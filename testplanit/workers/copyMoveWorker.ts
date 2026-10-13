@@ -1,5 +1,5 @@
 import { Job, Worker } from "bullmq";
-import { DbNull } from "@zenstackhq/orm";
+import { DbNull, JsonNull } from "@zenstackhq/orm";
 import { getAuditContext, runWithAuditContext } from "../lib/auditContext";
 import { buildGucPayload, withAuditGuc } from "../lib/audit/gucContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
@@ -768,6 +768,13 @@ const processor = async (
         const versions = await db.repositoryCaseVersions.findMany({
           where: { repositoryCaseId: sc.id },
           orderBy: { version: "asc" },
+          // Each snapshot's own custom field values travel with it. They hang
+          // off the version by id, so the rebuilt rows below need their own
+          // copies — without this a moved case keeps its history but every
+          // version in it reads as though the custom fields were empty.
+          include: {
+            caseFieldVersionValues: { select: { field: true, value: true } },
+          },
         });
         sourceVersionsMap.set(sc.id, versions);
       }
@@ -868,31 +875,51 @@ const processor = async (
         });
 
         let caseName = sourceCase.name;
-        if (existingCase) {
-          if (job.data.conflictResolution === "skip") {
-            result.skippedCount = (result.skippedCount ?? 0) + 1;
-            continue;
-          } else if (job.data.conflictResolution === "rename") {
-            // Find a unique name with incrementing suffix
-            let suffix = 1;
-            let candidateName = `${sourceCase.name} (copy)`;
-            while (true) {
-              const nameExists = await db.repositoryCases.findFirst({
-                where: {
-                  projectId: job.data.targetProjectId,
-                  name: candidateName,
-                  ...classNameWhere,
-                  source: sourceCase.source,
-                  isDeleted: false,
-                },
-                select: { id: true },
-              });
-              if (!nameExists) break;
-              suffix++;
-              candidateName = `${sourceCase.name} (copy ${suffix})`;
-            }
-            caseName = candidateName;
+
+        // `existingCase` only matches LIVE rows, so it answers "is there a
+        // visible duplicate?" — the trigger for the user's skip choice.
+        if (existingCase && job.data.conflictResolution === "skip") {
+          result.skippedCount = (result.skippedCount ?? 0) + 1;
+          continue;
+        }
+
+        // Resolve a target name that is free against BOTH live and
+        // soft-deleted cases, then always create a brand-new, distinct case
+        // below — we never resurrect a tombstone.
+        //
+        // Why tombstones matter: RepositoryCases
+        // @@unique([projectId, name, className, source]) covers soft-deleted
+        // rows. If a previously-deleted case still holds this name, creating
+        // with the same name would 23505. The old design worked around that by
+        // reusing (resurrecting) the dead case's id — which silently inherited
+        // its stale steps, field values, version history (RepositoryCaseVersions
+        // are never deleted) and run links, and then collided anyway when the
+        // copy's version 1 met the tombstone's surviving version 1.
+        //
+        // Only `copy` reaches here: a same-project move returns early via
+        // relocateWithinProject, and a cross-project move's sources live in
+        // another project, so neither can match these target-scoped probes.
+        const nameIsTaken = async (candidate: string): Promise<boolean> => {
+          const row = await db.repositoryCases.findFirst({
+            where: {
+              projectId: job.data.targetProjectId,
+              name: candidate,
+              ...classNameWhere,
+              source: sourceCase.source,
+            },
+            select: { id: true },
+          });
+          return row !== null;
+        };
+
+        if (await nameIsTaken(caseName)) {
+          let suffix = 1;
+          let candidateName = `${sourceCase.name} (copy)`;
+          while (await nameIsTaken(candidateName)) {
+            suffix++;
+            candidateName = `${sourceCase.name} (copy ${suffix})`;
           }
+          caseName = candidateName;
         }
 
         // Determine target folder for this case (either from folderTree map or flat targetFolderId)
@@ -960,37 +987,23 @@ const processor = async (
               order: caseOrder,
             };
 
-            // A prior soft-deleted case at the same (projectId, name,
-            // className, source) tuple (e.g. the user previously deleted a
-            // copy with the same name) gets resurrected with the fresh
-            // payload instead of 23505ing. Prisma's compound-unique upsert
-            // rejects null for nullable members like `className`, so the
-            // find-then-branch pattern is the typesafe path.
-            const softDeletedExisting = await tx.repositoryCases.findFirst({
-              where: {
+            // `caseName` was already disambiguated above against both live
+            // and soft-deleted cases, so this create cannot collide on the
+            // (projectId, name, className, source) unique tuple. We always
+            // create a brand-new, distinct case and never resurrect a
+            // tombstoned one — resurrecting inherited the dead case's stale
+            // steps, field values, run links and version rows, and its
+            // surviving version 1 then collided with the copy's own.
+            const newCase = await tx.repositoryCases.create({
+              data: {
                 projectId: job.data.targetProjectId,
                 name: caseName,
                 className: sourceCase.className,
                 source: sourceCase.source,
-                isDeleted: true,
+                ...caseFields,
+                currentVersion: 1,
               },
-              select: { id: true },
             });
-            const newCase = softDeletedExisting
-              ? await tx.repositoryCases.update({
-                  where: { id: softDeletedExisting.id },
-                  data: { ...caseFields, currentVersion: 1, isDeleted: false },
-                })
-              : await tx.repositoryCases.create({
-                  data: {
-                    projectId: job.data.targetProjectId,
-                    name: caseName,
-                    className: sourceCase.className,
-                    source: sourceCase.source,
-                    ...caseFields,
-                    currentVersion: 1,
-                  },
-                });
 
             // b. Create Steps
             for (const step of sourceCase.steps) {
@@ -1086,6 +1099,10 @@ const processor = async (
               await createTestCaseVersionInTransaction(tx, newCase.id, {
                 version: 1,
                 creatorId: job.data.userId,
+                // Step c created the copy's CaseFieldValues above, so this
+                // mirrors them onto version 1. Without it a copied case opens
+                // its own history with every custom field blank.
+                copyFieldValues: true,
               });
             } else {
               // Move: preserve full version history with updated FKs
@@ -1104,7 +1121,7 @@ const processor = async (
                 );
                 const effectiveVerStateName =
                   stateMapper.targetName(effectiveVerStateId) ?? ver.stateName;
-                await tx.repositoryCaseVersions.create({
+                const movedVersion = await tx.repositoryCaseVersions.create({
                   data: {
                     repositoryCaseId: newCase.id,
                     // Update location FKs to target
@@ -1141,6 +1158,21 @@ const processor = async (
                     attachments: ver.attachments ?? DbNull,
                   },
                 });
+                // Carry THIS snapshot's own field values across, not the live
+                // case's — copying the current values onto every historical
+                // version would rewrite the history the move is preserving.
+                const versionFieldValues = ver.caseFieldVersionValues ?? [];
+                if (versionFieldValues.length > 0) {
+                  await tx.caseFieldVersionValues.createMany({
+                    data: versionFieldValues.map(
+                      (fvv: { field: string; value: unknown }) => ({
+                        versionId: movedVersion.id,
+                        field: fvv.field,
+                        value: fvv.value ?? JsonNull,
+                      })
+                    ),
+                  });
+                }
                 lastVersionNumber = ver.version;
               }
               await tx.repositoryCases.update({

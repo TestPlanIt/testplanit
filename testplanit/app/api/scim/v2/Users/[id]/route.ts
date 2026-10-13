@@ -23,6 +23,7 @@ import { z } from "zod/v4";
 import { ScimAuthError, requireScimBearer } from "~/lib/scim/auth";
 import { SCIM_CONTENT_TYPE } from "~/lib/scim/constants";
 import { scimError } from "~/lib/scim/errors";
+import { ScimOwnershipError } from "~/lib/scim/ownership";
 import type { ScimUserBody } from "~/lib/scim/mapping/user";
 import { ScimPatchApplyError } from "~/lib/scim/patch";
 import { scimResponse } from "~/lib/scim/responses";
@@ -167,6 +168,9 @@ export async function PUT(
     if (e instanceof ScimValidationError) {
       return e.response;
     }
+    if (e instanceof ScimOwnershipError) {
+      return scimError(409, "uniqueness", e.message);
+    }
     if (e instanceof ScimUniquenessError) {
       return scimError(409, "uniqueness", e.message);
     }
@@ -225,6 +229,9 @@ export async function PATCH(
     if (e instanceof ScimValidationError) {
       return e.response;
     }
+    if (e instanceof ScimOwnershipError) {
+      return scimError(409, "uniqueness", e.message);
+    }
     if (e instanceof ScimUniquenessError) {
       return scimError(409, "uniqueness", e.message);
     }
@@ -259,6 +266,9 @@ export async function DELETE(
   } catch (e) {
     if (e instanceof ScimNotFoundError) {
       return scimError(404, null, e.message);
+    }
+    if (e instanceof ScimOwnershipError) {
+      return scimError(409, "uniqueness", e.message);
     }
     console.error("[scim/Users/:id] DELETE failed:", e);
     return scimError(500, null, "Internal server error");

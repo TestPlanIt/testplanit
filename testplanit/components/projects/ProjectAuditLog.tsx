@@ -10,7 +10,7 @@ import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { AuditAction } from "~/zenstack/models";
-import type { VisibilityState } from "@tanstack/react-table";
+import type { VisibilityState } from "@/components/tables/tableFeatures";
 import { endOfDay, format, startOfDay } from "date-fns";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";

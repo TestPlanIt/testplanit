@@ -1,7 +1,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
@@ -14,7 +14,7 @@ import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay"
 import { DateFormatter } from "@/components/DateFormatter";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { CommentsListDisplay } from "@/components/tables/CommentsListDisplay";
@@ -84,6 +84,7 @@ import {
   MoreVertical,
   PlayCircle,
   Plus,
+  FilePlay,
   PlusSquare,
   ScrollText,
   SquarePen,
@@ -94,6 +95,7 @@ import {
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
+import { useDetailsDisplayMode } from "~/hooks/useDetailsDisplayMode";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { Link } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
@@ -112,6 +114,8 @@ export interface ExtendedCases extends RepositoryCases {
     color: Pick<Color, "value">;
   };
   attachments: Attachments[];
+  /** Filtered relation counts the list selects carry (live rows only). */
+  _count?: { comments?: number; codePins?: number };
   tags?: Tags[];
   // Explicit join-model relations (RepositoryCases.caseTags/caseIssues). The
   // repository case query selects these; consumers derive tags/issues via
@@ -236,7 +240,7 @@ export interface ExtendedCases extends RepositoryCases {
  * tinted in primary. Same shape the Tiptap toolbar's
  * InsertParameterToolbarButton uses, so the association is already
  * familiar. Kept inline here because the cells-table render path
- * doesn't go through TestCaseNameDisplay.
+ * doesn't go through CaseDisplay.
  */
 function TypeIconWithParamBadge({
   isSoftDeletedInRun,
@@ -318,6 +322,11 @@ const NameCell = React.memo(function NameCell({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { opensInNewWindow } = useDetailsDisplayMode();
+  // Plain repository browsing with the "new window" preference: the click
+  // opens the full case page in a new window instead of the docked panel.
+  const opensFullPageInNewWindow =
+    !isRunMode && !isSelectionMode && opensInNewWindow;
 
   // DISABLED: Fetch all folders to build the path hierarchy
   // TODO: Replace with API endpoint that fetches only the path for a specific folder
@@ -448,13 +457,16 @@ const NameCell = React.memo(function NameCell({
           "group min-w-0 flex-auto",
           isSoftDeletedInRun && "line-through text-muted-foreground"
         )}
-        target={isSelectionMode ? "_blank" : undefined}
+        target={
+          isSelectionMode || opensFullPageInNewWindow ? "_blank" : undefined
+        }
         onClick={(e) => {
           // In plain repository browsing, open the case in the docked details
           // panel (via the `case` URL param) instead of navigating away — but let
           // modified/middle clicks fall through so the full page still opens in
-          // a new tab. Run and selection modes keep their existing behavior.
-          if (isRunMode || isSelectionMode) return;
+          // a new tab. Run and selection modes keep their existing behavior, and
+          // the "new window" preference lets the link's own target handle it.
+          if (isRunMode || isSelectionMode || opensFullPageInNewWindow) return;
           if (
             e.metaKey ||
             e.ctrlKey ||
@@ -475,8 +487,8 @@ const NameCell = React.memo(function NameCell({
           {/* The link icon signals "opens a new page" — only true when the
               click navigates (selection mode → new tab, run mode → case page).
               In plain repository browsing the click opens the docked details
-              panel, so hide it. */}
-          {(isRunMode || isSelectionMode) && (
+              panel, so hide it — unless the user prefers a new window. */}
+          {(isRunMode || isSelectionMode || opensFullPageInNewWindow) && (
             <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
           )}
         </div>
@@ -639,26 +651,23 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   // Combine isCompleted with isSoftDeletedInRun for disabling logic
   const isDisabled = isCompleted || isSoftDeletedInRun;
 
-  const selectedCount = table?.getState
-    ? Object.keys(table.getState().rowSelection || {}).length
-    : 0;
+  const rowSelection = table?.store?.state.rowSelection;
+  const selectedCount = rowSelection ? Object.keys(rowSelection).length : 0;
 
   const isRowSelected =
-    selectedCount > 0 && table?.getState().rowSelection
-      ? Object.entries(table.getState().rowSelection).some(
-          ([key, selected]) => {
-            if (!selected) return false;
-            const row = table.getRow(key);
-            return row?.original?.id === caseId;
-          }
-        )
+    selectedCount > 0 && rowSelection
+      ? Object.entries(rowSelection).some(([key, selected]) => {
+          if (!selected) return false;
+          const row = table.getRow(key);
+          return row?.original?.id === caseId;
+        })
       : false;
 
   const isMenuDisabled = selectedCount > 0 && !isRowSelected;
 
   const getSelectedCases = () => {
     if (!table || selectedCount === 0) return [];
-    return Object.keys(table.getState().rowSelection || {}).map(
+    return Object.keys(rowSelection || {}).map(
       (rowId) => table.getRow(rowId).original
     );
   };
@@ -769,7 +778,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             data-testid={`testrun-status-cell-parameterized-${caseId}`}
             title={t("repository.cases.parameterizedStatusReadOnly")}
           >
-            <StatusDotDisplay
+            <StatusDisplay
               name={displayStatus.name}
               color={
                 hasColor(displayStatus) ? displayStatus.color.value : undefined
@@ -787,7 +796,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                 className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start overflow-hidden"
                 disabled={isDisabled}
               >
-                <StatusDotDisplay
+                <StatusDisplay
                   name={displayStatus.name}
                   color={
                     hasColor(displayStatus)
@@ -808,7 +817,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                     statusOption.id === displayStatus.id ? "bg-muted" : ""
                   }`}
                 >
-                  <StatusDotDisplay
+                  <StatusDisplay
                     name={statusOption.name}
                     color={statusOption.color?.value}
                     dotClassName="w-3 h-3 rounded-full me-2"
@@ -1058,6 +1067,8 @@ const ActionsCell = React.memo(function ActionsCell({
   onCopyMove,
   onDeleteCase,
   excludeNotStartedFromRuns,
+  automationAvailable,
+  onRunAutomated,
 }: {
   row: any;
   isRunMode: boolean;
@@ -1071,6 +1082,8 @@ const ActionsCell = React.memo(function ActionsCell({
   onCopyMove?: (caseId: number) => void;
   onDeleteCase?: (testcase: ExtendedCases) => void;
   excludeNotStartedFromRuns?: boolean;
+  automationAvailable?: boolean;
+  onRunAutomated?: (testcase: ExtendedCases) => void;
 }) {
   const isDraftCase =
     !!excludeNotStartedFromRuns &&
@@ -1113,7 +1126,21 @@ const ActionsCell = React.memo(function ActionsCell({
                 data-testid={`quickscript-case-${row.original.id}`}
               >
                 <ScrollText className="me-2 h-4 w-4" />
-                <span>{t("repository.cases.quickScript")}</span>
+                <span>{t("common.pageTitles.quickscript")}</span>
+              </DropdownMenuItem>
+            )}
+          {!isRunMode &&
+            !isSelectionMode &&
+            automationAvailable &&
+            canAddEditRun &&
+            row.original.automated &&
+            onRunAutomated && (
+              <DropdownMenuItem
+                onClick={() => onRunAutomated(row.original)}
+                data-testid={`run-automated-case-${row.original.id}`}
+              >
+                <FilePlay className="me-2 h-4 w-4" />
+                <span>{t("automation.adhoc.button")}</span>
               </DropdownMenuItem>
             )}
           {!isRunMode &&
@@ -1354,9 +1381,11 @@ const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
             <Checkbox
               data-testid="select-all-cases-checkbox"
               checked={
-                table.getIsSomeRowsSelected()
-                  ? "indeterminate"
-                  : table.getIsAllRowsSelected()
+                table.getIsAllRowsSelected()
+                  ? true
+                  : table.getIsSomeRowsSelected()
+                    ? "indeterminate"
+                    : false
               }
               onCheckedChange={(value) => {
                 if (!handleSelectAllClick) {
@@ -1482,7 +1511,9 @@ export const getColumns = (
     currentAssigneeId?: string | null;
     isBulkAssign: boolean;
     selectedCases?: ExtendedCases[];
-  }) => void
+  }) => void,
+  automationAvailable?: boolean,
+  onRunAutomated?: (testcase: ExtendedCases) => void
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -2427,6 +2458,8 @@ export const getColumns = (
             onCopyMove={onCopyMove}
             onDeleteCase={onDeleteCase}
             excludeNotStartedFromRuns={excludeNotStartedFromRuns}
+            automationAvailable={automationAvailable}
+            onRunAutomated={onRunAutomated}
           />
         ),
       });

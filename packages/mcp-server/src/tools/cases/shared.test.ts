@@ -1,20 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  extractProseMirrorText,
   denormalizeCustomFields,
   buildFolderBreadcrumb,
   mapCaseRow,
   mapCaseDetail,
   lastUpdatedAtFromRaw,
   resolveLatestResult,
+  resolveTagIds,
 } from "./shared.js";
 import { TestPlanItHttpError } from "../../http.js";
 
 vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
+  lookup: vi.fn(),
 }));
 
-import { zenstack } from "../../api.js";
+import { lookup, zenstack } from "../../api.js";
 
 const mockZenstack = vi.mocked(zenstack);
 
@@ -23,142 +24,13 @@ const mockEnv = {
   apiToken: "tpi_testtoken",
 };
 
-// ── extractProseMirrorText ─────────────────────────────────────────────────
+// ── resolveTagIds ──────────────────────────────────────────────────────────
 
-describe("extractProseMirrorText", () => {
-  it("extracts text from a plain paragraph", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [{ type: "text", text: "Step 1 body" }],
-        },
-      ],
-    };
-    expect(extractProseMirrorText(doc)).toBe("Step 1 body");
-  });
-
-  it("joins multiple paragraphs with newline", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        { type: "paragraph", content: [{ type: "text", text: "First" }] },
-        { type: "paragraph", content: [{ type: "text", text: "Second" }] },
-      ],
-    };
-    expect(extractProseMirrorText(doc)).toBe("First\nSecond");
-  });
-
-  it("extracts text from bold-marked nodes (marks are ignored, text passes through)", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [
-            {
-              type: "text",
-              text: "Bold",
-              marks: [{ type: "bold" }],
-            },
-          ],
-        },
-      ],
-    };
-    expect(extractProseMirrorText(doc)).toBe("Bold");
-  });
-
-  it("returns empty string for null input", () => {
-    expect(extractProseMirrorText(null)).toBe("");
-  });
-
-  it("returns empty string for undefined input", () => {
-    expect(extractProseMirrorText(undefined)).toBe("");
-  });
-
-  it("returns the string verbatim when input is already a string (defensive — historical data)", () => {
-    expect(extractProseMirrorText("plain text step")).toBe("plain text step");
-  });
-
-  it("extracts from array of nodes (no doc wrapper)", () => {
-    const nodes = [
-      { type: "paragraph", content: [{ type: "text", text: "Line A" }] },
-      { type: "paragraph", content: [{ type: "text", text: "Line B" }] },
-    ];
-    const result = extractProseMirrorText(nodes);
-    expect(result).toContain("Line A");
-    expect(result).toContain("Line B");
-  });
-
-  it("WR-05: code_block with multiple text runs concatenates inline (no stray newlines)", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "code_block",
-          content: [
-            { type: "text", text: "const x = 1;" },
-            { type: "text", text: " // inline" },
-          ],
-        },
-      ],
-    };
-    // Code-block runs are joined inline; only one block in the doc, so no
-    // outer newline either.
-    expect(extractProseMirrorText(doc)).toBe("const x = 1; // inline");
-  });
-
-  it("WR-05: bullet_list of two items renders one line per item (no extra blanks)", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "bullet_list",
-          content: [
-            {
-              type: "list_item",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: "first" }],
-                },
-              ],
-            },
-            {
-              type: "list_item",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: "second" }],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-    // bullet_list is a non-block container (joins children with "\n"),
-    // list_item / paragraph are block-level (children inline). Result is
-    // exactly "first\nsecond" — not "first\n\nsecond" (the bug).
-    expect(extractProseMirrorText(doc)).toBe("first\nsecond");
-  });
-
-  it("WR-05: heading with multiple inline runs renders as one line", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "heading",
-          attrs: { level: 1 },
-          content: [
-            { type: "text", text: "Hello, " },
-            { type: "text", text: "world" },
-          ],
-        },
-      ],
-    };
-    expect(extractProseMirrorText(doc)).toBe("Hello, world");
+describe("resolveTagIds", () => {
+  it("returns each tag once, whether named twice or by id and name", async () => {
+    vi.mocked(lookup).mockResolvedValue({ id: 12, name: "Smoke" } as never);
+    const ids = await resolveTagIds([12, "Smoke", "smoke"], mockEnv);
+    expect(ids).toEqual([12]);
   });
 });
 
@@ -184,6 +56,77 @@ describe("denormalizeCustomFields", () => {
 
   it("returns empty object for empty array", () => {
     expect(denormalizeCustomFields([])).toEqual({});
+  });
+
+  // Issue #594: Text Long is a rich-text document — the UI stores a JSON
+  // string, older hosts stored plain text. Readers get Markdown either way.
+  it("flattens a Text Long value the web UI stored as a JSON string", () => {
+    const rows = [
+      {
+        value: JSON.stringify({
+          type: "doc",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: "Notes here" }] },
+          ],
+        }),
+        field: { displayName: "Description", type: { type: "Text Long" } },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({ Description: "Notes here" });
+  });
+
+  it("returns a formatted Text Long value as Markdown, so it can be written back intact", () => {
+    const rows = [
+      {
+        value: JSON.stringify({
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                { type: "text", text: "Use " },
+                { type: "text", text: "care", marks: [{ type: "bold" }] },
+              ],
+            },
+            {
+              type: "bulletList",
+              content: [
+                {
+                  type: "listItem",
+                  content: [
+                    { type: "paragraph", content: [{ type: "text", text: "one" }] },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+        field: { displayName: "Description", type: { type: "Text Long" } },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({
+      Description: "Use **care**\n\n- one",
+    });
+  });
+
+  it("passes a Text Long value this server stored as plain text through unchanged", () => {
+    const rows = [
+      {
+        value: "Notes here",
+        field: { displayName: "Description", type: { type: "Text Long" } },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({ Description: "Notes here" });
+  });
+
+  it("leaves an unset Text Long value null rather than turning it into an empty string", () => {
+    const rows = [
+      {
+        value: null,
+        field: { displayName: "Description", type: { type: "Text Long" } },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({ Description: null });
   });
 
   it("skips rows with missing field metadata", () => {
@@ -830,15 +773,15 @@ describe("mapCaseDetail Phase-8 codeRepository extension", () => {
 
   const breadcrumb = [{ id: 12, name: "Auth" }];
 
-  it("returns codeRepository: null when project.codeRepositoryConfig is null", () => {
+  it("returns codeRepository: null when project.codeRepositoryConfigs is empty", () => {
     const detail = makeDetail({
-      project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+      project: { id: 7, name: "TestProject", codeRepositoryConfigs: [] },
     });
     const result = mapCaseDetail(detail as never, breadcrumb);
     expect(result.codeRepository).toBeNull();
   });
 
-  it("returns codeRepository: null when project has no codeRepositoryConfig at all", () => {
+  it("returns codeRepository: null when project has no codeRepositoryConfigs at all", () => {
     const detail = makeDetail();
     const result = mapCaseDetail(detail as never, breadcrumb);
     expect(result.codeRepository).toBeNull();
@@ -849,20 +792,22 @@ describe("mapCaseDetail Phase-8 codeRepository extension", () => {
       project: {
         id: 7,
         name: "TestProject",
-        codeRepositoryConfig: {
-          repository: {
-            id: 5,
-            name: "acme/tools",
-            provider: "GITHUB",
-            status: "ACTIVE",
-            lastTestedAt: null,
-            settings: {
-              owner: "acme",
-              repo: "tools",
-              personalAccessToken: "pat_secret",
+        codeRepositoryConfigs: [
+          {
+            repository: {
+              id: 5,
+              name: "acme/tools",
+              provider: "GITHUB",
+              status: "ACTIVE",
+              lastTestedAt: null,
+              settings: {
+                owner: "acme",
+                repo: "tools",
+                personalAccessToken: "pat_secret",
+              },
             },
           },
-        },
+        ],
       },
     });
     const result = mapCaseDetail(detail as never, breadcrumb);
@@ -876,7 +821,7 @@ describe("mapCaseDetail Phase-8 codeRepository extension", () => {
 
   it("regression: existing detail fields still present when codeRepository null", () => {
     const detail = makeDetail({
-      project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+      project: { id: 7, name: "TestProject", codeRepositoryConfigs: [] },
       caseFieldValues: [{ value: "High", field: { displayName: "Priority" } }],
       // Raw issues now arrive through the caseIssues join model.
       caseIssues: [

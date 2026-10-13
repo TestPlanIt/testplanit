@@ -10,6 +10,40 @@ import {
   UpdateIssueData,
 } from "./IssueAdapter";
 
+/**
+ * Decodes the per-issue-type page cursor `searchIssues` round-trips through
+ * `pageToken`: `{ "<issue_type>": <next page>, ... }`, with `""` standing for
+ * "no type selected".
+ *
+ * Returns `null` for anything it does not recognize, which is deliberate
+ * rather than defensive. `pageToken` is a shared field on
+ * `IssueSearchOptions` and the orchestrator hands whatever it last received
+ * straight back; a token minted by a different adapter (Jira Cloud's opaque
+ * cursor) or a malformed one must fall back to the offset-derived page rather
+ * than throw mid-import or silently resume from page 1 of everything.
+ */
+function parseGitLabTypeCursor(
+  pageToken: string | undefined
+): Record<string, number> | null {
+  if (!pageToken) return null;
+  try {
+    const parsed = JSON.parse(pageToken);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const cursor: Record<string, number> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
+        return null;
+      }
+      cursor[key] = value;
+    }
+    return cursor;
+  } catch {
+    return null;
+  }
+}
+
 export class GitLabAdapter extends BaseAdapter {
   public supportsOAuth = true;
 
@@ -221,14 +255,78 @@ export class GitLabAdapter extends BaseAdapter {
     issues: IssueData[];
     total: number;
     hasMore: boolean;
+    nextPageToken?: string;
   }> {
+    // GitLab's `issue_type` filter accepts exactly ONE value, unlike Jira/ADO's
+    // IN-list syntax — see 28-RESEARCH Q1 (CITED, docs.gitlab.com/api/issues/).
+    // For >1 selected type we fetch each type sequentially (never in parallel:
+    // GitLab pagination doesn't compose across merged cursors from concurrent
+    // queries) and concatenate in selection order, letting the import
+    // orchestrator's own `seen` de-dup Set (SyncService.ts) merge the results
+    // the same way it already does for this adapter's degraded recency-window
+    // path. `[undefined]` (no selected types) preserves today's single request.
+    const types = options.issueTypeIds?.length
+      ? options.issueTypeIds
+      : [undefined];
+
+    // EACH TYPE PAGES INDEPENDENTLY, carried across calls in `pageToken`.
+    // A single shared page number cannot work here: the orchestrator advances
+    // its `offset` by the CONCATENATED row count, so with N types that offset
+    // moves N pages per iteration and a page derived from it steps
+    // 1 -> N+1 -> 2N+1, never requesting the pages in between. Dividing the
+    // offset by `types.length` instead only holds while every type returns
+    // full pages -- the moment one runs short the division re-derives a page
+    // that type has already been served.
+    //
+    // A type that has no more pages is dropped from the cursor entirely, so it
+    // is not re-queried while the others finish.
+    const cursor = parseGitLabTypeCursor(options.pageToken);
+    const nextCursor: Record<string, number> = {};
+
+    let issues: IssueData[] = [];
+    let total = 0;
+    let hasMore = false;
+    for (const issueType of types) {
+      const key = issueType ?? "";
+      // No cursor yet (the first call, or an offset-paginated caller such as
+      // preview/sampling): fall back to the offset-derived page, which is
+      // correct for a single type and is page 1 for all of them at offset 0.
+      if (cursor && !(key in cursor)) continue;
+      const page =
+        cursor?.[key] ??
+        Math.floor((options.offset || 0) / (options.limit || 30) + 1);
+
+      const result = await this.searchIssuesForType(options, issueType, page);
+      issues = issues.concat(result.issues);
+      total += result.total;
+      if (result.hasMore) {
+        nextCursor[key] = page + 1;
+        hasMore = true;
+      }
+    }
+
+    return {
+      issues,
+      total,
+      hasMore,
+      nextPageToken: hasMore ? JSON.stringify(nextCursor) : undefined,
+    };
+  }
+
+  /**
+   * The single-request body searchIssues fans out over — one call per
+   * selected issue type (or one call total when none are selected).
+   */
+  private async searchIssuesForType(
+    options: IssueSearchOptions,
+    issueType: string | undefined,
+    page: number
+  ): Promise<{ issues: IssueData[]; total: number; hasMore: boolean }> {
     const projectPath = this.resolveProjectPath(options.projectId);
     const encoded = encodeURIComponent(projectPath);
     const params = new URLSearchParams({
       per_page: (options.limit || 30).toString(),
-      page: Math.floor(
-        (options.offset || 0) / (options.limit || 30) + 1
-      ).toString(),
+      page: page.toString(),
     });
     if (options.query) {
       // Key format: "namespace/project#iid" — use iids[] for exact lookup
@@ -251,6 +349,7 @@ export class GitLabAdapter extends BaseAdapter {
         params.set("state", "opened");
       }
     }
+    if (issueType) params.set("issue_type", issueType);
     // Use full-text search order when there's a query; otherwise updated order
     params.set("order_by", options.query ? "created_at" : "updated_at");
     params.set("sort", "desc");
@@ -411,9 +510,27 @@ export class GitLabAdapter extends BaseAdapter {
     return "reopen";
   }
 
+  /**
+   * GitLab CE/Free only ever sends "issue" or "incident" in `issue_type`;
+   * paid tiers (Premium/Ultimate) add task/objective/key_result, which this
+   * adapter's getIssueTypes does not enumerate. Fall back to the raw value
+   * itself as both id and name rather than mislabeling an unrecognized type.
+   */
+  private static readonly ISSUE_TYPE_LABELS: Record<string, string> = {
+    issue: "Issue",
+    incident: "Incident",
+  };
+
   private mapGitLabIssue(issue: any, projectPath: string): IssueData {
     const iid = issue.iid;
     const key = `${projectPath}#${iid}`;
+    // getIssueTypes returns the literal "issue"/"incident" strings as both
+    // id and name — issueType.id must match those exactly for classification
+    // to see it.
+    const rawType =
+      typeof issue.issue_type === "string" && issue.issue_type
+        ? issue.issue_type
+        : "issue";
     return {
       id: String(iid),
       key,
@@ -435,7 +552,10 @@ export class GitLabAdapter extends BaseAdapter {
             email: issue.author.email,
           }
         : undefined,
-      issueType: issue.issue_type ?? "issue",
+      issueType: {
+        id: rawType,
+        name: GitLabAdapter.ISSUE_TYPE_LABELS[rawType] ?? rawType,
+      },
       labels: Array.isArray(issue.labels) ? issue.labels : [],
       customFields: {
         _gitlab_project: projectPath,

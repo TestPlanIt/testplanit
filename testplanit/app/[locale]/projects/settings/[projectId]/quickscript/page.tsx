@@ -1,5 +1,15 @@
 "use client";
 
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
+import {
+  PathPatternsCard,
+  pathPatternsSchema,
+} from "@/components/code-repositories/PathPatternsCard";
+import {
+  pathPatternRows,
+  repoConnectionData,
+  repoPreviewRequest,
+} from "@/components/code-repositories/repoConnectionForm";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -35,7 +45,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -51,43 +60,26 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   AlertTriangle,
   CheckCircle,
-  Eye,
   GitBranch,
   Loader2,
-  Plus,
   RefreshCw,
   Save,
-  Trash,
   Unlink,
   XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { ApplicationArea } from "~/zenstack/models";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useRepoCacheRefresh } from "~/hooks/useRepoCacheRefresh";
+import { useRepoPreviewFiles } from "~/hooks/useRepoPreviewFiles";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { ExportTemplateAssignmentSection } from "./ExportTemplateAssignmentSection";
 import { Link } from "~/lib/navigation";
-
-interface PreviewFile {
-  path: string;
-  size: number;
-}
-
-interface PreviewResult {
-  files: PreviewFile[];
-  fileCount: number;
-  totalSize: number;
-  totalSizeFormatted: string;
-  exceedsLimit: boolean;
-  overflowBytes: number;
-  truncated: boolean;
-  error?: string;
-}
 
 interface CodeRepository {
   id: number;
@@ -109,43 +101,26 @@ export default function QuickScriptPage() {
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("projects.settings.quickScript");
   const tCommon = useTranslations("common");
-
-  const pathPatternSchema = z.object({
-    path: z.string().min(1, t("validation.pathRequired")),
-    pattern: z.string().min(1, t("validation.patternRequired")),
-  });
+  const tDimensions = useTranslations("reports.dimensions");
+  const tRepo = useTranslations("projects.settings.codeRepository");
 
   const formSchema = z.object({
-    repositoryId: z.string().min(1, t("validation.repositoryRequired")),
+    repositoryId: z.string().min(1, tRepo("validation.repositoryRequired")),
     branch: z.string().optional().default(""),
-    pathPatterns: z
-      .array(pathPatternSchema)
-      .min(1, t("validation.pathPatternRequired")),
+    pathPatterns: pathPatternsSchema(tRepo),
     cacheEnabled: z.boolean().default(true),
     cacheTtlDays: z.number().int().min(1).max(30).default(7),
   });
 
   type FormData = z.infer<typeof formSchema>;
 
-  const [isPreviewing, setIsPreviewing] = useState(false);
-  const [preview, setPreview] = useState<PreviewResult | null>(null);
-  const [previewProgress, setPreviewProgress] = useState<{
-    step: string;
-    filesFound?: number;
-    scope?: string;
-    totalFiles?: number;
-    waitSeconds?: number;
-  } | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshStep, setRefreshStep] = useState<string>("");
-  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
 
   // Load existing config
   const { data: existingConfig, refetch: refetchConfig } = useClientQueries(
     schema
   ).projectCodeRepositoryConfig.useFindFirst({
-    where: { projectId },
+    where: { projectId, purpose: "QUICKSCRIPT" },
     include: {
       repository: {
         select: { id: true, name: true, provider: true },
@@ -205,11 +180,31 @@ export default function QuickScriptPage() {
 
   // Project-admin authority, resolved server-side by
   // `authorizeProjectAdminForProject`: system ADMIN, the project's creator, a
-  // holder of the per-project "Project Admin" role, or a system PROJECTADMIN
+  // holder of the per-project role with Settings canAddEdit, or a system PROJECTADMIN
   // assigned to this project. Gating on `session.user.access` alone 404'd the
   // creator/role-holder tiers that the settings APIs already accept.
   const { isProjectAdmin, isLoading: permissionsLoading } =
     useProjectPermissions(projectId, ApplicationArea.Settings);
+
+  const { isPreviewing, preview, previewProgress, runPreview, clearPreview } =
+    useRepoPreviewFiles({ networkErrorMessage: tRepo("networkError") });
+
+  const { isRefreshing, refreshStep, refreshError, refreshCache } =
+    useRepoCacheRefresh({
+      refetchConfig,
+      messages: {
+        pending: tRepo("cache.statusPending"),
+        listingFiles: tRepo("cache.listingFiles"),
+        cachingFiles: (count) =>
+          tRepo("cache.cachingFiles", { count: String(count) }),
+        contentsError: tRepo("contentsError"),
+        networkError: tRepo("networkError"),
+        refreshComplete: (fileCount) =>
+          tRepo("refreshComplete", { fileCount: String(fileCount) }),
+        refreshInProgress: tRepo("refreshInProgress"),
+        interrupted: tRepo("refreshInterrupted"),
+      },
+    });
 
   // Access control check - must hold project-admin authority here
   useEffect(() => {
@@ -237,11 +232,13 @@ export default function QuickScriptPage() {
       form.reset({
         repositoryId: "",
         branch: "",
-        pathPatterns: [{ path: "tests/e2e", pattern: "**/*.ts" }],
+        pathPatterns: [
+          { path: "tests/e2e", pattern: "**/*.ts", exclude: false },
+        ],
         cacheEnabled: true,
         cacheTtlDays: 7,
       });
-      setPreview(null);
+      clearPreview();
       toast.success(t("disconnectSuccess"));
       void refetchConfig();
     } catch {
@@ -254,238 +251,56 @@ export default function QuickScriptPage() {
     defaultValues: {
       repositoryId: "",
       branch: "",
-      pathPatterns: [{ path: "tests/e2e", pattern: "**/*.ts" }],
+      pathPatterns: [{ path: "tests/e2e", pattern: "**/*.ts", exclude: false }],
       cacheEnabled: true,
       cacheTtlDays: 7,
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control as any,
-    name: "pathPatterns",
-  });
-
-  // Populate form when existing config loads
+  // Populate the form when a different row arrives or it was saved, not on
+  // every poll while a refresh runs: that would wipe edits.
   useEffect(() => {
     if (existingConfig) {
       form.reset({
         repositoryId: String(existingConfig.repositoryId),
         branch: existingConfig.branch ?? "",
-        pathPatterns: (existingConfig.pathPatterns as {
-          path: string;
-          pattern: string;
-        }[]) ?? [{ path: "", pattern: "*" }],
+        pathPatterns: ((rows) =>
+          rows.length > 0
+            ? rows
+            : [{ path: "", pattern: "*", exclude: false }])(
+          pathPatternRows(existingConfig.pathPatterns)
+        ),
         cacheEnabled: (existingConfig as any).cacheEnabled ?? true,
         cacheTtlDays: existingConfig.cacheTtlDays ?? 7,
       });
     }
-  }, [existingConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [existingConfig?.id, String(existingConfig?.updatedAt)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedRepositoryId = form.watch("repositoryId");
   const cacheEnabled = form.watch("cacheEnabled");
 
-  const handlePreview = async () => {
+  const handlePreview = () => {
     const values = form.getValues();
     if (!values.repositoryId) return;
-
-    setIsPreviewing(true);
-    setPreview(null);
-    setPreviewProgress(null);
-
-    try {
-      const response = await fetch(
-        `/api/code-repositories/${values.repositoryId}/preview-files`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            branch: values.branch || undefined,
-            pathPatterns: values.pathPatterns,
-            cacheEnabled: values.cacheEnabled,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response
-          .json()
-          .catch(() => ({ error: "Request failed" }));
-        setPreview({
-          files: [],
-          fileCount: 0,
-          totalSize: 0,
-          totalSizeFormatted: "0 B",
-          exceedsLimit: false,
-          overflowBytes: 0,
-          truncated: false,
-          error: data.error,
-        });
-        return;
-      }
-
-      // Read SSE stream
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No response body");
-
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        // Keep the last partial line in the buffer
-        buffer = lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6);
-          try {
-            const event = JSON.parse(json);
-            if (event.type === "progress") {
-              setPreviewProgress({
-                step: event.step,
-                filesFound: event.filesFound,
-                scope: event.scope,
-                totalFiles: event.totalFiles,
-                waitSeconds: event.waitSeconds,
-              });
-            } else if (event.type === "complete") {
-              setPreview(event);
-            } else if (event.type === "error") {
-              setPreview({
-                files: [],
-                fileCount: 0,
-                totalSize: 0,
-                totalSizeFormatted: "0 B",
-                exceedsLimit: false,
-                overflowBytes: 0,
-                truncated: false,
-                error: event.error,
-              });
-            }
-          } catch {
-            // Skip malformed SSE lines
-          }
-        }
-      }
-    } catch {
-      setPreview({
-        files: [],
-        fileCount: 0,
-        totalSize: 0,
-        totalSizeFormatted: "0 B",
-        exceedsLimit: false,
-        overflowBytes: 0,
-        truncated: false,
-        error: t("networkError"),
-      });
-    } finally {
-      setIsPreviewing(false);
-      setPreviewProgress(null);
-    }
+    void runPreview(values.repositoryId, repoPreviewRequest(values));
   };
 
-  const handleRefreshCache = async () => {
+  const handleRefreshCache = () => {
     if (!existingConfig) return;
-    setIsRefreshing(true);
-    setRefreshError(null);
-    setRefreshStep(t("cache.statusPending"));
-
-    try {
-      // Enqueue a background refresh. The list+content fetch runs in the
-      // repo-cache worker so a rate-limited provider can't time out the
-      // request; we poll the config's cacheStatus for completion.
-      const res = await fetch(
-        `/api/code-repositories/${existingConfig.repositoryId}/refresh-cache`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectConfigId: existingConfig.id }),
-        }
-      );
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || data.error) {
-        setRefreshError(data.error ?? t("networkError"));
-        void refetchConfig();
-        return;
-      }
-
-      // Poll until the worker finishes (cacheStatus leaves "pending").
-      const POLL_MS = 2500;
-      const MAX_POLLS = 144; // ~6 minutes
-      for (let polls = 0; polls < MAX_POLLS; polls++) {
-        await new Promise((r) => setTimeout(r, POLL_MS));
-        const { data: fresh } = await refetchConfig();
-        const status = (fresh as { cacheStatus?: string } | null)?.cacheStatus;
-        const fileCount = (fresh as { cacheFileCount?: number } | null)
-          ?.cacheFileCount;
-
-        if (status == null || status === "pending") {
-          setRefreshStep(
-            fileCount != null
-              ? t("cache.cachingFiles", { count: String(fileCount) })
-              : t("cache.listingFiles")
-          );
-          continue;
-        }
-
-        if (status === "error") {
-          setRefreshError(
-            (fresh as { cacheError?: string } | null)?.cacheError ??
-              t("contentsError")
-          );
-        } else {
-          toast.success(
-            t("refreshComplete", { fileCount: String(fileCount ?? 0) })
-          );
-        }
-        return;
-      }
-
-      // Still running after the poll window — it continues in the background.
-      toast.info(t("refreshInProgress"));
-    } catch (err) {
-      setRefreshError(err instanceof Error ? err.message : t("networkError"));
-    } finally {
-      setIsRefreshing(false);
-      setRefreshStep("");
-    }
+    void refreshCache({
+      repositoryId: existingConfig.repositoryId,
+      configId: existingConfig.id,
+    });
   };
 
   const onSubmit = async (values: FormData) => {
     try {
       const repositoryId = parseInt(values.repositoryId);
 
-      // Only reset cache status when content-affecting fields actually change.
-      // Changing TTL or cacheEnabled doesn't invalidate the existing cached files.
-      const cacheContentChanged =
-        !existingConfig ||
-        existingConfig.repositoryId !== repositoryId ||
-        existingConfig.branch !== (values.branch || null) ||
-        JSON.stringify(existingConfig.pathPatterns) !==
-          JSON.stringify(values.pathPatterns);
-
-      const cacheResetFields = cacheContentChanged
-        ? {
-            cacheStatus: null,
-            cacheLastFetchedAt: null,
-            cacheFileCount: null,
-            cacheTotalSize: null,
-            cacheError: null,
-          }
-        : {};
-
-      const sharedData = {
-        branch: values.branch || null,
-        pathPatterns: values.pathPatterns,
-        cacheEnabled: values.cacheEnabled,
-        cacheTtlDays: values.cacheTtlDays,
-        ...cacheResetFields,
-      };
+      const { data: sharedData } = repoConnectionData(
+        existingConfig as any,
+        values
+      );
 
       if (existingConfig) {
         await updateConfig.mutateAsync({
@@ -499,6 +314,7 @@ export default function QuickScriptPage() {
         await createConfig.mutateAsync({
           data: {
             ...sharedData,
+            purpose: "QUICKSCRIPT",
             repository: { connect: { id: repositoryId } },
             project: { connect: { id: projectId } },
           },
@@ -508,7 +324,7 @@ export default function QuickScriptPage() {
       toast.success(t("saved"));
       void refetchConfig();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t("saveError");
+      const message = err instanceof Error ? err.message : tRepo("saveError");
       toast.error(message);
     }
   };
@@ -558,7 +374,7 @@ export default function QuickScriptPage() {
       <Card>
         <CardHeader className="w-full">
           <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{t("title")}</CardTitle>
+            <CardTitle>{tCommon("pageTitles.quickscript")}</CardTitle>
             <HelpPopover helpKey="projectQuickScript" />
           </SectionHeader>
           <CardDescription>
@@ -605,22 +421,22 @@ export default function QuickScriptPage() {
                 {session?.user?.access === "ADMIN" ? (
                   <>
                     <div>
-                      <p className="font-medium">{t("noRepos.title")}</p>
+                      <p className="font-medium">{tRepo("noRepos.title")}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {t("noRepos.adminDescription")}
                       </p>
                     </div>
                     <Button asChild>
                       <Link href="/admin/code-repositories">
-                        {t("noRepos.adminLink")}
+                        {tRepo("noRepos.adminLink")}
                       </Link>
                     </Button>
                   </>
                 ) : (
                   <div>
-                    <p className="font-medium">{t("noRepos.title")}</p>
+                    <p className="font-medium">{tRepo("noRepos.title")}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {t("noRepos.userDescription")}
+                      {tRepo("noRepos.userDescription")}
                     </p>
                   </div>
                 )}
@@ -636,7 +452,7 @@ export default function QuickScriptPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>{t("repository.title")}</CardTitle>
+                      <CardTitle>{tDimensions("codeRepository")}</CardTitle>
                       {existingConfig && (
                         <Button
                           type="button"
@@ -646,7 +462,7 @@ export default function QuickScriptPage() {
                           onClick={() => setShowDisconnectDialog(true)}
                         >
                           <Unlink className="h-4 w-4" />
-                          {t("disconnect")}
+                          {tRepo("disconnect")}
                         </Button>
                       )}
                     </div>
@@ -660,7 +476,7 @@ export default function QuickScriptPage() {
                       name="repositoryId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("repository.title")}</FormLabel>
+                          <FormLabel>{tDimensions("codeRepository")}</FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
@@ -668,7 +484,7 @@ export default function QuickScriptPage() {
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue
-                                  placeholder={t("repository.placeholder")}
+                                  placeholder={tRepo("repository.placeholder")}
                                 />
                               </SelectTrigger>
                             </FormControl>
@@ -681,9 +497,10 @@ export default function QuickScriptPage() {
                                   key={repo.id}
                                   value={String(repo.id)}
                                 >
-                                  {repo.name} {"("}
-                                  {repo.provider}
-                                  {")"}
+                                  <CodeRepositoryName
+                                    name={repo.name}
+                                    provider={repo.provider}
+                                  />
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -698,7 +515,9 @@ export default function QuickScriptPage() {
                       name="branch"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("repository.branchLabel")}</FormLabel>
+                          <FormLabel>
+                            {tRepo("repository.branchLabel")}
+                          </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
@@ -712,174 +531,35 @@ export default function QuickScriptPage() {
                   </CardContent>
                 </Card>
 
-                {/* Path Patterns */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t("pathPatterns.title")}</CardTitle>
-                    <CardDescription>
-                      {t("pathPatterns.description")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="flex items-start gap-2">
-                        <FormField
-                          control={form.control as any}
-                          name={`pathPatterns.${index}.path`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              {index === 0 && (
-                                <FormLabel>
-                                  {t("pathPatterns.pathLabel")}
-                                </FormLabel>
-                              )}
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder={t(
-                                    "pathPatterns.pathPlaceholder"
-                                  )}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control as any}
-                          name={`pathPatterns.${index}.pattern`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              {index === 0 && (
-                                <FormLabel>
-                                  {t("pathPatterns.patternLabel")}
-                                </FormLabel>
-                              )}
-                              <FormControl>
-                                <Input {...field} placeholder="*" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className={index === 0 ? "mt-8" : ""}
-                          onClick={() => remove(index)}
-                          disabled={fields.length === 1}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => append({ path: "", pattern: "*" })}
-                    >
-                      <Plus className="h-4 w-4" />
-                      {t("pathPatterns.addPath")}
-                    </Button>
-
-                    {/* Preview */}
-                    <div className="flex items-center gap-3 pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handlePreview}
-                        disabled={isPreviewing || !selectedRepositoryId}
-                      >
-                        {isPreviewing ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                        {t("pathPatterns.previewFiles")}
-                      </Button>
-                      {isPreviewing && previewProgress && (
-                        <span className="text-sm text-muted-foreground">
-                          {previewProgress.step === "branch" &&
-                            t("preview.resolvingBranch")}
-                          {previewProgress.step === "listing" &&
-                            (previewProgress.filesFound != null
-                              ? t("preview.scanningFilesCount", {
-                                  count: previewProgress.filesFound,
-                                  scope: previewProgress.scope ?? "",
-                                })
-                              : t("preview.scanningFiles", {
-                                  scope: previewProgress.scope ?? "",
-                                }))}
-                          {previewProgress.step === "filtering" &&
-                            t("preview.filtering", {
-                              count: previewProgress.totalFiles ?? 0,
-                            })}
-                          {previewProgress.step === "rate-limited" &&
-                            t("preview.rateLimited", {
-                              seconds: previewProgress.waitSeconds ?? 0,
-                            })}
-                        </span>
-                      )}
-                    </div>
-
-                    {preview && !preview.error && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>
-                            {t("pathPatterns.files", {
-                              count: preview.fileCount,
-                            })}
-                          </span>
-                          <span>{preview.totalSizeFormatted}</span>
-                          {preview.truncated && (
-                            <Badge variant="secondary">
-                              {t("pathPatterns.truncatedBadge")}
-                            </Badge>
-                          )}
-                        </div>
-
-                        {preview.exceedsLimit && (
-                          <Alert variant="destructive">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertDescription>
-                              {t("pathPatterns.exceedsLimit", {
-                                overflow: formatBytes(preview.overflowBytes),
-                              })}
-                            </AlertDescription>
-                          </Alert>
-                        )}
-
-                        <ScrollArea className="h-48 rounded-md border p-3">
-                          <div className="space-y-1">
-                            {preview.files.map((f) => (
-                              <div
-                                key={f.path}
-                                className="font-mono text-xs text-muted-foreground"
-                              >
-                                {f.path}
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </div>
-                    )}
-
-                    {preview?.error && (
+                <PathPatternsCard
+                  control={form.control as any}
+                  description={t("pathPatterns.description")}
+                  pathPlaceholder={t("pathPatterns.pathPlaceholder")}
+                  defaultPattern="*"
+                  testIdPrefix="quickscript"
+                  isPreviewing={isPreviewing}
+                  preview={preview}
+                  previewProgress={previewProgress}
+                  previewDisabled={!selectedRepositoryId}
+                  onPreview={handlePreview}
+                  previewExtras={
+                    preview?.exceedsLimit ? (
                       <Alert variant="destructive">
-                        <XCircle className="h-4 w-4" />
-                        <AlertDescription>{preview.error}</AlertDescription>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          {t("pathPatterns.exceedsLimit", {
+                            overflow: formatBytes(preview.overflowBytes),
+                          })}
+                        </AlertDescription>
                       </Alert>
-                    )}
-                  </CardContent>
-                </Card>
+                    ) : null
+                  }
+                />
 
                 {/* Cache Settings + Status */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>{t("cache.title")}</CardTitle>
+                    <CardTitle>{tRepo("cache.title")}</CardTitle>
                     <CardDescription>{t("cache.description")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -896,7 +576,7 @@ export default function QuickScriptPage() {
                             />
                           </FormControl>
                           <FormLabel className="font-medium">
-                            {t("cache.enableLabel")}
+                            {tRepo("cache.enableLabel")}
                           </FormLabel>
                           <FormMessage />
                         </FormItem>
@@ -936,7 +616,7 @@ export default function QuickScriptPage() {
                                 <FormItem>
                                   <div className="flex items-center gap-2 text-sm">
                                     <FormLabel className="font-normal">
-                                      {t("cache.ttlBefore")}
+                                      {tRepo("cache.ttlBefore")}
                                     </FormLabel>
                                     <FormControl>
                                       <Input
@@ -945,7 +625,7 @@ export default function QuickScriptPage() {
                                         min={1}
                                         max={30}
                                         className="w-16"
-                                        aria-label={t("cache.ttlAriaLabel")}
+                                        aria-label={tRepo("cache.ttlAriaLabel")}
                                         onChange={(e) =>
                                           field.onChange(
                                             parseInt(e.target.value) || 7
@@ -954,7 +634,7 @@ export default function QuickScriptPage() {
                                       />
                                     </FormControl>
                                     <span>
-                                      {t("cache.ttlDays", {
+                                      {tRepo("cache.ttlDays", {
                                         count: field.value,
                                       })}
                                     </span>
@@ -971,7 +651,7 @@ export default function QuickScriptPage() {
                                 <div className="space-y-3">
                                   <div className="flex items-center justify-between">
                                     <h4 className="text-sm font-medium">
-                                      {t("cache.statusTitle")}
+                                      {tRepo("cache.statusTitle")}
                                     </h4>
                                     <Button
                                       type="button"
@@ -987,7 +667,7 @@ export default function QuickScriptPage() {
                                       )}
                                       {isRefreshing && refreshStep
                                         ? refreshStep
-                                        : t("cache.refreshButton")}
+                                        : tRepo("cache.refreshButton")}
                                     </Button>
                                   </div>
 
@@ -999,7 +679,7 @@ export default function QuickScriptPage() {
                                       <div className="mt-1 flex items-center gap-2">
                                         {!configData.cacheStatus && (
                                           <Badge variant="secondary">
-                                            {t("cache.statusNeverFetched")}
+                                            {tRepo("cache.statusNeverFetched")}
                                           </Badge>
                                         )}
                                         {configData.cacheStatus ===
@@ -1024,7 +704,7 @@ export default function QuickScriptPage() {
                                           <>
                                             <Loader2 className="h-4 w-4 animate-spin" />
                                             <Badge variant="secondary">
-                                              {t("cache.statusPending")}
+                                              {tRepo("cache.statusPending")}
                                             </Badge>
                                           </>
                                         )}
@@ -1033,7 +713,7 @@ export default function QuickScriptPage() {
 
                                     <div>
                                       <span className="text-muted-foreground">
-                                        {t("cache.lastFetched")}
+                                        {tRepo("cache.lastFetched")}
                                       </span>
                                       <div className="mt-1">
                                         {configData.cacheLastFetchedAt ? (
@@ -1065,7 +745,7 @@ export default function QuickScriptPage() {
 
                                     <div>
                                       <span className="text-muted-foreground">
-                                        {t("cache.filesCached")}
+                                        {tRepo("cache.filesCached")}
                                       </span>
                                       <div className="mt-1">
                                         {configData.cacheFileCount ?? "\u2014"}
@@ -1074,7 +754,7 @@ export default function QuickScriptPage() {
 
                                     <div>
                                       <span className="text-muted-foreground">
-                                        {t("cache.contentsCached")}
+                                        {tRepo("cache.contentsCached")}
                                       </span>
                                       <div className="mt-1">
                                         {configData.cacheContentFileCount ??
@@ -1084,7 +764,7 @@ export default function QuickScriptPage() {
 
                                     <div>
                                       <span className="text-muted-foreground">
-                                        {t("cache.totalSize")}
+                                        {tRepo("cache.totalSize")}
                                       </span>
                                       <div className="mt-1">
                                         {configData.cacheTotalSize != null
@@ -1148,7 +828,7 @@ export default function QuickScriptPage() {
                   <Button
                     type="submit"
                     disabled={isSaving}
-                    aria-label={t("save")}
+                    aria-label={tRepo("save")}
                     className="group gap-0 transition-all duration-200 hover:gap-2"
                   >
                     {isSaving ? (
@@ -1157,7 +837,7 @@ export default function QuickScriptPage() {
                       <Save className="h-4 w-4" />
                     )}
                     <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("save")}
+                      {tRepo("save")}
                     </span>
                   </Button>
                 </div>
@@ -1175,19 +855,19 @@ export default function QuickScriptPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t("disconnect")}
+              {tRepo("disconnect")}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                {t("confirmDisconnect", {
+                {tRepo("confirmDisconnect", {
                   name: (existingConfig as any)?.repository?.name ?? "",
                 })}
               </p>
               <div>
-                <p className="font-medium">{t("disconnectWarningTitle")}</p>
+                <p className="font-medium">{tRepo("disconnectWarningTitle")}</p>
                 <ul className="list-disc ps-5 mt-1">
-                  <li>{t("disconnectWarning1")}</li>
-                  <li>{t("disconnectWarning2")}</li>
+                  <li>{tRepo("disconnectWarningCache")}</li>
+                  <li>{tRepo("disconnectWarningPatterns")}</li>
                   <li>{t("disconnectWarning3")}</li>
                 </ul>
               </div>
@@ -1199,7 +879,7 @@ export default function QuickScriptPage() {
               onClick={handleDisconnect}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t("disconnect")}
+              {tRepo("disconnect")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

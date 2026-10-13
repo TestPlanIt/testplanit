@@ -30,6 +30,15 @@ export function isNotFoundError(err: unknown): boolean {
   return err instanceof ORMError && err.reason === ORMErrorReason.NOT_FOUND;
 }
 
+// Access-policy sibling of isNotFoundError, above: routes that must map a
+// ZenStack policy denial to 403 (rather than letting it fall into a generic
+// catch as a 500) use this predicate.
+export function isAccessPolicyError(err: unknown): boolean {
+  return (
+    err instanceof ORMError && err.reason === ORMErrorReason.REJECTED_BY_POLICY
+  );
+}
+
 export function isForeignKeyError(err: unknown): boolean {
   if (err instanceof ORMError && err.dbErrorCode === "23503") return true;
   return /foreign key constraint/i.test(ormErrorText(err));

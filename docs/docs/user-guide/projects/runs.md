@@ -64,8 +64,8 @@ The chart cards include an expand button that opens the chart in a larger overla
 
 Above the tabs sits a row of filter chips. Click a chip to switch it on, click it again to switch it off. Filters apply to **both** the Active and Completed tabs, so switching tabs keeps your view narrowed.
 
-- **Manual**: Limits the list to manual test runs.
-- **Automated**: Limits the list to automated test runs.
+- **Manual**: Limits the list to manual test runs, including hybrid runs.
+- **Automated**: Limits the list to automated test runs, including hybrid runs (manual runs that have also received automated results — see [Hybrid Test Runs](run-details.md#hybrid-test-runs)).
 - **My Test Runs**: Limits the list to runs you take part in — see [What counts as taking part](#what-counts-as-taking-part).
 
 Manual and Automated are independent switches rather than one either/or control. Turning **both** on shows every run, exactly as turning both off does, so switching a chip back off is always the way back to the full list.

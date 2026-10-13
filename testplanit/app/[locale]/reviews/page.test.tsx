@@ -188,7 +188,13 @@ async function getFilterSelect(testId: string): Promise<HTMLSelectElement> {
   return select;
 }
 
-type SessionLike = { user: { id: string; access: string } } | null;
+type SessionLike = {
+  user: {
+    id: string;
+    access: string;
+    preferences?: { detailsDisplayMode: "DOCKED" | "NEW_WINDOW" };
+  };
+} | null;
 let currentSession: SessionLike = {
   user: { id: "user-1", access: "USER" },
 };
@@ -851,6 +857,23 @@ describe("ReviewsInboxPage (/reviews)", () => {
       "/reviews?case=101&caseProject=7",
       { scroll: false }
     );
+  });
+
+  it("(k2b) with the new-window preference a case name is left to open its full page in a new window", () => {
+    currentSession = {
+      user: {
+        id: "user-1",
+        access: "USER",
+        preferences: { detailsDisplayMode: "NEW_WINDOW" },
+      },
+    };
+    render(<ReviewsInboxPage />);
+    const args = mockUseColumns.mock.calls[0]![0] as {
+      onOpenCase?: (caseId: number, projectId: number) => void;
+      openCaseInNewWindow?: boolean;
+    };
+    expect(args.onOpenCase).toBeUndefined();
+    expect(args.openCaseInNewWindow).toBe(true);
   });
 
   it("(k3) the `case` + `caseProject` params render the panel for that case", () => {

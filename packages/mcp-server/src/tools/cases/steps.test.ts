@@ -12,7 +12,6 @@ vi.mock("../../api.js", () => ({
 
 import * as apiModule from "../../api.js";
 import {
-  wrapPlainTextInProseMirror,
   createStepsForCase,
   replaceStepsForCase,
 } from "./steps.js";
@@ -25,51 +24,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// ── wrapPlainTextInProseMirror ────────────────────────────────────────────────
-
-describe("wrapPlainTextInProseMirror", () => {
-  it("wraps plain text in minimal ProseMirror doc structure", () => {
-    const result = wrapPlainTextInProseMirror("Open login page");
-    expect(result).toEqual({
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [{ type: "text", text: "Open login page" }],
-        },
-      ],
-    });
-  });
-
-  it("returns a paragraph with empty content for empty string", () => {
-    const result = wrapPlainTextInProseMirror("");
-    expect(result).toEqual({
-      type: "doc",
-      content: [{ type: "paragraph", content: [] }],
-    });
-  });
-
-  it("returns a paragraph with empty content for null", () => {
-    const result = wrapPlainTextInProseMirror(null);
-    expect(result).toEqual({
-      type: "doc",
-      content: [{ type: "paragraph", content: [] }],
-    });
-  });
-
-  it("returns a paragraph with empty content for undefined", () => {
-    const result = wrapPlainTextInProseMirror(undefined);
-    expect(result).toEqual({
-      type: "doc",
-      content: [{ type: "paragraph", content: [] }],
-    });
-  });
-});
-
 // ── createStepsForCase ────────────────────────────────────────────────────────
 
 describe("createStepsForCase", () => {
-  it("calls zenstack create per step with correct order (inferred 0-based)", async () => {
+  it("calls zenstack create per step with correct order (inferred 0-based), sending the text for the host to convert", async () => {
     zenstackMock.mockResolvedValue({ id: 100 });
 
     await createStepsForCase(
@@ -90,7 +48,7 @@ describe("createStepsForCase", () => {
       data: {
         testCase: { connect: { id: 99 } },
         order: 0,
-        step: wrapPlainTextInProseMirror("a"),
+        step: "a",
         expectedResult: null,
       },
     });
@@ -102,9 +60,36 @@ describe("createStepsForCase", () => {
       data: {
         testCase: { connect: { id: 99 } },
         order: 1,
-        step: wrapPlainTextInProseMirror("b"),
-        expectedResult: wrapPlainTextInProseMirror("x"),
+        step: "b",
+        expectedResult: "x",
       },
+    });
+  });
+
+  it("passes Markdown through untouched (#658)", async () => {
+    zenstackMock.mockResolvedValue({ id: 100 });
+
+    await createStepsForCase(
+      99,
+      [{ text: "Open the **New leads** board", expectedResult: "Shows `3` statuses" }],
+      env,
+    );
+
+    expect(zenstackMock.mock.calls[0][2]).toMatchObject({
+      data: {
+        step: "Open the **New leads** board",
+        expectedResult: "Shows `3` statuses",
+      },
+    });
+  });
+
+  it("sends an empty string for a step with no text", async () => {
+    zenstackMock.mockResolvedValue({ id: 100 });
+
+    await createStepsForCase(99, [{ expectedResult: "x" }], env);
+
+    expect(zenstackMock.mock.calls[0][2]).toMatchObject({
+      data: { step: "", expectedResult: "x" },
     });
   });
 

@@ -1,0 +1,623 @@
+// The share-redirect parameter contract: entityConfig → URL params
+// (serializer) and URL params → per-type builder state (parser). The
+// seams under test are the generic serialization rules, the
+// iteration-matrix filters expansion, and the parser's type gating —
+// a param must only hydrate the state its report type owns.
+
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  buildSharedReportSearchParams,
+  buildSharedReportSearchParamsWithState,
+  initialDateRangeFromUrl,
+  parsePerTypeReportParams,
+  PER_TYPE_REPORT_PARAM_DEFAULTS,
+} from "./reportShareParams";
+import { MAX_EXECUTION_SCOPE_IDS } from "~/utils/requirementExecutionScope";
+
+describe("buildSharedReportSearchParams", () => {
+  it("serializes scalars, joins scalar arrays, and JSON-encodes objects", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "test-execution",
+      startDate: "2026-01-01T00:00:00.000Z",
+      dimensions: ["project", "user"],
+      metrics: ["testResultCount"],
+      dimensionFilters: { project: [1, 2] },
+      page: 1,
+      pageSize: 25,
+    });
+
+    expect(params.get("reportType")).toBe("test-execution");
+    expect(params.get("startDate")).toBe("2026-01-01T00:00:00.000Z");
+    expect(params.get("dimensions")).toBe("project,user");
+    expect(params.get("metrics")).toBe("testResultCount");
+    expect(JSON.parse(params.get("dimensionFilters")!)).toEqual({
+      project: [1, 2],
+    });
+    expect(params.get("page")).toBe("1");
+    expect(params.get("pageSize")).toBe("25");
+  });
+
+  it("leaves the builder selection out and carries the state id when given one", () => {
+    const params = buildSharedReportSearchParams(
+      {
+        reportType: "test-execution",
+        startDate: "2026-01-01T00:00:00.000Z",
+        endDate: "2026-01-31T00:00:00.000Z",
+        dimensions: ["project", "user"],
+        metrics: ["testResultCount"],
+        dimensionFilters: { project: [1, 2] },
+        includeTotals: true,
+        dateRangePreset: "lastMonth",
+      },
+      { stateId: "state-1" }
+    );
+
+    expect(params.get("state")).toBe("state-1");
+    expect(params.get("reportType")).toBe("test-execution");
+    expect(params.get("includeTotals")).toBe("true");
+    expect(params.get("dateRangePreset")).toBe("lastMonth");
+    for (const key of [
+      "dimensions",
+      "metrics",
+      "startDate",
+      "endDate",
+      "dimensionFilters",
+    ]) {
+      expect(params.has(key)).toBe(false);
+    }
+  });
+
+  it("drops projectId, null/undefined, empty strings, arrays, and objects", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "flaky-tests",
+      projectId: 370,
+      startDate: null,
+      endDate: undefined,
+      sortColumn: "",
+      requirementIds: [],
+      dimensionFilters: {},
+    });
+
+    expect([...params.keys()]).toEqual(["reportType"]);
+  });
+
+  it("carries per-type params without enumeration — booleans included", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "requirement-coverage-gaps",
+      requirementIds: [4451, 12],
+      includeNotRun: false,
+      consecutiveRuns: 7,
+      snapshotId: 42,
+    });
+
+    expect(params.get("requirementIds")).toBe("4451,12");
+    expect(params.get("includeNotRun")).toBe("false");
+    expect(params.get("consecutiveRuns")).toBe("7");
+    expect(params.get("snapshotId")).toBe("42");
+  });
+
+  it("JSON-encodes arrays containing null so no member is mangled", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "automation-trends",
+      automated: [1, null],
+    });
+
+    expect(params.get("automated")).toBe("[1,null]");
+  });
+
+  it("expands the iteration-matrix filters object into the matrix page's params", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "iteration-matrix",
+      filters: {
+        statusIds: [3, 4],
+        configIds: [9],
+        datasetIds: [],
+        dateFrom: "2026-02-01",
+        dateTo: undefined,
+      },
+    });
+
+    expect(params.getAll("status")).toEqual(["3", "4"]);
+    expect(params.getAll("config")).toEqual(["9"]);
+    expect(params.getAll("dataset")).toEqual([]);
+    expect(params.get("startDate")).toBe("2026-02-01");
+    expect(params.get("endDate")).toBeNull();
+    expect(params.get("filters")).toBeNull();
+  });
+
+  it("returns empty params for a malformed config", () => {
+    expect(buildSharedReportSearchParams(null).toString()).toBe("");
+    expect(buildSharedReportSearchParams("nope").toString()).toBe("");
+    expect(buildSharedReportSearchParams([1]).toString()).toBe("");
+  });
+});
+
+describe("parsePerTypeReportParams", () => {
+  it("returns the control defaults when no params are present", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(),
+      "requirement-coverage-gaps"
+    );
+    expect(state).toEqual(PER_TYPE_REPORT_PARAM_DEFAULTS);
+  });
+
+  it("hydrates flaky-tests params, capping flipThreshold below the run count", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "consecutiveRuns=6&flipThreshold=9&automatedFilter=manual"
+      ),
+      "cross-project-flaky-tests"
+    );
+    expect(state.consecutiveRuns).toBe(6);
+    expect(state.flipThreshold).toBe(5);
+    expect(state.filterValues).toEqual({ automated: [0] });
+  });
+
+  it("hydrates test-case-health params including its automatedFilter", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "staleDaysThreshold=60&minExecutionsForRate=3&lookbackDays=180" +
+          "&automatedFilter=automated&healthStatusFilter=always_failing&staleFilter=stale"
+      ),
+      "test-case-health"
+    );
+    expect(state.staleDaysThreshold).toBe(60);
+    expect(state.minExecutionsForRate).toBe(3);
+    expect(state.lookbackDays).toBe(180);
+    expect(state.filterValues).toEqual({
+      automated: [1],
+      healthStatus: ["always_failing"],
+      staleness: ["stale"],
+    });
+  });
+
+  it("hydrates multi-value health filters and treats all as no filter", () => {
+    const state = parsePerTypeReportParams(
+      buildSharedReportSearchParams({
+        automatedFilter: ["automated", "manual"],
+        healthStatusFilter: ["never_executed", "always_failing", "bogus"],
+        staleFilter: "all",
+      }),
+      "cross-project-test-case-health"
+    );
+    expect(state.filterValues).toEqual({
+      automated: [1, 0],
+      // Menu order, not request order; unknown values dropped.
+      healthStatus: ["never_executed", "always_failing"],
+    });
+  });
+
+  it("hydrates impact history params and drops a junk repository id", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "lookbackDays=30&triggerFilter=push&outcomeFilter=failed&configId=9"
+      ),
+      "impact-analysis"
+    );
+    expect(state.lookbackDays).toBe(30);
+    expect(state.filterValues).toEqual({
+      trigger: ["push"],
+      outcome: ["failed"],
+      repository: [9],
+    });
+
+    const multi = parsePerTypeReportParams(
+      new URLSearchParams(
+        "triggerFilter=manual,push&outcomeFilter=failed,no_run&configId=9,4"
+      ),
+      "impact-analysis"
+    );
+    expect(multi.filterValues).toEqual({
+      trigger: ["manual", "push"],
+      outcome: ["failed", "no_run"],
+      repository: [9, 4],
+    });
+
+    const junk = parsePerTypeReportParams(
+      new URLSearchParams("triggerFilter=cron&outcomeFilter=maybe&configId=x"),
+      "cross-project-impact-analysis"
+    );
+    expect(junk.filterValues).toEqual({});
+  });
+
+  it("hydrates code pin coverage filters from one value or a list", () => {
+    const single = parsePerTypeReportParams(
+      new URLSearchParams("coverageFilter=gaps&configId=3"),
+      "code-pin-coverage"
+    );
+    expect(single.filterValues).toEqual({
+      pinCoverage: ["gaps"],
+      repository: [3],
+    });
+    const all = parsePerTypeReportParams(
+      new URLSearchParams("coverageFilter=all"),
+      "code-pin-coverage"
+    );
+    expect(all.filterValues).toEqual({});
+  });
+
+  it.each(["test-case-health", "impact-analysis", "code-pin-coverage"])(
+    "restores an all-time lookback (0) on %s",
+    (reportType) => {
+      expect(
+        parsePerTypeReportParams(
+          new URLSearchParams("lookbackDays=0"),
+          reportType
+        ).lookbackDays
+      ).toBe(0);
+      expect(
+        parsePerTypeReportParams(
+          new URLSearchParams("lookbackDays=-5"),
+          reportType
+        ).lookbackDays
+      ).toBe(90);
+      expect(
+        parsePerTypeReportParams(
+          new URLSearchParams("lookbackDays=abc"),
+          reportType
+        ).lookbackDays
+      ).toBe(90);
+    }
+  );
+
+  it("round-trips an all-time lookback through a share config", () => {
+    const params = buildSharedReportSearchParams({ lookbackDays: 0 });
+    expect(
+      parsePerTypeReportParams(params, "code-pin-coverage").lookbackDays
+    ).toBe(0);
+  });
+
+  it("ignores params a report type does not own", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams("consecutiveRuns=6&requirementIds=4451"),
+      "test-case-health"
+    );
+    expect(state.consecutiveRuns).toBe(10);
+    expect(state.requirementIds).toEqual([]);
+  });
+
+  it("hydrates the requirement scope and coverage states, discarding junk", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "requirementIds=4451,12,0,-3,4451,abc&coverageStates=UNCOVERED,BOGUS,NOT_RUN"
+      ),
+      "requirement-traceability"
+    );
+    expect(state.requirementIds).toEqual([4451, 12]);
+    expect(state.requirementCoverageStates).toEqual(["UNCOVERED", "NOT_RUN"]);
+  });
+
+  it("restores the gaps report's explicit includeNotRun=false", () => {
+    const off = parsePerTypeReportParams(
+      new URLSearchParams("includeNotRun=false"),
+      "requirement-coverage-gaps"
+    );
+    expect(off.includeNotRunDebt).toBe(false);
+    const absent = parsePerTypeReportParams(
+      new URLSearchParams(),
+      "requirement-coverage-gaps"
+    );
+    expect(absent.includeNotRunDebt).toBe(true);
+  });
+
+  it("hydrates automation-trends filters from both list encodings", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "dateGrouping=monthly&projectIds=1,2&templateIds=7&automated=" +
+          encodeURIComponent("[1,null]") +
+          "&dynamicFieldFilters=" +
+          encodeURIComponent('{"12":["red","blue"],"13":[]}')
+      ),
+      "automation-trends"
+    );
+    expect(state.dateGrouping).toBe("monthly");
+    expect(state.filterValues.projects).toEqual([1, 2]);
+    expect(state.filterValues.templates).toEqual([7]);
+    expect(state.filterValues.automated).toEqual([1, null]);
+    expect(state.filterValues["dynamic_12"]).toEqual(["red", "blue"]);
+    expect(state.filterValues["dynamic_13"]).toBeUndefined();
+  });
+
+  it("hydrates flaky-tests case and run filters into the filter menu", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "cross-project-flaky-tests",
+      automatedFilter: "automated",
+      projectIds: [1, 2],
+      stateIds: [3],
+      caseTagIds: [4],
+      runTagIds: [5, 6],
+      milestoneIds: [7],
+      configIds: [8],
+      dynamicFieldFilters: { 12: ["red"] },
+    });
+    const state = parsePerTypeReportParams(params, "cross-project-flaky-tests");
+    expect(state.filterValues).toEqual({
+      automated: [1],
+      projects: [1, 2],
+      states: [3],
+      caseTags: [4],
+      runTags: [5, 6],
+      milestone: [7],
+      configuration: [8],
+      dynamic_12: ["red"],
+    });
+  });
+
+  it("restores a requirement report's execution scope past 200 ids per axis, and stops at the server's cap", () => {
+    const ids = (length: number) => Array.from({ length }, (_, i) => i + 1);
+
+    const restored = parsePerTypeReportParams(
+      buildSharedReportSearchParams({
+        reportType: "requirement-traceability",
+        milestoneIds: ids(201),
+        configIds: ids(MAX_EXECUTION_SCOPE_IDS + 5),
+      }),
+      "requirement-traceability"
+    );
+
+    expect(restored.requirementMilestoneIds).toEqual(ids(201));
+    expect(restored.requirementConfigIds).toEqual(ids(MAX_EXECUTION_SCOPE_IDS));
+  });
+
+  it("hydrates the Folders filter and its subfolder switch on case reports", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams("folderIds=12,40&folderIncludeDescendants=false"),
+      "test-case-health"
+    );
+    expect(state.filterValues).toEqual({ folders: [12, 40] });
+    expect(state.folderIncludeSubfolders).toBe(false);
+
+    const defaulted = parsePerTypeReportParams(
+      new URLSearchParams("folderIds=12"),
+      "automation-trends"
+    );
+    expect(defaulted.filterValues).toEqual({ folders: [12] });
+    expect(defaulted.folderIncludeSubfolders).toBe(true);
+
+    // Reports without a Folders filter ignore the param.
+    const other = parsePerTypeReportParams(
+      new URLSearchParams("folderIds=12"),
+      "impact-analysis"
+    );
+    expect(other.filterValues).toEqual({});
+  });
+
+  it("carries a relative date range to the URL for the builder to resolve", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "flaky-tests",
+      startDate: "2026-09-14T07:00:00.000Z",
+      endDate: "2026-09-21T06:59:59.999Z",
+      dateRangePreset: "lastN",
+      dateRangeAmount: 14,
+      dateRangeUnit: "days",
+      dateRangeTimezone: "America/Los_Angeles",
+    });
+    expect(params.get("dateRangePreset")).toBe("lastN");
+    expect(params.get("dateRangeAmount")).toBe("14");
+    expect(params.get("dateRangeUnit")).toBe("days");
+    expect(params.get("dateRangeTimezone")).toBe("America/Los_Angeles");
+    // The stored dates still travel for consumers that predate presets.
+    expect(params.get("startDate")).toBe("2026-09-14T07:00:00.000Z");
+  });
+
+  it("falls back to defaults on invalid values", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "consecutiveRuns=-2&flipThreshold=zap&automatedFilter=sideways"
+      ),
+      "flaky-tests"
+    );
+    expect(state.consecutiveRuns).toBe(10);
+    expect(state.flipThreshold).toBe(5);
+    expect(state.filterValues).toEqual({});
+  });
+});
+
+describe("chart total line param", () => {
+  it("serializes the run body's includeTotals flag", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "test-execution",
+      dimensions: ["date", "testCase"],
+      metrics: ["avgElapsedTime"],
+      includeTotals: true,
+    });
+    expect(params.get("includeTotals")).toBe("true");
+  });
+
+  it("hydrates includeTotals for any report type and defaults it off", () => {
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("includeTotals=true"),
+        "test-execution"
+      ).includeTotals
+    ).toBe(true);
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("includeTotals=true"),
+        "repository-stats"
+      ).includeTotals
+    ).toBe(true);
+    expect(
+      parsePerTypeReportParams(new URLSearchParams(""), "test-execution")
+        .includeTotals
+    ).toBe(false);
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("includeTotals=yes"),
+        "test-execution"
+      ).includeTotals
+    ).toBe(false);
+  });
+});
+
+describe("requirement snapshot params", () => {
+  it("serializes the snapshot ids the requirement reports send", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "requirement-coverage-changes",
+      projectId: 370,
+      baselineSnapshotId: 12,
+      compareSnapshotId: 15,
+      includeUnchanged: false,
+    });
+    expect(params.get("baselineSnapshotId")).toBe("12");
+    expect(params.get("compareSnapshotId")).toBe("15");
+    expect(params.get("includeUnchanged")).toBe("false");
+  });
+
+  it("hydrates a traceability snapshot id only for the two matrix reports", () => {
+    const traceability = parsePerTypeReportParams(
+      new URLSearchParams("snapshotId=9"),
+      "requirement-traceability"
+    );
+    expect(traceability.requirementSnapshotId).toBe(9);
+    const gaps = parsePerTypeReportParams(
+      new URLSearchParams("snapshotId=9"),
+      "requirement-coverage-gaps"
+    );
+    expect(gaps.requirementSnapshotId).toBe(9);
+    const changes = parsePerTypeReportParams(
+      new URLSearchParams("snapshotId=9"),
+      "requirement-coverage-changes"
+    );
+    expect(changes.requirementSnapshotId).toBeNull();
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("snapshotId=abc"),
+        "requirement-traceability"
+      ).requirementSnapshotId
+    ).toBeNull();
+  });
+
+  it("hydrates the changes report's baseline, comparison, scope, and unchanged toggle", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "baselineSnapshotId=12&compareSnapshotId=15&includeUnchanged=true&requirementIds=4451"
+      ),
+      "requirement-coverage-changes"
+    );
+    expect(state.baselineSnapshotId).toBe(12);
+    expect(state.compareSnapshotId).toBe(15);
+    expect(state.includeUnchanged).toBe(true);
+    expect(state.requirementIds).toEqual([4451]);
+    // A live comparison stores no compareSnapshotId — absence restores live.
+    const live = parsePerTypeReportParams(
+      new URLSearchParams("baselineSnapshotId=12"),
+      "requirement-coverage-changes"
+    );
+    expect(live.compareSnapshotId).toBeNull();
+    expect(live.includeUnchanged).toBe(
+      PER_TYPE_REPORT_PARAM_DEFAULTS.includeUnchanged
+    );
+    // Type-gated: the traceability report never reads the changes params.
+    const other = parsePerTypeReportParams(
+      new URLSearchParams("baselineSnapshotId=12&includeUnchanged=true"),
+      "requirement-traceability"
+    );
+    expect(other.baselineSnapshotId).toBeNull();
+    expect(other.includeUnchanged).toBe(false);
+  });
+});
+
+describe("initialDateRangeFromUrl", () => {
+  it("resolves a relative range on the URL's timezone and ignores stored dates", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-23T17:00:00.000Z"));
+    try {
+      const seed = initialDateRangeFromUrl(
+        new URLSearchParams(
+          "dateRangePreset=lastWeek&dateRangeTimezone=Etc/UTC" +
+            "&startDate=2026-01-05T00:00:00.000Z&endDate=2026-01-11T23:59:59.999Z"
+        )
+      );
+      expect(seed.preset).toEqual({ preset: "lastWeek" });
+      expect([seed.range?.from?.getDate(), seed.range?.to?.getDate()]).toEqual([
+        14, 20,
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("seeds a rolling window", () => {
+    const seed = initialDateRangeFromUrl(
+      new URLSearchParams(
+        "dateRangePreset=lastN&dateRangeAmount=14&dateRangeUnit=days"
+      )
+    );
+    expect(seed.preset).toEqual({ preset: "lastN", amount: 14, unit: "days" });
+    expect(seed.range?.from).toBeInstanceOf(Date);
+  });
+
+  it("restores custom dates as fixed, and nothing when there are none", () => {
+    const custom = initialDateRangeFromUrl(
+      new URLSearchParams(
+        "startDate=2026-01-05T00:00:00.000Z&endDate=2026-01-11T23:59:59.999Z"
+      )
+    );
+    expect(custom.preset).toBeNull();
+    expect(custom.range?.from?.toISOString()).toBe("2026-01-05T00:00:00.000Z");
+    expect(initialDateRangeFromUrl(new URLSearchParams())).toEqual({
+      preset: null,
+      range: undefined,
+    });
+    // A malformed preset falls back to the stored dates.
+    const junk = initialDateRangeFromUrl(
+      new URLSearchParams(
+        "dateRangePreset=fortnight&startDate=2026-01-05T00:00:00.000Z"
+      )
+    );
+    expect(junk.preset).toBeNull();
+    expect(junk.range?.from).toBeInstanceOf(Date);
+  });
+});
+
+describe("buildSharedReportSearchParamsWithState", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const config = {
+    reportType: "test-execution",
+    dimensions: ["testRun"],
+    metrics: ["testCaseCount"],
+    dimensionFilters: { testRun: [1, 2, 3] },
+    includeTotals: true,
+  };
+
+  it("saves the selection and writes only its id", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: "state-9" }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const params = await buildSharedReportSearchParamsWithState(config, 7);
+    expect(params.get("state")).toBe("state-9");
+    expect(params.has("dimensionFilters")).toBe(false);
+    expect(params.get("includeTotals")).toBe("true");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/reports/state",
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
+  it("spells the selection out when the save fails or there is nothing to save", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false }))
+    );
+    const fallback = await buildSharedReportSearchParamsWithState(config, 7);
+    expect(fallback.has("state")).toBe(false);
+    expect(JSON.parse(fallback.get("dimensionFilters")!)).toEqual({
+      testRun: [1, 2, 3],
+    });
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const preBuilt = await buildSharedReportSearchParamsWithState(
+      { reportType: "flaky-tests", consecutiveRuns: 8 },
+      7
+    );
+    expect(preBuilt.get("consecutiveRuns")).toBe("8");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

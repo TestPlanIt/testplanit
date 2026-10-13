@@ -42,6 +42,7 @@ Defines distinct functional areas within the application for granular permission
 - ClosedTestRuns
 - TestRunResults
 - TestRunResultRestrictedFields
+- AutomatedExecution
 - Sessions
 - SessionsRestrictedFields
 - ClosedSessions
@@ -49,8 +50,6 @@ Defines distinct functional areas within the application for granular permission
 - Tags
 - SharedSteps
 - Issues
-- IssueIntegration
-- Forecasting
 - Reporting
 - Settings
 

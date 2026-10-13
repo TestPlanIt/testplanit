@@ -21,7 +21,7 @@ import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -120,7 +120,7 @@ const stepTitles = [
   "admin.projects.wizard.steps.details",
   "common.fields.templates",
   "admin.projects.wizard.steps.workflows",
-  "admin.projects.wizard.steps.integrations",
+  "common.pageTitles.integrations",
   "admin.projects.wizard.steps.permissions",
 ];
 
@@ -1599,7 +1599,7 @@ export function CreateProjectWizard({
                           checked={selectedStatuses.includes(status.id)}
                           onCheckedChange={() => toggleStatus(status.id)}
                         />
-                        <StatusDotDisplay
+                        <StatusDisplay
                           name={status.name}
                           color={status.color?.value}
                           dotClassName="w-3 h-3 rounded-full"
@@ -1812,7 +1812,7 @@ export function CreateProjectWizard({
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
                         <Bot className="h-4 w-4" />
-                        {t("admin.menu.llm")}
+                        {tCommon("pageTitles.aiModels")}
                       </CardTitle>
                       <CardDescription>
                         {t("admin.projects.wizard.descriptions.aiModels")}

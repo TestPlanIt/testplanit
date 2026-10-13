@@ -129,6 +129,7 @@ Every user has a system-wide access level that determines their baseline permiss
 
 - An ADMIN can set a user's access level manually: navigate to **Administration** > **Users**, edit the user, and select an access level. No further step is needed, though an already–signed-in user may keep their previous access for up to a minute — see [How Quickly Changes Take Effect](#how-quickly-changes-take-effect).
 - Access levels can also be assigned **automatically by group role mapping** — a group carries a mapped tier (User, Project Admin, or Admin) that its members inherit, highest-wins, with a configurable fallback default. See [Role mapping](./scim.md#role-mapping) and [Groups → Mapped access tier](./groups.md#mapped-access-tier).
+- If your identity provider asserts a `roles` attribute, a **role mapping takes precedence over group mapping** — a user given a mapped role receives that tier even when a group would grant more. See [Map an IdP role to an access tier](./scim.md#map-an-idp-role-to-an-access-tier).
 - Editing the access level of a user who is governed by group mapping switches them to manual control.
 
 ## Project Access Control
@@ -232,6 +233,7 @@ Permissions are granted per application area. The complete list of areas is:
 - **ClosedTestRuns** - Deleting completed or archived test runs
 - **TestRunResults** - Recording and managing results for test cases within a run (works even when the run's composition is locked)
 - **TestRunResultRestrictedFields** - Recording restricted field values on test run results, and viewing sensitive parameter values on iteration results, matrix cells, matrix exports, and the issue-prefill body when linking an external issue from a failed iteration (see [Parameterized Test Cases](./projects/parameterized-test-cases.md))
+- **AutomatedExecution** - Starting, retrying, and cancelling automated executions on a CI provider. Recording the results still requires `TestRunResults` Add/Edit; starting one from the repository also requires `TestRuns` Add/Edit because it creates or extends a run
 - **Sessions** - Creating and managing active test sessions
 - **SessionsRestrictedFields** - Recording restricted field values on test sessions
 - **ClosedSessions** - Deleting completed or archived test sessions
@@ -239,17 +241,15 @@ Permissions are granted per application area. The complete list of areas is:
 - **Tags** - Creating new tags
 - **SharedSteps** - Managing shared test step groups
 - **Issues** - Issue tracking and management
-- **IssueIntegration** - Managing external issue tracker integrations
-- **Forecasting** - Time and effort forecasting
 - **Reporting** - Reports and analytics
-- **Settings** - Project settings
+- **Project Settings** - Project settings. **Add/Edit** on this area makes the role a *project admin* role — see [Project admins](#project-admins).
 
 :::note Unlocking a run's composition requires the creator or project admin
-Any user with the `TestRuns` **Add/Edit** permission can **lock** a run's composition, but **unlocking** is restricted to the run's **creator**, a **project admin** (the project creator or a user with the **Project Admin** role), or a user with `PROJECTADMIN`/`ADMIN` system access. See [Composition lock](./projects/run-details.md#composition-lock).
+Any user with the `TestRuns` **Add/Edit** permission can **lock** a run's composition, but **unlocking** is restricted to the run's **creator** or a [project admin](#project-admins). See [Composition lock](./projects/run-details.md#composition-lock).
 :::
 
 :::note Milestone sync actions require project admin
-Most milestone actions follow the `Milestones` area's **Add/Edit** permission as described above — including linking or unlinking individual issues and editing milestone fields. A few actions that reach out to the external tracker instead require **project admin** status (the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access), regardless of the acting user's `Milestones` permission:
+Most milestone actions follow the `Milestones` area's **Add/Edit** permission as described above — including linking or unlinking individual issues and editing milestone fields. A few actions that reach out to the external tracker instead require [project admin](#project-admins) status, regardless of the acting user's `Milestones` permission:
 
 - **Import from Jira**
 - **Sync now**
@@ -284,7 +284,22 @@ This has three consequences worth knowing:
 TestPlanIt does not ship with pre-configured roles — administrators create them in **Administration** > **Roles**. Two role concepts carry special behavior:
 
 - **The default role** - one role can be marked as the default. Newly provisioned users (including SCIM-provisioned accounts) receive it automatically, and it cannot be deleted while it is the default.
-- **The role named `Project Admin`** - this exact name is special-cased. A user whose project permission is `SPECIFIC_ROLE` with a role named **Project Admin** counts as a *project admin* — alongside the project creator and `PROJECTADMIN`/`ADMIN` system access — for admin-gated project actions such as milestone sync, unlocking a run's composition, and managing project members.
+- **Project admin roles** - any role with **Add/Edit** on the **Project Settings** area. See [Project admins](#project-admins).
+
+### Project admins
+
+A user is a **project admin** of a project when any of these hold:
+
+- They have `ADMIN` system access.
+- They have `PROJECTADMIN` system access and are assigned to the project.
+- They created the project.
+- Their effective role on the project has **Add/Edit** on the **Project Settings** area.
+
+The effective role is whatever the [precedence ladder](#resolution-order) resolves for that user on that project — a user-specific role, a group's role, the user's global role, or the project's default role. So a role with **Project Settings** Add/Edit grants project-admin authority however it reaches the user, including through a group.
+
+Project admins hold every permission on every application area of that project, see **Settings** and the project audit log in the project menu, and can perform the admin-gated actions: managing project members, milestone sync, unlocking a run's composition, managing share links and webhooks, and editing project settings.
+
+This is how a user with `USER` system access administers one project while holding an ordinary role on others: give them a role with **Project Settings** Add/Edit on the project they administer, and any other role elsewhere.
 
 ### Example Role Patterns
 
@@ -292,8 +307,8 @@ Roles you may want to create:
 
 #### Project Admin
 
+- **Add/Edit** on **Project Settings**, which makes the role a [project admin](#project-admins) role
 - Full access to all application areas
-- All permissions enabled
 - Can manage project members
 - Recommended for project leads
 
@@ -395,7 +410,7 @@ Groups provide an efficient way to manage permissions for teams.
 - **Groups with SPECIFIC_ROLE** - All group members share the same assigned role for that project; if a member also belongs to a GLOBAL_ROLE-granted group, the SPECIFIC_ROLE grant decides their role
 
 :::note
-The project permissions described here are assigned **per project** in **Project Settings > Members**. The **Admin > Groups** page manages group membership and, separately, an optional **Mapped Access Tier** that drives members' global access level (see [Role mapping](./scim.md#role-mapping)) — it does not assign per-project roles.
+The project permissions described here are assigned **per project** in **Project Settings > Members**. The **Admin > Groups** page can also grant a group access on specific projects — see [Per-project access](./groups.md#per-project-access) — which materializes into the same group permission rows described above and resolves through the same precedence ladder. Separately, a group's **Mapped Access Tier** drives members' *global* access level (see [Role mapping](./scim.md#role-mapping)) rather than any per-project role.
 :::
 
 ### Use Cases
@@ -447,6 +462,8 @@ Understanding how TestPlanIt resolves permissions when multiple rules apply:
 4. **Project Creator Check**
    - If user created the project → Full project access
 
+   The effective role resolved by the remaining steps is then checked for **Add/Edit** on **Project Settings**; if it has it, the user is a [project admin](#project-admins) with full permissions on that project.
+
 5. **Explicit User Permission**
    - Check user-specific project permission
    - Decides the effective role before group and defaults
@@ -480,9 +497,9 @@ Result: John can access, with Tester permissions
 ```text
 User: Sarah (access level: USER)
 Global Role: Tester
-Project: Sarah explicitly assigned as "Project Admin" role
+Project: Sarah explicitly assigned a role with Project Settings Add/Edit
 
-Result: Sarah has Project Admin permissions (overrides global role)
+Result: Sarah is a project admin of this project (overrides global role)
 ```
 
 **Example 3: Group Access**
@@ -761,6 +778,7 @@ If the change still has not applied after a minute, it is not this cache. Confir
 - Create groups
 - Add/remove members
 - Set a **Mapped Access Tier** to drive members' global access level (see [Role mapping](./scim.md#role-mapping))
+- Grant **Per-project access** so the group reaches specific projects only (see [Per-project access](./groups.md#per-project-access))
 - View group projects
 - Delete groups
 - Audit group access

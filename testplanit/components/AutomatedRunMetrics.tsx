@@ -1,4 +1,4 @@
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
@@ -264,7 +264,7 @@ export function AutomatedRunMetrics({
                     className="min-w-0 flex-1"
                     title={result.name ?? undefined}
                   >
-                    <TestCaseNameDisplay
+                    <CaseDisplay
                       testCase={{
                         id: result.id,
                         name: result.name ?? undefined,

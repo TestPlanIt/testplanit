@@ -5,6 +5,7 @@ import { DateFormatter } from "@/components/DateFormatter";
 import { formatSeconds } from "@/components/DurationDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
+import StatusDisplay from "@/components/StatusDisplay";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
@@ -60,6 +61,7 @@ import {
   ChartLine,
   ChevronDown,
   ChevronRight,
+  CircleAlert,
   Combine,
   History,
   Layers,
@@ -85,7 +87,6 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link, useRouter } from "~/lib/navigation";
-import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { getDateFnsLocale } from "~/utils/locales";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import TipTapEditor from "./tiptap/TipTapEditor";
@@ -532,19 +533,12 @@ const StepResultsDisplay = ({
                     <ListOrdered className="h-4 w-4 shrink-0" />
                     {tCommon("fields.step")} {stepCounter}
                   </div>
-                  <Badge
-                    variant="outline"
-                    data-status-surface
-                    style={{
-                      ...statusSurfaceVars(stepResult.status.color.value),
-                      backgroundColor: stepResult.status.color.value,
-                      color: "white",
-                      borderColor: stepResult.status.color.value,
-                    }}
+                  <StatusDisplay
+                    variant="filled"
+                    name={stepResult.status.name}
+                    color={stepResult.status.color.value}
                     className="shrink-0"
-                  >
-                    {stepResult.status.name}
-                  </Badge>
+                  />
                 </div>
                 <div className="space-y-2">
                   <div className="bg-muted/30 rounded-lg p-2">
@@ -698,19 +692,12 @@ const RenderSharedGroupInHistoryList: React.FC<{
                 </div>
               </div>
               {itemResult && (
-                <Badge
-                  variant="outline"
-                  data-status-surface
-                  style={{
-                    ...statusSurfaceVars(itemResult.status.color.value),
-                    backgroundColor: itemResult.status.color.value,
-                    color: "white",
-                    borderColor: itemResult.status.color.value,
-                  }}
+                <StatusDisplay
+                  variant="filled"
+                  name={itemResult.status.name}
+                  color={itemResult.status.color.value}
                   className="ms-2 shrink-0"
-                >
-                  {itemResult.status.name}
-                </Badge>
+                />
               )}
             </div>
             {itemResult?.notes && !isTiptapEmpty(itemResult.notes) && (
@@ -890,7 +877,7 @@ const ManualResultExpandedDetails = ({
                     {tParams("iterationIssueTableHeaderParameter")}
                   </th>
                   <th className="font-medium py-1">
-                    {tParams("iterationIssueTableHeaderValue")}
+                    {tCommon("fields.value")}
                   </th>
                 </tr>
               </thead>
@@ -1083,6 +1070,7 @@ export default function TestResultHistory({
   const tCommon = useTranslations("common");
   const tCases = useTranslations("repository.cases");
   const tParams = useTranslations("parameters");
+  const tVersion = useTranslations("repository.version");
   const locale = useLocale();
   const router = useRouter();
   const dateFnsLocale = getDateFnsLocale(locale);
@@ -1127,6 +1115,30 @@ export default function TestResultHistory({
   );
   const projectEditWindowSeconds =
     editWindowProject?.editResultsDurationSeconds ?? null;
+
+  // Version numbers this case actually has a snapshot for. A result records
+  // the case version it ran against, but nothing guarantees a matching
+  // RepositoryCaseVersions row — cases written by the API before #598, and
+  // anything created before snapshots were recorded, have none. Without this
+  // the version column links to a page that cannot show the case as executed,
+  // and the reader has no warning before clicking (#599).
+  const { data: recordedVersionRows } = useClientQueries(
+    schema
+  ).repositoryCaseVersions.useFindMany(
+    {
+      where: { repositoryCaseId: Number(caseId), isDeleted: false },
+      select: { version: true },
+    },
+    { enabled: Boolean(caseId) }
+  );
+
+  const recordedVersions = useMemo(
+    () =>
+      recordedVersionRows
+        ? new Set(recordedVersionRows.map((row) => row.version))
+        : null,
+    [recordedVersionRows]
+  );
 
   // Fetch test case data
   const { data: fetchedTestCase, isLoading: isLoadingTestCase } =
@@ -1662,7 +1674,6 @@ export default function TestResultHistory({
     nonPendingResults.every((r) => expandedResults.has(r.displayId));
 
   const renderResultRow = (result: UnifiedTestResult) => {
-    const statusColor = result.status?.color?.value || "transparent";
     const isExpanded = expandedResults.has(result.displayId);
     const isCurrentRun =
       currentTestRunId != null &&
@@ -1820,18 +1831,11 @@ export default function TestResultHistory({
             </div>
           </TableCell>
           <TableCell className="max-w-[120px]">
-            <Badge
-              variant="outline"
-              data-status-surface
-              style={{
-                ...statusSurfaceVars(statusColor),
-                backgroundColor: statusColor,
-                color: "white",
-                borderColor: statusColor,
-              }}
-            >
-              {result.status.name}
-            </Badge>
+            <StatusDisplay
+              variant="filled"
+              name={result.status.name}
+              color={result.status?.color?.value}
+            />
           </TableCell>
           <TableCell className="max-w-[150px]">
             {result.executedBy && result.executedBy.id ? (
@@ -1933,14 +1937,38 @@ export default function TestResultHistory({
             )}
           </TableCell>
           <TableCell className="max-w-[50px] text-center">
-            {result.sourceType === "manual" && !result.isPending && (
-              <Link
-                href={`/projects/repository/${activeProjectId}/${caseId}/${result.testRunCaseVersion}`}
-                className="hover:underline"
-              >
-                {result.testRunCaseVersion}
-              </Link>
-            )}
+            {result.sourceType === "manual" &&
+              !result.isPending &&
+              (recordedVersions &&
+              !recordedVersions.has(result.testRunCaseVersion) ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      tabIndex={0}
+                      className="text-muted-foreground inline-flex items-center gap-1"
+                      data-testid="snapshot-unavailable"
+                      aria-label={tVersion("snapshotUnavailable", {
+                        version: result.testRunCaseVersion,
+                      })}
+                    >
+                      <CircleAlert className="h-3.5 w-3.5 shrink-0" />
+                      {result.testRunCaseVersion}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {tVersion("snapshotUnavailable", {
+                      version: result.testRunCaseVersion,
+                    })}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link
+                  href={`/projects/repository/${activeProjectId}/${caseId}/${result.testRunCaseVersion}`}
+                  className="hover:underline"
+                >
+                  {result.testRunCaseVersion}
+                </Link>
+              ))}
             {result.sourceType !== "manual" && "-"}
           </TableCell>
           <TableCell className="max-w-[50px]">

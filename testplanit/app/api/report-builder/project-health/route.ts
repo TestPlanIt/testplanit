@@ -2,6 +2,7 @@ import { baseDb } from "@/lib/db";
 import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { NextRequest } from "next/server";
 import { getMilestoneCaseCompletion } from "~/lib/services/effectiveCaseStatus";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { buildDateFilter } from "~/utils/reportUtils";
 
@@ -89,7 +90,11 @@ const DIMENSION_REGISTRY: Record<
       );
       const issueCreators = relevantIssueIds.length
         ? await baseDb.issue.findMany({
-            where: { id: { in: relevantIssueIds }, isDeleted: false },
+            where: {
+              id: { in: relevantIssueIds },
+              isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
+            },
             select: {
               createdBy: {
                 select: { id: true, name: true, email: true },
@@ -142,7 +147,11 @@ const DIMENSION_REGISTRY: Record<
       );
       const issueDates = relevantIssueIds.length
         ? await baseDb.issue.findMany({
-            where: { id: { in: relevantIssueIds }, isDeleted: false },
+            where: {
+              id: { in: relevantIssueIds },
+              isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
+            },
             select: { createdAt: true },
             distinct: ["createdAt"],
             orderBy: { createdAt: "asc" },
@@ -537,7 +546,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, dimensions, metrics } = await req.json();
+    let body: {
+      projectId?: unknown;
+      dimensions?: unknown;
+      metrics?: unknown;
+    };
+    try {
+      body = await req.json();
+    } catch {
+      return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    const { projectId, dimensions, metrics } = body;
 
     const authz = await authorizeReportRequest(req, {
       requiresAdmin: false,
@@ -545,7 +564,7 @@ export async function POST(req: NextRequest) {
     });
     if (!authz.ok) return authz.response;
 
-    if (!projectId || !dimensions || !metrics) {
+    if (!projectId || !Array.isArray(dimensions) || !Array.isArray(metrics)) {
       return Response.json(
         { error: "Project ID, dimensions, and metrics are required" },
         { status: 400 }

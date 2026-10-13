@@ -2,7 +2,7 @@ import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useMemo } from "react";
 
 export interface ExtendedTags {
@@ -29,7 +29,7 @@ export const useColumns = (
         header: t("common.name"),
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
         meta: { isPinned: "left" },
         enableHiding: false,
         size: 500,
@@ -48,7 +48,7 @@ export const useColumns = (
         header: t("common.fields.testCases"),
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 130,
         cell: ({ row }) => (
           <div className="text-center">
@@ -78,7 +78,7 @@ export const useColumns = (
         header: t("common.fields.sessions"),
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 130,
         cell: ({ row }) => (
           <div className="text-center">
@@ -104,7 +104,7 @@ export const useColumns = (
         header: t("common.fields.testRuns"),
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 130,
         cell: ({ row }) => (
           <div className="text-center">

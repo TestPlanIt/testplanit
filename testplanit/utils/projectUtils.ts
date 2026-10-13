@@ -23,7 +23,8 @@ type ProjectWithAdminDataInput = ProjectsGetPayload<{
         group: { select: { assignedUsers: { select: { userId: true } } } };
       };
     };
-    codeRepositoryConfig: {
+    codeRepositoryConfigs: {
+      where: { purpose: "QUICKSCRIPT" };
       select: { id: true; repository: { select: { name: true } } };
     };
     projectLlmIntegrations: {

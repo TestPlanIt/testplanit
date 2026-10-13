@@ -1992,6 +1992,161 @@ describe("JiraAdapter", () => {
       const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
       expect(decodedUrl).toContain("updated >= -90d");
     });
+
+    it("scopes the JQL to specific issue types via issuetype in (...)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ["10001", "10002"],
+      });
+
+      const searchCall = mockFetch.mock.calls[1];
+      const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
+      expect(decodedUrl).toContain('issuetype in ("10001", "10002")');
+    });
+
+    it("produces today's exact JQL when issueTypeIds is absent or empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({});
+
+      const searchCallAbsent = mockFetch.mock.calls[1];
+      const decodedUrlAbsent = decodeURIComponent(
+        searchCallAbsent[0].replace(/\+/g, " ")
+      );
+      expect(decodedUrlAbsent).toContain(
+        "jql=created >= -30d ORDER BY created DESC"
+      );
+      expect(decodedUrlAbsent).not.toContain("issuetype in");
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({ issueTypeIds: [] });
+
+      const searchCallEmpty = mockFetch.mock.calls[2];
+      const decodedUrlEmpty = decodeURIComponent(
+        searchCallEmpty[0].replace(/\+/g, " ")
+      );
+      expect(decodedUrlEmpty).toContain(
+        "jql=created >= -30d ORDER BY created DESC"
+      );
+      expect(decodedUrlEmpty).not.toContain("issuetype in");
+    });
+
+    it("never lets a hostile issue type id break out of the JQL issuetype clause", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ['10001") OR project = "X'],
+      });
+
+      const searchCall = mockFetch.mock.calls[1];
+      const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
+      expect(decodedUrl).not.toContain('OR project = "X');
+    });
+
+    it("drops only the hostile id from a mixed list, keeping the safe one quoted", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ["10001", '10002") OR project = "X'],
+      });
+
+      const searchCall = mockFetch.mock.calls[1];
+      const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
+      expect(decodedUrl).toContain('issuetype in ("10001")');
+      expect(decodedUrl).not.toContain('OR project = "X');
+    });
+  });
+
+  describe("countIssues (SCALE-01 gap-closure, #501/28-22)", () => {
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await adapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    it("uses the dedicated approximate-count endpoint on Cloud and reports it as exact", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ count: 302 }),
+      });
+
+      const result = await adapter.countIssues!({
+        projectId: "ADM",
+        issueTypeIds: ["10001", "10002"],
+      });
+
+      expect(result).toEqual({ count: 302, exactness: "exact" });
+
+      const countCall = mockFetch.mock.calls[1];
+      expect(countCall[0]).toContain("/rest/api/3/search/approximate-count");
+      expect(countCall[1].method).toBe("POST");
+      const body = JSON.parse(countCall[1].body);
+      expect(body.jql).toContain("project = ADM");
+      expect(body.jql).toContain('issuetype in ("10001", "10002")');
+    });
+
+    it("never fetches a page of issues just to answer a count", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ count: 302 }),
+      });
+
+      await adapter.countIssues!({ projectId: "ADM" });
+
+      // Exactly two calls total: the beforeEach auth call, then the count
+      // call — no /search or /search/jql request in between.
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe("getProjects", () => {
@@ -2673,6 +2828,36 @@ describe("JiraAdapter Data Center / Server", () => {
     expect(searchCall).toBeTruthy();
     expect(searchCall![0]).not.toContain("search/jql");
     expect(res.issues).toHaveLength(1);
+  });
+
+  it("countIssues reuses the classic /search's own exact total on Data Center (SCALE-01 gap-closure, #501/28-22)", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({ issues: [dcIssue], total: 302, startAt: 0 }),
+    });
+
+    const result = await adapter.countIssues!({ projectId: "ADM" });
+
+    expect(result).toEqual({ count: 302, exactness: "exact" });
+    const countCall = mockFetch.mock.calls.find(
+      (c: any[]) =>
+        typeof c[0] === "string" && c[0].includes("/rest/api/2/search?")
+    );
+    expect(countCall).toBeTruthy();
+    expect(countCall![0]).toContain("maxResults=1");
+    expect(countCall![0]).not.toContain("approximate-count");
   });
 
   it("maps Data Center users by name (not accountId)", async () => {

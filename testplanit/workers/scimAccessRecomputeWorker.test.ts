@@ -90,6 +90,7 @@ afterEach(() => {
 function makeJob(
   overrides: Partial<{
     groupId: number;
+    roleValue: string;
     adminUserId: string;
     tenantId?: string;
   }> = {}
@@ -178,6 +179,45 @@ describe("scimAccessRecomputeWorker processor", () => {
     await processor(makeJob({ adminUserId: "admin-1" }));
 
     // 250 users / 100-per-batch = 3 transactions — not one sweep-wide tx.
+    expect((baseDb as any).$transaction).toHaveBeenCalledTimes(3);
+    expect(recomputeUserAccess).toHaveBeenCalledTimes(250);
+  });
+
+  it("W7: job with roleValue — recomputes every holder of that asserted role", async () => {
+    dbUser.findMany.mockResolvedValue([{ id: "user-r1" }, { id: "user-r2" }]);
+
+    await processor(makeJob({ roleValue: "qa-lead", adminUserId: "admin-1" }));
+
+    expect(dbUser.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          scimRoles: { has: "qa-lead" },
+          isDeleted: false,
+        }),
+      })
+    );
+    expect(recomputeUserAccess).toHaveBeenCalledTimes(2);
+    expect(recomputeUserAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-r1",
+      "NONE"
+    );
+  });
+
+  it("W8: roleValue takes the role branch, never the group branch", async () => {
+    dbUser.findMany.mockResolvedValue([{ id: "user-r1" }]);
+
+    await processor(makeJob({ roleValue: "qa-lead", adminUserId: "admin-1" }));
+
+    expect(dbGroupAssignment.findMany).not.toHaveBeenCalled();
+  });
+
+  it("W9: a directory-wide role batches into BATCH_SIZE-sized transactions", async () => {
+    const holders = Array.from({ length: 250 }, (_, i) => ({ id: `u-${i}` }));
+    dbUser.findMany.mockResolvedValue(holders);
+
+    await processor(makeJob({ roleValue: "employee", adminUserId: "admin-1" }));
+
     expect((baseDb as any).$transaction).toHaveBeenCalledTimes(3);
     expect(recomputeUserAccess).toHaveBeenCalledTimes(250);
   });

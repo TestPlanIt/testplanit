@@ -1,7 +1,7 @@
 import type {
   MilestonesInclude,
 } from "@db/input";
-import { extractProseMirrorText } from "../cases/shared.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 import {
   computeStatusRollup,
   type StatusGroup,
@@ -42,7 +42,9 @@ const CHILDREN_CAP_PLUS_ONE = MILESTONE_CHILDREN_CAP + 1;
 export const MILESTONE_ROW_INCLUDE = {
   milestoneType: { select: { id: true, name: true } },
   creator: { select: { id: true, name: true, email: true } },
-  _count: { select: { children: true, comments: true } },
+  _count: {
+    select: { children: true, comments: { where: { isDeleted: false } } },
+  },
   testRuns: { where: { isDeleted: false }, select: { id: true } },
   sessions: { where: { isDeleted: false }, select: { id: true } },
 } as const satisfies MilestonesInclude;
@@ -53,7 +55,9 @@ export const MILESTONE_ROW_INCLUDE = {
 export const MILESTONE_DETAIL_INCLUDE = {
   milestoneType: { select: { id: true, name: true } },
   creator: { select: { id: true, name: true, email: true } },
-  _count: { select: { children: true, comments: true } },
+  _count: {
+    select: { children: true, comments: { where: { isDeleted: false } } },
+  },
   testRuns: {
     where: { isDeleted: false },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -197,8 +201,8 @@ export function mapMilestoneDetail(
   );
   return {
     ...head,
-    note: extractProseMirrorText(raw.note),
-    docs: extractProseMirrorText(raw.docs),
+    note: proseMirrorToMarkdown(raw.note),
+    docs: proseMirrorToMarkdown(raw.docs),
     linkedTestRuns: raw.testRuns.map((r) => ({
       id: r.id,
       name: r.name,

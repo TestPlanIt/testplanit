@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock valkey module — null by default (no connection)
-const mockIncr = vi.fn();
-const mockExpire = vi.fn();
+const mockEval = vi.fn();
 
 vi.mock("./valkey", () => ({
   default: null,
@@ -14,18 +13,21 @@ import {
   _resetForTesting,
 } from "./api-rate-limit";
 
-// Helper to enable the mock Valkey connection for specific tests
-async function withValkeyMock(
-  fn: () => Promise<void>,
-  incrImpl?: (key: string) => number | Promise<number>
-) {
+type EvalImpl = (
+  script: string,
+  numKeys: number,
+  key: string,
+  ttl: number
+) => number | Promise<number>;
+
+// Helper to enable the mock Valkey connection for specific tests. The client
+// exposes only `eval`: the limiter must count through the atomic script, never
+// through separate INCR/EXPIRE round-trips.
+async function withValkeyMock(fn: () => Promise<void>, evalImpl?: EvalImpl) {
   const mod = await import("./valkey");
   const original = mod.default;
   // @ts-expect-error — replacing the default export for testing
-  mod.default = {
-    incr: incrImpl ? vi.fn(incrImpl) : mockIncr,
-    expire: mockExpire,
-  };
+  mod.default = { eval: evalImpl ? vi.fn(evalImpl) : mockEval };
   try {
     await fn();
   } finally {
@@ -33,12 +35,24 @@ async function withValkeyMock(
   }
 }
 
+// Server-side emulation of the script: INCR, and EXPIRE only on the first hit.
+function scriptedValkey() {
+  const counts = new Map<string, number>();
+  const ttls = new Map<string, number>();
+  const impl: EvalImpl = (_script, _numKeys, key, ttl) => {
+    const next = (counts.get(key) ?? 0) + 1;
+    counts.set(key, next);
+    if (next === 1) ttls.set(key, Number(ttl));
+    return next;
+  };
+  return { counts, ttls, impl };
+}
+
 describe("api-rate-limit", () => {
   beforeEach(() => {
     _resetForTesting();
     vi.unstubAllEnvs();
-    mockIncr.mockReset();
-    mockExpire.mockReset();
+    mockEval.mockReset();
   });
 
   afterEach(() => {
@@ -226,55 +240,47 @@ describe("api-rate-limit", () => {
   });
 
   describe("checkApiRateLimit (with Valkey)", () => {
-    it("should use Valkey INCR for counting", async () => {
+    it("counts through one atomic script call per request", async () => {
       vi.stubEnv("TIER", "essentials");
-      let _callCount = 0;
 
       await withValkeyMock(async () => {
-        mockIncr.mockResolvedValue(1);
-        mockExpire.mockResolvedValue(1);
+        mockEval.mockResolvedValue(1);
 
         const result = await checkApiRateLimit();
 
         expect(result.allowed).toBe(true);
         expect(result.remaining).toBe(999);
-        expect(mockIncr).toHaveBeenCalledTimes(1);
-        expect(mockIncr.mock.calls[0][0]).toMatch(/^ratelimit:api:global:\d+$/);
+        expect(mockEval).toHaveBeenCalledTimes(1);
+        const [script, numKeys, key, ttl] = mockEval.mock.calls[0];
+        expect(numKeys).toBe(1);
+        expect(key).toMatch(/^ratelimit:api:global:\d+$/);
+        expect(ttl).toBe(7200); // 2-hour TTL
+        // The script itself carries both halves of the window bookkeeping.
+        expect(script).toMatch(/INCR/);
+        expect(script).toMatch(/EXPIRE/);
+        expect(script).toMatch(/count == 1/);
       });
     });
 
-    it("should set TTL on first increment", async () => {
+    it("arms the TTL once per window, never on later hits", async () => {
       vi.stubEnv("TIER", "essentials");
+      const valkey = scriptedValkey();
 
       await withValkeyMock(async () => {
-        mockIncr.mockResolvedValue(1); // count = 1 → first increment
-        mockExpire.mockResolvedValue(1);
+        for (let i = 0; i < 10; i++) await checkApiRateLimit();
 
-        await checkApiRateLimit();
-
-        expect(mockExpire).toHaveBeenCalledTimes(1);
-        expect(mockExpire.mock.calls[0][1]).toBe(7200); // 2-hour TTL
-      });
-    });
-
-    it("should NOT set TTL on subsequent increments", async () => {
-      vi.stubEnv("TIER", "essentials");
-
-      await withValkeyMock(async () => {
-        mockIncr.mockResolvedValue(5); // count > 1
-        mockExpire.mockResolvedValue(1);
-
-        await checkApiRateLimit();
-
-        expect(mockExpire).not.toHaveBeenCalled();
-      });
+        // Ten increments, one EXPIRE — the key is not re-armed on every
+        // request, which would slide the window forward indefinitely.
+        expect([...valkey.counts.values()]).toEqual([10]);
+        expect([...valkey.ttls.values()]).toEqual([7200]);
+      }, valkey.impl);
     });
 
     it("should return allowed=false when Valkey count exceeds limit", async () => {
       vi.stubEnv("TIER", "essentials");
 
       await withValkeyMock(async () => {
-        mockIncr.mockResolvedValue(1_001); // over the 1000 limit
+        mockEval.mockResolvedValue(1_001); // over the 1000 limit
 
         const result = await checkApiRateLimit();
 
@@ -283,17 +289,168 @@ describe("api-rate-limit", () => {
       });
     });
 
-    it("should fall back to in-memory on Valkey error", async () => {
+    it("coerces a string reply from the script into a number", async () => {
       vi.stubEnv("TIER", "essentials");
 
       await withValkeyMock(async () => {
-        mockIncr.mockRejectedValue(new Error("Connection refused"));
+        mockEval.mockResolvedValue("1000" as unknown as number);
 
         const result = await checkApiRateLimit();
 
-        // Should fall back gracefully, not throw
+        expect(result.allowed).toBe(true);
+        expect(result.remaining).toBe(0);
+      });
+    });
+
+    it("falls back to in-memory on a Valkey error and counts the request once", async () => {
+      vi.stubEnv("TIER", "essentials");
+
+      await withValkeyMock(async () => {
+        mockEval.mockRejectedValue(new Error("Connection refused"));
+        const consoleErrorSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+
+        const result = await checkApiRateLimit();
+
+        // Should fall back gracefully, not throw; counted exactly once.
         expect(result.allowed).toBe(true);
         expect(result.remaining).toBe(999);
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "[API Rate Limit] Valkey error, falling back to in-memory:",
+          expect.any(Error)
+        );
+
+        consoleErrorSpy.mockRestore();
+      });
+    });
+
+    it("counts the window key derived from the clock, not a fixed key", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2024-01-01T10:30:00Z").getTime());
+      const valkey = scriptedValkey();
+
+      await withValkeyMock(async () => {
+        await checkApiRateLimit();
+        // Next hour → a different fixed-window key, so the counter restarts.
+        vi.setSystemTime(new Date("2024-01-01T11:00:00Z").getTime());
+        await checkApiRateLimit();
+
+        const windowAt = (iso: string) =>
+          Math.floor(new Date(iso).getTime() / 1000 / 3600);
+        const firstKey = `ratelimit:api:global:${windowAt("2024-01-01T10:30:00Z")}`;
+        const secondKey = `ratelimit:api:global:${windowAt("2024-01-01T11:00:00Z")}`;
+        expect(secondKey).not.toBe(firstKey);
+        expect([...valkey.counts.keys()]).toEqual([firstKey, secondKey]);
+        // TTL is armed per window, on the first increment of each.
+        expect([...valkey.ttls.keys()]).toEqual([firstKey, secondKey]);
+      }, valkey.impl);
+    });
+
+    it("reports remaining from the Valkey count, not a local tally", async () => {
+      vi.stubEnv("TIER", "team");
+
+      await withValkeyMock(async () => {
+        // Another instance already burned 4,000 of the shared window.
+        mockEval.mockResolvedValue(4_001);
+
+        const result = await checkApiRateLimit();
+
+        expect(result.allowed).toBe(true);
+        expect(result.limit).toBe(5_000);
+        expect(result.remaining).toBe(999);
+      });
+    });
+
+    it("allows the request that exactly reaches the limit, blocks the next", async () => {
+      vi.stubEnv("TIER", "essentials");
+
+      await withValkeyMock(async () => {
+        mockEval.mockResolvedValueOnce(1_000);
+        const atLimit = await checkApiRateLimit();
+        expect(atLimit.allowed).toBe(true);
+        expect(atLimit.remaining).toBe(0);
+
+        mockEval.mockResolvedValueOnce(1_001);
+        const over = await checkApiRateLimit();
+        expect(over.allowed).toBe(false);
+        expect(over.remaining).toBe(0);
+      });
+    });
+
+    it("clamps remaining at zero rather than going negative once over", async () => {
+      vi.stubEnv("TIER", "essentials");
+
+      await withValkeyMock(async () => {
+        mockEval.mockResolvedValue(50_000);
+
+        const result = await checkApiRateLimit();
+
+        expect(result.allowed).toBe(false);
+        expect(result.remaining).toBe(0);
+      });
+    });
+
+    it("honours the API_RATE_LIMIT override on the Valkey path", async () => {
+      vi.stubEnv("TIER", "essentials");
+      vi.stubEnv("API_RATE_LIMIT", "3");
+
+      await withValkeyMock(async () => {
+        mockEval.mockResolvedValueOnce(3);
+        const atLimit = await checkApiRateLimit();
+        expect(atLimit.limit).toBe(3);
+        expect(atLimit.allowed).toBe(true);
+
+        mockEval.mockResolvedValueOnce(4);
+        expect((await checkApiRateLimit()).allowed).toBe(false);
+      });
+    });
+
+    it("returns a resetAt aligned to the next hour boundary", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2024-01-01T10:30:00Z").getTime());
+
+      await withValkeyMock(async () => {
+        mockEval.mockResolvedValue(7);
+
+        const result = await checkApiRateLimit();
+
+        expect(result.resetAt).toBe(
+          new Date("2024-01-01T11:00:00Z").getTime() / 1000
+        );
+      });
+    });
+
+    it("keeps counting in memory while Valkey stays down", async () => {
+      vi.stubEnv("TIER", "essentials");
+
+      await withValkeyMock(async () => {
+        mockEval.mockRejectedValue(new Error("Connection refused"));
+        const consoleErrorSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+
+        expect((await checkApiRateLimit()).remaining).toBe(999);
+        expect((await checkApiRateLimit()).remaining).toBe(998);
+        expect((await checkApiRateLimit()).remaining).toBe(997);
+
+        consoleErrorSpy.mockRestore();
+      });
+    });
+
+    it("bypasses Valkey entirely when rate limiting is disabled", async () => {
+      vi.stubEnv("TIER", "essentials");
+      vi.stubEnv("DISABLE_API_RATE_LIMIT", "true");
+
+      await withValkeyMock(async () => {
+        const result = await checkApiRateLimit();
+
+        expect(result).toMatchObject({
+          allowed: true,
+          limit: 1_000,
+          remaining: 1_000,
+        });
+        expect(mockEval).not.toHaveBeenCalled();
       });
     });
   });

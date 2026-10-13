@@ -147,9 +147,7 @@ export function SaveSearchDialog({
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="saved-search-name">
-              {t("search.savedSearches.nameLabel")}
-            </Label>
+            <Label htmlFor="saved-search-name">{t("common.name")}</Label>
             <Input
               id="saved-search-name"
               value={name}
@@ -162,7 +160,7 @@ export function SaveSearchDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="saved-search-description">
-              {t("search.savedSearches.descriptionLabel")}
+              {t("common.upload.attachments.link.noteLabel")}
             </Label>
             <Textarea
               id="saved-search-description"
@@ -190,7 +188,7 @@ export function SaveSearchDialog({
             data-testid="saved-search-save-button"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("search.savedSearches.saveAction")}
+            {t("common.actions.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

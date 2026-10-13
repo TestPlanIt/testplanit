@@ -3,7 +3,10 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
-import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
+import {
+  AUTOMATED_TEST_RUN_TYPES,
+  MANUAL_TEST_RUN_TYPES,
+} from "~/utils/testResultTypes";
 
 export type CompletedTestRunsResponse = {
   runs: Array<{
@@ -125,10 +128,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Add run type filter
+    // A HYBRID run answers to both chips: it is a manual run that also holds
+    // automated results.
     if (runType === "manual") {
-      where.testRunType = "REGULAR";
+      where.testRunType = { in: MANUAL_TEST_RUN_TYPES };
     } else if (runType === "automated") {
-      where.testRunType = { in: AUTOMATED_TEST_RUN_TYPES };
+      where.testRunType = { in: [...AUTOMATED_TEST_RUN_TYPES, "HYBRID"] };
     }
 
     // "Runs I'm involved in": created the run, is assigned a case in it, or

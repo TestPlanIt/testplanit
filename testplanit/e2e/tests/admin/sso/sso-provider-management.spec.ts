@@ -10,6 +10,59 @@ import { expect, test } from "../../../fixtures";
  * - Managing email domain restrictions
  */
 
+// Every test here mutates the single global SsoProvider table, and a stray
+// forceSso=true hides the password form for every later sign-in in the suite.
+// Run this file's tests in order on one worker instead of letting
+// fullyParallel interleave their setup and cleanup.
+test.describe.configure({ mode: "default" });
+
+type ApiRequest = import("@playwright/test").APIRequestContext;
+
+async function listGoogleProviderIds(
+  request: ApiRequest,
+  baseURL: string
+): Promise<string[]> {
+  const res = await request.get(`${baseURL}/api/model/ssoProvider/findMany`, {
+    params: {
+      q: JSON.stringify({ where: { type: "GOOGLE" }, select: { id: true } }),
+    },
+  });
+  if (!res.ok()) return [];
+  const body = await res.json();
+  return (body?.data ?? []).map((provider: { id: string }) => provider.id);
+}
+
+async function listProviderForceSso(
+  request: ApiRequest,
+  baseURL: string
+): Promise<Map<string, boolean>> {
+  const res = await request.get(`${baseURL}/api/model/ssoProvider/findMany`, {
+    params: { q: JSON.stringify({ select: { id: true, forceSso: true } }) },
+  });
+  if (!res.ok()) return new Map();
+  const body = await res.json();
+  return new Map(
+    (body?.data ?? []).map((provider: { id: string; forceSso: boolean }) => [
+      provider.id,
+      provider.forceSso,
+    ])
+  );
+}
+
+// ZenStack's RPC handler reads delete args from the `q` query param and only
+// accepts the DELETE method; a POST here would silently return 400.
+async function deleteSsoProvider(
+  request: ApiRequest,
+  baseURL: string,
+  id: string
+): Promise<void> {
+  await request
+    .delete(`${baseURL}/api/model/ssoProvider/delete`, {
+      params: { q: JSON.stringify({ where: { id } }) },
+    })
+    .catch(() => {});
+}
+
 test.describe("Admin SSO Provider Management", () => {
   test("Admin can view SSO configuration page", async ({ page }) => {
     await test.step("Open the SSO admin page", async () => {
@@ -80,29 +133,11 @@ test.describe("Admin SSO Provider Management", () => {
     request,
     baseURL,
   }) => {
-    // Track existing Google provider to restore state
-    let existingProviderId: string | null = null;
-    try {
-      const listRes = await request.get(
-        `${baseURL}/api/model/ssoProvider/findFirst`,
-        {
-          params: {
-            q: JSON.stringify({
-              where: { type: "GOOGLE" },
-              select: { id: true },
-            }),
-          },
-        }
-      );
-      if (listRes.ok()) {
-        const data = await listRes.json();
-        if (data?.data?.id) {
-          existingProviderId = data.data.id;
-        }
-      }
-    } catch {
-      // No existing provider
-    }
+    // Remember the Google providers that existed before the test so cleanup
+    // removes exactly the rows this test created and restores the rest.
+    const existingProviderIds = new Set(
+      await listGoogleProviderIds(request, baseURL!)
+    );
 
     try {
       const dialog = page.locator('[role="dialog"]');
@@ -142,37 +177,16 @@ test.describe("Admin SSO Provider Management", () => {
         await expect(configuredBadge).toBeVisible({ timeout: 10000 });
       });
     } finally {
-      // Clean up Google provider
-      try {
-        const findRes = await request.get(
-          `${baseURL}/api/model/ssoProvider/findFirst`,
-          {
-            params: {
-              q: JSON.stringify({
-                where: { type: "GOOGLE" },
-                select: { id: true },
-              }),
-            },
-          }
-        );
-        if (findRes.ok()) {
-          const found = await findRes.json();
-          const providerId = found?.data?.id;
-          if (providerId && providerId !== existingProviderId) {
-            await request.post(`${baseURL}/api/model/ssoProvider/delete`, {
-              data: { where: { id: providerId } },
-            });
-          } else if (providerId) {
-            await request.post(`${baseURL}/api/model/ssoProvider/update`, {
-              data: {
-                where: { id: providerId },
-                data: { config: null, enabled: false },
-              },
-            });
-          }
+      for (const id of await listGoogleProviderIds(request, baseURL!)) {
+        if (existingProviderIds.has(id)) {
+          await request
+            .patch(`${baseURL}/api/model/ssoProvider/update`, {
+              data: { where: { id }, data: { config: null, enabled: false } },
+            })
+            .catch(() => {});
+        } else {
+          await deleteSsoProvider(request, baseURL!, id);
         }
-      } catch {
-        // Non-fatal
       }
     }
   });
@@ -182,45 +196,46 @@ test.describe("Admin SSO Provider Management", () => {
     request,
     baseURL,
   }) => {
-    // Ensure at least one SSO provider exists so the Force SSO toggle has something to update
-    let createdProviderId: string | null = null;
-    try {
-      const findRes = await request.get(
-        `${baseURL}/api/model/ssoProvider/findFirst`,
-        {
-          params: {
-            q: JSON.stringify({
-              where: {},
-              select: { id: true },
-            }),
+    // Always create a provider of our own for the toggle to write to. Other
+    // spec files create and delete providers concurrently, so one that merely
+    // exists right now can be gone before the Security page loads or the
+    // toggle writes, leaving nothing to update and nothing to verify.
+    const createRes = await request.post(
+      `${baseURL}/api/model/ssoProvider/create`,
+      {
+        data: {
+          data: {
+            name: `google-temp-e2e-${Date.now()}`,
+            type: "GOOGLE",
+            enabled: false,
+            forceSso: false,
+            config: { clientId: "temp-e2e", clientSecret: "temp-e2e" },
           },
-        }
-      );
-      const found = findRes.ok() ? await findRes.json() : null;
-      if (!found?.data?.id) {
-        // Create a temporary Google provider so we have something to toggle
-        const createRes = await request.post(
-          `${baseURL}/api/model/ssoProvider/create`,
-          {
-            data: {
-              data: {
-                name: `google-temp-e2e-${Date.now()}`,
-                type: "GOOGLE",
-                enabled: false,
-                forceSso: false,
-                config: { clientId: "temp-e2e", clientSecret: "temp-e2e" },
-              },
-            },
-          }
-        );
-        if (createRes.ok()) {
-          const created = await createRes.json();
-          createdProviderId = created?.data?.id ?? null;
-        }
+        },
       }
-    } catch {
-      // Non-fatal - test may still work if providers already exist
-    }
+    );
+    expect(createRes.ok()).toBeTruthy();
+    const createdProviderId: string | null =
+      (await createRes.json())?.data?.id ?? null;
+    expect(createdProviderId).toBeTruthy();
+
+    // The toggle only writes to the providers the Security page had loaded,
+    // so verify the flag on ours plus whatever else existed before the page
+    // loads, ignoring any that another spec deletes in the meantime.
+    const trackedIds = Array.from(
+      new Set([
+        createdProviderId!,
+        ...(await listProviderForceSso(request, baseURL!)).keys(),
+      ])
+    );
+    const trackedFlagsAre = async (expected: boolean) => {
+      const current = await listProviderForceSso(request, baseURL!);
+      const present = trackedIds.filter((id) => current.has(id));
+      return (
+        present.length > 0 &&
+        present.every((id) => current.get(id) === expected)
+      );
+    };
 
     let forceSsoSwitch: ReturnType<typeof page.locator> | undefined;
     let initialState: string | null = null;
@@ -243,42 +258,54 @@ test.describe("Admin SSO Provider Management", () => {
         initialState = await forceSsoSwitch.getAttribute("data-state");
       });
 
-      await test.step("Toggle Force SSO on and confirm the switch state changes", async () => {
-        // Toggle Force SSO — the handler calls updateProvider for ALL ssoProviders
-        // which may result in multiple API calls or none if the hook hasn't loaded providers yet.
-        // Use polling instead of waitForResponse since the number of API calls varies.
-        await forceSsoSwitch!.click();
+      const initiallyOn = initialState === "checked";
 
-        // Poll for state change
+      await test.step("Toggle Force SSO and confirm every provider is updated", async () => {
+        // The switch flips optimistically and the handler writes forceSso to
+        // every provider, so confirm the writes landed through the API before
+        // toggling back; otherwise the two batches of updates can overlap.
+        await forceSsoSwitch!.click();
+        await expect(forceSsoSwitch!).toHaveAttribute(
+          "data-state",
+          initiallyOn ? "unchecked" : "checked",
+          { timeout: 15000 }
+        );
         await expect
-          .poll(async () => forceSsoSwitch!.getAttribute("data-state"), {
-            message: "Force SSO switch state should change after toggle",
+          .poll(() => trackedFlagsAre(!initiallyOn), {
+            message:
+              "the pre-existing SSO providers should reflect the toggled Force SSO",
             timeout: 15000,
           })
-          .not.toBe(initialState);
+          .toBe(true);
       });
 
-      await test.step("Toggle Force SSO back to restore the original state", async () => {
-        // Toggle back to restore original state
+      await test.step("Toggle Force SSO back and confirm every provider is restored", async () => {
         await forceSsoSwitch!.click();
-
+        await expect(forceSsoSwitch!).toHaveAttribute(
+          "data-state",
+          initiallyOn ? "checked" : "unchecked",
+          { timeout: 15000 }
+        );
         await expect
-          .poll(async () => forceSsoSwitch!.getAttribute("data-state"), {
-            message: "Force SSO switch state should be restored",
+          .poll(() => trackedFlagsAre(initiallyOn), {
+            message:
+              "the pre-existing SSO providers should be back to their original Force SSO",
             timeout: 15000,
           })
-          .toBe(initialState);
+          .toBe(true);
       });
     } finally {
-      // Clean up temporary provider if we created one
+      // A leftover forceSso=true hides the password form for the rest of the
+      // suite, so clear it on every provider even if the test failed midway.
+      if (initialState !== "checked") {
+        await request
+          .patch(`${baseURL}/api/model/ssoProvider/updateMany`, {
+            data: { where: {}, data: { forceSso: false } },
+          })
+          .catch(() => {});
+      }
       if (createdProviderId) {
-        try {
-          await request.post(`${baseURL}/api/model/ssoProvider/delete`, {
-            data: { where: { id: createdProviderId } },
-          });
-        } catch {
-          // Non-fatal
-        }
+        await deleteSsoProvider(request, baseURL!, createdProviderId);
       }
     }
   });
@@ -403,9 +430,12 @@ test.describe("Admin SSO Provider Management", () => {
       // Clean up domain via API if it still exists
       if (createdDomainId) {
         try {
-          await request.post(`${baseURL}/api/model/allowedEmailDomain/delete`, {
-            data: { where: { id: createdDomainId } },
-          });
+          await request.delete(
+            `${baseURL}/api/model/allowedEmailDomain/delete`,
+            {
+              params: { q: JSON.stringify({ where: { id: createdDomainId } }) },
+            }
+          );
         } catch {
           // Non-fatal
         }

@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
+import { queryEngagementUserIds } from "~/lib/engagementUserIdsQuery";
 import {
   buildDateFilter,
+  createIssueTrackingDimensionRegistry,
   createIssueTrackingMetricRegistry,
+  createTestExecutionDimensionRegistry,
   createTestExecutionMetricRegistry,
+  createUserEngagementDimensionRegistry,
   createUserEngagementMetricRegistry,
   dimensionToDraggableField,
   draggableFieldToDimension,
@@ -14,6 +18,10 @@ import {
 
 vi.mock("~/lib/projectIssueIdsQuery", () => ({
   queryProjectRelevantIssueIds: vi.fn().mockResolvedValue([11, 12, 13]),
+}));
+
+vi.mock("~/lib/engagementUserIdsQuery", () => ({
+  queryEngagementUserIds: vi.fn(),
 }));
 
 describe("reportUtils", () => {
@@ -740,6 +748,115 @@ describe("reportUtils", () => {
     });
   });
 
+  describe("user-engagement user/role/group dimensions", () => {
+    function dimensionDb() {
+      return {
+        projectAssignment: {
+          findMany: vi.fn().mockResolvedValue([{ userId: "member" }]),
+        },
+        userProjectPermission: {
+          findMany: vi.fn().mockResolvedValue([{ userId: "granted" }]),
+        },
+        user: {
+          findMany: vi.fn().mockResolvedValue([]),
+          count: vi.fn().mockResolvedValue(0),
+        },
+        roles: { findMany: vi.fn().mockResolvedValue([]) },
+        groups: { findMany: vi.fn().mockResolvedValue([]) },
+      };
+    }
+
+    const whereOf = (fn: any) => fn.mock.calls[0][0].where;
+
+    it("scopes activity to the project and adds project members to the user list", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active", "member"]);
+      const db = dimensionDb();
+
+      await createUserEngagementDimensionRegistry(true).user.getValues(db, 370);
+
+      expect(queryEngagementUserIds).toHaveBeenCalledWith(db, 370);
+      expect(whereOf(db.user.findMany)).toEqual({
+        isDeleted: false,
+        id: { in: ["active", "member", "granted"] },
+      });
+    });
+
+    it("ignores the project and membership tables in cross-project mode", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active"]);
+      const db = dimensionDb();
+
+      await createUserEngagementDimensionRegistry(false).user.getValues(
+        db,
+        370
+      );
+
+      expect(queryEngagementUserIds).toHaveBeenCalledWith(db, undefined);
+      expect(db.projectAssignment.findMany).not.toHaveBeenCalled();
+      expect(db.userProjectPermission.findMany).not.toHaveBeenCalled();
+      expect(whereOf(db.user.findMany).id).toEqual({ in: ["active"] });
+    });
+
+    it("searches and pages the user filter picker in the database", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active"]);
+      const db = dimensionDb();
+      db.user.findMany.mockResolvedValue([
+        { id: "active", name: "Ada", email: "ada@example.com" },
+      ]);
+      db.user.count.mockResolvedValue(41);
+
+      const lookup = await createUserEngagementDimensionRegistry(
+        true
+      ).user.filterValues(db, 370, { search: "ad", skip: 25, take: 25 });
+
+      expect(lookup).toEqual({
+        results: [{ id: "active", name: "Ada", email: "ada@example.com" }],
+        total: 41,
+      });
+      const args = db.user.findMany.mock.calls[0][0];
+      expect(args.skip).toBe(25);
+      expect(args.take).toBe(25);
+      expect(args.where).toEqual({
+        isDeleted: false,
+        id: { in: ["active", "member", "granted"] },
+        OR: [
+          { name: { contains: "ad", mode: "insensitive" } },
+          { email: { contains: "ad", mode: "insensitive" } },
+        ],
+      });
+      expect(whereOf(db.user.count)).toEqual(args.where);
+    });
+
+    it("restores picker labels only for requested ids in scope", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active"]);
+      const db = dimensionDb();
+
+      await createUserEngagementDimensionRegistry(true).user.filterValues(
+        db,
+        370,
+        { ids: ["member", "stranger"], skip: 0, take: 25 }
+      );
+
+      expect(whereOf(db.user.findMany).id).toEqual({ in: ["member"] });
+    });
+
+    it("limits roles and groups to engaged users, without project members", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active"]);
+      const db = dimensionDb();
+      const registry = createUserEngagementDimensionRegistry(true);
+
+      await registry.role.getValues(db, 370);
+      await registry.group.getValues(db, 370);
+
+      expect(whereOf(db.roles.findMany).users).toEqual({
+        some: { isDeleted: false, id: { in: ["active"] } },
+      });
+      expect(whereOf(db.groups.findMany).assignedUsers).toEqual({
+        some: { user: { isDeleted: false, id: { in: ["active"] } } },
+      });
+      expect(db.projectAssignment.findMany).not.toHaveBeenCalled();
+    });
+  });
+
   // The user-engagement registry counts the same manual ∪ automated result
   // union as the test-execution registry, attributing automated results to
   // the submitting user, and treats durations as seconds end to end.
@@ -1000,6 +1117,305 @@ describe("reportUtils", () => {
           }),
         })
       );
+    });
+
+    it("findProjectIssues scopes to defect rows by default", async () => {
+      const db = {
+        issue: {
+          findMany: vi
+            .fn()
+            .mockResolvedValue([{ id: 11 }, { id: 12 }, { id: 13 }]),
+        },
+      };
+
+      const registry = createIssueTrackingMetricRegistry(true);
+      await registry.issueCount.aggregate(db, 370, [], {});
+
+      expect(db.issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: [11, 12, 13] },
+            isDeleted: false,
+            isRequirement: false,
+          }),
+        })
+      );
+    });
+
+    it("a caller-supplied where merges on top of the defect-scope default", async () => {
+      const db = {
+        issue: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+      };
+
+      const registry = createIssueTrackingDimensionRegistry(true);
+      await registry.issueStatus.getValues(db, 370);
+
+      expect(db.issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: [11, 12, 13] },
+            isDeleted: false,
+            isRequirement: false,
+            status: { not: null },
+          }),
+        })
+      );
+    });
+
+    it("cross-project issue-type dimension excludes requirement rows in both queries", async () => {
+      const db = {
+        issue: {
+          count: vi.fn().mockResolvedValue(0),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+      };
+
+      const registry = createIssueTrackingDimensionRegistry(false);
+      await registry.issueType.getValues(db, undefined);
+
+      expect(db.issue.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDeleted: false,
+            isRequirement: false,
+          }),
+        })
+      );
+      expect(db.issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDeleted: false,
+            isRequirement: false,
+          }),
+        })
+      );
+    });
+
+    it("cross-project issueCount metric counts only defect rows", async () => {
+      const db = {
+        issue: {
+          count: vi.fn().mockResolvedValue(5),
+        },
+      };
+
+      const registry = createIssueTrackingMetricRegistry(false);
+      const rows = await registry.issueCount.aggregate(db, undefined, [], {});
+
+      expect(rows).toEqual([{ issueCount: 5 }]);
+      expect(db.issue.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDeleted: false,
+            isRequirement: false,
+          }),
+        })
+      );
+    });
+
+    it("cross-project groupBy dimension aggregates only defect rows", async () => {
+      const db = {
+        issue: {
+          groupBy: vi
+            .fn()
+            .mockResolvedValue([{ status: "Open", _count: { _all: 2 } }]),
+        },
+      };
+
+      const registry = createIssueTrackingMetricRegistry(false);
+      await registry.issueCount.aggregate(db, undefined, ["status"], {});
+
+      expect(db.issue.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          by: ["status"],
+          where: expect.objectContaining({
+            isDeleted: false,
+            isRequirement: false,
+          }),
+        })
+      );
+    });
+  });
+
+  describe("impact dimensions and metrics", () => {
+    const DAY1 = new Date("2026-09-01T10:00:00.000Z");
+    const DAY2 = new Date("2026-09-02T10:00:00.000Z");
+    const status = (isFailure: boolean, isCompleted = true) => ({
+      status: { isFailure, isCompleted },
+    });
+    const analyses = [
+      {
+        id: 1,
+        createdAt: DAY1,
+        createdById: "u1",
+        projectId: 370,
+        configId: 9,
+        trigger: "pull_request",
+        testRunId: 100,
+        pinnedCaseCount: 2,
+        affectedCaseCount: 3,
+        testRun: {
+          configId: null,
+          milestoneId: null,
+          testCases: [status(true), status(false), { status: null }],
+        },
+      },
+      {
+        id: 2,
+        createdAt: DAY1,
+        createdById: "u1",
+        projectId: 370,
+        configId: 9,
+        trigger: null,
+        testRunId: null,
+        pinnedCaseCount: 1,
+        affectedCaseCount: 0,
+        testRun: null,
+      },
+      {
+        id: 3,
+        createdAt: DAY2,
+        createdById: "u2",
+        projectId: 370,
+        configId: 10,
+        trigger: "push",
+        testRunId: 101,
+        pinnedCaseCount: 0,
+        affectedCaseCount: 4,
+        testRun: {
+          configId: null,
+          milestoneId: null,
+          testCases: [status(false), status(false)],
+        },
+      },
+    ];
+    const db = {
+      impactAnalysis: { findMany: vi.fn().mockResolvedValue(analyses) },
+      projectCodeRepositoryConfig: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 9,
+            branch: "main",
+            repository: { name: "acme/app", isDeleted: false },
+          },
+          {
+            id: 10,
+            branch: null,
+            repository: { name: "acme/svc", isDeleted: false },
+          },
+          {
+            id: 11,
+            branch: null,
+            repository: { name: "gone", isDeleted: true },
+          },
+        ]),
+      },
+    };
+    const dims = createTestExecutionDimensionRegistry(true) as any;
+    const metrics = createTestExecutionMetricRegistry(true) as any;
+
+    it("offers the three triggers and the live repository connections as dimension values", async () => {
+      const triggers = await dims.trigger.getValues(db, 370);
+      expect(triggers.map((v: any) => v.id)).toEqual([
+        "manual",
+        "pull_request",
+        "push",
+      ]);
+      expect(triggers[1].impactTrigger).toBe("pull_request");
+      const repos = await dims.codeRepository.getValues(db, 370);
+      expect(repos).toEqual([
+        { id: 9, name: "acme/app (main)" },
+        { id: 10, name: "acme/svc" },
+      ]);
+      expect(
+        db.projectCodeRepositoryConfig.findMany.mock.calls[0][0].where
+      ).toMatchObject({
+        projectId: 370,
+        purpose: "IMPACT",
+      });
+    });
+
+    it("counts analyses and selected cases by trigger, date, and repository", async () => {
+      const totals = await metrics.impactAnalysisCount.aggregate(
+        db,
+        370,
+        [],
+        {}
+      );
+      expect(totals).toEqual([{ impactAnalysisCount: 3 }]);
+      const where = db.impactAnalysis.findMany.mock.calls[0][0].where;
+      expect(where).toMatchObject({ isDeleted: false, projectId: 370 });
+
+      const byTrigger: any[] = await metrics.impactAnalysisCount.aggregate(
+        db,
+        370,
+        ["impactTrigger"],
+        {}
+      );
+      expect(
+        Object.fromEntries(
+          byTrigger.map((r) => [r.impactTrigger, r.impactAnalysisCount])
+        )
+      ).toEqual({
+        pull_request: 1,
+        manual: 1,
+        push: 1,
+      });
+
+      const byDay: any[] = await metrics.affectedCasesSelected.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        {}
+      );
+      expect(byDay.map((r) => r.affectedCasesSelected)).toEqual([6, 4]);
+
+      const byRepo: any[] = await metrics.affectedCasesSelected.aggregate(
+        db,
+        370,
+        ["impactConfigId"],
+        {}
+      );
+      expect(
+        Object.fromEntries(
+          byRepo.map((r) => [r.impactConfigId, r.affectedCasesSelected])
+        )
+      ).toEqual({
+        9: 6,
+        10: 4,
+      });
+    });
+
+    it("measures selection precision from executed selected cases and stays null with nothing executed", async () => {
+      const totals = await metrics.selectionPrecision.aggregate(
+        db,
+        370,
+        [],
+        {}
+      );
+      // 4 executed selected cases across the two runs, 1 failed.
+      expect(totals).toEqual([{ selectionPrecision: 25 }]);
+
+      const byTrigger: any[] = await metrics.selectionPrecision.aggregate(
+        db,
+        370,
+        ["impactTrigger"],
+        {}
+      );
+      expect(
+        Object.fromEntries(
+          byTrigger.map((r) => [r.impactTrigger, r.selectionPrecision])
+        )
+      ).toEqual({
+        pull_request: 50,
+        push: 0,
+        manual: null,
+      });
+      expect(
+        db.impactAnalysis.findMany.mock.calls.at(-1)![0].select.testRun.select
+          .testCases
+      ).toBeDefined();
     });
   });
 });

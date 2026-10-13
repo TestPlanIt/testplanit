@@ -36,6 +36,37 @@
 // iterate (v2 only hooked single-row operations).
 import { definePlugin } from "@zenstackhq/orm";
 import { schema } from "~/zenstack/schema";
+
+import {
+  normalizeRichTextWrite,
+  normalizeTextLongFieldValueWrite,
+  type FieldTypeReader,
+} from "~/lib/richTextColumns";
+import { encrypt } from "@/utils/encryption";
+import {
+  assertValidFolderParent,
+  type FolderReader,
+} from "~/lib/folderParentGuard";
+import {
+  assertRestrictedFieldWrite,
+  type RestrictedFieldReader,
+} from "~/lib/restrictedFieldGuard";
+import {
+  assertRunNotReopened,
+  type CompletedRunReader,
+} from "~/lib/runReopenGuard";
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
+
+/** Write operations whose args can carry a rich-text column value. */
+const RICH_TEXT_WRITE_OPERATIONS = new Set([
+  "create",
+  "createMany",
+  "createManyAndReturn",
+  "update",
+  "updateMany",
+  "updateManyAndReturn",
+  "upsert",
+]);
 import type { TxClient } from "~/lib/zenstack";
 import { injectAuditGuc } from "~/lib/audit/gucContext";
 import { auditTxStore } from "~/lib/audit/auditTxStore";
@@ -45,6 +76,11 @@ import {
   cancelReviewsForDeletedEntities,
 } from "~/lib/services/reviewCancellation";
 import { WorkflowType } from "~/zenstack/models";
+import { markExecutionResultsReceived } from "~/lib/execution/service";
+import {
+  projectJUnitResultOntoRunCase,
+  promoteRunToHybrid,
+} from "~/lib/services/hybridRunProjection";
 
 import {
   emitTestRunCreated,
@@ -78,6 +114,7 @@ import {
 } from "~/lib/services/auditLog";
 import { invalidateApiTokenCache } from "~/lib/api-token-cache";
 import { enqueueRunReadyCheck } from "~/lib/services/runReadyCheck";
+import { snapshotAutomatedFlip } from "~/lib/services/caseAutomatedVersioning";
 
 // Models whose standalone hooked-client writes set the app.audit_context GUC so
 // the CDC trigger records the acting user. When the write is already inside an
@@ -104,6 +141,7 @@ export const GUC_MODELS = new Set<string>([
   "Comment",
   "SharedStepGroup",
   "WebhookConfig",
+  "ImpactAnalysis",
   // Admin-config catalog — CDC-only, no semantic (captureAuditEvent /
   // auditSystemConfigChange) coverage for general edits, so no double-logging.
   "Workflows",
@@ -139,6 +177,8 @@ export const GUC_MODELS = new Set<string>([
   "TestCaseParameter",
   "RepositoryCaseTag",
   "RepositoryCaseIssue",
+  "RepositoryCaseCodePin",
+  "ImpactAnalysisCase",
   "Attachments",
   "TestRunCases",
   "TestRunCaseIteration",
@@ -267,11 +307,220 @@ async function cancelReviewsForHardDeleted(
   await cancelAndAnnounceReviews(tx, model, names, "hard-delete");
 }
 
+/**
+ * Every update that changes `RepositoryCases.automated` leaves a version
+ * snapshot behind.
+ *
+ * Automation Trends reads each case's automated state off its version
+ * timeline, not the live flag (see lib/services/caseAutomatedVersioning.ts),
+ * so a flag-only write — the reporter SDK's `updateTestCase`, the MCP
+ * `cases_update` tool, a JUnit import matching an existing case — left the
+ * case counted as its old state for every period. Hooking the model covers
+ * every hooked-client writer at once, including reporter versions already
+ * deployed in CI, and reverts (true→false) as much as flips.
+ *
+ * Skip rule: a caller that changes `currentVersion` in the same write is
+ * taking responsibility for its own snapshot (the full case editor, bulk
+ * edit, submit-result, the imports all bump-then-snapshot). Compared on the
+ * before/after images rather than the query args so `updateMany` and an
+ * explicit `currentVersion: n` are treated the same as `{ increment: 1 }`.
+ *
+ * Rows are paired by id, not by index: for a multi-row update the before
+ * SELECT and the RETURNING rows are not guaranteed to come back in the same
+ * order.
+ *
+ * The nested writes go through `client.$unuseAll()`: it shares the mutation's
+ * transaction (the hook client is transaction-bound) but drops the plugins,
+ * so the bump cannot re-enter this hook and, when the write arrived through
+ * the policy client, the snapshot is not subject to the acting user's read
+ * policy on the case's creator/project relations. The audit GUC set in
+ * beforeEntityMutation still attributes the version row to the actor.
+ */
+async function snapshotAutomatedFlips(
+  client: { $unuseAll(): unknown },
+  before: any[],
+  after: any[]
+): Promise<void> {
+  const beforeById = new Map<number, any>();
+  for (const old of before) {
+    if (old?.id != null) beforeById.set(old.id, old);
+  }
+  const flipped: number[] = [];
+  for (const row of after) {
+    if (row?.id == null) continue;
+    const old = beforeById.get(row.id);
+    if (!old) continue;
+    if (row.automated === old.automated) continue;
+    if (row.currentVersion !== old.currentVersion) continue;
+    flipped.push(row.id);
+  }
+  if (flipped.length === 0) return;
+
+  const plain = client.$unuseAll() as unknown as TxClient;
+  for (const caseId of flipped) {
+    await snapshotAutomatedFlip(plain, caseId);
+  }
+}
+
+const CREDENTIAL_WRITE_OPERATIONS = new Set([
+  "create",
+  "update",
+  "upsert",
+  "createMany",
+  "updateMany",
+]);
+
+type CredentialReader = {
+  codeRepository: {
+    findUnique(args: {
+      where: Record<string, unknown>;
+      select: { credentials: true; provider: true };
+    }): Promise<{ credentials: unknown; provider: string } | null>;
+  };
+};
+
+const isEncryptedBlob = (value: unknown): boolean =>
+  typeof value === "object" &&
+  value !== null &&
+  typeof (value as { encrypted?: unknown }).encrypted === "string";
+
+/**
+ * Encrypt `credentials` on every CodeRepository write, whatever path it came
+ * in on: the admin modal through the model API, a fixture, an import. The
+ * stored shape is Integration's `{ encrypted }` blob, which
+ * resolveStoredCredentials already reads. An update carrying only some
+ * fields (an admin retyped one token) merges over what is stored, so a blank
+ * input keeps the current value instead of wiping the rest.
+ */
+export async function encryptCodeRepositoryCredentials(
+  operation: string,
+  args: Record<string, unknown> | undefined,
+  client: CredentialReader
+): Promise<void> {
+  if (!args || !CREDENTIAL_WRITE_OPERATIONS.has(operation)) return;
+
+  const encryptPlain = async (
+    plain: Record<string, unknown>,
+    existing?: Record<string, string>
+  ) => ({
+    encrypted: await encrypt(JSON.stringify({ ...(existing ?? {}), ...plain })),
+  });
+
+  const seal = async (
+    data: Record<string, unknown> | undefined,
+    where?: Record<string, unknown>
+  ) => {
+    if (!data || !("credentials" in data)) return;
+    const value = data.credentials;
+    if (value === null || value === undefined || isEncryptedBlob(value)) return;
+    if (typeof value !== "object" || Array.isArray(value)) return;
+    const plain = value as Record<string, unknown>;
+    let existing: Record<string, string> | undefined;
+    if (where) {
+      const row = await client.codeRepository.findUnique({
+        where,
+        select: { credentials: true, provider: true },
+      });
+      if (row) {
+        try {
+          existing = await resolveStoredCredentials(
+            row.credentials,
+            row.provider
+          );
+        } catch {
+          // Unreadable stored credentials are what this write replaces.
+          existing = undefined;
+        }
+      }
+    }
+    data.credentials = await encryptPlain(plain, existing);
+  };
+
+  const where = args.where as Record<string, unknown> | undefined;
+  switch (operation) {
+    case "create":
+      await seal(args.data as Record<string, unknown> | undefined);
+      break;
+    case "update":
+      await seal(args.data as Record<string, unknown> | undefined, where);
+      break;
+    case "updateMany":
+      await seal(args.data as Record<string, unknown> | undefined);
+      break;
+    case "upsert":
+      await seal(args.create as Record<string, unknown> | undefined);
+      await seal(args.update as Record<string, unknown> | undefined, where);
+      break;
+    case "createMany": {
+      const rows = args.data;
+      for (const row of Array.isArray(rows) ? rows : [rows]) {
+        await seal(row as Record<string, unknown> | undefined);
+      }
+      break;
+    }
+  }
+}
+
 export const sideEffectsPlugin = definePlugin(schema, {
   id: "testplanit-side-effects",
 
   // Arg-rewriting business logic that must run before the write SQL.
-  onQuery: async ({ model, operation, args, proceed }) => {
+  onQuery: async ({ model, operation, args, proceed, client }) => {
+    if (model === "CodeRepository") {
+      // The client an onQuery hook receives is ZenStack's un-proxied instance:
+      // `$`-members work but model accessors (`client.codeRepository`) do not.
+      // A derived client is proxied again and shares the connection; without
+      // plugins the read also skips the policy layer and this hook itself.
+      await encryptCodeRepositoryCredentials(
+        operation,
+        args,
+        client.$unuseAll() as unknown as CredentialReader
+      );
+    }
+
+    // One storage shape for rich text. The web UI serializes Tiptap documents
+    // before writing, so the same Json column held either a document object or
+    // a JSON string of one depending on the client. Normalizing here covers
+    // every writer that goes through the ORM instead of trusting each call
+    // site. See lib/richTextColumns.ts.
+    if (RICH_TEXT_WRITE_OPERATIONS.has(operation)) {
+      normalizeRichTextWrite(model, args);
+      if (model === "CaseFieldValues") {
+        await assertRestrictedFieldWrite(
+          model,
+          operation,
+          args,
+          (client as unknown as { $auth?: { id?: string; access?: string } })
+            .$auth,
+          client.$unuseAll() as unknown as RestrictedFieldReader
+        );
+        await normalizeTextLongFieldValueWrite(
+          model,
+          operation,
+          args,
+          client.$unuseAll() as unknown as FieldTypeReader
+        );
+      }
+    }
+
+    if (model === "RepositoryFolders") {
+      await assertValidFolderParent(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as FolderReader
+      );
+    }
+
+    if (model === "TestRuns") {
+      await assertRunNotReopened(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as CompletedRunReader
+      );
+    }
+
     if (
       model === "TestRuns" &&
       (operation === "update" || operation === "upsert")
@@ -396,6 +645,7 @@ export const sideEffectsPlugin = definePlugin(schema, {
             before,
             after
           );
+          await snapshotAutomatedFlips(client, before, after);
           break;
         }
 
@@ -509,11 +759,37 @@ export const sideEffectsPlugin = definePlugin(schema, {
           break;
         }
 
+        case "JUnitTestSuite": {
+          // First automated write into a manual run promotes it to HYBRID so
+          // the run page and summaries show both result trees.
+          if (action !== "create") break;
+          for (const row of after) {
+            if (row?.id && row.testRunId != null) {
+              await promoteRunToHybrid(tx as never, row.testRunId);
+              // Reporters write suites through the RPC, never the import
+              // route, so this is where a dispatched execution learns that
+              // its results have started arriving.
+              await markExecutionResultsReceived(tx as never, row.testRunId);
+            }
+          }
+          break;
+        }
+
         case "JUnitTestResult": {
           if (action !== "create") break;
           for (const row of after) {
-            if (row?.id && row.testSuiteId != null)
+            if (row?.id && row.testSuiteId != null) {
+              // Reporter-SDK results never touch TestRunCases.statusId; on a
+              // manual (REGULAR/HYBRID) run the manual UI, progress bar and
+              // ready-to-complete check all read that column, so mirror the
+              // result onto it here (same write the import route makes).
+              await projectJUnitResultOntoRunCase(tx as never, {
+                testSuiteId: row.testSuiteId,
+                repositoryCaseId: row.repositoryCaseId ?? null,
+                statusId: row.statusId ?? null,
+              });
               await emitJUnitResultAdded(row, tx);
+            }
           }
           break;
         }

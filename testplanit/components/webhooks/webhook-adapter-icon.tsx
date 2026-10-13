@@ -1,5 +1,11 @@
 import { MessagesSquare, Webhook } from "lucide-react";
-import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
+import {
+  siBitbucket,
+  siGithub,
+  siGitlab,
+  siJira,
+  siRedmine,
+} from "simple-icons";
 import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 import { MantisBTIcon } from "@/components/shared/mantisbt-icon";
 
@@ -67,6 +73,14 @@ export function WebhookAdapterIcon({
         <div className={cn(baseClass, "bg-[#B32024] text-white")}>
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
             <path d={siRedmine.path} />
+          </svg>
+        </div>
+      );
+    case "BITBUCKET":
+      return (
+        <div className={cn(baseClass, "bg-[#0052CC] text-white")}>
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+            <path d={siBitbucket.path} />
           </svg>
         </div>
       );

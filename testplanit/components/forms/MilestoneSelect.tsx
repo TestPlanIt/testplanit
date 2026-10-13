@@ -44,7 +44,7 @@ export const transformMilestones = (
   );
 };
 
-interface MilestoneSelectOption {
+export interface MilestoneSelectOption {
   value: string;
   label: string;
   milestoneType?: {
@@ -74,9 +74,10 @@ export interface MilestoneSelectProps {
 /**
  * Depth-first flatten preserving the parent → children ordering the old
  * recursive <SelectItem> render produced, with the nesting level kept for
- * indentation while browsing.
+ * indentation while browsing. Exported for the requirements page's
+ * milestone scope picker, which browses the same tree shape.
  */
-const flattenMilestoneTree = (
+export const flattenMilestoneTree = (
   milestones: MilestoneSelectOption[],
   parentId: number | null = null,
   level: number = 0
@@ -95,7 +96,7 @@ const flattenMilestoneTree = (
  * a button. `interactive={false}` keeps the segments and their collapse while
  * dropping the menu and the tracker link.
  */
-const MilestoneOptionContent = ({
+export const MilestoneOptionContent = ({
   milestone,
 }: {
   milestone: MilestoneSelectOption;

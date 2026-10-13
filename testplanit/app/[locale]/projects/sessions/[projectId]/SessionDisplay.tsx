@@ -655,7 +655,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
               className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
               data-testid="milestone-group-count-unscheduled"
             >
-              {t("milestoneGroup.sessionCount", {
+              {tCommon("configurationGroup.candidateInGroupSession", {
                 count: groupedSessions.unscheduled.length,
               })}
             </Badge>
@@ -721,7 +721,9 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
             className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
             data-testid={`milestone-group-count-${milestone.id}`}
           >
-            {t("milestoneGroup.sessionCount", { count: subtreeItemCount })}
+            {tCommon("configurationGroup.candidateInGroupSession", {
+              count: subtreeItemCount,
+            })}
           </Badge>
         </div>
 

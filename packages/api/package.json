@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/api",
-  "version": "1.0.1",
+  "version": "1.1.0-beta.0",
   "description": "Official JavaScript/TypeScript API client for TestPlanIt - test management platform",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -54,7 +54,7 @@
     "tag": "latest"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.5.1",
     "@vitest/coverage-v8": "^4.1.11",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",

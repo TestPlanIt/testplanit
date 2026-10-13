@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { useDebounce } from "@/components/Debounce";
 import { Filter } from "@/components/tables/Filter";
 import { DataTable } from "@/components/tables/DataTable";
@@ -9,7 +10,7 @@ import { IssueListFilters } from "@/components/issues/IssueListFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
-import type { VisibilityState } from "@tanstack/react-table";
+import type { VisibilityState } from "@/components/tables/tableFeatures";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -64,6 +65,7 @@ function Issues() {
 
   // Distinct status/priority/issue type values for the filter dropdowns.
   const { statuses, priorities, issueTypes } = useIssueFilterOptions({
+    scopeWhere: DEFECT_SCOPE_WHERE,
     enabled: status === "authenticated",
   });
 
@@ -107,6 +109,7 @@ function Issues() {
 
     const conditions: Array<Record<string, unknown>> = [
       { isDeleted: false },
+      DEFECT_SCOPE_WHERE,
       { OR: relations },
     ];
     if (searchFilter.OR) conditions.push(searchFilter);
@@ -371,10 +374,13 @@ function Issues() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{t("common.fields.issues")}</CardTitle>
-            <HelpPopover helpKey="issues" />
-          </SectionHeader>
+          {/* Same row height as headers that carry an action button. */}
+          <div className="flex min-h-9 items-center">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("common.fields.issues")}</CardTitle>
+              <HelpPopover helpKey="issues" />
+            </SectionHeader>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

@@ -112,6 +112,17 @@ export function IterationAwareTestRunCaseDetails({
     }
   );
 
+  // The reset result records the case version it applies to.
+  const { data: repositoryCase } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst(
+    {
+      where: { id: innerProps.caseId, isDeleted: false },
+      select: { currentVersion: true },
+    },
+    { enabled: !!innerProps.caseId }
+  );
+
   // Iteration list — DO NOT include dataSetSnapshot here. The snapshot is
   // identical for every iteration row; including it duplicates the entire
   // payload N times and overflows Prisma's napi string buffer above ~1500
@@ -353,6 +364,10 @@ export function IterationAwareTestRunCaseDetails({
         list.find(
           (s: { systemName?: string | null }) => s?.systemName === "untested"
         ) ?? list[0];
+      if (!repositoryCase?.currentVersion) {
+        toast.error(t("overrideError"));
+        return;
+      }
       if (!target) {
         toast.error(t("overrideError"), {
           description: t("iterationResetUntestedMissing"),
@@ -368,7 +383,7 @@ export function IterationAwareTestRunCaseDetails({
           iterationId,
           statusId: target.id,
           attempt: 1,
-          testRunCaseVersion: 1,
+          testRunCaseVersion: repositoryCase.currentVersion,
         }),
       });
       if (!res.ok) {

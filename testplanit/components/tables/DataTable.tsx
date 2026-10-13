@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -10,22 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ColumnDef,
-  ColumnOrderState,
-  ColumnSizingState,
-  ExpandedState,
-  flexRender,
-  getCoreRowModel,
-  getExpandedRowModel,
-  getGroupedRowModel,
-  getSortedRowModel,
-  OnChangeFn,
-  RowSelectionState,
-  Updater,
-  useReactTable,
-  VisibilityState,
-} from "@tanstack/react-table";
+import { useTable } from "@tanstack/react-table";
 import {
   ArrowDownAZ,
   ArrowDownUp,
@@ -72,6 +56,18 @@ import { usePathname, useRouter } from "~/lib/navigation";
 import SortableItem from "./SortableItem";
 import { tableStyles } from "./tableStyles";
 import {
+  type ColumnDef,
+  type ColumnOrderState,
+  type ColumnSizingState,
+  dataTableFeatures,
+  type ExpandedState,
+  flexRender,
+  type OnChangeFn,
+  type RowSelectionState,
+  type Updater,
+  type VisibilityState,
+} from "./tableFeatures";
+import {
   readStoredColumnOrder,
   readStoredColumnWidths,
   writeStoredColumnOrder,
@@ -86,7 +82,7 @@ import {
   reconcileColumnOrder,
   resolveGroupableCellContent,
   shallowEqualRecord,
-  useExpanderColumn,
+  RowExpanderPrefix,
   useInitialColumnPinning,
   useSortingAdapter,
 } from "./dataTableShared";
@@ -97,6 +93,7 @@ import {
 
 export { reconcileColumnOrder } from "./dataTableShared";
 export type { CustomColumnMeta, DataRow } from "./dataTableShared";
+export type { VirtualizedRowExtraProps } from "./VirtualizedTableEngine";
 
 // Structure for items passed to SortableItem for drag preview
 interface DraggedCaseInfoForSortableItem {
@@ -201,7 +198,7 @@ export interface VirtualizedDataTableProps<TData extends DataRow, TValue = any>
   extends
     DataTableBaseProps<TData, TValue>,
     Pick<
-      VirtualizedTableEngineProps,
+      VirtualizedTableEngineProps<TData>,
       | "flexColumnId"
       | "enableColumnPinning"
       | "pinFirstLast"
@@ -223,6 +220,9 @@ export interface VirtualizedDataTableProps<TData extends DataRow, TValue = any>
       | "scrollToRowId"
       | "highlightRowId"
       | "testIdPrefix"
+      | "getRowProps"
+      | "getRowNestingDepth"
+      | "getRowNestingGuideOffset"
     > {
   virtualized: true;
 }
@@ -330,8 +330,11 @@ function HeadCellContent({
         {hasMenu ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                type="button"
+              {/* Not a <button>: header labels may carry their own button
+                  (a help popover), and buttons cannot nest. */}
+              <div
+                role="button"
+                tabIndex={0}
                 className="flex items-center gap-1 whitespace-nowrap cursor-pointer outline-none"
                 aria-label={t("columnOptions")}
               >
@@ -344,7 +347,7 @@ function HeadCellContent({
                   className="h-3 w-3 opacity-50"
                   aria-hidden="true"
                 />
-              </button>
+              </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <ColumnMenuItems
@@ -770,14 +773,12 @@ function PagedTable<TData extends DataRow, TValue>({
     [storageKey]
   );
 
-  // Add expander column if grouping or sub-rows are set
-  const expanderColumn = useExpanderColumn<TData>(subRowsLabel);
-  const finalColumns = useMemo(() => {
-    if ((grouping && grouping.length > 0) || getSubRows) {
-      return [expanderColumn, ...columns];
-    }
-    return columns;
-  }, [columns, grouping, expanderColumn, getSubRows]);
+  // No expander COLUMN: the chevron renders inline at the head of the first
+  // content cell (`RowExpanderPrefix`) -- see that component's doc for why.
+  const expansionActive = Boolean(
+    (grouping && grouping.length > 0) || getSubRows
+  );
+  const finalColumns = columns;
 
   // Keep the current column set available to the width-persist handler without
   // rebuilding the callback each render.
@@ -807,18 +808,15 @@ function PagedTable<TData extends DataRow, TValue>({
     );
   }, [finalColumns, storageKey, enableColumnReorder]);
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data: localData,
-    columns: finalColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getGroupedRowModel:
-      grouping && grouping.length > 0 ? getGroupedRowModel() : undefined,
-    getExpandedRowModel:
-      (grouping && grouping.length > 0) || getSubRows
-        ? getExpandedRowModel()
-        : undefined,
+    columns: finalColumns as ColumnDef<TData, any>[],
     getSubRows: getSubRows,
+    // v9 resets expansion from the core row model on every data change (v8
+    // only did so from the grouped model), which collapses open rows after a
+    // refetch. Rows are keyed by getRowId, so expansion survives new data.
+    autoResetExpanded: false,
     ...(getRowId ? { getRowId } : {}),
     enableColumnPinning: true,
     enableColumnResizing: true,
@@ -879,7 +877,7 @@ function PagedTable<TData extends DataRow, TValue>({
       return;
     }
     if (!isResizing && onSortChange) {
-      const currentPinning = table.getState().columnPinning;
+      const currentPinning = columnPinning;
 
       onSortChange(header.column.id);
 
@@ -960,10 +958,10 @@ function PagedTable<TData extends DataRow, TValue>({
   // scroll-padding sized to the pinned widths makes the browser scroll such
   // targets into the UNCOVERED region instead.
   const leftPinnedWidth = table
-    .getLeftVisibleLeafColumns()
+    .getStartVisibleLeafColumns()
     .reduce((sum, column) => sum + column.getSize(), 0);
   const rightPinnedWidth = table
-    .getRightVisibleLeafColumns()
+    .getEndVisibleLeafColumns()
     .reduce((sum, column) => sum + column.getSize(), 0);
 
   const tableElement = (
@@ -1093,21 +1091,11 @@ function PagedTable<TData extends DataRow, TValue>({
 
                 // Use SortableItem when enableReorder is true and not a grouped row
                 if (enableReorder && !isGrouped && onReorder) {
-                  // Ensure row data conforms to SortableItem's expected type
-                  const sortableRow = {
-                    ...row,
-                    original: {
-                      ...row.original,
-                      folderId: row.original.folderId ?? null, // Convert undefined to null
-                      name: row.original.name ?? "",
-                    },
-                  };
-
                   return (
                     <SortableItem
                       key={row.id}
                       id={row.id}
-                      row={sortableRow}
+                      row={row}
                       index={index}
                       // Table-ordered (reflects columnOrder + pinning + visibility)
                       // so reorderable rows stay aligned with the header, which
@@ -1145,7 +1133,7 @@ function PagedTable<TData extends DataRow, TValue>({
                       }
                     }}
                   >
-                    {row.getVisibleCells().map((cell) => {
+                    {row.getVisibleCells().map((cell, cellIndex) => {
                       const { column } = cell;
                       const cellContent = resolveGroupableCellContent(
                         cell,
@@ -1177,7 +1165,7 @@ function PagedTable<TData extends DataRow, TValue>({
                             column.id === "expander" ||
                             (column.getIsPinned() &&
                               !column.getIsLastColumn(
-                                column.getIsPinned() as "left" | "right"
+                                column.getIsPinned() as "start" | "end"
                               ))
                               ? "border-e-0"
                               : "border-e"
@@ -1191,7 +1179,23 @@ function PagedTable<TData extends DataRow, TValue>({
                               wrapper carries no width of its own — content may
                               use all the space a stretched column actually
                               has, not just the configured `size`. */}
-                          {(column.columnDef.meta as CustomColumnMeta)?.wrap ? (
+                          {expansionActive && cellIndex === 0 ? (
+                            <span className="flex min-w-0 items-center">
+                              <RowExpanderPrefix
+                                row={row}
+                                subRowsLabel={subRowsLabel}
+                              />
+                              {(column.columnDef.meta as CustomColumnMeta)
+                                ?.wrap ? (
+                                cellContent
+                              ) : (
+                                <div className="min-w-0 truncate">
+                                  {cellContent}
+                                </div>
+                              )}
+                            </span>
+                          ) : (column.columnDef.meta as CustomColumnMeta)
+                              ?.wrap ? (
                             cellContent
                           ) : (
                             <div className="truncate">{cellContent}</div>

@@ -32,7 +32,7 @@ import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
@@ -46,22 +46,57 @@ const PROVIDERS = [
   { value: "GITEA", label: "Gitea / Forgejo / Gogs" },
 ] as const;
 
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  provider: z.enum(["GITHUB", "GITLAB", "BITBUCKET", "AZURE_DEVOPS", "GITEA"]),
-  credentials: z.record(z.string(), z.string()).optional(),
-  settings: z.record(z.string(), z.string()).optional(),
-  isActive: z.boolean().optional(),
-});
+/**
+ * The repository form. `takenNames` are the live repositories this one may
+ * not be named after; the save is an upsert on the unique name so that a
+ * soft-deleted repository can be recreated, and without this check the
+ * same upsert would silently overwrite a live one.
+ */
+export function createFormSchema(
+  t: (key: string) => string,
+  takenNames: string[]
+) {
+  const taken = new Set(takenNames.map((name) => name.trim().toLowerCase()));
+  return z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t("validation.nameRequired"))
+      .refine((name) => !taken.has(name.toLowerCase()), {
+        message: t("validation.nameUnique"),
+      }),
+    provider: z.enum([
+      "GITHUB",
+      "GITLAB",
+      "BITBUCKET",
+      "AZURE_DEVOPS",
+      "GITEA",
+    ]),
+    credentials: z.record(z.string(), z.string().optional()).optional(),
+    settings: z.record(z.string(), z.string().optional()).optional(),
+    isActive: z.boolean().optional(),
+  });
+}
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<ReturnType<typeof createFormSchema>>;
+
+/** Optional provider fields left blank must not be stored as empty strings. */
+function compactRecord(
+  record: Record<string, string | undefined> | undefined
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(record ?? {}).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && entry[1].trim() !== ""
+    )
+  );
+}
 
 interface CodeRepositoryModalProps {
   repository?: {
     id: number;
     name: string;
     provider: string;
-    credentials: Record<string, string> | null;
     settings: Record<string, string> | null;
     status: string;
   };
@@ -87,12 +122,32 @@ export function CodeRepositoryModal({
   const { mutateAsync: updateRepository } =
     useClientQueries(schema).codeRepository.useUpdate();
 
+  const { data: liveRepositories } = useClientQueries(
+    schema
+  ).codeRepository.useFindMany({
+    where: { isDeleted: false },
+    select: { id: true, name: true },
+  });
+  const takenNames = useMemo(
+    () =>
+      (liveRepositories ?? [])
+        .filter((row) => row.id !== repository?.id)
+        .map((row) => row.name),
+    [liveRepositories, repository?.id]
+  );
+  const formSchema = useMemo(
+    () => createFormSchema(t, takenNames),
+    [t, takenNames]
+  );
+
   const form = useForm<FormData>({
     resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: repository?.name ?? "",
       provider: (repository?.provider as FormData["provider"]) ?? "GITHUB",
-      credentials: (repository?.credentials as Record<string, string>) ?? {},
+      // Secrets never come back to the browser; on edit the fields start
+      // blank and a blank field keeps the stored value.
+      credentials: {},
       settings: (repository?.settings as Record<string, string>) ?? {},
       isActive: repository ? repository.status !== "INACTIVE" : true,
     },
@@ -119,8 +174,8 @@ export function CodeRepositoryModal({
     try {
       const body: Record<string, unknown> = {
         provider: values.provider,
-        credentials: values.credentials,
-        settings: values.settings,
+        credentials: compactRecord(values.credentials),
+        settings: compactRecord(values.settings),
       };
       if (repository?.id) body.repositoryId = repository.id;
 
@@ -144,12 +199,15 @@ export function CodeRepositoryModal({
       if (repository) {
         // Map isActive → status, preserving ERROR state if admin sets active
         const newStatus = values.isActive ? "ACTIVE" : "INACTIVE";
+        const typed = compactRecord(values.credentials);
         await updateRepository({
           where: { id: repository.id },
           data: {
             name: values.name,
-            settings: values.settings ?? {},
-            credentials: values.credentials ?? {},
+            settings: compactRecord(values.settings),
+            // Only what was retyped; the server merges it over the stored
+            // secrets and encrypts the result.
+            ...(Object.keys(typed).length > 0 ? { credentials: typed } : {}),
             status: newStatus as any,
           },
         });
@@ -159,14 +217,14 @@ export function CodeRepositoryModal({
           create: {
             name: values.name,
             provider: values.provider,
-            credentials: values.credentials ?? {},
-            settings: values.settings ?? {},
+            credentials: compactRecord(values.credentials),
+            settings: compactRecord(values.settings),
             isDeleted: false,
           },
           update: {
             provider: values.provider,
-            credentials: values.credentials ?? {},
-            settings: values.settings ?? {},
+            credentials: compactRecord(values.credentials),
+            settings: compactRecord(values.settings),
             isDeleted: false,
           },
         });
@@ -242,7 +300,11 @@ export function CodeRepositoryModal({
               />
             )}
 
-            <CodeRepositoryConfigForm provider={selectedProvider} form={form} />
+            <CodeRepositoryConfigForm
+              editing={!!repository}
+              provider={selectedProvider}
+              form={form}
+            />
 
             {repository && (
               <FormField

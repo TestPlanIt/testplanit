@@ -15,6 +15,7 @@ const {
   mockUseFindUniqueProjects,
   mockUseFindUniqueTestRunResults,
   mockUseFindUniqueJUnitTestResult,
+  mockUseFindManyRepositoryCaseVersions,
   mockUseProjectPermissions,
   mockUseSession,
   mockUseQueryClient,
@@ -28,6 +29,7 @@ const {
   mockUseFindUniqueProjects: vi.fn(),
   mockUseFindUniqueTestRunResults: vi.fn(),
   mockUseFindUniqueJUnitTestResult: vi.fn(),
+  mockUseFindManyRepositoryCaseVersions: vi.fn(),
   mockUseProjectPermissions: vi.fn(),
   mockUseSession: vi.fn(),
   mockUseQueryClient: vi.fn(),
@@ -46,6 +48,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     projects: { useFindUnique: mockUseFindUniqueProjects },
     testRunResults: { useFindUnique: mockUseFindUniqueTestRunResults },
     jUnitTestResult: { useFindUnique: mockUseFindUniqueJUnitTestResult },
+    repositoryCaseVersions: {
+      useFindMany: mockUseFindManyRepositoryCaseVersions,
+    },
   }),
 }));
 
@@ -311,6 +316,11 @@ function setupDefaultMocks() {
     data: undefined,
     isLoading: false,
   });
+  // The case has a recorded snapshot for the version its manual result ran
+  // against, so the version column links out as usual.
+  mockUseFindManyRepositoryCaseVersions.mockReturnValue({
+    data: [{ version: 1 }],
+  });
   mockUseProjectPermissions.mockReturnValue({
     permissions: { canAddEdit: true, canView: true, canDelete: true },
     isLoading: false,
@@ -366,6 +376,28 @@ describe("TestResultHistory", () => {
     const userNameCells = screen.getAllByTestId("user-name-cell");
     expect(userNameCells.length).toBeGreaterThan(0);
     expect(userNameCells[0]).toHaveTextContent("user-1");
+  });
+
+  // #599: a result records the case version it ran against, but the snapshot
+  // for that version may not exist — nothing guaranteed one was written. The
+  // version column linked out regardless, landing the reader on a page that
+  // silently showed the current case.
+  it("flags a manual result whose case version has no recorded snapshot", () => {
+    mockUseFindManyRepositoryCaseVersions.mockReturnValue({
+      data: [{ version: 2 }],
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(screen.getByTestId("snapshot-unavailable")).toBeInTheDocument();
+  });
+
+  it("links the case version when its snapshot was recorded", () => {
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(
+      screen.queryByTestId("snapshot-unavailable")
+    ).not.toBeInTheDocument();
   });
 
   it("renders JUnit result row", () => {

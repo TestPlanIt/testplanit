@@ -43,6 +43,8 @@ import type {
   CreateJUnitTestSuiteOptions,
   CreateJUnitTestResultOptions,
   UpdateJUnitTestSuiteOptions,
+  AutomationPlan,
+  ExecutionConclusion,
 } from "./types.js";
 import { tipTapDoc } from "./tipTapDoc.js";
 import {
@@ -713,6 +715,39 @@ export class TestPlanItClient {
   }
 
   /**
+   * The plan a CI job executes for a run: its automated cases with the
+   * identifiers a runner filter can match on. `executionId` applies an
+   * execution's ad-hoc subset and ref. Read-only tokens are accepted.
+   */
+  async getAutomationPlan(
+    testRunId: number,
+    executionId?: number
+  ): Promise<AutomationPlan> {
+    return this.request<AutomationPlan>(
+      "GET",
+      `/api/test-runs/${testRunId}/automation-plan`,
+      { query: { executionId } }
+    );
+  }
+
+  /**
+   * Report an execution's outcome to TestPlanIt. Needed for generic-webhook
+   * targets, which TestPlanIt cannot poll; harmless for the others.
+   */
+  async finishExecution(
+    testRunId: number,
+    executionId: number,
+    conclusion: ExecutionConclusion,
+    message?: string
+  ): Promise<{ id: number; status: string }> {
+    return this.request(
+      "POST",
+      `/api/test-runs/${testRunId}/executions/${executionId}/finish`,
+      { body: { conclusion, ...(message ? { message } : {}) } }
+    );
+  }
+
+  /**
    * Update a test run
    */
   async updateTestRun(
@@ -1300,7 +1335,7 @@ export class TestPlanItClient {
               some: { projectId: options.projectId },
             },
           },
-          orderBy: { order: "asc" },
+          orderBy: [{ isDefault: "desc" }, { order: "asc" }],
           take: 1,
         }
       );
@@ -1344,8 +1379,10 @@ export class TestPlanItClient {
    * failures are visible: each entry is `status: "success"` with a `caseId`, or
    * `status: "error"` with a message (e.g. a custom field not on the template).
    *
-   * `templateId` defaults to the project's first enabled template; resolve a
-   * specific one with {@link findTemplateByName}. Resolve `folderId` with
+   * `templateId` defaults to the template marked Default, else the project's
+   * first enabled template; resolve a specific one with
+   * {@link findTemplateByName}. `stateName` defaults to the CASES state marked
+   * Default, else the first by order. Resolve `folderId` with
    * {@link findFolderByName} / {@link findOrCreateFolderPath}.
    *
    * Requires a TestPlanIt instance (app v0.39.0+) exposing

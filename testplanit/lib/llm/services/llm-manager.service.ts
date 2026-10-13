@@ -5,6 +5,7 @@ import {
   AzureOpenAIAdapter,
   BaseLlmAdapter,
   CustomLlmAdapter,
+  DeepSeekAdapter,
   GeminiAdapter,
   OllamaAdapter,
   OpenAIAdapter,
@@ -25,6 +26,17 @@ import { estimatePromptTokens } from "../content";
  */
 const asDecimal = (value: number): Decimal => value as unknown as Decimal;
 
+/**
+ * Most generation routes only put `projectId` in `metadata`, so attribute the
+ * usage row from there when the top-level field is unset.
+ */
+const usageProjectConnect = (request: LlmRequest) => {
+  const projectId = request.projectId ?? request.metadata?.projectId;
+  return Number.isInteger(projectId) && projectId > 0
+    ? { project: { connect: { id: projectId as number } } }
+    : {};
+};
+
 interface LlmCredentials {
   apiKey?: string;
   endpoint?: string;
@@ -36,6 +48,7 @@ const ALLOWED_BASE_URLS: Record<string, string[]> = {
   OPENAI: ["https://api.openai.com"],
   ANTHROPIC: ["https://api.anthropic.com"],
   GEMINI: ["https://generativelanguage.googleapis.com"],
+  DEEPSEEK: ["https://api.deepseek.com"],
   AZURE_OPENAI: [], // Azure uses organization-specific endpoints, validated separately
   OLLAMA: [], // Self-hosted, validated separately
   CUSTOM_LLM: [], // Custom endpoints, validated separately
@@ -50,6 +63,7 @@ const CUSTOM_ENDPOINT_PROVIDERS = [
   "ANTHROPIC",
   "AZURE_OPENAI",
   "GEMINI",
+  "DEEPSEEK",
   "OLLAMA",
   "CUSTOM_LLM",
 ];
@@ -265,6 +279,8 @@ export class LlmManager {
         return new AzureOpenAIAdapter(config);
       case "GEMINI":
         return new GeminiAdapter(config);
+      case "DEEPSEEK":
+        return new DeepSeekAdapter(config);
       case "OLLAMA":
         return new OllamaAdapter(config);
       case "CUSTOM_LLM":
@@ -627,9 +643,7 @@ export class LlmManager {
       data: {
         llmIntegration: { connect: { id: llmIntegrationId } },
         user: { connect: { id: request.userId } },
-        ...(request.projectId
-          ? { project: { connect: { id: request.projectId } } }
-          : {}),
+        ...usageProjectConnect(request),
         feature: request.feature,
         model: response.model,
         promptTokens: response.promptTokens,
@@ -687,9 +701,7 @@ export class LlmManager {
       data: {
         llmIntegration: { connect: { id: llmIntegrationId } },
         user: { connect: { id: request.userId } },
-        ...(request.projectId
-          ? { project: { connect: { id: request.projectId } } }
-          : {}),
+        ...usageProjectConnect(request),
         feature: request.feature,
         model: request.model || config.defaultModel,
         promptTokens: estimatedPromptTokens,
@@ -734,9 +746,7 @@ export class LlmManager {
       data: {
         llmIntegration: { connect: { id: llmIntegrationId } },
         user: { connect: { id: request.userId } },
-        ...(request.projectId
-          ? { project: { connect: { id: request.projectId } } }
-          : {}),
+        ...usageProjectConnect(request),
         feature: request.feature,
         model: request.model || "unknown",
         promptTokens: 0,

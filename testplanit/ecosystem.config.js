@@ -1,6 +1,99 @@
 // Use compiled JavaScript in production, tsx in development
 const isDev = process.env.NODE_ENV !== "production";
 
+// Node's heap gets 75% of a worker's PM2 restart ceiling, leaving the rest for
+// buffers and native memory.
+const HEAP_RATIO = 0.75;
+
+// PM2 restarts a worker that outgrows its ceiling, so a ceiling below this
+// would only produce a restart loop.
+const MIN_RESTART_MB = 64;
+
+/** A size ("512M", "2G", or bare bytes) in megabytes; null if unreadable. */
+function toMegabytes(size) {
+  const match = /^(\d+(?:\.\d+)?)\s*([KMG])?B?$/i.exec(String(size).trim());
+  if (!match) return null;
+  const value = Number(match[1]);
+  const unit = (match[2] || "").toUpperCase();
+  if (unit === "G") return value * 1024;
+  if (unit === "M") return value;
+  if (unit === "K") return value / 1024;
+  return value / (1024 * 1024);
+}
+
+/** The size as PM2 accepts it: whole digits and an uppercase K, M or G. */
+function toPm2Size(size, megabytes) {
+  const trimmed = String(size).trim();
+  return /^\d+[KMG]?$/.test(trimmed) ? trimmed : `${Math.floor(megabytes)}M`;
+}
+
+const warned = new Set();
+function warnOnce(message) {
+  if (warned.has(message)) return;
+  warned.add(message);
+  console.warn(`[ecosystem] ${message}`);
+}
+
+/**
+ * PM2 restart ceiling and Node heap for one worker. Env overrides, most
+ * specific first:
+ *   <prefix>_MAX_MEMORY_RESTART / <prefix>_MAX_OLD_SPACE_MB — this worker
+ *   WORKER_MAX_MEMORY_RESTART / WORKER_MAX_OLD_SPACE_MB — every `shared` worker
+ * The heap defaults to 75% of whichever restart ceiling applies, so setting a
+ * ceiling alone is enough. A heap set at a broader level than the ceiling is
+ * ignored, so raising one worker never pairs its ceiling with another's heap.
+ * A value that cannot be used is skipped with a warning: an unreadable or
+ * tiny ceiling falls through to the next level, and a heap that does not fit
+ * under the ceiling falls back to the 75% default.
+ */
+function memoryLimits(defaultRestart, { prefix, shared = false } = {}) {
+  const levels = [];
+  if (prefix) levels.push(prefix);
+  if (shared) levels.push("WORKER");
+
+  let restart = defaultRestart;
+  let restartMb = toMegabytes(defaultRestart);
+  let restartLevel = -1;
+  for (const [index, level] of levels.entries()) {
+    const name = `${level}_MAX_MEMORY_RESTART`;
+    const value = process.env[name];
+    if (!value) continue;
+    const megabytes = toMegabytes(value);
+    if (megabytes === null || megabytes < MIN_RESTART_MB) {
+      warnOnce(
+        `Ignoring ${name}="${value}": expected a size of at least ${MIN_RESTART_MB}M, such as 512M or 2G.`
+      );
+      continue;
+    }
+    restart = toPm2Size(value, megabytes);
+    restartMb = megabytes;
+    restartLevel = index;
+    break;
+  }
+
+  const candidates =
+    restartLevel === -1 ? levels : levels.slice(0, restartLevel + 1);
+  let heapMb = Math.floor(restartMb * HEAP_RATIO);
+  for (const level of candidates) {
+    const name = `${level}_MAX_OLD_SPACE_MB`;
+    const value = process.env[name];
+    if (!value) continue;
+    const megabytes = Math.floor(Number(value));
+    if (megabytes > 0 && megabytes < restartMb) {
+      heapMb = megabytes;
+      break;
+    }
+    warnOnce(
+      `Ignoring ${name}="${value}": expected a whole number of megabytes below the ${restart} ceiling.`
+    );
+  }
+
+  return {
+    max_memory_restart: restart,
+    node_args: `--max-old-space-size=${heapMb}`,
+  };
+}
+
 module.exports = {
   apps: [
     {
@@ -10,8 +103,7 @@ module.exports = {
       instances: 1,
       autorestart: false,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -25,8 +117,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -38,8 +129,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -53,8 +143,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "2G",
-      node_args: "--max-old-space-size=1536",
+      ...memoryLimits("2G"),
       env: {
         NODE_ENV: "production",
       },
@@ -72,12 +161,9 @@ module.exports = {
       // this worker needs far more headroom than the 512M default that
       // OOM-killed big imports. Defaults to a 4G ceiling, which handles typical
       // large exports on a modest host; installs that import very large exports
-      // can raise both values via env (host RAM permitting), e.g.
-      // TESTMO_IMPORT_MAX_MEMORY_RESTART=18G TESTMO_IMPORT_MAX_OLD_SPACE_MB=16384.
-      max_memory_restart: process.env.TESTMO_IMPORT_MAX_MEMORY_RESTART || "4G",
-      node_args: `--max-old-space-size=${
-        process.env.TESTMO_IMPORT_MAX_OLD_SPACE_MB || "3072"
-      }`,
+      // can raise it via env (host RAM permitting), e.g.
+      // TESTMO_IMPORT_MAX_MEMORY_RESTART=18G.
+      ...memoryLimits("4G", { prefix: "TESTMO_IMPORT" }),
       env: {
         NODE_ENV: "production",
       },
@@ -89,8 +175,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "1G",
-      node_args: "--max-old-space-size=768",
+      ...memoryLimits("1G"),
       env: {
         NODE_ENV: "production",
       },
@@ -110,13 +195,9 @@ module.exports = {
       // SIGKILLs the worker mid-job, BullMQ redelivers the same job, and it
       // restarts from the top — never finishing. Defaults to a 2G ceiling
       // (matching the forecast worker's full-history sweeps); very large tenants
-      // can raise both via env (host RAM permitting), e.g.
-      // ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART=4G ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB=3072.
-      max_memory_restart:
-        process.env.ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART || "2G",
-      node_args: `--max-old-space-size=${
-        process.env.ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB || "1536"
-      }`,
+      // can raise it via env (host RAM permitting), e.g.
+      // ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART=4G.
+      ...memoryLimits("2G", { prefix: "ELASTICSEARCH_REINDEX" }),
       env: {
         NODE_ENV: "production",
       },
@@ -134,8 +215,7 @@ module.exports = {
       // multi-tenant mode (one Rust query engine each), the same per-tenant-client
       // footprint as the webhook outbox worker — so it shares that 3G tier. The
       // ceiling is harmless headroom in single-tenant mode (one client).
-      max_memory_restart: "3G",
-      node_args: "--max-old-space-size=2304",
+      ...memoryLimits("3G"),
       env: {
         NODE_ENV: "production",
       },
@@ -149,8 +229,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -164,8 +243,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -179,8 +257,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -194,8 +271,11 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      // A refresh holds a repository's whole archive and its cached file
+      // contents in memory at once. The 512M default suits typical repositories;
+      // installs caching very large ones can raise it via env (host RAM
+      // permitting), e.g. REPO_CACHE_MAX_MEMORY_RESTART=2G.
+      ...memoryLimits("512M", { prefix: "REPO_CACHE", shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -209,8 +289,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -224,8 +303,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -239,8 +317,21 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
+      name: "impact-analysis-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/impactAnalysisWorker.ts"
+        : "dist/workers/impactAnalysisWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -254,8 +345,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -269,8 +359,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -284,8 +373,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },
@@ -299,8 +387,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "2G",
-      node_args: "--max-old-space-size=1536",
+      ...memoryLimits("2G"),
       env: {
         NODE_ENV: "production",
       },
@@ -314,8 +401,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "3G",
-      node_args: "--max-old-space-size=2304",
+      ...memoryLimits("3G"),
       env: {
         NODE_ENV: "production",
       },
@@ -329,8 +415,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "3G",
-      node_args: "--max-old-space-size=2304",
+      ...memoryLimits("3G"),
       env: {
         NODE_ENV: "production",
       },
@@ -344,8 +429,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "3G",
-      node_args: "--max-old-space-size=2304",
+      ...memoryLimits("3G"),
       env: {
         NODE_ENV: "production",
       },
@@ -359,8 +443,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "3G",
-      node_args: "--max-old-space-size=2304",
+      ...memoryLimits("3G"),
       env: {
         NODE_ENV: "production",
       },
@@ -374,8 +457,21 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "3G",
-      node_args: "--max-old-space-size=2304",
+      ...memoryLimits("3G"),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
+      name: "execution-dispatch-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/executionDispatchWorker.ts"
+        : "dist/workers/executionDispatchWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("3G"),
       env: {
         NODE_ENV: "production",
       },

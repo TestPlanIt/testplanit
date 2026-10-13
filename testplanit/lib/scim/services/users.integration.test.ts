@@ -39,7 +39,12 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { sql } from "kysely";
 import { createRawDbClient } from "~/lib/rawDbClient";
+import {
+  cleanupIntegrationScimTokens,
+  provisionIntegrationScimToken,
+} from "~/__tests__/helpers/scimIntegrationToken";
 
 import {
   SCIM_SCHEMAS,
@@ -92,16 +97,19 @@ function makeBody(overrides: Partial<ScimUserBody> = {}): ScimUserBody {
 
 describeIntegration("SCIM Users service (live DB)", () => {
   let ctx: ScimAuthContext;
+  const mintedTokenIds: string[] = [];
 
   beforeAll(async () => {
     if (!process.env.NEXTAUTH_SECRET && !process.env.API_TOKEN_SECRET) {
       process.env.NEXTAUTH_SECRET =
         "integration-test-secret-for-scim-token-hashing";
     }
-    ctx = {
-      tokenId: `scimit-tok-${Date.now()}`,
-      systemUserId: SCIM_SYSTEM_USER_ID,
-    };
+    // A real ScimToken row: User.scimTokenId / Groups.scimTokenId are FKs
+    // onto it, so an invented id would violate the constraint the moment a
+    // create stamps provenance.
+    const provisioned = await provisionIntegrationScimToken("users");
+    ctx = provisioned.ctx;
+    mintedTokenIds.push(provisioned.tokenId);
 
     // Sanity check: the sentinel Projects row must exist before any test
     // can fire a webhook outbox event with projectId = -1.
@@ -139,19 +147,18 @@ describeIntegration("SCIM Users service (live DB)", () => {
     // actorUserId = SCIM_SYSTEM_USER_ID, so a `userId` filter would miss
     // them; payload.id is the discriminator the service writes.
     if (sweepIds.length > 0) {
-      await db.webhookOutboxEvent.deleteMany({
-        where: {
-          // Raw Prisma-style JSON-path filter v3's typed WhereInput doesn't model.
-          OR: sweepIds.map((id) => ({
-            payload: { path: ["id"], equals: id },
-          })) as any,
-        },
-      });
+      // Raw SQL: ZenStack v3 models a JSON `path` as a string, not
+      // Prisma's array form, so the typed filter is rejected outright.
+      await sql`
+        DELETE FROM "WebhookOutboxEvent"
+        WHERE "payload"->>'id' = ANY(${sql.val(sweepIds)})
+      `.execute(db.$qb);
       await db.account.deleteMany({
         where: { userId: { in: sweepIds } },
       });
       await db.user.deleteMany({ where: { id: { in: sweepIds } } });
     }
+    await cleanupIntegrationScimTokens(db, mintedTokenIds);
     await db.$disconnect();
   });
 
@@ -251,24 +258,51 @@ describeIntegration("SCIM Users service (live DB)", () => {
   });
 
   it("IT4: writes a WebhookOutboxEvent row with projectId=-1 FK-targeting the __system__ row", async () => {
-    const created = await createScimUser(makeBody(), ctx);
-
-    const events = await db.webhookOutboxEvent.findMany({
-      where: {
-        eventName: "scim.user.created",
+    // The outbox emitter fans out only to WebhookConfig rows subscribed to
+    // the event, and no seed creates one — so this test supplies its own and
+    // removes it again. Deliberately NOT a shared fixture: a config that
+    // outlives one test pulls every other SCIM emission in the suite through
+    // the per-config coalescing counter (10 events / 5-minute window), whose
+    // dedup writes then collide and roll back unrelated transactions.
+    const subscriber = await db.webhookConfig.create({
+      data: {
         projectId: SYSTEM_PROJECT_ID,
-        actorUserId: SCIM_SYSTEM_USER_ID,
+        adapterType: "SLACK",
+        direction: "OUTBOUND",
+        token: `${EMAIL_PREFIX}-webhook`,
+        secret: "integration-test-secret",
+        name: `${EMAIL_PREFIX}-subscriber`,
+        url: "http://127.0.0.1:9/never-dispatched",
+        subscribedEvents: ["scim.user.created"],
       },
-      orderBy: { createdAt: "desc" },
-      take: 10,
+      select: { id: true },
     });
-    // Must include at least one row whose payload references the new user.
-    const matching = events.find((e) => {
-      const payload = e.payload as Record<string, unknown> | null;
-      return payload?.id === created.resource.id;
-    });
-    expect(matching).toBeDefined();
-    expect(matching!.projectId).toBe(SYSTEM_PROJECT_ID);
+
+    try {
+      const created = await createScimUser(makeBody(), ctx);
+
+      const events = await db.webhookOutboxEvent.findMany({
+        where: {
+          eventName: "scim.user.created",
+          projectId: SYSTEM_PROJECT_ID,
+          actorUserId: SCIM_SYSTEM_USER_ID,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
+      // Must include at least one row whose payload references the new user.
+      const matching = events.find((e) => {
+        const payload = e.payload as Record<string, unknown> | null;
+        return payload?.id === created.resource.id;
+      });
+      expect(matching).toBeDefined();
+      expect(matching!.projectId).toBe(SYSTEM_PROJECT_ID);
+    } finally {
+      await db.webhookEventDedup.deleteMany({
+        where: { webhookConfigId: subscriber.id },
+      });
+      await db.webhookConfig.deleteMany({ where: { id: subscriber.id } });
+    }
   });
 
   it("IT5: JIT-bind path UPDATEs existing row and returns linked:true", async () => {

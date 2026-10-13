@@ -6,6 +6,7 @@ import { revokeShareLink } from "@/actions/share-links";
 import { DateFormatter } from "@/components/DateFormatter";
 import { EditShareLinkDialog } from "@/components/share/EditShareLinkDialog";
 import { DataTable } from "@/components/tables/DataTable";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,18 +26,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ShareLinkEntityType } from "~/zenstack/models";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@/components/tables/tableFeatures";
 import { isPast } from "date-fns";
 import {
   Ban,
   Bell,
   BellOff,
+  ChartNoAxesColumnIcon,
   CheckCircle2,
   Copy,
   Eye,
   Loader2,
   MoreVertical,
   Pencil,
+  Snowflake,
   Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -49,6 +52,11 @@ interface ShareLinkListProps {
   projectId?: number; // Optional for cross-project reports
   entityType?: ShareLinkEntityType;
   showProjectColumn?: boolean;
+  /**
+   * Show who created each link. On when the list can hold several people's
+   * links (the Manage Shares pages); off for a user's own shares.
+   */
+  showCreatorColumn?: boolean;
 }
 
 type ShareRow = {
@@ -69,9 +77,11 @@ export function ShareLinkList({
   projectId,
   entityType,
   showProjectColumn = false,
+  showCreatorColumn = true,
 }: ShareLinkListProps) {
   const t = useTranslations("reports.shareDialog.shareList");
   const tCommon = useTranslations("common");
+  const tFrozen = useTranslations("reports.frozen");
   const { data: session } = useSession();
   const dateFormat = session?.user?.preferences?.dateFormat;
   const timezone = session?.user?.preferences?.timezone;
@@ -91,6 +101,11 @@ export function ShareLinkList({
   >({});
 
   const sortField = COLUMN_TO_FIELD[sortConfig.column] ?? "createdAt";
+  // The creator is a relation, so it orders by the user's name.
+  const orderBy =
+    sortConfig.column === "creator"
+      ? { createdBy: { name: sortConfig.direction } }
+      : { [sortField]: sortConfig.direction };
 
   // Fetch shares (exclude deleted)
   const {
@@ -109,10 +124,9 @@ export function ShareLinkList({
           name: true,
         },
       },
+      snapshot: { select: { capturedAt: true } },
     },
-    orderBy: {
-      [sortField]: sortConfig.direction,
-    },
+    orderBy,
   });
 
   const { mutateAsync: updateShareLink, isPending: isRevoking } =
@@ -294,15 +308,17 @@ export function ShareLinkList({
           const share = row.original;
           return (
             <div className="min-w-0">
-              <Link
-                href={`/share/${share.shareKey}`}
-                className="block truncate font-medium hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {share.title ||
-                  t("defaultTitle", { entityType: share.entityType })}
-              </Link>
+              <div className="flex min-w-0 items-center gap-2">
+                <Link
+                  href={`/share/${share.shareKey}`}
+                  className="block truncate font-medium hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {share.title ||
+                    t("defaultTitle", { entityType: share.entityType })}
+                </Link>
+              </div>
               {share.description && (
                 <p className="truncate text-sm text-muted-foreground">
                   {share.description}
@@ -312,20 +328,75 @@ export function ShareLinkList({
           );
         },
       },
+      ...(showCreatorColumn
+        ? [
+            {
+              id: "creator",
+              accessorKey: "createdById",
+              header: tCommon("fields.createdBy"),
+              enableSorting: true,
+              size: 180,
+              cell: ({ row }) => (
+                <UserNameCell userId={row.original.createdById} />
+              ),
+            } satisfies ColumnDef<ShareRow>,
+          ]
+        : []),
       {
         id: "mode",
         accessorKey: "mode",
         header: t("columns.mode"),
         enableSorting: false,
         size: 150,
-        cell: ({ row }) => (
-          <Badge
-            variant="secondary"
-            className="text-xs w-fit whitespace-nowrap"
-          >
-            {row.original.mode.replace("_", " ")}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const mode = row.original.mode.replace("_", " ");
+          // Truncate rather than clip when the column is narrower than the
+          // label; the full mode shows on hover.
+          return (
+            <Badge
+              variant="secondary"
+              className="text-xs w-fit max-w-full min-w-0 whitespace-nowrap"
+              title={mode}
+            >
+              <span className="truncate">{mode}</span>
+            </Badge>
+          );
+        },
+      },
+      {
+        // Live (re-runs on open) or frozen (stored copy); reports only.
+        id: "data",
+        header: tCommon("fields.data"),
+        enableSorting: false,
+        size: 110,
+        cell: ({ row }) => {
+          const share = row.original;
+          if (
+            share.entityType !== "REPORT" &&
+            share.entityType !== "SAVED_REPORT"
+          ) {
+            return <span className="text-muted-foreground">-</span>;
+          }
+          return share.snapshot ? (
+            <Badge
+              variant="secondary"
+              className="gap-1 text-xs w-fit whitespace-nowrap"
+              data-testid="share-data-frozen"
+            >
+              <Snowflake className="h-3 w-3 shrink-0" />
+              {tFrozen("frozen.title")}
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="gap-1 text-xs w-fit whitespace-nowrap"
+              data-testid="share-data-live"
+            >
+              <ChartNoAxesColumnIcon className="h-3 w-3 shrink-0" />
+              {tFrozen("live.title")}
+            </Badge>
+          );
+        },
       },
       {
         id: "views",
@@ -364,7 +435,7 @@ export function ShareLinkList({
               {share.notifyOnView ? (
                 <>
                   <Bell className="h-4 w-4 text-primary" />
-                  <span className="text-xs">{t("notifications.enabled")}</span>
+                  <span className="text-xs">{tCommon("operators.on")}</span>
                 </>
               ) : (
                 <>
@@ -551,7 +622,9 @@ export function ShareLinkList({
   }, [
     t,
     tCommon,
+    tFrozen,
     showProjectColumn,
+    showCreatorColumn,
     copiedId,
     dateFormat,
     timezone,

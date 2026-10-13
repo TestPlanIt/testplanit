@@ -320,7 +320,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
 
       // Handle project assignments
       await deleteManyTemplateProjectAssignment({
-        where: { templateId: template.id },
+        where: { templateId: template.id, project: { isDeleted: false } },
       });
 
       if (data.isDefault) {

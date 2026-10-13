@@ -9,6 +9,7 @@
 
 export type TestRunType =
   | 'REGULAR'
+  | 'HYBRID'
   | 'JUNIT'
   | 'TESTNG'
   | 'XUNIT'
@@ -576,9 +577,15 @@ export interface CreateTestCasesOptions {
    * {@link BulkTestCaseInput.folderId}.
    */
   folderId: number;
-  /** Template for the batch. Defaults to the project's first enabled template. */
+  /**
+   * Template for the batch. Defaults to the template marked Default, else the
+   * project's first enabled template.
+   */
   templateId?: number;
-  /** Default CASES workflow state name; each case may override it. */
+  /**
+   * Default CASES workflow state name; each case may override it. Defaults to
+   * the state marked Default, else the first by order.
+   */
   stateName?: string;
   cases: BulkTestCaseInput[];
 }
@@ -1029,3 +1036,41 @@ export interface CreateJUnitTestStepOptions {
   stackTrace?: string;
   screenshot?: string;
 }
+
+// ============================================================================
+// Automated execution (runs dispatched from TestPlanIt)
+// ============================================================================
+
+export interface AutomationPlanCase {
+  id: number;
+  title: string;
+  className: string | null;
+  source: string;
+  automated: boolean;
+  selector: {
+    name: string;
+    className: string | null;
+    fullName: string;
+    idTokens: { brackets: string; c: string; tc: string };
+  };
+  tags: string[];
+}
+
+/** The plan a CI job pulls after TestPlanIt dispatches it (GET /api/test-runs/{id}/automation-plan). */
+export interface AutomationPlan {
+  runId: number;
+  projectId: number;
+  executionId: number | null;
+  ref: string | null;
+  run: {
+    name: string;
+    testRunType: string;
+    configuration: string | null;
+    milestone: string | null;
+  };
+  generatedAt: string;
+  cases: AutomationPlanCase[];
+  totals: { cases: number };
+}
+
+export type ExecutionConclusion = 'success' | 'failure' | 'cancelled';

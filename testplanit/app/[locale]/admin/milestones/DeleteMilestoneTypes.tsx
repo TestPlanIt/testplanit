@@ -107,7 +107,7 @@ export function DeleteMilestoneType({
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
                 <TriangleAlert className="w-6 h-6 me-2" />
-                {t("title", {
+                {tCommon("dialogs.delete.title", {
                   item: tCommon("fields.milestoneTypes"),
                 })}
               </AlertDialogTitle>

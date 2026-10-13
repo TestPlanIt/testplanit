@@ -5,14 +5,14 @@ title: File Storage & Attachments
 
 # File Storage & Attachments
 
-TestPlanIt supports file attachments across test cases, test runs, sessions, and other entities. The system supports both AWS S3 and MinIO (S3-compatible) storage backends for secure, scalable file management.
+TestPlanIt supports file attachments across test cases, test runs, sessions, and other entities. The system supports AWS S3 and S3-compatible storage backends (such as the bundled RustFS) for secure, scalable file management.
 
 ## Overview
 
 The file storage system provides:
 
 - **Secure file uploads** with signed URL generation
-- **Multiple storage backends** (AWS S3, MinIO)
+- **Multiple storage backends** (AWS S3, RustFS, and other S3-compatible services)
 - **File type validation** and size limits
 - **Attachment management** across all entities
 - **Access control** based on user permissions
@@ -46,9 +46,42 @@ AWS_S3_BUCKET_NAME=your-bucket-name
 # AWS_S3_ENDPOINT=https://your-s3-endpoint.com
 ```
 
+:::caution Avoid dots in the bucket name
+A name like `com.example.testplanit` cannot be addressed as
+`com.example.testplanit.s3.<region>.amazonaws.com`, because a TLS wildcard
+matches only one label — the certificate check fails outright.
+
+The AWS SDK detects this and falls back to path-style URLs
+(`https://s3.<region>.amazonaws.com/<bucket>/<key>`), so TestPlanIt works with
+such a bucket. But anything that builds an S3 URL by hand, or any tool assuming
+virtual-hosted addressing, will break against it. Prefer a name with no dots.
+:::
+
+#### Running without static keys
+
+When TestPlanIt runs on AWS, you can skip the two credential lines entirely:
+
+```env
+# No AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY at all
+AWS_REGION=us-east-1
+AWS_BUCKET_NAME=your-bucket-name
+```
+
+With both omitted, the AWS SDK uses its default provider chain and picks up
+whichever role the workload already has — an EC2 instance role, EKS IRSA, an
+ECS task role, SSO, or the shared config file. Nothing long-lived is stored in
+`.env`, and credentials rotate on their own.
+
+Grant the permissions below to that **role** instead of to an IAM user. Omit
+both variables or set both: supplying only one is treated as supplying neither,
+and the container will fail to reach storage.
+
+This applies to AWS only. RustFS and other S3-compatible services authenticate
+with static keys, so those deployments always set both.
+
 #### Required AWS Permissions
 
-Your AWS user needs the following S3 permissions:
+Your AWS user — or the role, if you are using the provider chain above — needs the following S3 permissions:
 
 ```json
 {
@@ -77,56 +110,30 @@ Your AWS user needs the following S3 permissions:
 }
 ```
 
-### MinIO Setup
+### Bundled Storage (RustFS)
 
-TestPlanIt supports MinIO as an S3-compatible alternative:
+The Docker Compose files and the Helm chart include [RustFS](https://github.com/rustfs/rustfs), an open-source (Apache-2.0) S3-compatible server, as the bundled file storage. For compatibility with existing configurations, the service is still named `minio` and is enabled with the `with-minio` profile of `docker-compose.prod.yml` (or the `prod` profile of `docker-compose.yml`):
 
 ```env
-# MinIO Configuration
+# Bundled storage (RustFS)
 AWS_ACCESS_KEY_ID=minioadmin
-AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin123
 AWS_REGION=us-east-1
-AWS_S3_BUCKET_NAME=testplanit
-AWS_S3_ENDPOINT=http://localhost:9000
+AWS_BUCKET_NAME=testplanit
+AWS_ENDPOINT_URL=http://minio:9000
 ```
 
-#### Docker Compose MinIO Setup
+The `minio-init` service creates the bucket on startup, allows anonymous read-only access to its files, and sets the CORS rules browsers need for presigned uploads. Files are stored in `./docker-data/rustfs`.
 
-Add MinIO to your Docker setup:
+The RustFS console is available at `http://localhost:9001` (set with `DOCKER_MINIO_CONSOLE_PORT`). Sign in with the access key and secret above.
 
-```yaml
-version: '3.8'
-services:
-  minio:
-    image: minio/minio:latest
-    container_name: testplanit-minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+:::warning Upgrading from MinIO
+Earlier releases bundled MinIO, which no longer publishes Docker images. Existing Docker Compose installs must migrate their files to RustFS, and TestPlanIt will not start until they do. Helm installs need a volume snapshot before upgrading. See [Migrating from MinIO to RustFS](/docs/migrating-from-minio).
+:::
 
-volumes:
-  minio_data:
-```
+### Other S3-Compatible Services
 
-#### MinIO Bucket Creation
-
-Create the required bucket:
-
-1. Access MinIO console at `http://localhost:9001`
-2. Login with your credentials
-3. Create a bucket named `testplanit` (or your configured bucket name)
-4. Set bucket policy to allow read/write access
+Any S3-compatible service works, including a MinIO server you run yourself. Set `AWS_ENDPOINT_URL` to the service's S3 API URL, provide its access key and secret, and create the bucket (`testplanit` or your configured `AWS_BUCKET_NAME`). See [Storage Modes](#storage-modes) to choose between direct and proxy access.
 
 ## File Upload Process
 
@@ -143,7 +150,7 @@ Users can attach files in several ways:
 
 Anywhere you can upload a file as an attachment — test cases, test runs, results, exploratory sessions — you can also attach an **external link** instead of a file. Click **Add Link** next to the file picker, paste the URL, optionally give it a display name and a short description, and click Add. The link appears in the attachment list alongside any uploaded files.
 
-External-link attachments are stored as regular `Attachments` rows with `mimeType: "text/uri-list"` — no file is uploaded to S3/MinIO, the URL itself is the payload. The attachment list renders them with a link icon (instead of a file thumbnail) and opens them in a new tab when clicked. Display, edit, and delete behave the same as for file attachments.
+External-link attachments are stored as regular `Attachments` rows with `mimeType: "text/uri-list"` — no file is uploaded to storage, the URL itself is the payload. The attachment list renders them with a link icon (instead of a file thumbnail) and opens them in a new tab when clicked. Display, edit, and delete behave the same as for file attachments.
 
 Use this when the evidence lives in another system — a Jira ticket, a CI build, a Looker dashboard, a Confluence runbook, a recorded session — rather than as a downloadable file.
 
@@ -153,20 +160,44 @@ TestPlanIt supports two upload modes depending on your deployment:
 
 #### Direct Mode (Default)
 
-Used when S3/MinIO is publicly accessible from the browser:
+Used when storage is publicly accessible from the browser:
 
 1. Frontend requests a presigned URL from the API
-2. Browser uploads directly to S3/MinIO using the presigned URL
+2. Browser uploads directly to storage using the presigned URL
 3. No file data passes through the Next.js server
 
 This is the most efficient mode as files upload directly to storage.
 
+:::danger Direct mode needs storage to be anonymously **readable**, not just reachable
+
+After uploading, the app keeps the presigned URL **with its query signature
+stripped** and stores that bare URL as the file's location. Every later read of
+that file is therefore an unauthenticated request straight to your bucket.
+
+So direct mode works only if objects can be fetched with no credentials. On AWS
+S3 that means a bucket open to the world — the opposite of the Block Public
+Access settings recommended above. **A private S3 bucket must use proxy mode.**
+
+Get this wrong and uploads appear to succeed (the `PUT` really does store the
+object) while the file is unreadable afterwards, returning:
+
+```xml
+<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>
+```
+
+:::
+
 #### Proxy Mode
 
-Used when MinIO/S3 is not publicly accessible from the browser (e.g., MinIO is running inside a Docker network):
+Used when storage is not publicly accessible from the browser. That covers two
+common setups:
+
+- The bundled storage running inside a Docker network, reachable only as `http://minio:9000`
+- **A private S3 bucket** — any bucket with Block Public Access enabled, which
+  is the recommended configuration
 
 1. Browser sends file to a Next.js server action
-2. Server action uploads the file to S3/MinIO internally
+2. Server action uploads the file to storage internally
 3. Server returns a proxy URL (`/api/storage/...`) for accessing the file
 
 Enable proxy mode by setting `IS_HOSTED=true` in your environment:
@@ -176,7 +207,19 @@ IS_HOSTED=true
 ```
 
 :::tip When to use Proxy Mode
-If your MinIO instance is only accessible within your Docker network (e.g., `http://minio:9000`) and not directly reachable from users' browsers, you **must** enable proxy mode. Without it, the app will generate presigned URLs pointing to the internal MinIO hostname, causing **mixed content errors** and **upload failures** in the browser.
+Enable proxy mode if **either** is true:
+
+- Your storage is reachable only inside the Docker network
+  (`http://minio:9000`). Without proxy mode the app hands the browser presigned
+  URLs pointing at an internal hostname, causing **mixed content errors** and
+  **upload failures**.
+- Your bucket blocks public access. Uploads will succeed and then every read
+  fails with `AccessDenied`, because the stored URL is unsigned — see the
+  warning under Direct Mode.
+
+The variable is named `IS_HOSTED` for historical reasons; it is read in exactly
+two places, both about storage, and setting it does not turn on multi-tenancy
+or anything else. Read it as "storage is not publicly readable".
 :::
 
 :::info Technical Note
@@ -185,13 +228,39 @@ Proxy mode uses Next.js Server Actions instead of Route Handlers. This is becaus
 
 #### Alternative: Public Endpoint URL
 
-If you prefer direct browser-to-storage uploads (better performance for large files), you can expose MinIO publicly and set `AWS_PUBLIC_ENDPOINT_URL` instead:
+If you prefer direct browser-to-storage uploads (better performance for large files), you can expose the storage publicly and set `AWS_PUBLIC_ENDPOINT_URL` instead:
 
 ```env
 AWS_PUBLIC_ENDPOINT_URL=https://yourdomain.com
 ```
 
-This tells the app to generate presigned URLs using your public domain instead of the internal MinIO hostname. The Nginx reverse proxy included in the Docker setup routes `/testplanit/` requests to MinIO automatically. This approach avoids the need for `IS_HOSTED=true` but requires MinIO to be reachable through your reverse proxy.
+This tells the app to generate presigned URLs using your public domain instead of the internal storage hostname. The Nginx reverse proxy included in the Docker setup routes `/testplanit/` requests to the bundled storage automatically. This approach avoids the need for `IS_HOSTED=true` but requires the storage to be reachable through your reverse proxy.
+
+#### Direct mode against AWS S3 requires a CORS policy
+
+In direct mode the browser sends the file to `s3.amazonaws.com`, a different
+origin from your instance, and the `Content-Type` header makes it a
+[preflighted request](https://developer.mozilla.org/docs/Web/HTTP/CORS). S3
+rejects the preflight unless the bucket allows your origin:
+
+```bash
+aws s3api put-bucket-cors --bucket your-bucket-name --cors-configuration '{
+  "CORSRules": [{
+    "AllowedOrigins": ["https://testplanit.example.com"],
+    "AllowedMethods": ["PUT", "POST", "GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }]
+}'
+```
+
+This failure leaves **nothing in the application logs** — the browser blocks the
+request before it reaches your server — so check the browser console rather than
+the server when an upload fails silently.
+
+Proxy mode needs no CORS rule at all: the browser only ever talks to your own
+origin.
 
 ### Upload Flow
 
@@ -199,8 +268,8 @@ This tells the app to generate presigned URLs using your public domain instead o
 2. **Validation**: System checks file type and size limits
 3. **Mode Detection**: System determines direct vs proxy mode
 4. **Upload**:
-   - *Direct mode*: Frontend requests presigned URL, uploads directly to S3/MinIO
-   - *Proxy mode*: Frontend calls server action, which uploads to S3/MinIO
+   - *Direct mode*: Frontend requests presigned URL, uploads directly to storage
+   - *Proxy mode*: Frontend calls server action, which uploads to storage
 5. **Metadata Storage**: File information stored in database
 6. **Attachment Link**: File linked to parent entity
 
@@ -219,7 +288,7 @@ A file over the limit is rejected before it is stored, with a message naming the
 maximum for that type.
 
 Attachments and inline document images share one knob, `UPLOAD_MAX_MB` (default
-`10`). Set it in the `.env` that Docker Compose reads, then rebuild:
+`10`). Set it in the `.env` that Docker Compose reads, then restart:
 
 ```bash
 # testplanit/.env
@@ -227,15 +296,16 @@ UPLOAD_MAX_MB=100
 ```
 
 ```bash
-docker compose -f docker-compose.prod.yml build prod
 docker compose -f docker-compose.prod.yml up -d prod
 ```
 
-A **rebuild** is required, not just a restart. Next.js freezes the matching
-server-action body limit into the standalone build, so a runtime-only change
-silently has no effect and uploads keep failing with an opaque error. Project
-icons and avatars are deliberately fixed — they are UI thumbnails, not
-operator-sized user payloads.
+No rebuild is needed, on an image you built or one you pulled. Next.js freezes
+the matching server-action body limit into the standalone build, so the
+container entrypoint rewrites that frozen value from `UPLOAD_MAX_MB` on every
+start — one variable drives both the transport limit and the per-file check. On
+Kubernetes, set `config.uploadMaxMb` in your Helm values instead. Project icons
+and avatars are deliberately fixed — they are UI thumbnails, not operator-sized
+user payloads.
 
 The bundled nginx separately caps any request body sent to the app at 10 MB. In
 proxy mode the file travels through the app server, so that ceiling applies to
@@ -328,11 +398,11 @@ Response:
 
 ### File Downloads
 
-Files are accessed directly through signed URLs generated during upload. The system does not provide a separate download API endpoint - instead, files are downloaded directly from S3/MinIO using the signed URLs provided during the upload process.
+Files are accessed directly through signed URLs generated during upload. The system does not provide a separate download API endpoint - instead, files are downloaded directly from storage using the signed URLs provided during the upload process.
 
 **Direct Download:**
 
-- Files are accessed via signed URLs from S3/MinIO
+- Files are accessed via signed URLs from storage
 - URLs are generated with appropriate expiration times
 - Access is controlled through the original upload permissions
 
@@ -395,9 +465,9 @@ returns `400`. Components that render through `<ProjectIcon>` (Admin) set
 **Solutions**:
 
 - Verify environment variables are set
-- Test S3/MinIO connectivity
+- Test storage connectivity
 - Check bucket exists and is accessible
-- Review AWS/MinIO credentials
+- Review storage credentials
 
 ### Performance Issues
 

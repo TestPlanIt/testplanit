@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -82,6 +83,7 @@ function IssueList() {
 
   // Distinct status/priority/issue type values for the filter dropdowns.
   const { statuses, priorities, issueTypes } = useIssueFilterOptions({
+    scopeWhere: DEFECT_SCOPE_WHERE,
     enabled: status === "authenticated",
   });
 
@@ -90,7 +92,15 @@ function IssueList() {
       return null;
     }
 
-    const conditions: Array<Record<string, unknown>> = [{ isDeleted: false }];
+    // This list spans every project. The scope predicate is still correct
+    // with zero per-project lookup because each row already carries its own
+    // project's classification outcome on this same column — there is no
+    // config to consult separately here. Ahead of the search filter so a
+    // search term can never shadow the scope.
+    const conditions: Array<Record<string, unknown>> = [
+      { isDeleted: false },
+      DEFECT_SCOPE_WHERE,
+    ];
 
     if (searchFilter.OR) {
       conditions.push(searchFilter);

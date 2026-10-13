@@ -28,19 +28,59 @@ const escapeHtml = (value: string): string =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-const applyInlineFormatting = (text: string): string => {
+export const applyInlineFormatting = (text: string): string => {
   const matches: Array<{
     start: number;
     end: number;
-    type: "bold" | "italic";
+    type: "bold" | "italic" | "code";
     content: string;
   }> = [];
 
+  const codePattern = /`([^`]+)`/g;
   const boldPattern = /\*\*(.*?)\*\*/g;
   const italicPattern = /\*(.*?)\*/g;
 
+  // A rejected match may have paired an asterisk inside an earlier span with
+  // one outside it; rescanning from the next character lets the outside one
+  // pair up on its own.
+  const overlapsExisting = (
+    pattern: RegExp,
+    start: number,
+    end: number
+  ): boolean => {
+    const overlaps = matches.some(
+      (match) => start < match.end && end > match.start
+    );
+    if (overlaps) pattern.lastIndex = start + 1;
+    return overlaps;
+  };
+
+  // Code spans first: their content is literal, so asterisks inside them are
+  // not emphasis.
+  let codeMatch: RegExpExecArray | null;
+  while ((codeMatch = codePattern.exec(text)) !== null) {
+    matches.push({
+      start: codeMatch.index,
+      end: codeMatch.index + codeMatch[0].length,
+      type: "code",
+      content: codeMatch[1],
+    });
+  }
+
   let boldMatch: RegExpExecArray | null;
   while ((boldMatch = boldPattern.exec(text)) !== null) {
+    // `****` carries no text; emitting an empty <strong> would only drop the
+    // literal asterisks the author typed.
+    if (boldMatch[1] === "") continue;
+    if (
+      overlapsExisting(
+        boldPattern,
+        boldMatch.index,
+        boldMatch.index + boldMatch[0].length
+      )
+    ) {
+      continue;
+    }
     matches.push({
       start: boldMatch.index,
       end: boldMatch.index + boldMatch[0].length,
@@ -52,17 +92,24 @@ const applyInlineFormatting = (text: string): string => {
   italicPattern.lastIndex = 0;
   let italicMatch: RegExpExecArray | null;
   while ((italicMatch = italicPattern.exec(text)) !== null) {
-    const insideBold = matches.some(
-      (bold) => italicMatch!.index > bold.start && italicMatch!.index < bold.end
-    );
-    if (!insideBold) {
-      matches.push({
-        start: italicMatch.index,
-        end: italicMatch.index + italicMatch[0].length,
-        type: "italic",
-        content: italicMatch[1],
-      });
-    }
+    // The italic pattern matches the EMPTY string between the two opening
+    // asterisks of a bold span, at the same index the bold match starts. An
+    // empty <em> emitted there rewound the write cursor to just past the
+    // asterisks, so everything after it was written a second time —
+    // "must **never** open" became "must <strong>never</strong><em></em>never**
+    // open". Skipping empty captures removes that match, and it costs nothing
+    // otherwise: an empty emphasis span has no text to mark up.
+    if (italicMatch[1] === "") continue;
+
+    const start = italicMatch.index;
+    const end = start + italicMatch[0].length;
+    // Overlap, not just "starts inside": an italic that begins before a bold
+    // or code span and runs into it would otherwise survive and produce
+    // interleaved tags. Nested emphasis (`*a **b** c*`) is left as literal
+    // asterisks rather than half-applied.
+    if (overlapsExisting(italicPattern, start, end)) continue;
+
+    matches.push({ start, end, type: "italic", content: italicMatch[1] });
   }
 
   matches.sort((a, b) => a.start - b.start);
@@ -71,15 +118,23 @@ const applyInlineFormatting = (text: string): string => {
   let currentIndex = 0;
 
   matches.forEach((match) => {
+    // Never move the cursor backwards. The guards above already keep the
+    // matches disjoint; this makes the duplication bug above structurally
+    // impossible rather than merely fixed.
+    if (match.start < currentIndex) return;
+
     if (currentIndex < match.start) {
       output += escapeHtml(text.substring(currentIndex, match.start));
     }
 
     const escapedContent = escapeHtml(match.content);
-    output +=
+    const tag =
       match.type === "bold"
-        ? `<strong>${escapedContent}</strong>`
-        : `<em>${escapedContent}</em>`;
+        ? "strong"
+        : match.type === "italic"
+          ? "em"
+          : "code";
+    output += `<${tag}>${escapedContent}</${tag}>`;
 
     currentIndex = match.end;
   });
@@ -309,4 +364,38 @@ export const serializeTipTapJSON = (value: any): string => {
     console.error("Failed to serialize TipTap JSON:", error);
     return JSON.stringify(emptyEditorContent);
   }
+};
+
+// Deterministic serialization regardless of object key order. Array order
+// is preserved — for a TipTap document it is content order.
+const stableStringify = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value as Record<string, unknown>)
+      .sort()
+      .map(
+        (key) =>
+          `${JSON.stringify(key)}:${stableStringify(
+            (value as Record<string, unknown>)[key]
+          )}`
+      )
+      .join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+};
+
+/**
+ * Structural equality for two documents in any of the shapes
+ * `ensureTipTapJSON` accepts. Postgres jsonb re-orders object keys, so a
+ * document round-tripped through the DB serializes with different key
+ * order than the same document fresh from the editor — a plain string
+ * compare of the two reads as a content change when nothing changed.
+ */
+export const tipTapJSONEquals = (a: any, b: any): boolean => {
+  return (
+    stableStringify(ensureTipTapJSON(a)) ===
+    stableStringify(ensureTipTapJSON(b))
+  );
 };

@@ -18,6 +18,8 @@ import {
   SmallMultipleData,
 } from "./ReportSmallMultiplesGroupedBar";
 import { ReportSunburstChart } from "./ReportSunburstChart";
+import { CodePinCoverageChart } from "./CodePinCoverageChart";
+import { ImpactAnalysisChart } from "./ImpactAnalysisChart";
 import { TestCaseHealthChart } from "./TestCaseHealthChart";
 
 // Helper functions for report type matching
@@ -93,11 +95,18 @@ export interface MultiLineSeries {
     formattedValue: string;
   }[];
   color?: string;
+  /** Drawn heavier and dashed — the total line above the per-series lines. */
+  emphasis?: boolean;
 }
+
+/** The total line's colour: the same purple automation trends uses. */
+const TOTAL_SERIES_COLOR = "hsl(262, 83%, 58%)";
 
 // Props for the main chart component
 interface ReportChartProps {
   results: any[];
+  /** Multi-line chart: also plot the sum of every series at each date. */
+  showTotals?: boolean;
   dimensions: { value: string; label: string }[];
   metrics: { value: string; label: string; apiLabel?: string }[];
   reportType?: string; // Optional report type to handle special cases like automation-trends
@@ -143,6 +152,8 @@ const getChartType = (
     "issueTracker",
     "priority",
     "configuration",
+    "trigger",
+    "codeRepository",
   ];
 
   if (dimCount === 0 || metricCount === 0) {
@@ -342,6 +353,8 @@ const getColor = (
       "session",
       "issueType",
       "configuration",
+      "trigger",
+      "codeRepository",
     ].includes(dimValueKey)
   ) {
     const itemName = getDimensionValue(row, dimension);
@@ -352,6 +365,7 @@ const getColor = (
 
 export const ReportChart: React.FC<ReportChartProps> = ({
   results,
+  showTotals = false,
   dimensions,
   metrics,
   reportType,
@@ -501,6 +515,16 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   // Shows health status distribution and health score vs days since execution
   if (reportType && matchesReportType(reportType, "test-case-health")) {
     return <TestCaseHealthChart data={results} projectId={projectId} />;
+  }
+
+  // Impact analysis history: summary tiles + analyses per week by trigger.
+  if (reportType && matchesReportType(reportType, "impact-analysis")) {
+    return <ImpactAnalysisChart data={results} />;
+  }
+
+  // Code pin coverage: summary tiles + pins vs uncovered files by directory.
+  if (reportType && matchesReportType(reportType, "code-pin-coverage")) {
+    return <CodePinCoverageChart data={results} />;
   }
 
   // Special handling for issue test coverage report - use stacked bar chart
@@ -890,6 +914,37 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       });
 
       const transformedData = Array.from(seriesMap.values());
+
+      // The total line: the plotted series summed at each date, drawn last
+      // so it sits above them. Only when the series split a single metric,
+      // and never for a percentage — rates do not add up.
+      if (
+        showTotals &&
+        isSingleMetric &&
+        otherDimensions.length > 0 &&
+        transformedData.length > 1 &&
+        !isPercentageMetric(chartMetrics[0])
+      ) {
+        const metric = chartMetrics[0];
+        const sums = new Map<number, number>();
+        transformedData.forEach((series) =>
+          series.values.forEach(({ date, value }) => {
+            const time = date.getTime();
+            sums.set(time, (sums.get(time) ?? 0) + value);
+          })
+        );
+        transformedData.push({
+          name: t("common.labels.total"),
+          color: TOTAL_SERIES_COLOR,
+          emphasis: true,
+          values: Array.from(sums.entries()).map(([time, value]) => ({
+            date: new Date(time),
+            value,
+            formattedValue: formatMetricValue(value, metric),
+          })),
+        });
+      }
+
       // Rows arrive in dimension order, not date order, so sort each series
       // chronologically to keep the connecting line from zig-zagging.
       transformedData.forEach((series) =>

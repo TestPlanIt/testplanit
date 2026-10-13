@@ -8,6 +8,9 @@
  *   - `mintScimTokenAction`  -- create a new token, surface the plaintext
  *                                bearer to the admin exactly ONCE in the
  *                                action response, audit with the new id.
+ *   - `rotateScimTokenAction` -- rotate a token's secret in place with an
+ *                                overlap window, surfacing the replacement
+ *                                bearer once and auditing the rotation.
  *   - `revokeScimTokenAction` -- soft-revoke a token, audit the revocation.
  *   - `testScimProbeAction`   -- run the server-side Test SCIM probe and
  *                                audit the attempt (success or failure).
@@ -32,8 +35,13 @@
 
 import { z } from "zod/v4";
 
+import { SCIM_MAX_ROTATION_OVERLAP_MS } from "~/lib/scim/constants";
 import { probeScimToken } from "~/lib/scim/probe";
-import { mintScimToken, revokeScimToken } from "~/lib/scim/tokens";
+import {
+  mintScimToken,
+  revokeScimToken,
+  rotateScimToken,
+} from "~/lib/scim/tokens";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
@@ -104,6 +112,88 @@ export async function mintScimTokenAction(
     }
     console.error("[scim/tokens] mint failed", err);
     return { success: false, error: "Failed to mint SCIM token" };
+  }
+}
+
+const rotateScimTokenInputSchema = z.object({
+  tokenId: z.string().min(1),
+  /**
+   * How long the superseded bearer keeps working. Zero cuts over
+   * immediately; the cap bounds how long two live secrets can coexist.
+   */
+  overlapMs: z.number().int().min(0).max(SCIM_MAX_ROTATION_OVERLAP_MS),
+});
+
+export type RotateScimTokenInput = z.infer<typeof rotateScimTokenInputSchema>;
+
+export interface RotateScimTokenActionResult {
+  success: boolean;
+  /**
+   * The replacement bearer, surfaced ONCE. Same show-once containment rules
+   * as the mint flow: transient `useState` only, never a query cache.
+   */
+  plaintext?: string;
+  tokenPrefix?: string;
+  /** When the superseded bearer stops working; null when there is no overlap. */
+  previousTokenExpiresAt?: string | null;
+  error?: string;
+}
+
+/**
+ * Rotate a token's secret in place with an overlap window.
+ *
+ * Preferred over revoke + mint because the row — and therefore every
+ * `scimTokenId` provenance link and the token's name and IdP — survives, so
+ * the replacement credential still owns the directory its predecessor
+ * provisioned.
+ */
+export async function rotateScimTokenAction(
+  input: RotateScimTokenInput
+): Promise<RotateScimTokenActionResult> {
+  const session = await getServerAuthSession();
+  if (!session?.user?.id || session.user.access !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  let validated: RotateScimTokenInput;
+  try {
+    validated = rotateScimTokenInputSchema.parse(input);
+  } catch {
+    return { success: false, error: "Invalid input" };
+  }
+
+  try {
+    const { token, plaintext } = await rotateScimToken(
+      validated.tokenId,
+      validated.overlapMs,
+      session.user.id
+    );
+
+    await captureAuditEvent({
+      action: "UPDATE",
+      entityType: "ScimToken",
+      entityId: token.id,
+      entityName: token.name,
+      userId: session.user.id,
+      metadata: {
+        scimTokenId: token.id,
+        scimTokenRotated: true,
+        overlapMs: validated.overlapMs,
+        previousTokenExpiresAt:
+          token.previousTokenExpiresAt?.toISOString() ?? null,
+      },
+    });
+
+    return {
+      success: true,
+      plaintext,
+      tokenPrefix: token.tokenPrefix,
+      previousTokenExpiresAt:
+        token.previousTokenExpiresAt?.toISOString() ?? null,
+    };
+  } catch (err) {
+    console.error("[scim/tokens] rotate failed", err);
+    return { success: false, error: "Failed to rotate SCIM token" };
   }
 }
 

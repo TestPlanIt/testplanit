@@ -219,4 +219,132 @@ describe("testplanit_cases_create_many", () => {
       .text;
     expect(text).not.toContain(env.apiToken);
   });
+
+  // #597: the tool is a thin pipe for `issues` — the host resolves the keys,
+  // so anything the tool rewrites here is a key the tracker will never match.
+  it("passes per-case issues keys through to the bulk-create body untouched", async () => {
+    mockFetchOnce(200, {
+      success: true,
+      importedCount: 2,
+      failedCount: 0,
+      results: [
+        { id: "0", name: "A", status: "success", caseId: 1 },
+        { id: "1", name: "B", status: "success", caseId: 2 },
+      ],
+    });
+
+    await callTool({
+      projectId: 7,
+      folderId: 12,
+      cases: [
+        { name: "A", issues: ["PROJ-1"] },
+        { name: "B", issues: ["PROJ-1", "proj-2", "ABC_DEF-99"] },
+      ],
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    // Verbatim: no dedup, no upper-casing, no reordering, no flattening to a
+    // batch-level field — the host owns all of that.
+    expect(body.cases).toEqual([
+      { name: "A", issues: ["PROJ-1"] },
+      { name: "B", issues: ["PROJ-1", "proj-2", "ABC_DEF-99"] },
+    ]);
+  });
+
+  it("forwards batch-level integrationId, and omits it when unset", async () => {
+    mockFetchOnce(200, {
+      success: true,
+      importedCount: 1,
+      failedCount: 0,
+      results: [{ id: "0", name: "A", status: "success", caseId: 1 }],
+    });
+
+    await callTool({
+      projectId: 7,
+      folderId: 12,
+      integrationId: 9,
+      cases: [{ name: "A", issues: ["PROJ-1"] }],
+    });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toMatchObject(
+      { integrationId: 9 },
+    );
+
+    mockFetchOnce(200, {
+      success: true,
+      importedCount: 1,
+      failedCount: 0,
+      results: [{ id: "0", name: "A", status: "success", caseId: 1 }],
+    });
+
+    await callTool({
+      projectId: 7,
+      folderId: 12,
+      cases: [{ name: "A", issues: ["PROJ-1"] }],
+    });
+
+    // Absent rather than `integrationId: undefined` — the host treats the key
+    // being present as "the caller disambiguated".
+    expect(
+      JSON.parse(fetchMock.mock.calls[1][1].body as string),
+    ).not.toHaveProperty("integrationId");
+  });
+
+  it("surfaces a per-case issue-key resolution failure without failing the tool", async () => {
+    mockFetchOnce(200, {
+      success: true,
+      importedCount: 1,
+      failedCount: 1,
+      results: [
+        { id: "0", name: "good", status: "success", caseId: 5 },
+        {
+          id: "1",
+          name: "bad",
+          status: "error",
+          error: 'Issue key "TYPO-9": Issue does not exist.',
+        },
+      ],
+    });
+
+    const result = await callTool({
+      projectId: 7,
+      folderId: 12,
+      cases: [
+        { name: "good", issues: ["PROJ-1"] },
+        { name: "bad", issues: ["TYPO-9"] },
+      ],
+    });
+
+    // One unresolvable key fails its own case only — the batch is a 200 and
+    // the tool result is not an error envelope.
+    expect(result.isError).toBeFalsy();
+    const sc = result.structuredContent as {
+      importedCount: number;
+      failedCount: number;
+      results: Array<{ name: string; status: string; error?: string }>;
+    };
+    expect(sc.importedCount).toBe(1);
+    expect(sc.failedCount).toBe(1);
+    expect(sc.results[0]).toMatchObject({ name: "good", status: "success" });
+    expect(sc.results[1].status).toBe("error");
+    expect(sc.results[1].error).toContain("TYPO-9");
+  });
+
+  it("maps a batch-wide integration failure (400) to a tool error", async () => {
+    mockFetchOnce(400, {
+      error:
+        "Project 7 has more than one active issue-tracker integration. Pass integrationId.",
+    });
+
+    const result = await callTool({
+      projectId: 7,
+      folderId: 12,
+      cases: [{ name: "A", issues: ["PROJ-1"] }],
+    });
+
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ type: string; text: string }>)[0]!
+      .text;
+    expect(text).toContain("integrationId");
+  });
 });

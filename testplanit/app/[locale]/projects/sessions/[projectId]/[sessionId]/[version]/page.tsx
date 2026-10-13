@@ -277,7 +277,7 @@ export default function SessionVersionPage() {
                 >
                   <SelectTrigger className="w-fit">
                     <SelectValue
-                      placeholder={t("sessions.version.selectVersion")}
+                      placeholder={tCommon("placeholders.selectVersion")}
                     />
                   </SelectTrigger>
                   <SelectContent>

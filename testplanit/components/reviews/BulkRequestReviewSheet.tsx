@@ -229,7 +229,7 @@ export function BulkRequestReviewSheet({
               className="text-sm font-medium"
               htmlFor="bulk-request-review-assignee"
             >
-              {t("reviews.requester.assigneeLabel")}
+              {t("common.ui.issues.assignee")}
             </label>
             <div id="bulk-request-review-assignee">
               <AssigneeCombobox

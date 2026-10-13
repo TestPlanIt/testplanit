@@ -29,7 +29,8 @@ export interface TestRunWakeUp {
     | "test_run.result_added"
     | "test_run.state_changed"
     | "test_run.completed"
-    | "test_run.case.status_changed";
+    | "test_run.case.status_changed"
+    | "test_run.execution_changed";
   runId?: number;
   targetId?: number;
 }

@@ -561,7 +561,9 @@ export function CreateIssueJiraForm({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={t("issues.selectProject")} />
+                        <SelectValue
+                          placeholder={t("common.aria.selectProject")}
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

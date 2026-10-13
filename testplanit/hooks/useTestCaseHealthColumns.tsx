@@ -7,7 +7,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "~/zenstack/models";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { format, formatDistanceToNow } from "date-fns";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -19,6 +22,7 @@ interface TestCaseHealthRow {
   testCaseName: string;
   testCaseSource: string;
   testCaseHasParameters: boolean;
+  testCaseAutomated: boolean;
   createdAt: string;
   lastExecutedAt: string | null;
   daysSinceLastExecution: number | null;
@@ -58,7 +62,7 @@ export function useTestCaseHealthColumns(
       columns.push(
         columnHelper.accessor(projectAccessor, {
           id: "project",
-          header: () => <span>{t("reports.dimensions.project")}</span>,
+          header: () => <span>{tCommon("fields.project")}</span>,
           cell: (info) => {
             const projectData = info.row.original.project;
             return (
@@ -68,7 +72,7 @@ export function useTestCaseHealthColumns(
             );
           },
           enableSorting: true,
-          sortingFn: (rowA, rowB) => {
+          sortFn: (rowA, rowB) => {
             const aVal = rowA.original.project;
             const bVal = rowB.original.project;
             const aStr = aVal?.name || String(aVal || "");
@@ -95,6 +99,7 @@ export function useTestCaseHealthColumns(
               name={info.row.original.testCaseName}
               source={info.row.original.testCaseSource as RepositoryCaseSource}
               hasParameters={info.row.original.testCaseHasParameters}
+              automated={info.row.original.testCaseAutomated}
               link={
                 rowProjectId
                   ? `/projects/repository/${rowProjectId}/${info.row.original.testCaseId}`
@@ -173,7 +178,7 @@ export function useTestCaseHealthColumns(
           );
         },
         enableSorting: true,
-        sortingFn: (rowA, rowB) => {
+        sortFn: (rowA, rowB) => {
           const statusPriority: Record<HealthStatus, number> = {
             always_failing: 1,
             never_executed: 2,
@@ -257,7 +262,7 @@ export function useTestCaseHealthColumns(
           if (!lastExecuted) {
             return (
               <span className="text-muted-foreground italic">
-                {t("reports.ui.testCaseHealth.never")}
+                {tCommon("never")}
               </span>
             );
           }
@@ -278,7 +283,7 @@ export function useTestCaseHealthColumns(
           );
         },
         enableSorting: true,
-        sortingFn: (rowA, rowB) => {
+        sortFn: (rowA, rowB) => {
           const aVal = rowA.original.lastExecutedAt;
           const bVal = rowB.original.lastExecutedAt;
           if (!aVal && !bVal) return 0;
@@ -307,7 +312,7 @@ export function useTestCaseHealthColumns(
     columns.push(
       columnHelper.accessor("passRate", {
         id: "passRate",
-        header: () => <span>{t("reports.ui.testCaseHealth.passRate")}</span>,
+        header: () => <span>{tCommon("fields.passRate")}</span>,
         cell: (info) => {
           const rate = info.getValue();
           const total = info.row.original.totalExecutions;

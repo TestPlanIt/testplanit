@@ -328,6 +328,7 @@
       "locale": "言語",
       "timezone": "タイムゾーン",
       "itemsPerPage": "ページあたりの項目数",
+      "detailsDisplayMode": "詳細を開く",
       "notificationMode": "通知",
       "value": "価値",
       "key": "鍵",
@@ -379,6 +380,7 @@
       "issues": "問題",
       "internalIssues": "内部問題",
       "externalIssues": "{provider} 問題",
+      "requirements": "要件",
       "data": "データ",
       "note": "注記",
       "externalId": "外部ID",
@@ -405,6 +407,7 @@
       "folder": "フォルダ",
       "parentFolder": "新規ケースの親フォルダ",
       "multipleValues": "複数の値",
+      "multipleValuesCount": "複数の値 ({count, number})",
       "provider": "プロバイダー",
       "updatedAt": "更新日時",
       "tools": "ツール",
@@ -455,7 +458,9 @@
         "urlRequired": "URLは必須です",
         "invalidUrl": "無効なURL形式"
       },
-      "worker": "ワーカー"
+      "worker": "ワーカー",
+      "hasCodePins": "コードピンあり",
+      "noCodePins": "コードピンなし"
     },
     "filter": {
       "placeholder": "フィルター {item}..."
@@ -560,7 +565,6 @@
       "selectTemplate": "テンプレートを選択",
       "duration": "例：1時間30分または90分",
       "docs": "ドキュメントを追加...",
-      "select": "選択",
       "selectState": "州を選択",
       "selectConfiguration": "構成を選択",
       "selectConfigurations": "構成を選択",
@@ -581,14 +585,12 @@
       "selectAModel": "モデルを選択してください",
       "selectWorkflowType": "ワークフローの種類を選択してください",
       "addAnOption": "オプションを追加する",
-      "addADescription": "説明を追加してください...",
       "optionalDescription": "任意での説明...",
       "projectNotes": "プロジェクトノート…",
       "filterByName": "名前で絞り込む...",
       "filterByValue": "値で絞り込む...",
       "selectOperator": "演算子を選択",
       "searchIcons": "アイコンを検索...",
-      "value": "価値",
       "stepCount": "歩数",
       "enterText": "テキストを入力してください...",
       "enterUrl": "URLを入力してください",
@@ -618,6 +620,7 @@
       "noSuccessStatus": "成功ステータスが選択されていません",
       "missingTestRunCase": "テスト実行ケースIDがありません",
       "fieldRequired": "この項目は必須です",
+      "restrictedFieldRequired": "このフィールドを編集できるユーザーのみがこれを入力できます。",
       "projectNameExists": "この名前のプロジェクトは既に存在します",
       "defaultNotFound": "デフォルト値が見つかりません",
       "emailExists": "このメールアドレスを持つユーザーは既に存在します",
@@ -709,15 +712,10 @@
       "twoFactorVerification": "二要素認証",
       "changePassword": "パスワードを変更する",
       "twoFactorSetup": "二段階認証の設定",
-      "signUp": "サインアップ",
-      "signIn": "サインイン",
       "verifyEmail": "メールアドレスを確認する",
       "trialExpired": "試用期間が終了しました",
       "linkSsoAccount": "SSOアカウントをリンクする",
       "userProfile": "ユーザープロフィール",
-      "users": "ユーザー",
-      "issues": "問題",
-      "tags": "タグ",
       "tagDetails": "タグの詳細",
       "aiModels": "AIモデル",
       "integrations": "統合",
@@ -725,28 +723,24 @@
       "advanced": "高度な",
       "reviews": "レビュー",
       "webhooks": "ウェブフック",
+      "automation": "自動化実行",
       "shares": "株式",
       "datasets": "共有データセット",
       "repository": "リポジトリ",
       "testCaseVersion": "テストケースバージョン",
       "duplicateTestCases": "重複したテストケース",
-      "documentation": "文書",
-      "sharedSteps": "共有ステップ",
       "stepDuplicates": "ステップの重複",
-      "sessions": "セッション",
       "sessionVersion": "セッションバージョン",
-      "milestones": "マイルストーン",
-      "testRuns": "テスト実行",
       "reports": "報告書",
       "adminSamlConfig": "管理者 - SAML設定",
       "apiDocumentation": "APIドキュメント",
-      "sharedContent": "共有コンテンツ"
+      "sharedContent": "共有コンテンツ",
+      "impact": "影響分析"
     },
     "aria": {
       "userMenu": "ユーザーメニュー",
       "selectProject": "プロジェクトを選択",
       "togglePanel": "パネルの切り替え",
-      "folder": "フォルダ",
       "toggleActive": "アクティブ状態を切り替える",
       "toggleDetails": "詳細を表示/非表示にする",
       "requiresReview": "審査が必要",
@@ -767,6 +761,7 @@
       "deletedUser": "削除されたユーザー",
       "restrictedField": "制限付きフィールド",
       "backToTestCase": "テストケースに戻る",
+      "backToRequirements": "要件に戻る",
       "selectDeselectAllApprove": "関連するすべての領域について承認を選択または選択解除します。",
       "selectDeselectAllReadSensitive": "関連するすべての領域について、読み取り専用を選択または選択解除します。"
     },
@@ -872,7 +867,6 @@
     "for": "のために",
     "and": "そして",
     "branding": {
-      "name": "TestPlanIt",
       "logoAlt": "TestPlanIt ロゴ",
       "tagline": "あらゆるものをテストする"
     },
@@ -1091,7 +1085,6 @@
         "viewIn": "表示",
         "fieldType": "フィールドタイプ: ",
         "richTextContent": "リッチテキストコンテンツ",
-        "invalidContent": "無効なコンテンツ",
         "fieldInformation": "フィールド情報"
       },
       "onboarding": {
@@ -1104,8 +1097,7 @@
         "zoomDonutChart": "ズームドーナツチャート",
         "zoomExecutionTimeline": "実行タイムラインをズーム",
         "zoomHistogramChart": "ズームヒストグラムチャート",
-        "duration": "持続時間: {seconds} 秒",
-        "durationLabel": "間隔"
+        "duration": "持続時間: {seconds} 秒"
       },
       "import": {
         "encoding": {
@@ -1117,7 +1109,10 @@
       },
       "loadingIssueTracker": "問題追跡情報を読み込んでいます...",
       "enterDocumentation": "ドキュメントを入力してください...",
-      "noAutomatedTestResults": "この実行では自動テストの結果が見つかりません。"
+      "noAutomatedTestResults": "この実行では自動テストの結果が見つかりません。",
+      "automatedResults": "自動化された結果",
+      "latestAutomatedResult": "最新の自動化結果",
+      "hybridRunHint": "このテスト実行には手動テストケースと自動化されたテストケースが含まれます。自動化された結果がテスト実行に報告されると、各ケースのステータスが更新されます。いずれのケースも手動で実行できます。"
     },
     "time": {
       "minutes": "{count, plural, =1 {分} other {分}}",
@@ -1259,7 +1254,6 @@
       }
     },
     "verifyEmail": {
-      "title": "メールを確認する",
       "loading": "メールを確認しています...",
       "success": "メールの確認に成功しました",
       "error": "メールの確認に失敗しました",
@@ -1311,10 +1305,8 @@
       "expiredDescription": "パスワードの有効期限が切れています。続行するには、新しいパスワードを設定してください。",
       "newPasswordLabel": "新しいパスワード",
       "confirmPasswordLabel": "新しいパスワードを確認する",
-      "submitButton": "パスワードを変更する",
       "signOut": "代わりにログアウトしてください",
       "passwordsMustMatch": "パスワードが一致しません。",
-      "passwordRequired": "パスワードが必要です。",
       "genericError": "エラーが発生しました。もう一度お試しください。",
       "policyTitle": "パスワード要件:",
       "policyMinLength": "少なくとも {count, number} 文字",
@@ -1326,7 +1318,6 @@
   },
   "account": {
     "linkSso": {
-      "title": "SSOアカウントをリンク",
       "description": "アカウントをシングルサインオンプロバイダーにリンクする",
       "availableProviders": "利用可能なSSOプロバイダー",
       "linkWithGoogle": "Googleとリンク",
@@ -1386,8 +1377,7 @@
       "latestTestRuns": "最新のテスト実行",
       "testCaseBreakdown": "テストケースの内訳",
       "noTestCases": "プロジェクトリポジトリが空です。リポジトリを使用してテストケースを追加してください。",
-      "noTestCasesPrefix": "プロジェクトリポジトリは空です。テストケースを追加するには、",
-      "noTestCasesLink": "リポジトリ"
+      "noTestCasesPrefix": "プロジェクトリポジトリは空です。テストケースを追加するには、"
     },
     "icon": {
       "upload": {
@@ -1407,10 +1397,8 @@
         "title": "反復プロパティマッピング",
         "description": "インポート時に、各テストケースの反復インデックスは、以下のエントリのいずれかに一致する名前を持つプロパティ、属性、または特性（JUnitプロパティ、TestNG属性、xUnit特性、NUnitプロパティ）から読み取られます。エミッターで使用する名前を追加してください。ルックアップでは大文字と小文字は区別されません。",
         "addLabel": "プロパティ名を追加する",
-        "addButton": "追加",
         "placeholder": "例：イテレーションインデックス",
         "defaultHint": "デフォルト：反復処理（大文字小文字を区別しない）。オプトインするには、カスタム名を追加してください。",
-        "saveButton": "保存",
         "saveSuccess": "反復処理のプロパティ名が保存されました。",
         "saveError": "イテレーションプロパティ名を保存できませんでした。",
         "removeAria": "{name} を削除",
@@ -1476,7 +1464,6 @@
           "removeProjectConfirmation": "このプロジェクトを削除すると、そこからの課題の同期が停止します。既に同期された課題は削除されません。続行しますか？",
           "removeProjectWebhookCascadeBullet": "このプロジェクトの受信ウェブフックも削除されます。",
           "keepProject": "プロジェクトを維持する",
-          "defaultIndicator": "デフォルト",
           "syncStatusSyncing": "同期中",
           "syncStatusCompleted": "同期済み",
           "syncStatusError": "同期エラー",
@@ -1500,11 +1487,13 @@
           "importDescription": "このリンクされたプロジェクトから課題を取得し、あなたのプロジェクトに取り込みます。既存の課題は重複しません。インポートされた課題は同期を通じて最新の状態に保たれます。",
           "importUpdatedWithin": "更新期間",
           "importLastDays": "過去{days}日間",
+          "importAllHistory": "すべての履歴",
           "importMax": "インポートする最大数",
+          "importCapHint": "{cap}のデフォルトを使用する場合は、空白のままにしてください。",
+          "importAllHistoryNoCapHint": "すべての履歴では、上限なしで一致するすべての問題をインポートします。",
           "importPreview": "プレビュー",
           "importPreviewResult": "約{count, plural, other {#件の課題}}がこのフィルターに一致します。最大{cap}件までインポートされます。",
           "importOverCap": "これは上限の{cap}件を超えています。最近更新された{cap}件のみがインポートされます。",
-          "importStart": "インポート",
           "importStarted": "インポートを開始しました。まもなく課題が表示されます。",
           "importFailed": "インポートに失敗しました",
           "importPreviewFailed": "一致数を見積もれませんでした",
@@ -1519,6 +1508,41 @@
             "autoTrackProjectsLabel": "これらの接続されたプロジェクトを新しいマイルストーンについてスキャンする",
             "settingsSaved": "マイルストーン同期設定を保存しました",
             "saveError": "マイルストーン同期設定の保存に失敗しました"
+          },
+          "requirementsConfig": {
+            "title": "要件の同期",
+            "description": "要件としてカウントするトラッカーの問題タイプを同期します。既存の問題はそれに合わせて再分類されます。",
+            "enableLabel": "要件分類を有効にする",
+            "issueTypesLabel": "問題の種類",
+            "issueTypesPlaceholder": "問題の種類を選択",
+            "issueTypesAriaLabel": "要件の問題タイプ",
+            "labelsLabel": "ラベル",
+            "labelsPlaceholder": "ラベルを選択",
+            "labelsAriaLabel": "要件ラベル",
+            "labelPreviewNote": "選択したラベルが付いているイシューは、保存すると要件になります。選択したラベルが付いていないイシューは、要件ではなくなります。",
+            "previewHeading": "この変更による影響",
+            "becomingRequirements": "{count, plural, other {{count}件の問題が要件になります}}",
+            "stoppingRequirements": "{count, plural, other {{count}件の問題が要件ではなくなります}}",
+            "detachedCallout": "{count, plural, other {そのうち{count}件はトラッカーから切断されているか、ローカルで編集されているため、要件のステータスが失われます}}",
+            "reversibilityNote": "タイプを再度追加すると、分類が復元されます。何も削除されません。",
+            "noChanges": "適用する分類の変更はありません。",
+            "importOfferBodyExact": "{count, plural, other {選択したタイプの{count}件の問題がトラッカーにあります}}",
+            "importOfferBodyFloor": "{count, plural, other {選択したタイプの問題が少なくとも{count}件トラッカーにあります — インポートはこの数に制限されません}}",
+            "importOfferBodyUnknown": "選択したタイプの問題がトラッカーに何件あるか正確には判断できませんでした。それでもインポートは続行でき、一致するすべての項目が取り込まれます。",
+            "importOfferConfirm": "今すぐインポート",
+            "importStarted": "インポートを開始しました。問題はインポートされると表示されます。",
+            "importFailed": "インポートを開始できませんでした",
+            "importAlreadyRunning": "このトラッカープロジェクトでは、インポートが既に実行中です",
+            "importNoTypes": "インポートする前に、少なくとも1つの問題タイプを選択して保存してください",
+            "importCountUnavailable": "トラッカーに何件の問題があるか判断できませんでした",
+            "importStopAction": "停止",
+            "importStopConfirmTitle": "このインポートを停止しますか？",
+            "importStopConfirmBody": "停止は、現在のページのインポートが完了した後に有効になります。既にインポートされた問題はそのまま残ります。",
+            "importStopRequested": "停止がリクエストされました — インポートは現在のページの後に停止します。",
+            "importStopNotRunning": "そのインポートは既に完了しているか、既に停止されています。",
+            "importCancelled": "インポートがキャンセルされました",
+            "settingsSaved": "要件タイプの設定が保存されました",
+            "saveError": "要件タイプの設定の保存に失敗しました"
           }
         },
         "integrationAssigned": "統合が正常に割り当てられました",
@@ -1559,8 +1583,6 @@
         "directionInbound": "受信",
         "directionOutbound": "発信",
         "inboundAddButtonAllConfigured": "インバウンドアダプタは既に設定済みです。",
-        "inboundAddButtonNoIntegration": "インバウンドWebhookを追加する前に、このプロジェクトに課題統合を割り当ててください。",
-        "inboundEmptyWithIntegration": "受信ウェブフックが設定されていません。 <link>割り当てられた課題統合から課題の更新情報を受け取るには、</link> を 1 つ追加してください。",
         "inboundEmptyNoIntegration": "受信した課題の更新情報を受け取るには、課題統合 <link>が必要です。開始するには、プロジェクトに課題統合</link> を割り当ててください。",
         "deliveriesEmptyNoConfigs": "まだWebhookによる配信は開始されていません。受信を開始するには、他のタブで受信または送信のWebhookを作成してください。",
         "noConfig": "ウェブフックが設定されていません",
@@ -1574,7 +1596,6 @@
         "rotateSecret": "秘密を回転させる",
         "rotateConfirmTitle": "ウェブフックのシークレットをローテーションしますか？",
         "rotateConfirm": "シークレットをローテーションすると、課題追跡システム側で設定を更新するまで、現在の設定が無効になります。続行しますか？",
-        "isActive": "有効",
         "deleteConfirmTitle": "ウェブフックの設定を削除しますか？",
         "deleteConfirm": "このWebhook設定を削除しますか？受信する配信が拒否されます。",
         "sendTest": "テスト用ウェブフックを送信",
@@ -1589,23 +1610,19 @@
         "urlCopied": "Webhook URLがクリップボードにコピーされました",
         "secretCopied": "Webhook シークレットがクリップボードにコピーされました",
         "nextSteps": "次に、これらの情報を課題トラッカーのWebhook設定に貼り付け、下の「テストWebhookを送信」をクリックしてパイプラインを確認してください。シークレットを保存したら「完了」をクリックしてください。シークレットは再度表示されません。",
-        "revealDone": "終わり",
         "pageTitle": "ウェブフック",
         "inboundTab": "受信",
         "outboundTab": "発信",
         "outboundEmpty": "送信ウェブフックが設定されていません。TestPlanItイベントをSlackまたはHMAC署名付きURLに送信するには、ウェブフックを追加してください。",
         "outboundAddButton": "アウトバウンドWebhookを追加する",
         "outboundCreateTitle": "新しいアウトバウンドウェブフック",
-        "outboundCreateName": "名前",
         "outboundCreateNameHelp": "この宛先のラベル。例：「エンジニアリングSlack」。",
         "outboundCreateNamePlaceholder": "エンジニアリングの余裕",
         "outboundCreateNameRequired": "名前は必須です。",
         "outboundCreateUrlRequired": "URLは必須です。",
         "outboundCreateUrlInvalid": "有効なURLを入力してください（例：https://example.com/...）。",
         "outboundCreateUrlMustUseHttps": "URLはHTTPSを使用する必要があります",
-        "outboundNameLabel": "名前",
         "outboundUnnamedConfig": "（名前のないウェブフック）",
-        "outboundCreateUrl": "URL",
         "outboundCreateUrlHelp": "宛先URL。Slackの受信Webhook URLは自動的に検出されます。",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "検出されました: Slack",
@@ -1673,14 +1690,11 @@
         "outboundSubsCases": "事例",
         "outboundSubsSelectAll": "このセクションのすべてを選択してください",
         "outboundCreateSubmit": "ウェブフックを作成する",
-        "outboundCreateCancel": "キャンセル",
         "outboundCreateSuccess": "送信用ウェブフックが作成されました。",
         "outboundCreateError": "送信ウェブフックの作成に失敗しました。",
         "outboundUrlLabel": "宛先URL",
-        "outboundActiveToggle": "アクティブ",
         "outboundSlackHint": "このURLは機密情報です。このURLを知っている人は誰でもあなたのチャンネルに投稿できます。",
         "outboundHmacSecretsTitle": "秘密の署名",
-        "outboundHmacActiveSecret": "アクティブ",
         "outboundHmacInactiveSecret": "非アクティブ",
         "outboundHmacRetiringSecret": "退職",
         "outboundHmacAutoRetireIn": "{days, number} 日後に自動引退します",
@@ -1707,19 +1721,12 @@
         "outboundDeleteError": "ウェブフックの削除に失敗しました。",
         "outboundSecretCopy": "コピーシークレット",
         "outboundSecretShownOnce": "この秘密は今すぐ守ってください。二度と明かすことはできません。",
-        "outboundSecretDone": "終わり",
         "inboundAddButton": "インバウンドウェブフックを追加する",
-        "inboundChooserTitle": "アダプターを選択してください",
-        "inboundChooserDescription": "TestPlanItにWebhookを送信する課題追跡システムを選択してください。各プロジェクトには、Jira、GitHub、Azure DevOpsの受信Webhookをそれぞれ1つずつ設定できます。",
         "inboundChooserJira": "ジラ",
         "inboundChooserGithub": "GitHub",
         "inboundChooserAdo": "Azure DevOps",
         "inboundChooserGitlab": "GitLab",
         "inboundChooserGitea": "ギテア",
-        "inboundChooserAlreadyConfigured": "既に設定済み",
-        "inboundChooserSubmit": "続く",
-        "inboundChooserCancel": "キャンセル",
-        "inboundEmpty": "受信Webhookが設定されていません。Jira、GitHub、GitLab、Gitea、またはAzure DevOpsからの課題更新情報を受信するには、受信Webhookを追加してください。",
         "inboundJiraTitle": "JiraインバウンドWebhook",
         "inboundGithubTitle": "GitHubの受信Webhook",
         "inboundGithubScopeHint": "GitHub <code>の課題</code> のイベントは、リンクされた TestPlanIt の課題を更新します。プル リクエストと課題コメントのイベントは受け付けられますが、課題はまだ更新されません。",
@@ -1730,7 +1737,6 @@
         "inboundAdoTitle": "Azure DevOps インバウンド Webhook",
         "inboundAdoScopeHint": "Azure DevOps <code>workitem.updated</code> イベントは、リンクされた TestPlanIt の課題を更新します。その他のイベントも受け付けますが、課題は更新されません。",
         "inboundAdoUsername": "ユーザー名",
-        "inboundAdoPassword": "パスワード",
         "inboundAdoUsernamePlaceholder": "サービスアカウント",
         "inboundAdoUsernameHelp": "Azure DevOps Service Hook側で設定されています。TestPlanItはHTTP基本認証を使用してこれを検証します。",
         "inboundAdoPasswordHelp": "保存時は暗号化されます。この値はAzure DevOps Service Hook側にも保存してください。",
@@ -1762,9 +1768,7 @@
         "deliveriesTab": "配達",
         "filterConfigPlaceholder": "すべてのウェブフック",
         "filterEventPlaceholder": "すべてのイベント",
-        "filterStatusAll": "全て",
         "filterStatusFailed": "失敗した",
-        "filterStatusSuccess": "成功",
         "filterSinceDefault": "…以来",
         "filterUntilDefault": "…まで",
         "filterReset": "フィルターをリセット",
@@ -1776,8 +1780,6 @@
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "イベント",
         "tableHeaderSubjectRef": "参照",
-        "tableHeaderStatus": "状態",
-        "tableHeaderError": "エラー",
         "tableHeaderReceivedAt": "受け取った",
         "tableHeaderAttempt": "試み",
         "tableHeaderDirection": "方向",
@@ -1790,7 +1792,6 @@
         "drawerLabelLatency": "遅延",
         "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
-        "drawerLabelError": "エラー",
         "drawerLabelPayloadDigest": "ペイロード概要",
         "drawerLabelEventId": "イベントID",
         "drawerLabelSubjectRef": "参照",
@@ -1819,7 +1820,6 @@
         "activityLastDispatched": "最終発送",
         "activityLastSuccess": "最後の成功",
         "activityLastFailure": "最後の失敗",
-        "activityNever": "一度もない",
         "reEnable": "再度有効にする",
         "reEnableConfirmTitle": "このウェブフックを再度有効にしますか？",
         "reEnableConfirm": "再度有効化する前に、上流の問題が解決されていることを確認してください。Webhookは直ちに配信を再開します。",
@@ -1843,11 +1843,49 @@
         "setupStepsMantisbtStep1": "MantisBTサーバーにMantisBTウェブフックプラグインをインストールして有効にしてください（MantisBTには組み込みのウェブフック機能がありません）。",
         "setupStepsMantisbtStep2": "プラグインの設定で、課題作成イベントと課題更新イベントを選択してください。",
         "setupStepsMantisbtStep3": "上記のURLをウェブフックの送信先として貼り付けて保存してください。",
-        "setupStepsMantisbtStep4": "MantisBTで課題を作成または更新すると、リンクされた課題のステータスがここに同期されます。"
+        "setupStepsMantisbtStep4": "MantisBTで課題を作成または更新すると、リンクされた課題のステータスがここに同期されます。",
+        "codeRepos": {
+          "empty": "影響分析用に接続されたリポジトリがありません。最初に<link>接続してください</link>。",
+          "unsupported": "{provider}リポジトリはTestPlanItにウェブフックを送信できません。",
+          "eventPullRequest": "プルリクエスト",
+          "eventPullRequestHelp": "プルリクエストが開かれたときに、ターゲットブランチに対する変更を分析し、テスト実行を構成します。",
+          "eventPush": "{branch}へのプッシュ",
+          "eventPushDefault": "デフォルトブランチへのプッシュ",
+          "eventPushHelp": "ベースブランチへのプッシュごとに、プッシュされたコミットを分析し、テスト実行を構成します。",
+          "setupGithub": "GitHubで、リポジトリの設定 → ウェブフックを開き、URLと秘密鍵を貼り付け、コンテンツタイプをapplication/jsonに設定し、プルリクエストとプッシュイベントを選択します。",
+          "setupGitlab": "GitLabで、プロジェクトの設定 → ウェブフックを開き、URLを貼り付け、秘密鍵をシークレットトークンとして貼り付け、マージリクエストイベントとプッシュイベントトリガーを有効にします。",
+          "setupGitea": "Giteaで、リポジトリの設定 → ウェブフックを開き、URLと秘密鍵を貼り付け、コンテンツタイプをapplication/jsonに設定し、プルリクエストとプッシュイベントを選択します。",
+          "setupAdo": "Azure DevOpsで、プルリクエスト作成イベントとコードプッシュイベント用のウェブフックタイプのサービスフックを作成し、URLを貼り付け、ここに入力したユーザー名とパスワードを基本認証として入力します。",
+          "setupBitbucket": "Bitbucketで、リポジトリの設定 → ウェブフックを開き、URLと秘密鍵を貼り付け、プルリクエスト作成とリポジトリプッシュトリガーを選択します。",
+          "rotateConfirm": "秘密鍵をローテーションすると、現在のURLと秘密鍵が無効になります。その後、リポジトリのウェブフック設定を更新してください。",
+          "deleteConfirm": "このリポジトリウェブフックを削除しますか？プルリクエストとプッシュは分析を開始しなくなります。",
+          "eventBranchPush": "他のブランチへのプッシュ",
+          "eventBranchPushHelp": "プルリクエストと同様に、他のブランチへのプッシュをベースブランチと比較して分析し、それぞれのテスト実行を構成します。",
+          "baseBranch": "ベースブランチ",
+          "baseBranchHelp": "このブランチへのプッシュは独立して分析されます。プルリクエストと他のブランチはこれと比較されます。空白のままにするとリポジトリのデフォルトブランチが使用されます。",
+          "minScoreHelp": "各構成実行は、分析がスコアを付けたすべてのテストケースをこれ以上（0～100）取ります。手で開始された実行と同様に、ピン留めされたテストと影響を受けたテストを取るために空のままにします。",
+          "minScoreInvalid": "0～100の整数を入力するか、空のままにしてください",
+          "autoExecute": "自動ケースの実行",
+          "autoExecuteHelp": "実行が構成された後、このターゲットで自動ケースの自動実行をリクエストします。手動ケースは実行のままテスターに残ります。",
+          "autoExecuteNoTargets": "このプロジェクトに対して実行ターゲットが構成されていません。実行を自動的に実行するには、<link>1つ追加</link>してください。",
+          "autoExecuteTargetMissing": "選択された実行ターゲットは削除または無効化されました。実行は引き続き構成されますが、別のターゲットを選択するまで実行はリクエストされません。",
+          "autoExecuteSaveError": "自動実行設定を保存できませんでした"
+        },
+        "inboundEmptyState": "インバウンドウェブフックまだ設定されていません。<link>1つ追加</link>して、課題トラッカーから課題更新を受け取るか、接続されたリポジトリからプルリクエストとプッシュを受け取ります。",
+        "inboundChooserBitbucket": "Bitbucket",
+        "wizard": {
+          "description": "TestPlanItにウェブフックを送信するシステムを選択し、URLと秘密鍵をそのシステムにコピーします。",
+          "stepConnect": "接続",
+          "sourceIssues": "課題トラッカー",
+          "sourceIssuesHelp": "リンクされた課題を{tracker}からの更新と同期させます。",
+          "sourceIssuesHelpGeneric": "リンクされた課題をプロジェクトの課題統合からの更新と同期させます。",
+          "sourceRepositoryHelp": "プルリクエストが開かれたときまたはコミットがプッシュされたときに、テスト対象のアプリケーションの影響分析を開始し、テスト実行を構成します。",
+          "noRepositoryAvailable": "接続されているすべてのリポジトリは既にウェブフックを持っているか、ウェブフックを送信できません。",
+          "repositoryPlaceholder": "リポジトリを選択"
+        }
       },
       "aiModels": {
         "description": "インテリジェントなテストケース生成と分析のための AI モデルを構成する",
-        "availableModels": "プロジェクトデフォルト",
         "availableModelsDescription": "システム管理者が設定したAIモデルの中から、このプロジェクトのデフォルトAIモデルを選択してください。",
         "currentModelSettings": "現在のモデル設定",
         "currentModelDescription": "現在アクティブなAIモデルの構成の詳細: {name}",
@@ -1907,28 +1945,20 @@
       },
       "parameters": {
         "title": "テストケースパラメータ",
-        "tabDatasets": "共有データセット",
         "tabJunit": "反復プロパティマッピング"
       },
       "datasets": {
-        "metaTitle": "共有データセット",
-        "title": "共有データセット",
         "description": "このプロジェクト内のどのテストケースでも参照できる、プロジェクト全体のデータセットを管理します。保存するたびに、変更不可能な新しいバージョンが作成されます。",
-        "navLabel": "共有データセット",
         "newButton": "新しいデータセット",
         "emptyHeading": "共有データセットはまだありません",
         "emptyBody": "複数のテストケースが参照でき、特定のバージョンに紐付けられる、プロジェクト全体のデータセットを作成します。",
         "loadError": "データセットを読み込めませんでした",
         "retry": "もう一度やり直してください",
         "columns": {
-          "name": "名前",
-          "columns": "コラム",
           "rows": "行",
-          "version": "バージョン",
           "lastEdited": "最終更新日",
           "owner": "所有者",
-          "assignments": "使用中",
-          "actions": "行動"
+          "assignments": "使用中"
         },
         "versionLabel": "v{version, number}",
         "assignmentsCount": "{count, plural, =0 {0件} =1 {#件} other {#件}}",
@@ -1936,17 +1966,13 @@
         "columnsCount": "{count, plural, =0 {0列} =1 {#列} other {#列}}",
         "actionsMenuLabel": "オープンデータセットアクション",
         "actionOpen": "エディターを開く",
-        "actionDelete": "消去",
         "openLink": "開ける",
         "create": {
           "title": "新しい共有データセット",
           "description": "データセットはプロジェクトの範囲に限定されており、このプロジェクト内のすべてのテストケースで利用可能になります。",
-          "nameLabel": "名前",
           "namePlaceholder": "例：顧客アカウント",
-          "descriptionLabel": "説明",
           "descriptionPlaceholder": "このデータセットに含まれる内容に関する補足説明（任意）。",
           "submit": "データセットを作成する",
-          "cancel": "キャンセル",
           "validationNameRequired": "名前は必須です。",
           "validationNameTooLong": "名前は120文字以内である必要があります。",
           "validationDescriptionTooLong": "説明文は2000文字以内である必要があります。",
@@ -1959,7 +1985,6 @@
           "descriptionStage2": "このデータセットは、 {count, plural, =1 {# ケース、} other {# ケース、}}で使用されています。これを削除すると、これらのケースから共有データセットの割り当てが削除されます。既存のテスト実行は影響を受けません（スナップショットは変更できません）。",
           "confirm": "データセットを削除する",
           "confirmAnyway": "とにかく削除します ({count, plural, =1 {# ケース} other {# ケース}})",
-          "cancel": "キャンセル",
           "error": "データセットを削除できませんでした"
         },
         "deleteSuccess": "削除済み \"{name}\"",
@@ -1969,7 +1994,6 @@
           "loadError": "このデータセットを読み込むことができませんでした",
           "notFound": "データセットが見つかりません",
           "notFoundDescription": "このデータセットは削除されたか、またはあなたにはアクセス権がありません。",
-          "saveAction": "保存",
           "saving": "保存",
           "savedHint": "すべての変更はバージョン {version, number} で保存されました。",
           "unsavedHint": "保存されていない変更",
@@ -1984,7 +2008,6 @@
         "saveSuccess": "保存済みバージョン {version, number}",
         "saveSuccessBranched": "保存されたバージョン {newVersion, number} (v{fromVersion, number} から分岐)",
         "versionPicker": {
-          "label": "バージョン",
           "loadError": "バージョンを読み込めませんでした",
           "currentItemLabel": "v{version, number} (現在)",
           "currentItemInitialLabel": "現在 — まだ保存されたバージョンはありません",
@@ -1996,81 +2019,29 @@
         "datasetTabSharedEditorHint": "完了したら「保存」をクリックしてください。保存するたびに新しいバージョンが作成されます。"
       },
       "quickScript": {
-        "title": "クイックスクリプト",
         "description": "QuickScriptを有効にし、AIによるテスト生成のためのコードリポジトリを接続します。",
         "enableLabel": "QuickScriptを有効にする",
         "enableDescription": " このプロジェクトでは、チームメンバーがQuickScriptを使用してテストケースを自動化スクリプトに変換できるようにします。",
         "enabledToast": "QuickScriptが有効になっています",
         "disabledToast": "QuickScriptが無効になっています",
         "noRepos": {
-          "title": "コードリポジトリは設定されていません",
-          "adminDescription": "このプロジェクトのコードコンテキストを設定する前に、リポジトリへの接続を確立してください。",
-          "adminLink": "コードリポジトリへ移動",
-          "userDescription": "コードリポジトリへの接続を設定するには、システム管理者に連絡してください。"
+          "adminDescription": "このプロジェクトのコードコンテキストを設定する前に、リポジトリへの接続を確立してください。"
         },
         "repository": {
-          "title": "コードリポジトリ",
           "description": "AIコンテキストで使用するコードリポジトリを選択してください。",
-          "placeholder": "コードリポジトリを選択してください...",
-          "branchLabel": "支店",
           "branchPlaceholder": "リポジトリのデフォルトブランチを使用する場合は、空白のままにしてください。"
         },
         "pathPatterns": {
-          "title": "パスパターン",
-          "description": "含めるファイルを指定します。各行は、ベースパスとグロブパターンを組み合わせたものです。例：path=tests/e2e/pages + pattern=* は、そのフォルダ内のすべてのファイルを直接含めます。path=src + pattern=**/*.test.ts は、すべてのテストファイルを再帰的に含めます。",
-          "pathLabel": "パス",
+          "description": "QuickScriptがAIコンテキストとして読み取ることができるリポジトリファイル。",
           "pathPlaceholder": "テスト/e2e/ページ",
-          "patternLabel": "パターン",
-          "addPath": "パスを追加",
-          "previewFiles": "プレビューファイル",
-          "scanningRepo": "リポジトリファイルをスキャンしています… ({seconds}秒)",
-          "files": "{count, plural, one {# ファイル} other {# ファイル}}",
-          "truncatedBadge": "結果は不完全な場合があります（プロバイダーの制限による）。",
           "exceedsLimit": "合計サイズがAIコンテキストの制限を {overflow}だけ超過しています。エクスポート中、ファイルはエクスポート対象のテストケースとの関連性に基づいてランク付けされます。最も関連性の高いファイルが最初に含まれ、制限に達するとランクの低いファイルはスキップされます。含めるファイルをより細かく制御したい場合は、パスパターンを絞り込んでください。"
         },
-        "preview": {
-          "resolvingBranch": "ブランチ… を解決しています",
-          "scanningFiles": "{scope}… のファイルをスキャンしています。",
-          "scanningFilesCount": "{scope}… 内のファイルをスキャンしています ({count, number} が見つかりました)",
-          "filtering": "{count, number} ファイル… にフィルタを適用しています。",
-          "rateLimited": "プロバイダーによってレート制限されました — {seconds, number}秒後に再試行します…"
-        },
         "cache": {
-          "title": "キャッシュ設定",
           "description": "AI生成時の高速アクセスを確保するため、ファイルはValkeyにキャッシュされます。",
-          "enableLabel": "ファイルキャッシュを有効にする",
           "disabledWarning": "ファイルキャッシュは無効になっています。リポジトリファイルはエクスポート時にプロバイダから直接取得され、TestPlanItには保存されません。AI搭載のQuickScriptにはコードコンテキストが含まれますが、エクスポートのたびにリポジトリへのリアルタイムリクエストが行われます。",
-          "ttlBefore": "キャッシュ期間",
-          "ttlDays": "{count, plural, other {日}}",
-          "ttlAriaLabel": "キャッシュの有効日数",
-          "statusTitle": "キャッシュの状態",
-          "refreshButton": "キャッシュを更新",
-          "listingFiles": "ファイル一覧…",
-          "cachingFiles": "{count} 個のファイルをキャッシュしています…",
-          "statusNeverFetched": "一度も取りに来なかった",
-          "statusPending": "爽快…",
-          "lastFetched": "最後に取得したデータ",
-          "filesCached": "キャッシュされたファイル",
-          "contentsCached": "コンテンツがキャッシュされました",
-          "contentsIncomplete": "{total}件中{cached}件のファイルコンテンツのみキャッシュされています — 生成されたスクリプトは不足しているファイルを使用しません。完了するには再度更新してください。",
-          "totalSize": "総サイズ"
+          "contentsIncomplete": "{total}件中{cached}件のファイルコンテンツのみキャッシュされています — 生成されたスクリプトは不足しているファイルを使用しません。完了するには再度更新してください。"
         },
-        "save": "設定を保存",
         "saved": "コードコンテキスト構成が保存されました",
-        "saveError": "設定の保存に失敗しました",
-        "listError": "リポジトリファイルの一覧表示に失敗しました",
-        "contentsError": "ファイルコンテンツのキャッシュに失敗しました",
-        "networkError": "キャッシュ更新中にネットワークエラーが発生しました",
-        "refreshSuccess": "キャッシュが更新されました: {fileCount} 個のファイル ({contentCached} 個のコンテンツがキャッシュされました)",
-        "refreshRateLimited": "キャッシュが更新されました: {fileCount} 個のファイルが一覧表示され、 {contentCached}/{fileCount} 個のコンテンツがキャッシュされました (レート制限あり - 完了するには再度更新してください)",
-        "refreshComplete": "キャッシュを更新しました：{fileCount} 件のファイル",
-        "refreshInProgress": "キャッシュの更新はバックグラウンドで実行中です。完了するとここに反映されます。",
-        "validation": {
-          "pathRequired": "パスが必要です",
-          "patternRequired": "型紙が必要です",
-          "repositoryRequired": "リポジトリが必要です",
-          "pathPatternRequired": "少なくとも1つのパスパターンが必要です"
-        },
         "exportTemplates": {
           "title": "エクスポートテンプレート",
           "description": "このプロジェクトにエクスポートテンプレートを割り当ててください。割り当てられたテンプレートのみがエクスポートダイアログに表示されます。",
@@ -2084,17 +2055,78 @@
           "saved": "テンプレートの割り当てが保存されました",
           "saveError": "テンプレート割り当ての保存に失敗しました"
         },
-        "disconnect": "リポジトリの接続を解除します",
-        "confirmDisconnect": "「{name}」をこのプロジェクトから切断してもよろしいですか？",
-        "disconnectWarningTitle": "このリポジトリの接続を解除すると、以下のようになります。",
-        "disconnectWarning1": "キャッシュされたリポジトリファイルをすべて削除します",
-        "disconnectWarning2": "パスパターンとブランチ構成を削除します",
         "disconnectWarning3": "AI生成エクスポートにコードコンテキストを含めないようにする",
         "disconnectSuccess": "コードリポジトリとの接続が切断されました",
         "disconnectError": "コードリポジトリの接続解除に失敗しました"
       },
+      "codeRepository": {
+        "cache": {
+          "cachingFiles": "{count}個のファイルをキャッシュしています…",
+          "contentsCached": "コンテンツがキャッシュされました",
+          "enableLabel": "ファイルキャッシュを有効にする",
+          "filesCached": "キャッシュされたファイル",
+          "lastFetched": "最後に取得したデータ",
+          "listingFiles": "ファイル一覧…",
+          "refreshButton": "キャッシュを更新",
+          "statusNeverFetched": "一度も取りに来なかった",
+          "statusPending": "爽快…",
+          "statusTitle": "キャッシュの状態",
+          "title": "キャッシュ設定",
+          "totalSize": "総サイズ",
+          "ttlAriaLabel": "キャッシュの有効日数",
+          "ttlBefore": "キャッシュ期間",
+          "ttlDays": "{count, plural, other {日}}"
+        },
+        "confirmDisconnect": "「{name}」をこのプロジェクトから切断してもよろしいですか？",
+        "contentsError": "ファイルコンテンツのキャッシュに失敗しました",
+        "disconnect": "リポジトリの接続を解除します",
+        "disconnectWarningTitle": "このリポジトリの接続を解除すると、以下のようになります。",
+        "listError": "リポジトリファイルの一覧表示に失敗しました",
+        "networkError": "キャッシュ更新中にネットワークエラーが発生しました",
+        "noRepos": {
+          "adminLink": "コードリポジトリへ移動",
+          "title": "コードリポジトリは設定されていません",
+          "userDescription": "コードリポジトリへの接続を設定するには、システム管理者に連絡してください。"
+        },
+        "pathPatterns": {
+          "addPath": "パスを追加",
+          "exclude": "除外",
+          "files": "{count, plural, one {# ファイル} other {# ファイル}}",
+          "pathLabel": "パス",
+          "patternLabel": "パターン",
+          "previewFiles": "プレビューファイル",
+          "scanningRepo": "リポジトリファイルをスキャンしています… ({seconds}秒)",
+          "title": "パスパターン",
+          "truncatedBadge": "結果は不完全な場合があります(プロバイダーの制限による)"
+        },
+        "preview": {
+          "filtering": "{count, number}ファイルにフィルタを適用しています…",
+          "rateLimited": "プロバイダーによってレート制限されました — {seconds, number}秒後に再試行します…",
+          "resolvingBranch": "ブランチを解決しています…",
+          "scanningFiles": "{scope}のファイルをスキャンしています…",
+          "scanningFilesCount": "{scope}…内のファイルをスキャンしています({count, number}が見つかりました)"
+        },
+        "refreshComplete": "キャッシュを更新しました：{fileCount}件のファイル",
+        "refreshInProgress": "キャッシュの更新はバックグラウンドで実行中です。完了するとここに反映されます。",
+        "refreshRateLimited": "キャッシュが更新されました: {fileCount}個のファイルが一覧表示され、{contentCached}/{fileCount}個のコンテンツがキャッシュされました(レート制限あり - 完了するには再度更新してください)",
+        "refreshSuccess": "キャッシュが更新されました: {fileCount}個のファイル({contentCached}個のコンテンツがキャッシュされました)",
+        "repository": {
+          "branchLabel": "支店",
+          "branchesTruncatedHint": "最初の{count, number}個のブランチを表示しています。入力してリポジトリ全体を検索します。",
+          "placeholder": "コードリポジトリを選択してください…"
+        },
+        "save": "設定を保存",
+        "saveError": "設定を保存できませんでした",
+        "validation": {
+          "pathPatternRequired": "少なくとも1つのパスパターンが必要です",
+          "patternRequired": "型紙が必要です",
+          "repositoryRequired": "リポジトリが必要です"
+        },
+        "disconnectWarningCache": "キャッシュされたリポジトリファイルをすべて削除します",
+        "disconnectWarningPatterns": "パスパターンとブランチ構成を削除します",
+        "refreshInterrupted": "キャッシュの更新は完了前に中断されました。再度更新して完了してください。"
+      },
       "advanced": {
-        "title": "高度な",
         "description": "プロジェクトごとに、独自の機能設定を切り替えることができます。新しい設定項目は、導入され次第ここに表示されます。",
         "recordKey": {
           "label": "プロジェクトコード",
@@ -2115,6 +2147,13 @@
           "saveError": "レビューワークフロー設定の更新に失敗しました",
           "systemDisabledTitle": "レビューワークフローがシステム全体で停止しています",
           "systemDisabledDescription": "プロジェクトの設定は保存されますが、システム管理者が「管理」→「ワークフロー」でこの機能を有効にするまでは、何も制限されません。"
+        },
+        "requirements": {
+          "label": "要件を有効にする",
+          "description": "このプロジェクトに要件エリアを追加し、システムが実行すべきことの階層を構築して、カバレッジのためにテストケースをリンクできるようにします。ここで現在の要件モデルを維持する場合はこれを有効にしてください。要件が完全に問題トラッカーにある場合は無効のままにしてください。",
+          "enabledToast": "このプロジェクトでは要件が有効になっています",
+          "disabledToast": "このプロジェクトでは要件が無効になっています",
+          "saveError": "要件の設定を更新できませんでした"
         },
         "flipJustification": {
           "label": "結果反転の正当化が必要",
@@ -2182,6 +2221,152 @@
           "savedToast": "このプロジェクトの放置された自動化のクリーンアップを更新しました",
           "saveError": "放置された自動化のクリーンアップの更新に失敗しました"
         }
+      },
+      "impact": {
+        "description": "テスト影響分析を有効にし、テスト対象のアプリケーションのリポジトリを接続します。",
+        "enableLabel": "影響分析を有効にする",
+        "enableDescription": "チームメンバーがテスト実行を構成するときに、コード変更から影響を受けるテストを選択できます。",
+        "enabledToast": "影響分析が有効になりました",
+        "disabledToast": "影響分析が無効になりました",
+        "noRepos": {
+          "adminDescription": "このプロジェクトの影響を設定する前に、リポジトリへの接続を確立してください。"
+        },
+        "repository": {
+          "title": "アプリケーションリポジトリ",
+          "description": "テスト対象のアプリケーションの一部を保持するリポジトリを選択します。複数のサービスでテストされるプロジェクトは、サービスごとに1つのリポジトリを接続できます。",
+          "branchPlaceholder": "ブランチを選択してください…",
+          "branchInputPlaceholder": "リポジトリのデフォルトブランチを使用する場合は、空白のままにしてください",
+          "branchesUnavailable": "ブランチを一覧表示できませんでした: {error}",
+          "branchesFallbackHint": "代わりにブランチ名を入力してください。"
+        },
+        "pathPatterns": {
+          "description": "Impactが読み取るアプリケーションファイル：Code Pinファイルピッカー、キャッシュ、リポジトリマーカー、および分析が無視する変更されたファイル。",
+          "pathPlaceholder": "src"
+        },
+        "cache": {
+          "description": "ファイルはValkeyにキャッシュされるため、コードピンファイルピッカーとリポジトリマーカーが高速のままになります。",
+          "disabledWarning": "ファイルキャッシュが無効です。リポジトリマーカーはスキャンされず、コードピンファイルピッカーは毎回開くときにプロバイダーからライブでファイルを一覧表示します。",
+          "contentsIncomplete": "{total}件中{cached}件のファイルコンテンツのみキャッシュされています。完了するには再度更新してください。"
+        },
+        "tickets": {
+          "title": "リンクされたチケット",
+          "description": "チケットに名前を付けるコミット(PROJ-123、#42、AB#42)は、そのチケットにリンクされているすべてのテストケースのコードピンになります — コミットが変更した関数またはクラスで、diffがそれらを表示している場合、それ以外の場合はファイル全体で — そのコードへの後の変更がケースを再度見つけるようにします。TestPlanItがまだ保持していない名前の付いたチケットは、プロジェクトの課題トラッカーからインポートされるため、リンクできます。",
+          "enableLabel": "コミットメッセージからコードピンを派生させる",
+          "enableDescription": "キャッシュ更新のたびにブランチの最近のコミットをスキャンします。分析されたコミットのみからチケットキーを読み取るための分析を保つためにオフにしてください。手動スキャンは引き続き実行されます。",
+          "resultLinksLabel": "テスト結果に追加されたチケットもカウント",
+          "resultLinksDescription": "テスト結果またはステップ結果に追加されたチケットは、その結果が記録されたケースもリンクするため、そのコミットはそのケースをピンおよび選択します。オフの場合、テストケースに直接リンクされたチケットのみがカウントされます。",
+          "skippedLarge": "{count, plural, one {# コミットは} other {# コミットが}} ピン止めするには大きすぎるためスキップされました。",
+          "fetchCapped": "一部のコミットが このパスでリンクされたチケットに名前を付けました。ファイルは読み込まれていません。残りは次のスキャンで取得されます。",
+          "scanRecent": "最近のコミットを再スキャン",
+          "scanFull": "完全な履歴をスキャン",
+          "scanFullHint": "完全な履歴はブランチのすべてのコミットをウォークし、既存のチケットのピンをバックフィルします。既に読み込まれたコミットはキャッシュから提供され、キャップで停止したウォークは次回そこから続行されます。",
+          "scanStarted": "チケットスキャンがキューに入りました。",
+          "scanStillRunning": "チケットスキャンはバックグラウンドで実行中です。完了するとここに反映されます。",
+          "scanFailedToStart": "チケットスキャンを開始できませんでした",
+          "runningRecent": "最近のコミットをスキャンしています…",
+          "runningFull": "完全な履歴をスキャンしています…",
+          "runningProgress": "{commits, number}個のコミットを読んだ · {matched, number}個がリンクされたチケットに名前を付けた · {fetched, number}個が検査されました",
+          "fullBadge": "完全な履歴",
+          "imported": "{imported, plural, =0 {トラッカーからの新しいチケットはインポートされませんでした。} one {トラッカーから # チケットがインポートされました。} other {トラッカーから # チケットがインポートされました。}}",
+          "fullCapped": "ウォークはブランチの開始に到達する前に{count, number}個のコミットで停止しました。[完全な履歴のスキャン]をもう一度実行して、停止したところから続行します。",
+          "stale": "{date}に開始されたスキャンが報告されませんでした — ワーカーが再起動された可能性があります。続行するには再度キューに入れます。",
+          "summaryCommits": "{commits, plural, one {# コミット} other {# コミット}}が読まれました{cached, plural, =0 {} other {(コミットキャッシュから{cached, number})}} · {naming, number}個がチケットに名前を付けた · {tickets, plural, one {# 個の異なるチケット} other {# 個の異なるチケット}}",
+          "summaryPins": "ピン: {created, number}個が作成されました · {updated, number}個が更新されました · {removed, number}個が削除されました",
+          "noLinkedHint": "テストケースがそれらにリンクされたら、チケットはテストケースのみをピン止めします。インポートされたチケットにケースをリンクしてから、再スキャンします。",
+          "importFailuresTitle": "トラッカーに見つかったキー({shown}件中{total}件):",
+          "windowCapped": "{count, number}個の最新のコミットのみが読み込まれました(最近のウィンドウキャップ)。[完全な履歴をスキャン]を使用して、古いコミットを読み込みます。",
+          "runningWalk": "{commits, number}個のコミットがここまで読まれました{cached, plural, =0 {} other {(コミットキャッシュから{cached, number})}} — ウォークが終了すると、チケットが検索されます",
+          "runningImport": "{commits, number}個のコミットが読まれた · チケットをインポートしています: {lookups, number}個がトラッカーで検索された · {imported, number}個がインポートされました",
+          "summaryCommitsOnly": "{commits, plural, one {# コミット} other {# コミット}} が読まれました",
+          "importSkipped": "{skipped, plural, one {# キーはまだ検索されていません} other {# キーがまだ検索されていません}}。1つのスキャンはトラッカー検索の数に制限があるためです。スキャンを再度実行して続行してください。",
+          "cancelRequested": "キャンセルがリクエストされました。スキャンは次のステップで停止します。読み込まれたコミットはキャッシュに保持されます。",
+          "cancelled": "{date}にキャンセルされました。キャンセル前に読み込まれたコミットはコミットキャッシュに保持されます。ピンは更新されませんでした。",
+          "importMoved": "{moved, plural, one {# キーは旧名} other {# キーが旧名}} のインポート済みチケット。トラッカーで移動または名前が変更されました。",
+          "importFailed": "{failed, plural, one {# キーが} other {# キーが}} トラッカーに見つかりませんでした。下に一覧表示されています。",
+          "summaryMatched": "{matched, plural, one {# コミット} other {# コミット}} がテストケースにリンクされたチケットに名前を付けた",
+          "summarySymbolPins": "(作成されたピンの{count, number}個はファイル全体ではなく関数またはクラスをターゲットにしています。)"
+        },
+        "markers": {
+          "title": "リポジトリマーカー",
+          "description": "@testplanit case:123などのコメント注釈と.testplanit/testmap.ymlのエントリは、キャッシュ更新のたびにすべてのコードピンになります。",
+          "skippedPrivacy": "スキップ: ファイルキャッシュが無効です。",
+          "skippedPartial": "スキップ: ファイルコンテンツは部分的にのみキャッシュされました。",
+          "summary": "{annotations, plural, one {# 注釈} other {# 注釈}} · {mapEntries, plural, one {# マップエントリ} other {# マップエントリ}} · {created}作成済み · {updated}更新済み · {removed}削除済み",
+          "problems": "{count, plural, one {# 問題} other {# 問題}}"
+        },
+        "saved": "影響分析の構成が保存されました",
+        "disconnectWarning1": "{count, plural, one {# コードピン} other {# コードピン}} を削除し、このリポジトリの分析履歴を削除します",
+        "disconnectSuccess": "アプリケーションリポジトリが切断されました",
+        "disconnectError": "アプリケーションリポジトリの接続を解除できませんでした",
+        "repositories": {
+          "title": "接続されたリポジトリ",
+          "description": "このプロジェクトが分析するすべてのリポジトリ。それぞれが独自のブランチ、パスパターン、キャッシュ、およびコードピンを保持します。",
+          "connect": "リポジトリを接続",
+          "allConnected": "登録されているすべてのリポジトリは既に接続されています。",
+          "columnCache": "キャッシュ",
+          "pinTotal": "{count, plural, one {# コードピン} other {# コードピン}}",
+          "cacheDisabled": "キャッシュオフ",
+          "edit": "接続を編集",
+          "connectTitle": "リポジトリを接続",
+          "editTitle": "{name}を編集",
+          "view": "接続を表示",
+          "connectDescription": "テスト対象のアプリケーションの登録済みリポジトリを選択し、どのブランチとパスを読み取るかを指定します。",
+          "editDescription": "このブランチ、パスパターン、キャッシュ、およびチケットスキャンの設定を変更します。",
+          "viewDescription": "このリポジトリがどのように接続されているか。ここからキャッシュを更新するかチケットスキャンを実行します。設定を変更するには[編集]を使用します。",
+          "empty": "まだ接続されたリポジトリがありません",
+          "emptyDescription": "テスト対象のアプリケーションのリポジトリを接続して、変更の分析を開始します。",
+          "lastScan": "{created, plural, one {# ピン} other {# ピン}} が最後のスキャンで作成されました",
+          "scanFailed": "最後のスキャンに失敗しました",
+          "scanCancelled": "最後のスキャンがキャンセルされました"
+        },
+        "bulk": {
+          "label": "{count, plural, other {すべての # リポジトリ:}}",
+          "scanRecentHint": "接続されたリポジトリを再スキャンします（{count, plural, one {1 つ} other {# つ}}）。",
+          "scanFullHint": "{count, plural, one {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークし、既存のチケットのピンをバックフィルします。",
+          "scanFullConfirm": "{count, plural, one {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークします。リポジトリは一度に 1 つずつスキャンされるため、この処理には長時間かかる可能性があり、各ウォークではプロバイダーの API 経由でコミットを読み取り、このプロセスはレート制限にカウントされます。",
+          "checkStaleHint": "{count, plural, one {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のコード ピンを各ブランチ先端に対してチェックします。",
+          "removeStaleHint": "{count, plural, one {# 個のスタレ コード ピン} other {# 個のスタレ コード ピン}}を{repos, plural, one {# リポジトリ} other {# リポジトリ}}全体で削除します。",
+          "removeConfirm": "{repos, plural, one {# リポジトリ} other {# リポジトリ}}全体で、最後のチェックでブランチ先端に見つからなかった{count, plural, one {# 個のコード ピン} other {# 個のコード ピン}}を削除しますか？",
+          "queued": "{count, plural, one {# リポジトリ} other {# リポジトリ}}でキューに登録されました。{skipped, plural, =0 {} one {# は既に実行中です。} other {# は既に実行中です。}}",
+          "allRunning": "すべてのリポジトリに対して既にキューに登録されているか、実行中です。",
+          "failed": "以下では開始できませんでした: {names}"
+        },
+        "initialScanStarted": "リポジトリファイルを取得し、リポジトリマーカーとリンクされたチケットをスキャンしています…",
+        "scanError": "スキャンに失敗しました: {error}",
+        "scanLastScan": "最後のスキャン: {date}",
+        "scanNever": "まだスキャンされていません",
+        "stalePins": {
+          "title": "古いコードピン",
+          "check": "古いピンをチェック",
+          "checkHint": "各ピン止めされたファイルをブランチチップで読み込み、ファイル、行、またはシンボルが見つからないピンにフラグを付けます。",
+          "remove": "古いピンを削除",
+          "checkStarted": "古いピンチェックがキューに入りました。",
+          "checkFailedToStart": "古いピンチェックを開始できませんでした",
+          "running": "{total, plural, one {# ファイル} other {# ファイル}} 中 {checked, number}個をチェック中…",
+          "neverChecked": "まだチェックされていません",
+          "checkFailed": "最後のチェックに失敗しました",
+          "summary": "{count, plural, =0 {古いピンなし} one {# 古いピン} other {# 古いピン}} · {checked, plural, one {# ピン} other {# ピン}} がチェックされました",
+          "unreadable": "{count, plural, one {# ファイル} other {# ファイル}} を読み込めなかったため、それらのピンはチェックされませんでした。",
+          "removed": "{count, plural, =0 {古いピンは削除されませんでした} one {# 古いピンが削除されました} other {# 古いピンが削除されました}}",
+          "removeFailed": "古いピンを削除できませんでした",
+          "removeConfirm": "最後のチェックで{name}のチップで見つけられなかった{count, plural, one {# コードピン} other {# コードピン}}を削除しますか？",
+          "removeConfirmNote": "古いバッジが解除され、リポジトリマーカーによって保持されているピンは保持されます。削除されたピンはゴミ箱から復元できます。",
+          "checkCancelled": "最後のチェックはキャンセルされました",
+          "interrupted": "{date}に開始されたチェックが応答を返しませんでした。ワーカーが再開された可能性があります。再度キューに入れて続行してください。"
+        },
+        "jobs": {
+          "queued": "キューイング中",
+          "queuedBehind": "{what, select, sweep {夜間のキャッシュ更新の完了を待機中です。} refresh {キャッシュ更新の完了を待機中です。} scan {チケットスキャンの完了を待機中です。} stale {古いピンチェックの完了を待機中です。} other {別のジョブの完了を待機中です。}}",
+          "notResponding": "応答なし",
+          "notRespondingHint": "実行中ですが、{date}以降進捗が報告されていません。プロバイダーを待機中の可能性があります。再開しない場合はキャンセルしてください。",
+          "interruptedRescan": "中断 — 再スキャン",
+          "interruptedRecheck": "中断 — 再度チェック",
+          "interruptedRefresh": "中断 — 再度更新"
+        }
+      },
+      "access": {
+        "editButton": "プロジェクトアクセスを編集",
+        "adminOnlyNote": "システム管理者のみがプロジェクトアクセスを変更できます。"
       }
     },
     "matrix": {
@@ -2191,7 +2376,6 @@
       "loadError": "マトリックスビューを読み込めませんでした。もう一度お試しいただくか、フィルターを絞り込んでください。",
       "cellCapShort": "このマトリックスでは、 {cells, number} 個のセルが生成されますが、これは {threshold, number} 個のセル制限を超えています。続行するには、フィルタを狭めてください。",
       "caseColumnHeader": "ケース/パラメータ行",
-      "cellNotRun": "未検証",
       "cellSummary": "{pass, number} 合格、 {fail, number} 不合格、 {notRun, number} 未実行",
       "popoverTitle": "{count, plural, =1 {# 反復} other {# 反復}}",
       "iterationUnlabeled": "イテレーション #{index, number}",
@@ -2200,8 +2384,6 @@
       "filterStatus": "{count, plural, =0 {ステータス} one {ステータス (#)} other {ステータス (#)}}",
       "filterConfig": "{count, plural, =0 {設定} one {設定 (#)} other {設定 (#)}}",
       "filterDataset": "{count, plural, =0 {データセット} one {データセット (#)} other {データセット (#)}}",
-      "filterStatusLabel": "状態",
-      "filterConfigLabel": "構成",
       "filterDatasetLabel": "データセット",
       "filterStatusPlaceholder": "ステータス",
       "filterConfigPlaceholder": "任意の構成",
@@ -2210,12 +2392,10 @@
       "filterDateTo": "に",
       "configNone": "（設定なし）",
       "clearFilter": "クリア",
-      "filterEmpty": "利用可能なオプションはありません",
       "resetFilters": "フィルターをリセット",
       "exportCsv": "CSVをエクスポート",
       "legendPassedName": "合格した",
       "legendFailedName": "失敗した",
-      "legendUntestedName": "未検証",
       "legendClickHint": "反復処理の詳細を表示するには、任意のセルをクリックしてください。",
       "cellCapTitle": "マトリックスは {cellCount, number} セルをレンダリングします (制限 {threshold, number})",
       "cellCapSuggestionFilterCases": "テストケースの数を減らしてみてください。その軸が最も大きな影響を与えています。",
@@ -2360,7 +2540,6 @@
       "importStarted": "インポートを開始しました",
       "kindRelease": "リリース",
       "kindSprint": "スプリント",
-      "selectAll": "すべて選択",
       "searchPlaceholder": "リリースとスプリントを検索…",
       "emptyFiltered": "フィルター条件に一致するマイルストーンはありません。",
       "partialWarning": "一部の Jira プロジェクトを取得できませんでした：",
@@ -2371,14 +2550,12 @@
     "sync": {
       "managedByJira": "Jira によって管理されています",
       "lastSynced": "最終同期: {time}",
-      "openInJira": "Jira で開く",
       "providerJira": "Jira",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "今すぐ同期",
       "unlinkMenuItem": "{provider} からリンクを解除",
       "unlinkConfirmTitle": "マイルストーンのリンクを解除しますか？",
       "unlinkConfirmDescription": "これにより、トラッカーとの同期が停止します。フィールドは再度編集可能になり、同期された問題のリンクは手動管理になります（保持または削除は自由です）。後でこのアーティファクトを再度インポートすれば、再リンクが可能です。",
-      "unlinkConfirmAction": "リンクを解除",
       "unlinkSuccess": "マイルストーンのトラッカーとのリンクを解除しました。",
       "unlinkError": "マイルストーンのリンク解除に失敗しました。",
       "sourceRemoved": "{provider} でソースが削除されました",
@@ -2402,19 +2579,15 @@
       "tooltipAhead": "理想より{count, number}件進んでいる"
     },
     "members": {
-      "cardTitle": "問題",
       "casesOtherProjects": "{count, plural, other {他のプロジェクトのテストケース # 件}}",
       "inScope": "対象",
       "foundInTesting": "テストで発見",
       "foundInTestingEmpty": "テストで発見された問題はありません。",
       "inScopeCrossBadge": "対象",
       "refresh": "更新",
-      "columnKey": "名前",
-      "columnStatus": "状態",
       "columnCoverage": "カバレッジ",
       "columnSource": "ソース",
       "sourceSynced": "同期済み",
-      "sourceManual": "マニュアル",
       "coveragePassed": "合格した",
       "coverageFailed": "失敗した",
       "coverageInProgress": "進行中",
@@ -2425,7 +2598,6 @@
       "filterAllTypes": "すべてのタイプ",
       "empty": "このマイルストーンにはまだ問題がリンクされていません。",
       "emptyFiltered": "現在のフィルターに一致する問題はありません。",
-      "unlink": "リンクを解除",
       "managedByJira": "Jira によって管理されています — Jira のバージョン/スプリントから削除してください",
       "linkSuccess": "問題がこのマイルストーンにリンクされました。",
       "linkError": "このマイルストーンへの問題のリンクに失敗しました。",
@@ -2439,7 +2611,6 @@
       "overflowImportSuccess": "インポートを開始しました — 同期されると問題が表示されます。",
       "overflowImportError": "Jira からメンバーの問題のインポートに失敗しました。",
       "emptyCta": "開始するには問題をリンクしてください。",
-      "columnDescription": "説明",
       "unlinkConfirmTitle": "問題のリンクを解除しますか？",
       "unlinkConfirmDescription": "これにより、このマイルストーンから問題が削除されます。問題自体は保持され、後で再度リンクできます。",
       "totalsUncovered": "{count, plural, other {#件の未カバーの問題}}",
@@ -2463,7 +2634,6 @@
       "deleteDescription": "{count, plural, other {これらのセッションを削除してもよろしいですか？}}"
     },
     "auditLog": {
-      "trigger": "活動",
       "description": "このセッションで記録されたすべての変更です。"
     },
     "title": "{count, plural, =1 {セッション} other {セッション}}",
@@ -2492,9 +2662,6 @@
       "viewSessionDetails": "セッションを見る"
     },
     "noMilestone": "マイルストーンなし",
-    "milestoneGroup": {
-      "sessionCount": "{count, plural, other {# 件のセッション}}"
-    },
     "completeDialog": {
       "noWorkflowsConfigured": "このプロジェクトには完了ワークフローが設定されていません。セッションの完了を有効にするには、管理設定でワークフローを設定してください。"
     },
@@ -2565,7 +2732,6 @@
     "version": {
       "title": "セッション履歴ビュー",
       "notFound": "セッション バージョンが見つかりません。",
-      "selectVersion": "バージョンを選択",
       "backToSession": "セッションに戻る",
       "backToLatest": "最新バージョンに戻る",
       "versionInfo": {
@@ -2680,10 +2846,11 @@
         "emailDisabledForScim": "メールアドレスは、お客様のIDプロバイダーがSCIMを介して管理しており、こちらで変更することはできません。"
       },
       "preferences": {
-        "title": "設定"
-      },
-      "access": {
-        "title": "アクセス"
+        "title": "設定",
+        "detailsDisplayMode": {
+          "docked": "ドッキングパネル",
+          "newWindow": "新しいウィンドウ"
+        }
       },
       "assignments": {
         "title": "割り当て",
@@ -2699,7 +2866,6 @@
         "userName": "ディレクトリユーザー名",
         "givenName": "ファーストネーム",
         "familyName": "苗字",
-        "jobTitle": "タイトル",
         "userType": "ユーザータイプ",
         "employeeNumber": "従業員番号",
         "department": "部門",
@@ -2733,7 +2899,6 @@
         }
       },
       "changePasswordModal": {
-        "buttonText": "パスワードを変更する",
         "setPasswordButtonText": "パスワードを設定",
         "description": "アカウントのパスワードを変更するには、現在のパスワードと新しいパスワードを入力してください。これにより、社内で管理されているパスワードのみが変更されます。SSO経由でログインした場合、そのパスワードは変更されません。",
         "setPasswordDescription": "SSO経由でサインインしましたが、ローカルパスワードはまだ設定されていません。アカウントへのメールアドレス/パスワードログインを有効にするには、新しいパスワードを入力してください。",
@@ -2755,8 +2920,6 @@
         "loadMore": "読み込み中",
         "viewDetails": "詳細を見る",
         "columnAction": "アクション",
-        "columnEntityType": "タイプ",
-        "columnEntityName": "名前",
         "columnTimestamp": "タイムスタンプ",
         "allActions": "すべてのアクション",
         "allTypes": "すべてのタイプ",
@@ -2835,8 +2998,7 @@
       "remove": "アバターを削除",
       "changeProfilePicture": "プロフィール写真を変更する",
       "notAuthenticated": "アバターをアップロードするにはログインする必要があります。"
-    },
-    "deletedUser": "削除されたユーザー"
+    }
   },
   "userMenu": {
     "viewProfile": "プロフィールを見る",
@@ -2855,6 +3017,15 @@
   "repository": {
     "version": {
       "notFound": "テストケースのバージョンが見つかりません。",
+      "caseNotFoundTitle": "このテストケースが見つかりませんでした",
+      "caseNotFoundDescription": "このバージョンが属するテストケースがこのプロジェクトに存在しないか、削除されています。フォローしたリンクを確認してください。",
+      "backToRepository": "リポジトリに戻る",
+      "invalidVersionTitle": "「{version}」はバージョン番号ではありません",
+      "invalidVersionDescription": "バージョンは1から始まる整数です。フォローしたリンクを確認するか、テストケースを開いてその履歴からバージョンを選択します。",
+      "notRecordedTitle": "このテストケースのバージョン{version}は記録されませんでした",
+      "notRecordedDescription": "このバージョンのスナップショットが保存されていないため、テストケースはそのポイントで存在したとおりに表示されません。バージョンはケースが保存されたときに記録されます。ケースが作成されたか、スナップショットが記録される前に変更されたケースには、表示する履歴がありません。",
+      "viewCurrentCase": "現在のテストケースを表示",
+      "snapshotUnavailable": "バージョン{version}は記録されていないため、この結果は実行時のケースの状況として表示できません。",
       "detailsRegion": "テストケースの詳細",
       "metadataRegion": "テストケースのメタデータ",
       "versionCreated": "バージョン {version}",
@@ -2862,7 +3033,6 @@
       "historyView": "テストケース履歴ビュー"
     },
     "auditLog": {
-      "trigger": "活動",
       "description": "このテストケースで記録されたすべての変更です。"
     },
     "fields": {
@@ -2950,7 +3120,6 @@
     },
     "dragDrop": {
       "move": "動く",
-      "copy": "コピー",
       "promptTitle": "何をしたいですか？",
       "copying": "… をコピーしています",
       "copyComplete": "{count, plural, =1 {1件のケースを {folder}にコピーしました} other {#件のケースを {folder}にコピーしました}}{dest, select, samename {} crossProject { を {projectName}} other {}} にコピーしました",
@@ -3006,7 +3175,6 @@
       "addToRunDraftBlocked": "このプロジェクトで「テスト実行から下書きケースを除外する」が有効になっている間は、下書きケースを実行に追加することはできません。",
       "copyMoveToProject": "コピー／移動",
       "export": "輸出",
-      "quickScript": "クイックスクリプト",
       "parameterizedStatusReadOnly": "ステータスは反復結果から計算されます — クリックして開きます",
       "cannotReorderAcrossPages": "複数ページにまたがるテストケースの順序を変更することはできません。順序を変更するには、ページサイズメニューから「すべて」を選択してすべてのケースを1ページに表示するか、他のページでケースの選択を解除してください。選択したケースをフォルダにドラッグすることは可能です。",
       "exportModal": {
@@ -3046,6 +3214,10 @@
           "validationMultiRowNote": "行番号は、プレビューに表示されるグループ化されたテストケースを参照しており、CSVの生の行を参照するものではありません。",
           "partialTitle": "一部のテストケースはインポートされませんでした",
           "partialSummary": "{failed, plural, other {#行}}をインポートできませんでした。{imported, plural, other {#件のテストケース}}が正常にインポートされました。"
+        },
+        "warnings": {
+          "partialTitle": "一部の問題リンクが作成されませんでした",
+          "summary": "{count, plural, one {# 問題のセル} other {# 問題のセル}} をリンクできませんでした。テストケースはインポートされました。"
         },
         "page1": {
           "fileType": {
@@ -3119,6 +3291,21 @@
       "successMessage": "新しいテストケースが追加されました",
       "errorMessage": "新しいテストケースの追加中に不明なエラーが発生しました"
     },
+    "draft": {
+      "saving": "保存中…",
+      "saved": "すべての変更は {time}に保存されました",
+      "unsaved": "保存されていない変更",
+      "saveFailed": "保存できません — 再試行中",
+      "restoreTitle": "保存されていない変更を復元しますか？",
+      "restoreDescription": "このテストケースに対して{age}の保存されていない変更があります。それらを復元するか、破棄して保存されたバージョンを読み込みます。",
+      "restoreTitleNew": "保存されていないテストケースを復元しますか？",
+      "restoreDescriptionNew": "テストケースを{age}に開始し、保存したことがありません。書いたものを復元するか、破棄して新鮮に始めてください。",
+      "restoreStaleWarning": "ドラフトが作成されて以降、このテストケースは他の誰かによって保存されています。復元して保存すると、その内容が置き換わります。",
+      "restoreDiscard": "破棄",
+      "bannerText": "このテストケースに対して{age}の保存されていない変更があります。",
+      "bannerAction": "編集を再開",
+      "bannerDiscard": "破棄します"
+    },
     "columns": {
       "selectCase": "ケースを選択",
       "runOrder": "実行順序",
@@ -3153,7 +3340,6 @@
     "views": {
       "byAutomation": "オートメーション",
       "byParameterized": "パラメータ化",
-      "byAttachments": "添付ファイル",
       "byReview": "レビュー",
       "allTemplates": "すべてのテンプレート",
       "allStates": "すべての州",
@@ -3237,7 +3423,6 @@
         "markdown": "マークダウン"
       },
       "columns": {
-        "all": "全て",
         "visible": "見える"
       },
       "delimiter": {
@@ -3267,13 +3452,10 @@
         "multi": "ステップごとに複数行"
       },
       "comingSoon": "近日公開",
-      "exporting": "エクスポート中...",
       "exportError": "エクスポートに失敗しました。もう一度お試しください。"
     },
     "quickScript": {
-      "title": "クイックスクリプト",
       "description": "テンプレートまたはAIを使用して、選択したテストケースを自動化スクリプトに変換します。",
-      "templatePlaceholder": "テンプレートを選択してください...",
       "searchPlaceholder": "テンプレートを検索...",
       "noTemplatesFound": "テンプレートが見つかりませんでした。",
       "outputModeLabel": "出力モード",
@@ -3326,7 +3508,6 @@
       "compareButton": "比較する",
       "viewCaseDetails": "事件の詳細を見る",
       "selectAll": "すべて選択",
-      "selectRow": "行を選択",
       "selected": "{count, plural, one {# 選択済み} other {# 選択済み}}",
       "bulkDismiss": "重複なし ({count, number})",
       "bulkLink": "関連リンク ({count, number})",
@@ -3387,6 +3568,9 @@
         "title": "要件ソースを選択",
         "description": "問題からテスト ケースを生成するか、要件ドキュメントから生成するかを選択します。",
         "folderContextTip": "重複を避けるため、「{folderName}」およびその親/子フォルダにある既存のテストケースがコンテキストとして使用されます。続行する前に、正しいフォルダを選択していることを確認してください。",
+        "folderContextCount": "\"{folderName}\" とその親/子フォルダには {count, plural, =1 {1 個の既存テストケース} other {# 個の既存テストケース}} が含まれています。AI はプロジェクトのスタイルに合わせて重複を避けるため、コンテキストに収まる限り多くのテストケースを使用します。",
+        "folderContextEmptyTitle": "コンテキストとして使用する既存テストケースがありません",
+        "folderContextEmpty": "\"{folderName}\"とその親/子フォルダにテストケースがないため、AIがプロジェクトのスタイルや既存のカバレッジの例がありません。より良い結果を得るために、これらのテストケースが属するフォルダから、関連するケースの隣でジェネレータを開始してください。",
         "currentFolder": "現在のフォルダ",
         "fromIssue": "発行元",
         "fromDocument": "文書から",
@@ -3409,7 +3593,6 @@
         "urlInput": "ページURL",
         "urlInputPlaceholder": "https://example.com/docs",
         "urlMode": "このURLには何が含まれていますか？",
-        "urlModeRequirements": "要件",
         "urlModeRequirementsHint": "このページでは、何を作るべきかを説明しています。",
         "urlModeApplication": "応用",
         "urlModeApplicationHint": "Pageはテストするアプリです",
@@ -3431,7 +3614,6 @@
       "selectTemplate": {
         "title": "テストケーステンプレートを選択",
         "description": "テストケースの生成に使用するテンプレートを選択します。AIはこのテンプレートに従ってフィールドにデータを入力します。",
-        "placeholder": "テンプレートを選択...",
         "fieldsDescription": "AIが入力するフィールドを選択します。必須フィールドは常に含まれます。",
         "requiredOnly": "必須のみ"
       },
@@ -3440,6 +3622,8 @@
         "description": "AI がより良いテスト ケースを生成できるように、追加のコンテキストとガイダンスを提供します。",
         "quantity": "生成するテストケースの数",
         "placeholder": "テストケース生成のための具体的な指示を追加します...\n\n例:\n• セキュリティテストに重点を置く\n• エッジケースと境界条件を含める\n• ハッピーパスとエラーシナリオの両方をテストする\n• モバイルとデスクトップのシナリオを考慮する\n• APIテストに重点を置く",
+        "linksIgnoredTitle": "メモ内のリンクは開かれません",
+        "linksIgnored": "{count, plural, =1 {メモ内のリンク} other {メモ内の# 個のリンク}}はプレーンテキストのみで送信されます。ドキュメントまたはスプレッドシートを使用するには、関連するコンテンツ(シナリオ、テストデータ、期待される結果)をメモに貼り付けてください。",
         "suggestions": "簡単な提案:",
         "quantityOptions": {
           "justOne": "たった一つ",
@@ -3474,7 +3658,6 @@
       "expandProgress": "{done, number} の {total, number} が生成されました",
       "import": "{count, plural, =0 {テストケースをインポート} =1 {1 つのテストケースをインポート} other {# つのテストケースをインポート}}",
       "importing": "{count, plural, =0 {テストケースをインポートしています...} =1 {1 つのテストケースをインポートしています...} other {# つのテストケースをインポートしています...}}",
-      "openInExternalSystem": "{provider}で開く",
       "externalSystem": "外部システム",
       "autoGenerateTags": "テストケースのタグを自動生成する",
       "includeParametersLabel": "パラメータとスターターデータセットを生成する",
@@ -3641,11 +3824,80 @@
       "renameTitle": "保存済みビューの名前を変更",
       "renamed": "保存済みビューを更新しました",
       "renameFailed": "ビューを更新できませんでした。もう一度お試しください。",
-      "delete": "削除",
       "deleteTitle": "保存済みビューを削除しますか？",
       "deleteConfirm": "「{name}」が保存済みビューから削除されます。この操作は元に戻せません。",
       "deleted": "保存済みビューを削除しました",
       "deleteFailed": "ビューを削除できませんでした。もう一度お試しください。"
+    },
+    "codePins": {
+      "add": "ピンを追加",
+      "addDialogDescription": "ピンは現在のブランチチップで固定されています。",
+      "addDialogTitle": "このケースをコードにピン止めする",
+      "addFailed": "ピンを追加できませんでした",
+      "addSuccess": "ピンが追加されました",
+      "anchoredAt": "{sha}で固定",
+      "caseLabel": "テストケース",
+      "contentUnavailable": "ファイルコンテンツは利用できません。",
+      "description": "このケースが対象とするコード。ピン止めされたブロック内の変更により、ケースは影響分析にプルされます。",
+      "duplicate": "このピンは既に存在します。",
+      "empty": "まだコードピンはありません。",
+      "endLine": "終了行",
+      "errorFileNotFound": "ブランチチップでファイルが見つかりません。",
+      "errorLineOutOfRange": "行の範囲がファイルの外にあります。",
+      "errorSnippetTooLarge": "ピン止めされたブロックが大きすぎます。",
+      "errorSymbolNotFound": "ファイルにシンボルが見つかりません。",
+      "filePlaceholder": "ファイルを検索…",
+      "filesCached": "{count, plural, one {# ファイル} other {# ファイル}} がキャッシュされました · {date}",
+      "filesLive": "ファイルをリポジトリからライブリストしています",
+      "globMatches": "{count, plural, =0 {キャッシュされたファイルに一致しません} one {# キャッシュされたファイルが一致} other {# キャッシュされたファイルが一致}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "種類",
+      "kindFile": "ファイル全体",
+      "kindGlob": "グロブパターン",
+      "kindLabel": "ピン止め対象",
+      "kindRange": "線",
+      "kindSymbol": "シンボル",
+      "linesHint": "行番号をクリックして開始し、Shift+クリックして終了します。",
+      "location": "位置",
+      "managedTooltip": "リポジトリによって管理されます。コード内のマーカーを編集してください。",
+      "noFilesCached": "キャッシュされたファイルリストがありません。プロジェクト管理者にリポジトリキャッシュを更新するよう依頼してください。",
+      "notePlaceholder": "このケースがこのコードをカバーする理由(オプション)",
+      "reanchor": "再固定",
+      "reanchorFailed": "ピンを再固定できませんでした",
+      "reanchorSuccess": "ピンが再固定されました",
+      "removeConfirm": "このピンを削除しますか？",
+      "removeFailed": "ピンを削除できませんでした",
+      "removeSuccess": "ピンが削除されました",
+      "sourceAnnotation": "注釈",
+      "sourceMapfile": "マップファイル",
+      "staleFileDeleted": "ファイル削除",
+      "staleSnippetNotFound": "行が見つかりません",
+      "staleSymbolNotFound": "シンボルが見つかりません",
+      "staleTooltip": "ピン止めされたブロックをブランチチップで見つけることができませんでした: {reason}。",
+      "startLine": "開始行",
+      "symbolHint": "宣言はファイル内で名前で検索されます。",
+      "symbolNoneDetected": "シンボルが検出されていません。名前を入力してください。",
+      "symbolPlaceholder": "functionName",
+      "symbolSelectPlaceholder": "シンボルを選択または入力…",
+      "updateSuccess": "ピンが更新されました",
+      "updateFailed": "ピンを更新できませんでした",
+      "editDialogTitle": "このピンを編集",
+      "editDialogDescription": "ファイルとピンタイプはそのままです。どちらかを変更するには、このピンを削除して新しいピンを追加します。",
+      "editAction": "ピンを編集",
+      "symbolSearchPlaceholder": "シンボルを検索…",
+      "symbolUseTyped": "「{symbol}」を使用",
+      "title": "コードピン",
+      "viewerFailed": "ファイルを読み込めませんでした。",
+      "viewerLoading": "ファイルを読み込み中…",
+      "viewerTooLarge": "このファイルは表示するにはサイズが大きすぎます。代わりに行番号を入力してください。",
+      "repositoriesCount": "{count, plural, one {# リポジトリ} other {# リポジトリ}}"
+    },
+    "diffView": {
+      "added": "追加された行",
+      "removed": "削除された行",
+      "oldLine": "古い行",
+      "newLine": "新しい行",
+      "context": "コンテキスト行"
     }
   },
   "tags": {
@@ -3669,15 +3921,13 @@
     "noProject": "プロジェクトなし",
     "description": "タグを使用してテストケースとセッションを管理および整理します",
     "detail": {
-      "title": "タグの詳細",
       "filterPlaceholder": "アイテムをフィルター...",
       "noResults": "アイテムが見つかりません",
       "noFilterResults": "現在のフィルターに一致するアイテムはありません",
       "filters": {
         "hideCompletedSessions": "完了したセッションを非表示にする",
         "hideCompletedTestRuns": "完了したテスト実行を非表示にする",
-        "caseTypeLabel": "ケースの種類",
-        "allCases": "全て"
+        "caseTypeLabel": "ケースの種類"
       }
     },
     "manageTags": {
@@ -3699,9 +3949,7 @@
       "tooLarge": "このファイルはプレビューするには大きすぎます。",
       "empty": "このドキュメントは空のようです。",
       "download": "表示するにはダウンロードしてください",
-      "slideCounter": "{current} / {total} スライド",
-      "previousSlide": "前のスライド",
-      "nextSlide": "次のスライド"
+      "slideCounter": "{current} / {total} スライド"
     }
   },
   "reviews": {
@@ -3731,7 +3979,6 @@
     },
     "transitionGate": {
       "blockedByGate": "この移行を行う前に、「{gateName}」の承認が必要です。「レビューをリクエスト」を使用して承認を開始してください。",
-      "gatedOptionBadge": "審査が必要",
       "gatedStatesNotSelectable": "ゲート状態にある、またはゲート状態より先の州は、作成時に選択できません。最初のゲートより前の州を選択し、「レビューをリクエスト」を使用してゲートを越えてください。",
       "saveBlockedByFormErrors": "保存する前に、強調表示されているフォームエラーを解決してください。",
       "bulkBlockedHeading": "ゲート「{gateName}」によってブロックされている{count, plural, other {# 件のケース}}：",
@@ -3743,44 +3990,33 @@
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {レビュー受信ボックス} one {レビュー受信ボックス、# 保留中} other {レビュー受信ボックス、# 保留中}}",
-      "pageTitle": "レビュー",
-      "tabPending": "保留中",
       "tabDecided": "決めた",
       "emptyDecided": "決定済みのレビューはまだありません。あなたが決定したレビュー、およびあなたがリクエストしたレビューへの決定がここに表示されます。",
       "empty": "保留中のレビューはありません。あなたを待っているものはなく、依頼したレビューはすべて決定済みです。",
       "featureDisabled": "レビューワークフロー機能は現在無効になっています。保留中のレビューは保持されており、機能が再度有効になった際に表示されます。",
       "columnEntity": "実在物",
-      "columnProject": "プロジェクト",
       "columnRequester": "依頼者",
-      "columnAssignee": "担当者",
       "columnTransition": "遷移",
       "columnRequestedAt": "リクエスト先",
       "columnDecidedBy": "決定者",
       "columnDecidedAt": "決定日",
-      "columnStatus": "状態",
-      "columnActions": "行動",
-      "actionApprove": "承認する",
       "actionRequestChanges": "変更をリクエストする",
       "actionReject": "拒否する",
       "actionNudge": "リマインダーを送信",
       "filterEntityType": "エンティティタイプ",
-      "filterProject": "プロジェクト",
       "filterRequester": "依頼者",
       "filterAllRequesters": "すべての依頼者",
       "filterDecidedBy": "決定者",
       "filterAllDeciders": "すべての決定者",
-      "filterStatus": "状態",
       "filterAllStatuses": "すべてのステータス",
       "filterAllEntityTypes": "すべてのエンティティタイプ",
       "filterEntityTypeCase": "テストケース",
       "filterEntityTypeRun": "テスト実行",
-      "filterEntityTypeSession": "セッション",
       "filterAllProjects": "すべてのプロジェクト"
     },
     "requester": {
       "openButton": "レビューを依頼する",
       "sheetDescription": "目標状態に移行する前に、このエンティティをレビューに提出してください。",
-      "assigneeLabel": "譲受人",
       "assigneePlaceholder": "ユーザーまたは役割を選択してください",
       "usersNotified": "{count, plural, =0 {誰にも通知されません} other {# 人のユーザーに通知されます}}",
       "targetStateLabel": "目標状態",
@@ -3817,7 +4053,6 @@
       "unnamedUser": "（匿名ユーザー）"
     },
     "reviewer": {
-      "approve": "承認する",
       "requestChanges": "変更をリクエストする",
       "reject": "拒否する",
       "approveConfirmTitle": "このレビュー依頼を承認しますか？",
@@ -3894,7 +4129,6 @@
       "errorNoAssignable": "この実行には分配するケースがありません"
     },
     "auditLog": {
-      "trigger": "活動",
       "description": "このテスト実行で記録されたすべての変更です。"
     },
     "notFound": "テスト実行が見つかりません。",
@@ -4033,7 +4267,6 @@
           "unassign": "複製されたテスト実行内のすべてのテストケースは割り当て解除されます"
         },
         "configurationGroup": {
-          "label": "構成グループ",
           "separate": "コピーは互いにのみグループ化されます。複製元のテスト実行はそのグループの外に残ります",
           "join": "複製元のテスト実行とすべてのコピーが同じ構成グループに参加します"
         }
@@ -4054,7 +4287,6 @@
       "noMatchingActive": "フィルターに一致するアクティブなテスト実行はありません。"
     },
     "milestoneGroup": {
-      "runCount": "{count, plural, other {# 回の実行}}",
       "altHintMac": "⌥キーを押しながらクリックすると、すべてのグループを展開/折りたたみできます",
       "altHintWin": "Altキーを押しながらクリックすると、すべてのグループを展開/折りたたみできます"
     },
@@ -4068,42 +4300,182 @@
     "junitFilters": {
       "retried": "リトライ済み",
       "clear": "フィルターをクリア"
+    },
+    "impact": {
+      "title": "影響",
+      "analyzeImpact": "影響を分析",
+      "description": "テスト対象のアプリケーションの2つのコミットを選択し、変更が影響するテストケースを選択します。",
+      "noRepository": "影響を使用するには、プロジェクト設定でアプリケーションリポジトリを接続してください。",
+      "aiUnavailable": "アクティブなLLM統合がありません: 結果はコードピン、キーワードマッチング、実行履歴のみから取得されます。",
+      "steps": {
+        "review": "影響を受けたテスト"
+      },
+      "pull": {
+        "label": "プルリクエスト",
+        "selectPlaceholder": "プルリクエストを選択…",
+        "searchPlaceholder": "数値、タイトル、作者、またはブランチで検索…",
+        "stateOpen": "開く",
+        "stateMerged": "マージされた",
+        "stateClosed": "閉じた",
+        "resolved": "{target}の{base}を{source}の{head}と比較しています。"
+      },
+      "pick": {
+        "modeLabel": "変更を選択する方法",
+        "modeCommits": "コミット",
+        "modeCommitsHint": "2つのビルド間で何が変わったかを確認して、最後に検証した以降に着陸したすべてをリテストできます。",
+        "modePullHint": "このプルリクエストが何を変更するかは、そのブランチが分割した場所から測定されているため、その間にターゲットブランチに着陸した作業は除外されます。",
+        "baseLabel": "ベースコミット",
+        "headLabel": "ヘッドコミット",
+        "commitPlaceholder": "コミットを検索…",
+        "searchHint": "コミットシャを入力するか、読み込まれたコミットをメッセージまたは作成者でフィルタリングします。",
+        "refLabel": "または参照を貼り付け",
+        "refPlaceholder": "ブランチ、タグ、またはsha",
+        "refNotFound": "参照が見つかりませんでした",
+        "latestOnBranch": "{branch}で最新",
+        "previousAnalysisLabel": "前の分析から開始",
+        "previousAnalysisPlaceholder": "分析を選択…",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# 影響を受けるテスト} other {# 影響を受けるテスト}}",
+        "sameCommit": "ベースとヘッドは同じコミットです。",
+        "swapped": "ベースとヘッドが交換されたため、変更は前方に読まれます。",
+        "loadingCommits": "コミットを読み込み中…",
+        "noCommits": "コミットが見つかりません。"
+      },
+      "diff": {
+        "summary": "{files, plural, one {# ファイル} other {# ファイル}} が変更されました · +{additions, number} −{deletions, number}",
+        "truncated": "プロバイダーが部分的な差分を返しました。変更されたファイルの一部は表示されていないか、パッチがありません。",
+        "noChanges": "これらのコミット間に変更はありません。",
+        "statusModified": "変更済み",
+        "statusRenamed": "名前変更",
+        "showPatch": "変更を表示",
+        "hidePatch": "変更を非表示",
+        "largePatch": "大きなパッチ({lines, number}行)",
+        "showFullPatch": "完全なパッチを表示",
+        "binary": "バイナリファイル",
+        "noPatch": "パッチは利用できません",
+        "pinnedFiles": "{count, plural, one {# ピン} other {# ピン}}",
+        "loading": "コミットを比較中…"
+      },
+      "loading": {
+        "analyzing": "分析中…",
+        "resolving_config": "リポジトリ構成を解決しています…",
+        "fetching_diff": "差分を取得中…",
+        "matching_pins": "コードピンをマッチング中…",
+        "matching_issues": "コミットで名前が付けられたチケットをマッチング中…",
+        "searching_cases": "キーワードでテストケースを検索中…",
+        "scoring_history": "テスト実行履歴をスコアリング中…",
+        "waiting_for_ai": "AI待機中…",
+        "merging": "結果を統合中…",
+        "ranking": "{total}個の候補テストケース中{current}個をランク付け",
+        "reused": "同じコミットの最近の分析を再利用しています。"
+      },
+      "affected": {
+        "selectedOf": "{total, number}個の影響を受けたテストケース中{selected, number}個を選択",
+        "thresholdHint": "{threshold, number}以上の得点を持つテストは選択済みで表示されます。最小スコアを下げると、残りを表示できます。すべてのテストは選択理由を表示します。",
+        "shownCount": "{total, number}個中{shown, number}個を表示",
+        "minScore": "最小スコア",
+        "selectShown": "表示済みを選択({count, number})",
+        "deselectShown": "表示済みを選択解除({count, number})",
+        "noneShown": "フィルターに一致するテストはありません。",
+        "reasons": "理由",
+        "tierPinned": "ピン止めされた",
+        "tierAffected": "影響を受けた",
+        "tierRelated": "関連",
+        "tierPinnedTooltip": "このケースのコードピンが変更と交差しています。ピン止めされたケースは常に最初にランク付けされます。",
+        "tierAffectedTooltip": "他の信号はこのケースを{threshold, number}の影響を受けたしきい値以上に置きます。",
+        "tierRelatedTooltip": "強く影響を受けたケースにリンクされているか、そのシグナルが{threshold, number}以下のスコアされました。",
+        "showDetails": "理由を表示",
+        "hideDetails": "理由を非表示",
+        "excluded": "{count, plural, one {# 実行済みの場合はスキップされた} other {# 実行済みの場合はスキップされた}}"
+      },
+      "noAffected": {
+        "title": "影響を受けたテストが見つかりません",
+        "description": "テストケースが変更に一致しませんでした。ケースを変更されたファイルにピン止めして、次の分析がそれらを見つけるようにします。"
+      },
+      "reasons": {
+        "pin": "ピン",
+        "issue": "問題",
+        "path": "キーワード",
+        "history": "履歴",
+        "ai": "AI",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "{pattern}に一致",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "{field}で「{term}」と一致",
+        "fieldName": "ケース名",
+        "fieldContent": "ケースコンテンツ",
+        "fieldTag": "タグ",
+        "fieldFolder": "フォルダ",
+        "historyDetail": "{count, plural, one {# 前の実行} other {# 前の実行}} 同じファイルへの変更後",
+        "historyFailed": "同様の変更後の前の実行で失敗",
+        "linkedDetail": "ケース{caseId}にリンク",
+        "issueDetail": "{key}にリンク。{count, plural, one {コミット{sha}} other {# コミット}}で名前が付けられています"
+      },
+      "stale": {
+        "badge": "古い",
+        "tooltipAnalysis": "ピン止めされたブロックがベースコミットで見つかりませんでした。ファイルパスのみで一致しました。テストケースページから再ピン止めしてください。",
+        "title": "{count, plural, one {# 古いピン} other {# 古いピン}}",
+        "description": "これらのピンはもはやコードと一致しません。テストケースページから再固定してください。"
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# 変更されたファイルにはテストがありません} other {# 変更されたファイルにはテストがありません}}",
+        "description": "テストケースはこれらのファイルにリンクされていません。ケースをピン止めしてギャップを閉じてください。",
+        "pinAction": "ケースをピン止め…"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "プロバイダーが部分的な差分を返しました。",
+        "diff_truncated_by_budget": "差分の一部のみがAIコンテキストに適合しました。{count, plural, one {# ファイルは} other {# ファイルは}} パスのみで要約されました。",
+        "llm_not_configured": "アクティブなLLM統合がありません: AIランキングはスキップされました。",
+        "search_fallback_db": "検索インデックスが利用できません: キーワードマッチングはデータベースを使用しました。",
+        "search_index_empty": "検索インデックスには、このプロジェクトのテストケースが含まれていないため、キーワードマッチングはデータベース内のテストケース名にフォールバックされ、ケースコンテンツのマッチが失われた可能性があります。管理者に、管理 → 検索エンジンの下で検索インデックスを再構築するよう依頼してください。",
+        "ai_partial": "一部のAIバッチが失敗しました。結果は不完全な場合があります。",
+        "ai_truncated": "{count, plural, one {# AIバッチは} other {# AIバッチは}} モデルによって切断されました。",
+        "no_candidates": "テストケースに一致しませんでした。",
+        "anchor_fetch_capped": "一部のピン止めされたファイルはパスのみで一致しました(フェッチ制限に達しました)。",
+        "issue_commit_fetch_capped": "チケットの名前が付けられた一部のコミットはファイルごとに読み込まれませんでした(フェッチ制限に達しました)。それらのケースは特定のファイルをカバーしていません。",
+        "paths_excluded_by_settings": "{count, plural, other {# 個の変更されたファイル}} はリポジトリの除外パス設定により無視されました。"
+      },
+      "actions": {
+        "analyze": "分析",
+        "reanalyze": "再度分析",
+        "refine": "変更に戻る",
+        "accept": "{count, plural, one {# ケースを追加} other {# ケースを追加}}",
+        "cancelAnalysis": "分析をキャンセル"
+      },
+      "errors": {
+        "generic": "変更の分析中にエラーが発生しました。もう一度お試しください。",
+        "pullFailed": "そのプルリクエストのコミットを読み込めませんでした。別を選択するか、コミット自体に名前を付けます。",
+        "compareFailed": "コミットを比較できませんでした。",
+        "analysisFailed": "分析に失敗しました: {error}",
+        "cancelled": "分析がキャンセルされました。",
+        "timeout": "分析に時間がかかっています。後で確認するか、もう一度試してください。",
+        "branchesFailed": "ブランチを一覧表示できませんでした。",
+        "commitsFailed": "コミットを読み込めませんでした。",
+        "disabled": "このプロジェクトで影響分析が有効になっていません。",
+        "noConfig": "プロジェクト設定でまずアプリケーションリポジトリを接続してください。",
+        "configRequired": "分析するリポジトリを選択してください。"
+      },
+      "repositoryPlaceholder": "リポジトリを選択…",
+      "chooseRepository": "プロジェクトの接続されたリポジトリのうち、分析する変更を保持するリポジトリを選択してください。"
     }
   },
   "admin": {
     "menu": {
       "header": "主要",
-      "projects": "プロジェクト",
-      "templatesAndFields": "テンプレートとフィールド",
       "fields": "フィールド",
-      "workflows": "ワークフロー",
-      "statuses": "ステータス",
-      "milestoneTypes": "マイルストーンの種類",
-      "configurations": "構成",
-      "users": "ユーザー",
-      "groups": "グループ",
-      "roles": "役割",
-      "tags": "タグ",
-      "issues": "問題",
       "appConfig": "アプリケーション構成",
       "recordKeys": "レコードキー",
-      "notifications": "通知",
       "imports": "データのインポート",
       "integrations": "問題の統合",
-      "webhooks": "ウェブフック",
       "junit": "JUnit",
       "datasets": "共有データセット",
       "testCaseParameters": "テストケースパラメータ",
-      "llm": "AIモデル",
       "prompts": "プロンプト設定",
       "exportTemplates": "エクスポートテンプレート",
       "codeRepositories": "コードリポジトリ",
-      "quickScript": "クイックスクリプト",
-      "advanced": "高度な",
       "sso": "認証",
       "security": "安全",
       "trash": "ごみ",
-      "reports": "レポート",
       "shares": "株式の管理",
       "elasticsearch": "検索エンジン",
       "queues": "ジョブキュー",
@@ -4685,7 +5057,6 @@
         },
         "allowedDomains": {
           "title": "許可されたメールドメイン",
-          "placeholder": "example.com",
           "add": "ドメインを追加",
           "empty": "許可されたドメインが設定されていません。制限を有効にすると、すべてのドメインがブロックされます。"
         },
@@ -4734,7 +5105,6 @@
         "steps": {
           "details": "プロジェクトの詳細",
           "workflows": "ワークフロー、ステータス、マイルストーンの種類",
-          "integrations": "統合",
           "permissions": "ユーザーと権限"
         },
         "labels": {
@@ -4908,7 +5278,11 @@
       "saveFailed": "リポジトリの保存に失敗しました",
       "namePlaceholder": "私のリポジトリ",
       "selectProvider": "プロバイダーを選択してください",
-      "httpWarning": "このURLはHTTPを使用しています。認証情報は平文で送信されます。安全な接続にはHTTPSを使用してください。"
+      "httpWarning": "このURLはHTTPを使用しています。認証情報は平文で送信されます。安全な接続にはHTTPSを使用してください。",
+      "validation": {
+        "nameRequired": "名前は必須です",
+        "nameUnique": "この名前のコードリポジトリは既に存在します"
+      }
     },
     "exportTemplates": {
       "title": "QuickScriptテンプレート",
@@ -5004,7 +5378,6 @@
       "forcePasswordChangeDialogDescription": "これにより、 {name} は次回のログイン時にパスワードを変更する必要があります。",
       "revokePasswordDialogTitle": "パスワードの取り消し",
       "revokePasswordDialogDescription": "これにより、 {name}のパスワードは即座に無効になります。別のログイン方法を使用する必要があります。",
-      "confirmAction": "確認する",
       "forcePasswordChangeSuccess": "{name} のパスワード変更が必要です。",
       "forcePasswordChangeFailed": "パスワード変更の強制に失敗しました",
       "revokePasswordSuccess": "{name} のパスワードが取り消されました",
@@ -5060,7 +5433,6 @@
       "lockoutThresholdDescription": "アカウントロックアウトまでの失敗回数（最低1回）",
       "lockoutDurationMinutesLabel": "ロックアウト期間（分）",
       "lockoutDurationMinutesDescription": "アカウントがロックされる期間（最低1年）",
-      "saveChanges": "変更を保存",
       "forceAllUsers": "全ユーザーにパスワードの変更を強制する",
       "forceAllUsersDialogTitle": "全ユーザーのパスワード変更を強制する",
       "forceAllUsersDialogDescription": "これにより、 {count, number} 認証情報ベースのユーザーは次回のログイン時にパスワードを変更する必要があります。",
@@ -5121,7 +5493,6 @@
         "loading": "読み込みの競合…",
         "errorLoad": "競合ログを読み込めませんでした。再試行してください。",
         "colTimestamp": "いつ",
-        "colType": "タイプ",
         "colEntity": "実在物",
         "colAction": "システムアクション",
         "typeLinked": "リンク済み",
@@ -5130,6 +5501,7 @@
         "typeDisplayNameOverwrote": "表示名が上書きされました",
         "typeReEmitted": "再発行",
         "typeConflict": "対立",
+        "typeTokenConflict": "クロスIdPの競合",
         "typeUnknown": "未知",
         "viewPayload": "ペイロードを表示",
         "reEmit": "会員イベントの再送信",
@@ -5137,11 +5509,8 @@
         "reEmitConfirmTitle": "メンバーイベントを再送信しますか？",
         "reEmitSuccess": "Webhookが再送信され、監査ログが書き込まれました。",
         "reEmitError": "再送信できませんでした。 {reason}",
-        "next": "次",
-        "previous": "前の",
         "viewDialogTitle": "競合ペイロード",
-        "viewDialogDescription": "{entityType}#{entityId} の監査行メタデータ。",
-        "close": "近い"
+        "viewDialogDescription": "{entityType}#{entityId} の監査行メタデータ。"
       },
       "errorLoad": "トークンを読み込めませんでした。もう一度お試しください。",
       "columns": {
@@ -5180,10 +5549,8 @@
         "title": "トークンが作成されました",
         "warning": "このトークンを今すぐコピーしてください。TestPlanItでは二度と表示されません。",
         "tokenLabel": "SCIMベアラートークン",
-        "copy": "コピー",
         "copied": "コピーしました",
         "baseUrlHint": "これをIdPのSCIMベアラートークンフィールドに貼り付けてください。ベースURLは {baseUrl}です。",
-        "close": "近い",
         "toast": "トークンが作成されました。",
         "a11yAnnounce": "トークンが作成されました。今すぐコピーしてください。"
       },
@@ -5204,7 +5571,36 @@
       "fallbackDefaultTitle": "デフォルトのマッピングアクセス",
       "fallbackDefaultDescription": "どのグループマッピングにも該当しないユーザーに割り当てられるアクセス階層です。",
       "fallbackDefaultLabel": "デフォルトのアクセス階層",
-      "fallbackDefaultSaved": "フォールバックデフォルトを保存しました"
+      "fallbackDefaultSaved": "フォールバックデフォルトを保存しました",
+      "rotate": {
+        "confirm": "トークンを回転させる",
+        "title": "SCIMトークンを回転",
+        "description": "「{name}」の新しいベアラーを生成します。トークンは名前、IdP、およびプロビジョニングしたすべてのものを保持します —秘密鍵のみが変更されます。",
+        "overlapLabel": "古いトークンを機能させ続ける",
+        "overlapHint": "IdPは、このウィンドウが終了するまで古いトークンを使用してプロビジョニングを続けるため、ダウンタイムなしで新しいトークンを貼り付けることができます。",
+        "overlapNone": "すぐにカットオーバー",
+        "overlap1h": "1時間",
+        "overlap24h": "24時間",
+        "overlap7d": "7日間",
+        "overlap30d": "30日間",
+        "submit": "トークンを回転させる",
+        "submitting": "回転中…",
+        "revealTitle": "新しいSCIMトークン",
+        "revealDescriptionOverlap": "これをIdPに貼り付けてから、重複期間が終了します。前のトークンは、それまで機能し続けます。",
+        "revealDescriptionImmediate": "前のトークンは即座に機能を停止しました。プロビジョニングを再開するには、これをIdPに貼り付けてください。"
+      },
+      "roleMappings": {
+        "title": "ロール マッピング",
+        "description": "ユーザーが主張するロールをアイデンティティプロバイダーがアクセス層にマップします。ロールマッピングはグループマッピングよりも優先されるため、アクセスを上げたり下げたりできます。",
+        "empty": "まだロールマッピングがありません。ユーザーはグループマッピングとデフォルトアクセス層によって管理されます。",
+        "roleLabel": "ロール値",
+        "rolePlaceholder": "IdPからのロール値、例：qa-lead",
+        "accessLabel": "アクセス層",
+        "add": "マッピングを追加",
+        "remove": "マッピングを削除",
+        "saved": "ロールマッピングが保存されました",
+        "errorRoleRequired": "IdPが送信するロール値を入力してください。"
+      }
     },
     "tags": {
       "add": {
@@ -5239,7 +5635,6 @@
         "remindersToggleAriaLabel": "レビューリマインダー通知の切り替え",
         "thresholdLabel": "レビュー担当者にリマインダーを送る",
         "thresholdUnit": "{count, plural, other {日}}",
-        "thresholdSaveButton": "保存",
         "thresholdHelp": "レビュー依頼が保留状態になってから、レビュー担当者にリマインダー通知が届くまで何日間待つことができますか？新規依頼は提出された時点からカウントが開始されます。",
         "thresholdUpdateSuccess": "レビューリマインダーの設定が更新されました。",
         "thresholdUpdateError": "リマインダー設定の更新に失敗しました。しばらくしてからもう一度お試しください。"
@@ -5254,7 +5649,6 @@
         "emptyState": "条件に一致するプロジェクトはありません。"
       },
       "editWorkflow": {
-        "requiresReviewLabel": "審査が必要",
         "requiresReviewFeatureDisabled": "レビューワークフロー機能はシステムレベルで無効になっています。プロジェクトの詳細設定を切り替えるか、TESTPLANIT_REVIEW_FEATURE_ENABLED を設定して再度有効にしてください。",
         "requiresReviewDefaultDisabled": "デフォルトのワークフロー状態ではレビューを要求できません。新しいエンティティはここに到着し、ゲートするための以前の状態がありません。"
       },
@@ -5289,7 +5683,6 @@
       "description": "各アプリケーション領域の権限を切り替えることで、ユーザーが実行できる操作を定義します。",
       "confirmDefaultDescription": "このロールをデフォルトとして設定してもよろしいですか？",
       "defaultWarning": "新規ユーザーにはデフォルトでこのロールが割り当てられます。",
-      "defaultLockedTitle": "デフォルトロール",
       "defaultLockedDescription": "デフォルトを変更するには、別のロールを編集してデフォルトとして設定してください。",
       "filterPlaceholder": "役割をフィルター...",
       "add": {
@@ -5525,6 +5918,16 @@
       "mappedAccessLabel": "マッピングされたアクセス階層",
       "mappedAccessNone": "マッピングされていません",
       "mappedAccessSelect": "アクセス階層を選択…",
+      "projectMappings": {
+        "label": "プロジェクトごとのアクセス",
+        "description": "組織全体の層の代わりに、または上に、特定のプロジェクトでこのグループアクセス層を付与します。",
+        "empty": "プロジェクト別アクセスなし。メンバーは、上の組織全体の層とそれぞれのプロジェクトのデフォルトのみを取得します。",
+        "projectPlaceholder": "プロジェクトを選択…",
+        "accessLabel": "アクセス層",
+        "add": "プロジェクトを追加",
+        "remove": "プロジェクトアクセスを削除",
+        "saved": "プロジェクトアクセスが保存されました"
+      },
       "downgradeConfirmTitle": "アクセス変更の確認",
       "downgradeConfirmDescription": "{count, plural, other {# 人のユーザー}}のアクセスが引き下げられます。続行しますか？",
       "downgradeConfirmApplyAnyway": "とにかく適用",
@@ -5558,7 +5961,6 @@
         "title": "マイルストーンタイプの編集"
       },
       "delete": {
-        "title": "{item} を削除",
         "confirmMessage": "マイルストーンタイプ {name} を削除してもよろしいですか？"
       }
     },
@@ -5638,7 +6040,22 @@
         "testRunStepResults": "テスト実行ステップの結果",
         "issueConfigs": "問題構成",
         "sharedStepGroups": "共有ステップグループ",
-        "dataSets": "データセット"
+        "dataSets": "データセット",
+        "impactAnalyses": "影響分析",
+        "dataSetRows": "データセット行",
+        "duplicateScanResults": "重複スキャン結果",
+        "executionTargets": "実行ターゲット",
+        "importMappings": "インポートマッピング",
+        "llmReportSnapshots": "AIレポートスナップショット",
+        "notifications": "通知",
+        "requirementTraceabilitySnapshots": "トレーサビリティスナップショット",
+        "reviewRequests": "レビュー依頼",
+        "shareLinks": "共有リンク",
+        "stepSequenceMatches": "ステップシーケンスマッチ",
+        "stepSequenceMatchCases": "ステップシーケンスマッチケース",
+        "testRunCases": "テスト実行ケース",
+        "testRunCaseDataSetSnapshots": "テスト実行データセットスナップショット",
+        "testRunCaseIterations": "テスト実行イテレーション"
       },
       "table": {
         "title": "削除されました {itemType}",
@@ -5870,7 +6287,6 @@
         "repoHelp": "Giteaリポジトリの名前",
         "encrypted": "暗号化された",
         "encryptedHelp": "このフィールドは暗号化され、安全に保存されます",
-        "changeCredential": "変化",
         "leaveBlankToKeep": "既存の値を保持するには空欄のままにしてください",
         "apiKeyWarningTitle": "APIキー認証に関するお知らせ",
         "apiKeyWarningDescription": "APIキー認証の場合、作成された課題の報告者が、課題を作成したTestPlanItユーザーと一致しない可能性があります。たとえメールアドレスが一致していても同様です。",
@@ -5882,13 +6298,11 @@
         "tokenCreatorNoticeDescription": "この連携機能を通じて作成された課題は、作成者である TestPlanIt ユーザーではなく、このアクセス トークンを所有するアカウントに記録されます。このプロバイダーの API では、他のユーザーに代わって作成者を設定することはできません。",
         "callbackUrlLabel": "コールバックURL（リダイレクトURI）",
         "callbackUrlDescription": "このURLを、プロバイダーのOAuthアプリのコールバック／リダイレクトURIとして正確に登録してください。完全に一致しないと承認が失敗します。",
-        "callbackUrlCopy": "コピー",
         "callbackUrlCopied": "コピーしました",
         "forgeApiKeyLabel": "Forge APIキー",
         "forgeApiKeyDescription": "Atlassian ForgeアプリがJira課題パネルからのリクエストを認証するために使用します。ここでキーを生成し、Forgeアプリの設定に貼り付けてください。",
         "forgeApiKeyPlaceholder": "「生成」をクリックしてAPIキーを作成します。",
         "forgeApiKeyGenerate": "生成する",
-        "forgeApiKeyCopy": "コピー",
         "forgeApiKeyCopied": "コピーしました",
         "platform": "プラットフォーム",
         "platformPlaceholder": "プラットフォームを選択してください...",
@@ -5968,6 +6382,7 @@
         "anthropic": "人類学的",
         "azureOpenai": "Azure オープンAI",
         "gemini": "Google ジェミニ",
+        "deepseek": "DeepSeek",
         "ollama": "オラマ",
         "customLlm": "カスタムLLM",
         "apiKeyPlaceholder": "API キーを入力してください...",
@@ -6002,7 +6417,6 @@
         "setAsDefaultDescription": "これを組織のデフォルトのAIモデルとして使用します",
         "fetchingModels": "モデルを取得しています...",
         "failedToFetchModels": "利用可能なモデルを取得できませんでした",
-        "selectModel": "モデルを選択",
         "modelsFound": "{count, plural, other {利用可能なモデルが{count}件見つかりました}}",
         "modelsFoundDescription": "デフォルトモデルとして「{model}」を選択しました",
         "noModelsFoundDescription": "プロバイダーから利用可能なモデルが返されませんでした",
@@ -6035,9 +6449,7 @@
         }
       },
       "sections": {
-        "provider": "プロバイダー",
-        "costAndBudget": "費用と予算",
-        "advanced": "高度な"
+        "costAndBudget": "費用と予算"
       },
       "delete": {
         "title": "AIモデル統合の削除",
@@ -6088,7 +6500,6 @@
       "featureCount": "{count, plural, one {# 機能} other {# 機能}}",
       "llmIntegration": "LLM統合",
       "modelOverride": "モデルのオーバーライド",
-      "llmIntegrationPlaceholder": "プロジェクトデフォルト",
       "modelOverridePlaceholder": "統合デフォルト",
       "projectDefault": "プロジェクトのデフォルト設定（クリア）",
       "integrationDefault": "統合デフォルト（クリア）",
@@ -6128,7 +6539,8 @@
         "generate_from_url": "URLからテストケースを生成する（要件）",
         "generate_from_url_app": "URLからテストケースを生成する（アプリケーションテスト）",
         "automation_candidates": "自動化候補者レポート",
-        "derive_case_steps": "AIステップ導出"
+        "derive_case_steps": "AIステップ導出",
+        "impact_analysis": "影響: 影響を受けたテスト選択"
       }
     },
     "elasticsearch": {
@@ -6304,6 +6716,13 @@
           "question": "このジョブを強制的に削除しますか?",
           "warning": "これにより、遅延を伴い複数回削除が試行されます。注: ジョブが実行中のワーカーによって実際にロックされている場合、削除は失敗する可能性があります。",
           "confirm": "強制削除"
+        },
+        "cancelJob": {
+          "button": "ジョブをキャンセル"
+        },
+        "activeJob": {
+          "title": "ワーカーがこのジョブを処理しています",
+          "cancelHint": "キャンセルはワーカーに次のチェック時に停止するよう求めます。ジョブが停止すると、キューから削除されます。強制削除は、ジョブを保持していたワーカーがなくなり、そのロックが期限切れになった場合にのみ機能します。"
         }
       }
     },
@@ -6323,7 +6742,6 @@
       "changes": "変更点",
       "metadata": "メタデータ",
       "oldValue": "古い",
-      "newValue": "新しい",
       "columns": {
         "timestamp": "タイムスタンプ",
         "entityId": "エンティティID",
@@ -6352,9 +6770,7 @@
   "components": {
     "notifications": {
       "empty": "通知なし",
-      "aria": {
-        "notifications": "通知（{count, number} 未読）"
-      },
+      "panelTitle": "{count, plural, =0 {通知} one {# 件の新しい通知} other {# 件の新しい通知}}",
       "actions": {
         "markRead": "既読にする",
         "markUnread": "未読としてマーク",
@@ -6413,7 +6829,7 @@
         "userRegisteredMessageForm": "{userName} ({userEmail}) が登録フォームから登録しました",
         "viewUserList": "ユーザーリストを表示",
         "reviewGeneratedCases": "生成されたテストケースを確認する",
-        "generateFromUrlCompleteTitle": "ページのクロールは正常に完了しました。",
+        "generateFromUrlCompleteTitle": "ページのクロールが正常に完了しました",
         "generateFromUrlCompleteMessage": "{pages, plural, one {# ページ} other {# ページ}} はプロジェクト \"{projectName}\" の {url} からクロールされました。クリックして確認し、テストケースを生成してください。",
         "generateFromUrlFailedTitle": "URLクロールに失敗しました",
         "reviewRequestedTitle": "レビュー依頼",
@@ -6517,7 +6933,6 @@
       "targetFolder": "対象フォルダ",
       "newFolderPlaceholder": "新しいフォルダ名...",
       "operation": "手術",
-      "operationCopy": "コピー",
       "operationCopyDesc": "選択したケースのコピーをターゲットプロジェクトに作成します。オリジナルは変更されません。",
       "operationMove": "動く",
       "operationMoveDesc": "選択したケースをターゲットプロジェクトに移動します。元のファイルはソースから削除されます。",
@@ -6603,7 +7018,6 @@
     "useIntegration": "{provider}を使用する",
     "useIntegrationDescription": "外部システムに問題を作成する",
     "externalProject": "外部プロジェクト",
-    "selectProject": "プロジェクトを選択",
     "issueType": "問題の種類",
     "selectIssueType": "問題の種類を選択",
     "noIssueTypes": "利用可能な問題タイプはありません",
@@ -6631,15 +7045,214 @@
     "searchForIssue": "リンクする問題を検索する",
     "searchUsers": "ユーザーを検索",
     "noTeamsAvailable": "利用可能なチームはありません",
-    "filterAll": "全て",
     "fanOutPartialFailure": "{count, number} プロジェクトにアクセスできませんでした。 {successCount, number} プロジェクトの結果を表示します。",
-    "projectSelectorLabel": "プロジェクト",
     "searchFailedTitle": "検索に失敗しました",
+    "useAsRequirement": "要件として使用",
+    "useAsRequirementSuccess": "要件として使用されるようになりました。プロジェクトの要件ページで確認できます。",
+    "resetRequirementOverride": "設定された分類にリセット",
+    "resetRequirementOverrideSuccess": "分類がリセットされました。この問題は再び要件タイプの設定に従います。",
+    "requirementOverrideFailed": "要件の分類の更新に失敗しました。",
     "authComplete": {
       "successTitle": "認可が完了しました",
       "successDescription": "アカウントが接続されました。このウィンドウを閉じて、作業を続けることができます。",
       "errorTitle": "認可に失敗しました",
       "errorDescription": "認可を完了できませんでした。このウィンドウを閉じて、再度お試しください。"
+    }
+  },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "要件を検索…",
+      "emptyTitle": "要件がまだありません",
+      "emptyDescription": "最初の要件を作成して、このプロジェクトの要件ツリーの構築を始めましょう。",
+      "loadFailed": "要件の読み込みに失敗しました。",
+      "addRoot": "要件を追加",
+      "addChild": "子要件を追加",
+      "rename": "名前を変更",
+      "expandAll": "すべて展開",
+      "collapseAll": "すべて折りたたむ",
+      "dropToRootHint": "ここにドロップしてトップレベルに移動",
+      "moveSuccess": "要件を移動しました。",
+      "moveFailed": "要件の移動に失敗しました。",
+      "moveRejected": "この移動は拒否されました：",
+      "dragDisabled": "この要件は現在移動できません。"
+    },
+    "list": {
+      "columnSource": "ソース",
+      "expandRow": "{name}を展開",
+      "collapseRow": "{name}を折りたたむ",
+      "filterAllStatuses": "すべてのステータス",
+      "dragLockedSynced": "同期された要件はトラッカーの階層をミラーリングします。移動するには切断してください。"
+    },
+    "detail": {
+      "coverageLabel": "カバレッジ",
+      "previousRequirement": "前の要件",
+      "nextRequirement": "次の要件",
+      "breadcrumbLabel": "要件の階層",
+      "notFound": "要件が見つかりません",
+      "documentationEmpty": "文書は提供されていません",
+      "documentationPlaceholder": "要件の文書を入力してください…",
+      "lockedHint": "このフィールドは接続されたトラッカーによって管理されており、ここでは編集できません。",
+      "saveSuccess": "要件を保存しました。",
+      "saveFailed": "要件の保存に失敗しました。"
+    },
+    "provenance": {
+      "syncedLabel": "同期済み",
+      "detachedLabel": "切断済み",
+      "nativeTooltip": "TestPlanItで直接作成されました。",
+      "syncedTooltip": "接続されたトラッカーから同期されています。ロックされたフィールドはここでは編集できません。",
+      "detachedTooltip": "接続されたトラッカーから切断されました。手動で作成された要件と同様に、完全に編集可能になりました。",
+      "detach": "切断",
+      "detachDialogTitle": "この要件を切断しますか？",
+      "detachDialogDescription": "切断すると、この要件はTestPlanItで完全に編集可能になり、接続されたトラッカーへのリンクが解除されます。この操作は元に戻せません — トラッカーへの再接続はまだサポートされていません。",
+      "detachConfirm": "切断",
+      "detachSuccess": "要件を切断しました。",
+      "detachFailed": "要件の切断に失敗しました。",
+      "exclude": "要件として使用しない",
+      "excludeSuccess": "要件としての使用が解除されました。プロジェクトの課題ページに表示されます。",
+      "excludeFailed": "要件の分類の更新に失敗しました。"
+    },
+    "override": {
+      "promoteTitle": "この問題を要件として使用しますか？",
+      "promoteDescription": "{issue}は要件ツリーに追加され、問題ビューには表示されなくなります。元に戻すまで、同期や要件タイプの設定変更を経ても要件として維持されます。",
+      "promoteConfirm": "要件として使用",
+      "excludeTitle": "この要件の使用を停止しますか？",
+      "excludeDescription": "{issue}は要件ツリーから削除され、プロジェクトの問題ページに表示されます。テストケースへのリンクは維持されます。元に戻すまで、同期や要件タイプの設定変更を経ても除外状態が維持されます。",
+      "excludeConfirm": "要件として使用しない",
+      "resetTitle": "設定された分類にリセットしますか？",
+      "resetDescription": "{issue}はプロジェクトの要件タイプ設定に再び従うようになり、要件ツリーへの追加または削除が行われる可能性があります。",
+      "resetConfirm": "リセット"
+    },
+    "create": {
+      "dialogTitle": "要件を作成",
+      "dialogDescription": "このプロジェクトの要件ツリーに新しい要件を追加します。",
+      "namePlaceholder": "要件名を入力してください…",
+      "parentNone": "親なし(トップレベル)",
+      "submit": "要件を作成",
+      "submitHint": "Enterキーを押して作成",
+      "success": "要件を作成しました。",
+      "failed": "要件の作成に失敗しました。",
+      "modeCreate": "新規要件",
+      "modePromote": "既存の問題を昇格",
+      "promoteDescription": "このプロジェクトに既に同期済みの問題を要件として使用します。問題ビューから移動し、トラッカーの階層は維持され、同期や設定変更を経ても要件として維持されます。",
+      "promoteParentNote": "トラッカーの階層に従います",
+      "promoteIssueLabel": "問題",
+      "promoteChooseIssue": "問題を選択",
+      "promoteNoneSelected": "問題が選択されていません",
+      "promoteSubmit": "要件として使用",
+      "promoteSuccess": "問題が要件になりました。",
+      "promoteFailed": "問題の昇格に失敗しました。"
+    },
+    "edit": {
+      "dialogTitle": "要件を編集",
+      "submit": "変更を保存",
+      "success": "要件を更新しました。",
+      "failed": "要件の更新に失敗しました。",
+      "lockedTooltip": "この要件は接続されたトラッカーから同期されています。名前を変更するには切断してください。"
+    },
+    "delete": {
+      "dialogTitle": "要件を削除",
+      "confirmNoChildren": "この要件を削除してもよろしいですか? この操作は元に戻せます。",
+      "confirmWithChildren": "この要件には{count, plural, other {{count}件の子要件}}があり、これらも削除されます。この操作は元に戻せます。",
+      "success": "要件を削除しました。",
+      "failed": "要件の削除に失敗しました。",
+      "undo": "元に戻す",
+      "undoSuccess": "要件を復元しました。",
+      "undoFailed": "要件の復元に失敗しました。"
+    },
+    "attachments": {
+      "empty": "添付ファイルなし",
+      "uploadSuccess": "添付ファイルをアップロードしました。",
+      "uploadFailed": "添付ファイルのアップロードに失敗しました。",
+      "removeSuccess": "添付ファイルを削除しました。",
+      "removeFailed": "添付ファイルの削除に失敗しました。"
+    },
+    "linkedCases": {
+      "title": "リンクされたテストケース",
+      "titleWithCount": "{count, plural, =0 {リンクされたテストケース} =1 {# 件のリンクされたテストケース} other {# 件のリンクされたテストケース}}",
+      "empty": "リンクされたテストケースはありません。",
+      "addLinkDialogTitle": "テストケースをリンク",
+      "searchPlaceholder": "テストケースを検索…",
+      "linkSuccess": "テストケースをリンクしました。",
+      "linkFailed": "テストケースのリンクに失敗しました。",
+      "unlinkConfirm": "このテストケースのリンクを解除してもよろしいですか？",
+      "unlinkSuccess": "テストケースのリンクを解除しました。",
+      "unlinkFailed": "テストケースのリンク解除に失敗しました。",
+      "columnCase": "テストケース"
+    },
+    "linkedRequirements": {
+      "title": "リンクされた要件",
+      "empty": "リンクされた要件はありません。",
+      "addLinkDialogTitle": "要件をリンク",
+      "searchPlaceholder": "要件を検索…",
+      "linkSuccess": "要件をリンクしました。",
+      "linkFailed": "要件のリンクに失敗しました。",
+      "unlinkConfirm": "この要件のリンクを解除してもよろしいですか？",
+      "unlinkSuccess": "要件のリンクを解除しました。",
+      "unlinkFailed": "要件のリンク解除に失敗しました。"
+    },
+    "suspect": {
+      "badgeLabel": "疑わしい",
+      "tooltipCaseSide": "この要件はこのケースの最終実行後に更新されました。",
+      "tooltipRequirementSide": "このケースの最終実行は、この要件の最終更新より古いです。",
+      "dismissConfirm": "この疑わしいフラグを解除しますか? 要件が再度編集されると、再度フラグが付きます。",
+      "dismissAction": "フラグを解除",
+      "dismissSuccess": "疑わしいフラグを解除しました。",
+      "dismissFailed": "疑わしいフラグの解除に失敗しました。"
+    },
+    "references": {
+      "title": "{count, plural, =0 {参照} =1 {{count}件の参照} other {{count}件の参照}}",
+      "empty": "参照はまだありません。",
+      "emptyHint": "この要件を形成したチケットを添付します。",
+      "addReference": "参照を追加",
+      "createDialogLabel": "参照",
+      "attachSuccess": "参照を添付しました。",
+      "attachFailed": "参照の添付に失敗しました。",
+      "removeConfirm": "この参照を削除してもよろしいですか？",
+      "removeSuccess": "参照を削除しました。",
+      "removeFailed": "参照の削除に失敗しました。",
+      "columnReference": "参照"
+    },
+    "coverage": {
+      "title": "カバレッジ",
+      "uncovered": "未カバー",
+      "uncoveredTooltip": "この要件またはその子要件にリンクされたテストケースはありません。",
+      "statusPassed": "合格した",
+      "statusFailed": "失敗した",
+      "statusNotRun": "未実行",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "合格: {passed} · 失敗: {failed} · 進行中: {inProgress} · 未実行: {notRun}",
+      "showOnlyUncovered": "未カバーのみ表示",
+      "showOnlyUncoveredUnavailable": "カバレッジデータは現在利用できません。",
+      "loadFailed": "カバレッジの読み込みに失敗しました。",
+      "retry": "リトライ",
+      "panelTitle": "カバーしているテストケース",
+      "panelTitleWithCount": "{count, plural, =0 {カバーするテストケース} =1 {カバーする # 件のテストケース} other {カバーする # 件のテストケース}}",
+      "panelDescription": "この要件のカバレッジに数えられるすべてのテストケース — 直接リンクされたケースと、その下位の要件にリンクされたケースの両方です。リンクを追加または削除するには、リンクされたテストケースを使用してください。",
+      "panelEmpty": "この要件をカバーするテストケースはまだありません。",
+      "columnCase": "テストケース",
+      "columnResult": "最新の結果",
+      "columnResultTooltip": "ケースの最新の実行結果です。ステータスが合格でも不合格でもない場合も含まれます。リポジトリの「最新の結果」など他の画面では、合格または不合格となった最新の結果が表示されるため、同じケースでも表示が異なる場合があります。",
+      "resultRunLink": "この結果の元となったテスト実行を表示",
+      "inherited": "継承",
+      "inheritedTooltip": "この要件の子要件にリンクされており、直接リンクされていません。",
+      "notRunCell": "未実行"
+    },
+    "disabled": {
+      "title": "要件が有効になっていません",
+      "description": "このプロジェクトでは要件機能が有効になっていません。要件ツリーの構築を始めるには、プロジェクト管理者にプロジェクト設定で有効にするよう依頼してください。"
+    },
+    "scope": {
+      "hint": "選択したマイルストーンと構成のテスト実行のみをカバレッジの対象にする",
+      "scopedBadge": "スコープ付きカバレッジ",
+      "snapshotScoped": "実行スコープ付きでキャプチャされました"
+    },
+    "history": {
+      "title": "内容の履歴",
+      "description": "この要件のタイトル・ドキュメント・ノートに対するすべての変更と、その変更内容",
+      "empty": "記録された内容の変更はまだありません。現在のテキストが原本です。",
+      "versionLabel": "バージョン {version}",
+      "currentBadge": "現在",
+      "bySync": "同期またはシステム"
     }
   },
   "Pages": {
@@ -6648,7 +7261,178 @@
       "filterPlaceholder": "名前で問題をフィルタリング..."
     }
   },
+  "automation": {
+    "settings": {
+      "title": "自動化実行",
+      "description": "このプロジェクトが自動化されたケースを送信できるターゲット。",
+      "emptyTitle": "まだ実行ターゲットがありません",
+      "emptyDescription": "テストラン時に自動化されたケースをこのプロジェクトから実行するターゲットを追加: GitHubActionsワークフロー、GitLabCIパイプライン、または署名されたウェブフック。",
+      "createButton": "ターゲットを追加",
+      "createTitle": "新しい実行ターゲット",
+      "editTitle": "実行ターゲットを編集",
+      "namePlaceholder": "例:夜間E2E",
+      "repository": "コードリポジトリ",
+      "repositoryPlaceholder": "リポジトリを選択",
+      "noRepositories": "{provider}リポジトリは登録されていません。管理 → コードリポジトリの下で管理者に追加するよう依頼してください。",
+      "workflow": "ワークフロー",
+      "workflowPlaceholder": "ワークフローファイルを選択",
+      "workflowHelp": "ワークフローはworkflow_dispatchトリガーをTESTPA nit_*入力で宣言する必要があります。GitHubは宣言されていない入力を拒否します。",
+      "workflowsUnavailable": "ワークフローを一覧表示できませんでした({error})。代わりにワークフローファイル名を入力してください。",
+      "workflowInputPlaceholder": "例:e2e.yml",
+      "defaultRef": "支店",
+      "defaultRefHelp": "このブランチで実行が開始されます。ただし、実行時に別のrefが指定されている場合を除きます。",
+      "defaultRefDefault": "リポジトリのデフォルトブランチ",
+      "defaultRefPlaceholder": "例:main",
+      "staticInputs": "ワークフロー入力",
+      "variables": "パイプライン変数",
+      "webhookVariables": "変数",
+      "staticInputsHelp": "すべてのディスパッチで送信されます(TESTPLANIT_*値に加えて)。秘密ではありません。リポジトリを読み込むことができる誰でもそれを見ることができます。",
+      "addInput": "入力を追加",
+      "removeInput": "入力を削除",
+      "parametersHelp": "テスト実行実行ダイアログで選択する値。各値は、パラメーターに従って名前が付けられた入力として送信されます。マルチセレクトは、その選択肢をコンマで結合します。",
+      "parameterNamePlaceholder": "例:ブラウザ",
+      "parameterLabelPlaceholder": "例:ブラウザ",
+      "parameterTypes": {
+        "select": "単一選択",
+        "multiselect": "複数選択",
+        "text": "テキスト",
+        "configuration": "構成"
+      },
+      "parameterConfigurationMultiple": "複数を選択できます",
+      "parameterConfigurationHelp": "このプロジェクトに割り当てられた構成を提供します。ジョブは{id}(ID)、{name}(名前)、{variants}(Category=Variantペア)で選択を受け取ります。",
+      "parameterConfigurationNone": "構成はこのプロジェクトに割り当てられていません。管理 → 構成の下に割り当ててください。",
+      "parameterValues": "値",
+      "parameterValuesPlaceholder": "値を入力してEnterキーを押します",
+      "parameterDefaultNone": "デフォルトなし",
+      "parameterDefaultPlaceholder": "オプションのデフォルト値",
+      "credentials": "認証情報",
+      "credentialsHelp": "リポジトリの保存された認証情報を使用するには、空白のままにします。",
+      "credentialsOverride": "ディスパッチ用に別の認証情報を使用",
+      "personalAccessToken": "アクセストークン",
+      "personalAccessTokenHelp": "GitHub: ワークフロースコープ(クラシック)またはアクション読み取り/書き込み(微調整)を持つトークン。GitLab: APIスコープを持つトークン。",
+      "triggerToken": "パイプライントリガートークン",
+      "triggerTokenHelp": "オプション。アクセストークンなしでパイプラインを開始しますが、ステータスは読み込めません。",
+      "clearCredentials": "オーバーライドを削除し、リポジトリ認証情報を使用",
+      "webhookUrl": "Webhook URL",
+      "webhookUrlPlaceholder": "https://ci.example.com/hooks/testplanit",
+      "webhookUrlHelp": "TestPlanItは署名されたPOSTをここに送信します。受信者はX-TestPlanIt-Signatureヘッダーを確認し、ジョブを開始してから、レポーターまたはCLIで結果をレポートします。",
+      "secret": "署名秘密",
+      "secretHelp": "ターゲットが保存されたときに生成され、1回表示されます。",
+      "secretCustom": "独自の秘密を提供",
+      "rotateSecret": "新しい署名秘密を生成",
+      "payloadPreview": "ペイロード",
+      "timeout": "タイムアウト(分)",
+      "timeoutHelp": "その時点までに完了していない実行は、タイムアウトとしてマークされます。",
+      "hasOwnCredentials": "独自の認証情報",
+      "usesRepositoryCredentials": "リポジトリの認証情報",
+      "verifying": "確認中…",
+      "verifyOk": "ターゲットが確認されました",
+      "verifyOkWithWarnings": "ターゲットが確認され、警告があります",
+      "verifyFailed": "確認に失敗しました",
+      "declaredInputs": "宣言された入力: {inputs}",
+      "lastVerified": "最後に検証した",
+      "neverVerified": "まだ確認されていません",
+      "deleteConfirmTitle": "この実行ターゲットを削除しますか？",
+      "deleteConfirm": "過去の実行は履歴を保持します。このターゲットにテストランをディスパッチできなくなります。",
+      "saved": "実行ターゲットが保存されました",
+      "deleted": "実行ターゲットが削除されました",
+      "enabledToast": "ターゲットが有効になりました",
+      "disabledToast": "ターゲットが無効になりました",
+      "revealedSecretTitle": "署名秘密を今すぐコピー",
+      "revealedSecretWarning": "この秘密は1回表示されます。受信者は、各ディスパッチのX-TestPlanIt-Signatureヘッダーを確認するために使用します。別の認証方法(たとえばJenkinsトリガートークン)で認証するシステムはこれを無視できます。それをCI システムのシークレットストアに保存します。TestPlanItはもう一度それを表示することはできません。",
+      "secretCopied": "秘密をコピー",
+      "errors": {
+        "invalid": "ターゲットを保存できませんでした。フォームを確認してもう一度試してください。",
+        "invalidInputs": "入力の1つが有効ではありません。",
+        "urlRequired": "Webhook URLが必要です。",
+        "urlBlocked": "Webhook URLはプライベートまたは内部アドレスを指しています。",
+        "repositoryRequired": "コードリポジトリを選択してください。",
+        "repositoryNotFound": "コードリポジトリはもう存在しません。",
+        "repositoryProviderMismatch": "リポジトリプロバイダーはターゲットプロバイダーと一致しません。",
+        "workflowRequired": "ワークフローファイルを選択してください。",
+        "nameTaken": "この名前のターゲットは既に存在します。",
+        "paramNameInvalid": "パラメータの入力名は文字またはアンダースコアで始まり、文字、数字、アンダースコアのみを含む必要があります。",
+        "paramNameDuplicate": "2つのパラメータは同じ入力名を持っています。",
+        "paramNameReserved": "パラメータの入力名はTESTANIT_で始まることはできません。",
+        "paramCollidesWithInput": "パラメータは静的入力と同じ入力名を持っています。いずれかを削除します。",
+        "paramLabelRequired": "すべてのパラメータにラベルが必要です。",
+        "paramValuesRequired": "選択肢パラメータには少なくとも1つの値が必要です。",
+        "paramValuesDuplicate": "パラメータが同じ値を2回リストしています。",
+        "paramValuesTooMany": "パラメータに値が多すぎます。",
+        "paramValueTooLong": "パラメータの値が長すぎます。",
+        "paramValueHasSeparator": "複数選択パラメータの値にはコンマを含めることはできません。",
+        "paramDefaultNotInValues": "パラメータのデフォルト値がその値の1つではありません。",
+        "paramDefaultNotSingle": "単一選択構成パラメータは1つのデフォルト値のみを持つことができます。",
+        "paramConfigurationNotAssigned": "構成パラメータのデフォルト値がこのプロジェクトに割り当てられていません。",
+        "tooManyInputs": "入力が多すぎます：静的入力とパラメータは合わせて20に制限されています。"
+      }
+    },
+    "execute": {
+      "button": "自動化されたケースを実行",
+      "title": "自動化されたケースを実行",
+      "description": "TestPlanItはターゲットのジョブをこの実行のIDで開始します。ジョブは自動化されたケースの計画を読み取り、それらを実行して、結果をこの実行に報告します。",
+      "noTargets": "このプロジェクトでは実行ターゲットが設定されていません。",
+      "noAutomatedCases": "この実行に実行する自動化されたケースがありません。",
+      "activeExecution": "この実行では実行が既に進行中です。",
+      "target": "ターゲット",
+      "targetPlaceholder": "ターゲットを選択",
+      "ref": "ブランチまたはref",
+      "refHelp": "ターゲットのデフォルトブランチを使用する場合は、空白のままにしてください。",
+      "caseCountSummary": "{count, plural, other {# 件の自動化されたケースが要求されます}}",
+      "buttonSelected": "{count, plural, other {選択した # 件の自動化されたケースを実行}}",
+      "noAutomatedSelected": "選択したケースの中に、この実行での自動化されたケースはありません。",
+      "selectedCaseCountSummary": "{count, plural, other {選択した # 件の自動化されたケースが要求されます}}",
+      "skippedSelection": "{count, plural, other {選択した # 件のケースはこの実行の自動化されたケースではないため、スキップされます。}}",
+      "resultsNote": "ジョブがTESTPLANIT_RUN_ID={runId}で報告すると、結果がこの実行に添付されます。",
+      "submit": "実行",
+      "submitting": "リクエスト中…",
+      "dispatched": "実行がリクエストされました",
+      "dispatchFailed": "実行をリクエストできませんでした",
+      "status": "実行",
+      "requestedBy": "{name}がリクエスト",
+      "timesOutAt": "タイムアウト時刻",
+      "cancel": "実行をキャンセル",
+      "cancelConfirmTitle": "この実行をキャンセルしますか？",
+      "cancelConfirm": "TestPlanItはそれをキャンセルとしてマークし、できるときプロバイダーにジョブを停止するよう要求します。到着した結果は保持されます。",
+      "cancelled": "実行がキャンセルされました",
+      "retry": "再試行",
+      "history": "実行履歴",
+      "historyTitle": "実行履歴",
+      "historyDescription": "この実行の自動化されたケースのすべてのディスパッチ、最新のものが最初です。",
+      "historyEmpty": "まだ実行がありません。",
+      "columnTarget": "ターゲット",
+      "columnRef": "参照",
+      "columnRequested": "リクエスト済み",
+      "columnCases": "ケース",
+      "columnLink": "ジョブ",
+      "externalStatus": "プロバイダーステータス: {status}",
+      "awaitingResults": "結果を待機中",
+      "resultsReceived": "結果を受信"
+    },
+    "adhoc": {
+      "button": "自動化されたテストを実行",
+      "title": "この自動化されたケースを実行",
+      "description": "TestPlanItはこのケースを保持する実行を作成し、ターゲットにそれを実行するよう要求し、ジョブが終了したときに実行を完了します。",
+      "runName": "自動化: {title}",
+      "notAutomated": "このケースは自動化されているとしてマークされていません。"
+    }
+  },
   "enums": {
+    "ExecutionProvider": {
+      "GITHUB_ACTIONS": "GitHub Actions",
+      "GITLAB_CI": "GitLab CI",
+      "GENERIC_WEBHOOK": "汎用ウェブフック"
+    },
+    "TestRunExecutionStatus": {
+      "PENDING": "保留中",
+      "DISPATCHED": "ディスパッチ済み",
+      "RUNNING": "実行中",
+      "SUCCEEDED": "ジョブが成功しました",
+      "FAILED": "ジョブが失敗しました",
+      "DISPATCH_FAILED": "開始できませんでした",
+      "TIMED_OUT": "タイムアウト",
+      "CANCELLED": "キャンセル"
+    },
     "ApplicationArea": {
       "Documentation": "ドキュメント",
       "Milestones": "マイルストーン",
@@ -6658,6 +7442,7 @@
       "ClosedTestRuns": "クローズドテスト実行",
       "TestRunResults": "テスト実行結果",
       "TestRunResultRestrictedFields": "テスト実行結果の制限フィールド",
+      "AutomatedExecution": "自動化実行",
       "Sessions": "セッション",
       "SessionsRestrictedFields": "セッション制限フィールド",
       "ClosedSessions": "クローズドセッション",
@@ -6665,10 +7450,8 @@
       "Tags": "タグ",
       "SharedSteps": "共有ステップ",
       "Issues": "問題",
-      "IssueIntegration": "問題の統合",
-      "Forecasting": "予測",
       "Reporting": "報告",
-      "Settings": "設定"
+      "Settings": "プロジェクト設定"
     },
     "WorkflowType": {
       "NOT_STARTED": "開始されていません",
@@ -6677,6 +7460,7 @@
     }
   },
   "charts": {
+    "openInRepository": "これらのケースをリポジトリで開く",
     "average": "平均",
     "count": "カウント: {count, number}",
     "percent": "パーセント: {percent}%",
@@ -6692,7 +7476,6 @@
   },
   "linkedCases": {
     "title": "リンクされたテストケース",
-    "addLink": "リンクを追加",
     "addLinkedTestCase": "リンクされたテストケースを追加",
     "testCase": "テストケース",
     "linkType": "リンクタイプ",
@@ -6743,6 +7526,7 @@
     "projectSessions": "## セッション\n探索的テストセッションは、時間を区切った台本のないテストであり、進行中および完了状態にわたってメモと結果として記録されます。",
     "projectTags": "## タグ\nタグはこのプロジェクトのテストケース、セッション、テスト実行にラベルを付けてグループ化し、関連作業を見つけやすくします。",
     "projectIssues": "## 課題\nこのプロジェクトに接続されたトラッカーからの課題で、発見または参照されたテストケース、テスト実行、セッションにリンクされます。",
+    "projectRequirements": "## 要件\nプロジェクトの要件を階層で表示します — TestPlanItで直接作成されたもの、または接続されたトラッカーから同期されたもの — リンクされたテストケースとカバレッジがツリー全体に集約されます。",
     "projectReports": "## レポート\nレポートは、このプロジェクトのテスト実行やセッション、結果などのテスト状況を、フィルタリングおよびエクスポート可能なグラフと表にまとめます。",
     "projectAuditLogs": "## 監査ログ\nセキュリティとコンプライアンスの追跡のために、このプロジェクトで実行されたアクションの監査証跡です。誰が何をいつ変更したかを記録します。",
     "projectIntegrations": "## 課題連携\nこのプロジェクトを課題トラッカーに接続し、テストケース、テスト実行、セッションを外部の課題やマイルストーンにリンクして同期できるようにします。",
@@ -6752,6 +7536,7 @@
     "projectParameters": "## テストケースパラメータ\nこのプロジェクトのデータ駆動テストを設定します。インポートされた結果のJUnitイテレーションプロパティ名と、パラメータ化されたケース用の再利用可能なデータセットです。",
     "projectAdvanced": "## 詳細設定\nこのプロジェクトの詳細設定です。レコードIDのプレフィックス、結果のレビューワークフロー、失敗時の自動課題作成、および結果の編集期間を設定します。",
     "projectShares": "## 共有の管理\nこのプロジェクトのレポートへの共有可能なリンクで、それぞれに公開、サインイン必須、パスワード保護のいずれかのアクセスレベルがあります。リンクを取り消すとアクセスが遮断されます。",
+    "projectAccess": "## アクセス\nこのプロジェクトを開くことができるすべてのユーザーと、ここで何ができるかを決定するロール。ユーザーのロールは、自分のプロジェクトアクセス設定、属するグループ、またはプロジェクトのデフォルトアクセスから、この順序で決定されます。システム管理者とプロジェクト管理者は、ロールに関係なく完全なアクセス権を持ちます。アクセスは、管理者が「管理」>「プロジェクト」>「プロジェクトの編集」で変更します。",
     "groups": "## グループ\nグループを使用すると、多数のユーザーに対してプロジェクトアクセスとロールを一度に割り当てることができます。メンバーを直接追加するか、IDプロバイダーからグループをマッピングします。",
     "roles": "## ロール\nロールはユーザーができることを制御します。各ロールはアプリケーション領域ごとに権限を切り替えます。ロールはユーザーに直接割り当てるか、プロジェクトのデフォルトとして割り当てます。",
     "sso": "## 認証\nユーザーのサインイン方法と、新規アカウントの登録可否を管理します。",
@@ -6773,6 +7558,7 @@
     "scim": "## SCIMプロビジョニング\nSCIM 2.0 を介して、ID プロバイダーから TestPlanIt にユーザーをプロビジョニングします。",
     "scimConflicts": "## 外部ID競合ログ\nシステム介入が必要となったSCIM IDイベント（リンク、復元、displayNameの上書き、スキップされたメンバー）。",
     "scimFallbackDefault": "## デフォルトマップアクセス\nグループマッピングでカバーされないユーザーに割り当てられるアクセス層です。",
+    "scimRoleMappings": "## ロールマッピング\nアイデンティティプロバイダーがアサートする`roles`値をアクセス層にマップします。ロールマッピングはグループマッピングより優先されます。IdPから割り当てられたマップ済みロールを持つユーザーは、グループがより多くを付与する場合でも、そのティアを受け取ります。マップされていないロール値は無視されます。",
     "integrations": "## 課題連携\n課題追跡のためのサードパーティ連携を管理します。",
     "notifications": "## 通知管理\nデフォルトの通知設定（ユーザーが上書き可能）を設定し、システム通知を送信します。",
     "notificationsSystem": "## システム通知\n全ユーザーに重要なお知らせを送信します。",
@@ -6828,6 +7614,7 @@
       "projects": "## プロジェクトの割り当て\nこのユーザーがアクセスできるプロジェクトを選択します。\n\n- ユーザーのダッシュボードに表示されるプロジェクトを制御します\n- プロジェクトへの参加に必須です\n- 管理者が後で変更できます\n- 「すべて選択」を使用して、利用可能なすべてのプロジェクトをすばやく割り当てます",
       "groups": "## グループの割り当て\nこのユーザーが所属するグループを選択します。\n\n- グループはユーザーと権限を整理するのに役立ちます\n- ユーザーはグループから権限を継承します\n- アクセス管理が簡素化されます\n- 管理者が後で変更できます",
       "itemsPerPage": "## 1ページあたりのアイテム数\nテーブルやリストに表示されるデフォルトのアイテム数を制御します。\n\n- アプリケーション内のすべてのページ分割されたビューに影響します\n- いつでも変更できます\n- 大規模なデータセットを効率的に管理するのに役立ちます\n- 使用可能なオプション: 10、25、50、または100アイテム",
+      "detailsDisplayMode": "## 詳細を開く\nリストの詳細を横に表示できるアイテムをクリックしたときの動作を選択します。\n\n- **ドッキングパネル:**詳細はリストの横のパネルで開きます\n- **新しいウィンドウ:**詳細は新しいウィンドウの独自のページで開きます\n- テストケースリポジトリ、レビューインボックス、および要件に適用されます",
       "dateFormat": "## 日付形式\n日付の表示形式を設定します。\n\n- アプリケーション全体で一貫して適用されます\n- 日付の解釈の正確性を確保するのに役立ちます\n- 変更はすぐに有効になります\n- ドロップダウンに表示される例は実際の形式を反映しています",
       "timeFormat": "## 時刻形式\n希望する時刻表示形式を設定します。\n\n- 12時間形式と24時間形式から選択します\n- アプリケーション全体で一貫して適用されます\n- 変更はすぐに有効になります\n- ドロップダウンに表示される例は実際の形式を反映しています",
       "timezone": "## タイムゾーン\n日付と時刻の表示に使用するタイムゾーンを設定します。\n\n- アプリケーション全体で一貫して適用されます",
@@ -6899,7 +7686,7 @@
       "name": "## ロール名\nすべてのプロジェクトで使用される、明確で簡潔な説明的な名前またはキーワード。\n\n- チームメンバーが関連するテストケース、テスト実行、およびセッションをすばやく見つけるのに役立ちます。",
       "isDefault": "## デフォルトのロール\nこのロールがプロジェクトのデフォルトかどうかを示します。\n\n- デフォルトのロールは新しいユーザーには事前に選択されています\n- いつでも変更できます",
       "permissions": {
-        "canAddEdit": "## 追加/編集\nこのロールが関連するアプリケーション領域を追加および編集できるかどうかを示します。",
+        "canAddEdit": "## 追加/編集\nこのロールが関連するアプリケーション領域を追加および編集できるかどうかを示します。\n\n- **自動化実行**により、CIプロバイダーで自動化実行を開始、再試行、キャンセルする権利が付与されます。結果の記録には**テスト実行結果**の追加/編集が必要であり、リポジトリから実行を開始するには、実行を作成または拡張するため、**テスト実行**の追加/編集も必要です。",
         "canDelete": "## 削除\nこのロールが関連するアプリケーション領域を削除できるかどうかを示します。",
         "canClose": "## 閉じる\nこのロールが関連するアプリケーション領域を閉じることができるかどうかを示します。",
         "canApprove": "## 承認\nこのロールが関連するアプリケーション領域のレビュー要求を承認できるかどうかを示します。テストケースリポジトリ、テスト実行、およびセッションにのみ適用されます。",
@@ -6909,6 +7696,7 @@
     "group": {
       "name": "## グループ名\nすべてのプロジェクトで使用される、明確で簡潔な説明的な名前またはキーワード。\n\n- チームメンバーが関連するテストケース、テスト実行、およびセッションをすばやく見つけるのに役立ちます。",
       "users": "## ユーザー\nこのグループに割り当てられているユーザーを示します。",
+      "projectMappedAccess": "## プロジェクト別アクセス\nこのグループのメンバーに1つの特定プロジェクトでのアクセス層を付与します。これはプロジェクトの通常のアクセス許可ルールで解決されます。\n\n- **ユーザー**はそのプロジェクトでメンバーに自身のグローバルロールを与えます\n- **プロジェクト管理者**と**管理者**の両方が、そのプロジェクトでプロジェクト管理者ロールを付与します — 1つのプロジェクト内では、プロジェクト管理者が最も強い付与です\n- プロジェクト別アクセスは**付与のみ**です。プロジェクト自身のデフォルトが既に付与しているアクセスを削除することはできないため、「なし」オプションがないのはそのためです\n- マッピングを削除すると付与が撤回されます。メンバーはプロジェクトのデフォルトにフォールバックします",
       "mappedAccess": "## マッピングされたアクセス階層\nこのグループのメンバーには、次回の同期時に少なくともこのアクセス階層が付与されます。\n\n- ユーザーが所属するすべてのグループの中で最も高い階層が適用されます\n- 「マッピングされていません」は、このグループがアクセスに影響しないことを意味します — メンバーはSCIMページで設定されたデフォルトにフォールバックします\n- ユーザーへの手動でのアクセス変更はマッピングより優先されます（そのユーザーの編集画面にフラグが表示されます）"
     },
     "template": {
@@ -6923,12 +7711,12 @@
       "name": "## 統合名\nこの LLM 統合の説明ラベル。\n\n- リストや設定で識別するために使用されます。\n- 例: \"OpenAI GPT-4o\" または \"Internal Ollama\"",
       "provider": "## プロバイダー\nこの統合を支えるLLMサービス。\n\n- APIプロトコルと利用可能なモデルを決定します。\n- 作成後に変更することはできません。",
       "apiKey": "## API キー\nLLM プロバイダーの API の認証キー。\n\n- プロバイダーの開発者コンソールから取得します。\n- 保存後は暗号化され、表示されません。\n- Ollama (ローカル展開) では不要です。",
-      "endpoint": "## APIエンドポイント\nLLMプロバイダーのAPIのベースURL。\n\n- OpenAI、Anthropic、Geminiの場合は空白のままにしてください。公式URLが自動的に使用されます\n- Ollama（例：`http://localhost:11434`）、Azure OpenAI、カスタムLLMには必須です\n- どのプロバイダーでもオプションです。OpenAI互換プロキシ（例：LiteLLM）を指定するには、そのURLを入力します\n- **プライベート/内部アドレス**（localhost、127.0.0.1、プライベートIP、クラウドメタデータ）は、`ALLOWED_PRIVATE_HOSTS`環境変数で明示的に許可されていない限りブロックされます",
+      "endpoint": "## APIエンドポイント\nLLMプロバイダーのAPIのベースURL。\n\n- OpenAI、Anthropic、Gemini、DeepSeekの場合は空白のままにしてください — 公式URLが自動的に使用されます\n- Ollama（例：`http://localhost:11434`）、Azure OpenAI、カスタムLLMには必須です\n- どのプロバイダーでもオプションです。OpenAI互換プロキシ（例：LiteLLM）を指定するには、そのURLを入力します\n- **プライベート/内部アドレス**（localhost、127.0.0.1、プライベートIP、クラウドメタデータ）は、`ALLOWED_PRIVATE_HOSTS`環境変数で明示的に許可されていない限りブロックされます",
       "deploymentName": "## Azure デプロイメント名\nAzure OpenAI モデルデプロイメントの名前。\n\n- Azure OpenAI Studio の「デプロイメント」に表示されます。\n- モデル名とは異なります。例: `my-gpt4-deploy` は `gpt-4` にマッピングされます。\n- Azure OpenAI でのみ必要です。",
-      "defaultModel": "## デフォルトモデル\nこの統合でAIリクエストに使用されるモデル。\n\n- OpenAI、Anthropic、Gemini、OllamaおよびOpenAI互換のカスタムエンドポイント（LiteLLMなど）の場合、利用可能なモデルは自動的に取得されます\n- プロバイダーがモデルの価格情報も提供している場合、選択時にコストフィールドが自動的に入力されます\n- プロバイダーアカウントでモデルが有効になっていることを確認してください\n- 例：`gpt-4o`、`claude-3-5-sonnet-20241022`、`gemini-1.5-pro`",
+      "defaultModel": "## デフォルトモデル\nこの統合でAIリクエストに使用されるモデル。\n\n- OpenAI、Anthropic、Gemini、DeepSeek、Ollama、およびOpenAI互換のカスタムエンドポイント（LiteLLMなど）の場合、利用可能なモデルは自動的に取得されます\n- プロバイダーがモデルの価格情報も提供している場合、選択時にコストフィールドが自動的に入力されます\n- プロバイダーアカウントでモデルが有効になっていることを確認してください\n- 例：`gpt-4o`、`claude-3-5-sonnet-20241022`、`gemini-1.5-pro`、`deepseek-v4-flash`",
       "maxTokensPerRequest": "## リクエストごとの最大トークン数\nモデルが1回の応答で生成できる**_出力_トークンの上限**です。\n\n- モデルの**返信**の長さを制限します — 送信するコンテキストの量ではありません\n- これを超えるリクエストは、**モデルに到達する前に拒否されます**\n- モデルの実際の最大出力に設定してください — 例: Claude Opus/Sonnet は `128000`、Claude Haiku は `64000`、Gemini は `65536`、GPT-4o は `16384`\n- 低すぎると → AI機能が失敗するか、出力が切り捨てられます",
       "defaultMaxTokens": "## デフォルトの最大トークン数\nこのAIモデルへのリクエストが要求する**出力の長さ**で、_リクエストごとの最大トークン数_によって制限されます。\n\n- **テストケース生成**（Jira課題パネルを含むすべてのソース）、**Markdownテストケース解析**、**エディタ執筆アシスタント**、および**スマートテストケース選択**は常にこの値を使用します。これらのプロンプト設定の_最大出力トークン数_は適用されません\n- **エクスポートコード生成**、**AIタグ提案**、**AIステップ導出**、および**自動化候補レポート**は、代わりに**管理 → プロンプト設定**の独自の_最大出力トークン数_を使用します\n- 回答前に思考するモデル（例: Claude Opus 5）は、この予算の一部を推論に使用します — 返信のための余裕を残してください\n- QuickScriptがモデルに送信するリポジトリコードの量は制御**しません** — その予算はモデルのコンテキストウィンドウから自動的に算出されます\n- _リクエストごとの最大トークン数_以下に保ってください",
-      "repoContextBudget": "## リポジトリコンテキスト予算\nスクリプトを生成する際に、QuickScriptが接続されたリポジトリのコードをどれだけモデルに送るかを示します。\n\n- 選択したモデルの入力コンテキストウィンドウから**自動的に設定**されます — ここで設定する項目はありません\n- コンテキストが大きいモデル（Claude、Gemini）はより多く受け取り、小さなローカルモデルは溢れない安全な量を受け取ります\n- コンテキストが多いほど、実際のページオブジェクトやフィクスチャに基づいたスクリプトになります — 生成されるスクリプトの長さが変わるわけではありません",
+      "repoContextBudget": "## リポジトリコンテキスト予算\nスクリプトを生成する際に、QuickScriptが接続されたリポジトリのコードをどれだけモデルに送るかを示します。\n\n- 選択したモデルの入力コンテキストウィンドウから**自動的に設定**されます — ここで設定する項目はありません\n- コンテキストが大きいモデル（Claude、Gemini、DeepSeek）はより多く受け取り、小さなローカルモデルは溢れない安全な量を受け取ります\n- コンテキストが多いほど、実際のページオブジェクトやフィクスチャに基づいたスクリプトになります — 生成されるスクリプトの長さが変わるわけではありません",
       "maxRequestsPerMinute": "## 1分あたりの最大リクエスト数\nこのプロバイダに対して1分あたりに実行できるAPI呼び出しの数を制限します。\n\n- プロバイダプランのレート制限に合わせて設定します。\n- 超過リクエストは拒否されず、キューに格納されます。\n- プランの制限については、プロバイダのドキュメントを確認してください。",
       "costPerInputToken": "## 100万入力トークンあたりのコスト（USD）\nモデルに送信される**100万**入力（プロンプト）トークンあたりのコスト（USD）です。\n\n- コスト追跡と予算アラートに使用されます\n- プロバイダーがモデルの価格情報を提供している場合（LiteLLM、OpenRouter、Together AI）に、モデルを選択したときや接続テストを実行したときに自動的に入力されます\n- それ以外の場合は、プロバイダーの価格ページでご確認ください\n- 例: `0.15` = 100万入力トークンあたり$0.15",
       "costPerOutputToken": "## 100万出力トークンあたりのコスト（USD）\nモデルによって生成される**100万**出力（完了）トークンあたりのコスト（USD）です。\n\n- 通常、入力トークンのコストよりも高くなります\n- コスト追跡と予算アラートに使用されます\n- プロバイダーがモデルの価格情報を提供している場合（LiteLLM、OpenRouter、Together AI）に、モデルを選択したときや接続テストを実行したときに自動的に入力されます\n- それ以外の場合は、プロバイダーの価格ページでご確認ください\n- 例: `0.60` = 100万出力トークンあたり$0.60",
@@ -7018,7 +7806,7 @@
       "isDefault": "## デフォルト\nこのワークフローがプロジェクトのデフォルトかどうかを示します。\n\n- 新しいテスト実行、セッション、および自動化では、デフォルトのワークフローが事前に選択されています。",
       "isEnabled": "## 有効\nこのワークフローが有効かどうかを示します。",
       "isActive": "## アクティブ\nこのワークフローの状態がアクティブで使用可能かどうかを示します。\n\n- アクティブなワークフローは、テスト実行、セッション、または自動化を更新するときに選択できます。\n- 非アクティブなワークフローは選択から非表示になりますが、既存の項目に保持されます。",
-      "requiresReview": "## レビューが必要\nON の場合、ケース、テスト実行、またはセッションをこの状態に移行させるには、承認されたレビュー依頼が必要です。承認された依頼がない場合、移行はブロックされます。\n\n- 依頼を承認すると移行が実行されます。レビュー担当者の承認によって、ケース、実行、またはセッションが依頼された状態に移行します。依頼者が手動で状態変更を行う必要はありません。\n- システムレベルの機能が OFF の場合、保留中の既存のレビューはサイレントに保持され、再度有効にすると再び表示されます。\n- テスターがエンティティの詳細ページから「レビューを依頼」をクリックすると、レビュー担当者が選択されます。\n\nシステムレベルの機能が無効になっている場合、このスイッチはロックされます。上記の「レビュー ワークフロー」カードから再度有効にすると、オンに切り替えることができます。",
+      "requiresReview": "## レビューが必要\nONの場合、ケース、テスト実行、またはセッションをこの状態に移行させるには、承認されたレビュー依頼が必要です。承認された依頼がない場合、移行はブロックされます。\n\n- 依頼を承認すると移行が実行されます。レビュー担当者の承認によって、ケース、実行、またはセッションが依頼された状態に移行します。依頼者が手動で状態変更を行う必要はありません。\n- システムレベルの機能が OFF の場合、保留中の既存のレビューはサイレントに保持され、再度有効にすると再び表示されます。\n- テスターがエンティティの詳細ページから「レビューを依頼」をクリックすると、レビュー担当者が選択されます。\n\nシステムレベルの機能が無効になっている場合、このスイッチはロックされます。上記の「レビューワークフロー」セクションから再度有効にすると、オンに切り替えることができます。",
       "projects": "## プロジェクト\nこのワークフローを使用できるプロジェクトを示します。"
     },
     "testResult": {
@@ -7126,7 +7914,10 @@
       "totalCost": "## 合計コスト\nこのグループの呼び出しに対する米ドルでの推定プロバイダーコストです。ローカルでホストされたモデルのコストはゼロとして記録されます。",
       "avgLatency": "## 平均レイテンシ\nこのグループ内の呼び出しに対してプロバイダーが応答するまでの平均時間。",
       "successRate": "## 成功率\nこのグループ内でエラーなく完了した呼び出しの割合。",
-      "errorCount": "## 失敗した呼び出し\nこのグループ内でエラーで終了した呼び出しの数。"
+      "errorCount": "## 失敗した呼び出し\nこのグループ内でエラーで終了した呼び出しの数。",
+      "impactAnalysisCount": "## インパクト分析カウント\nこのグループで開始されたインパクト分析の数。実行を構成したかどうかは問いません。",
+      "affectedCasesSelected": "## 選択された影響を受けるケース\nこのグループの分析が選択した、ピン留めされたケースと影響を受けるケースの合計。",
+      "selectionPrecision": "## 選択精度（%）\nインパクト分析が選択し、その後実行されたケースのうち、失敗したケースの割合。何も選択されていない場合は空です。"
     },
     "reportDimensions": {
       "user": "## ユーザー ディメンション\nテストを実行したユーザーまたはアイテムに割り当てられているユーザーごとに結果をグループ化します。",
@@ -7153,12 +7944,14 @@
       "feature": "## 機能ディメンション\nLLMの使用状況を、呼び出しを行ったアプリケーション機能（例：テストケース生成）別にグループ化します。",
       "model": "## モデルディメンション\nLLMの使用状況を、呼び出しを処理したモデル別にグループ化します。",
       "integration": "## 統合ディメンション\nLLMの使用状況を、呼び出しを処理した設定済みのLLM統合別にグループ化します。",
-      "outcome": "## 結果ディメンション\nLLMの使用状況を成功した呼び出しと失敗した呼び出しに分割します。"
+      "outcome": "## 結果ディメンション\nLLMの使用状況を成功した呼び出しと失敗した呼び出しに分割します。",
+      "trigger": "## トリガーディメンション\n実行を構成したインパクト分析がどのように開始されたかでグループ化：手動、プルリクエスト、またはプッシュから。分析が構成されていない実行は「なし」に入ります。",
+      "codeRepository": "## コードリポジトリディメンション\nテスト実行を構成した接続されたリポジトリでグループ化。分析のない実行は「なし」に入ります。"
     },
     "reportBuilder": {
       "dimensions": "## ディメンション\nレポートで分析したいディメンションを選択します。ディメンションとは、日付、ユーザー、ステータスなど、データを分類する属性です。ドラッグして順序を変更できます。",
       "metrics": "## メトリクス\nレポートで測定するメトリクスを選択します。メトリクスとは、テスト結果数、合格率、平均経過時間など、データから得られる定量的な測定値です。ドラッグして順序を変更できます。",
-      "dateRange": "## 日付範囲\n特定の期間でレポートデータをフィルタリングします。「過去7日間」や「前月」などの定義済み範囲から選択するか、カスタムの日付範囲を定義することができます。このフィルターは、各レポートタイプの関連する日付フィールド（例：テスト結果の実行日、テストケースの作成日）に適用されます。",
+      "dateRange": "## 日付範囲\n特定の期間でレポートデータをフィルタリングします。「過去7日間」「過去1か月」「過去N日」などのプリセットを選択するか、カレンダーで開始日と終了日を選択します。\n\nプリセットは相対的なままです：保存されたレポートまたはライブ共有リンクは開くたびに日付を改めて計算し、タイムゾーンで表示されます。カスタム日付は固定されます。このフィルターは、各レポートタイプに関連する日付フィールドに適用されます(たとえば、テスト結果の実行日、テストケースの作成日)。",
       "dimensionFilters": "## フィルター\nレポートを選択した各ディメンションの特定の値に絞り込みます。そのディメンションのすべての値を含めるには、フィルターを空のままにしてください。日付ディメンションは、代わりに日付範囲ピッカーでフィルタリングされます。"
     },
     "codeRepository": {
@@ -7449,7 +8242,10 @@
       }
     },
     "projectRunsFilters": "## テスト実行のフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「アクティブ」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイス上で記憶されます。\n\n- **手動** / **自動** — その種類の実行のみにリストを限定します。両方をオンにする（または両方をオフにする）と、すべての実行が表示されます。\n- **自分のテスト実行** — 自分が関与している実行のみ：自分が作成した実行、自分にテストケースが割り当てられている実行、または自分がテスト結果を記録した実行です。",
-    "projectSessionsFilters": "## セッションのフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「進行中」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイスに記憶されます。\n\n- **マイセッション** — 自分が関与しているセッションのみ：自分が作成したセッション、または自分に割り当てられたセッション。"
+    "projectSessionsFilters": "## セッションのフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「進行中」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイスに記憶されます。\n\n- **マイセッション** — 自分が関与しているセッションのみ：自分が作成したセッション、または自分に割り当てられたセッション。",
+    "projectImpact": "## インパクト\nテスト対象のアプリケーションのリポジトリを接続して、このプロジェクトがテストインパクト分析を実行できるようにします：2つのコミットを選択して、変更がどのテストケースに影響を与えるかを確認し、テストケースをそれらがカバーするコードにピン留めします。",
+    "pathPatterns": "## パスパターン\n各行は基本的な**パス**とグロブ**パターン**を組み合わせます。行は累積されます。任意の行がファイルに一致する場合、ファイルが含まれます。\n\n- `src` + `**/*` — `src`の下のすべて\n- 空白または`.` + `**/*` — リポジトリ内のすべてのファイル\n- `src` + `**/!(*.test|*.spec).ts` — テストを除く`.ts`ファイル\n\n### 除外\n行で**除外**をチェックして、別の行が含める場合でもそのファイルを削除します。除外はファイルピッカーとキャッシュに適用され、インパクト分析の変更されたファイルに対して適用されるため、ほぼすべてのプルリクエストで変更されるファイルは関連のないテストケースを取得できなくなります。少なくとも1行はチェックなしのままにしておく必要があります。\n\n- 空白 + `**/CHANGELOG*` — あらゆる深さのすべてのチェンジログ\n- `app` + `build.gradle.kts` — バージョンをバンプするだけのビルドファイル",
+    "projectAutomation": "## 自動化実行\n実行ターゲットは、このプロジェクトの自動化されたケースをどこで実行するかをTestPlanItに伝えます：GitHub Actionsワークフロー、GitLab CIパイプライン、または他のシステムの署名付きウェブフック。実行が実行されると、TestPlanItはジョブを実行IDと計画URLで開始します。ジョブは計画を読み取り、一致するテストを実行して、その実行にピン留めされたレポーターまたはCLIで結果を報告します。ターゲットは削除せずに無効にできます。"
   },
   "reports": {
     "ui": {
@@ -7484,7 +8280,6 @@
       "metricOrder": "メートル法",
       "filtersDescription": "特定の基準でレポートデータをフィルタリングする",
       "activeFilters": "アクティブフィルター:",
-      "priorityFilterPlaceholder": "優先度の値を選択する（またはすべて空白のままにする）",
       "dateRange": {
         "selectDateRange": "日付範囲を選択",
         "chooseStartDate": "開始日を選択",
@@ -7498,8 +8293,6 @@
         },
         "today": "今日",
         "yesterday": "昨日",
-        "last7Days": "過去7日間",
-        "last30Days": "過去30日間",
         "thisWeek": "今週",
         "lastWeek": "先週",
         "last2Weeks": "過去2週間",
@@ -7508,11 +8301,25 @@
         "last3Months": "過去3か月",
         "thisQuarter": "今四半期",
         "lastQuarter": "前四半期",
-        "thisYear": "今年",
         "lastYear": "去年",
         "last12Months": "過去12か月",
         "allTime": "オールタイム",
-        "custom": "カスタム日付範囲"
+        "custom": "カスタム日付範囲",
+        "relativeHint": "レポートが開くたびに更新されます。カレンダーで日付を選択して修正します。",
+        "rolling": {
+          "label": "過去N日、週、月…",
+          "last": "過去",
+          "amount": "期間の数",
+          "unit": "期間",
+          "days": "過去 {count, plural, other {# 日}}",
+          "weeks": "過去 {count, plural, other {# 週}}",
+          "months": "過去 {count, plural, other {# ヶ月}}"
+        },
+        "rollingUnits": {
+          "days": "日",
+          "weeks": "週",
+          "months": "ヶ月"
+        }
       },
       "dateGrouping": {
         "label": "グループ化",
@@ -7523,6 +8330,7 @@
         "annually": "毎年"
       },
       "filters": {
+        "allValues": "すべての値",
         "selectFilter": "フィルターの種類を選択",
         "allProjects": "すべてのプロジェクト"
       },
@@ -7597,6 +8405,26 @@
         "automationCandidates": {
           "label": "自動化候補者",
           "description": "ケースの内容、カスタムフィールド、および関連する問題のコンテキストに基づいて、次に自動化する手動テストケースのランキングリスト"
+        },
+        "requirementCoverageGaps": {
+          "label": "要件カバレッジギャップ",
+          "description": "リンクされたテストケースがない要件をすべて一覧表示し、ツリーを開かずにギャップを可視化します"
+        },
+        "requirementTraceability": {
+          "label": "要件トレーサビリティ",
+          "description": "リンクされたテストケースと最新の実行結果を備えた各要件"
+        },
+        "requirementCoverageChanges": {
+          "label": "要件カバレッジの変更",
+          "description": "保存したトレーサビリティスナップショットを、後のスナップショットまたはライブマトリックスと比較して、どの要件のカバレッジが変化したかを確認します"
+        },
+        "impactAnalysis": {
+          "label": "インパクト分析履歴",
+          "description": "すべてのインパクト分析：それを開始したもの、それが変更したもの、選択したケース、および構成した実行の結果"
+        },
+        "codePinCoverage": {
+          "label": "コードピンカバレッジ",
+          "description": "コードピンがある場所：リポジトリとディレクトリ、および最近の変更がカバーされなかった場所"
         }
       },
       "flakyTests": {
@@ -7610,6 +8438,8 @@
         "oldest": "古い",
         "noFlakyTests": "基準に合致する不安定なテストは見つかりませんでした",
         "includeFilter": "含む",
+        "caseTags": "テストケースタグ",
+        "runTags": "テスト実行タグ",
         "testRunDeleted": "テスト実行は削除されました",
         "chart": {
           "highPriority": "注意が必要",
@@ -7639,10 +8469,8 @@
         "healthScore": "スコア",
         "lastExecuted": "最後に処刑された",
         "executions": "処刑",
-        "passRate": "合格率",
         "passCount": "パス",
         "failCount": "失敗",
-        "never": "一度もない",
         "daysSince": "処刑からの日数",
         "count": "カウント",
         "totalTests": "テストケース",
@@ -7706,8 +8534,7 @@
           "forecast": "{value} 予報",
           "forecastUnset": "予報なし",
           "flakiness": "反転 {value}%",
-          "flakinessUnset": "反転データなし",
-          "createdLabel": "作成済み"
+          "flakinessUnset": "反転データなし"
         },
         "heuristic": {
           "intro": "このプロジェクトではLLM連携が設定されていないため、ランキングは選択戦略指標から直接構築されます。LLM連携を設定するには（管理画面 → AIモデル）、カスタムフィールド、関連する課題のコンテキスト、ケースコンテンツなどを指標と併せて考慮した、より高度な推論を有効にしてください。",
@@ -7755,8 +8582,6 @@
         "invalidProject": "無効なプロジェクトです。",
         "historyPlaceholder": "スナップショットを選択してください",
         "generatedAt": "生成された",
-        "by": "による",
-        "summaryHeading": "まとめ",
         "actions": {
           "generate": "レポートを生成する",
           "regenerate": "再生する"
@@ -7786,11 +8611,8 @@
           "score": "スコア {score}"
         },
         "delete": {
-          "button": "消去",
           "title": "このスナップショットを削除しますか？",
-          "description": "スナップショットは履歴から削除されます。この操作は元に戻せません。",
-          "cancel": "キャンセル",
-          "confirm": "消去"
+          "description": "スナップショットは履歴から削除されます。この操作は元に戻せません。"
         }
       },
       "issueTestCoverage": {
@@ -7800,11 +8622,8 @@
         "issue": "問題",
         "testCase": "テストケース",
         "testCases": "{count, plural, =1 {テストケース} other {テストケース}}",
-        "issueStatus": "状態",
-        "priority": "優先度",
         "linkedTests": "関連テスト",
         "testResults": "結果（合格／不合格／追跡調査）",
-        "passRate": "合格率",
         "passed": "合格した",
         "failed": "失敗した",
         "lastStatus": "最終ステータス",
@@ -7819,7 +8638,6 @@
           "issuesWithUntested": "未検証",
           "issuesWithUntestedTooltip": "少なくとも1つのテストケースが実行されていないという問題があります。",
           "issuesAllPassing": "通過するすべての人",
-          "overallPassRate": "合格率",
           "numberOfIssues": "発行件数"
         },
         "charts": {
@@ -7828,6 +8646,81 @@
           "untestedTestCases": "未テストのテストケース数",
           "testCoverageVsExecution": "テストカバレッジと実行状況の比較"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "要件",
+        "path": "親パス",
+        "testCase": "テストケース",
+        "linkedCases": "リンクされたケース",
+        "uncovered": "未カバー",
+        "notRun": "未実行",
+        "noData": "このレポートに利用できる要件データはありません。",
+        "noGaps": "カバレッジギャップは見つかりませんでした — すべての要件にリンクされたテストケースが少なくとも1つあります。",
+        "scopeLabel": "要件にスコープを限定",
+        "scopeHelp": "レポートを選択した要件とその配下のすべてに限定します。空欄にすると、プロジェクト内のすべての要件を対象にレポートします。",
+        "scopePlaceholder": "すべての要件",
+        "covered": "カバー済み",
+        "byHierarchy": "トップレベル要件別のカバレッジ",
+        "uncoveredSince": "未カバー開始日",
+        "totalDebt": "累計負債",
+        "onClosedRequirements": "クローズ済み要件について",
+        "debtByHierarchy": "トップレベル要件別の負債",
+        "debtAging": "負債の経過期間",
+        "ageUnder30": "30日未満",
+        "age30to90": "30～90日",
+        "age90to180": "90～180日",
+        "age180to365": "180～365日",
+        "ageOver365": "1年以上",
+        "includeNotRun": "テストが一度も実行されていない要件を含める",
+        "otherRoots": "その他（{count, plural, other {#件の階層}}）",
+        "snapshotLabel": "スナップショット",
+        "snapshotLive": "ライブマトリックス",
+        "snapshotHelp": "ライブデータの代わりに、保存された時点のマトリックスのスナップショットを表示します。スナップショットはエクスポート、共有、比較が可能な不変のレコードです。",
+        "snapshotPlaceholder": "スナップショットを選択",
+        "snapshotRequirementsCount": "{count, plural, other {# 件の要件}}",
+        "snapshotUncoveredCount": "未カバー: {count} 件",
+        "snapshotCapturedBy": "{date}に{user}が取得",
+        "noSnapshots": "スナップショットはまだありません。要件トレーサビリティレポートまたは要件ページから保存してください。",
+        "saveSnapshot": "スナップショットを保存",
+        "saveSnapshotTitle": "トレーサビリティスナップショットを保存",
+        "saveSnapshotDescription": "現在のトレーサビリティマトリックス（すべての要件、それをカバーするテストケース、およびその最新の結果）を、後で表示・エクスポート・共有・比較できる不変の名前付きスナップショットとして記録します。",
+        "saveSnapshotScoped": "現在スコープ内にある要件のみがキャプチャされます。",
+        "snapshotNamePlaceholder": "リリース2.4サインオフ",
+        "snapshotNotePlaceholder": "任意 — このスナップショットが何の証拠であるか",
+        "snapshotSaved": "スナップショット「{name}」を保存しました。",
+        "snapshotSaveFailed": "スナップショットの保存に失敗しました。",
+        "deleteSnapshot": "スナップショットを削除",
+        "deleteSnapshotTitle": "このスナップショットを削除しますか？",
+        "deleteSnapshotDescription": "「{name}」はレポートビュー、比較のベースライン、共有対象として利用できなくなります。要件やテストケースには影響しません。",
+        "snapshotDeleted": "スナップショットを削除しました。",
+        "snapshotDeleteFailed": "スナップショットの削除に失敗しました。",
+        "baselineLabel": "ベースラインスナップショット",
+        "requirementProject": "要件プロジェクト",
+        "compareLabel": "比較対象",
+        "baselineRequired": "このレポートを実行するには、ベースラインスナップショットを選択してください。",
+        "includeUnchanged": "変更のない要件を含める",
+        "coverageBefore": "変更前のカバレッジ",
+        "coverageAfter": "変更後のカバレッジ",
+        "linkedCasesBefore": "変更前のリンク数",
+        "linkedCasesAfter": "変更後のリンク数",
+        "casesAdded": "追加されたケース",
+        "casesRemoved": "削除されたケース",
+        "resultsChanged": "変更された結果",
+        "changeAdded": "追加",
+        "changeRemoved": "削除",
+        "changeCoverage": "カバレッジが変更されました",
+        "changeLinks": "リンクが変更されました",
+        "changeResults": "結果が変更されました",
+        "changeUnchanged": "変更なし",
+        "changedRequirements": "変更された要件",
+        "newlyCovered": "新たにカバーされた",
+        "newlyUncovered": "新たに未カバーとなった",
+        "nowFailing": "新たに失敗中",
+        "noLongerFailing": "失敗が解消された",
+        "byChangeKind": "変更種別ごとの要件",
+        "noChanges": "両者の間にカバレッジの変更はありません。",
+        "snapshotsMenu": "スナップショット",
+        "openSnapshotInReport": "要件トレーサビリティレポートで開く"
       },
       "crossProjectReportTypes": {
         "testExecution": {
@@ -7866,17 +8759,89 @@
           "label": "プロジェクト横断的な課題テストカバレッジ",
           "description": "プロジェクト全体にわたる、関連するテストケースと最新の実行状況とともに課題を表示します。"
         },
+        "requirementCoverageGaps": {
+          "label": "プロジェクト横断的な要件カバレッジギャップ",
+          "description": "要件が有効なすべてのプロジェクトにおいて、テストカバレッジがない要件"
+        },
+        "requirementTraceability": {
+          "label": "プロジェクト横断的な要件トレーサビリティ",
+          "description": "プロジェクト全体で、各要件とそれに紐づくテストケースおよび最新の結果をペアにしたもの"
+        },
         "executionLog": {
           "label": "プロジェクト横断実行ログ",
           "description": "プロジェクト全体にわたる、ステータス、実行者、タイムスタンプを含む個々のテスト結果レコードのフラットリスト"
+        },
+        "impactAnalysis": {
+          "label": "プロジェクト横断的インパクト分析履歴",
+          "description": "インパクト分析が有効なすべてのプロジェクトにおけるインパクト分析"
+        },
+        "codePinCoverage": {
+          "label": "プロジェクト横断的コードピンカバレッジ",
+          "description": "インパクト分析が有効なすべてのプロジェクトにおけるコードピンカバレッジ"
         }
       },
       "folderDescendants": {
         "label": "サブフォルダーを含める",
-        "description": "各親フォルダに対して、サブフォルダ内の結果をカウントします。"
+        "description": "各親フォルダに対して、サブフォルダ内の結果をカウントします。",
+        "filterDescription": "選択されたフォルダのサブフォルダ内のテストケースも含めます。"
       },
+      "chartTotals": {
+        "label": "合計行を表示",
+        "description": "すべてのシリーズを1つの値に結合する行を日付ごとに追加します。"
+      },
+      "groupedTotal": "このグループの {count, plural, other {# 行}} の合計",
       "dimensionFilters": {
         "allValues": "すべての値"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "この日数以内に開始された分析。すべての時間は、プロジェクトが保持するすべての分析を読み取ります。",
+        "triggerPush": "プッシュ",
+        "outcomeNotExecuted": "実行されなかった",
+        "outcomeNoRun": "実行なし",
+        "allRepositories": "すべてのリポジトリ",
+        "analysis": "分析",
+        "changedFiles": "変更されたファイル",
+        "changedFilesDetail": "{files, number}ファイル·+{additions, number} −{deletions, number}",
+        "accepted": "承認済み",
+        "runResults": "{executed, number}実行·{passed, number}合格·{failed, number}失敗",
+        "chart": {
+          "perWeek": "週あたりの分析",
+          "week": "{date}の週"
+        },
+        "stats": {
+          "analyses": "分析",
+          "runsComposed": "構成されたの実行",
+          "runsComposedTooltip": "手動またはリポジトリイベントから、テスト実行を構成したインパクト分析。",
+          "runsWithFailures": "失敗がある実行",
+          "runsWithFailuresTooltip": "構成された実行のうち、選択されたケースの少なくとも1つが失敗したもの（実行された構成された実行のシェアとして）。",
+          "medianAffected": "影響を受けるケースの中央値",
+          "medianAffectedTooltip": "分析が選択したピン留めされたケースと影響を受けるケースの平均的な数。",
+          "acceptedShare": "承認されたシェア",
+          "acceptedShareTooltip": "レビュー担当者が承認したケース（分析が提案したすべてのピン留めされたケースと影響を受けるケースのシェアとして）。"
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "この日数以内に開始された分析から未カバーファイルが来ます。すべての時間は完了したすべての分析を読み取ります。",
+        "directory": "ディレクトリ",
+        "rootDirectory": "(リポジトリルート)",
+        "casesWithPins": "ピンを持つケース",
+        "stalePins": "古いピン",
+        "stalePinsHelp": "接続の最新分析がヘッドコミットで見つけられなかったピン。",
+        "uncoveredFiles": "カバーされていない変更ファイル",
+        "uncoveredFilesHelp": "ピンがカバーしていない変更ファイル（ウィンドウ内の分析全体で1回カウントされます）。",
+        "coverageFilter": "表示",
+        "coverageGaps": "ピンのない変更",
+        "coveragePinned": "ピン付き",
+        "kindBreakdown": "{file, number}ファイル全体·{range, number}行·{symbol, number}シンボル·{glob, number}グロブ",
+        "sourceBreakdown": "{manual, number}手動·{ai, number}AI·{annotation, number}注釈·{mapfile, number}マップファイル·{issue, number}チケット",
+        "stats": {
+          "casesWithPinsTooltip": "プロジェクトのケースのシェアとして、少なくとも1つのコードピンを持つテストケース。",
+          "gapDirectories": "ピンのない変更ディレクトリ",
+          "gapDirectoriesTooltip": "分析が変更ファイルを見つけたがピンが何もカバーしていないディレクトリ。"
+        },
+        "chart": {
+          "byDirectory": "ディレクトリ別のピンと未カバーファイル"
+        }
       }
     },
     "errors": {
@@ -7893,30 +8858,16 @@
       "unexpectedError": "予期しないエラーが発生しました。"
     },
     "dimensions": {
-      "project": "プロジェクト",
-      "status": "状態",
-      "user": "ユーザー",
       "executor": "執行者",
       "assignedTo": "担当者",
-      "configuration": "構成",
-      "date": "日付",
       "executionDate": "実行日",
       "creationDate": "作成日",
       "activityDate": "活動日",
-      "testRun": "試運転",
       "testCase": "テストケース",
-      "milestone": "マイルストーン",
-      "template": "テンプレート",
       "creator": "クリエイター",
-      "state": "州",
       "source": "ソース",
-      "folder": "フォルダ",
-      "group": "グループ",
-      "role": "役割",
-      "session": "セッション",
       "weekEnding": "週末",
       "period": "期間",
-      "priority": "優先度",
       "automationStatus": "自動化ステータス",
       "issueType": "問題の種類",
       "issueTracker": "課題追跡システム",
@@ -7924,8 +8875,9 @@
       "tag": "タグ",
       "feature": "機能",
       "model": "モデル",
-      "integration": "統合",
-      "outcome": "結果"
+      "outcome": "結果",
+      "trigger": "トリガー",
+      "codeRepository": "コードリポジトリ"
     },
     "metrics": {
       "percentReady": "準備完了（%）",
@@ -7940,7 +8892,6 @@
       "passRate": "合格率（％）",
       "avgElapsed": "平均経過時間",
       "avgElapsedTime": "平均経過時間",
-      "totalElapsedTime": "経過時間合計",
       "testRunCount": "テスト実行回数",
       "testCaseCount": "テストケース数",
       "automationRate": "自動化率（％）",
@@ -7977,7 +8928,10 @@
       "totalCost": "合計コスト",
       "avgLatency": "平均レイテンシ",
       "successRate": "成功率 (%)",
-      "errorCount": "失敗した呼び出し"
+      "errorCount": "失敗した呼び出し",
+      "impactAnalysisCount": "インパクト分析カウント",
+      "affectedCasesSelected": "選択された影響を受けるケース",
+      "selectionPrecision": "選択精度（%）"
     },
     "drillDown": {
       "title": "詳細な記録",
@@ -8072,7 +9026,6 @@
           "expired": "期限切れ"
         },
         "notifications": {
-          "enabled": "の上",
           "disabled": "オフ"
         },
         "empty": {
@@ -8121,7 +9074,6 @@
         "title": "共有リンクが作成されました！",
         "description": "共有リンクの準備ができました。コピーして他の人と共有してください。",
         "shareLink": "共有リンク",
-        "copy": "コピー",
         "openInNewTab": "新しいタブで開く",
         "metadata": {
           "mode": "モード",
@@ -8170,6 +9122,8 @@
       "defaultTitle": "共有レポート",
       "fromProject": "プロジェクトより:",
       "dateRange": "日付範囲:",
+      "currentlyReporting": "現在レポート中：",
+      "reportedRange": "レポート済み：",
       "readOnlyNotice": "これは読み取り専用の共有ビューです",
       "viewCount": "{count, plural, =1 {1ビュー} other {#ビュー}}",
       "viewInFullApp": "フルアプリで表示",
@@ -8183,6 +9137,55 @@
       "title": "このプロジェクトへのアクセス権があります",
       "description": "{userName} として表示され、 {projectName}にアクセスできます。",
       "viewInApp": "アプリ全体を表示"
+    },
+    "dateRangeMode": {
+      "label": "日付範囲",
+      "relative": {
+        "title": "{range}（相対）",
+        "description": "レポートが生成される日付に移動します。現在レポート中：{dates}。"
+      },
+      "fixed": {
+        "title": "固定日付",
+        "description": "常に{dates}。"
+      },
+      "frozenNote": "凍結されたレポートは実行された日付を保持します：{range}、{dates}。"
+    },
+    "frozen": {
+      "live": {
+        "title": "ライブ",
+        "description": "開くたびにレポートを再度実行するため、常に現在のデータが表示されます。"
+      },
+      "frozen": {
+        "title": "凍結",
+        "description": "今レポートを取得します。これは常にこれらの結果を正確に表示し、更新されることはありません。"
+      },
+      "truncation": {
+        "title": "このレポートは完全に凍結するには大きすぎます",
+        "description": "{total, number}行あり、凍結されたレポートは最大{max, number}行を保持します。最初の{max, number}行のみを保持するコピーを保存しますか？"
+      },
+      "capturedBy": "<date></date>に{name}により凍結",
+      "capturedAt": "<date></date>に凍結",
+      "truncatedNotice": "このコピーは{totalRowCount, number}行のうち最初の{rowCount, number}行を保持します。"
+    },
+    "savedReports": {
+      "title": "保存されたレポート",
+      "saveTitle": "レポートを保存",
+      "saveDescription": "このレポートを保存されたレポートに保存します。自分だけが表示できます。",
+      "saved": "レポートが保存されました",
+      "savedDescription": "「{name}」が保存されたレポートに追加されました。",
+      "saveFailed": "レポートの保存に失敗しました",
+      "empty": "保存されたレポートはまだありません。",
+      "emptyHint": "レポートを実行してから「保存」を選択してここに保持します。",
+      "open": "{name}を開く",
+      "frozenBadge": "凍結",
+      "rename": "名前を変更",
+      "renameTitle": "保存されたレポート名を変更",
+      "renamed": "保存されたレポートの名前を変更しました",
+      "renameFailed": "保存されたレポートの名前変更に失敗しました",
+      "deleteTitle": "保存されたレポートを削除しますか？",
+      "deleteConfirm": "「{name}」は保存されたレポートから削除されます。",
+      "deleted": "保存されたレポートを削除しました",
+      "deleteFailed": "保存されたレポートの削除に失敗しました"
     }
   },
   "sharedSteps": {
@@ -8301,25 +9304,20 @@
         "viewSharedStep": "共有ステップグループを表示",
         "skippedWarning": "{count, plural, one {# ケースがスキップされました} other {# ケースがスキップされました}} (古いか、既に変換済み)。",
         "noCasesSelected": "変換するケースを少なくとも1つ選択してください。",
-        "stepsUnavailable": "一致したステップはこのテストケースにはもう存在しません。この一致を却下して新しいスキャンを実行してください。",
-        "selectAll": "すべて選択"
+        "stepsUnavailable": "一致したステップはこのテストケースにはもう存在しません。この一致を却下して新しいスキャンを実行してください。"
       }
     },
     "findStepDuplicates": "重複データの検索"
   },
   "search": {
-    "title": "検索",
     "savedSearches": {
       "title": "保存された検索",
       "save": "検索を保存",
       "saveTitle": "検索を保存",
       "saveDescription": "後で見返せるように、この検索に名前を付けてください。",
-      "saveAction": "保存",
-      "nameLabel": "名前",
       "namePlaceholder": "例：今スプリントの失敗した実行",
       "nameRequired": "この検索の名前を入力してください。",
       "loginRequired": "検索を保存するにはサインインする必要があります。",
-      "descriptionLabel": "説明（任意）",
       "descriptionPlaceholder": "この検索の用途",
       "saved": "検索を保存しました",
       "savedDescription": "「{name}」を保存された検索に追加しました。",
@@ -8328,11 +9326,9 @@
       "emptyHint": "検索を保存すると、後で見返すことができます。",
       "loaded": "「{name}」を読み込みました",
       "loadFailed": "この保存された検索は無効になりました。",
-      "edit": "編集",
       "editTitle": "保存された検索を編集",
       "edited": "保存された検索を更新しました",
       "editFailed": "検索を更新できませんでした。もう一度お試しください。",
-      "delete": "消去",
       "deleteTitle": "保存された検索を削除しますか？",
       "deleteConfirm": "「{name}」が保存された検索から削除されます。この操作は元に戻せません。",
       "deleted": "保存された検索を削除しました",
@@ -8425,6 +9421,7 @@
       "testRunType": "テスト実行タイプ",
       "regular": "通常",
       "junit": "ジュニット",
+      "hybrid": "ハイブリッド",
       "automatedOnly": "自動のみ",
       "archivedOnly": "アーカイブのみ",
       "completedOnly": "完了のみ",
@@ -8635,11 +9632,7 @@
     "tabDataset": "データセット",
     "tabDatasetDisabledTooltip": "データセットの行を編集する前に、少なくとも1つのパラメータを追加してください。",
     "sheetAutoSaveHint": "変更は自動的に保存されます。",
-    "formName": "名前",
-    "formType": "タイプ",
-    "formDefault": "デフォルト",
     "formOrder": "注文",
-    "formRequired": "必須",
     "formRequiredHelp": "この値が欠落している反復処理は検証に失敗します。",
     "formSensitive": "センシティブ",
     "formSensitiveHelp": "監査ログおよび読み取り権限を持たないユーザーから値を非表示にする。",
@@ -8657,7 +9650,6 @@
     "editDialogTitle": "パラメータ「{name}」を編集します",
     "editDialogDescription": "型、デフォルト値、フラグ、または許可値を更新します。名前を変更するには、リスト内のパラメータ名をクリックします。",
     "editDialogRenameHint": "名前を変更するには、このダイアログを閉じて、パラメータ名をクリックしてください。",
-    "editDialogCancel": "キャンセル",
     "editDialogSave": "変更を保存する",
     "editError": "パラメータの更新に失敗しました",
     "editSuccess": "更新されたパラメータ \"{name}\"",
@@ -8675,11 +9667,9 @@
     "selectSourceWarningTitle": "\"@{name} \"のSELECTソースを変更しますか？",
     "selectSourceWarningDescription": "このパラメータの既存のデータセット値が新しいリストに存在しない可能性があります。この変更後、{invalidCount, plural, =1 {#件の行} other {#件の行}}に対応が必要になります。続行しますか？",
     "selectSourceConfirm": "ソースを変更する",
-    "datasetRowSelectAria": "行を選択",
     "datasetSelectAllPageTooltip": "このページ上のすべての行を選択するには、クリックしてください。Shiftキーを押しながらクリックすると、すべてのページのすべての行を選択できます。",
     "datasetSelectAllAcrossPagesTooltip": "すべてのページにわたって{count, plural, =1 {#行} =2 {両方の行} other {すべての#行}}を選択",
     "datasetDeselectAllAcrossPagesTooltip": "すべてのページにわたるすべての行の選択を解除する",
-    "datasetLabelColumn": "ラベル",
     "datasetAddRow": "行を追加する",
     "datasetAddColumn": "列を追加する",
     "datasetAddColumnTitle": "列を追加する",
@@ -8688,14 +9678,12 @@
     "datasetAddColumnSubmit": "列を追加する",
     "datasetAddColumnDuplicate": "その名前の列は既に存在します。",
     "datasetColumnMenuLabel": "列 {name} アクション",
-    "datasetColumnDelete": "列を削除",
     "datasetColumnDeleteTitle": "列 \"{name} \" を削除しますか？",
     "datasetColumnDeleteChecking": "この列を参照しているケースを確認しています…",
     "datasetColumnDeleteDescription": "該当列とその値は、各行から削除されます。既にこれらの値をスナップショットしている既存のテスト実行には影響はありません。",
     "datasetColumnDeleteBlocked": "{count, plural, =1 {# case はパラメーターをこの列にマッピングします} other {# cases はパラメーターをこの列にマッピングします}}。まずこれらのマッピングを更新してから、列を削除します。",
     "datasetColumnDeleteAndMore": "そして {count, plural, =1 {# その他のケース} other {# その他のケース}}",
     "datasetColumnDeleteCheckError": "この列を参照しているケースを確認できませんでした。もう一度お試しください。",
-    "datasetColumnDeleteConfirm": "列を削除",
     "datasetRowDefaultLabel": "行 {number}",
     "datasetPasteCsv": "CSVを貼り付ける",
     "datasetImportCsv": "CSVファイルをインポート",
@@ -8742,13 +9730,11 @@
     "importStep4Append": "既存の行に追加",
     "importStep4AppendDescription": "#{existingCount} の後に新しい行が追加されます。",
     "importStep4ErrorBlock": "インポートする前に、前のステップで発生したエラー {errorCount} を解決してください。",
-    "importStep4Label": "確認する",
     "confirmSummaryValid": "有効な行: {count}",
     "confirmSummaryErrors": "エラー: {count}",
     "confirmSummaryMode": "モード: {mode}",
     "cancelUploadTitle": "アップロードを破棄しますか？",
     "cancelUploadDescription": "アップロードされたCSVデータは失われます。",
-    "importCommit": "輸入",
     "importSuccess": "インポート済み {count, plural, =1 {#行} other {#行}}",
     "addSuccess": "パラメータ \"{name}\" が追加されました",
     "addError": "パラメータを追加できませんでした",
@@ -8796,8 +9782,6 @@
     "hardRefuseColumnCase": "場合",
     "hardRefuseColumnRows": "データセットの行",
     "hardRefuseColumnConfigs": "設定",
-    "hardRefuseColumnIterations": "反復",
-    "hardRefuseTotalRow": "合計",
     "hardRefuseSuggestionsHeading": "推奨される行動",
     "hardRefuseSuggestion1": "最も寄与度の高いケースのデータセット行数を削減する。",
     "hardRefuseSuggestion2": "1つ以上の設定の選択を解除してください。",
@@ -8812,15 +9796,11 @@
     "runProgressNavAway": "残りのランニングを見せてください",
     "runGeneratingHeading": "反復処理を生成中…",
     "runGeneratingHelper": "これには数分かかる場合があります。",
-    "iterationsHeading": "反復",
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} (生成中)",
-    "iterationSidebarAria": "反復",
     "iterationStatusLegendAria": "ステータス伝説",
     "iterationActionSkipped": "スキップしました",
     "iterationBulkPickStatusPrompt": "選択した反復処理に適用するステータスを選択してください。",
-    "iterationBulkStatusLabel": "状態",
-    "iterationBulkStatusPlaceholder": "ステータスを選択してください",
     "iterationBulkApplyStatus": "… でマークする",
     "iterationSelectAria": "反復処理を選択してください {n}",
     "iterationRowMenuAria": "反復 {n} アクション",
@@ -8829,13 +9809,11 @@
     "iterationReset": "反復結果をリセット",
     "iterationSelectedCount": "{count} 選択済み",
     "iterationBulkSkip": "マーク {count, plural, =1 {# イテレーション} other {# イテレーション}} ステータス…",
-    "iterationBulkCancel": "キャンセル",
     "iterationIssueTitleSnapshot": "{total} の {n} 反復: {caseName}",
     "iterationIssueTitleCiExtended": "イテレーション {n} (CI拡張) 問題: {caseName}",
     "iterationIssueProseSnapshot": "{label} に対する {total} の反復 {n}。",
     "iterationIssueProseCiExtended": "{n} (CI拡張) を {label} に対して反復します。",
     "iterationIssueTableHeaderParameter": "パラメータ",
-    "iterationIssueTableHeaderValue": "価値",
     "iterationIssueDeepLinkLabel": "TestPlanItでイテレーションを表示する",
     "iterationHeaderTitle": "{n} の {total} の反復 {n}",
     "iterationPrevAria": "前回の反復",
@@ -8917,7 +9895,6 @@
     "mappingHint": "自動マッチングされた列は折りたたまれています。「変更」をクリックして再マッピングしてください。",
     "mappingShowAll": "すべての列を表示",
     "mappingNoColumns": "選択したバージョンでは、列が利用できません。",
-    "mappingChange": "変化",
     "mappingSkipColumn": "列をスキップ",
     "mappingRequiredAlert": "必須パラメータがマッピングされていません: {names}。",
     "mappingRequiredUnmapped": "必須パラメータ \"@{name}\" にはマッピングされた列がありません。"
@@ -8951,5 +9928,30 @@
     "inProject": "{project}内の{label}",
     "testRunSummary": "{project}内の{count, plural, =0 {テストケースなし} =1 {{count}件のテストケース} other {{count}件のテストケース}}",
     "projectSummary": "{cases, plural, =1 {{cases}件のテストケース} other {{cases}件のテストケース}} · {runs, plural, =1 {{runs}件のテスト実行} other {{runs}件のテスト実行}}"
+  },
+  "importMappings": {
+    "title": "保存されたマッピング",
+    "saveTitle": "マッピングを保存",
+    "saveDescription": "この列マッピングに名前を付けて、後のインポートに適用できるようにします。",
+    "namePlaceholder": "回帰シートの毎週のエクスポートなど",
+    "descriptionPlaceholder": "ファイルがどこから来たのか、またはこのマッピングをいつ使用するのか",
+    "shareLabel": "他の人と共有",
+    "shareHint": "誰もが適用できます。自分と管理者のみが編集または削除できます。",
+    "shareHintTemplate": "<b>{template}</b>テンプレートを使用するプロジェクトにインポートしている人は誰でも適用できます。自分と管理者のみが編集または削除できます。",
+    "saved": "マッピングを保存しました",
+    "empty": "保存されたマッピングはまだありません",
+    "suggested": "このファイルに一致",
+    "mine": "マイマッピング",
+    "shared": "他の人が共有",
+    "sharedBy": "{name}が共有",
+    "suggestionBanner": "「<highlight>{name}</highlight>」はこのファイルの列と一致します。",
+    "loadFailed": "この保存されたマッピングはもう有効ではありません。",
+    "skippedTitle": "保存された列の一部が適用されていません",
+    "missingColumns": "アップロードされたファイルに含まれていません：{columns}",
+    "unavailableFields": "マップするマッチングフィールドがありません：{columns}",
+    "editTitle": "保存されたマッピングを編集",
+    "update": "現在のマッピングで更新",
+    "updateConfirm": "「{name}」は現在の列マッピングと設定で更新されます。",
+    "savePrompt": "この列マッピングを次回のために保存しますか？"
   }
 }

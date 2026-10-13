@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
       "copy-move": 1,
       "duplicate-scan": 1,
       "magic-select": 1,
+      "impact-analysis": 1,
       "step-scan": 1,
       "derive-case-steps": 2,
       "generate-from-url": 1,

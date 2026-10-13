@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth, itemTypeToModelMap } from "../shared";
+import { checkAdminAuth, getTrashModel } from "../shared";
 
 export async function GET(
   request: NextRequest,
@@ -12,9 +12,9 @@ export async function GET(
 
   const itemType = routeParams.itemType;
 
-  const model = itemTypeToModelMap[itemType];
+  const entry = getTrashModel(itemType);
 
-  if (!model) {
+  if (!entry) {
     console.error(
       `[API /api/admin/trash/[itemType]] Invalid item type received: ${itemType}`
     );
@@ -30,35 +30,18 @@ export async function GET(
 
   const whereClause: any = { isDeleted: true };
 
-  if (search && model.fields && model.name) {
-    whereClause.AND = whereClause.AND || [];
-    whereClause.AND.push({
-      name: {
-        contains: search,
-        mode: "insensitive",
-      },
-    });
-  } else if (
-    search &&
-    itemType === "AppConfig" &&
-    model.fields &&
-    model.fields.key
-  ) {
-    whereClause.AND = whereClause.AND || [];
-    whereClause.AND.push({
-      key: {
-        contains: search,
-        mode: "insensitive",
-      },
-    });
+  if (search && entry.searchField) {
+    whereClause.AND = [
+      { [entry.searchField]: { contains: search, mode: "insensitive" } },
+    ];
   }
 
   try {
-    const totalCount = await model.count({
+    const totalCount = await entry.model.count({
       where: whereClause,
     });
 
-    const items = await model.findMany({
+    const items = await entry.model.findMany({
       where: whereClause,
       orderBy: {
         [sortBy]: sortDir,

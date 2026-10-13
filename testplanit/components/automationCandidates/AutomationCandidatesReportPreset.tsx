@@ -635,7 +635,9 @@ export function AutomationCandidatesReportPreset({
         {renderedSummary && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t("summaryHeading")}</CardTitle>
+              <CardTitle className="text-base">
+                {tCommon("fields.summary")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm whitespace-pre-line">{renderedSummary}</p>
@@ -676,7 +678,7 @@ export function AutomationCandidatesReportPreset({
           )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>
-              {t("delete.cancel")}
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
@@ -691,7 +693,7 @@ export function AutomationCandidatesReportPreset({
               ) : (
                 <Trash className="h-4 w-4" />
               )}
-              {t("delete.confirm")}
+              {tCommon("actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -853,6 +855,7 @@ function StrategyMetric({
   metrics: CandidateMetrics;
 }) {
   const t = useTranslations("reports.ui.automationCandidates.metric");
+  const tCommon = useTranslations("common");
   // Created date for the date-based strategies renders through
   // DateFormatter so it picks up the viewer's preferred date format
   // (same path as the Generated date on the meta bar).
@@ -892,7 +895,7 @@ function StrategyMetric({
           data-testid="automation-candidate-metric"
           className="inline-flex items-center gap-1"
         >
-          {t("createdLabel")}{" "}
+          {tCommon("fields.created")}{" "}
           <DateFormatter
             date={metrics.createdAtIso}
             formatString={userDateFormat}
@@ -942,6 +945,7 @@ function SnapshotMetaBar({
   onDeleteRequest: () => void;
 }) {
   const t = useTranslations("reports.ui.automationCandidates");
+  const tCommon = useTranslations("common");
   // Display "Generated …" in the viewer's preferred date+time format
   // rather than DateFormatter's MM-dd-yyyy fallback, matching how other
   // surfaces (datasets-list, webhook-deliveries, etc.) read it.
@@ -986,7 +990,7 @@ function SnapshotMetaBar({
             formatString={dateTimeFormat}
           />
           {snapshot.generatedBy?.name
-            ? ` ${t("by")} ${snapshot.generatedBy.name}`
+            ? ` ${tCommon("by")} ${snapshot.generatedBy.name}`
             : null}
         </span>
         {sourceLine && <span className="text-xs italic">{sourceLine}</span>}
@@ -999,7 +1003,7 @@ function SnapshotMetaBar({
           data-testid="automation-candidates-delete"
         >
           <Trash className="h-4 w-4" />
-          {t("delete.button")}
+          {tCommon("actions.delete")}
         </Button>
       )}
     </div>

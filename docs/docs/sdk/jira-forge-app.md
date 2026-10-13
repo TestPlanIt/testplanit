@@ -74,11 +74,11 @@ Select your Jira instance when prompted.
 
 Navigate to any Jira issue that has linked test cases in TestPlanIt. The **TestPlanIt panel** will appear on the right side showing:
 
-- **Test Cases** — Linked test cases with status. Case fields whose Jira toggle is enabled on the case's template (Admin → Templates & Fields) are shown with each case.
+- **Test Cases** — Linked test cases with status. Case fields whose Jira toggle is enabled on the case's template (Admin → Templates & Fields) are shown with each case. A test case that has since been deleted in TestPlanIt is only listed while it still has test results, so the result history stays with the issue; such cases appear after the live ones, struck through and marked **Deleted**, and the section header counts them separately (for example, "Test Cases (4) · 1 deleted"). A deleted case that was never run is hidden.
 - **Test Runs** — Recent test runs referencing this issue
 - **Sessions** — Exploratory testing sessions linked to this issue
 
-Click any item to open it directly in TestPlanIt.
+Click any item to open it directly in TestPlanIt. Deleted test cases are not clickable, but their result history can still be expanded.
 
 ## Linking Tests to Jira Issues
 
@@ -111,6 +111,7 @@ The app hasn't been configured yet. Go to **Jira Settings > Apps > TestPlanIt Se
 
 - Confirm that test cases are linked to this Jira issue in TestPlanIt
 - Check that the Jira issue key matches exactly (e.g., `PROJ-123`)
+- Remember that a test case deleted in TestPlanIt only stays in the panel while it has test results; a deleted case that was never run disappears from the issue
 
 ### Check Forge Logs
 

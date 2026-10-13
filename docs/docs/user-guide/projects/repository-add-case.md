@@ -49,8 +49,15 @@ The Add Case dialog uses a resizable two-panel layout:
 
 ## Actions
 
-- **Cancel**: Closes the dialog without creating the test case.
+- **Cancel**: Closes the dialog and discards the test case you were writing.
 - **Create**: Validates the input fields and creates the new test case in the selected folder. It also creates the initial version (Version 1) of the test case.
+
+## Auto-Save
+
+Your work is saved as you type, so closing the dialog by accident does not lose
+it. Reopening Add Case in the same folder offers to restore what you wrote. A
+save-status indicator sits beside the Create button. See
+[Auto-Save and Draft Recovery](./case-draft-autosave.md).
 
 ## AI-Powered Test Generation
 

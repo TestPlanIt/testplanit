@@ -758,20 +758,20 @@ export function buildSystemPrompt(
 
         if (fieldNameLower.includes("description")) {
           exampleValue =
-            "Comprehensive description explaining what this test case validates, including the specific functionality, expected behavior, and how it relates to the issue requirements. Should be 2-3 sentences minimum.";
+            "One or two sentences on what this test case validates.";
         } else if (
           fieldNameLower.includes("precondition") ||
           fieldNameLower.includes("pre-condition")
         ) {
           exampleValue =
-            "List of prerequisites that must be met before executing this test, such as: user authentication status, required test data, system configuration, or dependencies on other features.";
+            "Short list of the state, test data, and permissions needed before the first step.";
         } else if (
           fieldNameLower.includes("postcondition") ||
           fieldNameLower.includes("post-condition") ||
           fieldNameLower.includes("post condition")
         ) {
           exampleValue =
-            "Expected state of the system after test execution, including: data changes, UI state, logged events, or cleanup actions required.";
+            "System state that matters after the test, such as data to clean up.";
         } else {
           switch (field.type.toLowerCase()) {
             case "text string":
@@ -788,7 +788,7 @@ export function buildSystemPrompt(
               exampleValue = "2024-01-01";
               break;
             case "text long":
-              exampleValue = `Detailed ${field.name.toLowerCase()} with comprehensive information relevant to this specific issue. Include multiple sentences with specific details.`;
+              exampleValue = `Concise ${field.name.toLowerCase()} specific to this issue`;
               break;
             case "multi-select":
               exampleValue = ["Option 1", "Option 2"];
@@ -869,7 +869,7 @@ export function buildSystemPrompt(
     )
     .join("\n");
   const stepsInstruction = includeSteps
-    ? "\n- For the Steps field in fieldValues, provide an ARRAY of detailed step objects, each with a 'step' and an 'expectedResult' key. Emit one object per individual action — a test case normally needs several. Never return the steps as a string, and never pack a numbered list of actions into a single step object."
+    ? "\n- For the Steps field in fieldValues, provide an ARRAY of step objects, each with a 'step' and an 'expectedResult' key. Emit one object per individual action — a test case normally needs several. Never return the steps as a string, and never pack a numbered list of actions into a single step object.\n- Start the steps in the application under test. Environment, account, and permission setup are prerequisites, not steps. Keep each case to one scenario, usually no more than about 8 steps; checks that belong to a different scenario (such as comparing with another user role) belong in their own test case."
     : "";
   const priorityField = template.fields.find((f) =>
     f.name.toLowerCase().includes("priority")
@@ -970,17 +970,17 @@ ${languageConsistencyInstruction}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields in fieldValues
 - For every text/textarea field listed above (and ONLY those):
-  * Always provide substantial, detailed content (minimum 2-3 sentences)
-  * Include specific details relevant to the issue being tested
-  * A description field should explain what the test validates and why it's important
-  * A preconditions field should list all prerequisites needed before testing
-  * A post-conditions field should describe the expected system state after the test
+  * Keep the content short and specific to the issue: write only what a tester needs, with no filler and no restating of the steps
+  * A description field should say in one or two sentences what the test validates
+  * A preconditions field should be a short list of the state, test data, and permissions needed before the first step, one item per line
+  * A post-conditions field should note only system state that matters after the test (such as data to clean up)
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly
 ${tagInstructions}
 - DO NOT create generic test cases - they must validate the specific issue requirements
-- DO NOT leave optional text fields empty - they provide critical context for test execution
+- Fill optional text fields only with useful content - a short entry is better than padding
+- TEST DATA: When the issue or the additional testing guidance names users, groups, accounts, or other test data, use those names exactly. Never invent email addresses, IDs, or credentials.
 - IMPORTANT: If existing test cases are provided, use them to understand the testing patterns, step granularity, and domain terminology used in this project. Generate new cases that complement the existing coverage — do NOT duplicate or substantially overlap with them.
 ${parameterInstructions ? `\n${parameterInstructions}\n` : ""}
 Return ONLY the JSON.`;
@@ -1088,6 +1088,22 @@ export function buildLinkedIssuesSection(
   return section;
 }
 
+/**
+ * Configs written before `{{LINKED_ISSUES_SECTION}}` existed would silently
+ * drop linked issues, so slot the section in after the comments (or at the
+ * end) when the template does not place it itself.
+ */
+function withLinkedIssuesSlot(baseTemplate: string): string {
+  if (baseTemplate.includes("{{LINKED_ISSUES_SECTION}}")) return baseTemplate;
+  if (baseTemplate.includes("{{COMMENTS_SECTION}}")) {
+    return baseTemplate.replace(
+      "{{COMMENTS_SECTION}}",
+      "{{COMMENTS_SECTION}}{{LINKED_ISSUES_SECTION}}"
+    );
+  }
+  return `${baseTemplate}{{LINKED_ISSUES_SECTION}}`;
+}
+
 export function buildUserPrompt(
   issue: IssueData,
   context: GenerationContext,
@@ -1123,7 +1139,7 @@ export function buildUserPrompt(
   }
 
   if (baseTemplate) {
-    return baseTemplate
+    return withLinkedIssuesSlot(baseTemplate)
       .replace("{{ISSUE_KEY}}", issue.key)
       .replace("{{ISSUE_TITLE}}", issue.title)
       .replace(
@@ -1300,7 +1316,7 @@ export function buildExpandUserPrompt(
   const linkedIssuesSection = buildLinkedIssuesSection(context.linkedIssues);
 
   if (baseTemplate) {
-    return baseTemplate
+    return withLinkedIssuesSlot(baseTemplate)
       .replace("{{ISSUE_KEY}}", issue.key)
       .replace("{{ISSUE_TITLE}}", issue.title)
       .replace(

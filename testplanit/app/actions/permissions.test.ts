@@ -156,6 +156,64 @@ describe("Permissions", () => {
       expect(result.effectiveRole).toBe("System Project Admin");
     });
 
+    it("should return full permissions when the effective role carries Settings canAddEdit", async () => {
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue({
+        accessType: ProjectAccessType.SPECIFIC_ROLE,
+        role: {
+          id: 9,
+          name: "Lead",
+          rolePermissions: [
+            {
+              area: ApplicationArea.Settings,
+              canAddEdit: true,
+              canDelete: false,
+              canClose: false,
+            },
+          ],
+        },
+      });
+
+      const result = await getUserProjectPermissions(
+        "user-123",
+        1,
+        mockSession
+      );
+
+      expect(result.hasAccess).toBe(true);
+      expect(result.effectiveRole).toBe("Lead");
+      expect(
+        (result.permissions as Record<ApplicationArea, any>)[
+          ApplicationArea.Milestones
+        ]
+      ).toEqual({ canAddEdit: true, canDelete: true, canClose: true });
+    });
+
+    it("should return full permissions for the project's creator", async () => {
+      mockDb.user.findUnique.mockResolvedValue({ ...mockUser, role: null });
+      mockDb.projects.findUnique.mockResolvedValue({
+        ...mockProject,
+        createdBy: "user-123",
+        defaultAccessType: ProjectAccessType.NO_ACCESS,
+      });
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
+
+      const result = await getUserProjectPermissions(
+        "user-123",
+        1,
+        mockSession,
+        ApplicationArea.TestRuns
+      );
+
+      expect(result.hasAccess).toBe(true);
+      expect(result.permissions).toEqual({
+        canAddEdit: true,
+        canDelete: true,
+        canClose: true,
+      });
+    });
+
     it("should deny access for NO_ACCESS user permission", async () => {
       mockDb.user.findUnique.mockResolvedValue(mockUser);
       mockDb.projects.findUnique.mockResolvedValue(mockProject);

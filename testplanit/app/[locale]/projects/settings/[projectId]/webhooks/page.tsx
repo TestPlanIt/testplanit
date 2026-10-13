@@ -46,7 +46,6 @@ export default function ProjectWebhooksPage() {
     isAuthenticated,
   } = useRequireAuth();
   const t = useTranslations("projects.settings.webhooks");
-  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const searchParams = useSearchParams();
@@ -86,7 +85,7 @@ export default function ProjectWebhooksPage() {
 
   // Mirrors `canManageWebhookConfig` (lib/webhooks/auth.ts), the server-side
   // gate on every WebhookConfig write: system ADMIN, project creator,
-  // per-project "Project Admin" role, or an assigned system PROJECTADMIN.
+  // per-project role with Settings canAddEdit, or an assigned system PROJECTADMIN.
   // The old `session.user.access` check 404'd tiers 2 and 3.
   const { isProjectAdmin, isLoading: permissionsLoading } =
     useProjectPermissions(projectId, ApplicationArea.Settings);
@@ -124,7 +123,7 @@ export default function ProjectWebhooksPage() {
       <Card>
         <CardHeader className="w-full">
           <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{tGlobal("admin.menu.webhooks")}</CardTitle>
+            <CardTitle>{tCommon("pageTitles.webhooks")}</CardTitle>
             <HelpPopover helpKey="projectWebhooks" />
           </SectionHeader>
           <CardDescription>

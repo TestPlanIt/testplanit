@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import type { User } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { Ban, KeyRound, MoreVertical, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";

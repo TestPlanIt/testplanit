@@ -29,5 +29,16 @@ DATABASE_URL="$INIT_DATABASE_URL" tsx scripts/apply-triggers.ts
 echo "Setting up PostgreSQL extensions..."
 DATABASE_URL="$INIT_DATABASE_URL" tsx db/setup-extensions.ts
 
+# UPLOAD_MAX_MB drives both the per-file check in app/actions/uploadFile.ts
+# (read at runtime) and Next's server-action body limit, which `next build`
+# freezes into the standalone output (inlined in server.js and in
+# .next/required-server-files.json). Rewrite those frozen copies so one variable
+# still drives both on an image this operator did not build -- the published
+# self-host images and the Helm chart ship a build-time default that would
+# otherwise be the real ceiling. No-op when the variable is unset, and never
+# fatal: if the file cannot be written the baked default stays in effect.
+tsx scripts/set-upload-body-limit.ts ||
+  echo "warning: could not sync the server-action body limit; the built-in default stays in effect"
+
 echo "Starting application..."
 exec "$@"

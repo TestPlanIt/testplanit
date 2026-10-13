@@ -35,6 +35,8 @@ import {
 
 import { Cloud, Users } from "lucide-react";
 
+import { GroupProjectMappings } from "./GroupProjectMappings";
+
 import {
   Form,
   FormControl,
@@ -346,6 +348,8 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
                 )}
               />
 
+              <GroupProjectMappings groupId={group.id} />
+
               <div className="space-y-2 pt-4 border-t">
                 <FormLabel className="flex items-center">
                   <Users className="w-4 h-4 me-1" />
@@ -364,7 +368,7 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
                   renderSelectedOption={(user) => <span>{user.name}</span>}
                   getOptionValue={(user) => user.id}
                   getOptionLabel={(user) => user.name}
-                  placeholder={tCommon("placeholders.select")}
+                  placeholder={tCommon("actions.select")}
                   className="w-full"
                   pageSize={20}
                   showTotal

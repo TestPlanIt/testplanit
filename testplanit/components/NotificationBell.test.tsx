@@ -49,7 +49,12 @@ vi.mock("next-intl", () => ({
     const translations: Record<string, string> = {
       title: "Notifications",
       empty: "No notifications",
-      "aria.notifications": `Notifications (${values?.count || 0} unread)`,
+      panelTitle:
+        values?.count === 1
+          ? "1 New Notification"
+          : values?.count > 1
+            ? `${values.count} New Notifications`
+            : "Notifications",
       "actions.menu": "Actions",
       "actions.markRead": "Mark as read",
       "actions.markUnread": "Mark as unread",
@@ -126,7 +131,7 @@ describe("NotificationBell", () => {
   it("should render notification bell with unread count", () => {
     render(<NotificationBell />);
 
-    const bell = screen.getByLabelText("Notifications (1 unread)");
+    const bell = screen.getByLabelText("1 New Notification");
     expect(bell).toBeDefined();
 
     const badge = screen.getByTestId("notification-count-badge");
@@ -138,7 +143,7 @@ describe("NotificationBell", () => {
 
     const button = screen.getByTestId("notification-bell-button");
     expect(button).toBeDefined();
-    expect(button.getAttribute("aria-label")).toBe("Notifications (1 unread)");
+    expect(button.getAttribute("aria-label")).toBe("1 New Notification");
   });
 
   it("should show 9+ for more than 9 unread notifications", () => {
@@ -227,7 +232,7 @@ describe("NotificationBell", () => {
 
     render(<NotificationBell />);
 
-    const bell = screen.getByLabelText("Notifications (0 unread)");
+    const bell = screen.getByLabelText("Notifications");
     expect(bell).toBeDefined();
 
     const badge = screen.queryByTestId("notification-count-badge");

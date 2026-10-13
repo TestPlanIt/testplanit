@@ -41,7 +41,7 @@ import type {
   Steps,
 } from "~/zenstack/models";
 import type { JsonValue } from "@zenstackhq/orm";
-import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
+import { ChevronLeft, CircleAlert, LinkIcon, Minus, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -100,24 +100,51 @@ export default function TestCaseVersions() {
     setSelectedAttachments([]);
   };
 
+  // Both route params are user-supplied. A junk `caseId` or `version` must not
+  // reach the queries as NaN, and — more importantly — the three ways this page
+  // can fail are DIFFERENT failures and get different answers below: the case
+  // doesn't exist, the version isn't a version number, or the version simply
+  // was never recorded.
+  const parsedCaseId = Number(caseId);
+  const isValidCaseId = Number.isInteger(parsedCaseId) && parsedCaseId > 0;
+  const parsedVersion = Number(version);
+  const isValidVersion = Number.isInteger(parsedVersion) && parsedVersion > 0;
+
+  const { data: liveCase, isLoading: isLoadingCase } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst(
+    {
+      where: {
+        id: parsedCaseId,
+        projectId: Number(projectId),
+        isDeleted: false,
+      },
+      select: { id: true },
+    },
+    { enabled: isValidCaseId }
+  );
+
   const { data, isLoading } = useClientQueries(
     schema
-  ).repositoryCaseVersions.useFindFirst({
-    where: {
-      repositoryCaseId: Number(caseId),
-      version: Number(version),
-      isDeleted: false,
-    },
-    include: {
-      caseFieldVersionValues: true,
-      repositoryCase: {
-        select: {
-          source: true,
-          hasParameters: true,
+  ).repositoryCaseVersions.useFindFirst(
+    {
+      where: {
+        repositoryCaseId: parsedCaseId,
+        version: parsedVersion,
+        isDeleted: false,
+      },
+      include: {
+        caseFieldVersionValues: true,
+        repositoryCase: {
+          select: {
+            source: true,
+            hasParameters: true,
+          },
         },
       },
     },
-  });
+    { enabled: isValidCaseId && isValidVersion }
+  );
 
   const { data: versions } = useClientQueries(
     schema
@@ -362,25 +389,79 @@ export default function TestCaseVersions() {
     }
   };
 
-  if (status === "loading" || isLoading) return <Loading />;
+  if (status !== "authenticated" || isLoadingCase || isLoading)
+    return <Loading />;
 
-  // Only redirect if session is authenticated and data is not found
-  // This prevents race conditions on refresh
-  if (status === "authenticated" && !data) {
-    router.push(`/projects/repository/${projectId}/${caseId}`);
-    return (
-      <div className="text-muted-foreground text-center p-4">
-        <div>{t("repository.version.notFound")}</div>
-      </div>
+  const emptyState = (
+    testId: string,
+    title: string,
+    description: string,
+    action: { href: string; label: string }
+  ) => (
+    <Card>
+      <CardContent className="py-10">
+        <div
+          className="mx-auto flex max-w-xl flex-col items-center gap-3 text-center"
+          data-testid={testId}
+        >
+          <CircleAlert className="text-muted-foreground h-8 w-8" />
+          <div className="text-lg font-bold">{title}</div>
+          <div className="text-muted-foreground text-sm">{description}</div>
+          <Button asChild variant="secondary" className="mt-2">
+            <Link href={action.href}>{action.label}</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // The case itself is gone (or was never a case id, or lives in another
+  // project). Offering "view the current test case" here just walks the reader
+  // into an error page, so this state sends them back to the repository.
+  if (!isValidCaseId || !liveCase) {
+    return emptyState(
+      "version-case-not-found",
+      t("repository.version.caseNotFoundTitle"),
+      t("repository.version.caseNotFoundDescription"),
+      {
+        href: `/projects/repository/${projectId}`,
+        label: t("repository.version.backToRepository"),
+      }
     );
   }
 
-  // If data is still loading or not ready, return null
-  if (!data) {
-    return null;
+  // The case is fine, the version segment is not a version number.
+  if (!isValidVersion) {
+    return emptyState(
+      "version-invalid",
+      t("repository.version.invalidVersionTitle", {
+        version: version?.toString() || "",
+      }),
+      t("repository.version.invalidVersionDescription"),
+      {
+        href: `/projects/repository/${projectId}/${caseId}`,
+        label: t("repository.version.viewCurrentCase"),
+      }
+    );
   }
 
-  if (!testcase) return <Loading />;
+  // A real case, a real version number, but no snapshot. This used to redirect
+  // to the current case, which meant the result history — it links here with
+  // the version recorded at execution time — presented today's case as the one
+  // that was executed, with nothing to say otherwise (#599).
+  if (!testcase) {
+    return emptyState(
+      "version-not-recorded",
+      t("repository.version.notRecordedTitle", {
+        version: version?.toString() || "",
+      }),
+      t("repository.version.notRecordedDescription"),
+      {
+        href: `/projects/repository/${projectId}/${caseId}`,
+        label: t("repository.version.viewCurrentCase"),
+      }
+    );
+  }
 
   const transformSteps = (stepsData: JsonValue | null | undefined): Steps[] => {
     if (!stepsData) return [];

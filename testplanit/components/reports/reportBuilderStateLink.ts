@@ -2,9 +2,10 @@ import type { ReportBuilderStateConfig } from "~/lib/schemas/reportBuilderStateS
 
 /**
  * Links INTO the Report Builder from outside it: the share page's
- * redirect for signed-in project members and the shared viewer's "View in
- * Full App" button. Both rebuild the builder from a stored report config
- * (ShareLink.entityConfig, the exact request body of the shared run).
+ * redirect for signed-in project members, the shared viewer's "View in
+ * Full App" button, and the Saved Reports menu. All rebuild the builder
+ * from a stored report config (ShareLink.entityConfig, the exact request
+ * body of the run), serialized by reportShareParams.ts.
  *
  * The builder's own Run Report keeps its selection in a ReportBuilderState
  * row and puts only `state=<id>` in the URL, because a "Select all" over
@@ -127,58 +128,4 @@ export async function resolveReportBuilderStateId(
     { projectId: projectId ?? null, reportType, config: stateConfig },
     fetchImpl
   );
-}
-
-/**
- * The share-redirect params for a stored config. With a state id the
- * selection rides the state row and only `state` is written; without one
- * the selection is spelled out as it always was.
- */
-export function sharedReportSearchParams(
-  config: Record<string, any>,
-  stateId: string | null
-): URLSearchParams {
-  const params = new URLSearchParams();
-  if (config.reportType) params.set("reportType", config.reportType);
-  if (stateId) {
-    params.set("state", stateId);
-  } else {
-    if (config.startDate) params.set("startDate", config.startDate);
-    if (config.endDate) params.set("endDate", config.endDate);
-    if (config.dimensions) {
-      params.set(
-        "dimensions",
-        Array.isArray(config.dimensions)
-          ? config.dimensions.join(",")
-          : config.dimensions
-      );
-    }
-    if (config.metrics) {
-      params.set(
-        "metrics",
-        Array.isArray(config.metrics)
-          ? config.metrics.join(",")
-          : config.metrics
-      );
-    }
-    if (config.dimensionFilters) {
-      params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
-    }
-  }
-  if (config.page) params.set("page", config.page.toString());
-  if (config.pageSize) params.set("pageSize", config.pageSize.toString());
-  return params;
-}
-
-/**
- * Share-redirect params with the builder selection moved into a
- * ReportBuilderState row, so a shared report whose filter lists thousands
- * of ids opens in the builder through a short URL.
- */
-export async function buildSharedReportUrlParams(
-  config: Record<string, any>,
-  projectId: number | null | undefined
-): Promise<URLSearchParams> {
-  const stateId = await resolveReportBuilderStateId(config, projectId);
-  return sharedReportSearchParams(config, stateId);
 }

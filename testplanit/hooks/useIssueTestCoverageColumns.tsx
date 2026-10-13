@@ -9,7 +9,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "~/zenstack/models";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { format, formatDistanceToNow } from "date-fns";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -41,6 +44,7 @@ interface IssueTestCoverageRow {
   testCaseName: string;
   testCaseSource: string;
   testCaseHasParameters: boolean;
+  testCaseAutomated: boolean;
 
   // Test case metrics
   lastStatusId: number | null;
@@ -87,7 +91,7 @@ export function useIssueTestCoverageSummaryColumns(
           {
             id: "project",
             enableGrouping: false,
-            header: () => <span>{t("reports.dimensions.project")}</span>,
+            header: () => <span>{tCommon("fields.project")}</span>,
             cell: (info) => {
               const projectData = info.row.original.project;
               return (
@@ -97,7 +101,7 @@ export function useIssueTestCoverageSummaryColumns(
               );
             },
             enableSorting: true,
-            sortingFn: (rowA, rowB) => {
+            sortFn: (rowA, rowB) => {
               const aVal = rowA.original.project;
               const bVal = rowB.original.project;
               const aStr = aVal?.name || String(aVal || "");
@@ -203,6 +207,7 @@ export function useIssueTestCoverageSummaryColumns(
               name={row.testCaseName}
               source={row.testCaseSource as RepositoryCaseSource}
               hasParameters={row.testCaseHasParameters}
+              automated={row.testCaseAutomated}
               link={
                 parentProjectId
                   ? `/projects/repository/${parentProjectId}/${row.testCaseId}`
@@ -224,7 +229,7 @@ export function useIssueTestCoverageSummaryColumns(
           );
         },
         enableSorting: true,
-        sortingFn: (rowA, rowB, _columnId) => {
+        sortFn: (rowA, rowB, _columnId) => {
           // When grouped, rows have subRows - sort by the count of subRows (which equals linkedTestCases)
           const hasSubRowsA = rowA.subRows && rowA.subRows.length > 0;
           const hasSubRowsB = rowB.subRows && rowB.subRows.length > 0;
@@ -252,9 +257,7 @@ export function useIssueTestCoverageSummaryColumns(
         id: "issueStatus",
         enableHiding: false,
         enableGrouping: false,
-        header: () => (
-          <span>{t("reports.ui.issueTestCoverage.issueStatus")}</span>
-        ),
+        header: () => <span>{tCommon("actions.status")}</span>,
         cell: (info) => {
           return <IssueStatusDisplay status={info.row.original.issueStatus} />;
         },
@@ -274,7 +277,7 @@ export function useIssueTestCoverageSummaryColumns(
         id: "issuePriority",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("reports.ui.issueTestCoverage.priority")}</span>,
+        header: () => <span>{tCommon("fields.priority")}</span>,
         cell: (info) => {
           return (
             <IssuePriorityDisplay priority={info.row.original.issuePriority} />
@@ -344,7 +347,7 @@ export function useIssueTestCoverageSummaryColumns(
           if (!lastExecuted) {
             return (
               <span className="text-muted-foreground italic text-sm">
-                {t("reports.ui.testCaseHealth.never")}
+                {tCommon("never")}
               </span>
             );
           }
@@ -427,7 +430,10 @@ export function useIssueTestCoverageSummaryColumns(
             </div>
           );
         },
-        enableSorting: true,
+        // No row property backs this column (leaf cells render null, the
+        // breakdown only appears on grouped rows), so a sort on it was a
+        // silent no-op — the menu item promised an order it never applied.
+        enableSorting: false,
         size: 120,
         minSize: 100,
       })
@@ -439,7 +445,7 @@ export function useIssueTestCoverageSummaryColumns(
         id: "passRate",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("reports.ui.issueTestCoverage.passRate")}</span>,
+        header: () => <span>{tCommon("fields.passRate")}</span>,
         cell: () => null, // Only show for grouped rows
         aggregatedCell: (info) => {
           const firstRow = info.row.subRows[0]?.original;

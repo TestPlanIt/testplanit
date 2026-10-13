@@ -200,7 +200,7 @@ export function DrillDownDrawer({
               >
                 <Download className="h-4 w-4" />
                 {isExporting
-                  ? tGlobal("repository.exportModal.exporting")
+                  ? tGlobal("common.actions.exportingPdf")
                   : tGlobal("admin.auditLogs.exportCsv")}
               </Button>
               <DrawerClose asChild>

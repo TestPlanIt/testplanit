@@ -12,6 +12,7 @@ import {
   FORECAST_QUEUE_NAME,
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
+  JOB_PURGE_STALE_CASE_DRAFTS,
   JOB_REVIEW_REMINDERS,
   JOB_SWEEP_ABANDONED_RUNS,
   JOB_SWEEP_REPORT_BUILDER_STATES,
@@ -23,6 +24,7 @@ import {
   resolveAbandonedRunTargetStateId,
   resolveEffectiveIdleMinutes,
 } from "../lib/services/abandonedRuns";
+import { CASE_DRAFT_RETENTION_DAYS } from "../lib/services/caseDraft";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
 import { sweepReportBuilderStates } from "../lib/services/reportBuilderState";
@@ -63,6 +65,7 @@ export {
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_REVIEW_REMINDERS,
+  JOB_PURGE_STALE_CASE_DRAFTS,
   JOB_SWEEP_ABANDONED_RUNS,
   JOB_SWEEP_REPORT_BUILDER_STATES,
   JOB_UPDATE_ALL_CASES,
@@ -840,6 +843,11 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
               isDeleted: false,
               testRunType: { in: AUTOMATED_TEST_RUN_TYPES },
               project: { isDeleted: false },
+              // A run whose execution is still dispatched or running is not
+              // abandoned — the CI job may simply not have reported yet.
+              executions: {
+                none: { status: { in: ["PENDING", "DISPATCHED", "RUNNING"] } },
+              },
             },
             select: {
               id: true,
@@ -1011,6 +1019,28 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           );
         } catch (error) {
           console.error(`Job ${job.id}: Error in abandoned-run sweep`, error);
+          throw error;
+        }
+        break;
+
+      case JOB_PURGE_STALE_CASE_DRAFTS:
+        console.log(`Job ${job.id}: Purging stale case drafts.`);
+        try {
+          const cutoff = new Date(
+            Date.now() - CASE_DRAFT_RETENTION_DAYS * 24 * 60 * 60 * 1000
+          );
+          // Deleted outright rather than soft-deleted: a draft is scratch
+          // space, never a record of anything, and a tombstoned one would
+          // still trip the unique (userId, draftKey) index on the next edit.
+          const { count } = await db.caseDraft.deleteMany({
+            where: { updatedAt: { lt: cutoff } },
+          });
+          successCount = count;
+          console.log(
+            `Job ${job.id} completed: purged ${count} case draft(s) untouched since ${cutoff.toISOString()}.`
+          );
+        } catch (error) {
+          console.error(`Job ${job.id}: Error purging case drafts`, error);
           throw error;
         }
         break;

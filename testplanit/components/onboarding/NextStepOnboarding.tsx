@@ -141,7 +141,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("search.title"),
+        title: t("common.aria.search"),
         content: t("help.tour.mainTour.search.content"),
         selector: '[data-testid="global-search-trigger"]',
         side: "bottom",

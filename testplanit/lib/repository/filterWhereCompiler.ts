@@ -24,6 +24,7 @@ import type {
   TestRunCasesWhereInput,
 } from "~/zenstack/input";
 import { attachmentsWhereClause } from "~/lib/repositoryCaseAttachmentsFilter";
+import { codePinsWhereClause } from "~/lib/repositoryCaseCodePinsFilter";
 import type { PostFetchFilter } from "~/lib/repositoryCaseFieldMatchers";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
@@ -32,6 +33,7 @@ import {
   STATUS_UNTESTED_SENTINEL,
   type FilterDimension,
   type FilterDimensionRegistry,
+  CODE_PINS_DIMENSION,
 } from "./filterDimensions";
 
 /** Raw fragment shape for the legacy-ported JSON-value conditions. */
@@ -651,6 +653,11 @@ export function compileRepoPredicates(
       case "attachments": {
         const value = booleanFromIsValue(predicate.values);
         fragment = value === null ? null : attachmentsWhereClause(value);
+        break;
+      }
+      case CODE_PINS_DIMENSION: {
+        const value = booleanFromIsValue(predicate.values);
+        fragment = value === null ? null : codePinsWhereClause(value);
         break;
       }
       case IN_REVIEW_DIMENSION: {

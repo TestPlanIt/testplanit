@@ -19,6 +19,8 @@ export interface ResolvedField {
 interface RawCaseField {
   id: number;
   displayName: string;
+  minValue?: number | null;
+  maxValue?: number | null;
   type: { type: string | null } | null;
   fieldOptions: Array<{
     fieldOption: { id: number; name: string } | null;
@@ -34,8 +36,11 @@ interface RawTemplateFieldAssignment {
 const CASE_FIELD_RESOLVE_SELECT = {
   id: true,
   displayName: true,
+  minValue: true,
+  maxValue: true,
   type: { select: { type: true } },
   fieldOptions: {
+    where: { fieldOption: { isEnabled: true, isDeleted: false } },
     select: {
       fieldOption: { select: { id: true, name: true } },
     },
@@ -52,8 +57,11 @@ const TEMPLATE_FIELD_RESOLVE_SELECT = {
     select: {
       id: true,
       displayName: true,
+      minValue: true,
+      maxValue: true,
       type: { select: { type: true } },
       fieldOptions: {
+        where: { fieldOption: { isEnabled: true, isDeleted: false } },
         select: {
           fieldOption: { select: { id: true, name: true } },
         },
@@ -94,12 +102,102 @@ function resolveOptionValue(
   const byName = new Map<string, number>();
   for (const o of options) {
     byId.set(o.id, true);
-    byName.set(o.name, o.id);
+    byName.set(o.name.trim().toLowerCase(), o.id);
   }
   const id = coerceOptionId(value);
   if (id != null && byId.has(id)) return id;
-  if (typeof value === "string" && byName.has(value)) return byName.get(value)!;
+  if (typeof value === "string") {
+    return byName.get(value.trim().toLowerCase()) ?? null;
+  }
   return null;
+}
+
+function invalid(name: string, why: string): never {
+  // T-06-05: message names the field, NEVER the value.
+  throw new TestPlanItHttpError(`Custom field '${name}' ${why}`, {
+    statusCode: 422,
+  });
+}
+
+function toNumber(value: unknown): number | undefined {
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (typeof value === "string" && value.trim() !== "") {
+    const n = Number(value.trim());
+    return Number.isFinite(n) ? n : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Store a scalar field value in the shape the web UI stores, matching the
+ * host's own coercion for created cases: numbers within min/max, true/false
+ * for Checkbox (the string "false" included), ISO dates with a bare
+ * YYYY-MM-DD pinned to noon UTC so it reads as that day everywhere, http(s)
+ * links. Text Long is converted by the host.
+ */
+function coerceScalar(field: RawCaseField, name: string, value: unknown): unknown {
+  const inRange = (n: number) => {
+    if (field.minValue != null && n < field.minValue) {
+      invalid(name, `must be at least ${field.minValue}.`);
+    }
+    if (field.maxValue != null && n > field.maxValue) {
+      invalid(name, `must be at most ${field.maxValue}.`);
+    }
+    return n;
+  };
+  switch (field.type?.type) {
+    case "Integer": {
+      const n = toNumber(value);
+      if (n === undefined || !Number.isInteger(n)) invalid(name, "expects a whole number.");
+      return inRange(n!);
+    }
+    case "Number": {
+      const n = toNumber(value);
+      if (n === undefined) invalid(name, "expects a number.");
+      return inRange(n!);
+    }
+    case "Checkbox": {
+      if (typeof value === "boolean") return value;
+      const text = String(value).trim().toLowerCase();
+      if (text === "true" || text === "1") return true;
+      if (text === "false" || text === "0") return false;
+      return invalid(name, "expects true or false.");
+    }
+    case "Date": {
+      if (typeof value !== "string") {
+        return invalid(name, "expects a date (YYYY-MM-DD or an ISO timestamp).");
+      }
+      const text = value.trim();
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(text)
+        ? new Date(`${text}T12:00:00.000Z`)
+        : new Date(text);
+      if (Number.isNaN(date.getTime())) {
+        invalid(name, "expects a date (YYYY-MM-DD or an ISO timestamp).");
+      }
+      return date.toISOString();
+    }
+    case "Link": {
+      if (typeof value === "string") {
+        try {
+          const url = new URL(value.trim());
+          if (url.protocol === "http:" || url.protocol === "https:") {
+            return value.trim();
+          }
+        } catch {
+          // fall through
+        }
+      }
+      return invalid(name, "expects an http(s) URL.");
+    }
+    case "Text String":
+      if (typeof value === "string") return value;
+      if (typeof value === "number" || typeof value === "boolean") return String(value);
+      return invalid(name, "expects text.");
+    case "Steps":
+      return invalid(name, "is a Steps field; send steps instead.");
+    default:
+      return value;
+  }
 }
 
 /**
@@ -215,14 +313,10 @@ export async function resolveCustomFields(
       }
       resolvedValue = id;
     } else if (fieldType === "Multi-Select") {
-      if (!Array.isArray(rawValue)) {
-        throw new TestPlanItHttpError(
-          `Custom field '${name}' expects an array of Multi-Select options (by id or name).`,
-          { statusCode: 422 },
-        );
-      }
+      // A single option is taken as a one-item list, as the host does.
+      const values = Array.isArray(rawValue) ? rawValue : [rawValue];
       const ids: number[] = [];
-      for (const v of rawValue) {
+      for (const v of values) {
         const id = resolveOptionValue(v, options);
         if (id == null) {
           throw new TestPlanItHttpError(
@@ -230,12 +324,12 @@ export async function resolveCustomFields(
             { statusCode: 422 },
           );
         }
-        ids.push(id);
+        if (!ids.includes(id)) ids.push(id);
       }
       resolvedValue = ids;
+    } else {
+      resolvedValue = coerceScalar(field, name, rawValue);
     }
-    // Other types (Text, Number, Date, Boolean, ...) pass through; the
-    // host's ZenStack policies validate the rest.
 
     resolved.push({ fieldId: field.id, value: resolvedValue, name });
   }

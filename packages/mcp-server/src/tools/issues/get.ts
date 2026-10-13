@@ -22,7 +22,7 @@ export function registerIssuesGet(
     "testplanit_issues_get",
     {
       description:
-        "Fetch a single Issue by id with its full denormalized header (including ProseMirror note rendered to plain text, integration, createdBy) and three inlined linked arrays — linkedCases, linkedSessions, linkedTestRuns — each capped at 100. When an array is over-capacity the response carries truncated.<key>: true and the rest are reachable via testplanit_cases_list({ issueId }) or testplanit_issues_list_links with the appropriate target.",
+        "Fetch a single Issue by id with its full denormalized header (including note rendered as Markdown, integration, createdBy) and three inlined linked arrays — linkedCases, linkedSessions, linkedTestRuns — each capped at 100. When an array is over-capacity the response carries truncated.<key>: true and the rest are reachable via testplanit_cases_list({ issueId }) or testplanit_issues_list_links with the appropriate target.",
       inputSchema: {
         id: z.number().int().positive(),
       },

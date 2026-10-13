@@ -1,6 +1,7 @@
 import { JiraAdapter } from "@/lib/integrations/adapters/JiraAdapter";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { baseDb } from "@/lib/db";
+import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -92,13 +93,9 @@ export async function POST(request: NextRequest) {
       validatedData.sessionId
     ) {
       // Use upsert to handle cases where the issue already exists
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: createdIssue.key || createdIssue.id,
-            integrationId: userIntegrationAuth.integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: createdIssue.key || createdIssue.id,
+        integrationId: userIntegrationAuth.integrationId,
         create: {
           name: createdIssue.title,
           title: createdIssue.title, // Use the same value for title

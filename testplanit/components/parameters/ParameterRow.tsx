@@ -36,6 +36,7 @@ function defaultValueDisplay(parameter: TestCaseParameter): string {
 
 export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
   const t = useTranslations("parameters");
+  const tCommon = useTranslations("common");
   const {
     attributes,
     listeners,
@@ -135,7 +136,7 @@ export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
         )}
 
         {parameter.required && (
-          <Badge variant="outline">{t("formRequired")}</Badge>
+          <Badge variant="outline">{tCommon("fields.required")}</Badge>
         )}
 
         {parameter.sensitive && (

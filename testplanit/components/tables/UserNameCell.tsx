@@ -37,7 +37,7 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
     },
   });
   const { data: session } = useSession();
-  const t = useTranslations("users");
+  const tCommon = useTranslations("common");
   const isCurrentUser = userId === session?.user.id;
 
   if (user?.isDeleted) {
@@ -45,9 +45,11 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
       <div
         className="min-w-0"
         data-testid="user-name-cell"
-        title={t("deletedUser")}
+        title={tCommon("aria.deletedUser")}
       >
-        <span className="text-muted-foreground italic">{t("deletedUser")}</span>
+        <span className="text-muted-foreground italic">
+          {tCommon("aria.deletedUser")}
+        </span>
       </div>
     );
   }

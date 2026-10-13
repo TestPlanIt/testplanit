@@ -72,7 +72,7 @@ describe("registerMilestoneTypesList", () => {
     expect(data).not.toHaveProperty("hasNextPage");
   });
 
-  it("where clause is exactly { isDeleted: false, projects: { some: { projectId: <input> } } }", async () => {
+  it("lists the project's types plus the Default type every project can use", async () => {
     mockZenstack.mockResolvedValueOnce([]);
 
     const { client } = await setupClient();
@@ -83,7 +83,7 @@ describe("registerMilestoneTypesList", () => {
     const where = getCallBody(0)?.where as Record<string, unknown>;
     expect(where).toEqual({
       isDeleted: false,
-      projects: { some: { projectId: 7 } },
+      OR: [{ isDefault: true }, { projects: { some: { projectId: 7 } } }],
     });
   });
 

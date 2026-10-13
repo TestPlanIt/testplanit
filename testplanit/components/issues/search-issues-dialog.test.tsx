@@ -785,6 +785,39 @@ describe("SearchIssuesDialog", () => {
     });
   });
 
+  describe("HYG-01: requirement-row exclusion default", () => {
+    it("calls the issue hook with a where carrying isRequirement: false when includeRequirements is not set", () => {
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const lastCall = mockUseFindManyIssue.mock.calls.at(-1)?.[0];
+      expect(lastCall?.where).toEqual(
+        expect.objectContaining({ isRequirement: false })
+      );
+    });
+
+    it("calls the issue hook with a where carrying no isRequirement key when includeRequirements is set", () => {
+      render(<SearchIssuesDialog {...defaultProps} includeRequirements />);
+
+      const lastCall = mockUseFindManyIssue.mock.calls.at(-1)?.[0];
+      expect(lastCall?.where).not.toHaveProperty("isRequirement");
+    });
+
+    it("keeps isRequirement: false alongside the search-term OR block", () => {
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "bug" } });
+
+      const lastCall = mockUseFindManyIssue.mock.calls.at(-1)?.[0];
+      expect(lastCall?.where).toEqual(
+        expect.objectContaining({
+          isRequirement: false,
+          OR: expect.any(Array),
+        })
+      );
+    });
+  });
+
   describe("CR-05: iterationContext threading to create-issue dispatcher", () => {
     const jiraIntegration = {
       id: 99,
@@ -878,6 +911,91 @@ describe("SearchIssuesDialog", () => {
         expect(screen.queryByTestId("create-issue-jira-form")).toBeTruthy();
       });
       expect(screen.queryByTestId("create-issue-dialog")).toBeNull();
+    });
+  });
+
+  describe("WR-01: internal-pick capable consumers", () => {
+    const activeIntegration = {
+      id: "pi-wr01",
+      integrationId: 42,
+      isActive: true,
+      config: {},
+      integration: { id: 42, name: "My Jira", provider: "JIRA" },
+    };
+
+    beforeEach(() => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [activeIntegration],
+      });
+    });
+
+    it("renders the internal source chip when allowInternalPicks is omitted", () => {
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      expect(screen.getByTestId("issue-source-internal")).toBeTruthy();
+    });
+
+    it("renders neither source chip when allowInternalPicks is false", () => {
+      render(
+        <SearchIssuesDialog {...defaultProps} allowInternalPicks={false} />
+      );
+
+      expect(screen.queryByTestId("issue-source-internal")).toBeNull();
+      expect(screen.queryByTestId("issue-source-external")).toBeNull();
+      // Hides the toggle only — the dialog itself (and tracker-only search)
+      // still renders.
+      expect(screen.getByRole("textbox")).toBeTruthy();
+    });
+  });
+
+  describe("WR-06: tracker-URL open does not leak window.opener", () => {
+    const activeIntegration = {
+      id: "pi-wr06",
+      integrationId: 43,
+      isActive: true,
+      config: {},
+      integration: { id: 43, name: "My Jira", provider: "JIRA" },
+    };
+
+    beforeEach(() => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [activeIntegration],
+      });
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          issues: [
+            {
+              id: "ext-1",
+              key: "TPI-1",
+              title: "Tracker issue",
+              status: "Open",
+              url: "https://tracker.example.com/browse/TPI-1",
+            },
+          ],
+        }),
+      });
+    });
+
+    it("opens a tracker URL without handing over an opener reference", async () => {
+      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "tracker" } });
+
+      const openButton = await screen.findByTitle("openInExternalSystem");
+      fireEvent.click(openButton);
+
+      expect(openSpy).toHaveBeenCalledWith(
+        "https://tracker.example.com/browse/TPI-1",
+        "_blank",
+        "noopener,noreferrer"
+      );
+
+      openSpy.mockRestore();
     });
   });
 });

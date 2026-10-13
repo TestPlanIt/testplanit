@@ -147,11 +147,12 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
   // resolves. Re-running reset on every defaultFormValues identity change
   // wipes mid-edit input if React Query refetches in the background and
   // returns a new array reference (same values, fresh ref). A ref guard
-  // ensures we only seed the form once per mount.
+  // ensures we only seed the form once per mount, and keepDirtyValues keeps
+  // anything the user typed (e.g. a new name) while permissions were loading.
   const hasSeededRef = useRef(false);
   useEffect(() => {
     if (!isLoadingPermissions && !hasSeededRef.current) {
-      reset(defaultFormValues);
+      reset(defaultFormValues, { keepDirtyValues: true });
       hasSeededRef.current = true;
     }
   }, [defaultFormValues, reset, isLoadingPermissions]);
@@ -221,6 +222,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
       area !== ApplicationArea.ClosedSessions) ||
     (field === "canDelete" &&
       area !== ApplicationArea.Documentation &&
+      area !== ApplicationArea.AutomatedExecution &&
       area !== ApplicationArea.TestCaseRestrictedFields &&
       area !== ApplicationArea.TestRunResultRestrictedFields &&
       area !== ApplicationArea.SessionsRestrictedFields &&
@@ -311,9 +313,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                   {role.isDefault ? (
                     <WarningAlert data-testid="role-default-locked-warning">
                       <TriangleAlert className="h-4 w-4" />
-                      <AlertTitle>
-                        {t("admin.roles.defaultLockedTitle")}
-                      </AlertTitle>
+                      <AlertTitle>{t("common.fields.defaultRole")}</AlertTitle>
                       <AlertDescription>
                         {t("admin.roles.defaultLockedDescription")}
                       </AlertDescription>
@@ -507,6 +507,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                       // Determine which controls are relevant for the area
                       let showDelete =
                         area !== ApplicationArea.Documentation &&
+                        area !== ApplicationArea.AutomatedExecution &&
                         area !== ApplicationArea.TestCaseRestrictedFields &&
                         area !==
                           ApplicationArea.TestRunResultRestrictedFields &&

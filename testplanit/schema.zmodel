@@ -31,6 +31,10 @@ type AuthCtx {
     // Every project this user may read, resolved once per request through the
     // same precedence ladder the removed per-row predicates encoded.
     accessibleProjectIds          Int[]
+    // Every project this user administers: the creator, a system PROJECTADMIN
+    // assigned to it, or a user whose effective role there carries the
+    // Settings area's canAddEdit bit. Resolved in lib/authContext.ts.
+    adminProjectIds               Int[]
     // Collaborator scope for the User read policy: users sharing ≥1 of the
     // projects above, resolved alongside them in lib/authContext.ts.
     // Enumerable grants by id; default-access grants as class flags with
@@ -124,100 +128,124 @@ model PendingAuth {
 }
 
 model User {
-    id                              String                        @id @default(cuid())
-    name                            String                        @length(1) @deny('update', scimGivenName != null)
-    email                           String                        @unique @email @deny('update', scimGivenName != null)
-    emailVerified                   DateTime?
-    emailVerifToken                 String?
-    emailTokenExpires               DateTime?
-    password                        String?                       @omit @length(4)
-    image                           String?
-    accounts                        Account[]
-    authMethod                      AuthMethod                    @default(INTERNAL)
-    externalId                      String?                 // For SAML/OAuth user mapping
-    scimUserName                    String?                       @unique @deny('update', scimGivenName != null)
-    scimExternalId                  String?                       @unique @deny('update', scimGivenName != null)
-    scimExtensions                  Json?
-    scimGivenName                   String?                       @deny('update', scimGivenName != null)
-    scimFamilyName                  String?                       @deny('update', scimGivenName != null)
-    access                          Access                        @default(NONE)
-    accessSource                    AccessSource                  @default(MANUAL)
-    roleId                          Int
-    role                            Roles                         @relation(fields: [roleId], references: [id])
-    isActive                        Boolean                       @default(true) @deny('update', scimGivenName != null)
-    isDeleted                       Boolean                       @default(false)
-    deletedAt                       DateTime?                     @db.Timestamptz(6)
-    isApi                           Boolean                       @default(false)
-    createdAt                       DateTime                      @default(now()) @db.Timestamptz(6)
-    createdById                     String?
-    createdBy                       User?                         @relation("UserCreator", fields: [createdById], references: [id])
-    updatedAt                       DateTime                      @updatedAt
-    userPreferences                 UserPreferences?
-    createdUsers                    User[]                        @relation("UserCreator")
-    projects                        ProjectAssignment[]
-    createdProjects                 Projects[]                    @relation("ProjectCreator")
-    groups                          GroupAssignment[]
-    createdMilestones               Milestones[]
-    repositoryFolders               RepositoryFolders[]
-    repositoryCases                 RepositoryCases[]
-    attachments                     Attachments[]
-    assignedSessions                Sessions[]                    @relation("SessionAssignedTo")
-    createdSessions                 Sessions[]                    @relation("SessionCreatedBy")
-    sessionResults                  SessionResults[]
-    testRunCreatedBy                TestRuns[]                    @relation("TestRunCreatedBy")
-    compositionLockedTestRuns       TestRuns[]                    @relation("TestRunCompositionLockedBy")
-    testRunCasesAssigned            TestRunCases[]
-    testRunResults                  TestRunResults[]
-    editedTestRunResults            TestRunResults[]              @relation("TestRunResultEditor")
-    testRunCaseIterations           TestRunCaseIteration[]
-    createdDataSets                 DataSet[]
-    createdDataSetVersions          DataSetVersion[]              @relation("DataSetVersionsCreatedBy")
-    createdSharedDataSetAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSetAssignmentCreatedBy")
-    createdIssues                   Issue[]                       @relation("IssueCreator")
-    projectPermissions              UserProjectPermission[]
-    junitTestSuites                 JUnitTestSuite[]
-    junitTestResults                JUnitTestResult[]
-    junitProperties                 JUnitProperty[]
-    junitAttachments                JUnitAttachment[]
-    junitTestSteps                  JUnitTestStep[]
-    createdCaseLinks                RepositoryCaseLink[]          @relation("UserCreatedCaseLinks")
-    createdSharedStepGroups         SharedStepGroup[]
-    notifications                   Notification[]
-    userIntegrationAuths            UserIntegrationAuth[]
-    createdEmailDomains             AllowedEmailDomain[]
-    lastActiveAt                    DateTime?
-    lastSeenVersion                 String?
-    llmUsages                       LlmUsage[]
-    generatedLlmReportSnapshots     LlmReportSnapshot[]           @relation("LlmReportSnapshotGeneratedBy")
-    testmoImportJobs                TestmoImportJob[]
-    createdComments                 Comment[]                     @relation("CommentCreator")
-    commentMentions                 CommentMention[]              @relation("CommentMentions")
-    apiTokens                       ApiToken[]
-    scimSystemTokens                ScimToken[]                   @relation("ScimSystemUser")
-    scimTokensCreated               ScimToken[]                   @relation("ScimTokenCreatedBy")
-    scimTokensRevoked               ScimToken[]                   @relation("ScimTokenRevokedBy")
-    createdShareLinks               ShareLink[]                   @relation("ShareLinkCreator")
-    shareLinkAccessLogs             ShareLinkAccessLog[]          @relation("ShareLinkAccessor")
-    reportBuilderStates             ReportBuilderState[]          @relation("ReportBuilderStateCreator")
-    reviewsRequested                ReviewRequest[]               @relation("ReviewRequestedBy")
-    reviewsAssigned                 ReviewRequest[]               @relation("ReviewAssignedToUser")
-    reviewsDecided                  ReviewRequest[]               @relation("ReviewDecidedBy")
+    id                                       String                            @id @default(cuid())
+    name                                     String                            @length(1) @deny('update', scimGivenName != null)
+    email                                    String                            @unique @email @deny('update', scimGivenName != null)
+    emailVerified                            DateTime?
+    emailVerifToken                          String?
+    emailTokenExpires                        DateTime?
+    password                                 String?                           @omit @length(4)
+    image                                    String?
+    accounts                                 Account[]
+    authMethod                               AuthMethod                        @default(INTERNAL)
+    externalId                               String?                 // For SAML/OAuth user mapping
+    scimUserName                             String?                           @unique @deny('update', scimGivenName != null)
+    scimExternalId                           String?                           @unique @deny('update', scimGivenName != null)
+    scimExtensions                           Json?
+    scimGivenName                            String?                           @deny('update', scimGivenName != null)
+    scimFamilyName                           String?                           @deny('update', scimGivenName != null)
+    // Flattened `roles[].value` strings from the IdP's last SCIM payload.
+    // The full roles array still round-trips verbatim through scimExtensions;
+    // this column exists so access resolution can join against
+    // ScimRoleMapping without parsing JSON on every recompute.
+    scimRoles                                String[]
+    // Provenance: which SCIM token last claimed this row. NULL means unowned
+    // -- either a pre-SCIM user or one provisioned before provenance existed
+    // -- and the first IdP to write it claims it. Ownership is enforced by the
+    // owning token's IdP, not its id, so revoke+mint rotation keeps access.
+    scimTokenId                              String?
+    scimToken                                ScimToken?                        @relation("ScimProvisionedUsers", fields: [scimTokenId], references: [id], onDelete: SetNull)
+    access                                   Access                            @default(NONE)
+    accessSource                             AccessSource                      @default(MANUAL)
+    roleId                                   Int
+    role                                     Roles                             @relation(fields: [roleId], references: [id])
+    isActive                                 Boolean                           @default(true) @deny('update', scimGivenName != null)
+    isDeleted                                Boolean                           @default(false)
+    deletedAt                                DateTime?                         @db.Timestamptz(6)
+    isApi                                    Boolean                           @default(false)
+    createdAt                                DateTime                          @default(now()) @db.Timestamptz(6)
+    createdById                              String?
+    createdBy                                User?                             @relation("UserCreator", fields: [createdById], references: [id])
+    updatedAt                                DateTime                          @updatedAt
+    userPreferences                          UserPreferences?
+    createdUsers                             User[]                            @relation("UserCreator")
+    projects                                 ProjectAssignment[]
+    createdProjects                          Projects[]                        @relation("ProjectCreator")
+    groups                                   GroupAssignment[]
+    createdMilestones                        Milestones[]
+    repositoryFolders                        RepositoryFolders[]
+    repositoryCases                          RepositoryCases[]
+    attachments                              Attachments[]
+    assignedSessions                         Sessions[]                        @relation("SessionAssignedTo")
+    createdSessions                          Sessions[]                        @relation("SessionCreatedBy")
+    sessionResults                           SessionResults[]
+    testRunCreatedBy                         TestRuns[]                        @relation("TestRunCreatedBy")
+    compositionLockedTestRuns                TestRuns[]                        @relation("TestRunCompositionLockedBy")
+    testRunCasesAssigned                     TestRunCases[]
+    testRunResults                           TestRunResults[]
+    editedTestRunResults                     TestRunResults[]                  @relation("TestRunResultEditor")
+    testRunCaseIterations                    TestRunCaseIteration[]
+    createdDataSets                          DataSet[]
+    createdDataSetVersions                   DataSetVersion[]                  @relation("DataSetVersionsCreatedBy")
+    createdSharedDataSetAssignments          CaseSharedDataSetAssignment[]     @relation("CaseSharedDataSetAssignmentCreatedBy")
+    createdIssues                            Issue[]                           @relation("IssueCreator")
+    createdRequirementReferences             RequirementIssueReference[]       @relation("RequirementIssueReferenceCreator")
+    issueVersionChanges                      IssueVersions[]
+    projectPermissions                       UserProjectPermission[]
+    junitTestSuites                          JUnitTestSuite[]
+    junitTestResults                         JUnitTestResult[]
+    junitProperties                          JUnitProperty[]
+    junitAttachments                         JUnitAttachment[]
+    junitTestSteps                           JUnitTestStep[]
+    createdCaseLinks                         RepositoryCaseLink[]              @relation("UserCreatedCaseLinks")
+    createdCodePins                          RepositoryCaseCodePin[]           @relation("UserCreatedCodePins")
+    createdImpactAnalyses                    ImpactAnalysis[]                  @relation("ImpactAnalysisCreatedBy")
+    createdExecutionTargets                  ExecutionTarget[]                 @relation("ExecutionTargetCreatedBy")
+    requestedTestRunExecutions               TestRunExecution[]                @relation("TestRunExecutionRequestedBy")
+    reviewedImpactAnalysisCases              ImpactAnalysisCase[]              @relation("ImpactAnalysisCaseReviewedBy")
+    createdSharedStepGroups                  SharedStepGroup[]
+    notifications                            Notification[]
+    userIntegrationAuths                     UserIntegrationAuth[]
+    createdEmailDomains                      AllowedEmailDomain[]
+    lastActiveAt                             DateTime?
+    lastSeenVersion                          String?
+    llmUsages                                LlmUsage[]
+    generatedLlmReportSnapshots              LlmReportSnapshot[]               @relation("LlmReportSnapshotGeneratedBy")
+    capturedRequirementTraceabilitySnapshots RequirementTraceabilitySnapshot[] @relation("RequirementTraceabilitySnapshotCapturedBy")
+    capturedReportSnapshots                  ReportSnapshot[]                  @relation("ReportSnapshotCapturedBy")
+    testmoImportJobs                         TestmoImportJob[]
+    createdComments                          Comment[]                         @relation("CommentCreator")
+    commentMentions                          CommentMention[]                  @relation("CommentMentions")
+    apiTokens                                ApiToken[]
+    scimSystemTokens                         ScimToken[]                       @relation("ScimSystemUser")
+    scimTokensCreated                        ScimToken[]                       @relation("ScimTokenCreatedBy")
+    scimTokensRevoked                        ScimToken[]                       @relation("ScimTokenRevokedBy")
+    scimTokensRotated                        ScimToken[]                       @relation("ScimTokenRotatedBy")
+    createdShareLinks                        ShareLink[]                       @relation("ShareLinkCreator")
+    importMappings                           ImportMapping[]                   @relation("ImportMappingCreator")
+    shareLinkAccessLogs                      ShareLinkAccessLog[]              @relation("ShareLinkAccessor")
+    reportBuilderStates                      ReportBuilderState[]              @relation("ReportBuilderStateCreator")
+    reviewsRequested                         ReviewRequest[]                   @relation("ReviewRequestedBy")
+    reviewsAssigned                          ReviewRequest[]                   @relation("ReviewAssignedToUser")
+    reviewsDecided                           ReviewRequest[]                   @relation("ReviewDecidedBy")
 
     // Two-factor authentication
-    twoFactorEnabled                Boolean                       @default(false)
-    twoFactorSecret                 String?                       @omit // Encrypted TOTP secret
-    twoFactorBackupCodes            String?                       @omit // JSON array of hashed backup codes
+    twoFactorEnabled                         Boolean                           @default(false)
+    twoFactorSecret                          String?                           @omit // Encrypted TOTP secret
+    twoFactorBackupCodes                     String?                           @omit // JSON array of hashed backup codes
 
     // Account lockout and password management
-    failedLoginAttempts             Int                           @default(0)
-    lockedUntil                     DateTime?                     @db.Timestamptz(6)
-    passwordChangedAt               DateTime?                     @db.Timestamptz(6)
-    mustChangePassword              Boolean                       @default(false)
-    passwordHistory                 PasswordHistory[]
+    failedLoginAttempts                      Int                               @default(0)
+    lockedUntil                              DateTime?                         @db.Timestamptz(6)
+    passwordChangedAt                        DateTime?                         @db.Timestamptz(6)
+    mustChangePassword                       Boolean                           @default(false)
+    passwordHistory                          PasswordHistory[]
+    caseDrafts                               CaseDraft[]
 
     @@index([isActive, isDeleted])
     @@index([access])
     @@index([accessSource])
+    @@index([scimTokenId])
     @@deny('delete, update, read', auth() == null)
     // Signup, SSO provisioning and profile self-edits use dedicated routes on the raw client
     @@allow('create, update, delete', auth().access == 'ADMIN')
@@ -250,20 +278,21 @@ model PasswordHistory {
 }
 
 model UserPreferences {
-    id                                  String           @id @default(uuid())
-    userId                              String           @unique @deny('update', true)
-    user                                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-    theme                               Theme            @default(Purple)
-    itemsPerPage                        ItemsPerPage     @default(P10)
-    locale                              Locale           @default(en_US)
-    dateFormat                          DateFormat       @default(MM_DD_YYYY_DASH)
-    timeFormat                          TimeFormat       @default(HH_MM_A)
-    timezone                            String           @default("Etc/UTC")
-    notificationMode                    NotificationMode @default(USE_GLOBAL)
-    emailNotifications                  Boolean          @default(true)
-    inAppNotifications                  Boolean          @default(true)
-    hasCompletedWelcomeTour             Boolean          @default(false)
-    hasCompletedInitialPreferencesSetup Boolean          @default(false)
+    id                                  String             @id @default(uuid())
+    userId                              String             @unique @deny('update', true)
+    user                                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    theme                               Theme              @default(Purple)
+    itemsPerPage                        ItemsPerPage       @default(P10)
+    locale                              Locale             @default(en_US)
+    dateFormat                          DateFormat         @default(MM_DD_YYYY_DASH)
+    timeFormat                          TimeFormat         @default(HH_MM_A)
+    timezone                            String             @default("Etc/UTC")
+    notificationMode                    NotificationMode   @default(USE_GLOBAL)
+    emailNotifications                  Boolean            @default(true)
+    inAppNotifications                  Boolean            @default(true)
+    detailsDisplayMode                  DetailsDisplayMode @default(DOCKED)
+    hasCompletedWelcomeTour             Boolean            @default(false)
+    hasCompletedInitialPreferencesSetup Boolean            @default(false)
 
     @@deny('all', auth() == null)
     @@allow('create,update,delete', auth().id == userId || auth().access == 'ADMIN')
@@ -309,31 +338,69 @@ enum IdpName {
 // Sibling to ApiToken, NOT extension. No userId FK -- a synthetic
 // __scim__ User row carries the audit attribution surface.
 model ScimToken {
-    id           String    @id @default(cuid())
-    name         String    @length(1, 100)
-    idpName      IdpName
-    token        String    @unique               // SHA-256/HMAC hash for bearer lookup
-    tokenPrefix  String                          // "tps_" + first 8 chars of plaintext
-    secret       String    @omit                 // Encrypted raw token at rest
-    systemUserId String
-    systemUser   User      @relation("ScimSystemUser", fields: [systemUserId], references: [id])
-    createdById  String
-    createdBy    User      @relation("ScimTokenCreatedBy", fields: [createdById], references: [id])
-    revokedById  String?
-    revokedBy    User?     @relation("ScimTokenRevokedBy", fields: [revokedById], references: [id])
-    expiresAt    DateTime?
-    lastUsedAt   DateTime?
-    lastUsedIp   String?
-    lastSyncAt   DateTime?
-    revokedAt    DateTime?
-    createdAt    DateTime  @default(now()) @db.Timestamptz(6)
-    isActive     Boolean   @default(true)
+    id                     String    @id @default(cuid())
+    name                   String    @length(1, 100)
+    idpName                IdpName
+    token                  String    @unique               // SHA-256/HMAC hash for bearer lookup
+    tokenPrefix            String                          // "tps_" + first 8 chars of plaintext
+    secret                 String    @omit                 // Encrypted raw token at rest
+    systemUserId           String
+    systemUser             User      @relation("ScimSystemUser", fields: [systemUserId], references: [id])
+    createdById            String
+    createdBy              User      @relation("ScimTokenCreatedBy", fields: [createdById], references: [id])
+    revokedById            String?
+    revokedBy              User?     @relation("ScimTokenRevokedBy", fields: [revokedById], references: [id])
+    expiresAt              DateTime?
+    lastUsedAt             DateTime?
+    lastUsedIp             String?
+    lastSyncAt             DateTime?
+    revokedAt              DateTime?
+    createdAt              DateTime  @default(now()) @db.Timestamptz(6)
+    isActive               Boolean   @default(true)
+
+    // Overlap-window rotation. Rotation happens in place: the row keeps its
+    // identity (name, IdP, provenance links, rate-limit bucket) and only the
+    // secret moves, so an operator can paste the new bearer into the IdP
+    // while the old one keeps working until previousTokenExpiresAt. Only one
+    // overlap can be open at a time -- rotating again supersedes it.
+    previousToken          String?   @unique  // hash of the superseded bearer
+    previousSecret         String?   @omit    // encrypted superseded bearer
+    previousTokenPrefix    String?
+    previousTokenExpiresAt DateTime?
+    rotatedAt              DateTime?
+    rotatedById            String?
+    rotatedBy              User?     @relation("ScimTokenRotatedBy", fields: [rotatedById], references: [id])
+
+    provisionedUsers       User[]    @relation("ScimProvisionedUsers")
+    provisionedGroups      Groups[]  @relation("ScimProvisionedGroups")
 
     @@index([token])
+    @@index([previousToken])
     @@index([isActive, expiresAt])
     @@index([createdById])
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
+}
+
+// Maps an IdP-asserted SCIM `roles[].value` string onto a TestPlanIt access
+// tier. Role-derived tiers take precedence over group-derived ones in
+// resolveEffectiveAccess -- an IdP that asserts roles is making a more
+// specific statement about the user than group membership does.
+//
+// Matching is case-insensitive: `roleValue` is stored lowercased and every
+// incoming role value is lowercased before comparison, because IdPs are not
+// consistent about the casing of role labels.
+model ScimRoleMapping {
+    id           Int      @id @default(autoincrement())
+    roleValue    String   @unique @length(1, 200)
+    mappedAccess Access
+    createdAt    DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+    @@index([roleValue])
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
 }
 
 enum Theme {
@@ -412,6 +479,15 @@ enum TimeFormat {
     @@allow('read', true) // Allow reads for signup
 }
 
+enum DetailsDisplayMode {
+    DOCKED
+    NEW_WINDOW
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', true) // Allow reads for signup
+}
+
 enum Access {
     NONE
     USER
@@ -471,20 +547,25 @@ enum NotificationType {
 }
 
 model Groups {
-    id                 Int                      @id @default(autoincrement())
-    name               String                   @unique @length(1) @deny('update', scimDisplayName != null)
-    externalId         String?                  @unique
-    url                String?                  @url
-    note               String?
-    isDeleted          Boolean                  @default(false)
-    deletedAt          DateTime?                @db.Timestamptz(6)
-    updatedAt          DateTime?                @updatedAt
-    scimDisplayName    String?
-    scimExtensions     Json?
-    mappedAccess       Access?
-    assignedUsers      GroupAssignment[]
-    projectPermissions GroupProjectPermission[]
+    id                    Int                         @id @default(autoincrement())
+    name                  String                      @unique @length(1) @deny('update', scimDisplayName != null)
+    externalId            String?                     @unique
+    url                   String?                     @url
+    note                  String?
+    isDeleted             Boolean                     @default(false)
+    deletedAt             DateTime?                   @db.Timestamptz(6)
+    updatedAt             DateTime?                   @updatedAt
+    scimDisplayName       String?
+    scimExtensions        Json?
+    mappedAccess          Access?
+    // See User.scimTokenId — same claim-on-first-write provenance rule.
+    scimTokenId           String?
+    scimToken             ScimToken?                  @relation("ScimProvisionedGroups", fields: [scimTokenId], references: [id], onDelete: SetNull)
+    assignedUsers         GroupAssignment[]
+    projectPermissions    GroupProjectPermission[]
+    projectAccessMappings GroupProjectAccessMapping[]
 
+    @@index([scimTokenId])
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
@@ -493,6 +574,35 @@ model Groups {
     // IdP's source of truth. The SCIM service uses the raw prisma client
     // and bypasses these policies; see lib/scim/services/groups.ts.
     @@deny('delete', scimDisplayName != null)
+}
+
+// Per-project access mapping: an IdP group grants an access tier on ONE
+// project, rather than the org-wide tier Groups.mappedAccess carries.
+//
+// The tier is materialized into a GroupProjectPermission row (see
+// lib/scim/access/projectMappings.ts) so the shipped permission engine
+// resolves it -- there is no second resolution path to keep in sync.
+//
+// Only granting tiers are meaningful here. The permission engine honours
+// SPECIFIC_ROLE and GLOBAL_ROLE from a group row and ignores NO_ACCESS
+// (denial comes only from a user-specific row or the project default), so a
+// mapping cannot revoke access the project default already grants. NONE is
+// therefore rejected at the write boundary rather than stored as a mapping
+// that would silently do nothing.
+model GroupProjectAccessMapping {
+    groupId      Int
+    group        Groups   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    projectId    Int
+    project      Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    mappedAccess Access
+    createdAt    DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+    @@id([groupId, projectId])
+    @@index([projectId])
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
 }
 
 model GroupAssignment {
@@ -531,74 +641,82 @@ model Roles {
 }
 
 model Projects {
-    id                              Int                                   @id @default(autoincrement())
-    name                            String                                @unique @length(1)
-    key                             String?                               @unique
-    iconUrl                         String?
-    note                            String?
-    docs                            String?
-    isCompleted                     Boolean                               @default(false)
-    isDeleted                       Boolean                               @default(false)
-    deletedAt                       DateTime?                             @db.Timestamptz(6)
-    completedAt                     DateTime?                             @db.Date
-    createdAt                       DateTime                              @default(now()) @db.Timestamptz(6)
-    createdBy                       String                                @deny('update', true)
-    creator                         User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
-    assignedUsers                   ProjectAssignment[]
-    assignedStatuses                ProjectStatusAssignment[]
-    milestoneTypes                  MilestoneTypesAssignment[]
-    assignedTemplates               TemplateProjectAssignment[]
-    assignedWorkflows               ProjectWorkflowAssignment[]
-    assignedConfigurations          ProjectConfigurationAssignment[]
-    milestones                      Milestones[]
-    repositories                    Repositories[]
-    repositoryFolders               RepositoryFolders[]
-    repositoryCases                 RepositoryCases[]
-    repositoryCaseVersions          RepositoryCaseVersions[]
-    sessions                        Sessions[]
-    sessionVersions                 SessionVersions[]
-    testRuns                        TestRuns[]
-    defaultAccessType               ProjectAccessType                     @default(GLOBAL_ROLE)
-    defaultRoleId                   Int?
-    defaultRole                     Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
-    userPermissions                 UserProjectPermission[]
-    groupPermissions                GroupProjectPermission[]
-    sharedStepGroups                SharedStepGroup[]
-    dataSets                        DataSet[]
-    projectIntegrations             ProjectIntegration[]
-    webhookConfigs                  WebhookConfig[]
-    webhookOutboxEvents             WebhookOutboxEvent[]
-    projectLlmIntegrations          ProjectLlmIntegration[]
-    codeRepositoryConfig            ProjectCodeRepositoryConfig?
-    promptConfigId                  String?
-    promptConfig                    PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
-    issues                          Issue[]
-    llmUsages                       LlmUsage[]
-    llmFeatureConfigs               LlmFeatureConfig[]
-    llmResponseCaches               LlmResponseCache[]
-    llmReportSnapshots              LlmReportSnapshot[]
-    comments                        Comment[]
-    auditLogs                       AuditLog[]
-    shareLinks                      ShareLink[]
-    reportBuilderStates             ReportBuilderState[]
-    assignedExportTemplates         CaseExportTemplateProjectAssignment[]
-    defaultCaseExportTemplateId     Int?
-    defaultCaseExportTemplate       CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
-    quickScriptEnabled              Boolean                               @default(false)
+    id                               Int                                   @id @default(autoincrement())
+    name                             String                                @unique @length(1)
+    key                              String?                               @unique
+    iconUrl                          String?
+    note                             String?
+    docs                             String?
+    isCompleted                      Boolean                               @default(false)
+    isDeleted                        Boolean                               @default(false)
+    deletedAt                        DateTime?                             @db.Timestamptz(6)
+    completedAt                      DateTime?                             @db.Date
+    createdAt                        DateTime                              @default(now()) @db.Timestamptz(6)
+    createdBy                        String                                @deny('update', true)
+    creator                          User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
+    assignedUsers                    ProjectAssignment[]
+    assignedStatuses                 ProjectStatusAssignment[]
+    milestoneTypes                   MilestoneTypesAssignment[]
+    assignedTemplates                TemplateProjectAssignment[]
+    assignedWorkflows                ProjectWorkflowAssignment[]
+    assignedConfigurations           ProjectConfigurationAssignment[]
+    milestones                       Milestones[]
+    repositories                     Repositories[]
+    repositoryFolders                RepositoryFolders[]
+    repositoryCases                  RepositoryCases[]
+    repositoryCaseVersions           RepositoryCaseVersions[]
+    sessions                         Sessions[]
+    sessionVersions                  SessionVersions[]
+    testRuns                         TestRuns[]
+    defaultAccessType                ProjectAccessType                     @default(GLOBAL_ROLE)
+    defaultRoleId                    Int?
+    defaultRole                      Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
+    userPermissions                  UserProjectPermission[]
+    groupPermissions                 GroupProjectPermission[]
+    groupAccessMappings              GroupProjectAccessMapping[]
+    sharedStepGroups                 SharedStepGroup[]
+    dataSets                         DataSet[]
+    projectIntegrations              ProjectIntegration[]
+    webhookConfigs                   WebhookConfig[]
+    webhookOutboxEvents              WebhookOutboxEvent[]
+    projectLlmIntegrations           ProjectLlmIntegration[]
+    codeRepositoryConfigs            ProjectCodeRepositoryConfig[]
+    impactAnalyses                   ImpactAnalysis[]
+    executionTargets                 ExecutionTarget[]
+    testRunExecutions                TestRunExecution[]
+    promptConfigId                   String?
+    promptConfig                     PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
+    issues                           Issue[]
+    llmUsages                        LlmUsage[]
+    llmFeatureConfigs                LlmFeatureConfig[]
+    llmResponseCaches                LlmResponseCache[]
+    llmReportSnapshots               LlmReportSnapshot[]
+    requirementTraceabilitySnapshots RequirementTraceabilitySnapshot[]
+    comments                         Comment[]
+    auditLogs                        AuditLog[]
+    shareLinks                       ShareLink[]
+    reportBuilderStates              ReportBuilderState[]
+    assignedExportTemplates          CaseExportTemplateProjectAssignment[]
+    defaultCaseExportTemplateId      Int?
+    defaultCaseExportTemplate        CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
+    quickScriptEnabled               Boolean                               @default(false)
+    impactEnabled                    Boolean                               @default(false)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
-    junitIterationPropertyNames     String[]                              @default([])
-    reviewWorkflowEnabled           Boolean                               @default(false)
-    requireResultFlipJustification  Boolean                               @default(false)
-    editResultsDurationSeconds      Int?
-    requireIssueOnFailure           Boolean                               @default(false)
-    excludeNotStartedFromRuns       Boolean                               @default(false)
-    autoLockCompositionOnInProgress Boolean                               @default(false)
-    abandonedRunIdleMinutes         Int?
-    abandonedRunStateId             Int?
-    abandonedRunState               Workflows?                            @relation("ProjectAbandonedRunState", fields: [abandonedRunStateId], references: [id], onDelete: SetNull)
-    duplicateScanResults            DuplicateScanResult[]
-    stepSequenceMatches             StepSequenceMatch[]
-    reviewRequests                  ReviewRequest[]
+    junitIterationPropertyNames      String[]                              @default([])
+    reviewWorkflowEnabled            Boolean                               @default(false)
+    requireResultFlipJustification   Boolean                               @default(false)
+    editResultsDurationSeconds       Int?
+    requireIssueOnFailure            Boolean                               @default(false)
+    excludeNotStartedFromRuns        Boolean                               @default(false)
+    requirementsEnabled              Boolean                               @default(false)
+    autoLockCompositionOnInProgress  Boolean                               @default(false)
+    abandonedRunIdleMinutes          Int?
+    abandonedRunStateId              Int?
+    abandonedRunState                Workflows?                            @relation("ProjectAbandonedRunState", fields: [abandonedRunStateId], references: [id], onDelete: SetNull)
+    duplicateScanResults             DuplicateScanResult[]
+    stepSequenceMatches              StepSequenceMatch[]
+    reviewRequests                   ReviewRequest[]
+    caseDrafts                       CaseDraft[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -622,8 +740,9 @@ model Projects {
     // Project creators have admin access
     @@allow('all', creator.id == auth().id)
 
-    // Users with explicit PROJECTADMIN role on project
-    @@allow('read,update,delete', userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+    // Project admins (creator, assigned system PROJECTADMIN, or a role with
+    // Settings canAddEdit) — see AuthCtx.adminProjectIds
+    @@allow('read,update,delete', id in auth().adminProjectIds)
 
     // Users with PROJECTADMIN access and assigned to project
     @@allow('read,update,delete', assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'])
@@ -818,9 +937,9 @@ model Milestones {
     // Create/update/delete access for users with milestone permissions
     @@allow('create,update,delete',
         project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Milestones' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'Milestones' && canAddEdit]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   ((accessType == 'SPECIFIC_ROLE' &&
@@ -894,9 +1013,9 @@ model MilestoneIssue {
 
     @@allow('create,update,delete',
         milestone.project.creator.id == auth().id ||
+        milestone.projectId in auth().adminProjectIds ||
         milestone.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Milestones' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'Milestones' && canAddEdit]] ||
         milestone.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         milestone.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   ((accessType == 'SPECIFIC_ROLE' &&
@@ -1061,6 +1180,7 @@ model Templates {
     projects        TemplateProjectAssignment[]
     repositoryCases RepositoryCases[]
     sessions        Sessions[]
+    importMappings  ImportMapping[]
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
@@ -1077,7 +1197,7 @@ model TemplateProjectAssignment {
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     // Project admins with explicit SPECIFIC_ROLE can manage assignments for their projects
-    @@allow('create,delete', project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+    @@allow('create,delete', projectId in auth().adminProjectIds)
     // Users with PROJECTADMIN access assigned to the project can manage assignments
     @@allow('create,delete', project.assignedUsers?[user.id == auth().id] && auth().access == 'PROJECTADMIN')
     @@allow('read', auth().access != null)
@@ -1146,7 +1266,7 @@ model CaseExportTemplateProjectAssignment {
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     // Project admins with explicit SPECIFIC_ROLE can manage assignments for their projects
-    @@allow('create,delete', project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+    @@allow('create,delete', projectId in auth().adminProjectIds)
     // Users with PROJECTADMIN access assigned to the project can manage assignments
     @@allow('create,delete', project.assignedUsers?[user.id == auth().id] && auth().access == 'PROJECTADMIN')
     @@allow('read', auth().access != null)
@@ -1204,6 +1324,15 @@ model Status {
     @@index([isDeleted, isEnabled])
     @@index([order])
     @@deny('all', auth() == null)
+    // Seven queries identify the run default by systemName = 'untested', so the
+    // row must keep existing. Denies a clean 403 before the write reaches the
+    // database; the authoritative guarantee is the tpl_seeded_status_guard
+    // trigger, which also blocks a rename and a soft-delete and covers the raw
+    // client and manual SQL. Rename is deliberately NOT denied here: this
+    // language cannot compare against the post-update value, so a policy could
+    // only freeze the whole row and would wrongly block the display-name,
+    // colour and ordering edits the trigger allows.
+    @@deny('delete', systemName == 'untested')
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1385,7 +1514,7 @@ model Repositories {
     // Update/delete access for project admins
     @@allow('update,delete',
         project.creator.id == auth().id ||
-        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        projectId in auth().adminProjectIds ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
     )
 
@@ -1441,6 +1570,7 @@ model RepositoryFolders {
     isDeleted    Boolean             @default(false)
     deletedAt    DateTime?           @db.Timestamptz(6)
     cases        RepositoryCases[]
+    caseDrafts   CaseDraft[]
 
     @@unique([projectId, repositoryId, parentId, name, isDeleted])
     @@index([projectId, repositoryId, isDeleted])
@@ -1467,9 +1597,9 @@ model RepositoryFolders {
     @@allow('create,update,delete',
         project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -1544,9 +1674,9 @@ model RepositoryCaseLink {
     @@allow('create,update,delete',
         caseA.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        caseA.projectId in auth().adminProjectIds ||
         caseA.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                       (role.name == 'Project Admin' ||
-                                        role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                        role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         caseA.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                        auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -1599,9 +1729,9 @@ model RepositoryCaseTag {
 
     @@allow('create,update,delete',
         case.project.creator.id == auth().id ||
+        case.projectId in auth().adminProjectIds ||
         case.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                      (role.name == 'Project Admin' ||
-                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
         case.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                       auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
         case.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
@@ -1624,10 +1754,14 @@ model RepositoryCaseTag {
 
 // Explicit join model for RepositoryCases <-> Issue (see RepositoryCaseTag).
 model RepositoryCaseIssue {
-    caseId  Int
-    case    RepositoryCases @relation(fields: [caseId], references: [id], onDelete: Cascade)
-    issueId Int
-    issue   Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    caseId             Int
+    case               RepositoryCases @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    issueId            Int
+    issue              Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    // D-07: dismissal rides this join's EXISTING create,update,delete policy
+    // (TestCaseRepository canAddEdit -- the same people who can link and
+    // unlink), so no policy clause changes and no new route are needed.
+    suspectDismissedAt DateTime?       @db.Timestamptz(6)
 
     @@id([caseId, issueId])
     @@index([issueId])
@@ -1645,9 +1779,9 @@ model RepositoryCaseIssue {
 
     @@allow('create,update,delete',
         case.project.creator.id == auth().id ||
+        case.projectId in auth().adminProjectIds ||
         case.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                      (role.name == 'Project Admin' ||
-                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
         case.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                       auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
         case.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
@@ -1666,6 +1800,91 @@ model RepositoryCaseIssue {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+}
+
+// D-09 load-bearing companion rule: a reference NEVER routes through
+// Issue.parentId and a reference-created shell NEVER sets isRequirement --
+// the coverage rollup's recursive descendant arm in
+// lib/services/requirementCoverage.ts is deliberately role-unscoped, so a
+// reference routed through the hierarchy column would harvest the
+// referenced issue's own linked cases into the requirement's counts.
+model RequirementIssueReference {
+    requirementId     Int
+    // A reference means "related ticket" -- always joined through this
+    // model, never through the issue hierarchy relation. See the
+    // model-level comment above for the full rationale (D-09).
+    requirement       Issue    @relation("RequirementIssueReferenceSource", fields: [requirementId], references: [id], onDelete: Cascade)
+    referencedIssueId Int
+    referencedIssue   Issue    @relation("RequirementIssueReferenceTarget", fields: [referencedIssueId], references: [id], onDelete: Cascade)
+    createdAt         DateTime @default(now()) @db.Timestamptz(6)
+    createdById       String?  @deny('update', true)
+    createdBy         User?    @relation("RequirementIssueReferenceCreator", fields: [createdById], references: [id])
+
+    // Composite PK is the unique-pair constraint -- mirrors RepositoryCaseIssue.
+    @@id([requirementId, referencedIssueId])
+    @@index([referencedIssueId])
+
+    // Removal hard-deletes this join row only; the referenced Issue always
+    // survives (it may be shared). Mirrors RepositoryCaseIssue unlink
+    // semantics -- a deliberate, precedent-based exception to the general
+    // soft-delete rule. This model carries no soft-delete tombstone columns (D-15).
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@deny('create', requirementId == referencedIssueId)
+
+    @@allow('read',
+        requirement.projectId in auth().accessibleProjectIds
+    )
+
+    @@allow('create,update,delete',
+        requirement.project.creator.id == auth().id ||
+        requirement.projectId in auth().adminProjectIds ||
+        requirement.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        requirement.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                      auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        requirement.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        requirement.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                       ((accessType == 'SPECIFIC_ROLE' &&
+                                         role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                        (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))] ||
+        (requirement.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (requirement.project.assignedUsers?[user.id == auth().id] &&
+         requirement.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         requirement.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (requirement.project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         requirement.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+/// One historical state of a requirement's content (title/description/note) —
+/// rows are written ONLY by the tpl_issue_version_capture DB trigger.
+model IssueVersions {
+    id          Int      @id @default(autoincrement())
+    issueId     Int
+    issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    version     Int
+    title       String
+    description String?
+    note        Json?
+    /// Best-effort actor from the audit GUC; null for writers outside an
+    /// audited transaction (sync polls, raw SQL). AuditLog stays authoritative.
+    changedById String?
+    changedBy   User?    @relation(fields: [changedById], references: [id], onDelete: SetNull)
+    changedAt   DateTime @default(now()) @db.Timestamptz(6)
+
+    @@unique([issueId, version])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    // History is trigger-written and immutable — no app writer, ADMIN included.
+    @@deny('create, update, delete', true)
+    @@allow('read', auth().access != null)
 }
 
 enum DuplicateScanResultStatus {
@@ -1711,9 +1930,9 @@ model DuplicateScanResult {
     @@allow('create,update,delete',
         caseA.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        caseA.projectId in auth().adminProjectIds ||
         caseA.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                       (role.name == 'Project Admin' ||
-                                        role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                        role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         caseA.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                        auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -1778,9 +1997,9 @@ model StepSequenceMatch {
 
     @@allow('create,update,delete',
         project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                 (role.name == 'Project Admin' ||
-                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   ((accessType == 'SPECIFIC_ROLE' &&
@@ -1831,9 +2050,9 @@ model StepSequenceMatchCase {
     @@allow('create,update,delete',
         match.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        match.projectId in auth().adminProjectIds ||
         match.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                       (role.name == 'Project Admin' ||
-                                        role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                        role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         match.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                        auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -1908,6 +2127,8 @@ model RepositoryCases {
     junitTestSteps          JUnitTestStep[]              @relation("JUnitTestStepCase")
     linksFrom               RepositoryCaseLink[]         @relation("CaseALinks")
     linksTo                 RepositoryCaseLink[]         @relation("CaseBLinks")
+    codePins                RepositoryCaseCodePin[]
+    impactAnalysisCases     ImpactAnalysisCase[]
     duplicateScanResultsA   DuplicateScanResult[]        @relation("DuplicateCaseA")
     duplicateScanResultsB   DuplicateScanResult[]        @relation("DuplicateCaseB")
     stepSequenceMatchCases  StepSequenceMatchCase[]
@@ -1915,6 +2136,7 @@ model RepositoryCases {
     parameters              TestCaseParameter[]
     ownedDataSets           DataSet[]                    @relation("DataSetOwnerCase")
     sharedDataSetAssignment CaseSharedDataSetAssignment? @relation("CaseSharedDataSetAssignmentCase")
+    drafts                  CaseDraft[]
 
     @@unique([projectId, name, className, source])
     @@index([projectId, isDeleted, isArchived])
@@ -1941,9 +2163,9 @@ model RepositoryCases {
     @@allow('create,update,delete',
         project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -1979,6 +2201,69 @@ model RepositoryCases {
     // imperfectly (drift risk). The app preflight is the single source
     // of truth and produces structured REVIEW_REQUIRED responses; raw
     // prisma + ZenStack-enhanced server actions both route through it.
+}
+
+// Auto-saved in-progress case edits. Shape and lifecycle: lib/services/caseDraft.ts
+model CaseDraft {
+    id          String             @id @default(uuid())
+    projectId   Int                @deny('update', true)
+    project     Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    userId      String             @deny('update', true)
+    user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // "case:<id>" or "folder:<id>" — a non-null key so the unique index below bites
+    draftKey    String
+    caseId      Int?
+    case        RepositoryCases?   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    folderId    Int?
+    folder      RepositoryFolders? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+    payload     Json
+    baseVersion Int?
+    createdAt   DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt   DateTime           @updatedAt @db.Timestamptz(6)
+
+    @@unique([userId, draftKey])
+    @@index([updatedAt])
+    @@index([projectId])
+    @@index([caseId])
+    @@index([folderId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    // A per-user NO_ACCESS grant beats the ladder below, whose
+    // default-access clauses would otherwise admit anyone holding a global
+    // role with TestCaseRepository canAddEdit. RepositoryCases does not need
+    // this because its read rule goes through auth().accessibleProjectIds,
+    // which already excludes NO_ACCESS projects.
+    @@deny('all', project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
+
+    // Author-only, with no ADMIN override: nobody reads another user's draft.
+    // The project half mirrors RepositoryCases' write ladder rather than using
+    // auth().accessibleProjectIds — that list is Valkey-cached for 60s for
+    // non-admins, and every other model uses it for `read` only. Gating writes
+    // on it made auto-save fail for a minute after a project was created or
+    // access granted, while every other repository action worked.
+    @@allow('all', auth().id == userId && (
+        project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
+    ))
 }
 
 model RepositoryCaseVersions {
@@ -2034,9 +2319,9 @@ model RepositoryCaseVersions {
     @@allow('create,update,delete',
         project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -2091,9 +2376,9 @@ model CaseFieldValues {
     @@allow('create,update,delete',
         testCase.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        testCase.projectId in auth().adminProjectIds ||
         testCase.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                          (role.name == 'Project Admin' ||
-                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type
         testCase.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                           auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -2143,9 +2428,9 @@ model CaseFieldVersionValues {
     @@allow('create,update,delete',
         version.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        version.projectId in auth().adminProjectIds ||
         version.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                         (role.name == 'Project Admin' ||
-                                          role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                          role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type
         version.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                          auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -2220,6 +2505,8 @@ model Attachments {
     testRunStepResult   TestRunStepResults? @relation(fields: [testRunStepResultId], references: [id], onDelete: Cascade)
     junitTestResultId   Int?
     junitTestResult     JUnitTestResult?    @relation(fields: [junitTestResultId], references: [id], onDelete: Cascade)
+    issueId             Int?
+    issue               Issue?              @relation(fields: [issueId], references: [id], onDelete: Cascade)
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
@@ -2232,6 +2519,7 @@ model Attachments {
     @@index([testRunResultsId])
     @@index([testRunStepResultId])
     @@index([junitTestResultId])
+    @@index([issueId])
 }
 
 model Steps {
@@ -2266,9 +2554,9 @@ model Steps {
     @@allow('create,update,delete',
         testCase.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        testCase.projectId in auth().adminProjectIds ||
         testCase.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                          (role.name == 'Project Admin' ||
-                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         testCase.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                           auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -2341,9 +2629,9 @@ model TestCaseParameter {
     @@allow('create,update,delete',
         testCase.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        testCase.projectId in auth().adminProjectIds ||
         testCase.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                          (role.name == 'Project Admin' ||
-                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         testCase.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                           auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -2441,9 +2729,9 @@ model Sessions {
     // Create access for users with session permissions
     @@allow('create',
         project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Sessions' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'SPECIFIC_ROLE' &&
@@ -2465,9 +2753,9 @@ model Sessions {
         auth().id == createdById ||
         project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)])] ||
+                                 role.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)]] ||
@@ -2542,9 +2830,9 @@ model SessionResults {
     @@allow('create',
         session.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        session.projectId in auth().adminProjectIds ||
         session.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                         (role.name == 'Project Admin' ||
-                                          role.rolePermissions?[area == 'SessionResults' && canAddEdit])] ||
+                                          role.rolePermissions?[area == 'SessionResults' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         session.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                          auth().role.rolePermissions?[area == 'SessionResults' && canAddEdit]] ||
@@ -2575,9 +2863,9 @@ model SessionResults {
         auth().id == createdById ||
         session.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        session.projectId in auth().adminProjectIds ||
         session.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                         (role.name == 'Project Admin' ||
-                                          role.rolePermissions?[area == 'SessionResults' && (canAddEdit || canDelete)])] ||
+                                          role.rolePermissions?[area == 'SessionResults' && (canAddEdit || canDelete)]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         session.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                          auth().role.rolePermissions?[area == 'SessionResults' && (canAddEdit || canDelete)]] ||
@@ -2659,9 +2947,9 @@ model SessionVersions {
     @@allow('create',
         project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Sessions' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
@@ -2716,9 +3004,9 @@ model SessionFieldValues {
     @@allow('create,update,delete',
         session.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        session.projectId in auth().adminProjectIds ||
         session.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                        (role.name == 'Project Admin' ||
-                                         role.rolePermissions?[area == 'Sessions' && canAddEdit])] ||
+                                         role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         session.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                         auth().role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
@@ -2748,28 +3036,28 @@ model SessionFieldValues {
 }
 
 model TestRuns {
-    id                        Int              @id @default(autoincrement())
-    projectId                 Int              @deny('update', true)
-    project                   Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    name                      String           @length(1)
+    id                        Int                @id @default(autoincrement())
+    projectId                 Int                @deny('update', true)
+    project                   Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name                      String             @length(1)
     note                      Json?
     docs                      Json?
     configId                  Int?
-    configuration             Configurations?  @relation(fields: [configId], references: [id], onDelete: SetNull)
+    configuration             Configurations?    @relation(fields: [configId], references: [id], onDelete: SetNull)
     milestoneId               Int?
-    milestone                 Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+    milestone                 Milestones?        @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
     stateId                   Int
-    state                     Workflows        @relation(fields: [stateId], references: [id])
+    state                     Workflows          @relation(fields: [stateId], references: [id])
     forecastManual            Int?
     forecastAutomated         Float?
     elapsed                   Int?
-    isCompleted               Boolean          @default(false)
-    isDeleted                 Boolean          @default(false)
-    deletedAt                 DateTime?        @db.Timestamptz(6)
+    isCompleted               Boolean            @default(false)
+    isDeleted                 Boolean            @default(false)
+    deletedAt                 DateTime?          @db.Timestamptz(6)
     completedAt               DateTime?
-    createdAt                 DateTime         @default(now()) @db.Timestamptz(6)
-    createdById               String           @deny('update', true)
-    createdBy                 User             @relation("TestRunCreatedBy", fields: [createdById], references: [id])
+    createdAt                 DateTime           @default(now()) @db.Timestamptz(6)
+    createdById               String             @deny('update', true)
+    createdBy                 User               @relation("TestRunCreatedBy", fields: [createdById], references: [id])
     // Execution-start composition lock: freezes which cases are in the run
     // (add / remove / reorder) while execution continues. Distinct from the
     // completion lock (testRun.isCompleted), which freezes everything. null =
@@ -2780,17 +3068,19 @@ model TestRuns {
     // enhanced-client/RPC write so an editor can't clear the lock by bypassing
     // the creator/admin unlock gate. A Postgres trigger (scripts/apply-triggers)
     // is the authoritative backstop on TestRunCases.
-    compositionLockedAt       DateTime?        @db.Timestamptz(6) @deny('update', true)
-    compositionLockedById     String?          @deny('update', true)
-    compositionLockedBy       User?            @relation("TestRunCompositionLockedBy", fields: [compositionLockedById], references: [id])
+    compositionLockedAt       DateTime?          @db.Timestamptz(6) @deny('update', true)
+    compositionLockedById     String?            @deny('update', true)
+    compositionLockedBy       User?              @relation("TestRunCompositionLockedBy", fields: [compositionLockedById], references: [id])
     attachments               Attachments[]
     testCases                 TestRunCases[]
     results                   TestRunResults[]
     tags                      Tags[]
     issues                    Issue[]
-    testRunType               TestRunType      @default(REGULAR)
+    testRunType               TestRunType        @default(REGULAR)
     junitTestSuites           JUnitTestSuite[]
+    executions                TestRunExecution[]
     comments                  Comment[]
+    impactAnalyses            ImpactAnalysis[]
     configurationGroupId      String?
     // Source run id when this row was created by duplicating another; drives
     // the test_run.duplicated webhook event. A provenance marker, not a live
@@ -2801,7 +3091,7 @@ model TestRuns {
     // being so, which is what re-arms the notification. Written only by the
     // ready-check worker on the raw client; @deny('update', true) keeps
     // enhanced-client and RPC writers out (cf. compositionLockedAt above).
-    readyToCompleteNotifiedAt DateTime?        @db.Timestamptz(6) @deny('update', true)
+    readyToCompleteNotifiedAt DateTime?          @db.Timestamptz(6) @deny('update', true)
 
     @@index([projectId, isDeleted])
     @@index([createdById])
@@ -2825,9 +3115,9 @@ model TestRuns {
     // Create access for users with test run permissions
     @@allow('create',
         project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'SPECIFIC_ROLE' &&
@@ -2849,9 +3139,9 @@ model TestRuns {
         auth().id == createdById ||
         project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)])] ||
+                                 role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]] ||
@@ -2898,6 +3188,7 @@ enum TestRunType {
     MSTEST
     MOCHA
     CUCUMBER
+    HYBRID // REGULAR run that has also received automated results; promoted, never created directly
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -2974,9 +3265,9 @@ model TestRunCases {
         auth().id == testRun.createdById ||
         testRun.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        testRun.projectId in auth().adminProjectIds ||
         testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                         (role.name == 'Project Admin' ||
-                                          role.rolePermissions?[area == 'TestRuns' && canAddEdit])] ||
+                                          role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                          auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
@@ -3008,9 +3299,9 @@ model TestRunCases {
         auth().id == assignedToId ||
         testRun.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        testRun.projectId in auth().adminProjectIds ||
         testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                         (role.name == 'Project Admin' ||
-                                          role.rolePermissions?[area == 'TestRuns' && canAddEdit])] ||
+                                          role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                          auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
@@ -3095,9 +3386,9 @@ model TestRunResults {
         auth().id == executedById ||
         testRun.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        testRun.projectId in auth().adminProjectIds ||
         testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                         (role.name == 'Project Admin' ||
-                                          role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+                                          role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                          auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
@@ -3169,9 +3460,9 @@ model TestRunStepResults {
         auth().id == testRunResult.executedById ||
         testRunResult.testRun.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        testRunResult.testRun.projectId in auth().adminProjectIds ||
         testRunResult.testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                                       (role.name == 'Project Admin' ||
-                                                        role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+                                                        role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         testRunResult.testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                                        auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
@@ -3244,9 +3535,9 @@ model TestRunCaseIteration {
     // Create access - users with test run result permissions
     @@allow('create',
         testRunCase.testRun.project.creator.id == auth().id ||
+        testRunCase.testRun.projectId in auth().adminProjectIds ||
         testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                                     (role.name == 'Project Admin' ||
-                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
         testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                                      auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
         testRunCase.testRun.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
@@ -3271,9 +3562,9 @@ model TestRunCaseIteration {
         auth().id == assignedToId ||
         testRunCase.testRun.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        testRunCase.testRun.projectId in auth().adminProjectIds ||
         testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                                     (role.name == 'Project Admin' ||
-                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         testRunCase.testRun.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                                      auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
@@ -3353,39 +3644,67 @@ model TestRunCaseDataSetSnapshot {
 }
 
 model Issue {
-    id                 Int                   @id @default(autoincrement())
-    name               String                @length(1)
-    title              String                @length(1)
-    description        String?
-    status             String?
-    priority           String?               @default("medium")
-    externalId         String?
-    externalKey        String?
-    externalUrl        String?               @url
-    externalStatus     String?
-    externalData       Json?
-    issueTypeId        String?
-    issueTypeName      String?
-    issueTypeIconUrl   String?
-    lastSyncedAt       DateTime?             @db.Timestamptz(6)
-    data               Json?
-    note               Json?
-    isDeleted          Boolean               @default(false)
-    deletedAt          DateTime?             @db.Timestamptz(6)
-    createdAt          DateTime              @default(now()) @db.Timestamptz(6)
-    createdById        String                @deny('update', true)
-    createdBy          User                  @relation("IssueCreator", fields: [createdById], references: [id])
-    caseIssues         RepositoryCaseIssue[]
-    sessions           Sessions[]
-    sessionResults     SessionResults[]
-    testRuns           TestRuns[]
-    testRunResults     TestRunResults[]
-    testRunStepResults TestRunStepResults[]
-    projectId          Int?                  @deny('update', true)
-    project            Projects?             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    integrationId      Int?
-    integration        Integration?          @relation(fields: [integrationId], references: [id], onDelete: SetNull)
-    milestoneIssues    MilestoneIssue[]
+    id                    Int                         @id @default(autoincrement())
+    name                  String                      @length(1)
+    title                 String                      @length(1) @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    description           String?                     @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    status                String?                     @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    priority              String?                     @default("medium") @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    externalId            String?
+    externalKey           String?
+    externalUrl           String?                     @url
+    externalStatus        String?
+    externalPriority      String?
+    externalData          Json?
+    issueTypeId           String?
+    issueTypeName         String?
+    issueTypeIconUrl      String?
+    lastSyncedAt          DateTime?                   @db.Timestamptz(6)
+    // D-01: plain nullable timestamp, NOT @updatedAt -- SyncService.ts
+    // rewrites title/description unconditionally on every poll, so an
+    // ORM-managed @updatedAt would mark every synced requirement suspect
+    // after every poll. A diff-aware BEFORE UPDATE trigger (see
+    // scripts/apply-triggers.ts) sets this column, never the app.
+    contentUpdatedAt      DateTime?                   @db.Timestamptz(6)
+    data                  Json?
+    note                  Json?
+    isDeleted             Boolean                     @default(false)
+    deletedAt             DateTime?                   @db.Timestamptz(6)
+    createdAt             DateTime                    @default(now()) @db.Timestamptz(6)
+    createdById           String                      @deny('update', true)
+    createdBy             User                        @relation("IssueCreator", fields: [createdById], references: [id])
+    caseIssues            RepositoryCaseIssue[]
+    // LINK-03 manual traceability references. Never routed through parentId
+    // and never set alongside isRequirement (D-09).
+    outgoingReferences    RequirementIssueReference[] @relation("RequirementIssueReferenceSource")
+    incomingReferences    RequirementIssueReference[] @relation("RequirementIssueReferenceTarget")
+    versions              IssueVersions[]
+    sessions              Sessions[]
+    sessionResults        SessionResults[]
+    testRuns              TestRuns[]
+    testRunResults        TestRunResults[]
+    testRunStepResults    TestRunStepResults[]
+    projectId             Int?                        @deny('update', true)
+    project               Projects?                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    integrationId         Int?
+    integration           Integration?                @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+    milestoneIssues       MilestoneIssue[]
+    parentId              Int?                        @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    parent                Issue?                      @relation("IssueParent", fields: [parentId], references: [id], onDelete: Cascade)
+    children              Issue[]                     @relation("IssueParent")
+    attachments           Attachments[]
+    // Three orthogonal states: synced+locked (isRequirement true,
+    // integrationId set, requirementDetachedAt null — tracker-owned fields
+    // locked), detached/local (requirementDetachedAt set — locks lift,
+    // integrationId stays non-null for badge/identity), native
+    // (integrationId null — never locked).
+    requirementDetachedAt DateTime?                   @db.Timestamptz(6)
+    // Set by the classification write path; not derived per read.
+    isRequirement         Boolean                     @default(false)
+    // Tri-state per-issue classification override: FORCE_ON/FORCE_OFF pin
+    // isRequirement regardless of the type config; null inherits the config.
+    requirementOverride   RequirementOverride?
+    currentVersion        Int                         @default(1)
 
     @@unique([externalId, integrationId])
     @@index([externalId])
@@ -3393,16 +3712,37 @@ model Issue {
     @@index([createdById])
     @@index([projectId])
     @@index([integrationId])
+    @@index([parentId])
     // Serves the issue-list page: ordering by name over non-deleted issues.
     // Lets Postgres walk issues in name order and short-circuit the linked-
     // entity OR-EXISTS filter per row (O(pageSize)) instead of hashing the
     // whole RepositoryCases/TestRuns tables and full-sorting every page
     // (~510ms -> ~70ms; verified via EXPLAIN on production data).
     @@index([isDeleted, name, id])
+    // Issue is never hard-deleted through the policy client. `parentId` carries
+    // `onDelete: Cascade`, so a single row delete takes the entire requirement
+    // subtree with it, and the ADMIN `@@allow('all', ...)` above would otherwise
+    // permit exactly that from the generic model route. Deletion of a
+    // requirement subtree goes through `deleteRequirementSubtree`, which soft
+    // deletes; defect shells are retired by the same soft-delete path in
+    // `jira-link-service`. A deny outranks every allow, so this closes the
+    // operation for every consumer of the policy client at once rather than
+    // per route — request-shape guards on individual routes have already proven
+    // bypassable (percent-encoded paths, SuperJSON-annotated payloads).
+    @@deny('delete', true)
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create, read, update', auth().access != null)
+}
+
+enum RequirementOverride {
+    FORCE_ON
+    FORCE_OFF
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
 }
 
 enum IntegrationProvider {
@@ -3448,6 +3788,7 @@ enum AdapterType {
     GITEA
     REDMINE
     MANTISBT
+    BITBUCKET
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -3480,6 +3821,7 @@ enum LlmProvider {
     GEMINI
     OLLAMA
     CUSTOM_LLM
+    DEEPSEEK
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -3549,18 +3891,21 @@ model Integration {
 // ============================================
 
 model CodeRepository {
-    id             Int                           @id @default(autoincrement())
-    name           String                        @unique @length(1)
-    provider       CodeRepositoryProvider
-    credentials    Json                         // Provider credentials (PAT, username/password, etc.)
-    settings       Json?                        // Non-sensitive: baseUrl, orgUrl, repoIdentifier
-    status         IntegrationStatus             @default(ACTIVE)
-    lastTestedAt   DateTime?
-    isDeleted      Boolean                       @default(false)
-    deletedAt      DateTime?                     @db.Timestamptz(6)
-    createdAt      DateTime                      @default(now())
-    updatedAt      DateTime                      @updatedAt
-    projectConfigs ProjectCodeRepositoryConfig[]
+    id               Int                           @id @default(autoincrement())
+    name             String                        @unique @length(1)
+    provider         CodeRepositoryProvider
+    // Encrypted at rest by sideEffectsPlugin on every write ({ encrypted }),
+    // left out of reads unless selected, and then only for administrators.
+    credentials      Json                          @omit @deny('read', auth().access != 'ADMIN')
+    settings         Json?                        // Non-sensitive: baseUrl, orgUrl, repoIdentifier
+    status           IntegrationStatus             @default(ACTIVE)
+    lastTestedAt     DateTime?
+    isDeleted        Boolean                       @default(false)
+    deletedAt        DateTime?                     @db.Timestamptz(6)
+    createdAt        DateTime                      @default(now())
+    updatedAt        DateTime                      @updatedAt
+    projectConfigs   ProjectCodeRepositoryConfig[]
+    executionTargets ExecutionTarget[]
 
     @@index([provider, status])
     @@deny('all', auth() == null)
@@ -3568,31 +3913,412 @@ model CodeRepository {
     @@allow('all', auth().access == 'ADMIN')
 }
 
+// QUICKSCRIPT reads the test-automation repo for AI export context (one per
+// project, kept single by the settings page); IMPACT reads an application
+// under test for test impact analysis (one row per connected repository, so a
+// project tested across several services can connect each of them).
+enum CodeRepositoryConfigPurpose {
+    QUICKSCRIPT
+    IMPACT
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
 model ProjectCodeRepositoryConfig {
-    id                    Int            @id @default(autoincrement())
-    projectId             Int            @unique
-    project               Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    id                    Int                         @id @default(autoincrement())
+    projectId             Int
+    project               Projects                    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    purpose               CodeRepositoryConfigPurpose @default(QUICKSCRIPT)
     repositoryId          Int
-    repository            CodeRepository @relation(fields: [repositoryId], references: [id])
-    branch                String?        // null = use repository's default branch
-    pathPatterns          Json           // Array of { path: string, pattern: string }
-    cacheEnabled          Boolean        @default(true)   // false = no file caching (privacy mode)
-    cacheTtlDays          Int            @default(7)
-    cacheStatus           String?        // "success" | "error" | "pending" | null (never fetched)
+    repository            CodeRepository              @relation(fields: [repositoryId], references: [id])
+    branch                String?                     // null = use repository's default branch
+    pathPatterns          Json                        // Array of { path: string, pattern: string, exclude?: boolean }; an exclude row removes its files everywhere, incl. (IMPACT) the changed files of an analysis
+    cacheEnabled          Boolean                     @default(true)   // false = no file caching (privacy mode)
+    cacheTtlDays          Int                         @default(7)
+    cacheStatus           String?                     // "success" | "error" | "pending" | null (never fetched)
     cacheLastFetchedAt    DateTime?
     cacheFileCount        Int?
-    cacheContentFileCount Int?        // how many file CONTENTS are cached (<= cacheFileCount when a fetch was rate-limited)
-    cacheTotalSize        BigInt?        // bytes
+    cacheContentFileCount Int?                        // how many file CONTENTS are cached (<= cacheFileCount when a fetch was rate-limited)
+    cacheTotalSize        BigInt?                     // bytes
     cacheError            String?
-    createdAt             DateTime       @default(now())
-    updatedAt             DateTime       @updatedAt
+    markerScanReport      Json?                       // IMPACT only: summary of the last repo-marker scan
+    issueScanEnabled      Boolean                     @default(true)   // IMPACT only: derive Code Pins from ticket keys in commit messages
+    issueResultLinks      Boolean                     @default(false)  // IMPACT only: a ticket on a test result also links the result's case
+    issueScanReport       Json?                       // IMPACT only: summary (or running state) of the last ticket-key scan
+    stalePinReport        Json?                       // IMPACT only: summary (or running state) of the last stale Code Pin check
+    createdAt             DateTime                    @default(now())
+    updatedAt             DateTime                    @updatedAt
+    codePins              RepositoryCaseCodePin[]
+    impactAnalyses        ImpactAnalysis[]
+    webhooks              WebhookConfig[]
+
+    @@unique([projectId, purpose, repositoryId])
+    @@index([repositoryId])
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
-    @@allow('read,update', auth().access == 'PROJECTADMIN')
-    @@allow('read,update',
-      project.userPermissions?[user.id == auth().id && role.rolePermissions?[area == 'Settings' && canAddEdit == true]]
+    @@allow('all', auth().access == 'PROJECTADMIN')
+    @@allow('all', projectId in auth().adminProjectIds)
+    // Every project member can read the IMPACT config (commit picking, Code
+    // Pins). No secret lives on this row; credentials stay on CodeRepository.
+    @@allow('read', purpose == 'IMPACT' && projectId in auth().accessibleProjectIds)
+}
+
+// ============================================
+// Impact (test impact analysis) Models
+// ============================================
+
+enum CodePinKind {
+    FILE
+    RANGE
+    SYMBOL
+    GLOB
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum CodePinSource {
+    MANUAL
+    AI
+    ANNOTATION
+    MAPFILE
+    ISSUE
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+// A Code Pin ties a test case to a block of the application under test so a
+// change inside that block pulls the case into an Impact analysis. Staleness
+// is computed at match time from the anchor, never stored.
+enum ExecutionProvider {
+    GITHUB_ACTIONS
+    GITLAB_CI
+    GENERIC_WEBHOOK
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum TestRunExecutionStatus {
+    PENDING
+    DISPATCHED
+    RUNNING
+    SUCCEEDED
+    FAILED
+    DISPATCH_FAILED
+    TIMED_OUT
+    CANCELLED
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+// Where a project's automated cases can be told to run: a CI workflow or a signed webhook.
+model ExecutionTarget {
+    id               Int                @id @default(autoincrement())
+    projectId        Int
+    project          Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name             String             @length(1, 100)
+    provider         ExecutionProvider
+    codeRepositoryId Int?
+    codeRepository   CodeRepository?    @relation(fields: [codeRepositoryId], references: [id])
+    workflowRef      String?            // GitHub workflow file name or id
+    defaultRef       String?            // null = repository default branch
+    url              String?            // GENERIC_WEBHOOK only
+    staticInputs     Json               @default("{}")
+    paramSchema      Json               @default("[]") // ExecutionParam[]: values the dispatcher picks at execute time
+    credentials      Json?              // optional override, {encrypted}; null = reuse codeRepository.credentials
+    timeoutMinutes   Int                @default(120)
+    isEnabled        Boolean            @default(true)
+    lastVerifiedAt   DateTime?          @db.Timestamptz(6)
+    lastVerifyError  String?
+    isDeleted        Boolean            @default(false)
+    deletedAt        DateTime?          @db.Timestamptz(6)
+    createdById      String
+    createdBy        User               @relation("ExecutionTargetCreatedBy", fields: [createdById], references: [id])
+    createdAt        DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime           @updatedAt
+    executions       TestRunExecution[]
+
+    @@index([projectId, isDeleted])
+    @@index([codeRepositoryId])
+    @@deny('all', auth() == null)
+    // Carries an encrypted credential: admins only through the RPC; members see
+    // a sanitized list via app/actions/execution-targets.ts, which also owns writes.
+    @@allow('read', auth().access == 'ADMIN')
+    @@deny('create, update, delete', true)
+}
+
+// One dispatch of a run's automated cases to a target. Immutable history; cascades with the run.
+model TestRunExecution {
+    id                Int                    @id @default(autoincrement())
+    testRunId         Int
+    testRun           TestRuns               @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    projectId         Int
+    project           Projects               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    targetId          Int
+    target            ExecutionTarget        @relation(fields: [targetId], references: [id])
+    provider          ExecutionProvider
+    status            TestRunExecutionStatus @default(PENDING)
+    requestedById     String
+    requestedBy       User                   @relation("TestRunExecutionRequestedBy", fields: [requestedById], references: [id])
+    ref               String?
+    inputs            Json                   @default("{}")
+    selectionCount    Int                    @default(0)
+    requestedCaseIds  Json                   @default("[]") // case ids; empty = every automated case in the run
+    adHoc             Boolean                @default(false) // one-case run from "Run automated test"; completes itself
+    externalRunId     String?
+    externalUrl       String?
+    externalStatus    String?
+    error             String?
+    pollCount         Int                    @default(0)
+    dispatchedAt      DateTime?              @db.Timestamptz(6)
+    lastPolledAt      DateTime?              @db.Timestamptz(6)
+    resultsReceivedAt DateTime?              @db.Timestamptz(6)
+    completedAt       DateTime?              @db.Timestamptz(6)
+    createdAt         DateTime               @default(now()) @db.Timestamptz(6)
+    updatedAt         DateTime               @updatedAt
+
+    @@index([testRunId, status])
+    @@index([status, lastPolledAt])
+    @@index([projectId, createdAt])
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('read', auth().access == 'ADMIN')
+    // Written by the execute routes and the dispatch worker on the raw client.
+    @@deny('create, update, delete', true)
+}
+
+model RepositoryCaseCodePin {
+    id               Int                         @id @default(autoincrement())
+    caseId           Int
+    case             RepositoryCases             @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    configId         Int
+    config           ProjectCodeRepositoryConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+    kind             CodePinKind
+    filePath         String                      // repo-relative path, or a glob pattern for GLOB pins
+    startLine        Int?
+    endLine          Int?
+    symbol           String?
+    anchorSha        String?
+    anchorSnippet    String?                     // pinned lines at anchorSha; drives re-anchoring
+    anchorHash       String?
+    source           CodePinSource               @default(MANUAL)
+    note             String?
+    staleDismissedAt DateTime?                   @db.Timestamptz(6)
+    staleCheckedAt   DateTime?                   @db.Timestamptz(6) // last project-wide stale check that evaluated this pin
+    staleReason      String?                     // set by that check when the pin could not be found at the branch tip
+    isDeleted        Boolean                     @default(false)
+    deletedAt        DateTime?                   @db.Timestamptz(6)
+    createdAt        DateTime                    @default(now()) @db.Timestamptz(6)
+    createdById      String                      @deny('update', true)
+    createdBy        User                        @relation("UserCreatedCodePins", fields: [createdById], references: [id])
+
+    @@index([caseId, isDeleted])
+    @@index([configId, filePath])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@allow('read',
+        case.projectId in auth().accessibleProjectIds
     )
+
+    @@allow('create,update,delete',
+        case.project.creator.id == auth().id ||
+        case.projectId in auth().adminProjectIds ||
+        case.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        case.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                      auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        case.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        case.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                       ((accessType == 'SPECIFIC_ROLE' &&
+                                         role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                        (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))] ||
+        (case.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (case.project.assignedUsers?[user.id == auth().id] &&
+         case.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         case.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (case.project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         case.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+enum ImpactAnalysisStatus {
+    PENDING
+    RUNNING
+    COMPLETED
+    FAILED
+    CANCELLED
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+// One Impact analysis = one base..head comparison for a project. diffSummary
+// holds per-file hunk ranges only (never patch text); result holds the
+// engine's summary, stale pins, uncovered files, warnings and stats.
+model ImpactAnalysis {
+    id                Int                         @id @default(autoincrement())
+    projectId         Int                         @deny('update', true)
+    project           Projects                    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    configId          Int
+    config            ProjectCodeRepositoryConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+    baseSha           String                      @deny('update', true)
+    headSha           String                      @deny('update', true)
+    baseRef           String?
+    headRef           String?
+    // Hash of the connection's excluded paths at creation; a later analysis
+    // of the same pair is only reused while the settings still match.
+    settingsHash      String?
+    status            ImpactAnalysisStatus        @default(PENDING)
+    error             String?
+    jobId             String?
+    notes             String?
+    diffSummary       Json?
+    changedPaths      String[]                    @default([])
+    changedDirs       String[]                    @default([])
+    fileCount         Int                         @default(0)
+    additions         Int                         @default(0)
+    deletions         Int                         @default(0)
+    truncated         Boolean                     @default(false)
+    pinnedCaseCount   Int                         @default(0)
+    affectedCaseCount Int                         @default(0)
+    result            Json?
+    // Set when a repository webhook started the analysis: what arrived and
+    // where it came from, for the run and the deliveries ledger.
+    trigger           String?                     // "pull_request" | "push"; null when started by hand
+    triggerLabel      String?                     // "PR #12: Fix checkout" / "main abc1234…def5678"
+    triggerUrl        String?
+    testRunId         Int?
+    testRun           TestRuns?                   @relation(fields: [testRunId], references: [id], onDelete: SetNull)
+    cases             ImpactAnalysisCase[]
+    createdById       String                      @deny('update', true)
+    createdBy         User                        @relation("ImpactAnalysisCreatedBy", fields: [createdById], references: [id])
+    completedAt       DateTime?                   @db.Timestamptz(6)
+    isDeleted         Boolean                     @default(false)
+    deletedAt         DateTime?                   @db.Timestamptz(6)
+    createdAt         DateTime                    @default(now()) @db.Timestamptz(6)
+    updatedAt         DateTime                    @updatedAt
+
+    @@index([projectId, createdAt])
+    @@index([projectId, isDeleted])
+    @@index([configId, baseSha, headSha])
+    @@index([testRunId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@allow('read', projectId in auth().accessibleProjectIds)
+
+    // Same gate as creating a test run: the analysis exists to compose one.
+    @@allow('create',
+        project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
+    )
+
+    @@allow('update,delete',
+        auth().id == createdById ||
+        project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]] ||
+        project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// One affected (or manually added) case per analysis, with the layers and
+// reasons that put it there and the reviewer's accept/reject decision.
+model ImpactAnalysisCase {
+    id            Int             @id @default(autoincrement())
+    analysisId    Int
+    analysis      ImpactAnalysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+    caseId        Int
+    case          RepositoryCases @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    score         Float
+    tier          String          // pinned | affected | related
+    layers        String[]        @default([])
+    reasons       Json?
+    coveredFiles  String[]        @default([])
+    suggested     Boolean         @default(true)
+    accepted      Boolean?
+    addedManually Boolean         @default(false)
+    reviewedAt    DateTime?       @db.Timestamptz(6)
+    reviewedById  String?
+    reviewedBy    User?           @relation("ImpactAnalysisCaseReviewedBy", fields: [reviewedById], references: [id])
+
+    @@unique([analysisId, caseId])
+    @@index([caseId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@allow('read', analysis.projectId in auth().accessibleProjectIds)
+
+    @@allow('create,update,delete',
+        analysis.project.creator.id == auth().id ||
+        analysis.projectId in auth().adminProjectIds ||
+        analysis.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        analysis.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        analysis.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                           accessType == 'SPECIFIC_ROLE' &&
+                                           role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        (analysis.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (analysis.project.assignedUsers?[user.id == auth().id] &&
+         analysis.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         analysis.project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (analysis.project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         analysis.project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
 }
 
 // ============================================
@@ -3643,6 +4369,7 @@ model ProjectLlmIntegration {
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
+    @@allow('all', projectId in auth().adminProjectIds)
 }
 
 model UserIntegrationAuth {
@@ -3678,6 +4405,7 @@ enum ApplicationArea {
     ClosedTestRuns
     TestRunResults
     TestRunResultRestrictedFields
+    AutomatedExecution
     Sessions
     SessionsRestrictedFields
     ClosedSessions
@@ -3685,8 +4413,6 @@ enum ApplicationArea {
     Tags
     SharedSteps
     Issues
-    IssueIntegration
-    Forecasting
     Reporting
     Settings
 
@@ -3748,8 +4474,8 @@ model UserProjectPermission {
     // Project admins can manage permissions
     @@allow('all', project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'])
 
-    // Users with explicit project admin role can manage permissions
-    @@allow('all', project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+    // Project admins can manage permissions
+    @@allow('all', projectId in auth().adminProjectIds)
 
     // Users can read their own permissions
     @@allow('read', user.id == auth().id)
@@ -3762,13 +4488,18 @@ model UserProjectPermission {
 }
 
 model GroupProjectPermission {
-    groupId    Int
-    group      Groups            @relation(fields: [groupId], references: [id], onDelete: Cascade)
-    projectId  Int
-    project    Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    accessType ProjectAccessType @default(DEFAULT)
-    roleId     Int?
-    role       Roles?            @relation("GroupProjectRole", fields: [roleId], references: [id], onDelete: SetNull)
+    groupId            Int
+    group              Groups            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    projectId          Int
+    project            Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    accessType         ProjectAccessType @default(DEFAULT)
+    roleId             Int?
+    role               Roles?            @relation("GroupProjectRole", fields: [roleId], references: [id], onDelete: SetNull)
+    // True when this row was materialized from a GroupProjectAccessMapping
+    // rather than assigned by hand in the project's permission UI. The
+    // materializer only ever deletes rows it owns, so a manual grant is never
+    // removed by a mapping change.
+    derivedFromMapping Boolean           @default(false)
 
     @@id([groupId, projectId])
 
@@ -3784,8 +4515,8 @@ model GroupProjectPermission {
     // Project admins can manage permissions
     @@allow('all', project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'])
 
-    // Users with explicit project admin role can manage permissions
-    @@allow('all', project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+    // Project admins can manage permissions
+    @@allow('all', projectId in auth().adminProjectIds)
 
     // Group members can read their group's permissions
     @@allow('read', group.assignedUsers?[user.id == auth().id])
@@ -3837,6 +4568,7 @@ model JUnitTestSuite {
     )
     @@allow('create,update', auth().id == createdById)
     @@allow('all', auth().access == 'PROJECTADMIN' || auth().access == 'ADMIN')
+    @@allow('all', testRun.projectId in auth().adminProjectIds)
 }
 
 model JUnitTestResult {
@@ -3866,6 +4598,7 @@ model JUnitTestResult {
     @@index([testSuiteId])
     @@index([repositoryCaseId])
     @@index([repositoryCaseId, executedAt(sort: Desc)]) // Optimize "latest result per case" queries
+    @@index([createdById])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -4059,9 +4792,9 @@ model SharedStepGroup {
     // Create/update/delete access based on shared steps permissions
     @@allow('create,update,delete',
         project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+                                 role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'SPECIFIC_ROLE' &&
@@ -4109,9 +4842,9 @@ model SharedStepItem {
     // Create/update/delete access based on shared steps permissions
     @@allow('create,update,delete',
         sharedStepGroup.project.creator.id == auth().id ||
+        sharedStepGroup.projectId in auth().adminProjectIds ||
         sharedStepGroup.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                                 (role.name == 'Project Admin' ||
-                                                  role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+                                                  role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]] ||
         sharedStepGroup.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         sharedStepGroup.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                                   accessType == 'SPECIFIC_ROLE' &&
@@ -4178,9 +4911,9 @@ model DataSet {
     // Create/update/delete access based on shared steps permissions
     @@allow('create,update,delete',
         project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+                                 role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'SPECIFIC_ROLE' &&
@@ -4242,9 +4975,9 @@ model DataSetRow {
     // Create/update/delete access based on shared steps permissions
     @@allow('create,update,delete',
         dataSet.project.creator.id == auth().id ||
+        dataSet.projectId in auth().adminProjectIds ||
         dataSet.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                         (role.name == 'Project Admin' ||
-                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]] ||
         dataSet.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         dataSet.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                           accessType == 'SPECIFIC_ROLE' &&
@@ -4301,9 +5034,9 @@ model DataSetVersion {
     // Create/update/delete access based on shared steps permissions (mirrors DataSet).
     @@allow('create,update,delete',
         dataSet.project.creator.id == auth().id ||
+        dataSet.projectId in auth().adminProjectIds ||
         dataSet.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                         (role.name == 'Project Admin' ||
-                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]] ||
         dataSet.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         dataSet.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                           accessType == 'SPECIFIC_ROLE' &&
@@ -4368,9 +5101,9 @@ model CaseSharedDataSetAssignment {
     @@allow('create,update,delete',
         case.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        case.projectId in auth().adminProjectIds ||
         case.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                      (role.name == 'Project Admin' ||
-                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         case.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                       auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
@@ -4462,6 +5195,12 @@ model ReviewRequest {
     entityType        ReviewEntityType
     entityId          Int
 
+    // Who asked, who may decide and what is under review are all fixed once
+    // the request exists. The decision itself is written by the decide service
+    // and the cancel action through the raw client, which hold the real
+    // eligibility gates, so nothing legitimate needs these on the policy path.
+    // Writable, they let a requester make themselves the assignee, retarget an
+    // approval at another entity or transition, or record a decision outright.
     requestedByUserId String           @deny('update', auth().access != 'ADMIN')
     requestedBy       User             @relation("ReviewRequestedBy", fields: [requestedByUserId], references: [id])
 
@@ -4605,6 +5344,7 @@ enum ShareLinkEntityType {
     DASHBOARD
     SEARCH
     REPOSITORY_VIEW
+    SAVED_REPORT
 
     @@deny('all', auth() == null)
     @@allow('read', true)
@@ -4614,14 +5354,15 @@ model ShareLink {
     id           String               @id @default(cuid())
     shareKey     String               @unique @length(32, 64)
 
-    // Polymorphic entity reference
-    // A link's target is fixed at creation: `create` requires the project be
-    // accessible, `update` is keyed on the creator alone, so a writable target
-    // let a creator repoint a link at a project they cannot access. For the
-    // config-driven types entityConfig IS the target and carries its own
-    // projectId. Point a new link instead.
+    // Polymorphic entity reference. A link's target is fixed at creation:
+    // `create` requires the project be accessible, `update` is keyed on the
+    // creator alone, so a writable target let a creator repoint a link at a
+    // project they cannot access. Point a new link instead.
     entityType   ShareLinkEntityType  @deny('update', true)
     entityId     String?              @deny('update', true) // For direct entities (test cases, runs, etc.)
+    // For the config-driven types (REPORT, SEARCH, REPOSITORY_VIEW,
+    // SAVED_REPORT) this blob IS the target, and it carries its own projectId,
+    // so it is fixed at creation too. Every writer sets it on create only.
     entityConfig Json?                @deny('update', true) // For reports (dimensions, metrics, dates)
 
     // Ownership
@@ -4649,6 +5390,7 @@ model ShareLink {
 
     // Relations
     accessLogs   ShareLinkAccessLog[]
+    snapshot     ReportSnapshot?
 
     @@index([shareKey])
     @@index([projectId, createdById])
@@ -4666,9 +5408,10 @@ model ShareLink {
 
     // Project-scoped shares
     @@allow('all', projectId != null && project.creator.id == auth().id)
+    @@allow('all', projectId != null && projectId in auth().adminProjectIds)
     @@allow('read,update,delete', createdBy.id == auth().id)
     @@allow('create',
-        projectId != null && (
+        createdById == auth().id && projectId != null && projectId in auth().accessibleProjectIds && (
             project.creator.id == auth().id ||
             project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
             project.assignedUsers?[user.id == auth().id] ||
@@ -4676,7 +5419,7 @@ model ShareLink {
         )
     )
     @@allow('read',
-        projectId != null && (
+        projectId != null && projectId in auth().accessibleProjectIds && (
             project.creator.id == auth().id ||
             project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
             project.assignedUsers?[user.id == auth().id]
@@ -4685,7 +5428,87 @@ model ShareLink {
     @@allow('read', projectId == null && createdBy.id == auth().id)
 
     // Cross-project shares (projectId == null) - only creator or admin can manage
-    @@allow('create', projectId == null && auth().access != 'NONE')
+    @@allow('create', createdById == auth().id && projectId == null && auth().access != 'NONE')
+}
+
+enum ImportMappingWizard {
+    TEST_CASES
+    SHARED_STEPS
+    DATASET
+
+    @@deny('all', auth() == null)
+    @@allow('read', true)
+}
+
+/// A named CSV import column mapping, private to its creator unless shared. A
+/// shared test-case mapping is readable in every project that uses its
+/// template; other shared mappings are readable by everyone. Shape of config:
+/// lib/schemas/savedImportMapping.ts.
+model ImportMapping {
+    id          String              @id @default(cuid())
+    name        String              @length(1, 120)
+    description String?             @length(0, 500)
+    wizard      ImportMappingWizard
+    config      Json
+    templateId  Int?
+    template    Templates?          @relation(fields: [templateId], references: [id], onDelete: SetNull)
+    isShared    Boolean             @default(false)
+    createdById String              @deny('update', true)
+    createdBy   User                @relation("ImportMappingCreator", fields: [createdById], references: [id], onDelete: Cascade)
+    isDeleted   Boolean             @default(false)
+    deletedAt   DateTime?           @db.Timestamptz(6)
+    createdAt   DateTime            @default(now()) @db.Timestamptz(6)
+    updatedAt   DateTime            @updatedAt
+
+    @@index([createdById, wizard, isDeleted])
+    @@index([wizard, isShared, isDeleted])
+
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+
+    @@allow('read,update,delete', createdById == auth().id)
+
+    @@allow('read',
+        isShared && (
+            templateId == null ||
+            template.projects?[projectId in auth().accessibleProjectIds]
+        )
+    )
+
+    @@allow('create', createdById == auth().id && auth().access != 'NONE')
+}
+
+/// The frozen result of a REPORT or SAVED_REPORT link: the viewer payload the
+/// report produced at capture, served in place of a live run. One per link and
+/// never updated, so a frozen link always shows the same numbers. Written only
+/// by the capture route through the raw client.
+model ReportSnapshot {
+    id            String    @id @default(cuid())
+    shareLinkId   String    @unique
+    shareLink     ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+    payload       Json
+    /// Rows kept in the payload, and rows the report produced before the cap.
+    rowCount      Int
+    totalRowCount Int
+    truncated     Boolean   @default(false)
+    capturedById  String
+    capturedBy    User      @relation("ReportSnapshotCapturedBy", fields: [capturedById], references: [id], onDelete: Cascade)
+    capturedAt    DateTime  @default(now()) @db.Timestamptz(6)
+
+    @@index([capturedById])
+
+    @@deny('all', auth() == null)
+    @@deny('read', shareLink.isDeleted)
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('read', shareLink.createdBy.id == auth().id)
+    // Same audience as the link row itself (ShareLink read rules).
+    @@allow('read',
+        shareLink.projectId != null && (
+            shareLink.project.creator.id == auth().id ||
+            shareLink.project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
+            shareLink.project.assignedUsers?[user.id == auth().id]
+        )
+    )
 }
 
 model ShareLinkAccessLog {
@@ -4758,7 +5581,7 @@ model ProjectIntegration {
     project             Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
     integrationId       Int
     integration         Integration          @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-    config              Json?               // Project-specific integration configuration
+    config              Json?               // Project-specific integration configuration: namespaces milestoneSync, requirements
     fieldMappings       Json?               // Custom field mappings for this project
     isActive            Boolean              @default(true)
     lastSyncAt          DateTime?            @db.Timestamptz(6)
@@ -4789,9 +5612,9 @@ model ProjectIntegration {
     @@allow('create,update',
         project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Settings' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'Settings' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'Settings' && canAddEdit]] ||
@@ -4820,9 +5643,9 @@ model ProjectIntegration {
     @@allow('delete',
         project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Settings' && canDelete])] ||
+                                 role.rolePermissions?[area == 'Settings' && canDelete]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'Settings' && canDelete]] ||
@@ -4886,9 +5709,9 @@ model IntegrationProject {
     @@allow('create,update',
         projectIntegration.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectIntegration.projectId in auth().adminProjectIds ||
         projectIntegration.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Settings' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'Settings' && canAddEdit]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         projectIntegration.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'Settings' && canAddEdit]] ||
@@ -4917,9 +5740,9 @@ model IntegrationProject {
     @@allow('delete',
         projectIntegration.project.creator.id == auth().id ||
     // User with SPECIFIC_ROLE access type
+        projectIntegration.projectId in auth().adminProjectIds ||
         projectIntegration.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Settings' && canDelete])] ||
+                                 role.rolePermissions?[area == 'Settings' && canDelete]] ||
     // User with GLOBAL_ROLE access type (use their global role)
         projectIntegration.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'Settings' && canDelete]] ||
@@ -4948,25 +5771,44 @@ model IntegrationProject {
 }
 
 model WebhookConfig {
-    id                      String                @id @default(cuid())
+    id                      String                       @id @default(cuid())
     projectId               Int
-    project                 Projects              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    project                 Projects                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
     adapterType             AdapterType
     direction               WebhookDirection
-    token                   String                @unique
+    token                   String                       @unique
     secret                  String
-    isActive                Boolean               @default(true)
-    subscribedEvents        String[]              @default([])
-    endpointHealth          EndpointHealth        @default(HEALTHY)
+    isActive                Boolean                      @default(true)
+    subscribedEvents        String[]                     @default([])
+    // Set on an inbound webhook that a code repository sends to: its pull
+    // request and push events start Impact analyses for that connection.
+    codeRepositoryConfigId  Int?
+    codeRepositoryConfig    ProjectCodeRepositoryConfig? @relation(fields: [codeRepositoryConfigId], references: [id], onDelete: Cascade)
+    // Branch a repository webhook compares pushes against; empty = the
+    // connection's branch.
+    baseBranch              String?
+    // Repository webhook only: request automated execution of the run each
+    // analysis composes, on this target with this ref and these parameter
+    // inputs (empty ref = the target's default). Kept when the target is
+    // deleted or disabled later; the request is then skipped and the
+    // delivery says so.
+    autoExecuteEnabled      Boolean                      @default(false)
+    autoExecuteTargetId     Int?
+    autoExecuteRef          String?
+    autoExecuteInputs       Json                         @default("{}")
+    // Repository webhook only: the composed run takes every case scoring at
+    // least this (0-100); empty = the pinned and affected tiers.
+    autoRunMinScore         Int?
+    endpointHealth          EndpointHealth               @default(HEALTHY)
     url                     String?
     name                    String?
-    lastReceivedAt          DateTime?             @db.Timestamptz(6)
-    lastDispatchedAt        DateTime?             @db.Timestamptz(6)
-    lastSuccessAt           DateTime?             @db.Timestamptz(6)
-    lastFailureAt           DateTime?             @db.Timestamptz(6)
-    consecutiveFailureCount Int                   @default(0)
-    createdAt               DateTime              @default(now()) @db.Timestamptz(6)
-    updatedAt               DateTime              @updatedAt
+    lastReceivedAt          DateTime?                    @db.Timestamptz(6)
+    lastDispatchedAt        DateTime?                    @db.Timestamptz(6)
+    lastSuccessAt           DateTime?                    @db.Timestamptz(6)
+    lastFailureAt           DateTime?                    @db.Timestamptz(6)
+    consecutiveFailureCount Int                          @default(0)
+    createdAt               DateTime                     @default(now()) @db.Timestamptz(6)
+    updatedAt               DateTime                     @updatedAt
     deliveries              WebhookDelivery[]
     eventDedups             WebhookEventDedup[]
     secrets                 WebhookConfigSecret[]
@@ -4974,13 +5816,14 @@ model WebhookConfig {
     @@index([projectId, adapterType, direction])
     @@index([projectId])
     @@index([token])
+    @@index([codeRepositoryConfigId])
 
     @@deny('all', auth() == null)
 
     @@deny('read', project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
     @@allow('read',
         project.creator.id == auth().id ||
-        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        projectId in auth().adminProjectIds ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
     )
     @@allow('read', auth().access == 'ADMIN')
@@ -5019,7 +5862,7 @@ model WebhookDelivery {
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
         webhookConfig.project.creator.id == auth().id ||
-        webhookConfig.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        webhookConfig.projectId in auth().adminProjectIds ||
         webhookConfig.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
     )
 }
@@ -5039,7 +5882,7 @@ model WebhookEventDedup {
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
         webhookConfig.project.creator.id == auth().id ||
-        webhookConfig.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        webhookConfig.projectId in auth().adminProjectIds ||
         webhookConfig.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
     )
 }
@@ -5062,7 +5905,7 @@ model WebhookConfigSecret {
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
         webhookConfig.project.creator.id == auth().id ||
-        webhookConfig.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        webhookConfig.projectId in auth().adminProjectIds ||
         webhookConfig.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
     )
 }
@@ -5087,7 +5930,7 @@ model WebhookOutboxEvent {
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
         project.creator.id == auth().id ||
-        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        projectId in auth().adminProjectIds ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
     )
 }
@@ -5295,6 +6138,7 @@ model LlmFeatureConfig {
     @@deny('all', auth() == null)
     @@allow('read', project.assignedUsers?[user.id == auth().id])
     @@allow('create,update,delete', project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'])
+    @@allow('create,update,delete', projectId in auth().adminProjectIds)
     @@allow('all', auth().access == 'ADMIN')
 }
 
@@ -5425,9 +6269,9 @@ model LlmReportSnapshot {
     // Create/update gated on Reporting.canAddEdit (server flips status/output on completion)
     @@allow('create,update',
         project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Reporting' && canAddEdit])] ||
+                                 role.rolePermissions?[area == 'Reporting' && canAddEdit]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   ((accessType == 'SPECIFIC_ROLE' &&
@@ -5449,9 +6293,9 @@ model LlmReportSnapshot {
     // Delete gated on Reporting.canDelete (used as soft-delete via update isDeleted=true)
     @@allow('delete',
         project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                (role.name == 'Project Admin' ||
-                                 role.rolePermissions?[area == 'Reporting' && canDelete])] ||
+                                 role.rolePermissions?[area == 'Reporting' && canDelete]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   ((accessType == 'SPECIFIC_ROLE' &&
@@ -5471,6 +6315,133 @@ model LlmReportSnapshot {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+}
+
+/// Point-in-time record of a project's requirement traceability matrix —
+/// audit evidence of which test cases covered which requirements, with
+/// what latest result, at the moment of capture. The capture is immutable:
+/// only name/note and soft-deletion change afterwards. The per-requirement
+/// rows live in RequirementTraceabilitySnapshotEntry.
+model RequirementTraceabilitySnapshot {
+    id                  Int                                    @id @default(autoincrement())
+    projectId           Int                                    @deny('update', true)
+    project             Projects                               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name                String                                 @length(1, 200)
+    note                String?
+    capturedById        String                                 @deny('update', true)
+    capturedBy          User                                   @relation("RequirementTraceabilitySnapshotCapturedBy", fields: [capturedById], references: [id])
+    capturedAt          DateTime                               @default(now()) @db.Timestamptz(6) @deny('update', true)
+    /// Requirement root ids (number[]) the capture was scoped to; empty = the whole project.
+    scopeRequirementIds Json                                   @default("[]") @deny('update', true)
+    /// Milestone ids (number[]) the capture's execution scope counted; empty = axis inactive.
+    scopeMilestoneIds   Json                                   @default("[]") @deny('update', true)
+    /// Configuration ids (number[]) the capture's execution scope counted; empty = axis inactive.
+    scopeConfigIds      Json                                   @default("[]") @deny('update', true)
+    requirementCount    Int                                    @deny('update', true)
+    passedCount         Int                                    @deny('update', true)
+    failedCount         Int                                    @deny('update', true)
+    notRunCount         Int                                    @deny('update', true)
+    uncoveredCount      Int                                    @deny('update', true)
+    /// Requirement–case pairs in the matrix (a gap row counts zero).
+    caseLinkCount       Int                                    @deny('update', true)
+    entries             RequirementTraceabilitySnapshotEntry[]
+    isDeleted           Boolean                                @default(false)
+    deletedAt           DateTime?                              @db.Timestamptz(6)
+    createdAt           DateTime                               @default(now()) @db.Timestamptz(6)
+    updatedAt           DateTime                               @updatedAt
+
+    @@index([projectId, capturedAt])
+    @@index([projectId, isDeleted])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@deny('read', isDeleted)
+
+    @@allow('read', projectId in auth().accessibleProjectIds)
+
+    // Capture (create) and rename/soft-delete (update) gated on Reporting.canAddEdit,
+    // the same ladder LlmReportSnapshot uses.
+    @@allow('create,update',
+        project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'Reporting' && canAddEdit]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Reporting' && canAddEdit]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Reporting' && canAddEdit]))] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'Reporting' && canAddEdit]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'Reporting' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'Reporting' && canAddEdit])
+    )
+
+    @@allow('delete',
+        project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'Reporting' && canDelete]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Reporting' && canDelete]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Reporting' && canDelete]))] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'Reporting' && canDelete]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'Reporting' && canDelete]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'Reporting' && canDelete])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+/// One requirement's row in a traceability snapshot: its identity and tree
+/// position as they were, its classified coverage state, and the covering
+/// cases with their latest results at capture time (`cases` holds
+/// RequirementTraceabilitySnapshotCase[]). No FK to Issue on purpose — the
+/// record must outlive the requirement it describes. Written only by the
+/// capture service through the raw client; read-only through the policy
+/// client.
+model RequirementTraceabilitySnapshotEntry {
+    id                          Int                             @id @default(autoincrement())
+    snapshotId                  Int
+    snapshot                    RequirementTraceabilitySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+    requirementId               Int
+    requirementKey              String
+    requirementTitle            String?
+    requirementPath             String
+    requirementParentPath       String
+    requirementParentId         Int?
+    requirementRootId           Int
+    requirementIssueTypeName    String?
+    requirementIssueTypeIconUrl String?
+    requirementPriority         String?
+    requirementStatus           String?
+    requirementCreatedAt        DateTime?                       @db.Timestamptz(6)
+    /// Issue.currentVersion at capture — which text revision this baseline saw.
+    requirementVersion          Int?
+    coverageStatus              String
+    linkedCaseCount             Int
+    cases                       Json
+
+    @@index([snapshotId])
+    @@index([requirementId, snapshotId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@deny('read', snapshot.isDeleted)
+    @@allow('read', snapshot.projectId in auth().accessibleProjectIds)
+    @@allow('read', auth().access == 'ADMIN')
 }
 
 // Custom SSO provider configuration
@@ -5873,6 +6844,11 @@ enum AuditAction {
     REVIEW_REJECTED
     REVIEW_CANCELLED
     REVIEW_REMINDED
+    // Automated execution dispatch
+    EXECUTION_REQUESTED
+    EXECUTION_DISPATCHED
+    EXECUTION_COMPLETED
+    EXECUTION_CANCELLED
 }
 
 model AuditLog {
@@ -5920,6 +6896,7 @@ model AuditLog {
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read', auth().id == userId)
     @@allow('read', project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'])
+    @@allow('read', projectId != null && projectId in auth().adminProjectIds)
     @@allow('read',
         (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions' || entityType == 'Milestones') && (
             project.creator.id == auth().id ||

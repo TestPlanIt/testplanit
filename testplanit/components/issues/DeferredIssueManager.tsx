@@ -20,6 +20,15 @@ interface DeferredIssueManagerProps {
   linkedIssueIds?: number[]; // The actual Issue IDs to display
   maxBadgeWidth?: string; // Tailwind max-width class for issue badges (e.g., "max-w-xs", "max-w-full")
   /**
+   * Overrides the trigger button's copy. `label` (above) is the section
+   * heading rendered ABOVE the badge list; this is the `<Button>` itself.
+   * Its default copy is provider-specific ("Link Jira Issue"), which no
+   * longer fits a picker that also accepts internal issues -- callers on a
+   * neutral surface (e.g. the requirement References picker) pass their own.
+   * Every other consumer omits this and keeps the provider-specific default.
+   */
+  triggerLabel?: string;
+  /**
    * INT-05: when set, the underlying SearchIssuesDialog prefills the
    * Create New Issue form with title + description from the iteration
    * body builder. Threaded through unchanged.
@@ -32,8 +41,12 @@ interface DeferredIssueManagerProps {
 }
 
 /**
- * DeferredIssueManager - Creates Issue records but marks them for cleanup on cancel
- * This provides immediate UI feedback while allowing cancellation without permanent changes.
+ * DeferredIssueManager - Links Issue records to an entity that doesn't have
+ * an id yet (an unsaved test case, run, session, etc.). An externally picked
+ * issue is upserted into a real Issue shell immediately; an internal pick is
+ * simply tracked, since it already refers to an existing Issue row. Either
+ * way, an Issue shell created here survives even if the surrounding form is
+ * later cancelled -- nothing in this component removes it.
  */
 export function DeferredIssueManager({
   projectId,
@@ -44,6 +57,7 @@ export function DeferredIssueManager({
   linkedIssueIds = [],
   maxBadgeWidth = "max-w-xl",
   iterationContext,
+  triggerLabel,
 }: DeferredIssueManagerProps) {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -107,7 +121,22 @@ export function DeferredIssueManager({
   };
 
   const handleAddIssue = async (issue: any) => {
-    if (!issue.isExternal || !session?.user?.id) return;
+    // Internal pick: `issue.id` is already a real Issue primary key (not a
+    // tracker key), so there's nothing to upsert -- just register it in the
+    // tracked array. Skip silently on a repeat pick rather than duplicating
+    // the id or re-toasting.
+    if (!issue.isExternal) {
+      if (linkedIssueIds.includes(issue.id)) {
+        return;
+      }
+      const updatedIds = [...linkedIssueIds, issue.id];
+      onIssuesChange(updatedIds);
+      void refetch(); // Refresh the display
+      toast.success(t("common.errors.issueManagement.linkedSuccess"));
+      return;
+    }
+
+    if (!session?.user?.id) return;
 
     // console.log("DeferredIssueManager: Creating issue:", {
     //   key: issue.key,
@@ -175,7 +204,7 @@ export function DeferredIssueManager({
         const updatedIds = [...linkedIssueIds, newIssue.id];
         onIssuesChange(updatedIds);
         void refetch(); // Refresh the display
-        toast.success(`Issue ${issue.key} linked successfully`);
+        toast.success(t("common.errors.issueManagement.linkedSuccess"));
       }
     } catch (error: any) {
       console.error("DeferredIssueManager: Error upserting issue:", error);
@@ -238,11 +267,12 @@ export function DeferredIssueManager({
         disabled={disabled}
       >
         <Plus className="h-4 w-4" />
-        {t("issues.linkExternalIssue", {
-          provider: formatProviderName(
-            activeIntegration?.integration?.provider || "Issue"
-          ),
-        })}
+        {triggerLabel ??
+          t("issues.linkExternalIssue", {
+            provider: formatProviderName(
+              activeIntegration?.integration?.provider || "Issue"
+            ),
+          })}
       </Button>
 
       <SearchIssuesDialog

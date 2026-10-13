@@ -63,6 +63,14 @@ interface RoleWithPermissions {
 export interface EffectiveProjectAccess {
   isSystemAdmin: boolean;
   isSystemProjectAdmin: boolean;
+  /**
+   * Project-admin authority on this project — the server-side twin of the
+   * policies' `projectId in auth().adminProjectIds` (lib/authContext.ts).
+   * True for a system ADMIN, the project's creator, a system PROJECTADMIN
+   * assigned to the project, or an effective role carrying Settings
+   * canAddEdit; the last three only when nothing denies the project.
+   */
+  isProjectAdmin: boolean;
   /** An explicit NO_ACCESS, from the user's own row or the project default. */
   accessDenied: boolean;
   effectiveRole: RoleWithPermissions | null;
@@ -78,7 +86,11 @@ export interface EffectiveProjectAccess {
 
 type AreaPermissionDb = Pick<
   typeof baseDb,
-  "user" | "projects" | "userProjectPermission" | "groupProjectPermission"
+  | "user"
+  | "projects"
+  | "userProjectPermission"
+  | "groupProjectPermission"
+  | "projectAssignment"
 >;
 
 /** Permission bits a role carries on one area; absent row ⇒ nothing. */
@@ -101,7 +113,7 @@ export async function resolveEffectiveProjectAccess(
   projectId: number,
   db: AreaPermissionDb = baseDb
 ): Promise<EffectiveProjectAccess> {
-  const [user, project, userProjectPermission] = await Promise.all([
+  const [user, project, userProjectPermission, assignment] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
       include: {
@@ -117,12 +129,17 @@ export async function resolveEffectiveProjectAccess(
       where: { userId_projectId: { userId, projectId } },
       include: { role: { include: { rolePermissions: true } } },
     }),
+    db.projectAssignment.findUnique({
+      where: { userId_projectId: { userId, projectId } },
+      select: { userId: true },
+    }),
   ]);
 
   if (!user || !project) {
     return {
       isSystemAdmin: false,
       isSystemProjectAdmin: false,
+      isProjectAdmin: false,
       accessDenied: false,
       effectiveRole: null,
       userAccessType: null,
@@ -203,9 +220,27 @@ export async function resolveEffectiveProjectAccess(
     }
   }
 
+  // Mirrors the policies: the creator and assigned-PROJECTADMIN clauses are
+  // outranked only by the user's own NO_ACCESS row (a project-wide NO_ACCESS
+  // default does not deny them), while the Settings-bit path needs an
+  // effective role, which any denial removes.
+  const deniedByOwnRow =
+    userProjectPermission?.accessType === ProjectAccessType.NO_ACCESS;
+  const isCreator =
+    (project as { createdBy?: string | null }).createdBy === userId;
+  const isProjectAdmin =
+    isSystemAdmin ||
+    (!deniedByOwnRow &&
+      (isCreator ||
+        (isSystemProjectAdmin && assignment !== null) ||
+        (!accessDenied &&
+          permissionsForArea(effectiveRole, ApplicationArea.Settings)
+            .canAddEdit)));
+
   return {
     isSystemAdmin,
     isSystemProjectAdmin,
+    isProjectAdmin,
     accessDenied,
     effectiveRole,
     userAccessType: userProjectPermission?.accessType ?? null,
@@ -221,8 +256,11 @@ export function areaPermissionsFrom(
   area: ApplicationArea
 ): AreaPermissions {
   if (!resolution.resolved) return NO_AREA_PERMISSIONS;
+  // Project admins hold every bit on every area, the same way the policies'
+  // adminProjectIds clause sits beside each area's own rule.
   if (
     resolution.isSystemAdmin ||
+    resolution.isProjectAdmin ||
     (resolution.isSystemProjectAdmin && !resolution.accessDenied)
   ) {
     return ALL_AREA_PERMISSIONS;
@@ -239,8 +277,22 @@ export function hasProjectAccess(resolution: EffectiveProjectAccess): boolean {
   return (
     resolution.isSystemAdmin ||
     resolution.isSystemProjectAdmin ||
+    resolution.isProjectAdmin ||
     (!resolution.accessDenied && resolution.effectiveRole !== null)
   );
+}
+
+/**
+ * Whether the user administers the project. One ladder walk; see
+ * `EffectiveProjectAccess.isProjectAdmin` for what qualifies.
+ */
+export async function isProjectAdminFor(
+  userId: string,
+  projectId: number,
+  db: AreaPermissionDb = baseDb
+): Promise<boolean> {
+  const resolution = await resolveEffectiveProjectAccess(userId, projectId, db);
+  return resolution.isProjectAdmin;
 }
 
 /**

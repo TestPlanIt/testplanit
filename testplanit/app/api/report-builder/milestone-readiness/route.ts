@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { NextRequest } from "next/server";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { resolveViewerProjectScope } from "~/lib/authContext";
@@ -121,8 +122,20 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { projectId, dimensions, metrics, startDate, endDate } =
-    await req.json();
+  let body: {
+    projectId?: unknown;
+    dimensions?: unknown;
+    metrics?: unknown;
+    startDate?: string | null;
+    endDate?: string | null;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const { projectId, dimensions, metrics } = body;
+  const { startDate, endDate } = resolveRequestDateRange(body);
   if (!projectId) {
     return Response.json({ error: "Missing projectId" }, { status: 400 });
   }

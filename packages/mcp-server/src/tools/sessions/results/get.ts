@@ -21,7 +21,7 @@ export function registerSessionResultsGet(
     "testplanit_session_results_get",
     {
       description:
-        "Fetch a single session result by id. Returns the result with denormalized status, createdBy (the executor — sessions don't have a separate executor field; per D7-13), session summary, attachments, linked issues, and customFields (resultFieldValues denormalized to a flat name-keyed dict per A3 — same shape as caseFieldValues for read). NOTE: no step-level results — sessions are exploratory and don't have ordered steps (per D7-13). resultData is surfaced as plain text (resultDataText) via ProseMirror extraction. (per SESS-04 / D7-13)",
+        "Fetch a single session result by id. Returns the result with denormalized status, createdBy (the executor — sessions don't have a separate executor field), session summary, attachments, linked issues, and customFields (resultFieldValues denormalized to a flat name-keyed dict — same shape as caseFieldValues for read). NOTE: no step-level results — sessions are exploratory and don't have ordered steps. resultData is surfaced as Markdown (resultDataText).",
       inputSchema: {
         // T-07-04 IDOR mitigation: positive integer only; non-int / non-positive
         // values rejected at the zod boundary before zenstack is called. Host's
@@ -33,9 +33,15 @@ export function registerSessionResultsGet(
       try {
         const raw = await zenstack<RawSessionResultDetail | null>(
           "sessionResults",
-          "findUnique",
+          "findFirst",
           {
-            where: { id: input.resultId },
+            // Deleted results, and results of a trashed session, read as not
+            // found.
+            where: {
+              id: input.resultId,
+              isDeleted: false,
+              session: { isDeleted: false },
+            },
             // SESSION_RESULT_DETAIL_INCLUDE (07-01) ships:
             //   - status / createdBy / session denormalized
             //   - attachments (isDeleted:false), issues (isDeleted:false)

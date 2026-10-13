@@ -37,6 +37,7 @@ vi.mock("~/lib/db", () => ({
   baseDb: {
     scimToken: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
   },
@@ -495,5 +496,69 @@ describe("requireScimBearer", () => {
 
     await new Promise(setImmediate);
     expect(baseDb.scimToken.updateMany).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("requireScimBearer — overlap-window rotation", () => {
+  it("R1: accepts the superseded bearer while its overlap window is open", async () => {
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(baseDb.scimToken.findFirst).mockResolvedValueOnce({
+      id: "tk_rotated",
+      systemUserId: "system-scim-user",
+      idpName: "OKTA",
+      isActive: true,
+      expiresAt: null,
+      revokedAt: null,
+      lastUsedAt: null,
+    } as never);
+
+    const ctx = await requireScimBearer(req("Bearer tps_old_but_in_window"));
+
+    // Same row, so the request keeps the rotated token's identity.
+    expect(ctx.tokenId).toBe("tk_rotated");
+    expect(ctx.idpName).toBe("OKTA");
+  });
+
+  it("R2: gates the fallback lookup on the window in SQL, not after the read", async () => {
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(baseDb.scimToken.findFirst).mockResolvedValueOnce(null as never);
+
+    await catchAuthError(req("Bearer tps_old_and_expired"));
+
+    const args = vi.mocked(baseDb.scimToken.findFirst).mock.calls[0][0] as {
+      where: {
+        previousToken: string;
+        previousTokenExpiresAt: { gt: Date };
+      };
+    };
+    expect(args.where.previousToken).toEqual(expect.any(String));
+    expect(args.where.previousTokenExpiresAt.gt).toBeInstanceOf(Date);
+  });
+
+  it("R3: an elapsed window rejects the superseded bearer", async () => {
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(baseDb.scimToken.findFirst).mockResolvedValueOnce(null as never);
+
+    const err = await catchAuthError(req("Bearer tps_old_and_expired"));
+
+    expect(err.response.status).toBe(401);
+    const body = await err.response.json();
+    expect(body.detail).toBe("Token rejected");
+  });
+
+  it("R4: the current bearer never triggers the rotation fallback lookup", async () => {
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
+      id: "tk_current",
+      systemUserId: "system-scim-user",
+      idpName: "ENTRA",
+      isActive: true,
+      expiresAt: null,
+      revokedAt: null,
+      lastUsedAt: null,
+    } as never);
+
+    await requireScimBearer(req("Bearer tps_current_token_value"));
+
+    expect(baseDb.scimToken.findFirst).not.toHaveBeenCalled();
   });
 });

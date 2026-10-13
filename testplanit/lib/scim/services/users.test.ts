@@ -19,6 +19,9 @@ vi.mock("~/lib/db", () => {
     appConfig: {
       findUnique: vi.fn(),
     },
+    scimToken: {
+      findUnique: vi.fn(),
+    },
   };
   return {
     baseDb: {
@@ -84,6 +87,7 @@ import {
   putScimUser,
 } from "./users";
 import { ScimPatchApplyError } from "../patch";
+import { ScimOwnershipError } from "../ownership";
 import { scimFilterToDbWhere } from "../filter";
 
 import type { ScimUserBody } from "../mapping/user";
@@ -100,13 +104,18 @@ interface TxLike {
   roles: { findFirst: ReturnType<typeof vi.fn> };
   account: { deleteMany: ReturnType<typeof vi.fn> };
   appConfig: { findUnique: ReturnType<typeof vi.fn> };
+  scimToken: { findUnique: ReturnType<typeof vi.fn> };
 }
 
 // Expose the internal tx mock object on baseDb during vi.mock setup so tests
 // can configure return values per-test.
 const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
 
-const CTX = { tokenId: "tok_test", systemUserId: SCIM_SYSTEM_USER_ID } as const;
+const CTX = {
+  tokenId: "tok_test",
+  systemUserId: SCIM_SYSTEM_USER_ID,
+  idpName: "OKTA",
+} as const;
 
 function makeUser(overrides: Record<string, unknown> = {}) {
   const now = new Date("2026-06-01T00:00:00Z");
@@ -119,6 +128,7 @@ function makeUser(overrides: Record<string, unknown> = {}) {
     scimGivenName: "Alice",
     scimFamilyName: "Example",
     scimExtensions: null,
+    scimRoles: [],
     isActive: true,
     isDeleted: false,
     authMethod: "SCIM",
@@ -489,7 +499,7 @@ describe("createScimUser", () => {
 
 describe("getScimUserById", () => {
   it("E1: returns userToScim for a non-tombstoned row regardless of isActive", async () => {
-    tx.user.findUnique.mockResolvedValue(makeUser({ isActive: false }));
+    tx.user.findFirst.mockResolvedValue(makeUser({ isActive: false }));
 
     const result = await getScimUserById("user_1", CTX);
     expect(result.id).toBe("user_1");
@@ -498,24 +508,24 @@ describe("getScimUserById", () => {
   });
 
   it("E2: throws ScimNotFoundError when row missing", async () => {
-    tx.user.findUnique.mockResolvedValue(null);
+    tx.user.findFirst.mockResolvedValue(null);
     await expect(getScimUserById("nope", CTX)).rejects.toBeInstanceOf(
       ScimNotFoundError
     );
   });
 
   it("E2b: throws ScimNotFoundError when row is tombstoned", async () => {
-    tx.user.findUnique.mockResolvedValue(makeUser({ isDeleted: true }));
+    tx.user.findFirst.mockResolvedValue(makeUser({ isDeleted: true }));
     await expect(getScimUserById("user_1", CTX)).rejects.toBeInstanceOf(
       ScimNotFoundError
     );
   });
 
-  it("E3: findUnique includes groups: { include: { group: true } }", async () => {
-    tx.user.findUnique.mockResolvedValue(makeUser());
+  it("E3: the ownership-scoped read includes groups: { include: { group: true } }", async () => {
+    tx.user.findFirst.mockResolvedValue(makeUser());
     await getScimUserById("user_1", CTX);
 
-    const args = tx.user.findUnique.mock.calls[0][0] as {
+    const args = tx.user.findFirst.mock.calls[0][0] as {
       include: { groups: { include: { group: boolean } } };
     };
     expect(args.include.groups.include.group).toBe(true);
@@ -556,7 +566,8 @@ describe("listScimUsers", () => {
     const args = tx.user.findMany.mock.calls[0][0] as {
       where: { AND: Array<Record<string, unknown>> };
     };
-    expect(args.where.AND.length).toBe(2);
+    // filter + tombstone gate + cross-IdP ownership scope
+    expect(args.where.AND.length).toBe(3);
   });
 
   it("F3: startIndex=51, count=50 → skip=50, take=50 (1-based)", async () => {
@@ -1081,5 +1092,146 @@ describe("K — fallback-default access on SCIM user create", () => {
     };
     expect(args.data.access).toBe("ADMIN");
     expect(args.data.access).not.toBe("NONE");
+  });
+});
+
+describe("L — cross-IdP provenance and ownership (V2-MULTI-IDP-01)", () => {
+  it("L1: a brand-new user is stamped with the provisioning token", async () => {
+    tx.user.findFirst.mockResolvedValue(null);
+    tx.user.create.mockResolvedValue(makeUser({ id: "user_new" }));
+
+    await createScimUser(makeBody(), CTX);
+
+    const args = tx.user.create.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    expect(args.data.scimTokenId).toBe("tok_test");
+  });
+
+  it("L2: a JIT bind claims the pre-existing row for the calling token", async () => {
+    tx.user.findFirst.mockResolvedValue(
+      makeUser({ scimExternalId: null, scimTokenId: null })
+    );
+    tx.user.update.mockResolvedValue(makeUser());
+
+    await createScimUser(makeBody(), CTX);
+
+    const args = tx.user.update.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    expect(args.data.scimTokenId).toBe("tok_test");
+  });
+
+  it("L3: POST colliding with another IdP's user is refused, not rebound", async () => {
+    tx.user.findFirst.mockResolvedValue(
+      makeUser({ scimExternalId: null, scimTokenId: "tok_entra" })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "ENTRA" });
+
+    await expect(createScimUser(makeBody(), CTX)).rejects.toBeInstanceOf(
+      ScimOwnershipError
+    );
+    expect(tx.user.update).not.toHaveBeenCalled();
+    expect(tx.user.create).not.toHaveBeenCalled();
+  });
+
+  it("L4: PUT on another IdP's user is refused and writes nothing", async () => {
+    tx.user.findUnique.mockResolvedValue(
+      makeUser({ scimTokenId: "tok_entra" })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "ENTRA" });
+
+    await expect(
+      putScimUser("user_1", makeBody({ active: false }), CTX)
+    ).rejects.toBeInstanceOf(ScimOwnershipError);
+    expect(tx.user.update).not.toHaveBeenCalled();
+  });
+
+  it("L5: PATCH on another IdP's user is refused and writes nothing", async () => {
+    tx.user.findUnique.mockResolvedValue(
+      makeUser({ scimTokenId: "tok_entra" })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "ENTRA" });
+
+    const body = {
+      schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      Operations: [{ op: "replace", path: "active", value: false }],
+    };
+
+    await expect(
+      patchScimUser("user_1", body as never, CTX)
+    ).rejects.toBeInstanceOf(ScimOwnershipError);
+    expect(tx.user.update).not.toHaveBeenCalled();
+  });
+
+  it("L6: DELETE on another IdP's user is refused and leaves no tombstone", async () => {
+    tx.user.findUnique.mockResolvedValue(
+      makeUser({ scimTokenId: "tok_entra" })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "ENTRA" });
+
+    await expect(deleteScimUser("user_1", CTX)).rejects.toBeInstanceOf(
+      ScimOwnershipError
+    );
+    expect(tx.user.update).not.toHaveBeenCalled();
+  });
+
+  it("L7: a sibling token for the same IdP may write — rotation keeps working", async () => {
+    tx.user.findUnique.mockResolvedValue(
+      makeUser({ scimTokenId: "tok_okta_old", isActive: true })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "OKTA" });
+    tx.user.update.mockResolvedValue(makeUser({ isActive: false }));
+
+    await expect(
+      putScimUser("user_1", makeBody({ active: false }), CTX)
+    ).resolves.toBeDefined();
+    expect(tx.user.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("L8: a real PUT claims a still-unowned row", async () => {
+    tx.user.findUnique.mockResolvedValue(
+      makeUser({ scimTokenId: null, isActive: true })
+    );
+    tx.user.update.mockResolvedValue(makeUser({ isActive: false }));
+
+    await putScimUser("user_1", makeBody({ active: false }), CTX);
+
+    const args = tx.user.update.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    expect(args.data.scimTokenId).toBe("tok_test");
+  });
+
+  it("L9: a no-op PUT does NOT claim the row — no-op stays a no-op", async () => {
+    // Extensions must already match what makeBody() would merge in, or the
+    // PUT is not actually a no-op.
+    tx.user.findUnique.mockResolvedValue(
+      makeUser({
+        scimTokenId: null,
+        scimExtensions: {
+          [SCIM_SCHEMAS.CORE_USER]: {
+            emails: [{ value: "alice@example.com", primary: true }],
+          },
+        },
+      })
+    );
+
+    await putScimUser("user_1", makeBody(), CTX);
+
+    expect(tx.user.update).not.toHaveBeenCalled();
+  });
+
+  it("L10: reads are scoped to unowned rows plus the caller's own IdP", async () => {
+    tx.user.findFirst.mockResolvedValue(makeUser());
+
+    await getScimUserById("user_1", CTX);
+
+    const args = tx.user.findFirst.mock.calls[0][0] as {
+      where: { AND: Array<Record<string, unknown>> };
+    };
+    expect(args.where.AND).toContainEqual({
+      OR: [{ scimTokenId: null }, { scimToken: { idpName: "OKTA" } }],
+    });
   });
 });

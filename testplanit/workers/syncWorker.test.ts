@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Mock the sync service
 const mockPerformSync = vi.fn();
 const mockPerformIssueRefresh = vi.fn();
+const mockPerformProjectImport = vi.fn();
 
 vi.mock("../lib/integrations/services/SyncService", () => ({
   syncService: {
     performSync: (...args: any[]) => mockPerformSync(...args),
     performIssueRefresh: (...args: any[]) => mockPerformIssueRefresh(...args),
+    performProjectImport: (...args: any[]) => mockPerformProjectImport(...args),
   },
   SyncJobData: {},
 }));
@@ -21,6 +23,24 @@ vi.mock("../lib/valkey", () => ({
 // Mock queue names
 vi.mock("../lib/queueNames", () => ({
   SYNC_QUEUE_NAME: "test-sync-queue",
+}));
+
+// Mock multi-tenant db helpers so `processor` can run in single-tenant mode
+// without touching a real Prisma client (`getDbClientForJob` otherwise lazily
+// requires `./rawDb`).
+const mockGetDbClientForJob = vi.fn();
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: (...args: any[]) => mockGetDbClientForJob(...args),
+  isMultiTenantMode: vi.fn(() => false),
+  validateMultiTenantJobData: vi.fn(),
+  disconnectAllTenantClients: vi.fn(),
+}));
+
+// Mock audit logging so processor's captureAuditEvent call is observable
+// without hitting a real DB.
+const mockCaptureAuditEvent = vi.fn().mockResolvedValue(undefined);
+vi.mock("../lib/services/auditLog", () => ({
+  captureAuditEvent: (...args: any[]) => mockCaptureAuditEvent(...args),
 }));
 
 // We need to create a testable processor since the actual processor isn't exported
@@ -144,6 +164,143 @@ describe("SyncWorker", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Issue not found");
+    });
+  });
+
+  describe("import-project-issues job (#501/28-05)", () => {
+    beforeEach(() => {
+      mockGetDbClientForJob.mockReturnValue({});
+    });
+
+    it("forwards issueTypeIds and pagedToCompletion from the job payload to performProjectImport", async () => {
+      mockPerformProjectImport.mockResolvedValue({
+        imported: 10,
+        matched: 10,
+        skipped: 0,
+        cappedAt: 10,
+        reachedCap: false,
+        errors: [],
+        cancelled: false,
+      });
+
+      const { processor } = await import("./syncWorker");
+
+      const jobData = {
+        userId: "user-1",
+        integrationId: 5,
+        action: "sync" as const,
+        data: {
+          integrationProjectId: "ip-1",
+          issueTypeIds: ["10001", "10002"],
+          pagedToCompletion: true,
+        },
+      };
+      const mockJob = {
+        id: "job-1",
+        name: "import-project-issues",
+        data: jobData,
+        updateProgress: vi.fn(),
+      } as unknown as Job;
+
+      await processor(mockJob);
+
+      expect(mockPerformProjectImport).toHaveBeenCalledWith(
+        5,
+        "ip-1",
+        expect.objectContaining({
+          issueTypeIds: ["10001", "10002"],
+          pagedToCompletion: true,
+        }),
+        mockJob,
+        expect.anything()
+      );
+    });
+
+    it("audits a cancelled run as cancelled, not as a success and not as an error", async () => {
+      mockPerformProjectImport.mockResolvedValue({
+        imported: 100,
+        matched: 100,
+        skipped: 0,
+        cappedAt: 100,
+        reachedCap: false,
+        errors: [],
+        cancelled: true,
+      });
+
+      const { processor } = await import("./syncWorker");
+
+      const jobData = {
+        userId: "user-1",
+        integrationId: 5,
+        action: "sync" as const,
+        data: { integrationProjectId: "ip-1", pagedToCompletion: true },
+      };
+      const mockJob = {
+        id: "job-1",
+        name: "import-project-issues",
+        data: jobData,
+        updateProgress: vi.fn(),
+      } as unknown as Job;
+
+      await processor(mockJob);
+
+      expect(mockCaptureAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ cancelled: true }),
+        })
+      );
+    });
+
+    it("leaves a recency-mode job's forwarded options and audit metadata unchanged", async () => {
+      mockPerformProjectImport.mockResolvedValue({
+        imported: 42,
+        matched: 42,
+        skipped: 3,
+        cappedAt: 200,
+        reachedCap: false,
+        errors: [],
+        cancelled: false,
+      });
+
+      const { processor } = await import("./syncWorker");
+
+      const jobData = {
+        userId: "user-1",
+        integrationId: 5,
+        action: "sync" as const,
+        data: { integrationProjectId: "ip-1", updatedWithinDays: 90, cap: 200 },
+      };
+      const mockJob = {
+        id: "job-1",
+        name: "import-project-issues",
+        data: jobData,
+        updateProgress: vi.fn(),
+      } as unknown as Job;
+
+      await processor(mockJob);
+
+      expect(mockPerformProjectImport).toHaveBeenCalledWith(
+        5,
+        "ip-1",
+        {
+          updatedWithinDays: 90,
+          cap: 200,
+          issueTypeIds: undefined,
+          pagedToCompletion: undefined,
+        },
+        mockJob,
+        expect.anything()
+      );
+      expect(mockCaptureAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            importedCount: 42,
+            skippedCount: 3,
+            reachedCap: false,
+            cancelled: false,
+          }),
+        })
+      );
     });
   });
 

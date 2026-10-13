@@ -29,6 +29,7 @@ import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { editorMinHeightStyle } from "~/utils/editorHeight";
 import StepsForm from "./StepsForm";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 interface RenderFieldProps {
   field: any;
@@ -267,12 +268,8 @@ const RenderField: React.FC<RenderFieldProps> = ({
         // Determine initial content: value > defaultValue > emptyEditorContent
         let initialContent: any = emptyEditorContent;
         if (value) {
-          try {
-            initialContent = JSON.parse(value);
-          } catch {
-            // console.warn("Error parsing field value in RenderField:", e);
-            // Keep initialContent as emptyEditorContent if value parsing fails
-          }
+          // Handles a document object, a JSON string of one, or plain text.
+          initialContent = ensureTipTapJSON(value);
         } else if (field.caseField.defaultValue) {
           try {
             initialContent = JSON.parse(field.caseField.defaultValue);

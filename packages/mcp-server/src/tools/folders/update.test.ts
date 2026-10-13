@@ -12,6 +12,7 @@ vi.mock("../../api.js", () => ({
 vi.mock("./shared.js", () => ({
   mapFolderTreeNode: vi.fn(),
   fetchFolderDetail: vi.fn(),
+  nextFolderOrder: vi.fn(async () => 3),
 }));
 
 import * as apiModule from "../../api.js";
@@ -62,21 +63,24 @@ describe("testplanit_folders_update", () => {
     await callTool({ folderId: 99, name: "Renamed" });
 
     expect(zenstackMock).toHaveBeenCalledTimes(1);
-    const updateCall = zenstackMock.mock.calls[0]!;
+    const updateCall = zenstackMock.mock.calls.find((c) => c[1] === "update")!;
     const data = (updateCall[2] as { data: Record<string, unknown> }).data;
     expect(data["name"]).toBe("Renamed");
     expect(data).not.toHaveProperty("parent");
   });
 
-  it("reparent to a folder: body has parent: {connect: {id: 5}}", async () => {
+  it("reparent to a folder: body has parent: {connect: {id: 5}} and an order after the new siblings", async () => {
+    zenstackMock.mockResolvedValueOnce({ projectId: 7 });
     zenstackMock.mockResolvedValueOnce({});
     fetchFolderDetailMock.mockResolvedValueOnce(FULL_DETAIL);
 
     await callTool({ folderId: 99, parentId: 5 });
 
-    const updateCall = zenstackMock.mock.calls[0]!;
+    const updateCall = zenstackMock.mock.calls.find((c) => c[1] === "update")!;
     const data = (updateCall[2] as { data: Record<string, unknown> }).data;
     expect(data["parent"]).toEqual({ connect: { id: 5 } });
+    expect(data["order"]).toBe(3);
+    expect(foldersSharedModule.nextFolderOrder).toHaveBeenCalledWith(7, 5, env);
   });
 
   it("reparent to root (parentId: null): body has parent: {disconnect: true}", async () => {
@@ -85,7 +89,7 @@ describe("testplanit_folders_update", () => {
 
     await callTool({ folderId: 99, parentId: null });
 
-    const updateCall = zenstackMock.mock.calls[0]!;
+    const updateCall = zenstackMock.mock.calls.find((c) => c[1] === "update")!;
     const data = (updateCall[2] as { data: Record<string, unknown> }).data;
     expect(data["parent"]).toEqual({ disconnect: true });
   });
@@ -96,7 +100,7 @@ describe("testplanit_folders_update", () => {
 
     await callTool({ folderId: 99, name: "Renamed", parentId: 5 });
 
-    const updateCall = zenstackMock.mock.calls[0]!;
+    const updateCall = zenstackMock.mock.calls.find((c) => c[1] === "update")!;
     const data = (updateCall[2] as { data: Record<string, unknown> }).data;
     expect(data["name"]).toBe("Renamed");
     expect(data["parent"]).toEqual({ connect: { id: 5 } });

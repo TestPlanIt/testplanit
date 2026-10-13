@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ProjectAccessType } from "~/zenstack/models";
 import {
+  resolveEffectiveProjectAccessForUsers,
   resolveEffectiveProjectRoleId,
   resolveEffectiveProjectRolesForUsers,
 } from "./effectiveRole";
@@ -299,5 +300,80 @@ describe("resolveEffectiveProjectRolesForUsers", () => {
     expect(result.size).toBe(0);
     expect(stub.user.findMany).not.toHaveBeenCalled();
     expect(stub.userProjectPermission.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("resolveEffectiveProjectAccessForUsers", () => {
+  it("names the rung that decided each user, including a NO_ACCESS denial", async () => {
+    const stub = makeStub();
+    //  - u-A: user-specific SPECIFIC_ROLE → 11, USER_PERMISSION
+    //  - u-B: user-specific DEFAULT, then group GLOBAL_ROLE → global 88, GROUP_PERMISSION
+    //  - u-C: nothing explicit, project default SPECIFIC_ROLE → 5, PROJECT_DEFAULT
+    //  - u-D: user-specific NO_ACCESS → null, still USER_PERMISSION
+    stub.userProjectPermission.findMany.mockResolvedValue([
+      {
+        userId: "u-A",
+        accessType: ProjectAccessType.SPECIFIC_ROLE,
+        roleId: 11,
+      },
+      { userId: "u-B", accessType: ProjectAccessType.DEFAULT, roleId: null },
+      { userId: "u-D", accessType: ProjectAccessType.NO_ACCESS, roleId: null },
+    ]);
+    stub.user.findMany.mockResolvedValue([
+      { id: "u-A", roleId: 99, groups: [] },
+      { id: "u-B", roleId: 88, groups: [{ groupId: 10 }] },
+      { id: "u-C", roleId: 33, groups: [] },
+      { id: "u-D", roleId: 1, groups: [] },
+    ]);
+    stub.groupProjectPermission.findMany.mockResolvedValue([
+      { groupId: 10, accessType: ProjectAccessType.GLOBAL_ROLE, roleId: null },
+    ]);
+    stub.projects.findUnique.mockResolvedValue({
+      defaultAccessType: ProjectAccessType.SPECIFIC_ROLE,
+      defaultRoleId: 5,
+    });
+
+    const result = await resolveEffectiveProjectAccessForUsers(
+      ["u-A", "u-B", "u-C", "u-D", "u-missing"],
+      100,
+      stub as any
+    );
+    expect(result.get("u-A")).toEqual({
+      roleId: 11,
+      source: "USER_PERMISSION",
+    });
+    expect(result.get("u-B")).toEqual({
+      roleId: 88,
+      source: "GROUP_PERMISSION",
+    });
+    expect(result.get("u-C")).toEqual({ roleId: 5, source: "PROJECT_DEFAULT" });
+    expect(result.get("u-D")).toEqual({
+      roleId: null,
+      source: "USER_PERMISSION",
+    });
+    expect(result.get("u-missing")).toEqual({ roleId: null, source: null });
+  });
+
+  it("reports a NO_ACCESS project default as the deciding rung with no role", async () => {
+    const stub = makeStub();
+    stub.userProjectPermission.findMany.mockResolvedValue([]);
+    stub.user.findMany.mockResolvedValue([
+      { id: "u-1", roleId: 3, groups: [] },
+    ]);
+    stub.groupProjectPermission.findMany.mockResolvedValue([]);
+    stub.projects.findUnique.mockResolvedValue({
+      defaultAccessType: ProjectAccessType.NO_ACCESS,
+      defaultRoleId: null,
+    });
+
+    const result = await resolveEffectiveProjectAccessForUsers(
+      ["u-1"],
+      100,
+      stub as any
+    );
+    expect(result.get("u-1")).toEqual({
+      roleId: null,
+      source: "PROJECT_DEFAULT",
+    });
   });
 });

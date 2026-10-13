@@ -34,8 +34,8 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import { safeExternalUrl } from "~/utils/externalUrl";
 import { IconName } from "~/types/globals";
 import {
   ColorMap,
@@ -44,6 +44,7 @@ import {
   hasCalendarDates,
   getStatusStyle,
 } from "~/utils/milestoneUtils";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 interface MilestoneFormControlsProps {
   isEditMode: boolean;
@@ -166,14 +167,8 @@ export default function MilestoneFormControls({
   // owns isCompleted for a synced milestone (see forecastWorker LOCK-04).
   const isSynced = milestone?.integrationId != null;
 
-  // Tracker-provided deep link to the source version/sprint. Only linkable when
-  // it's a real http(s) URL (never `javascript:` etc.), mirroring the safety
-  // check in MilestoneSourceBadge.
-  const jiraUrl =
-    typeof milestone?.externalUrl === "string" &&
-    /^https?:\/\//i.test(milestone.externalUrl)
-      ? milestone.externalUrl
-      : null;
+  // Tracker-provided deep link to the source version/sprint.
+  const jiraUrl = safeExternalUrl(milestone?.externalUrl);
 
   return (
     <div className="space-y-4">
@@ -196,7 +191,7 @@ export default function MilestoneFormControls({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 hover:underline"
-                  title={t("sync.openInJira")}
+                  title={tCommon("ui.issues.openInJira")}
                 >
                   {t("sync.managedByJira")}
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -403,9 +398,7 @@ export default function MilestoneFormControls({
               <FormControl>
                 <TipTapEditor
                   key={`editing-note-${isEditMode}`}
-                  content={
-                    field.value ? JSON.parse(field.value) : emptyEditorContent
-                  }
+                  content={ensureTipTapJSON(field.value)}
                   onUpdate={(newContent) => {
                     if (isEditMode && !isSynced) {
                       field.onChange(JSON.stringify(newContent));

@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { describe, expect, it } from "vitest";
 import {
   buildReportCsvRows,
@@ -71,7 +73,7 @@ describe("buildReportCsvRows", () => {
       reportType: "cross-project-flaky-tests",
       rows: [{ testCaseName: "X", flipCount: 1, project: { name: "Proj A" } }],
     });
-    expect(row["reports.dimensions.project"]).toBe("Proj A");
+    expect(row["common.fields.project"]).toBe("Proj A");
   });
 
   it("test-case-health: translates status, formats stale/pass-rate", () => {
@@ -96,11 +98,9 @@ describe("buildReportCsvRows", () => {
     expect(row["reports.ui.testCaseHealth.healthStatus.stale"]).toBe(
       "common.no"
     );
-    expect(row["reports.ui.testCaseHealth.lastExecuted"]).toBe(
-      "reports.ui.testCaseHealth.never"
-    );
+    expect(row["reports.ui.testCaseHealth.lastExecuted"]).toBe("common.never");
     // No executions → pass rate blank.
-    expect(row["reports.ui.testCaseHealth.passRate"]).toBe("");
+    expect(row["common.fields.passRate"]).toBe("");
   });
 
   it("test-case-health: pass rate shown as % when executed", () => {
@@ -119,7 +119,7 @@ describe("buildReportCsvRows", () => {
         },
       ],
     });
-    expect(row["reports.ui.testCaseHealth.passRate"]).toBe("50%");
+    expect(row["common.fields.passRate"]).toBe("50%");
     expect(row["reports.ui.testCaseHealth.healthStatus.stale"]).toBe(
       "common.yes"
     );
@@ -164,7 +164,7 @@ describe("buildReportCsvRows", () => {
         },
       ],
     });
-    expect(row["reports.dimensions.testRun"]).toBe("Run 1");
+    expect(row["common.actions.junit.import.testRun.label"]).toBe("Run 1");
     expect(row["common.actions.status"]).toBe("Passed");
     expect(row["common.fields.executedBy"]).toBe("Alice");
     expect(row["common.fields.duration"]).toBe(""); // 0 → blank
@@ -235,5 +235,338 @@ describe("buildReportCsvRows", () => {
     });
     expect(row["Status"]).toBe("");
     expect(row["Test Results"]).toBe(0);
+  });
+});
+
+// Converted from the Wave 0 title scaffold (COV-04, D-2).
+describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
+  it("builds requirement-coverage-gaps rows with localized headers", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-coverage-gaps",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "REQ-1",
+          requirementTitle: "Enrol domestic students",
+          requirementPath: "Enrolments > Enrol domestic students",
+          requirementParentPath: "Enrolments",
+          linkedCases: 0,
+        },
+      ],
+    });
+
+    // Header keys are the localized reports.ui.requirementCoverage.* keys,
+    // never a dimension-derived label like "reports.dimensions.testCase" --
+    // this is a pre-built report with no dimension/metric picker.
+    expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
+      "REQ-1: Enrol domestic students"
+    );
+    // The CSV writes the ancestors-only parent path — repeating the
+    // requirement's own text made Path a copy of the Requirement column.
+    expect(row["reports.ui.requirementCoverage.path"]).toBe("Enrolments");
+    expect(row["reports.ui.requirementCoverage.linkedCases"]).toBe(0);
+  });
+
+  // A native requirement (created via CreateRequirementDialog, or renamed
+  // via RequirementsListView) writes the SAME trimmed string to its name
+  // (requirementKey) and title (requirementTitle) -- unlike the fixture
+  // above, which is synced-shaped and has a genuinely differing title. Both
+  // report types delegate the Requirement cell to the shared
+  // `formatRequirementCellText` helper; this is a thin assertion that the
+  // CSV surface actually uses it, not a re-test of the helper itself (see
+  // utils/issueDisplayText.test.ts for full coverage of the guard).
+  it("renders a native requirement's name ONCE, not doubled, in gap rows", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-coverage-gaps",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "New Requirement",
+          requirementTitle: "New Requirement",
+          requirementPath: "New Requirement",
+          requirementParentPath: "",
+          linkedCases: 0,
+        },
+      ],
+    });
+
+    expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
+      "New Requirement"
+    );
+  });
+
+  it("renders a native requirement's name ONCE, not doubled, in traceability rows", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-traceability",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "New Requirement",
+          requirementTitle: "New Requirement",
+          requirementPath: "New Requirement",
+          requirementParentPath: "",
+          testCaseId: null,
+          testCaseName: null,
+          caseProjectId: null,
+          caseProjectName: null,
+          lastStatusName: null,
+          lastStatusColor: null,
+          lastExecutedAt: null,
+        },
+      ],
+    });
+
+    expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
+      "New Requirement"
+    );
+  });
+
+  it("builds requirement-traceability rows with localized headers", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-traceability",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "REQ-1",
+          requirementTitle: "Enrol domestic students",
+          requirementPath: "Enrolments > Enrol domestic students",
+          requirementParentPath: "Enrolments",
+          coverageStatus: "PASSED",
+          testCaseId: 55,
+          testCaseName: "Enrol via portal",
+          caseProjectId: 10,
+          caseProjectName: "Enrolments",
+          lastStatusName: "Passed",
+          lastStatusColor: "#10b981",
+          lastExecutedAt: "2026-08-20T12:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
+      "REQ-1: Enrol domestic students"
+    );
+    expect(row["reports.ui.requirementCoverage.path"]).toBe("Enrolments");
+    // The requirement-level Coverage column, labeled with the tree's own
+    // vocabulary key.
+    expect(row["requirements.coverage.title"]).toBe(
+      "requirements.coverage.statusPassed"
+    );
+    expect(row["reports.ui.requirementCoverage.testCase"]).toBe(
+      "Enrol via portal"
+    );
+    expect(row["common.fields.resultStatus"]).toBe("Passed");
+    // fmtDateTime formats in the test runner's local timezone (same as
+    // execution-log's equivalent field, above) -- assert non-empty and
+    // date-prefixed rather than hardcoding a timezone-dependent string.
+    expect(row["common.fields.executedAt"]).toMatch(
+      /^2026-08-20 \d{2}:\d{2}:\d{2}$/
+    );
+    expect(row["common.fields.project"]).toBe("Enrolments");
+  });
+
+  it("writes Uncovered rather than an empty cell for a null-case traceability row", () => {
+    const [gapRow, notRunRow] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-traceability",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "REQ-1",
+          requirementTitle: "Enrol domestic students",
+          requirementPath: "Enrolments > Enrol domestic students",
+          requirementParentPath: "Enrolments",
+          testCaseId: null,
+          testCaseName: null,
+          caseProjectId: null,
+          caseProjectName: null,
+          lastStatusName: null,
+          lastStatusColor: null,
+          lastExecutedAt: null,
+        },
+        {
+          requirementId: 2,
+          requirementKey: "REQ-2",
+          requirementTitle: "Enrol international students",
+          requirementPath: "Enrolments > Enrol international students",
+          requirementParentPath: "Enrolments",
+          testCaseId: 56,
+          testCaseName: "Enrol via agent",
+          caseProjectId: 10,
+          caseProjectName: "Enrolments",
+          lastStatusName: null,
+          lastStatusColor: null,
+          lastExecutedAt: null,
+        },
+      ],
+    });
+
+    // The gap row (null testCaseId) writes the localized "Uncovered" label,
+    // never an empty string -- a blank cell here would silently hide a
+    // coverage gap in the exported spreadsheet (T-26-12-05).
+    expect(gapRow["common.fields.resultStatus"]).toBe(
+      "reports.ui.requirementCoverage.uncovered"
+    );
+    expect(gapRow["common.fields.resultStatus"]).not.toBe("");
+
+    // Distinct from the gap row: a linked case with no status writes
+    // "Not run", not "Uncovered" and not an empty string either.
+    expect(notRunRow["common.fields.resultStatus"]).toBe(
+      "reports.ui.requirementCoverage.notRun"
+    );
+    expect(notRunRow["common.fields.resultStatus"]).not.toBe(
+      gapRow["common.fields.resultStatus"]
+    );
+  });
+});
+
+// Six-site registration check (26-12 Task 3, T-26-12-04). Adding a report
+// type in this codebase touches six sites; missing any one produces a
+// report that half-works and stays invisible until someone runs it. This
+// walks all six for both requirement report ids and names the EXACT site
+// that is missing, rather than a single pass/fail bit -- that is the whole
+// point of the check existing separately from the individual per-file
+// tests above, each of which only proves its own file.
+//
+// Every anchor below is an unbounded `.includes()` against the WHOLE
+// (comment-stripped) file, never a fixed-width slice -- the exact defect
+// class recorded for 25-12-T0 and 25-16-T2, where a fixed offset silently
+// stopped matching real content that had simply moved.
+describe("Phase 26 requirement report registration (six sites)", () => {
+  const REQUIREMENT_REPORT_IDS = [
+    "requirement-coverage-gaps",
+    "requirement-traceability",
+  ];
+
+  const REGISTRATION_SITES: Array<[string, string]> = [
+    ["lib/config/reportTypes.ts", "picker entry"],
+    ["lib/schemas/reportRequestSchema.ts", "pre-built validation list"],
+    ["components/reports/ReportRenderer.tsx", "renderer columns branch"],
+    ["components/reports/ReportBuilder.tsx", "builder columns + prebuilt list"],
+    ["utils/reportCsvUtils.ts", "csv builder dispatch"],
+  ];
+
+  const COLUMN_HOOK_PATH = "hooks/useRequirementCoverageReportColumns.tsx";
+
+  const REQUIRED_I18N_KEYS = [
+    "reports.ui.reportTypes.requirementCoverageGaps.label",
+    "reports.ui.reportTypes.requirementTraceability.label",
+    "reports.ui.requirementCoverage.requirement",
+  ];
+
+  function stripComments(source: string): string {
+    return source.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+  }
+
+  function readSource(relativePath: string): string {
+    return stripComments(
+      fs.readFileSync(path.join(process.cwd(), relativePath), "utf8")
+    );
+  }
+
+  function getIn(obj: any, dottedPath: string): unknown {
+    return dottedPath.split(".").reduce((o, k) => (o == null ? o : o[k]), obj);
+  }
+
+  /** Names every missing site/id combination, an empty array meaning fully
+   * registered. Exported logic re-run below by the mutation-proof test. */
+  function findMissingRegistrations(): string[] {
+    const missing: string[] = [];
+
+    for (const [file, label] of REGISTRATION_SITES) {
+      const source = readSource(file);
+      for (const id of REQUIREMENT_REPORT_IDS) {
+        if (!source.includes(id)) {
+          missing.push(`MISSING ${id} at ${label} (${file})`);
+        }
+      }
+    }
+
+    if (!fs.existsSync(path.join(process.cwd(), COLUMN_HOOK_PATH))) {
+      missing.push(`MISSING column set hook (${COLUMN_HOOK_PATH})`);
+    }
+
+    const messages = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "messages/en-US.json"), "utf8")
+    );
+    for (const key of REQUIRED_I18N_KEYS) {
+      if (!getIn(messages, key)) {
+        missing.push(`MISSING i18n key ${key}`);
+      }
+    }
+
+    return missing;
+  }
+
+  it("registers both requirement report ids at every one of the six sites", () => {
+    const missing = findMissingRegistrations();
+    expect(missing, missing.join("\n")).toEqual([]);
+  });
+});
+
+describe("requirement-coverage-changes CSV", () => {
+  it("writes the diff columns with localized labels and blank absent sides", () => {
+    const t = (key: string) => key;
+    const rows = buildReportCsvRows({
+      reportType: "requirement-coverage-changes",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "REQ-1",
+          requirementTitle: "Enrol domestic students",
+          requirementParentPath: "Enrolments",
+          changeKind: "COVERAGE_CHANGED",
+          previousCoverageStatus: "UNCOVERED",
+          currentCoverageStatus: "NOT_RUN",
+          previousLinkedCaseCount: 0,
+          currentLinkedCaseCount: 2,
+          casesAdded: 2,
+          casesRemoved: 0,
+          resultsChanged: 0,
+        },
+        {
+          requirementId: 2,
+          requirementKey: "REQ-2",
+          requirementTitle: null,
+          requirementParentPath: "",
+          changeKind: "REMOVED",
+          previousCoverageStatus: "FAILED",
+          currentCoverageStatus: null,
+          previousLinkedCaseCount: 1,
+          currentLinkedCaseCount: null,
+          casesAdded: 0,
+          casesRemoved: 1,
+          resultsChanged: 0,
+        },
+      ],
+      dimensions: [],
+      metrics: [],
+      t,
+      locale: "en-US",
+      isCrossProject: false,
+    } as any);
+
+    expect(rows[0]["common.actions.change"]).toBe(
+      "reports.ui.requirementCoverage.changeCoverage"
+    );
+    expect(rows[0]["reports.ui.requirementCoverage.coverageBefore"]).toBe(
+      "requirements.coverage.uncovered"
+    );
+    expect(rows[0]["reports.ui.requirementCoverage.coverageAfter"]).toBe(
+      "requirements.coverage.statusNotRun"
+    );
+    expect(rows[0]["reports.ui.requirementCoverage.linkedCasesAfter"]).toBe(2);
+    expect(rows[0]["reports.ui.requirementCoverage.casesAdded"]).toBe(2);
+    // The removed requirement has no "after" side: blank, never a state.
+    expect(rows[1]["common.actions.change"]).toBe(
+      "reports.ui.requirementCoverage.changeRemoved"
+    );
+    expect(rows[1]["reports.ui.requirementCoverage.coverageAfter"]).toBe("");
+    expect(rows[1]["reports.ui.requirementCoverage.linkedCasesAfter"]).toBe("");
+    expect(rows[1]["reports.ui.requirementCoverage.casesRemoved"]).toBe(1);
   });
 });

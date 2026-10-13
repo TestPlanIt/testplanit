@@ -191,9 +191,26 @@ export async function getUserProjectPermissions(
   // Get Permissions from Effective Role
   let permissions: AreaPermissions | AllAreaPermissions;
 
+  // Project admins hold every bit on every area: the project's creator, or
+  // an effective role carrying Settings canAddEdit — the server-side twin of
+  // the policies' `projectId in auth().adminProjectIds` clause. As in the
+  // policies, only the user's own NO_ACCESS row outranks the creator.
+  const deniedByOwnRow =
+    userProjectPermission?.accessType === ProjectAccessType.NO_ACCESS;
+  const isRoleProjectAdmin =
+    !deniedByOwnRow &&
+    (project.createdBy === userId ||
+      (!accessDenied &&
+        getPermissionsForArea(effectiveRole, ApplicationArea.Settings)
+          .canAddEdit));
+
   // System ADMINs always have full permissions
   // System PROJECTADMINs have full permissions on projects they can access
-  if (isSystemAdmin || (isSystemProjectAdmin && !accessDenied)) {
+  if (
+    isSystemAdmin ||
+    (isSystemProjectAdmin && !accessDenied) ||
+    isRoleProjectAdmin
+  ) {
     if (area) {
       permissions = { canAddEdit: true, canDelete: true, canClose: true };
     } else {
@@ -204,7 +221,11 @@ export async function getUserProjectPermissions(
     }
     return {
       hasAccess: true,
-      effectiveRole: isSystemAdmin ? "System Admin" : "System Project Admin",
+      effectiveRole: isSystemAdmin
+        ? "System Admin"
+        : isSystemProjectAdmin
+          ? "System Project Admin"
+          : (effectiveRole?.name ?? null),
       permissions,
     };
   } else if (!accessDenied && effectiveRole) {

@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   LlmAdapterConfig,
   LlmModelInfo,
@@ -455,6 +455,116 @@ describe("BaseLlmAdapter", () => {
       const result = await adapter.probeModelCapabilities("gpt-4");
       expect(result.unsupportedParams).toEqual([]);
       expect(result.probedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+    });
+  });
+
+  describe("isTemperatureRejectedError", () => {
+    class RejectionAdapter extends TestAdapter {
+      check(error: unknown): boolean {
+        return (this as any).isTemperatureRejectedError(error);
+      }
+    }
+    const a = new RejectionAdapter(createTestConfig());
+
+    it.each([
+      "`temperature` is deprecated for this model.",
+      "litellm.UnsupportedParamsError: us.anthropic.claude-opus-5 does not support temperature=0.7. Only temperature=1 is supported.",
+      "Unsupported parameter: temperature",
+      "temperature is not supported with this model",
+    ])("matches %s", (message) => {
+      expect(a.check(new Error(message))).toBe(true);
+      expect(a.check({ error: { message } })).toBe(true);
+    });
+
+    it.each([
+      "Temperature must be between 0 and 2",
+      "Invalid model specified",
+      "This model does not support streaming",
+    ])("ignores %s", (message) => {
+      expect(a.check(new Error(message))).toBe(false);
+    });
+
+    it("ignores non-error values", () => {
+      expect(a.check(undefined)).toBe(false);
+      expect(a.check({ message: 42 })).toBe(false);
+    });
+  });
+
+  describe("withTemperatureFallback", () => {
+    class FallbackAdapter extends TestAdapter {
+      supports(model: string): boolean {
+        return (this as any).modelSupportsTemperature(model);
+      }
+      run<T>(model: string, attempt: () => Promise<T>): Promise<T> {
+        return (this as any).withTemperatureFallback(model, attempt);
+      }
+      protected async sendTemperatureProbe(model: string): Promise<void> {
+        if (model === "rejects") {
+          throw new Error("`temperature` is deprecated for this model.");
+        }
+        if (model === "unauthorized") {
+          throw new Error("Invalid API key");
+        }
+      }
+    }
+
+    it("retries once on a temperature rejection and remembers the model", async () => {
+      const a = new FallbackAdapter(createTestConfig());
+      const attempt = vi
+        .fn()
+        .mockRejectedValueOnce(
+          new Error(
+            "does not support temperature=0.7. Only temperature=1 is supported."
+          )
+        )
+        .mockResolvedValueOnce("ok");
+
+      expect(a.supports("fallback-model")).toBe(true);
+      await expect(a.run("fallback-model", attempt)).resolves.toBe("ok");
+      expect(attempt).toHaveBeenCalledTimes(2);
+      expect(a.supports("fallback-model")).toBe(false);
+
+      // Another instance with the same provider sees the cached verdict
+      expect(
+        new FallbackAdapter(createTestConfig()).supports("fallback-model")
+      ).toBe(false);
+    });
+
+    it("propagates a second rejection instead of looping", async () => {
+      const a = new FallbackAdapter(createTestConfig());
+      const attempt = vi
+        .fn()
+        .mockRejectedValue(
+          new Error("`temperature` is deprecated for this model.")
+        );
+
+      await expect(a.run("stubborn-model", attempt)).rejects.toThrow(
+        "deprecated"
+      );
+      expect(attempt).toHaveBeenCalledTimes(2);
+    });
+
+    it("rethrows unrelated errors without retrying", async () => {
+      const a = new FallbackAdapter(createTestConfig());
+      const attempt = vi.fn().mockRejectedValue(new Error("boom"));
+
+      await expect(a.run("other-model", attempt)).rejects.toThrow("boom");
+      expect(attempt).toHaveBeenCalledTimes(1);
+    });
+
+    it("probeModelCapabilities uses sendTemperatureProbe when the adapter provides one", async () => {
+      const a = new FallbackAdapter(createTestConfig());
+
+      await expect(a.probeModelCapabilities("accepts")).resolves.toMatchObject({
+        unsupportedParams: [],
+      });
+      await expect(a.probeModelCapabilities("rejects")).resolves.toMatchObject({
+        unsupportedParams: ["temperature"],
+      });
+      expect(a.supports("rejects")).toBe(false);
+      await expect(a.probeModelCapabilities("unauthorized")).rejects.toThrow(
+        "Invalid API key"
+      );
     });
   });
 });

@@ -41,6 +41,8 @@ import { getServerSession } from "next-auth";
 import { getAuditContext, type AuditContext } from "~/lib/auditContext";
 import { baseDb } from "~/lib/db";
 import { expectAuditRowComplete } from "~/lib/testing/auditAssertions";
+import { createShareAccessToken } from "~/lib/shareAccessToken";
+import { NotificationService } from "~/lib/services/notificationService";
 import { GET, POST } from "./route";
 
 const createGetRequest = (
@@ -347,7 +349,25 @@ describe("POST /api/share/[shareKey]", () => {
     expect(data.requiresPassword).toBe(true);
   });
 
-  it("allows PASSWORD_PROTECTED mode with correct token", async () => {
+  it("allows PASSWORD_PROTECTED mode with a token from password-verify", async () => {
+    (getServerSession as any).mockResolvedValue(null);
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
+      ...mockShareLink,
+      mode: "PASSWORD_PROTECTED",
+      passwordHash: "$2b$10$hashvalue",
+    });
+
+    const [req, ctx] = createPostRequest("abc123", {
+      token: createShareAccessToken("abc123", "$2b$10$hashvalue"),
+    });
+    const response = await POST(req, ctx);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.accessed).toBe(true);
+  });
+
+  it("rejects the shareKey itself as a token", async () => {
     (getServerSession as any).mockResolvedValue(null);
     (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
@@ -357,10 +377,28 @@ describe("POST /api/share/[shareKey]", () => {
 
     const [req, ctx] = createPostRequest("abc123", { token: "abc123" });
     const response = await POST(req, ctx);
-    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(baseDb.shareLinkAccessLog.create).not.toHaveBeenCalled();
+  });
+
+  it("accepts a token for a signed-in user without project access", async () => {
+    (getServerSession as any).mockResolvedValue({
+      user: { id: "outsider", access: "USER" },
+    });
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
+      ...mockShareLink,
+      mode: "PASSWORD_PROTECTED",
+      passwordHash: "$2b$10$hashvalue",
+      project: { ...mockShareLink.project, userPermissions: [] },
+    });
+
+    const [req, ctx] = createPostRequest("abc123", {
+      token: createShareAccessToken("abc123", "$2b$10$hashvalue"),
+    });
+    const response = await POST(req, ctx);
 
     expect(response.status).toBe(200);
-    expect(data.accessed).toBe(true);
   });
 
   it("returns 401 for PASSWORD_PROTECTED mode with wrong password", async () => {
@@ -511,6 +549,137 @@ describe("POST /api/share/[shareKey]", () => {
     expect(capturedCtx?.ipAddress).toBe("203.0.113.7");
     expect(capturedCtx?.userAgent).toBe("vitest-share-post");
     expect(capturedCtx?.requestId).toMatch(/^req_\d+_[a-z0-9]+$/);
+  });
+});
+
+describe("Saved and frozen reports on share/[shareKey]", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const savedReport = {
+    ...mockShareLink,
+    entityType: "SAVED_REPORT",
+    mode: "AUTHENTICATED",
+    createdById: "owner-1",
+    projectId: null,
+    project: null,
+  };
+
+  it("GET returns 404 for someone else's saved report", async () => {
+    (getServerSession as any).mockResolvedValue({
+      user: { id: "someone-else", access: "ADMIN" },
+    });
+    (baseDb.shareLink.findUnique as any).mockResolvedValue(savedReport);
+
+    const [req, ctx] = createGetRequest("abc123");
+    const response = await GET(req, ctx);
+
+    expect(response.status).toBe(404);
+  });
+
+  it("POST returns 404 for someone else's saved report and logs nothing", async () => {
+    (getServerSession as any).mockResolvedValue({
+      user: { id: "someone-else", access: "USER" },
+    });
+    (baseDb.shareLink.findUnique as any).mockResolvedValue(savedReport);
+
+    const [req, ctx] = createPostRequest("abc123");
+    const response = await POST(req, ctx);
+
+    expect(response.status).toBe(404);
+    expect(baseDb.shareLinkAccessLog.create).not.toHaveBeenCalled();
+  });
+
+  it("GET returns the saved report to its owner", async () => {
+    (getServerSession as any).mockResolvedValue({
+      user: { id: "owner-1", access: "USER" },
+    });
+    (baseDb.shareLink.findUnique as any).mockResolvedValue(savedReport);
+
+    const [req, ctx] = createGetRequest("abc123");
+    const response = await GET(req, ctx);
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).frozen).toBeNull();
+  });
+
+  it("GET reports frozen metadata for a frozen link", async () => {
+    (getServerSession as any).mockResolvedValue(null);
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
+      ...mockShareLink,
+      snapshot: {
+        capturedAt: new Date("2026-09-01T10:00:00.000Z"),
+        capturedBy: { name: "Jane Tester" },
+        rowCount: 10000,
+        totalRowCount: 25000,
+        truncated: true,
+      },
+    });
+
+    const [req, ctx] = createGetRequest("abc123");
+    const response = await GET(req, ctx);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.frozen).toEqual({
+      capturedAt: "2026-09-01T10:00:00.000Z",
+      capturedByName: "Jane Tester",
+      rowCount: 10000,
+      totalRowCount: 25000,
+      truncated: true,
+    });
+  });
+});
+
+describe("recordView on share/[shareKey] POST", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (getServerSession as any).mockResolvedValue(null);
+  });
+
+  it("counts a view by default", async () => {
+    (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+
+    const [req, ctx] = createPostRequest("abc123", {});
+    const response = await POST(req, ctx);
+
+    expect(response.status).toBe(200);
+    expect(baseDb.shareLinkAccessLog.create).toHaveBeenCalledOnce();
+    expect(baseDb.shareLink.update).toHaveBeenCalledOnce();
+    expect((await response.json()).viewCount).toBe(mockShareLink.viewCount + 1);
+  });
+
+  it("re-checks access without counting a view when recordView is false", async () => {
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
+      ...mockShareLink,
+      notifyOnView: true,
+    });
+
+    const [req, ctx] = createPostRequest("abc123", { recordView: false });
+    const response = await POST(req, ctx);
+
+    expect(response.status).toBe(200);
+    expect(baseDb.shareLinkAccessLog.create).not.toHaveBeenCalled();
+    expect(baseDb.shareLink.update).not.toHaveBeenCalled();
+    expect(baseDb.auditLog.create).not.toHaveBeenCalled();
+    expect(
+      NotificationService.createShareLinkAccessedNotification
+    ).not.toHaveBeenCalled();
+    expect((await response.json()).viewCount).toBe(mockShareLink.viewCount);
+  });
+
+  it("still enforces access when recordView is false", async () => {
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
+      ...mockShareLink,
+      mode: "PASSWORD_PROTECTED",
+      passwordHash: "$2b$10$hashvalue",
+    });
+
+    const [req, ctx] = createPostRequest("abc123", { recordView: false });
+    const response = await POST(req, ctx);
+
+    expect(response.status).toBe(401);
   });
 });
 

@@ -4,7 +4,7 @@ description: |
   TestPlanIt — open-source test management platform. Single-tenant, self-hosted
   Helm chart for Kubernetes (EKS/GKE/AKS/k3s). Deploys the web app, background
   workers, and a one-shot migrate/seed job, with optional bundled PostgreSQL,
-  Valkey, Elasticsearch, and MinIO that can each be swapped for managed services
+  Valkey, Elasticsearch, and RustFS storage that can each be swapped for managed services
   (RDS / ElastiCache / OpenSearch / S3).
 type: application
 # Chart version — tracks the app release line it ships against.

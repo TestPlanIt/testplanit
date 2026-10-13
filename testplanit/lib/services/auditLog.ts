@@ -100,6 +100,9 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   // entity (see buildEntityAuditHooks / ENTITY_AUDIT_MODELS in entityAuditHooks).
   ProjectIntegration: "integration.name",
   TestRunCases: "repositoryCase.name",
+  RepositoryCaseCodePin: "filePath",
+  ImpactAnalysis: "headSha",
+  ImpactAnalysisCase: "case.name",
   // Custom field value on a test case: named from its field definition's
   // display name (see ENTITY_AUDIT_MODELS in entityAuditHooks).
   CaseFieldValues: "field.displayName",
@@ -135,6 +138,8 @@ export const PROJECT_SCOPE_PARENTS: Record<string, string | string[]> = {
   ],
   JUnitTestResult: "testSuite.testRun",
   JUnitTestSuite: "testRun",
+  RepositoryCaseCodePin: "case",
+  ImpactAnalysisCase: "analysis",
 };
 
 /**
@@ -169,6 +174,7 @@ export const PROJECT_SCOPED_ENTITY_TYPES: ReadonlySet<string> = new Set([
   "RepositoryFolders",
   "DataSet",
   "WebhookConfig",
+  "ImpactAnalysis",
   // A Projects row is its own scope — resolved from the entityId, no re-read.
   "Projects",
   // Project-scoped through a parent relation (see PROJECT_SCOPE_PARENTS)
@@ -181,6 +187,8 @@ export const PROJECT_SCOPED_ENTITY_TYPES: ReadonlySet<string> = new Set([
   "Attachments",
   "JUnitTestResult",
   "JUnitTestSuite",
+  "RepositoryCaseCodePin",
+  "ImpactAnalysisCase",
 ]);
 
 /**

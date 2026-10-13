@@ -18,13 +18,19 @@ The report divides the timeline into periods (daily, weekly, monthly, quarterly,
 
 Counts are cumulative — a case is included in every period from its creation onward — and each case is classified by its automation status **as of that period**, not its status today. Because this is derived from each case's version history, a case created as manual and later switched to automated is counted as manual in the periods before the switch and as automated from the switch onward. The report therefore reflects the true automation rate over time, not just authorship at creation.
 
-## Filters
-
-At generation time:
+## Settings
 
 - **Date Range** — limit the report to a window of periods. Cases created before the window still count toward the periods shown; the range controls which periods appear, not which cases are included.
 - **Period Grouping** — daily / weekly / monthly / quarterly / annually (default: weekly)
-- **Custom Field Filters** — up to five dynamic filters on the project's case fields, combined with AND logic
+
+## Filters
+
+Filters live in the **Filters** menu at the bottom of the report settings. Each filter accepts several values, and a row matches if it has any of them. When you use several filters, a row must match all of them. A filter with nothing selected doesn't narrow the report.
+
+- **Templates**, **States**, and custom fields such as **Priority** — the case's current values
+- **Automated** — Yes (automated cases), No (manual cases)
+- **Folder** — cases in the selected folders (project report only). **Include subfolders**, on by default, also covers every folder beneath them.
+- **Projects** — cross-project report only
 
 ## Dimensions and Metrics
 

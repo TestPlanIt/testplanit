@@ -49,6 +49,7 @@ export function DatasetDeleteConfirmDialog({
 }: DatasetDeleteConfirmDialogProps) {
   const t = useTranslations("projects.settings.datasets");
   const tDelete = useTranslations("projects.settings.datasets.delete");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
 
   const [stage, setStage] = useState<Stage>("stage1");
@@ -139,7 +140,7 @@ export function DatasetDeleteConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={submitting}>
-            {tDelete("cancel")}
+            {tCommon("cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
             data-testid="dataset-delete-confirm-button"

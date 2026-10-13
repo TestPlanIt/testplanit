@@ -10,6 +10,8 @@ import {
   extractNonWritableUrns,
   extractPrimaryEmail,
   mergeExtensions,
+  normalizeScimRoleValues,
+  rolesFromExtensions,
   scimToUserCreate,
   userToScim,
   type ScimUserBody,
@@ -521,5 +523,83 @@ describe("round-trip via fixtures", () => {
     const ext = created.scimExtensions as Record<string, unknown>;
     const core = ext[SCIM_SCHEMAS.CORE_USER] as Record<string, unknown>;
     expect(core["name.middleName"]).toBe("Excited");
+  });
+});
+
+describe("G — roles core-attribute normalization (HYBRID-01)", () => {
+  it("G1: reads RFC 7643 complex role objects via `value`", () => {
+    expect(
+      normalizeScimRoleValues([{ value: "QA-Lead" }, { value: "dev" }])
+    ).toEqual(["qa-lead", "dev"]);
+  });
+
+  it("G2: accepts bare strings, which several IdPs send instead", () => {
+    expect(normalizeScimRoleValues(["Admin", "user"])).toEqual([
+      "admin",
+      "user",
+    ]);
+  });
+
+  it("G3: falls back to `display` when the entry carries no `value`", () => {
+    expect(normalizeScimRoleValues([{ display: "Release Manager" }])).toEqual([
+      "release manager",
+    ]);
+  });
+
+  it("G4: trims, de-duplicates case-insensitively, and preserves first-seen order", () => {
+    expect(
+      normalizeScimRoleValues([
+        " QA ",
+        { value: "qa" },
+        "Dev",
+        { value: "DEV" },
+      ])
+    ).toEqual(["qa", "dev"]);
+  });
+
+  it("G5: drops empty, whitespace-only, and non-string entries", () => {
+    expect(
+      normalizeScimRoleValues([
+        "",
+        "   ",
+        42,
+        null,
+        undefined,
+        { value: 7 },
+        {},
+      ])
+    ).toEqual([]);
+  });
+
+  it("G6: returns [] for any non-array input", () => {
+    expect(normalizeScimRoleValues(undefined)).toEqual([]);
+    expect(normalizeScimRoleValues(null)).toEqual([]);
+    expect(normalizeScimRoleValues("admin")).toEqual([]);
+    expect(normalizeScimRoleValues({ value: "admin" })).toEqual([]);
+  });
+
+  it("G7: rolesFromExtensions reads the core-URN bucket a write path produced", () => {
+    const body = {
+      schemas: [SCIM_SCHEMAS.CORE_USER],
+      userName: "alice@example.com",
+      roles: [{ value: "QA-Lead" }],
+    } as ScimUserBody;
+    const extensions = extractNonWritableUrns(
+      body as unknown as Record<string, unknown>
+    );
+    expect(rolesFromExtensions(extensions)).toEqual(["qa-lead"]);
+  });
+
+  it("G8: rolesFromExtensions returns [] for blobs with no roles", () => {
+    expect(rolesFromExtensions(null)).toEqual([]);
+    expect(rolesFromExtensions({})).toEqual([]);
+    expect(rolesFromExtensions({ [SCIM_SCHEMAS.CORE_USER]: {} })).toEqual([]);
+    expect(rolesFromExtensions("not an object")).toEqual([]);
+  });
+
+  it("G9: an IdP clearing roles to [] yields [], not a preserved stale set", () => {
+    expect(
+      rolesFromExtensions({ [SCIM_SCHEMAS.CORE_USER]: { roles: [] } })
+    ).toEqual([]);
   });
 });

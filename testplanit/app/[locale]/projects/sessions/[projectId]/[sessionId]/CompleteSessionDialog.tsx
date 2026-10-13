@@ -172,7 +172,7 @@ export function CompleteSessionDialog({
           version: nextVersion,
           name: session.name,
           staticProjectId: projectId,
-          staticProjectName: session.project.name,
+          staticProjectName: session.project?.name ?? "",
           projectId: projectId,
           templateId: session.templateId,
           templateName: session.template.templateName,

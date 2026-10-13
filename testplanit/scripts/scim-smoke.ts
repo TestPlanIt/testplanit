@@ -17,7 +17,10 @@
  *   9.  PATCH  /api/scim/v2/Groups/{id}     (add-member op — re-adds test User)
  *   10. DELETE /api/scim/v2/Groups/{id}     (tombstone)
  *   11. DELETE /api/scim/v2/Users/{id}      (tombstone)
- *   12. revokeScimToken                 (token cleanup — always runs)
+ *   12. roles hybrid                    (role mapping drives the access tier)
+ *   13. cross-IdP ownership             (second IdP gets 404 on read, 409 on write)
+ *   14. overlap-window rotation         (old bearer keeps working after rotate)
+ *   15. revokeScimToken                 (token cleanup — always runs)
  *
  * Each step prints `PASS (Xms)` or `FAIL (Xms) (<reason>)`. Exit 0 when
  * every step passes, exit 1 on any failure. Target end-to-end runtime is
@@ -42,7 +45,11 @@
 import { IdpName } from "~/zenstack/models";
 
 import { baseDb } from "~/lib/db";
-import { mintScimToken, revokeScimToken } from "~/lib/scim/tokens";
+import {
+  mintScimToken,
+  revokeScimToken,
+  rotateScimToken,
+} from "~/lib/scim/tokens";
 import {
   SCIM_CONTENT_TYPE,
   SCIM_SCHEMAS,
@@ -169,6 +176,10 @@ async function main(): Promise<void> {
 
   let testUserId: string | null = null;
   let testGroupId: string | null = null;
+  // Extra resources the v2 follow-up steps create; swept in the finally block.
+  let secondTokenId: string | null = null;
+  let roleMappingValue: string | null = null;
+  let roleTestUserId: string | null = null;
 
   try {
     await runStep("GET /api/scim/v2/ServiceProviderConfig", async () => {
@@ -275,6 +286,89 @@ async function main(): Promise<void> {
       expectStatus(res.status, 200, "PATCH /Groups/{id}");
     });
 
+    // ---- v2 follow-ups -------------------------------------------------
+
+    await runStep("roles hybrid drives the access tier", async () => {
+      roleMappingValue = `smoke-lead-${ts}`;
+      await baseDb.scimRoleMapping.create({
+        data: { roleValue: roleMappingValue, mappedAccess: "PROJECTADMIN" },
+      });
+
+      const email = `smoke-roles-${ts}@example.com`;
+      const res = await request("POST", "/api/scim/v2/Users", {
+        schemas: [SCIM_SCHEMAS.CORE_USER],
+        userName: email,
+        externalId: `smoke-roles-ext-${ts}`,
+        name: { givenName: "Role", familyName: "Smoke" },
+        emails: [{ value: email, primary: true }],
+        active: true,
+        roles: [{ value: roleMappingValue.toUpperCase() }],
+      });
+      expectStatus(res.status, 201, "POST /Users (roles)");
+      const created = asObject(res.body, "roles user body");
+      roleTestUserId = String(created.id);
+
+      const row = await baseDb.user.findUnique({
+        where: { id: roleTestUserId },
+        select: { access: true, scimRoles: true },
+      });
+      if (!row) throw new Error("roles user row missing");
+      // Matching is case-insensitive, so the uppercased assertion still maps.
+      if (!row.scimRoles.includes(roleMappingValue)) {
+        throw new Error(
+          `scimRoles did not persist: ${JSON.stringify(row.scimRoles)}`
+        );
+      }
+      if (row.access !== "PROJECTADMIN") {
+        throw new Error(`expected PROJECTADMIN, got ${row.access}`);
+      }
+    });
+
+    await runStep(
+      "cross-IdP read is scoped (404) + write refused (409)",
+      async () => {
+        if (!testUserId) throw new Error("no test user id captured");
+        const second = await mintScimToken({
+          name: `smoke-test-okta-${ts}`,
+          idpName: IdpName.OKTA,
+          expiresAt: null,
+          createdById: ADMIN_USER_ID,
+        });
+        secondTokenId = second.token.id;
+        const otherIdp = makeRequest(second.plaintext);
+
+        // The smoke token is IdpName.OTHER, so this user belongs to a different
+        // directory as far as the OKTA token is concerned.
+        const read = await otherIdp("GET", `/api/scim/v2/Users/${testUserId}`);
+        expectStatus(read.status, 404, "cross-IdP GET /Users/{id}");
+
+        const write = await otherIdp(
+          "PUT",
+          `/api/scim/v2/Users/${testUserId}`,
+          {
+            schemas: [SCIM_SCHEMAS.CORE_USER],
+            userName: `smoke-hijack-${ts}@example.com`,
+            active: false,
+          }
+        );
+        expectStatus(write.status, 409, "cross-IdP PUT /Users/{id}");
+      }
+    );
+
+    await runStep("rotation overlap keeps the old bearer working", async () => {
+      const rotated = await rotateScimToken(tokenId, 3_600_000, ADMIN_USER_ID);
+
+      // The bearer this script has been using is now the SUPERSEDED one.
+      const viaOld = await request("GET", "/api/scim/v2/ServiceProviderConfig");
+      expectStatus(viaOld.status, 200, "superseded bearer during overlap");
+
+      const viaNew = await makeRequest(rotated.plaintext)(
+        "GET",
+        "/api/scim/v2/ServiceProviderConfig"
+      );
+      expectStatus(viaNew.status, 200, "replacement bearer");
+    });
+
     await runStep("DELETE /api/scim/v2/Groups/{id}", async () => {
       if (!testGroupId) throw new Error("no test group id captured");
       const res = await request("DELETE", `/api/scim/v2/Groups/${testGroupId}`);
@@ -287,6 +381,20 @@ async function main(): Promise<void> {
       expectStatus(res.status, 204, "DELETE /Users/{id}");
     });
   } finally {
+    await runStep("clean up v2 follow-up fixtures", async () => {
+      if (roleTestUserId) {
+        await baseDb.user.deleteMany({ where: { id: roleTestUserId } });
+      }
+      if (roleMappingValue) {
+        await baseDb.scimRoleMapping.deleteMany({
+          where: { roleValue: roleMappingValue },
+        });
+      }
+      if (secondTokenId) {
+        await baseDb.scimToken.deleteMany({ where: { id: secondTokenId } });
+      }
+    });
+
     await runStep("revoke smoke token", async () => {
       await revokeScimToken(tokenId, ADMIN_USER_ID);
     });

@@ -68,10 +68,13 @@ import { ProjectGroupPermissions } from "./ProjectGroupPermissions";
 import { ProjectUserPermissions } from "./ProjectUserPermissions";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
+export type EditProjectTab = "details" | "users" | "groups";
+
 interface EditProjectModalProps {
   project: ExtendedProjects;
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: EditProjectTab;
 }
 
 function buildEditProjectFormSchema(t: (key: any) => string) {
@@ -136,9 +139,10 @@ export function EditProjectModal({
   project,
   isOpen,
   onClose,
+  initialTab = "details",
 }: EditProjectModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("details");
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   const { mutateAsync: updateProject } =
     useClientQueries(schema).projects.useUpdate();

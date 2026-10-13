@@ -307,7 +307,7 @@ function LlmIntegrationList() {
           <div className="flex items-center justify-between gap-2">
             <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="llm-admin-page-title">
-                {tGlobal("admin.menu.llm")}
+                {tCommon("pageTitles.aiModels")}
               </CardTitle>
               <HelpPopover helpKey="aiModels" />
             </SectionHeader>

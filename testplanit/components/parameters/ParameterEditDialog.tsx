@@ -110,6 +110,7 @@ export function ParameterEditDialog({
   parameter,
 }: ParameterEditDialogProps) {
   const t = useTranslations("parameters");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
 
@@ -184,7 +185,7 @@ export function ParameterEditDialog({
         >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-medium">{t("formName")}</label>
+              <label className="text-xs font-medium">{tCommon("name")}</label>
               <Input value={parameter.name} disabled className="font-mono" />
               <p className="text-xs text-muted-foreground mt-1">
                 {t("editDialogRenameHint")}
@@ -196,7 +197,7 @@ export function ParameterEditDialog({
                 className="text-xs font-medium"
                 htmlFor="parameter-edit-type"
               >
-                {t("formType")}
+                {tCommon("fields.type")}
               </label>
               <Controller
                 control={form.control}
@@ -230,7 +231,7 @@ export function ParameterEditDialog({
                 className="text-xs font-medium"
                 htmlFor="parameter-edit-default"
               >
-                {t("formDefault")}
+                {tCommon("fields.default")}
               </label>
               <Input
                 id="parameter-edit-default"
@@ -259,7 +260,7 @@ export function ParameterEditDialog({
                 htmlFor="parameter-edit-required"
                 className="text-xs font-medium"
               >
-                {t("formRequired")}
+                {tCommon("fields.required")}
               </label>
             </div>
 
@@ -382,7 +383,7 @@ export function ParameterEditDialog({
               onClick={() => onOpenChange(false)}
               data-testid="parameter-edit-cancel"
             >
-              {t("editDialogCancel")}
+              {tCommon("cancel")}
             </Button>
             <Button
               type="submit"

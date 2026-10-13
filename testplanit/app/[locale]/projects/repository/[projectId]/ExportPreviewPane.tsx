@@ -1,11 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import "prismjs/themes/prism-tomorrow.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
+import { mapLanguageToPrism } from "~/lib/utils/codeHighlight";
 
+import { CodeBlock } from "@/components/code/CodeBlock";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -257,7 +257,7 @@ export function ExportPreviewPane({
               ref={streamingScrollRef}
               className="max-h-[70vh] overflow-y-auto"
             >
-              <CodeBlock code={streamingCode!} prismLanguage={prismLanguage} />
+              <CodeBlock code={streamingCode!} language={prismLanguage} />
             </div>
           </div>
         ) : results.length === 1 && !hasStreamingContent ? (
@@ -348,7 +348,7 @@ export function ExportPreviewPane({
                       )}
                     </div>
                   </div>
-                  <CodeBlock code={result.code} prismLanguage={prismLanguage} />
+                  <CodeBlock code={result.code} language={prismLanguage} />
                   {result.truncated && (
                     <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -370,10 +370,7 @@ export function ExportPreviewPane({
                     <Loader2 className="h-3 w-3 animate-spin" />
                     <span>{t("generating")}</span>
                   </div>
-                  <CodeBlock
-                    code={streamingCode!}
-                    prismLanguage={prismLanguage}
-                  />
+                  <CodeBlock code={streamingCode!} language={prismLanguage} />
                 </div>
               )}
             </div>
@@ -486,37 +483,12 @@ function SingleResultView({
         </div>
       )}
       <div className="max-h-[70vh] overflow-y-auto">
-        <CodeBlock code={result.code} prismLanguage={prismLanguage} />
+        <CodeBlock code={result.code} language={prismLanguage} />
         {result.contextFiles && result.contextFiles.length > 0 && (
           <ContextFilesList files={result.contextFiles} />
         )}
       </div>
     </div>
-  );
-}
-
-/**
- * Syntax-highlighted code block using PrismJS with dangerouslySetInnerHTML.
- */
-function CodeBlock({
-  code,
-  prismLanguage,
-}: {
-  code: string;
-  prismLanguage: string;
-}) {
-  const html = useMemo(
-    () => highlightCode(code, prismLanguage),
-    [code, prismLanguage]
-  );
-
-  return (
-    <pre className="bg-stone-800 rounded-md overflow-auto p-4 text-sm max-w-full">
-      <code
-        className={`language-${prismLanguage}`}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    </pre>
   );
 }
 

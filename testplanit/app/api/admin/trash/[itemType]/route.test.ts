@@ -56,7 +56,9 @@ vi.mock("~/server/db", () => ({
     testRunResults: mockModel,
     testRunStepResults: mockModel,
     issue: mockModel,
-    appConfig: mockModel,
+    shareLink: mockModel,
+    dataSetRow: mockModel,
+    comment: mockModel,
     codeRepository: mockModel,
     llmIntegration: mockModel,
     integration: mockModel,
@@ -155,6 +157,15 @@ describe("Admin Trash Route", () => {
       expect(data.error).toBe("Invalid item type");
     });
 
+    it("returns 404 for a model without soft-delete columns", async () => {
+      setupAdminSession();
+
+      const request = createMockRequest();
+      const response = await GET(request, createMockContext("AppConfig"));
+
+      expect(response.status).toBe(404);
+    });
+
     it("returns items and totalCount for valid itemType", async () => {
       setupAdminSession();
       mockModel.count.mockResolvedValue(2);
@@ -234,6 +245,42 @@ describe("Admin Trash Route", () => {
         expect.objectContaining({
           orderBy: { name: "desc" },
         })
+      );
+    });
+
+    it.each([
+      ["RepositoryCases", "name"],
+      ["Issues", "name"],
+      ["ShareLink", "title"],
+      ["DataSetRow", "label"],
+    ])("filters %s by %s when search is given", async (itemType, field) => {
+      setupAdminSession();
+      mockModel.count.mockResolvedValue(0);
+      mockModel.findMany.mockResolvedValue([]);
+
+      const request = createMockRequest({ searchParams: { search: "login" } });
+      await GET(request, createMockContext(itemType));
+
+      const where = {
+        isDeleted: true,
+        AND: [{ [field]: { contains: "login", mode: "insensitive" } }],
+      };
+      expect(mockModel.count).toHaveBeenCalledWith({ where });
+      expect(mockModel.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where })
+      );
+    });
+
+    it("ignores search for item types without a searchable field", async () => {
+      setupAdminSession();
+      mockModel.count.mockResolvedValue(0);
+      mockModel.findMany.mockResolvedValue([]);
+
+      const request = createMockRequest({ searchParams: { search: "login" } });
+      await GET(request, createMockContext("Comment"));
+
+      expect(mockModel.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { isDeleted: true } })
       );
     });
 

@@ -12,6 +12,7 @@ import {
 
 import { requireScimBearer, ScimAuthError } from "~/lib/scim/auth";
 import { scimError } from "~/lib/scim/errors";
+import { ScimOwnershipError } from "~/lib/scim/ownership";
 import { ScimPatchApplyError } from "~/lib/scim/patch";
 import {
   deleteScimUser,
@@ -35,6 +36,7 @@ vi.mock("~/lib/scim/auth", () => ({
   requireScimBearer: vi.fn().mockResolvedValue({
     tokenId: "tk_test",
     systemUserId: "system-scim-user",
+    idpName: "OKTA" as const,
   }),
 }));
 
@@ -129,6 +131,7 @@ beforeEach(() => {
   vi.mocked(requireScimBearer).mockResolvedValue({
     tokenId: "tk_test",
     systemUserId: "system-scim-user",
+    idpName: "OKTA" as const,
   });
   vi.mocked(getScimUserById).mockReset();
   vi.mocked(putScimUser).mockReset();
@@ -148,6 +151,7 @@ describe("GET /api/scim/v2/Users/[id]", () => {
     expect(getScimUserById).toHaveBeenCalledWith("u_1", {
       tokenId: "tk_test",
       systemUserId: "system-scim-user",
+      idpName: "OKTA" as const,
     });
   });
 
@@ -206,7 +210,11 @@ describe("PUT /api/scim/v2/Users/[id]", () => {
     expect(putScimUser).toHaveBeenCalledWith(
       "u_1",
       expect.objectContaining({ userName: "jdoe@example.com" }),
-      { tokenId: "tk_test", systemUserId: "system-scim-user" }
+      {
+        tokenId: "tk_test",
+        systemUserId: "system-scim-user",
+        idpName: "OKTA" as const,
+      }
     );
   });
 
@@ -307,7 +315,11 @@ describe("PATCH /api/scim/v2/Users/[id]", () => {
     expect(patchScimUser).toHaveBeenCalledWith(
       "u_1",
       expect.objectContaining({ Operations: expect.any(Array) }),
-      { tokenId: "tk_test", systemUserId: "system-scim-user" }
+      {
+        tokenId: "tk_test",
+        systemUserId: "system-scim-user",
+        idpName: "OKTA" as const,
+      }
     );
   });
 
@@ -397,6 +409,7 @@ describe("DELETE /api/scim/v2/Users/[id]", () => {
     expect(deleteScimUser).toHaveBeenCalledWith("u_1", {
       tokenId: "tk_test",
       systemUserId: "system-scim-user",
+      idpName: "OKTA" as const,
     });
   });
 
@@ -444,5 +457,54 @@ describe("POST /api/scim/v2/Users/[id]", () => {
     expect(body.schemas[0]).toBe("urn:ietf:params:scim:api:messages:2.0:Error");
     expect(body.status).toBe("405");
     expect(body.detail).toBe("Method not supported");
+  });
+});
+
+describe("cross-IdP ownership → 409 (V2-MULTI-IDP-01)", () => {
+  // ScimOwnershipError is deliberately NOT mocked at the top of this file, so
+  // these assert the real class flows through the real route mapping.
+  const ownershipError = () =>
+    new ScimOwnershipError("User", "u_1", "ENTRA" as never);
+
+  it("PUT on another IdP's user returns 409 uniqueness, not 500", async () => {
+    vi.mocked(putScimUser).mockRejectedValueOnce(ownershipError());
+    const [req, ctx] = makeReq({
+      method: "PUT",
+      body: { schemas: [], userName: "a@example.com" },
+    });
+
+    const res = await PUT(req, ctx);
+
+    expect(res.status).toBe(409);
+    expect(res.headers.get("Content-Type")).toBe("application/scim+json");
+    const body = (await res.json()) as { scimType: string; detail: string };
+    expect(body.scimType).toBe("uniqueness");
+    expect(body.detail).toContain("ENTRA");
+  });
+
+  it("PATCH on another IdP's user returns 409", async () => {
+    vi.mocked(patchScimUser).mockRejectedValueOnce(ownershipError());
+    const [req, ctx] = makeReq({
+      method: "PATCH",
+      body: {
+        schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+        Operations: [{ op: "replace", path: "active", value: false }],
+      },
+    });
+
+    const res = await PATCH(req, ctx);
+
+    expect(res.status).toBe(409);
+  });
+
+  it("DELETE on another IdP's user returns 409 rather than falling through to 500", async () => {
+    vi.mocked(deleteScimUser).mockRejectedValueOnce(ownershipError());
+    const [req, ctx] = makeReq({ method: "DELETE" });
+
+    const res = await DELETE(req, ctx);
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { scimType: string };
+    expect(body.scimType).toBe("uniqueness");
   });
 });

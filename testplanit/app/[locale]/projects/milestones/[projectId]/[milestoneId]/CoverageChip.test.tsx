@@ -92,6 +92,45 @@ describe("CoverageChip", () => {
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveAttribute("title", "labels.untested: 2");
   });
+
+  it("with uncoveredWhen=no-linked-cases, renders an Untested pip (not the Uncovered badge) for linked-but-unexecuted cases", () => {
+    render(
+      <CoverageChip
+        uncoveredWhen="no-linked-cases"
+        breakdown={{
+          linkedCaseCount: 3,
+          passed: 0,
+          failed: 0,
+          inProgress: 0,
+          notRun: 3,
+          uncovered: false,
+          statuses: [],
+          untested: 3,
+        }}
+      />
+    );
+    expect(screen.queryByText("coverageUncovered")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("labels.untested: 3")).toBeInTheDocument();
+  });
+
+  it("with uncoveredWhen=no-linked-cases, still shows the Uncovered badge when nothing is linked", () => {
+    render(
+      <CoverageChip
+        uncoveredWhen="no-linked-cases"
+        breakdown={{
+          linkedCaseCount: 0,
+          passed: 0,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+          uncovered: true,
+          statuses: [],
+          untested: 0,
+        }}
+      />
+    );
+    expect(screen.getByText("coverageUncovered")).toBeInTheDocument();
+  });
 });
 
 describe("coverageSortValue / hasCompletedCoverage", () => {

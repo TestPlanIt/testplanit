@@ -13,6 +13,11 @@ import {
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
 import { MagicSelectButton } from "@/components/runs/MagicSelectButton";
+import {
+  ImpactButton,
+  type ImpactAcceptedInfo,
+} from "@/components/impact/ImpactButton";
+import { recordImpactAcceptance } from "@/components/impact/recordImpactAcceptance";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
@@ -589,6 +594,7 @@ const TestCasesDialog = React.memo(
     form,
     projectId,
     linkedIssueIds,
+    onImpactAccepted,
     numericProjectId,
     onPreflightResult,
     onPreflightChipClick,
@@ -741,6 +747,12 @@ const TestCasesDialog = React.memo(
                   }}
                   selectedTestCases={selectedTestCases}
                   onSuggestionsAccepted={setSelectedTestCases}
+                />
+                <ImpactButton
+                  projectId={Number(projectId)}
+                  selectedTestCases={selectedTestCases}
+                  onSuggestionsAccepted={setSelectedTestCases}
+                  onAnalysisAccepted={onImpactAccepted}
                 />
                 <div className="flex items-start text-sm divide-x divide-muted-foreground">
                   {(isLoadingForecast || isLoadingTestCasesForDrawer) &&
@@ -920,6 +932,8 @@ export default function AddTestRunModal({
   const router = useRouter();
 
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
+  const [impactAccepted, setImpactAccepted] =
+    useState<ImpactAcceptedInfo | null>(null);
 
   const { mutateAsync: createTestRuns } =
     useClientQueries(schema).testRuns.useCreate();
@@ -1522,6 +1536,17 @@ export default function AddTestRunModal({
 
           await updateTestRunForecast(newTestRun.id);
 
+          if (createdRuns.length === 1 && impactAccepted) {
+            void recordImpactAcceptance(
+              Number(projectId),
+              impactAccepted.analysisId,
+              {
+                testRunId: newTestRun.id,
+                acceptedCaseIds: impactAccepted.acceptedCaseIds,
+              }
+            );
+          }
+
           // Fan out iteration rows for any parameterized cases. Three
           // possible response shapes from /generate-iterations:
           //   - 422 hardRefuse  → toast.error with cap details
@@ -1671,6 +1696,7 @@ export default function AddTestRunModal({
             form: form,
             projectId: projectId?.toString() || "",
             linkedIssueIds: linkedIssueIds,
+            onImpactAccepted: setImpactAccepted,
             numericProjectId: numericProjectId,
             onPreflightResult: setPreflightResult,
             onPreflightChipClick: (r: PreflightResult) => {

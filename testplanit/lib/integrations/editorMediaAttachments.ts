@@ -1,4 +1,5 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getS3Client } from "~/lib/s3Client";
 import { Readable } from "stream";
 
 /**
@@ -134,15 +135,7 @@ export async function resolveEditorMediaAttachments(
       const key = storageKeyForSrc(src);
       if (!key || !bucketName) continue;
 
-      s3Client ??= new S3Client({
-        region: process.env.AWS_REGION || process.env.AWS_BUCKET_REGION,
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-        },
-        endpoint: process.env.AWS_ENDPOINT_URL,
-        forcePathStyle: process.env.AWS_ENDPOINT_URL ? true : false,
-      });
+      s3Client ??= getS3Client();
 
       const response = await s3Client.send(
         new GetObjectCommand({ Bucket: bucketName, Key: key })

@@ -42,6 +42,7 @@ export function DatasetCreateDialog({
 }: DatasetCreateDialogProps) {
   const t = useTranslations("projects.settings.datasets");
   const tCreate = useTranslations("projects.settings.datasets.create");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -120,7 +121,7 @@ export function DatasetCreateDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{tCreate("nameLabel")}</FormLabel>
+                  <FormLabel>{tCommon("name")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -138,7 +139,7 @@ export function DatasetCreateDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{tCreate("descriptionLabel")}</FormLabel>
+                  <FormLabel>{tCommon("fields.description")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
@@ -158,7 +159,7 @@ export function DatasetCreateDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={submitting}
               >
-                {tCreate("cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button
                 type="submit"

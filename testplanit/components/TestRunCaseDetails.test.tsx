@@ -57,6 +57,23 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     // TestRunCases.statusId, so the sheet falls back to it when the run-case
     // carries no status of its own.
     jUnitTestResult: { useFindMany: mockUseFindManyJUnitTestResult },
+    // The read-only LinkedRequirementsPanel this sheet now mounts reads
+    // both of these. Empty data renders nothing at all (the panel returns
+    // null when a read-only case covers no requirements), which is what
+    // every case fixture in this file describes.
+    issue: { useFindMany: () => ({ data: [], refetch: vi.fn() }) },
+    // ...and its Requirements opt-in gate. Left ON so these fixtures keep
+    // exercising the read-only empty-case path above rather than the gate.
+    projects: {
+      useFindUnique: () => ({
+        data: { requirementsEnabled: true },
+        isPending: false,
+      }),
+    },
+    repositoryCaseIssue: {
+      useFindMany: () => ({ data: [], refetch: vi.fn() }),
+      useUpdate: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    },
   }),
 }));
 
@@ -96,6 +113,10 @@ vi.mock("@/components/TestResultHistory", () => ({
   default: ({ caseId }: { caseId: number }) => (
     <div data-testid="test-result-history">History for case {caseId}</div>
   ),
+}));
+
+vi.mock("@/components/impact/CodePinsPanel", () => ({
+  CodePinsPanel: () => null,
 }));
 
 vi.mock("@/projects/repository/[projectId]/AddResultModal", () => ({

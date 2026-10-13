@@ -222,7 +222,7 @@ export function AuditLogDetailModal({
                             </div>
                             <div className="overflow-hidden">
                               <span className="text-muted-foreground text-xs">
-                                {t("newValue")}:
+                                {tGlobal("common.labels.new")}:
                               </span>
                               <pre className="text-xs mt-1 bg-background p-2 rounded w-full whitespace-pre-wrap break-words">
                                 {formatValue(change.newName ?? change.new)}

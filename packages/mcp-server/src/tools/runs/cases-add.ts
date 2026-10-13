@@ -8,6 +8,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { generateRunIterations } from "./shared.js";
 
 export interface RunsCasesAddDeps {
   env: EnvConfig;
@@ -23,7 +24,7 @@ export function registerRunsCasesAdd(
     "testplanit_runs_cases_add",
     {
       description:
-        "Add repository test cases to an existing test run. Cases are appended after any existing run cases (order preserved). Case IDs already in the run are silently skipped; a case previously removed from the run is restored (at its former position, with its prior results still soft-deleted). Returns a confirmation with the number of cases requested, restored, and the updated total.",
+        "Add repository test cases to an existing test run. Cases are appended after any existing run cases (order preserved). Case IDs already in the run are silently skipped; a case previously removed from the run is restored at its former position, untested (its earlier results stay removed). Data-driven cases get their iterations, as in the web UI. Returns the number of cases requested and restored, the updated total, and `iterations` (whether they were generated, and how many).",
       inputSchema: {
         runId: z
           .number()
@@ -70,20 +71,63 @@ export function registerRunsCasesAdd(
         // Restore any of the requested cases that were previously removed
         // from the run — createMany's skipDuplicates skips their existing
         // (soft-deleted) rows, which would otherwise leave them removed.
-        // Restored rows keep their former order position.
-        const restored = await zenstack<{ count: number }>(
+        // Restored rows keep their former order position but come back
+        // untested: their results were removed with them, so the old status
+        // and iteration counts would describe results that no longer count.
+        const removed = await zenstack<Array<{ id: number }>>(
           "testRunCases",
-          "updateMany",
+          "findMany",
           {
             where: {
               testRunId: input.runId,
               repositoryCaseId: { in: input.caseIds },
               isDeleted: true,
             },
-            data: { isDeleted: false },
-          } satisfies TestRunCasesUpdateManyArgs,
+            select: { id: true },
+          },
           deps.env,
         );
+        const removedIds = (removed ?? []).map((r) => r.id);
+        let restored: { count: number } = { count: 0 };
+        if (removedIds.length > 0) {
+          restored = await zenstack<{ count: number }>(
+            "testRunCases",
+            "updateMany",
+            {
+              where: { id: { in: removedIds } },
+              data: {
+                isDeleted: false,
+                statusId: null,
+                isCompleted: false,
+                startedAt: null,
+                completedAt: null,
+                elapsed: null,
+                passedIterations: 0,
+                failedIterations: 0,
+                skippedIterations: 0,
+              },
+            } satisfies TestRunCasesUpdateManyArgs,
+            deps.env,
+          );
+          // Their iterations were removed with them; bring those back
+          // untested too.
+          await zenstack(
+            "testRunCaseIteration",
+            "updateMany",
+            {
+              where: { testRunCaseId: { in: removedIds }, isDeleted: true },
+              data: {
+                isDeleted: false,
+                statusId: null,
+                isCompleted: false,
+                startedAt: null,
+                completedAt: null,
+                elapsed: null,
+              },
+            },
+            deps.env,
+          );
+        }
 
         // Return the updated total of active (non-removed) run cases.
         const total = await zenstack<number>(
@@ -95,11 +139,14 @@ export function registerRunsCasesAdd(
           deps.env,
         );
 
+        const iterations = await generateRunIterations(input.runId, deps.env);
+
         const result = {
           runId: input.runId,
           requested: input.caseIds.length,
           restored: restored?.count ?? 0,
           total: total ?? 0,
+          iterations,
         };
         return {
           content: [{ type: "text", text: JSON.stringify(result) }],

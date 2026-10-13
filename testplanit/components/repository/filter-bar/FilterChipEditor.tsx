@@ -135,7 +135,11 @@ export function FilterChipEditor({
   };
 
   return (
-    <div className="flex flex-col gap-2" data-testid="filter-chip-editor">
+    <div
+      className="flex flex-col gap-2"
+      data-testid="filter-chip-editor"
+      data-dimension={dimension.key}
+    >
       {LIST_VALUE_TYPES.has(dimension.valueType) && (
         <>
           {dimension.operators.length > 1 && (

@@ -519,6 +519,29 @@ describe("AzureDevOpsAdapter", () => {
       expect(result.customFields).not.toHaveProperty("System.State");
     });
 
+    it("maps the work item type so an imported work item can be classified", async () => {
+      const userStoryWorkItem = {
+        ...mockWorkItem,
+        fields: {
+          ...mockWorkItem.fields,
+          "System.WorkItemType": "User Story",
+        },
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(userStoryWorkItem),
+      });
+
+      const result = await adapter.getIssue("123");
+
+      expect(result.issueType).toEqual({
+        id: "User Story",
+        name: "User Story",
+      });
+      // System.WorkItemType is a first-class field now, not a custom one.
+      expect(result.customFields).not.toHaveProperty("System.WorkItemType");
+    });
+
     it("should handle work item without assignee", async () => {
       const workItemNoAssignee = {
         ...mockWorkItem,
@@ -1356,6 +1379,59 @@ describe("AzureDevOpsAdapter", () => {
       expect(body.query).toContain("[System.ChangedDate] >= @Today - 180");
     });
 
+    it("scopes the WIQL to specific work item types via [System.WorkItemType] IN", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ["User Story", "Epic"],
+      });
+
+      const wiqlCall = mockFetch.mock.calls[1];
+      const body = JSON.parse(wiqlCall[1].body);
+      expect(body.query).toContain(
+        "[System.WorkItemType] IN ('User Story', 'Epic')"
+      );
+    });
+
+    it("produces today's exact WIQL when issueTypeIds is absent or empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+      await adapter.searchIssues({});
+      const wiqlCallAbsent = mockFetch.mock.calls[1];
+      const bodyAbsent = JSON.parse(wiqlCallAbsent[1].body);
+      expect(bodyAbsent.query).not.toContain("[System.WorkItemType]");
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+      await adapter.searchIssues({ issueTypeIds: [] });
+      const wiqlCallEmpty = mockFetch.mock.calls[2];
+      const bodyEmpty = JSON.parse(wiqlCallEmpty[1].body);
+      expect(bodyEmpty.query).not.toContain("[System.WorkItemType]");
+      expect(bodyEmpty.query).toBe(bodyAbsent.query);
+    });
+
+    it("never lets a single-quote-bearing work item type name terminate the WIQL literal early", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ["User Story' OR [System.TeamProject] <> ''"],
+      });
+
+      const wiqlCall = mockFetch.mock.calls[1];
+      const body = JSON.parse(wiqlCall[1].body);
+      expect(body.query).not.toContain("OR [System.TeamProject] <> ''");
+    });
+
     it("should handle pagination", async () => {
       mockFetch
         .mockResolvedValueOnce({
@@ -1393,6 +1469,78 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result.hasMore).toBe(true);
       expect(result.total).toBe(5);
+    });
+
+    it("pages past the first window when more work items match than one page holds", async () => {
+      // Simulates the real WIQL server: it only ever returns up to `$top` ids
+      // regardless of how many match, and the workitems endpoint only ever
+      // returns the ids actually requested.
+      const totalMatching = 120;
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes("/_apis/wit/wiql")) {
+          const topMatch = url.match(/\$top=(\d+)/);
+          const top = topMatch ? parseInt(topMatch[1], 10) : 200;
+          const workItems = Array.from(
+            { length: Math.min(top, totalMatching) },
+            (_, i) => ({ id: i + 1 })
+          );
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ workItems }),
+          });
+        }
+        if (url.includes("/_apis/wit/workitems?ids=")) {
+          const idsParam = url.match(/ids=([\d,]+)/)?.[1] ?? "";
+          const ids = idsParam
+            .split(",")
+            .filter(Boolean)
+            .map((s) => parseInt(s, 10));
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                value: ids.map((id) => ({ ...mockWorkItem, id })),
+              }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ value: [] }),
+        });
+      });
+
+      const page1 = await adapter.searchIssues({ limit: 50, offset: 0 });
+      expect(page1.issues).toHaveLength(50);
+      expect(page1.issues.map((i) => i.id)).toEqual(
+        Array.from({ length: 50 }, (_, i) => String(i + 1))
+      );
+      expect(page1.hasMore).toBe(true);
+      expect(page1.total).toBe(120);
+
+      const page2 = await adapter.searchIssues({ limit: 50, offset: 50 });
+      expect(page2.issues).toHaveLength(50);
+      expect(page2.issues.map((i) => i.id)).toEqual(
+        Array.from({ length: 50 }, (_, i) => String(i + 51))
+      );
+      expect(page2.hasMore).toBe(true);
+      expect(page2.total).toBe(120);
+
+      const page3 = await adapter.searchIssues({ limit: 50, offset: 100 });
+      expect(page3.issues).toHaveLength(20);
+      expect(page3.issues.map((i) => i.id)).toEqual(
+        Array.from({ length: 20 }, (_, i) => String(i + 101))
+      );
+      expect(page3.hasMore).toBe(false);
+      expect(page3.total).toBe(120);
+
+      // The WIQL id ceiling is fixed on every page, never options.limit (50).
+      const wiqlCalls = mockFetch.mock.calls.filter(
+        ([url]) => typeof url === "string" && url.includes("/_apis/wit/wiql")
+      );
+      expect(wiqlCalls).toHaveLength(3);
+      for (const [url] of wiqlCalls) {
+        expect(url).not.toContain("$top=50");
+      }
     });
 
     it("should return empty results when no items found", async () => {

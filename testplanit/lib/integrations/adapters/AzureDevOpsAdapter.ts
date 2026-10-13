@@ -15,6 +15,17 @@ import {
 const MAX_ATTACHMENT_DOWNLOAD_BYTES = 10 * 1024 * 1024;
 
 /**
+ * Azure DevOps' own documented WIQL query-results ceiling — "Work tracking,
+ * process, and project limits" (Microsoft Learn): query results are silently
+ * truncated at 20,000 items, with no error raised past that point. This
+ * bounds how many work-item ids a single WIQL call can return (the whole
+ * matching set the import orchestrator pages through) and must NOT be
+ * conflated with `options.limit`, which governs only how many of those ids
+ * one page hydrates via the follow-up workitems fetch below.
+ */
+const WIQL_MAX_IDS = 20000;
+
+/**
  * Azure DevOps integration adapter using Personal Access Token authentication
  */
 export class AzureDevOpsAdapter extends BaseAdapter {
@@ -368,13 +379,29 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       );
     }
 
+    // Type-scoped import (SCALE-01) — ids here are work-item type NAMES,
+    // because getIssueTypes returns `{ id: type.name }` for Azure DevOps, not
+    // a numeric id. WIQL has no parameter binding, so strip any value
+    // containing a single quote, backslash or newline before quoting it —
+    // that's the only injection barrier available for this dialect.
+    if (options.issueTypeIds?.length) {
+      const safeTypes = options.issueTypeIds.filter(
+        (id) => !/['\\\n\r]/.test(id)
+      );
+      if (safeTypes.length > 0) {
+        conditions.push(
+          `[System.WorkItemType] IN (${safeTypes.map((t) => `'${t}'`).join(", ")})`
+        );
+      }
+    }
+
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const wiql = `SELECT [System.Id] FROM WorkItems ${whereClause} ORDER BY [System.CreatedDate] DESC`;
 
     const wiqlResponse = await this.makeRequest<any>(
       this.buildUrl(
-        `/_apis/wit/wiql?api-version=${this.apiVersion}&$top=${options.limit || 200}`
+        `/_apis/wit/wiql?api-version=${this.apiVersion}&$top=${WIQL_MAX_IDS}`
       ),
       {
         method: "POST",
@@ -670,6 +697,10 @@ export class AzureDevOpsAdapter extends BaseAdapter {
 
   private mapAzureDevOpsWorkItem(workItem: any): IssueData {
     const fields = workItem.fields;
+    // getIssueTypes returns { id: type.name, name: type.name } — the work
+    // item type NAME is the id the Requirement Types picker stores, so
+    // issueType.id must be that same name, not some other identifier.
+    const workItemType = fields["System.WorkItemType"];
 
     return {
       id: workItem.id.toString(),
@@ -678,6 +709,10 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       description: fields["System.Description"],
       status: fields["System.State"],
       priority: fields["Microsoft.VSTS.Common.Priority"]?.toString(),
+      issueType:
+        typeof workItemType === "string" && workItemType
+          ? { id: workItemType, name: workItemType }
+          : undefined,
       assignee: fields["System.AssignedTo"]
         ? {
             id:

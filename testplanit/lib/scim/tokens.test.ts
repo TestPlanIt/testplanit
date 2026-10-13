@@ -32,6 +32,7 @@ import {
   listScimTokens,
   mintScimToken,
   revokeScimToken,
+  rotateScimToken,
 } from "./tokens";
 import { SCIM_SYSTEM_USER_ID, SCIM_TOKEN_PREFIX } from "./constants";
 
@@ -252,5 +253,203 @@ describe("SCIM tokens service", () => {
       const decrypted = await decryptScimSecret(args.data.secret);
       expect(decrypted).toBe(plaintext);
     });
+  });
+});
+
+describe("rotateScimToken — overlap-window rotation", () => {
+  const originalSecret = process.env.NEXTAUTH_SECRET;
+
+  beforeAll(() => {
+    process.env.NEXTAUTH_SECRET = "test-secret-for-scim-token-hashing";
+  });
+
+  afterAll(() => {
+    if (originalSecret) {
+      process.env.NEXTAUTH_SECRET = originalSecret;
+    } else {
+      delete process.env.NEXTAUTH_SECRET;
+    }
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const currentRow = {
+    id: "tk_1",
+    name: "Okta production",
+    token: "old-hash",
+    tokenPrefix: "tps_oldpref",
+    secret: "enc(tps_old_plaintext)",
+    isActive: true,
+    revokedAt: null,
+    expiresAt: null,
+  };
+
+  function mockCurrent(overrides: Record<string, unknown> = {}) {
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValue({
+      ...currentRow,
+      ...overrides,
+    } as never);
+    vi.mocked(baseDb.scimToken.update).mockImplementation((async (args: {
+      data: Record<string, unknown>;
+    }) => ({
+      ...currentRow,
+      ...args.data,
+    })) as never);
+  }
+
+  it("T1: updates the existing row rather than creating a new one — provenance links survive", async () => {
+    mockCurrent();
+
+    await rotateScimToken("tk_1", 3_600_000, "admin_1");
+
+    expect(baseDb.scimToken.create).not.toHaveBeenCalled();
+    expect(baseDb.scimToken.update).toHaveBeenCalledTimes(1);
+    const args = vi.mocked(baseDb.scimToken.update).mock.calls[0][0] as {
+      where: { id: string };
+    };
+    expect(args.where.id).toBe("tk_1");
+  });
+
+  it("T2: moves the superseded hash and secret into the previous* columns", async () => {
+    mockCurrent();
+
+    await rotateScimToken("tk_1", 3_600_000, "admin_1");
+
+    const data = (
+      vi.mocked(baseDb.scimToken.update).mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      }
+    ).data;
+    expect(data.previousToken).toBe("old-hash");
+    expect(data.previousSecret).toBe("enc(tps_old_plaintext)");
+    expect(data.previousTokenPrefix).toBe("tps_oldpref");
+    expect(data.previousTokenExpiresAt).toBeInstanceOf(Date);
+  });
+
+  it("T3: returns a brand-new prefixed plaintext exactly once, and never persists it raw", async () => {
+    mockCurrent();
+
+    const { plaintext } = await rotateScimToken("tk_1", 3_600_000, "admin_1");
+
+    expect(plaintext.startsWith(SCIM_TOKEN_PREFIX)).toBe(true);
+    const data = (
+      vi.mocked(baseDb.scimToken.update).mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      }
+    ).data;
+    expect(data.token).not.toBe(plaintext);
+    expect(data.secret).toBe(`enc(${plaintext})`);
+    expect(encrypt).toHaveBeenCalledWith(plaintext);
+  });
+
+  it("T4: sets the overlap expiry the requested distance into the future", async () => {
+    mockCurrent();
+    const before = Date.now();
+
+    await rotateScimToken("tk_1", 3_600_000, "admin_1");
+
+    const data = (
+      vi.mocked(baseDb.scimToken.update).mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      }
+    ).data;
+    const expiry = (data.previousTokenExpiresAt as Date).getTime();
+    expect(expiry).toBeGreaterThanOrEqual(before + 3_600_000);
+    expect(expiry).toBeLessThanOrEqual(Date.now() + 3_600_000);
+  });
+
+  it("T5: a zero window retains no previous bearer — the old revoke + mint semantics", async () => {
+    mockCurrent();
+
+    await rotateScimToken("tk_1", 0, "admin_1");
+
+    const data = (
+      vi.mocked(baseDb.scimToken.update).mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      }
+    ).data;
+    expect(data.previousToken).toBeNull();
+    expect(data.previousSecret).toBeNull();
+    expect(data.previousTokenExpiresAt).toBeNull();
+  });
+
+  it("T6: stamps who rotated and when", async () => {
+    mockCurrent();
+
+    await rotateScimToken("tk_1", 3_600_000, "admin_1");
+
+    const data = (
+      vi.mocked(baseDb.scimToken.update).mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      }
+    ).data;
+    expect(data.rotatedById).toBe("admin_1");
+    expect(data.rotatedAt).toBeInstanceOf(Date);
+  });
+
+  it("T7: throws for an unknown token id without writing", async () => {
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValue(null as never);
+
+    await expect(
+      rotateScimToken("tk_missing", 3_600_000, "admin_1")
+    ).rejects.toThrow();
+    expect(baseDb.scimToken.update).not.toHaveBeenCalled();
+  });
+
+  it("T8: revoking closes any open overlap so the superseded bearer dies with the token", async () => {
+    vi.mocked(baseDb.scimToken.update).mockResolvedValue({
+      id: "tk_1",
+    } as never);
+
+    await revokeScimToken("tk_1", "admin_1");
+
+    const data = (
+      vi.mocked(baseDb.scimToken.update).mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      }
+    ).data;
+    expect(data.previousToken).toBeNull();
+    expect(data.previousTokenExpiresAt).toBeNull();
+  });
+
+  it("T9: refuses to rotate a revoked token — a retired credential never comes back to life", async () => {
+    mockCurrent({
+      isActive: false,
+      revokedAt: new Date("2026-09-01T00:00:00Z"),
+    });
+
+    await expect(rotateScimToken("tk_1", 3_600_000, "admin_1")).rejects.toThrow(
+      /revoked/i
+    );
+    expect(baseDb.scimToken.update).not.toHaveBeenCalled();
+  });
+
+  it("T10: refuses to rotate an expired token without writing", async () => {
+    mockCurrent({ expiresAt: new Date("2020-01-01T00:00:00Z") });
+
+    await expect(rotateScimToken("tk_1", 3_600_000, "admin_1")).rejects.toThrow(
+      /expired/i
+    );
+    expect(baseDb.scimToken.update).not.toHaveBeenCalled();
+  });
+
+  it("T11: refuses to rotate a deactivated token even with no revokedAt stamp", async () => {
+    mockCurrent({ isActive: false });
+
+    await expect(rotateScimToken("tk_1", 3_600_000, "admin_1")).rejects.toThrow(
+      /revoked/i
+    );
+    expect(baseDb.scimToken.update).not.toHaveBeenCalled();
+  });
+
+  it("T12: a live token with a future expiry still rotates", async () => {
+    mockCurrent({ expiresAt: new Date(Date.now() + 86_400_000) });
+
+    await expect(
+      rotateScimToken("tk_1", 3_600_000, "admin_1")
+    ).resolves.toBeDefined();
+    expect(baseDb.scimToken.update).toHaveBeenCalledTimes(1);
   });
 });

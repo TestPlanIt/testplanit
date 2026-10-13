@@ -32,14 +32,34 @@ export const defaultPageSizeOptions: PageSizeOption[] = [
   "All",
 ];
 
+function parseUrlPage(raw: string | null): number | null {
+  if (!raw) return null;
+  const page = parseInt(raw, 10);
+  return !isNaN(page) && page > 0 ? page : null;
+}
+
+function parseUrlSize(raw: string | null): PageSizeOption | null {
+  if (!raw) return null;
+  if (raw === "All") return "All";
+  const size = parseInt(raw, 10);
+  return !isNaN(size) && size > 0 ? size : null;
+}
+
 interface PaginationProviderProps {
   children: React.ReactNode;
   defaultPageSize?: PageSizeOption;
+  /** URL param carrying the current page. Two providers on one page must
+   * bind to different params, or each one's URL sync fights the other's. */
+  pageParam?: string;
+  /** URL param carrying the page size. See `pageParam`. */
+  pageSizeParam?: string;
 }
 
 export function PaginationProvider({
   children,
   defaultPageSize = 10,
+  pageParam = "page",
+  pageSizeParam = "pageSize",
 }: PaginationProviderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,23 +67,21 @@ export function PaginationProvider({
 
   // Initialize state from URL if present, otherwise use defaults
   const [currentPage, setCurrentPage] = useState(() => {
-    const page = searchParams.get("page");
-    const urlPage = page ? parseInt(page, 10) : null;
-    return urlPage && !isNaN(urlPage) && urlPage > 0 ? urlPage : 1;
+    return parseUrlPage(searchParams.get(pageParam)) ?? 1;
   });
 
   const [pageSize, setPageSize] = useState<PageSizeOption>(() => {
-    const size = searchParams.get("pageSize");
-    if (size === "All") return "All";
-    const urlSize = size ? parseInt(size, 10) : null;
-    return urlSize && !isNaN(urlSize) && urlSize > 0
-      ? urlSize
-      : defaultPageSize;
+    return parseUrlSize(searchParams.get(pageSizeParam)) ?? defaultPageSize;
   });
 
   const [totalItems, setTotalItems] = useState(0);
 
-  // Track the last values we set to avoid circular updates
+  // The URL values this provider last reconciled with, by writing them or by
+  // adopting a change that arrived from outside (browser navigation, another
+  // writer). Owned by the write effect only: the read effect and the write
+  // effect run in the same commit, so if the read effect moved this ref the
+  // write effect would still see the previous state and write it back over
+  // the URL that just changed.
   const lastSetValues = React.useRef<{ page: number; size: PageSizeOption }>({
     page: currentPage,
     size: pageSize,
@@ -82,34 +100,20 @@ export function PaginationProvider({
 
   // Read from URL on mount or when URL changes externally
   useEffect(() => {
-    const page = searchParams.get("page");
-    const size = searchParams.get("pageSize");
-
-    // Parse URL values
-    const urlPage = page ? parseInt(page, 10) : null;
-    const urlSize = size === "All" ? "All" : size ? parseInt(size, 10) : null;
+    const urlPage = parseUrlPage(searchParams.get(pageParam));
+    const urlSize = parseUrlSize(searchParams.get(pageSizeParam));
 
     // Priority 1: URL parameters (always respect these)
-    if (urlPage && !isNaN(urlPage) && urlPage > 0) {
-      if (urlPage !== lastSetValues.current.page) {
-        lastSetValues.current.page = urlPage;
-        setCurrentPage(urlPage);
-      }
+    if (urlPage !== null && urlPage !== lastSetValues.current.page) {
+      setCurrentPage(urlPage);
     }
-
-    if (
-      urlSize === "All" ||
-      (typeof urlSize === "number" && !isNaN(urlSize) && urlSize > 0)
-    ) {
-      if (urlSize !== lastSetValues.current.size) {
-        lastSetValues.current.size = urlSize;
-        setPageSize(urlSize);
-      }
+    if (urlSize !== null && urlSize !== lastSetValues.current.size) {
+      setPageSize(urlSize);
     }
 
     // Priority 2: User preferences (only if no URL params, haven't applied yet, and session has preference)
     if (
-      !urlSize &&
+      urlSize === null &&
       !hasAppliedPreferences.current &&
       session?.user?.preferences?.itemsPerPage
     ) {
@@ -117,39 +121,48 @@ export function PaginationProvider({
         session.user.preferences.itemsPerPage.replace("P", ""),
         10
       );
-      if (
-        !isNaN(preferredSize) &&
-        preferredSize > 0 &&
-        preferredSize !== lastSetValues.current.size
-      ) {
+      if (!isNaN(preferredSize) && preferredSize > 0) {
         hasAppliedPreferences.current = true;
-        lastSetValues.current = {
-          page: lastSetValues.current.page,
-          size: preferredSize,
-        };
         setPageSize(preferredSize);
       }
     }
-  }, [searchParams, session?.user?.preferences?.itemsPerPage]);
+  }, [
+    searchParams,
+    session?.user?.preferences?.itemsPerPage,
+    pageParam,
+    pageSizeParam,
+  ]);
 
   // Update URL when pagination state changes
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
-    const currentPageParam = params.get("page");
-    const currentPageSizeParam = params.get("pageSize");
+    const urlPage = parseUrlPage(params.get(pageParam));
+    const urlSize = parseUrlSize(params.get(pageSizeParam));
 
-    const pageChanged = currentPageParam !== currentPage.toString();
-    const pageSizeChanged = currentPageSizeParam !== pageSize.toString();
+    // The URL moved away from what this provider last reconciled with, so
+    // something else changed it. The read effect is pulling that value into
+    // state; adopt it here instead of writing the (still previous) state back
+    // over it, which would flip the URL back and forth indefinitely.
+    const pageChangedExternally =
+      urlPage !== null && urlPage !== lastSetValues.current.page;
+    const sizeChangedExternally =
+      urlSize !== null && urlSize !== lastSetValues.current.size;
+    if (pageChangedExternally || sizeChangedExternally) {
+      lastSetValues.current = {
+        page: urlPage ?? lastSetValues.current.page,
+        size: urlSize ?? lastSetValues.current.size,
+      };
+      return;
+    }
 
-    if (pageChanged || pageSizeChanged) {
-      // Update our tracking ref
+    if (urlPage !== currentPage || urlSize !== pageSize) {
       lastSetValues.current = { page: currentPage, size: pageSize };
 
-      params.set("page", currentPage.toString());
-      params.set("pageSize", pageSize.toString());
+      params.set(pageParam, currentPage.toString());
+      params.set(pageSizeParam, pageSize.toString());
       router.replace(`?${params.toString()}`, { scroll: false });
     }
-  }, [currentPage, pageSize, router, searchParams]);
+  }, [currentPage, pageSize, router, searchParams, pageParam, pageSizeParam]);
 
   const value = {
     currentPage,

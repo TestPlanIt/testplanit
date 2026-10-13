@@ -765,7 +765,9 @@ export function QuickScriptModal({
       >
         <DialogHeader>
           <DialogTitle>
-            {showPreview ? tAi("previewTitle") : t("title")}
+            {showPreview
+              ? tAi("previewTitle")
+              : tCommon("pageTitles.quickscript")}
           </DialogTitle>
           <DialogDescription>
             {showPreview
@@ -814,7 +816,7 @@ export function QuickScriptModal({
                         <span className="flex items-center gap-1.5">
                           {selectedTemplate
                             ? selectedTemplate.name
-                            : t("templatePlaceholder")}
+                            : tCommon("placeholders.selectATemplate")}
                           {selectedTemplate?.isDefault && (
                             <Tooltip>
                               <TooltipTrigger className="ms-1" asChild>
@@ -979,7 +981,7 @@ export function QuickScriptModal({
                 {isExporting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {tExportModal("exporting")}
+                    {tCommon("actions.exportingPdf")}
                   </>
                 ) : (
                   tCases("export")

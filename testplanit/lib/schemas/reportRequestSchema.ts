@@ -17,6 +17,15 @@ const PRE_BUILT_REPORT_TYPES = [
   "cross-project-execution-log",
   "iteration-matrix",
   "automation-candidates",
+  "requirement-coverage-gaps",
+  "cross-project-requirement-coverage-gaps",
+  "requirement-traceability",
+  "cross-project-requirement-traceability",
+  "requirement-coverage-changes",
+  "impact-analysis",
+  "cross-project-impact-analysis",
+  "code-pin-coverage",
+  "cross-project-code-pin-coverage",
 ] as const;
 
 /**
@@ -42,6 +51,16 @@ export const reportRequestSchema = z
     projectId: z.number().optional(),
     startDate: z.iso.datetime().optional(),
     endDate: z.iso.datetime().optional(),
+    // A relative date range ("last week", or "last N days/weeks/months")
+    // resolved on `dateRangeTimezone`'s calendar at run time, so a stored
+    // run follows the calendar. Handlers read their dates through
+    // resolveRequestDateRange, which prefers this over startDate/endDate.
+    // Lenient on purpose: a malformed relative range falls back to the
+    // absolute dates rather than failing the run.
+    dateRangePreset: z.string().nullish(),
+    dateRangeAmount: z.union([z.number(), z.string()]).nullish(),
+    dateRangeUnit: z.string().nullish(),
+    dateRangeTimezone: z.string().nullish(),
     page: z.number().int().positive().optional().default(1),
     pageSize: z
       .union([z.number().int().positive(), z.literal("All")])
@@ -58,6 +77,35 @@ export const reportRequestSchema = z
     // Rows whose group key for a filtered dimension is not in the list are
     // dropped. Unknown dimension ids are ignored server-side.
     dimensionFilters: dimensionFiltersSchema.optional(),
+    // Chart option carried in the run body so saved reports and shares keep
+    // it: plot the sum of every series at each date. Aggregation ignores it.
+    includeTotals: z.boolean().nullish(),
+    // Requirement report scope: confine the gaps/traceability reports to
+    // these requirements' subtrees. Empty means whole-project, same as
+    // omitting it. `.nullish()` — a restored share config may carry an
+    // explicit null.
+    requirementIds: z.array(z.number().int().positive()).max(1000).nullish(),
+    // Traceability: keep only rows whose requirement classifies to one of
+    // these states. Empty = all states, same as omitting it.
+    coverageStates: z
+      .array(z.enum(["PASSED", "FAILED", "NOT_RUN", "UNCOVERED"]))
+      .nullish(),
+    // Coverage-debt (gaps) report: also list requirements whose linked
+    // cases have never run (tier 2), not only the zero-linked tier.
+    includeNotRun: z.boolean().nullish(),
+    // Traceability: render a persisted snapshot instead of the live
+    // matrix. Absent/null = live.
+    snapshotId: z.number().int().positive().nullish(),
+    // Coverage changes: the baseline snapshot, and what to compare it to
+    // (another snapshot; absent/null = the live matrix). The handler
+    // requires the baseline; the schema leaves it nullish so a restored
+    // share config with a stale null still parses and fails at the
+    // handler with a clear error rather than a validation blob.
+    baselineSnapshotId: z.number().int().positive().nullish(),
+    compareSnapshotId: z.number().int().positive().nullish(),
+    // Coverage changes: also list requirements whose coverage did not
+    // change between the two sides.
+    includeUnchanged: z.boolean().nullish(),
   })
   .superRefine((data, ctx) => {
     // Rule: If endDate is provided, startDate must also be provided

@@ -18,6 +18,15 @@ async function getApiKey() {
   return key || null;
 }
 
+// Instance URL + API key, read together rather than one after the other.
+async function getConnection() {
+  const [instanceUrl, apiKey] = await Promise.all([
+    getInstanceUrl(),
+    getApiKey(),
+  ]);
+  return { instanceUrl, apiKey };
+}
+
 // Read the current Jira user's identity so the backend can attribute
 // generated cases to the matching TestPlanIt user. Email is the primary
 // match key; accountId is a fallback. Both are best-effort — a hidden email
@@ -59,8 +68,7 @@ resolver.define('getTestInfo', async ({ context, payload }) => {
   const issueId = context.extension?.issue?.id;
 
   try {
-    // Get the configured instance URL
-    const instanceUrl = await getInstanceUrl();
+    const { instanceUrl, apiKey } = await getConnection();
 
     if (!instanceUrl) {
       return {
@@ -69,9 +77,11 @@ resolver.define('getTestInfo', async ({ context, payload }) => {
       };
     }
 
-    const apiKey = await getApiKey();
     const cleanUrl = instanceUrl.replace(/\/+$/, '');
-    const apiUrl = `${cleanUrl}/api/integrations/jira/test-info?issueKey=${issueKey}&issueId=${issueId}`;
+    // runCases=lazy: each run's per-case status bar is fetched by
+    // getTestRunCases when the user expands the run. Instances that predate it
+    // ignore the flag and send the bar inline, which the panel still renders.
+    const apiUrl = `${cleanUrl}/api/integrations/jira/test-info?issueKey=${issueKey}&issueId=${issueId}&runCases=lazy`;
 
     const headers = {
       'Accept': 'application/json',
@@ -105,6 +115,39 @@ resolver.define('getTestInfo', async ({ context, payload }) => {
   }
 });
 
+// One linked run's per-case status-bar segments, fetched when the user
+// expands the run in the panel.
+resolver.define('getTestRunCases', async ({ context, payload }) => {
+  const issueKey = context.extension?.issue?.key;
+  const issueId = context.extension?.issue?.id;
+
+  try {
+    const { instanceUrl, apiKey } = await getConnection();
+    if (!instanceUrl) {
+      return { error: 'TestPlanIt instance URL not configured.', notConfigured: true };
+    }
+
+    const cleanUrl = instanceUrl.replace(/\/+$/, '');
+    const qs = new URLSearchParams();
+    if (issueKey) qs.set('issueKey', issueKey);
+    if (issueId) qs.set('issueId', issueId);
+    qs.set('testRunId', String(payload?.testRunId));
+
+    const response = await api.fetch(
+      `${cleanUrl}/api/integrations/jira/test-run-cases?${qs.toString()}`,
+      { method: 'GET', headers: buildAuthHeaders(apiKey) }
+    );
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { error: data.error || `Failed to load test run cases (${response.status})` };
+    }
+    return { displayItems: data.displayItems || [] };
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
 resolver.define('openUrl', async ({ payload }) => {
   return {
     success: false, // Indicate frontend should handle the redirect
@@ -115,8 +158,7 @@ resolver.define('openUrl', async ({ payload }) => {
 // Settings management resolvers
 resolver.define('getSettings', async () => {
   try {
-    const instanceUrl = await getInstanceUrl();
-    const apiKey = await getApiKey();
+    const { instanceUrl, apiKey } = await getConnection();
     return { instanceUrl: instanceUrl || '', apiKey: apiKey || '' };
   } catch (error) {
     return { error: error.message };
@@ -242,7 +284,10 @@ resolver.define('getGenerationContext', async ({ context, payload }) => {
   const issueId = context.extension?.issue?.id;
 
   try {
-    const instanceUrl = await getInstanceUrl();
+    const [{ instanceUrl, apiKey }, user] = await Promise.all([
+      getConnection(),
+      getCurrentJiraUser(),
+    ]);
     if (!instanceUrl) {
       return {
         error: 'TestPlanIt instance URL not configured.',
@@ -250,8 +295,6 @@ resolver.define('getGenerationContext', async ({ context, payload }) => {
       };
     }
 
-    const apiKey = await getApiKey();
-    const user = await getCurrentJiraUser();
     const cleanUrl = instanceUrl.replace(/\/+$/, '');
 
     const qs = new URLSearchParams();
@@ -280,13 +323,14 @@ resolver.define('importTestCases', async ({ context, payload }) => {
   const issueId = context.extension?.issue?.id;
 
   try {
-    const instanceUrl = await getInstanceUrl();
+    const [{ instanceUrl, apiKey }, user] = await Promise.all([
+      getConnection(),
+      getCurrentJiraUser(),
+    ]);
     if (!instanceUrl) {
       return { error: 'TestPlanIt instance URL not configured.', notConfigured: true };
     }
 
-    const apiKey = await getApiKey();
-    const user = await getCurrentJiraUser();
     const cleanUrl = instanceUrl.replace(/\/+$/, '');
 
     const response = await api.fetch(
@@ -327,13 +371,14 @@ resolver.define('getGenerateToken', async ({ context, payload }) => {
   const issueId = context.extension?.issue?.id;
 
   try {
-    const instanceUrl = await getInstanceUrl();
+    const [{ instanceUrl, apiKey }, user] = await Promise.all([
+      getConnection(),
+      getCurrentJiraUser(),
+    ]);
     if (!instanceUrl) {
       return { error: 'TestPlanIt instance URL not configured.', notConfigured: true };
     }
 
-    const apiKey = await getApiKey();
-    const user = await getCurrentJiraUser();
     const cleanUrl = instanceUrl.replace(/\/+$/, '');
 
     const response = await api.fetch(
@@ -371,7 +416,10 @@ resolver.define('getQuickScriptContext', async ({ context, payload }) => {
   const issueId = context.extension?.issue?.id;
 
   try {
-    const instanceUrl = await getInstanceUrl();
+    const [{ instanceUrl, apiKey }, user] = await Promise.all([
+      getConnection(),
+      getCurrentJiraUser(),
+    ]);
     if (!instanceUrl) {
       return {
         error: 'TestPlanIt instance URL not configured.',
@@ -379,8 +427,6 @@ resolver.define('getQuickScriptContext', async ({ context, payload }) => {
       };
     }
 
-    const apiKey = await getApiKey();
-    const user = await getCurrentJiraUser();
     const cleanUrl = instanceUrl.replace(/\/+$/, '');
 
     const qs = new URLSearchParams();
@@ -410,13 +456,14 @@ resolver.define('getQuickScriptToken', async ({ context, payload }) => {
   const issueId = context.extension?.issue?.id;
 
   try {
-    const instanceUrl = await getInstanceUrl();
+    const [{ instanceUrl, apiKey }, user] = await Promise.all([
+      getConnection(),
+      getCurrentJiraUser(),
+    ]);
     if (!instanceUrl) {
       return { error: 'TestPlanIt instance URL not configured.', notConfigured: true };
     }
 
-    const apiKey = await getApiKey();
-    const user = await getCurrentJiraUser();
     const cleanUrl = instanceUrl.replace(/\/+$/, '');
 
     const response = await api.fetch(

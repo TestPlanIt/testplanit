@@ -157,7 +157,7 @@ const testCase = await client.createTestCase({
 const bulk = await client.createTestCases({
   projectId: 1,
   folderId: 1,                // Batch default; each case may override folderId
-  templateId: 1,              // Optional: defaults to the first enabled template
+  templateId: 1,              // Optional: defaults to the project's Default template
   cases: [
     {
       name: 'Login with valid credentials',

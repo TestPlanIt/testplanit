@@ -114,7 +114,7 @@
       "purge": "숙청",
       "previousCase": "이전 사례",
       "nextCase": "다음 사례",
-      "startTesting": "테스트 시작",
+      "startTesting": "수동 테스트 시작",
       "expandLeftPanel": "왼쪽 패널 펼치기",
       "collapseLeftPanel": "왼쪽 패널 접기",
       "expandRightPanel": "오른쪽 패널 펼치기",
@@ -328,6 +328,7 @@
       "locale": "언어",
       "timezone": "시간대",
       "itemsPerPage": "페이지당 항목 수",
+      "detailsDisplayMode": "세부 정보 열기",
       "notificationMode": "알림",
       "value": "값",
       "key": "열쇠",
@@ -379,6 +380,7 @@
       "issues": "문제점",
       "internalIssues": "내부 문제",
       "externalIssues": "{provider} 문제",
+      "requirements": "요구 사항",
       "data": "데이터",
       "note": "메모",
       "externalId": "외부 ID",
@@ -405,6 +407,7 @@
       "folder": "접는 사람",
       "parentFolder": "새 사건용 상위 폴더",
       "multipleValues": "다중 값",
+      "multipleValuesCount": "여러 값 ({count, number})",
       "provider": "공급자",
       "updatedAt": "업데이트됨",
       "tools": "도구",
@@ -455,7 +458,9 @@
         "urlRequired": "URL이 필요합니다.",
         "invalidUrl": "잘못된 URL 형식입니다"
       },
-      "worker": "작업자"
+      "worker": "작업자",
+      "hasCodePins": "코드 핀 있음",
+      "noCodePins": "코드 핀 없음"
     },
     "filter": {
       "placeholder": "필터 {item}..."
@@ -560,7 +565,6 @@
       "selectTemplate": "템플릿을 선택하세요",
       "duration": "예: 1시간 30분 또는 90분",
       "docs": "문서 추가...",
-      "select": "선택하다",
       "selectState": "주를 선택하세요",
       "selectConfiguration": "구성 선택",
       "selectConfigurations": "구성 선택",
@@ -581,14 +585,12 @@
       "selectAModel": "모델을 선택하세요",
       "selectWorkflowType": "워크플로 유형을 선택하세요",
       "addAnOption": "옵션을 추가하세요",
-      "addADescription": "설명을 추가하세요...",
       "optionalDescription": "선택 사항 설명...",
       "projectNotes": "프로젝트 노트...",
       "filterByName": "이름으로 필터링...",
       "filterByValue": "값으로 필터링...",
       "selectOperator": "연산자를 선택하세요",
       "searchIcons": "검색 아이콘...",
-      "value": "값",
       "stepCount": "걸음 수",
       "enterText": "텍스트를 입력하세요...",
       "enterUrl": "URL을 입력하세요",
@@ -618,6 +620,7 @@
       "noSuccessStatus": "성공 상태가 선택되지 않았습니다.",
       "missingTestRunCase": "테스트 실행 케이스 ID가 누락되었습니다.",
       "fieldRequired": "이 항목은 필수 입력 사항입니다.",
+      "restrictedFieldRequired": "이 필드를 채울 수 있는 권한이 있는 사용자만 입력할 수 있습니다.",
       "projectNameExists": "이미 동일한 이름의 프로젝트가 존재합니다.",
       "defaultNotFound": "기본값을 찾을 수 없습니다.",
       "emailExists": "이 이메일 주소를 가진 사용자가 이미 존재합니다.",
@@ -709,15 +712,10 @@
       "twoFactorVerification": "2단계 인증",
       "changePassword": "비밀번호 변경",
       "twoFactorSetup": "2단계 인증 설정",
-      "signUp": "회원가입",
-      "signIn": "로그인",
       "verifyEmail": "이메일 인증",
       "trialExpired": "체험 기간 만료",
       "linkSsoAccount": "SSO 계정 연결",
       "userProfile": "사용자 프로필",
-      "users": "사용자",
-      "issues": "문제점",
-      "tags": "태그",
       "tagDetails": "태그 세부 정보",
       "aiModels": "AI 모델",
       "integrations": "통합",
@@ -725,28 +723,24 @@
       "advanced": "고급의",
       "reviews": "리뷰",
       "webhooks": "웹훅",
+      "automation": "자동 실행",
       "shares": "주식",
       "datasets": "공유 데이터 세트",
       "repository": "저장소",
       "testCaseVersion": "테스트 케이스 버전",
       "duplicateTestCases": "중복 테스트 케이스",
-      "documentation": "선적 서류 비치",
-      "sharedSteps": "공유된 단계",
       "stepDuplicates": "단계 중복",
-      "sessions": "세션",
       "sessionVersion": "세션 버전",
-      "milestones": "주요 이정표",
-      "testRuns": "테스트 실행",
       "reports": "보고서",
       "adminSamlConfig": "관리자 - SAML 구성",
       "apiDocumentation": "API 문서",
-      "sharedContent": "공유 콘텐츠"
+      "sharedContent": "공유 콘텐츠",
+      "impact": "영향 분석"
     },
     "aria": {
       "userMenu": "사용자 메뉴",
       "selectProject": "프로젝트를 선택하세요",
       "togglePanel": "패널 토글",
-      "folder": "접는 사람",
       "toggleActive": "활성 상태 전환",
       "toggleDetails": "세부 정보 토글",
       "requiresReview": "검토가 필요합니다",
@@ -767,6 +761,7 @@
       "deletedUser": "삭제된 사용자",
       "restrictedField": "제한된 필드",
       "backToTestCase": "테스트 케이스로 돌아가기",
+      "backToRequirements": "요구 사항으로 돌아가기",
       "selectDeselectAllApprove": "관련된 모든 영역에 대해 승인을 선택하거나 선택 해제하십시오.",
       "selectDeselectAllReadSensitive": "관련 영역 모두에 대해 읽기 민감도 설정을 선택하거나 선택 해제합니다."
     },
@@ -872,7 +867,6 @@
     "for": "~을 위한",
     "and": "그리고",
     "branding": {
-      "name": "테스트플랜잇",
       "logoAlt": "TestPlanIt 로고",
       "tagline": "세상의 모든 것을 시험해 보세요"
     },
@@ -1091,7 +1085,6 @@
         "viewIn": "보기",
         "fieldType": "필드 유형: ",
         "richTextContent": "풍부한 텍스트 콘텐츠",
-        "invalidContent": "유효하지 않은 콘텐츠",
         "fieldInformation": "필드 정보"
       },
       "onboarding": {
@@ -1104,8 +1097,7 @@
         "zoomDonutChart": "줌 도넛 차트",
         "zoomExecutionTimeline": "실행 타임라인 확대",
         "zoomHistogramChart": "확대 히스토그램 차트",
-        "duration": "지속 시간: {seconds} 초",
-        "durationLabel": "지속"
+        "duration": "지속 시간: {seconds} 초"
       },
       "import": {
         "encoding": {
@@ -1117,7 +1109,10 @@
       },
       "loadingIssueTracker": "이슈 트래커 정보를 불러오는 중...",
       "enterDocumentation": "문서를 입력하세요...",
-      "noAutomatedTestResults": "이번 실행에 대한 자동 테스트 결과가 없습니다."
+      "noAutomatedTestResults": "이번 실행에 대한 자동 테스트 결과가 없습니다.",
+      "automatedResults": "자동화된 결과",
+      "latestAutomatedResult": "최신 자동화 결과",
+      "hybridRunHint": "이 실행에는 수동 및 자동화된 사례가 모두 포함되어 있습니다. 자동화된 결과는 각 사례의 상태를 업데이트합니다. 모든 사례는 여전히 수동으로 실행할 수 있습니다."
     },
     "time": {
       "minutes": "{count, plural, =1 {분} other {분}}",
@@ -1259,7 +1254,6 @@
       }
     },
     "verifyEmail": {
-      "title": "이메일 인증",
       "loading": "이메일을 확인하는 중...",
       "success": "이메일 인증이 완료되었습니다.",
       "error": "이메일 인증에 실패했습니다.",
@@ -1311,10 +1305,8 @@
       "expiredDescription": "비밀번호가 만료되었습니다. 계속하려면 새 비밀번호를 설정하세요.",
       "newPasswordLabel": "새 비밀번호",
       "confirmPasswordLabel": "새 비밀번호를 확인하세요",
-      "submitButton": "비밀번호 변경",
       "signOut": "로그아웃하세요.",
       "passwordsMustMatch": "비밀번호가 일치하지 않습니다.",
-      "passwordRequired": "비밀번호를 입력해야 합니다.",
       "genericError": "오류가 발생했습니다. 다시 시도해 주세요.",
       "policyTitle": "비밀번호 요구 사항:",
       "policyMinLength": "최소 {count, number} 문자",
@@ -1326,7 +1318,6 @@
   },
   "account": {
     "linkSso": {
-      "title": "SSO 계정 연결",
       "description": "계정을 싱글 사인온(SSO) 제공업체와 연결하세요",
       "availableProviders": "사용 가능한 SSO 제공업체",
       "linkWithGoogle": "구글과 연결하기",
@@ -1386,8 +1377,7 @@
       "latestTestRuns": "최근 테스트 실행 결과",
       "testCaseBreakdown": "테스트 케이스 분석",
       "noTestCases": "프로젝트 저장소가 비어 있습니다. 저장소를 사용하여 테스트 케이스를 추가하세요.",
-      "noTestCasesPrefix": "프로젝트 저장소가 비어 있습니다. 다음을 사용하여 테스트 케이스를 추가하세요.",
-      "noTestCasesLink": "저장소"
+      "noTestCasesPrefix": "프로젝트 저장소가 비어 있습니다. 다음을 사용하여 테스트 케이스를 추가하세요."
     },
     "icon": {
       "upload": {
@@ -1407,10 +1397,8 @@
         "title": "반복 속성 매핑",
         "description": "임포트 시 각 테스트 케이스의 반복 인덱스는 다음 항목 중 하나와 이름이 일치하는 속성, 특성 또는 트레이트에서 읽어옵니다(JUnit 속성, TestNG 특성, xUnit 트레이트, NUnit 속성). 사용 중인 이미터에서 사용하는 이름을 추가하세요. 조회는 대소문자를 구분하지 않습니다.",
         "addLabel": "속성 이름을 추가하세요",
-        "addButton": "추가하다",
         "placeholder": "예: iterationIndex",
         "defaultHint": "기본값: 반복 횟수(대소문자 구분 안 함). 사용자 지정 이름을 추가하여 선택적으로 사용할 수 있습니다.",
-        "saveButton": "구하다",
         "saveSuccess": "반복 속성 이름이 저장되었습니다.",
         "saveError": "반복 속성 이름을 저장할 수 없습니다.",
         "removeAria": "{name}를 제거하세요",
@@ -1476,7 +1464,6 @@
           "removeProjectConfirmation": "이 프로젝트를 삭제하면 해당 프로젝트와 관련된 이슈 동기화가 중지됩니다. 이전에 동기화된 이슈는 삭제되지 않습니다. 계속하시겠습니까?",
           "removeProjectWebhookCascadeBullet": "이 프로젝트에 대한 인바운드 웹훅도 제거될 예정입니다.",
           "keepProject": "프로젝트 유지",
-          "defaultIndicator": "기본",
           "syncStatusSyncing": "동기화",
           "syncStatusCompleted": "동기화됨",
           "syncStatusError": "동기화 오류",
@@ -1500,11 +1487,13 @@
           "importDescription": "이 연결된 프로젝트의 이슈를 내 프로젝트로 가져옵니다. 기존 이슈는 중복되지 않으며 가져온 이슈는 동기화를 통해 최신 상태로 유지됩니다.",
           "importUpdatedWithin": "업데이트 기간",
           "importLastDays": "최근 {days}일",
+          "importAllHistory": "전체 기록",
           "importMax": "최대 가져오기 개수",
+          "importCapHint": "{cap}의 기본값을 사용하려면 비워 두세요.",
+          "importAllHistoryNoCapHint": "전체 기록은 제한 없이 일치하는 모든 이슈를 가져옵니다.",
           "importPreview": "미리보기",
           "importPreviewResult": "이 필터와 일치하는 이슈가 약 {count, plural, other {#개}}입니다. 최대 {cap}개까지 가져옵니다.",
           "importOverCap": "이는 {cap}개의 한도를 초과합니다. 가장 최근에 업데이트된 {cap}개만 가져옵니다.",
-          "importStart": "가져오기",
           "importStarted": "가져오기가 시작되었습니다. 이슈가 곧 표시됩니다.",
           "importFailed": "가져오기 실패",
           "importPreviewFailed": "일치 항목을 추정할 수 없습니다",
@@ -1519,6 +1508,41 @@
             "autoTrackProjectsLabel": "새 마일스톤을 위해 연결된 프로젝트 스캔",
             "settingsSaved": "마일스톤 동기화 설정이 저장되었습니다",
             "saveError": "마일스톤 동기화 설정을 저장하는 데 실패했습니다"
+          },
+          "requirementsConfig": {
+            "title": "요구 사항 동기화",
+            "description": "요구 사항으로 간주할 트래커 이슈 유형을 동기화합니다. 기존 이슈는 그에 맞춰 재분류됩니다.",
+            "enableLabel": "요구 사항 분류 활성화",
+            "issueTypesLabel": "이슈 유형",
+            "issueTypesPlaceholder": "이슈 유형을 선택하세요",
+            "issueTypesAriaLabel": "요구 사항 이슈 유형",
+            "labelsLabel": "라벨",
+            "labelsPlaceholder": "라벨을 선택하세요",
+            "labelsAriaLabel": "요구 사항 라벨",
+            "labelPreviewNote": "선택한 라벨이 지정된 이슈는 저장 시 요구 사항이 되며, 선택한 라벨이 없는 이슈는 더 이상 요구 사항이 아니게 됩니다.",
+            "previewHeading": "이 변경의 영향",
+            "becomingRequirements": "{count, plural, other {{count}개 항목이 요구 사항이 됩니다}}",
+            "stoppingRequirements": "{count, plural, other {{count}개 항목이 더 이상 요구 사항이 아니게 됩니다}}",
+            "detachedCallout": "{count, plural, other {그 중 {count}개는 트래커에서 분리되었거나 로컬에서 수정되어 요구 사항 상태를 잃게 됩니다}}",
+            "reversibilityNote": "유형을 다시 추가하면 분류가 복원됩니다. 아무것도 삭제되지 않습니다.",
+            "noChanges": "적용할 분류 변경 사항이 없습니다.",
+            "importOfferBodyExact": "선택한 유형의 항목 {count, plural, other {{count}개}}가 트래커에 있습니다.",
+            "importOfferBodyFloor": "선택한 유형의 항목이 트래커에 최소 {count, plural, other {{count}개}} 있습니다 — 가져오기는 이 수로 제한되지 않습니다.",
+            "importOfferBodyUnknown": "선택한 유형의 이슈가 트래커에 정확히 몇 개 있는지 확인할 수 없습니다. 그래도 가져오기를 진행하면 일치하는 모든 항목을 가져옵니다.",
+            "importOfferConfirm": "지금 가져오기",
+            "importStarted": "가져오기가 시작되었습니다. 이슈는 가져오는 대로 표시됩니다.",
+            "importFailed": "가져오기를 시작할 수 없습니다",
+            "importAlreadyRunning": "이 트래커 프로젝트에 대한 가져오기가 이미 실행 중입니다",
+            "importNoTypes": "가져오기 전에 이슈 유형을 하나 이상 선택하고 저장하세요",
+            "importCountUnavailable": "트래커에 몇 개의 이슈가 있는지 확인할 수 없습니다",
+            "importStopAction": "멈추기",
+            "importStopConfirmTitle": "이 가져오기를 중지하시겠습니까?",
+            "importStopConfirmBody": "중지는 현재 페이지의 가져오기가 완료된 후 적용됩니다. 이미 가져온 이슈는 그대로 유지됩니다.",
+            "importStopRequested": "중지가 요청되었습니다 — 현재 페이지가 끝난 후 가져오기가 중지됩니다.",
+            "importStopNotRunning": "해당 가져오기는 이미 완료되었거나 이미 중지되었습니다.",
+            "importCancelled": "가져오기 취소됨",
+            "settingsSaved": "요구 사항 유형 설정이 저장되었습니다",
+            "saveError": "요구 사항 유형 설정을 저장하는 데 실패했습니다"
           }
         },
         "integrationAssigned": "통합 작업이 성공적으로 완료되었습니다.",
@@ -1554,13 +1578,11 @@
       },
       "webhooks": {
         "description": "연결된 이슈를 동기화 상태로 유지하려면 수신 웹훅을 구성하세요.",
-        "inboundDescription": "연결된 이슈를 동기화 상태로 유지하려면 수신 웹훅을 구성하세요.",
+        "inboundDescription": "이슈 트래커에서 이슈 업데이트를 받고 연결된 저장소에서 풀 요청과 푸시를 받습니다.",
         "outboundDescription": "TestPlanIt 이벤트를 Slack 또는 HMAC로 서명된 URL로 전송하도록 아웃바운드 웹훅을 구성합니다.",
         "directionInbound": "인바운드",
         "directionOutbound": "배 밖으로",
         "inboundAddButtonAllConfigured": "인바운드 어댑터가 이미 구성되었습니다.",
-        "inboundAddButtonNoIntegration": "인바운드 웹훅을 추가하기 전에 이 프로젝트에 이슈 통합을 할당하세요.",
-        "inboundEmptyWithIntegration": "구성된 인바운드 웹훅이 없습니다. <link>할당된 이슈 통합에서 이슈 업데이트를 받으려면</link> 하나를 추가하세요.",
         "inboundEmptyNoIntegration": "이슈 업데이트를 수신하려면 <link>이슈 통합</link> 이 필요합니다. 시작하려면 프로젝트에 이슈 통합 을 할당하세요.",
         "deliveriesEmptyNoConfigs": "아직 웹훅 전송이 없습니다. 수신 또는 발신 웹훅을 다른 탭에서 생성하여 웹훅 수신을 시작하세요.",
         "noConfig": "웹훅이 구성되지 않았습니다.",
@@ -1574,7 +1596,6 @@
         "rotateSecret": "비밀을 회전시키세요",
         "rotateConfirmTitle": "웹훅 비밀 키를 회전시키시겠습니까?",
         "rotateConfirm": "비밀 키를 변경하면 이슈 트래커 측의 현재 구성이 무효화되며, 이슈 트래커에서 구성을 업데이트하기 전까지는 유지됩니다. 계속하시겠습니까?",
-        "isActive": "활성화됨",
         "deleteConfirmTitle": "웹훅 설정을 삭제하시겠습니까?",
         "deleteConfirm": "이 웹훅 설정을 삭제하시겠습니까? 그러면 수신 요청이 거부됩니다.",
         "sendTest": "테스트 웹훅 전송",
@@ -1589,23 +1610,19 @@
         "urlCopied": "웹훅 URL이 클립보드에 복사되었습니다.",
         "secretCopied": "웹훅 비밀 키가 클립보드에 복사되었습니다.",
         "nextSteps": "다음으로, 이 내용을 이슈 트래커의 웹훅 구성에 붙여넣고 아래의 \"테스트 웹훅 보내기\"를 클릭하여 파이프라인을 확인하세요. 비밀 키를 저장한 후 \"완료\"를 클릭하면 비밀 키가 다시 표시되지 않습니다.",
-        "revealDone": "완료",
         "pageTitle": "웹훅",
         "inboundTab": "인바운드",
         "outboundTab": "배 밖으로",
         "outboundEmpty": "구성된 아웃바운드 웹훅이 없습니다. TestPlanIt 이벤트를 Slack 또는 HMAC로 서명된 URL로 보내려면 웹훅을 추가하세요.",
         "outboundAddButton": "아웃바운드 웹훅 추가",
         "outboundCreateTitle": "새로운 아웃바운드 웹훅",
-        "outboundCreateName": "이름",
         "outboundCreateNameHelp": "이 목적지에 대한 레이블(예: \"Engineering Slack\")을 지정합니다.",
         "outboundCreateNamePlaceholder": "엔지니어링 슬랙",
         "outboundCreateNameRequired": "이름은 필수 입력 사항입니다.",
         "outboundCreateUrlRequired": "URL은 필수 입력 사항입니다.",
         "outboundCreateUrlInvalid": "유효한 URL을 입력하세요(https://example.com/...).",
         "outboundCreateUrlMustUseHttps": "URL은 HTTPS를 사용해야 합니다.",
-        "outboundNameLabel": "이름",
         "outboundUnnamedConfig": "(이름 없는 웹훅)",
-        "outboundCreateUrl": "URL",
         "outboundCreateUrlHelp": "목적지 URL입니다. Slack 수신 웹훅 URL은 자동으로 감지됩니다.",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "감지됨: 슬랙",
@@ -1673,14 +1690,11 @@
         "outboundSubsCases": "사례",
         "outboundSubsSelectAll": "이 섹션에서 모두 선택하세요",
         "outboundCreateSubmit": "웹훅 생성",
-        "outboundCreateCancel": "취소",
         "outboundCreateSuccess": "아웃바운드 웹훅이 생성되었습니다.",
         "outboundCreateError": "아웃바운드 웹훅 생성에 실패했습니다.",
         "outboundUrlLabel": "목적지 URL",
-        "outboundActiveToggle": "활동적인",
         "outboundSlackHint": "이 URL은 민감한 정보입니다. 이 URL을 아는 사람은 누구나 당신의 채널에 게시물을 올릴 수 있습니다.",
         "outboundHmacSecretsTitle": "서명 비밀",
-        "outboundHmacActiveSecret": "활동적인",
         "outboundHmacInactiveSecret": "비활성화됨",
         "outboundHmacRetiringSecret": "암띤",
         "outboundHmacAutoRetireIn": "자동 은퇴는 {days, number} 일 후에 이루어집니다.",
@@ -1707,19 +1721,12 @@
         "outboundDeleteError": "웹훅 삭제에 실패했습니다.",
         "outboundSecretCopy": "비밀을 복사하세요",
         "outboundSecretShownOnce": "이 비밀을 지금 저장하세요. 다시는 공개될 수 없습니다.",
-        "outboundSecretDone": "완료",
         "inboundAddButton": "인바운드 웹훅 추가",
-        "inboundChooserTitle": "어댑터를 선택하세요",
-        "inboundChooserDescription": "TestPlanIt으로 웹훅을 전송할 이슈 트래커를 선택하세요. 각 프로젝트는 Jira, GitHub, Azure DevOps에서 각각 하나씩의 인바운드 웹훅을 설정할 수 있습니다.",
         "inboundChooserJira": "지라",
         "inboundChooserGithub": "깃허브",
         "inboundChooserAdo": "Azure DevOps",
         "inboundChooserGitlab": "깃랩",
         "inboundChooserGitea": "기테아",
-        "inboundChooserAlreadyConfigured": "이미 구성됨",
-        "inboundChooserSubmit": "계속하다",
-        "inboundChooserCancel": "취소",
-        "inboundEmpty": "구성된 인바운드 웹훅이 없습니다. Jira, GitHub, GitLab, Gitea 또는 Azure DevOps에서 이슈 업데이트를 수신하려면 웹훅을 추가하세요.",
         "inboundJiraTitle": "Jira 인바운드 웹훅",
         "inboundGithubTitle": "GitHub 인바운드 웹훅",
         "inboundGithubScopeHint": "GitHub <code>이슈</code> 이벤트는 연결된 TestPlanIt 이슈를 업데이트합니다. 풀 리퀘스트 및 이슈 댓글 이벤트는 허용되지만 아직 이슈를 업데이트하지는 않습니다.",
@@ -1730,7 +1737,6 @@
         "inboundAdoTitle": "Azure DevOps 인바운드 웹훅",
         "inboundAdoScopeHint": "Azure DevOps <code>작업 항목 업데이트</code> 이벤트는 연결된 TestPlanIt 이슈를 업데이트합니다. 다른 이벤트도 허용되지만 이슈는 업데이트되지 않습니다.",
         "inboundAdoUsername": "사용자 이름",
-        "inboundAdoPassword": "비밀번호",
         "inboundAdoUsernamePlaceholder": "서비스 계정",
         "inboundAdoUsernameHelp": "Azure DevOps 서비스 후크 측에서 구성됩니다. TestPlanIt은 HTTP 기본 인증을 통해 이를 검증합니다.",
         "inboundAdoPasswordHelp": "저장된 데이터는 암호화됩니다. 이 값은 Azure DevOps 서비스 후크 측에도 저장해야 합니다.",
@@ -1762,9 +1768,7 @@
         "deliveriesTab": "배송",
         "filterConfigPlaceholder": "모든 웹훅",
         "filterEventPlaceholder": "모든 이벤트",
-        "filterStatusAll": "모두",
         "filterStatusFailed": "실패한",
-        "filterStatusSuccess": "성공",
         "filterSinceDefault": "… 이후로",
         "filterUntilDefault": "…까지",
         "filterReset": "필터 초기화",
@@ -1776,8 +1780,6 @@
         "tableHeaderConfig": "웹훅",
         "tableHeaderEvent": "이벤트",
         "tableHeaderSubjectRef": "참조",
-        "tableHeaderStatus": "상태",
-        "tableHeaderError": "오류",
         "tableHeaderReceivedAt": "받았다",
         "tableHeaderAttempt": "시도",
         "tableHeaderDirection": "방향",
@@ -1790,7 +1792,6 @@
         "drawerLabelLatency": "숨어 있음",
         "drawerLatencyValue": "{ms, number}ms",
         "drawerLatencyUnknown": "—",
-        "drawerLabelError": "오류",
         "drawerLabelPayloadDigest": "페이로드 다이제스트",
         "drawerLabelEventId": "이벤트 ID",
         "drawerLabelSubjectRef": "참조",
@@ -1819,7 +1820,6 @@
         "activityLastDispatched": "마지막으로 발송됨",
         "activityLastSuccess": "마지막 성공",
         "activityLastFailure": "마지막 실패",
-        "activityNever": "절대",
         "reEnable": "다시 활성화",
         "reEnableConfirmTitle": "이 웹훅을 다시 활성화하시겠습니까?",
         "reEnableConfirm": "상위 문제 해결 여부를 확인한 후 다시 활성화하십시오. 웹훅은 즉시 전송을 재개합니다.",
@@ -1843,11 +1843,49 @@
         "setupStepsMantisbtStep1": "MantisBT 서버에 MantisBT 웹훅 플러그인을 설치하고 활성화하세요(MantisBT에는 기본 제공 웹훅이 없습니다).",
         "setupStepsMantisbtStep2": "플러그인 설정에서 이슈 생성 및 이슈 업데이트 이벤트를 선택하세요.",
         "setupStepsMantisbtStep3": "위 URL을 웹훅 대상으로 붙여넣고 저장하세요.",
-        "setupStepsMantisbtStep4": "MantisBT에서 이슈를 생성하거나 업데이트하면 연결된 이슈의 상태가 여기에 동기화됩니다."
+        "setupStepsMantisbtStep4": "MantisBT에서 이슈를 생성하거나 업데이트하면 연결된 이슈의 상태가 여기에 동기화됩니다.",
+        "codeRepos": {
+          "empty": "영향 분석을 위해 연결된 저장소가 없습니다. <link>하나를 먼저 연결</link>하세요.",
+          "unsupported": "{provider} 저장소는 TestPlanIt으로 웹훅을 보낼 수 없습니다.",
+          "eventPullRequest": "풀 요청",
+          "eventPullRequestHelp": "풀 요청이 열리면 해당 변경 사항을 대상 분기에 대해 분석하고 실행을 구성합니다.",
+          "eventPush": "{branch}에 푸시",
+          "eventPushDefault": "기본 분기에 푸시",
+          "eventPushHelp": "기본 분기에 대한 각 푸시에 대해 푸시된 커밋을 분석하고 실행을 구성합니다.",
+          "setupGithub": "GitHub에서 저장소의 설정 → 웹훅을 열고 URL과 비밀을 붙여넣으며 콘텐츠 유형을 application/json으로 설정하고 풀 요청 및 푸시 이벤트를 선택합니다.",
+          "setupGitlab": "GitLab에서 프로젝트의 설정 → 웹훅을 열고 URL을 붙여넣으며 비밀을 비밀 토큰으로 붙여넣고 병합 요청 이벤트 및 푸시 이벤트 트리거를 활성화합니다.",
+          "setupGitea": "Gitea에서 저장소의 설정 → 웹훅을 열고 URL과 비밀을 붙여넣으며 콘텐츠 유형을 application/json으로 설정하고 풀 요청 및 푸시 이벤트를 선택합니다.",
+          "setupAdo": "Azure DevOps에서 풀 요청 생성 및 코드 푸시 이벤트에 대한 웹 훅 유형의 서비스 훅을 만들고 URL을 붙여넣으며 여기에 입력한 사용자 이름과 암호를 기본 인증으로 입력합니다.",
+          "setupBitbucket": "Bitbucket에서 저장소의 설정 → 웹훅을 열고 URL과 비밀을 붙여넣으며 풀 요청 생성 및 저장소 푸시 트리거를 선택합니다.",
+          "rotateConfirm": "비밀을 회전하면 현재 URL과 비밀이 무효화됩니다. 그 이후에 저장소의 웹훅 설정을 업데이트하세요.",
+          "deleteConfirm": "이 저장소 웹훅을 삭제하시겠습니까? 풀 요청과 푸시가 더 이상 분석을 시작하지 않습니다.",
+          "eventBranchPush": "다른 분기에 푸시",
+          "eventBranchPushHelp": "다른 분기에 대한 모든 푸시를 기본 분기와 비교하여 분석하고, 풀 요청처럼 각각에 대한 실행을 구성합니다.",
+          "baseBranch": "기본 분기",
+          "baseBranchHelp": "이 분기에 푸시는 독립적으로 분석되며, 풀 요청과 다른 분기는 이에 대해 비교됩니다. 비워 두면 연결의 분기를 사용합니다.",
+          "minScoreHelp": "구성된 각 실행은 분석에서 최소한 이 점수(0–100)를 받은 모든 테스트 케이스를 포함합니다. 비워두면 수동으로 시작한 실행처럼 고정된 테스트와 영향을 받은 테스트를 포함합니다.",
+          "minScoreInvalid": "0~100 사이의 정수를 입력하거나 비워두세요",
+          "autoExecute": "자동화된 케이스 실행",
+          "autoExecuteHelp": "실행이 구성된 후 이 대상에서 자동화된 케이스의 자동화된 실행을 요청합니다. 수동 케이스는 테스터를 위해 실행에 남아있습니다.",
+          "autoExecuteNoTargets": "이 프로젝트에 구성된 실행 대상이 없습니다. <link>하나를 추가</link>하여 자동으로 실행을 실행하세요.",
+          "autoExecuteTargetMissing": "선택한 실행 대상이 삭제되었거나 비활성화되었습니다. 실행은 계속 구성되지만 다른 대상을 선택할 때까지 실행이 요청되지 않습니다.",
+          "autoExecuteSaveError": "자동화된 실행 설정을 저장할 수 없습니다"
+        },
+        "inboundEmptyState": "아직 인바운드 웹훅이 없습니다. <link>하나를 추가</link>하여 이슈 트래커에서 이슈 업데이트를 받거나 연결된 저장소에서 풀 요청과 푸시를 받습니다.",
+        "inboundChooserBitbucket": "Bitbucket",
+        "wizard": {
+          "description": "TestPlanIt에 웹훅을 보낼 것을 선택한 다음 URL과 비밀을 해당 시스템에 복사합니다.",
+          "stepConnect": "연결",
+          "sourceIssues": "이슈 트래커",
+          "sourceIssuesHelp": "{tracker}에서 업데이트를 통해 연결된 이슈를 동기화 상태로 유지합니다.",
+          "sourceIssuesHelpGeneric": "프로젝트의 이슈 통합에서 업데이트를 통해 연결된 이슈를 동기화 상태로 유지합니다.",
+          "sourceRepositoryHelp": "풀 요청이 열리거나 커밋이 푸시될 때 영향 분석을 시작하고 테스트 실행을 구성합니다.",
+          "noRepositoryAvailable": "모든 연결된 저장소에 이미 웹훅이 있거나 웹훅을 보낼 수 없습니다.",
+          "repositoryPlaceholder": "저장소를 선택하세요"
+        }
       },
       "aiModels": {
         "description": "지능형 테스트 케이스 생성 및 분석을 위한 AI 모델 구성",
-        "availableModels": "프로젝트 기본값",
         "availableModelsDescription": "시스템 관리자가 구성한 기본 AI 모델 중에서 이 프로젝트에 사용할 모델을 선택하세요.",
         "currentModelSettings": "현재 모델 설정",
         "currentModelDescription": "현재 활성화된 AI 모델의 구성 세부 정보: {name}",
@@ -1907,28 +1945,20 @@
       },
       "parameters": {
         "title": "테스트 케이스 매개변수",
-        "tabDatasets": "공유 데이터 세트",
         "tabJunit": "반복 속성 매핑"
       },
       "datasets": {
-        "metaTitle": "공유 데이터 세트",
-        "title": "공유 데이터 세트",
         "description": "이 프로젝트의 모든 테스트 케이스에서 참조할 수 있는 프로젝트 전체 데이터 세트를 관리합니다. 저장할 때마다 변경 불가능한 새 버전이 생성됩니다.",
-        "navLabel": "공유 데이터 세트",
         "newButton": "새로운 데이터 세트",
         "emptyHeading": "아직 공유 데이터 세트가 없습니다.",
         "emptyBody": "여러 테스트 케이스에서 참조하고 특정 버전에 고정할 수 있는 프로젝트 전체 데이터 세트를 생성합니다.",
         "loadError": "데이터셋을 불러올 수 없습니다.",
         "retry": "다시 시도해 보세요",
         "columns": {
-          "name": "이름",
-          "columns": "컬럼",
           "rows": "행",
-          "version": "버전",
           "lastEdited": "마지막 수정일",
           "owner": "소유자",
-          "assignments": "사용 중",
-          "actions": "행위"
+          "assignments": "사용 중"
         },
         "versionLabel": "v{version, number}",
         "assignmentsCount": "{count, plural, =0 {0건} =1 {#건} other {#건}}",
@@ -1936,17 +1966,13 @@
         "columnsCount": "{count, plural, =0 {0개 열} =1 {#개 열} other {#개 열}}",
         "actionsMenuLabel": "데이터셋 작업 열기",
         "actionOpen": "편집기 열기",
-        "actionDelete": "삭제",
         "openLink": "열려 있는",
         "create": {
           "title": "새로운 공유 데이터 세트",
           "description": "데이터 세트는 프로젝트 범위로 제한되며 해당 프로젝트의 모든 테스트 케이스에서 사용할 수 있습니다.",
-          "nameLabel": "이름",
           "namePlaceholder": "예: 고객 계정",
-          "descriptionLabel": "설명",
           "descriptionPlaceholder": "이 데이터 세트의 내용에 대한 선택적 참고 사항입니다.",
           "submit": "데이터셋 생성",
-          "cancel": "취소",
           "validationNameRequired": "이름은 필수 입력 사항입니다.",
           "validationNameTooLong": "이름은 120자 이하여야 합니다.",
           "validationDescriptionTooLong": "설명은 2000자 이하여야 합니다.",
@@ -1959,7 +1985,6 @@
           "descriptionStage2": "이 데이터셋은 {count, plural, =1 {# 케이스} other {# 케이스}}에서 사용됩니다. 이 데이터셋을 삭제하면 해당 케이스에서 공유 데이터셋 할당이 제거됩니다. 기존 테스트 실행에는 영향을 미치지 않습니다(스냅샷은 변경 불가능합니다).",
           "confirm": "데이터셋 삭제",
           "confirmAnyway": "어쨌든 삭제합니다 ({count, plural, =1 {# 경우} other {# 경우}})",
-          "cancel": "취소",
           "error": "데이터셋을 삭제할 수 없습니다."
         },
         "deleteSuccess": "삭제됨 \"{name}\"",
@@ -1969,7 +1994,6 @@
           "loadError": "이 데이터셋을 불러올 수 없습니다.",
           "notFound": "데이터셋을 찾을 수 없습니다.",
           "notFoundDescription": "이 데이터 세트는 삭제되었거나 접근 권한이 없습니다.",
-          "saveAction": "구하다",
           "saving": "절약",
           "savedHint": "모든 변경 사항이 버전 {version, number}에 저장되었습니다.",
           "unsavedHint": "저장되지 않은 변경 사항",
@@ -1984,7 +2008,6 @@
         "saveSuccess": "저장된 버전 {version, number}",
         "saveSuccessBranched": "저장된 버전 {newVersion, number} (v{fromVersion, number}에서 분기됨)",
         "versionPicker": {
-          "label": "버전",
           "loadError": "버전을 불러올 수 없습니다.",
           "currentItemLabel": "v{version, number} (현재)",
           "currentItemInitialLabel": "현재 — 아직 저장된 버전이 없습니다",
@@ -1996,81 +2019,29 @@
         "datasetTabSharedEditorHint": "작업이 완료되면 저장을 클릭하세요. 저장할 때마다 새 버전이 생성됩니다."
       },
       "quickScript": {
-        "title": "퀵스크립트",
         "description": "QuickScript를 활성화하고 AI 기반 테스트 생성을 위한 코드 저장소를 연결하세요.",
         "enableLabel": "QuickScript 활성화",
         "enableDescription": " 이 프로젝트에서 팀 구성원이 QuickScript를 사용하여 테스트 케이스를 자동화 스크립트로 변환할 수 있도록 허용합니다.",
         "enabledToast": "QuickScript 사용 가능",
         "disabledToast": "QuickScript가 비활성화되었습니다.",
         "noRepos": {
-          "title": "구성된 코드 저장소가 없습니다.",
-          "adminDescription": "이 프로젝트의 코드 컨텍스트를 구성하기 전에 저장소 연결을 설정하십시오.",
-          "adminLink": "코드 저장소로 이동",
-          "userDescription": "코드 저장소 연결을 설정하려면 시스템 관리자에게 문의하십시오."
+          "adminDescription": "이 프로젝트의 코드 컨텍스트를 구성하기 전에 저장소 연결을 설정하십시오."
         },
         "repository": {
-          "title": "코드 저장소",
           "description": "AI 컨텍스트에 사용할 코드 저장소를 선택하세요.",
-          "placeholder": "코드 저장소를 선택하세요...",
-          "branchLabel": "나뭇가지",
           "branchPlaceholder": "기본 저장소 분기를 사용하려면 비워 두십시오."
         },
         "pathPatterns": {
-          "title": "경로 패턴",
-          "description": "포함할 파일을 지정합니다. 각 행은 기본 경로와 글로브 패턴을 조합합니다. 예: path=tests/e2e/pages + pattern=*는 해당 폴더의 모든 파일을 직접 포함하고, path=src + pattern=**/*.test.ts는 모든 테스트 파일을 재귀적으로 포함합니다.",
-          "pathLabel": "길",
+          "description": "QuickScript가 AI 컨텍스트로 읽을 수 있는 리포지토리 파일입니다.",
           "pathPlaceholder": "테스트/e2e/페이지",
-          "patternLabel": "무늬",
-          "addPath": "경로 추가",
-          "previewFiles": "미리보기 파일",
-          "scanningRepo": "저장소 파일 스캔 중… ({seconds}s)",
-          "files": "{count, plural, one {# 파일} other {# 파일들}}",
-          "truncatedBadge": "결과가 불완전할 수 있습니다(제공업체 제한).",
           "exceedsLimit": "총 크기가 AI 컨텍스트 제한을 {overflow}만큼 초과했습니다. 내보내기 과정에서 파일은 내보내는 테스트 케이스와의 관련성에 따라 순위가 매겨집니다. 관련성이 가장 높은 파일이 먼저 포함되고, 예산이 초과되면 순위가 낮은 파일은 건너뛰어집니다. 포함할 파일을 더 세밀하게 제어하려면 경로 패턴을 좁히세요."
         },
-        "preview": {
-          "resolvingBranch": "분기…를 해결 중",
-          "scanningFiles": "{scope}…에서 파일을 스캔합니다.",
-          "scanningFilesCount": "{scope}… 에서 파일을 스캔하는 중입니다 ({count, number} 발견됨)",
-          "filtering": "{count, number} 파일…에 필터를 적용합니다.",
-          "rateLimited": "제공업체에서 속도 제한이 적용되어 {seconds, number}초 후 재시도합니다…"
-        },
         "cache": {
-          "title": "캐시 설정",
           "description": "AI 생성 중 빠른 접근을 위해 파일이 Valkey에 캐시됩니다.",
-          "enableLabel": "파일 캐싱을 활성화합니다.",
           "disabledWarning": "파일 캐싱이 비활성화되었습니다. 저장소 파일은 내보내기 시점에 공급자로부터 직접 가져오며 TestPlanIt에 저장되지 않습니다. AI 기반 QuickScript는 코드 컨텍스트를 계속 포함하지만, 각 내보내기 시 저장소에 실시간 요청을 보냅니다.",
-          "ttlBefore": "캐시 유지 기간",
-          "ttlDays": "{count, plural, other {일}}",
-          "ttlAriaLabel": "일 단위 캐시 지속 시간",
-          "statusTitle": "캐시 상태",
-          "refreshButton": "캐시 새로 고침",
-          "listingFiles": "파일 목록…",
-          "cachingFiles": "{count} 파일… 캐싱 중",
-          "statusNeverFetched": "절대 가져오지 않음",
-          "statusPending": "상쾌한...",
-          "lastFetched": "마지막으로 가져온",
-          "filesCached": "캐시된 파일",
-          "contentsCached": "콘텐츠 캐시됨",
-          "contentsIncomplete": "{total}개 파일 중 {cached}개의 콘텐츠만 캐시되었습니다 — 생성된 스크립트는 누락된 파일을 사용하지 않습니다. 완료하려면 다시 새로고침하세요.",
-          "totalSize": "전체 크기"
+          "contentsIncomplete": "{total}개 파일 중 {cached}개의 콘텐츠만 캐시되었습니다 — 생성된 스크립트는 누락된 파일을 사용하지 않습니다. 완료하려면 다시 새로고침하세요."
         },
-        "save": "설정 저장",
         "saved": "코드 컨텍스트 구성이 저장되었습니다.",
-        "saveError": "설정을 저장하는 데 실패했습니다.",
-        "listError": "저장소 파일 목록을 가져오는 데 실패했습니다.",
-        "contentsError": "파일 내용 캐시 실패",
-        "networkError": "캐시 새로 고침 중 네트워크 오류 발생",
-        "refreshSuccess": "캐시 새로 고침됨: {fileCount} 개 파일 ({contentCached} 개 콘텐츠 캐시됨)",
-        "refreshRateLimited": "캐시 새로 고침됨: {fileCount} 개의 파일이 나열되었고, {contentCached}/{fileCount} 개의 콘텐츠가 캐시되었습니다(호출 속도 제한됨 - 완료하려면 다시 새로 고침하세요).",
-        "refreshComplete": "캐시 새로고침 완료: 파일 {fileCount}개",
-        "refreshInProgress": "캐시 새로고침이 백그라운드에서 계속 실행 중입니다. 완료되면 여기에 업데이트됩니다.",
-        "validation": {
-          "pathRequired": "경로가 필요합니다",
-          "patternRequired": "패턴이 필요합니다",
-          "repositoryRequired": "저장소가 필요합니다",
-          "pathPatternRequired": "최소 하나의 경로 패턴이 필요합니다."
-        },
         "exportTemplates": {
           "title": "내보내기 템플릿",
           "description": "이 프로젝트에 내보내기 템플릿을 지정하세요. 지정된 템플릿만 내보내기 대화 상자에 표시됩니다.",
@@ -2084,17 +2055,78 @@
           "saved": "템플릿 할당이 저장되었습니다",
           "saveError": "템플릿 할당을 저장하는 데 실패했습니다."
         },
-        "disconnect": "저장소 연결 해제",
-        "confirmDisconnect": "\"{name}\"를 이 프로젝트에서 연결 해제하시겠습니까?",
-        "disconnectWarningTitle": "이 저장소 연결을 해제하면 다음과 같은 결과가 발생합니다.",
-        "disconnectWarning1": "캐시된 저장소 파일을 모두 제거합니다.",
-        "disconnectWarning2": "경로 패턴 및 분기 구성을 제거합니다.",
         "disconnectWarning3": "AI가 생성한 내보내기에 코드 컨텍스트를 포함하지 마세요.",
         "disconnectSuccess": "코드 저장소 연결이 끊어졌습니다.",
         "disconnectError": "코드 저장소 연결 해제에 실패했습니다."
       },
+      "codeRepository": {
+        "cache": {
+          "cachingFiles": "{count} 파일 캐싱 중…",
+          "contentsCached": "콘텐츠 캐시됨",
+          "enableLabel": "파일 캐싱 활성화",
+          "filesCached": "캐시된 파일",
+          "lastFetched": "마지막으로 가져온 시간",
+          "listingFiles": "파일 목록 중…",
+          "refreshButton": "캐시 새로 고침",
+          "statusNeverFetched": "절대 가져오지 않음",
+          "statusPending": "새로 고치는 중...",
+          "statusTitle": "캐시 상태",
+          "title": "캐시 설정",
+          "totalSize": "전체 크기",
+          "ttlAriaLabel": "일 단위 캐시 지속 시간",
+          "ttlBefore": "캐시 유지 기간",
+          "ttlDays": "{count, plural, other {일}}"
+        },
+        "confirmDisconnect": "\"{name}\"을 이 프로젝트에서 연결 해제하시겠습니까?",
+        "contentsError": "파일 내용 캐시 실패",
+        "disconnect": "저장소 연결 해제",
+        "disconnectWarningTitle": "이 저장소 연결을 해제하면 다음과 같은 결과가 발생합니다:",
+        "listError": "저장소 파일 목록을 가져오는 데 실패했습니다",
+        "networkError": "캐시 새로 고침 중 네트워크 오류 발생",
+        "noRepos": {
+          "adminLink": "코드 저장소로 이동",
+          "title": "구성된 코드 저장소가 없습니다",
+          "userDescription": "코드 저장소 연결을 설정하려면 시스템 관리자에게 문의하십시오."
+        },
+        "pathPatterns": {
+          "addPath": "경로 추가",
+          "exclude": "제외",
+          "files": "{count, plural, one {# 파일} other {# 파일들}}",
+          "pathLabel": "경로",
+          "patternLabel": "패턴",
+          "previewFiles": "파일 미리보기",
+          "scanningRepo": "저장소 파일 스캔 중… ({seconds}s)",
+          "title": "경로 패턴",
+          "truncatedBadge": "결과가 불완전할 수 있습니다(제공업체 제한)"
+        },
+        "preview": {
+          "filtering": "{count, number} 파일에 필터를 적용합니다…",
+          "rateLimited": "제공업체에서 속도 제한이 적용되어 {seconds, number}초 후 재시도합니다…",
+          "resolvingBranch": "분기 해결 중…",
+          "scanningFiles": "{scope}에서 파일을 스캔합니다…",
+          "scanningFilesCount": "{scope}에서 파일을 스캔하는 중입니다 ({count, number} 발견됨)"
+        },
+        "refreshComplete": "캐시 새로고침 완료: 파일 {fileCount}개",
+        "refreshInProgress": "캐시 새로고침이 백그라운드에서 계속 실행 중입니다. 완료되면 여기에 업데이트됩니다.",
+        "refreshRateLimited": "캐시 새로 고침됨: {fileCount}개의 파일이 나열되었고, {contentCached}/{fileCount}개의 콘텐츠가 캐시되었습니다(호출 속도 제한됨 - 완료하려면 다시 새로 고침하세요)",
+        "refreshSuccess": "캐시 새로 고침됨: {fileCount} 개 파일 ({contentCached} 개 콘텐츠 캐시됨)",
+        "repository": {
+          "branchLabel": "분기",
+          "branchesTruncatedHint": "처음 {count, number}개 분기가 표시됩니다. 입력하여 전체 저장소를 검색합니다.",
+          "placeholder": "코드 저장소를 선택하세요..."
+        },
+        "save": "설정 저장",
+        "saveError": "설정을 저장하는 데 실패했습니다",
+        "validation": {
+          "pathPatternRequired": "최소 하나의 경로 패턴이 필요합니다",
+          "patternRequired": "패턴이 필요합니다",
+          "repositoryRequired": "저장소가 필요합니다"
+        },
+        "disconnectWarningCache": "캐시된 저장소 파일을 모두 제거합니다",
+        "disconnectWarningPatterns": "경로 패턴 및 분기 구성을 제거합니다",
+        "refreshInterrupted": "캐시 새로고침이 완료되기 전에 중단되었습니다. 다시 새로고침하여 완료하세요."
+      },
       "advanced": {
-        "title": "고급의",
         "description": "프로젝트별로 특정 기능을 활성화/비활성화할 수 있는 토글 기능입니다. 새로운 토글 기능은 추가되는 대로 여기에 표시됩니다.",
         "recordKey": {
           "label": "프로젝트 코드",
@@ -2115,6 +2147,13 @@
           "saveError": "검토 워크플로 설정 업데이트에 실패했습니다.",
           "systemDisabledTitle": "검토 워크플로가 시스템 전체에서 비활성화되었습니다.",
           "systemDisabledDescription": "프로젝트 기본 설정은 저장되지만, 시스템 관리자가 관리 → 워크플로에서 해당 기능을 활성화하기 전까지는 아무것도 제한되지 않습니다."
+        },
+        "requirements": {
+          "label": "요구 사항 활성화",
+          "description": "이 프로젝트에 시스템이 수행해야 할 사항의 계층 구조를 구축하고 테스트 케이스를 연결하여 커버리지를 관리할 수 있는 요구 사항 영역을 추가합니다. 여기에서 현재 상태의 요구 사항 모델을 유지하는 경우 이 기능을 켜세요. 요구 사항이 전적으로 이슈 트래커에 있는 경우에는 꺼 두세요.",
+          "enabledToast": "이 프로젝트에 대해 요구 사항이 활성화되었습니다",
+          "disabledToast": "이 프로젝트에 대해 요구 사항이 비활성화되었습니다",
+          "saveError": "요구 사항 설정을 업데이트할 수 없습니다"
         },
         "flipJustification": {
           "label": "결과 반전에 대한 정당성을 요구합니다",
@@ -2182,6 +2221,152 @@
           "savedToast": "이 프로젝트의 자동화 방치 정리가 업데이트되었습니다",
           "saveError": "자동화 방치 정리 업데이트에 실패했습니다"
         }
+      },
+      "impact": {
+        "description": "테스트 영향 분석을 활성화하고 테스트 중인 애플리케이션의 저장소를 연결합니다.",
+        "enableLabel": "영향 분석 활성화",
+        "enableDescription": "팀 구성원이 테스트 실행을 구성할 때 코드 변경 사항으로부터 영향을 받는 테스트를 선택할 수 있습니다.",
+        "enabledToast": "영향 분석 활성화됨",
+        "disabledToast": "영향 분석 비활성화됨",
+        "noRepos": {
+          "adminDescription": "이 프로젝트의 영향을 구성하기 전에 저장소 연결을 설정하세요."
+        },
+        "repository": {
+          "title": "애플리케이션 저장소",
+          "description": "테스트 중인 애플리케이션의 일부를 보유한 저장소를 선택합니다. 여러 서비스에서 테스트하는 프로젝트는 서비스당 하나의 저장소를 연결할 수 있습니다.",
+          "branchPlaceholder": "분기를 선택하세요...",
+          "branchInputPlaceholder": "기본 저장소 분기를 사용하려면 비워 두십시오",
+          "branchesUnavailable": "분기를 나열할 수 없습니다: {error}",
+          "branchesFallbackHint": "대신 분기 이름을 입력하세요."
+        },
+        "pathPatterns": {
+          "description": "Impact가 읽는 애플리케이션 파일: 코드 핀 파일 선택기, 캐시, 리포지토리 마커 및 분석이 무시하는 변경된 파일입니다.",
+          "pathPlaceholder": "src"
+        },
+        "cache": {
+          "description": "파일은 Valkey에 캐시되므로 코드 핀 파일 피커와 저장소 마커가 빠르게 유지됩니다.",
+          "disabledWarning": "파일 캐싱이 비활성화되어 있습니다. 저장소 마커는 스캔되지 않으며, 코드 핀 파일 피커는 열 때마다 제공자로부터 파일을 실시간으로 나열합니다.",
+          "contentsIncomplete": "전체 {total}개 파일 중 {cached}개의 콘텐츠만 캐시되었습니다. 완료하려면 다시 새로고침하세요."
+        },
+        "tickets": {
+          "title": "연결된 티켓",
+          "description": "티켓을 이름 짓는 커밋(PROJ-123, #42, AB#42)은 해당 티켓에 연결된 모든 테스트 케이스에서 코드 핀이 됩니다. 커밋이 변경한 함수나 클래스(diff가 표시되는 경우)에서, 그렇지 않으면 전체 파일에서입니다. 나중에 해당 코드의 변경사항은 사례를 다시 찾습니다. 이름이 지정된 티켓 TestPlanIt은 아직 보유하지 않으며 프로젝트의 이슈 트래커에서 가져오므로 연결할 수 있습니다.",
+          "enableLabel": "커밋 메시지에서 코드 핀 파생",
+          "enableDescription": "캐시를 새로고침할 때마다 분기의 최근 커밋을 스캔합니다. 분석이 분석된 커밋에서만 티켓 키를 읽도록 유지하려면 끄세요. 수동 스캔은 계속 실행됩니다.",
+          "resultLinksLabel": "테스트 결과에 추가된 티켓도 계산",
+          "resultLinksDescription": "테스트 결과 또는 단계 결과에 추가된 티켓은 해당 결과가 기록된 케이스도 함께 연결하므로 커밋이 해당 케이스를 고정하고 선택합니다. 비활성화하면 테스트 케이스에 직접 연결된 티켓만 계산됩니다.",
+          "skippedLarge": "{count, plural, one {# 커밋은} other {# 커밋들은}} 너무 커서 고정할 수 없어 건너뛰었습니다.",
+          "fetchCapped": "이 패스에서 연결된 티켓의 이름을 지은 모든 커밋의 파일이 읽혀지지 않았습니다. 나머지는 다음 스캔에서 수집됩니다.",
+          "scanRecent": "최근 커밋 재스캔",
+          "scanFull": "전체 기록 스캔",
+          "scanFullHint": "전체 기록은 분기의 모든 커밋을 살펴보고 기존 티켓에 대한 핀을 역채웁니다. 이미 읽은 커밋은 캐시에서 제공되고, 캐시에서 중지된 워크는 다음번에 거기서 계속됩니다.",
+          "scanStarted": "티켓 스캔이 대기열에 올려졌습니다.",
+          "scanStillRunning": "티켓 스캔이 백그라운드에서 계속 실행 중입니다. 완료되면 여기에 업데이트됩니다.",
+          "scanFailedToStart": "티켓 스캔을 시작할 수 없습니다",
+          "runningRecent": "최근 커밋 스캔 중…",
+          "runningFull": "전체 기록 스캔 중…",
+          "runningProgress": "{commits, number}개 커밋 읽음 · {matched, number}개는 연결된 티켓의 이름을 지었습니다 · {fetched, number}개를 검사했습니다",
+          "fullBadge": "전체 기록",
+          "imported": "{imported, plural, =0 {트래커에서 새로운 티켓을 가져오지 않았습니다.} other {트래커에서 #개의 티켓을 가져왔습니다.}}",
+          "fullCapped": "워크가 분기 시작에 도달하기 전에 {count, number}개의 커밋에서 중지되었습니다. 전체 기록 스캔을 다시 실행하여 중지한 위치에서 계속하세요.",
+          "stale": "{date}에 시작된 스캔이 보고되지 않았습니다 — 작업자가 다시 시작되었을 수 있습니다. 계속하려면 다시 대기열에 올리세요.",
+          "summaryCommits": "{commits, plural, one {# 커밋} other {# 커밋}} 읽음{cached, plural, =0 {} other { ({cached, number}은 커밋 캐시에서)}} · {naming, number}개는 티켓의 이름을 지었습니다 · {tickets, plural, one {# 고유 티켓} other {# 고유 티켓}}",
+          "summaryPins": "핀: {created, number}개 생성됨 · {updated, number}개 업데이트됨 · {removed, number}개 제거됨",
+          "noLinkedHint": "테스트 케이스가 이들에 연결되면 티켓만 테스트 케이스를 고정합니다. 케이스를 가져온 티켓에 연결한 다음 다시 스캔하세요.",
+          "importFailuresTitle": "트래커에서 찾을 수 없는 키({shown}개 중 {total}개):",
+          "windowCapped": "최근 {count, number}개의 커밋만 읽혀졌습니다(최근 윈도우 캐프). 더 오래된 것을 읽으려면 전체 기록 스캔을 사용하세요.",
+          "runningWalk": "{commits, number}개의 커밋이 지금까지 읽혀졌습니다{cached, plural, =0 {} other { ({cached, number}은 커밋 캐시에서)}} — 티켓은 워크가 완료되면 조회됩니다",
+          "runningImport": "{commits, number}개의 커밋을 읽음 · 티켓 가져오는 중: {lookups, number}개를 트래커에서 조회함 · {imported, number}개 가져옴",
+          "summaryCommitsOnly": "{commits, plural, one {# 커밋} other {# 커밋}} 읽음",
+          "importSkipped": "{skipped, plural, one {# 키는} other {# 키들은}} 한 스캔이 제한된 수의 트래커 조회를 수행하므로 아직 조회되지 않았습니다. 계속하려면 스캔을 다시 실행하세요.",
+          "cancelRequested": "취소가 요청되었습니다. 스캔은 다음 단계에서 멈춥니다. 읽은 커밋은 캐시에 유지됩니다.",
+          "cancelled": "{date}에 스캔이 취소되었습니다. 취소 전에 읽은 커밋은 커밋 캐시에 유지됩니다. 핀은 업데이트되지 않았습니다.",
+          "importMoved": "{moved, plural, one {# 키는 이전 이름} other {# 키들은 이전 이름}} 이미 가져온 티켓의; 트래커에서 이동되거나 이름이 변경되었습니다.",
+          "importFailed": "{failed, plural, one {# 키는} other {# 키들은}} 트래커에서 찾을 수 없으며 아래 나열됩니다.",
+          "summaryMatched": "{matched, plural, one {# 커밋은} other {# 커밋들은}} 테스트 케이스에 연결된 티켓의 이름을 지었습니다",
+          "summarySymbolPins": "(생성된 핀 중 {count, number}개는 전체 파일이 아닌 함수 또는 클래스를 대상으로 합니다.)"
+        },
+        "markers": {
+          "title": "저장소 마커",
+          "description": "@testplanit case:123과 같은 댓글 주석 및 .testplanit/testmap.yml의 항목은 모든 캐시 새로고침에서 코드 핀이 됩니다.",
+          "skippedPrivacy": "건너뜀: 파일 캐싱이 비활성화되어 있습니다.",
+          "skippedPartial": "건너뜀: 파일 내용이 부분적으로만 캐시되었습니다.",
+          "summary": "{annotations, plural, one {# 주석} other {# 주석들}} · {mapEntries, plural, one {# 맵 항목} other {# 맵 항목들}} · {created}개 생성됨 · {updated}개 업데이트됨 · {removed}개 제거됨",
+          "problems": "{count, plural, one {# 문제} other {# 문제들}}"
+        },
+        "saved": "영향 분석 구성이 저장되었습니다",
+        "disconnectWarning1": "{count, plural, one {# 코드 핀} other {# 코드 핀}}을 제거하고 이 저장소의 분석 기록을 제거합니다",
+        "disconnectSuccess": "애플리케이션 저장소 연결 해제됨",
+        "disconnectError": "애플리케이션 저장소 연결 해제 실패",
+        "repositories": {
+          "title": "연결된 저장소",
+          "description": "이 프로젝트가 분석하는 모든 저장소입니다. 각각은 자체 분기, 경로 패턴, 캐시 및 코드 핀을 유지합니다.",
+          "connect": "저장소 연결",
+          "allConnected": "등록된 모든 저장소가 이미 연결되어 있습니다.",
+          "columnCache": "캐시",
+          "pinTotal": "{count, plural, one {# 코드 핀} other {# 코드 핀들}}",
+          "cacheDisabled": "캐싱 꺼짐",
+          "edit": "연결 편집",
+          "connectTitle": "저장소 연결",
+          "editTitle": "{name} 편집",
+          "view": "연결 보기",
+          "connectDescription": "테스트 중인 애플리케이션의 등록된 저장소를 선택하고 어느 분기와 경로를 읽을지 지정합니다.",
+          "editDescription": "이 연결의 분기, 경로 패턴, 캐시 및 티켓 스캔을 변경합니다.",
+          "viewDescription": "이 저장소가 어떻게 연결되어 있는지입니다. 여기서 캐시를 새로고침하거나 티켓 스캔을 실행하세요. 설정을 변경하려면 편집을 사용합니다.",
+          "empty": "아직 연결된 저장소가 없습니다",
+          "emptyDescription": "테스트 중인 애플리케이션의 저장소를 연결하여 변경 사항 분석을 시작합니다.",
+          "lastScan": "마지막 스캔으로 생성된 {created, plural, one {# 핀} other {# 핀들}}",
+          "scanFailed": "마지막 스캔 실패",
+          "scanCancelled": "마지막 스캔 취소됨"
+        },
+        "bulk": {
+          "label": "{count, plural, one {저장소:} other {모든 # 저장소:}}",
+          "scanRecentHint": "연결된 {count, plural, one {저장소} other {# 개의 저장소}}에서 최근 커밋을 다시 스캔합니다.",
+          "scanFullHint": "{count, plural, one {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 브랜치의 모든 커밋을 순회하고 기존 티켓에 대한 핀을 역입력합니다.",
+          "scanFullConfirm": "{count, plural, one {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 브랜치의 모든 커밋을 순회합니다. 저장소는 한 번에 하나씩 스캔되므로 시간이 오래 걸릴 수 있으며, 각 순회는 제공자의 API를 통해 커밋을 읽으므로 속도 제한에 영향을 줍니다.",
+          "checkStaleHint": "{count, plural, one {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 코드 핀을 각 브랜치 끝에 대해 확인합니다.",
+          "removeStaleHint": "{repos, plural, one {# 저장소} other {# 개의 저장소}}에서 {count, plural, one {# 개의 오래된 코드 핀} other {# 개의 오래된 코드 핀}}을 제거합니다.",
+          "removeConfirm": "{repos, plural, one {# 저장소} other {# 개의 저장소}}에서 마지막 확인에서 브랜치 끝에서 찾을 수 없는 {count, plural, one {# 개의 코드 핀} other {# 개의 코드 핀}}을 제거하시겠습니까?",
+          "queued": "{count, plural, one {# 저장소} other {# 개의 저장소}}에 대해 대기열에 추가되었습니다.{skipped, plural, =0 {} one { # 개가 이미 실행 중입니다.} other { # 개가 이미 실행 중입니다.}}",
+          "allRunning": "모든 저장소에 대해 이미 대기열에 추가되었거나 실행 중입니다.",
+          "failed": "다음에 대해 시작할 수 없습니다: {names}"
+        },
+        "initialScanStarted": "저장소 파일을 가져오고 저장소 마커 및 연결된 티켓을 스캔 중…",
+        "scanError": "스캔 실패: {error}",
+        "scanLastScan": "마지막 스캔: {date}",
+        "scanNever": "아직 스캔되지 않음",
+        "stalePins": {
+          "title": "오래된 코드 핀",
+          "check": "오래된 핀 확인",
+          "checkHint": "각 핀이 있는 파일을 분기 팁에서 읽고 파일, 줄 또는 기호를 더 이상 찾을 수 없는 핀에 플래그를 지정합니다.",
+          "remove": "오래된 핀 제거",
+          "checkStarted": "오래된 핀 확인이 대기열에 올려졌습니다.",
+          "checkFailedToStart": "오래된 핀 확인을 시작할 수 없습니다",
+          "running": "{total, plural, one {# 파일} other {# 파일들}} 중 {checked, number}개를 확인 중…",
+          "neverChecked": "아직 확인하지 않음",
+          "checkFailed": "마지막 확인 실패",
+          "summary": "{count, plural, =0 {오래된 핀 없음} one {# 오래된 핀} other {# 오래된 핀들}} · {checked, plural, one {# 핀} other {# 핀들}} 확인됨",
+          "unreadable": "{count, plural, one {# 파일} other {# 파일}}을 읽을 수 없어 해당 핀은 확인되지 않았습니다.",
+          "removed": "{count, plural, =0 {오래된 핀이 제거되지 않았습니다} one {# 오래된 핀 제거됨} other {# 오래된 핀들 제거됨}}",
+          "removeFailed": "오래된 핀을 제거할 수 없습니다",
+          "removeConfirm": "마지막 확인에서 {name}의 팁에서 찾을 수 없는 {count, plural, one {# 코드 핀} other {# 코드 핀}}을 제거하시겠습니까?",
+          "removeConfirmNote": "오래된 배지가 해제되었고 저장소 마커로 유지되는 핀은 유지됩니다. 제거된 핀은 휴지통에서 복원할 수 있습니다.",
+          "checkCancelled": "마지막 확인이 취소됨",
+          "interrupted": "{date}에 시작된 확인이 응답을 보내지 않았습니다. 워커가 다시 시작되었을 수 있습니다. 계속하려면 다시 대기열에 추가하세요."
+        },
+        "jobs": {
+          "queued": "대기열에 추가됨",
+          "queuedBehind": "{what, select, sweep {야간 캐시 새로고침이 완료될 때까지 기다리는 중입니다.} refresh {캐시 새로고침이 완료될 때까지 기다리는 중입니다.} scan {티켓 스캔이 완료될 때까지 기다리는 중입니다.} stale {부실 핀 확인이 완료될 때까지 기다리는 중입니다.} other {다른 작업이 완료될 때까지 기다리는 중입니다.}}",
+          "notResponding": "응답 없음",
+          "notRespondingHint": "{date} 이후 진행 상황이 보고되지 않았지만 계속 실행 중입니다. 공급자를 기다리고 있을 수 있습니다. 진행이 재개되지 않으면 취소하세요.",
+          "interruptedRescan": "중단됨 — 다시 스캔",
+          "interruptedRecheck": "중단됨 — 다시 확인",
+          "interruptedRefresh": "중단됨 — 다시 새로고침"
+        }
+      },
+      "access": {
+        "editButton": "프로젝트 접근 권한 편집",
+        "adminOnlyNote": "시스템 관리자만 프로젝트 액세스를 수정할 수 있습니다."
       }
     },
     "matrix": {
@@ -2191,7 +2376,6 @@
       "loadError": "매트릭스 뷰를 불러올 수 없습니다. 다시 시도하거나 필터 범위를 좁히세요.",
       "cellCapShort": "이 행렬은 {cells, number} 개의 셀을 생성하는데, 이는 {threshold, number} 개의 셀 제한을 초과합니다. 계속하려면 필터를 좁히십시오.",
       "caseColumnHeader": "케이스/매개변수 행",
-      "cellNotRun": "테스트되지 않음",
       "cellSummary": "{pass, number} 통과, {fail, number} 실패, {notRun, number} 실행 안 함",
       "popoverTitle": "{count, plural, =1 {# 반복 횟수} other {# 반복 횟수}}",
       "iterationUnlabeled": "반복 횟수 #{index, number}",
@@ -2200,8 +2384,6 @@
       "filterStatus": "{count, plural, =0 {상태} one {상태(#)} other {상태(#)}}",
       "filterConfig": "{count, plural, =0 {설정} one {설정 (#)} other {설정 (#)}}",
       "filterDataset": "{count, plural, =0 {데이터셋} one {데이터셋 (#)} other {데이터셋 (#)}}",
-      "filterStatusLabel": "상태",
-      "filterConfigLabel": "구성",
       "filterDatasetLabel": "데이터셋",
       "filterStatusPlaceholder": "어떤 상태든",
       "filterConfigPlaceholder": "모든 구성",
@@ -2210,12 +2392,10 @@
       "filterDateTo": "에게",
       "configNone": "(설정 없음)",
       "clearFilter": "분명한",
-      "filterEmpty": "사용 가능한 옵션이 없습니다",
       "resetFilters": "필터 초기화",
       "exportCsv": "CSV 내보내기",
       "legendPassedName": "통과됨",
       "legendFailedName": "실패한",
-      "legendUntestedName": "테스트되지 않음",
       "legendClickHint": "반복 내역을 보려면 아무 셀이나 클릭하세요.",
       "cellCapTitle": "Matrix는 {cellCount, number} 개의 셀을 렌더링합니다(제한 {threshold, number}).",
       "cellCapSuggestionFilterCases": "테스트 케이스 수를 줄여서 필터링해 보세요. 해당 요소가 가장 큰 영향을 미칩니다.",
@@ -2360,7 +2540,6 @@
       "importStarted": "가져오기가 시작되었습니다",
       "kindRelease": "릴리스",
       "kindSprint": "스프린트",
-      "selectAll": "모두 선택",
       "searchPlaceholder": "릴리스 및 스프린트 검색...",
       "emptyFiltered": "필터 조건에 맞는 마일스톤이 없습니다.",
       "partialWarning": "일부 Jira 프로젝트를 가져올 수 없습니다:",
@@ -2371,14 +2550,12 @@
     "sync": {
       "managedByJira": "Jira에서 관리됨",
       "lastSynced": "마지막 동기화: {time}",
-      "openInJira": "Jira에서 열기",
       "providerJira": "지라",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "지금 동기화",
       "unlinkMenuItem": "{provider}에서 연결 해제",
       "unlinkConfirmTitle": "마일스톤 연결을 해제하시겠습니까?",
       "unlinkConfirmDescription": "이렇게 하면 트래커와의 동기화가 중지됩니다. 필드가 다시 편집 가능해지고, 동기화된 이슈 링크는 수동으로 전환되어(유지하거나 제거할 수 있음) 나중에 이 아티팩트를 다시 가져오면 재연결할 수 있습니다.",
-      "unlinkConfirmAction": "연결 해제",
       "unlinkSuccess": "마일스톤이 트래커와의 연결이 해제되었습니다.",
       "unlinkError": "마일스톤 연결 해제에 실패했습니다.",
       "sourceRemoved": "{provider}에서 원본이 삭제됨",
@@ -2402,19 +2579,15 @@
       "tooltipAhead": "이상보다 {count, number}개 앞섬"
     },
     "members": {
-      "cardTitle": "이슈",
       "casesOtherProjects": "{count, plural, other {다른 프로젝트의 테스트 케이스 #개}}",
       "inScope": "범위 내",
       "foundInTesting": "테스트 중 발견",
       "foundInTestingEmpty": "테스트 중 발견된 이슈가 없습니다.",
       "inScopeCrossBadge": "범위 내",
       "refresh": "새로 고침",
-      "columnKey": "이름",
-      "columnStatus": "상태",
       "columnCoverage": "커버리지",
       "columnSource": "원본",
       "sourceSynced": "동기화됨",
-      "sourceManual": "수동",
       "coveragePassed": "통과됨",
       "coverageFailed": "실패",
       "coverageInProgress": "진행 중",
@@ -2425,7 +2598,6 @@
       "filterAllTypes": "모든 유형",
       "empty": "아직 이 마일스톤에 연결된 이슈가 없습니다.",
       "emptyFiltered": "현재 필터 조건에 맞는 이슈가 없습니다.",
-      "unlink": "연결 해제",
       "managedByJira": "Jira에서 관리됨 — Jira의 버전/스프린트에서 제거하세요",
       "linkSuccess": "이슈가 이 마일스톤에 연결되었습니다.",
       "linkError": "이슈를 이 마일스톤에 연결하는 데 실패했습니다.",
@@ -2439,7 +2611,6 @@
       "overflowImportSuccess": "가져오기가 시작되었습니다 — 동기화되는 대로 이슈가 표시됩니다.",
       "overflowImportError": "Jira에서 구성원 이슈를 가져오는 데 실패했습니다.",
       "emptyCta": "시작하려면 이슈를 연결하세요.",
-      "columnDescription": "설명",
       "unlinkConfirmTitle": "이슈 연결을 해제하시겠습니까?",
       "unlinkConfirmDescription": "이렇게 하면 이 마일스톤에서 이슈가 제거됩니다. 이슈 자체는 유지되며 나중에 다시 연결할 수 있습니다.",
       "totalsUncovered": "{count, plural, other {커버되지 않은 이슈 #개}}",
@@ -2463,7 +2634,6 @@
       "deleteDescription": "{count, plural, other {선택한 세션}}을 삭제하시겠습니까?"
     },
     "auditLog": {
-      "trigger": "활동",
       "description": "이 세션에 기록된 모든 변경 사항입니다."
     },
     "title": "{count, plural, =1 {세션} other {세션들}}",
@@ -2492,9 +2662,6 @@
       "viewSessionDetails": "세션 보기"
     },
     "noMilestone": "이정표 없음",
-    "milestoneGroup": {
-      "sessionCount": "{count, plural, other {# 세션}}"
-    },
     "completeDialog": {
       "noWorkflowsConfigured": "이 프로젝트에는 완료 워크플로가 구성되어 있지 않습니다. 세션 완료 기능을 활성화하려면 관리자 설정에서 워크플로를 구성하십시오."
     },
@@ -2565,7 +2732,6 @@
     "version": {
       "title": "세션 기록 보기",
       "notFound": "세션 버전을 찾을 수 없습니다.",
-      "selectVersion": "버전 선택",
       "backToSession": "세션으로 돌아가기",
       "backToLatest": "최신 버전으로 돌아가기",
       "versionInfo": {
@@ -2680,10 +2846,11 @@
         "emailDisabledForScim": "이메일 주소는 SCIM을 통해 ID 제공업체에서 관리하며 여기에서 변경할 수 없습니다."
       },
       "preferences": {
-        "title": "환경설정"
-      },
-      "access": {
-        "title": "입장"
+        "title": "환경설정",
+        "detailsDisplayMode": {
+          "docked": "도킹된 패널",
+          "newWindow": "새 창"
+        }
       },
       "assignments": {
         "title": "과제",
@@ -2699,7 +2866,6 @@
         "userName": "디렉터리 사용자 이름",
         "givenName": "이름",
         "familyName": "성",
-        "jobTitle": "제목",
         "userType": "사용자 유형",
         "employeeNumber": "직원 번호",
         "department": "부서",
@@ -2733,7 +2899,6 @@
         }
       },
       "changePasswordModal": {
-        "buttonText": "비밀번호 변경",
         "setPasswordButtonText": "비밀번호 설정",
         "description": "현재 비밀번호와 새 비밀번호를 입력하여 계정 비밀번호를 변경하세요. 이 작업은 내부적으로 관리되는 비밀번호만 변경합니다. SSO(단일 로그인)를 통해 로그인하는 경우 해당 비밀번호는 변경되지 않습니다.",
         "setPasswordDescription": "SSO를 통해 로그인하셨으며 아직 로컬 암호를 설정하지 않으셨습니다. 이메일/암호 로그인을 활성화하려면 새 암호를 입력하세요.",
@@ -2755,8 +2920,6 @@
         "loadMore": "로딩 중",
         "viewDetails": "자세히 보기",
         "columnAction": "작업",
-        "columnEntityType": "유형",
-        "columnEntityName": "이름",
         "columnTimestamp": "타임스탬프",
         "allActions": "모든 작업",
         "allTypes": "모든 유형",
@@ -2835,8 +2998,7 @@
       "remove": "아바타 제거",
       "changeProfilePicture": "프로필 사진 변경",
       "notAuthenticated": "아바타를 업로드하려면 로그인해야 합니다."
-    },
-    "deletedUser": "삭제된 사용자"
+    }
   },
   "userMenu": {
     "viewProfile": "프로필 보기",
@@ -2855,6 +3017,15 @@
   "repository": {
     "version": {
       "notFound": "테스트 케이스 버전을 찾을 수 없습니다.",
+      "caseNotFoundTitle": "이 테스트 케이스를 찾을 수 없습니다",
+      "caseNotFoundDescription": "이 버전이 속한 테스트 케이스가 이 프로젝트에 존재하지 않거나 삭제되었습니다. 따라한 링크를 확인하세요.",
+      "backToRepository": "저장소로 돌아가기",
+      "invalidVersionTitle": "\"{version}\"은 버전 번호가 아닙니다",
+      "invalidVersionDescription": "버전은 1부터 올라가는 정수입니다. 따라한 링크를 확인하거나 테스트 케이스를 열고 해당 기록에서 버전을 선택합니다.",
+      "notRecordedTitle": "이 테스트 케이스의 버전 {version}은 기록되지 않았습니다",
+      "notRecordedDescription": "이 버전에 대해 저장된 스냅샷이 없으므로 테스트 케이스를 해당 시점에서 표시할 수 없습니다. 버전은 케이스가 저장될 때 기록됩니다. 스냅샷이 기록되기 전에 생성되거나 변경된 케이스에는 표시할 기록이 없습니다.",
+      "viewCurrentCase": "현재 테스트 케이스 보기",
+      "snapshotUnavailable": "버전 {version}이 기록되지 않아 실행할 당시 케이스의 상태로 이 결과를 볼 수 없습니다.",
       "detailsRegion": "테스트 케이스 세부 정보",
       "metadataRegion": "테스트 케이스 메타데이터",
       "versionCreated": "버전 {version}",
@@ -2862,7 +3033,6 @@
       "historyView": "테스트 케이스 기록 보기"
     },
     "auditLog": {
-      "trigger": "활동",
       "description": "이 테스트 케이스에 기록된 모든 변경 사항입니다."
     },
     "fields": {
@@ -2950,7 +3120,6 @@
     },
     "dragDrop": {
       "move": "이동하다",
-      "copy": "복사",
       "promptTitle": "무엇을 하고 싶으세요?",
       "copying": "… 복사 중",
       "copyComplete": "{count, plural, =1 {케이스 1개를 {folder}} other {에 복사했습니다. #개의 케이스를 {folder}}}{dest, select, samename {} crossProject { 에 {projectName}} other {}}에 복사했습니다.",
@@ -3006,7 +3175,6 @@
       "addToRunDraftBlocked": "이 프로젝트에서 \"테스트 실행에서 초안 케이스 제외\" 옵션이 활성화된 경우 초안 케이스를 테스트 실행에 추가할 수 없습니다.",
       "copyMoveToProject": "복사/이동",
       "export": "내보내다",
-      "quickScript": "퀵스크립트",
       "parameterizedStatusReadOnly": "상태는 반복 결과로부터 계산됩니다. (클릭하여 열기)",
       "cannotReorderAcrossPages": "여러 페이지에 걸쳐 있는 테스트 케이스의 순서를 변경할 수 없습니다. 순서를 변경하려면 페이지 크기 메뉴에서 '모두'를 선택하여 모든 케이스를 한 페이지에 표시하거나 다른 페이지에서 케이스 선택을 해제하세요. 선택한 케이스는 폴더로 드래그하여 이동할 수 있습니다.",
       "exportModal": {
@@ -3046,6 +3214,10 @@
           "validationMultiRowNote": "행 번호는 원시 CSV 줄이 아니라 미리보기에 표시된 그룹화된 테스트 케이스를 나타냅니다.",
           "partialTitle": "일부 테스트 케이스를 가져오지 못했습니다",
           "partialSummary": "{failed, plural, other {#개 행}}을 가져올 수 없습니다. {imported, plural, other {#개의 테스트 케이스}}가 성공적으로 가져와졌습니다."
+        },
+        "warnings": {
+          "partialTitle": "일부 이슈 링크가 생성되지 않았습니다",
+          "summary": "{count, plural, one {# 이슈 셀} other {# 이슈 셀}}을 연결할 수 없습니다. 테스트 케이스가 가져오기 되었습니다."
         },
         "page1": {
           "fileType": {
@@ -3119,6 +3291,21 @@
       "successMessage": "새로운 테스트 케이스가 추가되었습니다.",
       "errorMessage": "새 테스트 케이스를 추가하는 중 알 수 없는 오류가 발생했습니다."
     },
+    "draft": {
+      "saving": "저장 중…",
+      "saved": "모든 변경 사항이 {time}에 저장되었습니다",
+      "unsaved": "저장되지 않은 변경 사항",
+      "saveFailed": "저장할 수 없습니다 — 재시도 중",
+      "restoreTitle": "저장되지 않은 변경 사항을 복원하시겠습니까?",
+      "restoreDescription": "{age}에서 이 테스트 케이스에 대한 저장되지 않은 변경 사항이 있습니다. 복원하거나 버리고 저장된 버전을 로드합니다.",
+      "restoreTitleNew": "저장되지 않은 테스트 케이스를 복원하시겠습니까?",
+      "restoreDescriptionNew": "{age}에서 테스트 케이스를 시작했지만 저장하지 않았습니다. 작성한 내용을 복원하거나 버리고 처음부터 시작합니다.",
+      "restoreStaleWarning": "이 테스트 케이스는 초안이 작성된 이후에 다른 사람에 의해 저장되었습니다. 복원하면 저장할 때 해당 콘텐츠를 바꿉니다.",
+      "restoreDiscard": "버리기",
+      "bannerText": "{age}에서 이 테스트 케이스에 대한 저장되지 않은 변경 사항이 있습니다.",
+      "bannerAction": "편집 재개",
+      "bannerDiscard": "버리기"
+    },
     "columns": {
       "selectCase": "케이스를 선택하세요",
       "runOrder": "실행 순서",
@@ -3153,7 +3340,6 @@
     "views": {
       "byAutomation": "오토메이션",
       "byParameterized": "매개변수화",
-      "byAttachments": "첨부파일",
       "byReview": "검토",
       "allTemplates": "모든 템플릿",
       "allStates": "모든 주",
@@ -3237,7 +3423,6 @@
         "markdown": "가격 인하"
       },
       "columns": {
-        "all": "모두",
         "visible": "보이는"
       },
       "delimiter": {
@@ -3267,13 +3452,10 @@
         "multi": "단계별로 여러 행"
       },
       "comingSoon": "곧 출시 예정",
-      "exporting": "수출 중...",
       "exportError": "내보내기에 실패했습니다. 다시 시도해 주세요."
     },
     "quickScript": {
-      "title": "퀵스크립트",
       "description": "선택한 테스트 케이스를 템플릿 또는 AI를 사용하여 자동화 스크립트로 변환합니다.",
-      "templatePlaceholder": "템플릿을 선택하세요...",
       "searchPlaceholder": "템플릿을 검색하세요...",
       "noTemplatesFound": "템플릿을 찾을 수 없습니다.",
       "outputModeLabel": "출력 모드",
@@ -3326,7 +3508,6 @@
       "compareButton": "비교하다",
       "viewCaseDetails": "사건 상세 정보를 확인하세요",
       "selectAll": "모두 선택하세요",
-      "selectRow": "행을 선택하세요",
       "selected": "{count, plural, one {# 선택됨} other {# 선택됨}}",
       "bulkDismiss": "중복되지 않음 ({count, number})",
       "bulkLink": "관련 링크 ({count, number})",
@@ -3387,6 +3568,9 @@
         "title": "요구사항 소스를 선택하세요",
         "description": "테스트 케이스를 이슈 또는 요구사항 문서에서 생성할지 여부를 선택하세요.",
         "folderContextTip": "\"{folderName}\" 및 상위/하위 폴더의 기존 테스트 케이스가 중복을 방지하기 위한 컨텍스트로 사용됩니다. 진행하기 전에 올바른 폴더를 선택했는지 확인하십시오.",
+        "folderContextCount": "\"{folderName}\" 및 상위/하위 폴더에 {count, plural, =1 {# 기존 테스트 케이스} other {# 기존 테스트 케이스}}가 포함되어 있습니다. AI는 프로젝트의 스타일과 일치하고 중복을 피하기 위해 컨텍스트에 맞는 만큼 많은 항목을 사용합니다.",
+        "folderContextEmptyTitle": "컨텍스트로 사용할 기존 테스트 케이스가 없습니다",
+        "folderContextEmpty": "\"{folderName}\" 및 그 상위/하위 폴더에는 테스트 케이스가 없어서 AI가 프로젝트의 스타일이나 기존 범위에 대한 예시가 없습니다. 더 나은 결과를 위해 이러한 테스트 케이스가 속하는 폴더에서 생성기를 시작하고 관련 케이스 옆에 배치하세요.",
         "currentFolder": "현재 폴더",
         "fromIssue": "문제에서",
         "fromDocument": "문서에서",
@@ -3409,7 +3593,6 @@
         "urlInput": "페이지 URL",
         "urlInputPlaceholder": "https://example.com/docs",
         "urlMode": "이 URL에는 무엇이 포함되어 있습니까?",
-        "urlModeRequirements": "요구 사항",
         "urlModeRequirementsHint": "이 페이지는 무엇을 만들어야 하는지 설명합니다.",
         "urlModeApplication": "애플리케이션",
         "urlModeApplicationHint": "Page는 테스트할 앱입니다.",
@@ -3431,7 +3614,6 @@
       "selectTemplate": {
         "title": "테스트 케이스 템플릿을 선택하세요",
         "description": "테스트 케이스 생성에 사용할 템플릿을 선택하세요. AI는 선택한 템플릿에 따라 필드를 채웁니다.",
-        "placeholder": "템플릿을 선택하세요...",
         "fieldsDescription": "AI가 자동으로 입력할 필드를 선택하세요. 필수 필드는 항상 포함됩니다.",
         "requiredOnly": "필수 항목만 해당"
       },
@@ -3440,6 +3622,8 @@
         "description": "AI가 더 나은 테스트 케이스를 생성할 수 있도록 추가적인 맥락과 지침을 제공하세요.",
         "quantity": "생성할 테스트 케이스 수",
         "placeholder": "테스트 케이스 생성에 대한 구체적인 지침을 추가하세요...\n\n예시:\n• 보안 테스트에 집중\n• 예외 상황 및 경계 조건 포함\n• 정상 경로 및 오류 시나리오 모두 테스트\n• 모바일 및 데스크톱 시나리오 고려\n• API 테스트에 집중",
+        "linksIgnoredTitle": "메모의 링크가 열리지 않음",
+        "linksIgnored": "{count, plural, =1 {메모의 링크} other {메모의 # 링크}}는 일반 텍스트로만 전송됩니다. 문서나 스프레드시트를 사용하려면 관련 내용(시나리오, 테스트 데이터, 예상 결과)을 메모에 붙여넣으세요.",
         "suggestions": "빠른 제안:",
         "quantityOptions": {
           "justOne": "단 하나",
@@ -3474,7 +3658,6 @@
       "expandProgress": "{done, number} {total, number} 생성됨",
       "import": "{count, plural, =0 {테스트 케이스 가져오기} =1 {테스트 케이스 1개 가져오기} other {테스트 케이스 #개 가져오기}}",
       "importing": "{count, plural, =0 {테스트 케이스를 가져오는 중...} =1 {테스트 케이스 1개를 가져오는 중...} other {테스트 케이스 #개를 가져오는 중...}}",
-      "openInExternalSystem": "{provider}에서 열기",
       "externalSystem": "외부 시스템",
       "autoGenerateTags": "테스트 케이스에 대한 태그를 자동으로 생성합니다.",
       "includeParametersLabel": "매개변수 및 시작 데이터 세트를 생성합니다.",
@@ -3641,11 +3824,80 @@
       "renameTitle": "저장된 보기 이름 변경",
       "renamed": "저장된 보기가 업데이트되었습니다",
       "renameFailed": "보기를 업데이트할 수 없습니다. 다시 시도해 주세요.",
-      "delete": "삭제",
       "deleteTitle": "저장된 보기를 삭제하시겠습니까?",
       "deleteConfirm": "“{name}” 보기가 저장된 보기에서 삭제됩니다. 이 작업은 취소할 수 없습니다.",
       "deleted": "저장된 보기가 삭제되었습니다",
       "deleteFailed": "보기를 삭제할 수 없습니다. 다시 시도해 주세요."
+    },
+    "codePins": {
+      "add": "핀 추가",
+      "addDialogDescription": "핀은 현재 분기 팁에 고정됩니다.",
+      "addDialogTitle": "이 케이스를 코드에 고정",
+      "addFailed": "핀을 추가할 수 없습니다",
+      "addSuccess": "핀 추가됨",
+      "anchoredAt": "{sha}에 고정됨",
+      "caseLabel": "테스트 케이스",
+      "contentUnavailable": "파일 콘텐츠를 사용할 수 없습니다.",
+      "description": "이 케이스가 커버하는 코드입니다. 핀이 있는 블록 내의 변경 사항은 케이스를 영향 분석으로 끌어옵니다.",
+      "duplicate": "이 핀이 이미 존재합니다.",
+      "empty": "아직 코드 핀이 없습니다.",
+      "endLine": "끝 줄",
+      "errorFileNotFound": "분기 팁에서 파일을 찾을 수 없습니다.",
+      "errorLineOutOfRange": "줄 범위가 파일을 벗어납니다.",
+      "errorSnippetTooLarge": "핀이 있는 블록이 너무 큽니다.",
+      "errorSymbolNotFound": "기호를 파일에서 찾을 수 없습니다.",
+      "filePlaceholder": "파일 검색…",
+      "filesCached": "{count, plural, one {# 파일} other {# 파일}} 캐시됨 · {date}",
+      "filesLive": "저장소에서 파일을 실시간으로 나열합니다",
+      "globMatches": "{count, plural, =0 {캐시된 파일이 일치하지 않습니다} one {# 캐시된 파일이 일치합니다} other {# 캐시된 파일들이 일치합니다}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "종류",
+      "kindFile": "전체 파일",
+      "kindGlob": "글로브 패턴",
+      "kindLabel": "핀 대상",
+      "kindRange": "줄",
+      "kindSymbol": "기호",
+      "linesHint": "줄 번호를 클릭하여 시작하고 Shift를 누르고 클릭하여 끝내세요.",
+      "location": "위치",
+      "managedTooltip": "저장소에서 관리됩니다. 코드에서 마커를 편집합니다.",
+      "noFilesCached": "캐시된 파일 목록이 없습니다. 프로젝트 관리자에게 저장소 캐시를 새로고침하도록 요청합니다.",
+      "notePlaceholder": "이 케이스가 이 코드를 커버하는 이유(선택사항)",
+      "reanchor": "다시 고정",
+      "reanchorFailed": "핀을 다시 고정할 수 없습니다",
+      "reanchorSuccess": "핀이 다시 고정되었습니다",
+      "removeConfirm": "이 핀을 제거하시겠습니까?",
+      "removeFailed": "핀을 제거할 수 없습니다",
+      "removeSuccess": "핀이 제거되었습니다",
+      "sourceAnnotation": "주석",
+      "sourceMapfile": "맵 파일",
+      "staleFileDeleted": "파일 삭제됨",
+      "staleSnippetNotFound": "줄을 찾을 수 없습니다",
+      "staleSymbolNotFound": "기호를 찾을 수 없습니다",
+      "staleTooltip": "핀이 있는 블록을 분기 팁에서 찾을 수 없습니다: {reason}.",
+      "startLine": "시작 줄",
+      "symbolHint": "선언은 파일의 이름으로 찾습니다.",
+      "symbolNoneDetected": "기호가 감지되지 않음, 이름을 입력합니다.",
+      "symbolPlaceholder": "functionName",
+      "symbolSelectPlaceholder": "기호를 선택하거나 입력합니다...",
+      "updateSuccess": "핀이 업데이트되었습니다",
+      "updateFailed": "핀을 업데이트할 수 없습니다",
+      "editDialogTitle": "이 핀 편집",
+      "editDialogDescription": "파일과 핀 유형은 그대로 유지됩니다. 중 하나를 변경하려면 이 핀을 제거하고 새로 추가합니다.",
+      "editAction": "핀 편집",
+      "symbolSearchPlaceholder": "기호 검색…",
+      "symbolUseTyped": "\"{symbol}\" 사용",
+      "title": "코드 핀",
+      "viewerFailed": "파일을 로드할 수 없습니다.",
+      "viewerLoading": "파일 로드 중…",
+      "viewerTooLarge": "이 파일이 너무 커서 표시할 수 없습니다. 대신 줄 번호를 입력합니다.",
+      "repositoriesCount": "{count, plural, one {# 저장소} other {# 저장소들}}"
+    },
+    "diffView": {
+      "added": "추가된 줄",
+      "removed": "제거된 줄",
+      "oldLine": "이전 줄",
+      "newLine": "새 줄",
+      "context": "컨텍스트 줄"
     }
   },
   "tags": {
@@ -3669,15 +3921,13 @@
     "noProject": "프로젝트 없음",
     "description": "태그를 사용하여 테스트 케이스와 세션을 관리하고 정리하세요.",
     "detail": {
-      "title": "태그 세부 정보",
       "filterPlaceholder": "항목을 필터링하세요...",
       "noResults": "항목을 찾을 수 없습니다.",
       "noFilterResults": "현재 필터 조건에 맞는 항목이 없습니다.",
       "filters": {
         "hideCompletedSessions": "완료된 세션 숨기기",
         "hideCompletedTestRuns": "완료된 테스트 실행 숨기기",
-        "caseTypeLabel": "케이스 유형",
-        "allCases": "모두"
+        "caseTypeLabel": "케이스 유형"
       }
     },
     "manageTags": {
@@ -3699,9 +3949,7 @@
       "tooLarge": "이 파일은 크기가 너무 커서 미리볼 수 없습니다.",
       "empty": "이 문서는 비어 있는 것으로 보입니다.",
       "download": "다운로드하여 보기",
-      "slideCounter": "{total}개 중 {current}번째 슬라이드",
-      "previousSlide": "이전 슬라이드",
-      "nextSlide": "다음 슬라이드"
+      "slideCounter": "{total}개 중 {current}번째 슬라이드"
     }
   },
   "reviews": {
@@ -3731,7 +3979,6 @@
     },
     "transitionGate": {
       "blockedByGate": "이 전환을 진행하기 전에 \"{gateName}\"에 대한 승인이 필요합니다. \"검토 요청\"을 사용하여 승인을 요청하세요.",
-      "gatedOptionBadge": "검토가 필요합니다",
       "gatedStatesNotSelectable": "생성 시 제한 구역에 도달했거나 그 이후의 상태는 선택할 수 없습니다. 첫 번째 제한 구역 이전의 상태를 선택한 다음, 검토 요청을 사용하여 해당 구역을 통과하세요.",
       "saveBlockedByFormErrors": "저장하기 전에 강조 표시된 양식 오류를 해결하세요.",
       "bulkBlockedHeading": "게이트 \"{gateName}\"에 의해 차단된 {count, plural, other {#개 케이스}}:",
@@ -3743,44 +3990,33 @@
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {리뷰 받은 편지함} one {리뷰 받은 편지함, 대기 중인 리뷰 #} other {리뷰 받은 편지함, 대기 중인 리뷰 #}}",
-      "pageTitle": "리뷰",
-      "tabPending": "보류 중",
       "tabDecided": "결정했다",
       "emptyDecided": "결정된 리뷰가 아직 없습니다. 회원님이 결정한 리뷰와 회원님이 요청한 리뷰에 대한 결정이 여기에 표시됩니다.",
       "empty": "대기 중인 검토가 없습니다. 귀하를 기다리는 항목이 없으며, 요청한 모든 검토가 결정되었습니다.",
       "featureDisabled": "현재 검토 워크플로 기능이 비활성화되어 있습니다. 보류 중인 검토는 보존되며 기능이 다시 활성화되면 다시 표시됩니다.",
       "columnEntity": "실재",
-      "columnProject": "프로젝트",
       "columnRequester": "요청자",
-      "columnAssignee": "담당자",
       "columnTransition": "이행",
       "columnRequestedAt": "요청됨",
       "columnDecidedBy": "결정자",
       "columnDecidedAt": "결정됨",
-      "columnStatus": "상태",
-      "columnActions": "행위",
-      "actionApprove": "승인하다",
       "actionRequestChanges": "변경 요청",
       "actionReject": "거부하다",
       "actionNudge": "알림 보내기",
       "filterEntityType": "엔티티 유형",
-      "filterProject": "프로젝트",
       "filterRequester": "요청자",
       "filterAllRequesters": "모든 요청자",
       "filterDecidedBy": "결정자",
       "filterAllDeciders": "모든 결정자",
-      "filterStatus": "상태",
       "filterAllStatuses": "모든 상태",
       "filterAllEntityTypes": "모든 엔티티 유형",
       "filterEntityTypeCase": "테스트 케이스",
       "filterEntityTypeRun": "테스트 실행",
-      "filterEntityTypeSession": "세션",
       "filterAllProjects": "모든 프로젝트"
     },
     "requester": {
       "openButton": "검토 요청",
       "sheetDescription": "목표 상태로 전환하기 전에 이 엔티티를 검토를 위해 보내십시오.",
-      "assigneeLabel": "양수인",
       "assigneePlaceholder": "사용자 또는 역할을 선택하세요",
       "usersNotified": "{count, plural, =0 {아무도 알림을 받지 않습니다} other {#명의 사용자에게 알림이 전송됩니다}}",
       "targetStateLabel": "목표 상태",
@@ -3817,7 +4053,6 @@
       "unnamedUser": "(익명의 사용자)"
     },
     "reviewer": {
-      "approve": "승인하다",
       "requestChanges": "변경 요청",
       "reject": "거부하다",
       "approveConfirmTitle": "이 검토 요청을 승인하시겠습니까?",
@@ -3894,7 +4129,6 @@
       "errorNoAssignable": "이 실행에는 배분할 케이스가 없습니다"
     },
     "auditLog": {
-      "trigger": "활동",
       "description": "이 테스트 실행에 기록된 모든 변경 사항입니다."
     },
     "notFound": "테스트 실행을 찾을 수 없습니다.",
@@ -4033,7 +4267,6 @@
           "unassign": "중복 테스트 실행에 포함된 모든 테스트 케이스는 할당되지 않습니다."
         },
         "configurationGroup": {
-          "label": "구성 그룹",
           "separate": "복사본들은 서로끼리만 그룹화됩니다. 복제되는 테스트 실행은 해당 그룹에 포함되지 않습니다",
           "join": "복제되는 테스트 실행과 모든 복사본이 동일한 구성 그룹에 포함됩니다"
         }
@@ -4054,7 +4287,6 @@
       "noMatchingActive": "필터 조건과 일치하는 활성 테스트 실행이 없습니다."
     },
     "milestoneGroup": {
-      "runCount": "{count, plural, other {실행 #개}}",
       "altHintMac": "⌥ 키를 누른 상태로 모든 그룹을 펼치거나 접으세요",
       "altHintWin": "Alt 키를 누른 상태로 모든 그룹을 펼치거나 접으세요"
     },
@@ -4068,42 +4300,182 @@
     "junitFilters": {
       "retried": "재시도됨",
       "clear": "필터 지우기"
+    },
+    "impact": {
+      "title": "영향",
+      "analyzeImpact": "영향 분석",
+      "description": "테스트 중인 애플리케이션의 두 커밋을 선택하고 변경 사항이 영향을 미치는 테스트 케이스를 선택합니다.",
+      "noRepository": "영향을 사용하려면 프로젝트 설정에서 애플리케이션 저장소를 연결합니다.",
+      "aiUnavailable": "활성 LLM 통합이 없습니다: 결과는 코드 핀, 키워드 일치 및 실행 기록에서만 나옵니다.",
+      "steps": {
+        "review": "영향을 받는 테스트"
+      },
+      "pull": {
+        "label": "풀 요청",
+        "selectPlaceholder": "풀 요청을 선택하세요...",
+        "searchPlaceholder": "번호, 제목, 작성자 또는 분기로 검색…",
+        "stateOpen": "열기",
+        "stateMerged": "병합됨",
+        "stateClosed": "닫음",
+        "resolved": "{target}의 {base}와 {source}의 {head}를 비교하고 있습니다."
+      },
+      "pick": {
+        "modeLabel": "변경 사항 선택 기준",
+        "modeCommits": "커밋",
+        "modeCommitsHint": "마지막으로 확인한 빌드 이후에 상륙한 모든 것을 다시 테스트할 수 있도록 두 빌드 사이에 변경된 내용입니다.",
+        "modePullHint": "이 풀 요청이 변경하는 것은 분기가 분리된 위치에서 측정되므로 그 동안 대상 분기에 상륙한 작업은 남겨집니다.",
+        "baseLabel": "기본 커밋",
+        "headLabel": "헤드 커밋",
+        "commitPlaceholder": "커밋 검색…",
+        "searchHint": "커밋 sha를 입력하거나 로드된 커밋을 메시지 또는 작성자별로 필터링합니다.",
+        "refLabel": "또는 ref를 붙여넣으세요",
+        "refPlaceholder": "분기, 태그 또는 sha",
+        "refNotFound": "Ref를 찾을 수 없습니다",
+        "latestOnBranch": "{branch}의 최신",
+        "previousAnalysisLabel": "이전 분석에서 시작",
+        "previousAnalysisPlaceholder": "분석을 선택하세요...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# 영향을 받는 테스트} other {# 영향을 받는 테스트들}}",
+        "sameCommit": "기본 및 헤드는 같은 커밋입니다.",
+        "swapped": "기본 및 헤드가 변경 사항이 앞으로 읽히도록 바뀌었습니다.",
+        "loadingCommits": "커밋 로드 중…",
+        "noCommits": "커밋을 찾을 수 없습니다."
+      },
+      "diff": {
+        "summary": "{files, plural, one {# 파일} other {# 파일들}} 변경됨 · +{additions, number} −{deletions, number}",
+        "truncated": "제공자가 부분 diff를 반환했습니다. 일부 변경된 파일이 표시되지 않거나 패치가 없습니다.",
+        "noChanges": "이 커밋 사이에 변경 사항이 없습니다.",
+        "statusModified": "수정됨",
+        "statusRenamed": "이름 변경됨",
+        "showPatch": "변경 사항 표시",
+        "hidePatch": "변경 사항 숨기기",
+        "largePatch": "큰 패치({lines, number}개 줄)",
+        "showFullPatch": "전체 패치 표시",
+        "binary": "바이너리 파일",
+        "noPatch": "패치를 사용할 수 없습니다",
+        "pinnedFiles": "{count, plural, one {# 핀} other {# 핀들}}",
+        "loading": "커밋 비교 중…"
+      },
+      "loading": {
+        "analyzing": "분석 중…",
+        "resolving_config": "저장소 구성 해결 중…",
+        "fetching_diff": "diff를 가져오는 중…",
+        "matching_pins": "코드 핀 일치 중…",
+        "matching_issues": "커밋에서 이름이 지정된 티켓 일치 중…",
+        "searching_cases": "키워드로 테스트 케이스 검색 중…",
+        "scoring_history": "실행 기록 스코어링 중…",
+        "waiting_for_ai": "AI 대기 중…",
+        "merging": "결과 결합 중…",
+        "ranking": "{total}개 후보 테스트 케이스 중 {current}개 순위 지정됨",
+        "reused": "같은 커밋의 최근 분석을 재사용합니다."
+      },
+      "affected": {
+        "selectedOf": "{total, number}개 중 {selected, number}개의 영향을 받는 테스트 케이스 선택됨",
+        "thresholdHint": "{threshold, number}점 이상으로 점수를 받은 테스트가 선택되고 표시됩니다. 최소 점수를 낮춰 나머지를 보세요. 모든 테스트는 선택된 이유를 표시합니다.",
+        "shownCount": "{total, number}개 중 {shown, number}개 표시",
+        "minScore": "최소 점수",
+        "selectShown": "표시된 항목 선택({count, number})",
+        "deselectShown": "표시된 항목 선택 해제({count, number})",
+        "noneShown": "필터와 일치하는 테스트가 없습니다.",
+        "reasons": "이유",
+        "tierPinned": "고정됨",
+        "tierAffected": "영향을 받음",
+        "tierRelated": "관련됨",
+        "tierPinnedTooltip": "이 케이스의 코드 핀이 변경과 교차합니다. 고정된 케이스는 항상 먼저 순위를 지정합니다.",
+        "tierAffectedTooltip": "다른 신호가 이 케이스를 {threshold, number}의 영향을 받는 임계값에서 높게 배치합니다.",
+        "tierRelatedTooltip": "강하게 영향을 받는 케이스에 연결되거나 해당 신호가 {threshold, number} 아래로 점수를 받았습니다.",
+        "showDetails": "이유 표시",
+        "hideDetails": "이유 숨기기",
+        "excluded": "{count, plural, one {# 케이스가 이미 실행 중 건너뛰었습니다} other {# 케이스들이 이미 실행 중 건너뛰었습니다}}"
+      },
+      "noAffected": {
+        "title": "영향을 받는 테스트를 찾을 수 없습니다",
+        "description": "테스트 케이스가 변경 사항과 일치하지 않습니다. 케이스를 변경된 파일에 고정하여 다음 분석에서 찾을 수 있도록 합니다."
+      },
+      "reasons": {
+        "pin": "핀",
+        "issue": "이슈",
+        "path": "키워드",
+        "history": "기록",
+        "ai": "AI",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "{pattern} 일치",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "{field}에서 \"{term}\" 일치",
+        "fieldName": "케이스 이름",
+        "fieldContent": "케이스 콘텐츠",
+        "fieldTag": "태그",
+        "fieldFolder": "폴더",
+        "historyDetail": "같은 파일에 대한 변경 후 {count, plural, one {# 이전 실행} other {# 이전 실행들}}",
+        "historyFailed": "유사한 변경 후 이전 실행에서 실패",
+        "linkedDetail": "케이스 {caseId}에 연결됨",
+        "issueDetail": "{key}에 연결되어 {count, plural, one {커밋 {sha}} other {# 커밋들}}에서 이름 지어집니다"
+      },
+      "stale": {
+        "badge": "오래됨",
+        "tooltipAnalysis": "핀이 있는 블록을 기본 커밋에서 찾을 수 없습니다. 파일 경로로만 일치했습니다. 테스트 케이스 페이지에서 다시 고정하세요.",
+        "title": "{count, plural, one {# 오래된 핀} other {# 오래된 핀들}}",
+        "description": "이 핀들은 더 이상 코드와 일치하지 않습니다. 테스트 케이스 페이지에서 다시 고정하세요."
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# 변경된 파일이 테스트를 갖지 않습니다} other {# 변경된 파일들이 테스트를 갖지 않습니다}}",
+        "description": "테스트 케이스가 이 파일들에 연결되지 않았습니다. 케이스를 고정하여 간격을 닫습니다.",
+        "pinAction": "케이스 고정…"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "제공자가 부분 diff를 반환했습니다.",
+        "diff_truncated_by_budget": "부분 diff만 AI 컨텍스트에 맞았습니다. {count, plural, one {# 파일은} other {# 파일들은}} 경로별로만 요약되었습니다.",
+        "llm_not_configured": "활성 LLM 통합이 없습니다: AI 순위가 건너뛰었습니다.",
+        "search_fallback_db": "검색 인덱스를 사용할 수 없습니다: 키워드 일치가 데이터베이스를 사용했습니다.",
+        "search_index_empty": "검색 인덱스에는 이 프로젝트의 테스트 케이스가 없으므로 키워드 일치가 데이터베이스의 테스트 케이스 이름으로 축소되었으며 케이스 콘텐츠의 일치를 놓쳤을 수 있습니다. 관리자에게 관리 → 검색 엔진 아래에서 검색 인덱스를 다시 구성하도록 요청합니다.",
+        "ai_partial": "일부 AI 배치가 실패했습니다. 결과가 불완전할 수 있습니다.",
+        "ai_truncated": "{count, plural, one {# AI 배치는} other {# AI 배치들은}} 모델에서 잘렸습니다.",
+        "no_candidates": "테스트 케이스가 일치하지 않았습니다.",
+        "anchor_fetch_capped": "일부 핀이 있는 파일이 경로별로만 일치했습니다(가져오기 한도 도달).",
+        "issue_commit_fetch_capped": "같은 파일에 대한 이름이 지정된 티켓의 커밋 중 일부가 파일 단위로 읽혀지지 않았습니다(가져오기 한도 도달). 해당 케이스는 특정 파일을 다루지 않습니다.",
+        "paths_excluded_by_settings": "{count, plural, other {# 변경된 파일이}} 저장소의 제외된 경로로 인해 무시되었습니다."
+      },
+      "actions": {
+        "analyze": "분석",
+        "reanalyze": "다시 분석",
+        "refine": "변경사항으로 돌아가기",
+        "accept": "{count, plural, one {# 케이스 추가} other {# 케이스들 추가}}",
+        "cancelAnalysis": "분석 취소"
+      },
+      "errors": {
+        "generic": "변경 사항을 분석하는 중에 문제가 발생했습니다. 다시 시도하세요.",
+        "pullFailed": "해당 풀 요청의 커밋을 읽을 수 없습니다. 다른 것을 선택하거나 직접 커밋 이름을 지정합니다.",
+        "compareFailed": "커밋을 비교할 수 없습니다.",
+        "analysisFailed": "분석 실패: {error}",
+        "cancelled": "분석이 취소되었습니다.",
+        "timeout": "분석이 너무 오래 걸립니다. 나중에 다시 확인하거나 다시 시도합니다.",
+        "branchesFailed": "분기를 나열할 수 없습니다.",
+        "commitsFailed": "커밋을 로드할 수 없습니다.",
+        "disabled": "이 프로젝트에 대해 영향이 활성화되지 않았습니다.",
+        "noConfig": "먼저 프로젝트 설정에서 애플리케이션 저장소를 연결합니다.",
+        "configRequired": "분석할 저장소를 선택합니다."
+      },
+      "repositoryPlaceholder": "저장소를 선택하세요...",
+      "chooseRepository": "변경 사항을 분석하는 프로젝트의 연결된 저장소 중 하나를 선택합니다."
     }
   },
   "admin": {
     "menu": {
       "header": "기본",
-      "projects": "프로젝트",
-      "templatesAndFields": "템플릿 및 필드",
       "fields": "전지",
-      "workflows": "워크플로",
-      "statuses": "상태",
-      "milestoneTypes": "마일스톤 유형",
-      "configurations": "구성",
-      "users": "사용자",
-      "groups": "여러 떼",
-      "roles": "역할",
-      "tags": "태그",
-      "issues": "문제점",
       "appConfig": "애플리케이션 구성",
       "recordKeys": "레코드 키",
-      "notifications": "알림",
       "imports": "데이터 가져오기",
       "integrations": "이슈 통합",
-      "webhooks": "웹훅",
       "junit": "JUnit",
       "datasets": "공유 데이터 세트",
       "testCaseParameters": "테스트 케이스 매개변수",
-      "llm": "AI 모델",
       "prompts": "프롬프트 구성",
       "exportTemplates": "내보내기 템플릿",
       "codeRepositories": "코드 저장소",
-      "quickScript": "퀵스크립트",
-      "advanced": "고급의",
       "sso": "입증",
       "security": "보안",
       "trash": "쓰레기",
-      "reports": "보고서",
       "shares": "주식 관리",
       "elasticsearch": "검색 엔진",
       "queues": "작업 대기열",
@@ -4685,7 +5057,6 @@
         },
         "allowedDomains": {
           "title": "허용된 이메일 도메인",
-          "placeholder": "example.com",
           "add": "도메인 추가",
           "empty": "허용된 도메인이 설정되어 있지 않습니다. 제한 기능을 활성화하면 모든 도메인이 차단됩니다."
         },
@@ -4734,7 +5105,6 @@
         "steps": {
           "details": "프로젝트 세부 정보",
           "workflows": "워크플로, 상태 및 마일스톤 유형",
-          "integrations": "통합",
           "permissions": "사용자 및 권한"
         },
         "labels": {
@@ -4908,7 +5278,11 @@
       "saveFailed": "저장소를 저장하는 데 실패했습니다.",
       "namePlaceholder": "내 저장소",
       "selectProvider": "제공업체를 선택하세요",
-      "httpWarning": "이 URL은 HTTP를 사용합니다. 자격 증명은 평문으로 전송됩니다. 안전한 연결을 위해서는 HTTPS를 사용하십시오."
+      "httpWarning": "이 URL은 HTTP를 사용합니다. 자격 증명은 평문으로 전송됩니다. 안전한 연결을 위해서는 HTTPS를 사용하십시오.",
+      "validation": {
+        "nameRequired": "이름은 필수 입력 사항입니다",
+        "nameUnique": "이 이름의 코드 저장소가 이미 존재합니다"
+      }
     },
     "exportTemplates": {
       "title": "QuickScript 템플릿",
@@ -5004,7 +5378,6 @@
       "forcePasswordChangeDialogDescription": "이렇게 하려면 {name} 님이 다음 로그인 시 비밀번호를 변경해야 합니다.",
       "revokePasswordDialogTitle": "비밀번호 취소",
       "revokePasswordDialogDescription": "이렇게 하면 {name}의 비밀번호가 즉시 무효화됩니다. 다른 로그인 방법을 사용해야 합니다.",
-      "confirmAction": "확인하다",
       "forcePasswordChangeSuccess": "{name}의 비밀번호를 변경해야 합니다.",
       "forcePasswordChangeFailed": "비밀번호 변경 강제 실행에 실패했습니다.",
       "revokePasswordSuccess": "{name}의 비밀번호가 취소되었습니다.",
@@ -5060,7 +5433,6 @@
       "lockoutThresholdDescription": "계정 잠금 전 실패 시도 횟수 (최소 1회)",
       "lockoutDurationMinutesLabel": "잠금 시간(분)",
       "lockoutDurationMinutesDescription": "계정 잠금 기간 (최소 1일)",
-      "saveChanges": "변경 사항 저장",
       "forceAllUsers": "모든 사용자에게 비밀번호 변경 강제 적용",
       "forceAllUsersDialogTitle": "모든 사용자에 대한 비밀번호 강제 변경",
       "forceAllUsersDialogDescription": "이렇게 하면 자격 증명 기반 사용자 {count, number}명이 다음 로그인 시 비밀번호를 변경해야 합니다.",
@@ -5121,7 +5493,6 @@
         "loading": "로딩 충돌…",
         "errorLoad": "충돌 로그를 불러올 수 없습니다. 다시 시도하세요.",
         "colTimestamp": "언제",
-        "colType": "유형",
         "colEntity": "실재",
         "colAction": "시스템 동작",
         "typeLinked": "링크됨",
@@ -5130,6 +5501,7 @@
         "typeDisplayNameOverwrote": "표시 이름이 덮어쓰기되었습니다.",
         "typeReEmitted": "재송금됨",
         "typeConflict": "갈등",
+        "typeTokenConflict": "교차 IdP 충돌",
         "typeUnknown": "알려지지 않은",
         "viewPayload": "페이로드 보기",
         "reEmit": "회원 이벤트 재전송",
@@ -5137,11 +5509,8 @@
         "reEmitConfirmTitle": "회원 이벤트를 다시 전송하시겠습니까?",
         "reEmitSuccess": "웹훅이 재전송되었고, 감사 행이 기록되었습니다.",
         "reEmitError": "재전송할 수 없습니다. {reason}",
-        "next": "다음",
-        "previous": "이전의",
         "viewDialogTitle": "충돌 페이로드",
-        "viewDialogDescription": "{entityType}#{entityId}에 대한 감사 행 메타데이터입니다.",
-        "close": "닫다"
+        "viewDialogDescription": "{entityType}#{entityId}에 대한 감사 행 메타데이터입니다."
       },
       "errorLoad": "토큰을 불러올 수 없습니다. 다시 시도하세요.",
       "columns": {
@@ -5180,10 +5549,8 @@
         "title": "토큰이 생성되었습니다",
         "warning": "지금 이 토큰을 복사하세요. TestPlanIt은 다시 이 토큰을 표시하지 않습니다.",
         "tokenLabel": "SCIM 베어러 토큰",
-        "copy": "복사",
         "copied": "복사됨",
         "baseUrlHint": "이 내용을 IdP의 SCIM 베어러 토큰 필드에 붙여넣으세요. 기본 URL은 {baseUrl} 입니다.",
-        "close": "닫다",
         "toast": "토큰이 생성되었습니다.",
         "a11yAnnounce": "토큰이 생성되었습니다. 지금 복사하세요."
       },
@@ -5204,7 +5571,36 @@
       "fallbackDefaultTitle": "기본 매핑 접근",
       "fallbackDefaultDescription": "그룹 매핑에 포함되지 않은 사용자에게 할당되는 접근 등급입니다.",
       "fallbackDefaultLabel": "기본 접근 등급",
-      "fallbackDefaultSaved": "기본 대체값이 저장되었습니다"
+      "fallbackDefaultSaved": "기본 대체값이 저장되었습니다",
+      "rotate": {
+        "confirm": "토큰 회전",
+        "title": "SCIM 토큰 회전",
+        "description": "\"{name}\"에 대한 새 베어러를 생성합니다. 토큰은 해당 이름, IdP 및 제공된 모든 것을 유지합니다 — 오직 비밀만 변경합니다.",
+        "overlapLabel": "이전 토큰을 다음 시간 동안 작동 유지",
+        "overlapHint": "IdP는 이 윈도우가 끝날 때까지 이전 토큰으로 계속 프로비저닝하므로 중단 없이 새로운 토큰을 붙여넣을 수 있습니다.",
+        "overlapNone": "즉시 전환",
+        "overlap1h": "1시간",
+        "overlap24h": "24시간",
+        "overlap7d": "7일",
+        "overlap30d": "30일",
+        "submit": "토큰 회전",
+        "submitting": "회전 중…",
+        "revealTitle": "새 SCIM 토큰",
+        "revealDescriptionOverlap": "겹침 윈도우가 끝나기 전에 IdP에 붙여넣으세요. 이전 토큰은 그때까지 계속 작동합니다.",
+        "revealDescriptionImmediate": "이전 토큰이 즉시 작동을 멈추었습니다. 지금 IdP에 붙여넣어 프로비저닝을 재개하세요."
+      },
+      "roleMappings": {
+        "title": "역할 매핑",
+        "description": "ID 공급자가 사용자에 어설션하는 역할을 액세스 계층에 매핑합니다. 역할 매핑은 그룹 매핑보다 우선 순위가 있으므로 액세스를 높이거나 낮출 수 있습니다.",
+        "empty": "역할 매핑이 아직 없습니다. 사용자는 그룹 매핑 및 기본 액세스 계층으로 관리됩니다.",
+        "roleLabel": "역할 값",
+        "rolePlaceholder": "IdP의 역할 값, 예: qa-lead",
+        "accessLabel": "액세스 계층",
+        "add": "매핑 추가",
+        "remove": "매핑 제거",
+        "saved": "역할 매핑이 저장되었습니다",
+        "errorRoleRequired": "IdP가 보내는 역할 값을 입력합니다."
+      }
     },
     "tags": {
       "add": {
@@ -5239,7 +5635,6 @@
         "remindersToggleAriaLabel": "리뷰 알림 토글",
         "thresholdLabel": "리뷰어에게 알림",
         "thresholdUnit": "{count, plural, other {일}}",
-        "thresholdSaveButton": "구하다",
         "thresholdHelp": "검토 요청이 접수된 후 검토자에게 알림 메시지가 전송되기까지 며칠이 걸릴 수 있나요? 새 요청은 제출 시점부터 기한이 계산됩니다.",
         "thresholdUpdateSuccess": "리뷰 알림 설정이 업데이트되었습니다.",
         "thresholdUpdateError": "알림 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요."
@@ -5254,7 +5649,6 @@
         "emptyState": "필터 조건에 맞는 프로젝트가 없습니다."
       },
       "editWorkflow": {
-        "requiresReviewLabel": "검토가 필요합니다",
         "requiresReviewFeatureDisabled": "시스템 수준에서 검토 워크플로 기능이 비활성화되어 있습니다. 프로젝트의 고급 설정을 변경하거나 TESTPLANIT_REVIEW_FEATURE_ENABLED를 설정하여 다시 활성화하십시오.",
         "requiresReviewDefaultDisabled": "기본 워크플로 상태에서는 검토가 필요하지 않습니다. 새로운 엔티티는 이 상태에 도달하며, 검토를 거쳐야 할 이전 상태가 없습니다."
       },
@@ -5289,7 +5683,6 @@
       "description": "각 애플리케이션 영역에 대한 권한을 설정하여 사용자가 수행할 수 있는 작업을 정의하십시오.",
       "confirmDefaultDescription": "이 역할을 기본값으로 설정하시겠습니까?",
       "defaultWarning": "새 사용자에게는 기본적으로 이 역할이 할당됩니다.",
-      "defaultLockedTitle": "기본 역할",
       "defaultLockedDescription": "기본값을 변경하려면 다른 역할을 편집하고 기본값으로 설정하세요.",
       "filterPlaceholder": "역할 필터링...",
       "add": {
@@ -5525,6 +5918,16 @@
       "mappedAccessLabel": "매핑된 접근 등급",
       "mappedAccessNone": "매핑 없음",
       "mappedAccessSelect": "접근 등급을 선택하세요...",
+      "projectMappings": {
+        "label": "프로젝트당 액세스",
+        "description": "조직 전체 계층 대신 — 또는 그 위에 — 특정 프로젝트에서 이 그룹에 액세스 계층을 부여합니다.",
+        "empty": "프로젝트당 액세스가 없습니다. 구성원은 위의 조직 전체 계층과 각 프로젝트의 자신만의 기본값만 받습니다.",
+        "projectPlaceholder": "프로젝트를 선택하세요…",
+        "accessLabel": "액세스 계층",
+        "add": "프로젝트 추가",
+        "remove": "프로젝트 액세스 제거",
+        "saved": "프로젝트 액세스가 저장되었습니다"
+      },
       "downgradeConfirmTitle": "접근 변경 확인",
       "downgradeConfirmDescription": "{count, plural, other {사용자 #명}}의 접근 권한이 낮아집니다. 계속하시겠습니까?",
       "downgradeConfirmApplyAnyway": "그래도 적용",
@@ -5558,7 +5961,6 @@
         "title": "마일스톤 유형 편집"
       },
       "delete": {
-        "title": "삭제 {item}",
         "confirmMessage": "마일스톤 유형 {name} 을 삭제하시겠습니까?"
       }
     },
@@ -5638,7 +6040,22 @@
         "testRunStepResults": "테스트 실행 단계 결과",
         "issueConfigs": "문제 구성",
         "sharedStepGroups": "공유 스텝 그룹",
-        "dataSets": "데이터 세트"
+        "dataSets": "데이터 세트",
+        "impactAnalyses": "영향 분석",
+        "dataSetRows": "데이터셋 행",
+        "duplicateScanResults": "중복 스캔 결과",
+        "executionTargets": "실행 대상",
+        "importMappings": "가져오기 매핑",
+        "llmReportSnapshots": "AI 리포트 스냅샷",
+        "notifications": "알림",
+        "requirementTraceabilitySnapshots": "추적성 스냅샷",
+        "reviewRequests": "검토 요청",
+        "shareLinks": "공유 링크",
+        "stepSequenceMatches": "단계 순서 일치",
+        "stepSequenceMatchCases": "단계 순서 일치 사례",
+        "testRunCases": "테스트 실행 사례",
+        "testRunCaseDataSetSnapshots": "테스트 실행 데이터셋 스냅샷",
+        "testRunCaseIterations": "테스트 실행 반복"
       },
       "table": {
         "title": "삭제됨 {itemType}",
@@ -5870,7 +6287,6 @@
         "repoHelp": "Gitea 저장소의 이름",
         "encrypted": "암호화됨",
         "encryptedHelp": "이 필드는 암호화되어 안전하게 저장됩니다.",
-        "changeCredential": "변화",
         "leaveBlankToKeep": "기존 값을 유지하려면 비워 두세요",
         "apiKeyWarningTitle": "API 키 인증 알림",
         "apiKeyWarningDescription": "API 키 인증을 사용하는 경우, 이메일 주소가 일치하더라도 생성된 이슈의 보고자가 해당 이슈를 생성한 TestPlanIt 사용자와 일치하지 않을 수 있습니다.",
@@ -5882,13 +6298,11 @@
         "tokenCreatorNoticeDescription": "이 연동을 통해 생성된 이슈는 항상 해당 액세스 토큰을 소유한 계정으로 기록되며, 이슈를 생성한 TestPlanIt 사용자 계정으로는 기록되지 않습니다. 이 공급자의 API는 다른 사용자를 대신하여 생성자를 설정하는 것을 허용하지 않습니다.",
         "callbackUrlLabel": "콜백 URL(리디렉션 URI)",
         "callbackUrlDescription": "제공업체의 OAuth 앱에 이 정확한 URL을 콜백/리디렉션 URI로 등록하세요. 정확히 일치하지 않으면 승인이 실패합니다.",
-        "callbackUrlCopy": "복사",
         "callbackUrlCopied": "복사됨",
         "forgeApiKeyLabel": "Forge API 키",
         "forgeApiKeyDescription": "Atlassian Forge 앱에서 Jira 이슈 패널의 요청을 인증하는 데 사용됩니다. 여기에서 키를 생성하고 Forge 앱 설정에 붙여넣으세요.",
         "forgeApiKeyPlaceholder": "API 키를 생성하려면 '생성'을 클릭하세요.",
         "forgeApiKeyGenerate": "생성하다",
-        "forgeApiKeyCopy": "복사",
         "forgeApiKeyCopied": "복사됨",
         "platform": "플랫폼",
         "platformPlaceholder": "플랫폼을 선택하세요...",
@@ -5968,6 +6382,7 @@
         "anthropic": "인류",
         "azureOpenai": "Azure OpenAI",
         "gemini": "구글 제미니",
+        "deepseek": "DeepSeek",
         "ollama": "올라마",
         "customLlm": "맞춤형 LLM",
         "apiKeyPlaceholder": "API 키를 입력하세요...",
@@ -6002,7 +6417,6 @@
         "setAsDefaultDescription": "이 모델을 조직의 기본 AI 모델로 사용하십시오.",
         "fetchingModels": "모델을 불러오는 중...",
         "failedToFetchModels": "사용 가능한 모델을 가져오는 데 실패했습니다.",
-        "selectModel": "모델을 선택하세요",
         "modelsFound": "{count, plural, other {사용 가능한 모델 {count}개를 찾았습니다}}",
         "modelsFoundDescription": "\"{model}\"을 기본 모델로 선택했습니다",
         "noModelsFoundDescription": "제공업체가 사용 가능한 모델을 반환하지 않았습니다",
@@ -6035,9 +6449,7 @@
         }
       },
       "sections": {
-        "provider": "공급자",
-        "costAndBudget": "비용 및 예산",
-        "advanced": "고급의"
+        "costAndBudget": "비용 및 예산"
       },
       "delete": {
         "title": "AI 모델 통합 삭제",
@@ -6088,7 +6500,6 @@
       "featureCount": "{count, plural, one {# 기능} other {# 기능}}",
       "llmIntegration": "LLM 통합",
       "modelOverride": "모델 오버라이드",
-      "llmIntegrationPlaceholder": "프로젝트 기본값",
       "modelOverridePlaceholder": "통합 기본값",
       "projectDefault": "프로젝트 기본값(지우기)",
       "integrationDefault": "통합 기본값(지우기)",
@@ -6128,7 +6539,8 @@
         "generate_from_url": "URL(요구사항)에서 테스트 케이스 생성",
         "generate_from_url_app": "URL에서 테스트 케이스 생성 (애플리케이션 테스트)",
         "automation_candidates": "자동화 후보 보고서",
-        "derive_case_steps": "AI 단계 도출"
+        "derive_case_steps": "AI 단계 도출",
+        "impact_analysis": "영향: 영향을 받는 테스트 선택"
       }
     },
     "elasticsearch": {
@@ -6304,6 +6716,13 @@
           "question": "이 작업을 강제로 삭제하시겠습니까?",
           "warning": "이렇게 하면 지연 시간을 두고 여러 번 제거를 시도합니다. 참고: 실행 중인 워커에 의해 작업이 실제로 잠겨 있는 경우 실패할 수 있습니다.",
           "confirm": "강제 제거"
+        },
+        "cancelJob": {
+          "button": "작업 취소"
+        },
+        "activeJob": {
+          "title": "워커가 이 작업을 처리 중입니다",
+          "cancelHint": "취소는 워커에게 다음 확인 시점에 중지하도록 요청합니다. 작업이 중지되면 대기열에서 제거됩니다. 강제 제거는 작업을 보유한 워커가 사라지고 잠금이 만료된 경우에만 작동합니다."
         }
       }
     },
@@ -6323,7 +6742,6 @@
       "changes": "변경 사항",
       "metadata": "메타데이터",
       "oldValue": "오래된",
-      "newValue": "새로운",
       "columns": {
         "timestamp": "타임스탬프",
         "entityId": "엔티티 ID",
@@ -6352,9 +6770,7 @@
   "components": {
     "notifications": {
       "empty": "알림 없음",
-      "aria": {
-        "notifications": "알림 ({count, number} 읽지 않음)"
-      },
+      "panelTitle": "{count, plural, =0 {알림} one {# 새 알림} other {# 새 알림}}",
       "actions": {
         "markRead": "읽음으로 표시",
         "markUnread": "읽지 않음으로 표시",
@@ -6412,8 +6828,8 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) 님이 SSO를 통해 등록했습니다.",
         "userRegisteredMessageForm": "{userName} ({userEmail}) 님이 등록 양식을 통해 등록했습니다.",
         "viewUserList": "사용자 목록 보기",
-        "reviewGeneratedCases": "생성된 테스트 케이스를 검토합니다.",
-        "generateFromUrlCompleteTitle": "페이지 크롤링이 성공적으로 완료되었습니다.",
+        "reviewGeneratedCases": "생성된 테스트 케이스를 검토합니다",
+        "generateFromUrlCompleteTitle": "페이지 크롤링이 성공적으로 완료되었습니다",
         "generateFromUrlCompleteMessage": "{pages, plural, one {# 페이지} other {# 페이지}} 프로젝트 \"{projectName}\"의 {url} 에서 크롤링되었습니다. 클릭하여 검토하고 테스트 케이스를 생성하세요.",
         "generateFromUrlFailedTitle": "URL 크롤링 실패",
         "reviewRequestedTitle": "리뷰 요청됨",
@@ -6517,7 +6933,6 @@
       "targetFolder": "대상 폴더",
       "newFolderPlaceholder": "새 폴더 이름...",
       "operation": "작업",
-      "operationCopy": "복사",
       "operationCopyDesc": "선택한 사례의 사본을 대상 프로젝트에 생성합니다. 원본은 변경되지 않습니다.",
       "operationMove": "이동하다",
       "operationMoveDesc": "선택한 케이스를 대상 프로젝트로 이동합니다. 원본 파일은 소스 프로젝트에서 삭제됩니다.",
@@ -6603,7 +7018,6 @@
     "useIntegration": "{provider}를 사용하세요",
     "useIntegrationDescription": "외부 시스템에 문제를 발생시키세요",
     "externalProject": "외부 프로젝트",
-    "selectProject": "프로젝트를 선택하세요",
     "issueType": "문제 유형",
     "selectIssueType": "문제 유형을 선택하세요",
     "noIssueTypes": "사용 가능한 문제 유형이 없습니다.",
@@ -6631,15 +7045,214 @@
     "searchForIssue": "연결할 문제를 검색하세요",
     "searchUsers": "사용자 검색",
     "noTeamsAvailable": "이용 가능한 팀이 없습니다.",
-    "filterAll": "모두",
     "fanOutPartialFailure": "{count, number} 프로젝트에 연결할 수 없습니다. {successCount, number} 프로젝트의 결과를 표시합니다.",
-    "projectSelectorLabel": "프로젝트",
     "searchFailedTitle": "검색 실패",
+    "useAsRequirement": "요구 사항으로 사용",
+    "useAsRequirementSuccess": "이제 요구사항으로 사용됩니다. 프로젝트의 요구사항 페이지에서 확인할 수 있습니다.",
+    "resetRequirementOverride": "구성된 분류로 재설정",
+    "resetRequirementOverrideSuccess": "분류가 재설정되었습니다. 이 이슈는 다시 요구사항 유형 설정을 따릅니다.",
+    "requirementOverrideFailed": "요구사항 분류를 업데이트하지 못했습니다.",
     "authComplete": {
       "successTitle": "인증 완료",
       "successDescription": "계정이 연결되었습니다. 이 창을 닫고 하던 작업으로 돌아가셔도 됩니다.",
       "errorTitle": "인증 실패",
       "errorDescription": "인증을 완료할 수 없습니다. 이 창을 닫고 다시 시도해 주세요."
+    }
+  },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "요구 사항 검색…",
+      "emptyTitle": "아직 요구 사항이 없습니다",
+      "emptyDescription": "이 프로젝트의 요구 사항 트리를 구성하려면 첫 번째 요구 사항을 생성하세요.",
+      "loadFailed": "요구 사항을 불러오는 데 실패했습니다.",
+      "addRoot": "요구 사항 추가",
+      "addChild": "하위 요구 사항 추가",
+      "rename": "이름 변경",
+      "expandAll": "모두 펼치기",
+      "collapseAll": "모두 접기",
+      "dropToRootHint": "최상위로 이동하려면 여기에 놓으세요",
+      "moveSuccess": "요구 사항이 이동되었습니다.",
+      "moveFailed": "요구 사항을 이동하는 데 실패했습니다.",
+      "moveRejected": "이 이동이 거부되었습니다:",
+      "dragDisabled": "이 요구 사항은 지금 이동할 수 없습니다."
+    },
+    "list": {
+      "columnSource": "원본",
+      "expandRow": "{name} 펼치기",
+      "collapseRow": "{name} 접기",
+      "filterAllStatuses": "모든 상태",
+      "dragLockedSynced": "동기화된 요구 사항은 트래커의 계층 구조를 그대로 반영합니다. 이동하려면 분리하세요."
+    },
+    "detail": {
+      "coverageLabel": "커버리지",
+      "previousRequirement": "이전 요구 사항",
+      "nextRequirement": "다음 요구 사항",
+      "breadcrumbLabel": "요구 사항 계층 구조",
+      "notFound": "요구 사항을 찾을 수 없습니다",
+      "documentationEmpty": "제공된 문서 없음",
+      "documentationPlaceholder": "요구 사항 문서를 입력하세요...",
+      "lockedHint": "이 필드는 연결된 트래커에서 관리되며 여기서는 편집할 수 없습니다.",
+      "saveSuccess": "요구 사항이 저장되었습니다.",
+      "saveFailed": "요구 사항을 저장하는 데 실패했습니다."
+    },
+    "provenance": {
+      "syncedLabel": "동기화됨",
+      "detachedLabel": "분리됨",
+      "nativeTooltip": "TestPlanIt에서 직접 생성됨.",
+      "syncedTooltip": "연결된 트래커에서 동기화됨. 잠긴 필드는 여기서 편집할 수 없습니다.",
+      "detachedTooltip": "연결된 트래커에서 분리됨. 이제 수동으로 생성된 요구 사항처럼 완전히 편집할 수 있습니다.",
+      "detach": "분리",
+      "detachDialogTitle": "이 요구 사항을 분리하시겠습니까?",
+      "detachDialogDescription": "분리하면 이 요구 사항이 TestPlanIt에서 완전히 편집 가능해지고 연결된 트래커와의 링크가 끊어집니다. 이 작업은 되돌릴 수 없으며, 트래커에 다시 연결하는 기능은 아직 지원되지 않습니다.",
+      "detachConfirm": "분리",
+      "detachSuccess": "요구 사항이 분리되었습니다.",
+      "detachFailed": "요구 사항을 분리하는 데 실패했습니다.",
+      "exclude": "요구사항으로 사용하지 않음",
+      "excludeSuccess": "더 이상 요구사항으로 사용되지 않습니다. 프로젝트의 이슈 페이지에 표시됩니다.",
+      "excludeFailed": "요구사항 분류를 업데이트하지 못했습니다."
+    },
+    "override": {
+      "promoteTitle": "이 이슈를 요구 사항으로 사용하시겠습니까?",
+      "promoteDescription": "{issue} 항목은 요구 사항 트리에 합류하며 더 이상 이슈 화면에 표시되지 않습니다. 다시 변경하기 전까지는 동기화 및 요구 사항 유형 구성 변경이 이루어져도 요구 사항 상태로 유지됩니다.",
+      "promoteConfirm": "요구 사항으로 사용",
+      "excludeTitle": "이 요구 사항 사용을 중지하시겠습니까?",
+      "excludeDescription": "{issue} 항목은 요구 사항 트리에서 제외되어 프로젝트의 이슈 페이지에 표시됩니다. 테스트 케이스 링크는 유지됩니다. 다시 변경하기 전까지는 동기화 및 요구 사항 유형 구성 변경이 이루어져도 제외된 상태로 유지됩니다.",
+      "excludeConfirm": "요구사항으로 사용하지 않음",
+      "resetTitle": "구성된 분류로 재설정하시겠습니까?",
+      "resetDescription": "{issue} 항목은 프로젝트의 요구 사항 유형 구성을 다시 따르게 되며, 이에 따라 요구 사항 트리에 추가되거나 제거될 수 있습니다.",
+      "resetConfirm": "재설정"
+    },
+    "create": {
+      "dialogTitle": "요구 사항 생성",
+      "dialogDescription": "이 프로젝트의 요구 사항 트리에 새 요구 사항을 추가하세요.",
+      "namePlaceholder": "요구 사항 이름을 입력하세요...",
+      "parentNone": "상위 없음(최상위)",
+      "submit": "요구 사항 생성",
+      "submitHint": "생성하려면 Enter 키를 누르세요",
+      "success": "요구 사항이 생성되었습니다.",
+      "failed": "요구 사항을 생성하는 데 실패했습니다.",
+      "modeCreate": "새 요구 사항",
+      "modePromote": "기존 이슈 승격",
+      "promoteDescription": "이 프로젝트에 이미 동기화된 이슈를 요구 사항으로 사용합니다. 이슈 화면에서 제외되며, 트래커의 계층 구조를 유지하고, 동기화 및 구성 변경이 이루어져도 요구 사항 상태로 유지됩니다.",
+      "promoteParentNote": "트래커의 계층 구조를 따름",
+      "promoteIssueLabel": "이슈",
+      "promoteChooseIssue": "이슈 선택",
+      "promoteNoneSelected": "선택된 이슈 없음",
+      "promoteSubmit": "요구 사항으로 사용",
+      "promoteSuccess": "이슈가 이제 요구 사항이 되었습니다.",
+      "promoteFailed": "이슈를 승격하지 못했습니다."
+    },
+    "edit": {
+      "dialogTitle": "요구 사항 편집",
+      "submit": "변경 사항 저장",
+      "success": "요구 사항이 업데이트되었습니다.",
+      "failed": "요구 사항을 업데이트하는 데 실패했습니다.",
+      "lockedTooltip": "이 요구 사항은 연결된 트래커에서 동기화되었습니다. 이름을 변경하려면 분리하세요."
+    },
+    "delete": {
+      "dialogTitle": "요구 사항 삭제",
+      "confirmNoChildren": "이 요구 사항을 삭제하시겠습니까? 이 작업은 되돌릴 수 있습니다.",
+      "confirmWithChildren": "이 요구 사항에는 함께 삭제될 하위 항목 {count, plural, one {{count}개} other {{count}개}}가 있습니다. 이 작업은 되돌릴 수 있습니다.",
+      "success": "요구 사항이 삭제되었습니다.",
+      "failed": "요구 사항을 삭제하는 데 실패했습니다.",
+      "undo": "실행 취소",
+      "undoSuccess": "요구 사항이 복원되었습니다.",
+      "undoFailed": "요구 사항을 복원하는 데 실패했습니다."
+    },
+    "attachments": {
+      "empty": "첨부파일 없음",
+      "uploadSuccess": "첨부파일이 업로드되었습니다.",
+      "uploadFailed": "첨부파일을 업로드하는 데 실패했습니다.",
+      "removeSuccess": "첨부파일이 삭제되었습니다.",
+      "removeFailed": "첨부파일을 삭제하는 데 실패했습니다."
+    },
+    "linkedCases": {
+      "title": "연결된 테스트 케이스",
+      "titleWithCount": "{count, plural, =0 {연결된 테스트 케이스} =1 {연결된 테스트 케이스 #개} other {연결된 테스트 케이스 #개}}",
+      "empty": "연결된 테스트 케이스가 없습니다.",
+      "addLinkDialogTitle": "테스트 케이스 연결",
+      "searchPlaceholder": "테스트 케이스 검색...",
+      "linkSuccess": "테스트 케이스가 연결되었습니다.",
+      "linkFailed": "테스트 케이스를 연결하는 데 실패했습니다.",
+      "unlinkConfirm": "이 테스트 케이스의 연결을 해제하시겠습니까?",
+      "unlinkSuccess": "테스트 케이스 연결이 해제되었습니다.",
+      "unlinkFailed": "테스트 케이스 연결을 해제하는 데 실패했습니다.",
+      "columnCase": "테스트 케이스"
+    },
+    "linkedRequirements": {
+      "title": "연결된 요구 사항",
+      "empty": "연결된 요구 사항이 없습니다.",
+      "addLinkDialogTitle": "요구 사항 연결",
+      "searchPlaceholder": "요구 사항 검색...",
+      "linkSuccess": "요구 사항이 연결되었습니다.",
+      "linkFailed": "요구 사항을 연결하는 데 실패했습니다.",
+      "unlinkConfirm": "이 요구 사항의 연결을 해제하시겠습니까?",
+      "unlinkSuccess": "요구 사항 연결이 해제되었습니다.",
+      "unlinkFailed": "요구 사항 연결을 해제하는 데 실패했습니다."
+    },
+    "suspect": {
+      "badgeLabel": "의심됨",
+      "tooltipCaseSide": "이 요구 사항은 이 케이스의 마지막 실행 이후에 업데이트되었습니다.",
+      "tooltipRequirementSide": "이 케이스의 마지막 실행이 이 요구 사항의 마지막 업데이트보다 오래되었습니다.",
+      "dismissConfirm": "이 의심 플래그를 해제하시겠습니까? 요구 사항이 다시 수정되면 플래그가 다시 표시됩니다.",
+      "dismissAction": "플래그 해제",
+      "dismissSuccess": "의심 플래그가 해제되었습니다.",
+      "dismissFailed": "의심 플래그를 해제하는 데 실패했습니다."
+    },
+    "references": {
+      "title": "{count, plural, =0 {참조} =1 {참조 {count}개} other {참조 {count}개}}",
+      "empty": "아직 참조가 없습니다.",
+      "emptyHint": "이 요구 사항을 형성한 티켓을 첨부하세요.",
+      "addReference": "참조 추가",
+      "createDialogLabel": "참조",
+      "attachSuccess": "참조가 첨부되었습니다.",
+      "attachFailed": "참조를 첨부하는 데 실패했습니다.",
+      "removeConfirm": "이 참조를 삭제하시겠습니까?",
+      "removeSuccess": "참조가 삭제되었습니다.",
+      "removeFailed": "참조를 삭제하는 데 실패했습니다.",
+      "columnReference": "참조"
+    },
+    "coverage": {
+      "title": "커버리지",
+      "uncovered": "커버되지 않음",
+      "uncoveredTooltip": "이 요구 사항 또는 그 하위 항목에 연결된 테스트 케이스가 없습니다.",
+      "statusPassed": "통과됨",
+      "statusFailed": "실패",
+      "statusNotRun": "실행되지 않음",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "통과: {passed} · 실패: {failed} · 진행 중: {inProgress} · 실행되지 않음: {notRun}",
+      "showOnlyUncovered": "커버되지 않은 항목만 표시",
+      "showOnlyUncoveredUnavailable": "지금은 커버리지 데이터를 사용할 수 없습니다.",
+      "loadFailed": "커버리지를 불러오는 데 실패했습니다.",
+      "retry": "다시 시도",
+      "panelTitle": "커버하는 테스트 케이스",
+      "panelTitleWithCount": "{count, plural, =0 {커버하는 테스트 케이스} =1 {테스트 케이스 #개 커버} other {테스트 케이스 #개 커버}}",
+      "panelDescription": "이 요구 사항의 커버리지에 포함되는 모든 테스트 케이스입니다 — 직접 연결된 케이스와 하위 요구 사항에 연결된 케이스를 모두 포함합니다. 링크를 추가하거나 제거하려면 연결된 테스트 케이스를 사용하세요.",
+      "panelEmpty": "아직 이 요구 사항을 커버하는 테스트 케이스가 없습니다.",
+      "columnCase": "테스트 케이스",
+      "columnResult": "최신 결과",
+      "columnResultTooltip": "해당 케이스의 가장 최근 실행 결과이며, 상태가 통과나 실패가 아닌 경우도 포함됩니다. 저장소의 최신 결과와 같은 다른 화면에서는 통과 또는 실패한 가장 최근 결과를 표시하므로, 동일한 케이스가 다르게 보일 수 있습니다.",
+      "resultRunLink": "이 결과가 나온 테스트 실행 보기",
+      "inherited": "상속됨",
+      "inheritedTooltip": "이 요구 사항에 직접 연결되지 않고 하위 항목에 연결되어 있습니다.",
+      "notRunCell": "실행되지 않음"
+    },
+    "disabled": {
+      "title": "요구 사항이 활성화되지 않음",
+      "description": "이 프로젝트는 요구 사항 기능을 활성화하지 않았습니다. 요구 사항 트리를 구성하려면 프로젝트 관리자에게 프로젝트 설정에서 이 기능을 활성화하도록 요청하세요."
+    },
+    "scope": {
+      "hint": "선택한 마일스톤과 구성의 실행만 커버리지에 포함",
+      "scopedBadge": "범위가 지정된 커버리지",
+      "snapshotScoped": "실행 범위와 함께 캡처됨"
+    },
+    "history": {
+      "title": "콘텐츠 이력",
+      "description": "이 요구 사항의 제목, 문서 또는 노트에 대한 모든 변경 사항과 변경 내용",
+      "empty": "아직 기록된 콘텐츠 변경이 없습니다. 현재 텍스트가 원본입니다.",
+      "versionLabel": "버전 {version}",
+      "currentBadge": "현재",
+      "bySync": "동기화 또는 시스템"
     }
   },
   "Pages": {
@@ -6648,7 +7261,178 @@
       "filterPlaceholder": "이슈를 이름으로 필터링하세요..."
     }
   },
+  "automation": {
+    "settings": {
+      "title": "자동화된 실행",
+      "description": "이 프로젝트가 자동화된 사례를 보낼 수 있는 대상입니다.",
+      "emptyTitle": "아직 실행 대상이 없습니다",
+      "emptyDescription": "GitHub Actions 워크플로, GitLab CI 파이프라인 또는 서명된 웹훅과 같이 테스트 실행에서 이 프로젝트의 자동화된 사례를 실행할 수 있는 대상을 추가합니다.",
+      "createButton": "대상 추가",
+      "createTitle": "새 실행 대상",
+      "editTitle": "실행 대상 편집",
+      "namePlaceholder": "예: Nightly E2E",
+      "repository": "코드 저장소",
+      "repositoryPlaceholder": "저장소 선택",
+      "noRepositories": "{provider} 저장소가 등록되어 있지 않습니다. 관리자에게 Admin → 코드 저장소에서 하나를 추가하도록 요청합니다.",
+      "workflow": "워크플로",
+      "workflowPlaceholder": "워크플로 파일 선택",
+      "workflowHelp": "워크플로는 TESTPLANIT_* 입력으로 workflow_dispatch 트리거를 선언해야 합니다. GitHub는 선언되지 않은 입력을 거부합니다.",
+      "workflowsUnavailable": "워크플로를 나열할 수 없습니다({error}). 대신 워크플로 파일 이름을 입력합니다.",
+      "workflowInputPlaceholder": "예: e2e.yml",
+      "defaultRef": "분기",
+      "defaultRefHelp": "실행 시 다른 ref가 지정되지 않으면 이 분기에서 시작됩니다.",
+      "defaultRefDefault": "저장소 기본 분기",
+      "defaultRefPlaceholder": "예: main",
+      "staticInputs": "워크플로 입력",
+      "variables": "파이프라인 변수",
+      "webhookVariables": "변수",
+      "staticInputsHelp": "TESTPLANIT_* 값 외에 모든 발송과 함께 전송됩니다. 비밀이 아닙니다. 저장소를 읽을 수 있는 사람은 누구나 이를 볼 수 있습니다.",
+      "addInput": "입력 추가",
+      "removeInput": "입력 제거",
+      "parametersHelp": "실행을 수행하는 사람이 실행 대화상자에서 선택하는 값입니다. 각각은 매개변수 이름의 입력으로 전송됩니다. 다중 선택은 선택 사항을 쉼표로 조인합니다.",
+      "parameterNamePlaceholder": "예: BROWSER",
+      "parameterLabelPlaceholder": "예: 브라우저",
+      "parameterTypes": {
+        "select": "단일 선택",
+        "multiselect": "다중 선택",
+        "text": "텍스트",
+        "configuration": "구성"
+      },
+      "parameterConfigurationMultiple": "두 개 이상 선택 허용",
+      "parameterConfigurationHelp": "이 프로젝트에 할당된 구성을 제공합니다. 작업은 선택 항목을 {id}(id), {name}(이름) 및 {variants}(카테고리=변형 쌍)로 수신합니다.",
+      "parameterConfigurationNone": "이 프로젝트에 할당된 구성이 없습니다. 먼저 Admin → 구성에서 하나를 할당합니다.",
+      "parameterValues": "값",
+      "parameterValuesPlaceholder": "값을 입력하고 Enter 키를 누르세요",
+      "parameterDefaultNone": "기본값 없음",
+      "parameterDefaultPlaceholder": "선택적 기본값",
+      "credentials": "자격 증명",
+      "credentialsHelp": "저장소의 저장된 자격 증명을 사용하려면 비워 두세요.",
+      "credentialsOverride": "발송에 다른 자격 증명 사용",
+      "personalAccessToken": "액세스 토큰",
+      "personalAccessTokenHelp": "GitHub: 워크플로 범위(클래식) 또는 작업 읽기/쓰기(세분화)가 있는 토큰입니다. GitLab: api 범위가 있는 토큰입니다.",
+      "triggerToken": "파이프라인 트리거 토큰",
+      "triggerTokenHelp": "선택 사항입니다. 액세스 토큰 없이 파이프라인을 시작하지만 해당 상태는 읽을 수 없습니다.",
+      "clearCredentials": "재정의를 제거하고 저장소 자격 증명 사용",
+      "webhookUrl": "웹훅 URL",
+      "webhookUrlPlaceholder": "https://ci.example.com/hooks/testplanit",
+      "webhookUrlHelp": "TestPlanIt이 서명된 POST를 여기로 보냅니다. 수신자는 X-TestPlanIt-Signature를 확인하고, 작업을 시작하며, 리포터 또는 CLI로 결과를 다시 보고합니다.",
+      "secret": "서명 비밀",
+      "secretHelp": "대상이 저장될 때 생성되고 한 번만 표시됩니다.",
+      "secretCustom": "자신의 비밀 제공",
+      "rotateSecret": "새 서명 비밀 생성",
+      "payloadPreview": "페이로드",
+      "timeout": "시간 초과(분)",
+      "timeoutHelp": "그때까지 완료되지 않은 실행은 시간 초과로 표시됩니다.",
+      "hasOwnCredentials": "자신의 자격 증명",
+      "usesRepositoryCredentials": "저장소 자격 증명",
+      "verifying": "확인 중…",
+      "verifyOk": "대상 확인됨",
+      "verifyOkWithWarnings": "경고와 함께 대상 확인됨",
+      "verifyFailed": "확인 실패",
+      "declaredInputs": "선언된 입력: {inputs}",
+      "lastVerified": "마지막으로 확인됨",
+      "neverVerified": "아직 확인되지 않음",
+      "deleteConfirmTitle": "이 실행 대상을 삭제하시겠습니까?",
+      "deleteConfirm": "과거 실행은 기록을 유지합니다. 실행을 더 이상 이 대상에 발송할 수 없습니다.",
+      "saved": "실행 대상이 저장되었습니다",
+      "deleted": "실행 대상이 삭제되었습니다",
+      "enabledToast": "대상 활성화됨",
+      "disabledToast": "대상 비활성화됨",
+      "revealedSecretTitle": "서명 비밀을 지금 복사합니다",
+      "revealedSecretWarning": "이 비밀은 한 번만 표시됩니다. 수신자는 이를 사용하여 각 발송에서 X-TestPlanIt-Signature 헤더를 확인합니다. 다르게 인증하는 시스템(예: Jenkins 트리거 토큰)은 이를 무시할 수 있습니다. CI 시스템의 비밀 저장소에 저장합니다. TestPlanIt은 이를 다시 표시할 수 없습니다.",
+      "secretCopied": "비밀이 복사되었습니다",
+      "errors": {
+        "invalid": "대상을 저장할 수 없습니다. 양식을 확인하고 다시 시도하세요.",
+        "invalidInputs": "입력 중 하나가 유효하지 않습니다.",
+        "urlRequired": "웹훅 URL이 필요합니다.",
+        "urlBlocked": "웹훅 URL이 개인 또는 내부 주소를 가리킵니다.",
+        "repositoryRequired": "코드 저장소를 선택합니다.",
+        "repositoryNotFound": "코드 저장소가 더 이상 존재하지 않습니다.",
+        "repositoryProviderMismatch": "저장소 제공자가 대상 제공자와 일치하지 않습니다.",
+        "workflowRequired": "워크플로 파일을 선택합니다.",
+        "nameTaken": "이 이름의 대상이 이미 존재합니다.",
+        "paramNameInvalid": "매개변수의 입력 이름은 문자 또는 밑줄로 시작해야 하며 문자, 숫자 및 밑줄만 포함해야 합니다.",
+        "paramNameDuplicate": "두 매개변수의 입력 이름이 같습니다.",
+        "paramNameReserved": "매개변수의 입력 이름은 TESTPLANIT_로 시작할 수 없습니다.",
+        "paramCollidesWithInput": "매개변수의 입력 이름이 정적 입력과 같습니다. 하나를 제거합니다.",
+        "paramLabelRequired": "모든 매개변수에는 레이블이 필요합니다.",
+        "paramValuesRequired": "선택 매개변수에는 최소 하나의 값이 필요합니다.",
+        "paramValuesDuplicate": "매개변수가 같은 값을 두 번 나열합니다.",
+        "paramValuesTooMany": "매개변수의 값이 너무 많습니다.",
+        "paramValueTooLong": "매개변수 값이 너무 깁니다.",
+        "paramValueHasSeparator": "다중 선택 매개변수의 값에는 쉼표가 포함될 수 없습니다.",
+        "paramDefaultNotInValues": "매개변수의 기본값이 해당 값 중 하나가 아닙니다.",
+        "paramDefaultNotSingle": "단일 선택 구성 매개변수는 기본값을 하나만 가질 수 있습니다.",
+        "paramConfigurationNotAssigned": "구성 매개변수의 기본값이 이 프로젝트에 할당되지 않았습니다.",
+        "tooManyInputs": "입력이 너무 많습니다: 정적 입력과 매개변수의 합계는 20개로 제한됩니다."
+      }
+    },
+    "execute": {
+      "button": "자동화된 케이스 실행",
+      "title": "자동화된 케이스 실행",
+      "description": "TestPlanIt은 이 실행의 ID를 사용하여 대상의 작업을 시작합니다. 작업은 자동화된 케이스의 계획을 읽고 실행한 후 결과를 이 실행으로 다시 보고합니다.",
+      "noTargets": "이 프로젝트에 대해 구성된 실행 대상이 없습니다.",
+      "noAutomatedCases": "이 실행에 실행할 자동화된 케이스가 없습니다.",
+      "activeExecution": "이 실행에 대해 이미 진행 중인 실행이 있습니다.",
+      "target": "대상",
+      "targetPlaceholder": "대상 선택",
+      "ref": "분기 또는 참조",
+      "refHelp": "대상의 기본 분기를 사용하려면 비워 두십시오.",
+      "caseCountSummary": "{count, plural, other {# 자동화된 케이스가 요청될 예정입니다}}",
+      "buttonSelected": "{count, plural, other {# 선택된 자동화된 케이스 실행}}",
+      "noAutomatedSelected": "선택된 케이스 중 이 실행에서 자동화된 케이스는 없습니다.",
+      "selectedCaseCountSummary": "{count, plural, other {# 선택된 자동화된 케이스가 요청될 예정입니다}}",
+      "skippedSelection": "{count, plural, other {# 선택된 케이스는 이 실행에서 자동화된 케이스가 아니므로 건너뜁니다.}}",
+      "resultsNote": "결과는 작업이 TESTPLANIT_RUN_ID={runId}로 보고할 때 이 실행에 첨부됩니다.",
+      "submit": "실행",
+      "submitting": "요청 중…",
+      "dispatched": "실행이 요청되었습니다",
+      "dispatchFailed": "실행을 요청할 수 없습니다",
+      "status": "실행",
+      "requestedBy": "{name}님에 의해 요청됨",
+      "timesOutAt": "다음 시간에 포기합니다",
+      "cancel": "실행 취소",
+      "cancelConfirmTitle": "이 실행을 취소하시겠습니까?",
+      "cancelConfirm": "TestPlanIt은 이를 취소됨으로 표시하고 공급자에게 가능할 때 작업을 중지하도록 요청합니다. 도착하는 결과는 유지됩니다.",
+      "cancelled": "실행이 취소되었습니다",
+      "retry": "다시 시도",
+      "history": "실행 기록",
+      "historyTitle": "실행 기록",
+      "historyDescription": "이 실행의 자동화된 케이스의 모든 배포입니다. 가장 최신 것부터입니다.",
+      "historyEmpty": "아직 실행 기록이 없습니다.",
+      "columnTarget": "대상",
+      "columnRef": "참조",
+      "columnRequested": "요청됨",
+      "columnCases": "케이스",
+      "columnLink": "작업",
+      "externalStatus": "공급자 상태: {status}",
+      "awaitingResults": "결과 대기 중",
+      "resultsReceived": "결과를 받았습니다"
+    },
+    "adhoc": {
+      "button": "자동화된 테스트 실행",
+      "title": "이 자동화된 케이스를 실행합니다",
+      "description": "TestPlanIt은 이 케이스를 보유하는 실행을 만들고 대상에게 실행하도록 요청한 후 작업이 완료되면 실행을 완료합니다.",
+      "runName": "자동화됨: {title}",
+      "notAutomated": "이 케이스는 자동화된 것으로 표시되지 않습니다."
+    }
+  },
   "enums": {
+    "ExecutionProvider": {
+      "GITHUB_ACTIONS": "GitHub Actions",
+      "GITLAB_CI": "GitLab CI",
+      "GENERIC_WEBHOOK": "일반 웹훅"
+    },
+    "TestRunExecutionStatus": {
+      "PENDING": "보류 중",
+      "DISPATCHED": "배포됨",
+      "RUNNING": "실행 중",
+      "SUCCEEDED": "작업 성공",
+      "FAILED": "작업 실패",
+      "DISPATCH_FAILED": "시작할 수 없음",
+      "TIMED_OUT": "시간 초과",
+      "CANCELLED": "취소됨"
+    },
     "ApplicationArea": {
       "Documentation": "선적 서류 비치",
       "Milestones": "주요 이정표",
@@ -6658,6 +7442,7 @@
       "ClosedTestRuns": "폐쇄형 테스트 실행",
       "TestRunResults": "테스트 실행 결과",
       "TestRunResultRestrictedFields": "테스트 실행 결과 제한된 필드",
+      "AutomatedExecution": "자동화된 실행",
       "Sessions": "세션",
       "SessionsRestrictedFields": "세션 제한 필드",
       "ClosedSessions": "비공개 세션",
@@ -6665,10 +7450,8 @@
       "Tags": "태그",
       "SharedSteps": "공유된 단계",
       "Issues": "문제점",
-      "IssueIntegration": "이슈 통합",
-      "Forecasting": "예측",
       "Reporting": "보고",
-      "Settings": "설정"
+      "Settings": "프로젝트 설정"
     },
     "WorkflowType": {
       "NOT_STARTED": "시작 안 함",
@@ -6677,6 +7460,7 @@
     }
   },
   "charts": {
+    "openInRepository": "리포지토리에서 이 케이스들을 엽니다",
     "average": "평균",
     "count": "개수: {count, number}",
     "percent": "백분율: {percent}%",
@@ -6692,7 +7476,6 @@
   },
   "linkedCases": {
     "title": "연결된 테스트 케이스",
-    "addLink": "링크 추가",
     "addLinkedTestCase": "연결된 테스트 케이스 추가",
     "testCase": "테스트 케이스",
     "linkType": "링크 유형",
@@ -6743,6 +7526,7 @@
     "projectSessions": "## 세션\n탐색적 테스트 세션은 시간 제한이 있는 비정형 테스트로, 진행 중 및 완료 상태에서 메모와 결과로 기록됩니다.",
     "projectTags": "## 태그\n태그는 이 프로젝트의 테스트 케이스, 세션, 실행에 라벨을 지정하고 그룹화하여 관련 작업을 쉽게 찾을 수 있게 합니다.",
     "projectIssues": "## 이슈\n이 프로젝트에 연결된 트래커의 이슈로, 발견되거나 참조된 테스트 케이스, 실행, 세션에 연결됩니다.",
+    "projectRequirements": "## 요구 사항\n계층 구조로 이루어진 프로젝트의 요구 사항입니다 — TestPlanIt에서 직접 작성되거나 연결된 트래커에서 동기화되며, 연결된 테스트 케이스와 커버리지가 트리 전체에 걸쳐 집계됩니다.",
     "projectReports": "## 보고서\n보고서는 이 프로젝트의 테스트 실행, 세션, 결과를 차트와 표로 요약하며 필터링 및 내보내기가 가능합니다.",
     "projectAuditLogs": "## 감사 로그\n이 프로젝트에서 수행된 작업의 감사 기록으로, 누가 무엇을 언제 변경했는지 보안 및 규정 준수 추적을 위해 확인할 수 있습니다.",
     "projectIntegrations": "## 이슈 통합\n이 프로젝트를 이슈 트래커에 연결하여 테스트 케이스, 실행, 세션이 외부 이슈 및 마일스톤과 연결되고 동기화될 수 있도록 합니다.",
@@ -6752,6 +7536,7 @@
     "projectParameters": "## 테스트 케이스 매개변수\n이 프로젝트의 데이터 기반 테스트를 구성합니다. 가져온 결과에 대한 JUnit 반복 속성 이름과 매개변수화된 케이스를 위한 재사용 가능한 데이터 세트를 설정할 수 있습니다.",
     "projectAdvanced": "## 고급\n이 프로젝트의 고급 설정으로, 레코드 ID 접두사, 결과 검토 워크플로, 실패 시 자동 이슈 생성, 결과 편집 기간을 포함합니다.",
     "projectShares": "## 공유 관리\n이 프로젝트의 보고서에 대한 공유 링크로, 각각 공개, 로그인 필요, 비밀번호 보호 중 하나의 접근 수준을 가집니다. 링크를 취소하면 접근이 차단됩니다.",
+    "projectAccess": "## 접근 권한\n이 프로젝트를 열 수 있는 모든 사용자와 그들이 여기서 수행할 수 있는 작업을 결정하는 역할입니다. 사용자의 역할은 자신의 프로젝트 접근 권한 설정, 속한 그룹, 또는 프로젝트의 기본 접근 권한 순서로 결정됩니다. 시스템 관리자와 프로젝트 관리자는 역할과 관계없이 모든 권한을 가집니다. 접근 권한은 관리자가 관리 › 프로젝트 › 프로젝트 편집에서 변경할 수 있습니다.",
     "groups": "## 그룹\n그룹을 사용하면 여러 사용자에게 프로젝트 접근 권한과 역할을 한 번에 할당할 수 있습니다. 구성원을 직접 추가하거나 ID 공급자의 그룹을 매핑할 수 있습니다.",
     "roles": "## 역할\n역할은 사용자가 수행할 수 있는 작업을 제어하며, 각 역할은 애플리케이션 영역별 권한을 전환합니다. 역할을 사용자에게 직접 할당하거나 프로젝트 기본값으로 설정할 수 있습니다.",
     "sso": "## 인증\n사용자의 로그인 방식과 신규 계정 등록 가능 여부를 관리합니다.",
@@ -6773,6 +7558,7 @@
     "scim": "## SCIM 프로비저닝\nSCIM 2.0을 통해 ID 공급자로부터 TestPlanIt에 사용자를 프로비저닝하세요.",
     "scimConflicts": "## 외부 ID 충돌 로그\n시스템 개입이 필요한 SCIM ID 이벤트(연결, 복구, displayName 덮어쓰기, 멤버 건너뛰기).",
     "scimFallbackDefault": "## 기본 매핑 접근 권한\n그룹 매핑에 포함되지 않은 사용자에게 할당되는 접근 등급입니다.",
+    "scimRoleMappings": "## 역할 매핑\n`roles` 값을 ID 공급자에 의해 주장된 액세스 계층으로 매핑합니다. 역할 매핑은 그룹 매핑보다 우선합니다: IdP가 매핑된 역할을 부여하는 사용자는 그룹이 더 많은 권한을 부여하더라도 해당 계층을 받습니다. 매핑되지 않은 역할 값은 무시됩니다.",
     "integrations": "## 이슈 통합\n이슈 추적을 위한 타사 통합 관리.",
     "notifications": "## 알림 관리\n기본 알림 설정을 지정하고(사용자가 재정의할 수 있음) 시스템 알림을 전송합니다.",
     "notificationsSystem": "## 시스템 알림\n모든 사용자에게 중요 공지사항을 전송합니다.",
@@ -6828,6 +7614,7 @@
       "projects": "## 프로젝트 할당\n이 사용자가 접근할 수 있는 프로젝트를 선택하세요.\n\n- 사용자 대시보드에 표시되는 프로젝트를 제어합니다.\n- 프로젝트 참여에 필수입니다.\n- 관리자가 나중에 수정할 수 있습니다.\n- \"모두 선택\"을 사용하여 사용 가능한 모든 프로젝트를 빠르게 할당할 수 있습니다.",
       "groups": "## 그룹 할당\n이 사용자가 속할 그룹을 선택하세요.\n\n- 그룹은 사용자와 권한을 체계적으로 관리하는 데 도움이 됩니다.\n- 사용자는 소속 그룹의 권한을 상속받습니다.\n- 접근 관리가 간편해집니다.\n- 관리자는 나중에 수정할 수 있습니다.",
       "itemsPerPage": "## 페이지당 항목 수\n표와 목록에 표시되는 기본 항목 수를 제어합니다.\n\n- 애플리케이션의 모든 페이지 매김 보기에 영향을 미칩니다.\n- 언제든지 변경할 수 있습니다.\n- 대규모 데이터 세트를 효율적으로 관리하는 데 도움이 됩니다.\n- 사용 가능한 옵션: 10, 25, 50 또는 100개 항목",
+      "detailsDisplayMode": "## 세부 정보 열기\n목록에서 항목을 클릭할 때 발생하는 작업을 선택합니다. 옆에 세부 정보를 표시할 수 있습니다.\n\n- **도킹된 패널:** 세부 정보가 목록 옆의 패널에서 열립니다\n- **새 창:** 세부 정보가 새 창의 자체 페이지에서 열립니다\n- 테스트 케이스 저장소, 검토 받은 편지함 및 요구사항에 적용됩니다",
       "dateFormat": "## 날짜 형식\n원하는 날짜 표시 형식을 설정합니다.\n\n- 애플리케이션 전체에 일관되게 적용됩니다.\n- 날짜 해석의 정확성을 높이는 데 도움이 됩니다.\n- 변경 사항이 즉시 적용됩니다.\n- 드롭다운 메뉴에 표시된 예시는 실제 형식을 반영합니다.",
       "timeFormat": "## 시간 형식\n원하는 시간 표시 형식을 설정합니다.\n\n- 12시간제 또는 24시간제 중에서 선택하세요.\n- 애플리케이션 전체에 일관되게 적용됩니다.\n- 변경 사항이 즉시 적용됩니다.\n- 드롭다운 메뉴에 표시된 예시는 실제 형식을 반영합니다.",
       "timezone": "## 시간대\n날짜 및 시간 표시를 위한 기본 시간대를 설정합니다.\n\n- 애플리케이션 전체에 일관되게 적용됩니다.",
@@ -6899,7 +7686,7 @@
       "name": "## 역할 이름\n모든 프로젝트에서 사용되는 명확하고 간결하며 설명적인 이름 또는 키워드입니다.\n\n- 팀 구성원이 관련 테스트 케이스, 테스트 실행 및 세션을 빠르게 찾을 수 있도록 도와줍니다.",
       "isDefault": "## 기본 역할\n이 역할이 프로젝트의 기본 역할인지 여부를 나타냅니다.\n\n- 신규 사용자의 경우 기본 역할이 미리 선택됩니다.\n- 언제든지 변경할 수 있습니다.",
       "permissions": {
-        "canAddEdit": "## 추가/편집\n이 역할이 관련 애플리케이션 영역을 추가하고 편집할 수 있는지 여부를 나타냅니다.",
+        "canAddEdit": "## 추가/편집\n이 역할이 관련 애플리케이션 영역을 추가하고 편집할 수 있는지 여부를 나타냅니다.\n\n- **자동화된 실행**은 CI 공급자에서 자동화된 실행을 시작, 재시도 및 취소할 권한을 부여합니다. 결과를 기록하려면 **테스트 실행 결과** 추가/편집이 필요하며, 리포지토리에서 시작하려면 실행을 만들거나 확장하기 때문에 **테스트 실행** 추가/편집도 필요합니다.",
         "canDelete": "## 삭제\n이 역할이 관련 애플리케이션 영역을 삭제할 수 있는지 여부를 나타냅니다.",
         "canClose": "## 닫기\n이 역할이 관련 애플리케이션 영역을 닫을 수 있는지 여부를 나타냅니다.",
         "canApprove": "## 승인\n이 역할이 관련 애플리케이션 영역에 대한 검토 요청을 승인할 수 있는지 여부를 나타냅니다. 테스트 케이스 저장소, 테스트 실행 및 세션에만 적용됩니다.",
@@ -6909,6 +7696,7 @@
     "group": {
       "name": "## 그룹 이름\n모든 프로젝트에서 사용되는 명확하고 간결하며 설명적인 이름 또는 키워드입니다.\n\n- 팀 구성원이 관련 테스트 케이스, 테스트 실행 및 세션을 빠르게 찾을 수 있도록 도와줍니다.",
       "users": "## 사용자\n이 그룹에 할당된 사용자를 나타냅니다.",
+      "projectMappedAccess": "## 프로젝트별 액세스\n이 그룹의 구성원에게 특정 프로젝트에 대한 액세스 계층을 부여하며, 프로젝트의 정상 권한 규칙을 통해 해결됩니다.\n\n- **사용자**는 구성원에게 해당 프로젝트에서 자신의 전역 역할을 제공합니다\n- **프로젝트 관리자** 및 **관리자**는 모두 해당 프로젝트에서 프로젝트 관리자 역할을 부여합니다 — 단일 프로젝트 내에서 프로젝트 관리자가 가장 강력한 권한입니다\n- 프로젝트별 액세스는 **부여**만 합니다. 프로젝트 자신의 기본값이 이미 제공하는 액세스를 빼앗을 수 없습니다. 그 이유는 \"없음\" 옵션이 없습니다\n- 매핑을 제거하면 권한이 취소되며, 구성원은 프로젝트의 기본값으로 돌아갑니다",
       "mappedAccess": "## 매핑된 접근 등급\n이 그룹의 구성원은 다음 동기화 시 최소한 이 접근 등급을 부여받습니다.\n\n- 사용자가 속한 모든 그룹 중 가장 높은 등급이 적용됩니다\n- \"매핑 없음\"은 이 그룹이 접근에 영향을 미치지 않음을 의미합니다 — 구성원은 SCIM 페이지에 설정된 기본값을 따릅니다\n- 사용자에 대한 수동 접근 변경은 매핑을 대체합니다(해당 사용자의 편집 화면에 표시됨)"
     },
     "template": {
@@ -6923,12 +7711,12 @@
       "name": "## 통합 이름\n이 LLM 통합에 대한 설명 레이블입니다.\n\n- 목록 및 설정에서 식별하는 데 사용됩니다.\n- 예: \"OpenAI GPT-4o\" 또는 \"Internal Ollama\"",
       "provider": "## 공급자\n이 통합을 지원하는 LLM 서비스입니다.\n\n- API 프로토콜 및 사용 가능한 모델을 결정합니다.\n- 생성 후에는 변경할 수 없습니다.",
       "apiKey": "## API 키\nLLM 제공업체 API에 대한 인증 키입니다.\n\n- 제공업체 개발자 콘솔에서 얻을 수 있습니다.\n- 저장 후에는 암호화되어 표시되지 않습니다.\n- Ollama(로컬 배포)에는 필요하지 않습니다.",
-      "endpoint": "## API 엔드포인트\nLLM 공급자 API의 기본 URL입니다.\n\n- OpenAI, Anthropic, Gemini의 경우 비워 두세요. 공식 URL이 자동으로 사용됩니다.\n- Ollama(예: `http://localhost:11434`), Azure OpenAI, Custom LLM의 경우 필수입니다.\n- 모든 공급자의 경우 선택 사항입니다. OpenAI 호환 프록시(예: LiteLLM)의 URL을 입력하여 해당 프록시를 가리키도록 설정할 수 있습니다.\n- **개인/내부 주소**(localhost, 127.0.0.1, 개인 IP, 클라우드 메타데이터)는 `ALLOWED_PRIVATE_HOSTS` 환경 변수를 통해 명시적으로 허용하지 않는 한 차단됩니다",
+      "endpoint": "## API 엔드포인트\nLLM 공급자 API의 기본 URL입니다.\n\n- OpenAI, Anthropic, Gemini 및 DeepSeek의 경우 비워두세요. 공식 URL이 자동으로 사용됩니다\n- Ollama(예: `http://localhost:11434`), Azure OpenAI 및 Custom LLM의 경우 필수입니다\n- 모든 공급자의 경우 선택 사항입니다 — OpenAI 호환 프록시(예: LiteLLM)의 URL을 입력하여 가리킵니다\n- **개인/내부 주소**(localhost, 127.0.0.1, 개인 IP, 클라우드 메타데이터)는 `ALLOWED_PRIVATE_HOSTS` 환경 변수를 통해 명시적으로 허용하지 않는 한 차단됩니다",
       "deploymentName": "## Azure 배포 이름\nAzure OpenAI 모델 배포의 이름입니다.\n\n- Azure OpenAI Studio의 배포에서 찾을 수 있습니다.\n- 모델 이름과 다릅니다. 예: `my-gpt4-deploy`는 `gpt-4`에 해당합니다.\n- Azure OpenAI에만 필요합니다.",
-      "defaultModel": "## 기본 모델\n이 통합을 통해 AI 요청에 사용되는 모델입니다.\n\n- OpenAI, Anthropic, Gemini, Ollama 및 OpenAI 호환 커스텀 엔드포인트(예: LiteLLM)의 경우 사용 가능한 모델이 자동으로 가져와집니다\n- 제공업체가 모델 가격도 제공하는 경우, 선택 시 비용 필드가 자동으로 채워집니다\n- 제공업체 계정에서 해당 모델이 활성화되어 있는지 확인하세요\n- 예시: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "defaultModel": "## 기본 모델\n이 통합을 통해 AI 요청에 사용되는 모델입니다.\n\n- OpenAI, Anthropic, Gemini, DeepSeek, Ollama 및 OpenAI 호환 커스텀 엔드포인트(예: LiteLLM)의 경우 사용 가능한 모델이 자동으로 가져와집니다\n- 공급자가 모델 가격도 제공하는 경우 선택 시 비용 필드가 자동으로 채워집니다\n- 공급자 계정에서 해당 모델이 활성화되어 있는지 확인하세요\n- 예시: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`, `deepseek-v4-flash`",
       "maxTokensPerRequest": "## 요청당 최대 토큰 수\n모델이 단일 응답에서 생성할 수 있는 **출력 토큰의 상한선**입니다.\n\n- 모델의 **응답** 길이를 제한합니다 — 보내는 컨텍스트의 양이 아닙니다\n- 이 한도를 초과하는 요청은 **모델에 도달하기 전에 거부됩니다**\n- 모델의 실제 최대 출력값으로 설정하세요 — 예: Claude Opus/Sonnet은 `128000`, Claude Haiku는 `64000`, Gemini는 `65536`, GPT-4o는 `16384`\n- 너무 낮게 설정하면 → AI 기능이 실패하거나 잘린 출력이 생성됩니다",
       "defaultMaxTokens": "## 기본 최대 토큰 수\n이 AI 모델이 요청하는 **_출력_ 길이**이며, _요청당 최대 토큰 수_ 를 상한으로 합니다.\n\n- **테스트 케이스 생성**(Jira 이슈 패널을 포함한 모든 소스), **마크다운 테스트 케이스 파싱**, **편집기 작성 도우미**, **스마트 테스트 케이스 선택**은 항상 이 값을 사용하며 — 이들의 프롬프트 설정 _최대 출력 토큰_ 값은 적용되지 않습니다\n- **내보내기 코드 생성**, **AI 태그 제안**, **AI 단계 유도**, **자동화 후보 보고서**는 대신 **관리자 → 프롬프트 설정**에 있는 자체 _최대 출력 토큰_ 값을 사용합니다\n- 답변 전에 추론하는 모델(예: Claude Opus 5)은 이 예산의 일부를 추론에 사용하므로 — 응답을 위한 여유를 남겨두세요\n- QuickScript가 모델에 전송하는 리포지토리 코드의 양은 제어하지 **않습니다** — 해당 예산은 모델의 컨텍스트 윈도우에서 자동으로 산출됩니다\n- _요청당 최대 토큰 수_ 이하로 유지하세요",
-      "repoContextBudget": "## 리포지토리 컨텍스트 예산\n스크립트를 생성할 때 QuickScript가 모델에 제공하는 연결된 리포지토리 코드의 양입니다.\n\n- 선택한 모델의 입력 컨텍스트 윈도우를 기준으로 **자동으로 설정**되며 여기서 별도로 구성할 항목은 없습니다\n- 컨텍스트가 더 큰 모델(Claude, Gemini)은 더 많이 받고, 작은 로컬 모델은 오버플로되지 않는 안전한 양을 받습니다\n- 더 많은 컨텍스트는 스크립트를 실제 페이지 객체 및 픽스처에 기반하게 하지만, 생성된 스크립트의 길이를 바꾸지는 않습니다",
+      "repoContextBudget": "## 리포지토리 컨텍스트 예산\n스크립트를 생성할 때 QuickScript가 모델에 제공하는 연결된 리포지토리 코드의 양입니다.\n\n- 선택한 모델의 입력 컨텍스트 윈도우에서 **자동으로 설정**되며, 여기서는 구성할 항목이 없습니다\n- 더 큰 컨텍스트 모델(Claude, Gemini, DeepSeek)은 더 많이 받고, 작은 로컬 모델은 오버플로되지 않는 안전한 양을 받습니다\n- 더 많은 컨텍스트는 스크립트를 실제 페이지 객체 및 픽스처에 기반하게 하지만, 생성된 스크립트의 길이를 바꾸지는 않습니다",
       "maxRequestsPerMinute": "## 분당 최대 요청 수\n이 공급자에게 분당 할 수 있는 API 호출 횟수를 제한합니다.\n\n- 공급자 요금제의 요청 제한에 맞춰 설정하세요.\n- 초과 요청은 거부되지 않고 대기열에 저장됩니다.\n- 요금제별 제한 사항은 공급자 문서를 확인하세요.",
       "costPerInputToken": "## 1M 입력 토큰당 비용 (USD)\n모델에 전송되는 입력(프롬프트) 토큰 **백만** 개당 USD 비용입니다.\n\n- 비용 추적 및 예산 알림에 사용됩니다\n- 공급자가 모델 가격을 제공하는 경우 자동으로 입력됩니다(LiteLLM, OpenRouter, Together AI) — 모델을 선택하거나 연결 테스트를 실행할 때 적용됩니다\n- 그렇지 않은 경우 공급자의 가격 페이지에서 확인하세요\n- 예: `0.15` = 백만 입력 토큰당 $0.15",
       "costPerOutputToken": "## 1M 출력 토큰당 비용 (USD)\n모델이 생성하는 출력(완성) 토큰 **백만** 개당 USD 비용입니다.\n\n- 일반적으로 입력 토큰 비용보다 높습니다\n- 비용 추적 및 예산 알림에 사용됩니다\n- 공급자가 모델 가격을 제공하는 경우 자동으로 입력됩니다(LiteLLM, OpenRouter, Together AI) — 모델을 선택하거나 연결 테스트를 실행할 때 적용됩니다\n- 그렇지 않은 경우 공급자의 가격 페이지에서 확인하세요\n- 예: `0.60` = 백만 출력 토큰당 $0.60",
@@ -7018,7 +7806,7 @@
       "isDefault": "## 기본값\n이 워크플로가 프로젝트의 기본값인지 여부를 나타냅니다.\n\n- 새 테스트 실행, 세션 및 자동화에 대해 기본 워크플로가 미리 선택됩니다.",
       "isEnabled": "## 활성화됨\n이 워크플로가 활성화되었는지 여부를 나타냅니다.",
       "isActive": "## 활성\n이 워크플로 상태가 활성화되어 사용 가능한지 여부를 나타냅니다.\n\n- 활성 워크플로는 테스트 실행, 세션 또는 자동화를 업데이트할 때 선택할 수 있습니다.\n- 비활성 워크플로는 선택 항목에서 숨겨지지만 기존 항목에는 유지됩니다.",
-      "requiresReview": "## 검토 필요\n이 기능이 켜져 있으면 케이스, 테스트 실행 또는 세션을 이 상태로 전환하려면 승인된 검토 요청이 있어야 합니다. 승인된 요청이 없으면 전환이 차단됩니다.\n\n- 요청을 승인하면 전환이 수행됩니다. 검토자의 승인으로 케이스, 실행 또는 세션이 요청된 상태로 이동하며, 요청자가 수동으로 상태 변경을 반복할 필요가 없습니다.\n- 시스템 수준 기능이 꺼져 있을 때 기존의 보류 중인 검토는 자동으로 유지되며 다시 활성화하면 다시 나타납니다.\n- 테스터가 엔티티 세부 정보 페이지에서 검토 요청을 클릭하면 검토자가 선택됩니다.\n\n시스템 수준 기능이 비활성화된 경우 이 스위치는 잠깁니다. 위의 검토 워크플로 카드에서 다시 활성화하여 이 기능을 켜십시오.",
+      "requiresReview": "## 검토 필요\n이 기능이 켜져 있으면 케이스, 테스트 실행 또는 세션을 이 상태로 전환하려면 승인된 검토 요청이 있어야 합니다. 승인된 요청이 없으면 전환이 차단됩니다.\n\n- 요청을 승인하면 전환이 수행됩니다. 검토자의 승인으로 케이스, 실행 또는 세션이 요청된 상태로 이동하며, 요청자가 수동으로 상태 변경을 반복할 필요가 없습니다.\n- 시스템 수준 기능이 꺼져 있을 때 기존의 보류 중인 검토는 자동으로 유지되며 다시 활성화하면 다시 나타납니다.\n- 테스터가 엔티티 세부 정보 페이지에서 검토 요청을 클릭하면 검토자가 선택됩니다.\n\n시스템 수준 기능이 비활성화된 경우 이 스위치는 잠깁니다. 위의 검토 워크플로 섹션에서 다시 활성화하여 이 기능을 켜십시오.",
       "projects": "## 프로젝트\n이 워크플로를 사용할 수 있는 프로젝트를 나타냅니다."
     },
     "testResult": {
@@ -7126,7 +7914,10 @@
       "totalCost": "## 총 비용\n이 그룹의 호출에 대해 USD로 추정된 제공업체 비용입니다. 로컬에서 호스팅되는 모델은 비용이 기록되지 않습니다.",
       "avgLatency": "## 평균 지연 시간\n이 그룹의 호출에 대해 제공업체가 응답하는 데 걸린 평균 시간입니다.",
       "successRate": "## 성공률\n이 그룹에서 오류 없이 완료된 호출의 비율입니다.",
-      "errorCount": "## 실패한 호출\n이 그룹에서 오류로 종료된 호출 수입니다."
+      "errorCount": "## 실패한 호출\n이 그룹에서 오류로 종료된 호출 수입니다.",
+      "impactAnalysisCount": "## 영향 분석 수\n이 그룹에서 시작된 영향 분석의 수입니다. 실행 계획 구성 여부와 관계없습니다.",
+      "affectedCasesSelected": "## 선택된 영향을 받는 케이스\n이 그룹의 분석이 선택한 고정 및 영향을 받는 케이스입니다. 합산입니다.",
+      "selectionPrecision": "## 선택 정밀도(%)\n영향 분석이 선택한 케이스 중 이후에 실행된 케이스의 실패 비율입니다. 선택된 항목이 실행되지 않으면 비어 있습니다."
     },
     "reportDimensions": {
       "user": "## 사용자 차원\n테스트를 실행한 사용자 또는 항목에 할당된 사용자를 기준으로 결과를 그룹화합니다.",
@@ -7153,12 +7944,14 @@
       "feature": "## 기능 차원\n호출을 수행한 애플리케이션 기능별로 LLM 사용량을 그룹화합니다(예: 테스트 케이스 생성).",
       "model": "## 모델 차원\n호출을 처리한 모델별로 LLM 사용량을 그룹화합니다.",
       "integration": "## 통합 차원\n호출을 처리한 구성된 LLM 통합별로 LLM 사용량을 그룹화합니다.",
-      "outcome": "## 결과 차원\nLLM 사용량을 성공한 호출과 실패한 호출로 나눕니다."
+      "outcome": "## 결과 차원\nLLM 사용량을 성공한 호출과 실패한 호출로 나눕니다.",
+      "trigger": "## 트리거 차원\n테스트 실행을 구성한 영향 분석이 시작된 방법별로 그룹화: 수동으로, 풀 요청에서 또는 푸시에서. 분석을 구성하지 않은 실행은 없음으로 분류됩니다.",
+      "codeRepository": "## 코드 저장소 차원\n테스트 실행을 구성한 연결된 저장소별로 그룹화합니다. 분석 없는 실행은 없음으로 분류됩니다."
     },
     "reportBuilder": {
       "dimensions": "## 차원\n보고서에서 분석할 차원을 선택하세요. 차원은 날짜, 사용자, 상태 등과 같이 데이터를 분류하는 속성입니다. 드래그하여 순서를 변경할 수 있습니다.",
       "metrics": "## 측정항목\n보고서에서 측정할 측정항목을 선택하세요. 측정항목은 시험 결과 개수, 합격률, 평균 소요 시간 등과 같이 데이터에서 도출된 정량적 측정값입니다. 드래그하여 순서를 변경할 수 있습니다.",
-      "dateRange": "## 날짜 범위\n특정 기간으로 보고서 데이터를 필터링하세요. '지난 7일' 또는 '지난달'과 같은 미리 정의된 범위를 선택하거나 사용자 지정 날짜 범위를 정의할 수 있습니다. 이 필터는 각 보고서 유형의 관련 날짜 필드(예: 테스트 결과의 실행 날짜, 테스트 케이스의 생성 날짜)에 적용됩니다.",
+      "dateRange": "## 날짜 범위\n특정 기간별로 보고서 데이터를 필터링합니다. '지난 7일', '지난 달' 또는 '지난 N일' 같은 사전 설정을 선택하거나 캘린더에서 사용자 지정 시작 및 종료 날짜를 선택합니다.\n\n사전 설정은 상대적으로 유지됩니다: 저장된 보고서 또는 실시간 공유 링크는 열릴 때마다 표준 시간대에서 날짜를 다시 계산합니다. 사용자 지정 날짜는 고정입니다. 이 필터는 각 보고서 유형과 관련된 날짜 필드에 적용됩니다(예: 테스트 결과의 경우 실행 날짜, 테스트 케이스의 경우 생성 날짜).",
       "dimensionFilters": "## 필터\n선택한 각 차원의 특정 값으로 보고서를 좁힙니다. 해당 차원의 모든 값을 포함하려면 필터를 비워 두세요. 날짜 차원은 대신 날짜 범위 선택기로 필터링됩니다."
     },
     "codeRepository": {
@@ -7449,7 +8242,10 @@
       }
     },
     "projectRunsFilters": "## 테스트 실행 필터링\n\n칩을 토글하여 목록을 좁힐 수 있습니다. 칩은 활성 탭과 완료 탭 모두에 적용되며, 이 기기에서 이 프로젝트에 대해 기억됩니다.\n\n- **수동** / **자동** — 해당 유형의 실행만 목록에 표시합니다. 둘 다 켜거나(또는 둘 다 끄면) 모든 실행이 표시됩니다.\n- **내 테스트 실행** — 본인이 참여한 실행만 표시합니다: 실행을 생성했거나, 실행에서 테스트 케이스가 할당되었거나, 실행에서 테스트 결과를 기록한 경우입니다.",
-    "projectSessionsFilters": "## 세션 필터링\n\n칩을 토글하여 목록을 좁힙니다. 칩은 활성 탭과 완료된 탭 모두에 적용되며, 이 프로젝트에 대해 이 기기에서 기억됩니다.\n\n- **내 세션** — 회원님이 참여하는 세션만 표시됩니다: 회원님이 생성했거나 회원님에게 할당된 세션입니다."
+    "projectSessionsFilters": "## 세션 필터링\n\n칩을 토글하여 목록을 좁힙니다. 칩은 활성 탭과 완료된 탭 모두에 적용되며, 이 프로젝트에 대해 이 기기에서 기억됩니다.\n\n- **내 세션** — 회원님이 참여하는 세션만 표시됩니다: 회원님이 생성했거나 회원님에게 할당된 세션입니다.",
+    "projectImpact": "## 영향\n테스트 중인 애플리케이션의 저장소를 연결하여 이 프로젝트가 테스트 영향 분석을 실행할 수 있도록 합니다: 두 개의 커밋을 선택하여 변경 사항이 어떤 테스트 케이스에 영향을 주는지 확인하고, 테스트 케이스를 자신이 커버하는 코드로 고정합니다.",
+    "pathPatterns": "## 경로 패턴\n각 행은 기본 **경로**와 glob **패턴**을 결합합니다. 행이 누적됩니다: 파일은 행이 일치할 때 포함됩니다.\n\n- `src` + `**/*` — `src` 아래의 모든 항목\n- 공백 또는 `.` + `**/*` — 저장소의 모든 파일\n- `src` + `**/!(*.test|*.spec).ts` — 테스트를 제외한 `.ts` 파일\n\n### 제외\n행에서 **제외**를 확인하여 다른 행이 포함할 때도 해당 파일을 제거합니다. 제외는 파일 선택기 및 캐시에 적용되며, 영향 분석의 변경된 파일에 적용되므로, 거의 모든 pull 요청에서 변경되는 파일은 관련 없는 테스트 케이스를 가져오기 중지합니다. 최소한 하나의 행은 선택되지 않은 상태로 유지되어야 합니다.\n\n- 공백 + `**/CHANGELOG*` — 모든 깊이의 모든 changelog\n- `app` + `build.gradle.kts` — 버전만 범프하는 빌드 파일",
+    "projectAutomation": "## 자동화된 실행\n실행 대상은 TestPlanIt에 이 프로젝트의 자동화된 케이스를 실행할 위치를 알려줍니다: GitHub Actions 워크플로, GitLab CI 파이프라인 또는 다른 시스템을 위한 서명된 웹훅입니다. 실행이 실행되면 TestPlanIt은 실행 ID와 계획 URL로 작업을 시작합니다. 작업은 계획을 읽고 일치하는 테스트를 실행한 후 해당 실행에 고정된 리포터 또는 CLI로 결과를 다시 보고합니다. 대상은 삭제하지 않고 비활성화할 수 있습니다."
   },
   "reports": {
     "ui": {
@@ -7484,7 +8280,6 @@
       "metricOrder": "미터법 순서",
       "filtersDescription": "특정 기준에 따라 보고서 데이터를 필터링합니다.",
       "activeFilters": "활성 필터:",
-      "priorityFilterPlaceholder": "우선순위 값을 선택하세요 (모두 선택하려면 비워 두세요).",
       "dateRange": {
         "selectDateRange": "날짜 범위를 선택하세요",
         "chooseStartDate": "시작일을 선택하세요",
@@ -7498,8 +8293,6 @@
         },
         "today": "오늘",
         "yesterday": "어제",
-        "last7Days": "지난 7일",
-        "last30Days": "지난 30일",
         "thisWeek": "이번 주",
         "lastWeek": "지난주",
         "last2Weeks": "지난 2주",
@@ -7508,11 +8301,25 @@
         "last3Months": "지난 3개월",
         "thisQuarter": "이번 분기",
         "lastQuarter": "지난 분기",
-        "thisYear": "올해",
         "lastYear": "작년",
         "last12Months": "지난 12개월",
         "allTime": "역대 최고",
-        "custom": "사용자 지정 날짜 범위"
+        "custom": "사용자 지정 날짜 범위",
+        "relativeHint": "보고서가 열릴 때마다 업데이트됩니다. 캘린더의 날짜를 선택하여 고정합니다.",
+        "rolling": {
+          "label": "지난 N일, 주 또는 달…",
+          "last": "지난",
+          "amount": "기간 수",
+          "unit": "기간",
+          "days": "지난 {count, plural, other {# 일}}",
+          "weeks": "지난 {count, plural, other {# 주}}",
+          "months": "지난 {count, plural, other {# 달}}"
+        },
+        "rollingUnits": {
+          "days": "일",
+          "weeks": "주",
+          "months": "달"
+        }
       },
       "dateGrouping": {
         "label": "그룹화 기준",
@@ -7523,6 +8330,7 @@
         "annually": "매년"
       },
       "filters": {
+        "allValues": "모든 값",
         "selectFilter": "필터 유형을 선택하세요",
         "allProjects": "모든 프로젝트"
       },
@@ -7597,6 +8405,26 @@
         "automationCandidates": {
           "label": "자동화 후보",
           "description": "테스트 케이스 내용, 사용자 정의 필드 및 연결된 이슈 컨텍스트를 기반으로 다음에 자동화할 수동 테스트 케이스 순위 목록입니다."
+        },
+        "requirementCoverageGaps": {
+          "label": "요구 사항 커버리지 격차",
+          "description": "연결된 테스트 케이스가 없는 모든 요구 사항을 나열하여 트리를 열지 않고도 격차를 확인할 수 있습니다"
+        },
+        "requirementTraceability": {
+          "label": "요구 사항 추적성",
+          "description": "모든 요구 사항과 연결된 테스트 케이스 및 최신 실행 결과를 함께 표시합니다"
+        },
+        "requirementCoverageChanges": {
+          "label": "요구사항 커버리지 변경",
+          "description": "저장된 추적성 스냅샷을 이후 스냅샷 또는 실시간 매트릭스와 비교하여 어떤 요구사항의 커버리지가 변경되었는지 확인합니다"
+        },
+        "impactAnalysis": {
+          "label": "영향 분석 기록",
+          "description": "모든 영향 분석: 무엇이 시작했는지, 무엇을 변경했는지, 선택한 케이스 및 구성된 실행 결과"
+        },
+        "codePinCoverage": {
+          "label": "코드 핀 커버리지",
+          "description": "코드 핀이 있는 위치(저장소 및 디렉토리별)와 최근 변경이 커버되지 않은 위치"
         }
       },
       "flakyTests": {
@@ -7610,6 +8438,8 @@
         "oldest": "오래된",
         "noFlakyTests": "해당 기준에 맞는 불안정한 테스트는 발견되지 않았습니다.",
         "includeFilter": "포함하다",
+        "caseTags": "테스트 케이스 태그",
+        "runTags": "테스트 실행 태그",
         "testRunDeleted": "테스트 실행이 삭제되었습니다.",
         "chart": {
           "highPriority": "주의가 필요합니다",
@@ -7639,10 +8469,8 @@
         "healthScore": "점수",
         "lastExecuted": "마지막 실행",
         "executions": "처형",
-        "passRate": "합격률",
         "passCount": "패스",
         "failCount": "실패",
-        "never": "절대",
         "daysSince": "사형 집행 후 경과 일수",
         "count": "세다",
         "totalTests": "테스트 케이스",
@@ -7706,8 +8534,7 @@
           "forecast": "{value} 예측",
           "forecastUnset": "예보 없음",
           "flakiness": "뒤집기 {value}%",
-          "flakinessUnset": "플립 데이터 없음",
-          "createdLabel": "생성됨"
+          "flakinessUnset": "플립 데이터 없음"
         },
         "heuristic": {
           "intro": "이 프로젝트에는 LLM 통합이 구성되어 있지 않으므로 순위는 선택 전략 지표를 직접 기반으로 계산됩니다. 사용자 지정 필드, 연결된 이슈 컨텍스트 및 사례 콘텐츠를 지표와 함께 고려하여 더욱 정교한 추론을 가능하게 하려면 LLM 통합을 구성하십시오(관리 → AI 모델).",
@@ -7755,8 +8582,6 @@
         "invalidProject": "유효하지 않은 프로젝트입니다.",
         "historyPlaceholder": "스냅샷을 선택하세요",
         "generatedAt": "생성됨",
-        "by": "~에 의해",
-        "summaryHeading": "요약",
         "actions": {
           "generate": "보고서 생성",
           "regenerate": "재생"
@@ -7786,11 +8611,8 @@
           "score": "점수 {score}"
         },
         "delete": {
-          "button": "삭제",
           "title": "이 스냅샷을 삭제하시겠습니까?",
-          "description": "해당 스냅샷은 기록에서 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
-          "cancel": "취소",
-          "confirm": "삭제"
+          "description": "해당 스냅샷은 기록에서 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
         }
       },
       "issueTestCoverage": {
@@ -7800,11 +8622,8 @@
         "issue": "문제",
         "testCase": "테스트 케이스",
         "testCases": "{count, plural, =1 {테스트 케이스} other {테스트 케이스}}",
-        "issueStatus": "상태",
-        "priority": "우선 사항",
         "linkedTests": "연동 테스트",
         "testResults": "결과 (P/F/U)",
-        "passRate": "합격률",
         "passed": "통과됨",
         "failed": "실패한",
         "lastStatus": "최종 상태",
@@ -7819,7 +8638,6 @@
           "issuesWithUntested": "검증되지 않은 것과 함께",
           "issuesWithUntestedTooltip": "실행되지 않은 테스트 케이스 중 하나 이상에 문제가 있습니다.",
           "issuesAllPassing": "모든 통과",
-          "overallPassRate": "합격률",
           "numberOfIssues": "문제 수"
         },
         "charts": {
@@ -7828,6 +8646,81 @@
           "untestedTestCases": "테스트되지 않은 테스트 케이스 수",
           "testCoverageVsExecution": "테스트 커버리지와 실행 상태"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "요구 사항",
+        "path": "상위 경로",
+        "testCase": "테스트 케이스",
+        "linkedCases": "연결된 케이스",
+        "uncovered": "커버되지 않음",
+        "notRun": "실행되지 않음",
+        "noData": "이 보고서에 사용할 수 있는 요구 사항 데이터가 없습니다.",
+        "noGaps": "커버리지 격차가 없습니다 — 모든 요구 사항에 하나 이상의 연결된 테스트 케이스가 있습니다.",
+        "scopeLabel": "요구 사항으로 범위 지정",
+        "scopeHelp": "선택한 요구 사항과 그 하위 항목으로 보고서 범위를 제한합니다. 프로젝트의 모든 요구 사항을 보고하려면 비워두세요.",
+        "scopePlaceholder": "모든 요구 사항",
+        "covered": "커버됨",
+        "byHierarchy": "최상위 요구 사항별 커버리지",
+        "uncoveredSince": "커버되지 않은 시점",
+        "totalDebt": "총 부채",
+        "onClosedRequirements": "종료된 요구 사항 기준",
+        "debtByHierarchy": "최상위 요구 사항별 부채",
+        "debtAging": "부채 기간 분석",
+        "ageUnder30": "30일 미만",
+        "age30to90": "30~90일",
+        "age90to180": "90~180일",
+        "age180to365": "180~365일",
+        "ageOver365": "1년 초과",
+        "includeNotRun": "테스트가 한 번도 실행되지 않은 요구 사항 포함",
+        "otherRoots": "기타 ({count, plural, other {#개 계층}})",
+        "snapshotLabel": "스냅샷",
+        "snapshotLive": "실시간 매트릭스",
+        "snapshotHelp": "실시간 데이터 대신 저장된 특정 시점의 매트릭스 스냅샷을 표시합니다. 스냅샷은 내보내고, 공유하고, 비교할 수 있는 변경 불가능한 기록입니다.",
+        "snapshotPlaceholder": "스냅샷 선택",
+        "snapshotRequirementsCount": "{count, plural, other {요구사항 #개}}",
+        "snapshotUncoveredCount": "미충족 {count}개",
+        "snapshotCapturedBy": "{user}에 의해 {date}에 캡처됨",
+        "noSnapshots": "아직 스냅샷이 없습니다. 요구사항 추적성 보고서 또는 요구사항 페이지에서 스냅샷을 저장하세요.",
+        "saveSnapshot": "스냅샷 저장",
+        "saveSnapshotTitle": "추적성 스냅샷 저장",
+        "saveSnapshotDescription": "현재 추적성 매트릭스—모든 요구사항, 이를 커버하는 테스트 케이스, 그리고 그 최신 결과—를 나중에 보기, 내보내기, 공유, 비교할 수 있는 변경 불가능한 명명된 특정 시점 스냅샷으로 기록합니다.",
+        "saveSnapshotScoped": "현재 범위에 포함된 요구사항만 캡처됩니다.",
+        "snapshotNamePlaceholder": "릴리스 2.4 승인",
+        "snapshotNotePlaceholder": "선택 사항 — 이 스냅샷이 무엇에 대한 증거인지",
+        "snapshotSaved": "스냅샷 \"{name}\" 저장됨.",
+        "snapshotSaveFailed": "스냅샷을 저장하지 못했습니다.",
+        "deleteSnapshot": "스냅샷 삭제",
+        "deleteSnapshotTitle": "이 스냅샷을 삭제하시겠습니까?",
+        "deleteSnapshotDescription": "\"{name}\"는 더 이상 보고서 뷰, 비교 기준선 또는 공유 대상으로 사용할 수 없습니다. 요구사항이나 테스트 케이스에는 영향이 없습니다.",
+        "snapshotDeleted": "스냅샷이 삭제되었습니다.",
+        "snapshotDeleteFailed": "스냅샷을 삭제하지 못했습니다.",
+        "baselineLabel": "기준선 스냅샷",
+        "requirementProject": "요구사항 프로젝트",
+        "compareLabel": "비교 대상",
+        "baselineRequired": "이 보고서를 실행하려면 기준선 스냅샷을 선택하세요.",
+        "includeUnchanged": "변경되지 않은 요구사항 포함",
+        "coverageBefore": "변경 전 커버리지",
+        "coverageAfter": "변경 후 커버리지",
+        "linkedCasesBefore": "변경 전 연동됨",
+        "linkedCasesAfter": "변경 후 연동됨",
+        "casesAdded": "추가된 케이스",
+        "casesRemoved": "제거된 케이스",
+        "resultsChanged": "결과 변경됨",
+        "changeAdded": "추가됨",
+        "changeRemoved": "제거됨",
+        "changeCoverage": "커버리지 변경됨",
+        "changeLinks": "링크 변경됨",
+        "changeResults": "결과 변경됨",
+        "changeUnchanged": "변경 없음",
+        "changedRequirements": "변경된 요구사항",
+        "newlyCovered": "새로 커버됨",
+        "newlyUncovered": "새로 커버 안 됨",
+        "nowFailing": "새로 실패함",
+        "noLongerFailing": "더 이상 실패하지 않음",
+        "byChangeKind": "변경 유형별 요구사항",
+        "noChanges": "두 항목 간 커버리지 변경이 없습니다.",
+        "snapshotsMenu": "스냅샷",
+        "openSnapshotInReport": "요구사항 추적성 보고서에서 열기"
       },
       "crossProjectReportTypes": {
         "testExecution": {
@@ -7866,17 +8759,89 @@
           "label": "프로젝트 간 이슈 테스트 범위",
           "description": "프로젝트 전반에 걸쳐 연결된 테스트 케이스 및 최신 실행 상태와 함께 문제를 확인하세요."
         },
+        "requirementCoverageGaps": {
+          "label": "프로젝트 간 요구사항 커버리지 격차",
+          "description": "요구사항이 활성화된 모든 프로젝트에서 테스트 커버리지가 없는 요구사항"
+        },
+        "requirementTraceability": {
+          "label": "프로젝트 간 요구사항 추적성",
+          "description": "프로젝트 전체에서 연결된 테스트 케이스와 최신 결과가 짝지어진 모든 요구사항"
+        },
         "executionLog": {
           "label": "프로젝트 간 실행 로그",
           "description": "프로젝트 전반에 걸쳐 상태, 실행자 및 타임스탬프가 포함된 개별 테스트 결과 기록의 평면 목록"
+        },
+        "impactAnalysis": {
+          "label": "프로젝트 간 영향 분석 기록",
+          "description": "영향 분석이 활성화된 모든 프로젝트의 영향 분석"
+        },
+        "codePinCoverage": {
+          "label": "프로젝트 간 코드 핀 커버리지",
+          "description": "영향 분석이 활성화된 모든 프로젝트의 코드 핀 커버리지"
         }
       },
       "folderDescendants": {
         "label": "하위 폴더를 포함하세요",
-        "description": "하위 폴더의 결과를 각 상위 폴더에 포함시킵니다."
+        "description": "하위 폴더의 결과를 각 상위 폴더에 포함시킵니다.",
+        "filterDescription": "선택한 폴더의 하위 폴더에 있는 테스트 케이스도 포함합니다."
       },
+      "chartTotals": {
+        "label": "총계 선 표시",
+        "description": "모든 시리즈를 날짜별 하나의 값으로 결합하는 선을 추가합니다."
+      },
+      "groupedTotal": "이 그룹의 {count, plural, other {# 행}}의 총합",
       "dimensionFilters": {
         "allValues": "모든 값"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "이 일수 내에 시작된 분석입니다. 모든 시간은 프로젝트가 유지하는 모든 분석을 읽습니다.",
+        "triggerPush": "푸시",
+        "outcomeNotExecuted": "실행되지 않음",
+        "outcomeNoRun": "실행 없음",
+        "allRepositories": "모든 저장소",
+        "analysis": "분석",
+        "changedFiles": "변경된 파일",
+        "changedFilesDetail": "{files, number}개 파일 · +{additions, number} −{deletions, number}",
+        "accepted": "수락됨",
+        "runResults": "{executed, number}개 실행됨 · {passed, number}개 통과 · {failed, number}개 실패",
+        "chart": {
+          "perWeek": "주당 분석",
+          "week": "{date}주"
+        },
+        "stats": {
+          "analyses": "분석",
+          "runsComposed": "구성된 실행",
+          "runsComposedTooltip": "수동으로 또는 저장소 이벤트에서 테스트 실행을 만든 분석입니다.",
+          "runsWithFailures": "실패가 있는 실행",
+          "runsWithFailuresTooltip": "구성된 실행 중 하나 이상의 선택된 케이스가 실패한 실행입니다. 실행되고 구성된 실행의 비율입니다.",
+          "medianAffected": "중간값 영향을 받는 케이스",
+          "medianAffectedTooltip": "분석이 선택한 고정 및 영향을 받는 케이스의 중간 수입니다.",
+          "acceptedShare": "수락된 비율",
+          "acceptedShareTooltip": "검토자가 수락한 케이스입니다. 분석이 제안한 고정 및 영향을 받는 모든 케이스의 비율입니다."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "커버되지 않은 파일은 이 일수 내에 시작된 분석에서 나옵니다. 모든 시간은 완료된 모든 분석을 읽습니다.",
+        "directory": "디렉토리",
+        "rootDirectory": "(저장소 루트)",
+        "casesWithPins": "핀이 있는 케이스",
+        "stalePins": "오래된 핀",
+        "stalePinsHelp": "연결의 최신 분석이 헤드 커밋에서 찾을 수 없는 핀입니다.",
+        "uncoveredFiles": "커버되지 않은 변경된 파일",
+        "uncoveredFilesHelp": "핀이 커버하지 않은 변경된 파일로, 분석 윈도우 전체에서 파일당 한 번 계산됩니다.",
+        "coverageFilter": "표시",
+        "coverageGaps": "핀 없이 변경됨",
+        "coveragePinned": "핀 포함",
+        "kindBreakdown": "{file, number}개 전체 파일 · {range, number}개 라인 · {symbol, number}개 기호 · {glob, number}개 글롭",
+        "sourceBreakdown": "{manual, number}개 수동 · {ai, number}개 AI · {annotation, number}개 주석 · {mapfile, number}개 맵 파일 · {issue, number}개 티켓",
+        "stats": {
+          "casesWithPinsTooltip": "최소 하나의 코드 핀을 가진 테스트 케이스입니다. 프로젝트의 케이스의 비율입니다.",
+          "gapDirectories": "핀 없이 변경된 디렉토리",
+          "gapDirectoriesTooltip": "분석이 변경된 파일을 발견했지만 핀이 아무것도 커버하지 않은 디렉토리입니다."
+        },
+        "chart": {
+          "byDirectory": "디렉토리별 핀 및 커버되지 않은 파일"
+        }
       }
     },
     "errors": {
@@ -7893,30 +8858,16 @@
       "unexpectedError": "예기치 않은 오류가 발생했습니다."
     },
     "dimensions": {
-      "project": "프로젝트",
-      "status": "상태",
-      "user": "사용자",
       "executor": "집행자",
       "assignedTo": "담당자에게 배정됨",
-      "configuration": "구성",
-      "date": "날짜",
       "executionDate": "실행일",
       "creationDate": "생성일",
       "activityDate": "활동 날짜",
-      "testRun": "테스트 실행",
       "testCase": "테스트 케이스",
-      "milestone": "중요한 단계",
-      "template": "주형",
       "creator": "창조자",
-      "state": "상태",
       "source": "원천",
-      "folder": "접는 사람",
-      "group": "그룹",
-      "role": "역할",
-      "session": "세션",
       "weekEnding": "주말",
       "period": "기간",
-      "priority": "우선 사항",
       "automationStatus": "자동화 상태",
       "issueType": "문제 유형",
       "issueTracker": "이슈 트래커",
@@ -7924,8 +8875,9 @@
       "tag": "꼬리표",
       "feature": "기능",
       "model": "모델",
-      "integration": "통합",
-      "outcome": "결과"
+      "outcome": "결과",
+      "trigger": "트리거",
+      "codeRepository": "코드 저장소"
     },
     "metrics": {
       "percentReady": "준비됨 (%)",
@@ -7940,7 +8892,6 @@
       "passRate": "합격률(%)",
       "avgElapsed": "평균 경과 시간",
       "avgElapsedTime": "평균 경과 시간",
-      "totalElapsedTime": "총 경과 시간",
       "testRunCount": "테스트 실행 횟수",
       "testCaseCount": "테스트 케이스 수",
       "automationRate": "자동화율(%)",
@@ -7977,7 +8928,10 @@
       "totalCost": "총 비용",
       "avgLatency": "평균 지연 시간",
       "successRate": "성공률 (%)",
-      "errorCount": "실패한 호출"
+      "errorCount": "실패한 호출",
+      "impactAnalysisCount": "영향 분석 수",
+      "affectedCasesSelected": "선택된 영향을 받는 케이스",
+      "selectionPrecision": "선택 정밀도(%)"
     },
     "drillDown": {
       "title": "상세 기록",
@@ -8072,7 +9026,6 @@
           "expired": "만료됨"
         },
         "notifications": {
-          "enabled": "~에",
           "disabled": "끄다"
         },
         "empty": {
@@ -8121,7 +9074,6 @@
         "title": "공유 링크가 생성되었습니다!",
         "description": "공유 링크가 준비되었습니다. 복사해서 다른 사람들과 공유하세요.",
         "shareLink": "공유 링크",
-        "copy": "복사",
         "openInNewTab": "새 탭에서 열기",
         "metadata": {
           "mode": "방법",
@@ -8170,6 +9122,8 @@
       "defaultTitle": "공유 보고서",
       "fromProject": "프로젝트에서:",
       "dateRange": "기간:",
+      "currentlyReporting": "현재 보고 중:",
+      "reportedRange": "보고됨:",
       "readOnlyNotice": "이것은 읽기 전용 공유 뷰입니다.",
       "viewCount": "{count, plural, =1 {조회수 1회} other {조회#}}",
       "viewInFullApp": "전체 화면에서 보기",
@@ -8183,6 +9137,55 @@
       "title": "이 프로젝트에 대한 접근 권한이 있습니다.",
       "description": "{userName} 로 보고 있으며 {projectName}에 접근할 수 있습니다.",
       "viewInApp": "전체 앱에서 보기"
+    },
+    "dateRangeMode": {
+      "label": "날짜 범위",
+      "relative": {
+        "title": "{range}(상대)",
+        "description": "보고서가 생성된 날짜로 이동합니다. 현재 보고 중: {dates}."
+      },
+      "fixed": {
+        "title": "고정된 날짜",
+        "description": "항상 {dates}."
+      },
+      "frozenNote": "고정된 보고서는 실행된 날짜를 유지합니다: {range}, {dates}."
+    },
+    "frozen": {
+      "live": {
+        "title": "실시간",
+        "description": "보고서를 열 때마다 다시 실행하므로 항상 현재 데이터를 표시합니다."
+      },
+      "frozen": {
+        "title": "고정됨",
+        "description": "지금 보고서를 캡처합니다. 항상 정확히 이 결과를 표시하며 업데이트되지 않습니다."
+      },
+      "truncation": {
+        "title": "이 보고서는 완전히 고정하기에는 너무 큽니다",
+        "description": "{total, number}개 행이 있으며, 고정된 보고서는 최대 {max, number}개를 유지합니다. 처음 {max, number}개 행만 유지하는 사본을 저장하시겠습니까?"
+      },
+      "capturedBy": "<date></date>에 {name}에 의해 고정됨",
+      "capturedAt": "<date></date>에 고정됨",
+      "truncatedNotice": "이 사본은 {totalRowCount, number}개 중 처음 {rowCount, number}개 행을 유지합니다."
+    },
+    "savedReports": {
+      "title": "저장된 보고서",
+      "saveTitle": "보고서 저장",
+      "saveDescription": "이 보고서를 저장된 보고서에 저장합니다. 자신만 볼 수 있습니다.",
+      "saved": "보고서가 저장되었습니다",
+      "savedDescription": "\"{name}\"이 저장된 보고서에 추가되었습니다.",
+      "saveFailed": "보고서를 저장하지 못했습니다",
+      "empty": "아직 저장된 보고서가 없습니다.",
+      "emptyHint": "보고서를 실행한 후 저장을 선택하여 여기에 보관합니다.",
+      "open": "{name} 열기",
+      "frozenBadge": "고정됨",
+      "rename": "이름 변경",
+      "renameTitle": "저장된 보고서 이름 변경",
+      "renamed": "저장된 보고서의 이름이 변경되었습니다",
+      "renameFailed": "저장된 보고서의 이름을 바꾸지 못했습니다",
+      "deleteTitle": "저장된 보고서를 삭제하시겠습니까?",
+      "deleteConfirm": "\"{name}\"이 저장된 보고서에서 제거됩니다.",
+      "deleted": "저장된 보고서가 삭제되었습니다",
+      "deleteFailed": "저장된 보고서를 삭제하지 못했습니다"
     }
   },
   "sharedSteps": {
@@ -8301,25 +9304,20 @@
         "viewSharedStep": "공유 스텝 그룹 보기",
         "skippedWarning": "{count, plural, one {# 해당 사례는 건너뛰었습니다.} other {# 해당 사례는 건너뛰었습니다.}} (오래되었거나 이미 변환되었습니다).",
         "noCasesSelected": "변환할 사례를 하나 이상 선택하세요.",
-        "stepsUnavailable": "일치한 단계가 더 이상 이 테스트 케이스에 없습니다. 이 일치 항목을 해제하고 새로 스캔하세요.",
-        "selectAll": "모두 선택하세요"
+        "stepsUnavailable": "일치한 단계가 더 이상 이 테스트 케이스에 없습니다. 이 일치 항목을 해제하고 새로 스캔하세요."
       }
     },
     "findStepDuplicates": "중복 항목 찾기"
   },
   "search": {
-    "title": "찾다",
     "savedSearches": {
       "title": "저장된 검색",
       "save": "검색 저장",
       "saveTitle": "검색 저장",
       "saveDescription": "나중에 다시 볼 수 있도록 이 검색에 이름을 지정하세요.",
-      "saveAction": "저장",
-      "nameLabel": "이름",
       "namePlaceholder": "예: 이번 스프린트 실패한 실행",
       "nameRequired": "이 검색의 이름을 입력하세요.",
       "loginRequired": "검색을 저장하려면 로그인해야 합니다.",
-      "descriptionLabel": "설명 (선택 사항)",
       "descriptionPlaceholder": "이 검색의 용도",
       "saved": "검색이 저장되었습니다",
       "savedDescription": "“{name}” 검색이 저장되었습니다.",
@@ -8328,11 +9326,9 @@
       "emptyHint": "나중에 다시 보려면 검색을 저장하세요.",
       "loaded": "“{name}” 불러옴",
       "loadFailed": "이 저장된 검색은 더 이상 유효하지 않습니다.",
-      "edit": "편집",
       "editTitle": "저장된 검색 편집",
       "edited": "저장된 검색이 업데이트되었습니다",
       "editFailed": "검색을 업데이트할 수 없습니다. 다시 시도해 주세요.",
-      "delete": "삭제",
       "deleteTitle": "저장된 검색을 삭제하시겠습니까?",
       "deleteConfirm": "“{name}” 검색이 삭제됩니다. 이 작업은 취소할 수 없습니다.",
       "deleted": "저장된 검색이 삭제되었습니다",
@@ -8425,6 +9421,7 @@
       "testRunType": "테스트 실행 유형",
       "regular": "정기적인",
       "junit": "JUnit",
+      "hybrid": "하이브리드",
       "automatedOnly": "자동화 전용",
       "archivedOnly": "보관된 자료 전용",
       "completedOnly": "완료됨만",
@@ -8635,11 +9632,7 @@
     "tabDataset": "데이터셋",
     "tabDatasetDisabledTooltip": "데이터셋 행을 편집하기 전에 최소 하나 이상의 매개변수를 추가하세요.",
     "sheetAutoSaveHint": "변경 사항은 자동으로 저장됩니다.",
-    "formName": "이름",
-    "formType": "유형",
-    "formDefault": "기본",
     "formOrder": "주문하다",
-    "formRequired": "필수의",
     "formRequiredHelp": "이 값이 누락된 반복은 유효성 검사에 실패합니다.",
     "formSensitive": "예민한",
     "formSensitiveHelp": "감사 로그와 읽기 권한이 없는 사용자에게는 해당 값을 숨깁니다.",
@@ -8657,7 +9650,6 @@
     "editDialogTitle": "매개변수 \"{name} \" 편집",
     "editDialogDescription": "유형, 기본값, 플래그 또는 허용 값을 업데이트하세요. 이름을 변경하려면 목록에서 매개변수 이름을 클릭하세요.",
     "editDialogRenameHint": "이름을 변경하려면 이 대화 상자를 닫고 매개변수 이름을 클릭하십시오.",
-    "editDialogCancel": "취소",
     "editDialogSave": "변경 사항 저장",
     "editError": "매개변수 업데이트에 실패했습니다.",
     "editSuccess": "업데이트된 매개변수 \"{name}\"",
@@ -8675,11 +9667,9 @@
     "selectSourceWarningTitle": "\"@{name} \"에 대한 SELECT 소스를 변경하시겠습니까?",
     "selectSourceWarningDescription": "이 매개변수에 대한 기존 데이터 세트 값이 새 목록에 없을 수 있습니다. {invalidCount, plural, =1 {# 행은} other {# 행은}} 이 변경 후 주의가 필요합니다. 계속하시겠습니까?",
     "selectSourceConfirm": "소스 변경",
-    "datasetRowSelectAria": "행을 선택하세요",
     "datasetSelectAllPageTooltip": "이 페이지의 모든 행을 선택하려면 클릭하세요. Shift 키를 누른 상태에서 클릭하면 모든 페이지의 모든 행이 선택됩니다.",
     "datasetSelectAllAcrossPagesTooltip": "모든 페이지에서 {count, plural, =1 {#개 행} =2 {두 행 모두} other {모든 #개 행}}을 선택합니다",
     "datasetDeselectAllAcrossPagesTooltip": "모든 페이지의 모든 행을 선택 해제합니다.",
-    "datasetLabelColumn": "상표",
     "datasetAddRow": "행 추가",
     "datasetAddColumn": "열을 추가합니다",
     "datasetAddColumnTitle": "열을 추가합니다",
@@ -8688,14 +9678,12 @@
     "datasetAddColumnSubmit": "열을 추가합니다",
     "datasetAddColumnDuplicate": "이미 동일한 이름의 열이 존재합니다.",
     "datasetColumnMenuLabel": "컬럼 {name} 액션",
-    "datasetColumnDelete": "열을 삭제합니다.",
     "datasetColumnDeleteTitle": "\"{name} \" 열을 삭제하시겠습니까?",
     "datasetColumnDeleteChecking": "이 열을 참조하는 경우를 확인합니다…",
     "datasetColumnDeleteDescription": "해당 열과 각 행의 값이 삭제됩니다. 이미 이러한 값을 스냅샷한 기존 테스트 실행에는 영향을 미치지 않습니다.",
     "datasetColumnDeleteBlocked": "{count, plural, =1 {# case는 매개변수를 이 열에 매핑합니다.} other {# case는 매개변수를 이 열에 매핑합니다.}}. 먼저 이러한 매핑을 업데이트한 다음 열을 삭제합니다.",
     "datasetColumnDeleteAndMore": "그리고 {count, plural, =1 {# 더 많은 경우} other {# 더 많은 경우}}",
     "datasetColumnDeleteCheckError": "이 열을 참조하는 사례를 확인할 수 없습니다. 다시 시도해 주세요.",
-    "datasetColumnDeleteConfirm": "열을 삭제합니다.",
     "datasetRowDefaultLabel": "행 {number}",
     "datasetPasteCsv": "CSV 붙여넣기",
     "datasetImportCsv": "CSV 가져오기",
@@ -8742,13 +9730,11 @@
     "importStep4Append": "기존 행에 추가합니다",
     "importStep4AppendDescription": "#{existingCount} 행 다음에 새 행이 추가됩니다.",
     "importStep4ErrorBlock": "가져오기 전에 이전 단계에서 발생한 {errorCount} 오류를 해결하십시오.",
-    "importStep4Label": "확인하다",
     "confirmSummaryValid": "유효한 행: {count}",
     "confirmSummaryErrors": "오류: {count}",
     "confirmSummaryMode": "모드: {mode}",
     "cancelUploadTitle": "업로드 취소하시겠습니까?",
     "cancelUploadDescription": "업로드하신 CSV 데이터가 손실됩니다.",
-    "importCommit": "수입",
     "importSuccess": "가져온 행 수 {count, plural, =1 {# 행 수} other {# 행 수}}",
     "addSuccess": "매개변수 \"{name}\"가 추가되었습니다",
     "addError": "매개변수를 추가할 수 없습니다.",
@@ -8796,8 +9782,6 @@
     "hardRefuseColumnCase": "사례",
     "hardRefuseColumnRows": "데이터셋 행",
     "hardRefuseColumnConfigs": "구성",
-    "hardRefuseColumnIterations": "반복",
-    "hardRefuseTotalRow": "총",
     "hardRefuseSuggestionsHeading": "제안된 조치",
     "hardRefuseSuggestion1": "가장 큰 영향을 미치는 사례에 대한 데이터셋 행 수를 줄입니다.",
     "hardRefuseSuggestion2": "하나 이상의 구성을 선택 해제하세요.",
@@ -8812,15 +9796,11 @@
     "runProgressNavAway": "나머지 주행 영상을 보여주세요",
     "runGeneratingHeading": "반복 생성 중…",
     "runGeneratingHelper": "이 과정은 몇 분 정도 소요될 수 있습니다.",
-    "iterationsHeading": "반복",
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} (생성 중)",
-    "iterationSidebarAria": "반복",
     "iterationStatusLegendAria": "상태 범례",
     "iterationActionSkipped": "건너뛰었습니다",
     "iterationBulkPickStatusPrompt": "선택한 반복 작업에 적용할 상태를 선택하세요.",
-    "iterationBulkStatusLabel": "상태",
-    "iterationBulkStatusPlaceholder": "상태를 선택하세요",
     "iterationBulkApplyStatus": "… 상태로 표시",
     "iterationSelectAria": "반복 횟수 선택 {n}",
     "iterationRowMenuAria": "반복 {n} 액션",
@@ -8829,13 +9809,11 @@
     "iterationReset": "반복 결과 초기화",
     "iterationSelectedCount": "{count} 선택됨",
     "iterationBulkSkip": "Mark {count, plural, =1 {# 반복} other {# 반복}} 상태…",
-    "iterationBulkCancel": "취소",
     "iterationIssueTitleSnapshot": "{total} 의 반복 {n} 문제: {caseName}",
     "iterationIssueTitleCiExtended": "반복 {n} (CI 확장) 문제: {caseName}",
     "iterationIssueProseSnapshot": "{total} 의 {label}에 대한 반복 {n} 입니다.",
     "iterationIssueProseCiExtended": "{n} 반복(CI 확장) {label}.",
     "iterationIssueTableHeaderParameter": "매개변수",
-    "iterationIssueTableHeaderValue": "값",
     "iterationIssueDeepLinkLabel": "TestPlanIt에서 반복 과정을 확인하세요",
     "iterationHeaderTitle": "{total}의 반복 {n}",
     "iterationPrevAria": "이전 버전",
@@ -8917,7 +9895,6 @@
     "mappingHint": "자동 매칭된 열은 축소됩니다. 다시 매핑하려면 '변경'을 클릭하세요.",
     "mappingShowAll": "모든 열 표시",
     "mappingNoColumns": "선택한 버전에는 사용 가능한 열이 없습니다.",
-    "mappingChange": "변화",
     "mappingSkipColumn": "열 건너뛰기",
     "mappingRequiredAlert": "필수 매개변수가 매핑되지 않았습니다: {names}.",
     "mappingRequiredUnmapped": "필수 매개변수 \"@{name}\"에 매핑된 열이 없습니다."
@@ -8951,5 +9928,30 @@
     "inProject": "{project}의 {label}",
     "testRunSummary": "{project}에 {count, plural, =0 {테스트 케이스 없음} =1 {테스트 케이스 {count}개} other {테스트 케이스 {count}개}}",
     "projectSummary": "{cases, plural, =1 {테스트 케이스 {cases}개} other {테스트 케이스 {cases}개}} · {runs, plural, =1 {테스트 실행 {runs}개} other {테스트 실행 {runs}개}}"
+  },
+  "importMappings": {
+    "title": "저장된 매핑",
+    "saveTitle": "매핑 저장",
+    "saveDescription": "나중에 가져오기에 적용할 수 있도록 이 열 매핑의 이름을 지정합니다.",
+    "namePlaceholder": "예: 회귀 시트에서 주간 내보내기",
+    "descriptionPlaceholder": "파일의 출처 또는 이 매핑을 사용할 때",
+    "shareLabel": "다른 사람과 공유",
+    "shareHint": "모든 사람이 적용할 수 있습니다. 자신과 관리자만 편집하거나 삭제할 수 있습니다.",
+    "shareHintTemplate": "<b>{template}</b> 템플릿을 사용하는 프로젝트로 가져오는 모든 사람이 적용할 수 있습니다. 자신과 관리자만 편집하거나 삭제할 수 있습니다.",
+    "saved": "매핑이 저장되었습니다",
+    "empty": "아직 저장된 매핑이 없습니다",
+    "suggested": "이 파일과 일치합니다",
+    "mine": "내 매핑",
+    "shared": "다른 사람이 공유함",
+    "sharedBy": "{name}이 공유함",
+    "suggestionBanner": "\"<highlight>{name}</highlight>\"이(가) 이 파일의 열과 일치합니다.",
+    "loadFailed": "이 저장된 매핑은 더 이상 유효하지 않습니다.",
+    "skippedTitle": "일부 저장된 열이 적용되지 않았습니다",
+    "missingColumns": "업로드된 파일에 없음: {columns}",
+    "unavailableFields": "매핑할 일치하는 필드가 없음: {columns}",
+    "editTitle": "저장된 매핑 편집",
+    "update": "현재 매핑으로 업데이트",
+    "updateConfirm": "\"{name}\"이 현재 열 매핑 및 설정으로 업데이트됩니다.",
+    "savePrompt": "나중을 위해 이 열 매핑을 저장하시겠습니까?"
   }
 }

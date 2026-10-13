@@ -189,8 +189,8 @@ test.describe("Initial preferences dialog", () => {
     // layer stacked on the dialog's, and both take part in the body
     // pointer-events lock. Locale is left alone on purpose — changing it exits
     // through a full page reload, which would paper over a leaked lock.
-    // Field order in the form: theme, locale, itemsPerPage, notificationMode,
-    // dateFormat, timeFormat, timezone.
+    // Field order in the form: theme, locale, dateFormat, timeFormat, timezone,
+    // itemsPerPage, notificationMode, detailsDisplayMode.
     const pickAnotherOption = async (fieldIndex: number) => {
       await dialog.getByRole("combobox").nth(fieldIndex).click();
       await page.getByRole("option").nth(1).click();
@@ -199,7 +199,7 @@ test.describe("Initial preferences dialog", () => {
     };
 
     await pickAnotherOption(0); // theme
-    await pickAnotherOption(2); // itemsPerPage
+    await pickAnotherOption(5); // itemsPerPage
 
     await page.getByRole("button", { name: "Save preferences" }).click();
 

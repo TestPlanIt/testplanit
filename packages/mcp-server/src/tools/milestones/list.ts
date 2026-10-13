@@ -147,8 +147,7 @@ export function registerMilestonesList(
           }
         }
 
-        // Call 2 — testRunCases.groupBy. TestRunCases has no `isDeleted`
-        // column (cascade deletes only); never add it to the where.
+        // Call 2 — testRunCases.groupBy, live run cases only.
         let runGroups: BatchedRunGroup[] = [];
         if (allRunIds.length > 0) {
           runGroups =
@@ -157,7 +156,8 @@ export function registerMilestonesList(
               "groupBy",
               {
                 by: ["testRunId", "statusId"],
-                where: { testRunId: { in: allRunIds } },
+                // Cases removed from a run no longer count toward it.
+                where: { testRunId: { in: allRunIds }, isDeleted: false },
                 _count: { id: true },
               } satisfies TestRunCasesGroupByArgs,
               deps.env,

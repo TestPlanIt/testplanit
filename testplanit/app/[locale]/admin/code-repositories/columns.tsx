@@ -1,10 +1,12 @@
 "use client";
 
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { DateFormatter } from "@/components/DateFormatter";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { Edit, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -12,11 +14,12 @@ export interface CodeRepositoryRow {
   id: number;
   name: string;
   provider: string;
-  credentials: Record<string, string> | null;
   settings: Record<string, string> | null;
   status: string;
   lastTestedAt: Date | string | null;
   createdAt: Date | string;
+  projectConfigs?: { projectId: number }[];
+  executionTargets?: { projectId: number }[];
   [key: string]: any;
 }
 
@@ -33,6 +36,7 @@ interface ColumnActions {
   onDelete: (repo: CodeRepositoryRow) => void;
   onToggleStatus: (id: number, currentStatus: string) => void;
   tCommon: ReturnType<typeof useTranslations<"common">>;
+  tGlobal: ReturnType<typeof useTranslations>;
   userPreferences?: {
     user: {
       preferences: { dateFormat?: string; timezone?: string };
@@ -45,6 +49,7 @@ export function getColumns({
   onDelete,
   onToggleStatus,
   tCommon,
+  tGlobal,
   userPreferences,
 }: ColumnActions): ColumnDef<CodeRepositoryRow>[] {
   return [
@@ -61,7 +66,10 @@ export function getColumns({
       size: 250,
       cell: ({ row }) => (
         <div className="bg-primary-foreground flex items-center gap-2">
-          <span className="font-medium">{row.original.name}</span>
+          <CodeRepositoryName
+            name={row.original.name}
+            nameClassName="font-medium"
+          />
         </div>
       ),
     },
@@ -101,9 +109,38 @@ export function getColumns({
       },
     },
     {
+      id: "projects",
+      header: tCommon("fields.projects"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 75,
+      cell: ({ row }) => {
+        // A project connects to this repository through a QuickScript or
+        // Impact configuration, or through an execution target that runs its
+        // CI workflow. Merge and dedupe so a project counts once.
+        const projectIds = new Set<number>();
+        for (const { projectId } of row.original.projectConfigs || []) {
+          projectIds.add(projectId);
+        }
+        for (const { projectId } of row.original.executionTargets || []) {
+          projectIds.add(projectId);
+        }
+
+        if (projectIds.size === 0) {
+          return null;
+        }
+
+        const projects = Array.from(projectIds, (projectId) => ({
+          projectId,
+        }));
+
+        return <ProjectListDisplay projects={projects} usePopover={true} />;
+      },
+    },
+    {
       id: "lastTestedAt",
       accessorKey: "lastTestedAt",
-      header: "Last Tested",
+      header: tGlobal("repository.columns.testedOn"),
       enableSorting: true,
       enableResizing: true,
       size: 150,

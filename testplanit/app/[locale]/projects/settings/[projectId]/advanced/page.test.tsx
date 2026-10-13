@@ -173,7 +173,7 @@ describe("AdvancedPage (per-project advanced settings)", () => {
   });
 
   it("(c2) a USER holding the per-project Project Admin role sees the page", () => {
-    // Project creators and "Project Admin" role holders are system USERs but
+    // Project creators and Settings-canAddEdit role holders are system USERs but
     // carry project-admin authority; the settings APIs already accept them.
     currentSession = { user: { id: "user-1", access: "USER" } };
     mockIsProjectAdmin = true;

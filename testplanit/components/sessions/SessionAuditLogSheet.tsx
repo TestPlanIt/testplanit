@@ -30,7 +30,7 @@ export function SessionAuditLogSheet({
     <ScopedAuditLogSheet
       entityType="Sessions"
       entityId={String(sessionId)}
-      triggerLabel={t("trigger")}
+      triggerLabel={tCommon("fields.activity")}
       title={tCommon("fields.activityLog")}
       description={t("description")}
       triggerTestId="session-history-trigger"

@@ -11,6 +11,7 @@ import {
   FORECAST_QUEUE_NAME,
   GENERATE_FROM_URL_QUEUE_NAME,
   ITERATION_GENERATION_QUEUE_NAME,
+  IMPACT_ANALYSIS_QUEUE_NAME,
   MAGIC_SELECT_QUEUE_NAME,
   NOTIFICATION_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
@@ -18,6 +19,7 @@ import {
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
+  EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
@@ -40,9 +42,11 @@ export {
   DUPLICATE_SCAN_QUEUE_NAME,
   STEP_SCAN_QUEUE_NAME,
   MAGIC_SELECT_QUEUE_NAME,
+  IMPACT_ANALYSIS_QUEUE_NAME,
   GENERATE_FROM_URL_QUEUE_NAME,
   ITERATION_GENERATION_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
+  EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
 };
 
@@ -81,6 +85,7 @@ let _copyMoveQueue: Queue | null = null;
 let _duplicateScanQueue: Queue | null = null;
 let _stepScanQueue: Queue | null = null;
 let _magicSelectQueue: Queue | null = null;
+let _impactAnalysisQueue: Queue | null = null;
 let _generateFromUrlQueue: Queue | null = null;
 let _iterationGenerationQueue: Queue | null = null;
 let _webhookDispatchQueue: Queue | null = null;
@@ -535,6 +540,31 @@ export function getMagicSelectQueue(): Queue | null {
 }
 
 /**
+ * Impact Analysis Queue
+ * Used for background Impact (test impact analysis) jobs: diff fetch, pin
+ * matching, search, history and LLM selection.
+ */
+export function getImpactAnalysisQueue(): Queue | null {
+  if (_impactAnalysisQueue) return _impactAnalysisQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${IMPACT_ANALYSIS_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _impactAnalysisQueue = new Queue(IMPACT_ANALYSIS_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
+  });
+  console.log(`Queue "${IMPACT_ANALYSIS_QUEUE_NAME}" initialized.`);
+  _impactAnalysisQueue.on("error", (error) => {
+    console.error(`Queue ${IMPACT_ANALYSIS_QUEUE_NAME} error:`, error);
+  });
+  return _impactAnalysisQueue;
+}
+
+/**
  * Get the generate-from-url queue instance (lazy initialization)
  * Used for background URL-based test case generation jobs
  */
@@ -660,6 +690,34 @@ export function getScimAccessRecomputeQueue(): Queue | null {
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
+let _executionDispatchQueue: Queue | null = null;
+
+/**
+ * Get the execution-dispatch queue instance (lazy initialization).
+ * Starts CI jobs for automated executions. A dispatch is not idempotent
+ * (each attempt starts a job), so jobs never retry; failures are recorded
+ * on the TestRunExecution row instead.
+ */
+export function getExecutionDispatchQueue(): Queue | null {
+  if (_executionDispatchQueue) return _executionDispatchQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${EXECUTION_DISPATCH_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _executionDispatchQueue = new Queue(EXECUTION_DISPATCH_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...NO_RETRY_MEDIUM_RETENTION },
+  });
+  console.log(`Queue "${EXECUTION_DISPATCH_QUEUE_NAME}" initialized.`);
+  _executionDispatchQueue.on("error", (error) => {
+    console.error(`Queue ${EXECUTION_DISPATCH_QUEUE_NAME} error:`, error);
+  });
+  return _executionDispatchQueue;
+}
+
 export function getAllQueues() {
   return {
     forecastQueue: getForecastQueue(),
@@ -677,9 +735,11 @@ export function getAllQueues() {
     duplicateScanQueue: getDuplicateScanQueue(),
     stepScanQueue: getStepScanQueue(),
     "magic-select": getMagicSelectQueue(),
+    "impact-analysis": getImpactAnalysisQueue(),
     "generate-from-url": getGenerateFromUrlQueue(),
     iterationGenerationQueue: getIterationGenerationQueue(),
     webhookDispatchQueue: getWebhookDispatchQueue(),
+    executionDispatchQueue: getExecutionDispatchQueue(),
     scimAccessRecomputeQueue: getScimAccessRecomputeQueue(),
   };
 }

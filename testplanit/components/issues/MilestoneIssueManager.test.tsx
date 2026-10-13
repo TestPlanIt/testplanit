@@ -28,6 +28,7 @@ const {
   mockDeleteMilestoneIssue,
   mockUpsertIssue,
   mockFindFirstProjectIntegration,
+  mockSearchIssuesDialog,
 } = vi.hoisted(() => {
   return {
     mockCreateMilestoneIssue: vi.fn(),
@@ -36,6 +37,7 @@ const {
     mockFindFirstProjectIntegration: vi.fn(
       (..._args: any[]) => ({ data: undefined }) as any
     ),
+    mockSearchIssuesDialog: vi.fn(),
   };
 });
 
@@ -105,7 +107,9 @@ vi.mock("@/components/ui/alert-dialog", () => ({
 }));
 
 vi.mock("./search-issues-dialog", () => ({
-  SearchIssuesDialog: ({ open, onIssueSelected }: any) => {
+  SearchIssuesDialog: (props: any) => {
+    mockSearchIssuesDialog(props);
+    const { open, onIssueSelected } = props;
     if (!open) return null;
     return (
       <div data-testid="search-issues-dialog-stub">
@@ -151,9 +155,26 @@ describe("MilestoneIssueManager", () => {
     mockCreateMilestoneIssue.mockReset();
     mockDeleteMilestoneIssue.mockReset();
     mockUpsertIssue.mockReset();
+    mockSearchIssuesDialog.mockReset();
     mockCreateMilestoneIssue.mockResolvedValue({});
     mockDeleteMilestoneIssue.mockResolvedValue({});
     mockUpsertIssue.mockResolvedValue({ id: 999 });
+  });
+
+  it("renders SearchIssuesDialog with includeRequirements set true — milestone membership is the one surface that legitimately wants both row kinds", () => {
+    renderWithQueryClient(
+      <MilestoneIssueManager
+        milestoneId={42}
+        projectId={7}
+        integrationId={3}
+        linkedIssueIds={[]}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("member-issues-add-button"));
+
+    const lastCall = mockSearchIssuesDialog.mock.calls.at(-1)?.[0];
+    expect(lastCall?.includeRequirements).toBe(true);
   });
 
   it("creates a MANUAL MilestoneIssue row via milestoneIssue.useCreate when linking an existing internal issue", async () => {

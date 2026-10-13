@@ -24,6 +24,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
 
@@ -78,6 +79,24 @@ interface SearchIssuesDialogProps {
   onIssuesSelected?: (issues: IssueItem[]) => void;
   linkedIssueIds?: (string | number)[]; // IDs of already linked issues
   /**
+   * Every defect-linking surface leaves this off, so the internal search
+   * only ever offers defect-context rows. Milestone membership is the one
+   * caller that turns this on, because a tracked item can legitimately be
+   * both a milestone member and a requirement — those are two different
+   * axes of the same row, not a hygiene leak.
+   */
+  includeRequirements?: boolean;
+  /**
+   * WR-01: consumers whose `onIssueSelected` cannot accept an internal
+   * pick (their handler only branches on `issue.isExternal`, with no
+   * else) set this `false`. That restores the pre-2f2f92bd6 behaviour,
+   * where internal search was unreachable while an integration was
+   * active, instead of leaving the "Internal Issues" chip reachable but
+   * silently dropping the selection. Defaults to `true` so every
+   * consumer that already handles both kinds is unaffected.
+   */
+  allowInternalPicks?: boolean;
+  /**
    * INT-05: when set, "Create New Issue" opens with the title +
    * description prefilled from the failed iteration's parameter values
    * and a deep link. The dialog fetches the prefill from
@@ -100,6 +119,8 @@ export function SearchIssuesDialog({
   multiSelect = false,
   onIssuesSelected,
   linkedIssueIds = [],
+  includeRequirements = false,
+  allowInternalPicks = true,
   iterationContext,
 }: SearchIssuesDialogProps) {
   const t = useTranslations();
@@ -177,11 +198,17 @@ export function SearchIssuesDialog({
   );
 
   // Automatically enable external search when integration is available
+  // Default to the tracker when an integration is present; the source
+  // toggle below can flip back (operator direction 2026-08-25, extending
+  // the requirement-reference fork's toggle to every linking surface).
+  // Keyed on the id, not the object -- a refetched identity must not stomp
+  // a user's Internal selection.
+  const activeIntegrationId = activeIntegration?.id;
   useEffect(() => {
-    if (activeIntegration) {
+    if (activeIntegrationId) {
       setSearchExternal(true);
     }
-  }, [activeIntegration]);
+  }, [activeIntegrationId]);
 
   // Search internal issues (only when no integration or explicitly internal)
   const { data: internalIssues, isLoading: loadingInternal } = useClientQueries(
@@ -190,6 +217,7 @@ export function SearchIssuesDialog({
     {
       where: {
         projectId,
+        ...(includeRequirements ? {} : DEFECT_SCOPE_WHERE),
         ...(debouncedSearchQuery && {
           OR: [
             { title: { contains: debouncedSearchQuery, mode: "insensitive" } },
@@ -223,10 +251,9 @@ export function SearchIssuesDialog({
       take: 20,
     },
     {
-      enabled:
-        !activeIntegration &&
-        !searchExternal &&
-        debouncedSearchQuery.length > 0,
+      // Gated on the source toggle alone: internal issues stay reachable
+      // even while an integration is active (operator direction 2026-08-25).
+      enabled: !searchExternal && debouncedSearchQuery.length > 0,
     }
   );
 
@@ -539,6 +566,10 @@ export function SearchIssuesDialog({
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
 
+    // WR-06: deliberately NOT hardened with noopener. This popup posts its
+    // completion back through window.opener (see
+    // lib/integrations/oauthPopup.ts / isIntegrationAuthCompleteMessage) --
+    // noopener would sever that channel and break re-search-after-authenticate.
     window.open(
       authUrl,
       "_blank",
@@ -565,7 +596,7 @@ export function SearchIssuesDialog({
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <DialogTitle>
-                  {activeIntegration ? (
+                  {activeIntegration && searchExternal ? (
                     <div className="flex items-center gap-2">
                       {t("issues.searchIssues")}
                       <span className="text-sm font-normal text-muted-foreground">
@@ -579,7 +610,7 @@ export function SearchIssuesDialog({
                   )}
                 </DialogTitle>
                 <DialogDescription>
-                  {activeIntegration
+                  {activeIntegration && searchExternal
                     ? t("issues.searchExternalDescription", {
                         provider: activeIntegration.integration.provider,
                       })
@@ -649,8 +680,36 @@ export function SearchIssuesDialog({
               />
             </div>
 
+            {/* Source toggle: reachable internal search while an
+                integration is active. Hidden without an integration -- the
+                dialog is already internal-only then. WR-01: also hidden
+                when allowInternalPicks is false, for consumers whose
+                onIssueSelected cannot accept an internal pick. */}
+            {activeIntegration && allowInternalPicks && (
+              <div className="flex flex-wrap gap-1 px-0">
+                <Badge
+                  variant={searchExternal ? "outline" : "default"}
+                  className="cursor-pointer"
+                  data-testid="issue-source-internal"
+                  onClick={() => setSearchExternal(false)}
+                >
+                  {t("common.fields.internalIssues")}
+                </Badge>
+                <Badge
+                  variant={searchExternal ? "default" : "outline"}
+                  className="cursor-pointer max-w-40 truncate"
+                  data-testid="issue-source-external"
+                  onClick={() => setSearchExternal(true)}
+                  title={activeIntegration.integration.name}
+                >
+                  {activeIntegration.integration.name}
+                </Badge>
+              </div>
+            )}
+
             {/* Project filter chips — only shown when 2+ active IntegrationProject records exist (D-05) */}
-            {activeIntegrationProjects &&
+            {searchExternal &&
+              activeIntegrationProjects &&
               activeIntegrationProjects.length >= 2 && (
                 <div className="flex flex-wrap gap-1 px-0">
                   <Badge
@@ -660,7 +719,7 @@ export function SearchIssuesDialog({
                     className="cursor-pointer"
                     onClick={() => setSelectedProjectFilter(null)}
                   >
-                    {t("issues.filterAll")}
+                    {t("common.filters.all")}
                   </Badge>
                   {activeIntegrationProjects.map((ip) => (
                     <Badge
@@ -903,11 +962,16 @@ export function SearchIssuesDialog({
                                   )}
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    // WR-06: noopener,noreferrer -- unlike
+                                    // <a target="_blank">, window.open hands
+                                    // the opened page a live window.opener
+                                    // by default (reverse tab-nabbing).
                                     window.open(
                                       (issue as any).url ||
                                         issue.externalUrl ||
                                         "",
-                                      "_blank"
+                                      "_blank",
+                                      "noopener,noreferrer"
                                     );
                                   }}
                                 >

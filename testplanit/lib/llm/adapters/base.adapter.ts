@@ -48,6 +48,14 @@ export abstract class BaseLlmAdapter {
   protected config: LlmAdapterConfig;
 
   /**
+   * Models discovered at runtime to reject the `temperature` parameter,
+   * keyed by `${provider}:${model}`. Populated on the first rejected request
+   * so the process never pays for the failed-and-retried round trip twice.
+   * Shared across adapter instances because each request builds a fresh one.
+   */
+  private static modelsWithoutTemperature = new Set<string>();
+
+  /**
    * Detail about why the most recent `testConnection()` attempt failed
    * (HTTP status + provider message, or a network/timeout description).
    * Adapters set this so callers can surface the real reason instead of a
@@ -96,24 +104,120 @@ export abstract class BaseLlmAdapter {
   abstract testConnection(): Promise<boolean>;
 
   /**
+   * Send a minimal request that carries a non-default `temperature` for the
+   * given model. The value must be one the provider will actually reject:
+   * Anthropic's adaptive-thinking models reject any temperature, while a
+   * LiteLLM proxy in front of them accepts `1` and rejects everything else.
+   *
+   * Adapters that can express such a probe implement this; the base
+   * `probeModelCapabilities` turns a temperature-rejection error into an
+   * `unsupportedParams` entry and re-throws anything else.
+   */
+  protected sendTemperatureProbe?(model: string): Promise<void>;
+
+  /** Temperature used by `sendTemperatureProbe` implementations. */
+  protected static readonly PROBE_TEMPERATURE = 0.5;
+
+  /**
    * Probe a model to determine which optional request parameters it accepts.
    *
    * Called from the admin "Test Connection" flow during integration setup.
-   * Adapters can override this to send minimal probe requests against the
-   * target model and detect parameter-rejection errors. Results are persisted
-   * in `LlmProviderConfig.settings.modelCapabilities[modelId]` so that
-   * subsequent chat requests skip unsupported params on the first try.
-   *
-   * The default implementation returns an empty `unsupportedParams` array,
-   * which is the right answer for providers (OpenAI, Gemini, Ollama, Custom)
-   * that don't have known parameter deprecations today.
+   * Results are persisted in `LlmProviderConfig.settings.modelCapabilities`
+   * so that subsequent chat requests skip unsupported params on the first
+   * try. Adapters without a `sendTemperatureProbe` (Gemini, Ollama) report
+   * no unsupported params; the runtime fallback still covers them if they
+   * ever adopt one.
    */
   async probeModelCapabilities(modelId?: string): Promise<ModelCapabilities> {
-    void modelId;
+    const model = modelId || this.getDefaultModel();
+    const unsupportedParams: string[] = [];
+
+    if (this.sendTemperatureProbe) {
+      try {
+        await this.sendTemperatureProbe(model);
+      } catch (error) {
+        if (this.isTemperatureRejectedError(error)) {
+          unsupportedParams.push("temperature");
+          // Cache locally too so any in-flight requests benefit immediately.
+          this.rememberTemperatureUnsupported(model);
+        } else {
+          // Any other failure (auth, rate limit, network) means we can't
+          // probe right now; surface it so the admin sees the real problem.
+          throw error;
+        }
+      }
+    }
+
     return {
-      unsupportedParams: [],
+      unsupportedParams,
       probedAt: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Whether an error says the model rejected the `temperature` parameter.
+   * Matches Anthropic's own wording ("`temperature` is deprecated for this
+   * model") and the LiteLLM proxy's ("does not support temperature=0.7.
+   * Only temperature=1 is supported"). Anything mentioning temperature
+   * together with a support/deprecation complaint counts; a range error
+   * like "temperature must be between 0 and 2" does not.
+   */
+  protected isTemperatureRejectedError(error: any): boolean {
+    const message = error?.message || error?.error?.message || "";
+    if (typeof message !== "string" || !/temperature/i.test(message)) {
+      return false;
+    }
+    return /deprecated|not supported|does not support|unsupported/i.test(
+      message
+    );
+  }
+
+  /**
+   * Whether to include the `temperature` field on requests for this model.
+   *
+   * Source order:
+   * 1. The persisted probe result in `config.settings.modelCapabilities`
+   *    (preferred — set during the admin "Test Connection" flow).
+   * 2. The in-process cache populated when a live request was rejected.
+   */
+  protected modelSupportsTemperature(model: string): boolean {
+    if (this.getUnsupportedParams(model).includes("temperature")) {
+      return false;
+    }
+    return !BaseLlmAdapter.modelsWithoutTemperature.has(
+      this.temperatureCacheKey(model)
+    );
+  }
+
+  protected rememberTemperatureUnsupported(model: string): void {
+    BaseLlmAdapter.modelsWithoutTemperature.add(
+      this.temperatureCacheKey(model)
+    );
+  }
+
+  private temperatureCacheKey(model: string): string {
+    return `${this.config.integration.provider}:${model}`;
+  }
+
+  /**
+   * Run `attempt` and, if the provider rejects the `temperature` parameter,
+   * remember that for the model and run it once more. `attempt` must build
+   * its request body from `modelSupportsTemperature(model)` on every call so
+   * the second run leaves the field out. A second rejection propagates.
+   */
+  protected async withTemperatureFallback<T>(
+    model: string,
+    attempt: () => Promise<T>
+  ): Promise<T> {
+    try {
+      return await attempt();
+    } catch (error) {
+      if (this.isTemperatureRejectedError(error)) {
+        this.rememberTemperatureUnsupported(model);
+        return await attempt();
+      }
+      throw error;
+    }
   }
 
   /**

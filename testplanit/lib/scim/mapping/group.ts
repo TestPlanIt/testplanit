@@ -76,6 +76,8 @@ export interface DbGroupForScim {
   scimExtensions: unknown;
   updatedAt: Date | null;
   isDeleted: boolean;
+  /** Owning SCIM token; null = unowned. See lib/scim/ownership.ts. */
+  scimTokenId: string | null;
   assignedUsers?: Array<{ user: { id: string; name: string } }>;
 }
 

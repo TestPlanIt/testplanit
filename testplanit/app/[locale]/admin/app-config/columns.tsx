@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { Edit, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AppConfigRow } from "./types";

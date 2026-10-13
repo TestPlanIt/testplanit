@@ -11,6 +11,7 @@ import { resolveSessionState } from "./create.js";
 import {
   SESSION_DETAIL_INCLUDE,
   mapSessionDetail,
+  recordSessionVersion,
   type RawSessionDetail,
 } from "./shared.js";
 
@@ -40,7 +41,7 @@ export function registerSessionsUpdate(
           .string()
           .nullable()
           .optional()
-          .describe("Updated mission statement. Pass null to clear."),
+          .describe("Updated mission statement; Markdown is formatted. Pass null to clear."),
         stateName: z
           .string()
           .min(1)
@@ -129,6 +130,35 @@ export function registerSessionsUpdate(
           } else {
             data.completedAt = null;
           }
+          // Completing moves the session to the project's first Done state, as
+          // the web UI's Complete dialog does, unless a state was named.
+          if (input.isCompleted && input.stateName === undefined) {
+            const owner = await zenstack<{ projectId: number } | null>(
+              "sessions",
+              "findUnique",
+              { where: { id: input.sessionId }, select: { projectId: true } },
+              deps.env,
+            );
+            const done = owner
+              ? await zenstack<{ id: number } | null>(
+                  "workflows",
+                  "findFirst",
+                  {
+                    where: {
+                      projects: { some: { projectId: owner.projectId } },
+                      scope: "SESSIONS",
+                      workflowType: "DONE",
+                      isEnabled: true,
+                      isDeleted: false,
+                    },
+                    orderBy: { order: "asc" },
+                    select: { id: true },
+                  },
+                  deps.env,
+                )
+              : null;
+            if (done) data.state = { connect: { id: done.id } };
+          }
         }
 
         if (input.tags !== undefined) {
@@ -159,6 +189,8 @@ export function registerSessionsUpdate(
           deps.env,
         );
 
+        const version = await recordSessionVersion(input.sessionId, true, deps.env);
+
         const raw = await zenstack<RawSessionDetail | null>(
           "sessions",
           "findUnique",
@@ -188,7 +220,7 @@ export function registerSessionsUpdate(
           sessionResults: sessionResultsRaw.slice(0, SESSION_RESULTS_INLINE_CAP),
         };
 
-        const detail = mapSessionDetail(trimmedRaw, { truncated });
+        const detail = { ...mapSessionDetail(trimmedRaw, { truncated }), version };
         return {
           content: [{ type: "text", text: JSON.stringify(detail) }],
           structuredContent: detail as unknown as Record<string, unknown>,

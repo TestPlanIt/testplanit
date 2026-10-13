@@ -72,12 +72,17 @@ export async function POST(request: NextRequest) {
       JSON.stringify(baseWhere)
     );
 
-    // Apply dynamic field filters (custom fields)
-    let dynamicFieldFilteredCaseIds: number[] | null = null;
-
-    if (dynamicFieldFilters && Object.keys(dynamicFieldFilters).length > 0) {
+    // Apply dynamic field filters (custom fields).
+    // Resolved twice when a project filter is also active: once inside it for
+    // the facets that respect it, and once across every project for the
+    // projects facet, which must keep listing the projects the viewer has not
+    // picked. Narrowing that facet by ids gathered under the project filter is
+    // what used to make picking one project empty the list of the others.
+    const resolveDynamicFieldCaseIds = async (
+      applyProjectFilter: boolean
+    ): Promise<number[] | null> => {
       // For each field filter, get the case IDs that match
-      const fieldFilterPromises = Object.entries(dynamicFieldFilters).map(
+      const fieldFilterPromises = Object.entries(dynamicFieldFilters ?? {}).map(
         async ([fieldIdStr, values]) => {
           const fieldId = parseInt(fieldIdStr);
           if (isNaN(fieldId) || !values || values.length === 0) return null;
@@ -95,7 +100,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Add projectId filter
-          if (baseWhere.projectId?.in) {
+          if (applyProjectFilter && baseWhere.projectId?.in) {
             const projectIds = baseWhere.projectId.in;
             whereClauses.push(`rc."projectId" = ANY($${paramIndex}::int[])`);
             params.push(projectIds);
@@ -178,25 +183,30 @@ export async function POST(request: NextRequest) {
         (result): result is Set<number> => result !== null
       );
 
-      if (validResults.length > 0) {
-        // Start with the first set
-        let intersectedIds = validResults[0];
+      if (validResults.length === 0) {
+        return null;
+      }
 
-        // Intersect with all other sets
-        for (let i = 1; i < validResults.length; i++) {
-          intersectedIds = new Set(
-            [...intersectedIds].filter((id) => validResults[i].has(id))
-          );
-        }
+      // Start with the first set
+      let intersectedIds = validResults[0];
 
-        dynamicFieldFilteredCaseIds = Array.from(intersectedIds);
+      // Intersect with all other sets
+      for (let i = 1; i < validResults.length; i++) {
+        intersectedIds = new Set(
+          [...intersectedIds].filter((id) => validResults[i].has(id))
+        );
+      }
 
-        // If no cases match all filters, return early with empty results
-        if (dynamicFieldFilteredCaseIds.length === 0) {
-          baseWhere.id = { in: [] };
-        } else {
-          baseWhere.id = { in: dynamicFieldFilteredCaseIds };
-        }
+      return Array.from(intersectedIds);
+    };
+
+    const hasDynamicFieldFilters =
+      !!dynamicFieldFilters && Object.keys(dynamicFieldFilters).length > 0;
+
+    if (hasDynamicFieldFilters) {
+      const scopedIds = await resolveDynamicFieldCaseIds(true);
+      if (scopedIds !== null) {
+        baseWhere.id = { in: scopedIds };
       }
     }
 
@@ -204,6 +214,16 @@ export async function POST(request: NextRequest) {
     // so that all projects remain available for selection even when filtering by project
     const baseWhereWithoutProjectFilter = { ...baseWhere };
     delete baseWhereWithoutProjectFilter.projectId;
+
+    // Dropping `projectId` is not enough on its own: a custom-field filter
+    // also narrows by `id`, and those ids were gathered inside the project
+    // filter. Re-resolve them across every project for this facet only.
+    if (hasDynamicFieldFilters && baseWhere.projectId?.in) {
+      const unscopedIds = await resolveDynamicFieldCaseIds(false);
+      if (unscopedIds !== null) {
+        baseWhereWithoutProjectFilter.id = { in: unscopedIds };
+      }
+    }
 
     // Execute all aggregation queries in parallel across all projects
     const [

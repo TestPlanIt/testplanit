@@ -4,6 +4,8 @@ import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { CodePinsPanel } from "@/components/impact/CodePinsPanel";
+import LinkedRequirementsPanel from "@/components/requirements/LinkedRequirementsPanel";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
@@ -39,6 +41,7 @@ import {
   ChevronRight,
   Clock,
   CloudSunRain,
+  Bot,
   Combine,
   LayoutTemplate,
   Plus,
@@ -245,13 +248,15 @@ export function TestRunCaseDetails({
   const hasRequiredResultField =
     (requiredResultFieldAssignments?.length ?? 0) > 0;
 
-  // Automated runs (JUnit, TestNG, Mocha, etc.) record their outcome in
+  // Pure automated runs (JUnit, TestNG, Mocha, etc.) record their outcome in
   // JUnitTestResult and never denormalise it onto TestRunCases.statusId, so
-  // `currentStatus` arrives null for a case that has in fact executed. Only
-  // fetched when there is no run-case status to show — a manual case never
-  // pays for this. Scoped to this case and run rather than added to the run's
-  // own testCases select, which is deliberately thin (a run can hold thousands
-  // of unpaginated cases).
+  // `currentStatus` arrives null for a case that has in fact executed — the
+  // newest attempt then stands in for it. On a hybrid run the status IS
+  // projected, and the newest automated attempt is shown alongside it so a
+  // tester can see what CI last reported even after overriding it. Scoped to
+  // this case and run rather than added to the run's own testCases select,
+  // which is deliberately thin (a run can hold thousands of unpaginated
+  // cases).
   const { data: automatedResults } = useClientQueries(
     schema
   ).jUnitTestResult.useFindMany(
@@ -272,7 +277,7 @@ export function TestRunCaseDetails({
       orderBy: [{ executedAt: "desc" }, { id: "desc" }],
       take: 1,
     },
-    { enabled: !currentStatus && testRunId != null }
+    { enabled: testRunId != null }
   );
   const automatedStatus = automatedResults?.[0]?.status ?? null;
 
@@ -881,6 +886,22 @@ export function TestRunCaseDetails({
               <span>{testcase.testRuns[0].testRun.configuration.name}</span>
             </Badge>
           )}
+          {currentStatus && automatedStatus && (
+            <div
+              className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1"
+              data-testid="latest-automated-result"
+            >
+              <Bot className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span>{tCommon("ui.latestAutomatedResult")}:</span>
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                style={{
+                  backgroundColor: automatedStatus.color?.value ?? "#B1B2B3",
+                }}
+              />
+              <span>{automatedStatus.name}</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {testRunId && activeIterationId ? (
@@ -1141,6 +1162,18 @@ export function TestRunCaseDetails({
           session={session}
           canManageLinks={canManageLinks}
         />
+
+        {/* What this case covers, as context for the person executing it.
+            Read-only on purpose: the execution surface answers "why am I
+            running this," while linking and unlinking stay on the
+            repository case detail where the case itself is edited. */}
+        <LinkedRequirementsPanel
+          caseId={caseId}
+          projectId={projectId}
+          readOnly
+        />
+
+        <CodePinsPanel caseId={caseId} projectId={projectId} readOnly />
 
         <TestResultHistory
           caseId={caseId}

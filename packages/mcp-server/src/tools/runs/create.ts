@@ -18,6 +18,7 @@ import {
   mapRunDetailTestCase,
   type RawRunRow,
   type RawRunDetailTestCase,
+  generateRunIterations,
 } from "./shared.js";
 
 export interface RunsCreateDeps {
@@ -43,7 +44,10 @@ export async function resolveRunState(
         projects: { some: { projectId } },
         ...(name ? { name } : {}),
       } satisfies WorkflowsWhereInput,
-      orderBy: { order: "asc" } satisfies WorkflowsOrderByWithRelationInput,
+      orderBy: [
+        { isDefault: "desc" },
+        { order: "asc" },
+      ] satisfies WorkflowsOrderByWithRelationInput[],
       take: 1,
     },
     env,
@@ -98,7 +102,7 @@ export function registerRunsCreate(
           .min(1)
           .optional()
           .describe(
-            "RUNS workflow state name. Defaults to the first state by order.",
+            "RUNS workflow state name. Defaults to the state marked Default, else the first by order.",
           ),
         tags: z
           .array(z.union([z.number().int().positive(), z.string().min(1)]))
@@ -135,26 +139,28 @@ export function registerRunsCreate(
               ...(tagIds.length > 0
                 ? { tags: { connect: tagIds.map((id) => ({ id })) } }
                 : {}),
+              // In the same create, as the web UI does: a bad case id fails
+              // the whole call instead of leaving an empty run behind.
+              ...(input.caseIds && input.caseIds.length > 0
+                ? {
+                    testCases: {
+                      create: input.caseIds.map((caseId, i) => ({
+                        repositoryCase: { connect: { id: caseId } },
+                        order: i + 1,
+                      })),
+                    },
+                  }
+                : {}),
             },
             select: { id: true },
           },
           deps.env,
         );
 
-        if (input.caseIds && input.caseIds.length > 0) {
-          await zenstack(
-            "testRunCases",
-            "createMany",
-            {
-              data: input.caseIds.map((caseId, i) => ({
-                testRunId: created.id,
-                repositoryCaseId: caseId,
-                order: i + 1,
-              })),
-            },
-            deps.env,
-          );
-        }
+        const iterations =
+          input.caseIds && input.caseIds.length > 0
+            ? await generateRunIterations(created.id, deps.env)
+            : undefined;
 
         const raw = await zenstack<
           (RawRunRow & { testCases: RawRunDetailTestCase[] }) | null
@@ -195,6 +201,7 @@ export function registerRunsCreate(
           total: rollup.total,
           testCases,
           testCasesNextCursor,
+          ...(iterations ? { iterations } : {}),
         };
 
         return {

@@ -104,7 +104,7 @@ export function SaveViewDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="saved-view-description">
-              {t("search.savedSearches.descriptionLabel")}
+              {t("common.upload.attachments.link.noteLabel")}
             </Label>
             <Textarea
               id="saved-view-description"

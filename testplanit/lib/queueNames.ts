@@ -14,13 +14,21 @@ export const REPO_CACHE_QUEUE_NAME = "repo-cache";
 // button). Runs the full list+content fetch off-request in the worker so a
 // rate-limited provider can't time out the HTTP request.
 export const JOB_REFRESH_SINGLE_REPO_CACHE = "refresh-single-repo-cache";
+/** Ticket scan for one Impact config; `full: true` walks the whole branch. */
+export const JOB_SCAN_REPO_ISSUES = "scan-repo-issues";
+/** Evaluate every Code Pin of one Impact connection against the branch tip. */
+export const JOB_CHECK_STALE_PINS = "check-stale-code-pins";
 export const COPY_MOVE_QUEUE_NAME = "copy-move";
 export const DUPLICATE_SCAN_QUEUE_NAME = "duplicate-scan";
 export const STEP_SCAN_QUEUE_NAME = "step-scan";
 export const MAGIC_SELECT_QUEUE_NAME = "magic-select";
+export const IMPACT_ANALYSIS_QUEUE_NAME = "impact-analysis";
 export const GENERATE_FROM_URL_QUEUE_NAME = "generate-from-url";
 export const ITERATION_GENERATION_QUEUE_NAME = "iteration-generation";
 export const WEBHOOK_DISPATCH_QUEUE_NAME = "webhook-dispatch";
+export const EXECUTION_DISPATCH_QUEUE_NAME = "execution-dispatch";
+export const JOB_DISPATCH_EXECUTION = "dispatch-execution";
+export const JOB_POLL_ACTIVE_EXECUTIONS = "poll-active-executions";
 export const SCIM_ACCESS_RECOMPUTE_QUEUE_NAME = "scim-access-recompute";
 
 // Job names shared between enqueue sites and the workers that process them.
@@ -39,4 +47,5 @@ export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 export const JOB_REVIEW_REMINDERS = "review-reminders";
 export const JOB_SWEEP_ABANDONED_RUNS = "sweep-abandoned-runs";
+export const JOB_PURGE_STALE_CASE_DRAFTS = "purge-stale-case-drafts";
 export const JOB_SWEEP_REPORT_BUILDER_STATES = "sweep-report-builder-states";

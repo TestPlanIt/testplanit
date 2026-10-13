@@ -167,7 +167,13 @@ export interface FieldMapping {
   fieldName: string;
   caseFieldId: number;
   fieldType: string;
-  fieldOptions?: { id: number; name: string }[];
+  fieldOptions?: { id: number; name: string; isDefault?: boolean }[];
+  isRequired?: boolean;
+  isRestricted?: boolean;
+  isChecked?: boolean | null;
+  defaultValue?: string | null;
+  minValue?: number | null;
+  maxValue?: number | null;
 }
 
 /**
@@ -185,6 +191,7 @@ export async function loadTemplateData(
       id: true,
       templateName: true,
       caseFields: {
+        where: { caseField: { isEnabled: true, isDeleted: false } },
         orderBy: { order: "asc" },
         select: {
           caseFieldId: true,
@@ -192,11 +199,19 @@ export async function loadTemplateData(
             select: {
               displayName: true,
               isRequired: true,
+              isRestricted: true,
+              isChecked: true,
+              defaultValue: true,
+              minValue: true,
+              maxValue: true,
               type: { select: { type: true } },
               fieldOptions: {
+                where: { fieldOption: { isEnabled: true, isDeleted: false } },
                 orderBy: { fieldOption: { order: "asc" } },
                 select: {
-                  fieldOption: { select: { id: true, name: true } },
+                  fieldOption: {
+                    select: { id: true, name: true, isDefault: true },
+                  },
                 },
               },
             },
@@ -219,12 +234,11 @@ export async function loadTemplateData(
     };
   });
 
+  // Steps are written as steps, never as a field value. Filter on the field
+  // type: a name test dropped fields such as "Steps to Reproduce" and let a
+  // Steps field under another name through.
   const fieldMappings: FieldMapping[] = template.caseFields
-    .filter(
-      (cf) =>
-        cf.caseField.displayName !== "Steps" &&
-        !cf.caseField.displayName.toLowerCase().includes("steps")
-    )
+    .filter((cf) => cf.caseField.type.type !== "Steps")
     .map((cf) => ({
       fieldName: cf.caseField.displayName,
       caseFieldId: cf.caseFieldId,
@@ -232,7 +246,14 @@ export async function loadTemplateData(
       fieldOptions: cf.caseField.fieldOptions.map((fo) => ({
         id: fo.fieldOption.id,
         name: fo.fieldOption.name,
+        isDefault: fo.fieldOption.isDefault,
       })),
+      isRequired: cf.caseField.isRequired,
+      isRestricted: cf.caseField.isRestricted,
+      isChecked: cf.caseField.isChecked,
+      defaultValue: cf.caseField.defaultValue,
+      minValue: cf.caseField.minValue,
+      maxValue: cf.caseField.maxValue,
     }));
 
   return {

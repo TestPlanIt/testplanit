@@ -72,6 +72,18 @@ describe("buildFilterDimensions", () => {
     ).toBe(false);
   });
 
+  it("omits codePins unless Impact Analysis is enabled, then adds it as a boolean dimension", () => {
+    expect(buildFilterDimensions().has("codePins")).toBe(false);
+    expect(
+      buildFilterDimensions({ includeCodePins: true }).get("codePins")
+    ).toMatchObject({
+      key: "codePins",
+      scope: "repo",
+      valueType: "boolean",
+      operators: ["is"],
+    });
+  });
+
   it("adds inReview as a repo-scoped boolean dimension when requested", () => {
     const registry = buildFilterDimensions({ includeInReview: true });
     expect(registry.get("inReview")).toMatchObject({

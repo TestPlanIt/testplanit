@@ -13,6 +13,7 @@ vi.mock("../../api.js", () => ({
 vi.mock("./shared.js", () => ({
   mapFolderTreeNode: vi.fn(),
   fetchFolderDetail: vi.fn(),
+  nextFolderOrder: vi.fn(async () => 3),
 }));
 
 import * as apiModule from "../../api.js";
@@ -69,13 +70,16 @@ describe("testplanit_folders_create", () => {
     expect(detail).toMatchObject({ id: 99 });
 
     // Assert create body
-    const createCall = zenstackMock.mock.calls[0]!;
+    const createCall = zenstackMock.mock.calls.find((c) => c[1] === "create")!;
     const data = (createCall[2] as { data: Record<string, unknown> }).data;
     expect(data["name"]).toBe("Auth");
     expect(data["project"]).toEqual({ connect: { id: 7 } });
     expect(data["repository"]).toEqual({ connect: { id: 11 } });
     expect(data).not.toHaveProperty("parent");
     expect(data).not.toHaveProperty("creatorId");
+    // After the existing root folders, as the web UI places it.
+    expect(data["order"]).toBe(3);
+    expect(foldersSharedModule.nextFolderOrder).toHaveBeenCalledWith(7, null, env);
   });
 
   it("create with parentId: body has parent: {connect: {id}}", async () => {
@@ -85,7 +89,7 @@ describe("testplanit_folders_create", () => {
 
     await callTool({ projectId: 7, name: "Sub", parentId: 5 });
 
-    const createCall = zenstackMock.mock.calls[0]!;
+    const createCall = zenstackMock.mock.calls.find((c) => c[1] === "create")!;
     const data = (createCall[2] as { data: Record<string, unknown> }).data;
     expect(data["parent"]).toEqual({ connect: { id: 5 } });
   });

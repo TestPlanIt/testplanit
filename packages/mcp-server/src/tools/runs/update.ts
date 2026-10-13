@@ -73,11 +73,25 @@ export function registerRunsUpdate(
         isCompleted: z
           .boolean()
           .optional()
-          .describe("Mark the run as completed (true) or reopen it (false)."),
+          .describe(
+            "Pass true to complete the run. A completed run cannot be reopened, so false is refused.",
+          ),
       },
     },
     async (input) => {
       try {
+        if (input.isCompleted === false) {
+          return {
+            isError: true as const,
+            content: [
+              {
+                type: "text" as const,
+                text: "A test run cannot be reopened. Leave isCompleted out, or pass true to complete the run.",
+              },
+            ],
+          };
+        }
+
         const data: Record<string, unknown> = {};
 
         if (input.name !== undefined) data.name = input.name;
@@ -127,11 +141,36 @@ export function registerRunsUpdate(
         }
 
         if (input.isCompleted !== undefined) {
-          data.isCompleted = input.isCompleted;
-          if (input.isCompleted) {
-            data.completedAt = new Date().toISOString();
-          } else {
-            data.completedAt = null;
+          data.isCompleted = true;
+          data.completedAt = new Date().toISOString();
+          // Completing moves the run to the project's first Done state, as
+          // the web UI's Complete dialog does, unless a state was named.
+          if (input.stateName === undefined) {
+            const owner = await zenstack<{ projectId: number } | null>(
+              "testRuns",
+              "findUnique",
+              { where: { id: input.runId }, select: { projectId: true } },
+              deps.env,
+            );
+            const done = owner
+              ? await zenstack<{ id: number } | null>(
+                  "workflows",
+                  "findFirst",
+                  {
+                    where: {
+                      projects: { some: { projectId: owner.projectId } },
+                      scope: "RUNS",
+                      workflowType: "DONE",
+                      isEnabled: true,
+                      isDeleted: false,
+                    },
+                    orderBy: { order: "asc" },
+                    select: { id: true },
+                  },
+                  deps.env,
+                )
+              : null;
+            if (done) data.state = { connect: { id: done.id } };
           }
         }
 

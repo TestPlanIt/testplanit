@@ -29,7 +29,7 @@ export function RunAuditLogSheet({
     <ScopedAuditLogSheet
       entityType="TestRuns"
       entityId={String(runId)}
-      triggerLabel={t("trigger")}
+      triggerLabel={tCommon("fields.activity")}
       title={tCommon("fields.activityLog")}
       description={t("description")}
       triggerTestId="run-history-trigger"

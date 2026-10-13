@@ -26,9 +26,7 @@ describe("FileThumbnail", () => {
     render(<FileThumbnail attachment={mockAttachment} />);
 
     const image = screen.getByRole("img");
-    expect(image.getAttribute("src")).toContain(
-      encodeURIComponent(mockAttachment.url)
-    );
+    expect(image.getAttribute("src")).toBe(mockAttachment.url);
     expect(image).toHaveAttribute("alt", mockAttachment.name);
   });
 

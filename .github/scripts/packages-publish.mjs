@@ -74,7 +74,8 @@ for (const entry of readdirSync("packages", { withFileTypes: true })) {
   }
 }
 
-// Inherit stdio so `changeset publish`'s output still flows to the changesets
-// action (it parses the published packages and tags from it).
+// Inherit stdio and (by default) the environment: the changesets action passes
+// CHANGESETS_OUTPUT in the env and reads the published packages back from that
+// file, so the env must reach `changeset publish` unfiltered.
 const result = spawnSync("pnpm", ["changeset", "publish"], { stdio: "inherit" });
 process.exit(result.status ?? 1);

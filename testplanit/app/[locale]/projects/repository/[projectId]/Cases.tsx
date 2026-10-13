@@ -51,7 +51,7 @@ type MaybeRunModeCase = { testRunCaseId?: number };
 import {
   RowSelectionState,
   Updater as TableUpdater,
-} from "@tanstack/react-table";
+} from "@/components/tables/tableFeatures";
 import {
   IN_REVIEW_DIMENSION,
   type FilterDimensionRegistry,
@@ -62,10 +62,12 @@ import {
   extractPostFetchFilters,
 } from "~/lib/repository/filterWhereCompiler";
 import { serializeWhereForTransport } from "~/lib/repository/whereTransport";
+import { durationSortTerms } from "~/lib/repository/durationSort";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
   ArrowRightLeft,
   PenSquare,
+  Pin,
   PlayCircle,
   ScrollText,
   Tags,
@@ -104,12 +106,18 @@ import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
 import { AssignTestCaseModal } from "./AssignTestCase";
+import {
+  EMPTY_RUN_CASE_SELECTION,
+  type RunCaseSelection,
+} from "~/lib/execution/selection";
 import { BulkEditModal } from "./BulkEditModal";
 import { CopyMoveDialog } from "@/components/copy-move/CopyMoveDialog";
 import { ExtendedCases, getColumns } from "./columns";
 import { DeleteCaseModal } from "./DeleteCase";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
+import { RunAutomatedCaseDialog } from "@/components/cases/RunAutomatedCaseButton";
+import { useExecutionTargetChoices } from "@/components/runs/ExecuteAutomationButton";
 
 type PageSizeOption = number | "All";
 
@@ -245,16 +253,16 @@ const CASE_ISSUES_SELECT = {
 // UI sort columns that map 1:1 to a RepositoryCases scalar column. The
 // remembered sort (localStorage, per project) can hold ANY column id from
 // either the repository or the run view — including UI-computed ones like
-// latestResults/forecast and numeric custom-field ids. Both orderBy builders
-// pass through only these names; anything else falls back to the default
-// order, because one unknown field in orderBy makes the server reject the
-// whole findMany and the table renders empty. Columns that can't be an
+// latestResults and numeric custom-field ids. Both orderBy builders pass
+// through only these names (plus the duration columns, which have their own
+// nulls-last terms — see durationSortTerms); anything else falls back to the
+// default order, because one unknown field in orderBy makes the server reject
+// the whole findMany and the table renders empty. Columns that can't be an
 // orderBy but ARE sortable (latestResults, Dropdown custom fields) order via
 // server-resolved page ids instead — see sortedPageIds.
 const REPOSITORY_CASE_SORTABLE_SCALARS = new Set([
   "id",
   "name",
-  "estimate",
   "stateId",
   "automated",
   "currentVersion",
@@ -327,6 +335,11 @@ const REPOSITORY_CASE_LIST_SELECT = {
   _count: {
     select: {
       comments: {
+        where: {
+          isDeleted: false,
+        },
+      },
+      codePins: {
         where: {
           isDeleted: false,
         },
@@ -446,6 +459,11 @@ const TEST_RUN_CASE_LIST_SELECT = {
               isDeleted: false,
             },
           },
+          codePins: {
+            where: {
+              isDeleted: false,
+            },
+          },
         },
       },
     },
@@ -487,6 +505,8 @@ interface CasesProps {
    * `undefined` = unresolved: the list holds rather than answering an
    * `inReview` filter from the empty set. */
   inReviewCaseIds?: number[];
+  /** Impact Analysis is on for the project: show the Code Pins column. */
+  codePinsEnabled?: boolean;
   isSelectionMode?: boolean;
   selectedTestCases?: number[];
   selectedRunIds?: number[];
@@ -494,6 +514,11 @@ interface CasesProps {
   onConfirm?: (selectedIds: number[]) => void;
   hideHeader?: boolean;
   isRunMode?: boolean;
+  /** Run mode only: the table's bulk selection, for the run page's
+   * "Execute automated cases" button. Keyed by TestRunCases id in a
+   * multi-configuration view (sibling runs share repository cases) and by
+   * repository case id otherwise. Emitted empty when there is no selection. */
+  onRunSelectionChange?: (selection: RunCaseSelection) => void;
   onTestCaseClick?: (caseId: number) => void;
   /** Lifts prev/next context for the selected `?case` up to ProjectRepository,
    * which renders the docked details panel. Null when no case is selected. */
@@ -553,6 +578,7 @@ export default function Cases({
   predicatesKey,
   onClearFilters,
   inReviewCaseIds,
+  codePinsEnabled = false,
   isSelectionMode = false,
   selectedTestCases = [],
   selectedRunIds,
@@ -560,6 +586,7 @@ export default function Cases({
   onConfirm: _onConfirm,
   hideHeader = false,
   isRunMode = false,
+  onRunSelectionChange,
   onTestCaseClick,
   onCaseNavChange,
   isCompleted = false,
@@ -924,6 +951,32 @@ export default function Cases({
   // Add state for the export modal
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isQuickScriptModalOpen, setIsQuickScriptModalOpen] = useState(false);
+  // Ad-hoc "Run automated test" from a row menu; the dialog lives here so the
+  // row stays a plain trigger.
+  const [runAutomatedCase, setRunAutomatedCase] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  // Ad-hoc execution creates a run, records results on it, and spends CI on
+  // it: all three grants are required before the targets are even fetched.
+  const { permissions: automationPermissions } = useProjectPermissions(
+    projectId,
+    "AutomatedExecution"
+  );
+  const canExecuteAutomation =
+    canAddEditRun &&
+    canAddEditResults &&
+    (automationPermissions?.canAddEdit ?? false);
+  const { data: automationTargets } = useExecutionTargetChoices(
+    projectId,
+    isValidProjectId && !isRunMode && canExecuteAutomation
+  );
+  const enabledAutomationTargets = useMemo(
+    () => (automationTargets ?? []).filter((x) => x.isEnabled),
+    [automationTargets]
+  );
+  const automationAvailable =
+    canExecuteAutomation && enabledAutomationTargets.length > 0;
   const [quickScriptCaseIds, setQuickScriptCaseIds] = useState<number[] | null>(
     null
   );
@@ -1253,6 +1306,8 @@ export default function Cases({
         return { repositoryCase: { comments: { _count: direction } } };
       } else if (column === "attachments") {
         return { repositoryCase: { attachments: { _count: direction } } };
+      } else if (column === "codePins") {
+        return { repositoryCase: { codePins: { _count: direction } } };
       } else if (column === "steps") {
         // Not `steps: { _count }`: a relation count orderBy takes no `where`, so it
         // counts retired (soft-deleted) steps the column does not display. The
@@ -1265,7 +1320,16 @@ export default function Cases({
       } else if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { repositoryCase: { [column]: direction } };
       }
-      // UI-only sorts (latestResults, forecast, custom-field columns) have no
+      // Estimate/Forecast: sparse columns, blanks pinned last in both
+      // directions; the run order breaks ties so pages stay stable.
+      const durationTerms = durationSortTerms(column, direction);
+      if (durationTerms) {
+        return [
+          ...durationTerms.map((term) => ({ repositoryCase: term })),
+          { order: "asc" as const },
+        ];
+      }
+      // UI-only sorts (latestResults, custom-field columns) have no
       // TestRunCases counterpart. The sort is remembered per project and shared
       // with the repository view, so an orderBy the server rejects would empty
       // the whole table — fall back to run order instead.
@@ -1315,6 +1379,9 @@ export default function Cases({
       if (column === "attachments") {
         return { attachments: { _count: direction } };
       }
+      if (column === "codePins") {
+        return { codePins: { _count: direction } };
+      }
       if (column === "steps") {
         // See the run-mode builder above: a relation count orderBy cannot exclude
         // retired steps, so sort on the trigger-maintained live count instead.
@@ -1345,9 +1412,15 @@ export default function Cases({
       if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { [column]: direction };
       }
+      // Estimate/Forecast: sparse columns, blanks pinned last in both
+      // directions; the repository order breaks ties so pages stay stable.
+      const durationTerms = durationSortTerms(column, direction);
+      if (durationTerms) {
+        return [...durationTerms, { order: "asc" as const }];
+      }
       // Dropdown custom-field sorts order via resolved page ids (see
       // fieldOptionPageIds below), so the query keeps its default order here.
-      // Remaining UI-only sorts (forecast, non-dropdown custom-field columns)
+      // Remaining UI-only sorts (non-dropdown custom-field columns)
       // and run-view sorts remembered under the shared per-project key
       // (status, assignedTo) have no RepositoryCases column — an orderBy the
       // server rejects would empty the whole table, so fall back to the
@@ -2057,6 +2130,34 @@ export default function Cases({
     isMultiConfigMode,
   ]);
 
+  // Lift the run-mode bulk selection to the run page. The callback is read
+  // through a ref so an inline prop cannot re-fire the effect on every render.
+  const onRunSelectionChangeRef = useRef(onRunSelectionChange);
+  useEffect(() => {
+    onRunSelectionChangeRef.current = onRunSelectionChange;
+  }, [onRunSelectionChange]);
+  useEffect(() => {
+    onRunSelectionChangeRef.current?.(
+      isRunMode && !isSelectionMode
+        ? {
+            ids: selectedCaseIdsForBulkEdit,
+            keyedBy: isMultiConfigMode ? "testRunCaseId" : "repositoryCaseId",
+          }
+        : EMPTY_RUN_CASE_SELECTION
+    );
+  }, [
+    isRunMode,
+    isSelectionMode,
+    isMultiConfigMode,
+    selectedCaseIdsForBulkEdit,
+  ]);
+  useEffect(
+    () => () => {
+      onRunSelectionChangeRef.current?.(EMPTY_RUN_CASE_SELECTION);
+    },
+    []
+  );
+
   // Handle bulk edit selection changes
   const _handleBulkEditSelectionChange = useCallback((ids: number[]) => {
     setSelectedCaseIdsForBulkEdit(ids);
@@ -2246,8 +2347,12 @@ export default function Cases({
         }
       } else {
         // Regular click - toggle single row
-        const newSelection = { ...rowSelection };
-        newSelection[rowIndex.toString()] = !newSelection[rowIndex.toString()];
+        const newSelection: RowSelectionState = { ...rowSelection };
+        if (newSelection[rowIndex.toString()]) {
+          delete newSelection[rowIndex.toString()];
+        } else {
+          newSelection[rowIndex.toString()] = true;
+        }
         handleTableRowSelectionChange(() => newSelection);
 
         // Update last selected index only if selecting (not deselecting)
@@ -2414,8 +2519,8 @@ export default function Cases({
     }
   }, [copyMoveFolderId, copyMoveFolderName]);
 
-  const columns: CustomColumnDef<any>[] = useMemo(() => {
-    return getColumns(
+  const columns: CustomColumnDef<ExtendedCases>[] = useMemo(() => {
+    const built = getColumns(
       userPreferencesForColumns,
       uniqueCaseFieldList,
       handleSelect,
@@ -2511,9 +2616,61 @@ export default function Cases({
       // Callback to open AssignTestCaseModal from TestRunStatusCell
       (modalData) => {
         setAssignModalState({ isOpen: true, ...modalData });
-      }
+      },
+      automationAvailable,
+      (testcase) =>
+        setRunAutomatedCase({ id: testcase.id, name: testcase.name })
     );
+    if (codePinsEnabled) {
+      // Sits beside Attachments: both count a soft-deleted relation and sort
+      // by that relation's count.
+      const attachmentsIndex = built.findIndex(
+        (column) => column.id === "attachments"
+      );
+      const codePinsColumn: (typeof built)[number] = {
+        id: "codePins",
+        accessorFn: (row) =>
+          row._count?.codePins ??
+          (row as any).repositoryCase?._count?.codePins ??
+          0,
+        header: t("repository.codePins.title"),
+        enableSorting: !isCompleted,
+        enableResizing: true,
+        enableHiding: true,
+        meta: { isVisible: true },
+        size: 90,
+        cell: ({ row }) => {
+          const count = ((row.original as any)._count?.codePins ??
+            (row.original as any).repositoryCase?._count?.codePins ??
+            0) as number;
+          return (
+            <div
+              className="flex w-full items-center justify-center gap-1"
+              data-testid={`case-code-pins-count-${row.original.id}`}
+            >
+              {count > 0 ? (
+                <>
+                  <Pin className="h-3.5 w-3.5 text-primary" />
+                  <span>{count}</span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">{"0"}</span>
+              )}
+            </div>
+          );
+        },
+      };
+      built.splice(
+        attachmentsIndex >= 0 ? attachmentsIndex + 1 : built.length,
+        0,
+        codePinsColumn
+      );
+    }
+    return built;
   }, [
+    codePinsEnabled,
+
+    automationAvailable,
     userPreferencesForColumns,
     uniqueCaseFieldList,
     handleSelect,
@@ -2945,7 +3102,7 @@ export default function Cases({
     fetchAllData: fetchAllDataForHook,
     currentData: cases,
     selectedIds: selectedCaseIdsForBulkEdit,
-    columns: columns,
+    columns: columns as CustomColumnDef<any>[],
     columnVisibility: columnVisibility,
     fileNamePrefix: "testplanit-cases",
     t: t as TFunction,
@@ -3125,7 +3282,7 @@ export default function Cases({
                   {
                     key: "quickScript",
                     icon: ScrollText,
-                    label: t("repository.cases.quickScript"),
+                    label: t("common.pageTitles.quickscript"),
                     onClick: () => {
                       setQuickScriptCaseIds(null);
                       setIsQuickScriptModalOpen(true);
@@ -3366,6 +3523,10 @@ export default function Cases({
           sourceProjectId={projectId}
           sourceFolderId={activeCopyMoveFolderId ?? undefined}
           sourceFolderName={activeCopyMoveFolderName || undefined}
+          onComplete={() => {
+            setRowSelection({});
+            setSelectedCaseIdsForBulkEdit([]);
+          }}
         />
       )}
 
@@ -3379,6 +3540,19 @@ export default function Cases({
           }}
           selectedCaseIds={quickScriptCaseIds ?? selectedCaseIdsForBulkEdit}
           projectId={projectId}
+        />
+      )}
+
+      {isValidProjectId && runAutomatedCase && (
+        <RunAutomatedCaseDialog
+          projectId={projectId}
+          caseId={runAutomatedCase.id}
+          caseTitle={runAutomatedCase.name}
+          targets={enabledAutomationTargets}
+          open
+          onOpenChange={(open) => {
+            if (!open) setRunAutomatedCase(null);
+          }}
         />
       )}
 

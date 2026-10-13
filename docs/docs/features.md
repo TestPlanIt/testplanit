@@ -16,6 +16,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Shared steps** - Define reusable step sequences that can be included in multiple test cases
 - **Custom fields** - Define custom fields to capture additional metadata for your test cases
 - **Expected results** - Clearly define what success looks like for each step
+- **Auto-save** - In-progress edits are kept as you type and offered back if a tab closes, a session expires, or you navigate away before saving; drafts are private to their author and never alter the test case until you click Save
 
 ### Repository Organization
 
@@ -105,6 +106,19 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Milestone types** - Define custom milestone categories (releases, sprints, etc.)
 - **Jira milestone sync** - Import Jira Fix Versions and Sprints as Milestones, kept fresh via webhooks and periodic refresh, with synced issue membership and per-issue test coverage
 
+### Requirements
+
+- **Requirement hierarchies** - Model what the system should do as requirement trees — multiple independent hierarchies per project, nested to any depth (opt-in per project)
+- **Tracker-synced requirements** - Designate which issue types count as requirements and mirror them, hierarchy included, as live read-only requirements; supported for Jira, Azure DevOps, GitLab, Redmine, and MantisBT, with GitHub classifying by label
+- **Three ownership modes** - Keep a requirement synced and locked to the tracker, detach it to local ownership while keeping its tracker reference, or author it natively in TestPlanIt
+- **Rich documentation** - Every requirement carries rich-text documentation and attachments, editable even on synced requirements
+- **Many-to-many test linkage** - Link test cases to requirements from either side, including cases in other projects
+- **Coverage rollup** - Each requirement rolls up its covering cases' latest results through its whole subtree, with per-status counts, an uncovered filter, and drill-down to the covering cases
+- **Suspect flags** - A link is flagged when the requirement's content changes after the case's last run; re-executing clears it automatically, or dismiss it after review
+- **Traceability references** - Attach the tracker tickets or internal issues that shaped a requirement, separate from its own sync source
+- **Traceability snapshots** - Capture immutable, point-in-time records of the traceability matrix — stamped with who captured them and when — as evidence for release sign-offs and audits
+- **Coverage change tracking** - Compare a snapshot against a later snapshot or the live matrix to see which requirements' coverage changed and how
+
 ### Issue Tracking Integration
 
 - **Jira integration** - Link test cases and results to Jira issues
@@ -134,6 +148,8 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Execution Log report** - Pre-built timeline of every result event with expanded step details
 - **Automation Candidates report** - LLM-ranked list of manual cases best suited for automation, drawing on custom field signals and attached-issue metadata
 - **Parameter Iteration Matrix** - Pivots per-iteration outcomes across runs for parameterized cases
+- **Requirement Traceability report** - Every requirement paired with its covering cases and their latest results, with subtree scoping, coverage-state filtering, and a per-hierarchy coverage visualization
+- **Requirement Coverage Gaps report** - A prioritized coverage-debt list — requirements with no tests and, by default, those whose tests have never run — with priority, status, debt aging, and per-hierarchy breakdowns
 - **Cross-project reports** - Aggregate results across multiple projects in a single view
 - **Coverage analysis** - Understand what has been tested and what remains
 - **Trend analysis** - Track quality metrics over time
@@ -161,7 +177,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Duplicate Detection** - LLM-scored semantic similarity layered on top of the syntactic scan so near-duplicates with reworded steps are surfaced too
 - **Automation Candidates ranking** - The Automation Candidates report (under [Reports](#reports)) is LLM-ranked over manual cases + their custom fields + drilled-down issue metadata
 - **Prompt Configurations** - Per-feature prompt templates that admins can override system-wide or per project
-- **Multiple providers** - Support for OpenAI, Azure OpenAI, Anthropic, Google Gemini, Ollama, plus a generic OpenAI-compatible custom endpoint, with per-feature provider routing
+- **Multiple providers** - Support for OpenAI, Azure OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, plus a generic OpenAI-compatible custom endpoint, with per-feature provider routing
 - **Privacy options** - Use local models for sensitive data with Ollama integration
 - **Capability probing + billing periods** - Admin UI surfaces each provider's available capabilities and tracks usage against custom billing periods
 
@@ -177,8 +193,12 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Role-based access** - Define custom roles with granular permissions, including a per-area "Can Approve" right for Review & Approval reviewers
 - **Groups** - Organize users into groups for easier permission management
 - **SSO support** - Integrate with your identity provider via [SAML, Google OAuth, Apple Sign In, or Microsoft (Azure AD)](./user-guide/sso.md). SAML providers expose per-provider `Require signed assertions` and `Require signed response` toggles so a standard IdP that signs only the assertion (Okta's default) works out of the box, and a stricter IdP can require both signatures.
-- **SCIM 2.0 provisioning** - Provision, update, and de-provision users and groups from your IdP via [SCIM 2.0](./user-guide/scim.md). Includes a per-token rate limit, a 5-minute coalescing window to avoid first-sync webhook floods, and an admin conflict log surfacing JIT binds, resurrections, and skipped-member operations.
+- **SCIM 2.0 provisioning** - Provision, update, and de-provision users and groups from your IdP via [SCIM 2.0](./user-guide/scim.md). Includes a per-token rate limit, a 5-minute coalescing window to avoid first-sync webhook floods, and an admin conflict log surfacing JIT binds, resurrections, skipped-member operations, and cross-IdP conflicts.
+- **Multiple identity providers** - Point several IdPs at one instance and keep their directories separate: each user and group records which provider provisioned it, reads are scoped to the calling provider, and a write from another one is [refused rather than silently overwriting](./user-guide/scim.md#running-more-than-one-identity-provider). Ownership tracks the provider rather than the individual token, so rotating a token keeps full access.
+- **Overlap-window token rotation** - [Re-key a SCIM token in place](./user-guide/scim.md#rotating-a-token) while the old bearer keeps working for a configurable window, so provisioning does not break in the gap between rotating and pasting the new value into your IdP. The token keeps its name, provider, and everything it has provisioned.
 - **Group role mapping** - Drive each user's global access tier (None, User, Project Admin, or Admin) from their [group membership](./user-guide/scim.md#role-mapping), with highest-wins precedence across groups, a configurable fallback default for users outside every mapped group, a downgrade-confirmation guard before any access is lowered, and a manual-override path that hands a user back to admin control.
+- **Role-attribute mapping** - Map a `roles` value your IdP asserts on the user to an access tier. [Role mappings take precedence over group mappings](./user-guide/scim.md#map-an-idp-role-to-an-access-tier), so a role can correct coarse group mapping — holding contractors at User even inside an Admin-mapped group — while unmapped role values are ignored rather than stripping access.
+- **Per-project group access** - Scope a group to [specific projects](./user-guide/groups.md#per-project-access) instead of granting access org-wide. Members carry their own global role onto each mapped project, resolved through the same permission rules as any other project grant, so membership changes from your IdP carry per-project access with no further configuration. It grants access, never project-admin authority.
 - **Magic Link sign-in** - Optional passwordless email link as an alternative to password authentication
 - **Self-registration toggle** - Admin-controlled switch for letting users create their own accounts (or restricting account creation to admins)
 

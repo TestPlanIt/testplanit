@@ -16,7 +16,7 @@ name: E2E Smoke
 on:
   workflow_dispatch:
   push:
-    branches: [main, 'release/**']
+    branches: [main, "release/**"]
     paths:
       - "testplanit/app/**"
       - "testplanit/components/**"
@@ -77,6 +77,17 @@ jobs:
         options: >-
           --health-cmd "curl -f http://localhost:9200/_cluster/health || exit 1"
           --health-interval 15s --health-timeout 10s --health-retries 8
+      # S3-compatible storage; e2e/setup-db.ts creates the bucket.
+      storage:
+        image: rustfs/rustfs:1.0.0
+        env:
+          RUSTFS_ACCESS_KEY: e2e-access-key
+          RUSTFS_SECRET_KEY: e2e-secret-key
+        ports:
+          - 9100:9000
+        options: >-
+          --health-cmd "curl -sf http://localhost:9000/health"
+          --health-interval 5s --health-timeout 5s --health-retries 10
 
     env:
       DATABASE_URL: "postgresql://user:password@localhost:5433/tpi_test?schema=public"
@@ -89,6 +100,11 @@ jobs:
       ADMIN_NAME: "Administrator Account"
       ADMIN_PASSWORD: "admin"
       TEST_REGULAR_USER_PASSWORD: "password123"
+      AWS_ACCESS_KEY_ID: "e2e-access-key"
+      AWS_SECRET_ACCESS_KEY: "e2e-secret-key"
+      AWS_REGION: "us-east-1"
+      AWS_BUCKET_NAME: "testplanit-e2e"
+      AWS_ENDPOINT_URL: "http://localhost:9100"
       E2E_PROD: "on"
       E2E_PORT: "3002"
       NODE_OPTIONS: "--max-old-space-size=8192"
@@ -145,6 +161,7 @@ jobs:
           e2e/tests/admin/statuses/status-management.spec.ts
           e2e/tests/test-runs/test-run-creation-wizard.spec.ts
           e2e/tests/sessions/session-lifecycle.spec.ts
+          e2e/tests/storage/storage-access.spec.ts
 
       - name: Upload Playwright artifacts
         if: failure()

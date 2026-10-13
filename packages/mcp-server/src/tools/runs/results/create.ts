@@ -40,6 +40,9 @@ async function submitResult(
     elapsed: number | null;
     attempt: number;
     testRunCaseVersion: number;
+    iterationId?: number;
+    issueIds?: number[];
+    inProgressStateId: number | null;
     fieldValues: Array<{ fieldId: number; value: string }> | undefined;
   },
   env: EnvConfig
@@ -81,7 +84,7 @@ export function registerRunResultsCreate(
     "testplanit_test_run_results_create",
     {
       description:
-        "Submit a test result for a case in a run. Atomically creates the result record and updates the run case's current status. The attempt number is auto-incremented — no need to track it manually. Optional `fieldValues` records custom Result Field entries alongside the result; pass either the field's display name or its system name. The server rejects the submission if the case's template marks any Result Field required and `fieldValues` does not supply each one. Returns the full denormalized result (same shape as testplanit_test_run_results_get).",
+        "Submit a test result for a case in a run. Atomically creates the result record and updates the run case's current status. For a data-driven case, pass the iterationId of the data row the result is for. The attempt number is auto-incremented — no need to track it manually. Optional `fieldValues` records custom Result Field entries alongside the result; pass either the field's display name or its system name. The server rejects the submission if the case's template marks any Result Field required and `fieldValues` does not supply each one. Returns the full denormalized result (same shape as testplanit_test_run_results_get).",
       inputSchema: {
         testRunCaseId: z
           .number()
@@ -109,6 +112,21 @@ export function registerRunResultsCreate(
           .describe(
             "Elapsed execution time in SECONDS (e.g. 95 for 1 min 35 s), or null. Stored as-is; the UI, forecasts and time tracking all read seconds."
           ),
+        issueIds: z
+          .array(z.number().int().positive())
+          .max(50)
+          .optional()
+          .describe(
+            "Issue IDs to link to the result. A project that requires an issue on failure refuses a failed result without one; resolve a tracker key to an id with testplanit_issues_resolve.",
+          ),
+        iterationId: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe(
+            "For a data-driven case: the iteration (data row) this result is for. Required when the case has iterations — list them with testplanit_test_run_case_iterations_list.",
+          ),
         fieldValues: z
           .array(
             z.object({
@@ -133,13 +151,16 @@ export function registerRunResultsCreate(
     },
     async (input) => {
       try {
-        // Fetch the test run case to get testRunId, projectId, and templateId
-        // (templateId is needed to resolve fieldValues by name).
+        // Fetch the test run case to get testRunId, projectId, templateId
+        // (needed to resolve fieldValues by name) and the case's current
+        // version, which the result records as the version executed — the
+        // same value the web UI sends.
         const runCase = await zenstack<{
           id: number;
           testRunId: number;
           testRun: { projectId: number };
-          repositoryCase: { templateId: number | null };
+          totalIterations: number;
+          repositoryCase: { templateId: number | null; currentVersion: number };
         } | null>(
           "testRunCases",
           "findUnique",
@@ -148,8 +169,11 @@ export function registerRunResultsCreate(
             select: {
               id: true,
               testRunId: true,
+              totalIterations: true,
               testRun: { select: { projectId: true } },
-              repositoryCase: { select: { templateId: true } },
+              repositoryCase: {
+                select: { templateId: true, currentVersion: true },
+              },
             } satisfies TestRunCasesSelect,
           },
           deps.env
@@ -167,6 +191,47 @@ export function registerRunResultsCreate(
           };
         }
 
+        // A data-driven case takes one result per data row. A case-level
+        // result would overwrite the case's status and bypass the per-row
+        // rollup, so it needs the iteration it is for.
+        if (input.iterationId == null && runCase.totalIterations > 0) {
+          return {
+            isError: true as const,
+            content: [
+              {
+                type: "text" as const,
+                text: `TestRunCase ${input.testRunCaseId} is data-driven (${runCase.totalIterations} iterations). Pass iterationId; list them with testplanit_test_run_case_iterations_list.`,
+              },
+            ],
+          };
+        }
+        if (input.iterationId != null) {
+          const iteration = await zenstack<{ id: number } | null>(
+            "testRunCaseIteration",
+            "findFirst",
+            {
+              where: {
+                id: input.iterationId,
+                testRunCaseId: input.testRunCaseId,
+                isDeleted: false,
+              },
+              select: { id: true },
+            },
+            deps.env,
+          );
+          if (!iteration) {
+            return {
+              isError: true as const,
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Iteration ${input.iterationId} does not belong to TestRunCase ${input.testRunCaseId}.`,
+                },
+              ],
+            };
+          }
+        }
+
         // Resolve status by name scoped to the project.
         const statuses = await zenstack<Array<{ id: number }>>(
           "status",
@@ -177,6 +242,8 @@ export function registerRunResultsCreate(
               isDeleted: false,
               isEnabled: true,
               projects: { some: { projectId: runCase.testRun.projectId } },
+              // The statuses a tester can pick for a run result in the web UI.
+              scope: { some: { scope: { name: "Test Run" } } },
             } satisfies StatusWhereInput,
             select: { id: true } satisfies StatusSelect,
             take: 1,
@@ -190,7 +257,7 @@ export function registerRunResultsCreate(
             content: [
               {
                 type: "text" as const,
-                text: `Status "${input.statusName}" not found for project ${runCase.testRun.projectId}. Use testplanit_test_runs_get to see available status names.`,
+                text: `Status "${input.statusName}" is not a test-run status in project ${runCase.testRun.projectId}. Use testplanit_test_runs_get to see available status names.`,
               },
             ],
           };
@@ -295,11 +362,34 @@ export function registerRunResultsCreate(
             where: {
               testRunCaseId: input.testRunCaseId,
               isDeleted: false,
+              // Attempts count per data row for a data-driven case.
+              ...(input.iterationId != null
+                ? { iterationId: input.iterationId }
+                : {}),
             } satisfies TestRunResultsWhereInput,
           },
           deps.env
         );
         const attempt = (existingCount ?? 0) + 1;
+
+        // The web UI sends the project's first In Progress run state, so the
+        // run leaves its initial state with its first result.
+        const inProgress = await zenstack<{ id: number } | null>(
+          "workflows",
+          "findFirst",
+          {
+            where: {
+              projects: { some: { projectId: runCase.testRun.projectId } },
+              scope: "RUNS",
+              workflowType: "IN_PROGRESS",
+              isEnabled: true,
+              isDeleted: false,
+            },
+            orderBy: { order: "asc" },
+            select: { id: true },
+          },
+          deps.env
+        );
 
         const { result } = await submitResult(
           {
@@ -309,7 +399,12 @@ export function registerRunResultsCreate(
             notes: plainTextToProseMirrorDoc(input.notes),
             elapsed: input.elapsed ?? null,
             attempt,
-            testRunCaseVersion: 1,
+            testRunCaseVersion: runCase.repositoryCase.currentVersion,
+            ...(input.iterationId != null
+              ? { iterationId: input.iterationId }
+              : {}),
+            ...(input.issueIds ? { issueIds: input.issueIds } : {}),
+            inProgressStateId: inProgress?.id ?? null,
             fieldValues: serverFieldValues,
           },
           deps.env

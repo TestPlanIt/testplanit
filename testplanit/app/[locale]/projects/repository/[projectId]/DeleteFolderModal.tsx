@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -45,6 +46,7 @@ export function DeleteFolderModal({
   onClose,
 }: DeleteFolderModalProps) {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { projectId } = useParams<{ projectId: string }>();
 
@@ -90,6 +92,7 @@ export function DeleteFolderModal({
       toast.success(t("repository.deleteFolder.success"));
       onDeleted?.();
       refetchFolders?.();
+      void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
       refetchCases?.();
     } catch (err: any) {
       console.error("Error deleting folder(s):", err);

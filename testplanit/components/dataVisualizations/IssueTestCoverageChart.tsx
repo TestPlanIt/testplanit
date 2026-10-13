@@ -521,7 +521,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
               {"%"}
             </p>
             <p className="text-xs text-muted-foreground">
-              {t("stats.overallPassRate")}
+              {tCommon("fields.passRate")}
             </p>
           </div>
         </div>

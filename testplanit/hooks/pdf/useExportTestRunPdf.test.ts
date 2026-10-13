@@ -29,6 +29,29 @@ describe("buildStepRows", () => {
     expect(rows.every((r) => r.result === undefined)).toBe(true);
   });
 
+  it("keeps a multi-paragraph step on separate lines", () => {
+    const lines = (...texts: string[]) => ({
+      type: "doc",
+      content: texts.map((text) => ({
+        type: "paragraph",
+        content: [{ type: "text", text }],
+      })),
+    });
+    const steps = [
+      {
+        id: 1,
+        order: 1,
+        step: lines("Given 2-port SmartNICs", "Examples:", "| racks | x |"),
+        expectedResult: JSON.stringify(lines("Topology built", "No errors")),
+      },
+    ];
+    const [row] = buildStepRows(steps, []);
+    expect(row.stepText).toBe(
+      "Given 2-port SmartNICs\nExamples:\n| racks | x |"
+    );
+    expect(row.expectedText).toBe("Topology built\nNo errors");
+  });
+
   it("overlays a recorded result only on the step that has one", () => {
     const steps = [
       { id: 10, order: 1, step: doc("Open app"), expectedResult: doc("Opens") },

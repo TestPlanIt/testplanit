@@ -23,6 +23,7 @@ export function IterationBulkToolbar({
   onCancel,
 }: IterationBulkToolbarProps) {
   const t = useTranslations("parameters");
+  const tCommon = useTranslations("common");
   const visible = selectedCount > 0;
 
   return (
@@ -47,7 +48,7 @@ export function IterationBulkToolbar({
         size="icon"
         onClick={onCancel}
         data-testid="iteration-bulk-cancel"
-        aria-label={t("iterationBulkCancel")}
+        aria-label={tCommon("cancel")}
       >
         <X className="h-4 w-4" />
       </Button>

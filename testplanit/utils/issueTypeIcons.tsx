@@ -18,19 +18,23 @@ import React from "react";
  */
 export function getIssueTypeIcon(
   issueTypeName?: string | null,
-  iconUrl?: string | null
+  iconUrl?: string | null,
+  /** The glyph for "nothing better is known" — Bug suits the defect
+   * surfaces this map grew up on; requirement surfaces pass
+   * ClipboardCheck so a native requirement never reads as a bug. */
+  fallbackIcon: LucideIcon = Bug
 ): {
   icon: LucideIcon;
   iconUrl?: string;
 } {
   // If we have an icon URL from Jira, return it along with a default icon
   if (iconUrl) {
-    return { icon: Bug, iconUrl };
+    return { icon: fallbackIcon, iconUrl };
   }
 
-  // If no issue type name, return default Bug icon
+  // If no issue type name, return the fallback icon
   if (!issueTypeName) {
-    return { icon: Bug };
+    return { icon: fallbackIcon };
   }
 
   // Normalize the issue type name for comparison
@@ -90,8 +94,8 @@ export function getIssueTypeIcon(
     return { icon: ListTodo };
   }
 
-  // Default to Bug icon
-  return { icon: Bug };
+  // Unrecognized type name — the caller's fallback
+  return { icon: fallbackIcon };
 }
 
 /**
@@ -101,13 +105,16 @@ export function IssueTypeIcon({
   issueTypeName,
   iconUrl,
   className = "h-4 w-4",
+  fallbackIcon,
 }: {
   issueTypeName?: string | null;
   iconUrl?: string | null;
   className?: string;
+  /** See getIssueTypeIcon — requirement surfaces pass ClipboardCheck. */
+  fallbackIcon?: LucideIcon;
 }) {
   const [imageError, setImageError] = React.useState(false);
-  const { icon: Icon } = getIssueTypeIcon(issueTypeName, iconUrl);
+  const { icon: Icon } = getIssueTypeIcon(issueTypeName, iconUrl, fallbackIcon);
 
   // Reset error state when iconUrl changes
   React.useEffect(() => {

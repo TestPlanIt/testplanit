@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "~/test/test-utils";
@@ -197,6 +197,105 @@ describe("DataTable (virtualized mode)", () => {
     expect(hookMock.lastOpts?.loadedCount).toBe(4);
   });
 
+  // `getRowNestingDepth` exists for a table that flattens its own tree (the
+  // requirements list): TanStack's `row.depth` is 0 on every row of a flat
+  // array, so without it a child row is indistinguishable from a root and the
+  // shared nested-row surface never paints.
+  it("reads nesting depth from getRowNestingDepth when the table supplies its own depth", () => {
+    renderTable({
+      data: [
+        { id: 1, name: "Root", count: 0, depth: 0 },
+        { id: 2, name: "Child", count: 0, depth: 1 },
+      ] as any,
+      getRowNestingDepth: (row) => (row.original as { depth: number }).depth,
+    });
+
+    const root = screen.getByTestId("virtualized-row-1");
+    const child = screen.getByTestId("virtualized-row-2");
+    expect(child.className).toContain("table-row-surface-nested");
+    expect(root.className).not.toContain("table-row-surface-nested");
+  });
+
+  // An expansion-based sub-row gets a guide without the consumer asking for
+  // one, derived from its own indent depth. This used to be a `border-e-4` on
+  // a dedicated expander column's cell, which had stopped rendering as a
+  // primary bar at all -- the nested-row CSS repaints every border on a nested
+  // cell with the softened divider tint.
+  it("derives a nesting guide offset from the first column for an expansion sub-row", () => {
+    renderTable({
+      data: [
+        {
+          id: 1,
+          name: "Parent",
+          count: 0,
+          subRows: [{ id: 11, name: "Child", count: 0 }],
+        },
+      ],
+      getSubRows: (row: RowShape) => row.subRows,
+      expanded: true,
+    });
+
+    const guides = screen.getAllByTestId("virtualized-nesting-guide");
+    // The sub-row gets one; the parent does not.
+    expect(guides).toHaveLength(1);
+    // The cell's own 12px `px-3` plus one 24px indent level: the rule marks
+    // the indent the sub-row was pushed over by, with the chevron slot still
+    // clear between it and the text.
+    expect(guides[0].getAttribute("style")).toContain("36px");
+  });
+
+  it("keeps an expanded row open when the data array is replaced", async () => {
+    const makeData = () => [
+      {
+        id: 1,
+        name: "Parent",
+        count: 0,
+        subRows: [{ id: 11, name: "Child", count: 0 }],
+      },
+    ];
+    const { props, rerender } = renderTable({
+      data: makeData(),
+      getSubRows: (row: RowShape) => row.subRows,
+      getRowId: (row: RowShape) => String(row.id),
+    });
+
+    expect(screen.queryByTestId("virtualized-row-11")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("row-expander"));
+    expect(screen.getByTestId("virtualized-row-11")).toBeInTheDocument();
+
+    // A refetch hands the table a new array with the same rows.
+    await act(async () => {
+      rerender(<DataTable {...props} data={makeData()} />);
+    });
+    await act(async () => {});
+
+    expect(screen.getByTestId("virtualized-row-11")).toBeInTheDocument();
+  });
+
+  it("gives a root row no nesting guide", () => {
+    renderTable({
+      data: [{ id: 1, name: "Root", count: 0 }],
+    });
+    expect(
+      screen.queryByTestId("virtualized-nesting-guide")
+    ).not.toBeInTheDocument();
+  });
+
+  it("leaves nesting on row.depth when getRowNestingDepth is absent, so existing tables are untouched", () => {
+    renderTable({
+      data: [
+        { id: 1, name: "Root", count: 0, depth: 0 },
+        { id: 2, name: "Child", count: 0, depth: 1 },
+      ] as any,
+    });
+
+    // A `depth` field the engine was never told to read must not change how
+    // any row paints.
+    expect(screen.getByTestId("virtualized-row-2").className).not.toContain(
+      "table-row-surface-nested"
+    );
+  });
+
   it("lets an explicit loadedCount prop override the derived tree count", () => {
     renderTable({
       hasMore: true,
@@ -284,17 +383,93 @@ describe("DataTable (virtualized mode)", () => {
     expect(hookMock.scrollToIndex).not.toHaveBeenCalled();
   });
 
-  it("draws a highlight ring on the deep-linked row", () => {
+  it("draws a highlight ring on the deep-linked row's overlay, not the row's own box (gap closure 26.2-15 moved the outline off the row)", () => {
     renderTable({ highlightRowId: 1 });
     const highlighted = screen
       .getByText("Alpha")
       .closest('[role="row"]') as HTMLElement;
-    expect(highlighted.className).toContain("outline-primary");
-    // The other row is not highlighted.
+    const ring = highlighted.querySelector(
+      '[data-testid="virtualized-row-1-ring"]'
+    ) as HTMLElement;
+    expect(ring).toBeInTheDocument();
+    expect(ring.className).toContain("outline-primary");
+    // The row itself only carries the translucent tint now.
+    expect(highlighted.className).toContain("bg-primary/10");
+    expect(highlighted.className).not.toContain("outline-primary");
+    // The other row is not highlighted -- no overlay at all.
     const other = screen
       .getByText("Beta")
       .closest('[role="row"]') as HTMLElement;
-    expect(other.className).not.toContain("outline-primary");
+    expect(
+      other.querySelector('[data-testid="virtualized-row-2-ring"]')
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the highlight ring fully inside the row so the scroll container's clip edge can't shave it (a ring edge clipped by the scroll container)", () => {
+    renderTable({ highlightRowId: 1 });
+    const highlighted = screen
+      .getByText("Alpha")
+      .closest('[role="row"]') as HTMLElement;
+    const ring = highlighted.querySelector(
+      '[data-testid="virtualized-row-1-ring"]'
+    ) as HTMLElement;
+    // outline-4 with -outline-offset-4 draws the ring entirely inside the
+    // overlay's own border box (which exactly covers the row via inset-0).
+    // -outline-offset-2 left 2px bleeding outside the box, which the
+    // absolutely-positioned row's clipping scroll container shaved off the
+    // start/end edges.
+    expect(ring.className).toContain("-outline-offset-4");
+    expect(ring.className).not.toContain("-outline-offset-2");
+  });
+
+  it("renders the ring overlay pointer-events-none with a z-index class above the pinned cell's -- jsdom can't compute real paint order, so this pins the MECHANISM: the pinned cell's own z-index (2, set inline by getFlexPinningStyles in dataTableShared.tsx) is a fixed, known constant strictly below the overlay's z-20", () => {
+    renderTable({ highlightRowId: 1 });
+    const row1 = screen.getByTestId("virtualized-row-1");
+    const ring = row1.querySelector(
+      '[data-testid="virtualized-row-1-ring"]'
+    ) as HTMLElement;
+    expect(ring.className).toContain("pointer-events-none");
+    expect(ring.className).toContain("z-20");
+
+    // Default pinning (pinFirstLast) freezes the last column ("count") right.
+    const pinnedCell = row1.querySelector(
+      '[data-column-id="count"]'
+    ) as HTMLElement;
+    expect(pinnedCell.style.zIndex).toBe("2");
+  });
+
+  it("composes a consumer's ringClassName with the built-in highlight ring on the SAME overlay, and renders the overlay even without highlightRowId when only ringClassName is supplied", () => {
+    renderTable({
+      highlightRowId: 1,
+      getRowProps: (row) =>
+        row.original.id === 1
+          ? { ringClassName: "drag-ring-test" }
+          : { ringClassName: "drag-ring-test-2" },
+    });
+    const row1 = screen.getByTestId("virtualized-row-1");
+    const ring1 = row1.querySelector(
+      '[data-testid="virtualized-row-1-ring"]'
+    ) as HTMLElement;
+    expect(ring1.className).toContain("outline-primary");
+    expect(ring1.className).toContain("drag-ring-test");
+
+    // Row 2 is not highlighted, but its own ringClassName alone still mounts
+    // the overlay (the candidate-row ring must render without a selection).
+    const row2 = screen.getByTestId("virtualized-row-2");
+    const ring2 = row2.querySelector(
+      '[data-testid="virtualized-row-2-ring"]'
+    ) as HTMLElement;
+    expect(ring2).toBeInTheDocument();
+    expect(ring2.className).toContain("drag-ring-test-2");
+    expect(ring2.className).not.toContain("outline-primary");
+  });
+
+  it("mounts no ring overlay at all for a plain row (no highlight, no ringClassName)", () => {
+    renderTable();
+    const row1 = screen.getByTestId("virtualized-row-1");
+    expect(
+      row1.querySelector('[data-testid="virtualized-row-1-ring"]')
+    ).not.toBeInTheDocument();
   });
 
   it("shows drag-to-reorder grips on non-pinned columns when the table persists state", () => {
@@ -375,5 +550,92 @@ describe("DataTable (virtualized mode)", () => {
     expect(nameHeader).toBeDefined();
     expect(nameHeader).toHaveStyle({ width: "275px" });
     window.localStorage.removeItem("vdt:colsize:my-key");
+  });
+});
+
+describe("DataTable (virtualized mode) — getRowProps row extension point", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    hookMock.lastOnLoadMore = null;
+    hookMock.lastOpts = null;
+    hookMock.scrollToIndex.mockClear();
+  });
+
+  it("applies the className getRowProps returns for a given row, and only that row", () => {
+    renderTable({
+      getRowProps: (row) => ({
+        className: row.original.id === 2 ? "ring-test" : undefined,
+      }),
+    });
+    const row2 = screen.getByTestId("virtualized-row-2");
+    const row1 = screen.getByTestId("virtualized-row-1");
+    expect(row2.className).toContain("ring-test");
+    expect(row1.className).not.toContain("ring-test");
+  });
+
+  it("composes the consumer className with the highlightRowId treatment instead of replacing it", () => {
+    renderTable({
+      highlightRowId: 2,
+      getRowProps: (row) =>
+        row.original.id === 2 ? { className: "ring-test" } : undefined,
+    });
+    const row2 = screen.getByTestId("virtualized-row-2");
+    expect(row2.className).toContain("bg-primary/10");
+    expect(row2.className).toContain("ring-test");
+  });
+
+  it("leaves a row's class list unchanged when getRowProps returns undefined for it", () => {
+    const { container } = renderTable({
+      getRowProps: () => undefined,
+    });
+    const row1 = screen.getByTestId("virtualized-row-1");
+    expect(row1.className).not.toContain("undefined");
+    void container;
+  });
+
+  it("fires onDragEnter supplied through getRowProps with the row's own DOM node as currentTarget", () => {
+    // The native DOM event's currentTarget is only live during dispatch, so it
+    // must be read synchronously inside the handler — reading it back off
+    // `mock.calls` afterward observes it already reset to null.
+    let observedCurrentTarget: EventTarget | null = null;
+    const onDragEnter = vi.fn((event: React.DragEvent<HTMLDivElement>) => {
+      observedCurrentTarget = event.currentTarget;
+    });
+    renderTable({
+      getRowProps: (row) =>
+        row.original.id === 2 ? { onDragEnter } : undefined,
+    });
+    const row2 = screen.getByTestId("virtualized-row-2");
+    fireEvent.dragEnter(row2);
+    expect(onDragEnter).toHaveBeenCalledTimes(1);
+    expect(observedCurrentTarget).toBe(row2);
+  });
+
+  it("fires onClick supplied through getRowProps", () => {
+    const onClick = vi.fn();
+    renderTable({
+      getRowProps: (row) => (row.original.id === 1 ? { onClick } : undefined),
+    });
+    fireEvent.click(screen.getByTestId("virtualized-row-1"));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes a TanStack Row (not the raw data object) to getRowProps", () => {
+    const getRowProps = vi.fn().mockReturnValue(undefined);
+    renderTable({ getRowProps });
+    expect(getRowProps).toHaveBeenCalled();
+    const rowArg = getRowProps.mock.calls[0][0];
+    expect(rowArg.original.id).toBeDefined();
+    expect(typeof rowArg.getIsGrouped).toBe("function");
+  });
+
+  it("renders rows identically to today when getRowProps is omitted (regression guard)", () => {
+    renderTable();
+    const row1 = screen.getByTestId("virtualized-row-1");
+    const row2 = screen.getByTestId("virtualized-row-2");
+    expect(row1.className).not.toContain("undefined");
+    expect(row2.className).not.toContain("undefined");
+    expect(row1).toBeInTheDocument();
+    expect(row2).toBeInTheDocument();
   });
 });

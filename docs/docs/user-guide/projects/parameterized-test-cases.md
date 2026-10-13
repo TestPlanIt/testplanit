@@ -63,6 +63,7 @@ Each row in this tab becomes one iteration when the case runs. The grid is a spr
 - Required cells with no value show a red border and refuse the save.
 - Sensitive cells render as `••••••`; click to reveal (for permitted viewers) before editing.
 - The **Label** column is free-text — surfaces on the iteration row in execution so testers can scan the table at a glance ("Good username", "Empty password", etc.).
+- **Import CSV** opens a wizard that maps the file's columns to the case's parameters. You can save that mapping and apply it to later imports. See [Saved Column Mappings](../../import-export.md#saved-column-mappings).
 
 ![The Configure Parameters sheet open on the Dataset tab, showing a five-row dataset with a Label column and one column per declared parameter](/img/screenshots/user-guide/projects/parameterized/dataset-tab.png)
 

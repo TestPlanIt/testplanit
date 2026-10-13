@@ -103,11 +103,24 @@ export function HelpPopover({
           className="ms-2 inline-flex"
           tabIndex={tabIndex}
           aria-label={tCommon("aria.help")}
+          // The icon often sits inside another trigger (a sortable table
+          // header, a menu button); opening help must not also fire that.
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         >
           <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent side={side} className="w-80">
+      <PopoverContent
+        side={side}
+        // Long entries scroll inside the space Radix leaves on the chosen
+        // side instead of running off the viewport. The wheel event stops
+        // here: the content is portaled outside a dialog's tree, where the
+        // dialog's scroll lock would otherwise swallow it (same as CommandList).
+        className="w-80 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
+        onWheel={(e) => e.stopPropagation()}
+      >
         <div className="p-4">
           <Markdown components={markdownComponents}>{contentToShow}</Markdown>
         </div>

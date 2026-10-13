@@ -7,8 +7,12 @@ import { logDataExport } from "~/lib/services/auditClient";
 import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
 import { RECORD_TYPES } from "~/lib/recordKey";
 import { toHumanReadable } from "~/utils/duration";
-import { extractTextFromNode } from "~/utils/extractTextFromJson";
-import { formatFieldValue, PdfRenderer, preloadImages } from "./pdfHelpers";
+import {
+  extractJsonText,
+  formatFieldValue,
+  PdfRenderer,
+  preloadImages,
+} from "./pdfHelpers";
 
 /**
  * Relations fetched for the PDF export. This is heavier than the run page's
@@ -582,22 +586,4 @@ function formatIssues(issues: any[]): string {
     })
     .filter(Boolean)
     .join(", ");
-}
-
-/** Extract plain text from a Tiptap JSON field (string or object). */
-function extractJsonText(value: any): string | null {
-  if (!value) return null;
-  try {
-    const parsed = typeof value === "string" ? JSON.parse(value) : value;
-    if (
-      parsed?.type === "doc" &&
-      (!parsed.content || parsed.content.length === 0)
-    ) {
-      return null;
-    }
-    const text = extractTextFromNode(parsed);
-    return text && text.trim() ? text.trim() : null;
-  } catch {
-    return typeof value === "string" && value.trim() ? value.trim() : null;
-  }
 }

@@ -524,7 +524,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base flex items-center">
-                      {t("fields.configurationGroup.label")}
+                      {tCommon("configurationGroup.title")}
                       <HelpPopover helpKey="testRun.duplicate.configurationGroup" />
                     </FormLabel>
                     <FormDescription>
@@ -540,7 +540,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       disabled={isSubmittingThisDialog}
-                      aria-label={t("fields.configurationGroup.label")}
+                      aria-label={tCommon("configurationGroup.title")}
                     />
                   </FormControl>
                   <FormMessage />

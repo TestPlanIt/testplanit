@@ -216,6 +216,22 @@ Changes driven by [group role mapping](./scim.md#role-mapping) are fully audited
 - Setting a group's **Mapped Access Tier** or changing the **fallback default** is recorded as an `UPDATE` on the group (or app configuration), attributed to the admin who made the change, with the field-level before/after.
 - Each resulting per-user access-tier change is recorded as a separate `UPDATE` on the user. These recompute events are attributed to the SCIM access-recompute worker and carry `source: scim` (with the originating group and token IDs) in their metadata, so they can be told apart from manual access changes.
 
+### Role mapping and per-project mapping changes
+
+The other two mapping surfaces are audited the same way, each with the field-level before/after and the acting admin:
+
+- Creating, retiering, or removing a **role mapping** is recorded against `ScimRoleMapping`, keyed by the role value. Removing a mapping is recorded as a `DELETE`; the per-user recompute it triggers is scoped to the holders of that role.
+- Granting, changing, or withdrawing **per-project access** for a group is recorded against `GroupProjectAccessMapping`, keyed by group and project.
+
+One situation worth watching for, recorded against the affected `GroupProjectPermission`:
+
+- `scimProjectMappingSupersededManual` — a per-project mapping took over a permission row an admin had previously assigned to that group by hand.
+
+### SCIM token and cross-IdP events
+
+- **Token rotation** is recorded as an `UPDATE` on the `ScimToken` carrying `scimTokenRotated`, the overlap window applied, and when the superseded bearer stops working.
+- **Cross-IdP conflicts** — a write refused because the user or group belongs to a different identity provider — are recorded against the target row with `scimTokenConflict`, naming both the owning and the requesting IdP. These also surface in the [conflict log](./scim.md#external-id-conflict-log) on `/admin/scim`.
+
 ## Exporting Audit Logs
 
 Administrators can export audit logs to CSV for compliance reporting or external analysis:

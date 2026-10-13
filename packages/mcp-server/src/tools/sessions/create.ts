@@ -13,6 +13,7 @@ type WorkflowsOrderByWithRelationInput = NonNullable<
 import {
   SESSION_DETAIL_INCLUDE,
   mapSessionDetail,
+  recordSessionVersion,
   type RawSessionDetail,
 } from "./shared.js";
 
@@ -38,7 +39,10 @@ export async function resolveSessionState(
         projects: { some: { projectId } },
         ...(name ? { name } : {}),
       } satisfies WorkflowsWhereInput,
-      orderBy: { order: "asc" } satisfies WorkflowsOrderByWithRelationInput,
+      orderBy: [
+        { isDefault: "desc" },
+        { order: "asc" },
+      ] satisfies WorkflowsOrderByWithRelationInput[],
       take: 1,
     },
     env,
@@ -72,7 +76,7 @@ export function registerSessionsCreate(
         mission: z
           .string()
           .optional()
-          .describe("Plain-text mission statement for the session."),
+          .describe("Mission statement for the session. Markdown is formatted."),
         milestoneId: z
           .number()
           .int()
@@ -90,7 +94,7 @@ export function registerSessionsCreate(
           .min(1)
           .optional()
           .describe(
-            "SESSIONS workflow state name. Defaults to the first state by order.",
+            "SESSIONS workflow state name. Defaults to the state marked Default, else the first by order.",
           ),
         tags: z
           .array(z.union([z.number().int().positive(), z.string().min(1)]))
@@ -138,6 +142,8 @@ export function registerSessionsCreate(
           deps.env,
         );
 
+        const version = await recordSessionVersion(created.id, false, deps.env);
+
         const raw = await zenstack<RawSessionDetail | null>(
           "sessions",
           "findUnique",
@@ -162,7 +168,7 @@ export function registerSessionsCreate(
           sessionResults: sessionResultsRaw.slice(0, SESSION_RESULTS_INLINE_CAP),
         };
 
-        const detail = mapSessionDetail(trimmedRaw, { truncated });
+        const detail = { ...mapSessionDetail(trimmedRaw, { truncated }), version };
         return {
           content: [{ type: "text", text: JSON.stringify(detail) }],
           structuredContent: detail as unknown as Record<string, unknown>,

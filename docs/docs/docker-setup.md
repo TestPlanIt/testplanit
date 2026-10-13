@@ -18,10 +18,10 @@ The Docker Compose setup starts these containerized services:
 3. **PostgreSQL** (`postgres`) - Main database with automatic schema initialization
 4. **Valkey** (`valkey`) - Job queue and caching (Redis-compatible in-memory data store)
 5. **Elasticsearch** (`elasticsearch`) - Search and indexing engine
-6. **MinIO** (`minio`) - S3-compatible object storage for file attachments
+6. **RustFS** (`minio`) - S3-compatible object storage for file attachments
 7. **Nginx** (`nginx`) - Reverse proxy for internal routing and file access
 8. **Database Initialization** (`db-init`/`db-init-prod`) - Automatic schema setup and seeding
-9. **MinIO Initialization** (`minio-init`) - Automatic bucket creation and permissions
+9. **Storage Initialization** (`minio-init`) - Automatic bucket creation, read-only public access, and CORS rules
 
 ## Prerequisites
 
@@ -44,7 +44,7 @@ The Docker Compose setup starts these containerized services:
   | Background Workers     | 2GB      | 4GB         |
   | PostgreSQL             | 1GB      | 2GB         |
   | Elasticsearch          | 2GB      | 3GB         |
-  | MinIO                  | 512MB    | 1GB         |
+  | RustFS (file storage)  | 512MB    | 1GB         |
   | Valkey (Redis)         | 32MB     | 64MB        |
   | **Total**              | **~8GB** | **~14GB**   |
 
@@ -129,7 +129,7 @@ The Docker Compose setup starts these containerized services:
     EMAIL_FROM=noreply@yourdomain.com
     ```
 
-    **Important:** `.env.example` ships with local-development values, so the connection URLs above must be changed to the Docker service hostnames as shown. The remaining variables (MinIO connection, ports, feature flags) work as shipped — only modify them if you're using external services.
+    **Important:** `.env.example` ships with local-development values, so the connection URLs above must be changed to the Docker service hostnames as shown. The remaining variables (file storage connection, ports, feature flags) work as shipped — only modify them if you're using external services.
 
     ### Optional: Change External Docker Ports
 
@@ -167,7 +167,7 @@ The Docker Compose setup starts these containerized services:
     - `with-postgres` - PostgreSQL database
     - `with-valkey` - Valkey/Redis cache and queue
     - `with-elasticsearch` - Elasticsearch search (optional)
-    - `with-minio` - MinIO file storage + Nginx
+    - `with-minio` - RustFS file storage + Nginx
 
     **Quick Start Options:**
 
@@ -220,11 +220,11 @@ The Docker Compose setup starts these containerized services:
     **What Happens During Startup:**
     1. Selected services start based on profiles
     2. PostgreSQL (if included) starts and becomes healthy
-    3. Other services (Valkey, Elasticsearch, MinIO) start
+    3. Other services (Valkey, Elasticsearch, RustFS file storage) start
     4. Database initialization runs (if using PostgreSQL container)
-    5. MinIO initialization creates buckets (if using MinIO container)
+    5. Storage initialization creates the bucket (if using the bundled storage)
     6. Main application and workers start
-    7. Nginx proxy becomes available (if using MinIO)
+    7. Nginx proxy becomes available (if using the bundled storage)
 
     **First startup takes 2-5 minutes** as images are built and services initialize.
 
@@ -237,7 +237,7 @@ The Docker Compose setup starts these containerized services:
     - **Demo Project**: A pre-populated Demo Project is created during initial setup with sample test cases, test runs, sessions, milestones, and issues. Use the **Help menu > Start Demo Project Tour** for a guided walkthrough.
 
 7. **Access Additional Services (if enabled):**
-    - **MinIO Console** (`with-minio`): [http://localhost:9001](http://localhost:9001)
+    - **RustFS Console** (`with-minio`): [http://localhost:9001](http://localhost:9001)
       - Override with `DOCKER_MINIO_CONSOLE_PORT`
     - **Elasticsearch** (`with-elasticsearch`): [http://localhost:9200](http://localhost:9200)
       - Override with `DOCKER_ELASTICSEARCH_HTTP_PORT`
@@ -287,27 +287,31 @@ docker compose top
 docker system df
 ```
 
+If you are updating from a release that bundled MinIO, migrate your files before starting the new version. See [Migrating from MinIO to RustFS](/docs/migrating-from-minio).
+
 ### File Storage Configuration
 
-**MinIO (Default)**:
-Provides S3-compatible file storage with automatic setup:
+**RustFS (Default)**:
+Provides S3-compatible file storage with automatic setup. The service is named `minio` and enabled with the `with-minio` profile:
 
-- **Internal**: `http://minio:9000` (app ↔ MinIO)
+- **Internal**: `http://minio:9000` (app ↔ storage)
 - **External**: `https://yourdomain.com/testplanit/...` (browser access)
 - **Console**: `http://localhost:9001` (admin interface)
-- **Bucket**: `testplanit` (auto-created with public read permissions)
+- **Bucket**: `testplanit` (auto-created with read-only public access)
 
 **Nginx Reverse Proxy**:
-Automatically routes `/testplanit/` requests to MinIO for external file access while preserving AWS signature validation.
+Automatically routes `/testplanit/` requests to the storage for external file access while preserving AWS signature validation.
 
 **Switching to AWS S3**:
-To use AWS S3 instead of MinIO:
+To use AWS S3 instead of the bundled storage:
 
 ```bash
 # In .env.production, change:
 AWS_ENDPOINT_URL=""  # Empty = use AWS S3
 AWS_PUBLIC_ENDPOINT_URL=""  # Empty = use AWS S3
 AWS_BUCKET_NAME=your-s3-bucket-name
+# Omit BOTH key lines to authenticate with the EC2 instance role instead:
+# https://docs.testplanit.com/docs/file-storage#running-without-static-keys
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 ```
@@ -315,7 +319,7 @@ AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 Then restart without the `with-minio` profile:
 
 ```bash
-# Production example without MinIO
+# Production example without the bundled storage
 docker compose -f docker-compose.prod.yml \
   --profile with-postgres \
   --profile with-valkey \
@@ -333,7 +337,7 @@ Most service data persists in `./docker-data/`:
 docker-data/
 ├── valkey/        # Valkey job queue persistence
 ├── elasticsearch/ # Search indexes
-└── minio/         # File attachments
+└── rustfs/        # File attachments
 ```
 
 Postgres is the exception: it uses the named Docker volume `testplanit-postgres-data`
@@ -465,7 +469,7 @@ docker compose up prod workers --build -d
 - `with-postgres` - PostgreSQL database container
 - `with-valkey` - Valkey/Redis cache container
 - `with-elasticsearch` - Elasticsearch search container
-- `with-minio` - MinIO storage + Nginx proxy containers
+- `with-minio` - RustFS storage + Nginx proxy containers
 
 Mix profiles to customize your deployment (e.g., `--profile with-postgres --profile with-valkey` for just database and cache).
 
@@ -534,34 +538,54 @@ curl http://localhost:9200/_cluster/health
 
 *Mixed content errors / uploads fail with "Failed to fetch":*
 
-- **Cause**: The app generates presigned URLs using the internal MinIO hostname (e.g., `http://minio:9000`), which the browser cannot reach. When the page is served over HTTPS, the browser blocks the HTTP request to the internal URL.
+- **Cause**: The app generates presigned URLs using the internal storage hostname (e.g., `http://minio:9000`), which the browser cannot reach. When the page is served over HTTPS, the browser blocks the HTTP request to the internal URL.
 - **Symptoms**: Browser console shows `Mixed Content: ... requested an insecure resource 'http://minio:9000/...'` and file uploads fail.
-- **Fix**: Set `IS_HOSTED=true` in your `.env.production` to enable proxy mode, which routes uploads through the Next.js server instead of directly to MinIO:
+- **Fix**: Set `IS_HOSTED=true` in your `.env.production` to enable proxy mode, which routes uploads through the Next.js server instead of directly to the storage:
 
   ```env
   IS_HOSTED=true
   ```
 
+*Uploads appear to work, but the file then fails with `AccessDenied` (private S3 bucket):*
+
+- **Cause**: In direct mode the app stores the presigned URL with its signature
+  stripped, so every later read is an unauthenticated request to the bucket. A
+  bucket with Block Public Access enabled refuses those.
+- **Symptoms**: The upload itself returns `200` and the object really is in the
+  bucket, but displaying or downloading it returns
+  `<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>`.
+  Existing attachments stored as `/api/storage/...` keep working, which makes it
+  look like only new uploads are broken.
+- **Fix**: Same flag — proxy mode serves files through the application, which
+  holds the credentials:
+
+  ```env
+  IS_HOSTED=true
+  ```
+
+  Keep the bucket private. The alternative, making it publicly readable, exposes
+  every attachment to the internet.
+
   Then recreate the container: `docker compose up -d --force-recreate prod`
-- **Alternative**: Set `AWS_PUBLIC_ENDPOINT_URL=https://yourdomain.com` if MinIO is accessible through your reverse proxy. See [File Storage docs](/docs/file-storage#storage-modes) for details.
+- **Alternative**: Set `AWS_PUBLIC_ENDPOINT_URL=https://yourdomain.com` if the storage is accessible through your reverse proxy. See [File Storage docs](/docs/file-storage#storage-modes) for details.
 
 *403 Forbidden on file uploads:*
 
-- **Cause**: AWS signature mismatch between app and MinIO
+- **Cause**: AWS signature mismatch between app and storage
 - **Fix**: Ensure `AWS_PUBLIC_ENDPOINT_URL` matches your external domain exactly
-- **Check**: MinIO console at `http://localhost:9001` → bucket `testplanit` exists with public read
+- **Check**: RustFS console at `http://localhost:9001` → bucket `testplanit` exists
 
 *Files not displaying:*
 
 ```bash
-# Test MinIO direct access
+# Test storage direct access
 curl -I http://localhost:9000/testplanit/
 
 # Test nginx proxy
 curl -I http://localhost:80/testplanit/
 
-# Check MinIO health
-curl http://localhost:9000/minio/health/live
+# Check storage health
+curl http://localhost:9000/health
 ```
 
 *Image optimization errors:*

@@ -138,3 +138,144 @@ describe("ReportBuilder Empty State", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+// Converted from the Wave 0 title scaffold (S6, COV-04, D-2).
+//
+// `filterReportTypesForRequirementsFlag` is imported directly from the real
+// `ReportBuilder.tsx` module rather than reimplemented here -- unlike the
+// EmptyStateComponent above (which predates this plan), nothing about the
+// picker gate under test is mocked or duplicated: this exercises the exact
+// function `ReportBuilder.tsx`'s `reportTypes` useMemo calls. Importing the
+// module pulls in its full dependency graph at evaluation time, but nothing
+// in that graph throws at import time in this test environment, so no
+// additional mocking was needed to make the import itself work.
+import {
+  filterReportTypesForImpactFlag,
+  filterReportTypesForRequirementsFlag,
+} from "./ReportBuilder";
+import type { ReportType } from "~/lib/config/reportTypes";
+
+describe("ReportBuilder (Phase 26 requirement report type gating)", () => {
+  const reportTypesFixture: ReportType[] = [
+    {
+      id: "test-execution",
+      label: "Test Execution",
+      description: "Test execution report",
+      icon: () => null,
+      endpoint: "/api/report-builder/test-execution",
+    },
+    {
+      id: "requirement-coverage-gaps",
+      label: "Requirement Coverage Gaps",
+      description: "Requirement coverage gaps report",
+      icon: () => null,
+      endpoint: "/api/report-builder/requirement-coverage-gaps",
+      isPreBuilt: true,
+    },
+    {
+      id: "requirement-traceability",
+      label: "Requirement Traceability",
+      description: "Requirement traceability report",
+      icon: () => null,
+      endpoint: "/api/report-builder/requirement-traceability",
+      isPreBuilt: true,
+    },
+  ];
+
+  it("omits both requirement report types when the project has requirements disabled", () => {
+    const filtered = filterReportTypesForRequirementsFlag(
+      reportTypesFixture,
+      false
+    );
+    const ids = filtered.map((rt) => rt.id);
+
+    expect(ids).not.toContain("requirement-coverage-gaps");
+    expect(ids).not.toContain("requirement-traceability");
+    // A gate that accidentally empties the WHOLE list (rather than just the
+    // two requirement ids) must fail this assertion too.
+    expect(ids).toContain("test-execution");
+  });
+
+  it("offers both requirement report types when the project has requirements enabled", () => {
+    const filtered = filterReportTypesForRequirementsFlag(
+      reportTypesFixture,
+      true
+    );
+    const ids = filtered.map((rt) => rt.id);
+
+    expect(ids).toContain("requirement-coverage-gaps");
+    expect(ids).toContain("requirement-traceability");
+    expect(ids).toContain("test-execution");
+  });
+
+  it("filters by BASE type, so a cross-project requirement report is gated the same way", () => {
+    // The cross-project ids carry a "cross-project-" prefix; the filter
+    // strips it before matching, so the gate cannot be sidestepped by the
+    // prefix alone. (In practice the cross-project picker never calls this
+    // — the requirements flag is a per-project setting — but the filter
+    // must not silently pass a requirement report just because of a
+    // prefix.)
+    const withCrossProject: ReportType[] = [
+      ...reportTypesFixture,
+      {
+        id: "cross-project-requirement-traceability",
+        label: "Cross-Project Requirement Traceability",
+        description: "",
+        icon: (() => null) as any,
+        endpoint: "/api/report-builder/cross-project-requirement-traceability",
+        isPreBuilt: true,
+      },
+    ];
+
+    const off = filterReportTypesForRequirementsFlag(
+      withCrossProject,
+      false
+    ).map((rt) => rt.id);
+    expect(off).not.toContain("cross-project-requirement-traceability");
+
+    const on = filterReportTypesForRequirementsFlag(withCrossProject, true).map(
+      (rt) => rt.id
+    );
+    expect(on).toContain("cross-project-requirement-traceability");
+  });
+
+  describe("impact report type gating", () => {
+    const withImpact: ReportType[] = [
+      ...reportTypesFixture,
+      {
+        id: "impact-analysis",
+        label: "Impact Analysis History",
+        description: "",
+        icon: (() => null) as any,
+        endpoint: "/api/report-builder/impact-analysis",
+        isPreBuilt: true,
+      },
+      {
+        id: "cross-project-impact-analysis",
+        label: "Cross-Project Impact Analysis History",
+        description: "",
+        icon: (() => null) as any,
+        endpoint: "/api/report-builder/cross-project-impact-analysis",
+        isPreBuilt: true,
+      },
+    ];
+
+    it("hides both impact history variants when the project has Impact Analysis off", () => {
+      const ids = filterReportTypesForImpactFlag(withImpact, false).map(
+        (rt) => rt.id
+      );
+      expect(ids).not.toContain("impact-analysis");
+      expect(ids).not.toContain("cross-project-impact-analysis");
+      expect(ids).toContain("test-execution");
+      expect(ids).toContain("requirement-coverage-gaps");
+    });
+
+    it("offers them when Impact Analysis is on", () => {
+      const ids = filterReportTypesForImpactFlag(withImpact, true).map(
+        (rt) => rt.id
+      );
+      expect(ids).toContain("impact-analysis");
+      expect(ids).toContain("cross-project-impact-analysis");
+    });
+  });
+});

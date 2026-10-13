@@ -281,6 +281,75 @@ describe("createTestCaseVersionInTransaction", () => {
     ]);
   });
 
+  // AddCase builds `versionFieldValues` from the case's dynamic fields and
+  // explicitly skips the Steps field, because the version renders steps from
+  // its own `steps` JSON. `copyFieldValues` has to honour the same rule — a
+  // Steps-type field copied onto the version draws the steps a second time.
+  it("copies field values onto the version but never a Steps-type field", async () => {
+    const fixture = buildTestCaseFixture();
+    const { tx, create } = buildTx(fixture);
+    const createManyFieldVersionValues = vi.fn(async () => ({ count: 0 }));
+    (tx as any).caseFieldValues = {
+      findMany: vi.fn(async () => [
+        {
+          value: 3,
+          field: {
+            displayName: "Priority",
+            systemName: "priority",
+            type: { type: "Dropdown" },
+          },
+        },
+        {
+          value: "step blob",
+          field: {
+            displayName: "Steps",
+            systemName: "steps",
+            type: { type: "Steps" },
+          },
+        },
+      ]),
+    };
+    (tx as any).caseFieldVersionValues = {
+      createMany: createManyFieldVersionValues,
+    };
+
+    await createTestCaseVersionInTransaction(tx as any, 1, {
+      copyFieldValues: true,
+    });
+
+    const versionId = (await create.mock.results[0]!.value).id;
+    expect(createManyFieldVersionValues).toHaveBeenCalledWith({
+      data: [{ versionId, field: "Priority", value: 3 }],
+    });
+  });
+
+  it("writes no field version values when the only field is a Steps field", async () => {
+    const fixture = buildTestCaseFixture();
+    const { tx } = buildTx(fixture);
+    const createManyFieldVersionValues = vi.fn(async () => ({ count: 0 }));
+    (tx as any).caseFieldValues = {
+      findMany: vi.fn(async () => [
+        {
+          value: "step blob",
+          field: {
+            displayName: "Steps",
+            systemName: "steps",
+            type: { type: "Steps" },
+          },
+        },
+      ]),
+    };
+    (tx as any).caseFieldVersionValues = {
+      createMany: createManyFieldVersionValues,
+    };
+
+    await createTestCaseVersionInTransaction(tx as any, 1, {
+      copyFieldValues: true,
+    });
+
+    expect(createManyFieldVersionValues).not.toHaveBeenCalled();
+  });
+
   it("still honours an explicit attachments override", async () => {
     const fixture = buildTestCaseFixture({
       attachments: [
@@ -306,5 +375,30 @@ describe("createTestCaseVersionInTransaction", () => {
 
     const data = create.mock.calls[0]![0]!.data as Record<string, unknown>;
     expect(data.attachments).toEqual([]);
+  });
+
+  it("propagates a unique-constraint error without re-querying the aborted transaction", async () => {
+    const fixture = buildTestCaseFixture();
+    const { tx, create, findUnique } = buildTx(fixture);
+
+    // Simulate the version insert hitting the (repositoryCaseId, version)
+    // unique constraint. This runs inside the caller's interactive
+    // transaction, so the violation poisons the whole transaction. The helper
+    // must surface this original error directly — it must NOT swallow it and
+    // run a follow-up findUnique/create on the now-aborted transaction (which
+    // would only yield the confusing "current transaction is aborted" 25P02).
+    const uniqueErr = Object.assign(new Error("Unique constraint failed"), {
+      code: "P2002",
+    });
+    create.mockRejectedValueOnce(uniqueErr);
+
+    await expect(
+      createTestCaseVersionInTransaction(tx, 1, { version: 1 })
+    ).rejects.toBe(uniqueErr);
+
+    // Exactly one fetch (the initial snapshot read) and one insert attempt —
+    // no second findUnique refetch, no retried create on the aborted tx.
+    expect(findUnique).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledTimes(1);
   });
 });

@@ -152,7 +152,7 @@ describe("SavedViewsMenu", () => {
     );
     expect(screen.getByTestId("saved-view-delete")).toHaveAttribute(
       "aria-label",
-      "repository.savedViews.delete"
+      "common.actions.delete"
     );
   });
 

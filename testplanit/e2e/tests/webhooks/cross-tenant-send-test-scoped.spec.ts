@@ -87,8 +87,15 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
         await expect(adminPage.getByTestId("webhook-config-form")).toBeVisible({
           timeout: 15_000,
         });
-        // 1:1 inbound model: Add skips the chooser and creates inline.
         await adminPage.getByTestId("webhook-inbound-add-button").click();
+        const wizard = adminPage.getByTestId("webhook-inbound-wizard");
+        await wizard.getByTestId("webhook-wizard-source-issues").click();
+        await wizard.getByTestId("webhook-wizard-next").click();
+        await wizard.getByTestId("webhook-create-button").click();
+        await expect(
+          wizard.getByTestId("webhook-inbound-revealed-box")
+        ).toBeVisible({ timeout: 15_000 });
+        await wizard.getByTestId("webhook-reveal-done-button").click();
         await expect(
           adminPage.getByTestId("webhook-inbound-card-jira")
         ).toBeVisible({ timeout: 15_000 });

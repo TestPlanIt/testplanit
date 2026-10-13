@@ -48,6 +48,12 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 }));
 
 // Mock next/navigation
+const mockQueryClient = vi.hoisted(() => ({ invalidateQueries: vi.fn() }));
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
+  useQueryClient: () => mockQueryClient,
+}));
+
 vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ projectId: "1" })),
   useRouter: vi.fn(() => ({

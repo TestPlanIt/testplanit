@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -39,6 +45,8 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     },
     webhookConfig: { useFindMany: () => mockFindManyWebhookConfig() },
     projectIntegration: { useUpdate: () => ({ mutateAsync: mockUpdatePI }) },
+    // Consumed by RequirementsConfigSettings, mounted as a section here.
+    issue: { useCount: () => ({ data: 0 }) },
   }),
 }));
 
@@ -53,6 +61,11 @@ vi.mock("@tanstack/react-query", () => ({
 
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+// Consumed by MilestoneSyncSettings, mounted as a section here.
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: { user: { id: "user-1" } } }),
 }));
 
 vi.mock("sonner", () => ({
@@ -103,6 +116,9 @@ vi.mock("@/components/ui/button", () => ({
       {children}
     </button>
   ),
+  // Consumed by the real (unmocked) alert-dialog.tsx, which uses this to
+  // className its own Cancel/Action buttons.
+  buttonVariants: () => "",
 }));
 
 vi.mock("@/components/ui/badge", () => ({
@@ -293,11 +309,17 @@ describe("ProjectIntegrationSettings", () => {
 
     render(<ProjectIntegrationSettings {...defaultProps} />);
 
-    expect(screen.getByText("Project A")).toBeTruthy();
-    expect(screen.getByText("Project B")).toBeTruthy();
-    expect(screen.getByText("Project C")).toBeTruthy();
+    // Scoped to the linked-projects list: the Requirement Types section in
+    // the same tree also names each project and its sync status, so an
+    // unscoped query matches twice.
+    const linkedProjects = within(
+      screen.getByTestId("linked-projects-section")
+    );
+    expect(linkedProjects.getByText("Project A")).toBeTruthy();
+    expect(linkedProjects.getByText("Project B")).toBeTruthy();
+    expect(linkedProjects.getByText("Project C")).toBeTruthy();
 
-    const badges = screen.getAllByTestId("badge");
+    const badges = linkedProjects.getAllByTestId("badge");
     const badgeTexts = badges.map((b) => b.textContent);
     expect(badgeTexts).toContain("PA");
     expect(badgeTexts).toContain("PB");
@@ -417,13 +439,17 @@ describe("ProjectIntegrationSettings", () => {
     // Start with data (so add button is in 'has projects' state below list)
     render(<ProjectIntegrationSettings {...defaultProps} />);
 
-    // Should not show combobox yet
-    expect(screen.queryByTestId("multi-async-combobox")).toBeNull();
+    // The add-projects panel itself should not be showing yet. (Requirement
+    // Types renders its own always-present MultiAsyncCombobox as a sibling
+    // section now, so the bare "multi-async-combobox" testid is no longer
+    // unique to this panel — scope through the panel's own testid instead.)
+    expect(screen.queryByTestId("add-projects-panel")).toBeNull();
 
     const addButton = screen.getByText("addProjects");
     fireEvent.click(addButton);
 
-    expect(screen.getByTestId("multi-async-combobox")).toBeTruthy();
+    const panel = screen.getByTestId("add-projects-panel");
+    expect(within(panel).getByTestId("multi-async-combobox")).toBeTruthy();
   });
 
   // --- Test 9: Handles undefined data gracefully ---
@@ -498,8 +524,11 @@ describe("ProjectIntegrationSettings", () => {
 
     render(<ProjectIntegrationSettings {...defaultProps} />);
 
-    expect(screen.getByText("syncStatusSyncing")).toBeTruthy();
-    expect(screen.getByText("syncStatusCompleted")).toBeTruthy();
+    const linkedProjects = within(
+      screen.getByTestId("linked-projects-section")
+    );
+    expect(linkedProjects.getByText("syncStatusSyncing")).toBeTruthy();
+    expect(linkedProjects.getByText("syncStatusCompleted")).toBeTruthy();
   });
 
   // --- Test 13: handleAddProjects calls upsertIntegrationProject ---
@@ -512,8 +541,11 @@ describe("ProjectIntegrationSettings", () => {
     const addButton = screen.getByText("addProjects");
     fireEvent.click(addButton);
 
-    // Simulate selecting a project via the mock combobox
-    const selectButton = screen.getByTestId("mock-select-project");
+    // Simulate selecting a project via the mock combobox, scoped to the add
+    // panel (Requirement Types renders its own always-present combobox with
+    // the same mock testids as a sibling section now).
+    const panel = screen.getByTestId("add-projects-panel");
+    const selectButton = within(panel).getByTestId("mock-select-project");
     fireEvent.click(selectButton);
 
     // Click Add Selected
@@ -539,10 +571,429 @@ describe("ProjectIntegrationSettings", () => {
 
     // Open add panel
     fireEvent.click(screen.getByText("addProjects"));
-    expect(screen.getByTestId("multi-async-combobox")).toBeTruthy();
+    expect(screen.getByTestId("add-projects-panel")).toBeTruthy();
 
     // Click cancel
     fireEvent.click(screen.getByText("cancel"));
-    expect(screen.queryByTestId("multi-async-combobox")).toBeNull();
+    expect(screen.queryByTestId("add-projects-panel")).toBeNull();
+  });
+
+  // --- Test 15: Milestone Sync and Requirement Types render as sections
+  // inside the same merged card ---
+  it("renders Milestone Sync and Requirement Types as sections for a milestone+requirement-capable integration (JIRA)", () => {
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    expect(screen.getByTestId("milestone-sync-section")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirements-config-section")
+    ).toBeInTheDocument();
+  });
+
+  it("renders Requirement Types but not Milestone Sync for GITHUB (label-mode requirement classification, no milestone sync)", () => {
+    const githubProps = {
+      ...defaultProps,
+      integration: { ...defaultProps.integration, provider: "GITHUB" },
+    };
+
+    render(<ProjectIntegrationSettings {...githubProps} />);
+
+    expect(
+      screen.queryByTestId("milestone-sync-section")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirements-config-section")
+    ).toBeInTheDocument();
+  });
+
+  it("renders Requirement Types but not Milestone Sync for GITEA (label-mode requirement classification, no milestone sync)", () => {
+    const giteaProps = {
+      ...defaultProps,
+      integration: { ...defaultProps.integration, provider: "GITEA" },
+    };
+
+    render(<ProjectIntegrationSettings {...giteaProps} />);
+
+    expect(
+      screen.queryByTestId("milestone-sync-section")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirements-config-section")
+    ).toBeInTheDocument();
+  });
+
+  it("does not render Milestone Sync or Requirement Types sections for a non-capable integration (SIMPLE_URL)", () => {
+    const simpleUrlProps = {
+      ...defaultProps,
+      integration: { ...defaultProps.integration, provider: "SIMPLE_URL" },
+    };
+
+    render(<ProjectIntegrationSettings {...simpleUrlProps} />);
+
+    expect(
+      screen.queryByTestId("milestone-sync-section")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("requirements-config-section")
+    ).not.toBeInTheDocument();
+  });
+
+  // --- Test 16: Linked Projects save button dirty-tracking ---
+  it("Linked Projects save button starts disabled, enables after an edit, and disables again after a successful save", async () => {
+    mockUpdatePI.mockResolvedValue({});
+
+    // Milestone Sync and Requirement Types render their own "save"-labeled
+    // buttons as sibling sections now, so scope every query to this
+    // section's own testid rather than a bare accessible-name lookup.
+    const { rerender } = render(
+      <ProjectIntegrationSettings {...defaultProps} />
+    );
+    const getSaveButton = () =>
+      within(screen.getByTestId("linked-projects-section")).getByRole(
+        "button",
+        { name: "save" }
+      );
+
+    // No edits yet — starts disabled.
+    expect(getSaveButton()).toBeDisabled();
+
+    // A real edit to this section's Save-gated state: a mapping's default
+    // issue type changes (the query refetches with the new value).
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: null,
+          syncError: null,
+          defaultIssueType: "epic-1",
+          defaultIssueTypeName: "Epic",
+          projectIntegrationId: "pi-1",
+        },
+        {
+          id: "ip-2",
+          externalProjectName: "Project B",
+          externalProjectKey: "PB",
+          externalProjectId: "ext-b",
+          isDefault: false,
+          isActive: true,
+          syncStatus: "completed",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+    rerender(<ProjectIntegrationSettings {...defaultProps} />);
+
+    expect(getSaveButton()).toBeEnabled();
+
+    fireEvent.click(getSaveButton());
+
+    await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
+    await waitFor(() => expect(getSaveButton()).toBeDisabled());
+  });
+
+  // --- Test 17 (#501/28-20): one import affordance per mapping, page-wide ---
+  it("offers exactly one import action per linked project", () => {
+    // A single linked mapping -- the Requirement Types section (mounted as
+    // a sibling here) renders the SAME mapping id, so this counts every
+    // import-triggering button for that one mapping across the WHOLE page,
+    // not scoped to either section.
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: null,
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    const importAffordances = screen.getAllByRole("button", {
+      name: /importIssues|importAction/,
+    });
+    expect(importAffordances.length).toBe(1);
+  });
+
+  // --- Test 18 (#501/28-21): progress + stop live on the mapping's own row ---
+  it("carries the saved requirement types into the import dialog", async () => {
+    // The row's Import action must hand the dialog the types saved in
+    // Requirement Sync. Without them the dialog's own typed-path gate
+    // refuses with "select and save at least one issue type" even though
+    // they ARE saved -- which makes an uncapped requirement import
+    // unreachable from this entry point.
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: "completed",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(
+      <ProjectIntegrationSettings
+        {...defaultProps}
+        projectIntegration={
+          {
+            ...defaultProps.projectIntegration,
+            config: {
+              requirements: {
+                enabled: true,
+                issueTypeIds: ["6", "7"],
+                issueTypeNames: { "6": "Epic", "7": "Story" },
+              },
+            },
+          } as any
+        }
+      />
+    );
+
+    fireEvent.click(
+      within(screen.getByTestId("linked-projects-section")).getByRole(
+        "button",
+        { name: "importIssues" }
+      )
+    );
+
+    expect(
+      await screen.findByTestId("import-configured-issue-types")
+    ).toHaveTextContent("Epic");
+    expect(
+      screen.getByTestId("import-configured-issue-types")
+    ).toHaveTextContent("Story");
+  });
+
+  it("offers a stop control on a syncing linked project", () => {
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: "syncing",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+        {
+          id: "ip-2",
+          externalProjectName: "Project B",
+          externalProjectKey: "PB",
+          externalProjectId: "ext-b",
+          isDefault: false,
+          isActive: true,
+          syncStatus: "completed",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    // Scoped to the linked-projects row itself: the Requirement Sync section
+    // (mounted as a sibling here) no longer renders anything about a
+    // mapping's import progress at all (#501/28-21 moved it here), but
+    // scoping stays cheap insurance against future ambiguity.
+    const linkedProjects = within(
+      screen.getByTestId("linked-projects-section")
+    );
+    expect(
+      linkedProjects.getByTestId("requirements-import-stop-ip-1")
+    ).toBeInTheDocument();
+    expect(
+      linkedProjects.queryByTestId("requirements-import-stop-ip-2")
+    ).not.toBeInTheDocument();
+  });
+
+  // --- Test 19 (#501/28-21, moved from requirements-config-settings.test.tsx) ---
+  it("a cancelled mapping renders distinctly from an error, and a syncing one shows a stop control", () => {
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: "syncing",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+        {
+          id: "ip-2",
+          externalProjectName: "Project B",
+          externalProjectKey: "PB",
+          externalProjectId: "ext-b",
+          isDefault: false,
+          isActive: true,
+          syncStatus: "cancelled",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+        {
+          id: "ip-3",
+          externalProjectName: "Project C",
+          externalProjectKey: "PC",
+          externalProjectId: "ext-c",
+          isDefault: false,
+          isActive: true,
+          syncStatus: "error",
+          syncError: "Boom",
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    expect(
+      screen.getByTestId("requirements-import-stop-ip-1")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirements-import-row-ip-2")
+    ).toHaveTextContent("importCancelled");
+    expect(
+      screen.getByTestId("requirements-import-row-ip-2")
+    ).not.toHaveTextContent("syncStatusError");
+    expect(
+      screen.getByTestId("requirements-import-row-ip-3")
+    ).toHaveTextContent("syncStatusError");
+  });
+
+  // --- Test 20 (#501/28-21, moved from requirements-config-settings.test.tsx) ---
+  it("stopping asks for confirmation stating the one-page latency and keep-what-was-imported contract, then POSTs the cancel route", async () => {
+    const { toast } = await import("sonner");
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: "syncing",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+    global.fetch = vi.fn((url: string) => {
+      if (String(url).includes("requirements-import/cancel")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ success: true }),
+        });
+      }
+      if (String(url).includes("/auth/check")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ authenticated: true }),
+        });
+      }
+      return Promise.resolve({ ok: false, json: async () => ({}) });
+    }) as any;
+
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId("requirements-import-stop-ip-1"));
+
+    await waitFor(() => screen.getByTestId("requirements-import-stop-dialog"));
+    expect(
+      screen.getByTestId("requirements-import-stop-dialog")
+    ).toHaveTextContent("importStopConfirmBody");
+
+    fireEvent.click(screen.getByTestId("requirements-import-stop-confirm"));
+
+    await waitFor(() => {
+      const cancelCall = (global.fetch as any).mock.calls.find(
+        ([url]: [string]) => url.includes("requirements-import/cancel")
+      );
+      expect(cancelCall).toBeDefined();
+      expect(JSON.parse(cancelCall![1].body)).toEqual({
+        projectId: 1,
+        integrationProjectId: "ip-1",
+      });
+    });
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  // --- Test 21 (#501/28-21, moved from requirements-config-settings.test.tsx) ---
+  it("polls every 3 seconds while any linked project is syncing or cancel-requested, and stops polling otherwise", () => {
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    // integrationProject.useFindMany is called twice: once by this
+    // component's own linked-projects query (where.projectIntegrationId),
+    // and once by the sibling Requirement Sync section's internal mappings
+    // query (where.projectIntegration.integrationId) -- both share this same
+    // mocked hook. Locate this component's own call by its distinct where
+    // shape rather than assuming call order.
+    const call = mockFindMany.mock.calls.find(
+      (call: any[]) => call[0]?.where?.projectIntegrationId !== undefined
+    );
+    expect(call).toBeDefined();
+    const [, options] = call!;
+    expect(
+      options.refetchInterval({ state: { data: [{ syncStatus: "syncing" }] } })
+    ).toBe(3000);
+    expect(
+      options.refetchInterval({
+        state: { data: [{ syncStatus: "cancel-requested" }] },
+      })
+    ).toBe(3000);
+    expect(
+      options.refetchInterval({
+        state: { data: [{ syncStatus: "completed" }] },
+      })
+    ).toBe(false);
+    expect(options.refetchInterval({ state: { data: [] } })).toBe(false);
   });
 });

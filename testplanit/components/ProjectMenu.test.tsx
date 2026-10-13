@@ -8,6 +8,7 @@ const mockUseTranslations = vi.hoisted(() => vi.fn());
 const mockUseParams = vi.hoisted(() => vi.fn());
 const mockUsePathname = vi.hoisted(() => vi.fn());
 const mockUseProjectPermissions = vi.hoisted(() => vi.fn());
+const projectFlags = vi.hoisted(() => ({ requirementsEnabled: true }));
 
 // Stable return object for useProjectPermissions — prevents infinite re-renders
 const stablePermissions = vi.hoisted(() => ({
@@ -42,6 +43,19 @@ vi.mock("~/lib/navigation", () => ({
 
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: mockUseProjectPermissions,
+}));
+
+// The Requirements entry is gated on the project's own opt-in, so the menu
+// reads one field off the project. Held in a mutable box rather than a fixed
+// return so a single test can flip it and assert the entry disappears.
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: {
+      useFindUnique: () => ({
+        data: { requirementsEnabled: projectFlags.requirementsEnabled },
+      }),
+    },
+  }),
 }));
 
 // Mock ProjectDropdownMenu as a simple div
@@ -225,10 +239,10 @@ describe("ProjectsMenu", () => {
       expect(screen.queryByTestId("project-menu-section-settings")).toBeNull();
     });
 
-    it("shows settings section for a USER holding the per-project Project Admin role", () => {
+    it("shows settings section for a USER the server resolves as a project admin", () => {
       // `isProjectAdmin` is the server's own resolution
       // (`authorizeProjectAdminForProject`), which admits project creators and
-      // per-project "Project Admin" role holders regardless of system access.
+      // holders of a role with Settings canAddEdit regardless of system access.
       mockUseSession.mockReturnValue(mockRegularSession);
       mockUseProjectPermissions.mockReturnValue({
         permissions: { canAddEdit: false, canDelete: false, canClose: false },
@@ -240,9 +254,9 @@ describe("ProjectsMenu", () => {
       expect(screen.getByTestId("project-menu-section-settings")).toBeDefined();
     });
 
-    it("hides settings section when only the unenforced Settings area bit is set", () => {
-      // Nothing server-side honours `Settings.canAddEdit`, so a role carrying
-      // it used to get a settings menu whose every page 404'd.
+    it("keys off the server's isProjectAdmin flag, not the raw Settings area bits", () => {
+      // The server folds `Settings.canAddEdit` into `isProjectAdmin`; the
+      // menu never re-derives it from the permission grid.
       mockUseSession.mockReturnValue(mockRegularSession);
       mockUseProjectPermissions.mockReturnValue({
         permissions: { canAddEdit: true, canDelete: true, canClose: true },
@@ -335,11 +349,61 @@ describe("ProjectsMenu", () => {
       );
     });
 
+    it("renders the Access settings link first in the settings section for admin", () => {
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      const link = document.getElementById("settings-access-link");
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute("href")).toContain(
+        "/projects/settings/42/access"
+      );
+      const settingsLinks = Array.from(
+        document.querySelectorAll('a[id^="settings-"]')
+      ).map((a) => a.id);
+      expect(settingsLinks[0]).toBe("settings-access-link");
+    });
+
+    it("renders the Impact settings link after QuickScript for admin", () => {
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      const link = document.getElementById("settings-impact-link");
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute("href")).toContain(
+        "/projects/settings/42/impact"
+      );
+      const quickScript = document.getElementById("settings-quickscript-link");
+      expect(quickScript).not.toBeNull();
+      expect(
+        quickScript!.compareDocumentPosition(link!) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    });
+
     it("renders milestones link", () => {
       render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
       const link = document.getElementById("milestones-link");
       expect(link).toBeDefined();
       expect(link?.getAttribute("href")).toContain("/projects/milestones/42");
+    });
+
+    it("renders a Requirements entry linking to /projects/requirements/[projectId]", () => {
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      const link = document.getElementById("project-requirements-link");
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute("href")).toContain("/projects/requirements/42");
+    });
+
+    it("omits the Requirements entry when the project has not opted in", () => {
+      // Requirements is opt-in: a team whose requirements live in their tracker
+      // should not carry a permanently empty section in the project menu.
+      projectFlags.requirementsEnabled = false;
+      try {
+        render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+        expect(document.getElementById("project-requirements-link")).toBeNull();
+        // The neighbouring entry still renders, so this proves the gate rather
+        // than a menu that failed to build at all.
+        expect(document.getElementById("project-issues-link")).not.toBeNull();
+      } finally {
+        projectFlags.requirementsEnabled = true;
+      }
     });
   });
 

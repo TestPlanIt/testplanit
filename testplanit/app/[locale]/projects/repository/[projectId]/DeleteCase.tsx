@@ -1,4 +1,5 @@
 "use client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import {
@@ -47,6 +48,7 @@ export function DeleteCaseModal({
   onDeleteSuccess,
 }: DeleteCaseProps) {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showActiveRunWarning, setShowActiveRunWarning] = useState(false);
   const [activeRunCount, setActiveRunCount] = useState(0);
@@ -92,6 +94,7 @@ export function DeleteCaseModal({
         data: { isDeleted: true },
         where: { id: testcase.id },
       });
+      void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
       onClose();
       onDeleteSuccess?.();
       // Dispatch event to refresh Cases component data

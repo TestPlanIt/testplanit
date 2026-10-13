@@ -303,14 +303,16 @@ export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
                   onClick={handleCopy}
                   data-testid="scim-mint-dialog-copy"
                   autoFocus
-                  aria-label={copied ? tReveal("copied") : tReveal("copy")}
+                  aria-label={
+                    copied ? tReveal("copied") : tCommon("actions.copy")
+                  }
                 >
                   {copied ? (
                     <Check className="h-4 w-4" aria-hidden="true" />
                   ) : (
                     <Copy className="h-4 w-4" aria-hidden="true" />
                   )}
-                  {copied ? tReveal("copied") : tReveal("copy")}
+                  {copied ? tReveal("copied") : tCommon("actions.copy")}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -325,7 +327,7 @@ export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
                 onClick={handleClose}
                 data-testid="scim-mint-dialog-close"
               >
-                {tReveal("close")}
+                {tCommon("actions.close")}
               </Button>
             </DialogFooter>
           </>

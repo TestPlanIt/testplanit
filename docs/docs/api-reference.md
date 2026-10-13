@@ -136,6 +136,12 @@ Additional endpoints for specialized operations:
 
 ```text
 /api/junit/import          - Import JUnit XML test results
+/api/test-results/import   - Import JUnit/TestNG/xUnit/NUnit/MSTest/Mocha/Cucumber results
+/api/test-runs/{id}/automation-plan          - Plan of a run's automated cases (GET)
+/api/test-runs/{id}/execute                  - Dispatch a run's automated cases to a target (POST)
+/api/test-runs/{id}/executions               - Dispatch history (GET); /{eid}/cancel, /{eid}/finish (POST)
+/api/projects/{id}/execute-cases             - Ad-hoc execution of automated cases (POST)
+/api/projects/{id}/execution-targets         - Sanitized list of a project's execution targets (GET)
 /api/search                - Full-text search
 /api/files/upload          - File uploads
 /api/admin/*               - Administrative operations

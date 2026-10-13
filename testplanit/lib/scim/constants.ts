@@ -93,6 +93,20 @@ export const SCIM_LAST_SYNC_THROTTLE_MS = 60_000 as const;
 export const SYSTEM_PROJECT_ID = -1 as const;
 
 /**
+ * Overlap-window rotation: how long the superseded bearer keeps working
+ * after a rotation, so an operator can paste the new value into the IdP
+ * without a provisioning outage in between.
+ *
+ * The default is one working day — long enough to survive a change-control
+ * window, short enough that a leaked old token is not indefinitely live.
+ * The maximum caps how long two live secrets can exist for one token.
+ * Passing zero rotates with no overlap, which is the old revoke + mint
+ * behaviour expressed as a rotation.
+ */
+export const SCIM_DEFAULT_ROTATION_OVERLAP_MS = 86_400_000 as const; // 24h
+export const SCIM_MAX_ROTATION_OVERLAP_MS = 2_592_000_000 as const; // 30d
+
+/**
  * Per-token request-per-second cap enforced by the SCIM bearer middleware.
  * The bucket lives in Valkey via the shared sliding-window rate-limit helper
  * so concurrent app instances share the same counter. Sized for the common

@@ -238,6 +238,72 @@ describe("POST /api/auth/callback/saml — ACS validator", () => {
     expect(updateArgs.data.emailVerified).toBeInstanceOf(Date);
   });
 
+  it("keeps an existing user's display name when the assertion carries a different one", async () => {
+    (db.samlConfiguration.findUnique as any).mockResolvedValue({
+      id: "cfg",
+      entryPoint: "e",
+      cert: "c",
+      issuer: "i",
+      attributeMapping: {},
+      autoProvisionUsers: false,
+      provider: { name: "okta", enabled: true },
+    });
+    validateSAMLResponse.mockResolvedValue({
+      email: "frank@example.com",
+      nameID: "frank",
+      name: "Franklin Q. Example",
+    });
+    (db.user.findUnique as any).mockResolvedValue({
+      id: "user_named",
+      email: "frank@example.com",
+      name: "Frank",
+      authMethod: "SSO",
+      externalId: "frank",
+      emailVerified: new Date("2024-01-01"),
+    });
+    (db.user.update as any).mockResolvedValue({});
+    (db.account.upsert as any).mockResolvedValue({});
+
+    await POST(makeReq(relayFor("ssoprovider_x")));
+
+    const nameWrites = (db.user.update as any).mock.calls.filter(
+      ([args]: [any]) => "name" in (args.data ?? {})
+    );
+    expect(nameWrites).toHaveLength(0);
+  });
+
+  it("fills in the display name from the assertion when the user has none yet", async () => {
+    (db.samlConfiguration.findUnique as any).mockResolvedValue({
+      id: "cfg",
+      entryPoint: "e",
+      cert: "c",
+      issuer: "i",
+      attributeMapping: {},
+      autoProvisionUsers: false,
+      provider: { name: "okta", enabled: true },
+    });
+    validateSAMLResponse.mockResolvedValue({
+      email: "grace@example.com",
+      nameID: "grace",
+      name: "Grace Hopper",
+    });
+    (db.user.findUnique as any).mockResolvedValue({
+      id: "user_unnamed",
+      email: "grace@example.com",
+      name: "  ",
+      authMethod: "SSO",
+      externalId: "grace",
+      emailVerified: new Date("2024-01-01"),
+    });
+    (db.user.update as any).mockResolvedValue({});
+    (db.account.upsert as any).mockResolvedValue({});
+
+    await POST(makeReq(relayFor("ssoprovider_x")));
+
+    const updateArgs = (db.user.update as any).mock.calls[0][0];
+    expect(updateArgs.data.name).toBe("Grace Hopper");
+  });
+
   it("Bug 6: leaves emailVerified alone for already-verified users", async () => {
     const verifiedAt = new Date("2024-01-01");
     (db.samlConfiguration.findUnique as any).mockResolvedValue({

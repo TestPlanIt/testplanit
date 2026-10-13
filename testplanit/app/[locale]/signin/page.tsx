@@ -110,6 +110,9 @@ const Signin: NextPage = () => {
   // server-side, so this works even after the dialog was closed and reopened.
   const [showCodeEntry, setShowCodeEntry] = useState(false);
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
+  // Hidden until /api/admin-contact answers, so the line never flashes on
+  // deployments that turned it off (SIGNIN_ADMIN_CONTACT=false).
+  const [showAdminContact, setShowAdminContact] = useState(false);
   const [sessionCleared, setSessionCleared] = useState(false);
   // 2FA state
   const [show2FAInput, setShow2FAInput] = useState(false);
@@ -134,8 +137,14 @@ const Signin: NextPage = () => {
     if (!sessionCleared) return;
     fetch("/api/admin-contact")
       .then((res) => res.json())
-      .then((data) => setAdminEmail(data.email))
-      .catch(() => setAdminEmail(null));
+      .then((data) => {
+        setShowAdminContact(data.enabled !== false);
+        setAdminEmail(data.email ?? null);
+      })
+      .catch(() => {
+        setShowAdminContact(true);
+        setAdminEmail(null);
+      });
   }, [sessionCleared]);
 
   // Check for error query parameter
@@ -286,6 +295,18 @@ const Signin: NextPage = () => {
       }
 
       // Redirect to callback URL if present, otherwise home
+      // An unverified account goes to the verification page first; pushing
+      // the callback URL here would race the header's own redirect and win.
+      const isSSO =
+        session?.user?.authMethod === "SSO" ||
+        session?.user?.authMethod === "BOTH";
+      if (!session?.user?.emailVerified && session?.user?.email && !isSSO) {
+        router.push(
+          "/verify-email?email=" + encodeURIComponent(session.user.email)
+        );
+        return;
+      }
+
       const callbackUrl = searchParams.get("callbackUrl") || "/";
       router.push(callbackUrl);
     } else if (result?.error?.startsWith("2FA_REQUIRED:")) {
@@ -599,7 +620,7 @@ const Signin: NextPage = () => {
             />
             <div className="ms-3 flex flex-col">
               <span className="scroll-m-20 text-4xl font-semibold tracking-tight lg:text-5xl text-[rgb(133,89,233)]">
-                {tCommon("branding.name")}
+                {tCommon("pageTitles.appName")}
               </span>
               <span className="text-xs text-muted-foreground -mt-1 no-wrap">
                 {tCommon("branding.tagline")}
@@ -802,8 +823,11 @@ const Signin: NextPage = () => {
           )}
 
           {/* Trouble signing in message */}
-          {sessionCleared && !isLoadingSsoProviders && (
-            <div className="w-full mt-6 text-center text-sm text-muted-foreground">
+          {sessionCleared && !isLoadingSsoProviders && showAdminContact && (
+            <div
+              className="w-full mt-6 text-center text-sm text-muted-foreground"
+              data-testid="signin-admin-contact"
+            >
               {t("auth.signin.troubleSigningIn")}{" "}
               {adminEmail ? (
                 <a

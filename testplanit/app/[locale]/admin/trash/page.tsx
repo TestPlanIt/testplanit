@@ -1,7 +1,6 @@
 "use client";
 
 import { Filter } from "@/components/tables/Filter";
-import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import DynamicIcon from "~/components/DynamicIcon";
@@ -10,178 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { cn } from "~/utils";
-import SoftDeletedDataTable from ".//SoftDeletedDataTable";
+import SoftDeletedDataTable from "./SoftDeletedDataTable";
 
-// Define the type for icon names based on the keys of dynamicIconImports
-type IconName = keyof typeof dynamicIconImports;
-
-// We'll get this list from the schema analysis later
-const softDeletedItemTypes: Array<{
-  name: string;
-  translationKey: string;
-  iconName: IconName;
-}> = [
-  {
-    name: "Projects",
-    translationKey: "admin.menu.projects",
-    iconName: "boxes",
-  },
-  {
-    name: "Templates",
-    translationKey: "common.fields.templates",
-    iconName: "layout-template",
-  },
-  {
-    name: "CaseFields",
-    translationKey: "common.fields.caseFields",
-    iconName: "layout-list",
-  },
-  {
-    name: "ResultFields",
-    translationKey: "common.fields.resultFields",
-    iconName: "square-check",
-  },
-  {
-    name: "FieldOptions",
-    translationKey: "admin.trash.itemTypes.fieldOptions",
-    iconName: "settings-2",
-  },
-  {
-    name: "Workflows",
-    translationKey: "admin.menu.workflows",
-    iconName: "workflow",
-  },
-  {
-    name: "Status",
-    translationKey: "admin.menu.statuses",
-    iconName: "circle-check-big",
-  },
-  {
-    name: "Milestones",
-    translationKey: "common.fields.milestones",
-    iconName: "flag",
-  },
-  {
-    name: "MilestoneTypes",
-    translationKey: "admin.menu.milestoneTypes",
-    iconName: "milestone",
-  },
-  {
-    name: "Configurations",
-    translationKey: "admin.menu.configurations",
-    iconName: "combine",
-  },
-  {
-    name: "ConfigCategories",
-    translationKey: "admin.trash.itemTypes.configCategories",
-    iconName: "layers-2",
-  },
-  {
-    name: "ConfigVariants",
-    translationKey: "admin.trash.itemTypes.configVariants",
-    iconName: "component",
-  },
-  { name: "User", translationKey: "admin.menu.users", iconName: "user" },
-  { name: "Groups", translationKey: "admin.menu.groups", iconName: "users" },
-  { name: "Roles", translationKey: "admin.menu.roles", iconName: "drama" },
-  { name: "Tags", translationKey: "admin.menu.tags", iconName: "tags" },
-  { name: "Issues", translationKey: "common.fields.issues", iconName: "bug" },
-  {
-    name: "TestRuns",
-    translationKey: "common.fields.testRuns",
-    iconName: "play-circle",
-  },
-  {
-    name: "TestRunResults",
-    translationKey: "enums.ApplicationArea.TestRunResults",
-    iconName: "clipboard-list",
-  },
-  {
-    name: "TestRunStepResults",
-    translationKey: "admin.trash.itemTypes.testRunStepResults",
-    iconName: "list-todo",
-  },
-  {
-    name: "Sessions",
-    translationKey: "common.fields.sessions",
-    iconName: "compass",
-  },
-  {
-    name: "SessionResults",
-    translationKey: "enums.ApplicationArea.SessionResults",
-    iconName: "clipboard-check",
-  },
-  {
-    name: "RepositoryFolders",
-    translationKey: "admin.trash.itemTypes.repositoryFolders",
-    iconName: "folder-open",
-  },
-  {
-    name: "RepositoryCases",
-    translationKey: "search.entityTypes.repositoryCase",
-    iconName: "list-checks",
-  },
-  {
-    name: "RepositoryCaseLink",
-    translationKey: "admin.trash.itemTypes.repositoryCaseLinks",
-    iconName: "link-2",
-  },
-  {
-    name: "RepositoryCaseVersions",
-    translationKey: "admin.trash.itemTypes.repositoryCaseVersions",
-    iconName: "history",
-  },
-  {
-    name: "Steps",
-    translationKey: "common.fields.steps",
-    iconName: "list-ordered",
-  },
-  {
-    name: "Attachments",
-    translationKey: "common.fields.attachments",
-    iconName: "paperclip",
-  },
-  {
-    name: "Repositories",
-    translationKey: "admin.trash.itemTypes.repositories",
-    iconName: "book-open",
-  },
-  {
-    name: "SharedStepGroup",
-    translationKey: "admin.trash.itemTypes.sharedStepGroups",
-    iconName: "share-2",
-  },
-  {
-    name: "Integration",
-    translationKey: "admin.menu.integrations",
-    iconName: "plug",
-  },
-  {
-    name: "LlmIntegration",
-    translationKey: "admin.menu.llm",
-    iconName: "sparkles",
-  },
-  {
-    name: "PromptConfig",
-    translationKey: "admin.menu.prompts",
-    iconName: "message-square-code",
-  },
-  {
-    name: "CaseExportTemplate",
-    translationKey: "admin.menu.exportTemplates",
-    iconName: "file-code",
-  },
-  {
-    name: "CodeRepository",
-    translationKey: "admin.menu.codeRepositories",
-    iconName: "git-branch",
-  },
-  {
-    name: "DataSet",
-    translationKey: "admin.trash.itemTypes.dataSets",
-    iconName: "database",
-  },
-];
+import {
+  softDeletedItemTypes,
+  type TrashIconName as IconName,
+} from "./itemTypes";
 
 export default function TrashPage() {
   const tGlobal = useTranslations();

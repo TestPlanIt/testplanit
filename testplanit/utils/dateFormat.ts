@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { getDateFnsLocale } from "~/utils/locales";
 
 /**
@@ -13,13 +14,27 @@ import { getDateFnsLocale } from "~/utils/locales";
 export function formatDateRange(
   start?: Date | string | null,
   end?: Date | string | null,
-  opts?: { locale?: string; formatStr?: string; separator?: string }
+  opts?: {
+    locale?: string;
+    formatStr?: string;
+    separator?: string;
+    /** Show the calendar days on this timezone's clock rather than the
+     * browser's — a range resolved on someone else's calendar. */
+    timeZone?: string | null;
+  }
 ): string | undefined {
   const formatStr = opts?.formatStr ?? "MMM d, yyyy";
   const separator = opts?.separator ?? "–";
   const localeObj = getDateFnsLocale(opts?.locale ?? "en-US");
+  const timeZone = opts?.timeZone;
   const fmt = (d?: Date | string | null) =>
-    d ? format(new Date(d), formatStr, { locale: localeObj }) : null;
+    d
+      ? timeZone
+        ? formatInTimeZone(new Date(d), timeZone, formatStr, {
+            locale: localeObj,
+          })
+        : format(new Date(d), formatStr, { locale: localeObj })
+      : null;
   const s = fmt(start);
   const e = fmt(end);
   if (s && e) return `${s} ${separator} ${e}`;

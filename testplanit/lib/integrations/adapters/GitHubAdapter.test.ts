@@ -302,6 +302,85 @@ describe("GitHubAdapter", () => {
     });
   });
 
+  describe("getIssueTypes (labels as the designation vocabulary)", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+      await adapter.authenticate({
+        type: "api_key",
+        apiKey: "ghp_valid_token",
+      });
+      mockFetch.mockClear();
+    });
+
+    it("serves repository labels in the issue-type shape, id === name", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { name: "epic", color: "ff0000" },
+            { name: "requirement", color: "00ff00" },
+          ]),
+      });
+
+      const issueTypes = await adapter.getIssueTypes("testrepo");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.github.com/repos/testowner/testrepo/labels?per_page=100&page=1",
+        expect.anything()
+      );
+      expect(issueTypes).toEqual([
+        { id: "epic", name: "epic" },
+        { id: "requirement", name: "requirement" },
+      ]);
+    });
+
+    it("resolves a full owner/repo project ref over the configured repository", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([{ name: "epic", color: "ff0000" }]),
+      });
+
+      await adapter.getIssueTypes("otherowner/otherrepo");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.github.com/repos/otherowner/otherrepo/labels?per_page=100&page=1",
+        expect.anything()
+      );
+    });
+
+    it("pages past a full first page and stops on a short one", async () => {
+      const fullPage = Array.from({ length: 100 }, (_, i) => ({
+        name: `label-${i}`,
+        color: "cccccc",
+      }));
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(fullPage),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([{ name: "tail", color: "cccccc" }]),
+        });
+
+      const issueTypes = await adapter.getIssueTypes("testrepo");
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(issueTypes).toHaveLength(101);
+      expect(issueTypes[100]).toEqual({ id: "tail", name: "tail" });
+    });
+
+    it("throws when no repository can be resolved", async () => {
+      const bare = new GitHubAdapter({ provider: "GITHUB" });
+      await expect(bare.getIssueTypes("")).rejects.toThrow(
+        "Repository not configured"
+      );
+    });
+  });
+
   describe("createIssue", () => {
     beforeEach(async () => {
       // Authenticate first

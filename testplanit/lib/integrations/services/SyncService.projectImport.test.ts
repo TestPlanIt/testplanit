@@ -363,4 +363,87 @@ describe("SyncService — performProjectImport (bulk import #452)", () => {
     expect(r2.matched).toBe(50);
     expect(r2.hasMore).toBe(true);
   });
+
+  // -------------------------------------------------------------------------
+  // #501/28-04 Task 3 — characterization tests pinning the recency-window
+  // import's ceilings, so "unchanged by the typed/paged-to-completion mode"
+  // is a tested claim rather than a hopeful one. New assertions about
+  // existing behaviour, not edits to the tests above.
+  // -------------------------------------------------------------------------
+
+  it("still stops at IMPORT_MAX_PAGES when pagedToCompletion is not set", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    // Every issue falls outside the recency window, so the cap is never
+    // what stops the loop — only the page ceiling can, even with 45 pages
+    // on offer and hasMore still true past page 40.
+    const staleDate = new Date(Date.now() - 400 * 86_400_000);
+    const pages = Array.from({ length: 45 }, (_, p) => ({
+      issues: Array.from({ length: 50 }, (_, i) =>
+        makeExtIssue({ id: `p${p}-${i}`, updatedAt: staleDate })
+      ),
+      total: undefined,
+      hasMore: p < 44,
+    }));
+    const adapter = makeSearchAdapter(pages);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.performProjectImport(1, "ip-1", {
+      updatedWithinDays: 30,
+      cap: 100_000,
+    });
+
+    expect(adapter.searchIssues).toHaveBeenCalledTimes(40);
+    expect(result.imported).toBe(0);
+    expect(result.skipped).toBe(40 * 50);
+  });
+
+  it("still clamps a requested cap to IMPORT_MAX_CAP", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter([
+      { issues: [makeExtIssue({ id: "a" })], total: 1, hasMore: false },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.performProjectImport(1, "ip-1", {
+      updatedWithinDays: 90,
+      cap: 5000,
+    });
+
+    expect(result.cappedAt).toBe(1000);
+  });
+
+  it("still applies the recency cutoff to a page a provider could not filter", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const staleDate = new Date(Date.now() - 200 * 86_400_000);
+    const adapter = makeSearchAdapter([
+      {
+        issues: [
+          makeExtIssue({ id: "stale-1", updatedAt: staleDate }),
+          makeExtIssue({ id: "stale-2", updatedAt: staleDate }),
+          makeExtIssue({ id: "fresh-1", updatedAt: new Date() }),
+        ],
+        total: 3,
+        hasMore: false,
+      },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.performProjectImport(1, "ip-1", {
+      updatedWithinDays: 30,
+      cap: 200,
+    });
+
+    expect(result.skipped).toBe(2);
+    expect(result.imported).toBe(1);
+    expect(mockIssueUpsert).toHaveBeenCalledTimes(1);
+    expect(mockIssueUpsert.mock.calls[0][0].where).toEqual({
+      externalId_integrationId: { externalId: "fresh-1", integrationId: 1 },
+    });
+  });
 });

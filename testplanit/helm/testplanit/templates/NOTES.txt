@@ -48,7 +48,7 @@ TestPlanIt has been deployed as release "{{ .Release.Name }}" in namespace "{{ .
 {{- if .Values.postgresql.enabled }}{{ $bundled = append $bundled "PostgreSQL" }}{{ end }}
 {{- if .Values.redis.enabled }}{{ $bundled = append $bundled "Valkey" }}{{ end }}
 {{- if .Values.elasticsearch.enabled }}{{ $bundled = append $bundled "Elasticsearch" }}{{ end }}
-{{- if .Values.objectStorage.minio.enabled }}{{ $bundled = append $bundled "MinIO" }}{{ end }}
+{{- if .Values.objectStorage.minio.enabled }}{{ $bundled = append $bundled "RustFS storage" }}{{ end }}
 {{- if $bundled }}
 
 5. Bundled datastores in-cluster: {{ join ", " $bundled }}.

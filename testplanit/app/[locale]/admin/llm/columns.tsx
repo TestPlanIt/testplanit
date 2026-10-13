@@ -3,7 +3,7 @@ import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import type { LlmIntegration, LlmProviderConfig } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { CheckCircle, Edit, Sparkles, Trash, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, type MutableRefObject } from "react";

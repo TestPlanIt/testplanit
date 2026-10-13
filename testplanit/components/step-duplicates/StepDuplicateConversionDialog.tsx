@@ -62,6 +62,7 @@ export function StepDuplicateConversionDialog({
   onResolved,
 }: StepDuplicateConversionDialogProps) {
   const t = useTranslations("sharedSteps.stepDuplicates.dialog");
+  const tCommon = useTranslations("common");
 
   const [name, setName] = useState("");
   const [checkedCaseIds, setCheckedCaseIds] = useState<Set<number>>(new Set());
@@ -287,7 +288,7 @@ export function StepDuplicateConversionDialog({
                   }}
                 />
                 <span className="text-sm text-muted-foreground">
-                  {t("selectAll")}
+                  {tCommon("aria.selectAll")}
                 </span>
               </Label>
             )}

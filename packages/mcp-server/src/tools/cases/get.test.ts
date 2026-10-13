@@ -301,20 +301,22 @@ describe("registerCasesGet", () => {
       project: {
         id: 7,
         name: "TestProject",
-        codeRepositoryConfig: {
-          repository: {
-            id: 5,
-            name: "acme/tools",
-            provider: "GITHUB",
-            status: "ACTIVE",
-            lastTestedAt: null,
-            settings: {
-              owner: "acme",
-              repo: "tools",
-              personalAccessToken: "pat_secret",
+        codeRepositoryConfigs: [
+          {
+            repository: {
+              id: 5,
+              name: "acme/tools",
+              provider: "GITHUB",
+              status: "ACTIVE",
+              lastTestedAt: null,
+              settings: {
+                owner: "acme",
+                repo: "tools",
+                personalAccessToken: "pat_secret",
+              },
             },
           },
-        },
+        ],
       },
     });
     mockZenstack.mockResolvedValueOnce(caseWithRepo);
@@ -335,10 +337,10 @@ describe("registerCasesGet", () => {
     });
   });
 
-  it("Phase-8: codeRepository null when project has no codeRepositoryConfig", async () => {
+  it("Phase-8: codeRepository null when project has no codeRepositoryConfigs", async () => {
     const caseWithoutRepo = makeRawCase({
       folder: { id: 5, name: "Root", parentId: null },
-      project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+      project: { id: 7, name: "TestProject", codeRepositoryConfigs: [] },
     });
     mockZenstack.mockResolvedValueOnce(caseWithoutRepo);
 
@@ -359,21 +361,23 @@ describe("registerCasesGet", () => {
       project: {
         id: 7,
         name: "TestProject",
-        codeRepositoryConfig: {
-          repository: {
-            id: 5,
-            name: "acme/tools",
-            provider: "GITHUB",
-            status: "ACTIVE",
-            lastTestedAt: null,
-            settings: {
-              owner: "acme",
-              repo: "tools",
-              personalAccessToken: "pat_secret",
-              webhookSecret: "secret_xyz",
+        codeRepositoryConfigs: [
+          {
+            repository: {
+              id: 5,
+              name: "acme/tools",
+              provider: "GITHUB",
+              status: "ACTIVE",
+              lastTestedAt: null,
+              settings: {
+                owner: "acme",
+                repo: "tools",
+                personalAccessToken: "pat_secret",
+                webhookSecret: "secret_xyz",
+              },
             },
           },
-        },
+        ],
       },
     });
     mockZenstack.mockResolvedValueOnce(caseWithRepo);
@@ -394,11 +398,11 @@ describe("registerCasesGet", () => {
     expect(serialized).not.toMatch(/secret_xyz/);
   });
 
-  it("Phase-8: CASE_DETAIL_INCLUDE selects project.codeRepositoryConfig.repository chain (no credentials)", async () => {
+  it("Phase-8: CASE_DETAIL_INCLUDE selects project.codeRepositoryConfigs.repository chain (no credentials)", async () => {
     mockZenstack.mockResolvedValueOnce(
       makeRawCase({
         folder: { id: 5, name: "Root", parentId: null },
-        project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+        project: { id: 7, name: "TestProject", codeRepositoryConfigs: [] },
       }),
     );
 
@@ -417,7 +421,8 @@ describe("registerCasesGet", () => {
           select: {
             id: boolean;
             name: boolean;
-            codeRepositoryConfig: {
+            codeRepositoryConfigs: {
+              where: { purpose: string };
               select: { repository: { select: Record<string, boolean> } };
             };
           };
@@ -427,7 +432,10 @@ describe("registerCasesGet", () => {
     const projectSelect = body.include.project.select;
     expect(projectSelect.id).toBe(true);
     expect(projectSelect.name).toBe(true);
-    const repoSelect = projectSelect.codeRepositoryConfig.select.repository.select;
+    expect(projectSelect.codeRepositoryConfigs.where).toEqual({
+      purpose: "QUICKSCRIPT",
+    });
+    const repoSelect = projectSelect.codeRepositoryConfigs.select.repository.select;
     expect(repoSelect.id).toBe(true);
     expect(repoSelect.name).toBe(true);
     expect(repoSelect.provider).toBe(true);
@@ -444,16 +452,18 @@ describe("registerCasesGet", () => {
       project: {
         id: 7,
         name: "TestProject",
-        codeRepositoryConfig: {
-          repository: {
-            id: 5,
-            name: "acme/tools",
-            provider: "GITHUB",
-            status: "ACTIVE",
-            lastTestedAt: null,
-            settings: { owner: "acme", repo: "tools" },
+        codeRepositoryConfigs: [
+          {
+            repository: {
+              id: 5,
+              name: "acme/tools",
+              provider: "GITHUB",
+              status: "ACTIVE",
+              lastTestedAt: null,
+              settings: { owner: "acme", repo: "tools" },
+            },
           },
-        },
+        ],
       },
       caseFieldValues: [
         { value: "High", field: { displayName: "Priority" } },

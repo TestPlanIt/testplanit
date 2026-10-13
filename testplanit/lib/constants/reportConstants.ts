@@ -45,6 +45,11 @@ export const METRIC_ID_MAP: Record<string, string> = {
   milestoneCompletionRate: "milestoneCompletionRate",
   averageMilestoneDuration: "averageMilestoneDuration",
 
+  // Impact metrics - canonical IDs
+  impactAnalysisCount: "impactAnalysisCount",
+  affectedCasesSelected: "affectedCasesSelected",
+  selectionPrecision: "selectionPrecision",
+
   // LLM usage metrics - canonical IDs
   llmCallCount: "llmCallCount",
   promptTokens: "promptTokens",
@@ -63,7 +68,7 @@ export const METRIC_HELP_KEYS: Record<string, string> = {
   "reports.metrics.testResults": "reportMetrics.count",
   "reports.metrics.passRate": "reportMetrics.passRate",
   "reports.metrics.avgElapsedTime": "reportMetrics.avgElapsed",
-  "reports.metrics.totalElapsedTime": "reportMetrics.sumElapsed",
+  "common.fields.totalElapsed": "reportMetrics.sumElapsed",
   "reports.metrics.executionCount": "reportMetrics.executionCount",
 
   // Repository metrics
@@ -96,6 +101,12 @@ export const METRIC_HELP_KEYS: Record<string, string> = {
     "reportMetrics.milestoneCompletionRate",
   "reports.metrics.averageMilestoneDuration":
     "reportMetrics.averageMilestoneDuration",
+
+  // Impact metrics
+  "reports.metrics.impactAnalysisCount": "reportMetrics.impactAnalysisCount",
+  "reports.metrics.affectedCasesSelected":
+    "reportMetrics.affectedCasesSelected",
+  "reports.metrics.selectionPrecision": "reportMetrics.selectionPrecision",
 
   // LLM usage metrics
   "reports.metrics.llmCallCount": "reportMetrics.llmCallCount",
@@ -156,35 +167,39 @@ export const DIMENSION_ID_KEYS: Record<string, string> = {
   model: "model",
   integration: "llmIntegrationId",
   outcome: "success",
+  trigger: "impactTrigger",
+  codeRepository: "impactConfigId",
 };
 
 export const DIMENSION_LABEL_KEYS: Record<string, string> = {
-  user: "reports.dimensions.user",
-  status: "reports.dimensions.status",
-  project: "reports.dimensions.project",
-  testRun: "reports.dimensions.testRun",
+  user: "common.access.user",
+  status: "common.actions.status",
+  project: "common.fields.project",
+  testRun: "common.actions.junit.import.testRun.label",
   testCase: "reports.dimensions.testCase",
-  milestone: "reports.dimensions.milestone",
-  configuration: "reports.dimensions.configuration",
-  template: "reports.dimensions.template",
+  milestone: "common.fields.milestone",
+  configuration: "common.fields.configuration",
+  template: "common.fields.template",
   creator: "reports.dimensions.creator",
-  state: "reports.dimensions.state",
-  role: "reports.dimensions.role",
-  group: "reports.dimensions.group",
-  folder: "reports.dimensions.folder",
+  state: "common.fields.state",
+  role: "common.fields.role",
+  group: "common.aria.group",
+  folder: "common.fields.folder",
   tag: "reports.dimensions.tag",
-  session: "reports.dimensions.session",
+  session: "common.fields.session",
   assignedTo: "common.fields.assignedTo",
   issueType: "reports.dimensions.issueType",
   issueTracker: "common.fields.issueTracker",
   issueStatus: "reports.dimensions.issueStatus",
-  priority: "reports.dimensions.priority",
+  priority: "common.fields.priority",
   source: "reports.dimensions.source",
-  date: "reports.dimensions.date",
+  date: "common.fields.date",
   feature: "reports.dimensions.feature",
   model: "reports.dimensions.model",
-  integration: "reports.dimensions.integration",
+  integration: "common.fields.integration",
   outcome: "reports.dimensions.outcome",
+  trigger: "reports.dimensions.trigger",
+  codeRepository: "reports.dimensions.codeRepository",
 };
 
 // Map dimension IDs to help keys for help tooltips
@@ -214,6 +229,8 @@ export const DIMENSION_HELP_KEYS: Record<string, string> = {
   model: "reportDimensions.model",
   integration: "reportDimensions.integration",
   outcome: "reportDimensions.outcome",
+  trigger: "reportDimensions.trigger",
+  codeRepository: "reportDimensions.codeRepository",
 };
 
 // Helper function to normalize metric ID to canonical form

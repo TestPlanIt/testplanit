@@ -145,6 +145,34 @@ export const resolveUserId = (
   return fallbackUserId;
 };
 
+type RepositoryClient = Pick<DbClient | TxClient, "repositories">;
+
+/**
+ * The repository a project's imported folders and cases belong in. A project
+ * has one repository: reuse its oldest active one - the same row the JUnit
+ * import and the repository page resolve - and create it only when the
+ * project has none. Mapping each Testmo repository to a new row split a
+ * project's folders across repositories.
+ */
+export const findOrCreateProjectRepository = async (
+  client: RepositoryClient,
+  projectId: number
+): Promise<{ id: number; created: boolean }> => {
+  const existing = await client.repositories.findFirst({
+    where: { projectId, isActive: true, isDeleted: false, isArchived: false },
+    orderBy: { id: "asc" },
+    select: { id: true },
+  });
+  if (existing) {
+    return { id: existing.id, created: false };
+  }
+  const repository = await client.repositories.create({
+    data: { projectId, isActive: true, isDeleted: false, isArchived: false },
+    select: { id: true },
+  });
+  return { id: repository.id, created: true };
+};
+
 export type WorkflowResolver = {
   resolve: (
     projectId: number,

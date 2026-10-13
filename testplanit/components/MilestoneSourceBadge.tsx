@@ -26,14 +26,7 @@ import { useRouter } from "~/lib/navigation";
 import { siJira } from "simple-icons";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-
-/**
- * A synced milestone's `externalUrl` is tracker-provided and written through
- * the raw db client, which bypasses the schema's `@url` validation — so only
- * treat http(s) URLs as linkable (never `javascript:` etc.) and open without
- * an opener reference to prevent reverse tab-nabbing.
- */
-const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
+import { safeExternalUrl } from "~/utils/externalUrl";
 
 export interface MilestoneSourceBadgeMilestone {
   id: number;
@@ -134,7 +127,11 @@ export function resolveMilestoneProjectSpace(
   return { name, short };
 }
 
-function JiraGlyph() {
+/**
+ * Exported so the requirements provenance badge renders the same Jira mark
+ * rather than keeping a second copy of the path data.
+ */
+export function JiraGlyph() {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -291,7 +288,7 @@ function SourceBadgeWithUnlinkMenu({
             data-testid="milestone-source-menu-open"
           >
             <ExternalLink className="h-4 w-4" />
-            {t("sync.openInJira")}
+            {tCommon("ui.issues.openInJira")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="gap-1 text-destructive focus:text-destructive"
@@ -321,7 +318,7 @@ function SourceBadgeWithUnlinkMenu({
               onClick={() => void handleUnlink()}
               data-testid="milestone-source-unlink-confirm"
             >
-              {t("sync.unlinkConfirmAction")}
+              {tCommon("configurationGroup.unlink")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -376,6 +373,7 @@ export function MilestoneSourceBadge({
   interactive = true,
 }: MilestoneSourceBadgeProps) {
   const t = useTranslations("milestones");
+  const tCommon = useTranslations("common");
   const wrapRef = useRef<HTMLSpanElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const projectSpace = resolveMilestoneProjectSpace(
@@ -417,12 +415,9 @@ export function MilestoneSourceBadge({
   // hover link icon — otherwise they'd advertise an affordance they don't
   // have. Resolved once and used by BOTH copies so the measured width keeps
   // matching what actually renders.
-  const trackerUrl =
-    interactive &&
-    milestone.externalUrl &&
-    SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl)
-      ? milestone.externalUrl
-      : null;
+  const trackerUrl = interactive
+    ? safeExternalUrl(milestone.externalUrl)
+    : null;
 
   const openInTracker = () => {
     if (!trackerUrl) return;
@@ -534,7 +529,7 @@ export function MilestoneSourceBadge({
       data-testid="milestone-source-badge"
       variant="outline"
       role={trackerUrl ? "link" : undefined}
-      title={trackerUrl ? t("sync.openInJira") : badgeLabel}
+      title={trackerUrl ? tCommon("ui.issues.openInJira") : badgeLabel}
       aria-label={badgeLabel}
       className={`text-xs max-w-full gap-1 whitespace-nowrap group ${
         asMenuTrigger || trackerUrl

@@ -39,6 +39,9 @@ export async function POST(request: NextRequest) {
       case "OPENAI":
         result = await fetchOpenAiModels(apiKey, endpoint);
         break;
+      case "DEEPSEEK":
+        result = await fetchDeepSeekModels(apiKey, endpoint);
+        break;
       case "GEMINI":
         result = await fetchGeminiModels(apiKey, endpoint);
         break;
@@ -89,19 +92,61 @@ function extractModelList(payload: unknown): any[] {
   return Array.isArray(data) ? data : [];
 }
 
-async function fetchOpenAiModels(
+/**
+ * A provider whose `/models` listing follows the OpenAI shape and is
+ * authenticated with a Bearer key. `officialFilter` prunes the official API's
+ * listing (OpenAI lists embeddings, tts, dall-e, ...); proxies in front of the
+ * same provider list exactly what they serve, so the filter is skipped for
+ * any non-official host.
+ */
+interface OpenAiCompatibleSource {
+  label: string;
+  defaultBaseUrl: string;
+  officialHost: string;
+  officialFilter?: (id: string) => boolean;
+}
+
+const OPENAI_SOURCE: OpenAiCompatibleSource = {
+  label: "OpenAI",
+  defaultBaseUrl: "https://api.openai.com/v1",
+  officialHost: "api.openai.com",
+  officialFilter: (id) => id.includes("gpt"),
+};
+
+const DEEPSEEK_SOURCE: OpenAiCompatibleSource = {
+  label: "DeepSeek",
+  defaultBaseUrl: "https://api.deepseek.com",
+  officialHost: "api.deepseek.com",
+};
+
+function fetchOpenAiModels(
+  apiKey?: string,
+  endpoint?: string
+): Promise<ModelsResult> {
+  return fetchOpenAiCompatibleModels(OPENAI_SOURCE, apiKey, endpoint);
+}
+
+function fetchDeepSeekModels(
+  apiKey?: string,
+  endpoint?: string
+): Promise<ModelsResult> {
+  return fetchOpenAiCompatibleModels(DEEPSEEK_SOURCE, apiKey, endpoint);
+}
+
+async function fetchOpenAiCompatibleModels(
+  source: OpenAiCompatibleSource,
   apiKey?: string,
   endpoint?: string
 ): Promise<ModelsResult> {
   if (!apiKey) {
-    throw new Error("API key is required for OpenAI");
+    throw new Error(`API key is required for ${source.label}`);
   }
 
-  const baseUrl = endpoint?.trim() || "https://api.openai.com/v1";
+  const baseUrl = endpoint?.trim() || source.defaultBaseUrl;
   const normalizedBase = baseUrl.replace(/\/$/, "");
   let isCustomEndpoint = false;
   try {
-    isCustomEndpoint = new URL(normalizedBase).hostname !== "api.openai.com";
+    isCustomEndpoint = new URL(normalizedBase).hostname !== source.officialHost;
   } catch {
     isCustomEndpoint = true;
   }
@@ -119,7 +164,9 @@ async function fetchOpenAiModels(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
+      throw new Error(
+        `${source.label} API error: ${response.status} ${errorText}`
+      );
     }
 
     const list = extractModelList(await response.json());
@@ -129,11 +176,9 @@ async function fetchOpenAiModels(
       .filter(
         (id: unknown): id is string =>
           typeof id === "string" &&
-          // The official API lists many non-chat models (embeddings, tts,
-          // dall-e, ...); keep the gpt filter there. Proxies (LiteLLM,
-          // OpenRouter, Together) list exactly what they serve, which is
-          // often not gpt-named — show everything.
-          (isCustomEndpoint || id.includes("gpt"))
+          (isCustomEndpoint ||
+            !source.officialFilter ||
+            source.officialFilter(id))
       )
       .sort();
 
@@ -144,9 +189,9 @@ async function fetchOpenAiModels(
 
     return { models, pricing };
   } catch (error) {
-    console.error("Error fetching OpenAI models:", error);
+    console.error(`Error fetching ${source.label} models:`, error);
     throw new Error(
-      `Failed to fetch OpenAI models: ${
+      `Failed to fetch ${source.label} models: ${
         error instanceof Error ? error.message : "Unknown error"
       }`
     );

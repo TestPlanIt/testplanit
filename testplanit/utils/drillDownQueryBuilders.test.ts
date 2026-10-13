@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 import {
   buildIssuesQuery,
@@ -1145,6 +1146,47 @@ describe("drillDownQueryBuilders", () => {
 
       expect(result.where?.issueTypeName).toBeNull();
       expect(result.where?.integrationId).toBeNull();
+    });
+
+    it("scopes to defect rows by default, with no dimension filters supplied", () => {
+      const context = createBaseContext({
+        reportType: "issue-tracking",
+        metricId: "issueCount",
+        dimensions: {},
+      });
+      const result = buildIssuesQuery(context, 0, 10);
+
+      expect(result.where?.isRequirement).toBe(false);
+    });
+
+    it("keeps the defect-scope predicate when issueType, issueStatus, priority and date dimensions are all applied", () => {
+      const context = createBaseContext({
+        reportType: "issue-tracking",
+        metricId: "issueCount",
+        dimensions: {
+          issueType: { id: "10001", name: "Bug" },
+          issueStatus: { id: "Done", name: "Done" },
+          priority: { id: "high", name: "High" },
+          date: { id: "d", createdAt: "2026-07-01T00:00:00.000Z" } as any,
+        },
+      });
+      const result = buildIssuesQuery(context, 0, 10);
+
+      expect(result.where?.isRequirement).toBe(false);
+      expect(result.where?.issueTypeName).toBe("Bug");
+      expect(result.where?.status).toBe("Done");
+    });
+
+    it("carries the same role predicate the report-builder aggregate applies, so the drill-down list agrees with the count", () => {
+      const context = createBaseContext({
+        reportType: "issue-tracking",
+        metricId: "issueCount",
+      });
+      const result = buildIssuesQuery(context, 0, 10);
+
+      expect(result.where?.isRequirement).toBe(
+        DEFECT_SCOPE_WHERE.isRequirement
+      );
     });
   });
 

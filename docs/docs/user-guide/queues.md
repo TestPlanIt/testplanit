@@ -33,7 +33,7 @@ The overview table refreshes automatically and lists every queue with these colu
 | **Delayed** | Jobs scheduled to run later. |
 | **Actions** | Pause/resume and clean (see below). |
 
-Queues monitored include forecast updates, notifications, emails, issue sync, Testmo imports, Elasticsearch reindex, audit logs, budget alerts, AI auto-tag, repository cache, copy & move, duplicate scan, smart selection, and step-sequence scan.
+Queues monitored include forecast updates, notifications, emails, issue sync, Testmo imports, Elasticsearch reindex, audit logs, budget alerts, AI auto-tag, repository cache, copy & move, duplicate scan, smart selection, step-sequence scan, and automated execution dispatch.
 
 :::info
 **Concurrency is read-only here.** To change how many jobs a worker processes in parallel, set the relevant `*_CONCURRENCY` environment variable and restart the workers.
@@ -54,10 +54,11 @@ Click a queue row to open the **Queue Jobs** panel, filterable by state (Waiting
 - **View details** — inspect job data, return value, options, timestamps, and (for failures) the failure reason and stack trace.
 - **Retry** — re-run a **failed** job.
 - **Promote** — move a **delayed** job to the front of the queue to run now.
-- **Remove** — delete a job. Removing an active or locked job prompts a **Force Remove** confirmation.
+- **Cancel** — for an active job whose worker checks for it (the code repository jobs — ticket scans, stale pin checks, cache refreshes and the nightly sweep — and impact analyses), asks the worker to stop at its next check. The job leaves the queue once it has stopped, and the connection or analysis records that it was cancelled.
+- **Remove** — delete a job that is not being processed. An active job cannot be removed: the worker keeps its lock and keeps running it, so the page refuses and offers **Cancel** where the job supports it. **Force Remove** retries the removal for a lock left by a worker that has died; it reports success only when the job was actually removed.
 
 :::tip
-Scheduled (repeatable) jobs are prefixed `repeat:`. Removing one first removes its schedule so it won't recur, then removes the current instance. If the instance is locked by a crashed worker, the schedule is still cleared — restart the worker to release the locked instance.
+Scheduled (repeatable) jobs are prefixed `repeat:`. Removing one first removes its schedule so it won't recur, then removes the current instance. If the instance is still locked, the response says the schedule was removed but the instance was not — cancel it, or restart the worker to release the lock. The scheduler recreates the schedule when it next starts.
 :::
 
 ## Related pages

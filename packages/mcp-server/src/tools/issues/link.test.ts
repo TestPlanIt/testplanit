@@ -6,12 +6,14 @@ import { TestPlanItHttpError } from "../../http.js";
 
 vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
+  resolveIssueKeys: vi.fn(),
 }));
 
-import { zenstack } from "../../api.js";
+import { resolveIssueKeys, zenstack } from "../../api.js";
 import { registerIssuesLink, registerIssuesUnlink } from "./link.js";
 
 const mockZenstack = vi.mocked(zenstack);
+const mockResolve = vi.mocked(resolveIssueKeys);
 
 const mockEnv = {
   apiUrl: "https://testplanit.example.com",
@@ -56,8 +58,9 @@ describe("registerIssuesLink", () => {
     mockZenstack.mockReset();
   });
 
-  // 1. Single testCase link → correct connect shape
-  it("links a single testCase", async () => {
+  // 1. Single testCase link → a RepositoryCaseIssue join row. Issue has no
+  // direct relation to cases, so an `issue.update` connect would be rejected.
+  it("links a single testCase through the join model", async () => {
     mockZenstack.mockResolvedValueOnce({ id: 7978 });
     const { client } = await setupLinkClient();
     const result = await client.callTool({
@@ -66,11 +69,11 @@ describe("registerIssuesLink", () => {
     });
     expect(result.isError).toBeFalsy();
     const { model, op, body } = getCallArgs();
-    expect(model).toBe("issue");
-    expect(op).toBe("update");
-    expect(body.where).toEqual({ id: 7978 });
-    expect((body.data as any).repositoryCases).toEqual({
-      connect: [{ id: 101 }],
+    expect(model).toBe("repositoryCaseIssue");
+    expect(op).toBe("createMany");
+    expect(body).toEqual({
+      data: [{ issueId: 7978, caseId: 101 }],
+      skipDuplicates: true,
     });
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.linked).toBe(1);
@@ -88,7 +91,7 @@ describe("registerIssuesLink", () => {
     });
     expect(result.isError).toBeFalsy();
     const { body } = getCallArgs();
-    expect((body.data as any).repositoryCases.connect).toHaveLength(9);
+    expect(body.data as unknown[]).toHaveLength(9);
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.linked).toBe(9);
   });
@@ -143,13 +146,150 @@ describe("registerIssuesLink", () => {
   });
 });
 
+/**
+ * Linking by key is the whole point of #596: an agent names the ticket, and
+ * TestPlanIt materializes the row rather than requiring someone to open it in
+ * the web UI first. The two identifying forms must stay exclusive — silently
+ * preferring one would let a call link a different issue than the key it named.
+ */
+describe("registerIssuesLink by externalKey", () => {
+  beforeEach(() => {
+    mockZenstack.mockReset();
+    mockResolve.mockReset();
+  });
+
+  it("resolves the key and links the row it produced", async () => {
+    mockResolve.mockResolvedValue({
+      success: true,
+      resolvedCount: 1,
+      failedCount: 0,
+      createdCount: 1,
+      results: [{ key: "PROJ-1", issueId: 4242, created: true }],
+    });
+    mockZenstack.mockResolvedValueOnce({ id: 4242 });
+
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        externalKey: "PROJ-1",
+        projectId: 3,
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(mockResolve).toHaveBeenCalledWith(3, ["PROJ-1"], deps.env, undefined);
+    const { body } = getCallArgs();
+    expect(body.data).toEqual([{ issueId: 4242, caseId: 101 }]);
+    const text = JSON.parse((result.content[0] as any).text);
+    expect(text.issueId).toBe(4242);
+  });
+
+  it("passes integrationId through when the project has more than one tracker", async () => {
+    mockResolve.mockResolvedValue({
+      success: true,
+      resolvedCount: 1,
+      failedCount: 0,
+      createdCount: 0,
+      results: [{ key: "PROJ-1", issueId: 1 }],
+    });
+    mockZenstack.mockResolvedValueOnce({ id: 1 });
+
+    const { client } = await setupLinkClient();
+    await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        externalKey: "PROJ-1",
+        projectId: 3,
+        integrationId: 9,
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(mockResolve).toHaveBeenCalledWith(3, ["PROJ-1"], deps.env, 9);
+  });
+
+  it("refuses both identifying forms at once instead of picking one", async () => {
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        issueId: 1,
+        externalKey: "PROJ-1",
+        projectId: 3,
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("not both");
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
+
+  it("requires projectId alongside a key, since a key is only unique within one", async () => {
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        externalKey: "PROJ-1",
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("projectId");
+    expect(mockResolve).not.toHaveBeenCalled();
+  });
+
+  it("requires one of the two forms", async () => {
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: { entityType: "testCase", entityIds: [101] },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
+
+  it("does not link anything when the key cannot be resolved", async () => {
+    mockResolve.mockResolvedValue({
+      success: true,
+      resolvedCount: 0,
+      failedCount: 1,
+      createdCount: 0,
+      results: [{ key: "TYPO-9", error: "Issue does not exist" }],
+    });
+
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        externalKey: "TYPO-9",
+        projectId: 3,
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("Issue does not exist");
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
+});
+
 describe("registerIssuesUnlink", () => {
   beforeEach(() => {
     mockZenstack.mockReset();
   });
 
-  // 7. Single unlink → correct disconnect shape
-  it("unlinks a single testCase", async () => {
+  // 7. Single unlink → the join rows for that issue and case are removed
+  it("unlinks a single testCase through the join model", async () => {
     mockZenstack.mockResolvedValueOnce({ id: 7978 });
     const { client } = await setupUnlinkClient();
     const result = await client.callTool({
@@ -158,11 +298,9 @@ describe("registerIssuesUnlink", () => {
     });
     expect(result.isError).toBeFalsy();
     const { model, op, body } = getCallArgs();
-    expect(model).toBe("issue");
-    expect(op).toBe("update");
-    expect((body.data as any).repositoryCases).toEqual({
-      disconnect: [{ id: 101 }],
-    });
+    expect(model).toBe("repositoryCaseIssue");
+    expect(op).toBe("deleteMany");
+    expect(body).toEqual({ where: { issueId: 7978, caseId: { in: [101] } } });
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.unlinked).toBe(1);
   });
@@ -181,8 +319,66 @@ describe("registerIssuesUnlink", () => {
     });
     expect(result.isError).toBeFalsy();
     const { body } = getCallArgs();
-    expect((body.data as any).repositoryCases.disconnect).toHaveLength(3);
+    expect(body).toEqual({ where: { issueId: 1, caseId: { in: [10, 11, 12] } } });
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.unlinked).toBe(3);
+  });
+
+  describe("unlinking from results that require an issue on failure", () => {
+    const failedResult = (issues: number[], stepIssues: number[] = []) => ({
+      id: 5,
+      status: { isFailure: true },
+      issues: issues.map((id) => ({ id })),
+      stepResults: [{ id: 9, issues: stepIssues.map((id) => ({ id })) }],
+      testRun: {
+        project: { requireIssueOnFailure: true, projectIntegrations: [{ id: 1 }] },
+      },
+    });
+
+    it("refuses to remove the last issue from a failed result", async () => {
+      mockZenstack.mockResolvedValueOnce([failedResult([7978])]);
+      const { client } = await setupUnlinkClient();
+      const result = await client.callTool({
+        name: "testplanit_issues_unlink",
+        arguments: { issueId: 7978, entityType: "testRunResult", entityIds: [5] },
+      });
+
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.content)).toContain("ISSUE_REQUIRED_ON_FAILURE");
+      expect(
+        mockZenstack.mock.calls.some((c) => c[0] === "issue" && c[1] === "update"),
+      ).toBe(false);
+    });
+
+    it("allows it while a step result still carries an issue", async () => {
+      mockZenstack.mockResolvedValueOnce([failedResult([7978], [11])]);
+      mockZenstack.mockResolvedValueOnce({ id: 7978 });
+      const { client } = await setupUnlinkClient();
+      const result = await client.callTool({
+        name: "testplanit_issues_unlink",
+        arguments: { issueId: 7978, entityType: "testRunResult", entityIds: [5] },
+      });
+
+      expect(result.isError).toBeFalsy();
+    });
+
+    it("does not check results in projects without the requirement", async () => {
+      mockZenstack.mockResolvedValueOnce([
+        {
+          ...failedResult([7978]),
+          testRun: {
+            project: { requireIssueOnFailure: false, projectIntegrations: [] },
+          },
+        },
+      ]);
+      mockZenstack.mockResolvedValueOnce({ id: 7978 });
+      const { client } = await setupUnlinkClient();
+      const result = await client.callTool({
+        name: "testplanit_issues_unlink",
+        arguments: { issueId: 7978, entityType: "testRunResult", entityIds: [5] },
+      });
+
+      expect(result.isError).toBeFalsy();
+    });
   });
 });

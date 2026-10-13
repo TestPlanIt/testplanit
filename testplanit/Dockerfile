@@ -137,9 +137,10 @@ ARG BASE_DOMAIN
 ARG SELF_HOSTED
 ENV SELF_HOSTED=${SELF_HOSTED}
 # Sizes serverActions.bodySizeLimit in next.config.ts. Next freezes experimental
-# config into the standalone output, so this has to be present at BUILD time --
-# a runtime-only value is too late. The production stage re-declares it for
-# app/actions/uploadFile.ts, which reads it at runtime.
+# config into the standalone output, so this sets the image's DEFAULT ceiling;
+# docker-entrypoint.sh re-syncs the frozen value from the runtime UPLOAD_MAX_MB
+# so a prebuilt image stays configurable. The production stage re-declares the
+# ARG for app/actions/uploadFile.ts, which reads it at runtime.
 ARG UPLOAD_MAX_MB
 ENV UPLOAD_MAX_MB=${UPLOAD_MAX_MB}
 ENV NODE_ENV=production
@@ -164,10 +165,11 @@ RUN npm run build
 # ---- Production ----
 FROM node:24-alpine AS production
 WORKDIR /app
-# Read at runtime by app/actions/uploadFile.ts. Defaulted from the same build arg
-# so an image built for a larger ceiling stays self-consistent under plain
+# Read at runtime by app/actions/uploadFile.ts, and by docker-entrypoint.sh to
+# re-sync Next's frozen server-action body limit. Defaulted from the same build
+# arg so an image built for a larger ceiling stays self-consistent under plain
 # `docker run`; compose passes it again via `environment:` so one variable in
-# .env drives both the baked body limit and the runtime per-file limit.
+# .env drives both the body limit and the per-file limit.
 ARG UPLOAD_MAX_MB
 ENV UPLOAD_MAX_MB=${UPLOAD_MAX_MB}
 ENV NODE_ENV=production
@@ -235,7 +237,8 @@ CMD ["node", "server.js"]
 FROM node:24-alpine AS workers
 ENV NODE_ENV=production
 WORKDIR /app/testplanit
-RUN apk add --no-cache postgresql-client
+# git: the repo-cache worker reads Bitbucket repositories with a shallow fetch.
+RUN apk add --no-cache postgresql-client git
 # System chromium for the URL-crawl screenshot capture. playwright-core
 # drives it — no browser download. Capture is ON by default in this image;
 # set CRAWL_SCREENSHOTS=false in the deployment env to disable.

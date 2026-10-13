@@ -60,7 +60,7 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     projectBId = await api.createProject(`E2E K-01 Project B ${uniqueId}`);
 
     // Inbound webhook below requires Project A to have a Jira issue
-    // integration assigned (1:1 inbound model gate).
+    // integration assigned (the wizard's issue-tracker source needs it).
     await api.setupProjectIssueIntegration(projectAId, "JIRA");
 
     // Configure a Jira inbound webhook on Project A so the data-layer
@@ -76,8 +76,15 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
       );
       const form = adminPage.getByTestId("webhook-config-form");
       await expect(form).toBeVisible({ timeout: 15_000 });
-      // 1:1 inbound model: Add skips the chooser and creates inline.
       await adminPage.getByTestId("webhook-inbound-add-button").click();
+      const wizard = adminPage.getByTestId("webhook-inbound-wizard");
+      await wizard.getByTestId("webhook-wizard-source-issues").click();
+      await wizard.getByTestId("webhook-wizard-next").click();
+      await wizard.getByTestId("webhook-create-button").click();
+      await expect(
+        wizard.getByTestId("webhook-inbound-revealed-box")
+      ).toBeVisible({ timeout: 15_000 });
+      await wizard.getByTestId("webhook-reveal-done-button").click();
       const jiraCard = adminPage.getByTestId("webhook-inbound-card-jira");
       await expect(jiraCard).toBeVisible({ timeout: 15_000 });
     } finally {

@@ -56,6 +56,56 @@ describe("getTestRunSummary", () => {
     expect(summary.junitSummary?.totalTests).toBeGreaterThanOrEqual(0);
   });
 
+  // A hybrid run is a manual run that also holds automated results: it
+  // summarises by case (its automated results are projected onto
+  // TestRunCases) and carries the automation figures as a separate block.
+  it("summarises a HYBRID run as a manual run and attaches junitSummary from the automated rows", async () => {
+    const fakeClient = makeFakeClient({
+      testRunType: "HYBRID",
+      forecastManual: null,
+      issues: [],
+      workflowType: "IN_PROGRESS",
+      junitAggregates: [
+        {
+          statusId: 1,
+          statusName: "Passed",
+          colorValue: "#00ff00",
+          type: "PASSED",
+          count: BigInt(3),
+          isCompleted: true,
+          isSuccess: true,
+          isFailure: false,
+        },
+      ],
+    });
+
+    const summary = await getTestRunSummary(1, { client: fakeClient as any });
+
+    expect(summary.testRunType).toBe("HYBRID");
+    // Manual-run path ran (TestRunCases status counts), so attempts were not
+    // counted as cases.
+    const queryTexts = (fakeClient.$queryRaw as any).mock.calls.map(
+      (c: unknown[]) => (c[0] as TemplateStringsArray).join(" ")
+    );
+    expect(queryTexts.some((q: string) => q.includes('"TestRunCases"'))).toBe(
+      true
+    );
+    expect(summary.totalCases).toBe(0);
+    expect(summary.junitSummary?.totalTests).toBe(3);
+  });
+
+  it("omits junitSummary on a HYBRID run that has no automated rows yet", async () => {
+    const fakeClient = makeFakeClient({
+      testRunType: "HYBRID",
+      forecastManual: null,
+      issues: [],
+      workflowType: "IN_PROGRESS",
+    });
+
+    const summary = await getTestRunSummary(1, { client: fakeClient as any });
+    expect(summary.junitSummary).toBeUndefined();
+  });
+
   it("uses the explicit `client` override when provided (so emitter can pass tx)", async () => {
     const fakeClient = makeFakeClient({
       testRunType: "REGULAR",
@@ -161,6 +211,7 @@ interface FakeClientOptions {
   issues?: Array<Record<string, unknown>>;
   workflowType?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | null;
   testRunNotFound?: boolean;
+  junitAggregates?: Array<Record<string, unknown>>;
 }
 
 function makeFakeClient(opts: FakeClientOptions) {
@@ -193,6 +244,10 @@ function makeFakeClient(opts: FakeClientOptions) {
     }
     if (text.includes("totalTime")) {
       return [{ totalTime: 0 }];
+    }
+    // JUnit per-status aggregate (getJUnitRunSummary).
+    if (text.includes("jtr.type") && text.includes("GROUP BY")) {
+      return opts.junitAggregates ?? [];
     }
     return [];
   });

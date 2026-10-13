@@ -239,7 +239,7 @@ export function NumericFilterInput({
           <Input
             type="number"
             step={fieldType === "Integer" ? "1" : "any"}
-            placeholder={t("common.placeholders.value")}
+            placeholder={t("common.fields.value")}
             value={value1}
             onChange={(e) => {
               setValue1(e.target.value);
@@ -257,7 +257,7 @@ export function NumericFilterInput({
               <Input
                 type="number"
                 step={fieldType === "Integer" ? "1" : "any"}
-                placeholder={t("common.placeholders.value")}
+                placeholder={t("common.fields.value")}
                 value={value2}
                 onChange={(e) => {
                   setValue2(e.target.value);

@@ -1,22 +1,74 @@
 import type { DbClient } from "~/lib/zenstack";
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 import {
   createGitRepoAdapter,
   type ArchiveTree,
+  type GitRepoAdapter,
 } from "~/lib/integrations/adapters/GitRepoAdapter";
 import {
   repoFileCache,
   type RepoFileEntry,
+  type StagedRepoCache,
 } from "~/lib/integrations/cache/RepoFileCache";
 import {
   applyPathPatterns,
   extractBasePathScopes,
   type PathPattern,
 } from "~/lib/integrations/repoPathPatterns";
+import { getCommitFilePaths } from "./impact/commitFiles";
+import { commitWalkStore, walkCommits } from "./impact/commitWalk";
+import { issueScanCancelKey } from "./impact/jobKeys";
+import { importableIssueKeys, type IssueToken } from "./impact/issueKeys";
+import { integrationManager } from "~/lib/integrations/IntegrationManager";
+import valkeyConnection from "~/lib/valkey";
+import {
+  IssueKeyResolutionError,
+  resolveIssueKeys,
+  resolveIssueTrackerIntegration,
+} from "./resolveIssueKeys";
+import { resolveRefToSha } from "./impact/compareService";
+import { impactConfig } from "./impact/config";
+import {
+  type IssueImportProgress,
+  type IssueImportResult,
+  type IssueScanDb,
+  type IssueScanProgress,
+  type IssueScanReport,
+  syncIssuePins,
+} from "./impact/issueScan";
+import { IssueScanCancelledError } from "./impact/issueScanCancel";
+import {
+  shouldScanMarkers,
+  syncMarkerPins,
+  type MarkerScanDb,
+} from "./impact/markerScan";
 
 function isRateLimitError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const msg = err.message.toLowerCase();
   return msg.includes("rate limit") || msg.includes("429");
+}
+
+/** The error the adapters throw on an HTTP 401/403, e.g. "HTTP 403 Forbidden". */
+function isAuthError(err: unknown): boolean {
+  return err instanceof Error && /^HTTP (401|403)\b/.test(err.message);
+}
+
+/**
+ * Why an archive download must not fall back to the per-file API path. A
+ * rejected credential or an exhausted quota fails that path too — only after
+ * thousands of requests, which keeps a rate-limited token limited. Returns
+ * null for failures the fallback can still recover from (network, 5xx).
+ */
+function archiveFailureReason(err: unknown): string | null {
+  if (isAuthError(err)) {
+    const status = (err as Error).message.match(/^HTTP \d{3}[^:]*/)?.[0];
+    return `Archive download rejected (${status}) — check the repository token's type and scopes`;
+  }
+  if (isRateLimitError(err)) {
+    return "Provider rate limit reached before the archive download could start; retry after the limit resets";
+  }
+  return null;
 }
 
 const MAX_RATE_LIMIT_RETRIES = 3;
@@ -38,7 +90,8 @@ async function fetchContentsBatched(
     retryAfterSeconds: number;
   },
   branch: string,
-  initialConcurrency: number
+  initialConcurrency: number,
+  assertNotCancelled: () => Promise<void> = async () => {}
 ): Promise<{ contentMap: Map<string, string>; contentRateLimited: boolean }> {
   const contentMap = new Map<string, string>();
   let concurrency = initialConcurrency;
@@ -46,6 +99,7 @@ async function fetchContentsBatched(
   let i = 0;
 
   while (i < files.length) {
+    await assertNotCancelled();
     if (consecutiveRateLimits >= MAX_RATE_LIMIT_RETRIES) {
       console.warn(
         `[repoCacheRefresh] Giving up after ${MAX_RATE_LIMIT_RETRIES} consecutive rate limits — ${contentMap.size}/${files.length} files cached`
@@ -98,6 +152,472 @@ async function fetchContentsBatched(
   return { contentMap, contentRateLimited: false };
 }
 
+async function storeMarkerScanReport(
+  dbClient: DbClient,
+  configId: number,
+  report: unknown
+): Promise<void> {
+  try {
+    await (dbClient as any).projectCodeRepositoryConfig.update({
+      where: { id: configId },
+      data: { markerScanReport: report },
+    });
+  } catch (err) {
+    console.warn(
+      `[repoCacheRefresh] Failed to store marker scan report for config ${configId}:`,
+      err
+    );
+  }
+}
+
+/**
+ * Sync repo markers (annotations + testmap) into code pins for an IMPACT
+ * config. Never throws: a failed scan is recorded in the report instead.
+ */
+async function runMarkerScan(
+  dbClient: DbClient,
+  config: { id: number; projectId: number; project: { createdBy: string } },
+  adapter: GitRepoAdapter,
+  branch: string,
+  contentMap: Map<string, string>,
+  contentRateLimited: boolean
+): Promise<void> {
+  const scannedAt = new Date().toISOString();
+  let report: unknown;
+  if (contentRateLimited) {
+    report = { skipped: "partial_contents", scannedAt };
+  } else {
+    try {
+      const anchorSha = await resolveRefToSha(adapter, branch);
+      report = await syncMarkerPins(
+        dbClient as unknown as MarkerScanDb,
+        { id: config.id, projectId: config.projectId, branch },
+        contentMap,
+        { anchorSha, actorId: config.project.createdBy }
+      );
+    } catch (err) {
+      console.warn(
+        `[repoCacheRefresh] Marker scan failed for config ${config.id}:`,
+        err
+      );
+      report = {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Unknown error during marker scan",
+        scannedAt,
+      };
+    }
+  }
+  await storeMarkerScanReport(dbClient, config.id, report);
+}
+
+async function storeIssueScanReport(
+  dbClient: DbClient,
+  configId: number,
+  report: unknown
+): Promise<void> {
+  try {
+    await (dbClient as any).projectCodeRepositoryConfig.update({
+      where: { id: configId },
+      data: { issueScanReport: report },
+    });
+  } catch (err) {
+    console.warn(
+      `[repoCacheRefresh] Failed to store issue scan report for config ${configId}:`,
+      err
+    );
+  }
+}
+
+interface IssueScanConfigRow {
+  id: number;
+  projectId: number;
+  cacheEnabled: boolean;
+  /** Tickets on test results also link the result's case. */
+  issueResultLinks: boolean;
+  project: { createdBy: string };
+}
+
+export interface IssueScanRunOptions {
+  /** Walk the whole branch instead of the recent window. */
+  full?: boolean;
+  /** Polled between pages, import rounds and commits; true stops the scan. */
+  isCancelled?: () => Promise<boolean>;
+}
+
+export interface IssueScanCancelledReport {
+  cancelled: true;
+  full: boolean;
+  scannedAt: string;
+}
+
+/** Was a cancel requested for this config's running scan? */
+async function cancelRequested(configId: number): Promise<boolean> {
+  if (!valkeyConnection) return false;
+  try {
+    return Boolean(await valkeyConnection.get(issueScanCancelKey(configId)));
+  } catch {
+    return false;
+  }
+}
+
+async function clearCancelRequest(configId: number): Promise<void> {
+  if (!valkeyConnection) return;
+  await valkeyConnection.del(issueScanCancelKey(configId)).catch(() => {});
+}
+
+/**
+ * Import the tickets a set of commit tokens name that TestPlanIt does not
+ * hold yet, through the project's issue tracker. A project without a tracker,
+ * or with several, imports nothing. A ticket another project already pulled
+ * in is already here — one row per ticket per integration — and is left for
+ * linking, not counted as a failure.
+ */
+/** Keys resolved per tracker round, so progress is reported between rounds. */
+const IMPORT_CHUNK = 20;
+
+/**
+ * The project prefixes (`PROJ` in `PROJ-123`) a Jira-style tracker can answer
+ * for. Commit messages are full of look-alikes — `PHASE-33`, `ID-24`,
+ * `ROUND-2` — that would each cost a 404 lookup. The tracker's own project
+ * list is the authority; when it cannot be listed, the prefixes of tickets
+ * already imported on the integration stand in. Null means unknown: try
+ * every key.
+ */
+async function knownIssueKeyPrefixes(
+  dbClient: DbClient,
+  integrationId: number
+): Promise<Set<string> | null> {
+  try {
+    const adapter = await integrationManager.getAdapter(
+      String(integrationId),
+      dbClient as any
+    );
+    if (adapter && typeof adapter.getProjects === "function") {
+      const projects = await adapter.getProjects();
+      const keys = projects
+        .map((project) => project.key?.toUpperCase())
+        .filter((key): key is string => !!key);
+      if (keys.length > 0) return new Set(keys);
+    }
+  } catch (err) {
+    console.warn(
+      `[repoCacheRefresh] Could not list tracker projects for integration ${integrationId}; falling back to known prefixes:`,
+      err
+    );
+  }
+  const rows = (await (dbClient as any).issue.findMany({
+    where: { integrationId, isDeleted: false, externalKey: { contains: "-" } },
+    select: { externalKey: true },
+    distinct: ["externalKey"],
+    take: 5000,
+  })) as Array<{ externalKey: string | null }>;
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const prefix = row.externalKey?.split("-")[0]?.toUpperCase();
+    if (prefix) seen.add(prefix);
+  }
+  return seen.size > 0 ? seen : null;
+}
+
+function keyPrefix(key: string): string | null {
+  const dash = key.indexOf("-");
+  return dash > 0 ? key.slice(0, dash).toUpperCase() : null;
+}
+
+async function importNamedIssues(
+  dbClient: DbClient,
+  config: { id: number; projectId: number },
+  tokens: IssueToken[],
+  maxLookups: number,
+  onProgress?: (progress: IssueImportProgress) => Promise<void>
+): Promise<IssueImportResult> {
+  let integration: { integrationId: number; provider: string };
+  try {
+    integration = await resolveIssueTrackerIntegration(config.projectId);
+  } catch (err) {
+    if (err instanceof IssueKeyResolutionError) {
+      return { imported: 0, failed: 0, skipped: 0, moved: 0 };
+    }
+    throw err;
+  }
+  let keys = importableIssueKeys(integration.provider, tokens);
+  if (keys.length === 0)
+    return { imported: 0, failed: 0, skipped: 0, moved: 0 };
+  if (integration.provider.toUpperCase() === "JIRA") {
+    const prefixes = await knownIssueKeyPrefixes(
+      dbClient,
+      integration.integrationId
+    );
+    if (prefixes) {
+      keys = keys.filter((key) => {
+        const prefix = keyPrefix(key);
+        return prefix !== null && prefixes.has(prefix);
+      });
+      if (keys.length === 0)
+        return { imported: 0, failed: 0, skipped: 0, moved: 0 };
+    }
+  }
+
+  // One local row per tracker ticket per integration, whichever project
+  // first pulled it in; a case in this project links to that row. So a
+  // ticket held anywhere on the integration is already here.
+  const known = (await (dbClient as any).issue.findMany({
+    where: {
+      integrationId: integration.integrationId,
+      isDeleted: false,
+      OR: [{ externalKey: { in: keys } }, { externalId: { in: keys } }],
+    },
+    select: { externalKey: true, externalId: true },
+  })) as Array<{ externalKey: string | null; externalId: string | null }>;
+  const held = new Set(
+    known.flatMap((row) => [row.externalKey, row.externalId]).filter(Boolean)
+  );
+  const missing = keys.filter((key) => !held.has(key));
+  if (missing.length === 0)
+    return { imported: 0, failed: 0, skipped: 0, moved: 0 };
+
+  let imported = 0;
+  let failed = 0;
+  let skipped = 0;
+  let moved = 0;
+  let lookups = 0;
+  const failures: Array<{ key: string; error: string }> = [];
+  let index = 0;
+  while (index < missing.length) {
+    const budget = maxLookups - lookups;
+    if (budget <= 0) {
+      // Left for the next scan: imported keys are skipped then, so each run
+      // continues where the cap stopped this one.
+      skipped = missing.length - index;
+      break;
+    }
+    const chunk = missing.slice(index, index + Math.min(IMPORT_CHUNK, budget));
+    index += chunk.length;
+    const results = await resolveIssueKeys({
+      projectId: config.projectId,
+      keys: chunk,
+      integrationId: integration.integrationId,
+      maxLookups: chunk.length,
+    });
+    // Every key here was missing locally, so each one cost a lookup.
+    lookups += chunk.length;
+    for (const result of results.values()) {
+      if (result.created) imported++;
+      else if (result.code === "moved") moved++;
+      else if (result.error) {
+        failed++;
+        failures.push({ key: result.key, error: result.error });
+      }
+    }
+    if (onProgress) await onProgress({ lookups, imported });
+  }
+  return { imported, failed, skipped, moved, failures };
+}
+
+/**
+ * Derive ISSUE code pins from ticket keys in commit messages of an IMPACT
+ * config: the recent window on a cache refresh, or the whole branch for a
+ * manual full scan. Tickets the commits name that are unknown here are
+ * imported from the tracker first. Progress is written into
+ * `issueScanReport` as `{ running: true, ... }` so the settings page can
+ * follow a long walk. Never throws: a failed scan is recorded in the report.
+ */
+async function runIssueScan(
+  dbClient: DbClient,
+  config: IssueScanConfigRow,
+  adapter: GitRepoAdapter,
+  branch: string,
+  opts: IssueScanRunOptions = {}
+): Promise<
+  | IssueScanReport
+  | IssueScanCancelledReport
+  | { error: string; scannedAt: string }
+> {
+  const full = opts.full === true;
+  const startedAt = new Date().toISOString();
+  const isCancelled = opts.isCancelled ?? (async () => false);
+  const assertNotCancelled = async () => {
+    if (await isCancelled()) throw new IssueScanCancelledError();
+  };
+  const writeProgress = (progress: IssueScanProgress) =>
+    storeIssueScanReport(dbClient, config.id, {
+      running: true,
+      full,
+      startedAt,
+      progressAt: new Date().toISOString(),
+      ...progress,
+    });
+  const walkProgress = (
+    scannedCommits: number,
+    cachedCommits = 0
+  ): IssueScanProgress => ({
+    stage: "walk",
+    scannedCommits,
+    cachedCommits,
+    matchedCommits: 0,
+    fetchedCommits: 0,
+    importLookups: 0,
+    importedIssues: 0,
+  });
+  let report:
+    | IssueScanReport
+    | IssueScanCancelledReport
+    | { error: string; scannedAt: string };
+  try {
+    const cfg = impactConfig;
+    await writeProgress(walkProgress(0));
+    const recent = await walkCommits(adapter, branch, {
+      lookbackDays: full ? Number.POSITIVE_INFINITY : cfg.issueScanLookbackDays,
+      maxCommits: full ? cfg.issueScanFullMaxCommits : cfg.issueScanMaxCommits,
+      // Only a full walk needs commits older than the cache already holds.
+      continueFromCache: full,
+      store: commitWalkStore(config.id, branch),
+      onProgress: (scannedCommits, fromCache) =>
+        writeProgress(walkProgress(scannedCommits, fromCache)),
+      shouldStop: isCancelled,
+    });
+    // The walk kept what it read; the rest of the scan is not worth a
+    // partial result.
+    if (recent.cancelled) throw new IssueScanCancelledError();
+    report = await syncIssuePins(
+      dbClient as unknown as IssueScanDb,
+      { id: config.id, projectId: config.projectId },
+      {
+        commits: recent.commits,
+        truncated: recent.truncated,
+        cachedCommits: recent.fromCache,
+        full,
+        getCommitFiles: (commit) =>
+          getCommitFilePaths({
+            configId: config.id,
+            cacheEnabled: config.cacheEnabled,
+            adapter,
+            commit,
+            maxFiles: cfg.maxDiffFiles,
+            withSymbols: cfg.issueScanSymbolPins,
+          }),
+        symbolPins: cfg.issueScanSymbolPins,
+        includeResultLinks: config.issueResultLinks,
+        maxCommitFetches: full
+          ? cfg.issueScanFullMaxCommitFetches
+          : cfg.issueScanMaxCommitFetches,
+        maxFilesPerCommit: cfg.issueScanMaxFilesPerCommit,
+        actorId: config.project.createdBy,
+        importIssues: (tokens, onProgress) =>
+          importNamedIssues(
+            dbClient,
+            config,
+            tokens,
+            full ? cfg.issueImportFullMaxLookups : cfg.issueImportMaxLookups,
+            async (progress) => {
+              await assertNotCancelled();
+              await onProgress(progress);
+            }
+          ),
+        onProgress: async (progress) => {
+          await assertNotCancelled();
+          await writeProgress(progress);
+        },
+      }
+    );
+  } catch (err) {
+    if (err instanceof IssueScanCancelledError) {
+      report = { cancelled: true, full, scannedAt: new Date().toISOString() };
+    } else {
+      console.warn(
+        `[repoCacheRefresh] Issue scan failed for config ${config.id}:`,
+        err
+      );
+      report = {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Unknown error during issue scan",
+        scannedAt: new Date().toISOString(),
+      };
+    }
+  }
+  await storeIssueScanReport(dbClient, config.id, report);
+  return report;
+}
+
+/**
+ * Run the ticket scan on its own for one IMPACT config — the manual
+ * "Rescan" and "Scan full history" actions on the settings page. Reads the
+ * repository directly; the file cache is not touched.
+ */
+export async function scanRepoIssues(
+  configId: number,
+  dbClient: DbClient,
+  opts: IssueScanRunOptions = {}
+): Promise<
+  | IssueScanReport
+  | IssueScanCancelledReport
+  | { error: string; scannedAt: string }
+> {
+  const config = await (dbClient as any).projectCodeRepositoryConfig.findUnique(
+    {
+      where: { id: configId },
+      include: {
+        repository: {
+          select: { credentials: true, settings: true, provider: true },
+        },
+        project: { select: { createdBy: true } },
+      },
+    }
+  );
+  if (!config) {
+    throw new Error(`ProjectCodeRepositoryConfig ${configId} not found`);
+  }
+  if (config.purpose !== "IMPACT") {
+    throw new Error(`Config ${configId} is not an Impact repository`);
+  }
+  try {
+    const credentials = await resolveStoredCredentials(
+      config.repository.credentials,
+      config.repository.provider
+    );
+    const adapter = createGitRepoAdapter(
+      config.repository.provider,
+      credentials,
+      config.repository.settings as Record<string, string> | null
+    );
+    const branch = config.branch || (await adapter.getDefaultBranch());
+    // A stale cancel from an earlier run must not stop this one.
+    await clearCancelRequest(config.id);
+    // The settings page cancels through the connection's flag; an admin
+    // cancelling the job from the Queues page arrives through `opts`.
+    const isCancelled = opts.isCancelled;
+    return await runIssueScan(dbClient, config, adapter, branch, {
+      ...opts,
+      isCancelled: async () =>
+        (await cancelRequested(config.id)) ||
+        (isCancelled ? await isCancelled() : false),
+    });
+  } catch (err) {
+    // The route marked the config running; leave a report, not a flag.
+    const report = {
+      error:
+        err instanceof Error ? err.message : "Unknown error during issue scan",
+      scannedAt: new Date().toISOString(),
+    };
+    await storeIssueScanReport(dbClient, config.id, report);
+    return report;
+  } finally {
+    await clearCancelRequest(config.id);
+  }
+}
+
+/** Only IMPACT configs with the ticket scan switched on are scanned. */
+export function shouldScanIssues(config: {
+  purpose: string | null | undefined;
+  issueScanEnabled: boolean | null | undefined;
+}): boolean {
+  return config.purpose === "IMPACT" && config.issueScanEnabled !== false;
+}
+
 export interface RefreshResult {
   success: boolean;
   fileCount: number;
@@ -108,19 +628,48 @@ export interface RefreshResult {
   error?: string;
 }
 
+export interface RefreshRepoCacheOptions {
+  /** Polled between fetch batches; true stops the refresh with an error. */
+  isCancelled?: () => Promise<boolean>;
+}
+
+/** A live cache whose recorded contents cover every listed file. */
+async function hasCompleteLiveCache(config: {
+  id: number;
+  cacheFileCount: number | null;
+  cacheContentFileCount: number | null;
+}): Promise<boolean> {
+  return (
+    config.cacheFileCount != null &&
+    config.cacheContentFileCount != null &&
+    config.cacheContentFileCount >= config.cacheFileCount &&
+    (await repoFileCache.hasFiles(config.id))
+  );
+}
+
+/** What a refresh an administrator stopped records as its error. */
+export const REFRESH_CANCELLED_MESSAGE = "Cancelled from the Queues page";
+
 /**
  * Refresh the code repository cache for a given ProjectCodeRepositoryConfig.
  *
  * This is the shared logic used by both the API route (manual refresh) and
  * the background worker (automatic refresh on expiry).
  *
- * Performs: invalidate old cache → fetch file list → store in Valkey →
- * fetch file contents → store in Valkey → update DB status.
+ * Performs: fetch file list and contents → stage in Valkey → swap the staged
+ * keys in for the live ones → update DB status. The old cache stays live
+ * when the fetch fails, is cancelled, or comes back rate-limited.
  */
 export async function refreshRepoCache(
   configId: number,
-  dbClient: DbClient
+  dbClient: DbClient,
+  opts: RefreshRepoCacheOptions = {}
 ): Promise<RefreshResult> {
+  const assertNotCancelled = async () => {
+    if (opts.isCancelled && (await opts.isCancelled())) {
+      throw new Error(REFRESH_CANCELLED_MESSAGE);
+    }
+  };
   const config = await (dbClient as any).projectCodeRepositoryConfig.findUnique(
     {
       where: { id: configId },
@@ -128,6 +677,7 @@ export async function refreshRepoCache(
         repository: {
           select: { credentials: true, settings: true, provider: true },
         },
+        project: { select: { createdBy: true } },
       },
     }
   );
@@ -137,6 +687,12 @@ export async function refreshRepoCache(
   }
 
   if (!config.cacheEnabled) {
+    if (config.purpose === "IMPACT") {
+      await storeMarkerScanReport(dbClient, config.id, {
+        skipped: "privacy_mode",
+        scannedAt: new Date().toISOString(),
+      });
+    }
     return {
       success: false,
       fileCount: 0,
@@ -148,7 +704,10 @@ export async function refreshRepoCache(
     };
   }
 
-  const credentials = config.repository.credentials as Record<string, string>;
+  const credentials = await resolveStoredCredentials(
+    config.repository.credentials,
+    config.repository.provider
+  );
   const adapter = createGitRepoAdapter(
     config.repository.provider,
     credentials,
@@ -156,15 +715,14 @@ export async function refreshRepoCache(
   );
   const branch = config.branch || (await adapter.getDefaultBranch());
 
-  // Invalidate existing cache
-  await repoFileCache.invalidate(config.id);
-
-  // Update DB status to "pending"
+  // The live cache keeps serving until the new download is staged and
+  // swapped in, so a slow or failed refresh never leaves the config empty.
   await (dbClient as any).projectCodeRepositoryConfig.update({
     where: { id: config.id },
     data: { cacheStatus: "pending", cacheError: null },
   });
 
+  let staged: StagedRepoCache | null = null;
   try {
     const pathPatterns =
       (config.pathPatterns as unknown as PathPattern[]) ?? [];
@@ -177,11 +735,17 @@ export async function refreshRepoCache(
     // Prefer ONE archive download that yields BOTH the file list and the file
     // contents (like `git clone`) — no per-directory API tree-walk and no
     // per-file rate limits. Fall back to the API tree-walk + per-file fetch
-    // when the provider has no archive support or the archive download fails.
+    // when the provider has no archive support or the archive download fails
+    // for a reason the per-file path can survive. An auth rejection or a rate
+    // limit is surfaced instead: the outer catch keeps the live cache and
+    // records the cause where the settings page shows it.
     let tree: ArchiveTree | null = null;
+    await assertNotCancelled();
     try {
       tree = await adapter.downloadArchiveTree(branch);
     } catch (archiveErr) {
+      const reason = archiveFailureReason(archiveErr);
+      if (reason) throw new Error(reason);
       console.warn(
         `[repoCacheRefresh] Archive download failed, falling back to tree-walk + per-file fetch:`,
         archiveErr
@@ -189,6 +753,7 @@ export async function refreshRepoCache(
       tree = null;
     }
 
+    await assertNotCancelled();
     if (tree) {
       const matched = applyPathPatterns(tree.files, pathPatterns);
       contentMap = await tree.getContents(new Set(matched.map((f) => f.path)));
@@ -218,20 +783,60 @@ export async function refreshRepoCache(
         files,
         adapter,
         branch,
-        10
+        10,
+        assertNotCancelled
       ));
     }
 
     const totalSize = files.reduce((sum, f) => sum + (f.size ?? 0), 0);
 
-    // Store file list in Valkey
-    await repoFileCache.setFiles(config.id, files, config.cacheTtlDays, {
+    staged = await repoFileCache.stage(config.id, files, contentMap, {
       truncated,
     });
+    await assertNotCancelled();
 
-    // Record the file list now so the UI can show the list count. Status stays
-    // "pending" until contents are cached so "success" never lies about content
-    // being available.
+    // Half a repo must not replace a complete one: keep the live cache and
+    // record the partial fetch as the refresh's error.
+    if (contentRateLimited && (await hasCompleteLiveCache(config))) {
+      await repoFileCache.discardStaged(staged);
+      staged = null;
+      const message = `Provider rate limit reached after fetching ${contentMap.size} of ${files.length} file contents; the previous cache is still in use`;
+      await repoFileCache.setError(config.id, message, config.cacheTtlDays);
+      await (dbClient as any).projectCodeRepositoryConfig.update({
+        where: { id: config.id },
+        data: { cacheStatus: "error", cacheError: message },
+      });
+      if (shouldScanMarkers(config)) {
+        await runMarkerScan(
+          dbClient,
+          config,
+          adapter,
+          branch,
+          contentMap,
+          true
+        );
+      }
+      if (shouldScanIssues(config)) {
+        await runIssueScan(dbClient, config, adapter, branch, {
+          isCancelled: opts.isCancelled,
+        });
+      }
+      return {
+        success: false,
+        fileCount: files.length,
+        totalSize,
+        truncated,
+        contentCached: contentMap.size,
+        contentRateLimited: true,
+        error: message,
+      };
+    }
+
+    await repoFileCache.commitStaged(staged, config.cacheTtlDays);
+    staged = null;
+
+    // Status stays "pending" until the counts match what is now live, so
+    // "success" never lies about content being available.
     await (dbClient as any).projectCodeRepositoryConfig.update({
       where: { id: config.id },
       data: {
@@ -241,14 +846,6 @@ export async function refreshRepoCache(
         cacheError: null,
       },
     });
-
-    if (contentMap.size > 0) {
-      await repoFileCache.setFileContents(
-        config.id,
-        contentMap,
-        config.cacheTtlDays
-      );
-    }
 
     // Finalize: mark success now that contents are cached. cacheContentFileCount
     // records how many file contents were actually stored — the UI warns when
@@ -260,6 +857,22 @@ export async function refreshRepoCache(
         cacheContentFileCount: contentMap.size,
       },
     });
+
+    if (shouldScanMarkers(config)) {
+      await runMarkerScan(
+        dbClient,
+        config,
+        adapter,
+        branch,
+        contentMap,
+        contentRateLimited
+      );
+    }
+    if (shouldScanIssues(config)) {
+      await runIssueScan(dbClient, config, adapter, branch, {
+        isCancelled: opts.isCancelled,
+      });
+    }
 
     return {
       success: true,
@@ -275,13 +888,18 @@ export async function refreshRepoCache(
         ? fetchErr.message
         : "Unknown error during file fetch";
 
-    // Store error in both Valkey and DB
-    await repoFileCache.setError(config.id, errorMessage, config.cacheTtlDays);
+    if (staged) await repoFileCache.discardStaged(staged);
+    // Store error in both Valkey and DB. A kept cache keeps its fetch time.
+    const keptCache = await repoFileCache.setError(
+      config.id,
+      errorMessage,
+      config.cacheTtlDays
+    );
     await (dbClient as any).projectCodeRepositoryConfig.update({
       where: { id: config.id },
       data: {
         cacheStatus: "error",
-        cacheLastFetchedAt: new Date(),
+        ...(!keptCache && { cacheLastFetchedAt: new Date() }),
         cacheError: errorMessage,
       },
     });

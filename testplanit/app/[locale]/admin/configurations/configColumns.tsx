@@ -1,13 +1,8 @@
-import { ProjectIcon } from "@/components/ProjectIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
@@ -16,17 +11,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Configurations } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
-import {
-  Boxes,
-  CircleCheckBig,
-  CircleSlash2,
-  Component,
-  SquarePen,
-  Trash,
-} from "lucide-react";
+import { ColumnDef } from "@/components/tables/tableFeatures";
+import { CircleSlash2, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
+import { sortVariantsByCategory } from "./configurationListUtils";
 
 export type ConfigWithVariants = Configurations & {
   variants: {
@@ -35,6 +24,7 @@ export type ConfigWithVariants = Configurations & {
       name: string;
       isEnabled: boolean;
       categoryId: number;
+      category?: { name: string };
     };
   }[];
   projects?: {
@@ -232,42 +222,26 @@ export const useColumns = (
         header: t("fields.variants"),
         enableSorting: true,
         enableResizing: true,
-        size: 100,
-        cell: ({ row }) => {
-          const hasVariants = row.original.variants.length > 0;
-          return (
-            <div className="text-center">
-              {hasVariants && (
-                <Popover>
-                  <PopoverTrigger
-                    className="cursor-default"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    <Badge>
-                      {" "}
-                      <Component className="w-4 h-4 me-1" />
-                      {row.original.variants.length}
-                    </Badge>
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    {row.original.variants.map((variant) => (
-                      <Badge key={variant.variant.id}>
-                        {variant.variant.isEnabled ? (
-                          <CircleCheckBig className="w-4 h-4" />
-                        ) : (
-                          <CircleSlash2 className="w-4 h-4 text-destructive" />
-                        )}
-                        <span className="ms-1">{variant.variant.name}</span>
-                      </Badge>
-                    ))}
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-          );
-        },
+        size: 350,
+        cell: ({ row }) => (
+          <div className="flex flex-wrap gap-1">
+            {sortVariantsByCategory(row.original.variants).map(
+              ({ variant }) => (
+                <Badge
+                  key={variant.id}
+                  variant={variant.isEnabled ? "default" : "outline"}
+                  title={variant.category?.name}
+                  data-testid={`config-variant-${row.original.id}-${variant.id}`}
+                >
+                  {!variant.isEnabled && (
+                    <CircleSlash2 className="w-4 h-4 me-1 text-destructive" />
+                  )}
+                  {variant.name}
+                </Badge>
+              )
+            )}
+          </div>
+        ),
       },
       {
         id: "projects",
@@ -277,42 +251,11 @@ export const useColumns = (
         enableResizing: true,
         size: 100,
         cell: ({ row }) => {
-          const projects = row.original.projects ?? [];
-          return (
-            <div className="text-center">
-              {projects.length > 0 && (
-                <Popover>
-                  <PopoverTrigger
-                    className="cursor-default"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    <Badge>
-                      <Boxes className="w-4 h-4 me-1" />
-                      {projects.length}
-                    </Badge>
-                  </PopoverTrigger>
-                  <PopoverContent className="flex flex-wrap gap-1">
-                    {projects.map((p) => (
-                      <Badge
-                        key={p.projectId}
-                        variant="secondary"
-                        className="gap-1"
-                      >
-                        <ProjectIcon
-                          iconUrl={p.project.iconUrl}
-                          width={14}
-                          height={14}
-                        />
-                        {p.project.name}
-                      </Badge>
-                    ))}
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-          );
+          const projects = (row.original.projects ?? []).map((p) => p.project);
+          if (projects.length === 0) {
+            return null;
+          }
+          return <ProjectListDisplay projects={projects} usePopover={true} />;
         },
       },
       {

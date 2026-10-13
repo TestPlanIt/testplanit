@@ -132,6 +132,30 @@ describe("AddFilterButton", () => {
     expect(onPick).toHaveBeenCalledTimes(1);
     expect(onPick.mock.calls[0][0].key).toBe("tags");
   });
+
+  // Radix restores focus to the trigger on a deferred tick after the menu
+  // unmounts; after a pick that would dismiss the chip editor that just
+  // opened, so the hand-back is suppressed only for picks.
+  it("does not hand focus back to the trigger after a pick", async () => {
+    render(<AddFilterButton registry={repoRegistry} onPick={() => {}} />);
+    const trigger = screen.getByTestId("filter-bar-add");
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByTestId("filter-dimension-option-tags"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(document.activeElement).not.toBe(trigger);
+  });
+
+  it("still returns focus to the trigger when dismissed without a pick", async () => {
+    render(<AddFilterButton registry={repoRegistry} onPick={() => {}} />);
+    const trigger = screen.getByTestId("filter-bar-add");
+    trigger.focus();
+    fireEvent.click(trigger);
+    fireEvent.keyDown(document.activeElement ?? document.body, {
+      key: "Escape",
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(document.activeElement).toBe(trigger);
+  });
 });
 
 describe("AddFilterButton at the predicate cap", () => {

@@ -5,6 +5,12 @@ import {
 } from "~/zenstack/models";
 import { z } from "zod/v4";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import {
+  coerceCaseFieldValue,
+  defaultCaseFieldValue,
+  isMissingValue,
+} from "~/lib/services/caseFieldValueCoercion";
+import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
@@ -47,9 +53,18 @@ const FieldMappingSchema = z.object({
       z.object({
         id: z.number(),
         name: z.string(),
+        isDefault: z.boolean().optional(),
       })
     )
     .optional(),
+  // Field metadata for defaults and validation; server-built mappings
+  // (loadTemplateData) carry it, the generation wizard's may not.
+  isRequired: z.boolean().optional(),
+  isRestricted: z.boolean().optional(),
+  isChecked: z.boolean().nullable().optional(),
+  defaultValue: z.string().nullable().optional(),
+  minValue: z.number().nullable().optional(),
+  maxValue: z.number().nullable().optional(),
 });
 
 // AddCase inline parameters/dataset (PARAM-AddCase). Both optional; datasetRows
@@ -107,6 +122,10 @@ export const ImportInputSchema = z.object({
   autoGenerateTags: z.boolean(),
   testCases: z.array(TestCaseInputSchema),
   fieldMappings: z.array(FieldMappingSchema),
+  // API writers (bulk-create) fail a case on a custom field value, required
+  // field or restricted field the UI would refuse; the generation flows keep
+  // their best-effort behaviour and drop a value they can't store.
+  strictFieldValues: z.boolean().optional(),
   source: z.enum(RepositoryCaseSource).optional(),
   // Issue linking (optional)
   issue: z
@@ -168,65 +187,13 @@ export interface ImportResult {
 export interface ImportAuthor {
   userId: string;
   userName: string;
-}
-
-function processFieldValue(
-  fieldType: string,
-  fieldValue: any,
-  fieldOptions?: { id: number; name: string }[]
-): any {
-  switch (fieldType) {
-    case "Text Long":
-      if (typeof fieldValue === "string") {
-        return JSON.stringify(ensureTipTapJSON(fieldValue));
-      }
-      return JSON.stringify(fieldValue);
-
-    case "Dropdown":
-    case "Multi-Select":
-      if (Array.isArray(fieldValue)) {
-        return fieldValue.map((optionName: any) => {
-          const option = fieldOptions?.find((fo) => fo.name === optionName);
-          return option ? option.id : optionName;
-        });
-      } else if (typeof fieldValue === "string") {
-        const option = fieldOptions?.find((fo) => fo.name === fieldValue);
-        return option ? option.id : fieldValue;
-      }
-      return fieldValue;
-
-    case "Checkbox":
-      return Boolean(fieldValue);
-
-    case "Integer":
-      return parseInt(fieldValue as string) || 0;
-
-    case "Number":
-      return parseFloat(fieldValue as string) || 0;
-
-    default:
-      return fieldValue;
-  }
+  /** False when the author may not set restricted fields (strict mode). */
+  canEditRestrictedFields?: boolean;
 }
 
 function convertStepToTipTap(value: any) {
   if (typeof value === "string") {
     return ensureTipTapJSON(value);
-  }
-  return value || emptyEditorContent;
-}
-
-function convertStepToTipTapForVersion(value: any) {
-  if (typeof value === "string") {
-    return {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [{ type: "text", text: value }],
-        },
-      ],
-    };
   }
   return value || emptyEditorContent;
 }
@@ -325,13 +292,14 @@ export async function persistGeneratedTestCases(
         externalId: string | null;
       } | null = null;
       if (data.issue) {
-        sharedIssue = await tx.issue.upsert({
-          where: {
-            externalId_integrationId: {
-              externalId: data.issue.externalId,
-              integrationId: data.issue.integrationId,
-            },
-          },
+        // The ninth PROV-06 site: this transaction is opened on the hooked
+        // base client (auditedTransaction), which carries side-effect hooks
+        // but no policy plugin, so the field-level requirement-lock deny
+        // never fires on it either. `tx` (not `baseDb`) is passed through so
+        // the write stays inside this caller's audited transaction.
+        sharedIssue = await upsertLinkedIssueShell(tx, {
+          externalId: data.issue.externalId,
+          integrationId: data.issue.integrationId,
           create: {
             name: data.issue.issueKey,
             title: data.issue.title,
@@ -393,6 +361,9 @@ export async function persistGeneratedTestCases(
           .filter((url): url is string => !!url)
       );
       const folderIdBySourceUrl = new Map<string, number>();
+      // Version snapshots record the folder each case actually lands in;
+      // callers' `folderName` can be a placeholder rather than the real name.
+      const folderNameById = new Map<number, string>();
 
       if (sourceUrls.size > 1) {
         // Multiple pages — create a subfolder per page
@@ -476,6 +447,7 @@ export async function persistGeneratedTestCases(
             }
           }
           folderIdBySourceUrl.set(url, folder.id);
+          folderNameById.set(folder.id, folderName);
         }
       }
 
@@ -495,6 +467,12 @@ export async function persistGeneratedTestCases(
         });
         resolvedTargetFolderId = folder.id;
         resolvedFolderName = data.destinationFolder.name;
+      } else {
+        const target = await tx.repositoryFolders.findUnique({
+          where: { id: data.folderId },
+          select: { name: true },
+        });
+        if (target) resolvedFolderName = target.name;
       }
 
       // Strict-transitive gate: if the caller picked a state at or past
@@ -519,6 +497,11 @@ export async function persistGeneratedTestCases(
       }
 
       for (const testCase of data.testCases) {
+        // Each case gets its own savepoint. Without it a failing case left its
+        // earlier writes behind, and a failed statement aborted the whole
+        // transaction: every later case failed, and COMMIT silently rolled
+        // back the cases already reported as created.
+        await tx.$executeRawUnsafe("SAVEPOINT import_case");
         try {
           const calculatedOrder = data.maxOrder + importedCount + 1;
           // Use subfolder if one was created for this page, otherwise use the
@@ -546,53 +529,28 @@ export async function persistGeneratedTestCases(
               ? [{ id: sharedIssue.id }]
               : [];
 
-          // 1. Create-or-restore the repository case. A prior soft-
-          // deleted case at the same (projectId, name, className,
-          // source) tuple — including `className: null`, which Postgres
-          // treats as distinct so the @@unique constraint doesn't fire
-          // — gets resurrected with the fresh payload instead of
-          // 23505ing. We can't use Prisma's compound-unique upsert here
-          // because the generated type rejects null for nullable
-          // members (`className: string`, not `string | null`), so the
-          // find-then-branch pattern is the typesafe path.
+          // 1. Create the repository case. The (projectId, name, className,
+          // source) unique index never fires here: className is null, and
+          // Postgres treats nulls as distinct.
           const caseName = testCase.name.slice(0, 255);
           const caseSource = data.source ?? RepositoryCaseSource.API;
-          const caseFields = {
-            repositoryId: data.repositoryId,
-            folderId: targetFolderId,
-            templateId: data.templateId,
-            stateId: effectiveStateId,
-            order: calculatedOrder,
-            creatorId: userId,
-            automated: testCase.automated ?? false,
-            estimate: testCase.estimate,
-            currentVersion: 1,
-          };
-          const softDeletedExisting = await tx.repositoryCases.findFirst({
-            where: {
+          const newCase = await tx.repositoryCases.create({
+            data: {
               projectId: data.projectId,
               name: caseName,
-              className: null,
               source: caseSource,
-              isDeleted: true,
+              repositoryId: data.repositoryId,
+              folderId: targetFolderId,
+              templateId: data.templateId,
+              stateId: effectiveStateId,
+              order: calculatedOrder,
+              creatorId: userId,
+              automated: testCase.automated ?? false,
+              estimate: testCase.estimate,
+              currentVersion: 1,
             },
             select: { id: true },
           });
-          const newCase = softDeletedExisting
-            ? await tx.repositoryCases.update({
-                where: { id: softDeletedExisting.id },
-                data: { ...caseFields, isDeleted: false },
-                select: { id: true },
-              })
-            : await tx.repositoryCases.create({
-                data: {
-                  projectId: data.projectId,
-                  name: caseName,
-                  source: caseSource,
-                  ...caseFields,
-                },
-                select: { id: true },
-              });
 
           // Link tags/issues through the explicit join models. The implicit
           // m2m `connect` syntax was replaced by RepositoryCaseTag /
@@ -672,31 +630,52 @@ export async function persistGeneratedTestCases(
           }
 
           // 3. Prepare version data
+          // Version 1 must equal the case as imported, so the snapshot runs
+          // the SAME conversion as the Steps rows written in step 6. The
+          // version used to have its own wrapper that turned a serialized
+          // `{"type":"doc"…}` string into literal paragraph text, so a caller
+          // that passed Tiptap JSON as a string got a readable case and a
+          // version page full of raw JSON.
           const resolvedStepsForVersion =
             testCase.steps?.map((step) => ({
-              step: convertStepToTipTapForVersion(step.step),
-              expectedResult: convertStepToTipTapForVersion(
-                step.expectedResult
-              ),
+              step: convertStepToTipTap(step.step),
+              expectedResult: convertStepToTipTap(step.expectedResult),
             })) || [];
+
+          // Tags and issues are read back from the join rows created above
+          // rather than re-derived from the input. The old derivation only
+          // saw `versionTags` / `versionIssues` (modal-add) or the
+          // `autoGenerateTags` name list, so a caller passing resolved
+          // `tagIds` / `issueIds` — which is what bulk-create does — got a
+          // case with tags and a snapshot claiming it had none.
+          const linkedTags = await tx.repositoryCaseTag.findMany({
+            where: { caseId: newCase.id },
+            select: { tag: { select: { name: true } } },
+          });
+          const linkedIssues = await tx.repositoryCaseIssue.findMany({
+            where: { caseId: newCase.id },
+            select: {
+              issue: { select: { id: true, name: true, externalId: true } },
+            },
+          });
 
           const issuesDataForVersion = testCase.versionIssues?.length
             ? testCase.versionIssues
-            : sharedIssue
-              ? [
-                  {
-                    id: sharedIssue.id,
-                    name: sharedIssue.name,
-                    externalId: sharedIssue.externalId,
-                  },
-                ]
-              : [];
+            : linkedIssues.map(
+                (link: {
+                  issue: {
+                    id: number;
+                    name: string;
+                    externalId: string | null;
+                  };
+                }) => link.issue
+              );
 
           const tagNamesForVersion = testCase.versionTags?.length
             ? testCase.versionTags
-            : data.autoGenerateTags && testCase.tags
-              ? testCase.tags
-              : [];
+            : linkedTags.map(
+                (link: { tag: { name: string } }) => link.tag.name
+              );
 
           // 4. Create version
           const newVersion = await tx.repositoryCaseVersions.create({
@@ -707,7 +686,8 @@ export async function persistGeneratedTestCases(
               projectId: data.projectId,
               repositoryId: data.repositoryId,
               folderId: targetFolderId,
-              folderName: resolvedFolderName,
+              folderName:
+                folderNameById.get(targetFolderId) ?? resolvedFolderName,
               templateId: data.templateId,
               templateName: data.templateName,
               name: testCase.name.slice(0, 255),
@@ -755,35 +735,59 @@ export async function persistGeneratedTestCases(
               });
             }
           } else {
-            // Name-keyed path (wizard import) — resolve via fieldMappings
+            // Name-keyed path (generation flows, bulk-create) — resolve via
+            // fieldMappings, storing each value in the shape the web UI does
+            // and starting unset fields from the template's defaults.
+            const strict = data.strictFieldValues === true;
+            const provided = new Map<string, unknown>();
             for (const [fieldName, fieldValue] of Object.entries(
               testCase.fieldValues
             )) {
+              const mapping = fieldMappingsByName.get(fieldName);
+              if (!mapping || mapping.fieldType === "Steps") continue;
+              if (fieldValue == null) continue;
               if (
-                fieldName === "Steps" ||
-                fieldName.toLowerCase().includes("steps")
+                strict &&
+                mapping.isRestricted &&
+                author.canEditRestrictedFields === false
               ) {
+                throw new Error(
+                  `Custom field '${fieldName}' is restricted; you do not have permission to set it.`
+                );
+              }
+              const coerced = coerceCaseFieldValue(mapping, fieldValue);
+              if (!coerced.ok) {
+                if (strict) throw new Error(coerced.error);
                 continue;
               }
+              provided.set(fieldName, coerced.value);
+            }
 
-              const mapping = fieldMappingsByName.get(fieldName);
-              if (mapping && fieldValue != null) {
-                const processedValue = processFieldValue(
-                  mapping.fieldType,
-                  fieldValue,
-                  mapping.fieldOptions
+            for (const mapping of data.fieldMappings) {
+              if (mapping.fieldType === "Steps") continue;
+              const value = provided.has(mapping.fieldName)
+                ? provided.get(mapping.fieldName)
+                : defaultCaseFieldValue(mapping);
+              if (
+                strict &&
+                mapping.isRequired &&
+                isMissingValue(mapping, value)
+              ) {
+                throw new Error(
+                  `Required custom field '${mapping.fieldName}' has no value.`
                 );
-                fieldValueData.push({
-                  testCaseId: newCase.id,
-                  fieldId: mapping.caseFieldId,
-                  value: processedValue,
-                });
-                fieldVersionValueData.push({
-                  versionId: newVersion.id,
-                  field: fieldName,
-                  value: processedValue,
-                });
               }
+              if (value === undefined) continue;
+              fieldValueData.push({
+                testCaseId: newCase.id,
+                fieldId: mapping.caseFieldId,
+                value,
+              });
+              fieldVersionValueData.push({
+                versionId: newVersion.id,
+                field: mapping.fieldName,
+                value,
+              });
             }
           }
 
@@ -903,6 +907,7 @@ export async function persistGeneratedTestCases(
             );
           }
 
+          await tx.$executeRawUnsafe("RELEASE SAVEPOINT import_case");
           importedIds.push(newCase.id);
           importedCount++;
           results.push({
@@ -912,6 +917,10 @@ export async function persistGeneratedTestCases(
             caseId: newCase.id,
           });
         } catch (error) {
+          // Undo this case only. If even that fails the transaction is
+          // unusable, so let it abort rather than report anything as created.
+          await tx.$executeRawUnsafe("ROLLBACK TO SAVEPOINT import_case");
+          await tx.$executeRawUnsafe("RELEASE SAVEPOINT import_case");
           const msg = error instanceof Error ? error.message : String(error);
           errors.push(`Failed to import "${testCase.name}": ${msg}`);
           results.push({

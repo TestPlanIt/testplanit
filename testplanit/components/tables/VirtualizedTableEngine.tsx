@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable react-hooks/incompatible-library -- This file consumes TanStack Table / TanStack Virtual APIs that return unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as components/matrix/MatrixGrid.tsx and hooks/useVirtualizedInfiniteList.ts). */
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,20 +15,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  ColumnDef,
-  ColumnSizingState,
-  ExpandedState,
-  flexRender,
-  getCoreRowModel,
-  getExpandedRowModel,
-  getGroupedRowModel,
-  OnChangeFn,
-  RowSelectionState,
-  Updater,
-  useReactTable,
-  VisibilityState,
-} from "@tanstack/react-table";
+import { useTable } from "@tanstack/react-table";
 import {
   ArrowDownAZ,
   ArrowDownUp,
@@ -55,15 +41,29 @@ import { cn } from "~/utils";
 import {
   ColumnMenuItems,
   type CustomColumnMeta,
+  type DataRow,
   type SortConfig,
   getFlexPinningStyles,
   resolveGroupableCellContent,
+  RowExpanderPrefix,
+  NESTING_INDENT_PX,
   TruncatedHeaderLabel,
-  useExpanderColumn,
   useInitialColumnPinning,
   usePersistedColumnOrder,
   useSortingAdapter,
 } from "./dataTableShared";
+import {
+  type ColumnDef,
+  type ColumnSizingState,
+  dataTableFeatures,
+  type ExpandedState,
+  flexRender,
+  type OnChangeFn,
+  type Row,
+  type RowSelectionState,
+  type Updater,
+  type VisibilityState,
+} from "./tableFeatures";
 import { tableStyles } from "./tableStyles";
 
 /**
@@ -95,6 +95,20 @@ import { tableStyles } from "./tableStyles";
  */
 
 const ESTIMATED_ROW_HEIGHT = 44;
+
+/** How close the scroll offset has to get to a deep-linked row's own offset
+ *  to count as landed, and how many animation frames the attempt is allowed
+ *  to take before giving up. Dynamic row measurement keeps nudging the
+ *  target offset while rows settle, so this is a tolerance rather than an
+ *  equality, and the cap keeps the retry from ever fighting a reader who has
+ *  started scrolling. Read by the deep-link scroll effect below. */
+const DEEP_LINK_SCROLL_TOLERANCE_PX = 8;
+const DEEP_LINK_SCROLL_MAX_ATTEMPTS = 20;
+
+/** The `px-3` this engine puts on every cell. Named because the nesting
+ *  guide's default offset is measured from the cell's content origin, which
+ *  begins after it. */
+const CELL_PADDING_INLINE_PX = 12;
 
 /**
  * Render-prop shell that makes one flex header cell drag-reorderable. The cell
@@ -157,9 +171,34 @@ function SortableHeaderShell({
   return <>{children({ setNodeRef, dragStyle, grip })}</>;
 }
 
-export interface VirtualizedTableEngineProps {
-  columns: ColumnDef<any, any>[];
-  data: any[];
+/**
+ * Inert DOM props a consumer can attach to a virtualized row's outer element
+ * via `getRowProps`. Deliberately has NO `ref` member — see `getRowProps`'s
+ * own doc comment for why.
+ */
+export interface VirtualizedRowExtraProps {
+  className?: string;
+  /**
+   * Classes rendered on the row's pointer-events-none ring overlay (gap
+   * closure 26.2-15, UAT gap 12) instead of on the row's own `className`.
+   * An outline/inset-ring drawn directly on the row loses to a pinned
+   * (sticky) cell's opaque background and `z-index: 2` (`getFlexPinningStyles`
+   * in `dataTableShared.tsx`) -- the pinned cell paints over it. The overlay
+   * sits ABOVE every cell (`z-20`) and never intercepts pointer/drag events,
+   * so a candidate-row or drag-hover ring stays visible across the FULL row
+   * width, including over a pinned Actions column, while pinned-cell clicks
+   * (e.g. the kebab menu) keep working unchanged.
+   */
+  ringClassName?: string;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onDragEnter?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragLeave?: (event: React.DragEvent<HTMLDivElement>) => void;
+}
+
+export interface VirtualizedTableEngineProps<TData extends DataRow = any> {
+  columns: ColumnDef<TData, any>[];
+  data: TData[];
 
   columnVisibility: VisibilityState;
   onColumnVisibilityChange: (visibility: VisibilityState) => void;
@@ -191,7 +230,7 @@ export interface VirtualizedTableEngineProps {
   expanded?: ExpandedState;
   onExpandedChange?: OnChangeFn<ExpandedState>;
 
-  getSubRows?: (row: any, index: number) => any[] | undefined;
+  getSubRows?: (row: TData, index: number) => TData[] | undefined;
   subRowsLabel?: string;
 
   /**
@@ -207,7 +246,7 @@ export interface VirtualizedTableEngineProps {
   /** Stable row identity for selection state — without it TanStack keys
    * selection by row INDEX, which silently re-targets selections when the
    * data is filtered or re-sorted. */
-  getRowId?: (originalRow: any, index: number) => string;
+  getRowId?: (originalRow: TData, index: number) => string;
   /** Row-level click, mirroring paged mode's `onTestCaseClick`. Interactive
    * cell content (checkboxes, buttons) must stop propagation to opt out.
    * Grouped lead rows never fire it. */
@@ -350,11 +389,64 @@ export interface VirtualizedTableEngineProps {
    * when the highlight should fade.
    */
   highlightRowId?: string | number | null;
+  /**
+   * Per-row extension point for inert DOM props on a virtualized row's outer
+   * element. Called once per VISIBLE row on every render (the visible row
+   * count changes as the user scrolls), so it MUST be a pure function and
+   * MUST NEVER call a React hook — hang any per-row hook off a real
+   * component instead, never off this callback.
+   *
+   * The returned `className` is appended LAST to the row's own class list,
+   * so it composes with (and can override) the engine's `highlightRowId`
+   * treatment rather than replacing it.
+   *
+   * There is deliberately no `ref` slot: the engine's own virtualizer
+   * `measureElement` ref must keep a stable identity, or TanStack Virtual
+   * re-measures every row on every render. A consumer that needs the row's
+   * DOM node reads `event.currentTarget` from one of the handlers below, or
+   * queries `[data-row-id]`.
+   */
+  getRowProps?: (row: Row<TData>) => VirtualizedRowExtraProps | undefined;
+  /**
+   * Nesting depth for a table that models its own hierarchy as a `depth`
+   * field on a FLAT data array rather than through TanStack's `getSubRows`
+   * expansion. TanStack's own `row.depth` stays 0 for such a table, so
+   * without this the engine cannot tell a child row from a root and the
+   * nested-row surface never paints (the requirements tree list is the
+   * case this exists for: it flattens its tree itself so the virtualizer
+   * sees one flat window).
+   *
+   * OPT-IN, and deliberately additive: absent, every existing table keeps
+   * reading nesting from `row.depth` exactly as it does today. It feeds the
+   * SAME `isSubRow` the expansion path already computes, so a consumer that
+   * opts in gets the established nested-row treatment (tinted surface,
+   * softened intra-group dividers, matching pinned-cell fill) rather than a
+   * second, parallel nesting style.
+   */
+  getRowNestingDepth?: (row: Row<TData>) => number;
+  /**
+   * Where, in px from the first cell's inline start, to paint a FULL-ROW-
+   * HEIGHT nesting guide — or `null`/undefined for none.
+   *
+   * Companion to `getRowNestingDepth`, and needed for the same reason: a
+   * table that draws its own indent inside a wide first column has nowhere
+   * to put the engine's own guide (which hangs off that column's right
+   * edge, correct only when the column IS the indent cell). It cannot draw
+   * a full-height one itself either — every cell's content is wrapped in a
+   * `flex-1 truncate` div that both CLIPS and sizes to its content, so a
+   * rule drawn from inside the cell renderer can only ever be as tall as
+   * the text. Painting it here, as a sibling of that wrapper, is what lets
+   * it reach the row's top and bottom borders.
+   *
+   * The offset is the CALLER's to compute because only the caller knows its
+   * own indent and leading slots.
+   */
+  getRowNestingGuideOffset?: (row: Row<TData>) => number | null;
   testIdPrefix?: string;
   rowTestIdPrefix?: string;
 }
 
-export function VirtualizedTableEngine({
+export function VirtualizedTableEngine<TData extends DataRow>({
   columns,
   data,
   columnVisibility,
@@ -394,9 +486,12 @@ export function VirtualizedTableEngine({
   fillViewport = false,
   scrollToRowId,
   highlightRowId,
+  getRowProps,
+  getRowNestingDepth,
+  getRowNestingGuideOffset,
   testIdPrefix = "virtualized-table",
   rowTestIdPrefix = "virtualized-row",
-}: VirtualizedTableEngineProps) {
+}: VirtualizedTableEngineProps<TData>) {
   const t = useTranslations("common.table");
   const tActions = useTranslations("common.actions");
   const tLabels = useTranslations("common.labels");
@@ -477,15 +572,15 @@ export function VirtualizedTableEngine({
   // viewport mirror the body's scrollLeft so the columns stay aligned.
   const headerScrollRef = useRef<HTMLDivElement>(null);
 
-  // Prepend an expander column when rows can nest (grouping or sub-rows).
-  const expanderColumn = useExpanderColumn<any>(subRowsLabel);
-
   const groupingActive = !!(grouping && grouping.length > 0);
-  const finalColumns = useMemo(
-    () =>
-      groupingActive || getSubRows ? [expanderColumn, ...columns] : columns,
-    [groupingActive, getSubRows, expanderColumn, columns]
-  );
+
+  // No expander COLUMN is prepended any more. The chevron is rendered inline
+  // at the head of the first content cell (`RowExpanderPrefix`) -- see that
+  // component's own doc for why the column had to go. `finalColumns` is now
+  // just the caller's own set, kept as a named value so the rest of this file
+  // (column order, pinning, sizing) reads unchanged.
+  const expansionActive = groupingActive || Boolean(getSubRows);
+  const finalColumns = columns;
 
   // Drag-to-reorder columns, persisted per surface under the same key as
   // widths.
@@ -500,14 +595,13 @@ export function VirtualizedTableEngine({
     finalColumns,
   });
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns: finalColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getGroupedRowModel: groupingActive ? getGroupedRowModel() : undefined,
-    getExpandedRowModel:
-      groupingActive || getSubRows ? getExpandedRowModel() : undefined,
     getSubRows,
+    // See DataTable: keep open rows open across a refetch under v9.
+    autoResetExpanded: false,
     enableSorting: true,
     // The CALLER owns row order (server orderBy or its own sort of `data`) —
     // sortConfig is display state. Without this, TanStack re-sorts the rows
@@ -544,7 +638,7 @@ export function VirtualizedTableEngine({
   // Flush widths to storage when a resize gesture settles — writing on every
   // onChange tick would hammer localStorage. `isResizingColumn` is the dragged
   // column id while active and false once released.
-  const isResizingColumn = table.getState().columnSizingInfo.isResizingColumn;
+  const isResizingColumn = table.state.columnResizing.isResizingColumn;
   const wasResizingRef = useRef<string | false>(false);
   useEffect(() => {
     if (wasResizingRef.current && !isResizingColumn && columnSizingStorage) {
@@ -570,6 +664,7 @@ export function VirtualizedTableEngine({
   // unchanged. An explicit `loadedCount` prop still wins for server-lazy trees.
   const loadedRowCount = loadedCount ?? table.getCoreRowModel().flatRows.length;
   const leafColumns = table.getVisibleLeafColumns();
+
   const totalWidth = leafColumns.reduce((sum, c) => sum + c.getSize(), 0);
 
   // When a flex column is configured, the table stretches to fill its container
@@ -620,15 +715,30 @@ export function VirtualizedTableEngine({
   // grouping, the column set, or a caller-supplied external signal such as a
   // filter) — but NOT when a page is appended (that would defeat infinite
   // scroll).
+  // The COLUMN SET is deliberately NOT part of this key.
+  //
+  // It used to be, and that quietly broke deep links. A column set can change
+  // well after mount for reasons that have nothing to do with the result set:
+  // the requirements list appends its Actions column only once
+  // `useProjectPermissions` resolves, and responsive tables show/hide columns
+  // as the pane is resized. Each of those fired the scroll-to-top below --
+  // landing AFTER `scrollToRowId` had already centred a deep-linked row,
+  // silently throwing the reader back to row one (operator repro: opening
+  // `?requirement=<row 70>` left the list at scrollTop 0 with the row not
+  // even rendered).
+  //
+  // It is also wrong on its own terms: hiding a column is not a new result
+  // set, and being flung to the top of a long list for it is a wart. Sort,
+  // grouping and the caller's own signal all genuinely re-order or re-scope
+  // the rows, so those stay.
   const resetKey = useMemo(
     () =>
       JSON.stringify({
         sort: sortConfig ?? null,
         grouping: grouping ?? null,
-        cols: columns.map((c) => c.id),
         external: externalResetKey ?? null,
       }),
-    [sortConfig, grouping, columns, externalResetKey]
+    [sortConfig, grouping, externalResetKey]
   );
 
   const {
@@ -664,8 +774,58 @@ export function VirtualizedTableEngine({
       (r) => String(r.original?.id) === String(scrollToRowId)
     );
     if (index < 0) return;
-    scrolledToRef.current = scrollToRowId;
-    virtualizer.scrollToIndex(index, { align: "center" });
+
+    // RE-ASSERTED until it actually lands, and the guard is latched only
+    // once it has. A single call that latched immediately did not survive:
+    // the scroll-to-top in `useVirtualizedInfiniteList` can run AFTER this
+    // one and zero it -- in dev on every load, because React StrictMode
+    // double-invokes effects, and in production whenever anything changes
+    // that list's own reset key while a deep link is still settling. The
+    // effect then refused to retry, because it had already recorded the id
+    // as done, so `?requirement=<row 70>` opened at row one with the target
+    // not even rendered (operator report).
+    //
+    // Landing is CHECKED, not assumed: `getOffsetForIndex` gives the offset
+    // this index should sit at, including the clamp at the end of the list,
+    // so a row that simply cannot be centred still counts as landed instead
+    // of spinning the retry out. The attempt cap bounds the whole thing to
+    // roughly a third of a second, after which the guard latches regardless
+    // -- a deep link is never worth fighting the reader for longer than
+    // that, and by then they may be scrolling themselves.
+    //
+    // `getOffsetForIndex` is optional: it is not part of the surface a
+    // virtualizer stand-in must implement. Absent, the row counts as landed
+    // on the first attempt -- the same outcome as a row that cannot be
+    // centred.
+    let frame = 0;
+    let attempts = 0;
+    let cancelled = false;
+
+    const apply = () => {
+      if (cancelled) return;
+      virtualizer.scrollToIndex(index, { align: "center" });
+      attempts += 1;
+      frame = requestAnimationFrame(() => {
+        if (cancelled) return;
+        const target = virtualizer.getOffsetForIndex?.(index, "center")?.[0];
+        const current = virtualizer.scrollOffset;
+        const landed =
+          target == null ||
+          current == null ||
+          Math.abs(current - target) <= DEEP_LINK_SCROLL_TOLERANCE_PX;
+        if (landed || attempts >= DEEP_LINK_SCROLL_MAX_ATTEMPTS) {
+          scrolledToRef.current = scrollToRowId;
+          return;
+        }
+        apply();
+      });
+    };
+    apply();
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
   }, [scrollToRowId, rows, virtualizer]);
 
   const headers = table.getHeaderGroups().at(-1)?.headers ?? [];
@@ -797,8 +957,12 @@ export function VirtualizedTableEngine({
                         return (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
+                              {/* Not a <button>: header labels may carry
+                                  their own button (a help popover), and
+                                  buttons cannot nest. */}
+                              <div
+                                role="button"
+                                tabIndex={0}
                                 className="flex min-w-0 cursor-pointer items-center gap-1 outline-none"
                                 aria-label={t("columnOptions")}
                               >
@@ -813,7 +977,7 @@ export function VirtualizedTableEngine({
                                   className="h-3 w-3 shrink-0 opacity-50"
                                   aria-hidden="true"
                                 />
-                              </button>
+                              </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
                               <ColumnMenuItems
@@ -826,6 +990,10 @@ export function VirtualizedTableEngine({
                                 onHideColumn={onHideColumn}
                               />
                             </DropdownMenuContent>
+                            {(
+                              column.columnDef.meta as
+                                CustomColumnMeta | undefined
+                            )?.headerExtra ?? null}
                           </DropdownMenu>
                         );
                       }
@@ -886,13 +1054,15 @@ export function VirtualizedTableEngine({
                   renderHeaderCell(header, { dragStyle: {}, grip: null })
                 );
               }
-              // Pinned columns and the expander stay put; everything else can
-              // be dragged.
+              // Pinned columns, the expander, and any column that declares
+              // `meta.noReorder` stay put; everything else can be dragged.
               const reorderDisabledFor = (
                 column: (typeof headers)[number]["column"]
               ) =>
                 (enableColumnPinning && !!column.getIsPinned()) ||
-                column.id === "expander";
+                column.id === "expander" ||
+                (column.columnDef.meta as CustomColumnMeta | undefined)
+                  ?.noReorder === true;
               return (
                 <SortableContext
                   items={visibleHeaders
@@ -963,10 +1133,44 @@ export function VirtualizedTableEngine({
                 const row = rows[vItem.index];
                 if (!row) return null;
                 const isGrouped = row.getIsGrouped();
-                const isSubRow = row.depth > 0;
+                // `getRowNestingDepth` wins when supplied: a table that
+                // flattens its own tree carries the real depth on the row
+                // data, where TanStack's `row.depth` is always 0. Falls
+                // back to the expansion path's own depth otherwise, so
+                // nothing changes for a table that never passes it.
+                const isSubRow = (getRowNestingDepth?.(row) ?? row.depth) > 0;
+                // Row-scoped, not per-cell: the guide is painted on the row
+                // itself so it can cross the row's own divider -- see its
+                // own render below for why that placement is required.
+                //
+                // Without a consumer-supplied offset, an EXPANSION-based
+                // sub-row gets one derived from its first column's width, so
+                // the guide lands at that column's inner right edge -- where
+                // the indent cell ends, and exactly where this used to be
+                // drawn as a `border-e-4` on the cell itself. Measured from
+                // the row's own first visible cell rather than the leaf
+                // column list, so column pinning cannot reorder it out from
+                // under the guide. `undefined` means "no opinion" and falls
+                // through; an explicit `null` from the consumer means "no
+                // guide on this row" and is honoured.
+                const consumerGuideOffset = getRowNestingGuideOffset?.(row);
+                const nestingGuideOffset =
+                  consumerGuideOffset !== undefined
+                    ? consumerGuideOffset
+                    : row.depth > 0
+                      ? // Past the cell's own `px-3` and this row's indent,
+                        // but BEFORE the chevron slot, so the rule marks the
+                        // indent the row was pushed over by and leaves the
+                        // slot's full width clear between it and the text.
+                        // Placing it after the slot put it hard against the
+                        // first column's own content (operator UAT: "it's
+                        // right on top of the date").
+                        CELL_PADDING_INLINE_PX + row.depth * NESTING_INDENT_PX
+                      : null;
                 const isHighlighted =
                   highlightRowId != null &&
                   String(row.original?.id) === String(highlightRowId);
+                const rowExtra = getRowProps?.(row);
                 return (
                   <div
                     // Key by the virtual item (index), not the data id, so React
@@ -980,10 +1184,23 @@ export function VirtualizedTableEngine({
                     data-row-id={row.original?.id}
                     data-testid={`${rowTestIdPrefix}-${row.original?.id ?? vItem.index}`}
                     onClick={
-                      onRowClick && !isGrouped && row.original?.id != null
-                        ? () => onRowClick(row.original.id)
+                      (onRowClick && !isGrouped && row.original?.id != null) ||
+                      rowExtra?.onClick
+                        ? (event) => {
+                            if (
+                              onRowClick &&
+                              !isGrouped &&
+                              row.original?.id != null
+                            ) {
+                              onRowClick(row.original.id);
+                            }
+                            rowExtra?.onClick?.(event);
+                          }
                         : undefined
                     }
+                    onDragEnter={rowExtra?.onDragEnter}
+                    onDragOver={rowExtra?.onDragOver}
+                    onDragLeave={rowExtra?.onDragLeave}
                     className={cn(
                       "absolute start-0 top-0 flex border-b",
                       onRowClick && !isGrouped && "cursor-pointer",
@@ -997,8 +1214,11 @@ export function VirtualizedTableEngine({
                             // next (lighter) parent row is clearly the boundary.
                             tableStyles.rowSurfaceNested
                           : tableStyles.rowSurface,
-                      isHighlighted &&
-                        "bg-primary/10 outline outline-4 -outline-offset-2 outline-primary"
+                      // Tint only -- the outline itself moved to the ring
+                      // overlay below (gap closure 26.2-15) so it paints
+                      // above pinned cells too.
+                      isHighlighted && "bg-primary/10",
+                      rowExtra?.className
                     )}
                     style={{
                       width: tableWidth,
@@ -1038,13 +1258,7 @@ export function VirtualizedTableEngine({
                               column.getIsPinned() &&
                               (isSubRow
                                 ? "table-row-surface-nested"
-                                : "table-row-surface"),
-                            // Nesting guide: a wide colored bar on the RIGHT edge of
-                            // the first (indent) cell of a sub-row, marking where the
-                            // nested content begins.
-                            isSubRow &&
-                              cellIndex === 0 &&
-                              "border-e-4 border-e-primary"
+                                : "table-row-surface")
                           )}
                           style={{
                             ...(isFlex
@@ -1060,6 +1274,12 @@ export function VirtualizedTableEngine({
                               : {}),
                           }}
                         >
+                          {expansionActive && cellIndex === 0 && (
+                            <RowExpanderPrefix
+                              row={row}
+                              subRowsLabel={subRowsLabel}
+                            />
+                          )}
                           {wrap ? (
                             content
                           ) : (
@@ -1070,6 +1290,91 @@ export function VirtualizedTableEngine({
                         </div>
                       );
                     })}
+                    {/* Full-height nesting guide, drawn on the ROW rather
+                        than inside the first cell. Two reasons, both
+                        load-bearing: every cell wraps its content in a
+                        `flex-1 truncate` div that clips to the height of its
+                        own text, and the cell itself is `overflow-hidden`,
+                        so a rule drawn in either place stops short of the
+                        row's own 1px divider and reads as broken between
+                        consecutive sub-rows. `-bottom-px` extends it over
+                        that divider, and being a positioned descendant it
+                        paints above the row's border without needing a
+                        z-index that would also lift it over a pinned cell.
+                        `pointer-events-none` so it never intercepts a click
+                        or a native drag from the row beneath it.
+
+                        This REPLACED a `border-e-4 border-e-primary` on the
+                        sub-row's first cell, which had stopped being a
+                        primary-coloured bar at all: the nested-row rule in
+                        globals.css sets `border-color` on every side of a
+                        nested row's cells to the softened divider tint, so
+                        the guide silently computed to grey. Painting it as
+                        its own element is what keeps its colour its own.
+
+                        `z-10` clears a PINNED first cell, which is `sticky`
+                        with `z-index: 2` and an opaque fill and otherwise
+                        paints straight over this (the audit log pins its
+                        first column, and the guide was invisible there until
+                        this z-index was added). Kept below the ring overlay's
+                        `z-20` so a selection ring still reads on top.
+
+                        KNOWN LIMIT with a pinned first column: this is
+                        positioned against the ROW, so while the body is
+                        scrolled horizontally the sticky cell stays put and
+                        the guide travels with the row, separating the two.
+                        Not reachable at normal widths -- these tables give a
+                        column `flex`, so the body only scrolls once the
+                        window is narrow enough to force it. Living inside
+                        the cell instead would track the pin, at the cost of
+                        the cell's `overflow-hidden` clipping the rule back
+                        to the cell and losing the divider crossing. */}
+                    {nestingGuideOffset !== null && (
+                      <span
+                        aria-hidden="true"
+                        data-testid="virtualized-nesting-guide"
+                        className="pointer-events-none absolute top-0 -bottom-px z-10 w-1 bg-primary/40"
+                        style={{ insetInlineStart: nestingGuideOffset }}
+                      />
+                    )}
+                    {/* Ring/highlight overlay -- rendered ABOVE every cell,
+                        including a pinned (sticky) one, so an outline drawn
+                        here can never lose to the pinned cell's own opaque
+                        background + `z-index: 2` the way one painted on the
+                        row's own box does (gap closure 26.2-15, UAT gap 12).
+                        `pointer-events-none` so it never steals a click from
+                        the pinned Actions cell's kebab menu, or a native
+                        drag event from the row beneath it. Only mounted when
+                        there is something to show -- `isHighlighted` (the
+                        deep-link ring) or a consumer's own `ringClassName`
+                        (e.g. the requirements list's drag-candidate/drag-over
+                        rings) -- so a plain, unselected row costs nothing
+                        extra. */}
+                    {(isHighlighted || rowExtra?.ringClassName) && (
+                      <div
+                        aria-hidden="true"
+                        data-testid={`${rowTestIdPrefix}-${row.original?.id ?? vItem.index}-ring`}
+                        className={cn(
+                          "pointer-events-none absolute inset-0 z-20",
+                          // Offset must equal the negated outline width: the
+                          // row is absolutely positioned inside a clipping
+                          // scroll container, so any part of the outline
+                          // that bleeds outside the overlay's own border box
+                          // gets clipped. At -outline-offset-2 with a 4px
+                          // outline, 2px bled past the edge -- invisible on
+                          // the start/end sides (the container's clip edge)
+                          // but rendered on top/bottom (which overlap
+                          // neighbouring rows instead), producing a ring
+                          // that looked half-thickness on one side and fully
+                          // clipped on the other. -outline-offset-4 draws
+                          // the whole ring inside the box, so there's
+                          // nothing left for the container to clip.
+                          isHighlighted &&
+                            "outline outline-4 -outline-offset-4 outline-primary",
+                          rowExtra?.ringClassName
+                        )}
+                      />
+                    )}
                   </div>
                 );
               })}

@@ -66,7 +66,8 @@ Two rules matter:
 - Raise the app's own per-upload limit to match — nginx only sets the outer
   ceiling, so a larger `client_max_body_size` on its own just moves the
   rejection from nginx to the app. Set `UPLOAD_MAX_MB` in the `.env` Compose
-  reads and rebuild the `prod` image (it is baked at build time). See
+  reads and restart the app containers — the entrypoint re-syncs Next's frozen
+  body limit from it, so no rebuild is needed. See
   [File Storage](../../docs/docs/file-storage.md#file-size-limits).
 
 Apply and verify the same way as above.

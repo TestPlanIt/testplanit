@@ -37,10 +37,11 @@ beforeEach(() => {
 });
 
 describe("testplanit_folders_delete", () => {
-  it("happy path: empty folder soft-deletes via update with isDeleted:true; returns {id, isDeleted:true}", async () => {
+  it("happy path: soft-deletes an empty folder and renames it aside, as the web UI does", async () => {
     // BL-01: pre-check returns empty arrays (no active cases, no children).
     zenstackMock.mockResolvedValueOnce([]); // active cases
     zenstackMock.mockResolvedValueOnce([]); // active children
+    zenstackMock.mockResolvedValueOnce({ name: "Login" }); // current name
     zenstackMock.mockResolvedValueOnce({ id: 42, isDeleted: true });
 
     const result = await callTool({ folderId: 42 });
@@ -48,15 +49,15 @@ describe("testplanit_folders_delete", () => {
     expect(result.isError).toBeFalsy();
     expect(result.structuredContent).toMatchObject({ id: 42, isDeleted: true });
 
-    expect(zenstackMock).toHaveBeenCalledWith(
-      "repositoryFolders",
-      "update",
-      expect.objectContaining({
-        where: { id: 42 },
-        data: { isDeleted: true },
-      }),
-      env,
-    );
+    const update = zenstackMock.mock.calls.find(
+      (c) => c[0] === "repositoryFolders" && c[1] === "update",
+    )!;
+    const body = update[2] as { where: unknown; data: { isDeleted: boolean; name: string } };
+    expect(body.where).toEqual({ id: 42 });
+    expect(body.data.isDeleted).toBe(true);
+    // The unique (project, repository, parent, name, isDeleted) index would
+    // otherwise refuse a second deleted "Login" under the same parent.
+    expect(body.data.name).toMatch(/^Login_deleted_\d+$/);
   });
 
   it("BL-01 pre-check: queries repositoryCases findMany filtered by folderId and isDeleted:false", async () => {

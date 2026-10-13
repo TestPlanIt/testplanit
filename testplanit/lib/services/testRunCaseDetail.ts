@@ -108,6 +108,7 @@ export const testRunCaseDetailSelect = {
       testRunResultsId: true,
       testRunStepResultId: true,
       junitTestResultId: true,
+      issueId: true,
     },
   },
   steps: {

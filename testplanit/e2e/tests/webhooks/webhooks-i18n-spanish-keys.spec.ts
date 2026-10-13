@@ -81,6 +81,8 @@ function loadMessages(locale: "en-US" | "es-ES" | "fr-FR"): WebhookMessages {
   );
   const parsed = JSON.parse(raw) as Record<string, unknown>;
   // Path: projects.settings.webhooks
+  const common = parsed.common as Record<string, unknown>;
+  const commonFilters = common.filters as Record<string, string>;
   const projects = parsed.projects as Record<string, unknown>;
   const settings = projects.settings as Record<string, unknown>;
   const webhooks = settings.webhooks as Record<string, unknown>;
@@ -95,10 +97,12 @@ function loadMessages(locale: "en-US" | "es-ES" | "fr-FR"): WebhookMessages {
     outboundCreateSubscriptionsTitle:
       webhooks.outboundCreateSubscriptionsTitle as string,
     outboundCreateSubmit: webhooks.outboundCreateSubmit as string,
-    outboundCreateCancel: webhooks.outboundCreateCancel as string,
+    // The cancel button and the "All" status filter use the shared common
+    // strings rather than webhook-specific keys.
+    outboundCreateCancel: common.cancel as string,
     outboundDeleteConfirmTitle: webhooks.outboundDeleteConfirmTitle as string,
     outboundDeleteConfirm: webhooks.outboundDeleteConfirm as string,
-    filterStatusAll: webhooks.filterStatusAll as string,
+    filterStatusAll: commonFilters.all,
     filterStatusFailed: webhooks.filterStatusFailed as string,
     filterReset: webhooks.filterReset as string,
     reEnable: webhooks.reEnable as string,
@@ -213,10 +217,8 @@ test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01
       // Inbound Add button label.
       const addInbound = page.getByTestId("webhook-inbound-add-button");
       await expect(addInbound).toContainText(es.inboundAddButton);
-      // The 1:1 inbound model gates Add on the project's active issue
-      // integration. With no integration assigned (i18n test scope is
-      // string coverage, not flow coverage) the button is disabled and
-      // clicking it has no effect; we don't drive a creation flow here.
+      // Add opens the inbound wizard; the i18n test scope is string
+      // coverage, not flow coverage, so we don't drive a creation here.
 
       // The DOM that just rendered must not carry missing-key markers.
       await assertNoMissingKeyMarkers(page);

@@ -21,6 +21,7 @@ vi.mock("~/lib/db", () => ({
 
 vi.mock("~/utils/testResultTypes", () => ({
   isAutomatedTestRunType: vi.fn(),
+  isHybridTestRunType: vi.fn(() => false),
 }));
 
 import { getServerSession } from "next-auth";

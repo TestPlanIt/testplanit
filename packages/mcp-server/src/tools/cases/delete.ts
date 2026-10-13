@@ -34,7 +34,7 @@ export function registerCasesDelete(
     "testplanit_cases_delete",
     {
       description:
-        "Soft-delete a test case by id. Sets isDeleted=true so the case is hidden from subsequent list/get queries. Returns { id, isDeleted: true }. (per D-05 / CASE-05)",
+        "Soft-delete a test case by id. Sets isDeleted=true so the case is hidden from subsequent list/get queries. Returns { id, isDeleted: true }.",
       inputSchema: {
         caseId: z.number().int().positive().describe("ID of the test case to soft-delete."),
       },

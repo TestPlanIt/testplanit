@@ -1,6 +1,6 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { DurationDisplay } from "@/components/DurationDisplay";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
@@ -12,7 +12,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "~/zenstack/models";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { formatDistanceToNow } from "date-fns";
 import { Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -45,7 +48,7 @@ export function useExecutionLogColumns(
           (row) => (isStepRow(row) ? "" : (row.project?.name ?? "")),
           {
             id: "project",
-            header: () => <span>{t("reports.dimensions.project")}</span>,
+            header: () => <span>{tCommon("fields.project")}</span>,
             cell: (info) => {
               const row = info.row.original;
               if (isStepRow(row)) return null;
@@ -157,6 +160,7 @@ export function useExecutionLogColumns(
                 name={row.testCaseName}
                 source={row.testCaseSource as RepositoryCaseSource}
                 hasParameters={row.testCaseHasParameters}
+                automated={row.testCaseAutomated}
                 link={
                   rowProjectId
                     ? `/projects/repository/${rowProjectId}/${row.testCaseId}`
@@ -178,7 +182,9 @@ export function useExecutionLogColumns(
     columns.push(
       columnHelper.accessor((row) => (isStepRow(row) ? "" : row.testRunName), {
         id: "testRunName",
-        header: () => <span>{t("reports.dimensions.testRun")}</span>,
+        header: () => (
+          <span>{t("common.actions.junit.import.testRun.label")}</span>
+        ),
         cell: (info) => {
           const row = info.row.original;
           if (isStepRow(row)) return null;
@@ -210,7 +216,7 @@ export function useExecutionLogColumns(
         cell: (info) => {
           const { status } = info.row.original;
           if (!status?.name) return null;
-          return <StatusDotDisplay name={status.name} color={status.color} />;
+          return <StatusDisplay name={status.name} color={status.color} />;
         },
         enableSorting: true,
         size: 140,
@@ -271,7 +277,7 @@ export function useExecutionLogColumns(
           );
         },
         enableSorting: true,
-        sortingFn: (rowA, rowB) => {
+        sortFn: (rowA, rowB) => {
           const aVal = rowA.original.executedAt;
           const bVal = rowB.original.executedAt;
           if (!aVal && !bVal) return 0;

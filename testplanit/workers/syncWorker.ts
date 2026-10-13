@@ -141,10 +141,16 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
 
       case "import-project-issues":
         try {
+          // Widened to carry every option queueProjectImport actually spreads
+          // into jobData.data (SyncService.ts's queueProjectImport) — issueTypeIds
+          // and pagedToCompletion were previously re-picked away here, silently
+          // dropping the typed import's own options on the way to the processor.
           const importData = (jobData.data ?? {}) as {
             integrationProjectId?: string;
             updatedWithinDays?: number;
             cap?: number;
+            issueTypeIds?: string[];
+            pagedToCompletion?: boolean;
           };
           if (!importData.integrationProjectId) {
             throw new Error(
@@ -158,6 +164,8 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
             {
               updatedWithinDays: importData.updatedWithinDays,
               cap: importData.cap,
+              issueTypeIds: importData.issueTypeIds,
+              pagedToCompletion: importData.pagedToCompletion,
             },
             job, // Pass job for progress reporting
             serviceOptions
@@ -179,6 +187,7 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
               skippedCount: result.skipped,
               errorCount: result.errors.length,
               reachedCap: result.reachedCap,
+              cancelled: result.cancelled,
               jobId: job.id,
             },
           }).catch(() => {});
@@ -191,7 +200,9 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
           }
 
           console.log(
-            `Imported ${result.imported} issues (skipped ${result.skipped}) for mapping ${importData.integrationProjectId}`
+            result.cancelled
+              ? `Cancelled import (kept ${result.imported} issues, skipped ${result.skipped}) for mapping ${importData.integrationProjectId}`
+              : `Imported ${result.imported} issues (skipped ${result.skipped}) for mapping ${importData.integrationProjectId}`
           );
           return result;
         } catch (error) {
@@ -501,3 +512,4 @@ if (require.main === module) {
 }
 
 export default worker;
+export { processor };

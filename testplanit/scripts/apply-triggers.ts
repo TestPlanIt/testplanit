@@ -74,6 +74,20 @@ function resolveAuditFnSqlPath(): string {
  */
 const APPLY_TRIGGERS_LOCK_KEY = 798_113_001;
 
+/**
+ * Bounds how long any single lock wait inside one apply attempt (the advisory lock above, and
+ * every DROP/CREATE TRIGGER below) can queue behind live traffic. Without this, a DROP TRIGGER
+ * queued for an ACCESS EXCLUSIVE lock sits in Postgres's FIFO lock queue and blocks every NEW
+ * query against that table too — not just this connection (2026-09-15 incident: froze 58/60
+ * active backends for 5+ minutes during a blue/green deploy, twice). Set per-connection so it
+ * covers the whole apply uniformly. A 55P03 (lock_timeout) is safe to retry from scratch — see
+ * applyAuditTriggers() — because every statement here is idempotent (DROP IF EXISTS / CREATE OR
+ * REPLACE).
+ */
+const LOCK_TIMEOUT_MS = 5_000;
+const MAX_LOCK_TIMEOUT_RETRIES = 3;
+const LOCK_TIMEOUT_RETRY_DELAY_MS = 3_000;
+
 export interface ApplyAuditTriggersOptions {
   /** Connection string override. Defaults to DIRECT_DATABASE_URL ?? DATABASE_URL. */
   connectionString?: string;
@@ -482,6 +496,248 @@ CREATE TRIGGER tpl_composition_lock_guard_upd BEFORE UPDATE OF "order", "isDelet
 `;
 
 /**
+ * Seeded-status guard — the authoritative DB-level guarantee that the `untested`
+ * Status row keeps its identity and keeps existing.
+ *
+ * WHY THIS EXISTS. Seven queries identify the run-default status by
+ * `systemName = 'untested'` so a case merely ADDED to a run is not counted as
+ * executed (milestoneMemberCoverage, requirementCoverage, resultUnion,
+ * reportUtils, drillDownQueryBuilders, executionLogUtils, and the milestone
+ * export). That name check is correct and is the ONLY way to identify the row —
+ * the three semantic flags cannot separate "untested" from "blocked", both being
+ * (false, false, false). But before this guard the guarantee lived entirely in
+ * the admin Statuses screen, which disables edit/delete on that row: nothing
+ * stopped the raw client, the generated `/api/model` surface (Status is
+ * ADMIN-writable), a migration, or manual SQL from renaming or removing it, and
+ * every one of those queries would then silently start counting never-executed
+ * cases as executed.
+ *
+ * SCOPE, deliberately narrow. This locks IDENTITY and EXISTENCE only:
+ *   - `systemName` may not change on the untested row, and no other row may take
+ *     that name (the column is already `@unique`, so this closes the rename-away-
+ *     then-rename-another race rather than duplicating the unique constraint).
+ *   - the row may not be hard-deleted or soft-deleted.
+ * Everything else stays editable — name, colour, aliases, order, scope and project
+ * assignment are all legitimate admin operations on that row, and the seeded flags
+ * are left alone here because they are the UI's business, not an invariant any
+ * query depends on.
+ *
+ * The distinct tpl_seeded_status_* prefix keeps these out of the tpl_audit_% /
+ * tpl_composition_% / tpl_issue_* / tpl_single_default_% / tpl_stamp_% drift
+ * checks, exactly like the guards above.
+ */
+export const SEEDED_STATUS_GUARD_SQL = `
+CREATE OR REPLACE FUNCTION tpl_seeded_status_guard() RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    IF OLD."systemName" = 'untested' THEN
+      RAISE EXCEPTION 'The seeded "untested" status cannot be deleted: % queries identify the run default by this systemName', 7 USING ERRCODE = 'check_violation'; -- 23514
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  -- UPDATE. Block renaming the seeded row away from 'untested' ...
+  IF OLD."systemName" = 'untested' AND NEW."systemName" IS DISTINCT FROM 'untested' THEN
+    RAISE EXCEPTION 'The seeded "untested" status cannot be renamed: queries identify the run default by this systemName' USING ERRCODE = 'check_violation'; -- 23514
+  END IF;
+  -- ... and block soft-deleting it out from under those same queries.
+  IF NEW."systemName" = 'untested' AND NEW."isDeleted" IS TRUE AND OLD."isDeleted" IS NOT TRUE THEN
+    RAISE EXCEPTION 'The seeded "untested" status cannot be soft-deleted: queries identify the run default by this systemName' USING ERRCODE = 'check_violation'; -- 23514
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_seeded_status_guard_upd ON "Status";
+CREATE TRIGGER tpl_seeded_status_guard_upd BEFORE UPDATE OF "systemName", "isDeleted" ON "Status"
+  FOR EACH ROW EXECUTE FUNCTION tpl_seeded_status_guard();
+
+DROP TRIGGER IF EXISTS tpl_seeded_status_guard_del ON "Status";
+CREATE TRIGGER tpl_seeded_status_guard_del BEFORE DELETE ON "Status"
+  FOR EACH ROW EXECUTE FUNCTION tpl_seeded_status_guard();
+`;
+
+/**
+ * Issue hierarchy cycle guard (HIER-03) — the authoritative DB-level guard against a
+ * parentId write that would make an issue its own descendant. Fires for ALL Issue rows
+ * unconditionally, not gated on the requirement-classification flag: a cycle is
+ * structurally wrong for any hierarchy, and an issue's requirement classification can
+ * change after its parent was set. This is the one enforcement point below every
+ * client tier (policy, base, raw, psql, sync) — the declarative @deny policy layer
+ * cannot express recursion.
+ *
+ * BEFORE INSERT: rejects only the self-parent case (parentId = id); a brand-new row
+ * cannot already be an ancestor of anything else.
+ *
+ * BEFORE UPDATE of the parentId column: takes a transaction-scoped advisory lock
+ * (pg_advisory_xact_lock) before walking ancestors. This is the only thing that closes
+ * the concurrent-reparent race, where two sessions each reparent a different node so
+ * that together they form a cycle — each statement's own ancestor walk can read a
+ * snapshot that predates the other session's commit. The lock is deliberately NOT taken
+ * on INSERT: a brand-new row cannot already be an ancestor of anything, and the
+ * parentId foreign key itself already serializes the mutual-insert case by blocking on
+ * the other transaction's uncommitted parent row. Do not "optimize" this lock away.
+ *
+ * The ancestor walk is a WITH RECURSIVE CTE capped at depth < 100 so malformed
+ * pre-existing cyclic data errors out instead of hanging a connection inside a BEFORE
+ * trigger.
+ *
+ * The distinct tpl_issue_hierarchy_* prefix keeps this out of the tpl_audit_% /
+ * tpl_composition_% / tpl_single_default_% / tpl_stamp_% drift checks.
+ */
+export const ISSUE_HIERARCHY_CYCLE_GUARD_SQL = `
+CREATE OR REPLACE FUNCTION tpl_issue_hierarchy_cycle_guard() RETURNS TRIGGER AS $$
+DECLARE
+  found_cycle boolean;
+BEGIN
+  IF NEW."parentId" IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW."parentId" = NEW.id THEN
+    RAISE EXCEPTION 'Issue % cannot be its own parent', NEW.id USING ERRCODE = 'check_violation'; -- 23514
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    PERFORM pg_advisory_xact_lock(hashtext('tpl_issue_hierarchy_cycle_guard'), 0);
+  END IF;
+
+  SELECT EXISTS (
+    WITH RECURSIVE ancestors AS (
+      SELECT "parentId" AS id, 1 AS depth FROM "Issue" WHERE id = NEW."parentId"
+      UNION ALL
+      SELECT i."parentId", a.depth + 1 FROM "Issue" i
+      INNER JOIN ancestors a ON i.id = a.id
+      WHERE i."parentId" IS NOT NULL AND a.depth < 100
+    )
+    SELECT 1 FROM ancestors WHERE id = NEW.id
+  ) INTO found_cycle;
+
+  IF found_cycle THEN
+    RAISE EXCEPTION 'Reparenting issue % under % would create a cycle', NEW.id, NEW."parentId" USING ERRCODE = 'check_violation'; -- 23514
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_issue_hierarchy_cycle_guard_ins ON "Issue";
+CREATE TRIGGER tpl_issue_hierarchy_cycle_guard_ins BEFORE INSERT ON "Issue"
+  FOR EACH ROW EXECUTE FUNCTION tpl_issue_hierarchy_cycle_guard();
+
+DROP TRIGGER IF EXISTS tpl_issue_hierarchy_cycle_guard_upd ON "Issue";
+CREATE TRIGGER tpl_issue_hierarchy_cycle_guard_upd BEFORE UPDATE OF "parentId" ON "Issue"
+  FOR EACH ROW EXECUTE FUNCTION tpl_issue_hierarchy_cycle_guard();
+`;
+
+/**
+ * Issue content-change stamp (COV-05, D-01) — the authoritative signal a linked case's
+ * suspect flag composes against. `lib/integrations/services/SyncService.ts` rewrites
+ * `title`/`description` unconditionally on every sync poll with `lastSyncedAt: new
+ * Date()`, so an ORM-managed `@updatedAt` would mark every synced requirement suspect
+ * after every poll — dead on arrival. This BEFORE UPDATE trigger instead stamps
+ * "contentUpdatedAt" only when title, description, or note actually changed, gated by
+ * the `WHEN (... IS DISTINCT FROM ...)` clause so a no-op identical-value rewrite never
+ * fires the function body. Write-path agnostic: native edits, sync-applied Jira edits,
+ * and any future write surface all pass through the same gate.
+ *
+ * Watched columns are exactly "title", "description", "note" (D-02) — status shuffles,
+ * priority tweaks, reparents, and attachment changes must NOT arm the suspect flag; do
+ * not widen this column list.
+ *
+ * Deliberately NO BEFORE INSERT trigger: a freshly created Issue keeps contentUpdatedAt
+ * NULL, which is the chosen backfill posture — pre-existing and newly created rows are
+ * never suspect until their first real content edit. Do not "helpfully" add an insert
+ * trigger.
+ *
+ * "note" is verified JSONB (not json) in migrations/20260625193632_init/migration.sql,
+ * and `IS DISTINCT FROM` is natively defined for jsonb — no cast is needed or wanted; a
+ * defensive `::text` cast would silently change comparison semantics from jsonb
+ * key-order-insensitive equality to text exact-match.
+ *
+ * The distinct tpl_issue_content_updated_at prefix keeps this out of the tpl_audit_% /
+ * tpl_composition_% / tpl_issue_hierarchy_% / tpl_stamp_% drift checks.
+ */
+export const ISSUE_CONTENT_UPDATED_AT_TRIGGER_SQL = `
+CREATE OR REPLACE FUNCTION tpl_issue_content_updated_at() RETURNS TRIGGER AS $$
+BEGIN
+  NEW."contentUpdatedAt" := now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_issue_content_updated_at_upd ON "Issue";
+CREATE TRIGGER tpl_issue_content_updated_at_upd BEFORE UPDATE OF "title", "description", "note" ON "Issue"
+  FOR EACH ROW WHEN (
+    NEW."title" IS DISTINCT FROM OLD."title" OR
+    NEW."description" IS DISTINCT FROM OLD."description" OR
+    NEW."note" IS DISTINCT FROM OLD."note"
+  )
+  EXECUTE FUNCTION tpl_issue_content_updated_at();
+`;
+
+/**
+ * Requirement content versioning (v1.1) — every content change to a requirement
+ * (title/description/note, the same three columns the content stamp above
+ * watches) captures a row in "IssueVersions" and bumps Issue.currentVersion.
+ *
+ * A BEFORE trigger, not AFTER, because it assigns NEW."currentVersion". Fires
+ * only for isRequirement rows: defects and plain synced issues stay
+ * unversioned (an Issue table holds tens of thousands of tracker shells whose
+ * sync churn would otherwise version-bomb the table). The first content change
+ * backfills version 1 from the OLD row, so history always starts with the
+ * text as it stood before any change — a lone v2 with no v1 would make the
+ * first diff unrenderable.
+ *
+ * Actor attribution is best-effort from the audit GUC (`app.audit_context`,
+ * the CDC substrate's own transaction-local context): present for audited app
+ * writes, NULL for sync polls and raw SQL. AuditLog remains the authoritative
+ * actor record; this column only saves the history view a join.
+ *
+ * The distinct tpl_issue_version_* prefix keeps it out of every drift
+ * self-check below, exactly like tpl_issue_content_* above.
+ */
+export const ISSUE_VERSION_CAPTURE_TRIGGER_SQL = `
+CREATE OR REPLACE FUNCTION tpl_issue_version_capture() RETURNS TRIGGER AS $$
+DECLARE
+  actor text;
+BEGIN
+  BEGIN
+    actor := NULLIF(current_setting('app.audit_context', true), '')::jsonb->>'userId';
+  EXCEPTION WHEN others THEN
+    actor := NULL;
+  END;
+  -- Backfill the pre-change text as its own version the first time this row
+  -- (or this counter value) changes. changedById is unknowable for a
+  -- backfilled state; its changedAt is the best available stamp for when
+  -- that text last changed.
+  INSERT INTO "IssueVersions" ("issueId", version, title, description, note, "changedById", "changedAt")
+  SELECT OLD.id, OLD."currentVersion", OLD.title, OLD.description, OLD.note, NULL,
+         COALESCE(OLD."contentUpdatedAt", OLD."createdAt", now())
+  WHERE NOT EXISTS (
+    SELECT 1 FROM "IssueVersions" v
+    WHERE v."issueId" = OLD.id AND v.version = OLD."currentVersion"
+  );
+  NEW."currentVersion" := OLD."currentVersion" + 1;
+  INSERT INTO "IssueVersions" ("issueId", version, title, description, note, "changedById", "changedAt")
+  VALUES (OLD.id, NEW."currentVersion", NEW.title, NEW.description, NEW.note, actor, now());
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_issue_version_capture_upd ON "Issue";
+CREATE TRIGGER tpl_issue_version_capture_upd BEFORE UPDATE OF "title", "description", "note" ON "Issue"
+  FOR EACH ROW WHEN (
+    NEW."isRequirement" = true AND (
+      NEW."title" IS DISTINCT FROM OLD."title" OR
+      NEW."description" IS DISTINCT FROM OLD."description" OR
+      NEW."note" IS DISTINCT FROM OLD."note"
+    )
+  )
+  EXECUTE FUNCTION tpl_issue_version_capture();
+`;
+
+/**
  * Apply the full audit-trigger substrate to one database, idempotently. Importable so the app can
  * self-install on boot (see lib/audit/ensureAuditTriggers + instrumentation.ts) in addition to the
  * CLI / deploy-entrypoint paths — `db push` silently drops these triggers, so they must be
@@ -491,6 +747,34 @@ export async function applyAuditTriggers(
   opts: ApplyAuditTriggersOptions = {}
 ): Promise<void> {
   const log = opts.log ?? ((m: string) => console.log(m));
+  for (let attempt = 1; attempt <= MAX_LOCK_TIMEOUT_RETRIES; attempt++) {
+    try {
+      await applyAuditTriggersOnce(opts, log);
+      return;
+    } catch (err) {
+      const isLockTimeout = (err as { code?: string }).code === "55P03";
+      if (!isLockTimeout || attempt === MAX_LOCK_TIMEOUT_RETRIES) {
+        throw err;
+      }
+      log(
+        `[apply-triggers] lock_timeout — a table is busy with live traffic (attempt ${attempt}/${MAX_LOCK_TIMEOUT_RETRIES}), retrying in ${LOCK_TIMEOUT_RETRY_DELAY_MS}ms`
+      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, LOCK_TIMEOUT_RETRY_DELAY_MS)
+      );
+    }
+  }
+}
+
+/**
+ * One apply attempt. Split out so applyAuditTriggers() can retry it wholesale on a lock_timeout
+ * — every statement below is DROP IF EXISTS / CREATE OR REPLACE, so restarting from scratch mid-
+ * apply is safe.
+ */
+async function applyAuditTriggersOnce(
+  opts: ApplyAuditTriggersOptions,
+  log: (message: string) => void
+): Promise<void> {
   const useLock = opts.lock ?? true;
   const connectionString =
     opts.connectionString ??
@@ -512,6 +796,9 @@ export async function applyAuditTriggers(
 
   const client = new Client({ connectionString });
   await client.connect();
+  // Bounds every lock wait below (the advisory lock and every DROP/CREATE TRIGGER) — see
+  // LOCK_TIMEOUT_MS.
+  await client.query(`SET lock_timeout = '${LOCK_TIMEOUT_MS}ms'`);
   let locked = false;
   try {
     // 0. Serialize concurrent appliers (multiple booting replicas) so their DROP/CREATE TRIGGER
@@ -720,6 +1007,36 @@ export async function applyAuditTriggers(
     //     CREATE OR REPLACE + DROP/CREATE TRIGGER. Distinct tpl_composition_*
     //     prefix keeps it out of every drift self-check below.
     await client.query(COMPOSITION_LOCK_GUARD_SQL);
+
+    // 3c. Issue hierarchy cycle guard (HIER-03) — the authoritative DB-level guard
+    //     against a parentId write that reparents an issue under its own descendant.
+    //     Idempotent CREATE OR REPLACE + DROP/CREATE TRIGGER pair. Distinct
+    //     tpl_issue_hierarchy_* prefix keeps it out of every drift self-check below,
+    //     exactly like tpl_composition_* above.
+    await client.query(ISSUE_HIERARCHY_CYCLE_GUARD_SQL);
+
+    // 3d. Issue content-change stamp (COV-05) — diff-aware BEFORE UPDATE trigger that
+    //     stamps contentUpdatedAt only when title/description/note actually change, so
+    //     SyncService.ts's unconditional identical-value sync-poll rewrite is a no-op
+    //     (D-01). Idempotent CREATE OR REPLACE + DROP/CREATE TRIGGER pair, safe to
+    //     re-run. Distinct tpl_issue_content_updated_at prefix keeps it out of every
+    //     drift self-check below, exactly like tpl_issue_hierarchy_* above.
+    await client.query(ISSUE_CONTENT_UPDATED_AT_TRIGGER_SQL);
+
+    // 3e. Seeded-status guard — the `untested` Status row keeps its systemName and
+    //     keeps existing, because seven queries identify the run default by that
+    //     name and the semantic flags cannot express it. Idempotent CREATE OR
+    //     REPLACE + DROP/CREATE TRIGGER pair. Distinct tpl_seeded_status_* prefix
+    //     keeps it out of every drift self-check below.
+    await client.query(SEEDED_STATUS_GUARD_SQL);
+
+    // 3f. Requirement content versioning — BEFORE UPDATE capture into
+    //     "IssueVersions" + currentVersion bump for isRequirement rows whose
+    //     title/description/note actually changed (the same distinct-ness the
+    //     content stamp in 3d tests). Idempotent CREATE OR REPLACE +
+    //     DROP/CREATE TRIGGER pair. Distinct tpl_issue_version_* prefix keeps
+    //     it out of every drift self-check below.
+    await client.query(ISSUE_VERSION_CAPTURE_TRIGGER_SQL);
 
     // 4. GRANT/REVOKE defense-in-depth: the connecting role keeps INSERT/SELECT/UPDATE/DELETE (the
     //    worker cursor + retention purge need UPDATE/DELETE); UPDATE/DELETE revoked from PUBLIC. The

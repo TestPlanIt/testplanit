@@ -13,6 +13,12 @@ const fetchMock = vi.hoisted(() => vi.fn());
 
 vi.stubGlobal("fetch", fetchMock);
 
+const mockQueryClient = vi.hoisted(() => ({ invalidateQueries: vi.fn() }));
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
+  useQueryClient: () => mockQueryClient,
+}));
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Build a standard ok fetch response with JSON body */
@@ -302,6 +308,7 @@ describe("useCopyMoveJob", () => {
         })
       );
 
+    const dispatchSpy = vi.spyOn(window, "dispatchEvent");
     const { result } = renderHook(() => useCopyMoveJob());
 
     await act(async () => {
@@ -314,6 +321,12 @@ describe("useCopyMoveJob", () => {
 
     expect(result.current.status).toBe("completed");
     expect(result.current.result).toEqual(jobResult);
+    expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["folderStats"],
+    });
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "repositoryCasesChanged" })
+    );
   });
 
   it("polling sets status=failed and error when state is failed", async () => {

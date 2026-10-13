@@ -17,7 +17,7 @@ TestPlanIt's production Docker setup (`docker-compose.prod.yml`) uses Docker Com
 | `with-postgres`      | PostgreSQL 18   | Database storage                              |
 | `with-valkey`        | Valkey 8        | Redis-compatible cache and job queue          |
 | `with-elasticsearch` | Elasticsearch 9 | Full-text search engine                       |
-| `with-minio`         | MinIO + Nginx   | S3-compatible file storage with reverse proxy |
+| `with-minio`         | RustFS + Nginx  | S3-compatible file storage with reverse proxy |
 
 ## Quick Start
 
@@ -146,9 +146,9 @@ ELASTICSEARCH_NODE=""
 
 **Included Services:**
 
-- `minio` - MinIO S3-compatible object storage
-- `minio-init` - Creates initial bucket
-- `nginx` - Reverse proxy for MinIO
+- `minio` - RustFS S3-compatible object storage (data in `./docker-data/rustfs`)
+- `minio-init` - Creates the bucket with read-only public access and CORS rules
+- `nginx` - Reverse proxy for file storage
 
 **Environment Variables:**
 
@@ -158,8 +158,9 @@ AWS_SECRET_ACCESS_KEY="minioadmin123"
 AWS_BUCKET_NAME="testplanit"
 AWS_ENDPOINT_URL="http://minio:9000"
 AWS_PUBLIC_ENDPOINT_URL="https://your-domain.com/minio"
-MINIO_SERVER_URL="https://your-domain.com"
 ```
+
+Installs that used the earlier bundled MinIO storage must migrate their files first. See [Migrating from MinIO to RustFS](https://docs.testplanit.com/docs/migrating-from-minio).
 
 **When to Use:**
 
@@ -265,7 +266,7 @@ Configure external AWS RDS (DATABASE*URL) and S3 (AWS*\* vars).
 
 5. **Backup Strategy**:
    - PostgreSQL data lives in the `testplanit-postgres-data` named volume — back it up with `pg_dump` (or snapshot the volume)
-   - Valkey, Elasticsearch, and MinIO data: Backup the `./docker-data/` directories
+   - Valkey, Elasticsearch, and RustFS file storage data: Backup the `./docker-data/` directories
    - With external services: Use cloud-native backup solutions (RDS snapshots, S3 versioning, etc.)
 
 6. **Networking**:
@@ -288,7 +289,7 @@ Configure external AWS RDS (DATABASE*URL) and S3 (AWS*\* vars).
 
 **Issue**: Data not persisting
 
-- **Solution**: PostgreSQL persists in the `testplanit-postgres-data` named volume; Valkey, Elasticsearch, and MinIO use `./docker-data/` bind mounts — check the mounts for the affected service
+- **Solution**: PostgreSQL persists in the `testplanit-postgres-data` named volume; Valkey, Elasticsearch, and RustFS use `./docker-data/` bind mounts — check the mounts for the affected service
 
 ## See Also
 

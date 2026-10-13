@@ -36,6 +36,10 @@ import {
   shapeAttachmentsFacet,
 } from "~/lib/repositoryCaseAttachmentsFilter";
 import {
+  codePinsWhereClause,
+  shapeCodePinsFacet,
+} from "~/lib/repositoryCaseCodePinsFilter";
+import {
   matchesPostFetchFilters,
   type PostFetchFilter,
 } from "~/lib/repositoryCaseFieldMatchers";
@@ -46,6 +50,7 @@ import {
   buildFilterDimensions,
   dynamicFieldDimensionKey,
   type FilterDimensionRegistry,
+  CODE_PINS_DIMENSION,
 } from "~/lib/repository/filterDimensions";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import {
@@ -373,6 +378,8 @@ export interface RepositoryCaseFacetCounts {
    * dead "In Review" axis in the ViewSelector of every other project.
    */
   inReview?: Array<{ value: boolean; count: number }>;
+  /** Present only while the project has Impact Analysis enabled. */
+  codePins?: Array<{ value: boolean; count: number }>;
   tags: Array<{ id: number | "any" | "none"; name: string; count: number }>;
   issues: Array<{
     id: number | "any" | "none";
@@ -474,15 +481,20 @@ export async function computeRepositoryCaseFacetCounts(
 
   // Kicked off here so the two flag reads overlap the dynamic-field metadata
   // query below; awaited at step 1b.
+  const projectFlagsPromise = db.projects.findUnique({
+    where: { id: projectId },
+    select: { reviewWorkflowEnabled: true, impactEnabled: true },
+  });
   const reviewEnabledPromise = Promise.all([
     isReviewFeatureSystemEnabled(db),
-    db.projects.findUnique({
-      where: { id: projectId },
-      select: { reviewWorkflowEnabled: true },
-    }),
+    projectFlagsPromise,
   ]).then(
     ([systemEnabled, project]) =>
       systemEnabled && project?.reviewWorkflowEnabled === true
+  );
+  // The codePins dimension exists only where Impact Analysis is on.
+  const codePinsEnabledPromise = projectFlagsPromise.then(
+    (project) => project?.impactEnabled === true
   );
 
   // 1. Dynamic-field metadata first — the registry needs the field types
@@ -564,6 +576,7 @@ export async function computeRepositoryCaseFacetCounts(
   //     (projectId, status); off-project rows can't leak in, so the set is
   //     one project's review queue rather than a scan of the repository.
   const reviewEnabled = await reviewEnabledPromise;
+  const codePinsEnabled = await codePinsEnabledPromise;
   let inReviewCaseIds: number[] = [];
   if (reviewEnabled) {
     const pendingRows = await db.reviewRequest.findMany({
@@ -587,6 +600,7 @@ export async function computeRepositoryCaseFacetCounts(
     })),
     includeRunDimensions: isRunMode,
     includeInReview: reviewEnabled,
+    includeCodePins: codePinsEnabled,
   });
   const predicates = parseFilterPredicates(options.predicates ?? [], registry);
 
@@ -1101,6 +1115,38 @@ export async function computeRepositoryCaseFacetCounts(
     return shapeAttachmentsFacet(totalExcept, withAttachments);
   })();
 
+  const codePinsTask = (async (): Promise<
+    Array<{ value: boolean; count: number }> | undefined
+  > => {
+    if (!codePinsEnabled) return undefined;
+    if (multiConfig) {
+      const rows = await weightedRowsExcept(CODE_PINS_DIMENSION);
+      const uniqueIds = [...new Set(rows.map((row) => row.repositoryCaseId))];
+      const withSet = new Set(
+        (
+          await db.repositoryCases.findMany({
+            where: { id: { in: uniqueIds }, ...codePinsWhereClause(true) },
+            select: { id: true },
+          })
+        ).map((c) => c.id)
+      );
+      const withPins = rows.filter((row) =>
+        withSet.has(row.repositoryCaseId)
+      ).length;
+      return shapeCodePinsFacet(rows.length, withPins);
+    }
+    const [withPins, totalExcept] = await Promise.all([
+      db.repositoryCases.count({
+        where: andWhere(
+          composer.whereExcept(CODE_PINS_DIMENSION),
+          codePinsWhereClause(true)
+        ),
+      }),
+      idsExcept(CODE_PINS_DIMENSION).then((ids) => ids.length),
+    ]);
+    return shapeCodePinsFacet(totalExcept, withPins);
+  })();
+
   // Both buckets come from ONE materialization of `whereExcept(inReview)` —
   // the id list is already in memory, so the split is a Set membership test
   // rather than a second COUNT. Unchipped, that id list is the same promise
@@ -1144,6 +1190,7 @@ export async function computeRepositoryCaseFacetCounts(
     issueCounts,
     attachmentsWithCounts,
     inReviewWithCounts,
+    codePinsWithCounts,
     totalCount,
   ] = await Promise.all([
     scalarCounts<number>("templates", "templateId", (p) => p.templateId),
@@ -1155,6 +1202,7 @@ export async function computeRepositoryCaseFacetCounts(
     issueCountsTask,
     attachmentsTask,
     inReviewTask,
+    codePinsTask,
     totalCountTask,
   ]);
 
@@ -1564,6 +1612,13 @@ export async function computeRepositoryCaseFacetCounts(
       parameterizedWithCounts.map((entry) => entry.count)
     ),
     attachments: sumValues(attachmentsWithCounts.map((entry) => entry.count)),
+    ...(codePinsWithCounts
+      ? {
+          [CODE_PINS_DIMENSION]: sumValues(
+            codePinsWithCounts.map((entry) => entry.count)
+          ),
+        }
+      : {}),
     ...(inReviewWithCounts
       ? {
           [IN_REVIEW_DIMENSION]: sumValues(
@@ -1609,6 +1664,7 @@ export async function computeRepositoryCaseFacetCounts(
     parameterized: parameterizedWithCounts,
     attachments: attachmentsWithCounts,
     ...(inReviewWithCounts ? { inReview: inReviewWithCounts } : {}),
+    ...(codePinsWithCounts ? { codePins: codePinsWithCounts } : {}),
     tags: [
       { id: "any" as const, name: "Any Tag", count: tagCounts.withTags },
       {

@@ -42,7 +42,7 @@ export function UserMention({
     select: { name: true, image: true, isDeleted: true },
   });
   const { data: session } = useSession();
-  const t = useTranslations("users");
+  const tCommon = useTranslations("common");
   const isCurrentUser = userId === session?.user?.id;
 
   if (user?.isDeleted) {
@@ -51,7 +51,7 @@ export function UserMention({
         className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 italic"
         data-testid="user-mention-deleted"
       >
-        {t("deletedUser")}
+        {tCommon("aria.deletedUser")}
       </span>
     );
   }

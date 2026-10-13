@@ -4,9 +4,13 @@ import { useCallback, useState } from "react";
 import { logDataExport } from "~/lib/services/auditClient";
 import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
 import { RECORD_TYPES } from "~/lib/recordKey";
-import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { toHumanReadable } from "~/utils/duration";
-import { PdfRenderer, preloadImages, formatFieldValue } from "./pdfHelpers";
+import {
+  extractJsonText,
+  PdfRenderer,
+  preloadImages,
+  formatFieldValue,
+} from "./pdfHelpers";
 
 interface SessionExportData {
   id: number;
@@ -377,23 +381,4 @@ export function useExportSessionPdf({
   }, [sessionData, embedImages, locale, formatKey]);
 
   return { isExporting, handleExport };
-}
-
-/** Extract plain text from a Tiptap JSON field (string or object) */
-function extractJsonText(value: any): string | null {
-  if (!value) return null;
-  try {
-    const parsed = typeof value === "string" ? JSON.parse(value) : value;
-    // Check if it's empty editor content
-    if (
-      parsed?.type === "doc" &&
-      (!parsed.content || parsed.content.length === 0)
-    ) {
-      return null;
-    }
-    const text = extractTextFromNode(parsed);
-    return text && text.trim() ? text.trim() : null;
-  } catch {
-    return typeof value === "string" && value.trim() ? value.trim() : null;
-  }
 }

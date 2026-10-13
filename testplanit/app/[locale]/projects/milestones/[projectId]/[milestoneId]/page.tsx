@@ -107,6 +107,7 @@ import { IssuesCard, type IssuesCardHandle } from "./IssuesCard";
 import MilestoneFormControls from "./MilestoneFormControls";
 import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";
 import { Loading } from "~/components/Loading";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 interface MilestoneForecastData {
   manualEstimate: number;
@@ -1113,11 +1114,7 @@ export default function MilestoneDetailsPage() {
                           <FormControl>
                             <TipTapEditor
                               key={`editing-docs-${isEditMode}`}
-                              content={
-                                field.value
-                                  ? JSON.parse(field.value)
-                                  : emptyEditorContent
-                              }
+                              content={ensureTipTapJSON(field.value)}
                               onUpdate={(newContent) => {
                                 if (isEditMode) {
                                   field.onChange(JSON.stringify(newContent));

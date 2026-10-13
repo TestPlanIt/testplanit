@@ -287,6 +287,12 @@ vi.mock("./ExportModal", () => ({
   )),
 }));
 
+vi.mock("@/components/runs/ExecuteAutomationButton", () => ({
+  useExecutionTargetChoices: () => ({ data: [] }),
+}));
+vi.mock("@/components/cases/RunAutomatedCaseButton", () => ({
+  RunAutomatedCaseDialog: () => null,
+}));
 vi.mock("./QuickScriptModal", () => ({
   QuickScriptModal: vi.fn(() => (
     <div data-testid="quick-script-modal">QuickScriptModal stub</div>

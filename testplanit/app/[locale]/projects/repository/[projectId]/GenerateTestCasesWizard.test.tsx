@@ -142,6 +142,20 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
   });
 });
 
+describe("GenerateTestCasesWizard — seeded-launch header", () => {
+  it("hides the folder-context tip when the launch is seeded (no folder to select)", () => {
+    const src = readWizard();
+    // "Make sure you have selected the correct folder" is advice only a
+    // repository launch can act on — seeded launches (milestone rows, gap
+    // report rows) never select a folder, the per-issue destination folder
+    // is created at import. The alert must be gated on !isSeeded.
+    // Both the info tip and the empty-context warning sit inside that gate.
+    expect(src).toMatch(
+      /\{!isSeeded &&\s*\([\s\S]{0,400}?folderContextEmpty[\s\S]{0,1600}?folderContextTip/
+    );
+  });
+});
+
 describe("GenerateTestCasesWizard — case-field eligibility", () => {
   it("filters the template caseFields query to enabled, non-deleted fields", () => {
     const src = readWizard();

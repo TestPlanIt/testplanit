@@ -1,4 +1,8 @@
 import { rawDb as defaultDb } from "@/lib/rawDb";
+import {
+  isDetachedRequirement,
+  LOCKED_ISSUE_FIELDS,
+} from "~/lib/services/linkedIssueUpsert";
 import type { DbClient } from "~/lib/zenstack";
 import { Job, JobsOptions } from "bullmq";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
@@ -11,6 +15,14 @@ import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
 import { issueCache } from "../cache/IssueCache";
 import { AuthenticationService } from "../AuthenticationService";
 import { integrationManager } from "../IntegrationManager";
+import {
+  effectiveRequirementTypeIds,
+  matchesRequirementDesignation,
+  readRequirementTypeConfig,
+  resolveEffectiveRequirementFlag,
+  type RequirementDesignationInput,
+} from "../requirementTypeConfig";
+import { SYNC_STATUS } from "../syncStatus";
 
 export interface SyncJobData {
   userId: string;
@@ -87,14 +99,163 @@ export interface SyncedIssueData {
    * parent don't gain a spurious key.
    */
   parent?: { id: string; key?: string };
+  /**
+   * The TRACKER's own creation instant (ISO) — `Issue.createdAt` is when
+   * the local row appeared (an import stamps import time), which is the
+   * wrong answer for "how long has this existed uncovered". Present only
+   * when the adapter supplied a valid date; rows synced before this key
+   * existed self-heal on their next sync (data is rebuilt wholesale).
+   */
+  createdAt?: string;
 }
 
 export function buildSyncedIssueData(issueData: IssueData): SyncedIssueData {
+  const createdAtMs = issueData.createdAt
+    ? new Date(issueData.createdAt).getTime()
+    : NaN;
   return {
     labels: Array.isArray(issueData.labels) ? issueData.labels : [],
     components: Array.isArray(issueData.components) ? issueData.components : [],
     ...(issueData.parent ? { parent: issueData.parent } : {}),
+    ...(Number.isFinite(createdAtMs)
+      ? { createdAt: new Date(createdAtMs).toISOString() }
+      : {}),
   };
+}
+
+/**
+ * Resolves a tracker parent ref (`IssueData.parent`) to a local `Issue.id`
+ * for the relational `Issue.parentId` column — PROV-04. Takes the parent
+ * REF, not the whole `IssueData`, so plan 22-05's end-of-import
+ * re-resolution pass can call this same function from a context where only
+ * the ref survives, with no second copy of the clause-building logic.
+ *
+ * Three-valued return, by design (CONTEXT P3d):
+ *   number    -> link to this local Issue.id
+ *   null      -> the tracker reports no parent; clear the column
+ *   undefined -> not resolvable this pass (no local row yet, or the
+ *                resolved row belongs to a different project); leave the
+ *                column untouched
+ *
+ * Do NOT write the caller's result through a truthy-parent conditional
+ * spread (`...(x ? {parentId: y} : {})`) the way `buildSyncedIssueData`
+ * above does for `Issue.data.parent` — that shape is a verified staleness
+ * bug (a parent removed upstream is never cleared because the merge never
+ * deletes a key the RHS omits). `undefined` already means "leave unchanged"
+ * to the ORM, which is exactly the third state above — write `parentId:
+ * resolvedParentId` as a plain key instead.
+ */
+export async function resolveSyncedParentId(
+  db: any,
+  integrationId: number,
+  ownerProjectId: number | null,
+  parentRef: { id: string; key?: string } | null | undefined
+): Promise<number | null | undefined> {
+  if (!parentRef || !parentRef.id) {
+    return null;
+  }
+
+  // Guarded like the existing `db.issue?.findUnique` pre-check above (in
+  // `upsertIssueFromExternal`) — some mocked/limited db clients used by
+  // pre-existing SyncService test files don't expose `findFirst` on this
+  // model. Absence reads as "not resolvable this pass", not a crash.
+  if (typeof db.issue?.findFirst !== "function") {
+    return undefined;
+  }
+
+  // Identifier clauses are built CONDITIONALLY: an `undefined` filter value
+  // means "ignore this condition" to this ORM, so an unconditional
+  // `{ externalKey: parentRef.key }` clause with no key present degrades
+  // the OR into a match-anything predicate that could link a child to an
+  // arbitrary row (T-22-02-02). Only add the externalKey clause when the
+  // tracker actually supplied a non-empty key.
+  const clauses: Array<Record<string, string>> = [{ externalId: parentRef.id }];
+  if (typeof parentRef.key === "string" && parentRef.key.length > 0) {
+    clauses.push({ externalKey: parentRef.key });
+  }
+
+  const parentRow = await db.issue.findFirst({
+    where: {
+      integrationId,
+      isDeleted: false,
+      OR: clauses,
+    },
+    select: { id: true, projectId: true },
+  });
+
+  // "Not found" (forward reference — child paged in before its parent) and
+  // "found in another project" (T-22-02-01, a real security boundary the
+  // cycle-guard trigger does not itself check) are treated identically:
+  // no throw, no write this pass. A forward reference is normal tracker
+  // ordering and plan 22-05 completes it within the same run.
+  if (
+    parentRow &&
+    parentRow.projectId != null &&
+    parentRow.projectId === ownerProjectId
+  ) {
+    return parentRow.id;
+  }
+  return undefined;
+}
+
+/**
+ * Classifies a synced issue against the project's stored
+ * `config.requirements` namespace for the `Issue.isRequirement` column —
+ * the write path `schema.zmodel:3393`'s comment names but that nothing
+ * implemented until this phase (P3e). Takes only the two designation
+ * fields (type id, labels), not the whole `IssueData`, for the same
+ * narrow-input reason as `resolveSyncedParentId`. The type-vs-label
+ * precedence lives in `matchesRequirementDesignation` — a typed tracker
+ * matches on the type id alone; a typeless tracker (GitHub, whose
+ * designation vocabulary is repository labels) matches on labels.
+ *
+ * Returns `undefined` (leave the column untouched) when the owning project
+ * is unknown or the db client exposes no `projectIntegration` model — the
+ * second guard is load-bearing, not defensive garnish: eight existing
+ * `SyncService.*.test.ts` files mock `rawDb` with only `projects`/`issue`,
+ * and an unguarded model access would break all of them. Mirrors the
+ * existing `typeof db.issue?.findUnique === "function"` guard shape used
+ * elsewhere in `upsertIssueFromExternal`.
+ *
+ * Cost note: this adds one indexed `findFirst` per synced issue, alongside
+ * the `projects.findUnique` `upsertIssueFromExternal` already runs per
+ * issue. Deliberate — a cached config would open a stale window immediately
+ * after an admin saves a config change, and correctness right after a save
+ * is exactly what CFG-03 exists to guarantee.
+ *
+ * Scope note: this write is unconditional across all synced issues,
+ * mirroring the `parentId` decision (CONTEXT P3b) and Phase 21's
+ * unconditional cycle-trigger reasoning — classification can change after
+ * the fact, so gating the write on the current classification would strand
+ * rows. It is also what makes CFG-01's config govern FUTURE imports rather
+ * than only the rows that existed when the admin saved.
+ */
+export async function resolveSyncedRequirementFlag(
+  db: any,
+  integrationId: number,
+  ownerProjectId: number | null,
+  designation: RequirementDesignationInput
+): Promise<boolean | undefined> {
+  if (
+    ownerProjectId == null ||
+    typeof db.projectIntegration?.findFirst !== "function"
+  ) {
+    return undefined;
+  }
+
+  const row = await db.projectIntegration.findFirst({
+    where: {
+      projectId: ownerProjectId,
+      integrationId,
+      isActive: true,
+    },
+    select: { config: true },
+  });
+
+  return matchesRequirementDesignation(
+    effectiveRequirementTypeIds(readRequirementTypeConfig(row?.config)),
+    designation
+  );
 }
 
 /**
@@ -178,6 +339,24 @@ export interface SyncOptions {
 }
 
 /**
+ * The single source of truth for values written to `IntegrationProject.syncStatus`
+ * — a nullable free-form `String` column (schema.zmodel), not an enum. Every
+ * write site in this file uses these constants instead of a raw string
+ * literal, and the cancel route / settings UI import this same object rather
+ * than re-declaring their own copies of the vocabulary. `cancelRequested` is
+ * an intermediate value written by a cancel request; `cancelled` is the
+ * terminal state a paged-to-completion import lands in when it honors one.
+ *
+ * Declared in the pure `lib/integrations/syncStatus.ts` module (imported
+ * above) and re-exported here so this file's own consumers (routes, worker)
+ * keep their existing import path unchanged, while a "use client" settings
+ * component can import the vocabulary from the pure module directly instead
+ * of pulling this file's server-only dependencies (ioredis, bullmq, the raw
+ * DB client) into the browser bundle.
+ */
+export { SYNC_STATUS };
+
+/**
  * Bulk-import caps. The import pulls issues from a linked external project that
  * were updated within a recency window, up to a cap. IMPORT_MAX_CAP is the
  * absolute ceiling enforced server-side regardless of the requested cap, so a
@@ -193,10 +372,37 @@ const IMPORT_PAGE_SIZE = 50;
  * (IMPORT_MAX_PAGES * IMPORT_PAGE_SIZE issues scanned at most).
  */
 const IMPORT_MAX_PAGES = 40;
+/**
+ * Page ceiling for the typed, paged-to-completion import mode (D-07: no
+ * recency window, no cap). TYPED_IMPORT_MAX_PAGES * IMPORT_PAGE_SIZE =
+ * 1,000,000 issues scanned at most — large enough that no real tracker's
+ * classified-issue set should ever hit it, so this functions purely as a
+ * runaway/rate-limit backstop (T-28-04-01), never a scope limit the way
+ * IMPORT_MAX_PAGES is for the recency-window mode below. IMPORT_MAX_PAGES
+ * itself stays untouched: the generic Import Issues dialog (D-06) keeps its
+ * existing, much smaller bound.
+ */
+const TYPED_IMPORT_MAX_PAGES = 20_000;
 
 export interface ProjectImportOptions {
   updatedWithinDays?: number;
   cap?: number;
+  /**
+   * Restrict the import to specific issue types. Threaded into every page's
+   * searchIssues call; adapters that can express it push it into their own
+   * query, and the orchestrator also re-applies the predicate to every
+   * returned page as a degraded fallback for adapters that can't (or
+   * silently don't). See performProjectImport's per-page loop.
+   */
+  issueTypeIds?: string[];
+  /**
+   * D-07: run this import paged to completion instead of the default
+   * recency-windowed/capped mode — no recency cutoff (even if
+   * updatedWithinDays is also passed), no imported-row cap, bounded only by
+   * TYPED_IMPORT_MAX_PAGES as a runaway guard. The generic Import Issues
+   * dialog never sets this; it is the typed-import trigger's mode alone.
+   */
+  pagedToCompletion?: boolean;
 }
 
 export interface ProjectImportResult {
@@ -206,6 +412,13 @@ export interface ProjectImportResult {
   cappedAt: number;
   reachedCap: boolean;
   errors: string[];
+  /**
+   * True only when a paged-to-completion import was stopped by a cancel
+   * request (or its mapping row disappearing mid-run) rather than running to
+   * natural completion. Never overloads `errors` with a pseudo-error — a
+   * cancelled run is a distinct, honest outcome, not a failure.
+   */
+  cancelled: boolean;
 }
 
 /**
@@ -575,7 +788,7 @@ export class SyncService {
             // Mark this project as syncing (D-08)
             await db.integrationProject.update({
               where: { id: integrationProject.id },
-              data: { syncStatus: "syncing" },
+              data: { syncStatus: SYNC_STATUS.syncing },
             });
 
             // Fetch all issues stored for this integration (filtered to this external project)
@@ -669,7 +882,7 @@ export class SyncService {
             await db.integrationProject.update({
               where: { id: integrationProject.id },
               data: {
-                syncStatus: "completed",
+                syncStatus: SYNC_STATUS.completed,
                 lastSyncAt: new Date(),
                 syncError: null,
               },
@@ -683,7 +896,7 @@ export class SyncService {
               await db.integrationProject.update({
                 where: { id: integrationProject.id },
                 data: {
-                  syncStatus: "error",
+                  syncStatus: SYNC_STATUS.error,
                   syncError: error.message,
                 },
               });
@@ -820,19 +1033,42 @@ export class SyncService {
 
   /**
    * Approximate how many issues a bulk import would pull, before writing
-   * anything. Asks the tracker for the recency-scoped result set (page of 1)
-   * and returns its reported `total`. For providers that push the recency
-   * window into their query (Jira/GitHub/Azure) this is the filtered count;
-   * for providers that can't, it's the project total (an over-estimate that
-   * the actual import then trims via the client-side cutoff) — surfaced as
-   * "approximate" in the UI.
+   * anything. Asks the tracker for a result set (page of 1) and returns its
+   * reported `total`. Two callers share this function:
+   *  - the recency preview (generic Import Issues dialog, D-06): passes
+   *    `updatedWithinDays`; the returned `cap` reflects the recency mode's
+   *    default/clamped cap and is meaningful to this caller.
+   *  - the typed, windowless count probe (D-07's import-consent prompt):
+   *    passes `issueTypeIds` and omits `updatedWithinDays` so no recency
+   *    window reaches the adapter at all; the returned `cap` is meaningless
+   *    here (paged-to-completion mode has no cap) and this caller is
+   *    expected to ignore it.
+   * For providers that push the recency window into their query (Jira/
+   * GitHub/Azure) `matched` is the filtered count; for providers that can't,
+   * it's the project (or type-scoped) total (an over-estimate that the
+   * actual import then trims via the client-side cutoff).
+   *
+   * `exactness` (SCALE-01 gap-closure, #501/28-22) says how much to trust
+   * `matched`: "exact" when the tracker (via `adapter.countIssues`, or a
+   * self-reported `total`, or a sampled page that turned out to hold
+   * everything) gave a real answer; "floor" when no total exists and only a
+   * sampled page's length is known, with more confirmed to exist beyond it
+   * — never presented as a bare total. `adapter.countIssues` is preferred
+   * over the sampled-page fallback whenever the adapter implements it, both
+   * because it is more accurate (a real tracker-wide count, not one page)
+   * and because it costs a single request instead of one per sampled page.
    */
   async previewProjectImport(
     integrationId: number,
     integrationProjectId: string,
     options: ProjectImportOptions = {},
     serviceOptions: SyncServiceOptions = {}
-  ): Promise<{ matched: number; hasMore: boolean; cap: number }> {
+  ): Promise<{
+    matched: number;
+    hasMore: boolean;
+    cap: number;
+    exactness: "exact" | "floor" | "unknown";
+  }> {
     const db = serviceOptions.dbClient || defaultDb;
     const cap = Math.min(options.cap ?? IMPORT_DEFAULT_CAP, IMPORT_MAX_CAP);
 
@@ -870,12 +1106,35 @@ export class SyncService {
     }
 
     const projectRef = resolveImportProjectRef(integration.provider, mapping);
-    // Fetch a real page rather than trusting a reported `total`: Jira Cloud's
-    // /search/jql endpoint no longer returns `total`, so `matched` falls back
-    // to the count of issues actually returned (an honest "at least N"), and
-    // `hasMore` is true when the tracker says so or the page came back full.
-    // Sample a full page (not capped) so the count still reflects matches that
-    // exceed a small cap — which is exactly when the over-cap notice matters.
+
+    // Ask the tracker for a real count where the adapter can answer that
+    // directly (SCALE-01 gap-closure, #501/28-22) — cheaper (one request)
+    // and more accurate than paging a sample to infer one. Adapters without
+    // a verified count mechanism simply don't implement `countIssues`.
+    if (typeof adapter.countIssues === "function") {
+      const counted = await adapter.countIssues({
+        projectId: projectRef,
+        issueTypeIds: options.issueTypeIds,
+        updatedWithinDays: options.updatedWithinDays,
+      });
+      return {
+        matched: counted.count,
+        hasMore: counted.count > cap,
+        cap,
+        exactness: counted.exactness,
+      };
+    }
+
+    // Fallback: fetch a real page rather than trusting a reported `total`.
+    // Jira Cloud's /search/jql endpoint no longer returns `total` — that gap
+    // is closed above via countIssues; this fallback remains for adapters
+    // that implement neither `total` nor `countIssues` (or when the adapter
+    // simply doesn't implement countIssues yet). `matched` falls back to the
+    // count of issues actually returned (an honest "at least N" when there's
+    // more beyond the page), and `hasMore` is true when the tracker says so
+    // or the page came back full. Sample a full page (not capped) so the
+    // count still reflects matches that exceed a small cap — which is
+    // exactly when the over-cap notice matters.
     const sampleLimit = IMPORT_PAGE_SIZE;
     const { issues, total, hasMore } = await adapter.searchIssues({
       projectId: projectRef,
@@ -883,14 +1142,47 @@ export class SyncService {
       fullSync: true,
       limit: sampleLimit,
       offset: 0,
+      issueTypeIds: options.issueTypeIds,
     });
 
-    const hasTotal = typeof total === "number" && Number.isFinite(total);
-    const matched = hasTotal && total >= issues.length ? total : issues.length;
+    // Re-apply the type predicate to the sampled page, exactly as
+    // performProjectImport re-applies it to every imported page — an
+    // adapter that ignores `issueTypeIds` (GitHub serves labels and
+    // filters nothing server-side) would otherwise preview the WHOLE
+    // repository while the real import filters, and the offer dialog
+    // would promise rows the import then skips. For adapters that do
+    // filter server-side the page comes back all-matching, this filter
+    // removes nothing, and every value below is byte-identical to the
+    // pre-filter computation.
+    const typeFilterActive =
+      Array.isArray(options.issueTypeIds) && options.issueTypeIds.length > 0;
+    const pageMatches = typeFilterActive
+      ? issues.filter((issueData) =>
+          matchesRequirementDesignation(options.issueTypeIds!, {
+            issueTypeId: issueData.issueType?.id,
+            labels: issueData.labels,
+          })
+        )
+      : issues;
+    // A page the filter narrowed proves the tracker's own `total` counted
+    // unfiltered rows — discard it rather than report a number the import
+    // can never reach.
+    const filterNarrowedPage = pageMatches.length < issues.length;
+    const hasTotal =
+      !filterNarrowedPage &&
+      typeof total === "number" &&
+      Number.isFinite(total);
+    const matched =
+      hasTotal && total >= pageMatches.length ? total : pageMatches.length;
     const more =
       hasMore || (hasTotal && total > matched) || issues.length >= sampleLimit;
+    // Honest exactness for the fallback path: a self-reported total, or a
+    // page that turned out to hold everything (no `more`), is exact; a
+    // sampled page with more confirmed beyond it is only a floor — never
+    // dressed as a bare total (must_haves.truths, 28-22-PLAN.md).
+    const exactness: "exact" | "floor" = hasTotal || !more ? "exact" : "floor";
 
-    return { matched, hasMore: more, cap };
+    return { matched, hasMore: more, cap, exactness };
   }
 
   /**
@@ -912,8 +1204,29 @@ export class SyncService {
   ): Promise<ProjectImportResult> {
     const db = serviceOptions.dbClient || defaultDb;
     const errors: string[] = [];
-    const cap = Math.min(options.cap ?? IMPORT_DEFAULT_CAP, IMPORT_MAX_CAP);
-    const updatedWithinDays = options.updatedWithinDays;
+    // Single named local, read at every mode-aware touch-point below (cap,
+    // recency window, page bound, progress shape, cappedAt) — one predicate,
+    // several uses, so a future edit can't make some of them agree and one
+    // disagree.
+    const pagedToCompletion = options.pagedToCompletion === true;
+    const issueTypeIds = options.issueTypeIds;
+    // D-07: no ceiling in paged-to-completion mode — TYPED_IMPORT_MAX_PAGES
+    // bounds the walk instead (see touch-point 3 below). A concrete
+    // Number.MAX_SAFE_INTEGER keeps `cap` a real number so imported/cap
+    // arithmetic elsewhere in this function never has to special-case
+    // `undefined`; the progress branch below still avoids dividing by it.
+    const cap = pagedToCompletion
+      ? Number.MAX_SAFE_INTEGER
+      : Math.min(options.cap ?? IMPORT_DEFAULT_CAP, IMPORT_MAX_CAP);
+    const maxPages = pagedToCompletion
+      ? TYPED_IMPORT_MAX_PAGES
+      : IMPORT_MAX_PAGES;
+    // D-07: paged-to-completion applies no recency window at all — neither
+    // pushed into the tracker query nor as the client-side fallback below —
+    // even if a caller also passed updatedWithinDays.
+    const updatedWithinDays = pagedToCompletion
+      ? undefined
+      : options.updatedWithinDays;
     const cutoffMs =
       updatedWithinDays && updatedWithinDays > 0
         ? Date.now() - updatedWithinDays * 86_400_000
@@ -923,6 +1236,21 @@ export class SyncService {
     let matched = 0;
     let skipped = 0;
     let reachedCap = false;
+    // Cooperative cancellation (T-28-05-01..05): set when the per-page check
+    // below (gated on pagedToCompletion) observes a cancel request or finds
+    // the mapping row gone. Read once after the loop closes to choose the
+    // terminal syncStatus write and to report ProjectImportResult.cancelled
+    // honestly — never inferred from anything else.
+    let cancelled = false;
+
+    // PROV-04 / CONTEXT P3f: issues THIS run wrote whose tracker parent ref
+    // was present but not yet resolvable (the parent hadn't been paged in
+    // yet). Scoped strictly to this invocation — never a project-wide
+    // rescan — and drained in one pass after the loop below closes.
+    const deferredParents: Array<{
+      issueId: number;
+      parentRef: { id: string; key?: string };
+    }> = [];
 
     // Resolve the mapping + owning project up front. A bad id is a caller
     // misconfiguration — throw before any status tracking so the worker fails
@@ -950,7 +1278,7 @@ export class SyncService {
     // Mark syncing — same per-project badge the admin re-sync uses.
     await db.integrationProject.update({
       where: { id: integrationProjectId },
-      data: { syncStatus: "syncing", syncError: null },
+      data: { syncStatus: SYNC_STATUS.syncing, syncError: null },
     });
 
     try {
@@ -985,7 +1313,7 @@ export class SyncService {
       // both so each adapter uses whichever it understands.
       let pageToken: string | undefined;
 
-      while (imported < cap && page < IMPORT_MAX_PAGES && hasMore) {
+      while (imported < cap && page < maxPages && hasMore) {
         const result = await adapter.searchIssues({
           projectId: projectRef,
           updatedWithinDays,
@@ -993,6 +1321,7 @@ export class SyncService {
           limit: IMPORT_PAGE_SIZE,
           offset,
           pageToken,
+          issueTypeIds,
         });
         hasMore = result.hasMore;
         offset += result.issues.length;
@@ -1019,26 +1348,70 @@ export class SyncService {
             skipped++;
             continue;
           }
+          // Degraded type filter: some adapters can't push issueTypeIds into
+          // their own query at all (MantisBT), or only partially (GitLab
+          // fans out one type per request but still can't guarantee a
+          // provider some day won't ignore the clause) — the orchestrator
+          // re-applies the predicate to every returned page regardless of
+          // what the adapter claims to have pushed, so a provider that
+          // silently ignores it narrows rather than leaks (T-28-04-02).
+          // Positioned after `result.issues.length === 0` has already been
+          // checked against the page's RAW length, so a page that filters
+          // down to zero here cannot end the run (see the objective).
+          if (
+            issueTypeIds &&
+            issueTypeIds.length > 0 &&
+            !matchesRequirementDesignation(issueTypeIds, {
+              issueTypeId: issueData.issueType?.id,
+              labels: issueData.labels,
+            })
+          ) {
+            skipped++;
+            continue;
+          }
           if (imported >= cap) {
             reachedCap = true;
             break;
           }
           matched++;
           try {
-            await this.upsertIssueFromExternal(
+            const upsertResult = await this.upsertIssueFromExternal(
               db,
               integrationId,
               projectId,
               issueData
             );
             imported++;
-            if (job) {
-              await job.updateProgress({
-                current: imported,
-                total: cap,
-                percentage: Math.min(Math.round((imported / cap) * 100), 100),
-                message: `Importing ${mapping.externalProjectKey}: ${imported}/${cap}`,
+            // PROV-04 / P3f: only reachable when a parent ref was present
+            // AND resolution failed this attempt — never queue an entry
+            // with no ref to re-check.
+            if (upsertResult.parentUnresolved && issueData.parent) {
+              deferredParents.push({
+                issueId: upsertResult.id,
+                parentRef: issueData.parent,
               });
+            }
+            if (job) {
+              // Paged-to-completion has no real ceiling to divide by — a
+              // fabricated cap would make percentage always ~0 and the
+              // message read "1234/9007199254740991". Report the running
+              // count alone; the settings UI polls syncStatus, not this
+              // payload (verified in project-integration-settings.tsx), so
+              // this shape change is safe.
+              if (pagedToCompletion) {
+                await job.updateProgress({
+                  current: imported,
+                  total: null,
+                  message: `Importing ${mapping.externalProjectKey}: ${imported} imported`,
+                });
+              } else {
+                await job.updateProgress({
+                  current: imported,
+                  total: cap,
+                  percentage: Math.min(Math.round((imported / cap) * 100), 100),
+                  message: `Importing ${mapping.externalProjectKey}: ${imported}/${cap}`,
+                });
+              }
             }
           } catch (error: any) {
             errors.push(
@@ -1052,16 +1425,127 @@ export class SyncService {
           break;
         }
 
+        // Cooperative cancellation check (T-28-05-01/02/05) — gated on
+        // pagedToCompletion so the shipped recency-window import (D-06's
+        // generic Import Issues dialog) gains no per-page database read at
+        // all. Runs once per page (up to 50 issues), selects only the one
+        // column that matters, and treats a disappeared mapping row the
+        // same as an explicit cancel request rather than reading `undefined`
+        // off a null result and silently importing into a mapping that no
+        // longer exists.
+        if (pagedToCompletion) {
+          const cancelCheck = await db.integrationProject.findUnique({
+            where: { id: integrationProjectId },
+            select: { syncStatus: true },
+          });
+          if (
+            !cancelCheck ||
+            cancelCheck.syncStatus === SYNC_STATUS.cancelRequested
+          ) {
+            cancelled = true;
+            break;
+          }
+        }
+
         // GC breather between pages, mirroring performSync.
         if (hasMore) {
           await new Promise((resolve) => setTimeout(resolve, 10));
         }
       }
 
+      // PROV-04 / CONTEXT P3f: end-of-import re-resolution pass. Completes
+      // the hierarchy for exactly this run's own forward references —
+      // issues whose tracker parent ref was present but not resolvable at
+      // first write, typically because the tracker paged the child in
+      // before its parent. By now every row this run wrote is committed,
+      // so one pass is enough: a parent that arrived earlier in the SAME
+      // run resolves now, and chains resolve independently against rows
+      // that already exist — no fixed-point loop needed. A parent that
+      // never showed up in this run (outside the recency window, or never
+      // imported at all) is deliberately left unresolved for the next sync
+      // pass to complete; that is an accepted, documented limitation, not
+      // a bug this pass tries to solve. No Elasticsearch re-index or SSE
+      // publish here — parent linkage isn't part of the indexed document,
+      // and the rows were already indexed/published moments ago when they
+      // were written.
+      //
+      // T-28-05: this pass runs whether or not `cancelled` is true. A
+      // cancellation stops the loop from starting more pages — it does not
+      // undo anything already committed, and `deferredParents` only ever
+      // contains rows THIS run wrote before it stopped. Completing their
+      // hierarchy links is bounded by that already-fixed list (never a
+      // project-wide rescan), so skipping it on a cancelled run would leave
+      // rows this run itself wrote with unresolved parents for no benefit —
+      // the contract is "rows already imported stay imported," not "rows
+      // already imported stay half-linked."
+      for (const entry of deferredParents) {
+        // Reuses resolveSyncedParentId verbatim — the same resolver the
+        // inline write above uses — so the conditional identifier-clause
+        // fix and the parentRow.projectId === ownerProjectId check cover
+        // this second write path by construction (T-22-05-01/02). A
+        // second hand-rolled lookup here would be a second place for both
+        // to reappear.
+        const resolved = await resolveSyncedParentId(
+          db,
+          integrationId,
+          projectId,
+          entry.parentRef
+        );
+        // Write only when resolution yields a number. `undefined` means
+        // still not resolvable this pass — leave it for later. `null`
+        // cannot occur here (every deferred entry had a ref by
+        // definition), but is treated identically rather than risking a
+        // write: writing null could clear a parent a later re-upsert
+        // legitimately set (P3d).
+        if (typeof resolved !== "number") {
+          continue;
+        }
+        try {
+          // Parameterized $executeRaw, NOT an ORM bulk-update call on the
+          // Issue model — this is load-bearing, not a style choice. Phase
+          // 21's containment gate (linkedIssueUpsert.containment.test.ts)
+          // has a SEPARATE hardcoded check (see that file's own source)
+          // for that ORM bulk-update shape with no allowlist mechanism; an
+          // ORM bulk write here would fail it deterministically. This
+          // mirrors the same tagged-template idiom
+          // recomputeRequirementClassification already uses elsewhere in
+          // this phase. The "projectId" predicate stays in the WHERE
+          // clause even though "id" is already a primary key — the same
+          // repeat-the-scope-predicate discipline requirementHierarchy.ts
+          // applies to its own bulk statements.
+          //
+          // Guarded like this file's existing `db.issue?.findUnique`
+          // idiom: some mocked SyncService test clients don't expose
+          // $executeRaw, and this keeps a future fixture gap from turning
+          // into a confusing crash instead of a silent no-op. In
+          // production `rawDb` always has it.
+          if (typeof db.$executeRaw === "function") {
+            await db.$executeRaw`
+              UPDATE "Issue"
+              SET "parentId" = ${resolved}
+              WHERE "id" = ${entry.issueId}
+                AND "projectId" = ${projectId}
+            `;
+          }
+        } catch (error: any) {
+          // P3c isolation, mirrored from the per-issue try/catch above: a
+          // cycle RAISE from the live trigger on this second write path
+          // fails only this one link, not the run. No detect-and-skip, no
+          // new error machinery.
+          errors.push(
+            `Failed to link parent for issue ${entry.issueId}: ${error.message}`
+          );
+        }
+      }
+
+      // The cancelled terminal write copies the completed write's shape
+      // exactly (same where, same .update, plus lastSyncAt) and lands in the
+      // same place a normal completion would — only the status value
+      // differs, chosen once by the `cancelled` flag set above.
       await db.integrationProject.update({
         where: { id: integrationProjectId },
         data: {
-          syncStatus: "completed",
+          syncStatus: cancelled ? SYNC_STATUS.cancelled : SYNC_STATUS.completed,
           lastSyncAt: new Date(),
           syncError: null,
         },
@@ -1070,13 +1554,28 @@ export class SyncService {
       await db.integrationProject
         .update({
           where: { id: integrationProjectId },
-          data: { syncStatus: "error", syncError: error.message },
+          data: { syncStatus: SYNC_STATUS.error, syncError: error.message },
         })
         .catch(() => {});
       errors.push(`Import failed: ${error.message}`);
     }
 
-    return { imported, matched, skipped, cappedAt: cap, reachedCap, errors };
+    // In paged-to-completion mode `cap` is Number.MAX_SAFE_INTEGER, an
+    // internal loop-bound sentinel, never a real ceiling — reporting it
+    // verbatim as `cappedAt` would look like a fabricated ceiling to a
+    // caller that doesn't know to check `reachedCap` first. Report the
+    // actual imported count instead: honest (it's not invented), and
+    // consistent with `reachedCap` always being false in this mode (a cap
+    // that large is, by construction, never reached).
+    return {
+      imported,
+      matched,
+      skipped,
+      cappedAt: pagedToCompletion ? imported : cap,
+      reachedCap,
+      errors,
+      cancelled,
+    };
   }
 
   /**
@@ -1547,7 +2046,7 @@ export class SyncService {
     integrationId: number,
     projectId: number,
     issueData: IssueData
-  ): Promise<{ id: number; created: boolean }> {
+  ): Promise<{ id: number; created: boolean; parentUnresolved?: boolean }> {
     // `Projects.createdBy` is the User.id string; the `creator` relation
     // joins to the User row. We just need the FK value here.
     const project = await db.projects.findUnique({
@@ -1574,24 +2073,93 @@ export class SyncService {
                 integrationId,
               },
             },
-            select: { id: true },
+            select: {
+              id: true,
+              projectId: true,
+              isRequirement: true,
+              requirementDetachedAt: true,
+              requirementOverride: true,
+              _count: {
+                select: {
+                  children: true,
+                  caseIssues: true,
+                  milestoneIssues: true,
+                },
+              },
+            },
           })
         : null;
+
+    // The dedup key (externalId, integrationId) carries no projectId, so
+    // two TestPlanIt projects sharing one Integration and both mapped to
+    // the same external issue collide on this same row. Refuse to hand
+    // the row to the second project once it has dependents (children,
+    // case links, or milestone links) — reassigning projectId would
+    // orphan them from the project that actually owns them.
+    const dependentsCount = existing
+      ? (existing._count?.children ?? 0) +
+        (existing._count?.caseIssues ?? 0) +
+        (existing._count?.milestoneIssues ?? 0)
+      : 0;
+    if (
+      existing &&
+      existing.projectId != null &&
+      existing.projectId !== projectId &&
+      dependentsCount > 0
+    ) {
+      throw new Error(
+        `Refusing to reassign Issue ${existing.id} from project ${existing.projectId} to ${projectId}: ` +
+          `it has ${existing._count?.children ?? 0} child issue(s), ${existing._count?.caseIssues ?? 0} case link(s), ` +
+          `and ${existing._count?.milestoneIssues ?? 0} milestone link(s) that would be orphaned. ` +
+          `Investigate the overlapping IntegrationProject configuration mapping both projects to the same external project.`
+      );
+    }
 
     // Resurrect-on-collision: if a prior soft-deleted Issue exists for
     // this (externalId, integrationId), `create` would 23505. Upsert with
     // overwrite + isDeleted: false brings the row back with the freshest
     // tracker payload — what a re-sync of an externally-restored ticket
     // should produce.
+    //
+    // PROV-04/P3e: resolvedParentId and resolvedIsRequirement are plain
+    // keys below, never inside a truthy-parent spread guard (see
+    // `resolveSyncedParentId`'s doc comment for why — `undefined` already
+    // means "leave unchanged" to the ORM).
+    const resolvedParentId = await resolveSyncedParentId(
+      db,
+      integrationId,
+      projectId,
+      issueData.parent
+    );
+    const configuredIsRequirement = await resolveSyncedRequirementFlag(
+      db,
+      integrationId,
+      projectId,
+      { issueTypeId: issueData.issueType?.id, labels: issueData.labels }
+    );
+    // The per-issue tri-state override outranks the config; `undefined`
+    // (config unreadable — mock db, or no owner project) still means
+    // "leave the column untouched" when no override pins it. The config
+    // arm passed to the resolver is unused whenever the override is set.
+    // A CREATE branch always resolves through the config: a brand-new row
+    // has no override by definition.
+    const resolvedIsRequirement =
+      existing?.requirementOverride != null
+        ? resolveEffectiveRequirementFlag(existing.requirementOverride, false)
+        : configuredIsRequirement;
     const issueFields = {
       name: issueData.key || issueData.id,
       title: issueData.title,
       description: issueData.description || "",
       status: issueData.status,
-      priority: issueData.priority || "medium",
+      // No fabricated fallback: a provider with no priority concept
+      // (GitHub, Gitea, GitLab) stores NULL and renders as the dash, not
+      // as a made-up "medium".
+      priority: issueData.priority ?? null,
       externalKey: issueData.key,
       externalUrl: issueData.url,
       externalStatus: issueData.status,
+      externalPriority: issueData.priority ?? null,
       externalData: issueData.customFields || {},
       // Non-customfield tracker metadata that auto-tag's prompt extractor
       // reads to surface linked-issue context. Kept distinct from
@@ -1601,9 +2169,24 @@ export class SyncService {
       issueTypeId: issueData.issueType?.id,
       issueTypeName: issueData.issueType?.name,
       issueTypeIconUrl: issueData.issueType?.iconUrl,
+      parentId: resolvedParentId,
+      isRequirement: resolvedIsRequirement,
       lastSyncedAt: new Date(),
       projectId,
     };
+    // A detached requirement's locally-owned columns (LOCKED_ISSUE_FIELDS)
+    // must survive the poll: the user owns their content once detached, so
+    // the update refreshes only the mirror/metadata columns — the same
+    // strip `upsertLinkedIssueShell` applies, from the sync side.
+    const updateFields: Record<string, unknown> = {
+      ...issueFields,
+      isDeleted: false,
+    };
+    if (isDetachedRequirement(existing)) {
+      for (const field of LOCKED_ISSUE_FIELDS) {
+        delete updateFields[field];
+      }
+    }
     const upserted = await db.issue.upsert({
       where: {
         externalId_integrationId: {
@@ -1617,10 +2200,7 @@ export class SyncService {
         integrationId,
         createdById: project.createdBy,
       },
-      update: {
-        ...issueFields,
-        isDeleted: false,
-      },
+      update: updateFields,
     });
 
     // Index newly-created issues just like manual import does. Best-effort
@@ -1643,7 +2223,22 @@ export class SyncService {
       tenantId: getCurrentTenantId() ?? "default",
     });
 
-    return { id: upserted.id, created: !existing };
+    // PROV-04 / plan 22-05: additive third field, derived from the value
+    // already computed above rather than re-queried. Only true when the
+    // tracker actually supplied a parent ref AND resolveSyncedParentId
+    // came back undefined (forward reference — the parent hasn't been
+    // written yet this run). Left absent (not false) otherwise, so the
+    // returned shape stays minimal for the two callers that ignore it
+    // (MilestoneSyncService.ts destructures only `{ id }`; the manual-sync
+    // call site above ignores the result entirely).
+    const parentUnresolved =
+      Boolean(issueData.parent?.id) && resolvedParentId === undefined;
+
+    return {
+      id: upserted.id,
+      created: !existing,
+      ...(parentUnresolved ? { parentUnresolved: true } : {}),
+    };
   }
 
   /**
@@ -1702,16 +2297,46 @@ export class SyncService {
         ? (existingIssue.data as Record<string, unknown>)
         : {};
 
+    // PROV-04/P3e: resolve against the EXISTING row's own project — this
+    // function receives no projectId parameter (it's an update, not an
+    // upsert). resolvedParentId/resolvedIsRequirement are plain keys below,
+    // never inside a truthy-parent spread guard (see
+    // `resolveSyncedParentId`'s doc comment).
+    const resolvedParentId = await resolveSyncedParentId(
+      db,
+      integrationId,
+      existingIssue.projectId ?? null,
+      issueData.parent
+    );
+    const configuredIsRequirement = await resolveSyncedRequirementFlag(
+      db,
+      integrationId,
+      existingIssue.projectId ?? null,
+      { issueTypeId: issueData.issueType?.id, labels: issueData.labels }
+    );
+    // Same override precedence as upsertIssueFromExternal: a pinned row
+    // never follows the config, and `undefined` still means "leave the
+    // column untouched" only when no override pins it.
+    const resolvedIsRequirement =
+      existingIssue.requirementOverride != null
+        ? resolveEffectiveRequirementFlag(
+            existingIssue.requirementOverride,
+            false
+          )
+        : configuredIsRequirement;
+
     const issuePayload = {
       name: issueData.key || issueData.id, // Use key if available, otherwise use id
       title: issueData.title,
       description: issueData.description || "",
       status: issueData.status,
-      priority: issueData.priority || "medium",
+      // See createNewIssue's issueFields — never fabricate a priority.
+      priority: issueData.priority ?? null,
       externalId: issueData.id,
       externalKey: issueData.key,
       externalUrl: issueData.url,
       externalStatus: issueData.status,
+      externalPriority: issueData.priority ?? null,
       externalData: issueData.customFields || {},
       // See createNewIssue above — keep the non-customfield tracker metadata
       // (labels, components) fresh on every sync. Existing rows in the wild
@@ -1720,12 +2345,24 @@ export class SyncService {
       issueTypeId: issueData.issueType?.id,
       issueTypeName: issueData.issueType?.name,
       issueTypeIconUrl: issueData.issueType?.iconUrl,
+      parentId: resolvedParentId,
+      isRequirement: resolvedIsRequirement,
       lastSyncedAt: new Date(),
     };
 
+    // Same detach gate as upsertIssueFromExternal: once a requirement is
+    // released to local ownership the poll keeps only the mirror columns
+    // fresh, never the five locally-owned ones.
+    const updateData: Record<string, unknown> = { ...issuePayload };
+    if (isDetachedRequirement(existingIssue)) {
+      for (const field of LOCKED_ISSUE_FIELDS) {
+        delete updateData[field];
+      }
+    }
+
     await db.issue.update({
       where: { id: existingIssue.id },
-      data: issuePayload,
+      data: updateData,
     });
 
     // Manually sync to Elasticsearch since enhanced Prisma client bypasses extensions

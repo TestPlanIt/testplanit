@@ -27,14 +27,16 @@ import {
   flexRender,
   OnChangeFn,
   Row,
+  type RowData,
   SortingState,
   Updater,
-} from "@tanstack/react-table";
+} from "@/components/tables/tableFeatures";
 import {
   ArrowDownAZ,
   ArrowDownUp,
   ArrowUpZA,
   Check,
+  ChevronRight,
   EyeOff,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -76,11 +78,37 @@ export interface CustomColumnMeta {
   isPinned?: "left" | "right";
   /** Opt a column out of the default single-line truncation so its cells wrap. */
   wrap?: boolean;
+  /**
+   * Hold this column in its declared position while the rest stay
+   * drag-reorderable. For a table that renders a TREE, the column carrying
+   * the chevrons and the indent is load-bearing: the nesting guide is
+   * painted from the row's own start, so moving that column elsewhere would
+   * leave the guide marking one column and the chevron sitting in another.
+   * Pinning would also hold a column still, but it freezes it against
+   * horizontal scroll as well, which is a different (and much heavier)
+   * decision.
+   */
+  noReorder?: boolean;
+  /**
+   * Rendered INSIDE the header cell but AFTER (as a sibling of) the
+   * column-menu trigger button. The header content itself lives inside that
+   * trigger `<button>`, so any interactive header adornment (a popover, a
+   * legend) MUST come through this slot instead of the `header` renderer --
+   * nesting a button inside the trigger is invalid HTML and breaks the sort
+   * menu (requirements list UAT).
+   */
+  headerExtra?: ReactNode;
 }
 
 export type SortConfig = { column: string; direction: "asc" | "desc" };
 
-export const EXPANDER_COLUMN_WIDTH = 24;
+/** One nesting level's indent, in px, applied by `RowExpanderPrefix`. Matches
+ *  the step the requirements list uses for its own tree. */
+export const NESTING_INDENT_PX = 24;
+
+/** The chevron slot's width, in px — reserved on every row whether or not it
+ *  can expand, so text keeps one origin. `h-5 w-5` in class form. */
+export const EXPANDER_SLOT_PX = 20;
 
 export function shallowEqualRecord(
   a: Record<string, boolean>,
@@ -132,12 +160,14 @@ export function reconcileColumnOrder(
  * context when idle, so their handles compete globally and would bleed over the
  * pinned column as it stays put while other columns scroll under it.
  */
-export const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
+export const getCommonPinningStyles = <TData extends RowData>(
+  column: Column<TData>
+): CSSProperties => {
   const isPinned = column.getIsPinned();
   const isLastLeftPinnedColumn =
-    isPinned === "left" && column.getIsLastColumn("left");
+    isPinned === "start" && column.getIsLastColumn("start");
   const isFirstRightPinnedColumn =
-    isPinned === "right" && column.getIsFirstColumn("right");
+    isPinned === "end" && column.getIsFirstColumn("end");
 
   return {
     boxShadow: isLastLeftPinnedColumn
@@ -145,8 +175,8 @@ export const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
       : isFirstRightPinnedColumn
         ? "-4px 0 8px -4px rgba(0,0,0,0.3)"
         : undefined,
-    left: isPinned === "left" ? `${column.getStart("left")}px` : undefined,
-    right: isPinned === "right" ? `${column.getStart("right")}px` : undefined,
+    left: isPinned === "start" ? `${column.getStart("start")}px` : undefined,
+    right: isPinned === "end" ? `${column.getStart("end")}px` : undefined,
     position: isPinned ? "sticky" : "relative",
     width: column.getSize(),
     maxWidth: column.columnDef.maxSize,
@@ -162,17 +192,19 @@ export const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
  * horizontally scrolled content doesn't bleed through. Width is set by the
  * engine's flex sizing, not here.
  */
-export function getFlexPinningStyles(column: Column<any, any>): CSSProperties {
+export function getFlexPinningStyles<TData extends RowData>(
+  column: Column<TData>
+): CSSProperties {
   const isPinned = column.getIsPinned();
   if (!isPinned) return {};
   const isLastLeftPinned =
-    isPinned === "left" && column.getIsLastColumn("left");
+    isPinned === "start" && column.getIsLastColumn("start");
   const isFirstRightPinned =
-    isPinned === "right" && column.getIsFirstColumn("right");
+    isPinned === "end" && column.getIsFirstColumn("end");
   return {
     position: "sticky",
-    left: isPinned === "left" ? column.getStart("left") : undefined,
-    right: isPinned === "right" ? column.getStart("right") : undefined,
+    left: isPinned === "start" ? column.getStart("start") : undefined,
+    right: isPinned === "end" ? column.getStart("end") : undefined,
     zIndex: 2,
     boxShadow: isLastLeftPinned
       ? "4px 0 8px -4px rgba(0,0,0,0.3)"
@@ -187,10 +219,10 @@ export function getFlexPinningStyles(column: Column<any, any>): CSSProperties {
  * ignoring a stale sort that points at a column the current set lacks, plus the
  * change handler that funnels TanStack's updater back into `onSortChange`.
  */
-export function useSortingAdapter(
+export function useSortingAdapter<TData extends RowData>(
   sortConfig: SortConfig | null | undefined,
   onSortChange: ((columnId: string) => void) | undefined,
-  columns: ColumnDef<any, any>[]
+  columns: ColumnDef<TData, any>[]
 ): { sorting: SortingState; handleSortingChange: OnChangeFn<SortingState> } {
   const sorting: SortingState = useMemo(() => {
     if (!sortConfig) return [];
@@ -214,60 +246,81 @@ export function useSortingAdapter(
 }
 
 /**
- * The expander column prepended when rows can nest (grouping or sub-rows).
- * Shared by both engines; sized to a fixed 24px well and excluded from
- * sorting/hiding/resizing.
+ * The expand/collapse chevron for a row with sub-rows, rendered INLINE at the
+ * head of the first content cell.
+ *
+ * This replaced a dedicated `expander` column prepended to every nesting
+ * table. That column was wrong twice over. It was sized to a 24px well while
+ * the virtualized engine gives every cell `px-3` — a ONE PIXEL content box
+ * under `overflow: hidden`, which clipped the chevron to 13 of its 16px (the
+ * literal "▶" it used to render is ~10px and squeaked through, so the
+ * clipping stayed invisible until the glyph was replaced with the app's
+ * standard icon). And on a GROUPED row it drew a second chevron beside the
+ * one `resolveGroupableCellContent` already renders in the grouped cell, so
+ * every grouping table showed two.
+ *
+ * Inline is also what the requirements list does with its own tree chevron,
+ * so the two nesting surfaces in this app now work the same way.
+ *
+ * Renders a same-sized SPACER rather than nothing when a row cannot expand,
+ * so a mixed list of expandable and leaf rows keeps one text origin instead
+ * of going ragged. Indents by depth, which the removed column could not do.
+ * Deliberately silent on a GROUPED row: that row's own cell already carries
+ * a chevron, and this is what stops it doubling.
  */
-export function useExpanderColumn<TData>(
-  subRowsLabel?: string
-): ColumnDef<TData, any> {
+export function RowExpanderPrefix<TData extends RowData>({
+  row,
+  subRowsLabel,
+}: {
+  row: Row<TData>;
+  subRowsLabel?: string;
+}) {
   const tActions = useTranslations("common.actions");
-  return useMemo(
-    () => ({
-      id: "expander",
-      header: () => null,
-      cell: ({ row }: { row: Row<TData> }) => {
-        if (!row.getCanExpand()) return null;
-        const isExpanded = row.getIsExpanded();
-        const subRowsCount = row.subRows?.length ?? 0;
-        const tooltipText = isExpanded
-          ? tActions("collapse")
-          : `${tActions("expand")}${subRowsLabel && subRowsCount > 0 ? ` • ${subRowsCount} ${subRowsLabel}` : ""}`;
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={row.getToggleExpandedHandler()}
-                  style={{ cursor: "pointer" }}
-                  className="me-2"
-                  aria-label={tooltipText}
+  const canExpand = row.getCanExpand() && !row.getIsGrouped();
+  const isExpanded = row.getIsExpanded();
+  const subRowsCount = row.subRows?.length ?? 0;
+  const tooltipText = isExpanded
+    ? tActions("collapse")
+    : `${tActions("expand")}${subRowsLabel && subRowsCount > 0 ? ` • ${subRowsCount} ${subRowsLabel}` : ""}`;
+
+  return (
+    <span
+      className="me-1 flex shrink-0 items-center"
+      style={{ paddingInlineStart: row.depth * NESTING_INDENT_PX }}
+    >
+      {canExpand ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={row.getToggleExpandedHandler()}
+                style={{ cursor: "pointer" }}
+                className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+                aria-label={tooltipText}
+                data-testid="row-expander"
+              >
+                {/* The rotation lives on this span as an inline transform,
+                    not as a `rotate-90` class on the icon: the class form
+                    sets the standalone `rotate` property, and only a node
+                    that survives the toggle animates either way. */}
+                <span
+                  className="inline-flex items-center justify-center transition-transform duration-200"
+                  style={{
+                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                  }}
                 >
-                  <span
-                    className="inline-flex items-center justify-center w-4 transition-transform duration-200"
-                    style={{
-                      transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                    }}
-                  >
-                    {"▶"}
-                  </span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{tooltipText}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      },
-      size: EXPANDER_COLUMN_WIDTH,
-      minSize: EXPANDER_COLUMN_WIDTH,
-      maxSize: EXPANDER_COLUMN_WIDTH,
-      enableSorting: false,
-      enableResizing: false,
-      enableHiding: false,
-      meta: { isPinned: "left" },
-    }),
-    [tActions, subRowsLabel]
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{tooltipText}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <span className="h-5 w-5 shrink-0" aria-hidden="true" />
+      )}
+    </span>
   );
 }
 
@@ -283,7 +336,7 @@ export function useExpanderColumn<TData>(
  * (the paged engine's behaviour): pin the expander whenever it is present, even
  * alongside explicit `meta.isPinned` columns.
  */
-export function useInitialColumnPinning({
+export function useInitialColumnPinning<TData extends RowData>({
   columns,
   grouping,
   getSubRows,
@@ -292,17 +345,17 @@ export function useInitialColumnPinning({
   autoPinLast = true,
   alwaysPinExpander = false,
 }: {
-  columns: ColumnDef<any, any>[];
+  columns: ColumnDef<TData, any>[];
   grouping?: string[];
-  getSubRows?: (row: any, index: number) => any[] | undefined;
+  getSubRows?: (row: TData, index: number) => TData[] | undefined;
   enabled?: boolean;
   autoPinFirstLast?: boolean;
   autoPinLast?: boolean;
   alwaysPinExpander?: boolean;
 }): [ColumnPinningState, Dispatch<SetStateAction<ColumnPinningState>>] {
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
-    left: [],
-    right: [],
+    start: [],
+    end: [],
   });
   const initialPinningDone = useRef(false);
 
@@ -331,7 +384,7 @@ export function useInitialColumnPinning({
     } else if (alwaysPinExpander && hasExpander) {
       left.unshift("expander");
     }
-    setColumnPinning({ left, right });
+    setColumnPinning({ start: left, end: right });
     initialPinningDone.current = true;
   }, [
     enabled,
@@ -355,14 +408,14 @@ export function useInitialColumnPinning({
  * dnd-kit sensors use a 5px activation distance so a plain click (sort) or a
  * resize-handle drag never starts a column drag.
  */
-export function usePersistedColumnOrder({
+export function usePersistedColumnOrder<TData extends RowData>({
   enabled,
   storageKey,
   finalColumns,
 }: {
   enabled: boolean;
   storageKey?: string;
-  finalColumns: ColumnDef<any, any>[];
+  finalColumns: ColumnDef<TData, any>[];
 }): {
   columnOrder: ColumnOrderState;
   setColumnOrder: Dispatch<SetStateAction<ColumnOrderState>>;
@@ -426,9 +479,9 @@ export function usePersistedColumnOrder({
  * engines; only gated on `groupingActive` so ungrouped tables never pay for it
  * (see feedback: gate grouped branches on groupingActive).
  */
-export function resolveGroupableCellContent(
-  cell: Cell<any, unknown>,
-  row: Row<any>,
+export function resolveGroupableCellContent<TData extends RowData>(
+  cell: Cell<TData, unknown>,
+  row: Row<TData>,
   groupingActive: boolean,
   tActions: (key: string) => string
 ): ReactNode {
@@ -447,13 +500,16 @@ export function resolveGroupableCellContent(
             row.getIsExpanded() ? tActions("collapse") : tActions("expand")
           }
         >
+          {/* Same chevron as the sub-row expander above -- a grouped row and
+              an expandable parent row are the same gesture and must not look
+              like two different ones. */}
           <span
             className="inline-flex items-center justify-center w-4 transition-transform duration-200"
             style={{
               transform: row.getIsExpanded() ? "rotate(90deg)" : "rotate(0deg)",
             }}
           >
-            {"▶"}
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </span>
         </Button>
         {flexRender(cell.column.columnDef.cell, cell.getContext())}

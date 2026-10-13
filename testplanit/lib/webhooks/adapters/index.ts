@@ -1,5 +1,6 @@
 import type { AdapterType } from "~/zenstack/models";
 import { azureDevopsAdapter } from "./azure-devops";
+import { bitbucketAdapter } from "./bitbucket";
 import { genericHmacAdapter } from "./generic-hmac";
 import { giteaAdapter } from "./gitea";
 import { gitlabAdapter } from "./gitlab";
@@ -33,6 +34,7 @@ export const ADAPTER_REGISTRY: Record<AdapterType, WebhookAdapter | null> = {
   GITEA: giteaAdapter,
   REDMINE: redmineAdapter,
   MANTISBT: mantisbtAdapter,
+  BITBUCKET: bitbucketAdapter,
   SLACK: null,
   GENERIC_HMAC: null,
 };
@@ -74,6 +76,7 @@ export const OUTBOUND_ADAPTER_REGISTRY: Record<
   GITEA: null,
   REDMINE: null,
   MANTISBT: null,
+  BITBUCKET: null,
   SLACK: slackAdapter,
   GENERIC_HMAC: genericHmacAdapter,
 };

@@ -25,6 +25,8 @@ vi.mock("~/lib/db", () => ({
     userProjectPermission: mockUserProjectPermission,
     groupProjectPermission: mockGroupProjectPermission,
     projectAssignment: mockProjectAssignment,
+    // Read by the project-scope resolver (Settings canAddEdit roles).
+    rolePermission: { findMany: vi.fn().mockResolvedValue([]) },
   },
 }));
 

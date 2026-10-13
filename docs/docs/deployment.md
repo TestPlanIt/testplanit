@@ -34,7 +34,7 @@ TestPlanIt supports flexible deployment configurations. You can deploy all servi
 3. **PostgreSQL** (`postgres`) - Primary database storage
 4. **Valkey** (`valkey`) - Redis-compatible cache and job queue
 5. **Elasticsearch** (`elasticsearch`) - Full-text search engine (optional feature)
-6. **MinIO** (`minio`) + **Nginx** (`nginx`) - S3-compatible file storage with reverse proxy
+6. **RustFS** (`minio`) + **Nginx** (`nginx`) - S3-compatible file storage with reverse proxy
 
 You can mix and match these services using Docker Compose profiles.
 
@@ -78,9 +78,11 @@ Available profiles:
 - `with-postgres` - Include PostgreSQL container
 - `with-valkey` - Include Valkey/Redis container
 - `with-elasticsearch` - Include Elasticsearch container (optional, for search)
-- `with-minio` - Include MinIO + Nginx containers (S3-compatible storage)
+- `with-minio` - Include RustFS + Nginx containers (S3-compatible storage)
 
 ### 3. Configure Environment
+
+Every variable the application reads, with its default, is listed on the [Environment Variables](environment-variables.md) reference page.
 
 Create and customize `.env.production` based on your deployment choice:
 
@@ -96,7 +98,7 @@ VALKEY_URL="valkey://valkey:6379"
 # Search (Docker Elasticsearch)
 ELASTICSEARCH_NODE="http://elasticsearch:9200"
 
-# File Storage (Docker MinIO)
+# File Storage (bundled RustFS)
 AWS_ACCESS_KEY_ID="minioadmin"
 AWS_SECRET_ACCESS_KEY="minioadmin123"
 AWS_BUCKET_NAME="testplanit"
@@ -123,6 +125,8 @@ VALKEY_URL="valkey://your-redis.cache.amazonaws.com:6379"
 ELASTICSEARCH_NODE="https://your-es.es.amazonaws.com:9200"
 
 # AWS S3
+# On AWS, omit BOTH key lines to use an instance role / IRSA instead:
+# https://docs.testplanit.com/docs/file-storage#running-without-static-keys
 AWS_ACCESS_KEY_ID="your-aws-key"
 AWS_SECRET_ACCESS_KEY="your-aws-secret"
 AWS_BUCKET_NAME="your-bucket"
@@ -155,7 +159,7 @@ What happens during startup:
 - **Database migrations run automatically** - The `migrate` service runs `zenstack migrate deploy` to apply pending migrations to the database schema before starting
 - Selected services start (based on profiles)
 - Database is seeded with initial data (if using `with-postgres` profile for first-time setup)
-- MinIO buckets are created (if using `with-minio`)
+- The storage bucket is created (if using `with-minio`)
 - Application and workers become available
 
 :::info Automatic Database Migrations
@@ -165,7 +169,7 @@ Every time you start the application, the `migrate` service automatically runs t
 ### 5. Access Your Application
 
 - **Application**: `http://localhost:30000` (or your configured domain)
-- **MinIO Console** (if using `with-minio`): `http://localhost:9001`
+- **RustFS Console** (if using `with-minio`): `http://localhost:9001`
 - **Elasticsearch** (if using `with-elasticsearch`): `http://localhost:9200`
 - **Default Login**: `admin@example.com` / `admin` (change in production!)
 
@@ -175,7 +179,7 @@ For production, configure a reverse proxy (nginx/Caddy/CloudFlare) to:
 
 - Handle SSL termination
 - Forward requests to port 30000 (TestPlanIt)
-- Forward `/testplanit/` requests to port 80 (internal nginx for MinIO)
+- Forward `/testplanit/` requests to port 80 (internal nginx for file storage)
 
 Example nginx configuration:
 
@@ -196,7 +200,7 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Proxy MinIO file access
+    # Proxy file storage access
     location /testplanit/ {
         proxy_pass http://localhost:80/testplanit/;
         proxy_set_header Host $host;
@@ -250,6 +254,8 @@ docker run --rm -v testplanit-postgres-data:/data -v "$(pwd):/backup" \
 docker compose -f docker-compose.prod.yml $PROFILES up -d
 ```
 
+If you are updating from a release that bundled MinIO, migrate your files before starting the new version. See [Migrating from MinIO to RustFS](/docs/migrating-from-minio).
+
 ## Service Details
 
 ### Background Workers & Scheduled Jobs
@@ -287,20 +293,20 @@ Most service data is stored in `./docker-data/`:
 
 - `redis/` - Valkey persistence
 - `elasticsearch/` - Search indexes
-- `minio/` - File attachments
+- `rustfs/` - File attachments
 
 Postgres data lives in the named Docker volume `testplanit-postgres-data` instead
 of a bind mount, so it can never end up inside the build context.
 
 ### File Storage Configuration
 
-**Option 1: Docker MinIO** (`with-minio` profile)
+**Option 1: Docker RustFS** (`with-minio` profile)
 
-- Internal endpoint: `http://minio:9000` (app → MinIO)
+- Internal endpoint: `http://minio:9000` (app → storage)
 - External access: `https://yourdomain.com/minio/` (browser → files)
 - Admin console: `http://localhost:9001`
 
-**Option 2: AWS S3** (no MinIO profile)
+**Option 2: AWS S3** (no `with-minio` profile)
 Update `.env.production`:
 
 ```bash
@@ -311,7 +317,7 @@ AWS_ACCESS_KEY_ID=your-aws-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret
 ```
 
-**Option 3: External MinIO**
+**Option 3: External S3-compatible storage** (for example, your own MinIO or RustFS server)
 Update `.env.production`:
 
 ```bash
@@ -355,7 +361,7 @@ No nginx reload is required - the check happens on each request.
 
 - When `/etc/nginx/maintenance.json` exists, nginx returns a 503 status with a static maintenance page
 - The `/health` endpoint remains available for monitoring systems
-- MinIO file access continues to work during maintenance
+- File storage access continues to work during maintenance
 - The maintenance page is served from `/etc/nginx/maintenance.html`
 - The page loads `/maintenance.json` to display start time and countdown
 

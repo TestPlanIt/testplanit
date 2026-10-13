@@ -903,9 +903,9 @@ export function UnifiedSearch({
               </SheetTrigger>
               <SheetContent side="right" className="w-[320px]">
                 <SheetHeader>
-                  <SheetTitle>{t("search.title")}</SheetTitle>
+                  <SheetTitle>{t("common.aria.search")}</SheetTitle>
                   <SheetDescription className="sr-only">
-                    {t("search.title")}
+                    {t("common.aria.search")}
                   </SheetDescription>
                 </SheetHeader>
                 <div className="mt-6">
@@ -1196,7 +1196,7 @@ function SearchResultCard({
   onSelectToggle?: () => void;
 }) {
   const t = useTranslations();
-  // Deleted wins over everything (matching TestCaseNameDisplay); automated
+  // Deleted wins over everything (matching CaseDisplay); automated
   // repository cases get the bot icon; everything else uses the entity icon.
   const Icon = hit.source.isDeleted
     ? "trash-2"
@@ -1698,7 +1698,7 @@ function SearchResultCard({
           >
             <Checkbox
               checked={isSelected}
-              aria-label={t("repository.duplicates.selectRow")}
+              aria-label={t("common.aria.selectRow")}
               data-testid={`bulk-select-${hit.entityType}-${hit.id}`}
             />
           </div>

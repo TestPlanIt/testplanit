@@ -168,13 +168,20 @@ export const Header = () => {
     if (status === "authenticated" && session?.user) {
       const isSSO =
         session.user.authMethod === "SSO" || session.user.authMethod === "BOTH";
-      if (!session.user.emailVerified && session.user.email && !isSSO) {
+      // Re-checked on every route change: a sign-in page's own redirect can
+      // supersede this push, and the session alone never changes again.
+      if (
+        !session.user.emailVerified &&
+        session.user.email &&
+        !isSSO &&
+        !path.startsWith("/verify-email")
+      ) {
         router.push(
           "/verify-email?email=" + encodeURIComponent(session.user.email)
         );
       }
     }
-  }, [session, status, router]);
+  }, [session, status, router, path]);
 
   // Detect platform for keyboard shortcut display
   useEffect(() => {
@@ -311,7 +318,7 @@ export const Header = () => {
                     priority={true}
                   />
                   <div className="flex flex-col">
-                    <span className="">{t("common.branding.name")}</span>
+                    <span className="">{tCommon("pageTitles.appName")}</span>
                     <div className="-mt-1 text-xs text-muted-foreground/60">
                       {versionString}
                     </div>

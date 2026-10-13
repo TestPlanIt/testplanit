@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import {
@@ -108,6 +109,9 @@ interface ReportConfig {
  *    the project (checked through the policy-enhanced client, so it follows
  *    the same access rules as the rest of the app).
  */
+/** Metrics that are rates: an absent value is null ("—"), never 0. */
+const RATE_METRIC_IDS = new Set(["passRate", "selectionPrecision"]);
+
 export async function authorizeReportRequest(
   req: NextRequest,
   opts: { requiresAdmin: boolean; projectId?: number }
@@ -121,7 +125,11 @@ export async function authorizeReportRequest(
   }
 
   const session = await getServerSession(authOptions);
-  const auth = await authenticateRequest(req, session);
+  // Report POSTs carry filters in the body but only read; a read-only token
+  // must be able to run them.
+  const auth = await authenticateRequest(req, session, {
+    readOperation: true,
+  });
   if (!auth.authenticated) {
     return {
       ok: false,
@@ -436,8 +444,6 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       projectId,
       dimensions,
       metrics,
-      startDate,
-      endDate,
       folderIncludeDescendants,
       dimensionFilters,
       page = 1,
@@ -445,6 +451,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       sortColumn,
       sortDirection,
     } = body;
+    const { startDate, endDate } = resolveRequestDateRange(body);
 
     // Validate with Zod schema
     const validation = reportRequestSchema.safeParse({
@@ -792,7 +799,7 @@ async function handleCrossProjectAggregation({
         // every metric even when a metric has no data for it. Rates
         // initialize to null ("—" on screen): an absent rate is not 0%.
         metricConfigs.forEach((mc: MetricConfig) => {
-          row[mc.label] = mc.id === "passRate" ? null : 0;
+          row[mc.label] = RATE_METRIC_IDS.has(mc.id) ? null : 0;
         });
 
         resultMap.set(resultKey, row);
@@ -1144,7 +1151,7 @@ async function handleProjectSpecificAggregation({
         // every metric even when a metric has no data for it. Rates
         // initialize to null ("—" on screen): an absent rate is not 0%.
         metricConfigs.forEach((mc: MetricConfig) => {
-          row[mc.label] = mc.id === "passRate" ? null : 0;
+          row[mc.label] = RATE_METRIC_IDS.has(mc.id) ? null : 0;
         });
 
         resultMap.set(resultKey, row);

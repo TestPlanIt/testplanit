@@ -1,6 +1,6 @@
 "use client";
 
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import {
   Tooltip,
   TooltipContent,
@@ -10,11 +10,11 @@ import {
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
-import type { TestResultExecution } from "~/lib/types/latestTestResults";
+import type { RenderableExecution } from "~/lib/types/latestTestResults";
 
 interface LatestResultsCellProps {
   /** Executions newest first, as returned by getLatestTestResultsByCase. */
-  executions: TestResultExecution[];
+  executions: RenderableExecution[];
   /** How many slots to draw; short histories are padded with empty ones. */
   slots: number;
   /** Project the case belongs to, used to link a square to its test run. */
@@ -76,7 +76,7 @@ export function LatestResultsCell({
               <TooltipTrigger asChild>{box}</TooltipTrigger>
               <TooltipContent>
                 <div className="space-y-1 text-xs">
-                  <StatusDotDisplay
+                  <StatusDisplay
                     name={execution.statusName}
                     color={execution.statusColor}
                   />

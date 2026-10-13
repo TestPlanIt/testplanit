@@ -22,10 +22,17 @@ import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 export interface ScimAccessRecomputeJobData extends MultiTenantJobData {
   /**
    * When present: recompute only the members of this group.
-   * When absent: recompute all users whose access is governed by group mapping
-   * (accessSource === GROUP_MAPPING) — used when the fallback default changes.
+   * When absent (and `roleValue` is absent too): recompute all users whose
+   * access is governed by group mapping (accessSource === GROUP_MAPPING) —
+   * used when the fallback default changes.
    */
   groupId?: number;
+  /**
+   * When present: recompute every user whose IdP-asserted `scimRoles` contains
+   * this value — used when an admin creates, retiers, or deletes a
+   * ScimRoleMapping. Mutually exclusive with `groupId`.
+   */
+  roleValue?: string;
   /**
    * The admin user who triggered the mapping/fallback change.
    * Stamped into the audit frame so access-change rows are attributable even
@@ -39,13 +46,17 @@ export interface ScimAccessRecomputeJobData extends MultiTenantJobData {
 export const processor = async (
   job: Job<ScimAccessRecomputeJobData>
 ): Promise<void> => {
-  const { groupId, adminUserId } = job.data;
+  const { groupId, roleValue, adminUserId } = job.data;
+
+  const scopeLabel =
+    groupId != null
+      ? ` for group ${groupId}`
+      : roleValue != null
+        ? ` for role "${roleValue}"`
+        : " (fallback-default sweep)";
 
   console.log(
-    `Processing scim-access-recompute job ${job.id}` +
-      (groupId != null
-        ? ` for group ${groupId}`
-        : " (fallback-default sweep)") +
+    `Processing scim-access-recompute job ${job.id}${scopeLabel}` +
       ` triggered by admin ${adminUserId}`
   );
 
@@ -72,6 +83,24 @@ export const processor = async (
             const fallbackDefault = await readScimFallbackDefault(tx);
             for (const { userId } of batch) {
               await recomputeUserAccess(tx, userId, fallbackDefault);
+            }
+          });
+        }
+      } else if (roleValue != null) {
+        // Role-mapping change: every user the IdP asserted this role for.
+        // Batched the same way as the group path so a directory-wide role
+        // ("employee") can't run as one unbounded transaction.
+        const holders = await baseDb.user.findMany({
+          where: { scimRoles: { has: roleValue }, isDeleted: false },
+          select: { id: true },
+        });
+
+        for (let i = 0; i < holders.length; i += BATCH_SIZE) {
+          const batch = holders.slice(i, i + BATCH_SIZE);
+          await baseDb.$transaction(async (tx) => {
+            const fallbackDefault = await readScimFallbackDefault(tx);
+            for (const { id } of batch) {
+              await recomputeUserAccess(tx, id, fallbackDefault);
             }
           });
         }

@@ -13,6 +13,7 @@ import {
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
   buildSystemPrompt,
+  buildUserPrompt,
   fetchExistingCasesContext,
   fetchIssueLinkedCasesContext,
   fetchLinkedIssuesContext,
@@ -889,7 +890,7 @@ describe("Steps field — shape normalization", () => {
       false
     );
 
-    expect(prompt).toContain("ARRAY of detailed step objects");
+    expect(prompt).toContain("ARRAY of step objects");
     expect(prompt).toContain("one object per individual action");
   });
 });
@@ -1428,6 +1429,35 @@ describe("issue enrichment sections — comments + linked issues", () => {
         "1. PROJ-2 (blocks, outward): Email delivery service"
       );
       expect(prompt).toContain('Title: "Reset link expires"');
+    });
+
+    it("slots linked issues in after the comments when a saved prompt predates the placeholder", () => {
+      const baseTemplate =
+        "ISSUE {{ISSUE_KEY}}{{COMMENTS_SECTION}}\n{{USER_NOTES_SECTION}}{{EXISTING_CASES_SECTION}}";
+      const prompt = buildExpandUserPrompt(
+        enrichedIssue,
+        outline,
+        enrichedContext,
+        baseTemplate
+      );
+      expect(prompt).not.toContain("{{LINKED_ISSUES_SECTION}}");
+      expect(prompt.indexOf("RELATED LINKED ISSUES:")).toBeGreaterThan(
+        prompt.indexOf("RELEVANT COMMENTS:")
+      );
+      expect(prompt.indexOf("RELATED LINKED ISSUES:")).toBeLessThan(
+        prompt.indexOf("TEST CASE TO GENERATE:")
+      );
+    });
+
+    it("appends linked issues to a saved prompt with no comments slot either", () => {
+      const prompt = buildUserPrompt(
+        enrichedIssue,
+        enrichedContext,
+        "ISSUE {{ISSUE_KEY}}{{USER_NOTES_SECTION}}"
+      );
+      expect(prompt).toContain(
+        "1. PROJ-2 (blocks, outward): Email delivery service"
+      );
     });
 
     it("omits both sections for an un-enriched issue", () => {

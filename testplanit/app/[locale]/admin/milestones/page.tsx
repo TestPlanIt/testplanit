@@ -141,7 +141,10 @@ function MilestoneTypes() {
         });
 
         await deleteManyMilestoneTypesAssignment({
-          where: { milestoneTypeId: selectedMilestoneTypeId },
+          where: {
+            milestoneTypeId: selectedMilestoneTypeId,
+            project: { isDeleted: false },
+          },
         });
 
         if (Array.isArray(projects)) {

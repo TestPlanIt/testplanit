@@ -1,7 +1,10 @@
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
 import { RepositoryCaseSource } from "~/zenstack/models";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -20,6 +23,7 @@ interface FlakyTestRow {
   testCaseName: string;
   testCaseSource: string;
   testCaseHasParameters: boolean;
+  testCaseAutomated: boolean;
   flipCount: number;
   executions: ExecutionStatus[];
   project?: {
@@ -57,7 +61,7 @@ export function useFlakyTestsColumns(
       columns.push(
         columnHelper.accessor(projectAccessor, {
           id: "project",
-          header: () => <span>{t("reports.dimensions.project")}</span>,
+          header: () => <span>{tCommon("fields.project")}</span>,
           cell: (info) => {
             // Get the actual project object from the row, not the accessor value
             const projectData = info.row.original.project;
@@ -68,7 +72,7 @@ export function useFlakyTestsColumns(
             );
           },
           enableSorting: true,
-          sortingFn: (rowA, rowB) => {
+          sortFn: (rowA, rowB) => {
             const aVal = rowA.original.project;
             const bVal = rowB.original.project;
 
@@ -98,6 +102,7 @@ export function useFlakyTestsColumns(
               name={info.row.original.testCaseName}
               source={info.row.original.testCaseSource as RepositoryCaseSource}
               hasParameters={info.row.original.testCaseHasParameters}
+              automated={info.row.original.testCaseAutomated}
               link={
                 rowProjectId
                   ? `/projects/repository/${rowProjectId}/${info.row.original.testCaseId}`

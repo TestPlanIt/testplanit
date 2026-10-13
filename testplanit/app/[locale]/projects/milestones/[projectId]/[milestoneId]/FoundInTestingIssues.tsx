@@ -17,7 +17,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
+import type {
+  ColumnDef,
+  VisibilityState,
+} from "@/components/tables/tableFeatures";
 import { Bug, ChevronDown, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -54,6 +57,7 @@ export function FoundInTestingIssues({
 }: FoundInTestingIssuesProps) {
   const t = useTranslations("milestones.members");
   const tMilestones = useTranslations("milestones");
+  const tCommon = useTranslations("common");
 
   const { data: summaryData, isLoading } = useMilestoneSummary(milestoneId);
   const issues: MilestoneIssue[] = summaryData?.issues ?? [];
@@ -126,7 +130,7 @@ export function FoundInTestingIssues({
       {
         id: "key",
         accessorFn: (row) => row.name ?? "",
-        header: t("columnKey"),
+        header: tCommon("name"),
         enableSorting: true,
         enableResizing: true,
         enableHiding: false,
@@ -167,7 +171,7 @@ export function FoundInTestingIssues({
       {
         id: "description",
         accessorFn: (row) => stripHtmlTags(row.description),
-        header: t("columnDescription"),
+        header: tCommon("fields.description"),
         enableSorting: false,
         enableResizing: true,
         size: 300,
@@ -196,7 +200,7 @@ export function FoundInTestingIssues({
               <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
                 <div className="space-y-2">
                   <h4 className="font-semibold text-sm">
-                    {t("columnDescription")}
+                    {tCommon("fields.description")}
                   </h4>
                   {hasHtml ? (
                     <div
@@ -239,7 +243,7 @@ export function FoundInTestingIssues({
       {
         id: "status",
         accessorFn: (row) => row.externalStatus ?? "",
-        header: t("columnStatus"),
+        header: tCommon("actions.status"),
         enableSorting: true,
         enableResizing: true,
         size: 120,

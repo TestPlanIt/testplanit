@@ -1,8 +1,10 @@
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  JOB_CHECK_STALE_PINS,
   JOB_REFRESH_EXPIRED_CACHES,
   JOB_REFRESH_SINGLE_REPO_CACHE,
+  JOB_SCAN_REPO_ISSUES,
 } from "../lib/queueNames";
 
 // Create mock db instance
@@ -21,9 +23,20 @@ vi.mock("../lib/valkey", () => ({
 // Mock the multiTenantDb module to return our mock db client
 vi.mock("../lib/multiTenantDb", () => ({
   getDbClientForJob: vi.fn(() => mockDb),
+  getAllTenantIds: vi.fn(() => []),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
+}));
+
+const mockGetRepoCacheQueue = vi.fn();
+vi.mock("../lib/queues", () => ({
+  getRepoCacheQueue: () => mockGetRepoCacheQueue(),
+}));
+
+const mockMarkInterrupted = vi.fn();
+vi.mock("../lib/services/impact/repoJobStatus", () => ({
+  markInterruptedRepoJobs: (...args: any[]) => mockMarkInterrupted(...args),
 }));
 
 // Mock repoFileCache
@@ -34,10 +47,17 @@ vi.mock("../lib/integrations/cache/RepoFileCache", () => ({
   },
 }));
 
-// Mock refreshRepoCache
+// Mock refreshRepoCache and the standalone ticket scan
 const mockRefreshRepoCache = vi.fn();
+const mockScanRepoIssues = vi.fn();
 vi.mock("../lib/services/repoCacheRefreshService", () => ({
   refreshRepoCache: (...args: any[]) => mockRefreshRepoCache(...args),
+  scanRepoIssues: (...args: any[]) => mockScanRepoIssues(...args),
+}));
+
+const mockCheckStalePins = vi.fn();
+vi.mock("../lib/services/impact/stalePinCheck", () => ({
+  checkStalePins: (...args: any[]) => mockCheckStalePins(...args),
 }));
 
 // Mock queue names
@@ -109,7 +129,9 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb, {
+        isCancelled: expect.any(Function),
+      });
       expect(result).toMatchObject({
         status: "completed",
         successCount: 1,
@@ -138,7 +160,11 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(
+        101,
+        mockDb,
+        expect.anything()
+      );
       expect(result).toMatchObject({
         status: "completed",
         failCount: 1,
@@ -171,7 +197,11 @@ describe("RepoCacheWorker", () => {
       const result = await processor(mockJob);
 
       // Second config should still be processed
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(102, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(
+        102,
+        mockDb,
+        expect.anything()
+      );
       expect(result).toMatchObject({
         status: "completed",
         failCount: 1,
@@ -308,6 +338,246 @@ describe("RepoCacheWorker", () => {
     });
   });
 
+  describe(`${JOB_REFRESH_EXPIRED_CACHES} progress`, () => {
+    it("records which config the sweep is on before each refresh", async () => {
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue(
+        mockConfigs
+      );
+      mockGetFiles.mockResolvedValue([]);
+      mockRefreshRepoCache.mockResolvedValue({ success: true, fileCount: 1 });
+      const updateProgress = vi.fn().mockResolvedValue(undefined);
+
+      const { processor } = await import("./repoCacheWorker");
+      await processor({
+        id: "job-sweep",
+        name: JOB_REFRESH_EXPIRED_CACHES,
+        data: {},
+        updateProgress,
+      } as unknown as Job);
+
+      expect(updateProgress).toHaveBeenNthCalledWith(1, {
+        configId: 101,
+        at: expect.any(Number),
+        index: 0,
+        total: 2,
+      });
+      expect(updateProgress).toHaveBeenNthCalledWith(2, {
+        configId: 102,
+        at: expect.any(Number),
+        index: 1,
+        total: 2,
+      });
+    });
+  });
+
+  describe("start-up cleanup", () => {
+    it("marks flags the queue does not back as interrupted", async () => {
+      const queue = { getJob: vi.fn(), getActive: vi.fn() };
+      mockGetRepoCacheQueue.mockReturnValue(queue);
+      mockMarkInterrupted.mockResolvedValue(2);
+
+      const { cleanupInterruptedRepoJobs } = await import("./repoCacheWorker");
+      await cleanupInterruptedRepoJobs();
+
+      expect(mockMarkInterrupted).toHaveBeenCalledWith(
+        mockDb,
+        queue,
+        undefined
+      );
+    });
+
+    it("does nothing without a queue", async () => {
+      mockGetRepoCacheQueue.mockReturnValue(null);
+
+      const { cleanupInterruptedRepoJobs } = await import("./repoCacheWorker");
+      await cleanupInterruptedRepoJobs();
+
+      expect(mockMarkInterrupted).not.toHaveBeenCalled();
+    });
+  });
+
+  describe(`${JOB_CHECK_STALE_PINS} job`, () => {
+    it("counts a cancelled check as skipped, not failed", async () => {
+      mockCheckStalePins.mockResolvedValue({
+        cancelled: true,
+        checkedAt: "2026-09-28T00:00:00Z",
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-stale-cancel",
+        name: JOB_CHECK_STALE_PINS,
+        data: { configId: 101 },
+      } as Job);
+
+      expect(result).toMatchObject({
+        successCount: 0,
+        failCount: 0,
+        skippedCount: 1,
+      });
+    });
+
+    it("runs the stale pin check for the config and counts a success", async () => {
+      mockCheckStalePins.mockResolvedValue({
+        pins: 40,
+        checked: 40,
+        stale: 3,
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-stale-1",
+        name: JOB_CHECK_STALE_PINS,
+        data: { configId: 101, tenantId: "tenant-a" },
+      } as Job);
+
+      expect(mockCheckStalePins).toHaveBeenCalledWith(101, mockDb, {
+        isCancelled: expect.any(Function),
+      });
+      expect(mockRefreshRepoCache).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ successCount: 1, failCount: 0 });
+    });
+
+    it("counts a failed check", async () => {
+      mockCheckStalePins.mockResolvedValue({
+        error: "branch missing",
+        checkedAt: "2026-09-18T00:00:00Z",
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-stale-2",
+        name: JOB_CHECK_STALE_PINS,
+        data: { configId: 101 },
+      } as Job);
+
+      expect(result).toMatchObject({ successCount: 0, failCount: 1 });
+    });
+
+    it("rejects a job without a numeric configId", async () => {
+      const { processor } = await import("./repoCacheWorker");
+
+      await expect(
+        processor({
+          id: "job-stale-3",
+          name: JOB_CHECK_STALE_PINS,
+          data: {},
+        } as Job)
+      ).rejects.toThrow(/numeric configId/);
+      expect(mockCheckStalePins).not.toHaveBeenCalled();
+    });
+  });
+
+  describe(`${JOB_SCAN_REPO_ISSUES} job`, () => {
+    it("runs a full-history ticket scan for the config without touching the cache", async () => {
+      mockScanRepoIssues.mockResolvedValue({
+        scannedCommits: 5000,
+        matchedCommits: 40,
+        created: 12,
+        importedIssues: 3,
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-scan-1",
+        name: JOB_SCAN_REPO_ISSUES,
+        data: { configId: 101, full: true, tenantId: "tenant-a" },
+      } as Job);
+
+      expect(mockScanRepoIssues).toHaveBeenCalledWith(101, mockDb, {
+        full: true,
+        isCancelled: expect.any(Function),
+      });
+      expect(mockRefreshRepoCache).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ successCount: 1, failCount: 0 });
+    });
+
+    it("defaults to the recent window and counts a failed scan", async () => {
+      mockScanRepoIssues.mockResolvedValue({
+        error: "rate limited",
+        scannedAt: "2026-09-13T00:00:00Z",
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-scan-2",
+        name: JOB_SCAN_REPO_ISSUES,
+        data: { configId: 101 },
+      } as Job);
+
+      expect(mockScanRepoIssues).toHaveBeenCalledWith(101, mockDb, {
+        full: false,
+        isCancelled: expect.any(Function),
+      });
+      expect(result).toMatchObject({ successCount: 0, failCount: 1 });
+    });
+
+    it("counts a cancelled scan as skipped, not failed", async () => {
+      mockScanRepoIssues.mockResolvedValue({
+        cancelled: true,
+        full: true,
+        scannedAt: "2026-09-13T00:00:00Z",
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-scan-5",
+        name: JOB_SCAN_REPO_ISSUES,
+        data: { configId: 101, full: true },
+      } as Job);
+
+      expect(result).toMatchObject({
+        successCount: 0,
+        failCount: 0,
+        skippedCount: 1,
+      });
+    });
+
+    it("clears the running flag with the error when the scan throws", async () => {
+      mockScanRepoIssues.mockRejectedValue(new Error("column does not exist"));
+      const update = vi.fn().mockResolvedValue({});
+      (mockDb as any).projectCodeRepositoryConfig.update = update;
+
+      const { processor } = await import("./repoCacheWorker");
+
+      await expect(
+        processor({
+          id: "job-scan-4",
+          name: JOB_SCAN_REPO_ISSUES,
+          data: { configId: 101 },
+        } as Job)
+      ).rejects.toThrow("column does not exist");
+      expect(update).toHaveBeenCalledWith({
+        where: { id: 101 },
+        data: {
+          issueScanReport: {
+            error: "column does not exist",
+            scannedAt: expect.any(String),
+          },
+        },
+      });
+    });
+
+    it("rejects a job without a numeric configId", async () => {
+      const { processor } = await import("./repoCacheWorker");
+
+      await expect(
+        processor({
+          id: "job-scan-3",
+          name: JOB_SCAN_REPO_ISSUES,
+          data: { configId: "nope" },
+        } as Job)
+      ).rejects.toThrow("requires a numeric configId");
+      expect(mockScanRepoIssues).not.toHaveBeenCalled();
+    });
+  });
+
   describe(`${JOB_REFRESH_SINGLE_REPO_CACHE} job`, () => {
     it("refreshes the single config from job.data.configId", async () => {
       mockRefreshRepoCache.mockResolvedValue({
@@ -327,7 +597,9 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb, {
+        isCancelled: expect.any(Function),
+      });
       expect(result).toMatchObject({ successCount: 1, failCount: 0 });
       // It must NOT scan all configs like the expired-cache job does.
       expect(
@@ -351,7 +623,11 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(102, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(
+        102,
+        mockDb,
+        expect.anything()
+      );
       expect(result).toMatchObject({ successCount: 0, failCount: 1 });
     });
 

@@ -1,7 +1,6 @@
 "use server";
 
 import type { DbClient } from "~/lib/zenstack";
-import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { rawDb as defaultDb } from "../lib/rawDb";
 import { syncRepositoryCaseToElasticsearch } from "./repositoryCaseSync";
 import { syncTestRunToElasticsearch } from "./testRunSearch";
@@ -123,10 +122,12 @@ export async function updateRepositoryCaseForecast(
     if (process.env.DEBUG_FORECAST)
       console.log("[Forecast] manualDurations:", manualDurations);
 
-    // Automated sources (JUNIT, TESTNG, etc.): JUnitTestResult (statusId not null, time > 0)
-    const junitCaseIds = allCases
-      .filter((c) => isAutomatedCaseSource(c.source))
-      .map((c) => c.id);
+    // JUnitTestResult rows only ever exist for cases that actually received
+    // automated results, so query every live case in the group rather than
+    // filtering by `source` — a MANUAL-source case can still have automated
+    // results attached directly (HYBRID: see isHybridTestRunType), and
+    // filtering by source alone silently drops those durations.
+    const junitCaseIds = allCases.map((c) => c.id);
     if (process.env.DEBUG_FORECAST)
       console.log("[Forecast] junitCaseIds:", junitCaseIds);
     const junitResults = junitCaseIds.length

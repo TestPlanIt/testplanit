@@ -2,13 +2,14 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
 import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { Filter } from "@/components/tables/Filter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,7 +24,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, MessageSquare } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { Link } from "~/lib/navigation";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
@@ -126,10 +127,13 @@ interface CommentDisplayProps {
       id: number;
       name: string;
     } | null;
+    // Null when the project was soft-deleted: the Projects model denies all
+    // reads of deleted rows, so the include comes back empty while the
+    // comment itself is still returned.
     project: {
       id: number;
       name: string;
-    };
+    } | null;
   };
 }
 
@@ -155,6 +159,8 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
     editable: false,
     editorProps: {
       attributes: {
+        // Read-only display, not the role="textbox" Tiptap adds by default.
+        role: "presentation",
         class: "tiptap text-foreground focus:outline-none break-words",
       },
     },
@@ -169,6 +175,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
   // Determine the entity type and details
   let entityLink = "";
   let entityNameDisplay = null;
+  const projectDeleted = comment.project === null;
 
   if (comment.repositoryCaseId && comment.repositoryCase) {
     const isDeleted = comment.repositoryCase.isDeleted;
@@ -176,7 +183,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
       ? ""
       : `/projects/repository/${comment.projectId}/${comment.repositoryCaseId}`;
     entityNameDisplay = (
-      <TestCaseNameDisplay
+      <CaseDisplay
         testCase={{
           id: comment.repositoryCaseId,
           name: comment.repositoryCase.name,
@@ -224,6 +231,12 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
     );
   }
 
+  // Every entity link routes through the project, so none of them resolve
+  // once the project is gone; show the entity name as plain text instead.
+  if (projectDeleted) {
+    entityLink = "";
+  }
+
   return (
     <Card className="p-4">
       <div className="space-y-3">
@@ -233,7 +246,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
             <MessageSquare className="h-8 w-8 text-muted-foreground shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-                {entityLink && (
+                {entityLink ? (
                   <Link
                     href={entityLink}
                     className="font-medium text-primary hover:underline inline-flex items-center gap-1"
@@ -241,13 +254,21 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
                     {entityNameDisplay}
                     <ExternalLink className="h-3 w-3" />
                   </Link>
+                ) : (
+                  entityNameDisplay
                 )}
               </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 flex-wrap">
                 <span>
                   {tGlobal("components.notifications.content.inProject")}
                 </span>
-                <span className="font-medium">{comment.project.name}</span>
+                {comment.project ? (
+                  <span className="font-medium">{comment.project.name}</span>
+                ) : (
+                  <span className="font-medium line-through">
+                    {tGlobal("common.status.deleted")}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -307,6 +328,9 @@ export function UserComments({ userId }: UserCommentsProps) {
   const t = useTranslations("users.profile.myComments");
   const tGlobal = useTranslations();
   const locale = useLocale();
+  // Generated rather than hardcoded so a second instance on one page cannot
+  // point both triggers at the same label element.
+  const scopeLabelId = useId();
   const [scope, setScope] = useState<CommentScope>("all");
   // Already debounced by the Filter component before it lands here.
   const [searchText, setSearchText] = useState("");
@@ -412,12 +436,20 @@ export function UserComments({ userId }: UserCommentsProps) {
           dataTestId="user-comments-search"
         />
         <div className="w-[200px]">
+          {/* The label has to be wired to the trigger, not merely rendered
+              beside it: a bare <Label> names nothing, and Radix renders the
+              trigger as a role="combobox" button whose only content is the
+              selected value — so without this the control reaches screen
+              readers with no name at all (axe button-name, 4.1.2). */}
+          <Label id={scopeLabelId} className="sr-only">
+            {t("filterLabel")}
+          </Label>
           <Select
             value={scope}
             onValueChange={(value) => setScope(value as CommentScope)}
           >
             <SelectTrigger
-              aria-label={t("filterLabel")}
+              aria-labelledby={scopeLabelId}
               data-testid="user-comments-scope-select"
             >
               <SelectValue />

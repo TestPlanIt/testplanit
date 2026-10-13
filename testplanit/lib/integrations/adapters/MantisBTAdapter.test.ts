@@ -227,6 +227,77 @@ describe("MantisBTAdapter", () => {
       expect(res.issues).toHaveLength(1);
       expect(res.issues[0].id).toBe("1");
     });
+
+    it("reports hasMore when the tracker returned a full page", async () => {
+      await authenticate();
+      const fullPage = Array.from({ length: 5 }, (_, i) => ({
+        id: i + 1,
+        summary: `issue ${i + 1}`,
+      }));
+      mockFetch.mockResolvedValueOnce(okJson({ issues: fullPage }));
+
+      const res = await adapter.searchIssues({ projectId: "3", limit: 5 });
+
+      expect(res.issues).toHaveLength(5);
+      expect(res.hasMore).toBe(true);
+    });
+
+    it("reports hasMore from the raw page even when the text filter empties it", async () => {
+      await authenticate();
+      const fullPage = Array.from({ length: 100 }, (_, i) => ({
+        id: i + 1,
+        summary: "unrelated issue",
+      }));
+      mockFetch.mockResolvedValueOnce(okJson({ issues: fullPage }));
+
+      const res = await adapter.searchIssues({
+        query: "login",
+        projectId: "3",
+        limit: 10,
+      });
+
+      expect(res.issues).toEqual([]);
+      expect(res.hasMore).toBe(true);
+    });
+
+    it("ignores issueTypeIds entirely — the request URL and returned issues are unchanged", async () => {
+      await authenticate();
+      const page = [
+        { id: 1, summary: "login bug" },
+        { id: 2, summary: "logout works" },
+      ];
+      // Issues without dates are stamped `new Date()` on mapping; the two
+      // calls below must see the same clock or a millisecond boundary
+      // between them fails the deep-equal under full-suite load.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+      try {
+        mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
+
+        const withoutTypes = await adapter.searchIssues({
+          projectId: "3",
+          limit: 10,
+        });
+        const urlWithoutTypes = mockFetch.mock.calls[0][0];
+
+        mockFetch.mockClear();
+        mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
+
+        const withTypes = await adapter.searchIssues({
+          projectId: "3",
+          limit: 10,
+          issueTypeIds: ["10", "20"],
+        });
+        const urlWithTypes = mockFetch.mock.calls[0][0];
+
+        expect(urlWithTypes).toBe(urlWithoutTypes);
+        expect(withTypes.issues).toEqual(withoutTypes.issues);
+        expect(withTypes.total).toBe(withoutTypes.total);
+        expect(withTypes.hasMore).toBe(withoutTypes.hasMore);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   describe("createIssue", () => {

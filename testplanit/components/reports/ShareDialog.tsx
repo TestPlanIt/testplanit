@@ -6,6 +6,16 @@ import {
   auditShareLinkCreation,
   prepareShareLinkData,
 } from "@/actions/share-links";
+import {
+  FrozenTruncationWarning,
+  ReportDataModeField,
+  type ReportDataMode,
+} from "@/components/reports/ReportDataModeField";
+import {
+  ReportDateRangeModeField,
+  applyDateRangeMode,
+  type ReportDateRangeMode,
+} from "@/components/reports/ReportDateRangeModeField";
 import { ShareLinkCreated } from "@/components/share/ShareLinkCreated";
 import { ShareLinkList } from "@/components/share/ShareLinkList";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -35,6 +45,11 @@ import { Asterisk, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
+import {
+  buildShareUrl,
+  useCreateFrozenReportLink,
+  type FrozenTruncation,
+} from "~/hooks/useCreateFrozenReportLink";
 import { cn } from "~/utils";
 import {
   PasswordStrengthIndicator,
@@ -81,22 +96,28 @@ export function ShareDialog({
   const [notifyOnView, setNotifyOnView] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [dataMode, setDataMode] = useState<ReportDataMode>("live");
+  const [dateRangeMode, setDateRangeMode] =
+    useState<ReportDateRangeMode>("relative");
 
   // UI state
   const [error, setError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [createdShare, setCreatedShare] = useState<any>(null);
+  const [truncation, setTruncation] = useState<FrozenTruncation | null>(null);
 
   // Use ZenStack hook for creating share links
-  const { mutateAsync: createShareLink, isPending: isCreating } =
+  const { mutateAsync: createShareLink, isPending: isCreatingLive } =
     useClientQueries(schema).shareLink.useCreate();
+  const { createFrozenLink, isCreatingFrozen } = useCreateFrozenReportLink();
+  const isCreating = isCreatingLive || isCreatingFrozen;
 
   // Generate default title with timestamp
   const defaultTitle = useMemo(() => {
     return `${reportTitle || "Report"} - ${format(new Date(), "MMM d, yyyy h:mm a")}`;
   }, [reportTitle]);
 
-  const handleCreateShare = async () => {
+  const handleCreateShare = async (allowTruncate = false) => {
     setError(null);
     setPasswordError(null);
 
@@ -132,20 +153,47 @@ export function ShareDialog({
         return;
       }
 
+      // Use provided title or default title with timestamp
+      const finalTitle = title || defaultTitle;
+      // Frozen data fixes the dates at capture on its own.
+      const configToStore =
+        dataMode === "frozen"
+          ? reportConfig
+          : applyDateRangeMode(reportConfig, dateRangeMode);
+
+      if (dataMode === "frozen") {
+        const result = await createFrozenLink({
+          entityType: "REPORT",
+          reportConfig: configToStore,
+          projectId: projectId ?? null,
+          mode,
+          password: mode === "PASSWORD_PROTECTED" ? password : null,
+          expiresAt: expiresAt ? expiresAt.toISOString() : null,
+          notifyOnView,
+          title: finalTitle,
+          description: description || null,
+          allowTruncate,
+        });
+        if (result.status === "truncation-required") {
+          setTruncation(result.truncation);
+          return;
+        }
+        setTruncation(null);
+        showCreatedShare(result.link);
+        return;
+      }
+
       // Prepare share key and password hash via server action
       const { shareKey, passwordHash } = await prepareShareLinkData({
         password: mode === "PASSWORD_PROTECTED" ? password : null,
       });
-
-      // Use provided title or default title with timestamp
-      const finalTitle = title || defaultTitle;
 
       // Create share link using ZenStack hook
       const shareLink = await createShareLink({
         data: {
           shareKey,
           entityType: "REPORT",
-          entityConfig: reportConfig,
+          entityConfig: configToStore,
           ...(projectId !== undefined && { projectId }),
           createdById: session.user.id,
           mode,
@@ -175,27 +223,28 @@ export function ShareDialog({
         hasPassword: !!passwordHash,
       });
 
-      // Generate share URL (without locale - middleware will redirect based on user preference/browser language)
-      const protocol = window.location.protocol;
-      const host = window.location.host;
-      const shareUrl = `${protocol}//${host}/share/${shareKey}`;
-
-      // Set created share data for success view
-      setCreatedShare({
-        ...shareLink,
-        shareUrl,
-      });
-
-      // Reset form
-      setPassword("");
-      setConfirmPassword("");
-      setExpiresAt(undefined);
-      setNotifyOnView(false);
-      setDescription("");
+      showCreatedShare(shareLink);
     } catch (error) {
+      setTruncation(null);
       console.error("Error creating share:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
     }
+  };
+
+  const showCreatedShare = (shareLink: { shareKey: string }) => {
+    // Share URL without locale - middleware will redirect based on user preference/browser language
+    setCreatedShare({
+      ...shareLink,
+      shareUrl: buildShareUrl(shareLink.shareKey),
+    });
+
+    // Reset form
+    setPassword("");
+    setConfirmPassword("");
+    setExpiresAt(undefined);
+    setNotifyOnView(false);
+    setDescription("");
+    setDataMode("live");
   };
 
   const handleCloseCreated = () => {
@@ -246,7 +295,7 @@ export function ShareDialog({
 
           <TabsContent
             value="create"
-            className="space-y-4 mt-4 flex-1 min-h-0 overflow-y-auto"
+            className="space-y-4 mt-4 flex-1 min-h-0 overflow-y-auto px-0.5"
           >
             {error && (
               <Alert variant="destructive">
@@ -254,17 +303,73 @@ export function ShareDialog({
               </Alert>
             )}
 
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">{tCommon("fields.title")}</Label>
+              <Input
+                data-testid="share-title-input"
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={defaultTitle}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("title.leaveEmptyToUse")} {defaultTitle}
+              </p>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">
+                {tCommon("fields.description")}
+              </Label>
+              <Textarea
+                data-testid="share-description-input"
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t("description.placeholder")}
+                rows={3}
+              />
+            </div>
+
+            {/* Live or frozen data */}
+            <ReportDataModeField
+              value={dataMode}
+              onChange={(value) => {
+                setDataMode(value);
+                setTruncation(null);
+              }}
+            />
+            <ReportDateRangeModeField
+              config={reportConfig}
+              dataMode={dataMode}
+              value={dateRangeMode}
+              onChange={setDateRangeMode}
+            />
+
             {/* Share Mode */}
             <div className="space-y-3">
               <Label>{t("shareMode.label")}</Label>
               <RadioGroup
+                className="sm:grid-cols-3"
                 value={mode}
                 onValueChange={(v) => {
                   setMode(v as ShareLinkMode);
                   setPasswordError(null);
                 }}
               >
-                <div className="flex items-start space-x-2 rounded-lg border p-4">
+                <div
+                  className={cn(
+                    "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
+                    mode === "AUTHENTICATED" &&
+                      "bg-primary/10 border-primary/40"
+                  )}
+                  onClick={() => {
+                    setMode("AUTHENTICATED");
+                    setPasswordError(null);
+                  }}
+                >
                   <RadioGroupItem
                     data-testid="share-mode-authenticated"
                     value="AUTHENTICATED"
@@ -286,7 +391,17 @@ export function ShareDialog({
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-2 rounded-lg border p-4">
+                <div
+                  className={cn(
+                    "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
+                    mode === "PASSWORD_PROTECTED" &&
+                      "bg-primary/10 border-primary/40"
+                  )}
+                  onClick={() => {
+                    setMode("PASSWORD_PROTECTED");
+                    setPasswordError(null);
+                  }}
+                >
                   <RadioGroupItem
                     data-testid="share-mode-password"
                     value="PASSWORD_PROTECTED"
@@ -310,7 +425,16 @@ export function ShareDialog({
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-2 rounded-lg border p-4">
+                <div
+                  className={cn(
+                    "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
+                    mode === "PUBLIC" && "bg-primary/10 border-primary/40"
+                  )}
+                  onClick={() => {
+                    setMode("PUBLIC");
+                    setPasswordError(null);
+                  }}
+                >
                   <RadioGroupItem
                     data-testid="share-mode-public"
                     value="PUBLIC"
@@ -453,35 +577,15 @@ export function ShareDialog({
               </div>
             </div>
 
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">{tCommon("fields.title")}</Label>
-              <Input
-                data-testid="share-title-input"
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={defaultTitle}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("title.leaveEmptyToUse")} {defaultTitle}
-              </p>
-            </div>
+            <FrozenTruncationWarning
+              truncation={truncation}
 
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">
-                {tCommon("fields.description")}
-              </Label>
-              <Textarea
-                data-testid="share-description-input"
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={t("description.placeholder")}
-                rows={3}
-              />
-            </div>
+              disabled={isCreating}
+
+              onCancel={() => setTruncation(null)}
+
+              onConfirm={() => void handleCreateShare(true)}
+            />
 
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-4">
@@ -490,7 +594,7 @@ export function ShareDialog({
               </Button>
               <Button
                 data-testid="share-create-button"
-                onClick={handleCreateShare}
+                onClick={() => void handleCreateShare()}
                 disabled={isCreating}
               >
                 {isCreating ? (
@@ -505,8 +609,16 @@ export function ShareDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="list" className="mt-4">
-            <ShareLinkList projectId={projectId} entityType="REPORT" />
+          <TabsContent
+            value="list"
+            className="mt-4 flex-1 min-h-0 overflow-y-auto"
+          >
+            {/* A user's own shares: everyone here is the same creator. */}
+            <ShareLinkList
+              projectId={projectId}
+              entityType="REPORT"
+              showCreatorColumn={false}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>

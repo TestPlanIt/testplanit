@@ -43,6 +43,29 @@ describe("test-case-generation prompt — excluded-field compatibility", () => {
     expect(inline).toContain(TEXT_FIELD_GUIDANCE);
   });
 
+  it("places linked issues in the seeded and fallback user prompts", () => {
+    expect(fallback.userPrompt).toContain("{{LINKED_ISSUES_SECTION}}");
+    expect(readSource("db/seedPromptConfig.ts")).toContain(
+      "{{LINKED_ISSUES_SECTION}}"
+    );
+    const names = PROMPT_FEATURE_VARIABLES[
+      LLM_FEATURES.TEST_CASE_GENERATION
+    ].map((v) => v.name);
+    expect(names).toContain("LINKED_ISSUES_SECTION");
+  });
+
+  it("does not ask for padded text fields", () => {
+    for (const source of [
+      fallback.systemPrompt,
+      readSource("db/seedPromptConfig.ts"),
+      readSource("app/api/llm/generate-test-cases/shared.ts"),
+    ]) {
+      expect(source).not.toMatch(
+        /minimum 2-3 sentences|DO NOT leave optional text fields empty/
+      );
+    }
+  });
+
   it("offers EXCLUDED_FIELDS_LIST in the prompt editor's variable picker", () => {
     // The picker reads this registry directly (not the DB `variables` column),
     // so admins on existing installs see the variable without a reseed.
@@ -81,5 +104,32 @@ describe("quickscript prompt — bracketed case ids for importer matching", () =
       LLM_FEATURES.EXPORT_CODE_GENERATION
     ].map((v) => v.name);
     expect(names).toContain("CASE_ID");
+  });
+});
+
+describe("impact analysis prompt — seed and fallback in step", () => {
+  const fallback = FALLBACK_PROMPTS[LLM_FEATURES.IMPACT_ANALYSIS];
+
+  it("seeds the identical prompt text and settings", () => {
+    const seed = readSource("db/seedPromptConfig.ts");
+    expect(seed).toContain(fallback.systemPrompt);
+    expect(seed).toContain(fallback.userPrompt);
+    expect(seed).toContain(
+      `feature: LLM_FEATURES.IMPACT_ANALYSIS,\n      systemPrompt: \`${fallback.systemPrompt}\`,\n      userPrompt: \`${fallback.userPrompt}\`,\n      temperature: ${fallback.temperature},\n      maxOutputTokens: ${fallback.maxOutputTokens},`
+    );
+  });
+
+  it("renders every registered variable in the user template", () => {
+    const names = PROMPT_FEATURE_VARIABLES[LLM_FEATURES.IMPACT_ANALYSIS].map(
+      (v) => v.name
+    );
+    expect(names).toHaveLength(10);
+    for (const name of names) {
+      expect(fallback.userPrompt).toContain(`{{${name}}}`);
+    }
+    const referenced = fallback.userPrompt.match(/\{\{[A-Z0-9_]+\}\}/g) ?? [];
+    expect(new Set(referenced.map((m) => m.slice(2, -2)))).toEqual(
+      new Set(names)
+    );
   });
 });

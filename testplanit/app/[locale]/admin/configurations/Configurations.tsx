@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { SectionHeader } from "@/components/ui/typography";
-import type { RowSelectionState } from "@tanstack/react-table";
+import type { RowSelectionState } from "@/components/tables/tableFeatures";
 import { Boxes, PenSquare } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -19,6 +19,7 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import AddConfigurationWizard from "./AddConfigurationWizard";
 import { BulkEditConfigurations } from "./BulkEditConfigurations";
 import { ConfigWithVariants, useColumns } from "./configColumns";
+import { configurationMatchesSearch } from "./configurationListUtils";
 import { DeleteConfiguration } from "./DeleteConfig";
 import { EditConfiguration } from "./EditConfig";
 
@@ -68,8 +69,13 @@ function Configurations(): React.ReactElement | null {
         isDeleted: false,
       },
       include: {
-        variants: { include: { variant: true } },
+        variants: {
+          include: {
+            variant: { include: { category: { select: { name: true } } } },
+          },
+        },
         projects: {
+          where: { project: { isDeleted: false } },
           select: {
             projectId: true,
             project: { select: { id: true, name: true, iconUrl: true } },
@@ -95,10 +101,9 @@ function Configurations(): React.ReactElement | null {
       );
     }
 
-    const searchLower = debouncedSearchString.trim().toLowerCase();
-    if (searchLower) {
+    if (debouncedSearchString.trim()) {
       result = result.filter((config) =>
-        config.name.toLowerCase().includes(searchLower)
+        configurationMatchesSearch(config, debouncedSearchString)
       );
     }
 

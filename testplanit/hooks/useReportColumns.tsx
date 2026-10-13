@@ -1,4 +1,9 @@
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper } from "@/components/tables/tableFeatures";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Compass } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -7,6 +12,7 @@ import {
   getDimensionHelpKey,
   getMetricHelpKey,
 } from "~/lib/constants/reportConstants";
+import { hasMessage, metricLabelKey } from "~/lib/constants/reportLabelKeys";
 import { toHumanReadable } from "~/utils/duration";
 import { getDateFnsLocale } from "~/utils/locales";
 import { metricUnit } from "~/utils/metricUnits";
@@ -21,7 +27,7 @@ import { IssueTypeNameDisplay } from "~/components/IssueTypeNameDisplay";
 import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
 import { RoleNameDisplay } from "~/components/RoleNameDisplay";
-import StatusDotDisplay from "~/components/StatusDotDisplay";
+import StatusDisplay from "~/components/StatusDisplay";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { TagsDisplay } from "~/components/tables/TagDisplay";
 import { GroupNameCell } from "~/components/tables/GroupNameCell";
@@ -229,7 +235,7 @@ export function useReportColumns(
                 // Get the full status object from the row data
                 const statusData = info.row.original[dimensionId];
                 return (
-                  <StatusDotDisplay
+                  <StatusDisplay
                     name={statusData?.name || tCommon("labels.unknown")}
                     color={statusData?.color}
                   />
@@ -475,6 +481,32 @@ export function useReportColumns(
                   issueStatusData?.name || issueStatusData;
                 return <IssueStatusDisplay status={issueStatusName} />;
               }
+              case "trigger": {
+                // Group keys are the trigger ids; show the localized label.
+                const triggerId = info.row.original[dimensionId]?.id;
+                const triggerKey =
+                  triggerId === "pull_request"
+                    ? "runs.impact.pull.label"
+                    : triggerId === "push"
+                      ? "reports.ui.impactAnalysis.triggerPush"
+                      : triggerId === "manual"
+                        ? "common.fields.manual"
+                        : null;
+                return (
+                  <span>
+                    {triggerKey
+                      ? t(triggerKey as any)
+                      : info.row.original[dimensionId]?.name ||
+                        tCommon("labels.unknown")}
+                  </span>
+                );
+              }
+              case "codeRepository": {
+                const repoData = info.row.original[dimensionId];
+                return (
+                  <span>{repoData?.name || tCommon("labels.unknown")}</span>
+                );
+              }
               default:
                 // Generic display for other dimension types
                 return (
@@ -488,6 +520,12 @@ export function useReportColumns(
             }
           },
           aggregatedCell: (info) => {
+            // A group whose children differ on this dimension says how many
+            // rows it spans, so the totals beside it have a denominator.
+            const multipleValuesLabel = t("common.fields.multipleValuesCount", {
+              count: info.row.subRows.length,
+            });
+
             // Special handling for user, creator, and assignedTo dimensions
             if (
               dimensionId === "user" ||
@@ -529,7 +567,7 @@ export function useReportColumns(
                     return userId ? { id: userId, name: userId } : null;
                   }
                 },
-                t("common.fields.multipleValues" as any),
+                multipleValuesLabel,
                 t
               );
             }
@@ -540,12 +578,12 @@ export function useReportColumns(
                 info.row.subRows,
                 (subRow) => subRow.original[dimensionId],
                 (status) => (
-                  <StatusDotDisplay
+                  <StatusDisplay
                     name={status?.name || tCommon("labels.unknown")}
                     color={status?.color}
                   />
                 ),
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -583,7 +621,7 @@ export function useReportColumns(
                     return "-";
                   }
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -603,7 +641,7 @@ export function useReportColumns(
                     <WorkflowStateDisplay state={transformedState} size="sm" />
                   );
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -625,7 +663,7 @@ export function useReportColumns(
                     <span>{sourceValue || tCommon("labels.unknown")}</span>
                   );
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -639,7 +677,7 @@ export function useReportColumns(
                     name={value?.name || value?.templateName || ""}
                   />
                 ),
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -654,7 +692,7 @@ export function useReportColumns(
                   }
                   return <GroupNameCell groupId={String(groupId)} />;
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -666,7 +704,7 @@ export function useReportColumns(
                 (configData) => (
                   <ConfigurationNameDisplay configuration={configData} />
                 ),
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -690,7 +728,7 @@ export function useReportColumns(
                     />
                   );
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -700,7 +738,7 @@ export function useReportColumns(
                 info.row.subRows,
                 (subRow) => subRow.original[dimensionId],
                 (testRunData) => <TestRunNameDisplay testRun={testRunData} />,
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -738,7 +776,7 @@ export function useReportColumns(
                     />
                   );
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -757,10 +795,10 @@ export function useReportColumns(
                   </span>
                 );
               },
-              t("common.fields.multipleValues" as any)
+              multipleValuesLabel
             );
           },
-          sortingFn: (rowA, rowB) => {
+          sortFn: (rowA, rowB) => {
             const aVal = rowA.getValue(dimensionId) as any;
             const bVal = rowB.getValue(dimensionId) as any;
 
@@ -793,7 +831,10 @@ export function useReportColumns(
     // Add metric columns
     metrics.forEach((metricId) => {
       // Get translated metric label
-      const metricLabel = tReportsMetrics(metricId as any) || metricId;
+      // Some metric labels live on shared keys (see METRIC_LABEL_KEYS).
+      const metricLabel = hasMessage(t, metricLabelKey(metricId))
+        ? t(metricLabelKey(metricId) as any)
+        : tReportsMetrics(metricId as any) || metricId;
 
       // Unit metadata wins; the id/label heuristics only classify metrics
       // that aren't in the units map (custom presets), so renaming a metric
@@ -888,9 +929,23 @@ export function useReportColumns(
               return sum + (typeof value === "number" ? value : 0);
             }, 0);
 
-            // For percentages, calculate the average
+            // For percentages, average the sub-rows that have a rate; a
+            // null rate means "no population", so it neither counts as 0%
+            // nor dilutes the average, and an all-null group shows "—".
             if (isPercentMetric) {
-              const avg = total / subRows.length;
+              const rates = subRows
+                .map((subRow: any) => subRow.getValue(metricId))
+                .filter((v: unknown): v is number => typeof v === "number");
+              if (rates.length === 0) {
+                return (
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
+                    {"\u2014"}
+                  </span>
+                );
+              }
+              const avg =
+                rates.reduce((sum: number, v: number) => sum + v, 0) /
+                rates.length;
               return (
                 <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
                   {avg.toFixed(1)}
@@ -899,17 +954,19 @@ export function useReportColumns(
               );
             }
 
-            // For time metrics, show the total or average based on the metric type
+            // Time metrics total their children: for an average metric the
+            // group row is the sum of the children's averages (one run of
+            // all of them — the same figure as the chart's total line), so
+            // it carries a Σ marker and a tooltip since the header says
+            // "Avg.". A total metric's sum needs no marker.
             if (isDurationMetric) {
-              // For "average" metrics, calculate average; for "total" metrics, use sum
               const isAverage =
                 metricId.toLowerCase().includes("avg") ||
                 metricId.toLowerCase().includes("average") ||
                 metricLabel.toLowerCase().includes("avg") ||
                 metricLabel.toLowerCase().includes("average");
-              const value = isAverage ? total / subRows.length : total;
 
-              if (value === 0) {
+              if (total === 0) {
                 return (
                   <span className="inline-flex items-center px-2 py-1 text-xs font-bold bg-primary/10 text-primary rounded-full">
                     -
@@ -917,16 +974,34 @@ export function useReportColumns(
                 );
               }
 
-              const humanReadableDuration = toHumanReadable(value, {
+              const humanReadableDuration = toHumanReadable(total, {
                 isSeconds: isSecondsFormat,
                 locale: locale,
                 largest: 2,
                 round: true,
               });
+              if (!isAverage) {
+                return (
+                  <span className="inline-flex items-center px-2 py-1 text-xs bg-primary/10 text-primary rounded-full font-bold">
+                    {humanReadableDuration}
+                  </span>
+                );
+              }
               return (
-                <span className="inline-flex items-center px-2 py-1 text-xs bg-primary/10 text-primary rounded-full font-bold">
-                  {humanReadableDuration}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full font-bold"
+                      data-testid="grouped-duration-total"
+                    >
+                      <span aria-hidden="true">{"Σ"}</span>
+                      {humanReadableDuration}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("reports.ui.groupedTotal", { count: subRows.length })}
+                  </TooltipContent>
+                </Tooltip>
               );
             }
 
@@ -1104,7 +1179,7 @@ export function useReportColumns(
               </span>
             );
           },
-          sortingFn: (rowA, rowB) => {
+          sortFn: (rowA, rowB) => {
             const aVal = Number(rowA.getValue(metricId)) || 0;
             const bVal = Number(rowB.getValue(metricId)) || 0;
             return aVal - bVal;

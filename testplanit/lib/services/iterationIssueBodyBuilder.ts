@@ -252,7 +252,7 @@ export async function buildIterationIssueBody(
         locale,
         "parameters.iterationIssueTableHeaderParameter"
       ),
-      getServerTranslation(locale, "parameters.iterationIssueTableHeaderValue"),
+      getServerTranslation(locale, "common.fields.value"),
     ]);
     const rows: any[] = [];
     rows.push(tableRow(tableHeader(paramHeader), tableHeader(valueHeader)));

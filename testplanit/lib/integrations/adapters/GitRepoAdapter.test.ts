@@ -163,6 +163,35 @@ describe("GitRepoAdapter redirect protection", () => {
     expect(mockFetch.mock.calls[1][1]).toEqual(
       expect.objectContaining({ redirect: "error" })
     );
+    // Same host: the credential travels with the second request.
+    const authAfterRedirect = new Headers(mockFetch.mock.calls[1][1].headers);
+    expect(authAfterRedirect.get("Authorization")).toBe(
+      new Headers(mockFetch.mock.calls[0][1].headers).get("Authorization")
+    );
+  });
+
+  it("drops the credential when the redirect leaves the origin", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 302,
+      statusText: "Found",
+      headers: new Headers({
+        Location: "https://codeload.github.com/testorg/testrepo?token=signed",
+      }),
+      url: "https://api.github.com/repos/testorg/testrepo",
+      json: () => Promise.resolve({}),
+      text: () => Promise.resolve(""),
+    });
+    mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+
+    await adapter.getDefaultBranch();
+
+    expect(
+      new Headers(mockFetch.mock.calls[0][1].headers).get("Authorization")
+    ).not.toBeNull();
+    expect(
+      new Headers(mockFetch.mock.calls[1][1].headers).get("Authorization")
+    ).toBeNull();
   });
 
   it("rejects redirect with no Location header", async () => {
@@ -192,6 +221,39 @@ describe("GitRepoAdapter redirect protection", () => {
     expect(mockFetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({ redirect: "manual" })
+    );
+  });
+});
+
+describe("GitRepoAdapter error messages", () => {
+  let adapter: GitHubRepoAdapter;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    adapter = new GitHubRepoAdapter(
+      { personalAccessToken: "test-token" },
+      { owner: "testorg", repo: "testrepo" }
+    );
+    (adapter as any).rateLimitDelay = 0;
+    (adapter as any).lastRequestTime = 0;
+    (adapter as any).maxRetries = 0;
+  });
+
+  it("keeps the response body when it carries a reason", async () => {
+    mockFetch.mockResolvedValue(makeResponse({ message: "Not Found" }, 404));
+
+    await expect(adapter.getDefaultBranch()).rejects.toThrow(
+      'HTTP 404 Error: {"message":"Not Found"}'
+    );
+  });
+
+  it("keeps only the status line when the rejection is an HTML page", async () => {
+    mockFetch.mockResolvedValue(
+      makeResponse("<!DOCTYPE html>\n<html><body>Forbidden</body></html>", 403)
+    );
+
+    await expect(adapter.getDefaultBranch()).rejects.toThrow(
+      /^HTTP 403 Error$/
     );
   });
 });
@@ -266,5 +328,57 @@ describe("GitRepoAdapter rate-limit retry", () => {
 
     await expect(adapter.getDefaultBranch()).rejects.toThrow("HTTP 404");
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("GitRepoAdapter pull request defaults", () => {
+  const creds = { personalAccessToken: "test-token" };
+
+  function everyAdapter() {
+    return [
+      new GitHubRepoAdapter(creds, { owner: "o", repo: "r" }),
+      new GitLabRepoAdapter(creds, { projectPath: "g/p" }),
+      new BitbucketRepoAdapter(
+        { email: "a@b.c", apiToken: "t" },
+        { workspace: "w", repoSlug: "r" }
+      ),
+      new AzureDevOpsRepoAdapter(creds, {
+        organizationUrl: "https://dev.azure.com/o",
+        project: "p",
+        repositoryId: "r",
+      }),
+      new GiteaRepoAdapter(creds, {
+        baseUrl: "https://gitea.example.com",
+        owner: "o",
+        repo: "r",
+      }),
+    ];
+  }
+
+  it("every provider overrides the unsupported default, so the picker is never hidden by accident", () => {
+    for (const adapter of everyAdapter()) {
+      expect(
+        Object.getPrototypeOf(adapter).hasOwnProperty("listPullRequests")
+      ).toBe(true);
+      expect(
+        Object.getPrototypeOf(adapter).hasOwnProperty("getMergeBase")
+      ).toBe(true);
+    }
+  });
+
+  it("the base listPullRequests reports itself unsupported, which the route turns into a 501", async () => {
+    const adapter = new GitHubRepoAdapter(creds, { owner: "o", repo: "r" });
+    const base = Object.getPrototypeOf(GitHubRepoAdapter.prototype);
+
+    await expect(base.listPullRequests.call(adapter)).rejects.toThrow(
+      /pull requests/i
+    );
+  });
+
+  it("the base getMergeBase answers null, so callers fall back to the provider's base", async () => {
+    const adapter = new GitHubRepoAdapter(creds, { owner: "o", repo: "r" });
+    const base = Object.getPrototypeOf(GitHubRepoAdapter.prototype);
+
+    await expect(base.getMergeBase.call(adapter, "a", "b")).resolves.toBeNull();
   });
 });

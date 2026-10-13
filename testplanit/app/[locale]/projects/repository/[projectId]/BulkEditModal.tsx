@@ -1,9 +1,10 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { formatSeconds } from "@/components/DurationDisplay";
-import { TestCaseNameDisplay } from "~/components/TestCaseNameDisplay";
+import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "~/zenstack/models";
 import type { CaseFields as DbCaseField, Tags, Issue } from "~/zenstack/models";
+import { isRequirementRow } from "~/lib/services/issueRoleScope";
 import type { RepositoryCasesGetPayload } from "~/zenstack/input";
 import { isEqual } from "lodash";
 import {
@@ -161,6 +163,26 @@ interface BulkEditModalProps {
 const VARIOUS_PLACEHOLDER = "<various>";
 
 /**
+ * The subset of a case's issue links the bulk Issues field can actually act
+ * on: the ones its picker could put back.
+ *
+ * That picker mounts SearchIssuesDialog without `includeRequirements`, so it
+ * never shows a requirement row and offers no way to re-link one. The field's
+ * value therefore has no opinion about requirement links, and reading their
+ * absence from it as a removal deletes linkage authored on the requirements
+ * surfaces — irreversibly from here, because nothing in this modal can
+ * restore it. It is reachable without the user editing issues at all: the
+ * field seeds empty whenever the selected cases disagree, so ticking Issues
+ * to change one case's defect links would clear every requirement link across
+ * the whole selection.
+ */
+function pickableIssueIds(issues: Issue[] | undefined | null): number[] {
+  return (issues ?? [])
+    .filter((issue) => !isRequirementRow(issue))
+    .map((issue) => issue.id);
+}
+
+/**
  * True when a bulk-edit body would actually change something. Stripping the
  * gated `state` from a payload can leave an update that touches nothing, and
  * POSTing that would burn a version snapshot per case for no change.
@@ -184,6 +206,7 @@ export function BulkEditModal({
   onCopyMove,
 }: BulkEditModalProps) {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const tCommon = useTranslations("common");
   const tBulkEdit = useTranslations("repository.bulkEdit");
   const tReviews = useTranslations("reviews.transitionGate");
@@ -352,7 +375,7 @@ export function BulkEditModal({
     }
     const caseById = new Map((casesData ?? []).map((c) => [c.id, c] as const));
     // Carry the case rows (not just names) so each bullet can render the
-    // shared TestCaseNameDisplay — same manual/automated/parameterized/
+    // shared CaseDisplay — same manual/automated/parameterized/
     // deleted glyph the repository grid uses.
     const toSample = (entityId: number) => {
       const c = caseById.get(entityId);
@@ -930,7 +953,7 @@ export function BulkEditModal({
       if (fieldKey === "tags")
         return (caseItem.tags ?? []).map((t) => t.id).sort((a, b) => a - b);
       if (fieldKey === "issues")
-        return (caseItem.issues ?? []).map((i) => i.id).sort((a, b) => a - b);
+        return pickableIssueIds(caseItem.issues).sort((a, b) => a - b);
       if (fieldKey.startsWith("dynamic_")) {
         const fieldId = parseInt(fieldKey.split("_")[1], 10);
         const caseValue = caseItem.caseFieldValues.find(
@@ -1628,10 +1651,14 @@ export function BulkEditModal({
           }
         }
       } else if (fieldKey === "issues") {
-        // Get all unique issue IDs from all cases
+        // Only the links this field's picker can express — see
+        // pickableIssueIds. Everything else on the selected cases is outside
+        // this edit's reach and must not appear in the disconnect list.
         const allCurrentIssueIds = new Set<number>();
         casesData.forEach((c) => {
-          (c.issues ?? []).forEach((i) => allCurrentIssueIds.add(i.id));
+          pickableIssueIds(c.issues).forEach((id) =>
+            allCurrentIssueIds.add(id)
+          );
         });
 
         const newIssueIds = Array.isArray(newValue) ? newValue.map(Number) : [];
@@ -1865,6 +1892,7 @@ export function BulkEditModal({
         data: { isDeleted: true },
         where: { id: { in: selectedCaseIds } },
       });
+      void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
       // Use bracket notation to avoid linter error
       const deletedMsgFn = (tBulkEdit as any)["success.casesDeleted"];
       const deletedMsg =
@@ -2349,7 +2377,7 @@ export function BulkEditModal({
                                                 key={c.id}
                                                 className="min-w-0 text-foreground"
                                               >
-                                                <TestCaseNameDisplay
+                                                <CaseDisplay
                                                   testCase={c}
                                                   showIcon
                                                   size="small"
@@ -2381,7 +2409,7 @@ export function BulkEditModal({
                                   </p>
                                   {/* Disc marker lives on the <li>; truncation
                                      stays on the name span INSIDE
-                                     TestCaseNameDisplay — overflow-hidden on the
+                                     CaseDisplay — overflow-hidden on the
                                      <li> itself would clip the outside marker.
                                      No marker: override, so each disc inherits
                                      its <li>'s text-foreground, matching the
@@ -2393,7 +2421,7 @@ export function BulkEditModal({
                                           key={c.id}
                                           className="min-w-0 text-foreground"
                                         >
-                                          <TestCaseNameDisplay
+                                          <CaseDisplay
                                             testCase={c}
                                             showIcon
                                             size="small"

@@ -120,6 +120,42 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     payloadKeys: ["id", "projectId", "displayKey", "fromStateId", "toStateId"],
   },
   {
+    name: "test_run.execution_requested",
+    category: "test-run",
+    description:
+      "Automated execution of a run's cases was requested and is about to be dispatched to a CI target.",
+    payloadKeys: [
+      "id",
+      "testRunId",
+      "projectId",
+      "targetId",
+      "provider",
+      "status",
+      "requestedById",
+      "ref",
+      "selectionCount",
+    ],
+  },
+  {
+    name: "test_run.execution_completed",
+    category: "test-run",
+    description:
+      "A dispatched execution reached a terminal state (succeeded, failed, dispatch failed, timed out or cancelled).",
+    payloadKeys: [
+      "id",
+      "testRunId",
+      "projectId",
+      "targetId",
+      "provider",
+      "status",
+      "externalRunId",
+      "externalUrl",
+      "error",
+      "dispatchedAt",
+      "completedAt",
+    ],
+  },
+  {
     name: "test_run.result_added",
     category: "test-run",
     description:

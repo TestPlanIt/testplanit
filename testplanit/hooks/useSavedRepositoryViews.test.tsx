@@ -299,8 +299,7 @@ describe("useSavedRepositoryViews", () => {
 
     const [args] = mockUpdate.mock.calls[0];
     expect(args.where).toEqual({ id: "link-1" });
-    expect(args.data.isDeleted).toBe(true);
-    expect(args.data.deletedAt).toBeInstanceOf(Date);
+    expect(args.data).toEqual({ isDeleted: true });
     expect(mockRefetch).toHaveBeenCalled();
   });
 });

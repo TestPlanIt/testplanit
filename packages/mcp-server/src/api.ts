@@ -39,7 +39,8 @@ function bearerHeaders(env: EnvConfig): Record<string, string> {
  * `@testplanit/mcp-server` has NO dependency on `@testplanit/api` (D-01).
  *
  * Read operations use GET with `?q=encodeURIComponent(JSON.stringify(body))`.
- * Write operations use POST/PATCH/DELETE with the JSON body.
+ * Create/update operations use POST/PATCH with the JSON body; delete
+ * operations use DELETE with their args in `?q=`, as the RPC handler expects.
  *
  * Errors:
  *  - Non-2xx → throws TestPlanItHttpError with statusCode + (when present) code
@@ -61,12 +62,27 @@ export async function zenstack<T>(
   const baseUrl = env.apiUrl;
   let response: Response;
 
-  if (READ_OPS.has(operation)) {
+  if (READ_OPS.has(operation) || DELETE_OPS.has(operation)) {
+    // The RPC handler reads `delete` / `deleteMany` args from `?q=` only and
+    // ignores a body: a `where` sent in the body is dropped and `deleteMany`
+    // runs unfiltered. Refuse a delete with no `where` rather than send one.
+    const isDelete = DELETE_OPS.has(operation);
+    const where = (body as { where?: unknown } | null | undefined)?.where;
+    if (
+      isDelete &&
+      (where == null ||
+        (typeof where === "object" && Object.keys(where).length === 0))
+    ) {
+      throw new TestPlanItHttpError(
+        `Refusing ${model}.${operation} without a where filter.`,
+        { statusCode: 400 },
+      );
+    }
     const q = body !== undefined && body !== null
       ? `?q=${encodeURIComponent(JSON.stringify(body))}`
       : "";
     response = await fetch(`${baseUrl}/api/model/${model}/${operation}${q}`, {
-      method: "GET",
+      method: isDelete ? "DELETE" : "GET",
       headers: bearerHeaders(env),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -75,9 +91,7 @@ export async function zenstack<T>(
       ? "POST"
       : PATCH_OPS.has(operation)
         ? "PATCH"
-        : DELETE_OPS.has(operation)
-          ? "DELETE"
-          : "POST"; // default for any unrecognized op
+        : "POST"; // default for any unrecognized op
     response = await fetch(`${baseUrl}/api/model/${model}/${operation}`, {
       method,
       headers: bearerHeaders(env),
@@ -142,6 +156,137 @@ export async function zenstack<T>(
     throw new TestPlanItHttpError(errMessage, { code: errCode });
   }
   return parsed.data as T;
+}
+
+/**
+ * POST JSON to a non-RPC host route and unwrap the response.
+ *
+ * The host's bespoke routes don't speak the ZenStack envelope, but they do
+ * report failures the same way, so the error parsing here mirrors
+ * `zenstack()`'s exactly — a `READ_ONLY_TOKEN` 403 or a validation message
+ * reaches the agent with its `code` intact, and the bearer token never
+ * appears in an error string (T-06-05 / T-05-06b).
+ */
+export async function postHostJson<T>(
+  path: string,
+  body: unknown,
+  env: EnvConfig,
+  timeoutMs = TIMEOUT_MS,
+): Promise<T> {
+  const response = await fetch(`${env.apiUrl}${path}`, {
+    method: "POST",
+    headers: bearerHeaders(env),
+    body: JSON.stringify(body ?? {}),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    let code: string | undefined;
+    let parsedMessage: string | undefined;
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
+      const errField = parsed?.["error"];
+      if (typeof errField === "string") {
+        parsedMessage = errField;
+      } else if (errField && typeof errField === "object") {
+        const errObj = errField as Record<string, unknown>;
+        if (typeof errObj["code"] === "string") code = errObj["code"] as string;
+        if (typeof errObj["message"] === "string")
+          parsedMessage = errObj["message"] as string;
+      }
+    } catch {
+      // non-JSON body
+    }
+    throw new TestPlanItHttpError(
+      `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}`,
+      { statusCode: response.status, code },
+    );
+  }
+  return JSON.parse(text) as T;
+}
+
+/** GET JSON from a non-RPC host route; same error handling as `postHostJson`. */
+export async function getHostJson<T>(
+  path: string,
+  env: EnvConfig,
+  timeoutMs = TIMEOUT_MS,
+): Promise<T> {
+  const response = await fetch(`${env.apiUrl}${path}`, {
+    method: "GET",
+    headers: bearerHeaders(env),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    let code: string | undefined;
+    let parsedMessage: string | undefined;
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
+      const errField = parsed?.["error"];
+      if (typeof errField === "string") {
+        parsedMessage = errField;
+      } else if (errField && typeof errField === "object") {
+        const errObj = errField as Record<string, unknown>;
+        if (typeof errObj["code"] === "string") code = errObj["code"] as string;
+        if (typeof errObj["message"] === "string")
+          parsedMessage = errObj["message"] as string;
+      }
+    } catch {
+      // non-JSON body
+    }
+    throw new TestPlanItHttpError(
+      `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}`,
+      { statusCode: response.status, code },
+    );
+  }
+  return JSON.parse(text) as T;
+}
+
+/** One entry of `/api/projects/{id}/issues/resolve`'s per-key report. */
+export interface IssueKeyResolution {
+  key: string;
+  issueId?: number;
+  created?: boolean;
+  error?: string;
+}
+
+export interface ResolveIssueKeysResponse {
+  success: boolean;
+  resolvedCount: number;
+  failedCount: number;
+  createdCount: number;
+  results: IssueKeyResolution[];
+}
+
+// Each unresolved key costs one upstream tracker round trip, so a batch needs
+// materially more headroom than a CRUD call.
+const RESOLVE_TIMEOUT_MS = 60000;
+
+/**
+ * Resolve tracker issue keys to local Issue rows, creating any row the host
+ * has never seen, via `/api/projects/{projectId}/issues/resolve`.
+ *
+ * This is what lets an agent name `PROJ-123` without a human having opened
+ * that ticket in the web UI first: the host reads it through the project's own
+ * integration credentials and upserts on `(externalId, integrationId)`, the
+ * same key the UI writes, so the row is shared rather than duplicated.
+ *
+ * Resolution can hit the tracker's API, so it gets a longer ceiling than CRUD.
+ */
+export async function resolveIssueKeys(
+  projectId: number,
+  keys: string[],
+  env: EnvConfig,
+  integrationId?: number,
+): Promise<ResolveIssueKeysResponse> {
+  return postHostJson<ResolveIssueKeysResponse>(
+    `/api/projects/${projectId}/issues/resolve`,
+    { keys, ...(integrationId !== undefined ? { integrationId } : {}) },
+    env,
+    RESOLVE_TIMEOUT_MS,
+  );
 }
 
 /**
@@ -301,6 +446,83 @@ export async function generateQuickScript(
   return JSON.parse(text) as GenerateQuickScriptResponse;
 }
 
+export interface CreateCaseVersionOptions {
+  /**
+   * Increment the case's `currentVersion` on the host and snapshot at the new
+   * number, in one transaction. Set on EDIT; leave unset on CREATE, where the
+   * fresh case is already at version 1 with no snapshot yet.
+   */
+  bumpVersion?: boolean;
+}
+
+/**
+ * Record a version snapshot of a case's current state via
+ * `/api/repository/cases/{caseId}/versions`.
+ *
+ * Writing a case through the ZenStack RPC surface does NOT produce a version
+ * row on its own — the host builds the snapshot only when asked (see #598).
+ * Without this call a case authored or edited over the API has no history,
+ * and a run result recorded against it links to a version page that has no
+ * snapshot to show.
+ *
+ * `copyFieldValues` is always on: the host's in-app save path writes the
+ * per-version custom-field rows itself afterwards, but we have no equivalent
+ * step, so the host must mirror them or the version renders with every custom
+ * field blank.
+ */
+export async function createCaseVersion(
+  caseId: number,
+  options: CreateCaseVersionOptions,
+  env: EnvConfig,
+): Promise<void> {
+  const path = `/api/repository/cases/${caseId}/versions`;
+  const response = await fetch(`${env.apiUrl}${path}`, {
+    method: "POST",
+    headers: bearerHeaders(env),
+    body: JSON.stringify({
+      copyFieldValues: true,
+      ...(options.bumpVersion ? { bumpVersion: true } : {}),
+    }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    // Mirror the zenstack()/lookup() error parser so a host validation
+    // message reaches the agent instead of a bare status line.
+    let code: string | undefined;
+    let parsedMessage: string | undefined;
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
+      const errField = parsed?.["error"];
+      if (errField && typeof errField === "object") {
+        const errObj = errField as Record<string, unknown>;
+        if (typeof errObj["code"] === "string") code = errObj["code"] as string;
+        if (typeof errObj["message"] === "string")
+          parsedMessage = errObj["message"] as string;
+      } else if (typeof errField === "string") {
+        parsedMessage = errField;
+      }
+    } catch {
+      // body is not JSON; leave parsedMessage / code undefined
+    }
+    // A 401 or 404 here, on a request whose token was good enough to write
+    // the case moments earlier, means the host predates API-token access to
+    // this endpoint. Failing is deliberate — a case with no version snapshot
+    // cannot be read back as it was executed — but the failure has to say so,
+    // or the reader is left staring at an unexplained Unauthorized.
+    const hostTooOld = response.status === 401 || response.status === 404;
+    const hint = hostTooOld
+      ? " — this TestPlanIt host cannot record case versions for API clients. Upgrade the host, or pin an @testplanit/mcp-server matching it."
+      : "";
+    // T-06-05 / T-05-06b: NEVER include the bearer token in error messages.
+    throw new TestPlanItHttpError(
+      `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}${hint}`,
+      { statusCode: response.status, code },
+    );
+  }
+}
+
 /**
  * Resolve the single active repository for a project. Cases and folders
  * require `repositoryId` on create; the active repository is selected by
@@ -343,7 +565,8 @@ export async function resolveActiveRepository(
 /**
  * Resolve a default template assigned to the project (cases require
  * `templateId` per RepositoryCases.templateId being non-nullable —
- * VERIFIED in schema.zmodel).
+ * VERIFIED in schema.zmodel). Prefers the template marked Default, as the
+ * web UI does, then the lowest id.
  */
 export async function resolveDefaultTemplate(
   projectId: number,
@@ -359,7 +582,7 @@ export async function resolveDefaultTemplate(
         projects: { some: { projectId } },
       },
       select: { id: true },
-      orderBy: { id: "asc" },
+      orderBy: [{ isDefault: "desc" }, { id: "asc" }],
       take: 1,
     },
     env,
@@ -374,50 +597,9 @@ export async function resolveDefaultTemplate(
 }
 
 /**
- * Resolve the template to use for a case create.
- *
- * When `templateId` is provided, verify it is an enabled, non-deleted template
- * assigned to the project — throwing a 422 with a human-readable message when
- * it is not, so the agent gets a clear "that template isn't available here"
- * instead of a downstream foreign-key / policy error. When `templateId` is
- * omitted, this falls back to `resolveDefaultTemplate` (first enabled template
- * assigned to the project).
- */
-export async function resolveTemplateForProject(
-  projectId: number,
-  env: EnvConfig,
-  templateId?: number,
-): Promise<number> {
-  if (templateId == null) {
-    return resolveDefaultTemplate(projectId, env);
-  }
-  const templates = await zenstack<{ id: number }[]>(
-    "templates",
-    "findMany",
-    {
-      where: {
-        id: templateId,
-        isDeleted: false,
-        isEnabled: true,
-        projects: { some: { projectId } },
-      },
-      select: { id: true },
-      take: 1,
-    },
-    env,
-  );
-  if (!templates || templates.length === 0) {
-    throw new TestPlanItHttpError(
-      `Template ${templateId} is not an enabled template assigned to project ${projectId}. Use testplanit_templates_list to see available templates.`,
-      { statusCode: 422 },
-    );
-  }
-  return templates[0].id;
-}
-
-/**
  * Resolve a workflow state for the CASES scope (NOT runs). Pass `name` to
- * select by name; omit to take the first by `order asc`.
+ * select by name; omit to take the state marked Default, else the first by
+ * `order asc` — the web UI's choice.
  *
  * Cannot use `/api/cli/lookup` — that endpoint hardcodes
  * `WorkflowScope.RUNS` (see /api/cli/lookup/route.ts line 106).
@@ -438,7 +620,7 @@ export async function resolveCaseWorkflowState(
         projects: { some: { projectId } },
         ...(name ? { name } : {}),
       },
-      orderBy: { order: "asc" },
+      orderBy: [{ isDefault: "desc" }, { order: "asc" }],
       take: 1,
     },
     env,

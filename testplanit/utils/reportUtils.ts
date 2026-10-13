@@ -1,3 +1,5 @@
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import { queryEngagementUserIds } from "~/lib/engagementUserIdsQuery";
 import { queryProjectRelevantIssueIds } from "~/lib/projectIssueIdsQuery";
 import {
   buildFolderAncestorMap,
@@ -12,6 +14,7 @@ import {
   groupEngagementRows,
   junitResultWhere,
   manualResultWhere,
+  runImpactSelectFor,
 } from "~/utils/resultUnion";
 
 // Re-export: the date-filter helper predates the union module and many
@@ -41,6 +44,7 @@ async function findProjectIssues(
     where: {
       id: { in: relevantIssueIds },
       isDeleted: false,
+      ...DEFECT_SCOPE_WHERE,
       ...(where ?? {}),
     },
     ...rest,
@@ -82,6 +86,82 @@ function caseSelectFor(groupBy: string[]) {
       },
     },
   };
+}
+
+/**
+ * Impact analyses shaped like execution rows so `groupResults` can bucket
+ * them with the shared dimensions: date = when the analysis started, user =
+ * who started it, run = the run it composed, trigger and repository = its
+ * own. Status, case, folder and tag groupings do not apply and land in the
+ * "unknown" bucket.
+ */
+export async function fetchImpactAnalysisRows(
+  db: any,
+  projectId: number | undefined,
+  isProjectSpecific: boolean,
+  filters?: { startDate?: string; endDate?: string },
+  opts: { withRunCases?: boolean } = {}
+) {
+  const rows = await db.impactAnalysis.findMany({
+    where: {
+      isDeleted: false,
+      ...(isProjectSpecific && projectId
+        ? { projectId: Number(projectId) }
+        : { project: { isDeleted: false } }),
+      ...buildDateFilter(filters, "createdAt"),
+    },
+    select: {
+      id: true,
+      createdAt: true,
+      createdById: true,
+      projectId: true,
+      configId: true,
+      trigger: true,
+      testRunId: true,
+      pinnedCaseCount: true,
+      affectedCaseCount: true,
+      testRun: {
+        select: {
+          configId: true,
+          milestoneId: true,
+          ...(opts.withRunCases
+            ? {
+                testCases: {
+                  where: { isDeleted: false },
+                  select: {
+                    status: {
+                      select: { isFailure: true, isCompleted: true },
+                    },
+                  },
+                },
+              }
+            : {}),
+        },
+      },
+    },
+  });
+  return rows.map((a: any) => {
+    const runCases: Array<{
+      status: { isFailure: boolean; isCompleted: boolean } | null;
+    }> = a.testRun?.testCases ?? [];
+    return {
+      analysisId: a.id,
+      executedAt: a.createdAt,
+      createdAt: a.createdAt,
+      executedById: a.createdById,
+      statusId: null,
+      testRunId: a.testRunId,
+      testRun: {
+        projectId: a.projectId,
+        configId: a.testRun?.configId ?? null,
+        milestoneId: a.testRun?.milestoneId ?? null,
+        impactAnalyses: [{ trigger: a.trigger, configId: a.configId }],
+      },
+      selectedCount: a.pinnedCaseCount + a.affectedCaseCount,
+      selectedExecuted: runCases.filter((c) => c.status?.isCompleted).length,
+      selectedFailed: runCases.filter((c) => c.status?.isFailure).length,
+    };
+  });
 }
 
 /**
@@ -640,6 +720,56 @@ export function createTestExecutionDimensionRegistry(
       join: {},
       display: (val: any) => ({ name: val.name, id: val.id }),
     },
+    trigger: {
+      id: "trigger",
+      label: "Trigger",
+      // Group keys are the trigger strings themselves, so each value carries
+      // an `impactTrigger` property matching its id.
+      getValues: async () => [
+        { id: "manual", name: "Manual", impactTrigger: "manual" },
+        {
+          id: "pull_request",
+          name: "Pull request",
+          impactTrigger: "pull_request",
+        },
+        { id: "push", name: "Push", impactTrigger: "push" },
+      ],
+      groupBy: "impactTrigger",
+      join: {},
+      display: (val: any) => ({ name: val.name, id: val.id }),
+    },
+    codeRepository: {
+      id: "codeRepository",
+      label: "Code Repository",
+      // Repository connections whose analyses composed a run in scope.
+      getValues: async (db: any, projectId?: number) => {
+        const configs = await db.projectCodeRepositoryConfig.findMany({
+          where: {
+            ...(isProjectSpecific && projectId
+              ? { projectId: Number(projectId) }
+              : {}),
+            purpose: "IMPACT",
+          },
+          select: {
+            id: true,
+            branch: true,
+            repository: { select: { name: true, isDeleted: true } },
+          },
+          orderBy: { id: "asc" },
+        });
+        return configs
+          .filter((c: any) => !c.repository.isDeleted)
+          .map((c: any) => ({
+            id: c.id,
+            name: c.branch
+              ? `${c.repository.name} (${c.branch})`
+              : c.repository.name,
+          }));
+      },
+      groupBy: "impactConfigId",
+      join: {},
+      display: (val: any) => ({ name: val.name, id: val.id }),
+    },
     tag: {
       id: "tag",
       label: "Tag",
@@ -713,7 +843,12 @@ export function createTestExecutionMetricRegistry(
               testRunId: true,
               testRunCaseId: true,
               testRun: {
-                select: { projectId: true, configId: true, milestoneId: true },
+                select: {
+                  projectId: true,
+                  configId: true,
+                  milestoneId: true,
+                  ...runImpactSelectFor(groupBy),
+                },
               },
               ...caseSelectFor(groupBy),
             },
@@ -812,7 +947,12 @@ export function createTestExecutionMetricRegistry(
               testRunCaseId: true,
               status: { select: { isSuccess: true } },
               testRun: {
-                select: { projectId: true, configId: true, milestoneId: true },
+                select: {
+                  projectId: true,
+                  configId: true,
+                  milestoneId: true,
+                  ...runImpactSelectFor(groupBy),
+                },
               },
               ...caseSelectFor(groupBy),
             },
@@ -904,7 +1044,12 @@ export function createTestExecutionMetricRegistry(
               testRunId: true,
               testRunCaseId: true,
               testRun: {
-                select: { projectId: true, configId: true, milestoneId: true },
+                select: {
+                  projectId: true,
+                  configId: true,
+                  milestoneId: true,
+                  ...runImpactSelectFor(groupBy),
+                },
               },
               ...caseSelectFor(groupBy),
             },
@@ -996,7 +1141,12 @@ export function createTestExecutionMetricRegistry(
               testRunId: true,
               testRunCaseId: true,
               testRun: {
-                select: { projectId: true, configId: true, milestoneId: true },
+                select: {
+                  projectId: true,
+                  configId: true,
+                  milestoneId: true,
+                  ...runImpactSelectFor(groupBy),
+                },
               },
               ...caseSelectFor(groupBy),
             },
@@ -1118,6 +1268,7 @@ export function createTestExecutionMetricRegistry(
                     projectId: true,
                     configId: true,
                     milestoneId: true,
+                    ...runImpactSelectFor(groupBy),
                   },
                 },
                 ...caseSelectFor(groupBy),
@@ -1171,6 +1322,7 @@ export function createTestExecutionMetricRegistry(
             projectId: true,
             configId: true,
             milestoneId: true,
+            ...runImpactSelectFor(groupBy),
           },
         });
 
@@ -1185,6 +1337,7 @@ export function createTestExecutionMetricRegistry(
             projectId: run.projectId,
             configId: run.configId,
             milestoneId: run.milestoneId,
+            impactAnalyses: run.impactAnalyses,
           },
         }));
 
@@ -1194,6 +1347,120 @@ export function createTestExecutionMetricRegistry(
             acc.count++;
           },
           finalize: (acc: { count: number }) => ({ testRunCount: acc.count }),
+        });
+      },
+    },
+    impactAnalysisCount: {
+      id: "impactAnalysisCount",
+      label: "Impact Analysis Count",
+      aggregate: async (
+        db: any,
+        projectId: number | undefined,
+        groupBy: string[],
+        filters?: any,
+        _dims?: string[]
+      ) => {
+        if (!groupBy || !Array.isArray(groupBy)) return [];
+        const rows = await fetchImpactAnalysisRows(
+          db,
+          projectId,
+          isProjectSpecific,
+          filters
+        );
+        if (groupBy.length === 0) {
+          return [{ impactAnalysisCount: rows.length }];
+        }
+        return groupResults(rows, groupBy, {
+          create: () => ({ count: 0 }),
+          add: (acc: { count: number }) => {
+            acc.count++;
+          },
+          finalize: (acc: { count: number }) => ({
+            impactAnalysisCount: acc.count,
+          }),
+        });
+      },
+    },
+    affectedCasesSelected: {
+      id: "affectedCasesSelected",
+      label: "Affected Cases Selected",
+      aggregate: async (
+        db: any,
+        projectId: number | undefined,
+        groupBy: string[],
+        filters?: any,
+        _dims?: string[]
+      ) => {
+        if (!groupBy || !Array.isArray(groupBy)) return [];
+        const rows = await fetchImpactAnalysisRows(
+          db,
+          projectId,
+          isProjectSpecific,
+          filters
+        );
+        if (groupBy.length === 0) {
+          return [
+            {
+              affectedCasesSelected: rows.reduce(
+                (sum: number, r: any) => sum + r.selectedCount,
+                0
+              ),
+            },
+          ];
+        }
+        return groupResults(rows, groupBy, {
+          create: () => ({ sum: 0 }),
+          add: (acc: { sum: number }, row: any) => {
+            acc.sum += row.selectedCount;
+          },
+          finalize: (acc: { sum: number }) => ({
+            affectedCasesSelected: acc.sum,
+          }),
+        });
+      },
+    },
+    selectionPrecision: {
+      id: "selectionPrecision",
+      label: "Selection Precision (%)",
+      // Of the selected cases that were executed in the composed run, the
+      // share that failed. Null (not 0) until something selected has run.
+      aggregate: async (
+        db: any,
+        projectId: number | undefined,
+        groupBy: string[],
+        filters?: any,
+        _dims?: string[]
+      ) => {
+        if (!groupBy || !Array.isArray(groupBy)) return [];
+        const rows = await fetchImpactAnalysisRows(
+          db,
+          projectId,
+          isProjectSpecific,
+          filters,
+          { withRunCases: true }
+        );
+        const precision = (executed: number, failed: number) =>
+          executed > 0 ? Math.round((failed / executed) * 1000) / 10 : null;
+        if (groupBy.length === 0) {
+          const executed = rows.reduce(
+            (sum: number, r: any) => sum + r.selectedExecuted,
+            0
+          );
+          const failed = rows.reduce(
+            (sum: number, r: any) => sum + r.selectedFailed,
+            0
+          );
+          return [{ selectionPrecision: precision(executed, failed) }];
+        }
+        return groupResults(rows, groupBy, {
+          create: () => ({ executed: 0, failed: 0 }),
+          add: (acc: { executed: number; failed: number }, row: any) => {
+            acc.executed += row.selectedExecuted;
+            acc.failed += row.selectedFailed;
+          },
+          finalize: (acc: { executed: number; failed: number }) => ({
+            selectionPrecision: precision(acc.executed, acc.failed),
+          }),
         });
       },
     },
@@ -1251,7 +1518,12 @@ export function createTestExecutionMetricRegistry(
               statusId: true,
               testRunId: true,
               testRun: {
-                select: { projectId: true, configId: true, milestoneId: true },
+                select: {
+                  projectId: true,
+                  configId: true,
+                  milestoneId: true,
+                  ...runImpactSelectFor(groupBy),
+                },
               },
               // Always carry the repository case id (to count unique cases) plus
               // whatever folder/tag selects the grouping requires.
@@ -1938,6 +2210,39 @@ export function createRepositoryStatsMetricRegistry(
 export function createUserEngagementDimensionRegistry(
   isProjectSpecific: boolean = true
 ) {
+  const scopedProjectId = (projectId?: number) =>
+    isProjectSpecific && projectId ? Number(projectId) : undefined;
+
+  const engagedUserIds = (db: any, projectId?: number) =>
+    queryEngagementUserIds(db, scopedProjectId(projectId));
+
+  // The User dimension also lists project members with no activity yet.
+  const userDimensionIds = async (
+    db: any,
+    projectId?: number
+  ): Promise<string[]> => {
+    const scoped = scopedProjectId(projectId);
+    if (scoped === undefined) return engagedUserIds(db, projectId);
+    const [engaged, assigned, permitted] = await Promise.all([
+      engagedUserIds(db, projectId),
+      db.projectAssignment.findMany({
+        where: { projectId: scoped },
+        select: { userId: true },
+      }),
+      db.userProjectPermission.findMany({
+        where: { projectId: scoped },
+        select: { userId: true },
+      }),
+    ]);
+    return [
+      ...new Set<string>([
+        ...engaged,
+        ...assigned.map((a: { userId: string }) => a.userId),
+        ...permitted.map((p: { userId: string }) => p.userId),
+      ]),
+    ];
+  };
+
   return {
     project: !isProjectSpecific
       ? {
@@ -1994,91 +2299,45 @@ export function createUserEngagementDimensionRegistry(
         const users = await db.user.findMany({
           where: {
             isDeleted: false,
-            OR: [
-              // Users assigned to projects
-              ...(isProjectSpecific && projectId
-                ? [
-                    {
-                      projects: {
-                        some: {
-                          projectId: Number(projectId),
-                        },
-                      },
-                    },
-                  ]
-                : []),
-              // Users with project permissions
-              ...(isProjectSpecific && projectId
-                ? [
-                    {
-                      projectPermissions: {
-                        some: {
-                          projectId: Number(projectId),
-                        },
-                      },
-                    },
-                  ]
-                : []),
-              // Users who created test cases
-              {
-                repositoryCases: {
-                  some: {
-                    ...(isProjectSpecific && projectId
-                      ? { projectId: Number(projectId) }
-                      : {}),
-                    isDeleted: false,
-                  },
-                },
-              },
-              // Users who executed tests
-              {
-                testRunResults: {
-                  some: {
-                    isDeleted: false,
-                    testRun: {
-                      ...(isProjectSpecific && projectId
-                        ? { projectId: Number(projectId) }
-                        : {}),
-                      isDeleted: false,
-                    },
-                  },
-                },
-              },
-              // Users who submitted automated results
-              {
-                junitTestResults: {
-                  some: {
-                    testSuite: {
-                      testRun: {
-                        ...(isProjectSpecific && projectId
-                          ? { projectId: Number(projectId) }
-                          : {}),
-                        isDeleted: false,
-                      },
-                    },
-                  },
-                },
-              },
-              // Users who participated in sessions
-              {
-                sessionResults: {
-                  some: {
-                    isDeleted: false,
-                    session: {
-                      ...(isProjectSpecific && projectId
-                        ? { projectId: Number(projectId) }
-                        : {}),
-                      isDeleted: false,
-                    },
-                  },
-                },
-              },
-            ],
+            id: { in: await userDimensionIds(db, projectId) },
           },
           select: { id: true, name: true, email: true },
           orderBy: { name: "asc" },
         });
         return users;
+      },
+      filterValues: async (
+        db: any,
+        projectId: number | undefined,
+        opts: { search?: string; ids?: string[]; skip: number; take: number }
+      ) => {
+        const userIds = await userDimensionIds(db, projectId);
+        const requested = opts.ids ? new Set(opts.ids) : null;
+        const where = {
+          isDeleted: false,
+          id: {
+            in: requested ? userIds.filter((id) => requested.has(id)) : userIds,
+          },
+          ...(opts.search
+            ? {
+                OR: [
+                  { name: { contains: opts.search, mode: "insensitive" } },
+                  { email: { contains: opts.search, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        };
+        const [users, total] = await Promise.all([
+          db.user.findMany({
+            where,
+            select: { id: true, name: true, email: true },
+            orderBy: { name: "asc" },
+            skip: opts.skip,
+            take: opts.take,
+          }),
+          db.user.count({ where }),
+        ]);
+        return { results: users, total };
       },
       groupBy: "userId",
       join: { user: true },
@@ -2095,62 +2354,7 @@ export function createUserEngagementDimensionRegistry(
             users: {
               some: {
                 isDeleted: false,
-                OR: [
-                  // Users who created repository cases
-                  {
-                    repositoryCases: {
-                      some: {
-                        ...(isProjectSpecific && projectId
-                          ? { projectId: Number(projectId) }
-                          : {}),
-                        isDeleted: false,
-                      },
-                    },
-                  },
-                  // Users who executed tests
-                  {
-                    testRunResults: {
-                      some: {
-                        isDeleted: false,
-                        testRun: {
-                          ...(isProjectSpecific && projectId
-                            ? { projectId: Number(projectId) }
-                            : {}),
-                          isDeleted: false,
-                        },
-                      },
-                    },
-                  },
-                  // Users who submitted automated results
-                  {
-                    junitTestResults: {
-                      some: {
-                        testSuite: {
-                          testRun: {
-                            ...(isProjectSpecific && projectId
-                              ? { projectId: Number(projectId) }
-                              : {}),
-                            isDeleted: false,
-                          },
-                        },
-                      },
-                    },
-                  },
-                  // Users who participated in sessions
-                  {
-                    sessionResults: {
-                      some: {
-                        isDeleted: false,
-                        session: {
-                          ...(isProjectSpecific && projectId
-                            ? { projectId: Number(projectId) }
-                            : {}),
-                          isDeleted: false,
-                        },
-                      },
-                    },
-                  },
-                ],
+                id: { in: await engagedUserIds(db, projectId) },
               },
             },
           },
@@ -2175,62 +2379,7 @@ export function createUserEngagementDimensionRegistry(
               some: {
                 user: {
                   isDeleted: false,
-                  OR: [
-                    // Users who created repository cases
-                    {
-                      repositoryCases: {
-                        some: {
-                          ...(isProjectSpecific && projectId
-                            ? { projectId: Number(projectId) }
-                            : {}),
-                          isDeleted: false,
-                        },
-                      },
-                    },
-                    // Users who executed tests
-                    {
-                      testRunResults: {
-                        some: {
-                          isDeleted: false,
-                          testRun: {
-                            ...(isProjectSpecific && projectId
-                              ? { projectId: Number(projectId) }
-                              : {}),
-                            isDeleted: false,
-                          },
-                        },
-                      },
-                    },
-                    // Users who submitted automated results
-                    {
-                      junitTestResults: {
-                        some: {
-                          testSuite: {
-                            testRun: {
-                              ...(isProjectSpecific && projectId
-                                ? { projectId: Number(projectId) }
-                                : {}),
-                              isDeleted: false,
-                            },
-                          },
-                        },
-                      },
-                    },
-                    // Users who participated in sessions
-                    {
-                      sessionResults: {
-                        some: {
-                          isDeleted: false,
-                          session: {
-                            ...(isProjectSpecific && projectId
-                              ? { projectId: Number(projectId) }
-                              : {}),
-                            isDeleted: false,
-                          },
-                        },
-                      },
-                    },
-                  ],
+                  id: { in: await engagedUserIds(db, projectId) },
                 },
               },
             },
@@ -3121,6 +3270,7 @@ export function createIssueTrackingDimensionRegistry(
           const unknownTypeCount = await db.issue.count({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               issueTypeName: null,
             },
           });
@@ -3132,6 +3282,7 @@ export function createIssueTrackingDimensionRegistry(
           const issues = await db.issue.findMany({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               issueTypeName: { not: null },
             },
             select: {
@@ -3202,6 +3353,7 @@ export function createIssueTrackingDimensionRegistry(
           const internalIssueCount = await db.issue.count({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               integrationId: null,
             },
           });
@@ -3257,6 +3409,7 @@ export function createIssueTrackingDimensionRegistry(
           const issues = await db.issue.findMany({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               status: { not: null },
             },
             select: { status: true },
@@ -3316,6 +3469,7 @@ export function createIssueTrackingDimensionRegistry(
           const issues = await db.issue.findMany({
             where: {
               isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
               priority: { not: null },
             },
             select: { priority: true },
@@ -3373,7 +3527,7 @@ export function createIssueTrackingDimensionRegistry(
         } else {
           // Cross-project: Get all issue creation dates
           const dates = await db.issue.findMany({
-            where: { isDeleted: false },
+            where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
             select: { createdAt: true },
             distinct: ["createdAt"],
             orderBy: { createdAt: "asc" },
@@ -3527,7 +3681,7 @@ export function createIssueTrackingMetricRegistry(
           // Cross-project implementation
           if (groupBy.includes("createdAt")) {
             const results = await db.issue.findMany({
-              where: { isDeleted: false },
+              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
               select: {
                 createdAt: true,
                 createdById: true,
@@ -3608,7 +3762,7 @@ export function createIssueTrackingMetricRegistry(
 
           if (groupBy.length === 0) {
             const count = await db.issue.count({
-              where: { isDeleted: false },
+              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
             });
             return [{ issueCount: count }];
           }
@@ -3617,7 +3771,7 @@ export function createIssueTrackingMetricRegistry(
           if (!groupBy.includes("projectId")) {
             const rawResults = await db.issue.groupBy({
               by: groupBy as any[],
-              where: { isDeleted: false },
+              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
               _count: { _all: true },
             });
 
@@ -3655,7 +3809,7 @@ export function createIssueTrackingMetricRegistry(
 
           // For groupBy with project, we need a more complex query
           const results = await db.issue.findMany({
-            where: { isDeleted: false },
+            where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
             select: {
               createdById: true,
               integrationId: true,

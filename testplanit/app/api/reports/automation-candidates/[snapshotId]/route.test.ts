@@ -6,6 +6,10 @@
  * policy on canAddEdit is the whole reason this route exists in the first
  * place — without it, a canAddEdit-only user could soft-delete by flipping
  * isDeleted via the model-route update.
+ *
+ * The gate walks the effective-access ladder in lib/services/areaPermission.ts
+ * and reads the Reporting area's canDelete bit off the result, so the tests
+ * drive the ladder's resolution directly.
  */
 import { ApplicationArea } from "~/zenstack/models";
 import { NextRequest } from "next/server";
@@ -16,7 +20,6 @@ vi.mock("~/server/auth", () => ({ authOptions: {} }));
 
 vi.mock("~/lib/db", () => ({
   baseDb: {
-    user: { findUnique: vi.fn() },
     projects: { findFirst: vi.fn() },
     llmReportSnapshot: {
       findFirst: vi.fn(),
@@ -25,8 +28,15 @@ vi.mock("~/lib/db", () => ({
   },
 }));
 
+vi.mock("~/lib/services/areaPermission", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/lib/services/areaPermission")>();
+  return { ...actual, resolveEffectiveProjectAccess: vi.fn() };
+});
+
 import { getServerSession } from "next-auth";
 import { baseDb } from "~/lib/db";
+import { resolveEffectiveProjectAccess } from "~/lib/services/areaPermission";
 import { DELETE } from "./route";
 
 function req(): NextRequest {
@@ -37,7 +47,6 @@ function req(): NextRequest {
   );
 }
 
-const findUser = baseDb.user.findUnique as unknown as ReturnType<typeof vi.fn>;
 const findProject = baseDb.projects.findFirst as unknown as ReturnType<
   typeof vi.fn
 >;
@@ -46,6 +55,41 @@ const findSnapshot = baseDb.llmReportSnapshot
 const updateSnapshot = baseDb.llmReportSnapshot.update as unknown as ReturnType<
   typeof vi.fn
 >;
+const resolveAccess = vi.mocked(resolveEffectiveProjectAccess);
+
+const baseResolution = {
+  isSystemAdmin: false,
+  isSystemProjectAdmin: false,
+  isProjectAdmin: false,
+  accessDenied: false,
+  effectiveRole: null,
+  userAccessType: null,
+  groupAccessType: null,
+  projectDefaultAccessType: null,
+  resolved: true,
+};
+
+const reportingRole = (canDelete: boolean) => ({
+  id: 3,
+  name: "Tester",
+  rolePermissions: [
+    {
+      area: ApplicationArea.Reporting,
+      canAddEdit: true,
+      canDelete,
+      canClose: false,
+    },
+  ],
+});
+
+function signedIn() {
+  vi.mocked(getServerSession).mockResolvedValue({
+    user: { id: "u1" },
+  } as never);
+  findSnapshot.mockResolvedValue({ id: 1, projectId: 7 });
+  findProject.mockResolvedValue({ id: 7 });
+  updateSnapshot.mockResolvedValue({ id: 1 });
+}
 
 describe("DELETE /api/reports/automation-candidates/[snapshotId]", () => {
   beforeEach(() => {
@@ -82,54 +126,36 @@ describe("DELETE /api/reports/automation-candidates/[snapshotId]", () => {
     expect(updateSnapshot).not.toHaveBeenCalled();
   });
 
-  it("403s when the user lacks Reporting.canDelete and is not project admin or creator", async () => {
-    vi.mocked(getServerSession).mockResolvedValue({
-      user: { id: "u1" },
-    } as never);
-    findSnapshot.mockResolvedValue({ id: 1, projectId: 7 });
-    findUser.mockResolvedValue({ access: "USER" });
-    findProject.mockResolvedValue({
-      createdBy: "someone-else",
-      assignedUsers: [],
-      userPermissions: [
-        {
-          accessType: "SPECIFIC_ROLE",
-          role: {
-            name: "Tester",
-            rolePermissions: [{ canDelete: false }],
-          },
-        },
-      ],
-      groupPermissions: [],
+  it("403s when the user lacks Reporting.canDelete and is not a project admin", async () => {
+    signedIn();
+    resolveAccess.mockResolvedValue({
+      ...baseResolution,
+      effectiveRole: reportingRole(false),
     });
     const res = await DELETE(req(), {
       params: Promise.resolve({ snapshotId: "1" }),
     });
     expect(res.status).toBe(403);
     expect(updateSnapshot).not.toHaveBeenCalled();
+    expect(resolveAccess).toHaveBeenCalledWith("u1", 7);
   });
 
-  it("soft-deletes when the user has Reporting.canDelete via SPECIFIC_ROLE", async () => {
-    vi.mocked(getServerSession).mockResolvedValue({
-      user: { id: "u1" },
-    } as never);
-    findSnapshot.mockResolvedValue({ id: 1, projectId: 7 });
-    findUser.mockResolvedValue({ access: "USER" });
-    findProject.mockResolvedValue({
-      createdBy: "someone-else",
-      assignedUsers: [],
-      userPermissions: [
-        {
-          accessType: "SPECIFIC_ROLE",
-          role: {
-            name: "Tester",
-            rolePermissions: [{ canDelete: true }],
-          },
-        },
-      ],
-      groupPermissions: [],
+  it("403s when the project is missing or deleted", async () => {
+    signedIn();
+    findProject.mockResolvedValue(null);
+    const res = await DELETE(req(), {
+      params: Promise.resolve({ snapshotId: "1" }),
     });
-    updateSnapshot.mockResolvedValue({ id: 1 });
+    expect(res.status).toBe(403);
+    expect(resolveAccess).not.toHaveBeenCalled();
+  });
+
+  it("soft-deletes when the effective role carries Reporting.canDelete", async () => {
+    signedIn();
+    resolveAccess.mockResolvedValue({
+      ...baseResolution,
+      effectiveRole: reportingRole(true),
+    });
     const res = await DELETE(req(), {
       params: Promise.resolve({ snapshotId: "1" }),
     });
@@ -139,19 +165,13 @@ describe("DELETE /api/reports/automation-candidates/[snapshotId]", () => {
     expect(args.data.isDeleted).toBe(true);
   });
 
-  it("soft-deletes when the user is the project creator regardless of role permissions", async () => {
-    vi.mocked(getServerSession).mockResolvedValue({
-      user: { id: "u1" },
-    } as never);
-    findSnapshot.mockResolvedValue({ id: 1, projectId: 7 });
-    findUser.mockResolvedValue({ access: "USER" });
-    findProject.mockResolvedValue({
-      createdBy: "u1",
-      assignedUsers: [],
-      userPermissions: [],
-      groupPermissions: [],
+  it("soft-deletes for a project admin regardless of the Reporting bits", async () => {
+    signedIn();
+    resolveAccess.mockResolvedValue({
+      ...baseResolution,
+      isProjectAdmin: true,
+      effectiveRole: reportingRole(false),
     });
-    updateSnapshot.mockResolvedValue({ id: 1 });
     const res = await DELETE(req(), {
       params: Promise.resolve({ snapshotId: "1" }),
     });
@@ -160,12 +180,12 @@ describe("DELETE /api/reports/automation-candidates/[snapshotId]", () => {
   });
 
   it("soft-deletes when the user is a system admin", async () => {
-    vi.mocked(getServerSession).mockResolvedValue({
-      user: { id: "u1" },
-    } as never);
-    findSnapshot.mockResolvedValue({ id: 1, projectId: 7 });
-    findUser.mockResolvedValue({ access: "ADMIN" });
-    updateSnapshot.mockResolvedValue({ id: 1 });
+    signedIn();
+    resolveAccess.mockResolvedValue({
+      ...baseResolution,
+      isSystemAdmin: true,
+      isProjectAdmin: true,
+    });
     const res = await DELETE(req(), {
       params: Promise.resolve({ snapshotId: "1" }),
     });
@@ -173,37 +193,27 @@ describe("DELETE /api/reports/automation-candidates/[snapshotId]", () => {
     expect(updateSnapshot).toHaveBeenCalled();
   });
 
-  it("does not regress: the ApplicationArea query filter is Reporting (not Settings, etc.)", async () => {
-    // Belt-and-suspenders against a future copy-paste mistake that would
-    // silently make this gate check the wrong area.
-    vi.mocked(getServerSession).mockResolvedValue({
-      user: { id: "u1" },
-    } as never);
-    findSnapshot.mockResolvedValue({ id: 1, projectId: 7 });
-    findUser.mockResolvedValue({ access: "USER" });
-    findProject.mockResolvedValue({
-      createdBy: "someone-else",
-      assignedUsers: [],
-      userPermissions: [
-        {
-          accessType: "SPECIFIC_ROLE",
-          role: {
-            name: "Tester",
-            rolePermissions: [{ canDelete: true }],
+  it("does not regress: the gate reads the Reporting area, not another area's canDelete", async () => {
+    signedIn();
+    resolveAccess.mockResolvedValue({
+      ...baseResolution,
+      effectiveRole: {
+        id: 3,
+        name: "Tester",
+        rolePermissions: [
+          {
+            area: ApplicationArea.TestRuns,
+            canAddEdit: true,
+            canDelete: true,
+            canClose: true,
           },
-        },
-      ],
-      groupPermissions: [],
+        ],
+      },
     });
-    updateSnapshot.mockResolvedValue({ id: 1 });
-    await DELETE(req(), { params: Promise.resolve({ snapshotId: "1" }) });
-    // The project query selects userPermissions filtered on Reporting area
-    const projectQueryArgs = findProject.mock.calls[0]![0];
-    const userPermsSelect =
-      projectQueryArgs.select.userPermissions.select.role.select
-        .rolePermissions;
-    expect(userPermsSelect.where).toEqual({
-      area: ApplicationArea.Reporting,
+    const res = await DELETE(req(), {
+      params: Promise.resolve({ snapshotId: "1" }),
     });
+    expect(res.status).toBe(403);
+    expect(updateSnapshot).not.toHaveBeenCalled();
   });
 });

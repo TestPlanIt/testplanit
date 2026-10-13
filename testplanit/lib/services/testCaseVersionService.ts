@@ -2,8 +2,6 @@ import type { User } from "next-auth";
 
 import { DbNull, JsonNull } from "@zenstackhq/orm";
 
-import { isUniqueConstraintError } from "~/lib/utils/errors";
-
 /**
  * Service for creating test case versions.
  * This provides a consistent interface for version creation across the application.
@@ -57,7 +55,7 @@ export interface CreateVersionOptions {
     issues?: Array<{
       id: number;
       name: string;
-      externalId?: string;
+      externalId?: string | null;
     }>;
     attachments?: any; // JSON field
     links?: any; // JSON field
@@ -350,65 +348,49 @@ export async function createTestCaseVersionInTransaction(
     parameters: parametersJson,
   };
 
-  // Create the version with retry logic to handle race conditions
-  // Note: We expect the caller to have already updated currentVersion on the test case
-  // before calling this function. We simply snapshot the current state.
-  let newVersion;
-  let retryCount = 0;
-  const maxRetries = 3;
-  const baseDelay = 100; // milliseconds
-
-  while (retryCount <= maxRetries) {
-    try {
-      newVersion = await tx.repositoryCaseVersions.create({
-        data: versionData,
-      });
-      break; // Success, exit retry loop
-    } catch (error: any) {
-      // Check if it's a unique constraint violation
-      if (isUniqueConstraintError(error) && retryCount < maxRetries) {
-        retryCount++;
-        const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
-        console.log(
-          `Unique constraint violation on version creation (attempt ${retryCount}/${maxRetries}). Retrying after ${delay}ms...`
-        );
-
-        // Wait before retrying
-        await new Promise((resolve) => setTimeout(resolve, delay));
-
-        // Refetch the test case to get the latest currentVersion
-        const refetchedCase = await tx.repositoryCases.findUnique({
-          where: { id: caseId },
-          select: { currentVersion: true },
-        });
-
-        if (refetchedCase) {
-          // Update the version number with the refetched value
-          versionData.version = options.version ?? refetchedCase.currentVersion;
-        }
-      } else {
-        // Not a retryable error or max retries reached
-        throw error;
-      }
-    }
-  }
-
-  if (!newVersion) {
-    throw new Error(
-      `Failed to create version for case ${caseId} after retries`
-    );
-  }
+  // Create the version snapshot. The caller is responsible for having already
+  // updated currentVersion AND for choosing a free version number before
+  // calling this; we simply snapshot the current state.
+  //
+  // This runs inside the caller's interactive transaction, so we must NOT
+  // catch-and-retry a unique-constraint violation here. Once any statement in
+  // a Postgres transaction fails, the whole transaction is aborted and every
+  // subsequent query — a refetch, a retried insert — fails with the confusing
+  // downstream "current transaction is aborted" (25P02) error instead of the
+  // real cause. The retry was also ineffective: a refetch inside the same
+  // transaction sees the same snapshot, so it would just re-insert the same
+  // colliding version. Let the original error propagate — e.g. a 23505 on
+  // RepositoryCaseVersions_repositoryCaseId_version_key — so it surfaces
+  // loudly and rolls the transaction back cleanly.
+  const newVersion = await tx.repositoryCaseVersions.create({
+    data: versionData,
+  });
 
   if (options.copyFieldValues) {
     const fieldValues = await tx.caseFieldValues.findMany({
       where: { testCaseId: caseId },
       include: {
-        field: { select: { displayName: true, systemName: true } },
+        field: {
+          select: {
+            displayName: true,
+            systemName: true,
+            type: { select: { type: true } },
+          },
+        },
       },
     });
-    if (fieldValues.length > 0) {
+    // A Steps-type field NEVER becomes a version field value. Steps live in
+    // the version's own `steps` JSON, and the version page renders them from
+    // there; a snapshot that also carried them as a field value would draw
+    // the steps twice. This mirrors the AddCase save path, which skips the
+    // Steps field when it builds `versionFieldValues`.
+    const copyable = fieldValues.filter(
+      (fieldValue: { field: { type: { type: string } } }) =>
+        fieldValue.field.type.type !== "Steps"
+    );
+    if (copyable.length > 0) {
       await tx.caseFieldVersionValues.createMany({
-        data: fieldValues.map(
+        data: copyable.map(
           (fieldValue: {
             value: unknown;
             field: { displayName: string | null; systemName: string };

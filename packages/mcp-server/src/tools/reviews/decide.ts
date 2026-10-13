@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
+import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
@@ -32,6 +33,12 @@ export interface ReviewsDecideDeps {
  * The description leads with the irreversibility because the agent, not
  * the server, is the party that decides whether to ask its user first.
  */
+const ENTITY_MODEL: Record<string, string> = {
+  CASE: "repositoryCases",
+  RUN: "testRuns",
+  SESSION: "sessions",
+};
+
 export function registerReviewsDecide(
   server: McpServer,
   deps: ReviewsDecideDeps,
@@ -40,7 +47,7 @@ export function registerReviewsDecide(
     "testplanit_reviews_decide",
     {
       description:
-        "Record a review decision on behalf of the authenticated user, for a review request assigned to them (find ids with testplanit_reviews_list). IRREVERSIBLE AND VISIBLE TO OTHERS: decisions are append-only — they cannot be changed or retracted, they notify the requester, and APPROVING APPLIES THE WORKFLOW TRANSITION, moving the test case / run / session into the requested state. Confirm the decision with your user before calling; do not approve on your own initiative. `decision` is APPROVED, CHANGES_REQUESTED, or REJECTED. `comment` is required for CHANGES_REQUESTED and REJECTED (the reviewer must say what is wrong) and optional for APPROVED; it is posted as a comment on the entity's thread, addressed to the requester. Fails with INELIGIBLE_REVIEWER if the caller is not the assignee (directly or through an assigned role) with approve permission for the entity's area, and with ALREADY_DECIDED if someone else got there first. Read-only (`mode:read`) tokens are refused.",
+        "Record a review decision on behalf of the authenticated user, for a review request assigned to them (find ids with testplanit_reviews_list). IRREVERSIBLE AND VISIBLE TO OTHERS: decisions are append-only — they cannot be changed or retracted, they notify the requester, and APPROVING APPLIES THE WORKFLOW TRANSITION, moving the test case / run / session into the requested state; `transitionApplied` and `currentStateId` report whether it is now there. Confirm the decision with your user before calling; do not approve on your own initiative. `decision` is APPROVED, CHANGES_REQUESTED, or REJECTED. `comment` is required for CHANGES_REQUESTED and REJECTED (the reviewer must say what is wrong) and optional for APPROVED; it is posted as a comment on the entity's thread, addressed to the requester. Fails with INELIGIBLE_REVIEWER if the caller is not the assignee (directly or through an assigned role) with approve permission for the entity's area, and with ALREADY_DECIDED if someone else got there first. Read-only (`mode:read`) tokens are refused.",
       inputSchema: {
         reviewRequestId: z.string().trim().min(1),
         decision: z.enum(["APPROVED", "CHANGES_REQUESTED", "REJECTED"]),
@@ -69,6 +76,28 @@ export function registerReviewsDecide(
 
         const decided = await decideReview(input as DecideInput, deps.env);
 
+        // The host applies an approval's transition best-effort: it can skip
+        // it (the entity is gone, or already past the target) or fail it
+        // without failing the decision. Read the entity back instead of
+        // assuming it moved.
+        let currentStateId: number | null = null;
+        if (decided.status === "APPROVED") {
+          const model = ENTITY_MODEL[decided.entityType];
+          const entity = model
+            ? await zenstack<{ stateId: number } | null>(
+                model,
+                "findUnique",
+                { where: { id: decided.entityId }, select: { stateId: true } },
+                deps.env,
+              )
+            : null;
+          currentStateId = entity?.stateId ?? null;
+        }
+        const transitionApplied =
+          decided.status === "APPROVED" &&
+          currentStateId != null &&
+          currentStateId === decided.toStateId;
+
         const result = {
           id: decided.id,
           status: decided.status,
@@ -81,12 +110,11 @@ export function registerReviewsDecide(
               ? decided.decidedAt.toISOString()
               : decided.decidedAt,
           decidedByUserId: decided.decidedByUserId,
-          // An approval moves the entity; anything else leaves it where it
-          // was. Stated explicitly so the agent can report what happened
-          // without inferring it from the status.
-          transitionApplied: decided.status === "APPROVED",
-          appliedStateId:
-            decided.status === "APPROVED" ? decided.toStateId : null,
+          // Whether the entity is now in the approved target state, read
+          // back from the entity rather than inferred from the status.
+          transitionApplied,
+          appliedStateId: transitionApplied ? decided.toStateId : null,
+          currentStateId,
         };
         return {
           content: [{ type: "text" as const, text: JSON.stringify(result) }],

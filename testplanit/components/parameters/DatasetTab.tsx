@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
@@ -9,7 +8,7 @@ import { DatasetRowActions } from "@/components/parameters/DatasetRowActions";
 import { PasteCsvDialog } from "@/components/parameters/PasteCsvDialog";
 import { SheetEditingContext } from "@/components/parameters/ConfigureParametersSheet";
 import { SortableDatasetRow } from "@/components/parameters/SortableDatasetRow";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,10 +62,12 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  type ColumnDef,
+  type ColumnDef as TanStackColumnDef,
+  columnSizingFeature,
+  columnVisibilityFeature,
   flexRender,
-  getCoreRowModel,
-  useReactTable,
+  tableFeatures,
+  useTable,
 } from "@tanstack/react-table";
 import {
   ChevronLeft,
@@ -121,6 +122,16 @@ interface DatasetRecord {
   id: number;
   rows: DatasetRowRecord[];
 }
+
+const datasetTableFeatures = tableFeatures({
+  columnVisibilityFeature,
+  columnSizingFeature,
+});
+
+type ColumnDef<TData extends DatasetRowRecord> = TanStackColumnDef<
+  typeof datasetTableFeatures,
+  TData
+>;
 
 /**
  * Operating mode for `DatasetTab`.
@@ -524,6 +535,7 @@ export function DatasetTab({
     sharedReadonlyRows,
   ]);
   const editCellRef = useRef<EditCellState | null>(null);
+  // eslint-disable-next-line react-hooks/refs
   editCellRef.current = editCell;
 
   // ---------- Dataset bootstrap ----------
@@ -1155,7 +1167,7 @@ export function DatasetTab({
                   /* handled in onClick to capture shiftKey */
                 }}
                 onClick={handleClick}
-                aria-label={t("datasetRowSelectAria")}
+                aria-label={tCommon("aria.selectRow")}
                 data-testid={`dataset-row-select-${row.original.id}`}
               />
             </div>
@@ -1165,7 +1177,7 @@ export function DatasetTab({
       {
         id: LABEL_COLUMN_ID,
         minSize: 100,
-        header: () => t("datasetLabelColumn"),
+        header: () => tCommon("fields.options.label"),
         accessorKey: "label",
         cell: ({ row }) => {
           const isEditing =
@@ -1227,7 +1239,7 @@ export function DatasetTab({
                       data-testid={`dataset-column-delete-${p.name}`}
                     >
                       <Trash className="h-4 w-4" />
-                      {t("datasetColumnDelete")}
+                      {tCommon("editor.table.deleteColumn")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -1309,7 +1321,7 @@ export function DatasetTab({
               data-testid={`dataset-row-result-link-${row.original.rowIndex}`}
               className="text-sm hover:underline focus-visible:underline focus-visible:outline-none"
             >
-              <StatusDotDisplay
+              <StatusDisplay
                 name={entry.status.name}
                 color={entry.status.color?.value}
               />
@@ -1345,10 +1357,10 @@ export function DatasetTab({
     handleSelectAllClick,
   ]);
 
-  const table = useReactTable<DatasetRowRecord>({
+  const table = useTable({
+    features: datasetTableFeatures,
     data: rows,
     columns,
-    getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => String(row.id),
   });
 
@@ -2002,7 +2014,7 @@ export function DatasetTab({
                   className="text-xs font-medium"
                   htmlFor="dataset-add-column-input"
                 >
-                  {t("formName")}
+                  {tCommon("name")}
                 </label>
                 <Input
                   id="dataset-add-column-input"
@@ -2021,7 +2033,7 @@ export function DatasetTab({
                   className="text-xs font-medium"
                   htmlFor="dataset-add-column-type"
                 >
-                  {t("formType")}
+                  {tCommon("fields.type")}
                 </label>
                 <Select
                   value={newColumnType}
@@ -2055,7 +2067,7 @@ export function DatasetTab({
                   htmlFor="dataset-add-column-required"
                   className="text-xs font-medium"
                 >
-                  {t("formRequired")}
+                  {tCommon("fields.required")}
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -2182,7 +2194,7 @@ export function DatasetTab({
                   data-testid="dataset-column-delete-confirm"
                 >
                   <Trash className="h-4 w-4" />
-                  {t("datasetColumnDeleteConfirm")}
+                  {tCommon("editor.table.deleteColumn")}
                 </Button>
               )}
             </AlertDialogFooter>

@@ -8,6 +8,7 @@ import type { EnvConfig } from "../../env.js";
 // ── Module mocks ─────────────────────────────────────────────────────────────
 vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
+  createCaseVersion: vi.fn(),
   lookup: vi.fn(),
   resolveActiveRepository: vi.fn(),
   resolveDefaultTemplate: vi.fn(),
@@ -22,7 +23,6 @@ vi.mock("./customFields.js", () => ({
 vi.mock("./steps.js", () => ({
   createStepsForCase: vi.fn(),
   replaceStepsForCase: vi.fn(),
-  wrapPlainTextInProseMirror: vi.fn((text: string) => ({ type: "doc", text })),
 }));
 
 vi.mock("./fetchDetail.js", () => ({
@@ -41,10 +41,11 @@ const resolveCustomFieldsMock = vi.mocked(customFieldsModule.resolveCustomFields
 const writeCustomFieldValuesMock = vi.mocked(customFieldsModule.writeCustomFieldValues);
 const replaceStepsForCaseMock = vi.mocked(stepsModule.replaceStepsForCase);
 const fetchCaseDetailMock = vi.mocked(fetchDetailModule.fetchCaseDetail);
+const createCaseVersionMock = vi.mocked(apiModule.createCaseVersion);
 
 const env: EnvConfig = { apiUrl: "https://host.example.com", apiToken: "tpi_testtoken" };
 
-const HEAD_CASE = { id: 99, projectId: 7, templateId: 22 };
+const HEAD_CASE = { id: 99, projectId: 7, templateId: 22, caseTags: [] };
 
 const FULL_DETAIL = {
   id: 99,
@@ -101,6 +102,7 @@ beforeEach(() => {
   resolveCustomFieldsMock.mockResolvedValue([]);
   writeCustomFieldValuesMock.mockResolvedValue(undefined);
   replaceStepsForCaseMock.mockResolvedValue(undefined);
+  createCaseVersionMock.mockResolvedValue(undefined);
   fetchCaseDetailMock.mockResolvedValue(FULL_DETAIL);
 });
 
@@ -115,42 +117,120 @@ describe("testplanit_cases_update", () => {
     );
     expect(updateCall).toBeDefined();
     const data = (updateCall![2] as { data: Record<string, unknown> }).data;
-    expect(data).toEqual({ name: "new name" });
+    expect(data).toEqual({ name: "new name", currentVersion: { increment: 1 } });
 
     // Steps and custom field helpers should NOT have been called
     expect(replaceStepsForCaseMock).not.toHaveBeenCalled();
     expect(resolveCustomFieldsMock).not.toHaveBeenCalled();
   });
 
-  it("partial update: automated flag writes only automated in data", async () => {
-    await callTool({ caseId: 99, automated: true });
+  it("flips automated in the same write as the version bump, so only one version is recorded", async () => {
+    // The automated-flag hook snapshots a flip unless currentVersion changes
+    // in the same write; a separate bump used to record two versions.
+    await callTool({ caseId: 99, automated: true, steps: [{ text: "s" }] });
 
-    const updateCall = zenstackMock.mock.calls.find(
+    const caseWrites = zenstackMock.mock.calls.filter(
       (c) => c[0] === "repositoryCases" && c[1] === "update",
     );
-    expect(updateCall).toBeDefined();
-    const data = (updateCall![2] as { data: Record<string, unknown> }).data;
-    expect(data).toEqual({ automated: true });
+    expect(caseWrites).toHaveLength(1);
+    const data = (caseWrites[0]![2] as { data: Record<string, unknown> }).data;
+    expect(data).toEqual({ automated: true, currentVersion: { increment: 1 } });
+    // Steps land before the case write, so the snapshot sees them.
+    expect(replaceStepsForCaseMock.mock.invocationCallOrder[0]!).toBeLessThan(
+      zenstackMock.mock.invocationCallOrder[
+        zenstackMock.mock.calls.indexOf(caseWrites[0]!)
+      ]!,
+    );
+    expect(createCaseVersionMock).toHaveBeenCalledWith(99, {}, env);
   });
 
-  it("updates tags via the caseTags join (replace-all = deleteMany + create)", async () => {
-    await callTool({ caseId: 99, tags: [4, 5] });
+  describe("tags (#668)", () => {
+    function headWithTags(tagIds: number[]) {
+      zenstackMock.mockImplementation(async (_model, operation) => {
+        if (operation === "findUnique") {
+          return { ...HEAD_CASE, caseTags: tagIds.map((tagId) => ({ tagId })) };
+        }
+        if (operation === "update") return HEAD_CASE;
+        return {};
+      });
+    }
 
-    const updateCall = zenstackMock.mock.calls.find(
-      (c) => c[0] === "repositoryCases" && c[1] === "update",
-    );
-    expect(updateCall).toBeDefined();
-    const data = (updateCall![2] as { data: Record<string, unknown> }).data;
-    // Tags live on the explicit RepositoryCaseTag join model; "set"
-    // (replace-all) maps to deleteMany {} + create per requested tag.
-    expect(data).toMatchObject({
-      caseTags: {
-        deleteMany: {},
-        create: [
-          { tag: { connect: { id: 4 } } },
-          { tag: { connect: { id: 5 } } },
-        ],
-      },
+    function caseWriteData() {
+      const updateCall = zenstackMock.mock.calls.find(
+        (c) => c[0] === "repositoryCases" && c[1] === "update",
+      );
+      expect(updateCall).toBeDefined();
+      return (updateCall![2] as { data: Record<string, unknown> }).data;
+    }
+
+    it("reads the current tag links with the case head", async () => {
+      await callTool({ caseId: 99, tags: [4] });
+
+      const headCall = zenstackMock.mock.calls.find(
+        (c) => c[0] === "repositoryCases" && c[1] === "findUnique",
+      );
+      expect(headCall![2]).toMatchObject({
+        select: { caseTags: { select: { tagId: true } } },
+      });
+    });
+
+    it("adds tags to an untagged case with create only, never a blanket deleteMany", async () => {
+      await callTool({ caseId: 99, tags: [4, 5] });
+
+      // The host runs a nested create before a nested deleteMany, so
+      // `deleteMany: {}` beside the new links deleted them (#668).
+      expect(caseWriteData()).toEqual({
+        caseTags: {
+          create: [
+            { tag: { connect: { id: 4 } } },
+            { tag: { connect: { id: 5 } } },
+          ],
+        },
+        currentVersion: { increment: 1 },
+      });
+    });
+
+    it("replaces one tag by another: deletes only the old link, creates only the new one", async () => {
+      headWithTags([4, 7]);
+
+      await callTool({ caseId: 99, tags: [7, 9] });
+
+      expect(caseWriteData()).toEqual({
+        caseTags: {
+          deleteMany: { tagId: { in: [4] } },
+          create: [{ tag: { connect: { id: 9 } } }],
+        },
+        currentVersion: { increment: 1 },
+      });
+    });
+
+    it("clears tags with a deleteMany scoped to the current links", async () => {
+      headWithTags([4, 7]);
+
+      await callTool({ caseId: 99, tags: [] });
+
+      expect(caseWriteData()).toEqual({
+        caseTags: { deleteMany: { tagId: { in: [4, 7] } } },
+        currentVersion: { increment: 1 },
+      });
+    });
+
+    it("leaves matching links alone but still records a version", async () => {
+      headWithTags([4, 7]);
+
+      await callTool({ caseId: 99, tags: [7, 4] });
+
+      expect(caseWriteData()).toEqual({ currentVersion: { increment: 1 } });
+      expect(createCaseVersionMock).toHaveBeenCalledWith(99, {}, env);
+    });
+
+    it("links a tag given twice once", async () => {
+      await callTool({ caseId: 99, tags: [4, 4] });
+
+      expect(caseWriteData()).toEqual({
+        caseTags: { create: [{ tag: { connect: { id: 4 } } }] },
+        currentVersion: { increment: 1 },
+      });
     });
   });
 
@@ -246,6 +326,47 @@ describe("testplanit_cases_update", () => {
       steps: expect.any(Array),
       customFields: expect.any(Object),
     });
+  });
+
+  it("bumps the case version and snapshots it after an edit (#598)", async () => {
+    await callTool({ caseId: 99, name: "new name" });
+
+    expect(createCaseVersionMock).toHaveBeenCalledWith(
+      99,
+      {},
+      env,
+    );
+    // Written after the case write and before the detail re-fetch.
+    expect(createCaseVersionMock.mock.invocationCallOrder[0]!).toBeLessThan(
+      fetchCaseDetailMock.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("snapshots after a steps-only edit and after a custom-fields-only edit", async () => {
+    await callTool({ caseId: 99, steps: [{ text: "s" }] });
+    expect(createCaseVersionMock).toHaveBeenCalledWith(
+      99,
+      {},
+      env,
+    );
+    expect(createCaseVersionMock.mock.invocationCallOrder[0]!).toBeGreaterThan(
+      replaceStepsForCaseMock.mock.invocationCallOrder[0]!,
+    );
+
+    createCaseVersionMock.mockClear();
+    await callTool({ caseId: 99, customFields: { F: "v" } });
+    expect(createCaseVersionMock).toHaveBeenCalledWith(
+      99,
+      {},
+      env,
+    );
+  });
+
+  it("does not invent a version when the call carries no writable field", async () => {
+    const result = await callTool({ caseId: 99 });
+
+    expect(result.isError).toBeFalsy();
+    expect(createCaseVersionMock).not.toHaveBeenCalled();
   });
 
   it("tool is registered as 'testplanit_cases_update' with correct description prefix", () => {

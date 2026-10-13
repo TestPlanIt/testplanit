@@ -125,6 +125,7 @@ export async function listScimConflictsAction(
           OR metadata ? 'scimSkippedMemberIds'
           OR metadata ? 'scimDisplayNameOverwrote'
           OR metadata ? 'scimConflict'
+          OR metadata ? 'scimTokenConflict'
           OR metadata ? 'scimReEmittedBy'
         )
         AND "timestamp" > NOW() - INTERVAL '90 days'

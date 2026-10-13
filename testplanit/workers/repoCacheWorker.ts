@@ -2,16 +2,29 @@ import { Job, Worker } from "bullmq";
 import { repoFileCache } from "../lib/integrations/cache/RepoFileCache";
 import {
   disconnectAllTenantClients,
+  getAllTenantIds,
   getDbClientForJob,
   isMultiTenantMode,
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
 import {
+  JOB_CHECK_STALE_PINS,
   JOB_REFRESH_EXPIRED_CACHES,
   JOB_REFRESH_SINGLE_REPO_CACHE,
+  JOB_SCAN_REPO_ISSUES,
   REPO_CACHE_QUEUE_NAME,
 } from "../lib/queueNames";
-import { refreshRepoCache } from "../lib/services/repoCacheRefreshService";
+import { getRepoCacheQueue } from "../lib/queues";
+import { markInterruptedRepoJobs } from "../lib/services/impact/repoJobStatus";
+import { checkStalePins } from "../lib/services/impact/stalePinCheck";
+import {
+  clearJobCancel,
+  isJobCancelRequested,
+} from "../lib/services/jobCancel";
+import {
+  refreshRepoCache,
+  scanRepoIssues,
+} from "../lib/services/repoCacheRefreshService";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -32,6 +45,11 @@ const processor = async (job: Job) => {
   if (job.data.tenantId) {
     process.env.INSTANCE_TENANT_ID = job.data.tenantId;
   }
+
+  // Set by Cancel on the admin Queues page; every job here polls it.
+  const jobId = String(job.id ?? "");
+  const isCancelled = () =>
+    isJobCancelRequested(valkeyConnection, REPO_CACHE_QUEUE_NAME, jobId);
 
   try {
     // Get the appropriate Prisma client (tenant-specific or default)
@@ -57,7 +75,14 @@ const processor = async (job: Job) => {
           `Job ${job.id}: Found ${configs.length} cache-enabled code repository configs.`
         );
 
-        for (const config of configs) {
+        for (const [index, config] of configs.entries()) {
+          if (await isCancelled()) {
+            console.log(
+              `Job ${job.id}: Sweep cancelled after ${index} of ${configs.length} configs`
+            );
+            skippedCount += configs.length - index;
+            break;
+          }
           try {
             // Check if the Valkey cache still exists (non-expired)
             const cached = await repoFileCache.getFiles(config.id);
@@ -70,8 +95,22 @@ const processor = async (job: Job) => {
             console.log(
               `Job ${job.id}: Refreshing expired cache for config ${config.id} (project ${config.projectId})`
             );
+            // Which connection the sweep is on, and since when. The status
+            // resolver reads it to attribute the connection's running flags
+            // to this job and to judge whether it still responds. A failed
+            // write must not fail the refresh.
+            try {
+              await job.updateProgress({
+                configId: config.id,
+                at: Date.now(),
+                index,
+                total: configs.length,
+              });
+            } catch {}
 
-            const result = await refreshRepoCache(config.id, db);
+            const result = await refreshRepoCache(config.id, db, {
+              isCancelled,
+            });
 
             if (result.success) {
               successCount++;
@@ -115,7 +154,7 @@ const processor = async (job: Job) => {
 
         // refreshRepoCache persists cacheStatus (pending → success/error),
         // cacheFileCount, cacheError, etc., which the UI polls for completion.
-        const result = await refreshRepoCache(configId, db);
+        const result = await refreshRepoCache(configId, db, { isCancelled });
 
         if (result.success) {
           successCount++;
@@ -131,12 +170,94 @@ const processor = async (job: Job) => {
         break;
       }
 
+      case JOB_SCAN_REPO_ISSUES: {
+        // Manual ticket scan for one Impact config ("Rescan" / "Scan full
+        // history"). The scan writes its progress and final report into the
+        // config's issueScanReport, which the settings page polls.
+        const configId = Number(job.data.configId);
+        if (!Number.isFinite(configId)) {
+          throw new Error(
+            `${JOB_SCAN_REPO_ISSUES} job requires a numeric configId`
+          );
+        }
+        const full = job.data.full === true;
+        console.log(
+          `Job ${job.id}: ${full ? "Full-history" : "Recent"} ticket scan for config ${configId}`
+        );
+        let report: Awaited<ReturnType<typeof scanRepoIssues>>;
+        try {
+          report = await scanRepoIssues(configId, db, { full, isCancelled });
+        } catch (error) {
+          // Nothing else clears the queued mark the route wrote.
+          await (db as any).projectCodeRepositoryConfig
+            .update({
+              where: { id: configId },
+              data: {
+                issueScanReport: {
+                  error: error instanceof Error ? error.message : String(error),
+                  scannedAt: new Date().toISOString(),
+                },
+              },
+            })
+            .catch(() => {});
+          throw error;
+        }
+        if ("error" in report) {
+          failCount++;
+          console.warn(
+            `Job ${job.id}: Ticket scan failed for config ${configId}: ${report.error}`
+          );
+        } else if ("cancelled" in report) {
+          skippedCount++;
+          console.log(
+            `Job ${job.id}: Ticket scan for config ${configId} cancelled by the user`
+          );
+        } else {
+          successCount++;
+          console.log(
+            `Job ${job.id}: Ticket scan for config ${configId} — ${report.scannedCommits} commits, ${report.matchedCommits} matched, ${report.created} pins created, ${report.importedIssues} tickets imported`
+          );
+        }
+        break;
+      }
+
+      case JOB_CHECK_STALE_PINS: {
+        // "Check for Stale Pins" on the Impact settings page. The check
+        // writes its progress and summary into the config's stalePinReport.
+        const configId = Number(job.data.configId);
+        if (!Number.isFinite(configId)) {
+          throw new Error(
+            `${JOB_CHECK_STALE_PINS} job requires a numeric configId`
+          );
+        }
+        console.log(`Job ${job.id}: Stale pin check for config ${configId}`);
+        const report = await checkStalePins(configId, db, { isCancelled });
+        if ("error" in report) {
+          failCount++;
+          console.warn(
+            `Job ${job.id}: Stale pin check failed for config ${configId}: ${report.error}`
+          );
+        } else if ("cancelled" in report) {
+          skippedCount++;
+          console.log(
+            `Job ${job.id}: Stale pin check for config ${configId} cancelled`
+          );
+        } else {
+          successCount++;
+          console.log(
+            `Job ${job.id}: Stale pin check for config ${configId} — ${report.checked} of ${report.pins} pins checked, ${report.stale} stale`
+          );
+        }
+        break;
+      }
+
       default:
         throw new Error(`Unknown job type: ${job.name}`);
     }
 
     return { status: "completed", successCount, failCount, skippedCount };
   } finally {
+    await clearJobCancel(valkeyConnection, REPO_CACHE_QUEUE_NAME, jobId);
     // Restore original INSTANCE_TENANT_ID
     if (previousTenantId !== undefined) {
       process.env.INSTANCE_TENANT_ID = previousTenantId;
@@ -145,6 +266,39 @@ const processor = async (job: Job) => {
     }
   }
 };
+
+/**
+ * Mark every connection whose saved report claims a job this queue does
+ * not hold as interrupted. Run once at start-up, so flags left by a deploy
+ * or a crash mid-job do not wait for a page read to clear them.
+ */
+async function cleanupInterruptedRepoJobs(): Promise<void> {
+  const queue = getRepoCacheQueue();
+  if (!queue) return;
+  const tenants: Array<string | undefined> = isMultiTenantMode()
+    ? getAllTenantIds()
+    : [undefined];
+  for (const tenantId of tenants) {
+    try {
+      const db = getDbClientForJob(tenantId ? { tenantId } : {});
+      const interrupted = await markInterruptedRepoJobs(
+        db as any,
+        queue,
+        tenantId
+      );
+      if (interrupted > 0) {
+        console.warn(
+          `Marked ${interrupted} repo job flag(s) as interrupted${tenantId ? ` for tenant ${tenantId}` : ""}: no job in the queue backed them.`
+        );
+      }
+    } catch (error) {
+      console.error(
+        `Failed to clean up interrupted repo jobs${tenantId ? ` for tenant ${tenantId}` : ""}:`,
+        error
+      );
+    }
+  }
+}
 
 async function startWorker() {
   if (isMultiTenantMode()) {
@@ -183,6 +337,7 @@ async function startWorker() {
     });
 
     console.log("Repo cache worker started and listening for jobs...");
+    void cleanupInterruptedRepoJobs();
 
     const shutdown = async () => {
       console.log("Shutting down repo cache worker...");
@@ -211,4 +366,4 @@ if (require.main === module) {
   });
 }
 
-export { processor, startWorker };
+export { cleanupInterruptedRepoJobs, processor, startWorker };

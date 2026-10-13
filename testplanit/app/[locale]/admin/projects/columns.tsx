@@ -1,3 +1,4 @@
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { DateFormatter } from "@/components/DateFormatter";
 import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
 import { ProjectIcon } from "@/components/ProjectIcon";
@@ -19,8 +20,8 @@ import type {
   Projects,
   User,
 } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
-import { Bug, GitBranchIcon, SquarePen, Trash } from "lucide-react";
+import { ColumnDef } from "@/components/tables/tableFeatures";
+import { Bug, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { LlmProviderBadge } from "~/lib/llm/provider-styles";
@@ -39,10 +40,10 @@ export interface ExtendedProjects extends Projects {
   groupPermissions: {
     groupId: number;
   }[];
-  codeRepositoryConfig: {
+  codeRepositoryConfigs: {
     id: number;
     repository: { name: string };
-  } | null;
+  }[];
   projectLlmIntegrations: {
     isActive: boolean;
     llmIntegration: { name: string; provider: string };
@@ -170,27 +171,28 @@ export const useColumns = (
       },
       {
         id: "codeRepository",
-        accessorKey: "codeRepositoryConfig",
+        accessorKey: "codeRepositoryConfigs",
         header: tCommon("fields.codeRepository"),
         enableSorting: false,
         enableResizing: true,
         size: 150,
         cell: ({ row }) => {
-          const config = row.original.codeRepositoryConfig;
+          const config = row.original.codeRepositoryConfigs?.[0];
           return (
             <div
               className="flex items-center gap-1"
               data-testid="code-repo-indicator"
               data-active={!!config}
             >
-              <GitBranchIcon
-                className={`h-4 w-4 shrink-0 ${config ? "text-primary" : "opacity-25"}`}
+              <CodeRepositoryName
+                name={
+                  config
+                    ? config.repository.name
+                    : tCommon("status.notApplicable")
+                }
+                iconClassName={config ? "text-primary" : "opacity-25"}
+                nameClassName="whitespace-nowrap"
               />
-              <span className="truncate whitespace-nowrap">
-                {config
-                  ? config.repository.name
-                  : tCommon("status.notApplicable")}
-              </span>
             </div>
           );
         },

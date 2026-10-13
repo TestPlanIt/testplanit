@@ -8,6 +8,8 @@ import {
   IssueAdapterCapabilities,
   IssueAttachmentMeta,
   IssueComment,
+  IssueCountOptions,
+  IssueCountResult,
   IssueData,
   IssueSearchOptions,
   LinkedIssueRef,
@@ -68,6 +70,17 @@ function sanitizeUpstreamErrorBody(body: string): string {
   return text.length > UPSTREAM_ERROR_EXCERPT_MAX
     ? `${text.slice(0, UPSTREAM_ERROR_EXCERPT_MAX)}…`
     : text;
+}
+
+/**
+ * JQL has no parameter binding, so a stored issue-type id that reaches this
+ * point unsanitized could break out of the `issuetype in (...)` clause it's
+ * interpolated into. Drop any id containing a double quote, backslash, or
+ * newline before it's ever quoted into JQL — callers are not assumed to have
+ * already run `sanitizeRequirementTypeIds` (requirementTypeConfig.ts).
+ */
+function sanitizeJqlIssueTypeIds(ids: string[]): string[] {
+  return ids.filter((id) => !/["\\\n\r]/.test(id));
 }
 
 /**
@@ -1614,6 +1627,19 @@ export class JiraAdapter extends BaseAdapter {
       jql.push(`updated >= -${Math.floor(options.updatedWithinDays)}d`);
     }
 
+    // Type-scoped import (SCALE-01) — numeric type ids match getIssueTypes'
+    // own `id` shape. MEDIUM confidence: this numeric-id `issuetype in (...)`
+    // syntax is Atlassian-community-sourced, not an official doc page. If a
+    // live Jira instance rejects it, the fallback is resolving these ids to
+    // type NAMES via getIssueTypes and quoting those instead — see 28-RESEARCH
+    // Q1 and revisit here if 28-18's live-tracker UAT surfaces a rejection.
+    if (options.issueTypeIds?.length) {
+      const safeIds = sanitizeJqlIssueTypeIds(options.issueTypeIds);
+      if (safeIds.length > 0) {
+        jql.push(`issuetype in (${safeIds.map((id) => `"${id}"`).join(", ")})`);
+      }
+    }
+
     // Ensure the query is always bounded - Jira rejects unbounded queries
     let jqlString: string;
     if (jql.length > 0) {
@@ -1630,6 +1656,72 @@ export class JiraAdapter extends BaseAdapter {
       pageToken: options.pageToken,
       limit: options.limit,
     });
+  }
+
+  /**
+   * Real tracker-side count for a JQL scope (SCALE-01 gap-closure,
+   * #501/28-22) — the count-informed consent prompt's number, not a
+   * page-size guess. Builds the same bounded scope `searchIssues` does
+   * (project, recency window, issue types) but never fetches a single
+   * issue.
+   *
+   * Data Center: reuses `runJqlSearch` with `limit: 1`. The classic
+   * `/rest/api/2/search` endpoint already returns an exact `total` (paged by
+   * `startAt`) — confirmed by `runJqlSearch`'s own doc comment above and
+   * unaffected by CHANGE-2046, which only removed `total` from Cloud's
+   * enhanced endpoint. Reported as "exact".
+   *
+   * Cloud: `/rest/api/3/search/jql` dropped `total` (CHANGE-2046), but
+   * Atlassian ships a dedicated `POST /rest/api/3/search/approximate-count`
+   * endpoint for exactly this need ("Count issues using JQL" — operationId
+   * `countIssues`, request `{ jql }` / `JQLCountRequestBean`, response
+   * `{ count }` / `JQLCountResultsBean`). Verified directly against
+   * Atlassian's live OpenAPI spec at
+   * developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/
+   * on 2026-08-28: requires only a bounded JQL string, is reachable with the
+   * same basic-auth/OAuth2 `read:jira-work` scope this adapter already
+   * carries, and answers in a single request — no pagination needed.
+   * Atlassian's own docs call the result "estimated" (index-based; may lag
+   * very recent writes), but it is reported here as "exact" rather than
+   * "floor": unlike a page-size fallback, it is the tracker's own answer to
+   * "how many match this query" and does not carry the "there are
+   * definitely more beyond this number" guarantee that "floor" implies —
+   * see 28-22-SUMMARY.md for the full reasoning.
+   */
+  async countIssues(options: IssueCountOptions): Promise<IssueCountResult> {
+    const jqlParts: string[] = [];
+    if (options.projectId) {
+      jqlParts.push(`project = ${options.projectId}`);
+    }
+    if (options.updatedWithinDays && options.updatedWithinDays > 0) {
+      jqlParts.push(`updated >= -${Math.floor(options.updatedWithinDays)}d`);
+    }
+    if (options.issueTypeIds?.length) {
+      const safeIds = sanitizeJqlIssueTypeIds(options.issueTypeIds);
+      if (safeIds.length > 0) {
+        jqlParts.push(
+          `issuetype in (${safeIds.map((id) => `"${id}"`).join(", ")})`
+        );
+      }
+    }
+    // Both dialects reject an unbounded query — mirror searchIssues' own
+    // "no clauses at all" fallback.
+    const jql =
+      jqlParts.length > 0 ? jqlParts.join(" AND ") : "created >= -365d";
+
+    if (this.deployment === "server") {
+      const result = await this.runJqlSearch(jql, { limit: 1 });
+      return { count: result.total, exactness: "exact" };
+    }
+
+    const response = await this.makeRequest<{ count: number }>(
+      this.buildUrl("/rest/api/3/search/approximate-count"),
+      {
+        method: "POST",
+        body: JSON.stringify({ jql }),
+      }
+    );
+    return { count: response.count ?? 0, exactness: "exact" };
   }
 
   /**

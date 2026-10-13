@@ -95,6 +95,8 @@ Environment variables take precedence over stored configuration, making them ide
 | ---------- | ------------- |
 | `TESTPLANIT_URL` | TestPlanIt instance URL |
 | `TESTPLANIT_TOKEN` | API token |
+| `TESTPLANIT_RUN_ID` | Set by TestPlanIt when it dispatches a job; `run plan`, `run complete`, `run finish` and `import -r` default to it |
+| `TESTPLANIT_EXECUTION_ID` | Set by TestPlanIt when it dispatches a job; `run plan` and `run finish` default to it |
 
 ```bash
 TESTPLANIT_URL=https://demo.testplanit.com \
@@ -286,7 +288,69 @@ testplanit import results.xml -p 1 -n "Build" \
   -a ./test-plan.pdf ./requirements.docx
 ```
 
+### Run Commands
+
+For a job that TestPlanIt dispatched (see [Automated Execution](./user-guide/automated-execution.md)), or any job reporting into a run created up front:
+
+```bash
+# Create one run up front and let every shard, machine and retry attach to it
+export TESTPLANIT_RUN_ID=$(testplanit run create -p 9 -n "Nightly #12")
+
+# The run's automated cases, as JSON
+testplanit run plan
+
+# One selector per line, for a shell shim to feed a runner filter
+testplanit run plan --format lines --selector-field fullName > plan.txt
+
+# Mark the run complete once every job has reported
+testplanit run complete
+
+# Report the execution's outcome (needed for generic-webhook targets, which TestPlanIt cannot poll)
+testplanit run finish --conclusion success
+```
+
+| Command | Options |
+| --- | --- |
+| `run create` | `-n, --name <name>` (required), `-p, --project <id\|name>` (default `$TESTPLANIT_PROJECT_ID`), `--type REGULAR\|JUNIT\|TESTNG\|XUNIT\|NUNIT\|MSTEST\|MOCHA\|CUCUMBER` (default `REGULAR`), `--config <id\|name>`, `--milestone <id\|name>`, `--tags <a,b>` (missing tags are created). Prints only the new run id to stdout |
+| `run plan` | `-r, --run <id>` (default `$TESTPLANIT_RUN_ID`), `--execution <id>` (default `$TESTPLANIT_EXECUTION_ID`; applies that execution's case subset and ref), `-F, --format json\|lines`, `--selector-field selector\|fullName\|title\|className\|id`, `-o, --output <file>` |
+| `run complete` | `-r, --run <id>`, `-p, --project <id>` (read from the run when omitted) |
+| `run finish` | `-r, --run <id>`, `--execution <id>`, `--conclusion success\|failure\|cancelled` (required), `--message <text>` |
+
+`--format lines` prints `selector.fullName` (class name and test name) by default. The CLI never produces framework-specific filter syntax; a short script in your repository turns the lines into the `--grep`, `-k` or `--tests` expression your runner takes.
+
 ## CI/CD Integration
+
+### Triggered from TestPlanIt
+
+When TestPlanIt dispatches the job, `TESTPLANIT_RUN_ID` and `TESTPLANIT_EXECUTION_ID` arrive as workflow inputs or pipeline variables. Export them into the environment, read the plan, run the tests, import the results, complete the run:
+
+```yaml
+on:
+  workflow_dispatch:
+    inputs:
+      TESTPLANIT_RUN_ID: { required: false }
+      TESTPLANIT_EXECUTION_ID: { required: false }
+      TESTPLANIT_PROJECT_ID: { required: false }
+      TESTPLANIT_URL: { required: false }
+      TESTPLANIT_PLAN_URL: { required: false }
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      TESTPLANIT_URL: ${{ inputs.TESTPLANIT_URL }}
+      TESTPLANIT_TOKEN: ${{ secrets.TESTPLANIT_TOKEN }}
+      TESTPLANIT_RUN_ID: ${{ inputs.TESTPLANIT_RUN_ID }}
+      TESTPLANIT_EXECUTION_ID: ${{ inputs.TESTPLANIT_EXECUTION_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx @testplanit/cli run plan --format lines --selector-field fullName > plan.txt
+      - run: ./scripts/run-testplanit-plan.sh plan.txt
+      - if: always()
+        run: npx @testplanit/cli import ./test-results/*.xml -p ${{ inputs.TESTPLANIT_PROJECT_ID }}
+```
+
+TestPlanIt polls a GitHub Actions or GitLab CI job for its outcome, so nothing else is needed. A job started through a generic webhook (Jenkins, for example) ends with `testplanit run finish --conclusion success|failure`. Reserve `run complete` for runs that hold nothing but automated cases; it completes the whole run, manual cases included. The step-by-step guides are under [Automated Execution](./user-guide/automated-execution.md).
 
 ### GitHub Actions
 

@@ -347,7 +347,7 @@ export function SavedViewsMenu({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    aria-label={t("repository.savedViews.delete")}
+                    aria-label={t("common.actions.delete")}
                     onClick={() => {
                       setDeleteTarget({
                         id: view.id,
@@ -418,7 +418,7 @@ export function SavedViewsMenu({
             </div>
             <div className="space-y-2">
               <Label htmlFor="saved-view-rename-description">
-                {t("search.savedSearches.descriptionLabel")}
+                {t("common.upload.attachments.link.noteLabel")}
               </Label>
               <Textarea
                 id="saved-view-rename-description"
@@ -484,7 +484,7 @@ export function SavedViewsMenu({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="saved-view-delete-confirm"
             >
-              {t("repository.savedViews.delete")}
+              {t("common.actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

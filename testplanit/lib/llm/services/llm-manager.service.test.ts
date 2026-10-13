@@ -79,6 +79,24 @@ vi.mock("../adapters", () => ({
     getAvailableModels = vi.fn().mockResolvedValue([]);
     constructor(public config: any) {}
   },
+  DeepSeekAdapter: class DeepSeekAdapter {
+    chat = vi.fn().mockResolvedValue({
+      content: "DeepSeek response",
+      model: "deepseek-v4-flash",
+      promptTokens: 10,
+      completionTokens: 20,
+      totalTokens: 30,
+      finishReason: "stop",
+    });
+    chatStream = vi.fn().mockImplementation(async function* () {
+      yield { delta: "Hello", done: false };
+      yield { delta: " world", done: true };
+    });
+    testConnection = vi.fn().mockResolvedValue(true);
+    getAvailableModels = vi.fn().mockResolvedValue([]);
+    getProviderName = vi.fn().mockReturnValue("DeepSeek");
+    constructor(public config: any) {}
+  },
   OllamaAdapter: class OllamaAdapter {
     chat = vi.fn().mockResolvedValue({
       content: "Ollama response",
@@ -270,6 +288,32 @@ describe("LlmManager", () => {
       expect(adapter).toBeDefined();
     });
 
+    it("should create DeepSeek adapter", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
+        ...mockLlmIntegration,
+        provider: "DEEPSEEK",
+      });
+
+      const adapter = await manager.getAdapter(1);
+
+      expect(adapter.getProviderName()).toBe("DeepSeek");
+    });
+
+    it("should create DeepSeek adapter with custom proxy URL", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
+        ...mockLlmIntegration,
+        provider: "DEEPSEEK",
+        credentials: {
+          apiKey: "test-api-key",
+          endpoint: "https://litellm.example.com/v1",
+        },
+      });
+
+      const adapter = await manager.getAdapter(1);
+
+      expect(adapter.getProviderName()).toBe("DeepSeek");
+    });
+
     it("should create Ollama adapter with public URL", async () => {
       mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
@@ -384,6 +428,28 @@ describe("LlmManager", () => {
           outputCost: expect.any(Number),
           totalCost: expect.any(Number),
           success: true,
+        }),
+      });
+    });
+
+    it("attributes usage to metadata.projectId when projectId is unset", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
+        mockLlmIntegration.llmProviderConfig
+      );
+      mockDb.llmUsage.create.mockResolvedValue({});
+      mockDb.llmRateLimit.upsert.mockResolvedValue({});
+
+      await manager.chat(1, {
+        messages: [{ role: "user", content: "Hello" }],
+        userId: "user-123",
+        feature: "test_case_generation",
+        metadata: { projectId: 3, issueKey: "ADM-1" },
+      });
+
+      expect(mockDb.llmUsage.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          project: { connect: { id: 3 } },
         }),
       });
     });

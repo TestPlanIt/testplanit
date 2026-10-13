@@ -3,7 +3,11 @@ import type {
   RepositoryCasesSelect,
 } from "@db/input";
 import * as z from "zod/v4";
-import { zenstack, resolveCaseWorkflowState } from "../../api.js";
+import {
+  zenstack,
+  createCaseVersion,
+  resolveCaseWorkflowState,
+} from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { resolveCustomFields, writeCustomFieldValues } from "./customFields.js";
@@ -23,7 +27,7 @@ export function registerCasesUpdate(
     "testplanit_cases_update",
     {
       description:
-        "Update a test case (partial). Provide only the fields to change: name, automated, steps (replaces all current steps), tags (replaces the tag set), customFields (upserts each), stateName, folderId. Returns the full denormalized case detail (CASE-02 shape). (per D-05 / CASE-04)",
+        "Update a test case (partial). Provide only the fields to change: name, automated, steps (replaces all current steps), tags (replaces the tag set), customFields (upserts each), stateName, folderId. Returns the full denormalized case detail (same shape as testplanit_cases_get).",
       inputSchema: {
         caseId: z.number().int().positive().describe("ID of the test case to update."),
         name: z.string().min(1).max(2000).optional().describe("New test case name."),
@@ -53,7 +57,9 @@ export function registerCasesUpdate(
             }),
           )
           .optional()
-          .describe("New step set. Replaces ALL existing steps (soft-deletes them first)."),
+          .describe(
+            "New step set. Replaces ALL existing steps (soft-deletes them first). Shared steps aren't supported: these are plain steps, and replacing the steps removes any shared step groups from the case (a shared step group reads back from testplanit_cases_get as an empty step).",
+          ),
         tags: z
           .array(z.union([z.number().int().positive(), z.string().min(1)]))
           .optional()
@@ -73,6 +79,7 @@ export function registerCasesUpdate(
           id: number;
           projectId: number;
           templateId: number;
+          caseTags: { tagId: number }[];
         } | null>(
           "repositoryCases",
           "findUnique",
@@ -82,6 +89,7 @@ export function registerCasesUpdate(
               id: true,
               projectId: true,
               templateId: true,
+              caseTags: { select: { tagId: true } },
             } satisfies RepositoryCasesSelect,
           },
           deps.env,
@@ -115,27 +123,39 @@ export function registerCasesUpdate(
           );
           data.state = { connect: { id: state.id } };
         }
+        let changed = false;
+
         if (input.tags !== undefined) {
           const tagIds = await resolveTagIds(input.tags, deps.env);
-          // Tags live on the explicit RepositoryCaseTag join model. "set"
-          // (replace-all) semantics map to: clear the existing join rows,
-          // then create one per requested tag (nested caseTags.tag.connect).
-          // The implicit `tags` relation no longer exists and would 422.
-          data.caseTags = {
-            deleteMany: {},
-            create: tagIds.map((id) => ({ tag: { connect: { id } } })),
-          };
+          // Tags live on the explicit RepositoryCaseTag join model, so
+          // "replace the set" is a nested deleteMany + create on caseTags.
+          // The host runs nested relation operations in its own fixed
+          // order, create before deleteMany, so `deleteMany: {}` paired
+          // with the new links wiped the links it had just created (#668).
+          // Diffing against the current links keeps the two operations on
+          // disjoint rows, so their order no longer matters.
+          const current = new Set(head.caseTags.map((ct) => ct.tagId));
+          const wanted = new Set(tagIds);
+          const toCreate = tagIds.filter((id) => !current.has(id));
+          const toDelete = [...current].filter((id) => !wanted.has(id));
+          const caseTags: Record<string, unknown> = {};
+          if (toDelete.length > 0) {
+            caseTags.deleteMany = { tagId: { in: toDelete } };
+          }
+          if (toCreate.length > 0) {
+            caseTags.create = toCreate.map((id) => ({ tag: { connect: { id } } }));
+          }
+          if (Object.keys(caseTags).length > 0) {
+            data.caseTags = caseTags;
+          }
+          // A tag set that already matches still counts as an edit, as a
+          // web UI save does, so the version bump below is not skipped.
+          changed = true;
         }
 
-        // Only write if there are scalar/relation fields to update.
-        if (Object.keys(data).length > 0) {
-          await zenstack(
-            "repositoryCases",
-            "update",
-            { where: { id: input.caseId }, data },
-            deps.env,
-          );
-        }
+        // Steps and field values first: they don't touch the case row, so
+        // the one case write below can carry the version bump with every
+        // other change, as a web UI save does.
 
         // Steps replacement: soft-delete existing + create new (T-06-06).
         if (input.steps !== undefined) {
@@ -144,6 +164,7 @@ export function registerCasesUpdate(
             input.steps as StepInput[],
             deps.env,
           );
+          changed = true;
         }
 
         // Custom field upserts — resolved against the case's own template so an
@@ -155,6 +176,27 @@ export function registerCasesUpdate(
             deps.env,
           );
           await writeCustomFieldValues(input.caseId, resolved, deps.env);
+          changed = true;
+        }
+
+        // An edit through this tool leaves the same history a UI save does
+        // (#598): one version bump, in the same write as the case's own
+        // changes, then a snapshot of the case as it now stands. Bumping in a
+        // separate call let the automated-flag hook snapshot the half-written
+        // case first, so flipping `automated` recorded two versions. Skipped
+        // when the call carried no writable field, so a read-shaped update
+        // doesn't invent a version.
+        if (changed || Object.keys(data).length > 0) {
+          await zenstack(
+            "repositoryCases",
+            "update",
+            {
+              where: { id: input.caseId },
+              data: { ...data, currentVersion: { increment: 1 } },
+            },
+            deps.env,
+          );
+          await createCaseVersion(input.caseId, {}, deps.env);
         }
 
         // Re-fetch with full D-10 denormalized shape.

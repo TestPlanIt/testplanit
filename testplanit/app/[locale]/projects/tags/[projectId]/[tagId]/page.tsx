@@ -500,8 +500,8 @@ function TagDetail() {
                 </Label>
                 <Select
                   value={filters.caseType}
-                  onValueChange={(value: CaseTypeFilter) =>
-                    updateFilters({ caseType: value })
+                  onValueChange={(value) =>
+                    updateFilters({ caseType: value as CaseTypeFilter })
                   }
                 >
                   <SelectTrigger
@@ -513,7 +513,7 @@ function TagDetail() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">
-                      {t("tags.detail.filters.allCases")}
+                      {t("common.filters.all")}
                     </SelectItem>
                     <SelectItem value="manual">
                       {t("common.fields.manual")}

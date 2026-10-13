@@ -8,6 +8,10 @@ import {
   recordPasswordAttempt,
 } from "~/lib/rate-limit";
 import { auditAuthEvent } from "~/lib/services/auditLog";
+import {
+  createShareAccessToken,
+  SHARE_ACCESS_TOKEN_TTL_SECONDS,
+} from "~/lib/shareAccessToken";
 
 export const dynamic = "force-dynamic";
 
@@ -146,8 +150,8 @@ export const POST = withAuditContext(
       // Return success (client will store this in sessionStorage)
       return NextResponse.json({
         success: true,
-        token: shareKey, // Use shareKey as simple token
-        expiresIn: 3600, // 1 hour in seconds
+        token: createShareAccessToken(shareKey, shareLink.passwordHash),
+        expiresIn: SHARE_ACCESS_TOKEN_TTL_SECONDS,
       });
     } catch (error) {
       console.error("Error verifying password:", error);

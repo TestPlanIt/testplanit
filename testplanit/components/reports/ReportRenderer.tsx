@@ -24,8 +24,9 @@ import {
   ExpandedState,
   OnChangeFn,
   VisibilityState,
-} from "@tanstack/react-table";
+} from "@/components/tables/tableFeatures";
 import { Download } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
@@ -33,7 +34,18 @@ import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { useReportColumns } from "~/hooks/useReportColumns";
+import {
+  useRequirementCoverageChangeColumns,
+  useRequirementCoverageGapColumns,
+  useRequirementTraceabilityColumns,
+} from "~/hooks/useRequirementCoverageReportColumns";
+import { useCodePinCoverageColumns } from "~/hooks/useCodePinCoverageColumns";
+import { useImpactAnalysisColumns } from "~/hooks/useImpactAnalysisColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
+import { sortRequirementReportRows } from "~/utils/requirementReportSort";
+import { RequirementCoverageChangesOverview } from "@/components/reports/RequirementCoverageChangesOverview";
+import { RequirementCoverageOverview } from "@/components/reports/RequirementCoverageOverview";
+import { RequirementDebtOverview } from "@/components/reports/RequirementDebtOverview";
 
 // Helper functions for report type matching
 // These helpers allow us to write code that works with both project-level and cross-project variants
@@ -62,6 +74,8 @@ interface ReportRendererProps {
   // Data
   results: any[];
   chartData?: any[];
+  // Multi-line chart: also plot the sum of every series at each date.
+  showChartTotals?: boolean;
 
   // Config
   reportType: string;
@@ -149,6 +163,11 @@ interface ReportRendererProps {
   // indicator instead of the no-results card.
   awaitingFirstRun?: boolean;
 
+  // A report that cannot run yet (the coverage-changes report before a
+  // baseline is chosen) shows this instruction instead of "No results
+  // found" — nothing was run, so nothing is missing.
+  emptyPrompt?: string;
+
   // Children (for ShareButton in ReportBuilder, omitted in shared view)
   headerActions?: React.ReactNode;
 }
@@ -156,6 +175,7 @@ interface ReportRendererProps {
 export function ReportRenderer({
   results,
   chartData,
+  showChartTotals = false,
   reportType,
   dimensions = [],
   metrics = [],
@@ -194,8 +214,14 @@ export function ReportRenderer({
   userTimezone,
   readOnly = false,
   awaitingFirstRun = false,
+  emptyPrompt,
   headerActions,
 }: ReportRendererProps) {
+  const { data: session } = useSession();
+  // The viewer's preferred date/time format; the default when signed out.
+  const generatedAtFormat = session?.user?.preferences?.dateFormat
+    ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat || "HH:mm"}`
+    : "PPp";
   const locale = useLocale();
   const tCommon = useTranslations("common");
   const tReports = useTranslations("reports.ui");
@@ -235,6 +261,18 @@ export function ReportRenderer({
     mode === "cross-project"
   );
 
+  const impactAnalysisColumns = useImpactAnalysisColumns(
+    projectId,
+    dimensionIds,
+    mode === "cross-project"
+  );
+
+  const codePinCoverageColumns = useCodePinCoverageColumns(
+    projectId,
+    dimensionIds,
+    mode === "cross-project"
+  );
+
   const issueTestCoverageColumns = useIssueTestCoverageSummaryColumns(
     projectId,
     dimensionIds,
@@ -246,6 +284,23 @@ export function ReportRenderer({
     mode === "cross-project"
   );
 
+  // Requirement report types (D-2, COV-04) are pre-built, flat tables — no
+  // dimension/metric picker, no grouping. Every covering case's row names
+  // its own project, so the only project context the column set needs is
+  // whether to add the column naming the REQUIREMENT's project, which only
+  // the cross-project variants have more than one of.
+  const isCrossProjectRequirementReport = mode === "cross-project";
+  const requirementCoverageGapColumns = useRequirementCoverageGapColumns(
+    results,
+    undefined,
+    isCrossProjectRequirementReport
+  );
+  const requirementTraceabilityColumns = useRequirementTraceabilityColumns(
+    isCrossProjectRequirementReport
+  );
+  const requirementCoverageChangeColumns =
+    useRequirementCoverageChangeColumns();
+
   // Choose which columns to use based on report type (same logic as ReportBuilder)
   // If preGeneratedColumns are provided (e.g., from ReportBuilder with drill-down handlers), use those
   const generatedColumns = matchesReportType(reportType, "automation-trends")
@@ -254,11 +309,24 @@ export function ReportRenderer({
       ? flakyTestsColumns
       : matchesReportType(reportType, "test-case-health")
         ? testCaseHealthColumns
-        : matchesReportType(reportType, "issue-test-coverage")
-          ? issueTestCoverageColumns
-          : matchesReportType(reportType, "execution-log")
-            ? executionLogColumns
-            : standardColumns;
+        : matchesReportType(reportType, "impact-analysis")
+          ? impactAnalysisColumns
+          : matchesReportType(reportType, "code-pin-coverage")
+            ? codePinCoverageColumns
+            : matchesReportType(reportType, "issue-test-coverage")
+              ? issueTestCoverageColumns
+              : matchesReportType(reportType, "execution-log")
+                ? executionLogColumns
+                : matchesReportType(reportType, "requirement-coverage-gaps")
+                  ? requirementCoverageGapColumns
+                  : matchesReportType(reportType, "requirement-traceability")
+                    ? requirementTraceabilityColumns
+                    : matchesReportType(
+                          reportType,
+                          "requirement-coverage-changes"
+                        )
+                      ? requirementCoverageChangeColumns
+                      : standardColumns;
 
   const columns = preGeneratedColumns || generatedColumns;
 
@@ -266,6 +334,8 @@ export function ReportRenderer({
   const isAutomationTrends = matchesReportType(reportType, "automation-trends");
   const isFlakyTests = matchesReportType(reportType, "flaky-tests");
   const isTestCaseHealth = matchesReportType(reportType, "test-case-health");
+  const isImpactAnalysis = matchesReportType(reportType, "impact-analysis");
+  const isCodePinCoverage = matchesReportType(reportType, "code-pin-coverage");
   const isIssueTestCoverage = matchesReportType(
     reportType,
     "issue-test-coverage"
@@ -276,6 +346,41 @@ export function ReportRenderer({
     reportType,
     "automation-candidates"
   );
+  const isRequirementCoverageGaps = matchesReportType(
+    reportType,
+    "requirement-coverage-gaps"
+  );
+  const isRequirementTraceability = matchesReportType(
+    reportType,
+    "requirement-traceability"
+  );
+  const isRequirementCoverageChanges = matchesReportType(
+    reportType,
+    "requirement-coverage-changes"
+  );
+
+  // The virtualized DataTable is manualSorting — the caller owns row
+  // order. The requirement reports return their full set in path order
+  // and their handler ignores sortColumn, so the sort a header menu
+  // requests is applied HERE, to the in-memory rows, rather than as a
+  // full-matrix refetch per click. Every other report type keeps its
+  // existing (server-ordered) rows untouched.
+  const requirementSortedResults = useMemo(() => {
+    if (
+      !isRequirementCoverageGaps &&
+      !isRequirementTraceability &&
+      !isRequirementCoverageChanges
+    ) {
+      return results;
+    }
+    return sortRequirementReportRows(results ?? [], sortConfig);
+  }, [
+    isRequirementCoverageGaps,
+    isRequirementTraceability,
+    isRequirementCoverageChanges,
+    results,
+    sortConfig,
+  ]);
 
   // Maximum number of data points to render in charts
   const MAX_CHART_DATA_POINTS = 50;
@@ -284,13 +389,25 @@ export function ReportRenderer({
   const memoizedChart = useMemo(() => {
     const dataForChart = chartData || results;
 
-    // Check if we should show a chart
+    // Check if we should show a chart. Deliberately NOT joined by
+    // isRequirementCoverageGaps/isRequirementTraceability -- unlike the five
+    // report types listed here, the requirement reports have no chart-shaped
+    // aggregation at all (no grouping, unlike issue-test-coverage's
+    // getGroupedRowModel-driven summary) and always carry empty
+    // dimensionIds/metricIds since they are isPreBuilt with no dimension
+    // picker. Leaving them out of this list means this condition's existing
+    // `(dimensionIds.length === 0 || metricIds.length === 0)` clause already
+    // resolves to "no chart" for both, which is the correct outcome for a
+    // flat, table-only report — adding them here would need a
+    // requirement-specific chart that does not exist.
     if (
       !dataForChart ||
       dataForChart.length === 0 ||
       (!isAutomationTrends &&
         !isFlakyTests &&
         !isTestCaseHealth &&
+        !isImpactAnalysis &&
+        !isCodePinCoverage &&
         !isIssueTestCoverage &&
         !isExecutionLog &&
         (dimensionIds.length === 0 || metricIds.length === 0))
@@ -337,7 +454,11 @@ export function ReportRenderer({
 
     // For Test Case Health, Issue Test Coverage, and Execution Log, pass all data for accurate summaries
     const chartResults =
-      isTestCaseHealth || isIssueTestCoverage || isExecutionLog
+      isTestCaseHealth ||
+      isImpactAnalysis ||
+      isCodePinCoverage ||
+      isIssueTestCoverage ||
+      isExecutionLog
         ? dataForChart
         : limitedChartData;
 
@@ -345,6 +466,7 @@ export function ReportRenderer({
       chart: (
         <ReportChart
           results={chartResults}
+          showTotals={showChartTotals}
           dimensions={dimensions}
           metrics={metrics}
           reportType={reportType}
@@ -355,11 +477,17 @@ export function ReportRenderer({
         />
       ),
       isTruncated:
-        isTestCaseHealth || isIssueTestCoverage ? false : isTruncated,
+        isTestCaseHealth ||
+        isImpactAnalysis ||
+        isCodePinCoverage ||
+        isIssueTestCoverage
+          ? false
+          : isTruncated,
       totalDataPoints: dataForChart.length,
     };
   }, [
     chartData,
+    showChartTotals,
     results,
     reportType,
     dimensions,
@@ -417,6 +545,22 @@ export function ReportRenderer({
     if (awaitingFirstRun) {
       return <Loading />;
     }
+    if (emptyPrompt) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <Card className="max-w-md" data-testid="report-empty-prompt">
+            <CardHeader>
+              <CardTitle>
+                {isRequirementCoverageChanges
+                  ? tReports("reportTypes.requirementCoverageChanges.label")
+                  : tReports("noResultsFound")}
+              </CardTitle>
+              <CardDescription>{emptyPrompt}</CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center h-full">
         <Card className="max-w-md">
@@ -425,13 +569,30 @@ export function ReportRenderer({
             <CardDescription>
               {dimensionIds.length > 0 && metricIds.length > 0
                 ? tReports("noDataMatchingCriteria")
-                : isAutomationTrends ||
-                    isFlakyTests ||
-                    isTestCaseHealth ||
-                    isIssueTestCoverage ||
-                    isExecutionLog
-                  ? tReports("noDataAvailable")
-                  : tReports("selectAtLeastOneDimensionAndMetric")}
+                : // The requirement reports are always dimension/metric-free
+                  // (isPreBuilt, no picker), so without these two branches
+                  // an empty result would fall through to
+                  // "selectAtLeastOneDimensionAndMetric" -- nonsensical for
+                  // a report type with no dimension/metric selection at
+                  // all. The gaps report gets its own POSITIVE empty-state
+                  // message (26-01's requirementCoverage.noGaps): zero rows
+                  // there means every requirement is covered, which is good
+                  // news, not "no data available."
+                  isRequirementCoverageGaps
+                  ? tReports("requirementCoverage.noGaps")
+                  : isRequirementCoverageChanges
+                    ? tReports("requirementCoverage.noChanges")
+                    : isRequirementTraceability
+                      ? tReports("requirementCoverage.noData")
+                      : isAutomationTrends ||
+                          isFlakyTests ||
+                          isTestCaseHealth ||
+                          isImpactAnalysis ||
+                          isCodePinCoverage ||
+                          isIssueTestCoverage ||
+                          isExecutionLog
+                        ? tReports("noDataAvailable")
+                        : tReports("selectAtLeastOneDimensionAndMetric")}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -469,7 +630,7 @@ export function ReportRenderer({
                     {tReports("generatedAt")}{" "}
                     <DateFormatter
                       date={reportGeneratedAt}
-                      formatString="PPp"
+                      formatString={generatedAtFormat}
                       timezone={userTimezone}
                     />
                   </p>
@@ -488,7 +649,21 @@ export function ReportRenderer({
             </div>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
-            <div className="flex-1 min-h-0 w-full">{memoizedChart.chart}</div>
+            <div className="flex-1 min-h-0 w-full overflow-auto">
+              {/* The traceability report's visualization: coverage donut
+                  + stat tiles (its legend) + a coverage-by-hierarchy
+                  breakdown, all computed from the same rows the table
+                  shows so the panel can never disagree with it. */}
+              {isRequirementTraceability && (results?.length ?? 0) > 0 ? (
+                <RequirementCoverageOverview rows={results} />
+              ) : isRequirementCoverageGaps && (results?.length ?? 0) > 0 ? (
+                <RequirementDebtOverview rows={results} />
+              ) : isRequirementCoverageChanges && (results?.length ?? 0) > 0 ? (
+                <RequirementCoverageChangesOverview rows={results} />
+              ) : (
+                memoizedChart.chart
+              )}
+            </div>
           </CardContent>
         </Card>
       </ResizablePanel>
@@ -514,8 +689,9 @@ export function ReportRenderer({
                     className="text-sm text-muted-foreground"
                     data-testid="report-results-summary"
                   >
-                    {tCommon("pagination.showing")} {loadedCount}{" "}
-                    {tCommon("of")} {totalCount} {tCommon("results")}
+                    {tCommon("pagination.showing")}{" "}
+                    {loadedCount.toLocaleString(locale)} {tCommon("of")}{" "}
+                    {totalCount.toLocaleString(locale)} {tCommon("results")}
                   </div>
                 )}
                 {onExportCsv && totalCount > 0 && (
@@ -538,7 +714,7 @@ export function ReportRenderer({
               virtualized
               pinLastColumn={false}
               columns={columns as ColumnDef<any>[]}
-              data={results}
+              data={requirementSortedResults}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={onColumnVisibilityChange}
               columnSizingStorageKey={`report:${getBaseReportType(reportType)}`}

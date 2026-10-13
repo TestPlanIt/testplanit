@@ -200,7 +200,7 @@ export function EditStatus({ status, open, onClose }: EditStatusProps) {
 
       await deleteManyStatusScopeAssignment({ where: { statusId: status.id } });
       await deleteManyProjectStatusAssignment({
-        where: { statusId: status.id },
+        where: { statusId: status.id, project: { isDeleted: false } },
       });
 
       if (Array.isArray(data.scope) && data.scope.length > 0) {

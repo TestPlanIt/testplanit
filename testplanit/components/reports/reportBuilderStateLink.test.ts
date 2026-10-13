@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
-  buildSharedReportUrlParams,
   mintReportBuilderStateId,
   reportBuilderStateConfigFromReportConfig,
   resolveReportBuilderStateId,
-  sharedReportSearchParams,
 } from "./reportBuilderStateLink";
 
 const customConfig = {
@@ -13,18 +11,13 @@ const customConfig = {
   metrics: ["testCaseCount"],
   startDate: "2026-09-01T00:00:00.000Z",
   dimensionFilters: { testRun: [1, 2, 3], status: [] },
-  page: 1,
-  pageSize: 25,
+  includeTotals: true,
   projectId: 7,
 };
 
 function okFetch(id = "state-1") {
   return vi.fn(async () => ({ ok: true, json: async () => ({ id }) })) as any;
 }
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
 
 describe("reportBuilderStateConfigFromReportConfig", () => {
   it("picks the builder selection out of a stored request body", () => {
@@ -120,46 +113,5 @@ describe("resolveReportBuilderStateId", () => {
     expect(await resolveReportBuilderStateId(customConfig, 7, fetchImpl)).toBe(
       "s9"
     );
-  });
-});
-
-describe("sharedReportSearchParams", () => {
-  it("carries only reportType, state, and paging when a state id is given", () => {
-    const params = sharedReportSearchParams(customConfig, "s1");
-    expect([...params.keys()].sort()).toEqual([
-      "page",
-      "pageSize",
-      "reportType",
-      "state",
-    ]);
-    expect(params.get("state")).toBe("s1");
-  });
-
-  it("spells the selection out without a state id", () => {
-    const params = sharedReportSearchParams(customConfig, null);
-    expect(params.get("dimensions")).toBe("testRun,status");
-    expect(params.get("metrics")).toBe("testCaseCount");
-    expect(params.get("startDate")).toBe("2026-09-01T00:00:00.000Z");
-    expect(JSON.parse(params.get("dimensionFilters")!)).toEqual(
-      customConfig.dimensionFilters
-    );
-    expect(params.has("state")).toBe(false);
-  });
-});
-
-describe("buildSharedReportUrlParams", () => {
-  it("uses the state id when the save succeeds and falls back when it fails", async () => {
-    vi.stubGlobal("fetch", okFetch("s2"));
-    const withState = await buildSharedReportUrlParams(customConfig, 7);
-    expect(withState.get("state")).toBe("s2");
-    expect(withState.has("dimensionFilters")).toBe(false);
-
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({ ok: false }))
-    );
-    const fallback = await buildSharedReportUrlParams(customConfig, 7);
-    expect(fallback.has("state")).toBe(false);
-    expect(fallback.get("dimensions")).toBe("testRun,status");
   });
 });

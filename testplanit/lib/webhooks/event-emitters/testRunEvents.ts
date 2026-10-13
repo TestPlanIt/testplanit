@@ -13,6 +13,7 @@ import {
 } from "~/lib/services/parameterRedaction";
 import { publishTestRunWakeUp } from "~/lib/live/publish";
 import { webhookEvents } from "~/lib/webhooks/events";
+import { completeExecutionsForRun } from "~/lib/execution/service";
 
 /**
  * Derive the cosmetic `TEST_RUN` display key (e.g. `WEB-TR-1234`) for a run
@@ -276,6 +277,9 @@ export async function emitTestRunUpdateEvents(
   }
 
   if (completedTransition) {
+    // Whoever completed the run (a person, the CLI, a reporter, the
+    // abandoned-run sweeper) also finished any dispatched execution.
+    await completeExecutionsForRun(tx, newRow.id);
     // Payload is the full TestRunSummaryData shape used by the in-app
     // summary UI, enriched with run identity + deep-link so Slack (and
     // any other consumer) can render a self-contained message without

@@ -2,7 +2,10 @@
  * Hook for generating table columns for drill-down data
  */
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import {
+  createColumnHelper,
+  type ColumnDef,
+} from "@/components/tables/tableFeatures";
 import { format } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -16,9 +19,10 @@ import { IssuePriorityDisplay } from "~/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "~/components/IssueStatusDisplay";
 import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { SessionNameDisplay } from "~/components/SessionNameDisplay";
-import StatusDotDisplay from "~/components/StatusDotDisplay";
+import StatusDisplay from "~/components/StatusDisplay";
 import { UserNameCell } from "~/components/tables/UserNameCell";
-import { TestCaseNameDisplay } from "~/components/TestCaseNameDisplay";
+import { CaseDisplay } from "~/components/tables/CaseDisplay";
+import { CodeRepositoryName } from "~/components/CodeRepositoryName";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Link } from "~/lib/navigation";
@@ -52,6 +56,7 @@ export function useDrillDownColumns({
   reportType,
 }: UseDrillDownColumnsProps): ColumnDef<DrillDownRecord, any>[] {
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
   const tLinkedCases = useTranslations("linkedCases");
   const tMilestones = useTranslations("milestones");
   const locale = useLocale();
@@ -225,7 +230,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             const projectId = row.repositoryCase?.project?.id;
             return (
-              <TestCaseNameDisplay
+              <CaseDisplay
                 testCase={{
                   id: row.repositoryCase?.id || row.repositoryCaseId || 0,
                   name: row.repositoryCase?.name || "",
@@ -274,7 +279,7 @@ export function useDrillDownColumns({
               );
             }
             return (
-              <StatusDotDisplay
+              <StatusDisplay
                 name={row.status.name}
                 color={row.status.color?.value}
               />
@@ -352,7 +357,7 @@ export function useDrillDownColumns({
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
               return (
-                <TestCaseNameDisplay
+                <CaseDisplay
                   testCase={{
                     id: row.testRunCase?.repositoryCase?.id || 0,
                     name: row.testRunCase?.repositoryCase?.name || "",
@@ -398,7 +403,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const row = info.row.original as any;
             return (
-              <StatusDotDisplay
+              <StatusDisplay
                 name={row.status?.name || ""}
                 color={row.status?.color?.value}
               />
@@ -506,7 +511,7 @@ export function useDrillDownColumns({
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
               return (
-                <TestCaseNameDisplay
+                <CaseDisplay
                   testCase={{
                     id: row.testRunCase?.repositoryCase?.id || 0,
                     name: row.testRunCase?.repositoryCase?.name || "",
@@ -610,7 +615,7 @@ export function useDrillDownColumns({
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
               return (
-                <TestCaseNameDisplay
+                <CaseDisplay
                   testCase={{
                     id: row.testRunCase?.repositoryCase?.id || 0,
                     name: row.testRunCase?.repositoryCase?.name || "",
@@ -689,6 +694,134 @@ export function useDrillDownColumns({
       ];
     }
 
+    // Impact analyses: what started each one, what it selected, and the run
+    // it composed (linked when there is one).
+    if (
+      metricId === "impactAnalysisCount" ||
+      metricId === "affectedCasesSelected" ||
+      metricId === "selectionPrecision"
+    ) {
+      return [
+        columnHelper.accessor((row: any) => row.triggerLabel ?? row.id, {
+          id: "name",
+          header: () => tGlobal("reports.ui.impactAnalysis.analysis"),
+          cell: (info) => {
+            const row = info.row.original as any;
+            const label =
+              row.triggerLabel ||
+              `${tGlobal("reports.ui.impactAnalysis.analysis")} #${row.id}`;
+            return row.triggerUrl ? (
+              <a
+                href={row.triggerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="truncate hover:underline"
+              >
+                {label}
+              </a>
+            ) : (
+              <span className="truncate">{label}</span>
+            );
+          },
+          enableSorting: false,
+          size: 260,
+          minSize: 150,
+          maxSize: 500,
+        }),
+        columnHelper.accessor((row: any) => row.config?.repository?.name, {
+          id: "repository",
+          header: () => tCommon("pageTitles.repository"),
+          cell: (info) => {
+            const row = info.row.original as any;
+            return row.config?.repository ? (
+              <CodeRepositoryName
+                name={row.config.repository.name}
+                provider={row.config.repository.provider}
+                branch={row.config.branch}
+              />
+            ) : (
+              <span>-</span>
+            );
+          },
+          enableSorting: false,
+          size: 240,
+          minSize: 150,
+          maxSize: 400,
+        }),
+        columnHelper.accessor((row: any) => row.trigger, {
+          id: "trigger",
+          header: () => tGlobal("reports.dimensions.trigger"),
+          cell: (info) => {
+            const trigger = info.getValue() as string | null;
+            return (
+              <span>
+                {trigger === "pull_request"
+                  ? tGlobal("runs.impact.pull.label")
+                  : trigger === "push"
+                    ? tGlobal("reports.ui.impactAnalysis.triggerPush")
+                    : tCommon("fields.manual")}
+              </span>
+            );
+          },
+          enableSorting: false,
+          size: 130,
+          minSize: 100,
+          maxSize: 200,
+        }),
+        columnHelper.accessor(
+          (row: any) =>
+            (row.pinnedCaseCount ?? 0) + (row.affectedCaseCount ?? 0),
+          {
+            id: "selected",
+            header: () => tGlobal("reports.metrics.affectedCasesSelected"),
+            cell: (info) => <span>{String(info.getValue())}</span>,
+            enableSorting: false,
+            size: 170,
+            minSize: 120,
+            maxSize: 240,
+          }
+        ),
+        columnHelper.accessor((row: any) => row.testRun?.name, {
+          id: "testRun",
+          header: () => tCommon("actions.junit.import.testRun.label"),
+          cell: (info) => {
+            const row = info.row.original as any;
+            const projectId = row.project?.id;
+            return row.testRun ? (
+              <TestRunNameDisplay
+                testRun={row.testRun}
+                projectId={projectId}
+                className="truncate"
+              />
+            ) : (
+              <span>-</span>
+            );
+          },
+          enableSorting: false,
+          size: 240,
+          minSize: 150,
+          maxSize: 500,
+        }),
+        columnHelper.accessor((row: any) => row.createdAt, {
+          id: "createdAt",
+          header: () => tCommon("fields.started"),
+          cell: (info) => {
+            const value = info.getValue();
+            if (!value) return <span>-</span>;
+            return (
+              <span>
+                {format(new Date(value), "PPp", { locale: dateFnsLocale })}
+              </span>
+            );
+          },
+          enableSorting: false,
+          size: 180,
+          minSize: 140,
+          maxSize: 260,
+        }),
+      ];
+    }
+
     // Test runs columns
     if (metricId === "testRuns") {
       return [
@@ -720,7 +853,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const row = info.row.original as any;
             return (
-              <StatusDotDisplay
+              <StatusDisplay
                 name={row.state?.name || ""}
                 color={row.state?.color?.value}
               />
@@ -817,7 +950,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
             return (
-              <TestCaseNameDisplay
+              <CaseDisplay
                 testCase={{
                   id: row.id,
                   name: row.name,
@@ -864,7 +997,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
             return (
-              <TestCaseNameDisplay
+              <CaseDisplay
                 testCase={{
                   id: row.id,
                   name: row.name,
@@ -944,7 +1077,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
             return (
-              <TestCaseNameDisplay
+              <CaseDisplay
                 testCase={{
                   id: row.id,
                   name: row.name,
@@ -1469,7 +1602,7 @@ export function useDrillDownColumns({
           header: () => translations.name,
           cell: (info) => {
             const row = info.row.original as any;
-            // Try to use TestCaseNameDisplay if it looks like a test case
+            // Try to use CaseDisplay if it looks like a test case
             if (
               row.id &&
               (row.name ||
@@ -1493,7 +1626,7 @@ export function useDrillDownColumns({
                 row.testCase?.hasParameters ??
                 row.testRunCase?.repositoryCase?.hasParameters;
               return (
-                <TestCaseNameDisplay
+                <CaseDisplay
                   testCase={{
                     id: testCaseId,
                     name: testCaseName,
@@ -1542,7 +1675,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             if (row.status) {
               return (
-                <StatusDotDisplay
+                <StatusDisplay
                   name={row.status.name}
                   color={row.status.color?.value}
                 />
@@ -1550,7 +1683,7 @@ export function useDrillDownColumns({
             }
             if (row.state) {
               return (
-                <StatusDotDisplay
+                <StatusDisplay
                   name={row.state.name}
                   color={row.state.color?.value}
                 />
@@ -1591,5 +1724,13 @@ export function useDrillDownColumns({
         maxSize: 150,
       }),
     ];
-  }, [metricId, reportType, translations, dateFnsLocale, columnHelper]);
+  }, [
+    metricId,
+    reportType,
+    translations,
+    dateFnsLocale,
+    columnHelper,
+    tCommon,
+    tGlobal,
+  ]);
 }

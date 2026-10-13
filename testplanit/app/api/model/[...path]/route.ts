@@ -7,6 +7,10 @@ import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
 import { tryFastPathCreate } from "~/lib/access-fast-path";
 import {
+  AUTO_INJECT_USER_FIELDS,
+  injectUserFields,
+} from "~/lib/api/injectUserFields";
+import {
   authenticateApiTokenForMethod,
   extractBearerToken,
 } from "~/lib/api-token-auth";
@@ -58,6 +62,7 @@ import {
   assertResultEditWindowOpen,
   isEditWindowExpiredError,
 } from "~/lib/services/editWindow";
+import { requestHardDeletesIssue } from "~/lib/services/issueHardDeleteGuard";
 import { hasMissingRequiredResultField } from "~/lib/services/resultGuards";
 import { softDeleteUnexecutedRunCasesForDraftRevert } from "~/lib/services/runCaseEligibility";
 import {
@@ -105,22 +110,6 @@ function getCurrentApiAuth(): ApiAuthContext {
   return apiAuthStorage.getStore() ?? null;
 }
 
-// Models that require automatic user injection for create operations
-// Maps model name to the field that needs the authenticated user
-const AUTO_INJECT_USER_FIELDS: Record<string, string[]> = {
-  testRuns: ["createdBy"],
-  testRunResults: ["executedBy"],
-  sessionResults: ["createdBy"],
-  repositoryCases: ["creator"],
-  repositoryFolders: ["creator"],
-  sessions: ["createdBy"],
-  attachments: ["createdBy"],
-  caseSteps: ["createdBy"],
-  jUnitTestSuite: ["createdBy"],
-  jUnitTestResult: ["createdBy"],
-  issue: ["createdBy"],
-};
-
 const WEBHOOK_EMIT_MODELS = new Set([
   "testRuns",
   "sessions",
@@ -130,6 +119,17 @@ const WEBHOOK_EMIT_MODELS = new Set([
   "testRunResults",
   "sessionResults",
 ]);
+
+/**
+ * The workflow state a write moves an entity to, whether it sets the `stateId`
+ * scalar (the web UI) or connects the `state` relation (API clients such as
+ * the MCP server). Reading only the scalar let the relation form skip the
+ * review gate.
+ */
+function targetStateIdOf(payload: any): unknown {
+  if (payload?.stateId !== undefined) return payload.stateId;
+  return payload?.state?.connect?.id;
+}
 
 // Models whose `stateId` updates are gated by Review & Approval (Plan 01-04).
 // When `parsedPath.operation === "update"` AND `requestBody.data.stateId` is
@@ -394,49 +394,6 @@ function parseZenStackPath(
   return null;
 }
 
-// Inject user fields into create/upsert request bodies
-function injectUserFields(
-  model: string,
-  operation: string,
-  body: any,
-  userId: string
-): any {
-  const fieldsToInject = AUTO_INJECT_USER_FIELDS[model];
-  if (!fieldsToInject || fieldsToInject.length === 0) {
-    return body;
-  }
-
-  // Only inject for create and upsert operations
-  if (!["create", "upsert"].includes(operation)) {
-    return body;
-  }
-
-  // Clone the body to avoid mutating the original
-  const newBody = JSON.parse(JSON.stringify(body));
-
-  // For create operations, the data is in body.data
-  // For upsert operations, the create data is in body.create
-  const dataToModify =
-    operation === "create"
-      ? newBody.data
-      : operation === "upsert"
-        ? newBody.create
-        : null;
-
-  if (dataToModify) {
-    for (const field of fieldsToInject) {
-      // Check for both relation syntax (e.g., "creator") and scalar ID field (e.g., "creatorId")
-      const scalarIdField = `${field}Id`;
-      // Only inject if neither the relation nor scalar ID field is already set
-      if (!dataToModify[field] && !dataToModify[scalarIdField]) {
-        dataToModify[field] = { connect: { id: userId } };
-      }
-    }
-  }
-
-  return newBody;
-}
-
 // The RPC operation shapes that carry a SamlConfiguration write payload:
 //   create / update / updateMany: body.data (object)
 //   createMany:                   body.data (array of objects)
@@ -624,6 +581,32 @@ async function handleRequest(
       }
     }
 
+    // Issue hard-delete guard. `Issue` is `@@allow('all', ADMIN)`, so this
+    // route's RPCApiHandler will happily dispatch `issue.delete` — a real SQL
+    // DELETE, and with `Issue.parent`'s `onDelete: Cascade` it takes the whole
+    // requirement subtree beneath the row with it. Issues are always
+    // soft-deleted (`isDeleted: true`); nothing in the product hard-deletes
+    // one. Refused before the review/config gates because a delete that can
+    // never proceed should not pay for their lookups, and refused for every
+    // shape that reaches the same ORM call — the per-model path, the
+    // `$transaction` route, and nested relation deletes under another model's
+    // write. See lib/services/issueHardDeleteGuard.ts; the schema `@@deny` is
+    // the authoritative layer, this is the chokepoint half of it.
+    if (
+      isMutation &&
+      parsedPath &&
+      requestHardDeletesIssue({
+        model: parsedPath.model,
+        operation: parsedPath.operation,
+        requestBody,
+      })
+    ) {
+      return NextResponse.json(
+        { error: { code: "ISSUE_HARD_DELETE_FORBIDDEN" } },
+        { status: 403 }
+      );
+    }
+
     // Normalize the IdP signing certificate on SamlConfiguration writes.
     // Admins paste certs through the generic SSO config form, where a
     // copy/paste or JSON round-trip can collapse the PEM newlines to spaces —
@@ -743,9 +726,9 @@ async function handleRequest(
         gatedEntityType !== undefined
           ? parsedPath.operation === "update" ||
             parsedPath.operation === "updateMany"
-            ? requestBody?.data?.stateId
+            ? targetStateIdOf(requestBody?.data)
             : parsedPath.operation === "upsert"
-              ? requestBody?.update?.stateId
+              ? targetStateIdOf(requestBody?.update)
               : undefined
           : undefined;
       const isGatedUpdate =
@@ -1342,7 +1325,7 @@ async function handleRequest(
 
           if (
             parsedPath.operation === "update" &&
-            typeof requestBody?.data?.stateId === "number" &&
+            typeof targetStateIdOf(requestBody?.data) === "number" &&
             typeof data.projectId === "number" &&
             typeof data.stateId === "number"
           ) {
@@ -1567,16 +1550,17 @@ async function handleRequest(
         const result = responseBody ? JSON.parse(responseBody) : null;
         const data = result?.data;
 
-        if (data?.repositoryCaseId) {
-          syncRepositoryCaseToElasticsearch(
-            data.repositoryCaseId,
-            tenantId
-          ).catch((error: any) => {
-            console.error(
-              `Failed to sync repository case ${data.repositoryCaseId} after step update to Elasticsearch:`,
-              error
-            );
-          });
+        // Steps and CaseFieldValues point at their case through testCaseId.
+        const caseId = data?.testCaseId;
+        if (typeof caseId === "number") {
+          syncRepositoryCaseToElasticsearch(caseId, tenantId).catch(
+            (error: any) => {
+              console.error(
+                `Failed to sync repository case ${caseId} after step update to Elasticsearch:`,
+                error
+              );
+            }
+          );
         }
       } catch (e) {
         console.error(
@@ -1598,16 +1582,17 @@ async function handleRequest(
         const result = responseBody ? JSON.parse(responseBody) : null;
         const data = result?.data;
 
-        if (data?.repositoryCaseId) {
-          syncRepositoryCaseToElasticsearch(
-            data.repositoryCaseId,
-            tenantId
-          ).catch((error: any) => {
-            console.error(
-              `Failed to sync repository case ${data.repositoryCaseId} after custom field update to Elasticsearch:`,
-              error
-            );
-          });
+        // Steps and CaseFieldValues point at their case through testCaseId.
+        const caseId = data?.testCaseId;
+        if (typeof caseId === "number") {
+          syncRepositoryCaseToElasticsearch(caseId, tenantId).catch(
+            (error: any) => {
+              console.error(
+                `Failed to sync repository case ${caseId} after custom field update to Elasticsearch:`,
+                error
+              );
+            }
+          );
         }
       } catch (e) {
         console.error(

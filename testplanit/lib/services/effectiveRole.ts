@@ -101,6 +101,16 @@ export async function resolveEffectiveProjectRoleId(
   return null;
 }
 
+/** Which rung of the ladder decided a user's effective role. */
+export type EffectiveRoleSource =
+  "USER_PERMISSION" | "GROUP_PERMISSION" | "PROJECT_DEFAULT";
+
+export interface EffectiveProjectRoleResolution {
+  roleId: number | null;
+  /** Null when the user or project row does not exist. */
+  source: EffectiveRoleSource | null;
+}
+
 /**
  * Bulk variant of resolveEffectiveProjectRoleId. Resolves the effective
  * project role id for every userId in input using a fixed number of
@@ -115,7 +125,27 @@ export async function resolveEffectiveProjectRolesForUsers(
   projectId: number,
   dbClient: EffectiveRoleDbClient
 ): Promise<Map<string, number | null>> {
-  const result = new Map<string, number | null>();
+  const resolutions = await resolveEffectiveProjectAccessForUsers(
+    userIds,
+    projectId,
+    dbClient
+  );
+  return new Map(
+    Array.from(resolutions, ([userId, { roleId }]) => [userId, roleId])
+  );
+}
+
+/**
+ * Same walk as resolveEffectiveProjectRolesForUsers, but also reports which
+ * rung decided each user so callers that display the answer can say where it
+ * came from. A NO_ACCESS row still names its rung with a null roleId.
+ */
+export async function resolveEffectiveProjectAccessForUsers(
+  userIds: string[],
+  projectId: number,
+  dbClient: EffectiveRoleDbClient
+): Promise<Map<string, EffectiveProjectRoleResolution>> {
+  const result = new Map<string, EffectiveProjectRoleResolution>();
   if (userIds.length === 0) return result;
 
   const [users, userPerms, project] = await Promise.all([
@@ -159,10 +189,12 @@ export async function resolveEffectiveProjectRolesForUsers(
     groupPermsByGroupId.set(gp.groupId, list);
   }
 
+  const userMap = new Map(users.map((u) => [u.id, u]));
+
   for (const userId of userIds) {
-    const user = users.find((u) => u.id === userId);
+    const user = userMap.get(userId);
     if (!user || !project) {
-      result.set(userId, null);
+      result.set(userId, { roleId: null, source: null });
       continue;
     }
 
@@ -170,15 +202,21 @@ export async function resolveEffectiveProjectRolesForUsers(
     const userPerm = userPermByUserId.get(userId);
     if (userPerm) {
       if (userPerm.accessType === ProjectAccessType.NO_ACCESS) {
-        result.set(userId, null);
+        result.set(userId, { roleId: null, source: "USER_PERMISSION" });
         continue;
       }
       if (userPerm.accessType === ProjectAccessType.GLOBAL_ROLE) {
-        result.set(userId, user.roleId ?? null);
+        result.set(userId, {
+          roleId: user.roleId ?? null,
+          source: "USER_PERMISSION",
+        });
         continue;
       }
       if (userPerm.accessType === ProjectAccessType.SPECIFIC_ROLE) {
-        result.set(userId, userPerm.roleId ?? null);
+        result.set(userId, {
+          roleId: userPerm.roleId ?? null,
+          source: "USER_PERMISSION",
+        });
         continue;
       }
       // DEFAULT → fall through.
@@ -194,30 +232,39 @@ export async function resolveEffectiveProjectRolesForUsers(
       (p) => p.accessType === ProjectAccessType.SPECIFIC_ROLE
     );
     if (groupSpecific) {
-      result.set(userId, groupSpecific.roleId ?? null);
+      result.set(userId, {
+        roleId: groupSpecific.roleId ?? null,
+        source: "GROUP_PERMISSION",
+      });
       continue;
     }
     const groupGlobal = userGroupPerms.find(
       (p) => p.accessType === ProjectAccessType.GLOBAL_ROLE
     );
     if (groupGlobal) {
-      result.set(userId, user.roleId ?? null);
+      result.set(userId, {
+        roleId: user.roleId ?? null,
+        source: "GROUP_PERMISSION",
+      });
       continue;
     }
 
     // 3. Project default.
     switch (project.defaultAccessType) {
-      case ProjectAccessType.NO_ACCESS:
-        result.set(userId, null);
-        break;
       case ProjectAccessType.GLOBAL_ROLE:
-        result.set(userId, user.roleId ?? null);
+        result.set(userId, {
+          roleId: user.roleId ?? null,
+          source: "PROJECT_DEFAULT",
+        });
         break;
       case ProjectAccessType.SPECIFIC_ROLE:
-        result.set(userId, project.defaultRoleId ?? null);
+        result.set(userId, {
+          roleId: project.defaultRoleId ?? null,
+          source: "PROJECT_DEFAULT",
+        });
         break;
       default:
-        result.set(userId, null);
+        result.set(userId, { roleId: null, source: "PROJECT_DEFAULT" });
     }
   }
 

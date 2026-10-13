@@ -170,6 +170,7 @@ const LEGEND_COLORS = {
  */
 function MatrixCellLegend() {
   const t = useTranslations("projects.matrix");
+  const tCommon = useTranslations("common");
   return (
     <div
       className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground"
@@ -180,7 +181,7 @@ function MatrixCellLegend() {
       <LegendColumn name={t("legendFailedName")} color={LEGEND_COLORS.failed} />
       <span aria-hidden="true">|</span>
       <LegendColumn
-        name={t("legendUntestedName")}
+        name={tCommon("labels.untested")}
         color={LEGEND_COLORS.untested}
       />
       <span className="ms-auto italic">{t("legendClickHint")}</span>

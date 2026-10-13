@@ -36,6 +36,7 @@ const USAGE = `testplanit — TestPlanIt pipeline helpers
 Usage:
   testplanit create-run --project <id> --name <name> [options]
   testplanit complete-run --id <id> [--project <id>]
+  testplanit plan-run [--id <id>] [--execution <id>] [--format json|lines]
 
 Commands:
   create-run      Create a test run and print its ID to stdout. Export the ID
@@ -43,6 +44,10 @@ Commands:
                   to that run instead of creating its own.
   complete-run    Mark a test run done. Run this once, after every
                   invocation reporting into the run has finished.
+  plan-run        Print the automated cases TestPlanIt asked a job to run
+                  (the plan). Defaults to $TESTPLANIT_RUN_ID /
+                  $TESTPLANIT_EXECUTION_ID, which TestPlanIt sets when it
+                  dispatches the job.
 
 Options for create-run:
   --project <id>        Project ID. Defaults to $TESTPLANIT_PROJECT_ID.
@@ -56,6 +61,11 @@ Options for create-run:
 Options for complete-run:
   --id <id>             Test run ID (required).
   --project <id>        Project ID. Read from the run when omitted.
+
+Options for plan-run:
+  --id <id>             Test run ID. Defaults to $TESTPLANIT_RUN_ID.
+  --execution <id>      Execution ID. Defaults to $TESTPLANIT_EXECUTION_ID.
+  --format <format>     json (default) or lines (one selector per case).
 
 Common options:
   --url <url>           TestPlanIt base URL. Defaults to $TESTPLANIT_URL,
@@ -80,6 +90,33 @@ interface ParsedArgs {
  * Parse `--flag value` and `--flag=value` pairs. Repeated flags accumulate, so
  * `--tag a --tag b` yields both values.
  */
+async function planRunCommand(args: ParsedArgs): Promise<string> {
+  const client = buildClient(args);
+  const rawId = firstFlag(args, "id") ?? process.env.TESTPLANIT_RUN_ID;
+  if (!rawId) {
+    throw new TestPlanItError(
+      "No test run. Pass --id or set TESTPLANIT_RUN_ID."
+    );
+  }
+  const rawExecution =
+    firstFlag(args, "execution") ?? process.env.TESTPLANIT_EXECUTION_ID;
+  const plan = await client.getAutomationPlan(
+    parseId(rawId, "Test run ID"),
+    rawExecution ? parseId(rawExecution, "Execution ID") : undefined
+  );
+  const format = (firstFlag(args, "format") ?? "json").toLowerCase();
+  if (format === "lines") {
+    return plan.cases
+      .map((c) => c.selector.fullName || c.title)
+      .filter(Boolean)
+      .join("\n");
+  }
+  if (format !== "json") {
+    throw new TestPlanItError(`Unknown format "${format}"; use json or lines.`);
+  }
+  return JSON.stringify(plan, null, 2);
+}
+
 export function parseArgs(argv: string[]): ParsedArgs {
   const flags = new Map<string, string[]>();
   const positional: string[] = [];
@@ -283,6 +320,8 @@ export async function run(argv: string[]): Promise<string> {
       return createRunCommand(args);
     case "complete-run":
       return completeRunCommand(args);
+    case "plan-run":
+      return planRunCommand(args);
     default:
       throw new TestPlanItError(
         `Unknown command "${command}". Run "testplanit --help" for usage.`

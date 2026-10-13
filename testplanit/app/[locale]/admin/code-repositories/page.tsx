@@ -94,6 +94,16 @@ function CodeRepositoryList() {
     {
       orderBy: queryOrderBy,
       where: queryWhere,
+      include: {
+        projectConfigs: {
+          where: { project: { isDeleted: false } },
+          select: { projectId: true },
+        },
+        executionTargets: {
+          where: { isDeleted: false, project: { isDeleted: false } },
+          select: { projectId: true },
+        },
+      },
     },
     {
       enabled: !!session?.user,
@@ -193,6 +203,7 @@ function CodeRepositoryList() {
         onDelete: handleDeleteClick,
         onToggleStatus: handleToggleStatus,
         tCommon,
+        tGlobal,
         userPreferences,
       }),
     [
@@ -200,6 +211,7 @@ function CodeRepositoryList() {
       handleDeleteClick,
       handleToggleStatus,
       tCommon,
+      tGlobal,
       userPreferences,
     ]
   );

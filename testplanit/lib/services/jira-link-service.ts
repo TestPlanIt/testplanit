@@ -1,18 +1,66 @@
 import { baseDb } from "@/lib/db";
-import { IntegrationProvider } from "~/zenstack/models";
+import { ISSUE_TRACKING_PROVIDERS } from "~/lib/integrations/issueTrackerProviders";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 
-// Supported issue tracking providers (every provider routed through
-// ManageExternalIssues — i.e. all issue trackers except SIMPLE_URL, which has
-// its own ManageSimpleUrlIssues path).
-const ISSUE_TRACKING_PROVIDERS = [
-  IntegrationProvider.JIRA,
-  IntegrationProvider.GITHUB,
-  IntegrationProvider.AZURE_DEVOPS,
-  IntegrationProvider.GITLAB,
-  IntegrationProvider.GITEA,
-  IntegrationProvider.REDMINE,
-  IntegrationProvider.MANTISBT,
-];
+/**
+ * Retire the tracker shell row an unlink may have just orphaned.
+ *
+ * A shell row exists only as the local anchor for a tracker ticket some test
+ * artifact points at, so once nothing points at it there is nothing left to
+ * anchor. Three constraints bound that cleanup, and every unlink path shares
+ * this one implementation of them rather than restating them six times:
+ *
+ *   - It is a soft delete. `Issue.parent` is declared `onDelete: Cascade`, so
+ *     a row delete here would take the whole descendant subtree with it on
+ *     behalf of a caller that asked only to unlink a single artifact.
+ *   - It is scoped to defects, on the read and again on the write. A
+ *     requirement is an authored entity whose lifetime is owned by the
+ *     requirement tree, not by whichever test artifact happens to reference
+ *     it, so it is never link-lifecycle garbage.
+ *   - `children` counts as a reference. A node with descendants beneath it is
+ *     still reachable through the tree and is not an orphan.
+ */
+async function softDeleteOrphanedIssueShell(issueId: number): Promise<void> {
+  const shell = await baseDb.issue.findFirst({
+    where: { id: issueId, ...DEFECT_SCOPE_WHERE },
+    include: {
+      caseIssues: true,
+      testRuns: true,
+      sessions: true,
+      testRunResults: true,
+      sessionResults: true,
+      testRunStepResults: true,
+      children: true,
+    },
+  });
+
+  if (!shell) {
+    return;
+  }
+
+  const remainingReferences =
+    (shell.caseIssues?.length || 0) +
+    (shell.testRuns?.length || 0) +
+    (shell.sessions?.length || 0) +
+    (shell.testRunResults?.length || 0) +
+    (shell.sessionResults?.length || 0) +
+    (shell.testRunStepResults?.length || 0) +
+    (shell.children?.length || 0);
+
+  if (remainingReferences > 0) {
+    return;
+  }
+
+  // updateMany rather than update: the row-kind scope is re-evaluated inside
+  // the write itself, so a row reclassified as a requirement between the read
+  // above and this statement is left alone instead of being retired on the
+  // strength of a stale read.
+  await baseDb.issue.updateMany({
+    where: { id: issueId, ...DEFECT_SCOPE_WHERE },
+    data: { isDeleted: true },
+  });
+}
 
 export class JiraLinkService {
   /**
@@ -51,13 +99,9 @@ export class JiraLinkService {
       }
 
       // Use upsert to create or find the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -133,13 +177,9 @@ export class JiraLinkService {
       }
 
       // Use upsert to create or find the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -267,13 +307,9 @@ export class JiraLinkService {
       }
 
       // Use upsert to create or update the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -437,32 +473,7 @@ export class JiraLinkService {
         where: { caseId: testCaseId, issueId: issue.id },
       });
 
-      // Check if this issue is still linked to other entities
-      const issueWithLinks = await baseDb.issue.findUnique({
-        where: { id: issue.id },
-        include: {
-          caseIssues: true,
-          testRuns: true,
-          sessions: true,
-          testRunResults: true,
-          sessionResults: true,
-          testRunStepResults: true,
-        },
-      });
-
-      const remainingLinks =
-        (issueWithLinks?.caseIssues?.length || 0) +
-        (issueWithLinks?.testRuns?.length || 0) +
-        (issueWithLinks?.sessions?.length || 0) +
-        (issueWithLinks?.testRunResults?.length || 0) +
-        (issueWithLinks?.sessionResults?.length || 0) +
-        (issueWithLinks?.testRunStepResults?.length || 0);
-
-      if (remainingLinks === 0) {
-        await baseDb.issue.delete({
-          where: { id: issue.id },
-        });
-      }
+      await softDeleteOrphanedIssueShell(issue.id);
     } catch (error) {
       console.error("Error unlinking test case from Jira issue:", error);
       throw error;
@@ -500,32 +511,7 @@ export class JiraLinkService {
         },
       });
 
-      // Check if this issue is still linked to other entities
-      const issueWithLinks = await baseDb.issue.findUnique({
-        where: { id: issue.id },
-        include: {
-          caseIssues: true,
-          testRuns: true,
-          sessions: true,
-          testRunResults: true,
-          sessionResults: true,
-          testRunStepResults: true,
-        },
-      });
-
-      const remainingLinks =
-        (issueWithLinks?.caseIssues?.length || 0) +
-        (issueWithLinks?.testRuns?.length || 0) +
-        (issueWithLinks?.sessions?.length || 0) +
-        (issueWithLinks?.testRunResults?.length || 0) +
-        (issueWithLinks?.sessionResults?.length || 0) +
-        (issueWithLinks?.testRunStepResults?.length || 0);
-
-      if (remainingLinks === 0) {
-        await baseDb.issue.delete({
-          where: { id: issue.id },
-        });
-      }
+      await softDeleteOrphanedIssueShell(issue.id);
     } catch (error) {
       console.error("Error unlinking test run from Jira issue:", error);
       throw error;
@@ -563,32 +549,7 @@ export class JiraLinkService {
         },
       });
 
-      // Check if this issue is still linked to other entities
-      const issueWithLinks = await baseDb.issue.findUnique({
-        where: { id: issue.id },
-        include: {
-          caseIssues: true,
-          testRuns: true,
-          sessions: true,
-          testRunResults: true,
-          sessionResults: true,
-          testRunStepResults: true,
-        },
-      });
-
-      const remainingLinks =
-        (issueWithLinks?.caseIssues?.length || 0) +
-        (issueWithLinks?.testRuns?.length || 0) +
-        (issueWithLinks?.sessions?.length || 0) +
-        (issueWithLinks?.testRunResults?.length || 0) +
-        (issueWithLinks?.sessionResults?.length || 0) +
-        (issueWithLinks?.testRunStepResults?.length || 0);
-
-      if (remainingLinks === 0) {
-        await baseDb.issue.delete({
-          where: { id: issue.id },
-        });
-      }
+      await softDeleteOrphanedIssueShell(issue.id);
     } catch (error) {
       console.error("Error unlinking session from Jira issue:", error);
       throw error;
@@ -626,30 +587,7 @@ export class JiraLinkService {
         },
       });
 
-      // Check if this issue is still linked to other entities
-      const issueWithLinks = await baseDb.issue.findUnique({
-        where: { id: issue.id },
-        include: {
-          caseIssues: true,
-          testRuns: true,
-          sessions: true,
-          testRunResults: true,
-          sessionResults: true,
-        },
-      });
-
-      const remainingLinks =
-        (issueWithLinks?.caseIssues?.length || 0) +
-        (issueWithLinks?.testRuns?.length || 0) +
-        (issueWithLinks?.sessions?.length || 0) +
-        (issueWithLinks?.testRunResults?.length || 0) +
-        (issueWithLinks?.sessionResults?.length || 0);
-
-      if (remainingLinks === 0) {
-        await baseDb.issue.delete({
-          where: { id: issue.id },
-        });
-      }
+      await softDeleteOrphanedIssueShell(issue.id);
     } catch (error) {
       console.error("Error unlinking test run result from Jira issue:", error);
       throw error;
@@ -687,30 +625,7 @@ export class JiraLinkService {
         },
       });
 
-      // Check if this issue is still linked to other entities
-      const issueWithLinks = await baseDb.issue.findUnique({
-        where: { id: issue.id },
-        include: {
-          caseIssues: true,
-          testRuns: true,
-          sessions: true,
-          testRunResults: true,
-          sessionResults: true,
-        },
-      });
-
-      const remainingLinks =
-        (issueWithLinks?.caseIssues?.length || 0) +
-        (issueWithLinks?.testRuns?.length || 0) +
-        (issueWithLinks?.sessions?.length || 0) +
-        (issueWithLinks?.testRunResults?.length || 0) +
-        (issueWithLinks?.sessionResults?.length || 0);
-
-      if (remainingLinks === 0) {
-        await baseDb.issue.delete({
-          where: { id: issue.id },
-        });
-      }
+      await softDeleteOrphanedIssueShell(issue.id);
     } catch (error) {
       console.error("Error unlinking session result from Jira issue:", error);
       throw error;
@@ -760,13 +675,9 @@ export class JiraLinkService {
       const projectId = testRunResult.testRunCase.testRun.projectId;
 
       // Use upsert to create or update the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -849,13 +760,9 @@ export class JiraLinkService {
       const projectId = sessionResult.session.projectId;
 
       // Use upsert to create or update the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -1051,13 +958,9 @@ export class JiraLinkService {
         testRunStepResult.testRunResult.testRunCase.testRun.projectId;
 
       // Use upsert to create or update the issue atomically
-      const issue = await baseDb.issue.upsert({
-        where: {
-          externalId_integrationId: {
-            externalId: jiraIssueId,
-            integrationId: integrationId,
-          },
-        },
+      const issue = await upsertLinkedIssueShell(baseDb, {
+        externalId: jiraIssueId,
+        integrationId: integrationId,
         create: {
           name: jiraIssueKey,
           title: issueTitle || jiraIssueKey,
@@ -1132,32 +1035,7 @@ export class JiraLinkService {
         },
       });
 
-      // Check if this issue is still linked to other entities
-      const issueWithLinks = await baseDb.issue.findUnique({
-        where: { id: issue.id },
-        include: {
-          caseIssues: true,
-          testRuns: true,
-          sessions: true,
-          testRunResults: true,
-          sessionResults: true,
-          testRunStepResults: true,
-        },
-      });
-
-      const remainingLinks =
-        (issueWithLinks?.caseIssues?.length || 0) +
-        (issueWithLinks?.testRuns?.length || 0) +
-        (issueWithLinks?.sessions?.length || 0) +
-        (issueWithLinks?.testRunResults?.length || 0) +
-        (issueWithLinks?.sessionResults?.length || 0) +
-        (issueWithLinks?.testRunStepResults?.length || 0);
-
-      if (remainingLinks === 0) {
-        await baseDb.issue.delete({
-          where: { id: issue.id },
-        });
-      }
+      await softDeleteOrphanedIssueShell(issue.id);
     } catch (error) {
       console.error(
         "Error unlinking test run step result from Jira issue:",
@@ -1227,6 +1105,10 @@ export class JiraLinkService {
     issueData: any
   ): Promise<void> {
     try {
+      // Deliberately NOT routed through upsertLinkedIssueShell (PROV-06):
+      // this write touches only the `data` JSON blob, which is not one of
+      // LOCKED_ISSUE_FIELDS, so migrating it would add churn with no
+      // security value.
       await baseDb.issue.updateMany({
         where: {
           externalId: jiraIssueId,

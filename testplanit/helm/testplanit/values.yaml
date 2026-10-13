@@ -208,7 +208,7 @@ ingress:
     # secretName holding the cert for `host`. With cert-manager, also add the
     # issuer annotation above and set this to the secret cert-manager will fill.
     secretName: ""
-  # When bundled MinIO is used, expose it for browser file access at this path
+  # When the bundled storage is used, expose it for browser file access at this path
   # on the same host. Ignored when objectStorage.minio.enabled=false.
   minioPath: /files
 
@@ -217,6 +217,13 @@ ingress:
 # -----------------------------------------------------------------------------
 config:
   nodeOptions: "--max-old-space-size=4096"
+  # Per-file ceiling in MB for attachments and inline document images (project
+  # icons and avatars are fixed UI thumbnails and ignore this). Drives the app's
+  # own check and, via the container entrypoint, Next's server-action body
+  # limit — so it takes effect on a restart, with no image rebuild.
+  # Keep ingress.annotations' nginx.ingress.kubernetes.io/proxy-body-size at or
+  # above this value, or the proxy rejects a large upload before the app sees it.
+  uploadMaxMb: 10
   # Authentication surface. Defaults suit an internal enterprise install
   # (password auth on, open signup off). Magic Link needs SMTP configured.
   auth:
@@ -246,7 +253,7 @@ secrets:
   # If set, the chart creates NO Secret and every secret env is read from this
   # pre-existing Secret (e.g. managed by Vault / External Secrets / SOPS). It
   # must contain all required keys — see the chart README. When using bundled
-  # Postgres/MinIO with an existingSecret, it must also carry POSTGRES_PASSWORD /
+  # Postgres/storage with an existingSecret, it must also carry POSTGRES_PASSWORD /
   # MINIO_ROOT_USER / MINIO_ROOT_PASSWORD.
   existingSecret: ""
 
@@ -364,12 +371,18 @@ elasticsearch:
     node: "" # https://your-opensearch.region.es.amazonaws.com:9200
 
 # -----------------------------------------------------------------------------
-# Object storage (attachments) — bundled MinIO OR external S3
+# Object storage (attachments) — bundled RustFS OR external S3
 # -----------------------------------------------------------------------------
 objectStorage:
+  # Bundled S3-compatible storage. Runs RustFS (MinIO no longer publishes
+  # images); the "minio" key is kept so existing values files keep working.
+  # RustFS serves existing MinIO data in place but writes its own metadata, so
+  # snapshot the volume before upgrading from a MinIO release of this chart.
   minio:
     enabled: true
-    image: minio/minio:latest
+    image: rustfs/rustfs:1.0.0
+    # Creates the bucket and its public-read and CORS rules.
+    initImage: amazon/aws-cli:2.37.4
     imagePullPolicy: IfNotPresent
     auth:
       rootUser: "minioadmin"
@@ -393,7 +406,7 @@ objectStorage:
     affinity: {}
   # Used when minio.enabled=false — external S3-compatible storage.
   external:
-    # Empty endpoint => AWS S3. Set for S3-compatible services (MinIO, OCI, etc.).
+    # Empty endpoint => AWS S3. Set for S3-compatible services (RustFS, OCI, etc.).
     endpoint: ""
     # Browser-facing URL for downloading attachments (empty => AWS S3 default).
     publicEndpoint: ""

@@ -27,7 +27,7 @@ export function registerSessionResultsList(
     "testplanit_session_results_list",
     {
       description:
-        "List session results with cursor pagination. Filters: sessionId, createdById (executor user id, string), statusId. NOTE: there is NO testCase filter — `SessionResults` has no `testCaseId` column (sessions are exploratory and not case-linked; R4 / Pitfall 4 / SESS-03 schema gap). Each row carries denormalized status / createdBy (the executor) / session summary, plus resultData extracted to plain text via ProseMirror. Ordered by createdAt DESC then id DESC (BL-04 deterministic). isDeleted:false defense-in-depth. (per SESS-03)",
+        "List session results with cursor pagination. Filters: sessionId, createdById (executor user id, string), statusId. NOTE: there is NO testCase filter — `SessionResults` has no `testCaseId` column (sessions are exploratory and not case-linked). Each row carries denormalized status / createdBy (the executor) / session summary, plus resultData as Markdown (resultDataText). Ordered by createdAt DESC then id DESC. isDeleted:false defense-in-depth.",
       inputSchema: {
         sessionId: z.number().int().positive().optional(),
         createdById: z.string().min(1).optional(),
@@ -45,7 +45,11 @@ export function registerSessionResultsList(
         // `testCaseId` assignment were ever introduced. The input schema does
         // not declare `testCaseId` either; zod's raw-shape validator strips
         // unknown fields before this handler runs.
-        const where: SessionResultsWhereInput = { isDeleted: false };
+        // Results of a trashed session are hidden with it.
+        const where: SessionResultsWhereInput = {
+          isDeleted: false,
+          session: { isDeleted: false },
+        };
         if (input.sessionId !== undefined) where.sessionId = input.sessionId;
         if (input.createdById) where.createdById = input.createdById;
         if (input.statusId !== undefined) where.statusId = input.statusId;

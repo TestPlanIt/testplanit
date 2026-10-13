@@ -271,7 +271,7 @@ describe("resolveCustomFields (template-scoped)", () => {
     expect(value).toEqual([10, 12]);
   });
 
-  it("WR-02: Multi-Select with non-array value throws 422", async () => {
+  it("takes a single Multi-Select option as a one-item list, as the host does", async () => {
     zenstackMock.mockResolvedValueOnce(
       asTemplate([
         makeField({
@@ -283,13 +283,52 @@ describe("resolveCustomFields (template-scoped)", () => {
       ]),
     );
 
+    const [resolved] = await resolveCustomFields({ Tags: "ALPHA" }, TEMPLATE_ID, env);
+    expect(resolved!.value).toEqual([10]);
+  });
+
+  it("stores scalar values in the web UI's shapes", async () => {
+    zenstackMock.mockResolvedValueOnce(
+      asTemplate([
+        makeField({ id: 1, displayName: "Regression", type: "Checkbox" }),
+        makeField({ id: 2, displayName: "Points", type: "Integer" }),
+        makeField({ id: 3, displayName: "Due", type: "Date" }),
+        makeField({ id: 4, displayName: "Ref", type: "Text String" }),
+      ]),
+    );
+
+    const result = await resolveCustomFields(
+      { Regression: "false", Points: "5", Due: "2026-09-29", Ref: 42 },
+      TEMPLATE_ID,
+      env,
+    );
+
+    expect(Object.fromEntries(result.map((r) => [r.name, r.value]))).toEqual({
+      // Boolean("false") would be true; the string must store unchecked.
+      Regression: false,
+      Points: 5,
+      Due: "2026-09-29T12:00:00.000Z",
+      Ref: "42",
+    });
+  });
+
+  it.each([
+    ["Integer", "Points", 3.5],
+    ["Number", "Points", "lots"],
+    ["Checkbox", "Points", "maybe"],
+    ["Date", "Points", "next week"],
+    ["Link", "Points", "javascript:alert(1)"],
+  ])("refuses a %s value it cannot store, naming only the field", async (type, name, value) => {
+    zenstackMock.mockResolvedValueOnce(
+      asTemplate([makeField({ id: 1, displayName: name, type })]),
+    );
     await expect(
-      resolveCustomFields({ Tags: "alpha" }, TEMPLATE_ID, env),
+      resolveCustomFields({ [name]: value }, TEMPLATE_ID, env),
     ).rejects.toSatisfy((err: unknown) => {
-      if (!(err instanceof TestPlanItHttpError)) return false;
-      expect(err.statusCode).toBe(422);
-      expect(err.message).toContain("Tags");
-      expect(err.message).toContain("array");
+      expect(err).toBeInstanceOf(TestPlanItHttpError);
+      expect((err as TestPlanItHttpError).statusCode).toBe(422);
+      expect((err as Error).message).toContain(name);
+      expect((err as Error).message).not.toContain(String(value));
       return true;
     });
   });

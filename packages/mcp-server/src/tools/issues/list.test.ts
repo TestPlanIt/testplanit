@@ -223,4 +223,75 @@ describe("registerIssuesList", () => {
       .text;
     expect(text).not.toContain("tpi_test_secret");
   });
+
+  // ── requirement-role scope (HYG-01) ─────────────────────────────────────
+
+  it("excludes requirements by default: where carries isRequirement === false", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_issues_list",
+      arguments: { projectId: 7 },
+    });
+    const where = getCallBody(0)?.where as Record<string, unknown>;
+    expect(where.isRequirement).toBe(false);
+  });
+
+  it("includeRequirements: true widens the query — where carries no isRequirement key", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_issues_list",
+      arguments: { projectId: 7, includeRequirements: true },
+    });
+    const where = getCallBody(0)?.where as Record<string, unknown>;
+    expect("isRequirement" in where).toBe(false);
+  });
+
+  it("includeRequirements: false behaves identically to omitting it", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_issues_list",
+      arguments: { projectId: 7, includeRequirements: false },
+    });
+    const where = getCallBody(0)?.where as Record<string, unknown>;
+    expect(where.isRequirement).toBe(false);
+  });
+
+  it("the role predicate coexists with every other filter", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_issues_list",
+      arguments: {
+        projectId: 7,
+        externalSystem: "JIRA",
+        status: "Open",
+        externalStatus: "Done",
+        cursor: 100,
+      },
+    });
+    const body = getCallBody(0);
+    const where = body?.where as Record<string, unknown>;
+    expect(where.isRequirement).toBe(false);
+    expect((where.integration as { provider?: string }).provider).toBe(
+      "JIRA",
+    );
+    expect(where.status).toBe("Open");
+    expect(where.externalStatus).toEqual({
+      contains: "Done",
+      mode: "insensitive",
+    });
+    expect(body?.cursor).toEqual({ id: 100 });
+  });
+
+  it("the description states the requirement-exclusion default and the opt-in", async () => {
+    const { client } = await setupClient();
+    const tools = await client.listTools();
+    const tool = tools.tools.find(
+      (t) => t.name === "testplanit_issues_list",
+    );
+    expect(tool?.description).toMatch(/includeRequirements/);
+  });
 });

@@ -299,6 +299,54 @@ describe("AnthropicAdapter", () => {
     });
   });
 
+  it("reads the first text block, not the first block, on a thinking model", async () => {
+    // Adaptive thinking puts reasoning in content[0]; the answer follows it.
+    const config = createTestConfig();
+    const adapter = new AnthropicAdapter(config);
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: "msg_thinking",
+        content: [
+          { type: "thinking", thinking: "weighing the options" },
+          { type: "text", text: "The answer." },
+        ],
+        model: "claude-3-5-sonnet-20241022",
+        stop_reason: "end_turn",
+        usage: { input_tokens: 5, output_tokens: 3 },
+      }),
+    });
+
+    const response = await adapter.chat({
+      messages: [{ role: "user", content: "Hello" }],
+    } as LlmRequest);
+
+    expect(response.content).toBe("The answer.");
+  });
+
+  it("returns an empty string when the reply carries no text block", async () => {
+    const config = createTestConfig();
+    const adapter = new AnthropicAdapter(config);
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: "msg_no_text",
+        content: [{ type: "thinking", thinking: "still thinking" }],
+        model: "claude-3-5-sonnet-20241022",
+        stop_reason: "max_tokens",
+        usage: { input_tokens: 5, output_tokens: 1 },
+      }),
+    });
+
+    const response = await adapter.chat({
+      messages: [{ role: "user", content: "Hello" }],
+    } as LlmRequest);
+
+    expect(response.content).toBe("");
+  });
+
   describe("testConnection", () => {
     it("should return true on successful connection", async () => {
       const config = createTestConfig();
@@ -528,6 +576,49 @@ describe("AnthropicAdapter", () => {
       expect(thirdBody.temperature).toBeUndefined();
     });
 
+    it("retries without temperature when a LiteLLM proxy rejects it", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          type: "error",
+          error: {
+            type: "invalid_request_error",
+            message:
+              "litellm.UnsupportedParamsError: us.anthropic.claude-opus-5 does not support temperature=0.7. Only temperature=1 is supported. To drop unsupported params, set `litellm.drop_params = True`.",
+          },
+        }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "msg_lite",
+          content: [{ type: "text", text: "Hello via LiteLLM" }],
+          model: "claude-opus-5",
+          stop_reason: "end_turn",
+          usage: { input_tokens: 10, output_tokens: 15 },
+        }),
+      });
+
+      const response = await adapter.chat({
+        messages: [{ role: "user", content: "Hello" }],
+        model: "claude-opus-5-litellm",
+        userId: "user-123",
+        feature: "test",
+      });
+
+      expect(response.content).toBe("Hello via LiteLLM");
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).temperature).toBe(0.7);
+      expect(
+        JSON.parse(mockFetch.mock.calls[1][1].body).temperature
+      ).toBeUndefined();
+    });
+
     it("should not retry for non-temperature errors", async () => {
       const config = createTestConfig();
       const adapter = new AnthropicAdapter(config);
@@ -658,10 +749,36 @@ describe("AnthropicAdapter", () => {
       expect(result.unsupportedParams).toEqual(["temperature"]);
       expect(result.probedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
 
-      // Probe sent temperature so the error path was actually exercised
+      // Probe sent a non-default temperature so both Anthropic's own
+      // rejection and a LiteLLM proxy's "only temperature=1" rejection fire
       const probeBody = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(probeBody.temperature).toBe(1);
+      expect(probeBody.temperature).toBe(0.5);
       expect(probeBody.max_tokens).toBe(1);
+    });
+
+    it("recognises a LiteLLM proxy's unsupported-temperature wording", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          type: "error",
+          error: {
+            type: "invalid_request_error",
+            message:
+              "litellm.UnsupportedParamsError: us.anthropic.claude-opus-5 does not support temperature=0.5. Only temperature=1 is supported. To drop unsupported params, set `litellm.drop_params = True`.",
+          },
+        }),
+      });
+
+      const result = await adapter.probeModelCapabilities(
+        "claude-opus-5-probe"
+      );
+
+      expect(result.unsupportedParams).toEqual(["temperature"]);
     });
 
     it("returns empty unsupportedParams when the probe succeeds", async () => {

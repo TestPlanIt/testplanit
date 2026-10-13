@@ -13,7 +13,11 @@ export interface MultiLineSeries {
     formattedValue: string;
   }[];
   color?: string;
+  /** Drawn heavier and dashed — the total line above the per-series lines. */
+  emphasis?: boolean;
 }
+
+const EMPHASIS_DASH = "8 4";
 
 interface ReportMultiLineChartProps {
   data: MultiLineSeries[];
@@ -137,9 +141,10 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       .attr("d", (d) => line(d.values))
       .style("fill", "none")
       .style("stroke", (d) => d.color || color(d.name))
-      .style("stroke-width", 2);
+      .style("stroke-width", (d) => (d.emphasis ? 3 : 2));
 
-    // Animate each line drawing with stagger
+    // Animate each line drawing with stagger. The draw effect borrows the
+    // dash array, so an emphasized line takes its dashes once it has drawn.
     linePaths.each(function (d, i) {
       const path = d3.select(this);
       const totalLength = (this as SVGPathElement).getTotalLength();
@@ -151,7 +156,14 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
         .delay(i * 200) // Stagger each line
         .duration(1000)
         .ease(d3.easeQuadOut)
-        .attr("stroke-dashoffset", 0);
+        .attr("stroke-dashoffset", 0)
+        .on("end", function () {
+          if (d.emphasis) {
+            d3.select(this)
+              .attr("stroke-dasharray", EMPHASIS_DASH)
+              .attr("stroke-dashoffset", null);
+          }
+        });
     });
 
     // Create dots with staggered animation
@@ -261,7 +273,7 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
               <div
                 style={{
                   width: "12px",
-                  height: "12px",
+                  height: series.emphasis ? "4px" : "12px",
                   backgroundColor: seriesColor as string,
                   borderRadius: "2px",
                   flexShrink: 0,

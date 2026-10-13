@@ -13,6 +13,11 @@ import {
   Sparkles,
   TrendingUp,
   Users,
+  ClipboardX,
+  ClipboardList,
+  GitCompareArrows,
+  MapPin,
+  Radar,
 } from "lucide-react";
 
 export interface ReportType {
@@ -121,6 +126,30 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
   {
+    id: "requirement-coverage-gaps",
+    label: tReports("reportTypes.requirementCoverageGaps.label"),
+    description: tReports("reportTypes.requirementCoverageGaps.description"),
+    icon: ClipboardX,
+    endpoint: "/api/report-builder/requirement-coverage-gaps",
+    isPreBuilt: true,
+  },
+  {
+    id: "requirement-traceability",
+    label: tReports("reportTypes.requirementTraceability.label"),
+    description: tReports("reportTypes.requirementTraceability.description"),
+    icon: ClipboardList,
+    endpoint: "/api/report-builder/requirement-traceability",
+    isPreBuilt: true,
+  },
+  {
+    id: "requirement-coverage-changes",
+    label: tReports("reportTypes.requirementCoverageChanges.label"),
+    description: tReports("reportTypes.requirementCoverageChanges.description"),
+    icon: GitCompareArrows,
+    endpoint: "/api/report-builder/requirement-coverage-changes",
+    isPreBuilt: true,
+  },
+  {
     id: "iteration-matrix",
     label: tReports("reportTypes.iterationMatrix.label"),
     description: tReports("reportTypes.iterationMatrix.description"),
@@ -134,6 +163,22 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("reportTypes.testCaseHealth.description"),
     icon: HeartPulse,
     endpoint: "/api/report-builder/test-case-health",
+    isPreBuilt: true,
+  },
+  {
+    id: "impact-analysis",
+    label: tReports("reportTypes.impactAnalysis.label"),
+    description: tReports("reportTypes.impactAnalysis.description"),
+    icon: Radar,
+    endpoint: "/api/report-builder/impact-analysis",
+    isPreBuilt: true,
+  },
+  {
+    id: "code-pin-coverage",
+    label: tReports("reportTypes.codePinCoverage.label"),
+    description: tReports("reportTypes.codePinCoverage.description"),
+    icon: MapPin,
+    endpoint: "/api/report-builder/code-pin-coverage",
     isPreBuilt: true,
   },
 ];
@@ -204,6 +249,24 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
   {
+    id: "cross-project-impact-analysis",
+    label: tReports("crossProjectReportTypes.impactAnalysis.label"),
+    description: tReports("crossProjectReportTypes.impactAnalysis.description"),
+    icon: Radar,
+    endpoint: "/api/report-builder/cross-project-impact-analysis",
+    isPreBuilt: true,
+  },
+  {
+    id: "cross-project-code-pin-coverage",
+    label: tReports("crossProjectReportTypes.codePinCoverage.label"),
+    description: tReports(
+      "crossProjectReportTypes.codePinCoverage.description"
+    ),
+    icon: MapPin,
+    endpoint: "/api/report-builder/cross-project-code-pin-coverage",
+    isPreBuilt: true,
+  },
+  {
     id: "cross-project-issue-test-coverage",
     label: tReports("crossProjectReportTypes.issueTestCoverage.label"),
     description: tReports(
@@ -211,6 +274,26 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     ),
     icon: Bug,
     endpoint: "/api/report-builder/cross-project-issue-test-coverage",
+    isPreBuilt: true,
+  },
+  {
+    id: "cross-project-requirement-coverage-gaps",
+    label: tReports("crossProjectReportTypes.requirementCoverageGaps.label"),
+    description: tReports(
+      "crossProjectReportTypes.requirementCoverageGaps.description"
+    ),
+    icon: ClipboardX,
+    endpoint: "/api/report-builder/cross-project-requirement-coverage-gaps",
+    isPreBuilt: true,
+  },
+  {
+    id: "cross-project-requirement-traceability",
+    label: tReports("crossProjectReportTypes.requirementTraceability.label"),
+    description: tReports(
+      "crossProjectReportTypes.requirementTraceability.description"
+    ),
+    icon: ClipboardList,
+    endpoint: "/api/report-builder/cross-project-requirement-traceability",
     isPreBuilt: true,
   },
   {
@@ -222,3 +305,16 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
 ];
+
+/**
+ * The picker's display order: alphabetical by the LOCALIZED label
+ * (operator direction 2026-09-01), so the registry arrays above stay in
+ * registration order and every locale reads its own alphabet. Returns a
+ * new array; `localeCompare` keeps diacritics and case sane where a raw
+ * codepoint sort would not.
+ */
+export const sortReportTypesByLabel = (
+  reportTypes: ReportType[],
+  locale: string
+): ReportType[] =>
+  [...reportTypes].sort((a, b) => a.label.localeCompare(b.label, locale));

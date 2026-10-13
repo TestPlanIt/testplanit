@@ -1497,12 +1497,23 @@ export default class TestPlanItReporter extends WDIOReporter {
       const runCaseKey = `${this.state.testRunId}_${repositoryCaseId}`;
 
       if (!this.state.testRunCaseMap.has(runCaseKey)) {
-        const testRunCase = await this.client.findOrAddTestCaseToRun({
-          testRunId: this.state.testRunId,
-          repositoryCaseId,
-        });
-        this.state.testRunCaseMap.set(runCaseKey, testRunCase.id);
-        this.log('Added case to run:', testRunCase.id);
+        try {
+          const testRunCase = await this.client.findOrAddTestCaseToRun({
+            testRunId: this.state.testRunId,
+            repositoryCaseId,
+          });
+          this.state.testRunCaseMap.set(runCaseKey, testRunCase.id);
+          this.log('Added case to run:', testRunCase.id);
+        } catch (err) {
+          // A pinned run may have its composition locked (the team froze the
+          // case list before dispatching to CI). The result still belongs to
+          // the run, so report it rather than dropping it.
+          this.state.testRunCaseMap.set(runCaseKey, 0);
+          this.log(
+            'Could not add case to run (composition locked?); reporting the result anyway:',
+            err instanceof Error ? err.message : String(err)
+          );
+        }
       }
 
       // Get status ID for the JUnit result

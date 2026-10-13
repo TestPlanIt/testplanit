@@ -67,16 +67,18 @@ async function ensureSsoProvider(
 }
 
 /**
- * Delete an SSO provider by ID using an authenticated browser context.
+ * Delete an SSO provider by ID. Takes the admin `request` fixture rather than
+ * `page.request`: by cleanup time the page's cookies usually belong to the
+ * non-admin user the test signed in as, and the delete is admin-only.
  */
 async function deleteSsoProvider(
-  page: import("@playwright/test").Page,
+  request: import("@playwright/test").APIRequestContext,
   baseURL: string,
   providerId: string
 ): Promise<void> {
-  await page.request
-    .post(`${baseURL}/api/model/ssoProvider/delete`, {
-      data: { where: { id: providerId } },
+  await request
+    .delete(`${baseURL}/api/model/ssoProvider/delete`, {
+      params: { q: JSON.stringify({ where: { id: providerId } }) },
     })
     .catch(() => {});
 }
@@ -111,9 +113,15 @@ async function signInAsAdmin(
  * some tests need to make admin API calls. Instead, each test clears
  * browser cookies as needed after the setup phase.
  */
+// Run this file's tests in order on one worker: ensureSsoProvider reuses an
+// enabled provider of the same type, so a parallel test's cleanup could
+// delete the provider this one is about to sign in with.
+test.describe.configure({ mode: "default" });
+
 test.describe("SSO and Magic Link", () => {
   test("SSO Google login via mocked OAuth callback", async ({
     page,
+    request,
     api,
     baseURL,
   }) => {
@@ -226,13 +234,14 @@ test.describe("SSO and Magic Link", () => {
         // Sign in as admin again to delete the provider
         await page.context().clearCookies();
         await signInAsAdmin(page, baseURL!);
-        await deleteSsoProvider(page, baseURL!, providerResult!.id);
+        await deleteSsoProvider(request, baseURL!, providerResult!.id);
       }
     }
   });
 
   test("SSO Microsoft login via mocked OAuth callback", async ({
     page,
+    request,
     api,
     baseURL,
   }) => {
@@ -343,13 +352,14 @@ test.describe("SSO and Magic Link", () => {
       if (providerResult!.created) {
         await page.context().clearCookies();
         await signInAsAdmin(page, baseURL!);
-        await deleteSsoProvider(page, baseURL!, providerResult!.id);
+        await deleteSsoProvider(request, baseURL!, providerResult!.id);
       }
     }
   });
 
   test("SSO SAML login via mocked SAML assertion", async ({
     page,
+    request,
     api,
     baseURL,
   }) => {
@@ -409,7 +419,7 @@ test.describe("SSO and Magic Link", () => {
 
     if (!samlConfigRes.ok()) {
       // Clean up provider if config creation failed
-      await deleteSsoProvider(page, baseURL!, samlProviderId);
+      await deleteSsoProvider(request, baseURL!, samlProviderId);
       test.skip(true, "Could not create SAML configuration for test");
       return;
     }
@@ -494,7 +504,7 @@ test.describe("SSO and Magic Link", () => {
       // so we need to re-auth. Use goto carefully to avoid aborted navigation)
       try {
         await signInAsAdmin(page, baseURL!);
-        await deleteSsoProvider(page, baseURL!, samlProviderId);
+        await deleteSsoProvider(request, baseURL!, samlProviderId);
       } catch {
         // Ignore cleanup errors - the test result is what matters
       }
@@ -524,6 +534,7 @@ test.describe("SSO and Magic Link", () => {
       password: testPassword,
     });
     const userId = userResult.data.id;
+    let providerResult: Awaited<ReturnType<typeof ensureSsoProvider>> = null;
 
     try {
       // Sign in as admin to insert the verificationToken via authenticated API
@@ -534,7 +545,13 @@ test.describe("SSO and Magic Link", () => {
       // and /api/auth/callback/email returns "not supported". Doing this
       // after admin sign-in (the API requires admin) and before the email-
       // provider availability check below.
-      await ensureSsoProvider(page, baseURL!, "MAGIC_LINK", "Magic Link", {});
+      providerResult = await ensureSsoProvider(
+        page,
+        baseURL!,
+        "MAGIC_LINK",
+        "Magic Link",
+        {}
+      );
 
       // Confirm the email provider is available — if the env doesn't have
       // EMAIL_SERVER_* configured, NextAuth still won't register it and we
@@ -609,11 +626,15 @@ test.describe("SSO and Magic Link", () => {
       });
     } finally {
       await api.deleteUser(userId);
+      if (providerResult?.created) {
+        await deleteSsoProvider(request, baseURL!, providerResult.id);
+      }
     }
   });
 
   test("Magic link UI shows success message after email submission", async ({
     page,
+    request,
     baseURL,
   }) => {
     const timestamp = Date.now();
@@ -680,7 +701,7 @@ test.describe("SSO and Magic Link", () => {
       if (providerResult?.created) {
         await page.context().clearCookies();
         await signInAsAdmin(page, baseURL!);
-        await deleteSsoProvider(page, baseURL!, providerResult.id);
+        await deleteSsoProvider(request, baseURL!, providerResult.id);
       }
     }
   });

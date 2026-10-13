@@ -17,6 +17,7 @@ enum ApplicationArea {
   ClosedTestRuns = "ClosedTestRuns",
   TestRunResults = "TestRunResults",
   TestRunResultRestrictedFields = "TestRunResultRestrictedFields",
+  AutomatedExecution = "AutomatedExecution",
   Sessions = "Sessions",
   SessionsRestrictedFields = "SessionsRestrictedFields",
   ClosedSessions = "ClosedSessions",
@@ -24,8 +25,6 @@ enum ApplicationArea {
   Tags = "Tags",
   SharedSteps = "SharedSteps",
   Issues = "Issues",
-  IssueIntegration = "IssueIntegration",
-  Forecasting = "Forecasting",
   Reporting = "Reporting",
   Settings = "Settings",
 }
@@ -140,6 +139,11 @@ const mockAllAreaPermissions: AllAreaPermissions = {
     canDelete: false,
     canClose: false,
   },
+  [ApplicationArea.AutomatedExecution]: {
+    canAddEdit: true,
+    canDelete: false,
+    canClose: false,
+  },
   [ApplicationArea.Sessions]: {
     canAddEdit: true,
     canDelete: false,
@@ -170,16 +174,6 @@ const mockAllAreaPermissions: AllAreaPermissions = {
     canAddEdit: true,
     canDelete: false,
     canClose: true,
-  },
-  [ApplicationArea.IssueIntegration]: {
-    canAddEdit: false,
-    canDelete: false,
-    canClose: false,
-  },
-  [ApplicationArea.Forecasting]: {
-    canAddEdit: true,
-    canDelete: false,
-    canClose: false,
   },
   [ApplicationArea.Reporting]: {
     canAddEdit: false,

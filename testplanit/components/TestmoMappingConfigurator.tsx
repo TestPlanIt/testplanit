@@ -4,7 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { ColorPicker } from "@/components/ColorPicker";
 import { FieldIconPicker } from "@/components/FieldIconPicker";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -3641,7 +3641,7 @@ function StatusMappingSection({
             return (
               <TableRow key={status.id}>
                 <TableCell className="font-medium">
-                  <StatusDotDisplay
+                  <StatusDisplay
                     name={status.name}
                     color={status.colorHex ?? DEFAULT_STATUS_COLOR}
                   />
@@ -3731,7 +3731,7 @@ function StatusMappingSection({
                                 value={option.value}
                               >
                                 <div className="flex items-center gap-2">
-                                  <StatusDotDisplay
+                                  <StatusDisplay
                                     name={option.name}
                                     color={
                                       option.colorHex ?? DEFAULT_STATUS_COLOR
@@ -3751,7 +3751,7 @@ function StatusMappingSection({
                   ) : (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-3">
-                        <StatusDotDisplay
+                        <StatusDisplay
                           name={nameValue || status.name}
                           color={selectedColorHex}
                         />

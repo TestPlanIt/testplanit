@@ -326,7 +326,7 @@ describe("CopyMoveDialog", () => {
 
     // Radio buttons for copy and move
     expect(
-      screen.getByRole("radio", { name: /operationCopy/i })
+      screen.getByRole("radio", { name: /actions\.copy/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("radio", { name: /operationMove/i })
@@ -583,6 +583,20 @@ describe("CopyMoveDialog", () => {
 
     // Verify reset was NOT called when we clicked Go (step advanced to progress)
     expect(mockJobState.reset).not.toHaveBeenCalled();
+  });
+
+  it("calls onComplete once when the job completes", () => {
+    const onComplete = vi.fn();
+    const { rerender } = render(
+      <CopyMoveDialog {...DEFAULT_PROPS} onComplete={onComplete} />
+    );
+    expect(onComplete).not.toHaveBeenCalled();
+
+    mockJobState.status = "completed";
+    rerender(<CopyMoveDialog {...DEFAULT_PROPS} onComplete={onComplete} />);
+    rerender(<CopyMoveDialog {...DEFAULT_PROPS} onComplete={() => {}} />);
+
+    expect(onComplete).toHaveBeenCalledOnce();
   });
 
   // Test 16: Dialog close when idle calls reset

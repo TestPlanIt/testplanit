@@ -1,0 +1,364 @@
+import { z } from "zod";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { withAuditGuc, type GucPayload } from "~/lib/audit/gucContext";
+import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
+import { baseDb } from "~/lib/db";
+import type { DbClient } from "~/lib/zenstack";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
+import { getExecutionDispatchQueue } from "~/lib/queues";
+import { JOB_DISPATCH_EXECUTION } from "~/lib/queueNames";
+import { captureAuditEvent } from "~/lib/services/auditLog";
+import { promoteRunToHybrid } from "~/lib/services/hybridRunProjection";
+import { resolveConfigurationParams } from "./configurationParams";
+import { dispatchExecution } from "./dispatch";
+import {
+  describeInputError,
+  normalizeInputs,
+  validateCustomInputs,
+} from "./inputs";
+import { describeParamInputs, normalizeParamSchema } from "./params";
+import { mergeRunMetadataIntoDoc, runMetadataFromParams } from "./runMetadata";
+import { buildAutomationPlan } from "./plan";
+import { checkDispatchRateLimit } from "./rateLimit";
+import {
+  emitExecutionEvent,
+  EXECUTION_REQUESTED_EVENT,
+  findActiveExecution,
+  publishExecutionChanged,
+} from "./service";
+
+/**
+ * Create a TestRunExecution for a run and hand it to the dispatch worker.
+ * Shared by the run-level execute route and the ad-hoc case route.
+ *
+ * Inside one audited transaction, with the run row locked: refuse a completed
+ * run, refuse a second active execution, refuse an empty selection, promote
+ * a REGULAR run to HYBRID, insert the PENDING row and emit the requested
+ * event. After commit, enqueue the dispatch (or dispatch inline when no
+ * queue is available, e.g. single-pod dev without Valkey).
+ */
+
+export const executeBodySchema = z.object({
+  targetId: z.number().int().positive(),
+  ref: z.string().trim().min(1).max(255).optional(),
+  caseIds: z.array(z.number().int().positive()).max(5000).optional(),
+  inputs: z.record(z.string(), z.string().max(1000)).optional(),
+});
+
+export type ExecuteBody = z.infer<typeof executeBodySchema>;
+
+export type RequestExecutionErrorCode =
+  | "INVALID_INPUTS"
+  | "TARGET_NOT_FOUND"
+  | "TARGET_DISABLED"
+  | "RATE_LIMITED"
+  | "RUN_NOT_FOUND"
+  | "RUN_COMPLETED"
+  | "EXECUTION_IN_PROGRESS"
+  | "NO_AUTOMATED_CASES";
+
+export type RequestExecutionResult =
+  | {
+      ok: true;
+      execution: { id: number; status: string; selectionCount: number };
+      queued: boolean;
+    }
+  | {
+      ok: false;
+      status: number;
+      code: RequestExecutionErrorCode;
+      error: string;
+      executionId?: number;
+    };
+
+class RequestExecutionError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: RequestExecutionErrorCode,
+    message: string,
+    public readonly executionId?: number
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * Where a request runs outside an HTTP request: a worker passes the job's
+ * tenant client, tenant id and audit actor, since the shared multi-tenant
+ * worker has no per-tenant `baseDb` and no ALS audit frame.
+ */
+export interface RequestExecutionEnv {
+  db: DbClient;
+  tenantId?: string;
+  guc: GucPayload;
+  /**
+   * Why the dispatch job has no request actor (`scope:identifier`, e.g.
+   * `webhook:auto-execute`); stamped on the job's audit frame as the
+   * system actor's reason.
+   */
+  systemReason: string;
+}
+
+export async function requestExecution(params: {
+  runId: number;
+  projectId: number;
+  requestedById: string;
+  targetId: number;
+  ref?: string;
+  caseIds?: number[];
+  inputs?: Record<string, string>;
+  /** Created by "Run automated test": the run holds only this case and completes itself. */
+  adHoc?: boolean;
+  env?: RequestExecutionEnv;
+}): Promise<RequestExecutionResult> {
+  const env = params.env;
+  const db: DbClient = env?.db ?? baseDb;
+  const transaction = <T>(fn: (tx: any) => Promise<T>): Promise<T> =>
+    env ? withAuditGuc(env.db, env.guc, fn) : auditedTransaction(fn);
+  const inputError = validateCustomInputs(params.inputs);
+  if (inputError) {
+    return {
+      ok: false,
+      status: 400,
+      code: "INVALID_INPUTS",
+      error: describeInputError(inputError),
+    };
+  }
+  const caseIds = Array.from(new Set(params.caseIds ?? []));
+
+  const target = await db.executionTarget.findFirst({
+    where: {
+      id: params.targetId,
+      projectId: params.projectId,
+      isDeleted: false,
+    },
+    select: {
+      id: true,
+      provider: true,
+      isEnabled: true,
+      defaultRef: true,
+      paramSchema: true,
+    },
+  });
+  if (!target) {
+    return {
+      ok: false,
+      status: 404,
+      code: "TARGET_NOT_FOUND",
+      error: "Execution target not found",
+    };
+  }
+  if (!target.isEnabled) {
+    return {
+      ok: false,
+      status: 409,
+      code: "TARGET_DISABLED",
+      error: "Execution target is disabled",
+    };
+  }
+
+  // A configuration parameter arrives as ids; the job gets the id, name
+  // and variants of each, resolved here against the project's assignments
+  // so the stored inputs (and the run metadata) already carry them.
+  const paramSchema = normalizeParamSchema(target.paramSchema);
+  const resolved = await resolveConfigurationParams(
+    db as never,
+    params.projectId,
+    paramSchema,
+    normalizeInputs(params.inputs)
+  );
+  if (!resolved.ok) {
+    return {
+      ok: false,
+      status: 400,
+      code: "INVALID_INPUTS",
+      error: resolved.error,
+    };
+  }
+  const inputs = resolved.inputs;
+
+  const rate = await checkDispatchRateLimit(params.projectId);
+  if (!rate.allowed) {
+    return {
+      ok: false,
+      status: 429,
+      code: "RATE_LIMITED",
+      error: "Too many executions requested for this project; try again later",
+    };
+  }
+
+  const tenantId = env ? env.tenantId : getCurrentTenantId();
+  let created: { id: number; status: string; selectionCount: number };
+  try {
+    created = await transaction(async (tx) => {
+      await tx.$executeRaw`SELECT id FROM "TestRuns" WHERE id = ${params.runId} FOR UPDATE`;
+      const run = await tx.testRuns.findFirst({
+        where: {
+          id: params.runId,
+          isDeleted: false,
+          projectId: params.projectId,
+        },
+        select: { id: true, isCompleted: true, testRunType: true, docs: true },
+      });
+      if (!run) {
+        throw new RequestExecutionError(
+          404,
+          "RUN_NOT_FOUND",
+          "Test run not found"
+        );
+      }
+      if (run.isCompleted) {
+        throw new RequestExecutionError(
+          409,
+          "RUN_COMPLETED",
+          "Test run is completed"
+        );
+      }
+      const active = await findActiveExecution(tx as never, params.runId);
+      if (active) {
+        throw new RequestExecutionError(
+          409,
+          "EXECUTION_IN_PROGRESS",
+          "An execution is already in progress for this run",
+          active.id
+        );
+      }
+      // The plan decides what an execution covers: live automated cases of
+      // this run, intersected with the requested subset. Only those ids are
+      // stored, so a request naming manual cases (or cases outside the run)
+      // can never make the job attempt them.
+      const plan = await buildAutomationPlan(tx as never, params.runId, {
+        requestedCaseIds: caseIds,
+      });
+      if (!plan || plan.totals.cases === 0) {
+        throw new RequestExecutionError(
+          409,
+          "NO_AUTOMATED_CASES",
+          "The run has no automated cases to execute"
+        );
+      }
+      if (run.testRunType === "REGULAR") {
+        await promoteRunToHybrid(tx as never, params.runId);
+      }
+      const execution = await tx.testRunExecution.create({
+        data: {
+          testRunId: params.runId,
+          projectId: params.projectId,
+          targetId: target.id,
+          provider: target.provider,
+          requestedById: params.requestedById,
+          ref: params.ref ?? target.defaultRef ?? null,
+          inputs,
+          selectionCount: plan.totals.cases,
+          requestedCaseIds:
+            caseIds.length > 0 ? plan.cases.map((c) => c.id) : [],
+          adHoc: params.adHoc ?? false,
+        },
+      });
+      // The parameter choices become run metadata (bold "Label: value"
+      // lines in the run's docs, the shape the reporters write), so the run
+      // itself says what it was executed with. Merged by key: a retry with
+      // other values rewrites the same lines; every execution's own values
+      // stay on its execution row.
+      const metadata = runMetadataFromParams(
+        describeParamInputs(paramSchema, inputs)
+      );
+      if (Object.keys(metadata).length > 0) {
+        await tx.testRuns.update({
+          where: { id: params.runId },
+          data: {
+            docs: JSON.stringify(mergeRunMetadataIntoDoc(run.docs, metadata)),
+          },
+        });
+      }
+      await emitExecutionEvent(
+        tx,
+        EXECUTION_REQUESTED_EVENT,
+        execution,
+        params.requestedById
+      );
+      return {
+        id: execution.id,
+        status: execution.status,
+        selectionCount: execution.selectionCount,
+      };
+    });
+  } catch (err) {
+    if (err instanceof RequestExecutionError) {
+      return {
+        ok: false,
+        status: err.status,
+        code: err.code,
+        error: err.message,
+        ...(err.executionId ? { executionId: err.executionId } : {}),
+      };
+    }
+    throw err;
+  }
+
+  try {
+    await captureAuditEvent({
+      action: "EXECUTION_REQUESTED",
+      entityType: "TestRunExecution",
+      entityId: String(created.id),
+      projectId: params.projectId,
+      userId: params.requestedById,
+      tenantId,
+      metadata: {
+        testRunId: params.runId,
+        targetId: target.id,
+        provider: target.provider,
+        selectionCount: created.selectionCount,
+        adHoc: params.adHoc ?? false,
+        subset: caseIds.length > 0,
+      },
+    });
+  } catch (err) {
+    console.warn(
+      "[execution] audit capture failed (non-blocking):",
+      err instanceof Error ? err.message : String(err)
+    );
+  }
+
+  publishExecutionChanged({
+    id: created.id,
+    testRunId: params.runId,
+    projectId: params.projectId,
+  });
+
+  const queue = getExecutionDispatchQueue();
+  if (queue) {
+    const jobData = { executionId: created.id, tenantId };
+    const jobOptions = {
+      // Unique per request: BullMQ returns an existing job for a repeated
+      // jobId, and completed jobs are retained, so a bare execution id could
+      // collide with a retained job from another database on the same Valkey.
+      // No colons: BullMQ reserves them for repeatable-job ids.
+      jobId: `dispatch-${tenantId ?? "default"}-${created.id}-${Date.now()}`,
+    };
+    // A worker has no request audit frame: the job is stamped as the system
+    // actor with the worker's reason, instead of the enqueue refusing it.
+    if (env) {
+      await enqueueWithAuditContext(
+        queue,
+        JOB_DISPATCH_EXECUTION,
+        jobData,
+        { systemReason: env.systemReason },
+        jobOptions
+      );
+    } else {
+      await enqueueWithAuditContext(
+        queue,
+        JOB_DISPATCH_EXECUTION,
+        jobData,
+        jobOptions
+      );
+    }
+    return { ok: true, execution: created, queued: true };
+  }
+
+  // No queue (Valkey absent): dispatch on the request path so the feature
+  // still works in a single-process deployment.
+  await dispatchExecution(db, created.id, { tenantId });
+  return { ok: true, execution: created, queued: false };
+}

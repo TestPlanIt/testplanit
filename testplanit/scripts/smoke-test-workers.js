@@ -52,6 +52,7 @@ const WORKERS = [
   "copyMoveWorker",
   "duplicateScanWorker",
   "magicSelectWorker",
+  "impactAnalysisWorker",
   "stepSequenceScanWorker",
   "generateFromUrlWorker",
   "iterationGenerationWorker",
@@ -61,6 +62,7 @@ const WORKERS = [
   "webhookRetentionWorker",
   "dataChangeLogRetentionWorker",
   "datasetLeaseSweepWorker",
+  "executionDispatchWorker",
 ];
 
 const entryPoints = [

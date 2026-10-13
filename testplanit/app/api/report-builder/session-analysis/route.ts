@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { buildDateFilter } from "@/utils/reportUtils";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
@@ -758,8 +759,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, dimensions, metrics, startDate, endDate } =
-      await req.json();
+    const requestBody = await req.json();
+    const { projectId, dimensions, metrics } = requestBody;
+    const { startDate, endDate } = resolveRequestDateRange(requestBody);
 
     const authz = await authorizeReportRequest(req, {
       requiresAdmin: false,

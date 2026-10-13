@@ -1,0 +1,57 @@
+# One-time copy of files from the old MinIO storage (./docker-data/minio) into
+# the RustFS storage that replaced it. Use it through
+# scripts/migrate-minio-to-rustfs.sh, which stops TestPlanIt first.
+#
+# MinIO no longer publishes Docker images, so legacy-minio runs from the
+# minio/minio image already on this machine and never pulls.
+
+services:
+  legacy-minio:
+    image: minio/minio:latest
+    pull_policy: never
+    command: server /data --address ":9000"
+    environment:
+      MINIO_ROOT_USER: ${LEGACY_MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${LEGACY_MINIO_ROOT_PASSWORD:-minioadmin123}
+    volumes:
+      - ./docker-data/minio:/data
+    networks:
+      - testplanit-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    profiles:
+      - minio-migration
+
+  minio-migrate:
+    image: rclone/rclone:1.75.1
+    environment:
+      RCLONE_CONFIG_OLD_TYPE: s3
+      RCLONE_CONFIG_OLD_PROVIDER: Minio
+      RCLONE_CONFIG_OLD_ENDPOINT: http://legacy-minio:9000
+      RCLONE_CONFIG_OLD_ACCESS_KEY_ID: ${LEGACY_MINIO_ROOT_USER:-minioadmin}
+      RCLONE_CONFIG_OLD_SECRET_ACCESS_KEY: ${LEGACY_MINIO_ROOT_PASSWORD:-minioadmin123}
+      RCLONE_CONFIG_NEW_TYPE: s3
+      RCLONE_CONFIG_NEW_PROVIDER: Other
+      RCLONE_CONFIG_NEW_ENDPOINT: http://minio:9000
+      RCLONE_CONFIG_NEW_ACCESS_KEY_ID: minioadmin
+      RCLONE_CONFIG_NEW_SECRET_ACCESS_KEY: minioadmin123
+    # Copies every bucket, then re-reads both sides and compares every file's
+    # contents (multipart uploads have no plain checksum to compare).
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "rclone copy old: new: --checksum --stats-one-line --stats 10s && rclone check old: new: --one-way --download",
+      ]
+    networks:
+      - testplanit-net
+    depends_on:
+      legacy-minio:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    profiles:
+      - minio-migration

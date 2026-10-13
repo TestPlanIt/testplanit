@@ -218,7 +218,7 @@ export function SavedSearchesMenu({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 shrink-0"
-                    aria-label={t("search.savedSearches.edit")}
+                    aria-label={t("common.actions.edit")}
                     onClick={() =>
                       openEdit({
                         id: saved.id,
@@ -233,7 +233,7 @@ export function SavedSearchesMenu({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    aria-label={t("search.savedSearches.delete")}
+                    aria-label={t("common.actions.delete")}
                     onClick={() => {
                       setDeleteTarget({
                         id: saved.id,
@@ -268,9 +268,7 @@ export function SavedSearchesMenu({
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="saved-search-edit-name">
-                {t("search.savedSearches.nameLabel")}
-              </Label>
+              <Label htmlFor="saved-search-edit-name">{t("common.name")}</Label>
               <Input
                 id="saved-search-edit-name"
                 value={editName}
@@ -288,7 +286,7 @@ export function SavedSearchesMenu({
             </div>
             <div className="space-y-2">
               <Label htmlFor="saved-search-edit-description">
-                {t("search.savedSearches.descriptionLabel")}
+                {t("common.upload.attachments.link.noteLabel")}
               </Label>
               <Textarea
                 id="saved-search-edit-description"
@@ -314,7 +312,7 @@ export function SavedSearchesMenu({
               disabled={isMutating || !editName.trim()}
             >
               {isMutating && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("search.savedSearches.saveAction")}
+              {t("common.actions.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -347,7 +345,7 @@ export function SavedSearchesMenu({
               disabled={isMutating}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t("search.savedSearches.delete")}
+              {t("common.actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

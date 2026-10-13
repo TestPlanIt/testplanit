@@ -38,6 +38,7 @@ vi.mock("@/lib/db", () => {
     testRuns: {
       create: vi.fn(),
       findUnique: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
     repositories: {
       findFirst: vi.fn(),
@@ -594,10 +595,10 @@ describe("Test Results Import API Route", () => {
       expect(completeEvent?.testRunId).toBe(42);
     });
 
-    it("emits error when existing test run type does not match format", async () => {
+    it("emits error when an automated test run's type does not match the format", async () => {
       (baseDb.testRuns.findUnique as any).mockResolvedValue({
         id: 42,
-        testRunType: "REGULAR", // does not match JUNIT
+        testRunType: "TESTNG", // does not match JUNIT
       });
 
       const formData = new FormData();
@@ -612,6 +613,82 @@ describe("Test Results Import API Route", () => {
       const errorEvent = events.find((e) => "error" in e);
       expect(errorEvent).toBeDefined();
       expect(errorEvent.error).toContain("not of type");
+    });
+
+    // A manual run accepts any automated format: the results attach to its
+    // cases and the run becomes HYBRID.
+    it("accepts a REGULAR run for any format and promotes it to HYBRID", async () => {
+      (baseDb.testRuns.findUnique as any).mockResolvedValue({
+        id: 42,
+        testRunType: "REGULAR",
+        compositionLockedAt: null,
+      });
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("testRunId", "42");
+      formData.append("projectId", "1");
+
+      const events = await readSseResponse(
+        await POST(createFormDataRequest(formData))
+      );
+
+      expect(events.find((e) => "error" in e)).toBeUndefined();
+      expect(events.find((e) => e.complete === true)?.testRunId).toBe(42);
+      expect(baseDb.testRuns.updateMany).toHaveBeenCalledWith({
+        where: { id: 42, testRunType: "REGULAR", isDeleted: false },
+        data: { testRunType: "HYBRID" },
+      });
+      expect(baseDb.testRunCases.upsert).toHaveBeenCalled();
+      expect(baseDb.testRunCases.update).toHaveBeenCalled();
+    });
+
+    it("accepts a HYBRID run without re-promoting it", async () => {
+      (baseDb.testRuns.findUnique as any).mockResolvedValue({
+        id: 42,
+        testRunType: "HYBRID",
+        compositionLockedAt: null,
+      });
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("testRunId", "42");
+      formData.append("projectId", "1");
+
+      const events = await readSseResponse(
+        await POST(createFormDataRequest(formData))
+      );
+
+      expect(events.find((e) => "error" in e)).toBeUndefined();
+      expect(baseDb.testRuns.updateMany).not.toHaveBeenCalled();
+    });
+
+    // The composition-lock trigger refuses new TestRunCases rows. Instead of
+    // letting that abort the suite, the result is kept and the case reported.
+    it("records results but does not add cases to a composition-locked run", async () => {
+      (baseDb.testRuns.findUnique as any).mockResolvedValue({
+        id: 42,
+        testRunType: "HYBRID",
+        compositionLockedAt: new Date("2026-09-01T00:00:00Z"),
+      });
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue(null);
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("testRunId", "42");
+      formData.append("projectId", "1");
+
+      const events = await readSseResponse(
+        await POST(createFormDataRequest(formData))
+      );
+
+      expect(events.find((e) => "error" in e)).toBeUndefined();
+      expect(baseDb.testRunCases.upsert).not.toHaveBeenCalled();
+      expect(baseDb.jUnitTestResult.create).toHaveBeenCalled();
+      const complete = events.find((e) => e.complete === true);
+      expect(complete?.notInRun).toEqual([
+        expect.objectContaining({ repositoryCaseId: expect.any(Number) }),
+      ]);
     });
 
     it("emits error when no template is available", async () => {

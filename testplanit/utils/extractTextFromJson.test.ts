@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   extractTextFromNode,
   extractTextWithImageMarkers,
+  extractTextWithLineBreaks,
 } from "./extractTextFromJson";
 
 describe("extractTextFromNode Utility", () => {
@@ -142,5 +143,97 @@ describe("extractTextWithImageMarkers", () => {
   it("returns empty string for non-docs", () => {
     expect(extractTextWithImageMarkers(null)).toBe("");
     expect(extractTextWithImageMarkers("text")).toBe("");
+  });
+});
+
+describe("extractTextWithLineBreaks", () => {
+  const p = (...content: any[]) => ({ type: "paragraph", content });
+  const t = (text: string) => ({ type: "text", text });
+
+  it("puts each paragraph on its own line", () => {
+    const doc = {
+      type: "doc",
+      content: [
+        p(t("Scenario Outline: Build a topology")),
+        p(t("Given 2-port SmartNICs")),
+        p(t("| racks | x |")),
+      ],
+    };
+    expect(extractTextWithLineBreaks(doc)).toBe(
+      "Scenario Outline: Build a topology\nGiven 2-port SmartNICs\n| racks | x |"
+    );
+  });
+
+  it("turns hard breaks into line breaks and keeps marks inline", () => {
+    const doc = {
+      type: "doc",
+      content: [
+        p(
+          t("Given "),
+          { type: "text", text: "bold", marks: [{ type: "bold" }] },
+          { type: "hardBreak" },
+          t("And more")
+        ),
+      ],
+    };
+    expect(extractTextWithLineBreaks(doc)).toBe("Given bold\nAnd more");
+  });
+
+  it("marks list items and indents their continuation lines", () => {
+    const item = (...content: any[]) => ({ type: "listItem", content });
+    const doc = {
+      type: "doc",
+      content: [
+        {
+          type: "orderedList",
+          content: [
+            item(p(t("first"))),
+            item(p(t("second")), {
+              type: "bulletList",
+              content: [item(p(t("nested")))],
+            }),
+          ],
+        },
+      ],
+    };
+    expect(extractTextWithLineBreaks(doc)).toBe(
+      "1. first\n2. second\n   - nested"
+    );
+  });
+
+  it("flattens tables into padded pipe rows", () => {
+    const cell = (type: string, text: string) => ({
+      type,
+      content: [p(t(text))],
+    });
+    const doc = {
+      type: "doc",
+      content: [
+        p(t("Examples:")),
+        {
+          type: "table",
+          content: [
+            {
+              type: "tableRow",
+              content: [cell("tableHeader", "racks"), cell("tableHeader", "x")],
+            },
+            {
+              type: "tableRow",
+              content: [cell("tableCell", "2"), cell("tableCell", "24")],
+            },
+          ],
+        },
+      ],
+    };
+    expect(extractTextWithLineBreaks(doc)).toBe(
+      "Examples:\n| racks | x  |\n| 2     | 24 |"
+    );
+  });
+
+  it("collapses blank runs and returns empty for non-documents", () => {
+    const doc = { type: "doc", content: [p(t("a")), p(), p(), p(), p(t("b"))] };
+    expect(extractTextWithLineBreaks(doc)).toBe("a\n\nb");
+    expect(extractTextWithLineBreaks(null)).toBe("");
+    expect(extractTextWithLineBreaks({ type: "doc", content: [] })).toBe("");
   });
 });

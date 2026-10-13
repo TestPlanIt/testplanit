@@ -1,7 +1,5 @@
 import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantDb";
 import { baseDb } from "@/lib/db";
-import { getAllQueues } from "@/lib/queues";
-import { Queue } from "bullmq";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import {
@@ -9,6 +7,14 @@ import {
   withAuditContext,
 } from "~/lib/auditContextWrappers";
 import { auditSystemConfigChange } from "~/lib/services/auditLog";
+import { cancelFlagsForJob } from "~/lib/services/jobCancel";
+import {
+  ActiveJobError,
+  cancelJob,
+  getQueueByName,
+  NotCancellableError,
+  removeJob,
+} from "~/lib/services/queueAdmin";
 import { getServerAuthSession } from "~/server/auth";
 
 // Helper to check admin authentication (session or API token)
@@ -67,26 +73,6 @@ async function checkAdminAuth(
   return { userId };
 }
 
-function getQueueByName(queueName: string): Queue | null {
-  const allQueues = getAllQueues();
-  const queueMap: Record<string, Queue | null> = {
-    "forecast-updates": allQueues.forecastQueue,
-    notifications: allQueues.notificationQueue,
-    emails: allQueues.emailQueue,
-    "issue-sync": allQueues.syncQueue,
-    "testmo-imports": allQueues.testmoImportQueue,
-    "elasticsearch-reindex": allQueues.elasticsearchReindexQueue,
-    "audit-logs": allQueues.auditLogQueue,
-    "budget-alerts": allQueues.budgetAlertQueue,
-    "auto-tag": allQueues.autoTagQueue,
-    "repo-cache": allQueues.repoCacheQueue,
-    "copy-move": allQueues.copyMoveQueue,
-    "duplicate-scan": allQueues.duplicateScanQueue,
-    "step-scan": allQueues.stepScanQueue,
-  };
-  return queueMap[queueName] ?? null;
-}
-
 /**
  * Check if job belongs to the current tenant
  * In single-tenant mode, always returns true
@@ -111,103 +97,31 @@ function jobBelongsToCurrentTenant(job: any): boolean {
   return job.data?.tenantId === currentTenantId;
 }
 
-// Helper function to safely remove a job (handles both regular and repeatable jobs)
-async function removeJob(
-  queue: Queue,
-  job: any,
-  force: boolean = false
-): Promise<boolean | { partialSuccess: true; message: string }> {
-  const jobId = job.id as string;
-  let isRepeatable = false;
-  let repeatKey: string | undefined;
-
-  // Check if this is a repeatable job (ID starts with "repeat:")
-  if (jobId && jobId.startsWith("repeat:")) {
-    isRepeatable = true;
-    // Extract the repeat key from the job ID format: repeat:{key}:{timestamp}
-    const parts = jobId.split(":");
-    if (parts.length >= 2) {
-      repeatKey = parts[1];
-    }
-  }
-
-  // Check if job is currently locked (active)
-  const state = await job.getState();
-  if (state === "active" && !force) {
-    const jobType = isRepeatable ? "active scheduled" : "active";
-    throw new Error(
-      `Cannot remove ${jobType} job. The job is currently being processed by a worker. Please wait for it to complete or use force removal.`
+/**
+ * A remove or cancel the queue refused. 409 for a job a worker holds (the
+ * page offers Cancel when the job's processor honours a flag), 400 for a
+ * cancel the job cannot take.
+ */
+function refusal(error: unknown): NextResponse | null {
+  if (error instanceof ActiveJobError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        active: true,
+        cancellable: error.cancellable,
+        scheduleRemoved: error.scheduleRemoved,
+      },
+      { status: 409 }
     );
   }
-
-  // For repeatable jobs, remove the schedule first
-  if (isRepeatable && repeatKey) {
-    try {
-      // Get all repeatable jobs to find the one with matching key
-      const repeatableJobs = await queue.getRepeatableJobs();
-      const repeatableJob = repeatableJobs.find((rj) => rj.key === repeatKey);
-
-      if (repeatableJob) {
-        // Remove the repeatable schedule (prevents future jobs)
-        await queue.removeRepeatableByKey(repeatKey);
-      }
-    } catch (error: any) {
-      console.warn("Failed to remove repeatable schedule:", error.message);
-      // Continue anyway to try to remove the current instance
-    }
+  if (error instanceof NotCancellableError) {
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 400 }
+    );
   }
-
-  // Now try to remove the current job instance
-  try {
-    await job.remove();
-  } catch (error: any) {
-    if (error.message?.includes("locked")) {
-      if (!force) {
-        throw new Error(
-          "Job is locked by a worker. Use force removal to remove it anyway."
-        );
-      }
-
-      // Force removal: Try multiple times with delays
-      let attempts = 0;
-      const maxAttempts = 3;
-
-      while (attempts < maxAttempts) {
-        attempts++;
-        await new Promise((resolve) => setTimeout(resolve, 200 * attempts));
-
-        try {
-          await job.remove();
-          return true; // Success!
-        } catch (retryError: any) {
-          if (!retryError.message?.includes("locked")) {
-            throw retryError; // Different error, throw it
-          }
-        }
-      }
-
-      // All attempts failed - but for repeatable jobs, this is a partial success
-      if (isRepeatable) {
-        console.warn(
-          `Repeatable job instance ${jobId} is still locked, but schedule has been removed.`
-        );
-        // Return success since the schedule is gone - this instance will eventually timeout
-        return {
-          partialSuccess: true,
-          message:
-            "The repeatable schedule has been removed successfully. This specific job instance is still locked by a worker that may have crashed. It will not recur. The lock will automatically expire, or you can restart the worker to clear it.",
-        };
-      }
-
-      throw new Error(
-        `Failed to remove locked job after ${maxAttempts} attempts. Try again later or restart the worker.`
-      );
-    } else {
-      throw error;
-    }
-  }
-
-  return true;
+  return null;
 }
 
 // GET: Get detailed information about a specific job
@@ -256,6 +170,7 @@ export const GET = withAuditContext(
           finishedOn: job.finishedOn,
           processedOn: job.processedOn,
           state,
+          cancellable: cancelFlagsForJob(queueName, job) !== null,
           logs,
         },
       });
@@ -269,7 +184,7 @@ export const GET = withAuditContext(
   }
 );
 
-// POST: Perform actions on a specific job (retry, promote)
+// POST: Perform actions on a specific job (retry, promote, remove, cancel)
 export const POST = withAuditContext(
   async (
     request: NextRequest,
@@ -331,8 +246,8 @@ export const POST = withAuditContext(
           return NextResponse.json({ success: true, message: "Job promoted" });
 
         case "remove": {
-          const result = await removeJob(queue, job, force);
-          // Audit the admin job-remove operator action.
+          // Only a removal that happened is audited or reported as one.
+          await removeJob(queue, queueName, job, force);
           await auditSystemConfigChange(
             `queue.${queueName}.job.${jobId}.remove`,
             null,
@@ -344,15 +259,29 @@ export const POST = withAuditContext(
               force,
             }
           );
-          // Handle partial success (repeatable job schedule removed but instance locked)
-          if (typeof result === "object" && result.partialSuccess) {
-            return NextResponse.json({
-              success: true,
-              partialSuccess: true,
-              message: result.message,
-            });
-          }
           return NextResponse.json({ success: true, message: "Job removed" });
+        }
+
+        case "cancel": {
+          const outcome = await cancelJob(queue, queueName, job);
+          await auditSystemConfigChange(
+            `queue.${queueName}.job.${jobId}.cancel`,
+            null,
+            {
+              queueName,
+              jobId,
+              action: "cancel",
+              triggeredBy: auth.userId ?? "unknown",
+              removed: outcome.removed,
+            }
+          );
+          return NextResponse.json({
+            success: true,
+            ...outcome,
+            message: outcome.removed
+              ? "Job removed before it started"
+              : "Cancel requested; the job stops at its next check",
+          });
         }
 
         default:
@@ -362,6 +291,8 @@ export const POST = withAuditContext(
           );
       }
     } catch (error: any) {
+      const refused = refusal(error);
+      if (refused) return refused;
       console.error("Error performing job action:", error);
       return NextResponse.json(
         { error: error.message || "Internal server error" },
@@ -403,9 +334,8 @@ export const DELETE = withAuditContext(
       const { searchParams } = new URL(request.url);
       const force = searchParams.get("force") === "true";
 
-      const result = await removeJob(queue, job, force);
-
-      // Audit the admin job-delete operator action.
+      // Only a removal that happened is audited or reported as one.
+      await removeJob(queue, queueName, job, force);
       await auditSystemConfigChange(
         `queue.${queueName}.job.${jobId}.delete`,
         null,
@@ -418,17 +348,10 @@ export const DELETE = withAuditContext(
         }
       );
 
-      // Handle partial success (repeatable job schedule removed but instance locked)
-      if (typeof result === "object" && result.partialSuccess) {
-        return NextResponse.json({
-          success: true,
-          partialSuccess: true,
-          message: result.message,
-        });
-      }
-
       return NextResponse.json({ success: true, message: "Job removed" });
     } catch (error: any) {
+      const refused = refusal(error);
+      if (refused) return refused;
       console.error("Error removing job:", error);
       return NextResponse.json(
         { error: error.message || "Internal server error" },

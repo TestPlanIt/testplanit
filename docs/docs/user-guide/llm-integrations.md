@@ -38,6 +38,12 @@ AI-powered features in TestPlanIt:
 - **Authentication**: API Key
 - **Strengths**: Excellent instruction following, safety-focused
 
+### DeepSeek
+
+- **Models**: DeepSeek V4 Flash, DeepSeek V4 Pro, and the experimental DeepSeek V4 Flash Vision
+- **Authentication**: API Key
+- **Strengths**: Low cost, strong reasoning (thinking mode is on by default)
+
 ### Ollama (Self-Hosted)
 
 - **Models**: Llama 2, Code Llama, Mistral, and other open-source models
@@ -98,6 +104,17 @@ Max Tokens: 4096
 Temperature: 0.7
 ```
 
+#### DeepSeek Configuration
+
+```text
+API Key: your-deepseek-api-key
+Model: deepseek-v4-flash
+Max Tokens: 65536
+Temperature: 0.7
+```
+
+DeepSeek's V4 models reason before answering (thinking mode) by default. The reasoning is returned separately from the answer and is billed as output tokens, so keep **Max Tokens Per Request** generous enough to leave room for the answer. Only `deepseek-v4-flash-vision-exp` accepts image input; the other models receive images as text placeholders. Leave **Endpoint URL** blank to use `https://api.deepseek.com`.
+
 #### Ollama Configuration
 
 ```text
@@ -143,8 +160,8 @@ Neither field controls how much source material is *sent* to the model. For Quic
 
 The **Endpoint URL** field is optional for every provider:
 
-- **Leave it blank** to use each provider's official URL (OpenAI, Anthropic, Gemini, Azure OpenAI defaults).
-- **Set it to an OpenAI-compatible proxy** (for example, [LiteLLM](https://github.com/BerriAI/litellm)) to route any provider through your own infrastructure. This works for `OPENAI`, `ANTHROPIC`, `AZURE_OPENAI`, `GEMINI`, `OLLAMA`, and `CUSTOM_LLM`.
+- **Leave it blank** to use each provider's official URL (OpenAI, Anthropic, Gemini, DeepSeek, Azure OpenAI defaults).
+- **Set it to an OpenAI-compatible proxy** (for example, [LiteLLM](https://github.com/BerriAI/litellm)) to route any provider through your own infrastructure. This works for `OPENAI`, `ANTHROPIC`, `AZURE_OPENAI`, `GEMINI`, `DEEPSEEK`, `OLLAMA`, and `CUSTOM_LLM`.
 - **Required** for `OLLAMA` and `CUSTOM_LLM`, since they have no public default.
 
 For security, all custom URLs are validated to prevent Server-Side Request Forgery (SSRF) attacks. The following are **blocked**:
@@ -177,7 +194,7 @@ When the provider reports per-model pricing, both fields are filled in automatic
 
 Auto-fill happens when you select a model from the fetched model list, and again after a successful **Test Connection** — the latter is also how you refresh the values for the already-selected model after a provider price change. A toast confirms the applied rates, and you can still edit both fields before saving; nothing is stored until you click **Create**/**Update**. Models whose pricing the provider doesn't report leave the fields untouched.
 
-Direct OpenAI, Anthropic, Gemini, and Azure OpenAI APIs do not report pricing, so enter the values from your provider's pricing page. Locally hosted models (Ollama) cost nothing — leave both fields at `0`.
+Direct OpenAI, Anthropic, Gemini, DeepSeek, and Azure OpenAI APIs do not report pricing, so enter the values from your provider's pricing page. Locally hosted models (Ollama) cost nothing — leave both fields at `0`.
 
 ### Billing Period
 
@@ -203,7 +220,7 @@ Saving an integration with a changed `billingPeriodStartDay` clears any threshol
 
 Both the **Test Connection** button and the **Update / Create** action probe the configured model for parameter support before persisting. This avoids paying for a failed-and-retried request the first time an AI feature actually fires.
 
-**What gets probed.** TestPlanIt sends a 1-token request with `temperature: 1` to the configured model and watches for parameter-rejection errors. Today only the `temperature` parameter is probed — newer Anthropic adaptive-thinking models (e.g., Claude Opus 4.7) return a deprecation error rather than ignoring the field. The probe code is structured so additional parameters can be added later without changing the storage shape.
+**What gets probed.** TestPlanIt sends a 1-token request with a non-default `temperature` to the configured model and watches for parameter-rejection errors. Today only the `temperature` parameter is probed — newer Anthropic adaptive-thinking models (Claude Opus 4.7 and later) return a deprecation error rather than ignoring the field, and a LiteLLM proxy in front of such a model rejects any temperature other than `1`. The probe runs for Anthropic, OpenAI, Azure OpenAI, DeepSeek, and Custom LLM integrations, so it covers a proxy configured under any of those provider types. The probe code is structured so additional parameters can be added later without changing the storage shape.
 
 **What gets stored.** The result lands in `LlmProviderConfig.settings.modelCapabilities` keyed by model id:
 
@@ -239,7 +256,7 @@ An explicit `supportsVision` always wins over the name-based detection, in both 
 - **Clicking Test Connection** runs a probe and captures the result in the form. A success toast confirms the connection.
 - **Clicking Update / Create** runs the probe automatically if no successful test has been performed in this session, or if any credential-affecting field (provider, API key, endpoint, deployment name, default model) has been edited since the last test. A failed probe at this stage aborts the save and surfaces the same error toast as Test Connection — the admin can fix and retry without losing form state.
 
-**Runtime fallback.** Each adapter still carries an in-memory cache that catches and remembers parameter-rejection errors at chat-request time. If a model is updated by the provider after an integration is configured, the first chat request will hit the new error, retry without the rejected param, and remember it for the rest of the process — giving you correct behavior until the next Test Connection re-probes and persists the change.
+**Runtime fallback.** The same adapters also carry an in-memory cache that catches and remembers parameter-rejection errors at chat-request time. If a model is updated by the provider after an integration is configured, the first chat request will hit the new error, retry without the rejected param, and remember it for the rest of the process — giving you correct behavior until the next Test Connection re-probes and persists the change.
 
 ### Project Assignment
 

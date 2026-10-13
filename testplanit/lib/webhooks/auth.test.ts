@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Session } from "next-auth";
 
-const mockProjectsFindFirst = vi.fn();
-const mockGetEnhancedDb = vi.fn();
-vi.mock("~/lib/auth/utils", () => ({
-  getEnhancedDb: (...args: unknown[]) => mockGetEnhancedDb(...args),
+const mockAuthorize = vi.fn();
+vi.mock("~/lib/integrations/importAuthorization", () => ({
+  authorizeProjectAdminForProject: (...args: unknown[]) =>
+    mockAuthorize(...args),
 }));
 
 import { canManageWebhookConfig } from "./auth";
@@ -24,18 +24,16 @@ function makeSession(
 describe("canManageWebhookConfig (CR-02 helper)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetEnhancedDb.mockResolvedValue({
-      projects: { findFirst: mockProjectsFindFirst },
-    });
   });
 
-  it("System Admin (User.access='ADMIN') is always authorized — short-circuits without a DB query", async () => {
-    const session = makeSession({ access: "ADMIN" });
-
-    const ok = await canManageWebhookConfig(session, 99);
+  it("System Admin (User.access='ADMIN') is always authorized — short-circuits without the ladder", async () => {
+    const ok = await canManageWebhookConfig(
+      makeSession({ access: "ADMIN" }),
+      99
+    );
 
     expect(ok).toBe(true);
-    expect(mockGetEnhancedDb).not.toHaveBeenCalled();
+    expect(mockAuthorize).not.toHaveBeenCalled();
   });
 
   it("returns false when session has no user id", async () => {
@@ -44,79 +42,25 @@ describe("canManageWebhookConfig (CR-02 helper)", () => {
     const ok = await canManageWebhookConfig(session, 42);
 
     expect(ok).toBe(false);
-    expect(mockGetEnhancedDb).not.toHaveBeenCalled();
+    expect(mockAuthorize).not.toHaveBeenCalled();
   });
 
-  it("authorizes the project creator", async () => {
-    mockProjectsFindFirst.mockResolvedValue({ id: 42 });
+  it("delegates to the shared project-admin gate for everyone else", async () => {
+    mockAuthorize.mockResolvedValue({ ok: true, status: 200, projectId: 42 });
+    const session = makeSession({ id: "role-admin" });
 
-    const ok = await canManageWebhookConfig(
-      makeSession({ id: "creator-id" }),
-      42
-    );
+    const ok = await canManageWebhookConfig(session, 42);
 
     expect(ok).toBe(true);
-    const where = mockProjectsFindFirst.mock.calls[0][0].where;
-    expect(where.id).toBe(42);
-    expect(where.OR).toEqual(
-      expect.arrayContaining([{ createdBy: "creator-id" }])
-    );
+    expect(mockAuthorize).toHaveBeenCalledWith(session, 42);
   });
 
-  it("authorizes a user with SPECIFIC_ROLE='Project Admin' on the project", async () => {
-    mockProjectsFindFirst.mockResolvedValue({ id: 42 });
-
-    const ok = await canManageWebhookConfig(
-      makeSession({ id: "role-admin" }),
-      42
-    );
-
-    expect(ok).toBe(true);
-    const where = mockProjectsFindFirst.mock.calls[0][0].where;
-    expect(where.OR).toEqual(
-      expect.arrayContaining([
-        {
-          userPermissions: {
-            some: {
-              userId: "role-admin",
-              accessType: "SPECIFIC_ROLE",
-              role: { name: "Project Admin" },
-            },
-          },
-        },
-      ])
-    );
-  });
-
-  it("PROJECTADMIN tier user only authorized on projects they're assigned to (assignedUsers branch is included in the OR)", async () => {
-    mockProjectsFindFirst.mockResolvedValue({ id: 42 });
-
-    const ok = await canManageWebhookConfig(
-      makeSession({ id: "pa-1", access: "PROJECTADMIN" }),
-      42
-    );
-
-    expect(ok).toBe(true);
-    const where = mockProjectsFindFirst.mock.calls[0][0].where;
-    expect(where.OR).toEqual(
-      expect.arrayContaining([{ assignedUsers: { some: { userId: "pa-1" } } }])
-    );
-  });
-
-  it("non-admin tier (e.g., access='USER') does NOT include the assignedUsers branch in the OR", async () => {
-    mockProjectsFindFirst.mockResolvedValue(null);
-
-    await canManageWebhookConfig(makeSession({ access: "USER" }), 42);
-
-    const where = mockProjectsFindFirst.mock.calls[0][0].where;
-    const hasAssignedUsersBranch = where.OR.some(
-      (clause: Record<string, unknown>) => "assignedUsers" in clause
-    );
-    expect(hasAssignedUsersBranch).toBe(false);
-  });
-
-  it("returns false when the enhanced query returns no project (user is not creator, not Project Admin role, and not assigned)", async () => {
-    mockProjectsFindFirst.mockResolvedValue(null);
+  it("returns false when the gate refuses (not creator, no Settings-bit role, not an assigned PROJECTADMIN)", async () => {
+    mockAuthorize.mockResolvedValue({
+      ok: false,
+      status: 403,
+      error: "Forbidden",
+    });
 
     const ok = await canManageWebhookConfig(
       makeSession({ id: "outsider", access: "USER" }),

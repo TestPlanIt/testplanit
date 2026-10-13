@@ -31,9 +31,26 @@ export interface MapColumnsStepProps {
   mapping: Record<string, string>;
   onMappingChange: (mapping: Record<string, string>) => void;
   onValidityChange: (valid: boolean) => void;
+  /** Rendered under the heading, e.g. the saved-mappings menu. */
+  toolbar?: React.ReactNode;
 }
 
-const SKIP_VALUE = "__skip__";
+export const SKIP_VALUE = "__skip__";
+
+/** Maps each CSV header to the parameter of the same name, ignoring case. */
+export function autoMapDatasetColumns(
+  csvHeaders: string[],
+  parameters: MapColumnsStepParameter[]
+): Record<string, string> {
+  const initial: Record<string, string> = {};
+  csvHeaders.forEach((h) => {
+    const match = parameters.find(
+      (p) => p.name.toLowerCase() === h.toLowerCase()
+    );
+    initial[h] = match ? match.name : SKIP_VALUE;
+  });
+  return initial;
+}
 
 /**
  * Surface E.3 — Step 2 (Map columns).
@@ -50,6 +67,7 @@ export function MapColumnsStep({
   mapping,
   onMappingChange,
   onValidityChange,
+  toolbar,
 }: MapColumnsStepProps) {
   const t = useTranslations("parameters");
   const autoMappedRef = useRef(false);
@@ -62,15 +80,8 @@ export function MapColumnsStep({
       return;
     }
     if (csvHeaders.length === 0) return;
-    const initial: Record<string, string> = {};
-    csvHeaders.forEach((h) => {
-      const match = parameters.find(
-        (p) => p.name.toLowerCase() === h.toLowerCase()
-      );
-      initial[h] = match ? match.name : SKIP_VALUE;
-    });
     autoMappedRef.current = true;
-    onMappingChange(initial);
+    onMappingChange(autoMapDatasetColumns(csvHeaders, parameters));
   }, [csvHeaders, parameters, mapping, onMappingChange]);
 
   const unmappedRequired = useMemo(() => {
@@ -85,6 +96,8 @@ export function MapColumnsStep({
   return (
     <div className="p-6 space-y-4" data-testid="dataset-import-wizard-step-map">
       <h3 className="text-base font-semibold">{t("importStep2Heading")}</h3>
+
+      {toolbar}
 
       {unmappedRequired.length > 0 && (
         <div

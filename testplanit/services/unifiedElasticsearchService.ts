@@ -343,6 +343,7 @@ export const ENTITY_MAPPINGS = {
       url: { type: "keyword" as const },
       issueSystem: { type: "text" as const },
       isDeleted: { type: "boolean" as const },
+      isRequirement: { type: "boolean" as const },
     },
   },
   [SearchableEntityType.MILESTONE]: {

@@ -29,10 +29,15 @@ vi.mock("next-themes", () => ({
   useTheme: () => ({ theme: "system", setTheme: vi.fn() }),
 }));
 
+const { mockPush, mockPathname } = vi.hoisted(() => ({
+  mockPush: vi.fn(),
+  mockPathname: { current: "/dashboard" },
+}));
+
 // Mock ~/lib/navigation
 vi.mock("~/lib/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  usePathname: () => "/dashboard",
+  useRouter: () => ({ push: mockPush, replace: vi.fn() }),
+  usePathname: () => mockPathname.current,
   Link: ({ children, href, ...props }: any) => (
     <a href={href} {...props}>
       {children}
@@ -119,6 +124,7 @@ const mockUseSession = vi.mocked(useSession);
 describe("Header", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPathname.current = "/dashboard";
     // Default: authenticated user
     mockUseSession.mockReturnValue({
       data: {
@@ -141,6 +147,59 @@ describe("Header", () => {
       ok: true,
       json: async () => ({ isTrialInstance: false }),
     });
+  });
+
+  function unverifiedSession(authMethod = "CREDENTIALS") {
+    mockUseSession.mockReturnValue({
+      data: {
+        user: {
+          id: "user-2",
+          name: "New User",
+          email: "new@example.com",
+          access: "USER",
+          emailVerified: null,
+          authMethod,
+          preferences: { theme: "system" },
+        },
+      },
+      status: "authenticated",
+      update: vi.fn(),
+    } as any);
+  }
+
+  it("sends an unverified credentials user to the verification page", () => {
+    unverifiedSession();
+
+    render(<Header />);
+
+    expect(mockPush).toHaveBeenCalledWith(
+      "/verify-email?email=new%40example.com"
+    );
+  });
+
+  it("re-checks verification when the route changes", () => {
+    unverifiedSession();
+    const { rerender } = render(<Header />);
+    expect(mockPush).toHaveBeenCalledTimes(1);
+
+    // A competing navigation landed the user somewhere else.
+    mockPathname.current = "/";
+    rerender(<Header />);
+
+    expect(mockPush).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves an unverified user alone on the verification page and when SSO", () => {
+    unverifiedSession();
+    mockPathname.current = "/verify-email";
+    const onPage = render(<Header />);
+    expect(mockPush).not.toHaveBeenCalled();
+    onPage.unmount();
+
+    mockPathname.current = "/dashboard";
+    unverifiedSession("SSO");
+    render(<Header />);
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it("returns null when session is not present (unauthenticated)", () => {

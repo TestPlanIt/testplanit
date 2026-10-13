@@ -4,6 +4,16 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WarningAlert } from "@/components/ui/warning-alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +31,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SectionTitle, Text } from "@/components/ui/typography";
 import type { Integration, ProjectIntegration } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -35,9 +46,13 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
+import { SYNC_STATUS } from "~/lib/integrations/syncStatus";
 
 import { removeIntegrationProjectMapping } from "~/app/actions/project-integration";
 import { ImportIssuesDialog } from "./import-issues-dialog";
+import { MilestoneSyncSettings } from "./milestone-sync-settings";
+import { readRequirementTypeConfig } from "~/lib/integrations/requirementTypeConfig";
+import { RequirementsConfigSettings } from "./requirements-config-settings";
 
 interface ProjectIntegrationSettingsProps {
   projectIntegration: ProjectIntegration;
@@ -53,6 +68,36 @@ interface ExternalProject {
 interface IssueType {
   id: string;
   name: string;
+}
+
+interface LinkedProjectSnapshotEntry {
+  id: string;
+  defaultIssueType: string | null;
+}
+
+/** Order-independent, primitive-only fingerprint of this section's Save-gated
+ *  editable state: which mappings are linked, and each one's default issue
+ *  type. Everything else in the section (add/remove/set-default) already
+ *  commits immediately via its own mutation, so this exists purely to drive
+ *  the Save button's dirty state. A JSON string of sorted primitives is
+ *  cheap to recompute every render and stays equal across renders that carry
+ *  the same underlying rows, even when the query hook hands back a new array
+ *  reference — the identity-stability `useMemo` needs to avoid a false
+ *  "dirty" reading on every unrelated re-render. */
+function buildLinkedProjectsSnapshotKey(
+  integrationProjects:
+    Array<{ id: string; defaultIssueType?: string | null }> | undefined
+): string | null {
+  if (!integrationProjects) {
+    return null;
+  }
+  const entries: LinkedProjectSnapshotEntry[] = integrationProjects
+    .map((ip) => ({
+      id: ip.id,
+      defaultIssueType: ip.defaultIssueType ?? null,
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  return JSON.stringify(entries);
 }
 
 export function ProjectIntegrationSettings({
@@ -71,6 +116,17 @@ export function ProjectIntegrationSettings({
   const [config, _setConfig] = useState(
     (projectIntegration.config as Record<string, any>) || {}
   );
+
+  // The requirement types saved in Requirement Sync. The import dialog's
+  // typed path gates on receiving these: without them it refuses with
+  // "select and save at least one issue type" even when they ARE saved,
+  // which makes an uncapped requirement import unreachable from this row.
+  // Read through the same shared reader that section uses, so the two
+  // entry points can never disagree about what is configured.
+  const savedRequirementConfig = useMemo(
+    () => readRequirementTypeConfig(projectIntegration.config),
+    [projectIntegration.config]
+  );
   const [needsAuth, setNeedsAuth] = useState(false);
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [selectedNewProjects, setSelectedNewProjects] = useState<
@@ -80,11 +136,24 @@ export function ProjectIntegrationSettings({
     null
   );
   const [isAddingProjects, setIsAddingProjects] = useState(false);
-  const [importTarget, setImportTarget] = useState<{
-    id: string;
-    name: string;
-    key: string;
+  // The single, shared import dialog's request (28-20): which mapping, and
+  // -- only when opened from the Requirement Sync section -- its configured
+  // requirement types to preselect. Held as one object so opening from
+  // EITHER entry point always fully replaces any stale preselection from
+  // the other.
+  const [importRequest, setImportRequest] = useState<{
+    target: { id: string; name: string; key: string };
+    initialIssueTypeIds?: string[];
+    initialIssueTypeNames?: Record<string, string>;
   } | null>(null);
+
+  // The stop-confirmation dialog targets one mapping (IntegrationProject) id
+  // at a time -- moved here from requirements-config-settings.tsx (#501/28-21)
+  // so progress and its stop control live on the same row as the Import
+  // button that started the run, instead of a separate block that could only
+  // describe where that button was.
+  const [stopMappingId, setStopMappingId] = useState<string | null>(null);
+  const [isStopping, setIsStopping] = useState(false);
 
   const { mutateAsync: updateProjectIntegration } =
     useClientQueries(schema).projectIntegration.useUpdate();
@@ -103,11 +172,21 @@ export function ProjectIntegrationSettings({
     },
     {
       // While a row is mid-import (or re-sync) its syncStatus is "syncing";
-      // poll so the badge advances to completed/error without a manual reload.
+      // poll so the badge advances to completed/error without a manual
+      // reload. Extended to also poll while cancel-requested (#501/28-21) --
+      // a stop request lands in that intermediate state before the running
+      // import's own page loop honors it and moves the row to "cancelled",
+      // and that is exactly when the user is watching hardest.
       refetchInterval: (query: any) => {
         const rows = query?.state?.data as
           Array<{ syncStatus?: string | null }> | undefined;
-        return rows?.some((r) => r.syncStatus === "syncing") ? 3000 : false;
+        return rows?.some(
+          (r) =>
+            r.syncStatus === SYNC_STATUS.syncing ||
+            r.syncStatus === SYNC_STATUS.cancelRequested
+        )
+          ? 3000
+          : false;
       },
     }
   );
@@ -130,6 +209,27 @@ export function ProjectIntegrationSettings({
     });
   const hasInboundWebhook = (inboundConfigs?.length ?? 0) > 0;
   const isLastActiveMapping = (integrationProjects?.length ?? 0) === 1;
+
+  const currentLinkedProjectsSnapshot = useMemo(
+    () => buildLinkedProjectsSnapshotKey(integrationProjects),
+    [integrationProjects]
+  );
+
+  // Baseline the Save button compares against, seeded once the linked
+  // projects query resolves (never while still loading, so the loading ->
+  // loaded transition itself never reads as a pending edit) and advanced
+  // only by a successful Save.
+  const [savedLinkedProjectsSnapshot, setSavedLinkedProjectsSnapshot] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    if (
+      savedLinkedProjectsSnapshot === null &&
+      currentLinkedProjectsSnapshot !== null
+    ) {
+      setSavedLinkedProjectsSnapshot(currentLinkedProjectsSnapshot);
+    }
+  }, [currentLinkedProjectsSnapshot, savedLinkedProjectsSnapshot]);
 
   const loadExternalProjects = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -184,9 +284,14 @@ export function ProjectIntegrationSettings({
     }
   }, [checkAuthAndLoadProjects, integration.provider]);
 
-  const canSave = useMemo(() => {
-    return true;
-  }, []);
+  // Real dirty-tracking, not a stub: enabled only when the linked-projects
+  // list or a mapping's default issue type differs from the last-saved
+  // snapshot — the same "disabled until dirty" contract Milestone Sync and
+  // Requirement Types use.
+  const canSave =
+    savedLinkedProjectsSnapshot !== null &&
+    currentLinkedProjectsSnapshot !== null &&
+    currentLinkedProjectsSnapshot !== savedLinkedProjectsSnapshot;
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -201,6 +306,9 @@ export function ProjectIntegrationSettings({
         },
       });
 
+      if (currentLinkedProjectsSnapshot !== null) {
+        setSavedLinkedProjectsSnapshot(currentLinkedProjectsSnapshot);
+      }
       toast.success(t("integration.settingsSaved"));
       router.refresh();
     } catch (error) {
@@ -261,6 +369,44 @@ export function ProjectIntegrationSettings({
       toast.error(t("integration.saveSettingsError"));
     }
   };
+
+  // Requests cooperative cancellation of a running typed requirements import
+  // for one mapping (#501/28-21, moved from requirements-config-settings.tsx
+  // so the stop control lives on the same row as the Import button that
+  // started the run).
+  const handleConfirmStop = useCallback(async () => {
+    if (!stopMappingId) return;
+    setIsStopping(true);
+    try {
+      const res = await fetch(
+        `/api/integrations/${integration.id}/requirements-import/cancel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId: projectIntegration.projectId,
+            integrationProjectId: stopMappingId,
+          }),
+        }
+      );
+      if (res.status === 409) {
+        toast.error(t("integration.requirementsConfig.importStopNotRunning"));
+        setStopMappingId(null);
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(t("integration.requirementsConfig.importFailed"));
+      }
+      toast.success(t("integration.requirementsConfig.importStopRequested"));
+      setStopMappingId(null);
+    } catch (e: any) {
+      toast.error(
+        e?.message || t("integration.requirementsConfig.importFailed")
+      );
+    } finally {
+      setIsStopping(false);
+    }
+  }, [integration.id, projectIntegration.projectId, stopMappingId, t]);
 
   const handleAddProjects = async () => {
     if (selectedNewProjects.length === 0) return;
@@ -424,24 +570,17 @@ export function ProjectIntegrationSettings({
           </Alert>
         )}
 
-        {/* Linked External Projects card for integrations that support it */}
+        {/* Linked External Projects section for integrations that support it */}
         {integration.provider !== "SIMPLE_URL" && (
-          <Card
-            className={
-              integrationProjects && integrationProjects.length > 0
-                ? "border-primary"
-                : undefined
-            }
-          >
-            <CardHeader>
-              <CardTitle className="text-base">
-                {t("integration.linkedProjects")}
-              </CardTitle>
-              <CardDescription>
+          <div className="space-y-4" data-testid="linked-projects-section">
+            <div>
+              <SectionTitle>{t("integration.linkedProjects")}</SectionTitle>
+              <Text variant="subtitle">
                 {t("integration.linkedProjectsDescription")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </Text>
+            </div>
+
+            <div className="space-y-3">
               {isLoadingLinkedProjects ? (
                 <div className="space-y-2">
                   <div className="h-11 w-full animate-pulse rounded bg-muted" />
@@ -471,6 +610,7 @@ export function ProjectIntegrationSettings({
                     <div
                       key={ip.id}
                       className="group rounded-md border px-3 py-2 space-y-2"
+                      data-testid={`requirements-import-row-${ip.id}`}
                     >
                       <div className="flex items-center gap-2 min-h-[36px]">
                         <span className="flex-1 text-sm font-medium">
@@ -481,17 +621,31 @@ export function ProjectIntegrationSettings({
                         </Badge>
 
                         {/* Sync status badge */}
-                        {ip.syncStatus === "syncing" && (
+                        {ip.syncStatus === SYNC_STATUS.syncing && (
                           <Badge variant="secondary">
                             {t("integration.syncStatusSyncing")}
                           </Badge>
                         )}
-                        {ip.syncStatus === "completed" && (
+                        {ip.syncStatus === SYNC_STATUS.cancelRequested && (
+                          <Badge variant="secondary">
+                            {t(
+                              "integration.requirementsConfig.importStopRequested"
+                            )}
+                          </Badge>
+                        )}
+                        {ip.syncStatus === SYNC_STATUS.completed && (
                           <Badge className="bg-success text-success-foreground">
                             {t("integration.syncStatusCompleted")}
                           </Badge>
                         )}
-                        {ip.syncStatus === "error" && (
+                        {ip.syncStatus === SYNC_STATUS.cancelled && (
+                          <Badge variant="outline">
+                            {t(
+                              "integration.requirementsConfig.importCancelled"
+                            )}
+                          </Badge>
+                        )}
+                        {ip.syncStatus === SYNC_STATUS.error && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Badge variant="destructive">
@@ -509,7 +663,7 @@ export function ProjectIntegrationSettings({
                               <Star className="h-4 w-4 fill-primary text-primary shrink-0" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              {t("integration.defaultIndicator")}
+                              {tGlobal("common.fields.default")}
                             </TooltipContent>
                           </Tooltip>
                         ) : (
@@ -537,12 +691,27 @@ export function ProjectIntegrationSettings({
                               variant="outline"
                               size="icon"
                               className="h-7 w-7 shrink-0"
-                              disabled={ip.syncStatus === "syncing"}
+                              // `cancel-requested` counts as busy, the same
+                              // way the poll interval above already treats
+                              // it: the run is still winding down and the
+                              // start route refuses it as already running,
+                              // so an enabled button here only ever produces
+                              // an error toast.
+                              disabled={
+                                ip.syncStatus === SYNC_STATUS.syncing ||
+                                ip.syncStatus === SYNC_STATUS.cancelRequested
+                              }
                               onClick={() =>
-                                setImportTarget({
-                                  id: ip.id,
-                                  name: ip.externalProjectName,
-                                  key: ip.externalProjectKey,
+                                setImportRequest({
+                                  initialIssueTypeIds:
+                                    savedRequirementConfig.issueTypeIds,
+                                  initialIssueTypeNames:
+                                    savedRequirementConfig.issueTypeNames,
+                                  target: {
+                                    id: ip.id,
+                                    name: ip.externalProjectName,
+                                    key: ip.externalProjectKey,
+                                  },
                                 })
                               }
                               aria-label={t("integration.importIssues")}
@@ -554,6 +723,22 @@ export function ProjectIntegrationSettings({
                             {t("integration.importIssues")}
                           </TooltipContent>
                         </Tooltip>
+
+                        {/* Stop button -- only while this mapping's import is
+                            actually running (#501/28-21) */}
+                        {ip.syncStatus === SYNC_STATUS.syncing && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={() => setStopMappingId(ip.id)}
+                            data-testid={`requirements-import-stop-${ip.id}`}
+                          >
+                            {t(
+                              "integration.requirementsConfig.importStopAction"
+                            )}
+                          </Button>
+                        )}
 
                         {/* Remove button */}
                         <Tooltip>
@@ -669,7 +854,10 @@ export function ProjectIntegrationSettings({
 
               {/* Add Projects inline panel */}
               {showAddPanel && (
-                <div className="border rounded-md p-3 space-y-3">
+                <div
+                  className="border rounded-md p-3 space-y-3"
+                  data-testid="add-projects-panel"
+                >
                   <MultiAsyncCombobox<ExternalProject>
                     value={selectedNewProjects}
                     onValueChange={setSelectedNewProjects}
@@ -718,65 +906,112 @@ export function ProjectIntegrationSettings({
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Automatic sync via webhooks is not yet implemented - hiding this option
-          {integration.provider !== "SIMPLE_URL" && (
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="syncEnabled"
-                  checked={config.syncEnabled || false}
-                  onCheckedChange={(checked) =>
-                    setConfig({ ...config, syncEnabled: !!checked })
-                  }
-                />
-                <Label
-                  htmlFor="syncEnabled"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {t("integration.automaticSync")}
-                </Label>
-                <HelpPopover helpKey="projects.settings.integrations.automaticSyncHelp" />
-              </div>
             </div>
-          )}
-          */}
 
-        {/* Only show save button if there are settings to save */}
-        {integration.provider !== "SIMPLE_URL" && (
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSaveSettings}
-              disabled={isSaving || !canSave}
-              aria-label={tGlobal("admin.notifications.save")}
-              className="group gap-0 transition-all duration-200 hover:gap-2"
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                {tGlobal("admin.notifications.save")}
-              </span>
-            </Button>
+            {/* Automatic sync via webhooks is not yet implemented - hiding this option
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="syncEnabled"
+                    checked={config.syncEnabled || false}
+                    onCheckedChange={(checked) =>
+                      setConfig({ ...config, syncEnabled: !!checked })
+                    }
+                  />
+                  <Label
+                    htmlFor="syncEnabled"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {t("integration.automaticSync")}
+                  </Label>
+                  <HelpPopover helpKey="projects.settings.integrations.automaticSyncHelp" />
+                </div>
+              </div>
+              */}
+
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveSettings}
+                disabled={isSaving || !canSave}
+                aria-label={tGlobal("admin.notifications.save")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                  {tGlobal("admin.notifications.save")}
+                </span>
+              </Button>
+            </div>
           </div>
         )}
 
+        <MilestoneSyncSettings
+          projectIntegration={projectIntegration}
+          integration={integration}
+        />
+
+        <RequirementsConfigSettings
+          projectIntegration={projectIntegration}
+          integration={integration}
+          onRequestImport={setImportRequest}
+        />
+
         <ImportIssuesDialog
           integrationId={integration.id}
-          target={importTarget}
-          open={importTarget !== null}
+          projectId={projectIntegration.projectId}
+          target={importRequest?.target ?? null}
+          open={importRequest !== null}
           onOpenChange={(open) => {
-            if (!open) setImportTarget(null);
+            if (!open) setImportRequest(null);
           }}
           onStarted={() => {
             void refetchIntegrationProjects();
           }}
+          initialIssueTypeIds={importRequest?.initialIssueTypeIds}
+          initialIssueTypeNames={importRequest?.initialIssueTypeNames}
         />
+
+        <AlertDialog
+          open={stopMappingId !== null}
+          onOpenChange={(open) => {
+            if (!open) setStopMappingId(null);
+          }}
+        >
+          <AlertDialogContent data-testid="requirements-import-stop-dialog">
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("integration.requirementsConfig.importStopConfirmTitle")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("integration.requirementsConfig.importStopConfirmBody")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                type="button"
+                onClick={() => setStopMappingId(null)}
+              >
+                {tGlobal("common.cancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                type="button"
+                disabled={isStopping}
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleConfirmStop();
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                data-testid="requirements-import-stop-confirm"
+              >
+                {t("integration.requirementsConfig.importStopAction")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

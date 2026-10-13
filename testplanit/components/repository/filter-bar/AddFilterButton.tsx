@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useMemo, useState, type Ref } from "react";
+import { useCallback, useMemo, useRef, useState, type Ref } from "react";
 import type {
   FilterDimension,
   FilterDimensionRegistry,
@@ -53,6 +53,10 @@ export function AddFilterButton({
 }: AddFilterButtonProps) {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
+  // Set on a pick so the closing menu does not hand focus back to the Add
+  // button: Radix restores focus on a deferred tick, which would land as a
+  // focus-outside on the chip editor that just opened and dismiss it.
+  const pickedRef = useRef(false);
 
   const locale = useLocale();
 
@@ -124,7 +128,16 @@ export function AddFilterButton({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-64 p-0" align="start">
+      <PopoverContent
+        className="w-64 p-0"
+        align="start"
+        onCloseAutoFocus={(event) => {
+          if (pickedRef.current) {
+            pickedRef.current = false;
+            event.preventDefault();
+          }
+        }}
+      >
         <Command filter={filterByLabel}>
           <CommandInput
             placeholder={t("common.search")}
@@ -141,6 +154,7 @@ export function AddFilterButton({
                   value={dimension.key}
                   keywords={[label]}
                   onSelect={() => {
+                    pickedRef.current = true;
                     setOpen(false);
                     onPick(dimension);
                   }}

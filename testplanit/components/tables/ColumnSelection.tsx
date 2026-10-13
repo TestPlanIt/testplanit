@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, type RowData } from "@/components/tables/tableFeatures";
 import { Columns3, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -241,7 +241,10 @@ export interface CustomColumnMeta {
   isPinned?: "left" | "right";
 }
 
-export type CustomColumnDef<TData> = ColumnDef<TData, unknown> & {
+export type CustomColumnDef<TData extends RowData> = ColumnDef<
+  TData,
+  unknown
+> & {
   meta?: CustomColumnMeta;
 };
 
@@ -263,7 +266,7 @@ function humanizeColumnId(id: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-interface ColumnSelectionProps<TData> {
+interface ColumnSelectionProps<TData extends RowData> {
   columns: CustomColumnDef<TData>[];
   columnMetadata?: ColumnMetadata[];
   onVisibilityChange: (visibility: Record<string, boolean>) => void;
@@ -284,7 +287,7 @@ interface ColumnSelectionProps<TData> {
   hideColumnRef?: MutableRefObject<((columnId: string) => void) | null>;
 }
 
-export function ColumnSelection<TData>({
+export function ColumnSelection<TData extends RowData>({
   columns,
   columnMetadata,
   onVisibilityChange,

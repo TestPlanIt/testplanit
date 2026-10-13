@@ -6,6 +6,12 @@
 
 import { assertSsrfSafeResolved, isSsrfSafe } from "~/utils/ssrf";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
+import {
+  computeLocalCompare,
+  looksBinaryPath,
+  type LocalCompareChange,
+  type LocalCompareResult,
+} from "../diff/localDiff";
 
 export interface RepoFileEntry {
   path: string;
@@ -30,6 +36,125 @@ export interface ArchiveTree {
   files: RepoFileEntry[];
   /** Decompress the contents of the given paths (a subset of `files`). */
   getContents(wantedPaths: Set<string>): Promise<Map<string, string>>;
+}
+
+export interface RepoBranch {
+  name: string;
+  sha: string;
+  isDefault: boolean;
+  protected?: boolean;
+}
+
+/** Most branches `listBranches` returns; longer lists are searched instead. */
+export const MAX_BRANCHES = 500;
+/** Most branches one `searchBranches` call returns. */
+export const BRANCH_SEARCH_LIMIT = 100;
+
+/** A branch name as a URL path, one encoded segment per slash. */
+export function encodeBranchPath(name: string): string {
+  return name.split("/").map(encodeURIComponent).join("/");
+}
+
+export interface RepoCommit {
+  sha: string;
+  shortSha: string;
+  message: string;
+  authorName: string;
+  authorEmail?: string;
+  /** ISO 8601 */
+  authoredAt: string;
+  parents: string[];
+  url?: string;
+}
+
+export interface ListCommitsOptions {
+  page?: number;
+  perPage?: number;
+  path?: string;
+}
+
+export interface ListCommitsResult {
+  commits: RepoCommit[];
+  hasMore: boolean;
+}
+
+export type PullRequestState = "open" | "merged" | "closed";
+
+export interface RepoPullRequest {
+  /** Provider-visible number, or the id where a provider has no number. */
+  number: number;
+  title: string;
+  state: PullRequestState;
+  authorName?: string;
+  sourceBranch: string;
+  targetBranch: string;
+  /**
+   * Head and base commits. A provider that does not return the base in its
+   * list call leaves `baseSha` unset; callers fall back to `targetBranch`,
+   * which the compare route resolves like any other ref.
+   */
+  headSha?: string;
+  baseSha?: string;
+  url?: string;
+  /** ISO 8601 */
+  updatedAt?: string;
+}
+
+export interface ListPullRequestsOptions {
+  /** Defaults to "all"; the picker filters client-side from there. */
+  state?: PullRequestState | "all";
+  page?: number;
+  perPage?: number;
+  /** Free text the provider matches against the title, where it supports it. */
+  search?: string;
+}
+
+export interface ListPullRequestsResult {
+  pullRequests: RepoPullRequest[];
+  hasMore: boolean;
+}
+
+/** Thrown by adapters whose provider has no pull request concept. */
+export class PullRequestsUnsupportedError extends Error {
+  constructor(provider: string) {
+    super(`${provider} does not support pull requests`);
+    this.name = "PullRequestsUnsupportedError";
+  }
+}
+
+export type ChangedFileStatus = "added" | "modified" | "deleted" | "renamed";
+
+export interface ChangedFile {
+  path: string;
+  previousPath?: string;
+  status: ChangedFileStatus;
+  additions: number;
+  deletions: number;
+  /** Unified diff body for this file, starting at the first hunk. Absent when
+   * the file is binary or the patch exceeded a cap. */
+  patch?: string;
+  patchTruncated?: boolean;
+  isBinary: boolean;
+}
+
+export interface CompareOptions {
+  maxFiles?: number;
+  maxFilesWithPatch?: number;
+  maxPatchBytesPerFile?: number;
+  maxTotalPatchBytes?: number;
+  maxCommits?: number;
+}
+
+export interface CompareResult {
+  baseSha: string;
+  headSha: string;
+  files: ChangedFile[];
+  commits: RepoCommit[];
+  /** True when any cap (ours or the provider's) cut the result short. */
+  truncated: boolean;
+  totalFiles?: number;
+  aheadBy?: number;
+  behindBy?: number;
 }
 
 export abstract class GitRepoAdapter {
@@ -104,6 +229,127 @@ export abstract class GitRepoAdapter {
    * Fetch raw text content of a single file at the given path and branch.
    */
   abstract getFileContent(path: string, branch: string): Promise<string>;
+
+  /** Branches of the repository, at most MAX_BRANCHES of them. */
+  abstract listBranches(): Promise<RepoBranch[]>;
+
+  /**
+   * Branches whose name matches `query`, asked of the provider so that a
+   * repository with more branches than `listBranches` returns can still be
+   * searched. Providers without a name filter fall back to an exact lookup
+   * and a bounded scan. Never more than `limit` results.
+   */
+  async searchBranches(
+    query: string,
+    limit: number = BRANCH_SEARCH_LIMIT
+  ): Promise<RepoBranch[]> {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return [];
+    const branches = await this.listBranches();
+    return branches
+      .filter((branch) => branch.name.toLowerCase().includes(needle))
+      .slice(0, limit);
+  }
+
+  /** True for the error `makeRequest` throws on an HTTP 404. */
+  protected isNotFoundError(err: unknown): boolean {
+    return err instanceof Error && /^HTTP 404\b/.test(err.message);
+  }
+
+  /**
+   * Commits reachable from `ref` (branch, tag, or sha), newest first.
+   * `path` restricts the log to commits touching that path.
+   */
+  abstract listCommits(
+    ref: string,
+    opts?: ListCommitsOptions
+  ): Promise<ListCommitsResult>;
+
+  /**
+   * Files changed between two commits (base..head), with per-file patches
+   * where the provider exposes them or the local fallback can compute them.
+   */
+  abstract compareCommits(
+    baseSha: string,
+    headSha: string,
+    opts?: CompareOptions
+  ): Promise<CompareResult>;
+
+  /**
+   * Where two refs diverged, or null when the provider cannot say.
+   *
+   * A pull request is judged from this point, not from the target branch tip,
+   * so the diff describes what the branch did rather than also reporting
+   * everything that landed on the target meanwhile, in reverse. Comparing two
+   * commits chosen by hand stays a direct comparison, which is the question
+   * that mode asks.
+   */
+  async getMergeBase(
+    _baseRef: string,
+    _headRef: string
+  ): Promise<string | null> {
+    return null;
+  }
+
+  /**
+   * Pull requests, newest first. Concrete rather than abstract so a provider
+   * that grows support only adds an override, and the UI can ask whether the
+   * mode is offered at all.
+   */
+  async listPullRequests(
+    _opts?: ListPullRequestsOptions
+  ): Promise<ListPullRequestsResult> {
+    throw new PullRequestsUnsupportedError(this.constructor.name);
+  }
+
+  /**
+   * File content at an exact commit. Defaults to getFileContent, which every
+   * provider accepts a sha for except Azure DevOps (it overrides this).
+   */
+  async getFileContentAtCommit(path: string, sha: string): Promise<string> {
+    return this.getFileContent(path, sha);
+  }
+
+  protected isSha(ref: string): boolean {
+    return /^[0-9a-f]{7,40}$/i.test(ref);
+  }
+
+  /**
+   * Shared fallback for providers whose compare endpoint returns changed paths
+   * but no patch text: fetch both sides of each file and diff locally.
+   */
+  protected async computeLocalCompare(
+    baseSha: string,
+    headSha: string,
+    changes: LocalCompareChange[],
+    opts: CompareOptions = {}
+  ): Promise<LocalCompareResult> {
+    // A caller that wants no patches wants only the changed paths, which the
+    // provider already listed; skip the per-file content fetches entirely.
+    if (opts.maxFilesWithPatch === 0) {
+      return {
+        files: changes.map((change) => ({
+          path: change.path,
+          ...(change.previousPath ? { previousPath: change.previousPath } : {}),
+          status: change.status,
+          additions: 0,
+          deletions: 0,
+          isBinary: looksBinaryPath(change.path),
+        })),
+        truncated: false,
+      };
+    }
+    return computeLocalCompare(
+      {
+        getFileContentAtCommit: (path, sha) =>
+          this.getFileContentAtCommit(path, sha),
+      },
+      baseSha,
+      headSha,
+      changes,
+      { maxPatchBytesPerFile: opts.maxPatchBytesPerFile }
+    );
+  }
 
   /**
    * HTTP request with timeout via AbortController.
@@ -187,9 +433,7 @@ export abstract class GitRepoAdapter {
             throw new Error(`Rate limit exceeded.${suffix}`);
           }
           const errorText = await response.text().catch(() => "");
-          throw new Error(
-            `HTTP ${response.status} ${response.statusText}: ${errorText.slice(0, 200)}`
-          );
+          throw this.httpError(response, errorText);
         }
 
         // Read as text and parse ourselves so a non-JSON body (e.g. a path that
@@ -272,9 +516,7 @@ export abstract class GitRepoAdapter {
             throw new Error(`Rate limit exceeded.`);
           }
           const errorText = await response.text().catch(() => "");
-          throw new Error(
-            `HTTP ${response.status} ${response.statusText}: ${errorText.slice(0, 200)}`
-          );
+          throw this.httpError(response, errorText);
         }
 
         return await response.text();
@@ -282,6 +524,28 @@ export abstract class GitRepoAdapter {
         clearTimeout(timeoutId);
       }
     });
+  }
+
+  /**
+   * The error for a non-2xx response. Some rejections arrive as a whole HTML
+   * page (Bitbucket's 403 on an archive download); its markup tells the reader
+   * nothing, so only the status line is kept for those.
+   */
+  private httpError(response: Response, body: string): Error {
+    const detail = /^\s*<(!doctype|html)/i.test(body) ? "" : body.slice(0, 200);
+    return new Error(
+      `HTTP ${response.status} ${response.statusText}${detail ? `: ${detail}` : ""}`
+    );
+  }
+
+  /** `headers` without the credential, for a request to another host. */
+  private withoutAuthorization(
+    headers: HeadersInit | undefined
+  ): HeadersInit | undefined {
+    if (!headers) return headers;
+    const copy = new Headers(headers);
+    copy.delete("Authorization");
+    return copy;
   }
 
   /**
@@ -338,9 +602,7 @@ export abstract class GitRepoAdapter {
             throw new Error(`Rate limit exceeded.`);
           }
           const errorText = await response.text().catch(() => "");
-          throw new Error(
-            `HTTP ${response.status} ${response.statusText}: ${errorText.slice(0, 200)}`
-          );
+          throw this.httpError(response, errorText);
         }
 
         return Buffer.from(await response.arrayBuffer());
@@ -384,9 +646,20 @@ export abstract class GitRepoAdapter {
     const buffer = await this.makeBinaryRequest(request.url, {
       headers: request.headers,
     });
+    return this.archiveTreeFromZip(buffer, this.archiveStripsTopDir);
+  }
+
+  /**
+   * The file list and lazy content extraction for a zip of a repository tree.
+   * `stripTopDir` removes the single wrapper directory providers put around
+   * every entry.
+   */
+  protected async archiveTreeFromZip(
+    buffer: Buffer,
+    stripTopDir: boolean
+  ): Promise<ArchiveTree> {
     const JSZip = (await import("jszip")).default;
     const zip = await JSZip.loadAsync(buffer);
-    const stripTopDir = this.archiveStripsTopDir;
 
     // Enumerate entries cheaply (no decompression) to build the file list.
     // Contents are decompressed lazily, and only for the paths the caller wants.
@@ -485,8 +758,17 @@ export abstract class GitRepoAdapter {
     const redirectUrl = this.sanitizeUrl(new URL(location, response.url).href);
     await assertSsrfSafeResolved(redirectUrl);
 
+    // A hop to another host drops the credential, as fetch's own redirect
+    // handling would: a signed download URL (an archive handed off to object
+    // storage) authenticates itself and rejects a second Authorization header,
+    // and the token must not reach a host it was never issued for.
+    const originalOrigin = response.url ? new URL(response.url).origin : null;
+    const sameOrigin = new URL(redirectUrl).origin === originalOrigin;
     const redirectResponse = await fetch(redirectUrl, {
       ...options,
+      headers: sameOrigin
+        ? options.headers
+        : this.withoutAuthorization(options.headers),
       signal,
       redirect: "error", // no further redirects
     });
@@ -495,9 +777,7 @@ export abstract class GitRepoAdapter {
 
     if (!redirectResponse.ok) {
       const errorText = await redirectResponse.text().catch(() => "");
-      throw new Error(
-        `HTTP ${redirectResponse.status} ${redirectResponse.statusText}: ${errorText.slice(0, 200)}`
-      );
+      throw this.httpError(redirectResponse, errorText);
     }
 
     if (mode === "binary") {

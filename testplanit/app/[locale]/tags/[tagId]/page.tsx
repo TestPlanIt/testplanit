@@ -136,11 +136,13 @@ function TagDetail() {
   const baseWhere = useMemo(() => {
     const conditions: any = {
       isDeleted: false,
+      project: { isDeleted: false },
     };
 
     // Add project filter for non-admin users
     if (!isAdmin && userId) {
       conditions.project = {
+        isDeleted: false,
         assignedUsers: {
           some: {
             userId: userId,
@@ -496,7 +498,7 @@ function TagDetail() {
           <CardTitle>
             <SectionHeader className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span>{t("tags.detail.title")}</span>
+                <span>{t("common.pageTitles.tagDetails")}</span>
                 <TagsDisplay id={Number(tagId)} name={tagName} size="large" />
               </div>
             </SectionHeader>
@@ -551,8 +553,8 @@ function TagDetail() {
                 </Label>
                 <Select
                   value={filters.caseType}
-                  onValueChange={(value: CaseTypeFilter) =>
-                    updateFilters({ caseType: value })
+                  onValueChange={(value) =>
+                    updateFilters({ caseType: value as CaseTypeFilter })
                   }
                 >
                   <SelectTrigger
@@ -564,7 +566,7 @@ function TagDetail() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">
-                      {t("tags.detail.filters.allCases")}
+                      {t("common.filters.all")}
                     </SelectItem>
                     <SelectItem value="manual">
                       {t("common.fields.manual")}

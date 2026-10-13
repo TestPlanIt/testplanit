@@ -69,7 +69,16 @@ export interface TestRunFilters extends BaseEntityFilters {
   configurationIds?: number[];
   milestoneIds?: number[];
   isCompleted?: boolean;
-  testRunType?: "REGULAR" | "JUNIT";
+  testRunType?:
+    | "REGULAR"
+    | "HYBRID"
+    | "JUNIT"
+    | "TESTNG"
+    | "XUNIT"
+    | "NUNIT"
+    | "MSTEST"
+    | "MOCHA"
+    | "CUCUMBER";
   customFields?: CustomFieldFilter[];
   elapsedRange?: {
     min?: number;

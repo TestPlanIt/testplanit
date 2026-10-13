@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -45,6 +46,12 @@ type ResizablePanelGroupProps = Omit<
 > & {
   direction?: Orientation;
   autoSaveId?: string;
+  /**
+   * When false, layout changes are not written to storage. Use while the page
+   * collapses panels programmatically for a temporary mode, so that transient
+   * layout does not become the one restored on the next visit.
+   */
+  persistLayout?: boolean;
 };
 
 const STORAGE_PREFIX = "rrp:";
@@ -53,10 +60,18 @@ const ResizablePanelGroup = ({
   className,
   direction = "horizontal",
   autoSaveId,
+  persistLayout = true,
   id,
   ...props
 }: ResizablePanelGroupProps) => {
   const storageKey = autoSaveId ? `${STORAGE_PREFIX}${autoSaveId}` : undefined;
+  // Read through a ref: v4 can report a layout change after the render that
+  // flipped this flag, and the write must honour the latest value. A layout
+  // effect updates it before the caller's effects collapse or expand panels.
+  const persistLayoutRef = useRef(persistLayout);
+  useLayoutEffect(() => {
+    persistLayoutRef.current = persistLayout;
+  }, [persistLayout]);
   // react-resizable-panels v4 renders the group element's `data-testid` from its
   // `id` prop and ignores a passed `data-testid`. Map an explicit data-testid onto
   // `id` so callers' test ids (e.g. "repository-layout") stay queryable. The
@@ -97,7 +112,8 @@ const ResizablePanelGroup = ({
 
   const onLayoutChanged = useCallback(
     (layout: Layout) => {
-      if (!storageKey || typeof window === "undefined") return;
+      if (!storageKey || !persistLayoutRef.current) return;
+      if (typeof window === "undefined") return;
       try {
         window.localStorage.setItem(storageKey, JSON.stringify(layout));
       } catch {

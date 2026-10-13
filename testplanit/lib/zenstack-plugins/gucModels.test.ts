@@ -17,6 +17,7 @@ describe("GUC_MODELS — audit actor-context coverage", () => {
       "Comment",
       "SharedStepGroup",
       "Issue",
+      "ImpactAnalysis",
     ]) {
       expect(GUC_MODELS.has(model)).toBe(true);
     }
@@ -55,6 +56,8 @@ describe("GUC_MODELS — audit actor-context coverage", () => {
       "TestCaseParameter",
       "RepositoryCaseTag",
       "RepositoryCaseIssue",
+      "RepositoryCaseCodePin",
+      "ImpactAnalysisCase",
       "Attachments",
       "TestRunCases",
       "TestRunCaseIteration",

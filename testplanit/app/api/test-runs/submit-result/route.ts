@@ -37,6 +37,7 @@ import {
 } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
 const submitResultSchema = z.object({
   testRunId: z.number().int().positive(),
@@ -183,7 +184,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
           select: {
             rolePermissions: {
               where: {
-                area: "TestRunResults",
+                area: { in: ["TestRunResults", "Settings"] },
                 canAddEdit: true,
               },
               select: {
@@ -256,7 +257,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
                         name: true,
                         rolePermissions: {
                           where: {
-                            area: "TestRunResults",
+                            area: { in: ["TestRunResults", "Settings"] },
                             canAddEdit: true,
                           },
                           select: {
@@ -284,7 +285,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
                         name: true,
                         rolePermissions: {
                           where: {
-                            area: "TestRunResults",
+                            area: { in: ["TestRunResults", "Settings"] },
                             canAddEdit: true,
                           },
                           select: {
@@ -300,7 +301,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
                     name: true,
                     rolePermissions: {
                       where: {
-                        area: "TestRunResults",
+                        area: { in: ["TestRunResults", "Settings"] },
                         canAddEdit: true,
                       },
                       select: {
@@ -475,7 +476,9 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       ? await resolveCanReadSensitive(authenticatedUserId)
       : false;
 
-    const isAutomatedRun = runCase.testRun.testRunType !== "REGULAR";
+    // HYBRID counts as manual here: a tester recording a result on a manual
+    // case in a hybrid run must not flip that case to automated.
+    const isAutomatedRun = isAutomatedTestRunType(runCase.testRun.testRunType);
     const needsAutomatedFlip =
       isAutomatedRun && !runCase.repositoryCase.automated;
 
@@ -702,12 +705,21 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         // ─── Legacy branch (no iterationId) — unchanged behavior ──────
         // Preserves PARAM-07: non-parameterized cases see byte-identical
         // semantics. Direct status write, no rollup, no iteration counters.
+        //
+        // On a HYBRID run the automated projection stamps completion when a
+        // result lands (hybridRunProjection); a manual result must do the
+        // same, or a later manual result leaves isCompleted/completedAt
+        // describing the earlier automated one.
+        const isHybridRun = runCase.testRun.testRunType === "HYBRID";
         await tx.testRunCases.update({
           where: {
             id: input.testRunCaseId,
           },
           data: {
             statusId: input.statusId,
+            ...(isHybridRun
+              ? { isCompleted: true, completedAt: new Date() }
+              : {}),
           },
         });
       }

@@ -21,7 +21,8 @@ The chart lives in the repository at [`testplanit/helm/testplanit`](https://gith
   authoritative schema owner; the app and worker pods wait for it and never
   migrate on boot.
 - **Bundled datastores (optional, on by default)** — PostgreSQL, Valkey,
-  Elasticsearch, and MinIO, so a first install works out of the box. Each can be
+  Elasticsearch, and S3-compatible file storage (RustFS, configured under
+  `objectStorage.minio`), so a first install works out of the box. Each can be
   turned off and pointed at a managed service (Amazon RDS / ElastiCache /
   OpenSearch / S3).
 
@@ -87,6 +88,14 @@ secrets:
 # image:                          # optional — defaults to the public image
 #   tag: "1.0.0"                  # pin instead of latest
 ```
+
+:::note Upload ceiling
+Attachments and inline images are capped at 10 MB per file by default. Raise
+`config.uploadMaxMb` and keep `ingress.annotations`'
+`nginx.ingress.kubernetes.io/proxy-body-size` (default `100m`) at or above it —
+whichever is lower rejects the upload. It applies on a pod restart; the image
+needs no rebuild.
+:::
 
 :::tip Live updates (SSE)
 The notification bell and live milestone / test-run updates use long-lived SSE
@@ -221,6 +230,12 @@ datastore is enabled, also `POSTGRES_PASSWORD`, `MINIO_ROOT_USER`,
 `MINIO_ROOT_PASSWORD`; and as needed `DIRECT_DATABASE_URL`, `AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY`, `EMAIL_SERVER_PASSWORD`.
 
+When the bucket is real S3, prefer **IRSA** over the two `AWS_*` secrets: annotate
+the service account with a role ARN and leave both variables unset. The SDK then
+resolves credentials from the projected service-account token, so no static keys
+are stored in the cluster. See
+[File Storage](file-storage.md#running-without-static-keys).
+
 ## Email (SMTP)
 
 ```yaml
@@ -247,6 +262,9 @@ helm upgrade testplanit ./testplanit/helm/testplanit \
 The migrate/seed job re-runs on every upgrade (idempotent) and applies any new
 migrations before the new app pods take traffic. The web tier rolls with zero
 downtime (surge-up + a 15s pre-stop drain behind ingress-nginx).
+
+If you are upgrading from a chart release that bundled MinIO, snapshot the
+storage volume first. See [Migrating from MinIO to RustFS](/docs/migrating-from-minio#kubernetes-helm).
 
 ## Scaling
 

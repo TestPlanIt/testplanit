@@ -4,7 +4,7 @@
  */
 
 import type { jsPDF } from "jspdf";
-import { extractTextFromNode } from "../../utils/extractTextFromJson";
+import { extractTextWithLineBreaks } from "../../utils/extractTextFromJson";
 
 // Image MIME types that can be embedded in PDF
 const EMBEDDABLE_IMAGE_TYPES = [
@@ -158,6 +158,8 @@ export function hexToRgb(
 }
 
 /** Helper class wrapping jsPDF with common rendering operations */
+type PdfLine = { text: string; mono: boolean };
+
 export class PdfRenderer {
   doc: jsPDF;
   yPosition: number;
@@ -191,6 +193,38 @@ export class PdfRenderer {
       this.doc.addPage();
       this.yPosition = this.topOffset;
     }
+  }
+
+  /**
+   * Wrap text to `width` in the current font, keeping the text's own line
+   * breaks. Lines that start with "|" (Gherkin example tables, flattened
+   * rich-text tables) are flagged `mono` and measured in Courier so their
+   * columns line up when drawn with {@link drawLine}.
+   */
+  private wrapLines(text: string, width: number): PdfLine[] {
+    const font = this.doc.getFont();
+    const lines: PdfLine[] = [];
+    for (const raw of sanitizeTextForPdf(text).split(/\r?\n/)) {
+      const mono = raw.trimStart().startsWith("|");
+      if (mono) this.doc.setFont("courier", "normal");
+      const wrapped: string[] =
+        raw === "" ? [""] : this.doc.splitTextToSize(raw, width);
+      if (mono) this.doc.setFont(font.fontName, font.fontStyle);
+      for (const line of wrapped) lines.push({ text: String(line), mono });
+    }
+    return lines;
+  }
+
+  /** Draw one wrapped line at the current y, in Courier when it is `mono`. */
+  private drawLine(line: PdfLine, x: number) {
+    if (!line.mono) {
+      this.doc.text(line.text, x, this.yPosition);
+      return;
+    }
+    const font = this.doc.getFont();
+    this.doc.setFont("courier", "normal");
+    this.doc.text(line.text, x, this.yPosition);
+    this.doc.setFont(font.fontName, font.fontStyle);
   }
 
   /** Render a title (18pt bold) */
@@ -284,20 +318,17 @@ export class PdfRenderer {
     }
 
     const displayValue = sanitizeTextForPdf(String(value));
-    const lines: string[] = this.doc.splitTextToSize(
-      displayValue,
-      this.contentWidth - 5
-    );
+    const lines = this.wrapLines(displayValue, this.contentWidth - 5);
 
     if (lines.length > 1 || displayValue.length > 60) {
       this.yPosition += 5;
-      lines.forEach((line: string) => {
+      lines.forEach((line) => {
         this.ensureSpace(10);
-        this.doc.text(String(line), this.margin + 5, this.yPosition);
+        this.drawLine(line, this.margin + 5);
         this.yPosition += 5;
       });
     } else {
-      this.doc.text(String(lines[0] || ""), this.margin + 45, this.yPosition);
+      if (lines[0]) this.drawLine(lines[0], this.margin + 45);
       this.yPosition += 6;
     }
 
@@ -314,21 +345,18 @@ export class PdfRenderer {
     this.yPosition += 5;
     this.doc.setFont("helvetica", "normal");
 
-    const lines: string[] = this.doc.splitTextToSize(
-      sanitizeTextForPdf(text),
-      this.contentWidth - 5
-    );
-    lines.forEach((line: string) => {
+    const lines = this.wrapLines(text, this.contentWidth - 5);
+    lines.forEach((line) => {
       this.ensureSpace(10);
-      this.doc.text(String(line), this.margin + 5, this.yPosition);
+      this.drawLine(line, this.margin + 5);
       this.yPosition += 5;
     });
     this.yPosition += 3;
   }
 
   /**
-   * Render a numbered step heading: "N. <step text>" in bold, wrapped with a
-   * hanging indent so continuation lines align under the text.
+   * Render a numbered step: a bold "N." followed by the step text, wrapped
+   * with a hanging indent so continuation lines align under the text.
    */
   renderStepHeading(num: number, text: string) {
     this.ensureSpace(14);
@@ -338,17 +366,17 @@ export class PdfRenderer {
     const prefix = `${num}. `;
     const prefixWidth = this.doc.getTextWidth(prefix);
     const textX = this.margin + 4 + prefixWidth;
-    const lines: string[] = this.doc.splitTextToSize(
-      sanitizeTextForPdf(text || "(no description)"),
+    this.doc.text(prefix, this.margin + 4, this.yPosition);
+    this.doc.setFont("helvetica", "normal");
+    const lines = this.wrapLines(
+      text || "(no description)",
       this.contentWidth - 4 - prefixWidth
     );
-    this.doc.text(prefix, this.margin + 4, this.yPosition);
-    lines.forEach((line: string, i: number) => {
+    lines.forEach((line, i) => {
       if (i > 0) this.ensureSpace(8);
-      this.doc.text(String(line), textX, this.yPosition);
+      this.drawLine(line, textX);
       this.yPosition += 5;
     });
-    this.doc.setFont("helvetica", "normal");
   }
 
   /**
@@ -379,13 +407,13 @@ export class PdfRenderer {
     }
 
     const valueX = indent + labelWidth;
-    const lines: string[] = this.doc.splitTextToSize(
-      sanitizeTextForPdf(String(value)),
+    const lines = this.wrapLines(
+      String(value),
       Math.max(this.pageWidth - this.margin - valueX, 40)
     );
-    lines.forEach((line: string, i: number) => {
+    lines.forEach((line, i) => {
       if (i > 0) this.ensureSpace(8);
-      this.doc.text(String(line), valueX, this.yPosition);
+      this.drawLine(line, valueX);
       this.yPosition += 4.5;
     });
 
@@ -815,16 +843,8 @@ export function formatFieldValue(
     case "Checkbox":
       return rawValue === true ? "Yes" : "No";
     case "Text Long": {
-      if (typeof rawValue === "string") {
-        try {
-          const parsed = JSON.parse(rawValue);
-          return extractTextFromNode(parsed) ?? "";
-        } catch {
-          return rawValue;
-        }
-      }
-      if (typeof rawValue === "object") {
-        return extractTextFromNode(rawValue) ?? "";
+      if (typeof rawValue === "string" || typeof rawValue === "object") {
+        return extractJsonText(rawValue) ?? "";
       }
       return String(rawValue);
     }
@@ -833,6 +853,21 @@ export function formatFieldValue(
     case "Integer":
     default:
       return String(rawValue);
+  }
+}
+
+/**
+ * Extract the text of a Tiptap JSON field (string or object) for the PDF,
+ * one line per block. Returns null when the field has no text.
+ */
+export function extractJsonText(value: any): string | null {
+  if (!value) return null;
+  try {
+    const parsed = typeof value === "string" ? JSON.parse(value) : value;
+    const text = extractTextWithLineBreaks(parsed);
+    return text ? text : null;
+  } catch {
+    return typeof value === "string" && value.trim() ? value.trim() : null;
   }
 }
 

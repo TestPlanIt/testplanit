@@ -2,7 +2,7 @@ import { DateFormatter } from "@/components/DateFormatter";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import type { Integration } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 import { MantisBTIcon } from "@/components/shared/mantisbt-icon";
 import { Link, Plug } from "lucide-react";

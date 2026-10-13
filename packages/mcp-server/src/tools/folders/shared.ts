@@ -11,6 +11,29 @@ import {
   fetchProjectFolders,
 } from "./tree.js";
 
+/**
+ * The order that puts a folder after its siblings, as the web UI's Add Folder
+ * dialog does. Without it every folder written here got the schema default of
+ * 0 and sorted to the top, tied with the first sibling.
+ */
+export async function nextFolderOrder(
+  projectId: number,
+  parentId: number | null,
+  env: EnvConfig,
+): Promise<number> {
+  const last = await zenstack<{ order: number } | null>(
+    "repositoryFolders",
+    "findFirst",
+    {
+      where: { projectId, parentId, isDeleted: false },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    },
+    env,
+  );
+  return (last?.order ?? -1) + 1;
+}
+
 const FOLDER_DETAIL_INCLUDE = {
   children: {
     where: { isDeleted: false },

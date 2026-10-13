@@ -436,6 +436,10 @@ function ConfigCategoriesList() {
         columns={columns}
         data={tableData}
         getSubRows={getSubRows}
+        // Key rows by identity, not index: a refetch that inserts or re-sorts
+        // categories (another admin adding one) must not hand a category's
+        // expanded state to whichever row now sits at its old position.
+        getRowId={(row) => `${row.rowKind}-${row.id}`}
         onSortChange={handleSortChange}
         onSortColumn={handleSortColumn}
         sortConfig={sortConfig}

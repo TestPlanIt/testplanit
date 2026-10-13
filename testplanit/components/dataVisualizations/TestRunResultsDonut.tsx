@@ -17,12 +17,18 @@ interface TestRunResultsDonutProps {
   data: TestRunResultStatusItem[];
   isZoomed?: boolean;
   height?: number;
+  /** Multiplier on the radius-derived label font sizes (segment labels
+   * and the center total). Optional and additive: the default of 1 keeps
+   * every existing consumer byte-identical. Page-level CSS cannot do this
+   * — the sizes are inline styles on classless text nodes. */
+  labelScale?: number;
 }
 
 const TestRunResultsDonut: React.FC<TestRunResultsDonutProps> = ({
   data,
   isZoomed = false,
   height,
+  labelScale = 1,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -99,15 +105,11 @@ const TestRunResultsDonut: React.FC<TestRunResultsDonutProps> = ({
       12,
       Math.min(24, radius * (isZoomed ? 0.4 : 0.25))
     );
-    const centerTextFontSize = Math.max(
-      10,
-      Math.min(32, radius * (isZoomed ? 0.45 : 0.2))
-    );
+    const centerTextFontSize =
+      Math.max(10, Math.min(32, radius * (isZoomed ? 0.45 : 0.2))) * labelScale;
     const tooltipFontSize = isZoomed ? 18 : 13;
-    const segmentLabelFontSize = Math.max(
-      8,
-      Math.min(20, radius * (isZoomed ? 0.25 : 0.1))
-    );
+    const segmentLabelFontSize =
+      Math.max(8, Math.min(20, radius * (isZoomed ? 0.25 : 0.1))) * labelScale;
 
     const labelArc = d3
       .arc<any, d3.PieArcDatum<TestRunResultStatusItem>>()
@@ -305,7 +307,7 @@ const TestRunResultsDonut: React.FC<TestRunResultsDonutProps> = ({
       .duration(600)
       .ease(d3.easeQuadOut)
       .style("opacity", 1);
-  }, [data, width, svgHeight, isZoomed, t, locale]);
+  }, [data, width, svgHeight, isZoomed, t, locale, labelScale]);
 
   return (
     <div

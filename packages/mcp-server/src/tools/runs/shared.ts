@@ -9,12 +9,10 @@ import type {
   TestRunStepResultsSelect,
   TestRunsInclude,
 } from "@db/input";
-import { zenstack } from "../../api.js";
+import { postHostJson, zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
-import {
-  extractProseMirrorText,
-  denormalizeCustomFields,
-} from "../cases/shared.js";
+import { denormalizeCustomFields } from "../cases/shared.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typed includes — every literal carries `as const satisfies Prisma.<Model><Include|Select>`.
@@ -151,7 +149,7 @@ export const STEP_RESULT_SELECT = {
   id: true,
   statusId: true,
   stepStatus: { select: { id: true, name: true } },
-  notes: true, // Json? -> extractProseMirrorText
+  notes: true, // Json? -> proseMirrorToMarkdown
   evidence: true, // Json? -> as-is per D7-08
   executedAt: true,
   elapsed: true,
@@ -251,7 +249,9 @@ export const RUN_RESULT_DETAIL_INCLUDE = {
  * CUCUMBER) stores results in the JUnit suite tables.
  */
 export function isAutomatedRunType(testRunType: string): boolean {
-  return testRunType !== "REGULAR";
+  // HYBRID is a manual run that also holds automated results; its automated
+  // results are projected onto TestRunCases, so it rolls up like REGULAR.
+  return testRunType !== "REGULAR" && testRunType !== "HYBRID";
 }
 
 export interface StatusGroup {
@@ -913,9 +913,9 @@ export function mapStepResult(raw: RawStepResult) {
       : null,
     stepId: raw.step?.id ?? null,
     stepOrder: raw.step?.order ?? null,
-    stepText: extractProseMirrorText(raw.step?.step),
-    expectedResultText: extractProseMirrorText(raw.step?.expectedResult),
-    notes: extractProseMirrorText(raw.notes),
+    stepText: proseMirrorToMarkdown(raw.step?.step),
+    expectedResultText: proseMirrorToMarkdown(raw.step?.expectedResult),
+    notes: proseMirrorToMarkdown(raw.notes),
     evidence: raw.evidence, // D7-08 — surface as-is, no truncation
     executedAt: raw.executedAt,
     elapsed: raw.elapsed ?? null,
@@ -954,7 +954,7 @@ export function mapRunResultDetail(raw: RawRunResultDetail) {
     executedAt: raw.executedAt,
     editedAt: raw.editedAt,
     elapsed: raw.elapsed ?? null,
-    notes: extractProseMirrorText(raw.notes),
+    notes: proseMirrorToMarkdown(raw.notes),
     evidence: raw.evidence, // D7-08
     status: raw.status ? { id: raw.status.id, name: raw.status.name } : null,
     executedBy: raw.executedBy
@@ -999,4 +999,41 @@ export function mapRunResultDetail(raw: RawRunResultDetail) {
     attachments: (raw.attachments ?? []).map(mapAttachment),
     issues: (raw.issues ?? []).map(mapIssue),
   };
+}
+
+export type IterationGeneration =
+  | { generated: true; iterationCount: number; async: boolean }
+  | { generated: false; reason: string };
+
+/**
+ * Create the iterations for the run's parameterized cases that don't have
+ * them yet — what the web UI does after it creates a run. Without it a
+ * data-driven case in a run created here had no iterations, and its results
+ * bypassed the per-row rollup. Safe to repeat: cases that already have
+ * iterations are skipped by the host.
+ *
+ * Never throws: the run already exists, so a host that can't generate them
+ * (too many rows, or a host without this route for API tokens) is reported
+ * in the result instead of failing the call.
+ */
+export async function generateRunIterations(
+  runId: number,
+  env: EnvConfig,
+): Promise<IterationGeneration> {
+  try {
+    const out = await postHostJson<{
+      iterationCount?: number;
+      async?: boolean;
+    }>(`/api/test-runs/${runId}/generate-iterations`, {}, env, 30000);
+    return {
+      generated: true,
+      iterationCount: out.iterationCount ?? 0,
+      async: out.async === true,
+    };
+  } catch (err) {
+    return {
+      generated: false,
+      reason: err instanceof Error ? err.message : String(err),
+    };
+  }
 }

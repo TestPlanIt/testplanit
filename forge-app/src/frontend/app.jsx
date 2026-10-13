@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { invoke, router, view } from '@forge/bridge';
-import * as LucideIcons from 'lucide-react';
+
+// Keep in step with AUTOMATED_CASE_SOURCES in the app's utils/testResultTypes.ts.
+const AUTOMATED_CASE_SOURCES = [
+  'JUNIT', 'TESTNG', 'XUNIT', 'NUNIT', 'MSTEST', 'MOCHA', 'CUCUMBER',
+];
 import { formatDistanceToNow } from 'date-fns';
 import './app.css';
 
@@ -50,9 +54,40 @@ const StatusBadge = ({ status, statusColor, icon, className = "", width = "w-20"
   );
 };
 
+// Status icons can be any Lucide icon an admin picks, so the whole set ships
+// -- about 800 KB, most of the panel's code. It is split into its own chunk and
+// requested at startup, so it downloads alongside the panel's data request
+// instead of delaying it.
+let LucideIcons = null;
+const lucideIconsReady = import(
+  /* webpackChunkName: "lucide-icons" */ 'lucide-react'
+).then((icons) => {
+  LucideIcons = icons;
+  return icons;
+});
+
+const useLucideIcons = () => {
+  const [icons, setIcons] = useState(LucideIcons);
+  useEffect(() => {
+    if (!icons) lucideIconsReady.then((loaded) => setIcons(() => loaded));
+  }, [icons]);
+  return icons;
+};
+
 // Dynamic icon component that maps icon names to Lucide React icons
 const DynamicIcon = ({ name, className = "h-4 w-4", style }) => {
+  const icons = useLucideIcons();
   if (!name) return null;
+  // Same-size placeholder until the icon chunk arrives, so nothing shifts.
+  if (!icons) {
+    return (
+      <span
+        className={className}
+        style={{ display: 'inline-block', ...style }}
+        aria-hidden="true"
+      />
+    );
+  }
 
   // Convert icon name to PascalCase for Lucide React
   // Handle common transformations: kebab-case, snake_case, etc.
@@ -102,15 +137,15 @@ const DynamicIcon = ({ name, className = "h-4 w-4", style }) => {
   // Try to find the icon in Lucide React
   let IconComponent = null;
   for (const variation of iconVariations) {
-    if (LucideIcons[variation]) {
-      IconComponent = LucideIcons[variation];
+    if (icons[variation]) {
+      IconComponent = icons[variation];
       break;
     }
   }
 
   // Fallback to Circle if no icon found
   if (!IconComponent) {
-    IconComponent = LucideIcons.Circle;
+    IconComponent = icons.Circle;
   }
 
   return <IconComponent className={className} style={style} />;
@@ -423,14 +458,29 @@ const FieldChipsRow = ({ fields, expanded, onToggle }) => {
 };
 
 // Test case row component
-const TestCaseRow = ({ testCase, onOpen }) => {
+const TestCaseRow = ({ testCase, onOpen, onOpenRun }) => {
   const [expanded, setExpanded] = useState(false);
+  // A deleted case is only listed because it still has results; the row
+  // exists to keep that history with the issue, so it is rendered muted, its
+  // stale field values are dropped, and the title no longer deep-links (the
+  // case page refuses soft-deleted cases).
+  const isDeleted = Boolean(testCase.isDeleted);
   // Fields opted into the panel; valueless ones are hidden by design.
-  const visibleFields = (testCase.fields || []).filter(fieldHasValue);
+  const visibleFields = isDeleted
+    ? []
+    : (testCase.fields || []).filter(fieldHasValue);
 
-  const getIcon = (source, isDeleted) => {
+  // Mirrors CaseDisplay in the main app: Bot for automated, ListChecks for
+  // manual. Two things decide it, and BOTH are needed. The `automated` column
+  // is set independently of `source` -- a case imported as MANUAL that later
+  // had automation attached keeps source=MANUAL -- so reading source alone
+  // showed a manual icon on automated cases. And the source list is seven
+  // frameworks, not just JUnit.
+  const getIcon = (source, isDeleted, automated) => {
     if (isDeleted) return <DynamicIcon name="Trash" className="h-4 w-4 shrink-0" />;
-    if (source === 'JUNIT') return <DynamicIcon name="Bot" className="h-4 w-4 shrink-0" />;
+    if (automated || AUTOMATED_CASE_SOURCES.includes(source)) {
+      return <DynamicIcon name="Bot" className="h-4 w-4 shrink-0" />;
+    }
     return <DynamicIcon name="ListChecks" className="h-4 w-4 shrink-0" />;
   };
 
@@ -476,17 +526,26 @@ const TestCaseRow = ({ testCase, onOpen }) => {
   };
 
   return (
-    <div className="testplanit-card border rounded-md transition-colors">
+    <div className={`testplanit-card border rounded-md transition-colors ${isDeleted ? 'border-dashed opacity-75' : ''}`}>
       <div className="flex items-center justify-between p-2 testplanit-hover">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          {getIcon(testCase.source, testCase.isDeleted)}
-          <button
-            className="text-sm font-medium testplanit-primary flex-1 truncate text-left"
-            onClick={handleTitleClick}
-            title={testCase.name}
-          >
-            {testCase.name}
-          </button>
+          {getIcon(testCase.source, isDeleted, testCase.automated)}
+          {isDeleted ? (
+            <span
+              className="text-sm font-medium testplanit-text-muted flex-1 truncate text-left line-through"
+              title={`${testCase.name} (deleted in TestPlanIt)`}
+            >
+              {testCase.name}
+            </span>
+          ) : (
+            <button
+              className="text-sm font-medium testplanit-primary flex-1 truncate text-left"
+              onClick={handleTitleClick}
+              title={testCase.name}
+            >
+              {testCase.name}
+            </button>
+          )}
           {(testCase.estimate || testCase.forecastManual || testCase.forecastAutomated) && (
             <div className="flex items-center gap-1">
               {testCase.estimate && (
@@ -507,15 +566,25 @@ const TestCaseRow = ({ testCase, onOpen }) => {
             </div>
           )}
           <div className="flex items-center gap-2">
-            {/* Workflow State */}
-            <span
-              className="text-xs px-2 py-1 rounded-md border font-medium flex items-center justify-center gap-1 w-20"
-              style={getStatusStyle(testCase.statusColor)}
-              title={testCase.status}
-            >
-              <DynamicIcon name={testCase.statusIcon} className="h-3 w-3 shrink-0" style={{ color: 'white' }} />
-              <span className="truncate">{testCase.status}</span>
-            </span>
+            {isDeleted ? (
+              /* A workflow state means nothing for a deleted case; say so instead. */
+              <span
+                className="text-xs px-2 py-1 rounded-md border font-medium flex items-center justify-center w-20 testplanit-text-muted testplanit-muted-bg"
+                title="Deleted in TestPlanIt. Its results are kept with this issue."
+              >
+                <span className="truncate">Deleted</span>
+              </span>
+            ) : (
+              /* Workflow State */
+              <span
+                className="text-xs px-2 py-1 rounded-md border font-medium flex items-center justify-center gap-1 w-20"
+                style={getStatusStyle(testCase.statusColor)}
+                title={testCase.status}
+              >
+                <DynamicIcon name={testCase.statusIcon} className="h-3 w-3 shrink-0" style={{ color: 'white' }} />
+                <span className="truncate">{testCase.status}</span>
+              </span>
+            )}
             {/* Test Result Status Badge */}
             {testCase.lastResult && (
               <span
@@ -568,23 +637,11 @@ const TestCaseRow = ({ testCase, onOpen }) => {
                             <button
                               className="truncate font-medium text-primary hover:text-primary/80 hover:underline text-left min-w-0"
                               title={result.testRunName}
-                              onClick={async () => {
-                                if (!instanceUrl) return;
-                                const url = `${instanceUrl}/projects/runs/${testCase.projectId}/${result.testRunId}?selectedCase=${testCase.id}&view=status`;
-                                console.log('Opening test run URL:', url);
-                                try {
-                                  await router.open(url);
-                                  console.log('Successfully opened test run via Forge router.open()');
-                                } catch (routerError) {
-                                  console.log('Forge router.open() failed, trying router.navigate():', routerError);
-                                  try {
-                                    await router.navigate(url);
-                                    console.log('Successfully navigated via Forge router.navigate()');
-                                  } catch (navigateError) {
-                                    console.log('Forge router.navigate() failed:', navigateError);
-                                    window.location.href = url;
-                                  }
-                                }
+                              onClick={(e) => {
+                                // The instance URL lives in the panel, not this
+                                // row, so the panel builds and opens the link.
+                                e.stopPropagation();
+                                onOpenRun?.(result.testRunId, testCase.projectId, testCase.id);
                               }}
                             >
                               {result.testRunName}
@@ -798,10 +855,33 @@ const SessionRow = ({ session, onOpen }) => {
 const TestRunRow = ({ testRun, onOpen }) => {
   const [expanded, setExpanded] = useState(false);
 
-  // Use display items from API (like TestRunCasesSummary)
-  const displayItems = testRun.displayItems || [];
-  const passedCount = displayItems.filter(item => item.status?.name === 'Passed').length;
+  // The per-case status bar (like TestRunCasesSummary) is fetched the first
+  // time the run is expanded; the collapsed row only needs the totals. An
+  // instance that predates lazy loading still sends it inline with the run.
+  const [lazyItems, setLazyItems] = useState(null);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [itemsError, setItemsError] = useState(null);
+  const displayItems = testRun.displayItems || lazyItems || [];
+  const passedCount = testRun.passedCount ??
+    displayItems.filter(item => item.status?.name === 'Passed').length;
   const passRate = testRun.total > 0 ? Math.round((passedCount / testRun.total) * 100) : 0;
+
+  const loadItems = async () => {
+    setItemsLoading(true);
+    setItemsError(null);
+    try {
+      const response = await invoke('getTestRunCases', { testRunId: testRun.id });
+      if (response.error) {
+        setItemsError(response.error);
+      } else {
+        setLazyItems(response.displayItems || []);
+      }
+    } catch (err) {
+      setItemsError(err.message);
+    } finally {
+      setItemsLoading(false);
+    }
+  };
 
   const handleTitleClick = (e) => {
     e.stopPropagation();
@@ -810,6 +890,9 @@ const TestRunRow = ({ testRun, onOpen }) => {
 
   const toggleExpanded = (e) => {
     e.stopPropagation();
+    if (!expanded && !testRun.displayItems && !lazyItems && !itemsLoading) {
+      loadItems();
+    }
     setExpanded(!expanded);
   };
 
@@ -854,6 +937,9 @@ const TestRunRow = ({ testRun, onOpen }) => {
                 {/* Status Bar Visualization */}
                 <div className="flex flex-col space-y-1">
                   <div className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted">
+                    {itemsLoading && (
+                      <div className="h-full w-full animate-pulse bg-muted" title="Loading test cases…" />
+                    )}
                     {/* Individual segments for each test case with actual status colors (like TestRunCasesSummary) */}
                     {displayItems.map((item, index) => {
                       const color = item.status?.color?.value || '#9ca3af';
@@ -874,6 +960,14 @@ const TestRunRow = ({ testRun, onOpen }) => {
                   <div className="text-xs testplanit-text-muted">
                     Total: {testRun.total} cases{testRun.summaryText ? ` (${testRun.summaryText})` : ''}
                   </div>
+                  {itemsError && (
+                    <div className="text-xs text-red-500 flex items-center gap-2">
+                      <span>Couldn't load test cases: {itemsError}</span>
+                      <button className="underline hover:text-primary" onClick={loadItems}>
+                        Retry
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2088,7 +2182,6 @@ const App = () => {
   const loadTestInfo = async () => {
     try {
       const response = await invoke('getTestInfo');
-      console.log('Response from resolver:', response);
 
       if (response.error) {
         setError(response.error);
@@ -2202,17 +2295,21 @@ const App = () => {
     }
   };
 
-  const openTestRunUrl = async (testRunId, projectId) => {
+  const openTestRunUrl = async (testRunId, projectId, testCaseId) => {
     try {
       if (!instanceUrl) {
         console.error('Instance URL not configured');
         return;
       }
 
-      // Use locale-neutral URLs - let TestPlanit middleware handle locale detection
-      const url = projectId
+      // Use locale-neutral URLs - let TestPlanit middleware handle locale detection.
+      // With a case id, the run opens on that case's status view.
+      const runUrl = projectId
         ? `${instanceUrl}/projects/runs/${projectId}/${testRunId}`
         : `${instanceUrl}/test-runs/${testRunId}`;
+      const url = testCaseId
+        ? `${runUrl}?selectedCase=${testCaseId}&view=status`
+        : runUrl;
 
       console.log('Opening test run URL:', url);
 
@@ -2559,13 +2656,17 @@ const App = () => {
     );
   }
 
-  // A deleted case is worth keeping only while it still carries result
-  // history; with no results attached the row is just noise on the issue.
-  const visibleTestCases = (testData?.testCases || []).filter(
-    (testCase) => !testCase.isDeleted || testCase.resultHistory?.length > 0
+  // Deleted cases are listed after the live ones and counted separately so
+  // they are easy to skip. A deleted case is worth keeping only while it still
+  // carries result history; with no results attached the row is just noise on
+  // the issue.
+  const allTestCases = testData?.testCases || [];
+  const liveTestCases = allTestCases.filter((testCase) => !testCase.isDeleted);
+  const deletedTestCases = allTestCases.filter(
+    (testCase) => testCase.isDeleted && testCase.resultHistory?.length > 0
   );
 
-  const hasTestCases = visibleTestCases.length > 0;
+  const hasTestCases = liveTestCases.length > 0 || deletedTestCases.length > 0;
   const hasSessions = testData?.sessions?.length > 0;
   const hasTestRuns = testData?.testRuns?.length > 0;
 
@@ -2610,15 +2711,21 @@ const App = () => {
               name={sectionsExpanded.testCases ? "ChevronDown" : "ChevronRight"}
               className="h-4 w-4"
             />
-            Test Cases ({visibleTestCases.length})
+            Test Cases ({liveTestCases.length})
+            {deletedTestCases.length > 0 && (
+              <span className="normal-case tracking-normal font-normal testplanit-text-muted">
+                · {deletedTestCases.length} deleted
+              </span>
+            )}
           </button>
           {sectionsExpanded.testCases && (
             <div>
-              {visibleTestCases.map((testCase, index) => (
+              {[...liveTestCases, ...deletedTestCases].map((testCase, index) => (
                 <TestCaseRow
                   key={testCase.id || index}
                   testCase={testCase}
                   onOpen={openTestCaseUrl}
+                  onOpenRun={openTestRunUrl}
                 />
               ))}
             </div>

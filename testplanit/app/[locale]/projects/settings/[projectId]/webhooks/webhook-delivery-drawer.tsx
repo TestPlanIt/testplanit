@@ -271,7 +271,7 @@ export function WebhookDeliveryDrawer({
 
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
-                    {t("drawerLabelError")}
+                    {tCommon("errors.error")}
                   </label>
                   <p
                     className="text-sm break-all"

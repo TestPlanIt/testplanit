@@ -196,6 +196,18 @@ describe("claimRunReadyTransition", () => {
     }
   );
 
+  // A hybrid run is a manual run whose automated results are projected onto
+  // TestRunCases, so the counts describe it and the nudge applies.
+  it("evaluates HYBRID runs like REGULAR ones", async () => {
+    const db = makeDb(
+      { ...READY_RUN, testRunType: "HYBRID" },
+      { liveCases: 5, openCases: 0 }
+    );
+    const outcome = await claimRunReadyTransition(db as never, 42);
+    expect(outcome.reason).not.toBe("not-regular");
+    expect(db.$queryRaw).toHaveBeenCalled();
+  });
+
   // An allowlist, so a future run type nobody has considered stays silent
   // rather than opting itself in.
   it("ignores an unrecognised run type", async () => {

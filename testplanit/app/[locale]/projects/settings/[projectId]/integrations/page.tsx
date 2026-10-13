@@ -20,7 +20,6 @@ import { useEffect } from "react";
 import { ApplicationArea } from "~/zenstack/models";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { MilestoneSyncSettings } from "./milestone-sync-settings";
 import { ProjectIntegrationSettings } from "./project-integration-settings";
 
 export default function ProjectIntegrationsPage() {
@@ -124,7 +123,7 @@ export default function ProjectIntegrationsPage() {
   // `authorizeProjectAdminForProject` enforces server-side:
   // 1. System ADMIN users always have access
   // 2. System PROJECTADMIN users, on projects they are assigned to
-  // 3. Users with the Project Admin role on this specific project
+  // 3. Users with a role with Settings canAddEdit on this specific project
   // 4. The project's creator
   // Tiers 3 and 4 were the standing TODO here, and 404'd until now.
   const { isProjectAdmin, isLoading: permissionsLoading } =
@@ -206,16 +205,10 @@ export default function ProjectIntegrationsPage() {
           </Card>
 
           {currentIntegration && (
-            <>
-              <ProjectIntegrationSettings
-                projectIntegration={currentIntegration}
-                integration={currentIntegration.integration}
-              />
-              <MilestoneSyncSettings
-                projectIntegration={currentIntegration}
-                integration={currentIntegration.integration}
-              />
-            </>
+            <ProjectIntegrationSettings
+              projectIntegration={currentIntegration}
+              integration={currentIntegration.integration}
+            />
           )}
         </CardContent>
       </Card>

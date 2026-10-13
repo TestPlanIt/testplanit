@@ -15,8 +15,14 @@ vi.mock("~/lib/db", () => ({
   },
 }));
 
+vi.mock("~/lib/services/areaPermission", () => ({
+  isProjectAdminFor: vi.fn(),
+}));
+
 import { baseDb } from "~/lib/db";
+import { isProjectAdminFor } from "~/lib/services/areaPermission";
 import {
+  authorizeProjectAdminForProject,
   authorizeProjectImport,
   authorizeProjectMilestoneSyncAdmin,
 } from "./importAuthorization";
@@ -116,8 +122,9 @@ describe("authorizeProjectMilestoneSyncAdmin", () => {
     // (3) the standalone authorizeProjectImport baseline call below — allowed.
     (baseDb.projects.findFirst as any)
       .mockResolvedValueOnce({ id: PROJECT_ID }) // authorizeProjectImport member check: allowed
-      .mockResolvedValueOnce(null) // admin gate: not an admin
+      .mockResolvedValueOnce({ id: PROJECT_ID }) // admin gate: project exists
       .mockResolvedValueOnce({ id: PROJECT_ID }); // baseline authorizeProjectImport call: allowed
+    (isProjectAdminFor as any).mockResolvedValue(false); // admin gate: not an admin
 
     const result = await authorizeProjectMilestoneSyncAdmin(
       session({ id: "user-1", access: "USER" }),
@@ -127,6 +134,7 @@ describe("authorizeProjectMilestoneSyncAdmin", () => {
 
     expect(result.ok).toBe(false);
     expect(result.status).toBe(403);
+    expect(isProjectAdminFor).toHaveBeenCalledWith("user-1", PROJECT_ID);
     // Confirm the SAME user was in fact allowed by authorizeProjectImport.
     const baseline = await authorizeProjectImport(
       session({ id: "user-1", access: "USER" }),
@@ -136,29 +144,12 @@ describe("authorizeProjectMilestoneSyncAdmin", () => {
     expect(baseline.ok).toBe(true);
   });
 
-  it("allows the project creator", async () => {
+  it("allows a member the project-admin ladder admits (creator, Settings-bit role, assigned PROJECTADMIN)", async () => {
     mockValidMapping();
     (baseDb.projects.findFirst as any)
       .mockResolvedValueOnce({ id: PROJECT_ID }) // authorizeProjectImport member check
-      .mockResolvedValueOnce({ id: PROJECT_ID }); // admin gate: creator match
-
-    const result = await authorizeProjectMilestoneSyncAdmin(
-      session({ id: "creator-1", access: "USER" }),
-      INTEGRATION_ID,
-      MAPPING_ID
-    );
-
-    expect(result.ok).toBe(true);
-    expect(result.status).toBe(200);
-    expect(result.projectId).toBe(PROJECT_ID);
-    expect(result.provider).toBe("JIRA");
-  });
-
-  it("allows a SPECIFIC_ROLE 'Project Admin' member", async () => {
-    mockValidMapping();
-    (baseDb.projects.findFirst as any)
-      .mockResolvedValueOnce({ id: PROJECT_ID })
-      .mockResolvedValueOnce({ id: PROJECT_ID });
+      .mockResolvedValueOnce({ id: PROJECT_ID }); // admin gate: project exists
+    (isProjectAdminFor as any).mockResolvedValue(true);
 
     const result = await authorizeProjectMilestoneSyncAdmin(
       session({ id: "project-admin-1", access: "USER" }),
@@ -168,22 +159,29 @@ describe("authorizeProjectMilestoneSyncAdmin", () => {
 
     expect(result.ok).toBe(true);
     expect(result.status).toBe(200);
+    expect(result.projectId).toBe(PROJECT_ID);
+    expect(result.provider).toBe("JIRA");
+    expect(isProjectAdminFor).toHaveBeenCalledWith(
+      "project-admin-1",
+      PROJECT_ID
+    );
   });
 
-  it("allows a PROJECTADMIN-access user assigned to the project", async () => {
-    mockValidMapping();
-    (baseDb.projects.findFirst as any)
-      .mockResolvedValueOnce({ id: PROJECT_ID })
-      .mockResolvedValueOnce({ id: PROJECT_ID });
+  it("authorizeProjectAdminForProject refuses a deleted or missing project even for a ladder admin", async () => {
+    (baseDb.projects.findFirst as any).mockResolvedValueOnce(null);
+    (isProjectAdminFor as any).mockResolvedValue(true);
 
-    const result = await authorizeProjectMilestoneSyncAdmin(
-      session({ id: "assigned-admin-1", access: "PROJECTADMIN" }),
-      INTEGRATION_ID,
-      MAPPING_ID
+    const result = await authorizeProjectAdminForProject(
+      session({ id: "project-admin-1", access: "USER" }),
+      PROJECT_ID
     );
 
-    expect(result.ok).toBe(true);
-    expect(result.status).toBe(200);
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(403);
+    expect(baseDb.projects.findFirst).toHaveBeenCalledWith({
+      where: { id: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+    });
   });
 
   it("allows a system ADMIN without an extra project query (short-circuit)", async () => {

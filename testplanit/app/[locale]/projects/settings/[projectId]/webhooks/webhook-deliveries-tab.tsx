@@ -18,7 +18,7 @@ import { DateFormatter } from "@/components/DateFormatter";
 import { DateRangePicker } from "@/components/forms/DateRangePicker";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@/components/tables/tableFeatures";
 import { useSession } from "next-auth/react";
 
 import {
@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { bulkReplayFailedDeliveries } from "~/app/actions/webhook-config";
 import { usePathname, useRouter } from "~/lib/navigation";
 
+import { adapterLabelKey } from "./inbound-adapters";
 import { WebhookDeliveryDrawer } from "./webhook-delivery-drawer";
 
 type DeliveryListItem = {
@@ -66,43 +67,6 @@ interface WebhookDeliveriesTabProps {
 }
 
 type StatusFilter = "all" | "failed" | "success";
-
-function adapterLabelKey(
-  adapterType: string
-):
-  | "inboundChooserJira"
-  | "inboundChooserGithub"
-  | "inboundChooserAdo"
-  | "inboundChooserGitlab"
-  | "inboundChooserGitea"
-  | "inboundChooserRedmine"
-  | "inboundChooserMantisbt"
-  | "adapterLabelSlack"
-  | "adapterLabelGenericHmac"
-  | null {
-  switch (adapterType) {
-    case "JIRA":
-      return "inboundChooserJira";
-    case "GITHUB":
-      return "inboundChooserGithub";
-    case "AZURE_DEVOPS":
-      return "inboundChooserAdo";
-    case "GITLAB":
-      return "inboundChooserGitlab";
-    case "GITEA":
-      return "inboundChooserGitea";
-    case "REDMINE":
-      return "inboundChooserRedmine";
-    case "MANTISBT":
-      return "inboundChooserMantisbt";
-    case "SLACK":
-      return "adapterLabelSlack";
-    case "GENERIC_HMAC":
-      return "adapterLabelGenericHmac";
-    default:
-      return null;
-  }
-}
 
 const EVENT_LABEL_KEYS: Record<string, string> = {
   // Outbound events
@@ -561,13 +525,13 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
               data-testid="webhook-deliveries-filter-status"
               className="w-full"
             >
-              <SelectValue placeholder={t("filterStatusAll")} />
+              <SelectValue placeholder={tCommon("filters.all")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t("filterStatusAll")}</SelectItem>
+              <SelectItem value="all">{tCommon("filters.all")}</SelectItem>
               <SelectItem value="failed">{t("filterStatusFailed")}</SelectItem>
               <SelectItem value="success">
-                {t("filterStatusSuccess")}
+                {tCommon("fields.success")}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -706,7 +670,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
       {
         id: "status",
         accessorKey: "statusCode",
-        header: t("tableHeaderStatus"),
+        header: tCommon("actions.status"),
         enableSorting: true,
         enableResizing: true,
         size: 100,
@@ -722,7 +686,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
       {
         id: "error",
         accessorKey: "error",
-        header: t("tableHeaderError"),
+        header: tCommon("errors.error"),
         enableSorting: true,
         enableResizing: true,
         size: 100,

@@ -252,7 +252,9 @@ describe("GitLabAdapter", () => {
       expect(result.key).toBe("testgroup/testrepo#42");
       expect(result.title).toBe("Test Issue");
       expect(result.status).toBe("opened");
-      expect(result.issueType).toBe("issue");
+      // issueType is an { id, name } pair matching getIssueTypes, not a bare
+      // string — see the AZDO/GitLab issueType mapper fix.
+      expect(result.issueType).toEqual({ id: "issue", name: "Issue" });
     });
 
     it("should include issue_type in payload when provided", async () => {
@@ -320,7 +322,9 @@ describe("GitLabAdapter", () => {
       });
 
       const result = await adapter.getIssue("testgroup/testrepo#42");
-      expect(result.issueType).toBe("incident");
+      // issueType is an { id, name } pair matching getIssueTypes, not a bare
+      // string — see the AZDO/GitLab issueType mapper fix.
+      expect(result.issueType).toEqual({ id: "incident", name: "Incident" });
     });
 
     it("should default issueType to 'issue' when field is absent", async () => {
@@ -331,7 +335,7 @@ describe("GitLabAdapter", () => {
       });
 
       const result = await adapter.getIssue("testgroup/testrepo#42");
-      expect(result.issueType).toBe("issue");
+      expect(result.issueType).toEqual({ id: "issue", name: "Issue" });
     });
   });
 
@@ -452,6 +456,146 @@ describe("GitLabAdapter", () => {
 
       const result = await adapter.searchIssues({});
       expect(result.issues).toEqual([]);
+    });
+
+    it("maps the issue type as an { id, name } pair, not a bare string", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([{ ...mockGitLabIssue, issue_type: "incident" }]),
+      });
+
+      const result = await adapter.searchIssues({});
+
+      expect(result.issues[0].issueType).toEqual({
+        id: "incident",
+        name: "Incident",
+      });
+    });
+
+    it("issues exactly one request with no issue_type param when no types are selected", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([mockGitLabIssue]),
+      });
+
+      await adapter.searchIssues({});
+
+      // beforeEach's authenticate() call is calls[0]; exactly one search call follows.
+      expect(mockFetch.mock.calls).toHaveLength(2);
+      const url = mockFetch.mock.calls[1][0];
+      expect(url).not.toContain("issue_type");
+    });
+
+    it("issues exactly one request carrying issue_type=<value> when one type is selected", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([mockGitLabIssue]),
+      });
+
+      await adapter.searchIssues({ issueTypeIds: ["incident"] });
+
+      expect(mockFetch.mock.calls).toHaveLength(2);
+      const url = mockFetch.mock.calls[1][0];
+      expect(url).toContain("issue_type=incident");
+    });
+
+    it("fans out sequentially, one request per selected type, concatenated in selection order", async () => {
+      const issueResult = { ...mockGitLabIssue, iid: 1 };
+      const incidentResult = { ...mockGitLabIssue, iid: 2 };
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([issueResult]),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([incidentResult]),
+        });
+
+      const result = await adapter.searchIssues({
+        issueTypeIds: ["issue", "incident"],
+      });
+
+      // beforeEach's authenticate() = calls[0]; two sequential per-type calls follow.
+      expect(mockFetch.mock.calls).toHaveLength(3);
+      expect(mockFetch.mock.calls[1][0]).toContain("issue_type=issue");
+      expect(mockFetch.mock.calls[2][0]).toContain("issue_type=incident");
+      // Concatenated in selection order, not re-sorted.
+      expect(result.issues.map((i) => i.id)).toEqual(["1", "2"]);
+    });
+
+    it("reports hasMore true when ANY selected type's page reported more", async () => {
+      const fullPage = Array.from({ length: 2 }, (_, i) => ({
+        ...mockGitLabIssue,
+        iid: i + 1,
+      }));
+      const shortPage = [{ ...mockGitLabIssue, iid: 99 }];
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(fullPage),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(shortPage),
+        });
+
+      const result = await adapter.searchIssues({
+        limit: 2,
+        issueTypeIds: ["issue", "incident"],
+      });
+
+      // First type's page is full (length === limit) -> that type's hasMore
+      // is true; the second type's short page alone would be false. The
+      // combined result must still be true.
+      expect(result.hasMore).toBe(true);
+    });
+
+    it("walks EVERY page of each selected type across successive orchestrator iterations, skipping none", async () => {
+      // The orchestrator advances its offset by the CONCATENATED row count,
+      // so with two types that offset moves two pages per iteration. Deriving
+      // each type's page from it therefore steps 1 -> 3 -> 5 and never asks
+      // for page 2 of either type: roughly half the matching issues are
+      // silently absent, and the run still reports success.
+      const fullPage = (iid: number) => [
+        { ...mockGitLabIssue, iid },
+        { ...mockGitLabIssue, iid: iid + 1 },
+      ];
+      for (let i = 0; i < 6; i++) {
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(fullPage(100 + i * 10)),
+        });
+      }
+
+      // Three iterations, driven the way SyncService drives them: offset
+      // advances by the rows returned, and any cursor is handed straight back.
+      let offset = 0;
+      let pageToken: string | undefined;
+      for (let iteration = 0; iteration < 3; iteration++) {
+        const result = await adapter.searchIssues({
+          limit: 2,
+          offset,
+          pageToken,
+          issueTypeIds: ["issue", "incident"],
+        });
+        offset += result.issues.length;
+        pageToken = result.nextPageToken;
+      }
+
+      // calls[0] is authenticate(); six searches follow, in type order.
+      const pagesByType: Record<string, number[]> = { issue: [], incident: [] };
+      for (const [url] of mockFetch.mock.calls.slice(1)) {
+        const parsed = new URL(url as string);
+        const type = parsed.searchParams.get("issue_type");
+        const page = Number(parsed.searchParams.get("page"));
+        if (type) pagesByType[type].push(page);
+      }
+
+      // Each type must be walked 1, 2, 3 -- consecutively and independently.
+      expect(pagesByType.issue).toEqual([1, 2, 3]);
+      expect(pagesByType.incident).toEqual([1, 2, 3]);
     });
   });
 

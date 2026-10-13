@@ -1,33 +1,64 @@
 "use client";
 import { DraggableList } from "@/components/DraggableCaseFields";
+import {
+  flattenFolderOptions,
+  transformFolders,
+} from "@/components/forms/FolderSelect";
+import {
+  flattenMilestoneTree,
+  MilestoneOptionContent,
+  transformMilestones,
+} from "@/components/forms/MilestoneSelect";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
+import {
+  RequirementScopePicker,
+  type RequirementScopeOption,
+} from "@/components/reports/RequirementScopePicker";
+import { REQUIREMENT_COVERAGE_STATE_ORDER } from "@/components/reports/RequirementCoverageOverview";
+import { RequirementSnapshotPicker } from "@/components/reports/RequirementSnapshotPicker";
+import { Switch } from "@/components/ui/switch";
+import { metricUnit } from "~/utils/metricUnits";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import {
   ColumnDef,
   ExpandedState,
   VisibilityState,
-} from "@tanstack/react-table";
+} from "@/components/tables/tableFeatures";
 import {
   Bot,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleDashed,
+  CircleDot,
+  Combine,
   Filter,
+  Flag,
   FolderOpen,
+  FolderTree,
   LayoutTemplate,
+  ListChecks,
   Loader2,
+  Clock,
+  GitBranch,
+  HeartPulse,
+  Milestone,
+  Pin,
+  Tag,
+  Tags,
+  Zap,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 import { useSearchParams } from "next/navigation";
 import React, {
@@ -43,13 +74,24 @@ import MultiSelect from "react-select";
 import { z } from "zod/v4";
 import { DateFormatter } from "~/components/DateFormatter";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import {
+  parseRelativeDateRange,
+  resolveRelativeDateRange,
+  type RelativeDateRange,
+} from "~/lib/reports/dateRangePresets";
 import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";
 import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
 import { MatrixFilterPanel } from "@/components/matrix/MatrixFilterPanel";
 import { ReportFilters } from "~/components/reports/ReportFilters";
 import { ReportRenderer } from "~/components/reports/ReportRenderer";
+import { RequirementGapGenerateCases } from "~/components/reports/RequirementGapGenerateCases";
+import { SavedReportContext } from "~/components/reports/SavedReportContext";
+import { SaveReportButton } from "~/components/reports/SaveReportButton";
 import { ShareButton } from "~/components/reports/ShareButton";
 import { useMatrixFilters } from "~/hooks/useMatrixFilters";
+import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import { ApplicationArea } from "~/zenstack/models";
+import type { RequirementCoverageGapReportRow } from "~/utils/requirementCoverageReportUtils";
 import { Card, CardContent } from "~/components/ui/card";
 import {
   DropdownMenu,
@@ -72,12 +114,26 @@ import { useDrillDown } from "~/hooks/useDrillDown";
 import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useReportCsvExport } from "~/hooks/useReportCsvExport";
+import {
+  useRequirementCoverageChangeColumns,
+  useRequirementCoverageGapColumns,
+  useRequirementTraceabilityColumns,
+} from "~/hooks/useRequirementCoverageReportColumns";
+import { useCodePinCoverageColumns } from "~/hooks/useCodePinCoverageColumns";
+import {
+  IMPACT_OUTCOME_LABEL_KEY,
+  IMPACT_TRIGGER_LABEL_KEY,
+  useImpactAnalysisColumns,
+} from "~/hooks/useImpactAnalysisColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
+  sortReportTypesByLabel,
+  type ReportType,
 } from "~/lib/config/reportTypes";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
@@ -86,11 +142,26 @@ import type {
   DrillDownContext,
 } from "~/lib/types/reportDrillDown";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
+import {
+  dimensionLabelKey,
+  hasMessage,
+  metricLabelKey,
+} from "~/lib/constants/reportLabelKeys";
+import { schema } from "~/zenstack/schema";
 import {
   dimensionToDraggableField,
   draggableFieldToDimension,
   getReportSummary,
 } from "~/utils/reportUtils";
+import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
+import {
+  mergeSeenOptions,
+  mergeSeenProjectOptions,
+  withLatestCounts,
+  withLatestProjectCounts,
+  type ProjectFilterOption,
+} from "~/utils/reportProjectFilterOptions";
 import type { ReportBuilderStateConfig } from "~/lib/schemas/reportBuilderStateSchema";
 import {
   applyLegacyReportUrlParams,
@@ -106,6 +177,10 @@ import {
   stripReportSelectionParams,
 } from "./reportUrlUtils";
 import { mintReportBuilderStateId } from "./reportBuilderStateLink";
+import {
+  initialDateRangeFromUrl,
+  parsePerTypeReportParams,
+} from "./reportShareParams";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -145,6 +220,75 @@ function isCrossProjectReport(reportType: string): boolean {
   return reportType.startsWith("cross-project-");
 }
 
+// The requirement report ids (D-2, COV-04, plus the snapshot-diff report),
+// as BASE types -- `getBaseReportType` strips any "cross-project-" prefix
+// before these are consulted, so the gaps and traceability ids cover their
+// cross-project twins too. The changes report has no cross-project twin:
+// a snapshot is captured from one project and pinned to it.
+const REQUIREMENT_REPORT_TYPE_IDS = [
+  "requirement-coverage-gaps",
+  "requirement-traceability",
+  "requirement-coverage-changes",
+] as const;
+
+// Impact Analysis is opt-in per project the same way; the id covers its
+// cross-project twin because the list is consulted by base id.
+const IMPACT_REPORT_TYPE_IDS = [
+  "impact-analysis",
+  "code-pin-coverage",
+] as const;
+
+/** Coverage-state labels, the same mapping RequirementCoverageStateFilter
+ * used when it stood on its own. */
+/** The options endpoint's milestone row: id/name for the filter contract
+ * plus everything the shared MilestoneOptionContent renders (type icon,
+ * tree position, tracker-source badge fields). */
+interface RequirementMilestoneFilterOption {
+  id: number;
+  name: string;
+  parentId: number | null;
+  integrationId?: number | null;
+  externalKind?: string | null;
+  externalState?: string | null;
+  externalUrl?: string | null;
+  detachedAt?: Date | string | null;
+  mergedToExternalId?: string | null;
+  milestoneType?: { icon?: { name: string } | null };
+}
+
+const COVERAGE_STATE_LABEL_KEYS: Record<string, string> = {
+  PASSED: "statusPassed",
+  FAILED: "statusFailed",
+  NOT_RUN: "statusNotRun",
+  UNCOVERED: "uncovered",
+};
+
+/** The gaps/traceability reports, which share one filter menu. */
+function isFilterableRequirementReport(reportType: string): boolean {
+  return (
+    matchesReportType(reportType, "requirement-coverage-gaps") ||
+    matchesReportType(reportType, "requirement-traceability")
+  );
+}
+
+/**
+ * The Automated menu's selection (1 = automated, 0 = manual; the All Cases
+ * row stores null) as the flaky/health reports' `automatedFilter` list.
+ */
+function automatedFilterBody(values: Array<string | number | null>) {
+  return values
+    .filter((value) => value !== null)
+    .map((value) => (Number(value) === 1 ? "automated" : "manual"));
+}
+
+/** ...and the cross-project pair of them, which also filter by project. */
+function isCrossProjectRequirementReport(reportType: string): boolean {
+  return (
+    isCrossProjectReport(reportType) &&
+    isFilterableRequirementReport(reportType)
+  );
+}
+
 /**
  * Checks if a report type is a pre-built report (automation-trends, flaky-tests, test-case-health, issue-test-coverage)
  * Pre-built reports have fixed configurations and don't require dimension/metric selection
@@ -157,7 +301,58 @@ function isPreBuiltReport(reportType: string): boolean {
     "test-case-health",
     "issue-test-coverage",
     "execution-log",
-  ].includes(baseType);
+    ...REQUIREMENT_REPORT_TYPE_IDS,
+    ...IMPACT_REPORT_TYPE_IDS,
+  ].includes(baseType as (typeof REQUIREMENT_REPORT_TYPE_IDS)[number]);
+}
+
+/**
+ * Filters the two requirement report ids out of a project-scoped report
+ * type list when the project has not opted into the requirements feature
+ * (`Projects.requirementsEnabled`).
+ *
+ * This filters HERE, at the `ReportBuilder.tsx` call site, rather than
+ * inside `getProjectReportTypes` in `lib/config/reportTypes.ts`. The
+ * alternative -- threading a `requirementsEnabled` flag through that
+ * function's signature -- was rejected: `getProjectReportTypes` is also
+ * called by `app/api/share/[shareKey]/report/route.ts:138` with an
+ * identity translator and no project flag in scope (a share link has no
+ * per-viewer project row to read the flag from), and that route's own test
+ * mocks the function wholesale. Changing the signature would ripple into a
+ * route that cannot satisfy the new parameter. See 26-VALIDATION.md
+ * resolution O2.
+ *
+ * The flag is a PRESENTATION gate, not the security boundary (carve-out 4)
+ * -- the report-builder routes for both ids keep their own project
+ * authorization regardless of this filter, so a request crafted directly
+ * against the endpoint is still correctly scoped even if the picker never
+ * offered the report.
+ */
+export function filterReportTypesForRequirementsFlag(
+  reportTypes: ReportType[],
+  requirementsEnabled: boolean
+): ReportType[] {
+  if (requirementsEnabled) return reportTypes;
+  return reportTypes.filter(
+    (reportType) =>
+      !(REQUIREMENT_REPORT_TYPE_IDS as readonly string[]).includes(
+        getBaseReportType(reportType.id)
+      )
+  );
+}
+
+/** Hides the Impact Analysis history from a project without the feature. */
+export function filterReportTypesForImpactFlag(
+  reportTypes: ReportType[],
+  impactEnabled: boolean
+): ReportType[] {
+  if (impactEnabled) return reportTypes;
+  return reportTypes.filter(
+    (reportType) =>
+      !(IMPACT_REPORT_TYPE_IDS as readonly string[]).includes(
+        getBaseReportType(reportType.id)
+      )
+  );
 }
 
 // Form schema for date range
@@ -186,22 +381,62 @@ function ReportBuilderContent({
   const { data: session } = useSession();
   const tReports = useTranslations("reports.ui");
   const tCommon = useTranslations("common");
-  const tAdminMenu = useTranslations("admin.menu");
+  const tCoverage = useTranslations("requirements.coverage");
   const tDimensions = useTranslations("reports.dimensions");
   const tMetrics = useTranslations("reports.metrics");
-  const tRuns = useTranslations("runs");
-  const tIssues = useTranslations("issues");
+  const tGlobal = useTranslations();
   const customStyles = getCustomStyles({ theme });
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
+  // Requirements is opt-in per project (Projects.requirementsEnabled).
+  // Narrow `select`, `enabled` guard against a NaN/absent id, and an
+  // explicit `=== true` read because the generated type is nullable --
+  // the identical read `ProjectMenu.tsx:153-165` uses for the same flag.
+  const { data: reportBuilderProject } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
+    {
+      where: { id: Number(projectId) },
+      select: { requirementsEnabled: true, impactEnabled: true },
+    },
+    {
+      enabled:
+        mode === "project" && Boolean(projectId) && !isNaN(Number(projectId)),
+    }
+  );
+  const requirementsEnabled =
+    reportBuilderProject?.requirementsEnabled === true;
+  const impactEnabled = reportBuilderProject?.impactEnabled === true;
+
+  const appLocale = useLocale();
   // Get report types based on mode - done inside client component to avoid passing functions across server/client boundary
   const reportTypes = useMemo(() => {
-    return mode === "cross-project"
-      ? getCrossProjectReportTypes(tReports)
-      : getProjectReportTypes(tReports);
-  }, [mode, tReports]);
+    // Alphabetical by localized label in every mode — the picker's order,
+    // and (because the default report is the first list entry) the
+    // default selection follow the viewer's alphabet.
+    if (mode === "cross-project")
+      return sortReportTypesByLabel(
+        getCrossProjectReportTypes(tReports),
+        appLocale
+      );
+    // The requirements flag is a PROJECT setting, so it only ever filters
+    // the project list. The cross-project requirement reports need no such
+    // filter: they anchor on whichever projects have requirements enabled,
+    // resolved server-side, so they stay offered and simply return nothing
+    // when no project has opted in.
+    return sortReportTypesByLabel(
+      filterReportTypesForImpactFlag(
+        filterReportTypesForRequirementsFlag(
+          getProjectReportTypes(tReports),
+          requirementsEnabled
+        ),
+        impactEnabled
+      ),
+      appLocale
+    );
+  }, [mode, tReports, requirementsEnabled, impactEnabled, appLocale]);
 
   // Results count for the "Showing X of Y" summary. The table is virtualized
   // and infinite-scrolling now, so there is no page/pageSize state — full-set
@@ -210,11 +445,16 @@ function ReportBuilderContent({
   // A load-more fetch is in flight (execution-log only).
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // The date range the URL opened with (a saved report or share redirect).
+  const [initialDateRange] = useState(() =>
+    initialDateRangeFromUrl(searchParams)
+  );
+
   // Form for date range
   const form = useForm<DateRangeFormData>({
     resolver: standardSchemaResolver(dateRangeSchema),
     defaultValues: {
-      dateRange: undefined,
+      dateRange: initialDateRange.range,
     },
   });
 
@@ -275,6 +515,14 @@ function ReportBuilderContent({
   const initialReportType =
     searchParams.get("reportType") || computedDefaultReportType;
   const [reportType, setReportType] = useState<string>(initialReportType);
+  // Per-type report params (share redirects and deep links) are read ONCE
+  // at mount and seed the initializers below — pre-built reports auto-run
+  // with mounted state, so hydrating in an effect would race that first
+  // run. In-app type switches reset the URL (buildCleanReportUrlParams),
+  // so these params can only describe the mounted URL's report type.
+  const [initialPerTypeParams] = useState(() =>
+    parsePerTypeReportParams(searchParams, initialReportType)
+  );
   const [dimensions, setDimensions] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any[]>([]);
   const [results, setResults] = useState<any[] | null>(null);
@@ -300,8 +548,69 @@ function ReportBuilderContent({
   const [selectedFilterType, setSelectedFilterType] = useState<string>("");
   const [selectedFilterValues, setSelectedFilterValues] = useState<
     Record<string, Array<string | number>>
-  >({});
+  >(() => ({
+    ...initialPerTypeParams.filterValues,
+    ...(initialPerTypeParams.requirementCoverageStates.length > 0
+      ? { coverage: initialPerTypeParams.requirementCoverageStates }
+      : {}),
+    // Execution scope restored from a share redirect — hydrated into the
+    // same consolidated filter menu the run body reads it back out of.
+    ...(initialPerTypeParams.requirementMilestoneIds.length > 0
+      ? { milestone: initialPerTypeParams.requirementMilestoneIds }
+      : {}),
+    ...(initialPerTypeParams.requirementConfigIds.length > 0
+      ? { configuration: initialPerTypeParams.requirementConfigIds }
+      : {}),
+  }));
   const [filterOptions, setFilterOptions] = useState<any>(null);
+  // Every project this report has offered, in the order first seen. The trends
+  // filter options are re-fetched whenever a selection changes so the counts
+  // stay live, and the menu is rebuilt from the response — so without this the
+  // list could shrink as the viewer picks, hiding the very options they need
+  // to build a multi-project selection. Counts still come from the latest
+  // response; a project the current filters exclude simply shows zero.
+  const [seenProjectOptions, setSeenProjectOptions] = useState<
+    ProjectFilterOption[]
+  >([]);
+  // The same union for the other case-count groups, so picking one template,
+  // state, or Automated value never hides the rest.
+  // Which report/project the unfiltered option list has been fetched for.
+  const optionsSeededForRef = useRef<string | null>(null);
+  const [seenCaseOptions, setSeenCaseOptions] = useState<{
+    templates: any[];
+    states: any[];
+    automated: any[];
+  }>({ templates: [], states: [], automated: [] });
+  // The cross-project requirement reports source their Projects filter from
+  // their OWN endpoint (requirements-enabled projects, requirement counts),
+  // not from the repository-cases view-options the trends filter uses --
+  // that list is grouped from test cases, so it would omit a project that
+  // has requirements but no cases. It also does not depend on the current
+  // selection, so picking one project never removes the others.
+  const [requirementFilterOptions, setRequirementFilterOptions] = useState<{
+    projects: { id: number; name: string; count: number }[];
+    priorities: { id: string; name: string; count: number }[];
+    statuses: { id: string; name: string; count: number }[];
+    milestones: RequirementMilestoneFilterOption[];
+    configurations: { id: number; name: string }[];
+  }>({
+    projects: [],
+    priorities: [],
+    statuses: [],
+    milestones: [],
+    configurations: [],
+  });
+
+  // The flaky report's options beyond the view-options case filters: case
+  // and run tags, plus the execution-scope milestones/configurations
+  // (project-scoped only). Fetched once per report and project, like the
+  // requirement reports' options.
+  const [flakyFilterOptions, setFlakyFilterOptions] = useState<{
+    caseTags: { id: number; name: string; count: number }[];
+    runTags: { id: number; name: string; count: number }[];
+    milestones: RequirementMilestoneFilterOption[];
+    configurations: { id: number; name: string }[];
+  }>({ caseTags: [], runTags: [], milestones: [], configurations: [] });
 
   // Legacy state for builder tab priority filter
   const [selectedPriorityValues, setSelectedPriorityValues] = useState<
@@ -313,14 +622,37 @@ function ReportBuilderContent({
 
   const [dateGrouping, setDateGrouping] = useState<
     "daily" | "weekly" | "monthly" | "quarterly" | "annually"
-  >("weekly");
+  >(initialPerTypeParams.dateGrouping);
   const [lastUsedDateGrouping, setLastUsedDateGrouping] = useState<
     "daily" | "weekly" | "monthly" | "quarterly" | "annually"
-  >("weekly");
+  >(initialPerTypeParams.dateGrouping);
   // When the folder dimension is grouped, roll results up into ancestor
   // folders so a parent folder includes its whole subtree.
   const [folderIncludeDescendants, setFolderIncludeDescendants] =
     useState(false);
+  // Plot the sum of every series at each date when the date dimension is
+  // combined with another dimension. Computed in the chart; the flag rides
+  // the run body so saved reports and shares keep it.
+  const [includeTotals, setIncludeTotals] = useState(
+    initialPerTypeParams.includeTotals
+  );
+  // The multi-line chart the total line belongs to: a time axis (the date
+  // dimension, or milestones plotted by their dates), at least one series
+  // dimension, and one summable metric (rates do not add up).
+  const totalLineApplies = (
+    selectedDimensions: Array<{ value: string }>,
+    selectedMetrics: Array<{ value: string }>
+  ) =>
+    selectedDimensions.length > 1 &&
+    selectedDimensions.some(
+      (d) => d.value === "date" || d.value === "milestone"
+    ) &&
+    selectedMetrics.length === 1 &&
+    metricUnit(selectedMetrics[0].value) !== "percent";
+  // The pre-built reports' Folders filter: whether a picked folder brings
+  // its subfolders' cases too. On by default — "cases under this folder".
+  const [filterFolderIncludeSubfolders, setFilterFolderIncludeSubfolders] =
+    useState(initialPerTypeParams.folderIncludeSubfolders);
   // Per-dimension value filters: dimension id -> selected value objects
   // ({ id, name, ... } from the dimension-values lookup). Empty/missing
   // means "all values" for that dimension. The date dimension is excluded
@@ -330,7 +662,17 @@ function ReportBuilderContent({
   >({});
   const [lastUsedDateRange, setLastUsedDateRange] = useState<
     DateRange | undefined
-  >(undefined);
+  >(initialDateRange.range);
+  // The relative range behind the picked dates ("last week"), when there is
+  // one. A run carries it so a saved report or live share follows the
+  // calendar instead of freezing on today's dates; null = custom dates.
+  const [dateRangePreset, setDateRangePreset] =
+    useState<RelativeDateRange | null>(initialDateRange.preset);
+  // The calendar relative ranges resolve on: the user's timezone preference,
+  // else the browser's. Stored with the run so every viewer sees one range.
+  const dateRangeTimezone =
+    session?.user?.preferences?.timezone ||
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   // Automation Candidates state. Snapshot-style report has two knobs:
   //   - how many manual cases to send to the LLM (default 25, max 100)
@@ -351,27 +693,165 @@ function ReportBuilderContent({
     >("most_executed");
 
   // Flaky tests state
-  const [consecutiveRuns, setConsecutiveRuns] = useState(10);
-  const [flipThreshold, setFlipThreshold] = useState(5);
-  const [flakyAutomatedFilter, setFlakyAutomatedFilter] = useState<
-    "all" | "automated" | "manual"
-  >("all");
+  const [consecutiveRuns, setConsecutiveRuns] = useState(
+    initialPerTypeParams.consecutiveRuns
+  );
+  // Requirement report scope (gaps/traceability): the requirements whose
+  // subtrees the report is confined to. Empty = whole project. Options are
+  // kept whole (not just ids) so the trigger can keep rendering their
+  // labels; only ids travel in the request body. Ids restored from the URL
+  // start as placeholder options — the run needs only the ids, and the
+  // resolution query below swaps in real labels when it lands.
+  const [requirementScope, setRequirementScope] = useState<
+    RequirementScopeOption[]
+  >(() =>
+    initialPerTypeParams.requirementIds.map((id) => ({
+      id,
+      name: `#${id}`,
+      title: null,
+      externalUrl: null,
+    }))
+  );
+  // Traceability's requirement-level coverage-state filter (empty = all;
+  // applied server-side so counts/CSV/viz/share all describe one set) and
+  // the coverage-debt report's never-ran tier.
+  const [requirementCoverageStates, setRequirementCoverageStates] = useState<
+    string[]
+  >(initialPerTypeParams.requirementCoverageStates);
+  // ON by default (operator direction 2026-08-30): never-run linked cases
+  // are as evidence-free as true gaps, so the debt report opens complete.
+  const [includeNotRunDebt, setIncludeNotRunDebt] = useState(
+    initialPerTypeParams.includeNotRunDebt
+  );
+  // Gaps/traceability: render a persisted snapshot instead of the live
+  // matrix (null = live). Coverage changes: the baseline snapshot the
+  // report is REQUIRED to have, what it compares against (null = live),
+  // and whether unchanged requirements are listed too.
+  const [requirementSnapshotId, setRequirementSnapshotId] = useState<
+    number | null
+  >(initialPerTypeParams.requirementSnapshotId);
+  const [baselineSnapshotId, setBaselineSnapshotId] = useState<number | null>(
+    initialPerTypeParams.baselineSnapshotId
+  );
+  const [compareSnapshotId, setCompareSnapshotId] = useState<number | null>(
+    initialPerTypeParams.compareSnapshotId
+  );
+  const [includeUnchanged, setIncludeUnchanged] = useState(
+    initialPerTypeParams.includeUnchanged
+  );
+  const [flipThreshold, setFlipThreshold] = useState(
+    initialPerTypeParams.flipThreshold
+  );
   // Track the consecutiveRuns value used when report was last run (for stable chart/table rendering)
-  const [lastUsedConsecutiveRuns, setLastUsedConsecutiveRuns] = useState(10);
+  const [lastUsedConsecutiveRuns, setLastUsedConsecutiveRuns] = useState(
+    initialPerTypeParams.consecutiveRuns
+  );
 
   // Test case health state
-  const [staleDaysThreshold, setStaleDaysThreshold] = useState(30);
-  const [minExecutionsForRate, setMinExecutionsForRate] = useState(5);
-  const [lookbackDays, setLookbackDays] = useState(90);
-  const [healthAutomatedFilter, setHealthAutomatedFilter] = useState<
-    "all" | "automated" | "manual"
-  >("all");
-  const [healthStatusFilter, setHealthStatusFilter] = useState<
-    "all" | "healthy" | "never_executed" | "always_passing" | "always_failing"
-  >("all");
-  const [healthStaleFilter, setHealthStaleFilter] = useState<
-    "all" | "stale" | "notStale"
-  >("all");
+  const [staleDaysThreshold, setStaleDaysThreshold] = useState(
+    initialPerTypeParams.staleDaysThreshold
+  );
+  const [minExecutionsForRate, setMinExecutionsForRate] = useState(
+    initialPerTypeParams.minExecutionsForRate
+  );
+  const [lookbackDays, setLookbackDays] = useState(
+    initialPerTypeParams.lookbackDays
+  );
+  const isImpactHistory = matchesReportType(reportType, "impact-analysis");
+  const isCodePinCoverage = matchesReportType(reportType, "code-pin-coverage");
+  const hasFolderFilter =
+    mode === "project" &&
+    (matchesReportType(reportType, "flaky-tests") ||
+      matchesReportType(reportType, "test-case-health") ||
+      matchesReportType(reportType, "automation-trends"));
+  const { data: reportFolders } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
+    {
+      where: { projectId: Number(projectId), isDeleted: false },
+      orderBy: { order: "asc" },
+      select: { id: true, name: true, parentId: true },
+    },
+    {
+      enabled:
+        hasFolderFilter && Boolean(projectId) && !isNaN(Number(projectId)),
+    }
+  );
+  const { data: impactConnections } = useClientQueries(
+    schema
+  ).projectCodeRepositoryConfig.useFindMany(
+    {
+      where: { projectId: Number(projectId), purpose: "IMPACT" },
+      orderBy: { id: "asc" },
+      select: {
+        id: true,
+        branch: true,
+        repository: { select: { name: true, provider: true } },
+      },
+    },
+    {
+      enabled:
+        (isImpactHistory || isCodePinCoverage) &&
+        mode === "project" &&
+        Boolean(projectId) &&
+        !isNaN(Number(projectId)),
+    }
+  );
+
+  // Resolve display labels for scope options restored from the URL as
+  // placeholders. Display-only: the report request already carried the
+  // ids, and an id the viewer cannot see (or that was deleted since the
+  // share was made) simply keeps its placeholder — the report routes
+  // apply their own scope checks regardless.
+  const placeholderScopeIds = useMemo(
+    () =>
+      requirementScope
+        .filter(
+          (option) => option.title === null && option.name === `#${option.id}`
+        )
+        .map((option) => option.id),
+    [requirementScope]
+  );
+  const { data: resolvedScopeOptions } = useClientQueries(
+    schema
+  ).issue.useFindMany(
+    {
+      where: {
+        id: { in: placeholderScopeIds },
+        // The ids come straight from the URL — the requirement-role
+        // predicate keeps a crafted link from resolving a defect's
+        // name/title into the picker (HYG-01).
+        ...REQUIREMENT_SCOPE_WHERE,
+        isDeleted: false,
+      },
+      select: { id: true, name: true, title: true, externalUrl: true },
+    },
+    { enabled: placeholderScopeIds.length > 0 }
+  );
+  useEffect(() => {
+    if (!resolvedScopeOptions || resolvedScopeOptions.length === 0) return;
+    const byId = new Map(
+      resolvedScopeOptions.map((issue) => [issue.id, issue])
+    );
+    setRequirementScope((prev) => {
+      let changed = false;
+      const next = prev.map((option) => {
+        const resolved =
+          option.title === null && option.name === `#${option.id}`
+            ? byId.get(option.id)
+            : undefined;
+        if (!resolved) return option;
+        changed = true;
+        return {
+          id: resolved.id,
+          name: resolved.name,
+          title: resolved.title,
+          externalUrl: resolved.externalUrl,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [resolvedScopeOptions]);
 
   // Track when the report was last generated (for display and future export functionality)
   const [reportGeneratedAt, setReportGeneratedAt] = useState<Date | null>(null);
@@ -416,47 +896,364 @@ function ReportBuilderContent({
   // Drill-down functionality
   const drillDown = useDrillDown();
 
+  const mergeCaseOptions = useCallback((options: any) => {
+    setSeenCaseOptions((previous) => {
+      const templates = mergeSeenOptions(
+        previous.templates,
+        options?.templates,
+        (t) => t?.id
+      );
+      const states = mergeSeenOptions(
+        previous.states,
+        options?.states,
+        (s) => s?.id
+      );
+      const automated = mergeSeenOptions(
+        previous.automated,
+        options?.automated,
+        (a) => a?.value
+      );
+      return templates === previous.templates &&
+        states === previous.states &&
+        automated === previous.automated
+        ? previous
+        : { templates, states, automated };
+    });
+  }, []);
+
+  // The execution-scope (milestone/configuration) menu entries, shared by the
+  // requirement reports and the flaky report.
+  const executionScopeFilterItems = useCallback(
+    (
+      milestones: RequirementMilestoneFilterOption[],
+      configurations: { id: number; name: string }[]
+    ) => {
+      const items: any[] = [];
+      if (milestones.length > 0) {
+        // Options browse as the same indented parent → child tree every
+        // milestone picker renders, each row through the shared
+        // MilestoneOptionContent (type icon + tracker-source badge).
+        const flattened = flattenMilestoneTree(transformMilestones(milestones));
+        items.push({
+          id: "milestone",
+          name: tCommon("fields.milestone"),
+          icon: Milestone,
+          options: flattened.map((milestone) => ({
+            id: Number(milestone.value),
+            name: milestone.label,
+            milestoneOption: milestone,
+          })),
+          renderOptionContent: (option: any) =>
+            option.milestoneOption ? (
+              <MilestoneOptionContent milestone={option.milestoneOption} />
+            ) : (
+              <span className="truncate">{option.name}</span>
+            ),
+        });
+      }
+      if (configurations.length > 0) {
+        items.push({
+          id: "configuration",
+          name: tCommon("fields.configuration"),
+          icon: Combine,
+          options: configurations,
+          renderOptionContent: (option: any) => (
+            <span className="flex min-w-0 items-center gap-2">
+              <Combine className="h-4 w-4 shrink-0" />
+              <span className="truncate">{option.name}</span>
+            </span>
+          ),
+        });
+      }
+      return items;
+    },
+    [tCommon]
+  );
+
   // Build filter items for automation trends
   const filterItems = useMemo(() => {
+    // The requirement reports put every filter in ONE menu -- coverage
+    // included, rather than as a control standing apart from the rest.
+    if (isFilterableRequirementReport(reportType)) {
+      const items: any[] = [];
+      if (isCrossProjectRequirementReport(reportType)) {
+        if (requirementFilterOptions.projects.length > 0) {
+          items.push({
+            id: "projects",
+            name: tCommon("fields.projects"),
+            icon: FolderOpen,
+            options: requirementFilterOptions.projects,
+          });
+        }
+      }
+      // Coverage state applies to the matrix, where a row IS a
+      // requirement-case pair; the gaps report's two tiers are governed by
+      // its own include-never-run toggle instead.
+      if (matchesReportType(reportType, "requirement-traceability")) {
+        items.push({
+          id: "coverage",
+          name: tCoverage("title"),
+          icon: ListChecks,
+          options: REQUIREMENT_COVERAGE_STATE_ORDER.map((state) => ({
+            id: state,
+            name: tCoverage(COVERAGE_STATE_LABEL_KEYS[state]),
+          })),
+        });
+      }
+      if (requirementFilterOptions.priorities.length > 0) {
+        items.push({
+          id: "priority",
+          name: tCommon("fields.priority"),
+          icon: Flag,
+          options: requirementFilterOptions.priorities,
+        });
+      }
+      if (requirementFilterOptions.statuses.length > 0) {
+        items.push({
+          id: "status",
+          name: tCommon("actions.status"),
+          icon: CircleDot,
+          options: requirementFilterOptions.statuses,
+        });
+      }
+      // The execution scope (which runs' executions count as "latest") —
+      // gaps/traceability only: the changes report inherits its frame from
+      // the baseline snapshot, and the cross-project reports have no
+      // single project to list milestones for.
+      if (
+        !isCrossProjectRequirementReport(reportType) &&
+        (matchesReportType(reportType, "requirement-coverage-gaps") ||
+          matchesReportType(reportType, "requirement-traceability"))
+      ) {
+        items.push(
+          ...executionScopeFilterItems(
+            requirementFilterOptions.milestones,
+            requirementFilterOptions.configurations
+          )
+        );
+      }
+      return items;
+    }
+
+    // Folders browse as the repository tree, indented by depth.
+    const folderById = new Map(
+      (reportFolders ?? []).map((folder) => [folder.id, folder])
+    );
+    const folderPath = (id: number) => {
+      const names: string[] = [];
+      const seen = new Set<number>();
+      let current = folderById.get(id);
+      while (current && !seen.has(current.id)) {
+        seen.add(current.id);
+        names.unshift(current.name);
+        current =
+          current.parentId != null
+            ? folderById.get(current.parentId)
+            : undefined;
+      }
+      return names;
+    };
+    const folderItems =
+      hasFolderFilter && (reportFolders?.length ?? 0) > 0
+        ? [
+            {
+              id: "folders",
+              name: tCommon("fields.folder"),
+              icon: FolderTree,
+              options: flattenFolderOptions(
+                transformFolders(reportFolders ?? [])
+              ).map((folder) => {
+                const path = folderPath(Number(folder.value));
+                return {
+                  id: Number(folder.value),
+                  name: folder.label,
+                  level: folder.level,
+                  fullName: path.join(" › "),
+                  parentPath: path.slice(0, -1).join(" › "),
+                };
+              }),
+              // Browsing shows the tree; a search result loses its place in
+              // it, so it names its parent folders instead.
+              renderOptionContent: (
+                option: any,
+                { searching }: { searching: boolean }
+              ) => (
+                <span
+                  className="flex min-w-0 items-center gap-2"
+                  style={
+                    searching
+                      ? undefined
+                      : { paddingInlineStart: `${option.level * 12}px` }
+                  }
+                >
+                  <FolderOpen className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{option.name}</span>
+                  {searching && option.parentPath && (
+                    <span className="min-w-0 truncate text-xs text-muted-foreground">
+                      {option.parentPath}
+                    </span>
+                  )}
+                </span>
+              ),
+            },
+          ]
+        : [];
+
+    // A report without case counts offers Automated/Manual as a plain pair.
+    const automatedItem = {
+      id: "automated",
+      name: tCommon("fields.automated"),
+      icon: Bot,
+      options: [
+        { id: 1, name: tCommon("yes") },
+        { id: 0, name: tCommon("no") },
+      ],
+    };
+    // Impact and code pin reports can narrow to repository connections
+    // once a project has more than one.
+    const repositoryItems =
+      mode === "project" && (impactConnections?.length ?? 0) > 1
+        ? [
+            {
+              id: "repository",
+              name: tCommon("pageTitles.repository"),
+              icon: GitBranch,
+              options: (impactConnections ?? []).map((connection) => ({
+                id: connection.id,
+                name: connection.repository.name,
+                connection,
+              })),
+              renderOptionContent: (option: any) => (
+                <CodeRepositoryName
+                  name={option.connection.repository.name}
+                  provider={option.connection.repository.provider}
+                  branch={option.connection.branch}
+                />
+              ),
+            },
+          ]
+        : [];
+
+    if (matchesReportType(reportType, "test-case-health")) {
+      return [
+        automatedItem,
+        ...folderItems,
+        {
+          id: "healthStatus",
+          name: tReports("testCaseHealth.status"),
+          icon: HeartPulse,
+          options: (
+            [
+              ["healthy", "healthy"],
+              ["always_passing", "alwaysPassing"],
+              ["always_failing", "alwaysFailing"],
+              ["never_executed", "neverExecuted"],
+            ] as const
+          ).map(([id, key]) => ({
+            id,
+            name: tReports(`testCaseHealth.healthStatus.${key}`),
+          })),
+        },
+        {
+          id: "staleness",
+          name: tReports("testCaseHealth.staleFilter"),
+          icon: Clock,
+          options: [
+            { id: "stale", name: tReports("testCaseHealth.stale") },
+            { id: "notStale", name: tReports("testCaseHealth.notStale") },
+          ],
+        },
+      ];
+    }
+
+    if (isImpactHistory) {
+      return [
+        {
+          id: "trigger",
+          name: tDimensions("trigger"),
+          icon: Zap,
+          options: (["manual", "pull_request", "push"] as const).map(
+            (trigger) => ({
+              id: trigger,
+              name: tGlobal(IMPACT_TRIGGER_LABEL_KEY[trigger] as any),
+            })
+          ),
+        },
+        {
+          id: "outcome",
+          name: tGlobal("reports.dimensions.outcome"),
+          icon: CircleDot,
+          options: (
+            ["failed", "passed", "not_executed", "no_run"] as const
+          ).map((outcome) => ({
+            id: outcome,
+            name: tGlobal(IMPACT_OUTCOME_LABEL_KEY[outcome] as any),
+          })),
+        },
+        ...repositoryItems,
+      ];
+    }
+
+    if (isCodePinCoverage) {
+      return [
+        {
+          id: "pinCoverage",
+          name: tReports("codePinCoverage.coverageFilter"),
+          icon: Pin,
+          options: [
+            { id: "gaps", name: tReports("codePinCoverage.coverageGaps") },
+            {
+              id: "pinned",
+              name: tReports("codePinCoverage.coveragePinned"),
+            },
+          ],
+        },
+        ...repositoryItems,
+      ];
+    }
+
     if (!filterOptions) return [];
 
     const items: any[] = [];
 
     // Projects filter (cross-project only)
-    if (filterOptions.projects && filterOptions.projects.length > 0) {
+    if (seenProjectOptions.length > 0) {
       items.push({
         id: "projects",
         name: tCommon("fields.projects"),
         icon: FolderOpen,
-        options: filterOptions.projects.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          count: p.count,
-        })),
+        options: withLatestProjectCounts(
+          seenProjectOptions,
+          filterOptions.projects
+        ),
       });
     }
 
     // Templates filter
-    if (filterOptions.templates && filterOptions.templates.length > 0) {
+    if (seenCaseOptions.templates.length > 0) {
       items.push({
         id: "templates",
         name: tCommon("fields.templates"),
         icon: LayoutTemplate,
-        options: filterOptions.templates.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          count: t.count,
-        })),
+        options: withLatestCounts(
+          seenCaseOptions.templates,
+          filterOptions.templates,
+          (t) => t?.id
+        ).map((t: any) => ({ id: t.id, name: t.name, count: t.count })),
       });
     }
 
     // States filter
-    if (filterOptions.states && filterOptions.states.length > 0) {
+    if (seenCaseOptions.states.length > 0) {
       items.push({
         id: "states",
         name: tCommon("ui.search.states"),
         icon: CircleDashed,
-        options: filterOptions.states.map((s: any) => ({
+        options: withLatestCounts(
+          seenCaseOptions.states,
+          filterOptions.states,
+          (s) => s?.id
+        ).map((s: any) => ({
           id: s.id,
           name: s.name,
           icon: s.icon,
@@ -466,17 +1263,21 @@ function ReportBuilderContent({
       });
     }
 
+    items.push(...folderItems);
+
     // Automated filter
-    if (filterOptions.automated && filterOptions.automated.length > 0) {
+    if (seenCaseOptions.automated.length > 0) {
       items.push({
         id: "automated",
         name: tCommon("fields.automated"),
         icon: Bot,
-        options: filterOptions.automated.map((a: any) => ({
+        options: withLatestCounts(
+          seenCaseOptions.automated,
+          filterOptions.automated,
+          (a) => a?.value
+        ).map((a: any) => ({
           id: a.value ? 1 : 0,
-          name: a.value
-            ? tCommon("fields.automated")
-            : tCommon("fields.manual"),
+          name: a.value ? tCommon("yes") : tCommon("no"),
           count: a.count,
         })),
       });
@@ -502,8 +1303,67 @@ function ReportBuilderContent({
       );
     }
 
+    if (matchesReportType(reportType, "flaky-tests")) {
+      if (flakyFilterOptions.caseTags.length > 0) {
+        items.push({
+          id: "caseTags",
+          name: tReports("flakyTests.caseTags"),
+          icon: Tag,
+          options: flakyFilterOptions.caseTags,
+        });
+      }
+      if (flakyFilterOptions.runTags.length > 0) {
+        items.push({
+          id: "runTags",
+          name: tReports("flakyTests.runTags"),
+          icon: Tags,
+          options: flakyFilterOptions.runTags,
+        });
+      }
+      items.push(
+        ...executionScopeFilterItems(
+          flakyFilterOptions.milestones,
+          flakyFilterOptions.configurations
+        )
+      );
+    }
+
     return items;
-  }, [filterOptions, tCommon]);
+  }, [
+    filterOptions,
+    seenProjectOptions,
+    seenCaseOptions,
+    tCommon,
+    tCoverage,
+    tReports,
+    tDimensions,
+    tGlobal,
+    reportType,
+    mode,
+    isImpactHistory,
+    isCodePinCoverage,
+    impactConnections,
+    hasFolderFilter,
+    reportFolders,
+    requirementFilterOptions,
+    flakyFilterOptions,
+    executionScopeFilterItems,
+  ]);
+
+  // Reset the remembered options whenever the report itself changes — a
+  // different report may cover a different set of projects entirely.
+  useEffect(() => {
+    setSeenProjectOptions([]);
+    setSeenCaseOptions({ templates: [], states: [], automated: [] });
+  }, [reportType, mode, projectId]);
+
+  useEffect(() => {
+    setSeenProjectOptions((previous) =>
+      mergeSeenProjectOptions(previous, filterOptions?.projects)
+    );
+    mergeCaseOptions(filterOptions);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterOptions]);
 
   // Build active filter chips from selectedFilterValues
   const activeFilterChips = useMemo(() => {
@@ -531,7 +1391,7 @@ function ReportBuilderContent({
             (opt: any) => opt.id === valueId
           );
           if (option) {
-            valueName = option.name;
+            valueName = option.fullName ?? option.name;
             icon = option.icon || null;
             iconColor = option.iconColor || null;
           }
@@ -715,6 +1575,18 @@ function ReportBuilderContent({
     mode === "cross-project"
   );
 
+  const impactAnalysisColumns = useImpactAnalysisColumns(
+    projectId,
+    lastUsedDimensions.map((d) => d.value),
+    mode === "cross-project"
+  );
+
+  const codePinCoverageColumns = useCodePinCoverageColumns(
+    projectId,
+    lastUsedDimensions.map((d) => d.value),
+    mode === "cross-project"
+  );
+
   // Use issue test coverage columns for issue-test-coverage report
   const issueTestCoverageSummaryColumns = useIssueTestCoverageSummaryColumns(
     projectId,
@@ -728,6 +1600,77 @@ function ReportBuilderContent({
     mode === "cross-project"
   );
 
+  // Requirement report types (D-2, COV-04) are pre-built and flat — no
+  // grouping, no project-dimension branch. Every covering case's row names
+  // its project (the report's own included), so the column set needs no
+  // project context.
+  //
+  // "Generate Test Cases" on gap rows: same two-part eligibility as the
+  // milestone member-issues flow (MemberIssuesTable) — the viewer can
+  // add/edit the Test Case Repository AND the project has an active LLM
+  // connection. Project mode only: the wizard resolves its projectId from
+  // the route params, which the cross-project reports page does not carry.
+  const gapGenerationEligible =
+    mode === "project" &&
+    Boolean(projectId) &&
+    matchesReportType(reportType, "requirement-coverage-gaps");
+  const { permissions: tcRepoPermissions } = useProjectPermissions(
+    projectId ?? 0,
+    ApplicationArea.TestCaseRepository
+  );
+  const { data: gapLlmIntegrations } = useClientQueries(
+    schema
+  ).projectLlmIntegration.useFindMany(
+    { where: { projectId: Number(projectId), isActive: true } },
+    { enabled: gapGenerationEligible }
+  );
+  const canGenerateFromGap =
+    gapGenerationEligible &&
+    (tcRepoPermissions?.canAddEdit ?? false) &&
+    (gapLlmIntegrations?.length ?? 0) > 0;
+  const [gapGenerateRow, setGapGenerateRow] =
+    useState<RequirementCoverageGapReportRow | null>(null);
+  // Stable identity — this feeds the column hook's useMemo; an inline arrow
+  // would regenerate the column defs on every render (the cell-remount trap
+  // MemberIssuesTable documents on its own renderRowActions).
+  const handleGenerateFromGap = useCallback(
+    (row: RequirementCoverageGapReportRow) => setGapGenerateRow(row),
+    []
+  );
+  const requirementCoverageGapColumns = useRequirementCoverageGapColumns(
+    results,
+    canGenerateFromGap ? handleGenerateFromGap : undefined,
+    mode === "cross-project"
+  );
+  const requirementTraceabilityColumns = useRequirementTraceabilityColumns(
+    mode === "cross-project"
+  );
+  const requirementCoverageChangeColumns =
+    useRequirementCoverageChangeColumns();
+
+  // Snapshot capture/delete beside the pickers: the same Reporting
+  // add/edit (capture) and delete ladders the snapshot routes enforce,
+  // resolved here only so the buttons are hidden from viewers whose
+  // write would be refused anyway. Project mode only — snapshots belong
+  // to a project.
+  const { permissions: reportingPermissions } = useProjectPermissions(
+    projectId ?? 0,
+    ApplicationArea.Reporting
+  );
+  const canManageSnapshots =
+    mode === "project" &&
+    Boolean(projectId) &&
+    reportingPermissions?.canAddEdit === true;
+  const canDeleteSnapshots =
+    mode === "project" &&
+    Boolean(projectId) &&
+    reportingPermissions?.canDelete === true;
+  // The changes report cannot run without a baseline — auto-run and the
+  // Run button both wait for one instead of firing a guaranteed 400.
+  const changesMissingBaseline =
+    matchesReportType(reportType, "requirement-coverage-changes") &&
+    baselineSnapshotId === null;
+
   // Choose which columns to use based on report type
   const columns = matchesReportType(reportType, "automation-trends")
     ? automationTrendsColumns
@@ -735,11 +1678,24 @@ function ReportBuilderContent({
       ? flakyTestsColumns
       : matchesReportType(reportType, "test-case-health")
         ? testCaseHealthColumns
-        : matchesReportType(reportType, "issue-test-coverage")
-          ? issueTestCoverageSummaryColumns
-          : matchesReportType(reportType, "execution-log")
-            ? executionLogColumns
-            : standardColumns;
+        : matchesReportType(reportType, "impact-analysis")
+          ? impactAnalysisColumns
+          : matchesReportType(reportType, "code-pin-coverage")
+            ? codePinCoverageColumns
+            : matchesReportType(reportType, "issue-test-coverage")
+              ? issueTestCoverageSummaryColumns
+              : matchesReportType(reportType, "execution-log")
+                ? executionLogColumns
+                : matchesReportType(reportType, "requirement-coverage-gaps")
+                  ? requirementCoverageGapColumns
+                  : matchesReportType(reportType, "requirement-traceability")
+                    ? requirementTraceabilityColumns
+                    : matchesReportType(
+                          reportType,
+                          "requirement-coverage-changes"
+                        )
+                      ? requirementCoverageChangeColumns
+                      : standardColumns;
 
   // Single source of truth for row grouping. issue-test-coverage is ALWAYS
   // grouped by issue (issues with expandable test cases) — its last two columns
@@ -804,6 +1760,42 @@ function ReportBuilderContent({
         passRate: true,
       };
       setColumnVisibility(visibility);
+    }
+  }, [reportType]);
+
+  React.useEffect(() => {
+    if (matchesReportType(reportType, "code-pin-coverage")) {
+      setColumnVisibility({
+        project: true,
+        repository: true,
+        directory: true,
+        pinCount: true,
+        caseCount: true,
+        stalePinCount: true,
+        uncoveredFileCount: true,
+        uncoveredAnalysisCount: false,
+      });
+    }
+  }, [reportType]);
+
+  React.useEffect(() => {
+    if (matchesReportType(reportType, "impact-analysis")) {
+      setColumnVisibility({
+        project: true,
+        createdAt: true,
+        repository: true,
+        trigger: true,
+        commits: false,
+        fileCount: true,
+        pinnedCaseCount: true,
+        affectedCaseCount: true,
+        relatedCaseCount: false,
+        acceptedCaseCount: true,
+        testRun: true,
+        outcome: true,
+        durationMs: false,
+        createdBy: false,
+      });
     }
   }, [reportType]);
 
@@ -875,12 +1867,12 @@ function ReportBuilderContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, reportTypes]);
 
-  // Fetch filter options when report type changes to automation-trends or when filters change
+  // Fetch filter options when report type changes to automation-trends or
+  // flaky-tests, or when filters change
   useEffect(() => {
     if (
-      reportType === "automation-trends" ||
-      (isCrossProjectReport(reportType) &&
-        matchesReportType(reportType, "automation-trends"))
+      matchesReportType(reportType, "automation-trends") ||
+      matchesReportType(reportType, "flaky-tests")
     ) {
       // Build filter payload to send to view-options API
       const filterPayload: any = {};
@@ -888,6 +1880,11 @@ function ReportBuilderContent({
       // For project-specific mode, include projectId
       if (mode === "project" && projectId) {
         filterPayload.projectId = projectId;
+      }
+
+      if (mode === "project" && selectedFilterValues.folders?.length) {
+        filterPayload.folderIds = selectedFilterValues.folders.map(Number);
+        filterPayload.folderIncludeDescendants = filterFolderIncludeSubfolders;
       }
 
       // Add active filters to get updated counts based on current selection
@@ -942,9 +1939,140 @@ function ReportBuilderContent({
           .catch(() => {
             // Failed to fetch filter options - ignore
           });
+
+        // A report opened with filters already applied (a share or saved
+        // report) would only ever be offered the picked values; fetch the
+        // unfiltered option list once so every value stays selectable.
+        const seedKey = `${reportType}:${mode}:${projectId ?? ""}`;
+        const hasSelection = Object.values(selectedFilterValues).some(
+          (values) => values && values.length > 0
+        );
+        if (hasSelection && optionsSeededForRef.current !== seedKey) {
+          optionsSeededForRef.current = seedKey;
+          fetch(apiEndpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+              mode === "project" && projectId ? { projectId } : {}
+            ),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              setSeenProjectOptions((previous) =>
+                mergeSeenProjectOptions(previous, data?.projects)
+              );
+              mergeCaseOptions(data);
+            })
+            .catch(() => {
+              // The filtered response still supplies the options.
+            });
+        } else if (!hasSelection) {
+          optionsSeededForRef.current = seedKey;
+        }
       }
     }
-  }, [reportType, projectId, mode, selectedFilterValues]);
+  }, [
+    reportType,
+    projectId,
+    mode,
+    selectedFilterValues,
+    filterFolderIncludeSubfolders,
+    mergeCaseOptions,
+  ]);
+
+  // The requirement reports' filter options. Fetched once per report and
+  // project, and deliberately NOT re-fetched when a selection changes, so
+  // picking one option never removes the others from the menu.
+  useEffect(() => {
+    if (!isFilterableRequirementReport(reportType) || !currentReportEndpoint) {
+      setRequirementFilterOptions({
+        projects: [],
+        priorities: [],
+        statuses: [],
+        milestones: [],
+        configurations: [],
+      });
+      return;
+    }
+    const url = new URL(currentReportEndpoint, window.location.origin);
+    if (mode === "project" && projectId) {
+      url.searchParams.set("projectId", String(projectId));
+    }
+    let cancelled = false;
+    fetch(url.toString())
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setRequirementFilterOptions({
+          projects: Array.isArray(data.projects) ? data.projects : [],
+          priorities: Array.isArray(data.priorities) ? data.priorities : [],
+          statuses: Array.isArray(data.statuses) ? data.statuses : [],
+          milestones: Array.isArray(data.milestones) ? data.milestones : [],
+          configurations: Array.isArray(data.configurations)
+            ? data.configurations
+            : [],
+        });
+      })
+      .catch(() => {
+        // Filter options are optional; the report still runs unfiltered.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reportType, currentReportEndpoint, mode, projectId]);
+
+  // The flaky report's tag and execution-scope options.
+  useEffect(() => {
+    if (
+      !matchesReportType(reportType, "flaky-tests") ||
+      !currentReportEndpoint
+    ) {
+      setFlakyFilterOptions({
+        caseTags: [],
+        runTags: [],
+        milestones: [],
+        configurations: [],
+      });
+      return;
+    }
+    if (mode === "project" && !projectId) return;
+    const url = new URL(currentReportEndpoint, window.location.origin);
+    if (mode === "project" && projectId) {
+      url.searchParams.set("projectId", String(projectId));
+    }
+    let cancelled = false;
+    fetch(url.toString())
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setFlakyFilterOptions({
+          caseTags: Array.isArray(data.caseTags) ? data.caseTags : [],
+          runTags: Array.isArray(data.runTags) ? data.runTags : [],
+          milestones: Array.isArray(data.milestones) ? data.milestones : [],
+          configurations: Array.isArray(data.configurations)
+            ? data.configurations
+            : [],
+        });
+      })
+      .catch(() => {
+        // Filter options are optional; the report still runs unfiltered.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reportType, currentReportEndpoint, mode, projectId]);
+
+  // Coverage moved into the shared filter menu, so the menu is its source of
+  // truth; this keeps the value the share link serializes in step.
+  useEffect(() => {
+    const picked = (selectedFilterValues.coverage ?? []) as string[];
+    setRequirementCoverageStates((current) =>
+      current.length === picked.length &&
+      current.every((state, i) => state === picked[i])
+        ? current
+        : picked
+    );
+  }, [selectedFilterValues]);
 
   // Note: No default filter type selection - user must explicitly choose a filter
 
@@ -1118,14 +2246,20 @@ function ReportBuilderContent({
         const dimOpts = data.dimensions
           .map((d: any) => ({
             value: d.id,
-            label: tDimensions(d.id) || d.label, // Translated label for display
+            // Labels live on shared keys (see DIMENSION_LABEL_KEYS); an id
+            // with no message keeps the server's English label.
+            label: hasMessage(tGlobal, dimensionLabelKey(d.id))
+              ? tGlobal(dimensionLabelKey(d.id) as any)
+              : d.label,
             apiLabel: d.label, // Keep English label for API data access
           }))
           .sort((a: any, b: any) => a.label.localeCompare(b.label));
         const metOpts = data.metrics
           .map((m: any) => ({
             value: m.id,
-            label: tMetrics(m.id) || m.label, // Translated label for display
+            label: hasMessage(tGlobal, metricLabelKey(m.id))
+              ? tGlobal(metricLabelKey(m.id) as any)
+              : m.label,
             apiLabel: m.label, // Keep English label for API data access
           }))
           .sort((a: any, b: any) => a.label.localeCompare(b.label));
@@ -1167,13 +2301,31 @@ function ReportBuilderContent({
           urlConfig = parseLegacyReportUrlParams(searchParams);
         }
 
-        // Load date range from URL if present
-        if (urlConfig?.startDate) {
+        // Load date range from URL if present. A relative range (a saved
+        // report or share made with "last week") resolves on today's
+        // calendar, in the saver's timezone; only custom dates restore as
+        // stored.
+        const urlPreset = parseRelativeDateRange({
+          dateRangePreset: searchParams.get("dateRangePreset"),
+          dateRangeAmount: searchParams.get("dateRangeAmount"),
+          dateRangeUnit: searchParams.get("dateRangeUnit"),
+        });
+        if (urlPreset) {
+          const resolved = resolveRelativeDateRange(urlPreset, {
+            timezone: searchParams.get("dateRangeTimezone"),
+          });
+          form.setValue("dateRange", {
+            from: resolved.fromDay,
+            to: resolved.toDay,
+          });
+          setDateRangePreset(urlPreset);
+        } else if (urlConfig?.startDate) {
           const dateRange: DateRange = {
             from: new Date(urlConfig.startDate),
             to: urlConfig.endDate ? new Date(urlConfig.endDate) : undefined,
           };
           form.setValue("dateRange", dateRange);
+          setDateRangePreset(null);
         }
 
         // Restore dimension value filters. Stored as ids only
@@ -1301,8 +2453,18 @@ function ReportBuilderContent({
             setLastUsedDimensions(selectedDims);
             setLastUsedMetrics(selectedMets);
 
-            // Also set the last used date range if present
-            if (urlConfig?.startDate) {
+            // Also set the last used date range if present — the resolved
+            // range for a relative one, so the results header names the
+            // dates this run covers rather than the stored ones.
+            if (urlPreset) {
+              const resolved = resolveRelativeDateRange(urlPreset, {
+                timezone: searchParams.get("dateRangeTimezone"),
+              });
+              setLastUsedDateRange({
+                from: resolved.fromDay,
+                to: resolved.toDay,
+              });
+            } else if (urlConfig?.startDate) {
               setLastUsedDateRange({
                 from: new Date(urlConfig.startDate),
                 to: urlConfig.endDate ? new Date(urlConfig.endDate) : undefined,
@@ -1348,7 +2510,16 @@ function ReportBuilderContent({
       selectedDimensions: any[],
       selectedMetrics: any[],
       updateUrl: boolean = false,
-      { append = false, page = 1 }: { append?: boolean; page?: number } = {}
+      {
+        append = false,
+        page = 1,
+        fresh = false,
+      }: {
+        append?: boolean;
+        page?: number;
+        /** A new run (explicit or auto-run), not a sort or page re-fetch. */
+        fresh?: boolean;
+      } = {}
     ) => {
       try {
         // Don't attempt to run report if metrics are empty (except for pre-built reports)
@@ -1407,6 +2578,14 @@ function ReportBuilderContent({
           body.dimensionFilters = activeDimensionFilters;
         }
 
+        // The chart's total line, when the selection can plot one.
+        if (
+          includeTotals &&
+          totalLineApplies(selectedDimensions, selectedMetrics)
+        ) {
+          body.includeTotals = true;
+        }
+
         // For automation trends, add selected filter values and date grouping
         if (matchesReportType(reportType, "automation-trends")) {
           // Build filters object from selectedFilterValues
@@ -1444,7 +2623,44 @@ function ReportBuilderContent({
         if (matchesReportType(reportType, "flaky-tests")) {
           body.consecutiveRuns = consecutiveRuns;
           body.flipThreshold = flipThreshold;
-          body.automatedFilter = flakyAutomatedFilter;
+          // The menu's case filters (which tests are listed) and run filters
+          // (which executions count toward the flip history).
+          const dynamicFieldFilters: Record<number, (string | number)[]> = {};
+          const flakyFilterBodyKeys: Record<string, string> = {
+            projects: "projectIds",
+            templates: "templateIds",
+            states: "stateIds",
+            caseTags: "caseTagIds",
+            runTags: "runTagIds",
+            milestone: "milestoneIds",
+            configuration: "configIds",
+          };
+          if (selectedFilterValues.automated?.length) {
+            body.automatedFilter = automatedFilterBody(
+              selectedFilterValues.automated
+            );
+          }
+          Object.entries(selectedFilterValues).forEach(([key, values]) => {
+            if (!values || values.length === 0) return;
+            if (key === "projects" && mode !== "cross-project") return;
+            if (
+              (key === "milestone" || key === "configuration") &&
+              mode === "cross-project"
+            ) {
+              return;
+            }
+            if (flakyFilterBodyKeys[key]) {
+              body[flakyFilterBodyKeys[key]] = values.map(Number);
+            } else if (key.startsWith("dynamic_")) {
+              const fieldId = parseInt(key.split("_")[1]);
+              if (!isNaN(fieldId)) {
+                dynamicFieldFilters[fieldId] = values;
+              }
+            }
+          });
+          if (Object.keys(dynamicFieldFilters).length > 0) {
+            body.dynamicFieldFilters = dynamicFieldFilters;
+          }
           // Always include dimensions for cross-project reports (project should be auto-added)
           if (
             isCrossProjectReport(reportType) &&
@@ -1464,9 +2680,17 @@ function ReportBuilderContent({
           body.staleDaysThreshold = staleDaysThreshold;
           body.minExecutionsForRate = minExecutionsForRate;
           body.lookbackDays = lookbackDays;
-          body.automatedFilter = healthAutomatedFilter;
-          body.healthStatusFilter = healthStatusFilter;
-          body.staleFilter = healthStaleFilter;
+          if (selectedFilterValues.automated?.length) {
+            body.automatedFilter = automatedFilterBody(
+              selectedFilterValues.automated
+            );
+          }
+          if (selectedFilterValues.healthStatus?.length) {
+            body.healthStatusFilter = selectedFilterValues.healthStatus;
+          }
+          if (selectedFilterValues.staleness?.length) {
+            body.staleFilter = selectedFilterValues.staleness;
+          }
           // Always include dimensions for cross-project reports (project should be auto-added)
           if (
             isCrossProjectReport(reportType) &&
@@ -1477,6 +2701,44 @@ function ReportBuilderContent({
             if (!dimValues.includes("project")) {
               dimValues.unshift("project");
             }
+            body.dimensions = dimValues;
+          }
+        }
+
+        if (hasFolderFilter && selectedFilterValues.folders?.length) {
+          body.folderIds = selectedFilterValues.folders.map(Number);
+          body.folderIncludeDescendants = filterFolderIncludeSubfolders;
+        }
+
+        if (matchesReportType(reportType, "code-pin-coverage")) {
+          body.lookbackDays = lookbackDays;
+          if (selectedFilterValues.pinCoverage?.length) {
+            body.coverageFilter = selectedFilterValues.pinCoverage;
+          }
+          if (selectedFilterValues.repository?.length) {
+            body.configId = selectedFilterValues.repository.map(Number);
+          }
+          if (isCrossProjectReport(reportType)) {
+            const dimValues = selectedDimensions.map((d) => d.value);
+            if (!dimValues.includes("project")) dimValues.unshift("project");
+            body.dimensions = dimValues;
+          }
+        }
+
+        if (matchesReportType(reportType, "impact-analysis")) {
+          body.lookbackDays = lookbackDays;
+          if (selectedFilterValues.trigger?.length) {
+            body.triggerFilter = selectedFilterValues.trigger;
+          }
+          if (selectedFilterValues.outcome?.length) {
+            body.outcomeFilter = selectedFilterValues.outcome;
+          }
+          if (selectedFilterValues.repository?.length) {
+            body.configId = selectedFilterValues.repository.map(Number);
+          }
+          if (isCrossProjectReport(reportType)) {
+            const dimValues = selectedDimensions.map((d) => d.value);
+            if (!dimValues.includes("project")) dimValues.unshift("project");
             body.dimensions = dimValues;
           }
         }
@@ -1497,6 +2759,81 @@ function ReportBuilderContent({
           }
         }
 
+        // For the requirement reports, confine the matrix to the selected
+        // requirements' subtrees. Empty selection = whole project, and the
+        // key is omitted entirely so older share configs and new ones read
+        // the same way.
+        if (
+          matchesReportType(reportType, "requirement-coverage-gaps") ||
+          matchesReportType(reportType, "requirement-traceability") ||
+          matchesReportType(reportType, "requirement-coverage-changes")
+        ) {
+          if (requirementScope.length > 0) {
+            body.requirementIds = requirementScope.map((option) => option.id);
+          }
+          // Cross-project only: narrow the anchor set to the picked
+          // projects. Empty = every requirements-enabled project, matching
+          // the scope picker's own empty-means-all convention.
+          if (mode === "cross-project") {
+            const picked = selectedFilterValues.projects;
+            if (picked && picked.length > 0) {
+              body.projectIds = picked;
+            }
+          }
+          const pickedPriorities = selectedFilterValues.priority;
+          if (pickedPriorities && pickedPriorities.length > 0) {
+            body.priorities = pickedPriorities;
+          }
+          const pickedStatuses = selectedFilterValues.status;
+          if (pickedStatuses && pickedStatuses.length > 0) {
+            body.statuses = pickedStatuses;
+          }
+        }
+        if (
+          matchesReportType(reportType, "requirement-coverage-gaps") ||
+          matchesReportType(reportType, "requirement-traceability")
+        ) {
+          // Omitted when live, so a share of the live report stays a
+          // share of the live report.
+          if (requirementSnapshotId !== null) {
+            body.snapshotId = requirementSnapshotId;
+          }
+          // The execution scope rides only a LIVE run: a snapshot's frame
+          // was frozen at capture and the server refuses the combination.
+          // Project-scoped only — the cross-project forms render no scope
+          // pickers.
+          if (requirementSnapshotId === null && mode !== "cross-project") {
+            const pickedMilestones = selectedFilterValues.milestone;
+            if (pickedMilestones && pickedMilestones.length > 0) {
+              body.milestoneIds = pickedMilestones.map(Number);
+            }
+            const pickedConfigurations = selectedFilterValues.configuration;
+            if (pickedConfigurations && pickedConfigurations.length > 0) {
+              body.configIds = pickedConfigurations.map(Number);
+            }
+          }
+        }
+        if (matchesReportType(reportType, "requirement-traceability")) {
+          if (requirementCoverageStates.length > 0) {
+            body.coverageStates = requirementCoverageStates;
+          }
+        }
+        if (matchesReportType(reportType, "requirement-coverage-gaps")) {
+          // Always explicit: the config a share stores must distinguish
+          // "toggled off" from "predates the toggle", or the redirect
+          // would restore the default instead of the shared state.
+          body.includeNotRun = includeNotRunDebt;
+        }
+        if (matchesReportType(reportType, "requirement-coverage-changes")) {
+          if (baselineSnapshotId !== null) {
+            body.baselineSnapshotId = baselineSnapshotId;
+          }
+          if (compareSnapshotId !== null) {
+            body.compareSnapshotId = compareSnapshotId;
+          }
+          body.includeUnchanged = includeUnchanged;
+        }
+
         // Add sorting parameters if configured
         if (sortConfig) {
           // Map frontend column IDs to backend metric IDs
@@ -1515,8 +2852,22 @@ function ReportBuilderContent({
           body.sortDirection = sortConfig.direction;
         }
 
-        // Add date range if specified
-        if (dateRange?.from) {
+        // Add date range if specified. A relative range resolves now, on
+        // the stored timezone, and travels with the run so a saved report or
+        // live share resolves it again when viewed.
+        if (dateRangePreset) {
+          const resolved = resolveRelativeDateRange(dateRangePreset, {
+            timezone: dateRangeTimezone,
+          });
+          body.startDate = resolved.startDate;
+          body.endDate = resolved.endDate;
+          body.dateRangePreset = dateRangePreset.preset;
+          if (dateRangePreset.preset === "lastN") {
+            body.dateRangeAmount = dateRangePreset.amount;
+            body.dateRangeUnit = dateRangePreset.unit;
+          }
+          body.dateRangeTimezone = dateRangeTimezone;
+        } else if (dateRange?.from) {
           // Convert local date to UTC date string (YYYY-MM-DD format then to ISO)
           const year = dateRange.from.getFullYear();
           const month = String(dateRange.from.getMonth() + 1).padStart(2, "0");
@@ -1642,7 +2993,6 @@ function ReportBuilderContent({
           }
 
           // Apply sorting if configured
-          let sortedData = [...allData];
           const effectiveSortConfig =
             updateUrl &&
             (reportType === "flaky-tests" ||
@@ -1652,39 +3002,12 @@ function ReportBuilderContent({
               ? { column: "flipCount", direction: "desc" as const }
               : sortConfig;
 
-          if (effectiveSortConfig) {
-            sortedData.sort((a, b) => {
-              let aVal = a[effectiveSortConfig.column];
-              let bVal = b[effectiveSortConfig.column];
-
-              // Handle project column - extract name from object
-              if (effectiveSortConfig.column === "project") {
-                aVal = aVal?.name || "";
-                bVal = bVal?.name || "";
-              }
-
-              if (aVal === bVal) return 0;
-              if (aVal === null || aVal === undefined) return 1;
-              if (bVal === null || bVal === undefined) return -1;
-
-              // For strings, use localeCompare for proper alphabetical sorting
-              if (typeof aVal === "string" && typeof bVal === "string") {
-                const comparison = aVal.localeCompare(bVal);
-                return effectiveSortConfig.direction === "asc"
-                  ? comparison
-                  : -comparison;
-              }
-
-              // For numbers or other types, use standard comparison
-              const comparison = aVal < bVal ? -1 : 1;
-              return effectiveSortConfig.direction === "asc"
-                ? comparison
-                : -comparison;
-            });
-          }
-
           // Render the full sorted set; the table virtualizes it (no paging).
-          setResults(sortedData);
+          // The shared utility sorts by what each column DISPLAYS — see its
+          // doc comment for the id-vs-property overrides.
+          setResults(
+            sortPreBuiltReportRows(reportType, allData, effectiveSortConfig)
+          );
         } else {
           // Custom reports return the entire result set in `allResults` on the
           // first POST — render that full set and virtualize it (no paging).
@@ -1722,6 +3045,13 @@ function ReportBuilderContent({
           setLastRequestBody(shareableBody);
         }
 
+        // Record when the report was generated: on every new run, including
+        // auto-runs from the URL (a saved report or share link), but not on a
+        // sort or page re-fetch.
+        if (updateUrl || fresh) {
+          setReportGeneratedAt(new Date());
+        }
+
         // Only update these when running a new report (not just sorting/paginating)
         if (updateUrl) {
           setLastUsedDimensions(selectedDimensions);
@@ -1737,8 +3067,6 @@ function ReportBuilderContent({
           if (matchesReportType(reportType, "flaky-tests")) {
             setLastUsedConsecutiveRuns(consecutiveRuns);
           }
-          // Record when the report was generated
-          setReportGeneratedAt(new Date());
 
           // Only persist selections to the URL on an explicit run (the Run
           // Report button). Auto-runs / sort / filter re-runs must NOT write the
@@ -1749,9 +3077,31 @@ function ReportBuilderContent({
           if (stateConfig) {
             // Update URL with selections - start with existing params to preserve tab parameter
             const newParams = new URLSearchParams(searchParams.toString());
+            // A new run is no longer the saved report it was opened from.
+            newParams.delete("savedReport");
             newParams.set("reportType", safeReportType);
             stripReportSelectionParams(newParams);
 
+            // Add date range to URL if specified, or remove if cleared
+            for (const key of [
+              "dateRangePreset",
+              "dateRangeAmount",
+              "dateRangeUnit",
+              "dateRangeTimezone",
+            ]) {
+              newParams.delete(key);
+            }
+            if (dateRangePreset) {
+              newParams.set("dateRangePreset", dateRangePreset.preset);
+              if (dateRangePreset.preset === "lastN") {
+                newParams.set(
+                  "dateRangeAmount",
+                  String(dateRangePreset.amount)
+                );
+                newParams.set("dateRangeUnit", dateRangePreset.unit);
+              }
+              newParams.set("dateRangeTimezone", dateRangeTimezone);
+            }
             const stateId = await stateIdPromise;
             if (stateId) {
               newParams.set(REPORT_STATE_URL_KEY, stateId);
@@ -1759,6 +3109,12 @@ function ReportBuilderContent({
               // The state could not be saved; spell the selection out so
               // the URL is still restorable.
               applyLegacyReportUrlParams(newParams, stateConfig);
+            }
+
+            if (body.includeTotals) {
+              newParams.set("includeTotals", "true");
+            } else {
+              newParams.delete("includeTotals");
             }
 
             // If the user moved to another tab or report while this run was
@@ -1795,16 +3151,24 @@ function ReportBuilderContent({
       dateGrouping,
       selectedFilterValues,
       folderIncludeDescendants,
+      includeTotals,
+      hasFolderFilter,
+      filterFolderIncludeSubfolders,
       dimensionValueFilters,
       consecutiveRuns,
       flipThreshold,
-      flakyAutomatedFilter,
       staleDaysThreshold,
       minExecutionsForRate,
       lookbackDays,
-      healthAutomatedFilter,
-      healthStatusFilter,
-      healthStaleFilter,
+      requirementScope,
+      requirementCoverageStates,
+      includeNotRunDebt,
+      requirementSnapshotId,
+      baselineSnapshotId,
+      compareSnapshotId,
+      includeUnchanged,
+      dateRangePreset,
+      dateRangeTimezone,
     ]
   );
 
@@ -1818,7 +3182,9 @@ function ReportBuilderContent({
       setError(null);
 
       try {
-        await fetchReportData(selectedDimensions, selectedMetrics, persistUrl);
+        await fetchReportData(selectedDimensions, selectedMetrics, persistUrl, {
+          fresh: true,
+        });
       } finally {
         setLoading(false);
       }
@@ -1837,9 +3203,13 @@ function ReportBuilderContent({
   // completed yet — `results` stays null until a run lands and is reset to
   // null on report-type switches. While true, the results panel shows a
   // loading state instead of a premature "No results found".
+  // The changes report is the one pre-built type whose first run is NOT
+  // guaranteed: without a baseline nothing fires, so the panel must show
+  // its prompt rather than spin forever.
   const awaitingFirstRun =
     results === null &&
     !error &&
+    !changesMissingBaseline &&
     (loading ||
       Boolean(currentReport?.isPreBuilt) ||
       hasReportSelectionInUrl(searchParams));
@@ -1942,16 +3312,19 @@ function ReportBuilderContent({
       "automation-candidates"
     );
 
-    // For pre-built reports, auto-run even without dimensions/metrics
-    const shouldAutoRun = isSnapshotStyleReport
-      ? false
-      : currentReport?.isPreBuilt
-        ? !hasRunForCurrentType && !loading && !error
-        : lastUsedDimensions.length > 0 &&
-          lastUsedMetrics.length > 0 &&
-          !hasRunForCurrentType &&
-          !loading &&
-          !error;
+    // For pre-built reports, auto-run even without dimensions/metrics.
+    // The coverage-changes report waits for a baseline snapshot — once
+    // one is chosen this effect re-evaluates and fires the first run.
+    const shouldAutoRun =
+      isSnapshotStyleReport || changesMissingBaseline
+        ? false
+        : currentReport?.isPreBuilt
+          ? !hasRunForCurrentType && !loading && !error
+          : lastUsedDimensions.length > 0 &&
+            lastUsedMetrics.length > 0 &&
+            !hasRunForCurrentType &&
+            !loading &&
+            !error;
 
     if (shouldAutoRun) {
       lastRunReportType.current = reportType;
@@ -1966,6 +3339,7 @@ function ReportBuilderContent({
     error,
     runReport,
     currentReport,
+    changesMissingBaseline,
   ]);
 
   // Pre-built (non-execution-log) reports hold their full set client-side and
@@ -1975,34 +3349,7 @@ function ReportBuilderContent({
     if (matchesReportType(reportType, "execution-log")) return;
     if (!allResults || allResults.length === 0) return;
 
-    let sortedResults = [...allResults];
-    if (sortConfig) {
-      sortedResults.sort((a, b) => {
-        let aVal = a[sortConfig.column];
-        let bVal = b[sortConfig.column];
-
-        // Handle project column - extract name from object
-        if (sortConfig.column === "project") {
-          aVal = aVal?.name || "";
-          bVal = bVal?.name || "";
-        }
-
-        if (aVal === bVal) return 0;
-        if (aVal === null || aVal === undefined) return 1;
-        if (bVal === null || bVal === undefined) return -1;
-
-        // For strings, use localeCompare for proper alphabetical sorting
-        if (typeof aVal === "string" && typeof bVal === "string") {
-          const comparison = aVal.localeCompare(bVal);
-          return sortConfig.direction === "asc" ? comparison : -comparison;
-        }
-
-        // For numbers or other types, use standard comparison
-        const comparison = aVal < bVal ? -1 : 1;
-        return sortConfig.direction === "asc" ? comparison : -comparison;
-      });
-    }
-    setResults(sortedResults);
+    setResults(sortPreBuiltReportRows(reportType, allResults, sortConfig));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortConfig, reportType, allResults]);
 
@@ -2050,6 +3397,30 @@ function ReportBuilderContent({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dimensionValueFilters]);
+
+  // The total line is drawn client-side, so toggling it needs no re-run:
+  // the chart re-renders from the flag. Keep the URL and the stored run
+  // body in step so a refresh, save or share keeps the choice.
+  useEffect(() => {
+    if (isPreBuiltReport(reportType) || !results) return;
+    setLastRequestBody((prev: any) =>
+      prev
+        ? includeTotals
+          ? { ...prev, includeTotals: true }
+          : (({ includeTotals: _omit, ...rest }) => rest)(prev)
+        : prev
+    );
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (includeTotals) {
+      newParams.set("includeTotals", "true");
+    } else {
+      newParams.delete("includeTotals");
+    }
+    if (newParams.toString() !== searchParams.toString()) {
+      router.replace(`${pathname}?${newParams.toString()}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [includeTotals]);
 
   // Filter options based on selections
   useEffect(() => {
@@ -2116,6 +3487,8 @@ function ReportBuilderContent({
       );
       return;
     }
+    // A changes report without a baseline has nothing to diff against.
+    if (changesMissingBaseline) return;
     // Explicit user run — persist the selections to the URL (for refresh/share).
     void runReport(dimensions, metrics, { persistUrl: true });
   };
@@ -2165,6 +3538,43 @@ function ReportBuilderContent({
     );
   }, [reportSummary, lastUsedDateRange, session]);
 
+  // The stored configuration of the report on screen: what a share link or
+  // saved report reruns (live) or captures (frozen).
+  const shareReportConfig = matchesReportType(reportType, "iteration-matrix")
+    ? {
+        reportType,
+        projectId,
+        filters: matrixFilters,
+      }
+    : matchesReportType(reportType, "automation-candidates")
+      ? {
+          reportType,
+          projectId,
+          // Capture the snapshot the user is currently
+          // viewing — the preset mirrors selection to
+          // `?snapshotId=N` so the share resolves to
+          // that specific snapshot, not whichever one
+          // happens to be latest later.
+          ...(searchParams.get("snapshotId")
+            ? {
+                snapshotId: Number.parseInt(
+                  searchParams.get("snapshotId")!,
+                  10
+                ),
+              }
+            : {}),
+        }
+      : {
+          reportType,
+          // Use the last request body which contains ALL parameters
+          ...(lastRequestBody || {}),
+        };
+  // Set when the report was opened from the Saved Reports menu.
+  const savedReportId = searchParams.get("savedReport");
+  const currentReportTitle = reportTypes.find(
+    (r) => r.id === reportType
+  )?.label;
+
   return (
     <div>
       <ResizablePanelGroup
@@ -2202,7 +3612,7 @@ function ReportBuilderContent({
                     data-testid="reports-tab"
                     className="min-w-0 truncate"
                   >
-                    {tAdminMenu("reports")}
+                    {tCommon("pageTitles.reports")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="builder"
@@ -2219,7 +3629,7 @@ function ReportBuilderContent({
                 >
                   <div className="mb-4">
                     <h2 className="text-lg font-semibold">
-                      {tAdminMenu("reports")}
+                      {tCommon("pageTitles.reports")}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       {tReports("reportsTabDescription")}
@@ -2265,20 +3675,41 @@ function ReportBuilderContent({
                       {/* Date Range Selection. Snapshot-style LLM reports
                           (automation-candidates) don't accept a date range —
                           the LLM ranks the current state of every manual
-                          case, so a range would be meaningless. */}
+                          case, so a range would be meaningless. The two
+                          requirement reports don't either: coverage is
+                          defined as each case's LATEST-EVER result (the
+                          milestone's recorded latest-result decision,
+                          deliberately not windowed), so their handler
+                          ignores dates — showing the control would imply a
+                          filter that cannot exist. */}
                       {!matchesReportType(
                         reportType,
                         "automation-candidates"
-                      ) && (
-                        <div className="grid gap-2">
-                          <DateRangePickerField
-                            control={form.control}
-                            name="dateRange"
-                            label={tReports("dateRange.selectDateRange")}
-                            helpKey="reportBuilder.dateRange"
-                          />
-                        </div>
-                      )}
+                      ) &&
+                        !matchesReportType(
+                          reportType,
+                          "requirement-coverage-gaps"
+                        ) &&
+                        !matchesReportType(
+                          reportType,
+                          "requirement-traceability"
+                        ) &&
+                        !matchesReportType(
+                          reportType,
+                          "requirement-coverage-changes"
+                        ) && (
+                          <div className="grid gap-2">
+                            <DateRangePickerField
+                              control={form.control}
+                              name="dateRange"
+                              label={tReports("dateRange.selectDateRange")}
+                              helpKey="reportBuilder.dateRange"
+                              preset={dateRangePreset}
+                              onPresetChange={setDateRangePreset}
+                              timezone={dateRangeTimezone}
+                            />
+                          </div>
+                        )}
 
                       {/* Date Grouping Selection for Automation Trends */}
                       {(reportType === "automation-trends" ||
@@ -2320,47 +3751,6 @@ function ReportBuilderContent({
                           </Select>
                         </div>
                       )}
-
-                      {/* Filters Section for Automation Trends */}
-                      {(reportType === "automation-trends" ||
-                        (isCrossProjectReport(reportType) &&
-                          matchesReportType(
-                            reportType,
-                            "automation-trends"
-                          ))) &&
-                        filterItems.length > 0 && (
-                          <div className="grid gap-2">
-                            <div className="flex items-center gap-2">
-                              <label className="text-sm font-medium">
-                                {tCommon("ui.search.filters")}
-                              </label>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {tReports("filtersDescription")}
-                            </p>
-                            <ReportFilterChips
-                              activeFilters={activeFilterChips}
-                              onRemoveFilter={handleRemoveFilter}
-                              onClearAll={handleClearAllFilters}
-                            />
-                            <ReportFilters
-                              selectedFilter={selectedFilterType}
-                              onFilterChange={setSelectedFilterType}
-                              filterItems={filterItems}
-                              selectedValues={selectedFilterValues}
-                              onValuesChange={(filterType, values) => {
-                                setSelectedFilterValues((prev) => {
-                                  if (!values || values.length === 0) {
-                                    const { [filterType]: _, ...rest } = prev;
-                                    return rest;
-                                  }
-                                  return { ...prev, [filterType]: values };
-                                });
-                              }}
-                              totalCount={filterOptions?.totalCount || 0}
-                            />
-                          </div>
-                        )}
 
                       {/* Flaky Tests Parameters */}
                       {(reportType === "flaky-tests" ||
@@ -2427,58 +3817,139 @@ function ReportBuilderContent({
                               </span>
                             </div>
                           </div>
+                        </div>
+                      )}
 
-                          {/* Test Case Type Filter */}
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              {tReports("flakyTests.includeFilter")}
-                            </label>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-between"
-                                >
-                                  {flakyAutomatedFilter === "all"
-                                    ? tRuns("typeFilter.both")
-                                    : flakyAutomatedFilter === "manual"
-                                      ? tCommon("fields.manual")
-                                      : tCommon("fields.automated")}
-                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-full"
+                      {/* Requirement Report Scope (gaps/traceability/changes) */}
+                      {(matchesReportType(
+                        reportType,
+                        "requirement-coverage-gaps"
+                      ) ||
+                        matchesReportType(
+                          reportType,
+                          "requirement-traceability"
+                        ) ||
+                        matchesReportType(
+                          reportType,
+                          "requirement-coverage-changes"
+                        )) &&
+                        mode === "project" &&
+                        projectId && (
+                          <RequirementScopePicker
+                            projectId={projectId}
+                            value={requirementScope}
+                            onValueChange={setRequirementScope}
+                          />
+                        )}
+
+                      {/* Snapshot to render (gaps/traceability): live or a
+                          saved point-in-time record. */}
+                      {(matchesReportType(
+                        reportType,
+                        "requirement-coverage-gaps"
+                      ) ||
+                        matchesReportType(
+                          reportType,
+                          "requirement-traceability"
+                        )) &&
+                        mode === "project" &&
+                        projectId && (
+                          <RequirementSnapshotPicker
+                            projectId={Number(projectId)}
+                            value={requirementSnapshotId}
+                            onValueChange={setRequirementSnapshotId}
+                            label={tReports(
+                              "requirementCoverage.snapshotLabel"
+                            )}
+                            nullMode="live"
+                            canManage={canManageSnapshots}
+                            canDelete={canDeleteSnapshots}
+                            requirementIds={requirementScope.map(
+                              (option) => option.id
+                            )}
+                            testIdPrefix="requirement-snapshot"
+                          />
+                        )}
+
+                      {/* Coverage changes: baseline (required) vs. comparison. */}
+                      {matchesReportType(
+                        reportType,
+                        "requirement-coverage-changes"
+                      ) &&
+                        mode === "project" &&
+                        projectId && (
+                          <>
+                            <RequirementSnapshotPicker
+                              projectId={Number(projectId)}
+                              value={baselineSnapshotId}
+                              onValueChange={setBaselineSnapshotId}
+                              label={tReports(
+                                "requirementCoverage.baselineLabel"
+                              )}
+                              nullMode="none"
+                              canManage={canManageSnapshots}
+                              canDelete={canDeleteSnapshots}
+                              requirementIds={requirementScope.map(
+                                (option) => option.id
+                              )}
+                              testIdPrefix="requirement-baseline-snapshot"
+                            />
+                            {changesMissingBaseline ? (
+                              <p
+                                className="text-xs text-muted-foreground"
+                                data-testid="requirement-baseline-required"
                               >
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setFlakyAutomatedFilter("all")
-                                    }
-                                  >
-                                    {tRuns("typeFilter.both")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setFlakyAutomatedFilter("manual")
-                                    }
-                                  >
-                                    {tCommon("fields.manual")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setFlakyAutomatedFilter("automated")
-                                    }
-                                  >
-                                    {tCommon("fields.automated")}
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                                {tReports(
+                                  "requirementCoverage.baselineRequired"
+                                )}
+                              </p>
+                            ) : null}
+                            <RequirementSnapshotPicker
+                              projectId={Number(projectId)}
+                              value={compareSnapshotId}
+                              onValueChange={setCompareSnapshotId}
+                              label={tReports(
+                                "requirementCoverage.compareLabel"
+                              )}
+                              nullMode="live"
+                              testIdPrefix="requirement-compare-snapshot"
+                            />
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id="requirement-changes-include-unchanged"
+                                checked={includeUnchanged}
+                                onCheckedChange={setIncludeUnchanged}
+                                data-testid="requirement-changes-include-unchanged"
+                              />
+                              <label
+                                htmlFor="requirement-changes-include-unchanged"
+                                className="text-sm font-medium"
+                              >
+                                {tReports(
+                                  "requirementCoverage.includeUnchanged"
+                                )}
+                              </label>
+                            </div>
+                          </>
+                        )}
+
+                      {matchesReportType(
+                        reportType,
+                        "requirement-coverage-gaps"
+                      ) && (
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="requirement-debt-include-not-run"
+                            checked={includeNotRunDebt}
+                            onCheckedChange={setIncludeNotRunDebt}
+                            data-testid="requirement-debt-include-not-run"
+                          />
+                          <label
+                            htmlFor="requirement-debt-include-not-run"
+                            className="text-sm font-medium"
+                          >
+                            {tReports("requirementCoverage.includeNotRun")}
+                          </label>
                         </div>
                       )}
 
@@ -2569,7 +4040,7 @@ function ReportBuilderContent({
                                   {lookbackDays === 0
                                     ? tReports("dateRange.allTime")
                                     : lookbackDays === 30
-                                      ? tReports("dateRange.last30Days")
+                                      ? tCommon("operators.last30")
                                       : lookbackDays === 90
                                         ? tReports("dateRange.last3Months")
                                         : tReports("dateRange.last12Months")}
@@ -2580,7 +4051,7 @@ function ReportBuilderContent({
                                 <DropdownMenuItem
                                   onClick={() => setLookbackDays(30)}
                                 >
-                                  {tReports("dateRange.last30Days")}
+                                  {tCommon("operators.last30")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => setLookbackDays(90)}
@@ -2600,12 +4071,25 @@ function ReportBuilderContent({
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
+                        </div>
+                      )}
 
-                          {/* Test Case Type Filter */}
+                      {/* Impact Analysis History / Code Pin Coverage parameters */}
+                      {(isImpactHistory || isCodePinCoverage) && (
+                        <div className="grid gap-4">
                           <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              {tReports("testCaseHealth.includeFilter")}
-                            </label>
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("testCaseHealth.lookbackDays")}
+                              </label>
+                              <HelpPopover
+                                helpKey={`## ${tReports("testCaseHealth.lookbackDays")}\n${tReports(
+                                  isCodePinCoverage
+                                    ? "codePinCoverage.lookbackDaysHelp"
+                                    : "impactAnalysis.lookbackDaysHelp"
+                                )}`}
+                              />
+                            </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -2613,12 +4097,17 @@ function ReportBuilderContent({
                                   variant="outline"
                                   size="sm"
                                   className="w-full justify-between"
+                                  data-testid="impact-history-lookback"
                                 >
-                                  {healthAutomatedFilter === "all"
-                                    ? tRuns("typeFilter.both")
-                                    : healthAutomatedFilter === "manual"
-                                      ? tCommon("fields.manual")
-                                      : tCommon("fields.automated")}
+                                  {lookbackDays === 0
+                                    ? tReports("dateRange.allTime")
+                                    : lookbackDays === 7
+                                      ? tCommon("operators.last7")
+                                      : lookbackDays === 30
+                                        ? tCommon("operators.last30")
+                                        : lookbackDays === 90
+                                          ? tReports("dateRange.last3Months")
+                                          : tReports("dateRange.last12Months")}
                                   <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -2628,160 +4117,29 @@ function ReportBuilderContent({
                               >
                                 <DropdownMenuGroup>
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthAutomatedFilter("all")
-                                    }
+                                    onClick={() => setLookbackDays(7)}
                                   >
-                                    {tRuns("typeFilter.both")}
+                                    {tCommon("operators.last7")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthAutomatedFilter("manual")
-                                    }
+                                    onClick={() => setLookbackDays(30)}
                                   >
-                                    {tCommon("fields.manual")}
+                                    {tCommon("operators.last30")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthAutomatedFilter("automated")
-                                    }
+                                    onClick={() => setLookbackDays(90)}
                                   >
-                                    {tCommon("fields.automated")}
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-
-                          {/* Health Status Filter */}
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              {tReports("testCaseHealth.status")}
-                            </label>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-between"
-                                >
-                                  {healthStatusFilter === "all"
-                                    ? tIssues("filterAll")
-                                    : healthStatusFilter === "healthy"
-                                      ? tReports(
-                                          "testCaseHealth.healthStatus.healthy"
-                                        )
-                                      : healthStatusFilter === "always_passing"
-                                        ? tReports(
-                                            "testCaseHealth.healthStatus.alwaysPassing"
-                                          )
-                                        : healthStatusFilter ===
-                                            "always_failing"
-                                          ? tReports(
-                                              "testCaseHealth.healthStatus.alwaysFailing"
-                                            )
-                                          : tReports(
-                                              "testCaseHealth.healthStatus.neverExecuted"
-                                            )}
-                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-full"
-                              >
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    onClick={() => setHealthStatusFilter("all")}
-                                  >
-                                    {tIssues("filterAll")}
+                                    {tReports("dateRange.last3Months")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStatusFilter("healthy")
-                                    }
+                                    onClick={() => setLookbackDays(365)}
                                   >
-                                    {tReports(
-                                      "testCaseHealth.healthStatus.healthy"
-                                    )}
+                                    {tReports("dateRange.last12Months")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStatusFilter("always_passing")
-                                    }
+                                    onClick={() => setLookbackDays(0)}
                                   >
-                                    {tReports(
-                                      "testCaseHealth.healthStatus.alwaysPassing"
-                                    )}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStatusFilter("always_failing")
-                                    }
-                                  >
-                                    {tReports(
-                                      "testCaseHealth.healthStatus.alwaysFailing"
-                                    )}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStatusFilter("never_executed")
-                                    }
-                                  >
-                                    {tReports(
-                                      "testCaseHealth.healthStatus.neverExecuted"
-                                    )}
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-
-                          {/* Staleness Filter */}
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              {tReports("testCaseHealth.staleFilter")}
-                            </label>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-between"
-                                >
-                                  {healthStaleFilter === "all"
-                                    ? tIssues("filterAll")
-                                    : healthStaleFilter === "stale"
-                                      ? tReports("testCaseHealth.stale")
-                                      : tReports("testCaseHealth.notStale")}
-                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-full"
-                              >
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    onClick={() => setHealthStaleFilter("all")}
-                                  >
-                                    {tIssues("filterAll")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStaleFilter("stale")
-                                    }
-                                  >
-                                    {tReports("testCaseHealth.stale")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStaleFilter("notStale")
-                                    }
-                                  >
-                                    {tReports("testCaseHealth.notStale")}
+                                    {tReports("dateRange.allTime")}
                                   </DropdownMenuItem>
                                 </DropdownMenuGroup>
                               </DropdownMenuContent>
@@ -2900,11 +4258,77 @@ function ReportBuilderContent({
                         </div>
                       )}
 
+                      {/* Filters: every pre-built report's filters live in this one menu */}
+                      {(matchesReportType(reportType, "automation-trends") ||
+                        matchesReportType(reportType, "flaky-tests") ||
+                        matchesReportType(reportType, "test-case-health") ||
+                        isImpactHistory ||
+                        isCodePinCoverage ||
+                        isFilterableRequirementReport(reportType)) &&
+                        filterItems.length > 0 && (
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tCommon("ui.search.filters")}
+                              </label>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {tReports("filtersDescription")}
+                            </p>
+                            <ReportFilterChips
+                              activeFilters={activeFilterChips}
+                              onRemoveFilter={handleRemoveFilter}
+                              onClearAll={handleClearAllFilters}
+                            />
+                            <ReportFilters
+                              selectedFilter={selectedFilterType}
+                              onFilterChange={setSelectedFilterType}
+                              filterItems={filterItems}
+                              selectedValues={selectedFilterValues}
+                              onValuesChange={(filterType, values) => {
+                                setSelectedFilterValues((prev) => {
+                                  if (!values || values.length === 0) {
+                                    const { [filterType]: _, ...rest } = prev;
+                                    return rest;
+                                  }
+                                  return { ...prev, [filterType]: values };
+                                });
+                              }}
+                              totalCount={filterOptions?.totalCount}
+                            />
+                            {hasFolderFilter &&
+                              (selectedFilterValues.folders?.length ?? 0) >
+                                0 && (
+                                <label className="flex items-start gap-2">
+                                  <Checkbox
+                                    checked={filterFolderIncludeSubfolders}
+                                    onCheckedChange={(checked) =>
+                                      setFilterFolderIncludeSubfolders(
+                                        checked === true
+                                      )
+                                    }
+                                    data-testid="filter-folder-include-subfolders"
+                                  />
+                                  <span className="grid gap-0.5">
+                                    <span className="text-sm font-medium">
+                                      {tReports("folderDescendants.label")}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {tReports(
+                                        "folderDescendants.filterDescription"
+                                      )}
+                                    </span>
+                                  </span>
+                                </label>
+                              )}
+                          </div>
+                        )}
+
                       {/* Run Report Button */}
                       <Button
                         type="button"
                         onClick={handleRunReport}
-                        disabled={loading}
+                        disabled={loading || changesMissingBaseline}
                         className="w-full"
                         data-testid="run-report-button"
                       >
@@ -2985,6 +4409,9 @@ function ReportBuilderContent({
                           name="dateRange"
                           label={tReports("dateRange.selectDateRange")}
                           helpKey="reportBuilder.dateRange"
+                          preset={dateRangePreset}
+                          onPresetChange={setDateRangePreset}
+                          timezone={dateRangeTimezone}
                         />
                       </div>
 
@@ -3058,6 +4485,29 @@ function ReportBuilderContent({
                           </span>
                         </label>
                       )}
+
+                      {/* Chart total line — offered only when the chart
+                          can plot one (see totalLineApplies). */}
+                      {!isPreBuiltReport(reportType) &&
+                        totalLineApplies(dimensions, metrics) && (
+                          <label className="flex items-start gap-2">
+                            <Checkbox
+                              checked={includeTotals}
+                              onCheckedChange={(checked) =>
+                                setIncludeTotals(checked === true)
+                              }
+                              data-testid="chart-include-totals"
+                            />
+                            <span className="grid gap-0.5">
+                              <span className="text-sm font-medium">
+                                {tReports("chartTotals.label")}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {tReports("chartTotals.description")}
+                              </span>
+                            </span>
+                          </label>
+                        )}
 
                       {/* Per-dimension value filters. The date dimension is
                           covered by the date-range picker above. */}
@@ -3216,6 +4666,7 @@ function ReportBuilderContent({
                         onClick={handleRunReport}
                         disabled={
                           loading ||
+                          changesMissingBaseline ||
                           (isPreBuiltReport(reportType)
                             ? false // No requirements for pre-built reports
                             : dimensions.length === 0 || metrics.length === 0)
@@ -3271,11 +4722,20 @@ function ReportBuilderContent({
           collapsible
           className="min-h-[calc(100vh-14rem)]"
         >
+          {savedReportId && (
+            <SavedReportContext savedReportId={savedReportId} />
+          )}
           {/* Results Display */}
           <ReportRenderer
             results={results || []}
             awaitingFirstRun={awaitingFirstRun}
+            emptyPrompt={
+              changesMissingBaseline
+                ? tReports("requirementCoverage.baselineRequired")
+                : undefined
+            }
             chartData={allResults ?? undefined}
+            showChartTotals={includeTotals}
             reportType={reportType}
             dimensions={lastUsedDimensions}
             metrics={lastUsedMetrics}
@@ -3334,43 +4794,18 @@ function ReportBuilderContent({
             userTimezone={session?.user?.preferences?.timezone}
             readOnly={false}
             headerActions={
-              <ShareButton
-                projectId={mode === "project" ? projectId : undefined}
-                reportConfig={
-                  matchesReportType(reportType, "iteration-matrix")
-                    ? {
-                        reportType,
-                        projectId,
-                        filters: matrixFilters,
-                      }
-                    : matchesReportType(reportType, "automation-candidates")
-                      ? {
-                          reportType,
-                          projectId,
-                          // Capture the snapshot the user is currently
-                          // viewing — the preset mirrors selection to
-                          // `?snapshotId=N` so the share resolves to
-                          // that specific snapshot, not whichever one
-                          // happens to be latest later.
-                          ...(searchParams.get("snapshotId")
-                            ? {
-                                snapshotId: Number.parseInt(
-                                  searchParams.get("snapshotId")!,
-                                  10
-                                ),
-                              }
-                            : {}),
-                        }
-                      : {
-                          reportType,
-                          // Use the last request body which contains ALL parameters
-                          ...(lastRequestBody || {}),
-                        }
-                }
-                reportTitle={
-                  reportTypes.find((r) => r.id === reportType)?.label
-                }
-              />
+              <>
+                <SaveReportButton
+                  projectId={mode === "project" ? projectId : undefined}
+                  reportConfig={shareReportConfig}
+                  reportTitle={currentReportTitle}
+                />
+                <ShareButton
+                  projectId={mode === "project" ? projectId : undefined}
+                  reportConfig={shareReportConfig}
+                  reportTitle={currentReportTitle}
+                />
+              </>
             }
           />
         </ResizablePanel>
@@ -3389,6 +4824,26 @@ function ReportBuilderContent({
         onLoadMore={drillDown.loadMore}
         aggregates={drillDown.aggregates}
       />
+      {gapGenerateRow && projectId != null && (
+        <RequirementGapGenerateCases
+          projectId={Number(projectId)}
+          requirementId={gapGenerateRow.requirementId}
+          requirementKey={gapGenerateRow.requirementKey}
+          requirementTitle={
+            gapGenerateRow.requirementTitle ?? gapGenerateRow.requirementKey
+          }
+          onClose={() => setGapGenerateRow(null)}
+          onImportComplete={() => {
+            // The imported cases are linked back to the requirement — re-run
+            // the report so the closed gap leaves the list without a manual
+            // re-run.
+            void fetchReportData(lastUsedDimensions, lastUsedMetrics, false, {
+              append: false,
+              page: 1,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

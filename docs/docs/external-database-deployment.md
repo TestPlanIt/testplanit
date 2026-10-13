@@ -161,7 +161,7 @@ VALKEY_URL="valkey://valkey:6379"
 # Docker Elasticsearch
 ELASTICSEARCH_NODE="http://elasticsearch:9200"
 
-# Docker MinIO
+# Bundled storage (RustFS)
 AWS_ACCESS_KEY_ID="minioadmin"
 AWS_SECRET_ACCESS_KEY="minioadmin123"
 AWS_BUCKET_NAME="testplanit"
@@ -188,6 +188,8 @@ VALKEY_URL="valkey://your-redis.cache.amazonaws.com:6379"
 ELASTICSEARCH_NODE="https://your-es.es.amazonaws.com:9200"
 
 # AWS S3
+# On AWS, omit BOTH key lines to use an instance role / IRSA instead:
+# https://docs.testplanit.com/docs/file-storage#running-without-static-keys
 AWS_ACCESS_KEY_ID="your_aws_key"
 AWS_SECRET_ACCESS_KEY="your_aws_secret"
 AWS_BUCKET_NAME="your-bucket"
@@ -218,7 +220,7 @@ TestPlanIt uses Docker Compose profiles to enable/disable services. The included
 - `with-postgres` - PostgreSQL database container
 - `with-valkey` - Valkey/Redis cache container
 - `with-elasticsearch` - Elasticsearch search container
-- `with-minio` - MinIO storage + Nginx proxy
+- `with-minio` - RustFS storage + Nginx proxy
 
 **Deployment Examples:**
 

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeTextForPdf, isEmbeddableImage } from "./pdfHelpers";
+import {
+  formatFieldValue,
+  isEmbeddableImage,
+  PdfRenderer,
+  sanitizeTextForPdf,
+} from "./pdfHelpers";
 
 describe("pdfHelpers", () => {
   describe("sanitizeTextForPdf", () => {
@@ -100,6 +105,80 @@ describe("pdfHelpers", () => {
     it("is case-insensitive", () => {
       expect(isEmbeddableImage("IMAGE/JPEG")).toBe(true);
       expect(isEmbeddableImage("Image/Png")).toBe(true);
+    });
+  });
+
+  describe("PdfRenderer text layout", () => {
+    // Records each drawn string with the font active when it was drawn.
+    const fakeDoc = () => {
+      let font = { fontName: "helvetica", fontStyle: "normal" };
+      const drawn: { text: string; font: string; y: number }[] = [];
+      const doc = {
+        internal: { pageSize: { width: 210, height: 297 } },
+        setCharSpace: () => {},
+        setFontSize: () => {},
+        setTextColor: () => {},
+        addPage: () => {},
+        getFont: () => font,
+        setFont: (fontName: string, fontStyle: string) => {
+          font = { fontName, fontStyle };
+        },
+        getTextWidth: (text: string) => text.length * 2,
+        splitTextToSize: (text: string) => [text],
+        text: (text: string, _x: number, y: number) => {
+          drawn.push({ text, font: `${font.fontName}/${font.fontStyle}`, y });
+        },
+      };
+      return { doc, drawn };
+    };
+
+    it("draws each line of a step separately, bold number only, table rows in Courier", () => {
+      const { doc, drawn } = fakeDoc();
+      const pdf = new PdfRenderer(doc as any);
+      pdf.renderStepHeading(1, "Given a rack\nExamples:\n| racks | x |");
+
+      expect(drawn.map((d) => [d.text, d.font])).toEqual([
+        ["1. ", "helvetica/bold"],
+        ["Given a rack", "helvetica/normal"],
+        ["Examples:", "helvetica/normal"],
+        ["| racks | x |", "courier/normal"],
+      ]);
+      const ys = drawn.slice(1).map((d) => d.y);
+      expect(new Set(ys).size).toBe(3);
+      expect(doc.getFont()).toEqual({
+        fontName: "helvetica",
+        fontStyle: "normal",
+      });
+    });
+
+    it("keeps line breaks in detail values and text blocks", () => {
+      const { doc, drawn } = fakeDoc();
+      const pdf = new PdfRenderer(doc as any);
+      pdf.renderDetail("Expected", "Topology built\nNo errors");
+      pdf.renderTextBlock("Description", "First\nSecond");
+
+      expect(drawn.map((d) => d.text)).toEqual([
+        "Expected: ",
+        "Topology built",
+        "No errors",
+        "Description:",
+        "First",
+        "Second",
+      ]);
+    });
+  });
+
+  describe("formatFieldValue", () => {
+    it("keeps paragraph breaks in Text Long values", () => {
+      const value = JSON.stringify({
+        type: "doc",
+        content: ["one", "two"].map((text) => ({
+          type: "paragraph",
+          content: [{ type: "text", text }],
+        })),
+      });
+      expect(formatFieldValue(value, "Text Long")).toBe("one\ntwo");
+      expect(formatFieldValue("plain", "Text Long")).toBe("plain");
     });
   });
 });

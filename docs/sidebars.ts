@@ -33,11 +33,13 @@ const sidebars: SidebarsConfig = {
         'deployment', // Add deployment.md after Installation
         'external-database-deployment', // Add external-database-deployment.md
         'kubernetes-deployment', // Kubernetes / Helm chart deployment
+        'migrating-from-minio', // Moving bundled file storage from MinIO to RustFS
         'horizontal-read-scaling', // Read-replica horizontal read scaling
         'building-from-source', // Build from source / try a beta pre-release
         'background-processes', // Add background-processes.md
         'multi-tenant-workers', // Add multi-tenant-workers.md
         'sse-notifications', // SSE notifications deployment & ingress configuration
+        'environment-variables', // Reference for every environment variable
       ],
     },
     'getting-started', // Corresponds to getting-started.md
@@ -131,6 +133,23 @@ const sidebars: SidebarsConfig = {
               label: 'Tools & Integrations',
               items: [
                 'user-guide/integrations', // Issue integrations administration page
+                'user-guide/code-repositories', // Git repository connections for QuickScript, Impact Analysis and automated execution
+                {
+                  type: 'category',
+                  label: 'Automated Execution',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/automated-execution', // Overview: dispatch a run's automated cases to CI and collect results
+                  },
+                  items: [
+                    'user-guide/automated-execution/github-actions', // Step-by-step: workflow_dispatch target
+                    'user-guide/automated-execution/gitlab-ci', // Step-by-step: pipeline target
+                    'user-guide/automated-execution/jenkins', // Step-by-step: Generic Webhook Trigger plugin
+                    'user-guide/automated-execution/generic-webhook', // Contract, signature verification, private addresses
+                    'user-guide/automated-execution/reporting-results', // The job's side: plan, filters, reporters, finish
+                    'user-guide/automated-execution/troubleshooting', // Symptom → cause → fix
+                  ],
+                },
                 'user-guide/share-links', // Share Links documentation
                 // Convert Notifications to a category with children
                 {
@@ -163,6 +182,7 @@ const sidebars: SidebarsConfig = {
                   items: [
                     'user-guide/llm-test-generation', // AI test case generation
                     'user-guide/llm-magic-select', // AI-powered test case selection
+                    'user-guide/impact', // Test impact analysis: Analyze impact, Affected Tests, Code Pins
                     'user-guide/llm-quickscript', // AI-powered QuickScript generation
                     'user-guide/llm-writing-assistant', // In-editor AI writing assistant
                     'user-guide/llm-markdown-import', // AI-assisted markdown import
@@ -172,7 +192,6 @@ const sidebars: SidebarsConfig = {
                 },
                 'user-guide/prompt-configurations', // AI prompt configuration management
                 'user-guide/quickscript-templates', // QuickScript templates for test case export
-                'user-guide/code-repositories', // Git repository connections for AI export context
               ],
             },
             // System
@@ -249,6 +268,7 @@ const sidebars: SidebarsConfig = {
                     'user-guide/projects/repository-add-case', // Corresponds to repository-add-case.md
                     'user-guide/projects/repository-case-details', // Add Test Case Details page
                     'user-guide/projects/repository-case-versions', // Add Test Case Versions page
+                    'user-guide/projects/case-draft-autosave', // Auto-save and draft recovery
                     'user-guide/projects/parameterized-test-cases', // Parameterized Test Cases feature hub
                     'user-guide/projects/step-duplicate-detection', // Step sequence duplicate detection
                     'import-export', // Add import-export.md
@@ -320,7 +340,21 @@ const sidebars: SidebarsConfig = {
                     'user-guide/projects/reports/issue-test-coverage',
                     'user-guide/projects/reports/iteration-matrix',
                     'user-guide/projects/reports/test-case-health',
+                    'user-guide/projects/reports/impact-analysis-history',
+                    'user-guide/projects/reports/code-pin-coverage',
                     'user-guide/projects/reports/report-builder',
+                  ],
+                },
+                // Requirements category (linked label + traceability child)
+                {
+                  type: 'category',
+                  label: 'Requirements',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/projects/requirements', // Link to the main requirements page
+                  },
+                  items: [
+                    'user-guide/projects/requirements-traceability', // Coverage, suspect flags, reports, export
                   ],
                 },
                 'user-guide/projects/audit-log', // Project-scoped audit trail (ADMIN + assigned PROJECTADMIN)
@@ -331,10 +365,13 @@ const sidebars: SidebarsConfig = {
               type: 'category',
               label: 'Settings',
               items: [
+                'user-guide/projects/settings/access', // Read-only roster of who can open the project and their role
                 'user-guide/projects/settings/integrations', // Project issue integration selection
                 'user-guide/webhooks', // Inbound and outbound webhooks (configured per project)
                 'user-guide/projects/settings/ai-models', // Project AI model default + per-feature overrides
                 'user-guide/projects/settings/quickscript', // Project QuickScript context + export templates
+                'user-guide/projects/settings/impact', // Project Impact Analysis: application repository, cache, repository markers
+                'user-guide/projects/settings/automation', // Project execution targets: GitHub Actions, GitLab CI, generic webhook
                 'user-guide/projects/settings/parameters', // Test Case Parameters settings (CI mapping + shared datasets)
                 'user-guide/projects/settings/advanced', // Per-project feature toggles
                 'user-guide/projects/settings/shares', // Project-scoped share link management

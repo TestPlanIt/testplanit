@@ -30,6 +30,7 @@ import {
   getProjectReportTypes,
 } from "~/lib/config/reportTypes";
 import { baseDb } from "~/lib/db";
+import { createShareAccessToken } from "~/lib/shareAccessToken";
 import { GET } from "./route";
 
 const createRequest = (
@@ -240,11 +241,43 @@ describe("GET /api/share/[shareKey]/report", () => {
       expect(data.error).toContain("token");
     });
 
+    it("rejects the shareKey itself as a token", async () => {
+      (getServerSession as any).mockResolvedValue(null);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
+        ...mockShareLink,
+        mode: "PASSWORD_PROTECTED",
+        passwordHash: "$2b$10$hashvalue",
+      });
+
+      const [req, ctx] = createRequest("abc123", { token: "abc123" });
+      const response = await GET(req, ctx);
+
+      expect(response.status).toBe(401);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("rejects a token signed for another share", async () => {
+      (getServerSession as any).mockResolvedValue(null);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
+        ...mockShareLink,
+        mode: "PASSWORD_PROTECTED",
+        passwordHash: "$2b$10$hashvalue",
+      });
+
+      const [req, ctx] = createRequest("abc123", {
+        token: createShareAccessToken("other-share", "$2b$10$hashvalue"),
+      });
+      const response = await GET(req, ctx);
+
+      expect(response.status).toBe(401);
+    });
+
     it("allows PASSWORD_PROTECTED mode with valid token in query", async () => {
       (getServerSession as any).mockResolvedValue(null);
       (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         mode: "PASSWORD_PROTECTED",
+        passwordHash: "$2b$10$hashvalue",
       });
 
       mockFetch
@@ -257,7 +290,9 @@ describe("GET /api/share/[shareKey]/report", () => {
           json: async () => mockReportResponse,
         });
 
-      const [req, ctx] = createRequest("abc123", { token: "abc123" });
+      const [req, ctx] = createRequest("abc123", {
+        token: createShareAccessToken("abc123", "$2b$10$hashvalue"),
+      });
       const response = await GET(req, ctx);
 
       expect(response.status).toBe(200);
@@ -418,6 +453,131 @@ describe("GET /api/share/[shareKey]/report", () => {
           }),
         })
       );
+    });
+  });
+
+  describe("Frozen and saved reports", () => {
+    const frozenSnapshot = {
+      payload: {
+        results: [{ testCase: "Captured Test", count: 3 }],
+        chartData: [{ testCase: "Captured Test", count: 3 }],
+        dimensions: [{ value: "testCase", label: "Test Case" }],
+        metrics: [{ value: "count", label: "Count" }],
+        pagination: { totalCount: 1, page: 1, pageSize: "All" },
+      },
+      capturedAt: new Date("2026-09-01T10:00:00.000Z"),
+      capturedBy: { name: "Jane Tester" },
+      rowCount: 1,
+      totalRowCount: 1,
+      truncated: false,
+    };
+
+    it("serves the stored payload for a frozen link without running the report", async () => {
+      (getServerSession as any).mockResolvedValue(null);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
+        ...mockShareLink,
+        snapshot: frozenSnapshot,
+      });
+
+      const [req, ctx] = createRequest("abc123");
+      const response = await GET(req, ctx);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(data.results).toEqual(frozenSnapshot.payload.results);
+      expect(data.frozen).toEqual({
+        capturedAt: "2026-09-01T10:00:00.000Z",
+        capturedByName: "Jane Tester",
+        rowCount: 1,
+        totalRowCount: 1,
+        truncated: false,
+      });
+    });
+
+    it("still enforces revocation on a frozen link", async () => {
+      (getServerSession as any).mockResolvedValue(null);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
+        ...mockShareLink,
+        isRevoked: true,
+        snapshot: frozenSnapshot,
+      });
+
+      const [req, ctx] = createRequest("abc123");
+      const response = await GET(req, ctx);
+
+      expect(response.status).toBe(403);
+    });
+
+    it("returns 404 for a deleted share link", async () => {
+      (getServerSession as any).mockResolvedValue(null);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
+        ...mockShareLink,
+        isDeleted: true,
+        snapshot: frozenSnapshot,
+      });
+
+      const [req, ctx] = createRequest("abc123");
+      const response = await GET(req, ctx);
+
+      expect(response.status).toBe(404);
+    });
+
+    const savedReport = {
+      ...mockShareLink,
+      entityType: "SAVED_REPORT",
+      mode: "AUTHENTICATED",
+      createdById: "owner-1",
+      projectId: null,
+      project: null,
+      entityConfig: { ...mockShareLink.entityConfig, projectId: 10 },
+    };
+
+    it("hides a saved report from anyone but its owner", async () => {
+      (getServerSession as any).mockResolvedValue({
+        user: { id: "someone-else", access: "ADMIN" },
+      });
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(savedReport);
+
+      const [req, ctx] = createRequest("abc123");
+      const response = await GET(req, ctx);
+
+      expect(response.status).toBe(404);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("runs a live saved report as its owner, with the owner's credentials", async () => {
+      (getServerSession as any).mockResolvedValue({
+        user: { id: "owner-1", access: "USER" },
+      });
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(savedReport);
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockMetadataResponse,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockReportResponse,
+        });
+
+      const url = "http://localhost/api/share/abc123/report";
+      const req = new NextRequest(url, {
+        headers: { cookie: "next-auth.session-token=owner" },
+      });
+      const response = await GET(req, {
+        params: Promise.resolve({ shareKey: "abc123" }),
+      });
+
+      expect(response.status).toBe(200);
+      const [metadataUrl, metadataInit] = mockFetch.mock.calls[0];
+      expect(metadataUrl).toContain("projectId=10");
+      expect(metadataInit.headers).toEqual({
+        cookie: "next-auth.session-token=owner",
+      });
+      const reportInit = mockFetch.mock.calls[1][1];
+      expect(reportInit.headers).not.toHaveProperty("x-shared-report-bypass");
+      expect(JSON.parse(reportInit.body).projectId).toBe(10);
     });
   });
 

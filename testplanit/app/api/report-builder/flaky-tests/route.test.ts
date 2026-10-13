@@ -3,14 +3,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the utility module that handles the actual logic
 vi.mock("~/utils/flakyTestsUtils", () => ({
+  handleFlakyTestsOptionsGET: vi.fn(),
   handleFlakyTestsPOST: vi.fn(),
 }));
 
-import { handleFlakyTestsPOST } from "~/utils/flakyTestsUtils";
+import {
+  handleFlakyTestsOptionsGET,
+  handleFlakyTestsPOST,
+} from "~/utils/flakyTestsUtils";
 import { GET, POST } from "./route";
 
-const _createGETRequest = (): NextRequest => {
-  return new NextRequest("http://localhost/api/report-builder/flaky-tests");
+const createGETRequest = (): NextRequest => {
+  return new NextRequest(
+    "http://localhost/api/report-builder/flaky-tests?projectId=1"
+  );
 };
 
 const createPOSTRequest = (body: Record<string, unknown>): NextRequest => {
@@ -22,13 +28,18 @@ const createPOSTRequest = (body: Record<string, unknown>): NextRequest => {
 };
 
 describe("GET /api/report-builder/flaky-tests", () => {
-  it("returns empty dimensions and metrics arrays", async () => {
-    const response = await GET();
-    const data = await response.json();
+  it("delegates to handleFlakyTestsOptionsGET with isCrossProject=false", async () => {
+    (handleFlakyTestsOptionsGET as any).mockResolvedValue(
+      Response.json({ dimensions: [], metrics: [] })
+    );
+
+    const response = await GET(createGETRequest());
 
     expect(response.status).toBe(200);
-    expect(data.dimensions).toEqual([]);
-    expect(data.metrics).toEqual([]);
+    expect(handleFlakyTestsOptionsGET).toHaveBeenCalledOnce();
+    const [, isCrossProject] = (handleFlakyTestsOptionsGET as any).mock
+      .calls[0];
+    expect(isCrossProject).toBe(false);
   });
 });
 

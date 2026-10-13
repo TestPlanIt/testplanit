@@ -554,6 +554,29 @@ var TestPlanItClient = class {
     });
   }
   /**
+   * The plan a CI job executes for a run: its automated cases with the
+   * identifiers a runner filter can match on. `executionId` applies an
+   * execution's ad-hoc subset and ref. Read-only tokens are accepted.
+   */
+  async getAutomationPlan(testRunId, executionId) {
+    return this.request(
+      "GET",
+      `/api/test-runs/${testRunId}/automation-plan`,
+      { query: { executionId } }
+    );
+  }
+  /**
+   * Report an execution's outcome to TestPlanIt. Needed for generic-webhook
+   * targets, which TestPlanIt cannot poll; harmless for the others.
+   */
+  async finishExecution(testRunId, executionId, conclusion, message) {
+    return this.request(
+      "POST",
+      `/api/test-runs/${testRunId}/executions/${executionId}/finish`,
+      { body: { conclusion, ...message ? { message } : {} } }
+    );
+  }
+  /**
    * Update a test run
    */
   async updateTestRun(testRunId, options) {
@@ -1029,7 +1052,7 @@ var TestPlanItClient = class {
               some: { projectId: options.projectId }
             }
           },
-          orderBy: { order: "asc" },
+          orderBy: [{ isDefault: "desc" }, { order: "asc" }],
           take: 1
         }
       );
@@ -1068,8 +1091,10 @@ var TestPlanItClient = class {
    * failures are visible: each entry is `status: "success"` with a `caseId`, or
    * `status: "error"` with a message (e.g. a custom field not on the template).
    *
-   * `templateId` defaults to the project's first enabled template; resolve a
-   * specific one with {@link findTemplateByName}. Resolve `folderId` with
+   * `templateId` defaults to the template marked Default, else the project's
+   * first enabled template; resolve a specific one with
+   * {@link findTemplateByName}. `stateName` defaults to the CASES state marked
+   * Default, else the first by order. Resolve `folderId` with
    * {@link findFolderByName} / {@link findOrCreateFolderPath}.
    *
    * Requires a TestPlanIt instance (app v0.39.0+) exposing
@@ -1918,6 +1943,7 @@ var USAGE = `testplanit \u2014 TestPlanIt pipeline helpers
 Usage:
   testplanit create-run --project <id> --name <name> [options]
   testplanit complete-run --id <id> [--project <id>]
+  testplanit plan-run [--id <id>] [--execution <id>] [--format json|lines]
 
 Commands:
   create-run      Create a test run and print its ID to stdout. Export the ID
@@ -1925,6 +1951,10 @@ Commands:
                   to that run instead of creating its own.
   complete-run    Mark a test run done. Run this once, after every
                   invocation reporting into the run has finished.
+  plan-run        Print the automated cases TestPlanIt asked a job to run
+                  (the plan). Defaults to $TESTPLANIT_RUN_ID /
+                  $TESTPLANIT_EXECUTION_ID, which TestPlanIt sets when it
+                  dispatches the job.
 
 Options for create-run:
   --project <id>        Project ID. Defaults to $TESTPLANIT_PROJECT_ID.
@@ -1939,6 +1969,11 @@ Options for complete-run:
   --id <id>             Test run ID (required).
   --project <id>        Project ID. Read from the run when omitted.
 
+Options for plan-run:
+  --id <id>             Test run ID. Defaults to $TESTPLANIT_RUN_ID.
+  --execution <id>      Execution ID. Defaults to $TESTPLANIT_EXECUTION_ID.
+  --format <format>     json (default) or lines (one selector per case).
+
 Common options:
   --url <url>           TestPlanIt base URL. Defaults to $TESTPLANIT_URL,
                         then $TESTPLANIT_API_URL.
@@ -1952,6 +1987,28 @@ Environment:
   TESTPLANIT_RUN_ID                     Read by the reporters \u2014 set it from
                                         create-run's output
 `;
+async function planRunCommand(args) {
+  const client = buildClient(args);
+  const rawId = firstFlag(args, "id") ?? process.env.TESTPLANIT_RUN_ID;
+  if (!rawId) {
+    throw new TestPlanItError(
+      "No test run. Pass --id or set TESTPLANIT_RUN_ID."
+    );
+  }
+  const rawExecution = firstFlag(args, "execution") ?? process.env.TESTPLANIT_EXECUTION_ID;
+  const plan = await client.getAutomationPlan(
+    parseId(rawId, "Test run ID"),
+    rawExecution ? parseId(rawExecution, "Execution ID") : void 0
+  );
+  const format = (firstFlag(args, "format") ?? "json").toLowerCase();
+  if (format === "lines") {
+    return plan.cases.map((c) => c.selector.fullName || c.title).filter(Boolean).join("\n");
+  }
+  if (format !== "json") {
+    throw new TestPlanItError(`Unknown format "${format}"; use json or lines.`);
+  }
+  return JSON.stringify(plan, null, 2);
+}
 function parseArgs(argv) {
   const flags = /* @__PURE__ */ new Map();
   const positional = [];
@@ -2105,6 +2162,8 @@ async function run(argv) {
       return createRunCommand(args);
     case "complete-run":
       return completeRunCommand(args);
+    case "plan-run":
+      return planRunCommand(args);
     default:
       throw new TestPlanItError(
         `Unknown command "${command}". Run "testplanit --help" for usage.`

@@ -139,6 +139,9 @@ describe("registerSessionsGet", () => {
     expect(data.customFields).toEqual({});
     expect(data.truncated).toBe(false);
     expect((data.sessionResults as unknown[]).length).toBe(5);
+    // A trashed session reads as not found.
+    expect(mockZenstack.mock.calls[0]?.[1]).toBe("findFirst");
+    expect(getCallBody(0)?.where).toEqual({ id: 50, isDeleted: false });
   });
 
   it("output keys: enumerates header + issues + customFields + sessionResults + truncated", async () => {

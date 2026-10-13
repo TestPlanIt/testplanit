@@ -100,7 +100,7 @@ test.describe("Group Management", () => {
     } finally {
       // Cleanup: soft-delete the group
       if (createdGroupId) {
-        await page.request.post(`/api/model/groups/update`, {
+        await page.request.patch(`/api/model/groups/update`, {
           data: {
             where: { id: createdGroupId },
             data: { isDeleted: true },
@@ -186,7 +186,7 @@ test.describe("Group Management", () => {
       });
     } finally {
       if (createdGroupId) {
-        await page.request.post(`/api/model/groups/update`, {
+        await page.request.patch(`/api/model/groups/update`, {
           data: {
             where: { id: createdGroupId },
             data: { isDeleted: true },
@@ -269,7 +269,7 @@ test.describe("Group Management", () => {
       });
     } finally {
       if (createdGroupId) {
-        await page.request.post(`/api/model/groups/update`, {
+        await page.request.patch(`/api/model/groups/update`, {
           data: {
             where: { id: createdGroupId },
             data: { isDeleted: true },
@@ -397,7 +397,7 @@ test.describe("Group Management", () => {
         });
       }
       if (createdGroupId) {
-        await page.request.post(`/api/model/groups/update`, {
+        await page.request.patch(`/api/model/groups/update`, {
           data: {
             where: { id: createdGroupId },
             data: { isDeleted: true },

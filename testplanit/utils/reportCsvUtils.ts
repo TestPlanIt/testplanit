@@ -12,6 +12,8 @@
  */
 
 import { format } from "date-fns";
+import { ROOT_DIRECTORY } from "~/utils/codePinCoverageShared";
+import { formatRequirementCellText } from "~/utils/issueDisplayText";
 import { toHumanReadable } from "~/utils/duration";
 import { metricUnit } from "~/utils/metricUnits";
 
@@ -89,7 +91,7 @@ const HEALTH_STATUS_KEY: Record<string, string> = {
 
 function buildFlakyTests(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject, consecutiveRuns = 5 } = p;
-  const hProject = t("reports.dimensions.project");
+  const hProject = t("common.fields.project");
   const hCase = t("reports.dimensions.testCase");
   const hFlips = t("reports.ui.flakyTests.flips");
   const hResults = t("reports.ui.flakyTests.lastNResults", {
@@ -112,16 +114,16 @@ function buildFlakyTests(p: BuildReportCsvParams): CsvRow[] {
 function buildTestCaseHealth(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject } = p;
   const h = {
-    project: t("reports.dimensions.project"),
+    project: t("common.fields.project"),
     testCase: t("reports.dimensions.testCase"),
     status: t("reports.ui.testCaseHealth.status"),
     stale: t("reports.ui.testCaseHealth.healthStatus.stale"),
     score: t("reports.ui.testCaseHealth.healthScore"),
     lastExecuted: t("reports.ui.testCaseHealth.lastExecuted"),
     executions: t("reports.ui.testCaseHealth.executions"),
-    passRate: t("reports.ui.testCaseHealth.passRate"),
+    passRate: t("common.fields.passRate"),
   };
-  const never = t("reports.ui.testCaseHealth.never");
+  const never = t("common.never");
   return rows.map((r: any) => {
     const row: CsvRow = {};
     if (isCrossProject) row[h.project] = r.project?.name ?? "";
@@ -140,14 +142,123 @@ function buildTestCaseHealth(p: BuildReportCsvParams): CsvRow[] {
   });
 }
 
+const IMPACT_TRIGGER_KEY: Record<string, string> = {
+  manual: "common.fields.manual",
+  pull_request: "runs.impact.pull.label",
+  push: "reports.ui.impactAnalysis.triggerPush",
+};
+const IMPACT_OUTCOME_KEY: Record<string, string> = {
+  failed: "reports.metrics.failed",
+  passed: "reports.metrics.passed",
+  not_executed: "reports.ui.impactAnalysis.outcomeNotExecuted",
+  no_run: "reports.ui.impactAnalysis.outcomeNoRun",
+};
+
+// Same "8s" / "1m 5s" shape the history table's Duration cell shows.
+function fmtSecondsLikeTable(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined) return "";
+  const seconds = Math.round(ms / 1000);
+  return seconds >= 60
+    ? `${Math.floor(seconds / 60)}m ${seconds % 60}s`
+    : `${seconds}s`;
+}
+
+function buildImpactAnalysis(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t, isCrossProject } = p;
+  const h = {
+    project: t("common.fields.project"),
+    started: t("common.fields.started"),
+    repository: t("common.pageTitles.repository"),
+    trigger: t("reports.dimensions.trigger"),
+    commits: t("runs.impact.pick.modeCommits"),
+    files: t("reports.ui.impactAnalysis.changedFiles"),
+    pinned: t("runs.impact.affected.tierPinned"),
+    affected: t("runs.impact.affected.tierAffected"),
+    related: t("runs.impact.affected.tierRelated"),
+    accepted: t("reports.ui.impactAnalysis.accepted"),
+    testRun: t("common.actions.junit.import.testRun.label"),
+    outcome: t("reports.dimensions.outcome"),
+    passed: t("reports.metrics.passed"),
+    failed: t("reports.metrics.failed"),
+    duration: t("common.fields.duration"),
+    creator: t("reports.dimensions.creator"),
+  };
+  // Columns follow the table (hidden-by-default ones included); the trigger
+  // cell's sub-label (PR title, push summary) rides along in the same column.
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    if (isCrossProject) row[h.project] = r.project?.name ?? "";
+    row[h.started] = r.createdAt ? fmtDateTime(r.createdAt) : "";
+    row[h.repository] = r.repository?.name ?? "";
+    const triggerKind = IMPACT_TRIGGER_KEY[r.trigger]
+      ? t(IMPACT_TRIGGER_KEY[r.trigger])
+      : (r.trigger ?? "");
+    row[h.trigger] = r.triggerLabel
+      ? `${triggerKind}: ${r.triggerLabel}`
+      : triggerKind;
+    row[h.commits] = `${r.baseRef ?? ""}..${r.headRef ?? ""}`;
+    row[h.files] = r.fileCount ?? 0;
+    row[h.pinned] = r.pinnedCaseCount ?? 0;
+    row[h.affected] = r.affectedCaseCount ?? 0;
+    row[h.related] = r.relatedCaseCount ?? 0;
+    row[h.accepted] = r.acceptedCaseCount ?? 0;
+    row[h.testRun] = r.testRun?.name ?? "";
+    row[h.outcome] = IMPACT_OUTCOME_KEY[r.outcome]
+      ? t(IMPACT_OUTCOME_KEY[r.outcome])
+      : (r.outcome ?? "");
+    row[h.passed] = r.runPassedCount ?? 0;
+    row[h.failed] = r.runFailedCount ?? 0;
+    row[h.duration] = fmtSecondsLikeTable(r.durationMs);
+    row[h.creator] = r.createdBy?.name ?? "";
+    return row;
+  });
+}
+
+function buildCodePinCoverage(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t, isCrossProject } = p;
+  const h = {
+    project: t("common.fields.project"),
+    repository: t("common.pageTitles.repository"),
+    directory: t("reports.ui.codePinCoverage.directory"),
+    pins: t("repository.codePins.title"),
+    file: t("repository.codePins.kindFile"),
+    range: t("repository.codePins.kindRange"),
+    symbol: t("repository.codePins.kindSymbol"),
+    glob: t("repository.codePins.kindGlob"),
+    cases: t("reports.ui.codePinCoverage.casesWithPins"),
+    stale: t("reports.ui.codePinCoverage.stalePins"),
+    uncovered: t("reports.ui.codePinCoverage.uncoveredFiles"),
+    analyses: t("reports.ui.impactAnalysis.stats.analyses"),
+  };
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    if (isCrossProject) row[h.project] = r.project?.name ?? "";
+    row[h.repository] = r.repository?.name ?? "";
+    row[h.directory] =
+      r.directory === ROOT_DIRECTORY
+        ? t("reports.ui.codePinCoverage.rootDirectory")
+        : (r.directory ?? "");
+    row[h.pins] = r.pinCount ?? 0;
+    row[h.file] = r.kindCounts?.FILE ?? 0;
+    row[h.range] = r.kindCounts?.RANGE ?? 0;
+    row[h.symbol] = r.kindCounts?.SYMBOL ?? 0;
+    row[h.glob] = r.kindCounts?.GLOB ?? 0;
+    row[h.cases] = r.caseCount ?? 0;
+    row[h.stale] = r.stalePinCount ?? 0;
+    row[h.uncovered] = r.uncoveredFileCount ?? 0;
+    row[h.analyses] = r.uncoveredAnalysisCount ?? 0;
+    return row;
+  });
+}
+
 function buildIssueTestCoverage(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject } = p;
   const h = {
-    project: t("reports.dimensions.project"),
+    project: t("common.fields.project"),
     issue: t("reports.ui.issueTestCoverage.issue"),
     testCase: t("reports.ui.issueTestCoverage.testCase"),
-    status: t("reports.ui.issueTestCoverage.issueStatus"),
-    priority: t("reports.ui.issueTestCoverage.priority"),
+    status: t("common.actions.status"),
+    priority: t("common.fields.priority"),
     lastStatus: t("reports.ui.issueTestCoverage.lastStatus"),
     lastExecuted: t("reports.ui.issueTestCoverage.lastExecuted"),
   };
@@ -168,12 +279,144 @@ function buildIssueTestCoverage(p: BuildReportCsvParams): CsvRow[] {
   });
 }
 
+function buildRequirementCoverageGaps(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t, isCrossProject } = p;
+  const h = {
+    requirementProject: t("reports.ui.requirementCoverage.requirementProject"),
+    requirement: t("reports.ui.requirementCoverage.requirement"),
+    path: t("reports.ui.requirementCoverage.path"),
+    priority: t("common.fields.priority"),
+    status: t("common.actions.status"),
+    coverage: t("requirements.coverage.title"),
+    linkedCases: t("reports.ui.requirementCoverage.linkedCases"),
+    uncoveredSince: t("reports.ui.requirementCoverage.uncoveredSince"),
+  };
+  const coverageLabels: Record<string, string> = {
+    UNCOVERED: t("requirements.coverage.uncovered"),
+    NOT_RUN: t("requirements.coverage.statusNotRun"),
+  };
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    // Only the cross-project variant has more than one requirement project;
+    // on the project-scoped report the column would be a constant.
+    if (isCrossProject) {
+      row[h.requirementProject] = r.requirementProjectName ?? "";
+    }
+    row[h.requirement] = formatRequirementCellText(r);
+    row[h.path] = r.requirementParentPath ?? "";
+    row[h.priority] = r.requirementPriority ?? "";
+    row[h.status] = r.requirementStatus ?? "";
+    row[h.coverage] = coverageLabels[r.coverageStatus] ?? "";
+    row[h.linkedCases] = r.linkedCases ?? 0;
+    row[h.uncoveredSince] = fmtDateTime(r.requirementCreatedAt);
+    return row;
+  });
+}
+
+function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t, isCrossProject } = p;
+  const h = {
+    requirementProject: t("reports.ui.requirementCoverage.requirementProject"),
+    requirement: t("reports.ui.requirementCoverage.requirement"),
+    path: t("reports.ui.requirementCoverage.path"),
+    priority: t("common.fields.priority"),
+    status: t("common.actions.status"),
+    coverage: t("requirements.coverage.title"),
+    testCase: t("reports.ui.requirementCoverage.testCase"),
+    result: t("common.fields.resultStatus"),
+    executedAt: t("common.fields.executedAt"),
+    project: t("common.fields.project"),
+  };
+  const uncovered = t("reports.ui.requirementCoverage.uncovered");
+  const notRun = t("reports.ui.requirementCoverage.notRun");
+  // The requirement's classified coverage state, labeled with the same
+  // `requirements.coverage.*` vocabulary the tree and the table column use.
+  const coverageLabels: Record<string, string> = {
+    UNCOVERED: t("requirements.coverage.uncovered"),
+    PASSED: t("requirements.coverage.statusPassed"),
+    FAILED: t("requirements.coverage.statusFailed"),
+    NOT_RUN: t("requirements.coverage.statusNotRun"),
+  };
+  // Mirrors the report table cell's three-way split
+  // (`useRequirementCoverageReportColumns.tsx`): a null `testCaseId` is the
+  // coverage gap and writes the localized "Uncovered" label; a linked case
+  // with no `lastStatusName` has simply never run and writes "Not run" --
+  // the two must never collapse to the same blank cell, or a real gap
+  // becomes indistinguishable from a case that merely hasn't executed yet.
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    // The REQUIREMENT's project, only on the cross-project variant. The
+    // `project` column below is a different thing — the covering case's
+    // project — and ships on both variants.
+    if (isCrossProject) {
+      row[h.requirementProject] = r.requirementProjectName ?? "";
+    }
+    row[h.requirement] = formatRequirementCellText(r);
+    row[h.path] = r.requirementParentPath ?? "";
+    row[h.priority] = r.requirementPriority ?? "";
+    row[h.status] = r.requirementStatus ?? "";
+    row[h.coverage] = coverageLabels[r.coverageStatus] ?? "";
+    row[h.testCase] = r.testCaseName ?? "";
+    row[h.result] =
+      r.testCaseId == null ? uncovered : (r.lastStatusName ?? notRun);
+    row[h.executedAt] = fmtDateTime(r.lastExecutedAt);
+    row[h.project] = r.caseProjectName ?? "";
+    return row;
+  });
+}
+
+function buildRequirementCoverageChanges(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t } = p;
+  const h = {
+    requirement: t("reports.ui.requirementCoverage.requirement"),
+    path: t("reports.ui.requirementCoverage.path"),
+    change: t("common.actions.change"),
+    before: t("reports.ui.requirementCoverage.coverageBefore"),
+    after: t("reports.ui.requirementCoverage.coverageAfter"),
+    linkedBefore: t("reports.ui.requirementCoverage.linkedCasesBefore"),
+    linkedAfter: t("reports.ui.requirementCoverage.linkedCasesAfter"),
+    casesAdded: t("reports.ui.requirementCoverage.casesAdded"),
+    casesRemoved: t("reports.ui.requirementCoverage.casesRemoved"),
+    resultsChanged: t("reports.ui.requirementCoverage.resultsChanged"),
+  };
+  const coverageLabels: Record<string, string> = {
+    UNCOVERED: t("requirements.coverage.uncovered"),
+    PASSED: t("requirements.coverage.statusPassed"),
+    FAILED: t("requirements.coverage.statusFailed"),
+    NOT_RUN: t("requirements.coverage.statusNotRun"),
+  };
+  const changeLabels: Record<string, string> = {
+    ADDED: t("reports.ui.requirementCoverage.changeAdded"),
+    REMOVED: t("reports.ui.requirementCoverage.changeRemoved"),
+    COVERAGE_CHANGED: t("reports.ui.requirementCoverage.changeCoverage"),
+    LINKS_CHANGED: t("reports.ui.requirementCoverage.changeLinks"),
+    RESULTS_CHANGED: t("reports.ui.requirementCoverage.changeResults"),
+    UNCHANGED: t("reports.ui.requirementCoverage.changeUnchanged"),
+  };
+  // A missing side (no "before" for an added requirement, no "after" for
+  // a removed one) writes an empty cell, distinct from any real state.
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    row[h.requirement] = formatRequirementCellText(r);
+    row[h.path] = r.requirementParentPath ?? "";
+    row[h.change] = changeLabels[r.changeKind] ?? "";
+    row[h.before] = coverageLabels[r.previousCoverageStatus] ?? "";
+    row[h.after] = coverageLabels[r.currentCoverageStatus] ?? "";
+    row[h.linkedBefore] = r.previousLinkedCaseCount ?? "";
+    row[h.linkedAfter] = r.currentLinkedCaseCount ?? "";
+    row[h.casesAdded] = r.casesAdded ?? 0;
+    row[h.casesRemoved] = r.casesRemoved ?? 0;
+    row[h.resultsChanged] = r.resultsChanged ?? 0;
+    return row;
+  });
+}
+
 function buildExecutionLog(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject, locale } = p;
   const h = {
-    project: t("reports.dimensions.project"),
+    project: t("common.fields.project"),
     testCase: t("reports.dimensions.testCase"),
-    testRun: t("reports.dimensions.testRun"),
+    testRun: t("common.actions.junit.import.testRun.label"),
     status: t("common.actions.status"),
     executedBy: t("common.fields.executedBy"),
     executedAt: t("common.fields.executedAt"),
@@ -336,6 +579,16 @@ export function buildReportCsvRows(p: BuildReportCsvParams): CsvRow[] {
       return buildTestCaseHealth(p);
     case "issue-test-coverage":
       return buildIssueTestCoverage(p);
+    case "impact-analysis":
+      return buildImpactAnalysis(p);
+    case "code-pin-coverage":
+      return buildCodePinCoverage(p);
+    case "requirement-coverage-gaps":
+      return buildRequirementCoverageGaps(p);
+    case "requirement-traceability":
+      return buildRequirementTraceability(p);
+    case "requirement-coverage-changes":
+      return buildRequirementCoverageChanges(p);
     case "execution-log":
       return buildExecutionLog(p);
     case "automation-trends":

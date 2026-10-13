@@ -332,9 +332,11 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     } else {
-      // Update existing user with latest SAML attributes if changed
+      // Refresh the SAML-owned attributes. The display name is the user's
+      // own once set (they can edit it in their profile), so the assertion
+      // only fills it in when there is nothing there yet.
       const updates: any = {};
-      if (name && user.name !== name) updates.name = name;
+      if (name && !user.name?.trim()) updates.name = name;
       if (externalId && user.externalId !== externalId)
         updates.externalId = externalId;
 

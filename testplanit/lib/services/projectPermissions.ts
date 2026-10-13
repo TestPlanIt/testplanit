@@ -20,6 +20,19 @@ export async function userCanAddEditArea(
   area: ApplicationArea,
   userAccess: string | null | undefined
 ): Promise<boolean> {
+  return userCanAddEditAreas(userId, projectId, [area], userAccess);
+}
+
+/**
+ * Does `user` have `canAddEdit` for EVERY area in `areas` on `project`?
+ * Same ladder as `userCanAddEditArea`, resolved with one role lookup.
+ */
+export async function userCanAddEditAreas(
+  userId: string,
+  projectId: number,
+  areas: readonly ApplicationArea[],
+  userAccess: string | null | undefined
+): Promise<boolean> {
   if (userAccess === "ADMIN") return true;
 
   const roleId = await resolveEffectiveProjectRoleId(userId, projectId, baseDb);
@@ -27,12 +40,19 @@ export async function userCanAddEditArea(
   if (roleId == null) return false;
   // System PROJECTADMINs have full permissions on projects they can access.
   if (userAccess === "PROJECTADMIN") return true;
+  if (areas.length === 0) return true;
 
   const role = await baseDb.roles.findUnique({
     where: { id: roleId },
     select: {
-      rolePermissions: { where: { area }, select: { canAddEdit: true } },
+      rolePermissions: {
+        where: { area: { in: [...areas] } },
+        select: { area: true, canAddEdit: true },
+      },
     },
   });
-  return role?.rolePermissions[0]?.canAddEdit ?? false;
+  const granted = new Set(
+    (role?.rolePermissions ?? []).filter((p) => p.canAddEdit).map((p) => p.area)
+  );
+  return areas.every((area) => granted.has(area));
 }

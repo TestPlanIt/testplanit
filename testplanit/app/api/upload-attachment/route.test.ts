@@ -1,9 +1,12 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockSend } = vi.hoisted(() => ({
-  mockSend: vi.fn(),
-}));
+const { mockSend, mockGetServerAuthSession, mockAuthenticateRequest } =
+  vi.hoisted(() => ({
+    mockSend: vi.fn(),
+    mockGetServerAuthSession: vi.fn(),
+    mockAuthenticateRequest: vi.fn(),
+  }));
 
 vi.mock("@aws-sdk/client-s3", () => {
   const S3Client = vi.fn(function (this: any) {
@@ -14,6 +17,14 @@ vi.mock("@aws-sdk/client-s3", () => {
   });
   return { S3Client, PutObjectCommand };
 });
+
+vi.mock("~/server/auth", () => ({
+  getServerAuthSession: mockGetServerAuthSession,
+}));
+
+vi.mock("~/lib/api-token-auth", () => ({
+  authenticateRequest: mockAuthenticateRequest,
+}));
 
 import { POST } from "./route";
 
@@ -29,6 +40,7 @@ function createUploadRequest(
     formData.set("prependString", prependString);
   }
   return {
+    headers: new Headers(),
     formData: async () => formData,
   } as unknown as NextRequest;
 }
@@ -41,6 +53,11 @@ describe("POST /api/upload-attachment", () => {
     process.env.AWS_SECRET_ACCESS_KEY = "test-secret";
     process.env.AWS_REGION = "us-east-1";
     mockSend.mockResolvedValue({});
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "user-1" } });
+    mockAuthenticateRequest.mockResolvedValue({
+      authenticated: true,
+      user: { userId: "user-1" },
+    });
   });
 
   describe("Validation", () => {
@@ -122,6 +139,68 @@ describe("POST /api/upload-attachment", () => {
       await POST(request);
 
       expect(mockSend).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("Authorization", () => {
+    it("returns 401 and uploads nothing when unauthenticated", async () => {
+      mockAuthenticateRequest.mockResolvedValue({
+        authenticated: false,
+        error: "Unauthorized",
+        status: 401,
+      });
+
+      const file = new File(["poc"], "poc.txt", { type: "text/plain" });
+      const response = await POST(createUploadRequest(file, "POC"));
+
+      expect(response.status).toBe(401);
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it("passes through a 403 for a read-only API token", async () => {
+      mockAuthenticateRequest.mockResolvedValue({
+        authenticated: false,
+        error: "Read-only token",
+        errorCode: "READ_ONLY_TOKEN",
+        status: 403,
+      });
+
+      const file = new File(["poc"], "poc.txt", { type: "text/plain" });
+      const response = await POST(createUploadRequest(file));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.code).toBe("READ_ONLY_TOKEN");
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Object key", () => {
+    it("reduces a file name with path segments to one safe segment", async () => {
+      const file = new File(["x"], "../../avatars/evil name.html", {
+        type: "text/html",
+      });
+      const response = await POST(createUploadRequest(file, "a/../b"));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success.key).toMatch(
+        /^uploads\/attachments\/ab_\d+_evil_name\.html$/
+      );
+    });
+
+    it("returns 413 when the declared body exceeds the size limit", async () => {
+      const file = new File(["x"], "big.bin");
+      const request = createUploadRequest(file);
+      (request.headers as Headers).set(
+        "content-length",
+        String(100 * 1024 * 1024)
+      );
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(413);
+      expect(mockSend).not.toHaveBeenCalled();
     });
   });
 

@@ -70,7 +70,7 @@ function redactTokens(text: string): string {
  *  1. `TestPlanItHttpError` with a known `code`: friendly template, code
  *     appended in parentheses for log-grep traceability.
  *  2. `TestPlanItHttpError` with an unknown / missing code: generic
- *     "Request failed: <message> (HTTP <status>)" fallback.
+ *     "Request failed: <message> (HTTP <status>, <code>)" fallback.
  *  3. Any other `Error`: "Network or runtime error: <message>" fallback.
  *  4. Non-Error throwable: "Unknown error".
  *
@@ -84,9 +84,13 @@ export function mapHttpErrorToToolResult(err: unknown): ToolErrorResult {
   if (err instanceof TestPlanItHttpError) {
     const code = err.code;
     const friendly = code ? ERROR_CODE_MESSAGES[code] : undefined;
+    // An unmapped host code still says why (e.g. COMPLETE_NOT_PERMITTED on a
+    // 403 whose body carries no message), so keep it in the text.
     const rawText = friendly
       ? `${friendly} (${code})`
-      : `Request failed: ${err.message} (HTTP ${err.statusCode ?? "unknown"})`;
+      : `Request failed: ${err.message} (HTTP ${err.statusCode ?? "unknown"}${
+          code ? `, ${code}` : ""
+        })`;
     return { isError: true, content: [{ type: "text", text: redactTokens(rawText) }] };
   }
   if (err instanceof Error) {

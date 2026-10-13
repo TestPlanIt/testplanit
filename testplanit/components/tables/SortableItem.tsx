@@ -1,5 +1,5 @@
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Column, flexRender } from "@tanstack/react-table";
+import { Column, flexRender } from "@/components/tables/tableFeatures";
 import { useSearchParams } from "next/navigation";
 import React, { CSSProperties, useEffect, useRef, useState } from "react";
 import { DropTargetMonitor, useDrag, useDrop, XYCoord } from "react-dnd";
@@ -72,8 +72,8 @@ function SortableItem({
       item: () => {
         const primaryItem = {
           id: row.original.id as number | string,
-          folderId: row.original.folderId as number | null,
-          name: row.original.name as string,
+          folderId: (row.original.folderId ?? null) as number | null,
+          name: (row.original.name ?? "") as string,
           index,
           // Add icon and color data if this is a workflow
           ...(itemType === ItemTypes.WORKFLOW && {

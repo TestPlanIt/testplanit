@@ -1,11 +1,19 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { DbNull } from "@zenstackhq/orm";
+import {
+  authenticateApiTokenForMethod,
+  extractBearerToken,
+} from "~/lib/api-token-auth";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { updateAuditContext } from "~/lib/auditContext";
-import { withAuditContext } from "~/lib/auditContextWrappers";
+import {
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
-import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { buildProjectAccessWhere } from "~/lib/project-access";
+import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { authOptions } from "~/server/auth";
 
 /**
@@ -16,20 +24,39 @@ import { authOptions } from "~/server/auth";
  * - Imports (CSV/XML/JSON)
  * - External integrations (Testmo, etc.)
  * - LLM-generated cases
+ * - API / MCP clients (Bearer token, `mode:write`)
  *
  * IMPORTANT: This endpoint creates a version snapshot of the test case's CURRENT state.
- * The caller is responsible for updating RepositoryCases.currentVersion BEFORE calling this endpoint.
+ * The caller is responsible for updating RepositoryCases.currentVersion BEFORE calling this endpoint,
+ * OR for asking this endpoint to do it by passing `bumpVersion: true`.
  * The version number will match the test case's currentVersion field.
  *
  * Workflow:
  * 1. Update RepositoryCases (including incrementing currentVersion if editing)
  * 2. Call this endpoint to create a version snapshot matching that currentVersion
+ *
+ * The snapshot itself is built by `createTestCaseVersionInTransaction` — the same
+ * helper every server-side writer uses — so a version written through this route
+ * carries the same fields (attachments, parameters) as one written by an import
+ * or a bulk edit.
  */
 
 const createVersionSchema = z.object({
   // Optional: explicit version number (for imports that want to preserve versions)
   // If not provided, will use the test case's currentVersion
   version: z.number().int().positive().optional(),
+
+  // Increment RepositoryCases.currentVersion first, then snapshot at the new
+  // number — both inside one transaction. Lets a client that just edited a
+  // case record the edit without a separate write and without racing another
+  // writer between the two statements. Mutually exclusive with `version`.
+  bumpVersion: z.boolean().optional(),
+
+  // Copy the case's CaseFieldValues onto the version as CaseFieldVersionValues.
+  // The in-app save path writes those rows itself after this call, so this
+  // stays opt-in; API clients that don't should set it, otherwise the version
+  // renders as though every custom field were empty.
+  copyFieldValues: z.boolean().optional(),
 
   // Optional: override creator metadata (for imports)
   creatorId: z.string().optional(),
@@ -74,12 +101,47 @@ export const POST = withAuditContext(
     { params }: { params: Promise<{ caseId: string }> }
   ) => {
     try {
+      // ── Authentication (session, else API token) ──────────────────────────
+      // Same ladder as the bulk-create sibling: a browser session first, then
+      // a Bearer token whose `mode:read` scope is enforced against this write
+      // method. Without the token branch an API client could change a case
+      // (through /api/model) but never record the version for it — see #598.
       const session = await getServerSession(authOptions);
-      if (!session?.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      let userId: string | undefined = session?.user?.id;
+      let userName: string | undefined = session?.user?.name ?? undefined;
+      let userEmail: string | undefined = session?.user?.email ?? undefined;
+      let userAccess: string | null | undefined = session?.user?.access;
+
+      if (userId) {
+        updateAuditContext({ userId });
+      } else {
+        const token = extractBearerToken(request);
+        if (!token) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        const apiAuth = await authenticateApiTokenForMethod(request);
+        if (!apiAuth.authenticated) {
+          const status = apiAuth.errorCode === "READ_ONLY_TOKEN" ? 403 : 401;
+          return NextResponse.json(
+            { error: apiAuth.error, code: apiAuth.errorCode },
+            { status }
+          );
+        }
+        userId = apiAuth.userId;
+        userAccess = apiAuth.access;
+        userName = apiAuth.userName;
+        userEmail = apiAuth.userEmail;
+        enrichFromApiAuth({
+          userId: userId!,
+          userEmail,
+          userName,
+          scopes: apiAuth.scopes,
+        });
       }
 
-      updateAuditContext({ userId: session.user.id });
+      if (!userId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
       const { caseId: caseIdParam } = await params;
       const caseId = parseInt(caseIdParam);
@@ -90,27 +152,19 @@ export const POST = withAuditContext(
       const body = await request.json();
       const validatedData = createVersionSchema.parse(body);
 
-      // Fetch the current test case with all necessary relations
+      if (validatedData.bumpVersion && validatedData.version !== undefined) {
+        return NextResponse.json(
+          {
+            error:
+              "Pass either `version` or `bumpVersion`, not both — `bumpVersion` derives the number from the case.",
+          },
+          { status: 400 }
+        );
+      }
+
       const testCase = await baseDb.repositoryCases.findUnique({
         where: { id: caseId },
-        include: {
-          project: true,
-          folder: true,
-          template: true,
-          state: true,
-          creator: true,
-          caseTags: { select: { tag: { select: { name: true } } } },
-          caseIssues: {
-            select: {
-              issue: { select: { id: true, name: true, externalId: true } },
-            },
-          },
-          steps: {
-            where: { isDeleted: false },
-            orderBy: { order: "asc" },
-            select: { step: true, expectedResult: true },
-          },
-        },
+        select: { id: true, projectId: true },
       });
 
       if (!testCase) {
@@ -120,144 +174,55 @@ export const POST = withAuditContext(
         );
       }
 
-      // Calculate version number
-      // Use the currentVersion from the test case (which should already be updated by the caller)
-      // or allow explicit version override for imports
-      const versionNumber = validatedData.version ?? testCase.currentVersion;
-
-      // Determine creator (use override if provided, otherwise current session user)
-      const creatorId = validatedData.creatorId ?? session.user.id;
-      const creatorName =
-        validatedData.creatorName ??
-        session.user.name ??
-        session.user.email ??
-        "";
-      // Use provided createdAt (for imports), otherwise use current time (for new versions)
-      const createdAt = validatedData.createdAt
-        ? new Date(validatedData.createdAt)
-        : new Date();
-
-      // Build version data, applying overrides
-      const overrides = validatedData.overrides ?? {};
-
-      // Convert steps to JSON format for version storage
-      let stepsJson: any = null;
-      if (overrides.steps !== undefined) {
-        stepsJson = overrides.steps;
-      } else if (testCase.steps && testCase.steps.length > 0) {
-        stepsJson = testCase.steps.map(
-          (step: { step: any; expectedResult: any }) => ({
-            step: step.step,
-            expectedResult: step.expectedResult,
-          })
+      // ── Project access (identical policy to the bulk-create sibling) ──────
+      const project = await baseDb.projects.findFirst({
+        where: buildProjectAccessWhere(
+          testCase.projectId,
+          userId,
+          userAccess === "ADMIN",
+          userAccess === "PROJECTADMIN"
+        ),
+        select: { id: true },
+      });
+      if (!project) {
+        return NextResponse.json(
+          { error: "Test case not found" },
+          { status: 404 }
         );
       }
 
-      // Convert tags to array of tag names
-      const tagsArray =
-        overrides.tags ??
-        testCase.caseTags.map(
-          (caseTag: { tag: { name: string } }) => caseTag.tag.name
-        );
-
-      // Convert issues to array of objects
-      const issuesArray =
-        overrides.issues ??
-        testCase.caseIssues.map(
-          (caseIssue: {
-            issue: { id: number; name: string; externalId: string | null };
-          }) => caseIssue.issue
-        );
-
-      // Prepare version data
-      const versionData = {
-        repositoryCaseId: testCase.id,
-        staticProjectId: testCase.projectId,
-        staticProjectName: testCase.project.name,
-        projectId: testCase.projectId,
-        repositoryId: testCase.repositoryId,
-        folderId: testCase.folderId,
-        folderName: testCase.folder.name,
-        templateId: testCase.templateId,
-        templateName: testCase.template.templateName,
-        name: overrides.name ?? testCase.name,
-        stateId: overrides.stateId ?? testCase.stateId,
-        stateName: overrides.stateName ?? testCase.state.name,
-        estimate:
-          overrides.estimate !== undefined
-            ? overrides.estimate
-            : testCase.estimate,
-        forecastManual:
-          overrides.forecastManual !== undefined
-            ? overrides.forecastManual
-            : testCase.forecastManual,
-        forecastAutomated:
-          overrides.forecastAutomated !== undefined
-            ? overrides.forecastAutomated
-            : testCase.forecastAutomated,
-        order: overrides.order ?? testCase.order,
-        createdAt,
-        creatorId,
-        creatorName,
-        automated: overrides.automated ?? testCase.automated,
-        isArchived: overrides.isArchived ?? testCase.isArchived,
-        isDeleted: false, // Versions should never be marked as deleted
-        version: versionNumber,
-        // v3 rejects raw `null` for nullable Json columns; DbNull writes SQL NULL.
-        steps: stepsJson ?? DbNull,
-        tags: tagsArray,
-        issues: issuesArray ?? DbNull,
-        links: overrides.links ?? [],
-        attachments: overrides.attachments ?? [],
-      };
-
-      // Create the version with retry logic to handle race conditions
-      // Note: We expect the caller to have already updated currentVersion on the test case
-      // before calling this endpoint. We simply snapshot the current state.
-      let result;
-      let retryCount = 0;
-      const maxRetries = 3;
-      const baseDelay = 100; // milliseconds
-
-      while (retryCount <= maxRetries) {
-        try {
-          result = await baseDb.repositoryCaseVersions.create({
-            data: versionData,
+      const result = await auditedTransaction(async (tx) => {
+        // `bumpVersion` moves the case forward first so the snapshot the
+        // helper writes matches the case's new currentVersion. Reading the
+        // incremented value back from the update keeps two concurrent bumps
+        // from landing on the same number.
+        let versionNumber = validatedData.version;
+        if (validatedData.bumpVersion) {
+          const bumped = await tx.repositoryCases.update({
+            where: { id: caseId },
+            data: { currentVersion: { increment: 1 } },
+            select: { currentVersion: true },
           });
-          break; // Success, exit retry loop
-        } catch (error: any) {
-          // Check if it's a unique constraint violation
-          if (isUniqueConstraintError(error) && retryCount < maxRetries) {
-            retryCount++;
-            const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
-            console.log(
-              `Unique constraint violation on version creation (attempt ${retryCount}/${maxRetries}). Retrying after ${delay}ms...`
-            );
-
-            // Wait before retrying
-            await new Promise((resolve) => setTimeout(resolve, delay));
-
-            // Refetch the test case to get the latest currentVersion
-            const refetchedCase = await baseDb.repositoryCases.findUnique({
-              where: { id: caseId },
-              select: { currentVersion: true },
-            });
-
-            if (refetchedCase) {
-              // Update the version number with the refetched value
-              versionData.version =
-                validatedData.version ?? refetchedCase.currentVersion;
-            }
-          } else {
-            // Not a retryable error or max retries reached
-            throw error;
-          }
+          versionNumber = bumped.currentVersion;
         }
-      }
 
-      if (!result) {
-        throw new Error("Failed to create version after retries");
-      }
+        // `creatorName` is @length(1) on the model, so an anonymous-ish actor
+        // (a token whose user has no name and no email) must fall through to
+        // the helper's own default — the case's creator — rather than write "".
+        const creatorName =
+          validatedData.creatorName || userName || userEmail || undefined;
+
+        return createTestCaseVersionInTransaction(tx, caseId, {
+          ...(versionNumber !== undefined ? { version: versionNumber } : {}),
+          creatorId: validatedData.creatorId ?? userId,
+          ...(creatorName !== undefined ? { creatorName } : {}),
+          createdAt: validatedData.createdAt
+            ? new Date(validatedData.createdAt)
+            : new Date(),
+          copyFieldValues: validatedData.copyFieldValues ?? false,
+          overrides: validatedData.overrides,
+        });
+      });
 
       return NextResponse.json({
         success: true,

@@ -26,6 +26,7 @@ export function ViewPayloadDialog({
   auditRow,
 }: ViewPayloadDialogProps) {
   const t = useTranslations("admin.scim.conflicts");
+  const tCommon = useTranslations("common");
 
   // React's default text-node escaping is the XSS defense here. The metadata
   // JSON is rendered as plain text inside a <pre> block; no raw-HTML sink,
@@ -63,7 +64,7 @@ export function ViewPayloadDialog({
             onClick={() => onOpenChange(false)}
             data-testid="scim-conflict-payload-close"
           >
-            {t("close")}
+            {tCommon("actions.close")}
           </Button>
         </DialogFooter>
       </DialogContent>

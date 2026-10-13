@@ -249,10 +249,10 @@ describe("GlobalSearchSheet", () => {
   it("renders the sheet title and help button", () => {
     render(<GlobalSearchSheet {...defaultProps} />);
 
-    // Title text appears in the h2 heading (translation key last segment is "title")
+    // Title text appears in the h2 heading (translation key last segment is "search")
     const heading = screen.getByRole("heading");
     expect(heading).toBeInTheDocument();
-    expect(heading.textContent).toContain("title");
+    expect(heading.textContent).toContain("search");
 
     // Help popover trigger button. The aria-label now reads from
     // common.aria.help; the test mock returns only the last key segment.

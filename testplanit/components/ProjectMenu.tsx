@@ -21,8 +21,14 @@ import {
   ChartNoAxesCombined,
   Compass as SessionsIcon,
   FolderKanban,
+  FilePlay,
+  Radio,
   Home,
+  KeyRound,
   Layers,
+  // ClipboardList, not ListChecks — ListChecks is already in use elsewhere in
+  // the app and the two read as the same glyph at nav size.
+  ClipboardList as RequirementsIcon,
   ListTree as RepositoryIcon,
   Milestone,
   PlayCircle as RunsIcon,
@@ -41,6 +47,8 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, usePathname } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -145,6 +153,20 @@ export default function ProjectsMenu({
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
 
+  // Requirements is opt-in per project. Teams whose source of truth is their
+  // tracker never turn it on and should not carry a permanently empty section
+  // in the menu; the flag lives on the project rather than on an integration's
+  // config because a project with no tracker at all is exactly the case the
+  // feature was asked for (requirements authored natively in TestPlanIt).
+  const { data: project } = useClientQueries(schema).projects.useFindUnique(
+    {
+      where: { id: Number(projectId) },
+      select: { requirementsEnabled: true },
+    },
+    { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
+  );
+  const requirementsEnabled = project?.requirementsEnabled === true;
+
   // Permission check for Shared Steps
   const safeProjectId = projectId ? String(projectId) : "";
   const { permissions: sharedStepsPerms } = useProjectPermissions(
@@ -165,27 +187,22 @@ export default function ProjectsMenu({
   const canSeeReports =
     reportingPerms && (reportingPerms.canAddEdit || reportingPerms.canDelete);
 
-  // Project audit log is restricted to system ADMINs and PROJECTADMINs.
-  const canSeeAuditLogs =
-    session?.user?.access === "ADMIN" ||
-    session?.user?.access === "PROJECTADMIN";
-
-  // Check if user can see Settings. `isProjectAdmin` is the same resolution
-  // the settings pages and their server actions gate on
-  // (`authorizeProjectAdminForProject` / `canManageWebhookConfig`):
+  // Settings and the project audit log are for project admins.
+  // `isProjectAdmin` is the server's own resolution — the same one the
+  // settings pages, their server actions and the write policies gate on:
   // 1. System ADMIN users (always have access to all projects)
   // 2. System PROJECTADMIN users, on projects they are assigned to
-  // 3. Users holding the per-project "Project Admin" role
+  // 3. Users whose effective project role carries Settings canAddEdit
   // 4. The project's creator
-  //
-  // This deliberately no longer keys off the `Settings` area's `canAddEdit`
-  // bit: nothing on the server honours that bit, so a role carrying it got a
-  // full settings menu whose every page 404'd and whose every write 403'd.
   const { isProjectAdmin } = useProjectPermissions(
     safeProjectId,
     ApplicationArea.Settings
   );
   const canSeeSettings = isProjectAdmin;
+  const canSeeAuditLogs =
+    isProjectAdmin ||
+    session?.user?.access === "ADMIN" ||
+    session?.user?.access === "PROJECTADMIN";
 
   const menuOptions: MenuOption[] = [
     // Project
@@ -211,6 +228,24 @@ export default function ProjectsMenu({
       section: "project",
     },
     // Management
+    // Requirements leads the section: it is the upstream artifact the rest of
+    // the pipeline (repository → runs → issues) traces back to, and users in a
+    // requirements-first workflow bounce between it and the repository.
+    // Distinct icon from Issues (defects) keeps the two visually
+    // distinguishable. Gated on the project's own opt-in rather than a
+    // permission: nothing server-side gates on an
+    // ApplicationArea.Requirements today.
+    ...(requirementsEnabled
+      ? [
+          {
+            icon: RequirementsIcon,
+            label: t("common.fields.requirements"),
+            path: "requirements",
+            id: "project-requirements-link",
+            section: "management" as MenuSection,
+          },
+        ]
+      : []),
     {
       icon: RepositoryIcon,
       label: t("navigation.projects.menu.repository"),
@@ -261,7 +296,7 @@ export default function ProjectsMenu({
       ? [
           {
             icon: ChartNoAxesCombined,
-            label: t("admin.menu.reports"),
+            label: tCommon("pageTitles.reports"),
             path: "reports",
             id: "reports-link",
             section: "management" as MenuSection,
@@ -283,6 +318,13 @@ export default function ProjectsMenu({
     ...(canSeeSettings
       ? [
           {
+            icon: KeyRound,
+            label: tCommon("fields.access"),
+            path: "settings/access",
+            id: "settings-access-link",
+            section: "settings" as MenuSection,
+          },
+          {
             icon: Plug,
             label: t("admin.menu.integrations"),
             path: "settings/integrations",
@@ -291,23 +333,37 @@ export default function ProjectsMenu({
           },
           {
             icon: Webhook,
-            label: t("admin.menu.webhooks"),
+            label: tCommon("pageTitles.webhooks"),
             path: "settings/webhooks",
             id: "settings-webhooks-link",
             section: "settings" as MenuSection,
           },
           {
             icon: Sparkles,
-            label: t("admin.menu.llm"),
+            label: tCommon("pageTitles.aiModels"),
             path: "settings/ai-models",
             id: "settings-ai-models-link",
             section: "settings" as MenuSection,
           },
           {
             icon: ScrollText,
-            label: t("admin.menu.quickScript"),
+            label: tCommon("pageTitles.quickscript"),
             path: "settings/quickscript",
             id: "settings-quickscript-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: Radio,
+            label: tCommon("pageTitles.impact"),
+            path: "settings/impact",
+            id: "settings-impact-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: FilePlay,
+            label: tCommon("pageTitles.automation"),
+            path: "settings/automation",
+            id: "settings-automation-link",
             section: "settings" as MenuSection,
           },
           {
@@ -319,7 +375,7 @@ export default function ProjectsMenu({
           },
           {
             icon: Settings2,
-            label: t("admin.menu.advanced"),
+            label: tCommon("pageTitles.advanced"),
             path: "settings/advanced",
             id: "settings-advanced-link",
             section: "settings" as MenuSection,

@@ -3,6 +3,7 @@ import type {
 } from "@db/input";
 import { zenstack, lookup } from "../../api.js";
 import { TestPlanItHttpError } from "../../http.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 import type { EnvConfig } from "../../env.js";
 import { deriveWebUrl, stripSettings } from "../code-repositories/shared.js";
 
@@ -30,41 +31,11 @@ export async function resolveTagIds(
     const result = await lookup({ type: "tag", name: t, createIfMissing: true }, env);
     out.push(result.id);
   }
-  return out;
+  // Names resolve case-insensitively, so ["Smoke", "smoke"] — or an id plus
+  // its name — would otherwise write the same case-tag link twice and fail.
+  return [...new Set(out)];
 }
 
-/**
- * Block-level node types per Tiptap / ProseMirror schema. Children of
- * these nodes are joined inline (no extra newlines between text runs);
- * the newline goes BETWEEN sibling block nodes only. Inline-content
- * containers (e.g., `text` itself) never appear here.
- *
- * (WR-05: previously the walker inserted "\n" between every non-paragraph
- * child, corrupting code blocks and over-indenting nested lists.)
- */
-const BLOCK_TYPES = new Set([
-  "paragraph",
-  "code_block",
-  "codeBlock",
-  "heading",
-  "list_item",
-  "listItem",
-  "blockquote",
-]);
-
-/**
- * Walk a Tiptap ProseMirror document and extract concatenated plain text.
- * Marks (bold, italic, links) are ignored — only `text` nodes contribute.
- *
- * Newlines are inserted BETWEEN block-level nodes (paragraphs, headings,
- * code blocks, list items, blockquotes) — never within them. This matches
- * Tiptap `Node.textBetween` semantics and avoids the corruption mode
- * where a code block with two text runs gets a stray newline injected
- * between the runs (WR-05).
- *
- * Defensive: returns `""` on null/undefined, or the string itself if
- * input is already a primitive string.
- */
 /**
  * Wrap agent-supplied plain text in a ProseMirror doc, one paragraph per
  * line, so the TestPlanIt UI (which renders these Json columns with Tiptap)
@@ -82,35 +53,6 @@ export function plainTextToProseMirrorDoc(
       : { type: "paragraph", content: [{ type: "text", text: line }] },
   );
   return { type: "doc", content: paragraphs };
-}
-
-export function extractProseMirrorText(doc: unknown): string {
-  if (doc == null) return "";
-  if (typeof doc === "string") return doc;
-
-  const collectFromNode = (node: unknown): string => {
-    if (!node || typeof node !== "object") return "";
-    const n = node as { type?: string; text?: string; content?: unknown[] };
-    if (n.type === "text" && typeof n.text === "string") return n.text;
-    if (Array.isArray(n.content)) {
-      // For block-level nodes, children are inline — concatenate without
-      // separators. For container nodes (doc, bullet_list, ordered_list,
-      // etc.), children are themselves blocks — join with "\n".
-      const isBlock = n.type ? BLOCK_TYPES.has(n.type) : false;
-      const parts = n.content.map(collectFromNode);
-      return isBlock ? parts.join("") : parts.join("\n");
-    }
-    return "";
-  };
-
-  const root = doc as { type?: string; content?: unknown[] };
-  if (Array.isArray(root)) {
-    return (root as unknown[]).map(collectFromNode).join("\n");
-  }
-  if (root.type === "doc" && Array.isArray(root.content)) {
-    return root.content.map(collectFromNode).join("\n");
-  }
-  return collectFromNode(doc);
 }
 
 interface RawFieldOptionAssignment {
@@ -153,6 +95,14 @@ function resolveCustomFieldValue(
   field: RawCaseFieldValueRow["field"],
 ): unknown {
   const type = field?.type?.type;
+
+  // Text Long holds a rich-text document, stored as a JSON string by current
+  // hosts and as plain text by older ones. Return Markdown for both, so a
+  // value read here can be written back without losing its formatting.
+  if (type === "Text Long" && value != null) {
+    return proseMirrorToMarkdown(value);
+  }
+
   const options = (field?.fieldOptions ?? [])
     .map((a) => a.fieldOption)
     .filter((o): o is { id: number; name: string } => o != null);
@@ -335,13 +285,13 @@ interface RawCaseRow {
   automated: boolean;
   createdAt: string | Date;
   // Phase-8 (D8-02) widens project to optionally carry the
-  // codeRepositoryConfig chain. Phase-6 row callers don't include this
+  // codeRepositoryConfigs chain. Phase-6 row callers don't include this
   // sub-select so the field is optional; Phase-8 cases_get adds it via
   // CASE_DETAIL_INCLUDE.
   project: {
     id: number;
     name: string;
-    codeRepositoryConfig?: {
+    codeRepositoryConfigs?: Array<{
       repository: {
         id: number;
         name: string;
@@ -350,7 +300,7 @@ interface RawCaseRow {
         lastTestedAt: Date | string | null;
         settings: unknown;
       } | null;
-    } | null;
+    }>;
   };
   // WR-04: folderId is non-nullable in schema.zmodel — folder is always
   // present on a hydrated row. Call sites in get.ts / fetchDetail.ts
@@ -456,11 +406,11 @@ export function mapCaseDetail(
     .map((c) => ({ id: c.id, name: c.name, source: c.source }));
 
   // Phase-8 D8-02: derive inline codeRepository from the chained
-  // project.codeRepositoryConfig.repository select. Reuses the 08-01
+  // project.codeRepositoryConfigs[0].repository select. Reuses the 08-01
   // helpers (SETTINGS_ALLOW_LIST + stripSettings + deriveWebUrl) — never
   // forks them — so the per-provider public-key allow-list and URL
   // derivation stay in one place.
-  const repo = raw.project?.codeRepositoryConfig?.repository;
+  const repo = raw.project?.codeRepositoryConfigs?.[0]?.repository;
   const codeRepository = repo
     ? (() => {
         const settings = stripSettings(repo.provider, repo.settings);
@@ -480,8 +430,8 @@ export function mapCaseDetail(
     steps: (raw.steps ?? []).map((s) => ({
       id: s.id,
       order: s.order,
-      step: extractProseMirrorText(s.step),
-      expectedResult: extractProseMirrorText(s.expectedResult),
+      step: proseMirrorToMarkdown(s.step),
+      expectedResult: proseMirrorToMarkdown(s.expectedResult),
     })),
     customFields: denormalizeCustomFields(raw.caseFieldValues),
     issues: (raw.caseIssues ?? []).map((ci) => ({

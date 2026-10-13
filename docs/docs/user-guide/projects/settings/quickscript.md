@@ -33,7 +33,7 @@ Bind the project to a registered code repository so AI-generated scripts follow 
 
 - **Code Repository** — select a repository a system administrator registered under [Administration → Code Repositories](../../code-repositories.md). If none exist, an empty state links administrators to set one up.
 - **Branch** — leave blank to use the repository's default branch.
-- **Path Patterns** — one or more rows combining a base **path** with a glob **pattern** (for example path `tests/e2e/pages` + pattern `**/*.ts`). Use **Add Path** to add rows.
+- **Path Patterns** — one or more rows combining a base **path** with a glob **pattern** (for example path `tests/e2e/pages` + pattern `**/*.ts`). Leave the path blank, or enter `.`, to start at the repository root; path `.` with pattern `**/*` includes every file. Tick **Exclude** on a row to leave its files out even when another row includes them, such as a blank path with `**/CHANGELOG*`; see the [Impact settings examples](impact.md#path-patterns). Use **Add Path** to add rows.
 - **Preview Files** — resolve the branch and patterns and list the matching files, their count, and total size.
 
 :::warning
@@ -46,7 +46,7 @@ Repository file listings are cached (in Valkey) for fast access during AI genera
 
 - **Enable file caching** — on by default. When off, files are fetched live from the provider on every export (no copy is stored in TestPlanIt).
 - **Cache Duration (days)** — 1–30, default 7.
-- **Cache Status** — the last fetch result, plus **Files Cached** (how many files were listed) and **Contents Cached** (how many file _contents_ were stored). If contents are incomplete, a warning appears — generated scripts won't reference the missing files. **Refresh Cache** re-fetches now; the file list and contents are pulled in a single repository archive download.
+- **Cache Status** — the last fetch result, plus **Files Cached** (how many files were listed) and **Contents Cached** (how many file _contents_ were stored). If contents are incomplete, a warning appears — generated scripts won't reference the missing files. **Refresh Cache** re-fetches now; the file list and contents are pulled in a single download.
 
 Click **Save Configuration** to persist the binding. Changing the repository, branch, or path patterns invalidates the cache; changing only the duration or the cache toggle does not.
 

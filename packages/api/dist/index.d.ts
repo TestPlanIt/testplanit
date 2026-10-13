@@ -2,7 +2,7 @@
  * TestPlanIt API Types
  * Based on the TestPlanIt OpenAPI schema and Prisma models
  */
-type TestRunType = 'REGULAR' | 'JUNIT' | 'TESTNG' | 'XUNIT' | 'NUNIT' | 'MSTEST' | 'MOCHA' | 'CUCUMBER';
+type TestRunType = 'REGULAR' | 'HYBRID' | 'JUNIT' | 'TESTNG' | 'XUNIT' | 'NUNIT' | 'MSTEST' | 'MOCHA' | 'CUCUMBER';
 type RepositoryCaseSource = 'MANUAL' | 'JUNIT' | 'TESTNG' | 'XUNIT' | 'NUNIT' | 'MSTEST' | 'MOCHA' | 'CUCUMBER' | 'API';
 /**
  * Test status definition
@@ -511,9 +511,15 @@ interface CreateTestCasesOptions {
      * {@link BulkTestCaseInput.folderId}.
      */
     folderId: number;
-    /** Template for the batch. Defaults to the project's first enabled template. */
+    /**
+     * Template for the batch. Defaults to the template marked Default, else the
+     * project's first enabled template.
+     */
     templateId?: number;
-    /** Default CASES workflow state name; each case may override it. */
+    /**
+     * Default CASES workflow state name; each case may override it. Defaults to
+     * the state marked Default, else the first by order.
+     */
     stateName?: string;
     cases: BulkTestCaseInput[];
 }
@@ -925,6 +931,43 @@ interface CreateJUnitTestStepOptions {
     stackTrace?: string;
     screenshot?: string;
 }
+interface AutomationPlanCase {
+    id: number;
+    title: string;
+    className: string | null;
+    source: string;
+    automated: boolean;
+    selector: {
+        name: string;
+        className: string | null;
+        fullName: string;
+        idTokens: {
+            brackets: string;
+            c: string;
+            tc: string;
+        };
+    };
+    tags: string[];
+}
+/** The plan a CI job pulls after TestPlanIt dispatches it (GET /api/test-runs/{id}/automation-plan). */
+interface AutomationPlan {
+    runId: number;
+    projectId: number;
+    executionId: number | null;
+    ref: string | null;
+    run: {
+        name: string;
+        testRunType: string;
+        configuration: string | null;
+        milestone: string | null;
+    };
+    generatedAt: string;
+    cases: AutomationPlanCase[];
+    totals: {
+        cases: number;
+    };
+}
+type ExecutionConclusion = 'success' | 'failure' | 'cancelled';
 
 /**
  * Run-level metadata helpers.
@@ -1100,6 +1143,20 @@ declare class TestPlanItClient {
      */
     getTestRun(testRunId: number): Promise<TestRun>;
     /**
+     * The plan a CI job executes for a run: its automated cases with the
+     * identifiers a runner filter can match on. `executionId` applies an
+     * execution's ad-hoc subset and ref. Read-only tokens are accepted.
+     */
+    getAutomationPlan(testRunId: number, executionId?: number): Promise<AutomationPlan>;
+    /**
+     * Report an execution's outcome to TestPlanIt. Needed for generic-webhook
+     * targets, which TestPlanIt cannot poll; harmless for the others.
+     */
+    finishExecution(testRunId: number, executionId: number, conclusion: ExecutionConclusion, message?: string): Promise<{
+        id: number;
+        status: string;
+    }>;
+    /**
      * Update a test run
      */
     updateTestRun(testRunId: number, options: UpdateTestRunOptions): Promise<TestRun>;
@@ -1225,8 +1282,10 @@ declare class TestPlanItClient {
      * failures are visible: each entry is `status: "success"` with a `caseId`, or
      * `status: "error"` with a message (e.g. a custom field not on the template).
      *
-     * `templateId` defaults to the project's first enabled template; resolve a
-     * specific one with {@link findTemplateByName}. Resolve `folderId` with
+     * `templateId` defaults to the template marked Default, else the project's
+     * first enabled template; resolve a specific one with
+     * {@link findTemplateByName}. `stateName` defaults to the CASES state marked
+     * Default, else the first by order. Resolve `folderId` with
      * {@link findFolderByName} / {@link findOrCreateFolderPath}.
      *
      * Requires a TestPlanIt instance (app v0.39.0+) exposing

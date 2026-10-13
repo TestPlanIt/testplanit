@@ -10,7 +10,7 @@ import type {
   ReviewRequest,
   ReviewStatus,
 } from "~/zenstack/models";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@/components/tables/tableFeatures";
 import {
   ArrowRight,
   Ban,
@@ -162,6 +162,11 @@ interface UseColumnsArgs {
    * clicks still follow the link, so "open in a new tab" keeps working.
    */
   onOpenCase?: (caseId: number, projectId: number) => void;
+  /**
+   * Open a CASE row's full page in a new window on click. Set for users whose
+   * details preference is "new window"; `onOpenCase` is left unset then.
+   */
+  openCaseInNewWindow?: boolean;
 }
 
 /**
@@ -233,6 +238,7 @@ export const useColumns = ({
   testRunById,
   sessionById,
   onOpenCase,
+  openCaseInNewWindow,
 }: UseColumnsArgs): ColumnDef<InboxTableRow>[] => {
   return useMemo(() => {
     const baseColumns: ColumnDef<InboxTableRow>[] = [
@@ -269,6 +275,7 @@ export const useColumns = ({
                     ? undefined
                     : `/projects/repository/${projectId}/${c.id}`
                 }
+                linkTarget={openCaseInNewWindow ? "_blank" : undefined}
                 size="medium"
                 maxLines={1}
               />
@@ -326,7 +333,7 @@ export const useColumns = ({
       {
         id: "project",
         accessorKey: "projectId",
-        header: t("reviews.inbox.columnProject"),
+        header: t("common.fields.project"),
         enableSorting: true,
         minSize: 110,
         size: 220,
@@ -455,7 +462,7 @@ export const useColumns = ({
     const assigneeColumn: ColumnDef<InboxTableRow> = {
       id: "assignee",
       accessorKey: "assigneeUserId",
-      header: t("reviews.inbox.columnAssignee"),
+      header: t("common.ui.issues.assignee"),
       enableSorting: true,
       minSize: 125,
       size: 220,
@@ -498,7 +505,7 @@ export const useColumns = ({
       view === "pending"
         ? {
             id: "actions",
-            header: t("reviews.inbox.columnActions"),
+            header: t("common.actions.actionsLabel"),
             enableSorting: false,
             enableHiding: false,
             size: 122,
@@ -530,7 +537,7 @@ export const useColumns = ({
                     data-testid="reviews-inbox-row-actions"
                   >
                     <ActionIconButton
-                      label={t("reviews.inbox.actionApprove")}
+                      label={t("common.permissions.approve")}
                       testId={`reviews-inbox-approve-${id}`}
                       icon={CheckCircle2}
                       onClick={() => actions?.onApprove(row.original)}
@@ -585,7 +592,7 @@ export const useColumns = ({
         : {
             id: "status",
             accessorKey: "status",
-            header: t("reviews.inbox.columnStatus"),
+            header: t("common.actions.status"),
             enableSorting: true,
             size: 180,
             meta: { isPinned: "right" } satisfies CustomColumnMeta,
@@ -607,5 +614,6 @@ export const useColumns = ({
     testRunById,
     sessionById,
     onOpenCase,
+    openCaseInNewWindow,
   ]);
 };

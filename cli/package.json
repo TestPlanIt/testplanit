@@ -26,7 +26,7 @@
     "build:windows": "bun build src/index.ts --compile --target=bun-windows-x64 --outfile=releases/testplanit-windows-x64.exe"
   },
   "dependencies": {
-    "chalk": "^5.6.2",
+    "chalk": "^6.0.0",
     "commander": "^15.0.0",
     "conf": "^15.1.0",
     "form-data": "^4.0.6",
@@ -34,11 +34,11 @@
     "ora": "^9.4.1"
   },
   "devDependencies": {
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/git": "^11.0.1",
     "@semantic-release/github": "^12.0.9",
-    "@types/bun": "^1.4.0",
-    "@types/node": "^26.4.1",
+    "@types/bun": "^1.4.2",
+    "@types/node": "^26.5.1",
     "@vitest/coverage-v8": "^4.1.11",
     "semantic-release": "^25.0.9",
     "tsup": "^8.5.1",

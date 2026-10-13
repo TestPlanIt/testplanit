@@ -145,7 +145,7 @@ If your project has LLM integrations configured, AI features become available:
 **Requirements for AI:**
 - Project must have an LLM integration configured
 - See [LLM Integrations](../llm-integrations.md) for setup instructions
-- Supported providers: OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, Ollama, Custom LLM
+- Supported providers: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Azure OpenAI, Ollama, Custom LLM
 
 ### Saving and Canceling
 
@@ -497,7 +497,7 @@ System administrators can update the default template:
 ### File Uploads
 
 - Images and videos are uploaded to project file storage
-- S3 or MinIO backend (configurable)
+- S3 or S3-compatible backend such as RustFS (configurable)
 - Files are associated with the project
 - URLs are embedded in the documentation JSON
 - Deleted documentation doesn't auto-delete uploaded files

@@ -5,7 +5,9 @@
  * after they upgrade to a specific version.
  *
  * The key is the version number (must match package.json version format)
- * The value contains the notification title and message (TipTap JSON format supported)
+ * The value contains the notification title and message (TipTap JSON format supported),
+ * or a list of them when one version needs separate notifications (for example
+ * one for everyone and one only for administrators).
  *
  * Example:
  * "0.3.43": {
@@ -32,7 +34,10 @@ export interface UpgradeNotification {
   access?: Access[];
 }
 
-export const upgradeNotifications: Record<string, UpgradeNotification> = {
+export const upgradeNotifications: Record<
+  string,
+  UpgradeNotification | UpgradeNotification[]
+> = {
   "0.3.0": {
     title: "New Feature: Magic Select",
     message: `
@@ -425,6 +430,38 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Read the <a href="https://docs.testplanit.com/blog/v1.0-release" target="_blank">1.0 release announcement</a> for the complete list of what's new.</p>
     `,
   },
+  "1.1.0": [
+    {
+      title: "What's New in TestPlanIt 1.1",
+      message: `
+        <p>TestPlanIt <strong>1.1</strong> delivers requirements management — our most-requested feature — alongside test impact analysis, auto-save, and a hardened SCIM.</p>
+        <h4>Highlights</h4>
+        <ul>
+          <li><strong>Requirements</strong> — build a requirements tree per project or sync requirements from your issue tracker, link test cases from either side, and watch coverage roll up through the hierarchy. Suspect flags, content history, traceability reports, and point-in-time snapshots make release sign-off auditable. Opt in under <strong>Project Settings → Advanced</strong>.</li>
+          <li><strong>Impact Analysis</strong> — connect the repository of the application under test, compare two commits or a pull request, and select the Affected Tests when composing a run. Code Pins tie test cases to files, lines, symbols, or glob patterns. Enable it under <strong>Project Settings → Impact Analysis</strong>.</li>
+          <li><strong>Auto-save</strong> — test case edits are kept as you type and offered back after a crash, an expired session, or an accidental close.</li>
+          <li><strong>DeepSeek</strong> — DeepSeek V4 joins the supported LLM providers.</li>
+          <li><strong>Automated execution</strong> — dispatch a run's automated cases to GitHub Actions, GitLab CI or a signed webhook and collect the results back into the same run; manual and automated cases now live in one hybrid run. Configure targets under <strong>Project Settings → Automated Execution</strong>.</li>
+          <li><strong>Saved and frozen reports</strong> — save any report and reopen it from <strong>Saved Reports</strong> on the Reports page. Saved reports and share links can be live or frozen: a frozen report keeps the exact results from when it was captured, with who captured it and when.</li>
+          <li><strong>Saved import mappings</strong> — save the column mapping from the Test Cases, Shared Steps, or dataset CSV import and apply it to later imports.</li>
+        </ul>
+        <p>Read the <a href="https://docs.testplanit.com/blog/v1.1-release" target="_blank">1.1 release announcement</a> for the complete list of what's new.</p>
+      `,
+    },
+    {
+      title: "File storage now runs on RustFS",
+      access: [Access.ADMIN],
+      message: `
+        <p>MinIO no longer publishes Docker images, so TestPlanIt's bundled file storage now runs on <strong>RustFS</strong>, an open-source S3-compatible server.</p>
+        <ul>
+          <li>Check that attachments and images load as expected.</li>
+          <li>Once they do, delete the old <code>docker-data/minio</code> directory (or your MinIO volume snapshot) to free disk space.</li>
+          <li>If you started with <code>STORAGE_MIGRATION_SKIP=true</code>, files from before the upgrade are not in the new storage yet.</li>
+        </ul>
+        <p>See the <a href="https://docs.testplanit.com/docs/migrating-from-minio" target="_blank">migration guide</a> for details.</p>
+      `,
+    },
+  ],
 };
 
 /**
@@ -464,19 +501,19 @@ export function getUpgradeNotificationsBetweenVersions(
       const isAfterLastSeen =
         !lastSeenVersion || compareVersions(version, lastSeenVersion) > 0;
       const isUpToCurrent = compareVersions(version, currentVersion) <= 0;
-      if (!isAfterLastSeen || !isUpToCurrent) {
-        return false;
-      }
-      return (
-        userAccess === undefined ||
-        notificationTargetsAccess(upgradeNotifications[version], userAccess)
-      );
+      return isAfterLastSeen && isUpToCurrent;
     })
     .sort(compareVersions)
-    .map((version) => ({
-      version,
-      notification: upgradeNotifications[version],
-    }));
+    .flatMap((version) =>
+      ([] as UpgradeNotification[])
+        .concat(upgradeNotifications[version])
+        .filter(
+          (notification) =>
+            userAccess === undefined ||
+            notificationTargetsAccess(notification, userAccess)
+        )
+        .map((notification) => ({ version, notification }))
+    );
 }
 
 /**

@@ -6,8 +6,8 @@
  *   - Validation: array length cap (16), per-name length (64),
  *     whitespace rejection, empty string rejection, prototype-pollution
  *     defense (T-06-01-05).
- *   - Authorization: anonymous → 401, non-admin → 403, admin / project
- *     admin → 200.
+ *   - Authorization: anonymous → 401, non-project-admin → 403, project
+ *     admin (per `authorizeProjectAdminForProject`) → 200.
  *   - Happy path: round-trips the propertyNames array.
  */
 
@@ -24,14 +24,18 @@ vi.mock("~/server/auth", () => ({
 vi.mock("~/lib/db", () => ({
   baseDb: {
     projects: {
-      findFirst: vi.fn(),
       update: vi.fn(),
     },
   },
 }));
 
+vi.mock("~/lib/integrations/importAuthorization", () => ({
+  authorizeProjectAdminForProject: vi.fn(),
+}));
+
 import { getServerSession } from "next-auth";
 import { baseDb } from "~/lib/db";
+import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { PUT } from "./route";
 import { NextRequest } from "next/server";
 
@@ -52,7 +56,11 @@ function makeParams(projectId: string) {
 describe("PUT /api/projects/[projectId]/junit-iteration-property-names", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (baseDb.projects.findFirst as any).mockResolvedValue({ id: 1 });
+    (authorizeProjectAdminForProject as any).mockResolvedValue({
+      ok: true,
+      status: 200,
+      projectId: 1,
+    });
     (baseDb.projects.update as any).mockImplementation(async (args: any) => ({
       id: 1,
       junitIterationPropertyNames: args.data.junitIterationPropertyNames,
@@ -68,15 +76,24 @@ describe("PUT /api/projects/[projectId]/junit-iteration-property-names", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 403 when caller is not admin / project-admin", async () => {
+  it("returns 403 when caller is not a project admin", async () => {
     (getServerSession as any).mockResolvedValue({
-      user: { id: "u1", access: "VIEWER" },
+      user: { id: "u1", access: "USER" },
+    });
+    (authorizeProjectAdminForProject as any).mockResolvedValue({
+      ok: false,
+      status: 403,
+      error: "Forbidden",
     });
     const res = await PUT(
       makeRequest({ propertyNames: ["iteration"] }),
       makeParams("1")
     );
     expect(res.status).toBe(403);
+    expect(authorizeProjectAdminForProject).toHaveBeenCalledWith(
+      expect.objectContaining({ user: { id: "u1", access: "USER" } }),
+      1
+    );
   });
 
   it("returns 400 when projectId is not a number", async () => {
@@ -108,9 +125,9 @@ describe("PUT /api/projects/[projectId]/junit-iteration-property-names", () => {
     });
   });
 
-  it("returns 200 for PROJECTADMIN with a passing project lookup", async () => {
+  it("returns 200 for a USER the project-admin gate admits (e.g. a role with Settings canAddEdit)", async () => {
     (getServerSession as any).mockResolvedValue({
-      user: { id: "u1", access: "PROJECTADMIN" },
+      user: { id: "u1", access: "USER" },
     });
     const res = await PUT(
       makeRequest({ propertyNames: ["iteration"] }),
@@ -119,16 +136,21 @@ describe("PUT /api/projects/[projectId]/junit-iteration-property-names", () => {
     expect(res.status).toBe(200);
   });
 
-  it("returns 403 when project lookup fails (no access)", async () => {
+  it("returns 403 when the project-admin gate refuses a PROJECTADMIN (not assigned / project missing)", async () => {
     (getServerSession as any).mockResolvedValue({
       user: { id: "u1", access: "PROJECTADMIN" },
     });
-    (baseDb.projects.findFirst as any).mockResolvedValue(null);
+    (authorizeProjectAdminForProject as any).mockResolvedValue({
+      ok: false,
+      status: 403,
+      error: "Forbidden",
+    });
     const res = await PUT(
       makeRequest({ propertyNames: ["iteration"] }),
       makeParams("1")
     );
     expect(res.status).toBe(403);
+    expect(baseDb.projects.update).not.toHaveBeenCalled();
   });
 
   it("returns 400 when propertyNames array exceeds 16 entries", async () => {

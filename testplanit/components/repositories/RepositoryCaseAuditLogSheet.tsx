@@ -30,7 +30,7 @@ export function RepositoryCaseAuditLogSheet({
     <ScopedAuditLogSheet
       entityType="RepositoryCases"
       entityId={String(caseId)}
-      triggerLabel={t("trigger")}
+      triggerLabel={tCommon("fields.activity")}
       title={tCommon("fields.activityLog")}
       description={t("description")}
       triggerTestId="case-history-trigger"

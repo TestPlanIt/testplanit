@@ -414,6 +414,10 @@ test.describe("Documentation", () => {
       const listButton = page.getByTestId("tiptap-bullet-list");
       await expect(listButton).toBeVisible({ timeout: 3000 });
       await listButton.click();
+      // The toolbar button takes focus on click and the editor reclaims it a
+      // beat later; keys sent in between land on the button, and Enter would
+      // toggle the list straight back off.
+      await expect(editor).toBeFocused({ timeout: 2000 });
 
       // Type list items
       await page.keyboard.type("Item 1");
@@ -563,13 +567,28 @@ test.describe("Documentation", () => {
     });
 
     await test.step("Save the changes", async () => {
-      // Save
       const saveButton = page
         .locator("button")
         .filter({ hasText: /^save$/i })
         .first();
+
+      // Wait for the save request itself: the document is already at
+      // networkidle here, so waitForLoadState would resolve immediately and
+      // the reload below would abort the in-flight PUT.
+      const responsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/model/projects/update") &&
+          response.request().method() === "PUT",
+        { timeout: 15000 }
+      );
       await saveButton.click();
-      await page.waitForLoadState("networkidle");
+      const response = await responsePromise;
+      expect(response.ok()).toBeTruthy();
+
+      // The page leaves edit mode only after the save resolves
+      await expect(editor).toHaveAttribute("contenteditable", "false", {
+        timeout: 10000,
+      });
     });
 
     await test.step("Reload and verify content persisted", async () => {

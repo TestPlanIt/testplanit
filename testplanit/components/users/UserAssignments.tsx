@@ -3,7 +3,7 @@
 import { DataTable } from "@/components/tables/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@/components/tables/tableFeatures";
 import { CirclePlay, Compass, Inbox } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
@@ -340,7 +340,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
         id: "project",
         enableSorting: true,
         accessorKey: "projectId",
-        header: tReviewInbox("columnProject"),
+        header: tGlobal("common.fields.project"),
         size: 250,
         cell: ({ row }) =>
           row.original.project ? (

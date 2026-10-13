@@ -59,7 +59,7 @@ The fields available for mapping depend on the template you select. You'll alway
 | Estimate | No | Time estimate in minutes |
 | Forecast | No | Forecasted time in minutes |
 | Attachments | No | File attachments |
-| Issues | No | Linked issues |
+| Issues | No | Linked issues, by issue name or tracker key |
 | Linked Cases | No | Related test cases |
 | Workflow State | No | Current workflow state |
 | Created At | No | Creation date/time |
@@ -196,6 +196,7 @@ The preview page tells you how many CSV rows were grouped into how many test cas
    - Map CSV columns to TestPlanIt fields
    - Columns are auto-matched to fields by name when possible
    - You can change or ignore any auto-matched field mapping
+   - Apply a [saved column mapping](#saved-column-mappings), or save the current one
    - Preview shows sample data mapping
    - Rich text fields show a formatted preview (rendered markdown/HTML)
 
@@ -213,6 +214,23 @@ The preview page tells you how many CSV rows were grouped into how many test cas
    - View import statistics
    - Review any errors or warnings
    - Access imported test cases
+
+#### Linking Issues on Import
+
+The **Issues** column accepts a comma-separated list of issue names or tracker
+keys, such as `PROJ-123`.
+
+A value that matches an existing issue in the project links to it. A value that
+does not is looked up as a key in the project's issue-tracker integration, and
+the issue is created in TestPlanIt when the tracker returns it — no one has to
+open the ticket in TestPlanIt first. Keys are looked up once per import no
+matter how many rows cite them.
+
+The column links defects. A key that resolves to a requirement is reported
+rather than linked; link requirements from the requirements pages instead.
+
+Values that match nothing are listed after the import finishes, alongside the
+row and test case they came from. The test cases still import.
 
 #### Field Mapping Options
 
@@ -234,6 +252,35 @@ The preview page tells you how many CSV rows were grouped into how many test cas
 - **Tags**: Comma-separated values are split into individual tags; existing tags are reused, new ones are created
 - **Auto-matching**: Column names are automatically matched to similar field names; you can override any auto-match
 - **ID column**: If you map an `ID` column and a value matches an existing test case, that case is updated in place. Without a matching ID, a new case is created.
+
+#### Saved Column Mappings
+
+If you import files with the same columns regularly, save the mapping once and apply it on later imports. Saved mappings work the same way in the Test Cases, [Shared Steps](user-guide/import-shared-steps.md), and [dataset](user-guide/projects/parameterized-test-cases.md#dataset-tab) CSV import wizards. Each wizard lists only its own mappings.
+
+**Saving a mapping.** On the mapping page, open **Saved mappings** and choose **Save mapping**. Give it a name and, optionally, a description. A saved mapping stores:
+
+- each CSV column name and the field it maps to, including columns set to **Ignore Column**
+- the delimiter, header row, and encoding settings
+- single-row or multi-row mode
+- the template (Test Cases only)
+
+A saved mapping is private to you and available in every project. Select **Share with others** to share it:
+
+- A shared Test Cases mapping is available in every project that uses its template.
+- A shared Shared Steps or dataset mapping is available to everyone.
+
+Only you and administrators can edit or delete a mapping you shared.
+
+**Applying a mapping.** When a saved mapping covers the file's columns, the mapping page suggests it. Select **Apply** in the suggestion, or pick any mapping from the **Saved mappings** menu. Applying a mapping:
+
+- sets every column in the file that the saved mapping names
+- leaves the file's other columns on their auto-matched field
+- switches to the saved template, and re-reads the file if the saved delimiter, header row, or encoding differs from the current settings
+- lists saved columns that are not in the file, and saved fields that the current template doesn't have, which are left on **Ignore Column**
+
+Test-case fields are matched by field, not by template, so a mapping saved with one template also works with any other template that has the same fields.
+
+**Managing mappings.** In the **Saved mappings** menu, use the icons next to one of your mappings to update it with the current mapping and settings, edit its name, description, and sharing, or delete it. Mappings shared by others are listed under **Shared by others**.
 
 #### Multi-Folder Import and Folder Split Modes
 

@@ -23,6 +23,7 @@
  */
 
 import { getNotificationQueue } from "~/lib/queues";
+import { MANUAL_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
 export const JOB_CHECK_RUN_READY = "check-run-ready";
 
@@ -207,13 +208,15 @@ export async function claimRunReadyTransition(
 
   if (!run || run.isDeleted) return { notify: null, reason: "not-found" };
 
-  // Manual runs only. An allowlist, not "not automated": the seven imported
+  // Manual runs only (REGULAR, and HYBRID — a manual run that also receives
+  // automated results, which are projected onto TestRunCases so these counts
+  // do describe it). An allowlist, not "not automated": the seven imported
   // types (JUNIT/TESTNG/XUNIT/NUNIT/MSTEST/MOCHA/CUCUMBER — see
   // AUTOMATED_TEST_RUN_TYPES) reach completion through the import pipeline and
   // the abandoned-run sweeper, and summarise from JUnitTestResult rather than
   // TestRunCases, so these counts do not even describe them. Anything new that
   // is neither stays silent until someone decides it should not.
-  if (run.testRunType !== "REGULAR") {
+  if (!MANUAL_TEST_RUN_TYPES.includes(run.testRunType)) {
     return { notify: null, reason: "not-regular" };
   }
 

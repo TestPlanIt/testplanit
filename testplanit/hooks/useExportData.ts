@@ -4,8 +4,9 @@ import Papa from "papaparse";
 import { useCallback, useState } from "react";
 import { ExportOptions } from "../app/[locale]/projects/repository/[projectId]/ExportModal";
 import { CustomColumnDef } from "../components/tables/ColumnSelection";
+import type { RowData } from "../components/tables/tableFeatures";
 import { logDataExport } from "../lib/services/auditClient";
-import { extractTextFromNode } from "../utils/extractTextFromJson";
+import { extractTextWithLineBreaks } from "../utils/extractTextFromJson";
 import { tiptapToMarkdown } from "../utils/tiptapToMarkdown";
 import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
 import { RECORD_TYPES } from "~/lib/recordKey";
@@ -47,7 +48,7 @@ const formatStepContent = (
     // If parsing failed/skipped and it's still a string, use it directly
     if (typeof parsedContent === "string") return parsedContent;
     // Otherwise, extract text from the parsed object
-    return extractTextFromNode(parsedContent) ?? "";
+    return extractTextWithLineBreaks(parsedContent);
   } else if (formatOption === "markdown") {
     if (typeof parsedContent === "string") return parsedContent;
     return tiptapToMarkdown(parsedContent);
@@ -157,7 +158,7 @@ const loadImageAsDataUrl = (
 export type TFunction = (key: string, values?: Record<string, any>) => string;
 
 // Define the props for the hook
-interface UseExportDataProps<TData> {
+interface UseExportDataProps<TData extends RowData> {
   // fetchAllData now potentially accepts ExportOptions to determine behavior
   fetchAllData?: (options: ExportOptions) => Promise<TData[]>;
   currentData: TData[];
@@ -175,10 +176,10 @@ interface UseExportDataProps<TData> {
 }
 
 // --- Start: Added Centralized Formatting Helper ---
-const formatItemData = (
+const formatItemData = <TData extends RowData>(
   item: any, // Input item (can be TData or transformed multi-row item)
   options: ExportOptions,
-  exportableColumns: CustomColumnDef<any>[], // Pass the final columns list
+  exportableColumns: CustomColumnDef<TData>[], // Pass the final columns list
   t: TFunction, // Pass translation function
   formatKey: ReturnType<typeof useRecordKeyConfig>["formatKey"] // Cosmetic record-key formatter
 ): Record<string, any> => {
@@ -312,7 +313,8 @@ const formatItemData = (
               case "Text Long":
                 if (options.textLongFormat === "plainText") {
                   const p = safeJsonParse(rawValue);
-                  value = typeof p === "string" ? p : extractTextFromNode(p);
+                  value =
+                    typeof p === "string" ? p : extractTextWithLineBreaks(p);
                 } else if (options.textLongFormat === "markdown") {
                   const p = safeJsonParse(rawValue);
                   value = typeof p === "string" ? p : tiptapToMarkdown(p);

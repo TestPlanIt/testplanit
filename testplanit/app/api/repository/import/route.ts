@@ -9,6 +9,8 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
+import { replaceImportedCaseIssueLinks } from "~/lib/services/importCaseIssueLinks";
+import { resolveImportIssueKeys } from "~/lib/services/importIssueKeyResolution";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
@@ -77,9 +79,13 @@ function parseIssues(value: any): string[] {
       // Try to parse as JSON array
       const parsed = JSON.parse(value);
       if (Array.isArray(parsed)) {
-        // If array of objects with name property, extract names
+        // If array of objects with name property, extract names. Trimmed like
+        // the comma-separated branch below: both feed the same name lookup and
+        // the same batch key resolution, which key on the trimmed form.
         return parsed
           .map((issue) => (typeof issue === "string" ? issue : issue.name))
+          .filter((issue): issue is string => typeof issue === "string")
+          .map((issue) => issue.trim())
           .filter(Boolean);
       }
     } catch {
@@ -300,6 +306,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         }
 
         const errors: ImportError[] = [];
+        // Advisory notes about rows that DID import. Kept apart from `errors`
+        // so the wizard's "N rows could not be imported" count stays true —
+        // an issue cell that found no ticket does not fail its case.
+        const warnings: ImportError[] = [];
         const casesToImport: any[] = [];
 
         // A missing Name mapping fails every row identically, which drowns the
@@ -552,6 +562,19 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           folderMaxOrders[folderId] = maxOrderCase?.order ?? -1;
         }
 
+        // Resolve the whole file's `issues` column in one pass, before any row
+        // is written. Cells naming a tracker key no local row answers to are
+        // resolved upstream here — deduplicated across the file, so the cost
+        // is one call per distinct ticket rather than one per case. Advisory
+        // throughout: an unresolvable cell reports itself and the case still
+        // imports.
+        const importIssueKeys = await resolveImportIssueKeys(enhancedDb, {
+          projectId: body.projectId,
+          names: casesToImport.flatMap((c) =>
+            c.issues ? parseIssues(c.issues) : []
+          ),
+        });
+
         // Send initial progress
         sendProgress(0, totalCases);
 
@@ -660,6 +683,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               if (existingCase) {
                 isUpdate = true;
                 reusedCaseId = caseData.id;
+                // `automated` is written together with the currentVersion
+                // bump below, not here: a flag change on its own would make
+                // the ORM side-effects hook write a snapshot of its own on
+                // top of the one this import records.
                 newCase = await enhancedDb.repositoryCases.update({
                   where: { id: caseData.id },
                   data: {
@@ -667,7 +694,6 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     folderId: caseData.folderId,
                     templateId: caseData.templateId,
                     stateId: stateId,
-                    automated: caseData.automated,
                     estimate: caseData.estimate,
                     forecastManual: caseData.forecastManual,
                   },
@@ -839,8 +865,11 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               }
             }
 
-            // Create or update version using centralized helper
-            // First, ensure currentVersion is set correctly on the case
+            // Settle the version number now (it depends only on the case's
+            // own history), but DON'T snapshot yet: the helper re-reads the
+            // case, and tags / issues / attachments are attached further
+            // down. Snapshotting here recorded every imported case as having
+            // none of them.
             let versionNumber: number;
             if (isUpdate) {
               // For updates, calculate next version
@@ -860,10 +889,15 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   ? caseData.version
                   : highestVersion + 1;
 
-              // Update the case's currentVersion
-              await enhancedDb.repositoryCases.update({
+              // Update the case's currentVersion, carrying the automated flag
+              // in the same write so the side-effects hook sees a caller that
+              // snapshots for itself.
+              newCase = await enhancedDb.repositoryCases.update({
                 where: { id: newCase.id },
-                data: { currentVersion: versionNumber },
+                data: {
+                  currentVersion: versionNumber,
+                  automated: caseData.automated,
+                },
               });
             } else if (reusedCaseId !== null) {
               // A restored soft-deleted case keeps its earlier version
@@ -894,27 +928,6 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 data: { currentVersion: versionNumber },
               });
             }
-
-            // Create version snapshot using centralized helper
-            await createTestCaseVersionInTransaction(enhancedDb, newCase.id, {
-              version: versionNumber,
-              creatorId: isUpdate ? session.user.id : creatorId,
-              creatorName: isUpdate
-                ? session.user.name || session.user.email || ""
-                : caseData.createdByName ||
-                  session.user.name ||
-                  session.user.email ||
-                  "",
-              createdAt: isUpdate ? new Date() : createdAt || new Date(),
-              overrides: {
-                name: caseData.name,
-                stateId: stateId,
-                stateName: resolvedWorkflowStateName || defaultWorkflow.name,
-                estimate: caseData.estimate,
-                forecastManual: caseData.forecastManual,
-                automated: caseData.automated,
-              },
-            });
 
             // Handle tags if present
             if (caseData.tags && Array.isArray(caseData.tags)) {
@@ -964,24 +977,28 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
             // Handle issues if present
             if (caseData.issues) {
-              const issueNames = parseIssues(caseData.issues);
-
-              if (isUpdate) {
-                await enhancedDb.repositoryCaseIssue.deleteMany({
-                  where: { caseId: newCase.id },
-                });
-              }
-
-              for (const issueName of issueNames) {
-                const issue = await enhancedDb.issue.findFirst({
-                  where: { name: issueName, isDeleted: false },
-                });
-
-                if (issue) {
-                  await enhancedDb.repositoryCaseIssue.create({
-                    data: { caseId: newCase.id, issueId: issue.id },
-                  });
+              const { unmatched } = await replaceImportedCaseIssueLinks(
+                enhancedDb,
+                {
+                  caseId: newCase.id,
+                  projectId: body.projectId,
+                  issueNames: parseIssues(caseData.issues),
+                  replaceExisting: isUpdate,
+                  resolvedKeyIds: importIssueKeys.idsByName,
                 }
+              );
+              // Advisory, like the duplicate warnings: the case is imported,
+              // and the cells that could not be placed say why instead of
+              // disappearing.
+              for (const name of unmatched) {
+                warnings.push({
+                  row: casesToImport.indexOf(caseData) + 1,
+                  field: "Issues",
+                  caseName: caseData.name || undefined,
+                  error:
+                    importIssueKeys.errorsByName.get(name) ??
+                    `No issue named "${name}" in this project.`,
+                });
               }
             }
 
@@ -1013,6 +1030,33 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 }
               }
             }
+
+            // Create the version snapshot LAST, once steps, field values,
+            // tags, issues and attachments are all attached, so the helper's
+            // re-read of the case captures the imported case in full.
+            // `copyFieldValues` mirrors the case's CaseFieldValues onto the
+            // version — without it the version page renders as though every
+            // custom field was empty at import time.
+            await createTestCaseVersionInTransaction(enhancedDb, newCase.id, {
+              version: versionNumber,
+              creatorId: isUpdate ? session.user.id : creatorId,
+              creatorName: isUpdate
+                ? session.user.name || session.user.email || ""
+                : caseData.createdByName ||
+                  session.user.name ||
+                  session.user.email ||
+                  "",
+              createdAt: isUpdate ? new Date() : createdAt || new Date(),
+              copyFieldValues: true,
+              overrides: {
+                name: caseData.name,
+                stateId: stateId,
+                stateName: resolvedWorkflowStateName || defaultWorkflow.name,
+                estimate: caseData.estimate,
+                forecastManual: caseData.forecastManual,
+                automated: caseData.automated,
+              },
+            });
 
             // Handle test runs if present
             if (caseData.testRuns) {
@@ -1143,6 +1187,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           complete: true as const,
           importedCount,
           errors,
+          warnings,
           duplicateWarnings,
         };
         controller.enqueue(

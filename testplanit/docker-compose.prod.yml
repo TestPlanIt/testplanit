@@ -22,9 +22,11 @@ services:
         # (shell / default .env / --env-file), NOT the .env.production env_file.
         SELF_HOSTED: ${SELF_HOSTED:-true}
         # Per-file upload ceiling in MB (attachments and inline document
-        # images). Baked into next.config's serverActions.bodySizeLimit at build
-        # time, so changing it needs a rebuild, not just a restart. Raise the
-        # bundled nginx to match via nginx-local/ -- see nginx-local/README.md.
+        # images). Baked into next.config's serverActions.bodySizeLimit as the
+        # image default; the entrypoint re-syncs it from the `environment:` value
+        # below on every start, so changing it needs a restart, not a rebuild.
+        # Raise the bundled nginx to match via nginx-local/ -- see
+        # nginx-local/README.md.
         # Substitution reads the build environment (shell / default .env /
         # --env-file), NOT the .env.production env_file.
         UPLOAD_MAX_MB: ${UPLOAD_MAX_MB:-10}
@@ -45,9 +47,9 @@ services:
       # burst absorption, not parallelism: it exists so a handful of slow
       # queries can't occupy every slot and stall unrelated routes.
       DATABASE_POOL_MAX: ${PROD_DATABASE_POOL_MAX:-100}
-      # Same value as the build arg above -- uploadFile.ts reads it at runtime
-      # while next.config bakes it at build time. Both resolve from one
-      # UPLOAD_MAX_MB in .env, so they cannot drift.
+      # Same value as the build arg above -- uploadFile.ts reads it at runtime,
+      # and the entrypoint re-syncs Next's frozen body limit from it at boot.
+      # Both resolve from one UPLOAD_MAX_MB in .env, so they cannot drift.
       UPLOAD_MAX_MB: ${UPLOAD_MAX_MB:-10}
     ports:
       - "${DOCKER_PROD_APP_PORT:-30000}:3000"
@@ -55,6 +57,12 @@ services:
       testplanit-net:
         ipv4_address: 172.19.0.10
     restart: unless-stopped
+    # Waits for the bundled file storage to be ready (and migrated) when the
+    # with-minio profile is enabled; ignored when using external S3.
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+        required: false
 
   workers:
     container_name: testplanit-workers
@@ -113,26 +121,22 @@ services:
     profiles:
       - with-postgres
 
+  # Prepares the bundled file storage: creates the bucket with its public-read
+  # and CORS rules, and stops startup while files in ./docker-data/minio have
+  # not been migrated (see scripts/storage-init.sh).
   minio-init:
-    image: minio/mc:latest
+    image: amazon/aws-cli:2.37.4
+    env_file:
+      - .env.production
+    entrypoint: ["sh", "/storage-init.sh"]
+    volumes:
+      - ./scripts/storage-init.sh:/storage-init.sh:ro
+      - ./docker-data:/docker-data:ro
     networks:
       - testplanit-net
     depends_on:
       minio:
         condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-        echo 'Waiting for MinIO to be ready...';
-        until /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin123; do
-          echo 'MinIO not ready, waiting...';
-          sleep 2;
-        done;
-        echo 'MinIO ready, creating bucket...';
-        /usr/bin/mc mb local/testplanit --ignore-existing;
-        echo 'Setting bucket permissions...';
-        /usr/bin/mc anonymous set public local/testplanit;
-        echo 'MinIO initialization complete.';
-      "
     profiles:
       - with-minio
 
@@ -249,28 +253,42 @@ services:
     profiles:
       - with-elasticsearch
 
+  # Prepares ./docker-data/rustfs for RustFS, which runs as uid 10001.
+  minio-perms:
+    image: alpine:latest
+    user: root
+    command: sh -c "mkdir -p /data && chown -R 10001:10001 /data"
+    volumes:
+      - ./docker-data/rustfs:/data
+    profiles:
+      - with-minio
+
+  # S3-compatible file storage (RustFS). The service keeps the name `minio` so
+  # existing AWS_ENDPOINT_URL=http://minio:9000 settings and the with-minio
+  # profile keep working. Files from the old MinIO storage in
+  # ./docker-data/minio are migrated with scripts/migrate-minio-to-rustfs.sh.
   minio:
     container_name: testplanit-minio
-    image: minio/minio:latest
-    command: server /data --console-address ":9001" --address ":9000"
-    # Load MINIO_SERVER_URL (and other vars) from the same env file as the app so
-    # MinIO's public URL matches the presigned URLs the app generates.
-    env_file:
-      - .env.production
+    image: rustfs/rustfs:1.0.0
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
+      RUSTFS_ACCESS_KEY: minioadmin
+      RUSTFS_SECRET_KEY: minioadmin123
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
     ports:
-      - "${DOCKER_MINIO_API_PORT:-9000}:9000" # MinIO API (for external access)
-      - "${DOCKER_MINIO_CONSOLE_PORT:-9001}:9001" # MinIO Console (direct access for admin)
+      - "${DOCKER_MINIO_API_PORT:-9000}:9000" # S3 API (for external access)
+      - "${DOCKER_MINIO_CONSOLE_PORT:-9001}:9001" # Storage console (direct access for admin)
     networks:
       testplanit-net:
         ipv4_address: 172.19.0.20
     restart: unless-stopped
     volumes:
-      - ./docker-data/minio:/data
+      - ./docker-data/rustfs:/data
+    depends_on:
+      minio-perms:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/health"]
       interval: 30s
       timeout: 20s
       retries: 3

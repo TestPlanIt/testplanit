@@ -35,6 +35,9 @@ For detailed SSO configuration, see the [SSO Documentation](./sso.md).
 - Provision users and groups from your identity provider via SCIM 2.0
 - Configure **group role mapping** — assign a Mapped Access Tier (User, Project Admin, or Admin) to groups so members automatically gain that global access level
 - Set the fallback default access tier for users who belong to no mapped group
+- Configure **role mappings** — map a `roles` value your IdP asserts on a user to an access tier; role mappings take precedence over group mapping
+- **Rotate** a bearer token with an overlap window so provisioning keeps running while you paste the new value into the IdP
+- Review the **conflict log**, including cross-IdP conflicts when two identity providers target the same user or group
 
 For detailed SCIM and role-mapping information, see the [SCIM Provisioning Documentation](./scim.md).
 
@@ -65,6 +68,7 @@ For detailed search configuration, see the [Search Configuration Documentation](
 - Assign users to groups for easier permission management
 - Configure group-based project access
 - Set a **Mapped Access Tier** to drive members' global access level ([role mapping](./scim.md#role-mapping))
+- Grant **Per-project access** so a group carries a tier on specific projects only ([per-project access](./groups.md#per-project-access))
 
 ### System Configuration
 
@@ -86,11 +90,19 @@ For detailed search configuration, see the [Search Configuration Documentation](
 - Define field types and validation rules
 - Configure result fields for test execution
 
+### Tools & Integrations
+
+**Code Repositories** (`/admin/code-repositories`)
+
+- Connect source repositories (GitHub, GitLab, Azure DevOps, Bitbucket, Gitea) once, then use them across projects: QuickScript grounds generated scripts in your real page objects and fixtures, Impact Analysis reads commits, and execution targets dispatch automated runs to the repository's CI
+
+For details, see the [Code Repositories Documentation](./code-repositories.md).
+
 ### AI Tools
 
 **AI Models** (`/admin/llm`)
 
-- Connect AI providers (OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, Ollama, or a custom OpenAI-compatible endpoint)
+- Connect AI providers (OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Azure OpenAI, Ollama, or a custom OpenAI-compatible endpoint)
 - Set per-model token limits, rate limits, cost, and monthly budgets
 - Test connections and probe model capabilities
 
@@ -106,12 +118,6 @@ For details, see the [Prompt Configurations Documentation](./prompt-configuratio
 **QuickScript Templates** (`/admin/quickscripts`)
 
 - Manage the templates [QuickScript](./projects/quickscript.md) uses to turn manual test cases into automation scripts
-
-**Code Repositories** (`/admin/code-repositories`)
-
-- Connect source repositories so QuickScript can ground generated scripts in your real page objects and fixtures
-
-For details, see the [Code Repositories Documentation](./code-repositories.md).
 
 ### Audit & Compliance
 

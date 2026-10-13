@@ -25,8 +25,8 @@ vi.mock("@/components/tables/ProjectNameCell", () => ({
   ProjectNameCell: ({ value }: any) => <span>{value}</span>,
 }));
 
-vi.mock("@/components/TestCaseNameDisplay", () => ({
-  TestCaseNameDisplay: ({ testCase }: any) => <span>{testCase.name}</span>,
+vi.mock("@/components/tables/CaseDisplay", () => ({
+  CaseDisplay: ({ testCase }: any) => <span>{testCase.name}</span>,
 }));
 
 vi.mock("@/components/SessionNameDisplay", () => ({

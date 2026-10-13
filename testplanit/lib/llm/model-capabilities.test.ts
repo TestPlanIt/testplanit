@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { modelSupportsVision } from "./model-capabilities";
+import {
+  getModelContextWindow,
+  modelSupportsVision,
+} from "./model-capabilities";
 
 describe("modelSupportsVision", () => {
   it("Anthropic and Gemini are always vision-capable", () => {
@@ -29,6 +32,15 @@ describe("modelSupportsVision", () => {
     expect(modelSupportsVision("OLLAMA", "vladimir-model")).toBe(false);
   });
 
+  it("DeepSeek is text-only except the experimental vision variant", () => {
+    expect(modelSupportsVision("DEEPSEEK", "deepseek-v4-flash")).toBe(false);
+    expect(modelSupportsVision("DEEPSEEK", "deepseek-v4-pro")).toBe(false);
+    expect(modelSupportsVision("DEEPSEEK", "deepseek-chat")).toBe(false);
+    expect(
+      modelSupportsVision("DEEPSEEK", "deepseek-v4-flash-vision-exp")
+    ).toBe(true);
+  });
+
   it("Custom and unknown providers default false", () => {
     expect(modelSupportsVision("CUSTOM_LLM", "anything")).toBe(false);
     expect(modelSupportsVision(undefined, "gpt-4o")).toBe(false);
@@ -46,5 +58,20 @@ describe("modelSupportsVision", () => {
     expect(modelSupportsVision("OPENAI", "gpt-4o", settings)).toBe(false);
     // Models without an override fall through to heuristics.
     expect(modelSupportsVision("OPENAI", "gpt-4o-mini", settings)).toBe(true);
+  });
+});
+
+describe("getModelContextWindow", () => {
+  it("DeepSeek V4 is 1M, legacy aliases 128K", () => {
+    expect(getModelContextWindow("DEEPSEEK", "deepseek-v4-flash")).toBe(
+      1_000_000
+    );
+    expect(getModelContextWindow("DEEPSEEK", "deepseek-v4-pro")).toBe(
+      1_000_000
+    );
+    expect(getModelContextWindow("DEEPSEEK", "deepseek-chat")).toBe(128_000);
+    expect(getModelContextWindow("DEEPSEEK", "deepseek-reasoner")).toBe(
+      128_000
+    );
   });
 });

@@ -1,6 +1,8 @@
 import { baseDb } from "@/lib/db";
+import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { resolveReportFolderFilter } from "~/utils/reportGrouping";
 
 interface PeriodData {
   periodStart: string;
@@ -174,14 +176,13 @@ export async function handleAutomationTrendsPOST(
     const {
       projectId,
       dimensions: _dimensions = [],
-      startDate,
-      endDate,
       page = 1,
       pageSize: pageSizeParam = 10,
       sortColumn,
       sortDirection = "desc",
       dateGrouping = "weekly",
     } = body;
+    const { startDate, endDate } = resolveRequestDateRange(body);
 
     // Handle pageSize "All" - since we return all data anyway, just normalize it
     const pageSize =
@@ -230,6 +231,15 @@ export async function handleAutomationTrendsPOST(
     // Add stateIds filter if provided
     if (stateIds.length > 0) {
       baseWhere.stateId = { in: stateIds.map(Number) };
+    }
+
+    const folderIds = await resolveReportFolderFilter(
+      baseDb,
+      body.folderIds,
+      body.folderIncludeDescendants
+    );
+    if (folderIds) {
+      baseWhere.folderId = { in: folderIds };
     }
 
     // Add automated filter if provided

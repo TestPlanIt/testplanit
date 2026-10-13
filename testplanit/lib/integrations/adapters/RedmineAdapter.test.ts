@@ -224,6 +224,41 @@ describe("RedmineAdapter", () => {
       expect(res.hasMore).toBe(true);
       expect(res.total).toBe(10);
     });
+
+    it("sets tracker_id as a pipe-delimited param for multiple selected types", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issues: [], total_count: 0 }));
+
+      await adapter.searchIssues({ issueTypeIds: ["2", "3"] });
+
+      const url = new URL(mockFetch.mock.calls[0][0]);
+      // URLSearchParams encodes the pipe rather than us hand-escaping it —
+      // .get() decodes it back, proving the round trip.
+      expect(url.searchParams.get("tracker_id")).toBe("2|3");
+    });
+
+    it("sets tracker_id to a single value when one type is selected", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issues: [], total_count: 0 }));
+
+      await adapter.searchIssues({ issueTypeIds: ["2"] });
+
+      const url = new URL(mockFetch.mock.calls[0][0]);
+      expect(url.searchParams.get("tracker_id")).toBe("2");
+    });
+
+    it("produces today's exact query when issueTypeIds is absent or empty", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issues: [], total_count: 0 }));
+      await adapter.searchIssues({});
+      const urlAbsent = new URL(mockFetch.mock.calls[0][0]);
+      expect(urlAbsent.searchParams.has("tracker_id")).toBe(false);
+
+      mockFetch.mockResolvedValueOnce(okJson({ issues: [], total_count: 0 }));
+      await adapter.searchIssues({ issueTypeIds: [] });
+      const urlEmpty = new URL(mockFetch.mock.calls[1][0]);
+      expect(urlEmpty.searchParams.has("tracker_id")).toBe(false);
+    });
   });
 
   describe("createIssue", () => {

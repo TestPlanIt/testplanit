@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
-import { ColumnDef, VisibilityState } from "@tanstack/react-table";
+import { useQueryClient } from "@tanstack/react-query";
+import { ColumnDef, VisibilityState } from "@/components/tables/tableFeatures";
 import { AlertTriangle, UndoDot } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -47,6 +48,7 @@ export default function SoftDeletedDataTable({
 }: SoftDeletedDataTableProps) {
   const locale = useLocale();
   const t = useTranslations("admin.trash.table");
+  const queryClient = useQueryClient();
   const tActions = useTranslations("common.actions");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -216,6 +218,9 @@ export default function SoftDeletedDataTable({
       setReloadNonce((n) => n + 1);
       void loadFirstPage();
       onMutate?.(); // Let callers refresh derived state (e.g. counts)
+      if (alertActionType === "restore") {
+        void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
+      }
     } catch (e: any) {
       setError(
         e.message || `An unexpected error occurred during ${alertActionType}.`

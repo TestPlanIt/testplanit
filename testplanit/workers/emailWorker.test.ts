@@ -942,4 +942,207 @@ describe("EmailWorker", () => {
       );
     });
   });
+  describe("RUN_READY_TO_COMPLETE email", () => {
+    const readyNotification = {
+      ...baseNotification,
+      id: "notif-ready",
+      type: "RUN_READY_TO_COMPLETE",
+      title: "Test run ready to complete",
+      message: "English fallback persisted on the row",
+      data: {
+        testRunId: "run-1",
+        testRunName: "Regression sweep",
+        projectId: "proj-1",
+        projectName: "Project Alpha",
+        caseCount: 12,
+      },
+    };
+
+    it("immediate path: links straight to the run", async () => {
+      mockDb.notification.findUnique.mockResolvedValue(readyNotification);
+
+      const { processor } = await import("./emailWorker");
+
+      await processor({
+        id: "job-ready-url",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-ready",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      const callArgs = mockSendNotificationEmail.mock.calls[0][0];
+      expect(callArgs.notificationUrl).toBe(
+        "http://localhost:3000/en-US/projects/runs/proj-1/run-1"
+      );
+    });
+
+    it("immediate path: resolves the title, message and reason keys", async () => {
+      mockDb.notification.findUnique.mockResolvedValue(readyNotification);
+
+      const { processor } = await import("./emailWorker");
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
+
+      await processor({
+        id: "job-ready-i18n",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-ready",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.runReadyToCompleteTitle"
+      );
+
+      const messageCall = vi
+        .mocked(getServerTranslation)
+        .mock.calls.find(
+          (c: any) =>
+            c[1] ===
+            "components.notifications.content.runReadyToCompleteEmailMessage"
+        );
+      expect(messageCall).toBeDefined();
+      expect(messageCall?.[2]).toEqual({
+        caseCount: 12,
+        testRunName: "Regression sweep",
+        projectName: "Project Alpha",
+      });
+
+      // The "why am I getting this" line is the reason key, not the message.
+      const callArgs = mockSendNotificationEmail.mock.calls[0][0];
+      expect(callArgs.additionalInfo).toBe(
+        "components.notifications.content.runReadyToCompleteReason"
+      );
+      expect(callArgs.notificationTitle).toBe(
+        "components.notifications.content.runReadyToCompleteTitle"
+      );
+      expect(callArgs.notificationMessage).toBe(
+        "components.notifications.content.runReadyToCompleteEmailMessage"
+      );
+    });
+
+    it("immediate path: coerces a stringified caseCount and defaults a missing one to 0", async () => {
+      mockDb.notification.findUnique.mockResolvedValue({
+        ...readyNotification,
+        data: {
+          ...readyNotification.data,
+          caseCount: "7",
+          projectName: undefined,
+        },
+      });
+
+      const { processor } = await import("./emailWorker");
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
+
+      await processor({
+        id: "job-ready-count",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-ready",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      const placeholders = vi
+        .mocked(getServerTranslation)
+        .mock.calls.find(
+          (c: any) =>
+            c[1] ===
+            "components.notifications.content.runReadyToCompleteEmailMessage"
+        )?.[2] as any;
+      // ICU plural selection needs a number, not "7".
+      expect(placeholders.caseCount).toBe(7);
+      expect(placeholders.projectName).toBe("");
+    });
+
+    it("immediate path: sends without a link when the run cannot be located", async () => {
+      mockDb.notification.findUnique.mockResolvedValue({
+        ...readyNotification,
+        data: { testRunName: "Regression sweep", caseCount: 12 },
+      });
+
+      const { processor } = await import("./emailWorker");
+
+      await processor({
+        id: "job-ready-nolink",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-ready",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      expect(mockSendNotificationEmail).toHaveBeenCalledOnce();
+      const callArgs = mockSendNotificationEmail.mock.calls[0][0];
+      expect(callArgs.notificationUrl).toBeUndefined();
+    });
+
+    it("digest path: builds the same run URL and resolves the same title/message keys", async () => {
+      mockDb.user.findUnique.mockResolvedValue({
+        id: "user-1",
+        email: "user@example.com",
+        name: "Test User",
+        userPreferences: { locale: "en_US" },
+      });
+      mockDb.notification.findMany.mockResolvedValue([readyNotification]);
+
+      const { processor } = await import("./emailWorker");
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
+
+      await processor({
+        id: "job-ready-digest",
+        name: "send-digest-email",
+        data: {
+          userId: "user-1",
+          notifications: [
+            {
+              id: "notif-ready",
+              title: "t",
+              message: "m",
+              createdAt: new Date(),
+            },
+          ],
+        },
+      } as Job);
+
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.runReadyToCompleteTitle"
+      );
+      const messageCall = vi
+        .mocked(getServerTranslation)
+        .mock.calls.find(
+          (c: any) =>
+            c[1] ===
+            "components.notifications.content.runReadyToCompleteEmailMessage"
+        );
+      expect(messageCall?.[2]).toEqual({
+        caseCount: 12,
+        testRunName: "Regression sweep",
+        projectName: "Project Alpha",
+      });
+
+      const digestArgs = mockSendDigestEmail.mock.calls[0][0];
+      expect(digestArgs.notifications[0].url).toBe(
+        "http://localhost:3000/en-US/projects/runs/proj-1/run-1"
+      );
+      expect(digestArgs.notifications[0].title).toBe(
+        "components.notifications.content.runReadyToCompleteTitle"
+      );
+      expect(digestArgs.notifications[0].message).toBe(
+        "components.notifications.content.runReadyToCompleteEmailMessage"
+      );
+    });
+  });
 });

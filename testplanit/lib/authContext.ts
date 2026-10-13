@@ -1,9 +1,9 @@
-import { ProjectAccessType } from "~/zenstack/models";
+import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
 import { baseDb } from "~/lib/db";
 import valkeyConnection from "./valkey";
 
 /**
- * Cache for the resolved accessible-project id list.
+ * Cache for the resolved project scopes (accessible + administered ids).
  *
  * 60s to match MANIFEST_CACHE_TTL_SECONDS in ./access-manifest, which caches the
  * same class of data (project defaults + user/group permissions + assignments)
@@ -11,8 +11,14 @@ import valkeyConnection from "./valkey";
  * consequence, so they should expire on the same clock.
  */
 const PROJECT_IDS_CACHE_TTL_SECONDS = 60;
-const PROJECT_IDS_CACHE_PREFIX = "acl:projectids:";
+const PROJECT_IDS_CACHE_PREFIX = "acl:projectscopes:";
 const COLLAB_SCOPE_CACHE_PREFIX = "acl:collab:";
+
+/** The two project id lists the policies read off `auth()`. */
+export interface ProjectScopes {
+  accessibleProjectIds: number[];
+  adminProjectIds: number[];
+}
 
 /**
  * `access` and `roleId` are part of the key, not just the user id.
@@ -84,24 +90,48 @@ export interface UserForAuth {
 export async function resolveAccessibleProjectIds(
   user: UserForAuth
 ): Promise<number[]> {
+  return (await resolveProjectScopes(user)).accessibleProjectIds;
+}
+
+/**
+ * Resolve every project this user administers — the projects where the
+ * policies' `projectId in auth().adminProjectIds` clauses hold. Same cache
+ * entry and staleness window as the accessible list; see
+ * computeProjectScopes for the ladder.
+ */
+export async function resolveAdminProjectIds(
+  user: UserForAuth
+): Promise<number[]> {
+  return (await resolveProjectScopes(user)).adminProjectIds;
+}
+
+/**
+ * Both id lists in one cache-aside lookup. They derive from the same rows and
+ * are always needed together (buildAuthContext), so caching them as one value
+ * keeps a cache miss at one round of queries rather than two.
+ */
+export async function resolveProjectScopes(
+  user: UserForAuth
+): Promise<ProjectScopes> {
   const key = projectIdsCacheKey(user);
 
   if (valkeyConnection) {
     try {
       const raw = await valkeyConnection.get(key);
-      if (raw) return JSON.parse(raw) as number[];
+      const cached = raw ? parseCachedScopes(raw) : null;
+      if (cached) return cached;
     } catch {
       // fall through to the DB — a cache outage must not deny access
     }
   }
 
-  const ids = await computeAccessibleProjectIds(user);
+  const scopes = await computeProjectScopes(user);
 
   if (valkeyConnection) {
     try {
       await valkeyConnection.set(
         key,
-        JSON.stringify(ids),
+        JSON.stringify(scopes),
         "EX",
         PROJECT_IDS_CACHE_TTL_SECONDS
       );
@@ -110,7 +140,20 @@ export async function resolveAccessibleProjectIds(
     }
   }
 
-  return ids;
+  return scopes;
+}
+
+function parseCachedScopes(raw: string): ProjectScopes | null {
+  const parsed: unknown = JSON.parse(raw);
+  if (
+    parsed &&
+    typeof parsed === "object" &&
+    Array.isArray((parsed as ProjectScopes).accessibleProjectIds) &&
+    Array.isArray((parsed as ProjectScopes).adminProjectIds)
+  ) {
+    return parsed as ProjectScopes;
+  }
+  return null;
 }
 
 /**
@@ -166,66 +209,103 @@ export async function invalidateAllAccessibleProjectIds(): Promise<void> {
 }
 
 /**
- * The uncached computation. Four queries in one round of parallelism; see
- * resolveAccessibleProjectIds for why the result is cached.
+ * The uncached computation. Five queries in one round of parallelism; see
+ * resolveProjectScopes for why the result is cached.
+ *
+ * `adminProjectIds` is the project-admin ladder the policies' `projectId in
+ * auth().adminProjectIds` clauses stand for. A project qualifies when the
+ * user is not denied it by a per-user NO_ACCESS row and any branch holds:
+ *
+ *   1. the user created it
+ *   2. the user is a system PROJECTADMIN with a ProjectAssignment on it
+ *   3. the user's effective role there carries Settings canAddEdit, where the
+ *      effective role follows lib/services/areaPermission.ts: the user's own
+ *      row decides first (SPECIFIC_ROLE → its role, GLOBAL_ROLE → the global
+ *      role), then group grants (a SPECIFIC_ROLE grant's role, else the
+ *      global role under a GLOBAL_ROLE grant), then the project default.
+ *
+ * System ADMINs pass every policy through their own clause, so the list is
+ * not special-cased for them.
  */
-async function computeAccessibleProjectIds(
-  user: UserForAuth
-): Promise<number[]> {
+async function computeProjectScopes(user: UserForAuth): Promise<ProjectScopes> {
   const hasGlobalRole = user.roleId != null;
   const notNoAccess = user.access !== "NONE";
+  const isSystemProjectAdmin = user.access === "PROJECTADMIN";
 
-  const [projects, userPerms, groupPerms, assignments] = await Promise.all([
-    baseDb.projects.findMany({
-      select: {
-        id: true,
-        createdBy: true,
-        defaultAccessType: true,
-        defaultRoleId: true,
-      },
-    }),
-    baseDb.userProjectPermission.findMany({
-      where: { userId: user.id },
-      select: { projectId: true, accessType: true },
-    }),
-    baseDb.groupProjectPermission.findMany({
-      where: { group: { assignedUsers: { some: { userId: user.id } } } },
-      select: { projectId: true, accessType: true, roleId: true },
-    }),
-    baseDb.projectAssignment.findMany({
-      where: { userId: user.id },
-      select: { projectId: true },
-    }),
-  ]);
+  const [projects, userPerms, groupPerms, assignments, adminRoles] =
+    await Promise.all([
+      baseDb.projects.findMany({
+        select: {
+          id: true,
+          createdBy: true,
+          defaultAccessType: true,
+          defaultRoleId: true,
+        },
+      }),
+      baseDb.userProjectPermission.findMany({
+        where: { userId: user.id },
+        select: { projectId: true, accessType: true, roleId: true },
+      }),
+      baseDb.groupProjectPermission.findMany({
+        where: { group: { assignedUsers: { some: { userId: user.id } } } },
+        select: { projectId: true, accessType: true, roleId: true },
+      }),
+      baseDb.projectAssignment.findMany({
+        where: { userId: user.id },
+        select: { projectId: true },
+      }),
+      baseDb.rolePermission.findMany({
+        where: { area: ApplicationArea.Settings, canAddEdit: true },
+        select: { roleId: true },
+      }),
+    ]);
 
-  const userPermByProject = new Map(
-    userPerms.map((p) => [p.projectId, p.accessType])
-  );
+  const adminRoleIds = new Set(adminRoles.map((r) => r.roleId));
+  const globalRoleIsAdmin =
+    hasGlobalRole && adminRoleIds.has(user.roleId as number);
+
+  const userPermByProject = new Map(userPerms.map((p) => [p.projectId, p]));
   const assignedProjectIds = new Set(assignments.map((a) => a.projectId));
 
   const groupGrantedProjectIds = new Set<number>();
+  // Per project: does any group SPECIFIC_ROLE grant exist, and does one of
+  // them carry an admin role; does any GLOBAL_ROLE grant exist.
+  const groupSpecific = new Map<number, { any: boolean; admin: boolean }>();
+  const groupGlobal = new Set<number>();
   for (const perm of groupPerms) {
     if (
-      (perm.accessType === ProjectAccessType.SPECIFIC_ROLE &&
-        perm.roleId != null) ||
-      (perm.accessType === ProjectAccessType.GLOBAL_ROLE && hasGlobalRole)
+      perm.accessType === ProjectAccessType.SPECIFIC_ROLE &&
+      perm.roleId != null
     ) {
       groupGrantedProjectIds.add(perm.projectId);
+      const entry = groupSpecific.get(perm.projectId) ?? {
+        any: false,
+        admin: false,
+      };
+      entry.any = true;
+      if (adminRoleIds.has(perm.roleId)) entry.admin = true;
+      groupSpecific.set(perm.projectId, entry);
+    } else if (perm.accessType === ProjectAccessType.GLOBAL_ROLE) {
+      if (hasGlobalRole) groupGrantedProjectIds.add(perm.projectId);
+      groupGlobal.add(perm.projectId);
     }
   }
 
-  const accessible: number[] = [];
+  const accessibleProjectIds: number[] = [];
+  const adminProjectIds: number[] = [];
   for (const project of projects) {
+    const userPerm = userPermByProject.get(project.id);
+    const userAccessType = userPerm?.accessType;
+
     // A per-user NO_ACCESS row outranks every grant below.
-    if (userPermByProject.get(project.id) === ProjectAccessType.NO_ACCESS) {
+    if (userAccessType === ProjectAccessType.NO_ACCESS) {
       continue;
     }
 
-    const userPerm = userPermByProject.get(project.id);
     const granted =
       project.createdBy === user.id ||
-      userPerm === ProjectAccessType.SPECIFIC_ROLE ||
-      userPerm === ProjectAccessType.GLOBAL_ROLE ||
+      userAccessType === ProjectAccessType.SPECIFIC_ROLE ||
+      userAccessType === ProjectAccessType.GLOBAL_ROLE ||
       groupGrantedProjectIds.has(project.id) ||
       (project.defaultAccessType === ProjectAccessType.GLOBAL_ROLE &&
         hasGlobalRole &&
@@ -238,10 +318,49 @@ async function computeAccessibleProjectIds(
         notNoAccess) ||
       (project.defaultAccessType === ProjectAccessType.DEFAULT && notNoAccess);
 
-    if (granted) accessible.push(project.id);
+    if (granted) accessibleProjectIds.push(project.id);
+
+    if (
+      project.createdBy === user.id ||
+      (isSystemProjectAdmin && assignedProjectIds.has(project.id)) ||
+      effectiveRoleIsAdmin(project, userPerm)
+    ) {
+      adminProjectIds.push(project.id);
+    }
   }
 
-  return accessible;
+  return { accessibleProjectIds, adminProjectIds };
+
+  /** Whether the ladder's effective role on `project` carries Settings canAddEdit. */
+  function effectiveRoleIsAdmin(
+    project: (typeof projects)[number],
+    userPerm: (typeof userPerms)[number] | undefined
+  ): boolean {
+    if (!notNoAccess) return false;
+    // The user's own row decides first.
+    if (userPerm?.accessType === ProjectAccessType.SPECIFIC_ROLE) {
+      return userPerm.roleId != null && adminRoleIds.has(userPerm.roleId);
+    }
+    if (userPerm?.accessType === ProjectAccessType.GLOBAL_ROLE) {
+      return globalRoleIsAdmin;
+    }
+    // Then group grants: a SPECIFIC_ROLE grant wins over a GLOBAL_ROLE one.
+    const specific = groupSpecific.get(project.id);
+    if (specific?.any) return specific.admin;
+    if (groupGlobal.has(project.id) && hasGlobalRole) {
+      return globalRoleIsAdmin;
+    }
+    // Then the project default.
+    if (project.defaultAccessType === ProjectAccessType.GLOBAL_ROLE) {
+      return globalRoleIsAdmin;
+    }
+    if (project.defaultAccessType === ProjectAccessType.SPECIFIC_ROLE) {
+      return (
+        project.defaultRoleId != null && adminRoleIds.has(project.defaultRoleId)
+      );
+    }
+    return false;
+  }
 }
 
 /**
@@ -547,7 +666,7 @@ export async function resolveViewerProjectScope(
  * mutation.
  */
 export async function buildAuthContext(user: UserForAuth) {
-  let accessibleProjectIds: number[] | null = null;
+  let scopes: ProjectScopes | null = null;
   let collab: CollaboratorScope | null = null;
 
   // Read both cached scopes in ONE Valkey round trip — this path runs once per
@@ -556,17 +675,18 @@ export async function buildAuthContext(user: UserForAuth) {
   // recomputes and repopulates its own key.
   if (valkeyConnection && user.access !== "ADMIN") {
     try {
-      const [rawIds, rawCollab] = await valkeyConnection.mget(
+      const [rawScopes, rawCollab] = await valkeyConnection.mget(
         projectIdsCacheKey(user),
         collabScopeCacheKey(user)
       );
-      if (rawIds) accessibleProjectIds = JSON.parse(rawIds) as number[];
+      if (rawScopes) scopes = parseCachedScopes(rawScopes);
       if (rawCollab) collab = JSON.parse(rawCollab) as CollaboratorScope;
     } catch {
       // fall through to the resolvers — a cache outage must not deny access
     }
   }
-  accessibleProjectIds ??= await resolveAccessibleProjectIds(user);
+  scopes ??= await resolveProjectScopes(user);
+  const { accessibleProjectIds, adminProjectIds } = scopes;
   collab ??= await resolveCollaboratorScope(user, accessibleProjectIds);
 
   return {
@@ -588,6 +708,7 @@ export async function buildAuthContext(user: UserForAuth) {
         }
       : null,
     accessibleProjectIds,
+    adminProjectIds,
     collabUserIds: collab.userIds,
     collabViaOpenDefault: collab.viaOpenDefault,
     collabViaGlobalRoleDefault: collab.viaGlobalRoleDefault,

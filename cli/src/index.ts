@@ -9,6 +9,7 @@ import { Command } from "commander";
 import { createRequire } from "module";
 import { createConfigCommand } from "./commands/config.js";
 import { createImportCommand } from "./commands/import.js";
+import { createRunCommand } from "./commands/run.js";
 
 // Read version from package.json
 const require = createRequire(import.meta.url);
@@ -33,6 +34,11 @@ Examples:
     $ testplanit import ./results/*.xml -p "My Project" -n "Release Test" \\
         -s "In Progress" -c "Chrome" -m "Sprint 1" -t "regression,ci"
 
+  In a job TestPlanIt dispatched (TESTPLANIT_RUN_ID is set):
+    $ testplanit run plan --format lines > plan.txt
+    $ testplanit import ./results.xml -p 1
+    $ testplanit run complete
+
 Run 'testplanit <command> --help' for more information on a command.
 `);
 
@@ -41,6 +47,9 @@ program.addCommand(createConfigCommand());
 
 // Add import command (supports all formats: junit, testng, xunit, nunit, mstest, mocha, cucumber)
 program.addCommand(createImportCommand());
+
+// Add run command (plan / complete / finish for a dispatched or pre-created run)
+program.addCommand(createRunCommand());
 
 // Parse arguments
 program.parse();

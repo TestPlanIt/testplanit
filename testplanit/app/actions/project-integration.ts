@@ -142,7 +142,11 @@ export async function removeIntegrationProjectMapping(
       });
 
       const deleted = await tx.webhookConfig.deleteMany({
-        where: { projectId, direction: "INBOUND" },
+        where: {
+          projectId,
+          direction: "INBOUND",
+          codeRepositoryConfigId: null,
+        },
       });
 
       return {
@@ -239,7 +243,11 @@ export async function removeProjectIntegration(
         where: { id: projectIntegrationId },
       });
       const deleted = await tx.webhookConfig.deleteMany({
-        where: { projectId: target.projectId, direction: "INBOUND" },
+        where: {
+          projectId: target.projectId,
+          direction: "INBOUND",
+          codeRepositoryConfigId: null,
+        },
       });
       return {
         success: true,
@@ -334,7 +342,11 @@ export async function switchProjectIntegration(input: {
       let inboundWebhookDeletedCount = 0;
       if (providerChanged) {
         const deleted = await tx.webhookConfig.deleteMany({
-          where: { projectId, direction: "INBOUND" },
+          where: {
+            projectId,
+            direction: "INBOUND",
+            codeRepositoryConfigId: null,
+          },
         });
         inboundWebhookDeletedCount = deleted.count;
       }

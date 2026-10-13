@@ -50,6 +50,7 @@ export function SystemFeatureCard({
   embedded?: boolean;
 } = {}) {
   const t = useTranslations("admin.workflows.systemFeatureCard");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const { systemEnabled, isLoading } = useReviewFeatureEnabled();
@@ -203,12 +204,12 @@ export function SystemFeatureCard({
           data-testid="reminder-threshold-save"
           onClick={handleThresholdSave}
           disabled={thresholdSaveDisabled}
-          aria-label={t("thresholdSaveButton")}
+          aria-label={tCommon("actions.save")}
           className="group gap-0 transition-all duration-200 hover:gap-2"
         >
           <Save className="h-4 w-4" />
           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-            {t("thresholdSaveButton")}
+            {tCommon("actions.save")}
           </span>
         </Button>
       </div>

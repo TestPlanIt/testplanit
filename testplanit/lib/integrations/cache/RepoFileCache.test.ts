@@ -16,13 +16,21 @@ vi.mock("../../valkey", () => {
     hgetall: vi.fn(),
     disconnect: vi.fn(),
   };
+  // Each RepoFileCache takes whichever backend is current when it is built.
+  const backend = { current: mockValkey as unknown };
   return {
-    default: { duplicate: () => mockValkey },
+    default: { duplicate: () => backend.current },
     __mockValkey: mockValkey,
+    __backend: backend,
   };
 });
 
-import { RepoFileCache, type PreviewListCacheEntry } from "./RepoFileCache";
+import { FakeValkey } from "~/__tests__/helpers/fakeValkey";
+import {
+  RepoFileCache,
+  type PreviewListCacheEntry,
+  type RepoFileEntry,
+} from "./RepoFileCache";
 
 let mockValkey: any;
 
@@ -38,6 +46,7 @@ describe("RepoFileCache preview listing", () => {
     vi.clearAllMocks();
     const valkeyModule = await import("../../valkey");
     mockValkey = (valkeyModule as any).__mockValkey;
+    (valkeyModule as any).__backend.current = mockValkey;
     cache = new RepoFileCache();
   });
 
@@ -88,5 +97,193 @@ describe("RepoFileCache preview listing", () => {
     const result = await cache.getPreviewList(7, "main", ["src"]);
     expect(result).toBeNull();
     expect(mockValkey.del).toHaveBeenCalled();
+  });
+});
+
+describe("RepoFileCache staged refresh", () => {
+  const DAY = 24 * 3600;
+  let fake: FakeValkey;
+  let cache: RepoFileCache;
+
+  const file = (path: string): RepoFileEntry => ({
+    path,
+    size: 1,
+    type: "file",
+  });
+
+  /** A complete live cache, as the last successful refresh left it. */
+  async function seedLive(paths: string[]) {
+    const staged = await cache.stage(
+      5,
+      paths.map(file),
+      new Map(paths.map((p) => [p, `old ${p}`]))
+    );
+    await cache.commitStaged(staged, 7);
+  }
+
+  beforeEach(async () => {
+    delete process.env.INSTANCE_TENANT_ID;
+    const valkeyModule = await import("../../valkey");
+    fake = new FakeValkey();
+    (valkeyModule as any).__backend.current = fake;
+    cache = new RepoFileCache();
+  });
+
+  afterEach(() => {
+    delete process.env.INSTANCE_TENANT_ID;
+  });
+
+  it("keeps serving the live cache while a refresh is staged", async () => {
+    await seedLive(["a.ts"]);
+
+    await cache.stage(5, [file("b.ts")], new Map([["b.ts", "new"]]));
+
+    expect(await cache.getFiles(5)).toEqual([file("a.ts")]);
+    expect(await cache.getFileContents(5)).toEqual(
+      new Map([["a.ts", "old a.ts"]])
+    );
+    expect((await cache.getMeta(5))?.fileCount).toBe(1);
+  });
+
+  it("replaces the contents hash whole, so files deleted upstream do not linger", async () => {
+    await seedLive(["a.ts", "gone.ts"]);
+
+    const staged = await cache.stage(
+      5,
+      [file("a.ts"), file("b.ts")],
+      new Map([
+        ["a.ts", "new a"],
+        ["b.ts", "new b"],
+      ]),
+      { truncated: true }
+    );
+    await cache.commitStaged(staged, 3);
+
+    expect(await cache.getFiles(5)).toEqual([file("a.ts"), file("b.ts")]);
+    expect(await cache.getFileContents(5)).toEqual(
+      new Map([
+        ["a.ts", "new a"],
+        ["b.ts", "new b"],
+      ])
+    );
+    expect(await cache.getMeta(5)).toMatchObject({
+      status: "success",
+      fileCount: 2,
+      totalSize: 2,
+      truncated: true,
+    });
+    expect(fake.keys().sort()).toEqual([
+      "repo-file-contents:config:5",
+      "repo-files-meta:config:5",
+      "repo-files:config:5",
+    ]);
+    for (const key of fake.keys()) expect(fake.ttls.get(key)).toBe(3 * DAY);
+  });
+
+  it("drops the live contents when the refresh fetched none", async () => {
+    await seedLive(["a.ts"]);
+
+    const staged = await cache.stage(5, [file("a.ts")], new Map());
+    await cache.commitStaged(staged, 7);
+
+    expect(await cache.getFiles(5)).toEqual([file("a.ts")]);
+    expect(await cache.getFileContents(5)).toBeNull();
+  });
+
+  it("discarding a staged refresh removes it and leaves the live keys alone", async () => {
+    await seedLive(["a.ts"]);
+    const live = new Map(fake.strings);
+
+    const staged = await cache.stage(
+      5,
+      [file("b.ts")],
+      new Map([["b.ts", "x"]])
+    );
+    await cache.discardStaged(staged);
+
+    expect(fake.keys().filter((k) => k.includes(":staging:"))).toEqual([]);
+    expect(fake.strings).toEqual(live);
+    expect(await cache.getFileContents(5)).toEqual(
+      new Map([["a.ts", "old a.ts"]])
+    );
+  });
+
+  it("gives staging keys a short TTL so a crashed refresh cleans itself up", async () => {
+    await cache.stage(5, [file("a.ts")], new Map([["a.ts", "x"]]));
+
+    const staging = fake.keys().filter((k) => k.includes(":staging:"));
+    expect(staging).toHaveLength(3);
+    for (const key of staging) expect(fake.ttls.get(key)).toBe(3600);
+  });
+
+  it("keeps the tenant prefix on staging and live keys", async () => {
+    process.env.INSTANCE_TENANT_ID = "acme";
+
+    const staged = await cache.stage(
+      5,
+      [file("a.ts")],
+      new Map([["a.ts", "x"]])
+    );
+    const staging = fake.keys();
+    expect(staging).toEqual(
+      expect.arrayContaining([
+        `repo-files:acme:config:5:staging:${staged.token}`,
+        `repo-files-meta:acme:config:5:staging:${staged.token}`,
+        `repo-file-contents:acme:config:5:staging:${staged.token}`,
+      ])
+    );
+
+    await cache.commitStaged(staged, 7);
+    expect(fake.keys().sort()).toEqual([
+      "repo-file-contents:acme:config:5",
+      "repo-files-meta:acme:config:5",
+      "repo-files:acme:config:5",
+    ]);
+  });
+
+  it("fails the commit when a staged key has gone missing", async () => {
+    const staged = await cache.stage(5, [file("a.ts")], new Map());
+    await fake.del(...fake.keys());
+
+    await expect(cache.commitStaged(staged, 7)).rejects.toThrow(/no such key/);
+  });
+
+  describe("setError", () => {
+    it("keeps a live cache usable and records the failure beside its metadata", async () => {
+      await seedLive(["a.ts"]);
+      const before = await cache.getMeta(5);
+      fake.ttls.set("repo-files-meta:config:5", 1234);
+
+      const kept = await cache.setError(5, "HTTP 403", 7);
+
+      expect(kept).toBe(true);
+      expect(await cache.getFiles(5)).toEqual([file("a.ts")]);
+      expect(await cache.getMeta(5)).toEqual({
+        ...before,
+        lastError: { message: "HTTP 403", at: expect.any(String) },
+      });
+      expect(fake.ttls.get("repo-files-meta:config:5")).toBe(1234);
+    });
+
+    it("stores an error entry when there is no live cache", async () => {
+      const kept = await cache.setError(5, "HTTP 403", 2);
+
+      expect(kept).toBe(false);
+      expect(await cache.getMeta(5)).toMatchObject({
+        status: "error",
+        error: "HTTP 403",
+        fileCount: 0,
+      });
+      expect(fake.ttls.get("repo-files-meta:config:5")).toBe(2 * DAY);
+    });
+
+    it("a later successful refresh clears the recorded failure", async () => {
+      await seedLive(["a.ts"]);
+      await cache.setError(5, "HTTP 403", 7);
+
+      await seedLive(["a.ts"]);
+
+      expect((await cache.getMeta(5))?.lastError).toBeUndefined();
+    });
   });
 });

@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyInlineFormatting,
   convertHtmlToTipTapJSON,
   convertMarkdownToTipTapJSON,
   convertTextToTipTapJSON,
   ensureTipTapJSON,
   isLikelyMarkdown,
   serializeTipTapJSON,
+  tipTapJSONEquals,
 } from "./tiptapConversion";
 import { isJsonText } from "~/lib/utils/isJsonText";
 
@@ -223,6 +225,172 @@ describe("isLikelyMarkdown", () => {
   });
 });
 
+/** Flatten every text node in a document, ignoring structure. */
+function collectText(node: any): string {
+  if (!node) return "";
+  if (node.type === "text") return node.text ?? "";
+  return (node.content ?? []).map(collectText).join("");
+}
+
+/** The mark types carried by the text node whose text is `needle`. */
+function marksOn(node: any, needle: string): string[] {
+  if (!node) return [];
+  if (node.type === "text" && node.text === needle) {
+    return (node.marks ?? []).map((m: any) => m.type);
+  }
+  for (const child of node.content ?? []) {
+    const found = marksOn(child, needle);
+    if (found.length > 0) return found;
+  }
+  return [];
+}
+
+describe("applyInlineFormatting", () => {
+  // The italic pattern matches the empty string between a bold span's two
+  // opening asterisks. That empty <em> used to rewind the write cursor, so
+  // every bold span in a paragraph had its text emitted twice with a dangling
+  // "**" — reported as issue #595.
+  it("does not duplicate the text of a bold span", () => {
+    expect(applyInlineFormatting("must **never** open")).toBe(
+      "must <strong>never</strong> open"
+    );
+    expect(applyInlineFormatting("set to **10 minutes** in staging")).toBe(
+      "set to <strong>10 minutes</strong> in staging"
+    );
+  });
+
+  it("handles bold and italic together", () => {
+    expect(applyInlineFormatting("**bold** and *italic*")).toBe(
+      "<strong>bold</strong> and <em>italic</em>"
+    );
+    expect(applyInlineFormatting("a *i* b **b** c")).toBe(
+      "a <em>i</em> b <strong>b</strong> c"
+    );
+  });
+
+  it("handles several bold spans in one line", () => {
+    expect(applyInlineFormatting("**a** **b** **c**")).toBe(
+      "<strong>a</strong> <strong>b</strong> <strong>c</strong>"
+    );
+  });
+
+  it("marks a span at either end of the line", () => {
+    expect(applyInlineFormatting("trailing **bold**")).toBe(
+      "trailing <strong>bold</strong>"
+    );
+    expect(applyInlineFormatting("**leading** trailing")).toBe(
+      "<strong>leading</strong> trailing"
+    );
+  });
+
+  it("leaves text with no emphasis untouched", () => {
+    expect(applyInlineFormatting("plain text only")).toBe("plain text only");
+    // A lone asterisk is arithmetic, not emphasis.
+    expect(applyInlineFormatting("snake_case and 2 * 3 = 6")).toBe(
+      "snake_case and 2 * 3 = 6"
+    );
+  });
+
+  it("keeps unmatched asterisks literal instead of emitting empty emphasis", () => {
+    expect(applyInlineFormatting("a ** b")).toBe("a ** b");
+    expect(applyInlineFormatting("**")).toBe("**");
+    expect(applyInlineFormatting("****")).toBe("****");
+  });
+
+  it("escapes HTML in both marked and unmarked text", () => {
+    expect(
+      applyInlineFormatting("an <script>alert(1)</script> tag with **bold**")
+    ).toBe(
+      "an &lt;script&gt;alert(1)&lt;/script&gt; tag with <strong>bold</strong>"
+    );
+    expect(applyInlineFormatting("**<b>x</b>**")).toBe(
+      "<strong>&lt;b&gt;x&lt;/b&gt;</strong>"
+    );
+  });
+
+  it("leaves nested emphasis as literal asterisks rather than half-applying it", () => {
+    // Not a parser: `*a **b** c*` has no correct single-pass answer here. The
+    // outer italic is dropped rather than emitted as a partial `<em>a </em>`
+    // with a dangling tail, which is what it used to produce.
+    expect(applyInlineFormatting("*a **b** c*")).toBe(
+      "*a <strong>b</strong> c*"
+    );
+    expect(applyInlineFormatting("**a *b* c**")).toBe(
+      "<strong>a *b* c</strong>"
+    );
+  });
+
+  it("marks inline code", () => {
+    expect(applyInlineFormatting("The board shows its `3` statuses")).toBe(
+      "The board shows its <code>3</code> statuses"
+    );
+    expect(applyInlineFormatting("`a` then **b** then `c`")).toBe(
+      "<code>a</code> then <strong>b</strong> then <code>c</code>"
+    );
+  });
+
+  it("keeps asterisks inside inline code literal", () => {
+    expect(applyInlineFormatting("run `a * b * c` now")).toBe(
+      "run <code>a * b * c</code> now"
+    );
+    expect(applyInlineFormatting("glob `**/*.ts` and *x*")).toBe(
+      "glob <code>**/*.ts</code> and <em>x</em>"
+    );
+  });
+
+  it("escapes HTML inside inline code and leaves a lone backtick literal", () => {
+    expect(applyInlineFormatting("tag `<div>` here")).toBe(
+      "tag <code>&lt;div&gt;</code> here"
+    );
+    expect(applyInlineFormatting("it`s fine")).toBe("it`s fine");
+  });
+});
+
+describe("inline code alone in a field", () => {
+  // Issue #655: one code span is a single weak signal, so the text takes the
+  // plain-text path, which used to ignore backticks.
+  it("becomes a code mark through ensureTipTapJSON", () => {
+    const doc = ensureTipTapJSON("The board shows its `3` statuses");
+
+    expect(isLikelyMarkdown("The board shows its `3` statuses")).toBe(false);
+    expect(collectText(doc)).toBe("The board shows its 3 statuses");
+    expect(marksOn(doc, "3")).toContain("code");
+  });
+});
+
+describe("emphasis is rendered the same by both conversion paths", () => {
+  // ensureTipTapJSON routes on isLikelyMarkdown, which needs 2+ weak signals.
+  // A description with a single bold span has one, so it takes the plain-text
+  // path, while the same text in a list item has two and goes through marked.
+  // Issue #595 was visible precisely because those two paths disagreed.
+  it("marks a lone bold span whichever path handles it", () => {
+    const viaText = convertTextToTipTapJSON("must **never** open");
+    const viaMarkdown = convertMarkdownToTipTapJSON("must **never** open");
+
+    expect(collectText(viaText)).toBe("must never open");
+    expect(collectText(viaMarkdown)).toBe("must never open");
+    expect(marksOn(viaText, "never")).toContain("bold");
+    expect(marksOn(viaMarkdown, "never")).toContain("bold");
+  });
+
+  it("agrees on a bold span inside a list item", () => {
+    const viaText = convertTextToTipTapJSON("- set to **10 minutes**");
+    const viaMarkdown = convertMarkdownToTipTapJSON("- set to **10 minutes**");
+
+    expect(collectText(viaText)).toBe("set to 10 minutes");
+    expect(collectText(viaMarkdown)).toBe("set to 10 minutes");
+    expect(marksOn(viaText, "10 minutes")).toContain("bold");
+    expect(marksOn(viaMarkdown, "10 minutes")).toContain("bold");
+  });
+
+  it("routes a single bold span through the plain-text path", () => {
+    // Documents why the two paths have to agree rather than asserting a
+    // preference: one weak signal is below the markdown threshold.
+    expect(isLikelyMarkdown("must **never** open")).toBe(false);
+    expect(isLikelyMarkdown("- set to **10 minutes**")).toBe(true);
+  });
+});
+
 describe("convertMarkdownToTipTapJSON", () => {
   it("should convert markdown heading to TipTap JSON", () => {
     const result = convertMarkdownToTipTapJSON("# Hello");
@@ -237,6 +405,13 @@ describe("convertMarkdownToTipTapJSON", () => {
     const result = convertMarkdownToTipTapJSON("**bold** and *italic*");
     expect(result.type).toBe("doc");
     expect(result.content).toBeDefined();
+
+    // Assert the TEXT, not just the shape: this input duplicated the bold
+    // span for a long time and the shape-only assertion never noticed.
+    const text = collectText(result);
+    expect(text).toBe("bold and italic");
+    expect(marksOn(result, "bold")).toContain("bold");
+    expect(marksOn(result, "italic")).toContain("italic");
   });
 
   it("should convert markdown lists", () => {
@@ -367,5 +542,41 @@ describe("ensureTipTapJSON with markdown", () => {
       "Visit [TestPlanIt](https://testplanit.com) for details."
     );
     expect(result.type).toBe("doc");
+  });
+});
+
+describe("tipTapJSONEquals", () => {
+  // The seam under test: Postgres jsonb re-orders object keys, so the
+  // same document serializes differently from the DB and the editor.
+  const editorOrder =
+    '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hello"}]}]}';
+  const jsonbOrder =
+    '{"content":[{"content":[{"text":"Hello","type":"text"}],"type":"paragraph"}],"type":"doc"}';
+
+  it("treats jsonb key order and editor key order as the same document", () => {
+    expect(tipTapJSONEquals(editorOrder, jsonbOrder)).toBe(true);
+  });
+
+  it("still detects a real text change", () => {
+    const changed = editorOrder.replace("Hello", "Goodbye");
+    expect(tipTapJSONEquals(editorOrder, changed)).toBe(false);
+  });
+
+  it("does not treat content order as insignificant", () => {
+    const twoParagraphs = (first: string, second: string) =>
+      JSON.stringify({
+        type: "doc",
+        content: [first, second].map((text) => ({
+          type: "paragraph",
+          content: [{ type: "text", text }],
+        })),
+      });
+    expect(
+      tipTapJSONEquals(twoParagraphs("a", "b"), twoParagraphs("b", "a"))
+    ).toBe(false);
+  });
+
+  it("treats null and the canonical empty document as equal", () => {
+    expect(tipTapJSONEquals(null, serializeTipTapJSON(null))).toBe(true);
   });
 });

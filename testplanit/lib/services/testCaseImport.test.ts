@@ -1,4 +1,3 @@
-import { createQuerySchemaFactory } from "@zenstackhq/orm";
 import { describe, expect, it, vi } from "vitest";
 
 const auditedTransactionMock = vi.hoisted(() => vi.fn());
@@ -11,6 +10,7 @@ vi.mock("~/lib/services/reviewGate", () => ({
   resolveCreateStateRemap: vi.fn(async () => null),
 }));
 
+import { createQuerySchemaFactory } from "@zenstackhq/orm";
 import {
   ImportInputSchema,
   persistGeneratedTestCases,
@@ -109,14 +109,40 @@ describe("persistGeneratedTestCases input validation", () => {
   });
 });
 
-describe("persistGeneratedTestCases JSON columns", () => {
-  function stubTx(captured: { version?: any; steps?: any }) {
+/**
+ * Version 1 of an imported case has to equal the case as imported — the
+ * version page and every "as executed" view read the snapshot, not the case.
+ * Three ways it used to disagree (#600):
+ *   - steps passed as a serialized Tiptap document were wrapped as literal
+ *     text in the snapshot while the Steps rows got the parsed document;
+ *   - tags resolved to ids by the caller (what bulk-create does) never
+ *     reached the snapshot, which recorded `[]`;
+ *   - the same for issues linked by id.
+ */
+describe("persistGeneratedTestCases version 1 snapshot", () => {
+  const RICH_STEP = JSON.stringify({
+    type: "doc",
+    content: [
+      { type: "paragraph", content: [{ type: "text", text: "Click" }] },
+    ],
+  });
+  const RICH_RESULT = JSON.stringify({
+    type: "doc",
+    content: [
+      { type: "paragraph", content: [{ type: "text", text: "Opens" }] },
+    ],
+  });
+
+  function stubTx(captured: {
+    version?: any;
+    steps?: any;
+    fieldVersionValues?: any;
+  }) {
     return {
       issue: { findFirst: vi.fn(async () => null) },
       tags: { upsert: vi.fn() },
       repositoryFolders: {
         findUnique: vi.fn(),
-        findFirst: vi.fn(async () => null),
         update: vi.fn(),
         create: vi.fn(),
       },
@@ -126,8 +152,19 @@ describe("persistGeneratedTestCases JSON columns", () => {
         create: vi.fn(async () => ({ id: 500 })),
         update: vi.fn(async () => ({ id: 500 })),
       },
-      repositoryCaseIssue: { createMany: vi.fn(async () => ({ count: 0 })) },
-      repositoryCaseTag: { createMany: vi.fn(async () => ({ count: 0 })) },
+      repositoryCaseIssue: {
+        createMany: vi.fn(async () => ({ count: 1 })),
+        findMany: vi.fn(async () => [
+          { issue: { id: 77, name: "BUG-1", externalId: "EXT-77" } },
+        ]),
+      },
+      repositoryCaseTag: {
+        createMany: vi.fn(async () => ({ count: 2 })),
+        findMany: vi.fn(async () => [
+          { tag: { name: "smoke" } },
+          { tag: { name: "auth" } },
+        ]),
+      },
       attachments: { create: vi.fn() },
       repositoryCaseVersions: {
         create: vi.fn(async ({ data }: any) => {
@@ -136,7 +173,11 @@ describe("persistGeneratedTestCases JSON columns", () => {
         }),
       },
       caseFieldValues: { createMany: vi.fn() },
-      caseFieldVersionValues: { createMany: vi.fn() },
+      caseFieldVersionValues: {
+        createMany: vi.fn(async ({ data }: any) => {
+          captured.fieldVersionValues = data;
+        }),
+      },
       steps: {
         createMany: vi.fn(async ({ data }: any) => {
           captured.steps = data;
@@ -146,8 +187,298 @@ describe("persistGeneratedTestCases JSON columns", () => {
       dataSet: { create: vi.fn() },
       dataSetVersion: { create: vi.fn() },
       dataSetRow: { createMany: vi.fn() },
+      $executeRawUnsafe: vi.fn(async () => 0),
     };
   }
+
+  async function importOneCase() {
+    const captured: {
+      version?: any;
+      steps?: any;
+      fieldVersionValues?: any;
+    } = {};
+    auditedTransactionMock.mockImplementationOnce(async (fn: any) =>
+      fn(stubTx(captured))
+    );
+
+    const result = await persistGeneratedTestCases(
+      {
+        projectId: 1,
+        projectName: "Project",
+        repositoryId: 1,
+        folderId: 1,
+        folderName: "Folder",
+        templateId: 1,
+        templateName: "Template",
+        stateId: 1,
+        stateName: "Draft",
+        maxOrder: 0,
+        // bulk-create's exact shape: tags/issues already resolved to ids, so
+        // nothing hands the importer a name list to snapshot.
+        autoGenerateTags: false,
+        source: "MANUAL",
+        testCases: [
+          {
+            id: "case-1",
+            name: "Imported case",
+            fieldValues: {},
+            tagIds: [10, 11],
+            issueIds: [77],
+            steps: [{ step: RICH_STEP, expectedResult: RICH_RESULT }],
+          },
+        ],
+        fieldMappings: [],
+      } as any,
+      { userId: "u1", userName: "User" }
+    );
+
+    expect(result.status).toBe("success");
+    expect(result.errors).toEqual([]);
+    return captured;
+  }
+
+  it("snapshots the target folder's real name, not the caller's placeholder", async () => {
+    const captured: { version?: any } = {};
+    auditedTransactionMock.mockImplementationOnce(async (fn: any) => {
+      const tx = stubTx(captured);
+      tx.repositoryFolders.findUnique = vi.fn(async () => ({
+        name: "Manage my groups",
+      }));
+      return fn(tx);
+    });
+
+    const result = await persistGeneratedTestCases(
+      {
+        projectId: 1,
+        projectName: "Project",
+        repositoryId: 1,
+        folderId: 788,
+        // The generate wizard passes a translated "Generated" label here.
+        folderName: "Generated",
+        templateId: 1,
+        templateName: "Template",
+        stateId: 1,
+        stateName: "Draft",
+        maxOrder: 0,
+        autoGenerateTags: false,
+        testCases: [{ id: "case-1", name: "Imported case", fieldValues: {} }],
+        fieldMappings: [],
+      } as any,
+      { userId: "u1", userName: "User" }
+    );
+
+    expect(result.status).toBe("success");
+    expect(captured.version.folderId).toBe(788);
+    expect(captured.version.folderName).toBe("Manage my groups");
+  });
+
+  describe("custom field values on the name-keyed path", () => {
+    const MAPPINGS = [
+      {
+        fieldName: "Priority",
+        caseFieldId: 1,
+        fieldType: "Dropdown",
+        fieldOptions: [
+          { id: 11, name: "Low" },
+          { id: 12, name: "High", isDefault: true },
+        ],
+        isRequired: true,
+      },
+      {
+        fieldName: "Regression",
+        caseFieldId: 2,
+        fieldType: "Checkbox",
+        isChecked: true,
+      },
+      { fieldName: "Points", caseFieldId: 3, fieldType: "Integer" },
+      {
+        fieldName: "Secret",
+        caseFieldId: 4,
+        fieldType: "Text String",
+        isRestricted: true,
+      },
+    ];
+
+    async function importWith(
+      fieldValues: Record<string, unknown>,
+      opts: { strict?: boolean; canEditRestrictedFields?: boolean } = {}
+    ) {
+      const tx = stubTx({});
+      auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+      const result = await persistGeneratedTestCases(
+        {
+          ...buildInput(),
+          fieldMappings: MAPPINGS,
+          strictFieldValues: opts.strict ?? true,
+          testCases: [{ id: "a", name: "A", fieldValues, steps: [] }],
+        } as any,
+        {
+          userId: "u1",
+          userName: "User",
+          canEditRestrictedFields: opts.canEditRestrictedFields,
+        }
+      );
+      const written = (tx.caseFieldValues.createMany as any).mock.calls[0]?.[0]
+        .data as Array<{ fieldId: number; value: unknown }> | undefined;
+      return {
+        result: result.results[0],
+        values: Object.fromEntries(
+          (written ?? []).map((w) => [w.fieldId, w.value])
+        ),
+      };
+    }
+
+    it("stores values in the UI's shape and fills template defaults", async () => {
+      const { result, values } = await importWith({ Points: "5" });
+      expect(result.status).toBe("success");
+      // Priority: its default option. Regression: isChecked. Points: a number.
+      expect(values).toEqual({ 1: 12, 2: true, 3: 5 });
+    });
+
+    it("stores a Checkbox sent as 'false' unchecked", async () => {
+      const { values } = await importWith({
+        Priority: "Low",
+        Regression: "false",
+      });
+      expect(values[2]).toBe(false);
+      expect(values[1]).toBe(11);
+    });
+
+    it("fails the case on a value the field cannot hold", async () => {
+      const { result } = await importWith({ Points: "lots" });
+      expect(result).toMatchObject({
+        status: "error",
+        error: "Custom field 'Points' expects a whole number.",
+      });
+    });
+
+    it("fails the case when a required field has no value", async () => {
+      const noDefault = MAPPINGS.map((m) =>
+        m.fieldName === "Priority"
+          ? { ...m, fieldOptions: [{ id: 11, name: "Low" }] }
+          : m
+      );
+      const tx = stubTx({});
+      auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+      const result = await persistGeneratedTestCases(
+        {
+          ...buildInput(),
+          fieldMappings: noDefault,
+          strictFieldValues: true,
+          testCases: [{ id: "a", name: "A", fieldValues: {}, steps: [] }],
+        } as any,
+        { userId: "u1", userName: "User" }
+      );
+      expect(result.results[0]).toMatchObject({
+        status: "error",
+        error: "Required custom field 'Priority' has no value.",
+      });
+    });
+
+    it("refuses a restricted field from an author without permission", async () => {
+      const { result } = await importWith(
+        { Secret: "x" },
+        { canEditRestrictedFields: false }
+      );
+      expect(result.status).toBe("error");
+      expect(result.error).toMatch(/restricted/);
+      const allowed = await importWith(
+        { Secret: "x" },
+        { canEditRestrictedFields: true }
+      );
+      expect(allowed.values[4]).toBe("x");
+    });
+
+    it("drops an unusable value instead of failing outside strict mode", async () => {
+      const { result, values } = await importWith(
+        { Points: "lots" },
+        { strict: false }
+      );
+      expect(result.status).toBe("success");
+      expect(values[3]).toBeUndefined();
+    });
+  });
+
+  it("undoes only the failing case and keeps the cases already created", async () => {
+    // One interactive transaction holds the whole group. A failed statement
+    // used to abort it, so later cases failed and COMMIT quietly rolled back
+    // the ones reported as created; each case now runs in its own savepoint.
+    const tx = stubTx({});
+    tx.repositoryCases.create = vi
+      .fn()
+      .mockResolvedValueOnce({ id: 501 })
+      .mockRejectedValueOnce(new Error("insert or update violates foreign key"))
+      .mockResolvedValueOnce({ id: 503 });
+    auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+
+    const result = await persistGeneratedTestCases(
+      {
+        ...buildInput(),
+        testCases: ["A", "B", "C"].map((name) => ({
+          id: name,
+          name,
+          fieldValues: {},
+          steps: [],
+        })),
+      } as any,
+      { userId: "u1", userName: "User" }
+    );
+
+    expect(result.results.map((r: any) => [r.name, r.status])).toEqual([
+      ["A", "success"],
+      ["B", "error"],
+      ["C", "success"],
+    ]);
+    expect(tx.$executeRawUnsafe.mock.calls.map((c: any[]) => c[0])).toEqual([
+      "SAVEPOINT import_case",
+      "RELEASE SAVEPOINT import_case",
+      "SAVEPOINT import_case",
+      "ROLLBACK TO SAVEPOINT import_case",
+      "RELEASE SAVEPOINT import_case",
+      "SAVEPOINT import_case",
+      "RELEASE SAVEPOINT import_case",
+    ]);
+  });
+
+  it("creates a new case even when a deleted case has the same name", async () => {
+    // Restoring the deleted row brought back its old steps and versions, and
+    // its version 1 collided with the new snapshot.
+    const tx = stubTx({});
+    (tx.repositoryCases as any).findFirst = vi.fn(async () => ({ id: 42 }));
+    auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+
+    await persistGeneratedTestCases(
+      {
+        ...buildInput(),
+        testCases: [{ id: "a", name: "Login", fieldValues: {}, steps: [] }],
+      } as any,
+      { userId: "u1", userName: "User" }
+    );
+
+    expect(tx.repositoryCases.update).not.toHaveBeenCalled();
+    expect(tx.repositoryCases.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("snapshots steps exactly as the Steps rows store them", async () => {
+    const captured = await importOneCase();
+
+    const parsedDoc = JSON.parse(RICH_STEP);
+    const parsedResult = JSON.parse(RICH_RESULT);
+
+    expect(captured.steps[0].step).toEqual(parsedDoc);
+    expect(captured.version.steps).toEqual([
+      { step: parsedDoc, expectedResult: parsedResult },
+    ]);
+  });
+
+  it("snapshots the tags and issues actually linked to the case", async () => {
+    const captured = await importOneCase();
+
+    expect(captured.version.tags).toEqual(["smoke", "auth"]);
+    expect(captured.version.issues).toEqual([
+      { id: 77, name: "BUG-1", externalId: "EXT-77" },
+    ]);
+  });
 
   /**
    * A JSON body cannot carry NaN or Infinity, but React server actions do
@@ -213,7 +544,18 @@ describe("persistGeneratedTestCases JSON columns", () => {
     );
     const result = await persistGeneratedTestCases(
       {
-        ...buildInput(),
+        projectId: 1,
+        projectName: "Project",
+        repositoryId: 1,
+        folderId: 1,
+        folderName: "Folder",
+        templateId: 1,
+        templateName: "Template",
+        stateId: 1,
+        stateName: "Draft",
+        maxOrder: 0,
+        autoGenerateTags: false,
+        source: "MANUAL",
         testCases: [
           {
             id: "case-1",
@@ -224,6 +566,7 @@ describe("persistGeneratedTestCases JSON columns", () => {
             steps: [{ step: pastedList, expectedResult: pastedTable }],
           },
         ],
+        fieldMappings: [],
       } as any,
       { userId: "u1", userName: "User" }
     );

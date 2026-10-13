@@ -9,7 +9,7 @@ import { PageTitle, SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/tables/DataTable";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import {
   Dialog,
   DialogContent,
@@ -1178,9 +1178,7 @@ export default function SSOAdminPage() {
                 {/* Add new domain */}
                 <div className="flex gap-2 mb-4">
                   <Input
-                    placeholder={t(
-                      "admin.sso.registration.allowedDomains.placeholder"
-                    )}
+                    placeholder={t("common.placeholders.domainExample")}
                     value={newDomain}
                     onChange={(e) => setNewDomain(e.target.value)}
                     onKeyDown={(e) => {

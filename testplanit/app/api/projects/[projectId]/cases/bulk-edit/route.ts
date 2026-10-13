@@ -1,4 +1,4 @@
-import { ProjectAccessType } from "~/zenstack/models";
+import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -6,6 +6,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { baseDb } from "~/lib/db";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
+import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import {
@@ -166,6 +167,54 @@ export const POST = withAuditContext(
       // Parse and validate request body
       const body = await request.json();
       const validatedData: BulkEditRequest = bulkEditSchema.parse(body);
+
+      // The writes below go through the base client, so the policies a
+      // single edit meets — add/edit on the repository, and on restricted
+      // fields for those — are checked here.
+      const canEditCases = await userCanAddEditArea(
+        session.user.id,
+        projectId,
+        ApplicationArea.TestCaseRepository,
+        session.user.access
+      );
+      if (!canEditCases) {
+        return NextResponse.json(
+          {
+            error:
+              "You do not have permission to edit test cases in this project.",
+          },
+          { status: 403 }
+        );
+      }
+      const editedFieldIds = [
+        ...new Set(
+          (validatedData.customFieldUpdates ?? []).map((u) => u.fieldId)
+        ),
+      ];
+      if (editedFieldIds.length > 0) {
+        const restricted = await baseDb.caseFields.findMany({
+          where: { id: { in: editedFieldIds }, isRestricted: true },
+          select: { displayName: true },
+        });
+        if (
+          restricted.length > 0 &&
+          !(await userCanAddEditArea(
+            session.user.id,
+            projectId,
+            ApplicationArea.TestCaseRestrictedFields,
+            session.user.access
+          ))
+        ) {
+          return NextResponse.json(
+            {
+              error: `You do not have permission to change restricted field(s): ${restricted
+                .map((f) => f.displayName)
+                .join(", ")}.`,
+            },
+            { status: 403 }
+          );
+        }
+      }
 
       // Verify all cases belong to this project
       const cases = await baseDb.repositoryCases.findMany({
@@ -455,12 +504,27 @@ export const POST = withAuditContext(
 
             // Create version snapshot if requested
             // Note: The test case was already updated with currentVersion incremented above
-            if (validatedData.createVersions) {
+            //
+            // A change to `automated` is snapshotted even when the caller
+            // opted out of versions: Automation Trends reads the flag's
+            // history off the version timeline, so an unsnapshotted flip
+            // leaves the case counted as its old state in the report. The
+            // ORM hook that catches flag-only writes elsewhere skips this
+            // route because the update above bumps currentVersion.
+            const automatedFlips =
+              updateData.automated !== undefined &&
+              updateData.automated !== caseItem.automated;
+            if (validatedData.createVersions || automatedFlips) {
               await createTestCaseVersionInTransaction(tx, caseId, {
                 // Preserve original creator metadata
                 creatorId: caseItem.creatorId,
                 creatorName: caseItem.creator?.name || "",
                 createdAt: caseItem.createdAt,
+                // The field-value writes above land earlier in this same
+                // transaction, so the copy picks up this edit's values. Without
+                // it the snapshot carries none and the history UI reads as
+                // though the bulk edit had cleared every custom field.
+                copyFieldValues: true,
                 overrides: {
                   // Apply any changes from the bulk edit
                   name: updateData.name ?? caseItem.name,

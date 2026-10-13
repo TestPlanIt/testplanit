@@ -28,7 +28,7 @@ vi.mock("~/lib/db", () => ({
     repositoryFolders: { findFirst: vi.fn() },
     workflows: { findFirst: vi.fn() },
     repositoryCases: { findFirst: vi.fn() },
-    tags: { upsert: vi.fn() },
+    tags: { findMany: vi.fn() },
   },
 }));
 
@@ -36,11 +36,34 @@ vi.mock("~/lib/services/jira-panel-generation", () => ({
   loadTemplateData: vi.fn(),
 }));
 
+vi.mock("~/lib/services/tagResolution", () => ({
+  resolveTagByName: vi.fn(),
+}));
+
+vi.mock("~/lib/services/projectPermissions", () => ({
+  userCanAddEditArea: vi.fn(),
+}));
+
 vi.mock("~/lib/services/testCaseImport", () => ({
   persistGeneratedTestCases: vi.fn(),
 }));
 
+// Declared inside the factory: vi.mock is hoisted above any top-level binding
+// this file could otherwise close over.
+vi.mock("~/lib/services/resolveIssueKeys", () => ({
+  resolveIssueKeys: vi.fn(),
+  IssueKeyResolutionError: class extends Error {
+    readonly status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+    }
+  },
+}));
+
 import { getServerSession } from "next-auth";
+import { userCanAddEditArea } from "~/lib/services/projectPermissions";
+import { resolveTagByName } from "~/lib/services/tagResolution";
 import {
   authenticateApiTokenForMethod,
   extractBearerToken,
@@ -48,6 +71,10 @@ import {
 import { enrichFromApiAuth } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
+import {
+  IssueKeyResolutionError,
+  resolveIssueKeys,
+} from "~/lib/services/resolveIssueKeys";
 import { persistGeneratedTestCases } from "~/lib/services/testCaseImport";
 import { POST } from "./route";
 
@@ -100,6 +127,7 @@ beforeEach(() => {
   });
   // Default template resolution (no explicit templateId → default lookup).
   (baseDb.templates.findFirst as any).mockResolvedValue({ id: 22 });
+  (userCanAddEditArea as any).mockResolvedValue(true);
   (loadTemplateData as any).mockResolvedValue({
     template: { id: 22, name: "Default", fields: [] },
     fieldMappings: [
@@ -121,9 +149,15 @@ beforeEach(() => {
     name: "Draft",
   });
   (baseDb.repositoryCases.findFirst as any).mockResolvedValue({ order: 4 });
-  (baseDb.tags.upsert as any).mockImplementation(async ({ where }: any) => ({
-    id: where.name === "Regression" ? 50 : 51,
+  (resolveTagByName as any).mockImplementation(async (name: string) => ({
+    id: name === "Regression" ? 50 : 51,
+    name,
+    created: false,
   }));
+  (baseDb.tags.findMany as any).mockImplementation(async ({ where }: any) =>
+    where.id.in.filter((id: number) => id !== 999).map((id: number) => ({ id }))
+  );
+  (resolveIssueKeys as any).mockResolvedValue(new Map());
   importerEchoSuccess();
 });
 
@@ -210,6 +244,25 @@ describe("Bulk Create API Route", () => {
       expect(data.error).toBe("Project not found or access denied");
     });
 
+    it("returns 403 when the user cannot add or edit repository cases", async () => {
+      (userCanAddEditArea as any).mockResolvedValue(false);
+
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      const res = await POST(req, ctx);
+
+      expect(res.status).toBe(403);
+      expect(userCanAddEditArea).toHaveBeenCalledWith(
+        "user-123",
+        1,
+        "TestCaseRepository",
+        "ADMIN"
+      );
+      expect(persistGeneratedTestCases).not.toHaveBeenCalled();
+    });
+
     it("returns 400 for an invalid body (no cases)", async () => {
       const [req, ctx] = createRequest({ folderId: 12, cases: [] });
       const res = await POST(req, ctx);
@@ -241,6 +294,34 @@ describe("Bulk Create API Route", () => {
       const data = await res.json();
       expect(res.status).toBe(422);
       expect(data.error).toContain("No enabled template");
+    });
+
+    it("prefers the CASES state marked Default when stateName is omitted", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      expect(baseDb.workflows.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ isDefault: "desc" }, { order: "asc" }],
+        })
+      );
+    });
+
+    it("prefers the template marked Default when templateId is omitted", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      expect(baseDb.templates.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ isDefault: "desc" }, { id: "asc" }],
+        })
+      );
     });
   });
 
@@ -290,12 +371,126 @@ describe("Bulk Create API Route", () => {
       const res = await POST(req, ctx);
       expect(res.status).toBe(200);
 
-      // "Regression" was upserted to id 50; combined with explicit id 4.
+      // "Regression" resolved to id 50; combined with explicit id 4.
       const importInput = (persistGeneratedTestCases as any).mock.calls[0][0];
       const tc = importInput.testCases[0];
       expect(tc.steps).toEqual([{ step: "do x", expectedResult: "y" }]);
       expect(tc.tagIds).toEqual([4, 50]);
       expect(importInput.autoGenerateTags).toBe(false);
+    });
+
+    it("asks the importer to validate field values the way the UI does", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      const [input, author] = (persistGeneratedTestCases as any).mock.calls[0];
+      expect(input.strictFieldValues).toBe(true);
+      // No restricted field on the template, so no permission lookup.
+      expect(author.canEditRestrictedFields).toBe(true);
+    });
+
+    it("checks restricted-field permission when the template has one", async () => {
+      (loadTemplateData as any).mockResolvedValue({
+        template: { id: 22, name: "Default", fields: [] },
+        fieldMappings: [
+          {
+            fieldName: "Secret",
+            caseFieldId: 9,
+            fieldType: "Text String",
+            isRestricted: true,
+          },
+        ],
+      });
+      (userCanAddEditArea as any).mockImplementation(
+        async (_u: string, _p: number, area: string) =>
+          area === "TestCaseRepository"
+      );
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      const [, author] = (persistGeneratedTestCases as any).mock.calls[0];
+      expect(author.canEditRestrictedFields).toBe(false);
+    });
+
+    it("keeps steps in their given order", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          {
+            name: "A",
+            steps: [
+              { text: "third", order: 2 },
+              { text: "first", order: 0 },
+              { text: "second", order: 1 },
+            ],
+          },
+        ],
+      });
+      await POST(req, ctx);
+
+      const tc = (persistGeneratedTestCases as any).mock.calls[0][0]
+        .testCases[0];
+      expect(tc.steps.map((s: any) => s.step)).toEqual([
+        "first",
+        "second",
+        "third",
+      ]);
+    });
+
+    it("fails a case whose name is longer than 255 characters instead of cutting it", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "x".repeat(256) }, { name: "B" }],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(data.results[0]).toMatchObject({
+        status: "error",
+        error: "Name is 256 characters; the limit is 255.",
+      });
+      const imported = (persistGeneratedTestCases as any).mock.calls[0][0]
+        .testCases;
+      expect(imported.map((c: any) => c.name)).toEqual(["B"]);
+    });
+
+    it("links a tag named twice, by id and by name, once", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A", tags: [50, "Regression", " Regression "] }],
+      });
+      await POST(req, ctx);
+
+      const tc = (persistGeneratedTestCases as any).mock.calls[0][0]
+        .testCases[0];
+      expect(tc.tagIds).toEqual([50]);
+    });
+
+    it("fails only the case citing a tag id that does not exist", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          { name: "A", tags: [999] },
+          { name: "B", tags: [4] },
+        ],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(data.results[0]).toMatchObject({
+        name: "A",
+        status: "error",
+        error: "Tag id(s) not found: 999.",
+      });
+      const imported = (persistGeneratedTestCases as any).mock.calls[0][0]
+        .testCases;
+      expect(imported.map((c: any) => c.name)).toEqual(["B"]);
     });
 
     it("groups cases by (folderId, stateName) — one importer call per group", async () => {
@@ -433,6 +628,123 @@ describe("Bulk Create API Route", () => {
       const importInput = (persistGeneratedTestCases as any).mock.calls[0][0];
       expect(importInput.testCases).toHaveLength(1);
       expect(importInput.testCases[0].name).toBe("ok");
+    });
+  });
+
+  /**
+   * Issue keys are the point of #596: an agent attaches a ticket in the same
+   * request that creates the case, and the server does the tracker lookup that
+   * previously only the web UI could do.
+   */
+  describe("Issue keys", () => {
+    it("resolves keys once for the batch and links the resulting ids", async () => {
+      (resolveIssueKeys as any).mockResolvedValue(
+        new Map([
+          ["PROJ-1", { key: "PROJ-1", issueId: 900 }],
+          ["PROJ-2", { key: "PROJ-2", issueId: 901, created: true }],
+        ])
+      );
+
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          { name: "A", issues: ["PROJ-1"] },
+          { name: "B", issues: ["PROJ-1", "PROJ-2"] },
+        ],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.importedCount).toBe(2);
+
+      // One resolve call for the whole batch, carrying every citation.
+      expect(resolveIssueKeys).toHaveBeenCalledTimes(1);
+      expect((resolveIssueKeys as any).mock.calls[0][0]).toMatchObject({
+        projectId: 1,
+        keys: ["PROJ-1", "PROJ-1", "PROJ-2"],
+      });
+
+      const importInput = (persistGeneratedTestCases as any).mock.calls[0][0];
+      expect(importInput.testCases[0].issueIds).toEqual([900]);
+      expect(importInput.testCases[1].issueIds).toEqual([900, 901]);
+    });
+
+    it("fails only the cases citing an unresolvable key", async () => {
+      (resolveIssueKeys as any).mockResolvedValue(
+        new Map([
+          ["PROJ-1", { key: "PROJ-1", issueId: 900 }],
+          ["TYPO-9", { key: "TYPO-9", error: "Issue does not exist" }],
+        ])
+      );
+
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          { name: "good", issues: ["PROJ-1"] },
+          { name: "bad", issues: ["TYPO-9"] },
+          { name: "none" },
+        ],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(data.importedCount).toBe(2);
+      expect(data.failedCount).toBe(1);
+      const bad = data.results.find((r: any) => r.name === "bad");
+      expect(bad.status).toBe("error");
+      expect(bad.error).toContain("TYPO-9");
+      expect(bad.error).toContain("Issue does not exist");
+
+      // The unaffected cases still reached the importer.
+      const importInput = (persistGeneratedTestCases as any).mock.calls[0][0];
+      expect(importInput.testCases.map((c: any) => c.name)).toEqual([
+        "good",
+        "none",
+      ]);
+    });
+
+    it("reports a missing integration on the citing cases only", async () => {
+      (resolveIssueKeys as any).mockRejectedValue(
+        new IssueKeyResolutionError("no tracker configured", 400)
+      );
+
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "cites", issues: ["PROJ-1"] }, { name: "quiet" }],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(data.importedCount).toBe(1);
+      expect(data.failedCount).toBe(1);
+      expect(data.results.find((r: any) => r.name === "cites").error).toContain(
+        "no tracker configured"
+      );
+      expect(data.results.find((r: any) => r.name === "quiet").status).toBe(
+        "success"
+      );
+    });
+
+    it("forwards integrationId when the caller disambiguates", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        integrationId: 9,
+        cases: [{ name: "A", issues: ["PROJ-1"] }],
+      });
+      await POST(req, ctx);
+
+      expect((resolveIssueKeys as any).mock.calls[0][0].integrationId).toBe(9);
+    });
+
+    it("does not reach for the tracker when no case cites an issue", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      expect(resolveIssueKeys).not.toHaveBeenCalled();
     });
   });
 });
