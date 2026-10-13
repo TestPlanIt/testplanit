@@ -6,6 +6,7 @@ import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PanelCollapseToggle } from "@/components/PanelCollapseToggle";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,7 @@ import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { useLatestTestResults } from "~/hooks/useLatestTestResults";
+import { usePanelCollapsed } from "~/hooks/usePanelCollapsed";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { DateFormatter } from "./DateFormatter";
 import {
@@ -114,45 +116,50 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
 }) => {
   const tLinkedCases = useTranslations("linkedCases");
   const tGlobal = useTranslations();
-
-  // Fetch all links where this case is caseA or caseB
-  const { data: links, refetch } = useClientQueries(
-    schema
-  ).repositoryCaseLink.useFindMany({
-    where: {
-      OR: [
-        { caseAId: caseId, isDeleted: false },
-        { caseBId: caseId, isDeleted: false },
-      ],
-    },
-    include: {
-      caseA: {
-        select: {
-          id: true,
-          name: true,
-          source: true,
-          isDeleted: true,
-          automated: true,
-          hasParameters: true,
-        },
-      },
-      caseB: {
-        select: {
-          id: true,
-          name: true,
-          source: true,
-          isDeleted: true,
-          automated: true,
-          hasParameters: true,
-        },
-      },
-      createdBy: { select: { id: true, name: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const { collapsed, toggle, hydrated } = usePanelCollapsed("linked-cases");
 
   // For Add Link Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Fetch all links where this case is caseA or caseB. The add dialog reads
+  // them too (to exclude already-linked cases), so it loads them while open.
+  const { data: links, refetch } = useClientQueries(
+    schema
+  ).repositoryCaseLink.useFindMany(
+    {
+      where: {
+        OR: [
+          { caseAId: caseId, isDeleted: false },
+          { caseBId: caseId, isDeleted: false },
+        ],
+      },
+      include: {
+        caseA: {
+          select: {
+            id: true,
+            name: true,
+            source: true,
+            isDeleted: true,
+            automated: true,
+            hasParameters: true,
+          },
+        },
+        caseB: {
+          select: {
+            id: true,
+            name: true,
+            source: true,
+            isDeleted: true,
+            automated: true,
+            hasParameters: true,
+          },
+        },
+        createdBy: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    },
+    { enabled: hydrated && (!collapsed || isModalOpen) }
+  );
 
   const { mutateAsync: upsertLink } =
     useClientQueries(schema).repositoryCaseLink.useUpsert();
@@ -325,6 +332,11 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
     <Card shadow="none">
       <CardHeader className="flex flex-row items-center justify-between p-4">
         <CardTitle className="flex items-center gap-2">
+          <PanelCollapseToggle
+            collapsed={collapsed}
+            onToggle={toggle}
+            testId="linked-cases-collapse-toggle"
+          />
           <Link2 className="w-5 h-5" />
           {tLinkedCases("title")}
         </CardTitle>
@@ -350,191 +362,193 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           </>
         )}
       </CardHeader>
-      <CardContent className="p-0">
-        {!links || links.length === 0 ? (
-          <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm">
-            {tLinkedCases("noLinkedCases")}
-          </div>
-        ) : (
-          // Fixed layout, or a long header grows its own column and runs
-          // off the card instead of truncating.
-          <Table className="table-fixed w-full">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[34%] truncate">
-                  {tLinkedCases("testCase")}
-                </TableHead>
-                <TableHead className="w-[16%] truncate">
-                  {tLinkedCases("linkType")}
-                </TableHead>
-                <TableHead className="w-[16%] truncate">
-                  {tLinkedCases("status")}
-                </TableHead>
-                <TableHead className="w-[13%] truncate">
-                  {tLinkedCases("linkedBy")}
-                </TableHead>
-                <TableHead className="w-[13%] truncate">
-                  {tLinkedCases("on")}
-                </TableHead>
-                <TableHead className="w-[8%] truncate text-end">
-                  {tGlobal("common.actions.remove")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {links?.map(
-                (
-                  link: RepositoryCaseLink & {
-                    caseA: LinkedCase;
-                    caseB: LinkedCase;
-                    createdBy: { id: string; name: string };
-                  }
-                ) => {
-                  const otherCase = getOtherCase(link);
-                  const otherCaseSource = otherCase.source;
-                  const latestResult = latestResultsByCase[otherCase.id]?.[0];
-                  return (
-                    <TableRow key={link.id}>
-                      <TableCell>
-                        <CaseDisplay
-                          testCase={{
-                            id: otherCase.id,
-                            name: otherCase.name,
-                            source: otherCaseSource,
-                            isDeleted: otherCase.isDeleted,
-                            hasParameters: (otherCase as any).hasParameters,
-                          }}
-                          projectId={
-                            otherCase.isDeleted
-                              ? undefined
-                              : projectId || (otherCase as any).projectId
-                          }
-                          className="font-medium"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className="max-w-full"
-                          data-testid={`linked-case-type-${link.id}`}
-                        >
-                          <span className="truncate">
-                            {linkTypeLabel(link)}
-                          </span>
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <CaseResultStatus
-                            caseId={otherCase.id}
-                            statusName={latestResult?.statusName}
-                            statusColor={latestResult?.statusColor}
-                            testRunId={latestResult?.testRunId}
-                            projectId={projectId ?? otherCase.projectId}
-                            className="flex items-center space-x-1 min-w-0"
-                            nameClassName="truncate text-xs"
-                          />
-                          {latestResult && (
-                            // The execution time lives in a tooltip: the
-                            // column is narrow and the status is what the
-                            // reader scans for.
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span
-                                    className="text-muted-foreground shrink-0 inline-flex"
-                                    aria-label={tLinkedCases("at")}
-                                    data-testid={`linked-case-executed-at-${link.id}`}
-                                  >
-                                    <Calendar className="w-4 h-4" />
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                  <DateFormatter
-                                    date={latestResult.executedAt}
-                                    formatString={
-                                      session?.user.preferences?.dateFormat +
-                                      " " +
-                                      session?.user.preferences?.timeFormat
-                                    }
-                                    timezone={
-                                      session?.user.preferences?.timezone
-                                    }
-                                  />
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="truncate">
-                          <UserNameCell userId={link.createdBy?.id} />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <DateFormatter
-                          date={link.createdAt}
-                          formatString={
-                            session?.user.preferences?.dateFormat +
-                            " " +
-                            session?.user.preferences?.timeFormat
-                          }
-                          timezone={session?.user.preferences?.timezone}
-                        />
-                      </TableCell>
-                      <TableCell className="text-end">
-                        {canManageLinks && (
-                          <Popover
-                            open={openPopoverLinkId === link.id}
-                            onOpenChange={(open) =>
-                              setOpenPopoverLinkId(open ? link.id : null)
+      {!collapsed && (
+        <CardContent className="p-0">
+          {!links || links.length === 0 ? (
+            <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm">
+              {tLinkedCases("noLinkedCases")}
+            </div>
+          ) : (
+            // Fixed layout, or a long header grows its own column and runs
+            // off the card instead of truncating.
+            <Table className="table-fixed w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[34%] truncate">
+                    {tLinkedCases("testCase")}
+                  </TableHead>
+                  <TableHead className="w-[16%] truncate">
+                    {tLinkedCases("linkType")}
+                  </TableHead>
+                  <TableHead className="w-[16%] truncate">
+                    {tLinkedCases("status")}
+                  </TableHead>
+                  <TableHead className="w-[13%] truncate">
+                    {tLinkedCases("linkedBy")}
+                  </TableHead>
+                  <TableHead className="w-[13%] truncate">
+                    {tLinkedCases("on")}
+                  </TableHead>
+                  <TableHead className="w-[8%] truncate text-end">
+                    {tGlobal("common.actions.remove")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {links?.map(
+                  (
+                    link: RepositoryCaseLink & {
+                      caseA: LinkedCase;
+                      caseB: LinkedCase;
+                      createdBy: { id: string; name: string };
+                    }
+                  ) => {
+                    const otherCase = getOtherCase(link);
+                    const otherCaseSource = otherCase.source;
+                    const latestResult = latestResultsByCase[otherCase.id]?.[0];
+                    return (
+                      <TableRow key={link.id}>
+                        <TableCell>
+                          <CaseDisplay
+                            testCase={{
+                              id: otherCase.id,
+                              name: otherCase.name,
+                              source: otherCaseSource,
+                              isDeleted: otherCase.isDeleted,
+                              hasParameters: (otherCase as any).hasParameters,
+                            }}
+                            projectId={
+                              otherCase.isDeleted
+                                ? undefined
+                                : projectId || (otherCase as any).projectId
                             }
+                            className="font-medium"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="secondary"
+                            className="max-w-full"
+                            data-testid={`linked-case-type-${link.id}`}
                           >
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                aria-label={tGlobal("common.actions.remove")}
-                                onClick={() => setOpenPopoverLinkId(link.id)}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-fit" side="bottom">
-                              <div className="mb-2">
-                                {tLinkedCases("confirmRemoveLink")}
-                              </div>
-                              <div className="flex items-center gap-2">
+                            <span className="truncate">
+                              {linkTypeLabel(link)}
+                            </span>
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CaseResultStatus
+                              caseId={otherCase.id}
+                              statusName={latestResult?.statusName}
+                              statusColor={latestResult?.statusColor}
+                              testRunId={latestResult?.testRunId}
+                              projectId={projectId ?? otherCase.projectId}
+                              className="flex items-center space-x-1 min-w-0"
+                              nameClassName="truncate text-xs"
+                            />
+                            {latestResult && (
+                              // The execution time lives in a tooltip: the
+                              // column is narrow and the status is what the
+                              // reader scans for.
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span
+                                      className="text-muted-foreground shrink-0 inline-flex"
+                                      aria-label={tLinkedCases("at")}
+                                      data-testid={`linked-case-executed-at-${link.id}`}
+                                    >
+                                      <Calendar className="w-4 h-4" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    <DateFormatter
+                                      date={latestResult.executedAt}
+                                      formatString={
+                                        session?.user.preferences?.dateFormat +
+                                        " " +
+                                        session?.user.preferences?.timeFormat
+                                      }
+                                      timezone={
+                                        session?.user.preferences?.timezone
+                                      }
+                                    />
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="truncate">
+                            <UserNameCell userId={link.createdBy?.id} />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <DateFormatter
+                            date={link.createdAt}
+                            formatString={
+                              session?.user.preferences?.dateFormat +
+                              " " +
+                              session?.user.preferences?.timeFormat
+                            }
+                            timezone={session?.user.preferences?.timezone}
+                          />
+                        </TableCell>
+                        <TableCell className="text-end">
+                          {canManageLinks && (
+                            <Popover
+                              open={openPopoverLinkId === link.id}
+                              onOpenChange={(open) =>
+                                setOpenPopoverLinkId(open ? link.id : null)
+                              }
+                            >
+                              <PopoverTrigger asChild>
                                 <Button
-                                  type="button"
-                                  variant="secondary"
-                                  onClick={() => setOpenPopoverLinkId(null)}
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label={tGlobal("common.actions.remove")}
+                                  onClick={() => setOpenPopoverLinkId(link.id)}
                                 >
-                                  <CircleSlash2 className="w-4 h-4" />
-                                  {tGlobal("common.cancel")}
+                                  <X className="w-4 h-4" />
                                 </Button>
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  onClick={() => handleUnlink(link.id)}
-                                >
-                                  <Trash className="w-4 h-4" />
-                                  {tGlobal("common.actions.remove")}
-                                </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                }
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-fit" side="bottom">
+                                <div className="mb-2">
+                                  {tLinkedCases("confirmRemoveLink")}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={() => setOpenPopoverLinkId(null)}
+                                  >
+                                    <CircleSlash2 className="w-4 h-4" />
+                                    {tGlobal("common.cancel")}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    onClick={() => handleUnlink(link.id)}
+                                  >
+                                    <Trash className="w-4 h-4" />
+                                    {tGlobal("common.actions.remove")}
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 };

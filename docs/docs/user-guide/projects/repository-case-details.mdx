@@ -52,6 +52,10 @@ The `Forecast` value provides an automated prediction of the test case's executi
 - **Read-Only:** The forecast value is system-generated and cannot be edited directly by users. It serves as a data-driven insight into expected execution duration based on historical performance.
 - **Display:** It is shown on the Test Case Details page and can be added as a column in the main [Repository View](./repository.md).
 
+## Collapsing Panels
+
+The panels below the case information — **Linked Test Cases**, **Linked Requirements**, **Code Pins**, and **Test Result History** — each have a chevron at the left of their header that collapses the panel to its header and expands it again. Each panel remembers whether it is collapsed in your browser, so the choice carries over to other cases, page reloads, and the case details shown inside a test run. Panels are expanded until you collapse them.
+
 ## Test Result History
 
 Below the case information, the **Test Result History** panel lists every result the case has ever produced across all test runs — manual results, automated (JUnit) results, and pending entries for open runs where the case hasn't been executed yet. Each row shows the run, status, tester, execution time, duration, attachments, linked issues, and the case version the result was recorded against. Expand a row to see the full result: notes, custom result fields, step results, and — for parameterized cases — the iteration's parameter values (see [Parameterized Test Cases](./parameterized-test-cases.md#test-result-history)).
@@ -65,7 +69,7 @@ When the header is too narrow for labeled buttons (for example in the docked sid
 
 ## Code Pins
 
-When the project has [Impact Analysis](../impact.md) enabled and an application repository connected, a **Code Pins** panel follows the result history. It lists the code this case covers — a change inside a pinned block pulls the case into an analysis with the **Pin** reason. The panel header names the connected repository, and its branch when one is configured, and offers **Add pin**. When the project connects several repositories the header counts them instead, and each pin's row names its **Repository**.
+When the project has [Impact Analysis](../impact.md) enabled and an application repository connected, a **Code Pins** panel appears above the result history. It lists the code this case covers — a change inside a pinned block pulls the case into an analysis with the **Pin** reason. The panel header names the connected repository, and its branch when one is configured, and offers **Add pin**. When the project connects several repositories the header counts them instead, and each pin's row names its **Repository**.
 
 Each pin is a row with its **File** and note, its **Location** (a line range such as `L12–L40`, a symbol name, a glob pattern, or **Whole file**), its **Kind**, and its **Source** — **Manual**, **AI**, **Annotation**, **Map file**, or **Issue** (derived from a commit that named an issue the case is linked to; the issues appear as chips under the file path). Hovering the location names the commit the pin is anchored at, and the columns can be resized by dragging their edges. A pin whose file, lines, or symbol can no longer be found at the branch tip carries a **Stale** badge with **Re-anchor** and **Dismiss** actions under its path. Pins added here can be edited, or removed after a confirmation, which takes effect at once; pins that come from the repository (**Annotation** and **Map file**) have both actions disabled and are edited in the repository itself.
 

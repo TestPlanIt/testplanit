@@ -739,3 +739,44 @@ describe("TestResultHistory", () => {
     });
   });
 });
+
+describe("TestResultHistory — collapsing", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("runs none of its queries while collapsed", () => {
+    window.localStorage.setItem(
+      "case-panel-collapsed:test-result-history",
+      "true"
+    );
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(screen.getByText("testResultHistory")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("result-history-collapse-toggle")
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(mockUseFindFirstRepositoryCases).not.toHaveBeenCalled();
+    expect(mockUseFindManyRepositoryCaseVersions).not.toHaveBeenCalled();
+  });
+
+  it("loads the history once expanded and remembers the choice", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(
+      "case-panel-collapsed:test-result-history",
+      "true"
+    );
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+    await user.click(screen.getByTestId("result-history-collapse-toggle"));
+
+    expect(mockUseFindFirstRepositoryCases).toHaveBeenCalled();
+    expect(
+      screen.getByTestId("result-history-collapse-toggle")
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(
+      window.localStorage.getItem("case-panel-collapsed:test-result-history")
+    ).toBe("false");
+  });
+});

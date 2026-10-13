@@ -34,6 +34,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { PanelCollapseToggle } from "@/components/PanelCollapseToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,6 +90,7 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { EditResultModal } from "~/app/[locale]/projects/repository/[projectId]/EditResultModal";
 import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
+import { usePanelCollapsed } from "~/hooks/usePanelCollapsed";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
@@ -1099,12 +1101,54 @@ const JUnitResultExpandedDetails = ({
   );
 };
 
-export default function TestResultHistory({
+/**
+ * The history's queries are the heaviest on the case page, so while the panel
+ * is collapsed only its header renders and none of them run.
+ */
+export default function TestResultHistory(props: TestResultHistoryProps) {
+  const tCases = useTranslations("repository.cases");
+  const { collapsed, toggle, hydrated } = usePanelCollapsed(
+    "test-result-history"
+  );
+  const collapseToggle = (
+    <PanelCollapseToggle
+      collapsed={collapsed}
+      onToggle={toggle}
+      testId="result-history-collapse-toggle"
+    />
+  );
+
+  if (hydrated && !collapsed) {
+    return (
+      <TestResultHistoryContent {...props} collapseToggle={collapseToggle} />
+    );
+  }
+
+  return (
+    <Card shadow="none">
+      <CardHeader className="flex flex-row items-center justify-between p-4">
+        <div>
+          <CardTitle className="flex items-center gap-1">
+            {collapseToggle}
+            <History className="w-5 h-5" />
+            {tCases("testResultHistory")}
+          </CardTitle>
+          <CardDescription>
+            {tCases("testResultHistoryDescription")}
+          </CardDescription>
+        </div>
+      </CardHeader>
+    </Card>
+  );
+}
+
+function TestResultHistoryContent({
   caseId,
   projectId,
   session,
   currentTestRunId,
-}: TestResultHistoryProps) {
+  collapseToggle,
+}: TestResultHistoryProps & { collapseToggle: React.ReactNode }) {
   const tCommon = useTranslations("common");
   const tCases = useTranslations("repository.cases");
   const tParams = useTranslations("parameters");
@@ -1538,6 +1582,7 @@ export default function TestResultHistory({
       <Card shadow="none">
         <CardHeader>
           <CardTitle className="flex items-center gap-1">
+            {collapseToggle}
             <History className="w-5 h-5" />
             {tCases("testResultHistory")}
           </CardTitle>
@@ -1585,6 +1630,7 @@ export default function TestResultHistory({
       <Card shadow="none">
         <CardHeader>
           <CardTitle className="flex items-center gap-1">
+            {collapseToggle}
             <History className="w-5 h-5" />
             {tCases("testResultHistory")}
           </CardTitle>
@@ -1695,6 +1741,7 @@ export default function TestResultHistory({
         >
           <div>
             <CardTitle className="flex items-center gap-1">
+              {collapseToggle}
               <History className="w-5 h-5" />
               {tCases("testResultHistory")}
             </CardTitle>
@@ -2104,6 +2151,7 @@ export default function TestResultHistory({
       >
         <div>
           <CardTitle className="flex items-center gap-1">
+            {collapseToggle}
             <History className="w-5 h-5" />
             {tCases("testResultHistory")}
           </CardTitle>

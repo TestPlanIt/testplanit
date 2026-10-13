@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * The panel must not decide for itself which execution is "latest".
@@ -230,5 +230,39 @@ describe("LinkedCasesPanel — dependency direction", () => {
     expect(screen.getByTestId("linked-case-type-3")).toHaveTextContent(
       "linkedCases.SAME_TEST_DIFFERENT_SOURCE"
     );
+  });
+});
+
+describe("LinkedCasesPanel — collapsing", () => {
+  beforeEach(() => {
+    mockLinkFindMany.mockReset();
+    mockUseLatestTestResults.mockReset();
+    mockLinkFindMany.mockReturnValue({ data: undefined, refetch: vi.fn() });
+    mockUseLatestTestResults.mockReturnValue({});
+    window.localStorage.setItem("case-panel-collapsed:linked-cases", "true");
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("disables the links query and hides the body while collapsed", () => {
+    renderPanel();
+
+    const options = mockLinkFindMany.mock.calls.at(-1)?.[1];
+    expect(options).toEqual({ enabled: false });
+    expect(screen.queryByText(/noLinkedCases/)).not.toBeInTheDocument();
+  });
+
+  it("enables the query and shows the body once expanded", () => {
+    renderPanel();
+
+    fireEvent.click(screen.getByTestId("linked-cases-collapse-toggle"));
+
+    const options = mockLinkFindMany.mock.calls.at(-1)?.[1];
+    expect(options).toEqual({ enabled: true });
+    expect(
+      window.localStorage.getItem("case-panel-collapsed:linked-cases")
+    ).toBe("false");
   });
 });
