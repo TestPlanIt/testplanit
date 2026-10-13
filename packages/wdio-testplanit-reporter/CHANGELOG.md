@@ -1,5 +1,20 @@
 # @testplanit/wdio-reporter
 
+## 1.1.0
+
+### Patch Changes
+
+- [#674](https://github.com/TestPlanIt/testplanit/pull/674) [`733a195`](https://github.com/TestPlanIt/testplanit/commit/733a1956aa0fa16e2de03fa58c37afc146c3ed43) Thanks [@therealbrad](https://github.com/therealbrad)! - Keep reporting into a pinned run whose composition is locked
+
+  A run pinned with `TESTPLANIT_RUN_ID` may have its case list frozen (the
+  team locked the composition before dispatching to CI). Adding a case to such
+  a run is refused by TestPlanIt, and the reporters used to drop that test's
+  result with it. They now log the refusal and still record the result, which
+  TestPlanIt shows against the run as a case that is not part of it.
+
+- Updated dependencies [[`733a195`](https://github.com/TestPlanIt/testplanit/commit/733a1956aa0fa16e2de03fa58c37afc146c3ed43), [`733a195`](https://github.com/TestPlanIt/testplanit/commit/733a1956aa0fa16e2de03fa58c37afc146c3ed43)]:
+  - @testplanit/api@1.1.0
+
 ## 1.0.0
 
 ### Minor Changes
