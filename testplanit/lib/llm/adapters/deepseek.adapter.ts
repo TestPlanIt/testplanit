@@ -1,3 +1,4 @@
+import { stripTrailingSlashes } from "~/lib/utils/url";
 import type { LlmAdapterConfig, LlmModelInfo, LlmRequest } from "../types";
 import { OpenAIAdapter, type OpenAIChatRequest } from "./openai.adapter";
 
@@ -78,9 +79,8 @@ export class DeepSeekAdapter extends OpenAIAdapter {
   private readonly deepSeekBaseUrl: string;
 
   constructor(config: LlmAdapterConfig) {
-    const baseUrl = (config.baseUrl || DEEPSEEK_DEFAULT_BASE_URL).replace(
-      /\/+$/,
-      ""
+    const baseUrl = stripTrailingSlashes(
+      config.baseUrl || DEEPSEEK_DEFAULT_BASE_URL
     );
     super({ ...config, baseUrl });
     this.deepSeekBaseUrl = baseUrl;

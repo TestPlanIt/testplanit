@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
@@ -17,7 +18,7 @@ test.describe("Saved import column mappings", () => {
     baseURL,
   }) => {
     const repositoryPage = new RepositoryPage(page);
-    const uid = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const uid = `${Date.now()}-${randomUUID().slice(0, 8)}`;
     const projectId = await api.createProject(`E2E Import Mapping ${uid}`);
     const folderName = `Mapping Folder ${uid}`;
     const mappingName = `E2E mapping ${uid}`;
