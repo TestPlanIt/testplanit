@@ -228,7 +228,7 @@
     "fflate": "^0.8.3",
     "filesize": "^11.0.26",
     "formidable": "^3.5.4",
-    "framer-motion": "^13.5.1",
+    "framer-motion": "^14.1.0",
     "handlebars": "^4.7.10",
     "happy-dom": "^20.14.6",
     "hono": "^4.13.7",
