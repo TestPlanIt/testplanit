@@ -151,7 +151,7 @@ jobs:
 
       - name: Run E2E smoke subset
         run: >
-          pnpm exec playwright test --config e2e/playwright.config.ts
+          pnpm exec playwright test --config e2e/playwright.config.ts --no-deps
           e2e/tests/page-titles.spec.ts
           e2e/tests/auth/signin-signout.spec.ts
           e2e/tests/api/access-control.spec.ts
