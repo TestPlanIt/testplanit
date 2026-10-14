@@ -245,7 +245,7 @@ export function AlertRuleDialog({
         isActive: true,
       },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, url: true },
+      select: { id: true, name: true },
     },
     { enabled: open && hasProject && scopeType === AlertScopeType.WEBHOOK }
   );
@@ -1168,7 +1168,7 @@ export function AlertRuleDialog({
                               <SelectContent>
                                 {(webhooks ?? []).map((config) => (
                                   <SelectItem key={config.id} value={config.id}>
-                                    {config.name || config.url || config.id}
+                                    {config.name || config.id}
                                   </SelectItem>
                                 ))}
                               </SelectContent>

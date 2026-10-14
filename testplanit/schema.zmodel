@@ -5814,7 +5814,7 @@ model WebhookConfig {
     // again when this config is deleted or rotated.
     externalWebhookId       String?
     endpointHealth          EndpointHealth               @default(HEALTHY)
-    url                     String?
+    url                     String?                      @omit
     name                    String?
     lastReceivedAt          DateTime?                    @db.Timestamptz(6)
     lastDispatchedAt        DateTime?                    @db.Timestamptz(6)

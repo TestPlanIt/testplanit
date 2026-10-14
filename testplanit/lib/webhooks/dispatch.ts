@@ -12,6 +12,7 @@ import type {
   OutboundEnvelope,
   OutboundWebhookAdapter,
 } from "./adapters/types";
+import { openOutboundUrl } from "./outboundUrl";
 import { matchesSubscription } from "./subscription-matching";
 
 /**
@@ -89,6 +90,7 @@ export async function dispatchWebhook(
     }),
     db.webhookConfig.findUnique({
       where: { id: jobData.webhookConfigId },
+      omit: { url: false },
       include: {
         secrets: {
           where: { retiredAt: null },
@@ -256,12 +258,14 @@ export async function dispatchWebhook(
     });
   }
 
+  const destination = await openOutboundUrl(config.url);
+
   // 5. HTTP attempt OUTSIDE any DB tx.
   const startedAt = Date.now();
   let statusCode: number | null = null;
   let errorSentinel: string | null = null;
   try {
-    const response = await fetch(config.url, {
+    const response = await fetch(destination, {
       method: "POST",
       headers: { "Content-Type": formatted.contentType, ...signedHeaders },
       body,

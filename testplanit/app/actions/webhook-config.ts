@@ -24,6 +24,11 @@ import {
   bulkReplayDeliveries,
   replayDelivery,
 } from "~/lib/webhooks/replay";
+import {
+  openOutboundUrl,
+  outboundUrlHint,
+  sealOutboundUrl,
+} from "~/lib/webhooks/outboundUrl";
 import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
 import { decrypt, encrypt } from "~/utils/encryption";
 import { getServerAuthSession } from "~/server/auth";
@@ -1275,6 +1280,7 @@ export async function createOutboundWebhook(input: {
         return { success: false, error: "Forbidden" };
       }
 
+      const sealedUrl = await sealOutboundUrl(input.url);
       const adapterType: "SLACK" | "GENERIC_HMAC" = isSlackWebhookUrl(input.url)
         ? "SLACK"
         : "GENERIC_HMAC";
@@ -1295,7 +1301,7 @@ export async function createOutboundWebhook(input: {
               subscribedEvents,
               isActive: true,
               name: trimmedName,
-              url: input.url,
+              url: sealedUrl,
             },
             select: { id: true },
           });
@@ -1344,7 +1350,7 @@ export async function createOutboundWebhook(input: {
               subscribedEvents,
               isActive: true,
               name: trimmedName,
-              url: input.url,
+              url: sealedUrl,
             },
             select: { id: true },
           });
@@ -1382,6 +1388,35 @@ export async function createOutboundWebhook(input: {
  * Cascades to WebhookDelivery + WebhookEventDedup + WebhookConfigSecret rows
  * via `onDelete: Cascade` on the FK relations.
  */
+/**
+ * What the outbound settings may show of each webhook's URL: its origin and
+ * last characters. The URL itself never leaves the server after it is saved.
+ */
+export async function getOutboundWebhookUrlHints(input: {
+  projectId: number;
+}): Promise<Record<string, string>> {
+  const session = await getServerAuthSession();
+  if (!session?.user) return {};
+  if (!(await canManageWebhookConfig(session, input.projectId))) return {};
+  const configs = await baseDb.webhookConfig.findMany({
+    where: { projectId: input.projectId, direction: "OUTBOUND" },
+    select: { id: true, url: true },
+  });
+  const hints: Record<string, string> = {};
+  for (const config of configs) {
+    try {
+      const url = await openOutboundUrl(config.url);
+      if (url) hints[config.id] = outboundUrlHint(url);
+    } catch (err) {
+      console.error(
+        `[webhook-config] outbound URL unreadable (config ${config.id})`,
+        err
+      );
+    }
+  }
+  return hints;
+}
+
 export async function deleteOutboundWebhook(
   configId: string
 ): Promise<{ success: boolean; error?: string }> {

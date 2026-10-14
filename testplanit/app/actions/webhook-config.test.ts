@@ -13,6 +13,7 @@ const mockWebhookConfigFindFirst = vi.fn();
 const mockWebhookConfigUpdateMany = vi.fn();
 const mockProjectCodeRepositoryConfigFindFirst = vi.fn();
 const mockWebhookConfigFindUnique = vi.fn();
+const mockWebhookConfigFindMany = vi.fn();
 const mockWebhookConfigCreate = vi.fn();
 const mockWebhookConfigUpdate = vi.fn();
 const mockWebhookConfigDelete = vi.fn();
@@ -39,6 +40,7 @@ vi.mock("~/lib/db", () => ({
     webhookConfig: {
       findFirst: (...args: unknown[]) => mockWebhookConfigFindFirst(...args),
       findUnique: (...args: unknown[]) => mockWebhookConfigFindUnique(...args),
+      findMany: (...args: unknown[]) => mockWebhookConfigFindMany(...args),
       create: (...args: unknown[]) => mockWebhookConfigCreate(...args),
       update: (...args: unknown[]) => mockWebhookConfigUpdate(...args),
       updateMany: (...args: unknown[]) => mockWebhookConfigUpdateMany(...args),
@@ -116,6 +118,7 @@ const mockDecrypt = vi.fn();
 vi.mock("~/utils/encryption", () => ({
   encrypt: (...args: unknown[]) => mockEncrypt(...args),
   decrypt: (...args: unknown[]) => mockDecrypt(...args),
+  isEncrypted: (value: string) => value.startsWith("enc:"),
 }));
 
 // webhookEvents.emit is called by sendTestOutboundWebhook to fire
@@ -1548,7 +1551,8 @@ describe("webhook-config server actions", () => {
         direction: "OUTBOUND",
         secret: "", // Slack URL is the credential
         name: "Team Slack", // trimmed
-        url: "https://hooks.slack.com/services/T000/B000/abc",
+        // Stored encrypted: the Slack URL is the credential.
+        url: "enc:https://hooks.slack.com/services/T000/B000/abc",
         isActive: true,
       });
       // Default preset is empty — admins explicitly opt in via the form's
@@ -1621,7 +1625,7 @@ describe("webhook-config server actions", () => {
         adapterType: "GENERIC_HMAC",
         direction: "OUTBOUND",
         name: "Custom HMAC",
-        url: "https://example.com/webhooks/in",
+        url: "enc:https://example.com/webhooks/in",
         isActive: true,
       });
       expect(cfgCallArg.data.secret).toBe(`enc:${result.secret}`);
@@ -2955,5 +2959,52 @@ describe("webhook-config server actions", () => {
       expect(result).toEqual({ success: false, error: "Forbidden" });
       expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("getOutboundWebhookUrlHints", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "user-123" } });
+    mockCanManageWebhookConfig.mockResolvedValue(true);
+    mockDecrypt.mockImplementation(async (s: string) =>
+      s.startsWith("enc:") ? s.slice(4) : s
+    );
+  });
+
+  it("previews each outbound URL without returning it", async () => {
+    mockWebhookConfigFindMany.mockResolvedValue([
+      {
+        id: "cfg-slack",
+        url: "enc:https://hooks.slack.com/services/T/B/SECRET1",
+      },
+      { id: "cfg-legacy", url: "https://example.com/hooks/token-abcd" },
+    ]);
+    const { getOutboundWebhookUrlHints } = await import("./webhook-config");
+
+    const hints = await getOutboundWebhookUrlHints({ projectId: 42 });
+
+    expect(hints).toEqual({
+      "cfg-slack": "https://hooks.slack.com/…RET1",
+      "cfg-legacy": "https://example.com/…abcd",
+    });
+    expect(JSON.stringify(hints)).not.toContain("SECRET1/");
+    expect(mockWebhookConfigFindMany).toHaveBeenCalledWith({
+      where: { projectId: 42, direction: "OUTBOUND" },
+      select: { id: true, url: true },
+    });
+    expect(mockCanManageWebhookConfig).toHaveBeenCalledWith(
+      { user: { id: "user-123" } },
+      42
+    );
+  });
+
+  it("returns nothing to someone who cannot manage the project's webhooks", async () => {
+    mockCanManageWebhookConfig.mockResolvedValue(false);
+    const { getOutboundWebhookUrlHints } = await import("./webhook-config");
+    expect(await getOutboundWebhookUrlHints({ projectId: 42 })).toEqual({});
+    mockGetServerAuthSession.mockResolvedValue(null);
+    expect(await getOutboundWebhookUrlHints({ projectId: 42 })).toEqual({});
+    expect(mockWebhookConfigFindMany).not.toHaveBeenCalled();
   });
 });

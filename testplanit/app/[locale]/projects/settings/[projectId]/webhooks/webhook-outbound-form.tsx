@@ -48,7 +48,7 @@ import {
 
 import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -58,6 +58,7 @@ import {
   reEnableWebhookConfig,
   retireOutboundSecretNow,
   rotateOutboundSecret,
+  getOutboundWebhookUrlHints,
   sendTestOutboundWebhook,
   setWebhookActive,
   updateOutboundSubscriptions,
@@ -197,8 +198,8 @@ const DEFAULT_PRESET: string[] = [];
 
 /**
  * Outbound config row shape returned by `useClientQueries(schema).webhookConfig.useFindMany`. The select
- * clause INCLUDES `name` and `url` (Plan 02-01 columns; Blocker 4 fix), and
- * EXCLUDES the encrypted `secret` column (HI-01).
+ * clause INCLUDES `name` (Blocker 4 fix) and EXCLUDES the encrypted `url` and
+ * `secret` columns (HI-01); the URL preview comes from the server.
  */
 type EndpointHealth = "HEALTHY" | "DEGRADED" | "DISABLED";
 
@@ -208,7 +209,6 @@ interface OutboundConfig {
   adapterType: string;
   direction: string;
   name: string | null;
-  url: string | null;
   isActive: boolean;
   subscribedEvents: string[];
   // Plan 04-07 follow-up — health badge + Delivery activity surface.
@@ -329,7 +329,6 @@ export function WebhookOutboundForm({
       adapterType: true,
       direction: true,
       name: true, // Blocker 4 — admin label, used as Card title
-      url: true, // Blocker 4 — destination URL (Plan 02-01 column)
       isActive: true,
       subscribedEvents: true,
       // Plan 04-07 follow-up — health badge + Delivery activity surface.
@@ -354,6 +353,21 @@ export function WebhookOutboundForm({
   });
 
   const configs = (data ?? []) as OutboundConfig[];
+
+  // The stored URL is encrypted; the server sends a preview of each.
+  const [urlHints, setUrlHints] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!data) return;
+    let cancelled = false;
+    void getOutboundWebhookUrlHints({ projectId })
+      .then((hints) => {
+        if (!cancelled) setUrlHints(hints);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [data, projectId]);
 
   // ─── Create form local state ──────────────────────────────────────────
   const [creating, setCreating] = useState(false);
@@ -980,7 +994,7 @@ export function WebhookOutboundForm({
                 data-testid={`webhook-outbound-url-${config.id}`}
                 className="block break-all text-xs"
               >
-                {config.url ?? ""}
+                {urlHints[config.id] ?? ""}
               </code>
               {isSlack && (
                 <p className="text-xs text-muted-foreground">
