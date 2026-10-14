@@ -144,6 +144,7 @@ function makeFakeDb() {
   const user = {
     findUnique: vi.fn(async () => null),
     findFirst: vi.fn(async () => null),
+    update: vi.fn(async () => ({})),
   };
 
   return { db: { pendingAuth, user } as any, rows };
@@ -504,8 +505,55 @@ describe("authorizePasswordlessComplete (NextAuth provider)", () => {
     });
     expect(db.user.findUnique).toHaveBeenCalledWith({
       where: { email: "a@example.com" },
-      select: { id: true, email: true, name: true, isActive: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        isActive: true,
+        emailVerified: true,
+      },
     });
+  });
+
+  it("confirms the address of an unverified account, as the emailed code proves it", async () => {
+    const { db } = makeFakeDb();
+    const created = await createPendingAuth(db, { email: "a@example.com" });
+    db.user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "a@example.com",
+      name: "Alice",
+      isActive: true,
+      emailVerified: null,
+    });
+
+    await authorizePasswordlessComplete(db)(
+      { pendingId: created.id, linkToken: created.linkToken },
+      makeReq(encodeVerifierCookie(created.id, created.verifier))
+    );
+
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { emailVerified: expect.any(Date) },
+    });
+  });
+
+  it("leaves an already confirmed address alone", async () => {
+    const { db } = makeFakeDb();
+    const created = await createPendingAuth(db, { email: "a@example.com" });
+    db.user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "a@example.com",
+      name: "Alice",
+      isActive: true,
+      emailVerified: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    await authorizePasswordlessComplete(db)(
+      { pendingId: created.id, linkToken: created.linkToken },
+      makeReq(encodeVerifierCookie(created.id, created.verifier))
+    );
+
+    expect(db.user.update).not.toHaveBeenCalled();
   });
 
   it("fails without a verifier cookie even with a valid link token", async () => {

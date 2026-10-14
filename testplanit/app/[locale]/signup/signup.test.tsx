@@ -47,8 +47,10 @@ vi.mock("~/app/actions/notifications", () => ({
 }));
 
 // Mock EmailVerifications
+const mockResendVerificationEmail = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/components/EmailVerifications", () => ({
-  resendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+  resendVerificationEmail: (...args: any[]) =>
+    mockResendVerificationEmail(...args),
 }));
 
 // Mock next-auth signIn
@@ -262,9 +264,58 @@ describe("Signup Page", () => {
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
+  async function submitSignup() {
+    const user = userEvent.setup();
+    render(<Signup />);
+    await waitForFormToRender();
+    const inputs = screen.getAllByRole("textbox");
+    await user.type(inputs[0], "John Doe");
+    await user.type(inputs[1], "john@example.com");
+    const passwordInputs = document.querySelectorAll("input[type='password']");
+    await user.type(passwordInputs[0] as HTMLElement, "password123");
+    await user.type(passwordInputs[1] as HTMLElement, "password123");
+    await user.click(
+      screen.getByRole("button", { name: /sign up|common\.actions\.signUp/i })
+    );
+  }
+
+  it("sends an account that must confirm its address to verification, without signing in", async () => {
+    setupFetchMock({
+      status: 201,
+      response: {
+        data: {
+          id: "user-123",
+          email: "john@example.com",
+          emailVerified: null,
+        },
+      },
+    });
+
+    await submitSignup();
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        "/verify-email?email=john%40example.com"
+      );
+    });
+    expect(mockResendVerificationEmail).toHaveBeenCalledWith(
+      "john@example.com"
+    );
+    expect(mockSignIn).not.toHaveBeenCalled();
+  });
+
   it("redirects to home on successful signup", async () => {
     const user = userEvent.setup();
-    setupFetchMock({ status: 201 });
+    setupFetchMock({
+      status: 201,
+      response: {
+        data: {
+          id: "user-123",
+          email: "john@example.com",
+          emailVerified: "2026-01-01T00:00:00.000Z",
+        },
+      },
+    });
     mockSignIn.mockResolvedValue({ ok: true, error: null });
 
     render(<Signup />);

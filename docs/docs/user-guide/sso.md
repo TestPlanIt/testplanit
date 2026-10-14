@@ -340,7 +340,7 @@ The signup page behavior is affected by both Force SSO and the self-registration
   - Email
   - Password
   - Password confirmation
-- Email verification is required
+- Email verification is required when an email server is configured. Until the address is confirmed, the account can't sign in with its password; signing in opens the verification page instead.
 - Default user preferences are created
 
 #### Self-Registration Disabled

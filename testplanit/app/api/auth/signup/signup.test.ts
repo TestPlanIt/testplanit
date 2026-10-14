@@ -2,7 +2,12 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies using vi.hoisted
-const { mockDb, mockHash, mockIsEmailServerConfigured } = vi.hoisted(() => ({
+const {
+  mockDb,
+  mockHash,
+  mockIsEmailServerConfigured,
+  mockIsEmailDomainAllowed,
+} = vi.hoisted(() => ({
   mockDb: {
     user: {
       findFirst: vi.fn(),
@@ -21,6 +26,7 @@ const { mockDb, mockHash, mockIsEmailServerConfigured } = vi.hoisted(() => ({
   },
   mockHash: vi.fn(),
   mockIsEmailServerConfigured: vi.fn(),
+  mockIsEmailDomainAllowed: vi.fn(),
 }));
 
 vi.mock("~/server/db", () => ({
@@ -33,6 +39,10 @@ vi.mock("bcrypt", () => ({
 
 vi.mock("~/lib/email/emailConfig", () => ({
   isEmailServerConfigured: mockIsEmailServerConfigured,
+}));
+
+vi.mock("~/lib/utils/email-domain-validation", () => ({
+  isEmailDomainAllowed: mockIsEmailDomainAllowed,
 }));
 
 // Import the route after mocking
@@ -70,6 +80,8 @@ describe("POST /api/auth/signup", () => {
     mockHash.mockResolvedValue("hashed-password");
     // Default: email server is configured
     mockIsEmailServerConfigured.mockReturnValue(true);
+    // Default: the address's domain may register
+    mockIsEmailDomainAllowed.mockResolvedValue(true);
     mockDb.roles.findFirst.mockResolvedValue({ id: 1 });
     mockDb.ssoProvider.findFirst.mockResolvedValue(null);
   });
@@ -704,6 +716,33 @@ describe("POST /api/auth/signup", () => {
           select: expect.any(Object),
         });
       });
+    });
+  });
+
+  describe("Email domain restrictions", () => {
+    it("refuses an address outside the allowed domains, whatever the sign-up page checked", async () => {
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
+        allowOpenRegistration: true,
+        requireEmailVerification: true,
+      });
+      mockIsEmailDomainAllowed.mockResolvedValue(false);
+
+      const response = await signup(
+        createRequest({
+          name: "Intruder",
+          email: "intruder@evil.example",
+          password: "password123",
+        })
+      );
+
+      expect(response.status).toBe(403);
+      expect(await response.json()).toMatchObject({
+        errorCode: "auth.signup.errors.domainRestricted",
+      });
+      expect(mockIsEmailDomainAllowed).toHaveBeenCalledWith(
+        "intruder@evil.example"
+      );
+      expect(mockDb.user.create).not.toHaveBeenCalled();
     });
   });
 });
