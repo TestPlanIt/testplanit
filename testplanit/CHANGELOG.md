@@ -1,3 +1,9 @@
+## [1.1.2](https://github.com/TestPlanIt/testplanit/compare/v1.1.1...v1.1.2) (2026-10-14)
+
+### Bug Fixes
+
+* **security:** enforce sign-up rules on the server and encrypt outbound webhook URLs ([#681](https://github.com/TestPlanIt/testplanit/issues/681)) ([b5f92f1](https://github.com/TestPlanIt/testplanit/commit/b5f92f11a858fbdccd4a035f844bc635d03573ce))
+
 ## [1.1.1](https://github.com/TestPlanIt/testplanit/compare/v1.1.0...v1.1.1) (2026-10-14)
 
 ### Bug Fixes
