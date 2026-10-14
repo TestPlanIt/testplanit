@@ -2,10 +2,9 @@ import { baseDb as db } from "@/lib/db";
 import {
   collectPanelSessionIds,
   collectPanelTestRunIds,
-  getTestRunDisplayItems,
+  loadPanelRunSummaries,
   panelIssueLinkSelect,
   panelIssueWhere,
-  summarizeTestRuns,
 } from "~/lib/services/jiraForgePanel";
 import { authenticateForgeIntegration } from "~/lib/services/forge-jira-auth";
 import { getLatestTestResultsByCase } from "~/lib/services/latestTestResults";
@@ -119,33 +118,13 @@ const PANEL_STATE_SELECT = {
   },
 } as const;
 
-// Status counts for one run's cases, in case order (like TestRunCasesSummary).
-function summarizeDisplayItems(displayItems: any[]) {
-  const statusCounts: Record<string, { name: string; count: number }> = {};
-  displayItems.forEach((item) => {
-    const statusName = item.status?.name || "Untested";
-    if (!statusCounts[statusName]) {
-      statusCounts[statusName] = { name: statusName, count: 0 };
-    }
-    statusCounts[statusName].count += 1;
-  });
-
-  return {
-    total: displayItems.length,
-    passedCount: statusCounts["Passed"]?.count ?? 0,
-    summaryText: Object.values(statusCounts)
-      .map((status) => `${status.count} ${status.name}`)
-      .join(", "),
-  };
-}
-
 // Linked runs in panel order, each loaded once. With lazy run cases the row
-// carries only the collapsed-row totals (counted in SQL); otherwise it also
-// carries every case's status-bar segment, as older panel builds expect.
+// carries only the collapsed-row totals (from the run summary service); otherwise
+// it also carries every case's status-bar segment, as older panel builds expect.
 async function loadPanelTestRuns(testRunIds: number[], lazyRunCases: boolean) {
   if (testRunIds.length === 0) return [];
 
-  const [testRuns, caseData] = await Promise.all([
+  const [testRuns, summaries] = await Promise.all([
     db.testRuns.findMany({
       where: { id: { in: testRunIds } },
       select: {
@@ -156,15 +135,7 @@ async function loadPanelTestRuns(testRunIds: number[], lazyRunCases: boolean) {
         project: { select: { id: true } },
       },
     }),
-    lazyRunCases
-      ? summarizeTestRuns(testRunIds).then((summaries) => ({
-          summaries,
-          itemsByRun: null,
-        }))
-      : getTestRunDisplayItems(testRunIds).then((itemsByRun) => ({
-          summaries: null,
-          itemsByRun,
-        })),
+    loadPanelRunSummaries(testRunIds, !lazyRunCases),
   ]);
   const runsById = new Map(testRuns.map((testRun) => [testRun.id, testRun]));
 
@@ -172,14 +143,7 @@ async function loadPanelTestRuns(testRunIds: number[], lazyRunCases: boolean) {
     const testRun = runsById.get(testRunId);
     if (!testRun) return [];
 
-    const displayItems = caseData.itemsByRun?.get(testRunId) ?? [];
-    const summary = caseData.summaries
-      ? (caseData.summaries.get(testRunId) ?? {
-          total: 0,
-          passedCount: 0,
-          summaryText: "",
-        })
-      : summarizeDisplayItems(displayItems);
+    const summary = summaries.get(testRunId);
 
     return [
       {
@@ -188,10 +152,10 @@ async function loadPanelTestRuns(testRunIds: number[], lazyRunCases: boolean) {
         status: testRun.state.name,
         statusIcon: testRun.state.icon?.name,
         statusColor: testRun.state.color?.value,
-        total: summary.total,
-        passedCount: summary.passedCount,
-        ...(lazyRunCases ? {} : { displayItems }),
-        summaryText: summary.summaryText,
+        total: summary?.total ?? 0,
+        passedCount: summary?.passedCount ?? 0,
+        ...(lazyRunCases ? {} : { displayItems: summary?.displayItems ?? [] }),
+        summaryText: summary?.summaryText ?? "",
         projectId: testRun.project.id,
         isDeleted: testRun.isDeleted,
       },
