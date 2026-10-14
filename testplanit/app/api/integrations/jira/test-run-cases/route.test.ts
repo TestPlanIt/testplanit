@@ -5,11 +5,16 @@ vi.mock("@/lib/db", () => ({
   baseDb: {
     integration: { findMany: vi.fn() },
     issue: { findMany: vi.fn() },
-    testRunCases: { findMany: vi.fn() },
   },
 }));
 
+vi.mock("~/lib/services/testRunSummary", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/lib/services/testRunSummary")>()),
+  getTestRunSummary: vi.fn(),
+}));
+
 import { baseDb } from "@/lib/db";
+import { getTestRunSummary } from "~/lib/services/testRunSummary";
 
 import { GET } from "./route";
 
@@ -36,14 +41,22 @@ beforeEach(() => {
       sessionResults: [],
     },
   ] as any);
-  vi.mocked(baseDb.testRunCases.findMany).mockResolvedValue([
-    {
-      id: 70,
-      testRunId: 7,
-      repositoryCase: { id: 1, name: "A" },
-      results: [{ status: { name: "Failed", color: { value: "#f00" } } }],
-    },
-  ] as any);
+  vi.mocked(getTestRunSummary).mockResolvedValue({
+    totalCases: 1,
+    statusCounts: [
+      { statusId: 3, statusName: "Failed", colorValue: "#f00", count: 1 },
+    ],
+    caseDetails: [
+      {
+        id: 70,
+        repositoryCaseId: 1,
+        caseName: "A",
+        statusId: 3,
+        statusName: "Failed",
+        colorValue: "#f00",
+      },
+    ],
+  } as any);
 });
 
 describe("jira test-run-cases", () => {
@@ -64,18 +77,16 @@ describe("jira test-run-cases", () => {
         },
       ],
     });
-    expect(baseDb.testRunCases.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { testRunId: { in: [7] }, isDeleted: false },
-      })
-    );
+    expect(getTestRunSummary).toHaveBeenCalledWith(7, {
+      includeCaseDetails: true,
+    });
   });
 
   it("refuses a run that is not linked to the issue", async () => {
     const response = await GET(buildRequest("issueKey=PROJ-1&testRunId=8"));
 
     expect(response.status).toBe(404);
-    expect(baseDb.testRunCases.findMany).not.toHaveBeenCalled();
+    expect(getTestRunSummary).not.toHaveBeenCalled();
   });
 
   it("rejects requests without a valid Forge API key", async () => {

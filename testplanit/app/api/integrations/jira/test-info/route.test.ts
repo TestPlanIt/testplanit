@@ -18,11 +18,11 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
-// Per-run case counts are a raw SQL aggregate; it cannot run against the
-// mocked client, so lazy-mode tests supply the summaries directly.
-vi.mock("~/lib/services/jiraForgePanel", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("~/lib/services/jiraForgePanel")>()),
-  summarizeTestRuns: vi.fn(),
+// Run totals come from the run summary service, whose raw SQL cannot run
+// against the mocked client; its own behaviour is covered by its tests.
+vi.mock("~/lib/services/testRunSummary", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/lib/services/testRunSummary")>()),
+  getTestRunSummary: vi.fn(),
 }));
 
 // The latest-result ranking is a raw SQL query spanning TestRunResults and
@@ -33,8 +33,11 @@ vi.mock("~/lib/services/latestTestResults", () => ({
 }));
 
 import { baseDb } from "@/lib/db";
-import { summarizeTestRuns } from "~/lib/services/jiraForgePanel";
 import { getLatestTestResultsByCase } from "~/lib/services/latestTestResults";
+import {
+  getTestRunSummary,
+  TestRunNotFoundError,
+} from "~/lib/services/testRunSummary";
 
 import { GET } from "./route";
 
@@ -684,22 +687,52 @@ describe("jira test-info runs and sessions", () => {
     ] as any);
   });
 
+  // Run 7 has one passed and one untouched case; run 8 is empty.
+  const mockRunSummaries = () =>
+    vi.mocked(getTestRunSummary).mockImplementation(async (id) =>
+      id === 7
+        ? ({
+            totalCases: 2,
+            statusCounts: [
+              {
+                statusId: 2,
+                statusName: "Passed",
+                colorValue: "#0f0",
+                count: 1,
+                isSuccess: true,
+              },
+              {
+                statusId: null,
+                statusName: "Pending",
+                colorValue: "#9ca3af",
+                count: 1,
+              },
+            ],
+            caseDetails: [
+              {
+                id: 70,
+                repositoryCaseId: 1,
+                caseName: "A",
+                statusId: 2,
+                statusName: "Passed",
+                colorValue: "#0f0",
+              },
+              {
+                id: 71,
+                repositoryCaseId: 2,
+                caseName: "B",
+                statusId: null,
+                statusName: "Pending",
+                colorValue: "#9ca3af",
+              },
+            ],
+          } as any)
+        : ({ totalCases: 0, statusCounts: [], caseDetails: [] } as any)
+    );
+
   it("loads each linked run once, in link order, with its per-case bar inline", async () => {
     linkRuns();
-    vi.mocked(baseDb.testRunCases.findMany).mockResolvedValue([
-      {
-        id: 70,
-        testRunId: 7,
-        repositoryCase: { id: 1, name: "A" },
-        results: [{ status: { name: "Passed", color: { value: "#0f0" } } }],
-      },
-      {
-        id: 71,
-        testRunId: 7,
-        repositoryCase: { id: 2, name: "B" },
-        results: [],
-      },
-    ] as any);
+    mockRunSummaries();
 
     const body = await (await GET(buildRequest())).json();
 
@@ -707,6 +740,10 @@ describe("jira test-info runs and sessions", () => {
     expect(baseDb.testRuns.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: { in: [7, 8] } } })
     );
+    expect(getTestRunSummary).toHaveBeenCalledTimes(2);
+    expect(getTestRunSummary).toHaveBeenCalledWith(7, {
+      includeCaseDetails: true,
+    });
     expect(body.testRuns.map((run: any) => run.id)).toEqual([7, 8]);
     expect(body.testRuns[0]).toMatchObject({
       total: 2,
@@ -734,21 +771,17 @@ describe("jira test-info runs and sessions", () => {
       summaryText: "",
       displayItems: [],
     });
-    expect(summarizeTestRuns).not.toHaveBeenCalled();
   });
 
   it("sends only run totals when the panel loads run cases lazily", async () => {
     linkRuns();
-    vi.mocked(summarizeTestRuns).mockResolvedValue(
-      new Map([
-        [7, { total: 2, passedCount: 1, summaryText: "1 Passed, 1 Pending" }],
-      ])
-    );
+    mockRunSummaries();
 
     const body = await (await GET(buildRequest("&runCases=lazy"))).json();
 
-    expect(summarizeTestRuns).toHaveBeenCalledWith([7, 8]);
-    expect(baseDb.testRunCases.findMany).not.toHaveBeenCalled();
+    expect(getTestRunSummary).toHaveBeenCalledWith(7, {
+      includeCaseDetails: false,
+    });
     expect(body.testRuns[0]).toMatchObject({
       id: 7,
       total: 2,
@@ -756,13 +789,24 @@ describe("jira test-info runs and sessions", () => {
       summaryText: "1 Passed, 1 Pending",
     });
     expect(body.testRuns[0]).not.toHaveProperty("displayItems");
-    // A run with no cases has no aggregate row.
     expect(body.testRuns[1]).toMatchObject({
       id: 8,
       total: 0,
       passedCount: 0,
       summaryText: "",
     });
+  });
+
+  it("drops a run the summary service cannot find", async () => {
+    linkRuns();
+    vi.mocked(getTestRunSummary).mockImplementation(async (id) => {
+      if (id === 8) throw new TestRunNotFoundError(8);
+      return { totalCases: 0, statusCounts: [] } as any;
+    });
+
+    const body = await (await GET(buildRequest("&runCases=lazy"))).json();
+
+    expect(body.testRuns[1]).toMatchObject({ id: 8, total: 0 });
   });
 
   it("loads each linked session once, direct links first", async () => {
