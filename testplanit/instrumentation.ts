@@ -42,4 +42,9 @@ export async function register() {
   const { ensureCodeRepositoryCredentialsEncrypted } =
     await import("~/lib/integrations/ensureCodeRepositoryCredentialsEncrypted");
   await ensureCodeRepositoryCredentialsEncrypted();
+
+  // And AI model API keys, stored in the clear before they were sealed.
+  const { ensureLlmCredentialsEncrypted } =
+    await import("~/lib/llm/ensureLlmCredentialsEncrypted");
+  await ensureLlmCredentialsEncrypted();
 }

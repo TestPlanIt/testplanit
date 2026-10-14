@@ -14,7 +14,6 @@ const createTestConfig = (
     name: "Test Integration",
     provider: "ANTHROPIC",
     status: "ACTIVE",
-    credentials: {},
     settings: null,
     isDeleted: false,
     deletedAt: null,

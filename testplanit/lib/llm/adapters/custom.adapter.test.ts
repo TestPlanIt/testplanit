@@ -16,7 +16,6 @@ const createTestConfig = (
     name: "Test Custom LLM",
     provider: "CUSTOM_LLM",
     status: "ACTIVE",
-    credentials: {},
     settings: {
       endpoint: "https://custom-llm.example.com/v1/chat",
       apiKey: "test-api-key",

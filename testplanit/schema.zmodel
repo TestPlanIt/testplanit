@@ -4330,7 +4330,7 @@ model LlmIntegration {
     name                   String                  @length(1)
     provider               LlmProvider
     status                 IntegrationStatus       @default(INACTIVE)
-    credentials            Json                  // Encrypted API keys
+    credentials            Json                    @omit @deny('read', auth().access != 'ADMIN')
     settings               Json?                 // Provider-specific settings
     isDeleted              Boolean                 @default(false)
     deletedAt              DateTime?               @db.Timestamptz(6)

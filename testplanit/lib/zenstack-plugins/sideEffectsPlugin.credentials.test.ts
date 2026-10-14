@@ -7,7 +7,10 @@ vi.mock("~/lib/execution/service", () => ({}));
 vi.mock("~/lib/services/hybridRunProjection", () => ({}));
 
 import { decrypt, encrypt } from "@/utils/encryption";
-import { encryptCodeRepositoryCredentials } from "./sideEffectsPlugin";
+import {
+  encryptCodeRepositoryCredentials,
+  encryptCredentialsOnWrite,
+} from "./sideEffectsPlugin";
 
 async function open(blob: unknown): Promise<Record<string, string>> {
   return JSON.parse(await decrypt((blob as { encrypted: string }).encrypted));
@@ -107,5 +110,93 @@ describe("encryptCodeRepositoryCredentials", () => {
     const read = { where: { id: 1 } };
     await encryptCodeRepositoryCredentials("findUnique", read, client(null));
     expect(read).toEqual({ where: { id: 1 } });
+  });
+});
+
+describe("encryptCredentialsOnWrite for AI model integrations", () => {
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = "test-encryption-key-for-testing-purposes";
+  });
+
+  const llm = (row: { credentials: unknown; provider: string } | null) => ({
+    llmIntegration: { findUnique: vi.fn().mockResolvedValue(row) },
+  });
+
+  it("seals a new integration's key", async () => {
+    const args = {
+      data: {
+        name: "Claude",
+        provider: "ANTHROPIC",
+        credentials: { apiKey: "sk-ant-x", endpoint: "", baseUrl: "" },
+      },
+    };
+    await encryptCredentialsOnWrite(
+      "llmIntegration",
+      "create",
+      args,
+      llm(null)
+    );
+    expect(Object.keys(args.data.credentials)).toEqual(["encrypted"]);
+    expect(await open(args.data.credentials)).toMatchObject({
+      apiKey: "sk-ant-x",
+    });
+  });
+
+  it("keeps the stored key when an edit sends only a new endpoint", async () => {
+    const stored = {
+      encrypted: await encrypt(
+        JSON.stringify({ apiKey: "sk-old", endpoint: "https://a/v1" })
+      ),
+    };
+    const reader = llm({ credentials: stored, provider: "CUSTOM_LLM" });
+    const args = {
+      where: { id: 5 },
+      data: {
+        credentials: { endpoint: "https://b/v1", baseUrl: "https://b/v1" },
+      },
+    };
+    await encryptCredentialsOnWrite("llmIntegration", "update", args, reader);
+    expect(reader.llmIntegration.findUnique).toHaveBeenCalledWith({
+      where: { id: 5 },
+      select: { credentials: true, provider: true },
+    });
+    expect(await open(args.data.credentials)).toEqual({
+      apiKey: "sk-old",
+      endpoint: "https://b/v1",
+      baseUrl: "https://b/v1",
+    });
+  });
+
+  it("seals an upsert's create and merges its update, as the Add dialog's restore writes", async () => {
+    const stored = {
+      encrypted: await encrypt(JSON.stringify({ apiKey: "sk-old" })),
+    };
+    const args = {
+      where: { name: "Claude" },
+      create: { credentials: { apiKey: "sk-new" } },
+      update: { credentials: { apiKey: "sk-new" } },
+    };
+    await encryptCredentialsOnWrite(
+      "llmIntegration",
+      "upsert",
+      args,
+      llm({ credentials: stored, provider: "ANTHROPIC" })
+    );
+    expect(await open(args.create.credentials)).toEqual({ apiKey: "sk-new" });
+    expect(await open(args.update.credentials)).toEqual({ apiKey: "sk-new" });
+  });
+
+  it("leaves an already sealed blob alone", async () => {
+    const sealed = {
+      encrypted: await encrypt(JSON.stringify({ apiKey: "k" })),
+    };
+    const args = { data: { credentials: sealed } };
+    await encryptCredentialsOnWrite(
+      "llmIntegration",
+      "create",
+      args,
+      llm(null)
+    );
+    expect(args.data.credentials).toBe(sealed);
   });
 });

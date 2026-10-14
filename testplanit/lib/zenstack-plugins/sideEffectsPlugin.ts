@@ -370,14 +370,23 @@ const CREDENTIAL_WRITE_OPERATIONS = new Set([
   "updateMany",
 ]);
 
-type CredentialReader = {
-  codeRepository: {
-    findUnique(args: {
-      where: Record<string, unknown>;
-      select: { credentials: true; provider: true };
-    }): Promise<{ credentials: unknown; provider: string } | null>;
-  };
+type CredentialModelReader = {
+  findUnique(args: {
+    where: Record<string, unknown>;
+    select: { credentials: true; provider: true };
+  }): Promise<{ credentials: unknown; provider: string } | null>;
 };
+
+type CredentialReader = {
+  codeRepository: CredentialModelReader;
+  llmIntegration: CredentialModelReader;
+};
+
+/** The models whose `credentials` are sealed on every write. */
+const CREDENTIAL_MODELS = {
+  CodeRepository: "codeRepository",
+  LlmIntegration: "llmIntegration",
+} as const satisfies Record<string, keyof CredentialReader>;
 
 const isEncryptedBlob = (value: unknown): boolean =>
   typeof value === "object" &&
@@ -385,17 +394,32 @@ const isEncryptedBlob = (value: unknown): boolean =>
   typeof (value as { encrypted?: unknown }).encrypted === "string";
 
 /**
- * Encrypt `credentials` on every CodeRepository write, whatever path it came
- * in on: the admin modal through the model API, a fixture, an import. The
- * stored shape is Integration's `{ encrypted }` blob, which
- * resolveStoredCredentials already reads. An update carrying only some
- * fields (an admin retyped one token) merges over what is stored, so a blank
- * input keeps the current value instead of wiping the rest.
+ * Encrypt `credentials` on every CodeRepository and LlmIntegration write,
+ * whatever path it came in on: an admin modal through the model API, a
+ * fixture, an import. The stored shape is Integration's `{ encrypted }`
+ * blob, which resolveStoredCredentials already reads. An update carrying
+ * only some fields (an admin retyped one key) merges over what is stored,
+ * so a blank input keeps the current value instead of wiping the rest.
  */
 export async function encryptCodeRepositoryCredentials(
   operation: string,
   args: Record<string, unknown> | undefined,
-  client: CredentialReader
+  client: Pick<CredentialReader, "codeRepository">
+): Promise<void> {
+  await encryptCredentialsOnWrite("codeRepository", operation, args, client);
+}
+
+/**
+ * Seal `credentials` on a model's every write: the shared body of the
+ * CodeRepository and LlmIntegration hooks.
+ */
+export async function encryptCredentialsOnWrite<
+  K extends keyof CredentialReader,
+>(
+  modelKey: K,
+  operation: string,
+  args: Record<string, unknown> | undefined,
+  client: Pick<CredentialReader, K>
 ): Promise<void> {
   if (!args || !CREDENTIAL_WRITE_OPERATIONS.has(operation)) return;
 
@@ -417,7 +441,7 @@ export async function encryptCodeRepositoryCredentials(
     const plain = value as Record<string, unknown>;
     let existing: Record<string, string> | undefined;
     if (where) {
-      const row = await client.codeRepository.findUnique({
+      const row = await (client[modelKey] as CredentialModelReader).findUnique({
         where,
         select: { credentials: true, provider: true },
       });
@@ -466,12 +490,15 @@ export const sideEffectsPlugin = definePlugin(schema, {
 
   // Arg-rewriting business logic that must run before the write SQL.
   onQuery: async ({ model, operation, args, proceed, client }) => {
-    if (model === "CodeRepository") {
+    const credentialModel =
+      CREDENTIAL_MODELS[model as keyof typeof CREDENTIAL_MODELS];
+    if (credentialModel) {
       // The client an onQuery hook receives is ZenStack's un-proxied instance:
       // `$`-members work but model accessors (`client.codeRepository`) do not.
       // A derived client is proxied again and shares the connection; without
       // plugins the read also skips the policy layer and this hook itself.
-      await encryptCodeRepositoryCredentials(
+      await encryptCredentialsOnWrite(
+        credentialModel,
         operation,
         args,
         client.$unuseAll() as unknown as CredentialReader
