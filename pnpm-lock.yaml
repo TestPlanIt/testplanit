@@ -1043,6 +1043,9 @@ importers:
       typescript-string-operations:
         specifier: ^1.6.1
         version: 1.6.1
+      undici:
+        specifier: ^7.28.0
+        version: 7.30.0
       use-debounce:
         specifier: ^10.1.1
         version: 10.1.1(react@19.3.0)
