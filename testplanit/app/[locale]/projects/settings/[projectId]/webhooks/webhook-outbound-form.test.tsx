@@ -20,6 +20,7 @@ const {
   mockSetActive,
   mockUpdateSubs,
   mockReEnableWebhookConfig,
+  mockUrlHints,
   mockToastSuccess,
   mockToastError,
 } = vi.hoisted(() => ({
@@ -33,6 +34,7 @@ const {
   mockSetActive: vi.fn(),
   mockUpdateSubs: vi.fn(),
   mockReEnableWebhookConfig: vi.fn(),
+  mockUrlHints: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
 }));
@@ -55,6 +57,7 @@ vi.mock("~/app/actions/webhook-config", () => ({
   setWebhookActive: (...args: any[]) => mockSetActive(...args),
   updateOutboundSubscriptions: (...args: any[]) => mockUpdateSubs(...args),
   reEnableWebhookConfig: (...args: any[]) => mockReEnableWebhookConfig(...args),
+  getOutboundWebhookUrlHints: (...args: any[]) => mockUrlHints(...args),
 }));
 
 vi.mock("sonner", () => ({
@@ -199,7 +202,6 @@ const baseSlackConfig = {
   adapterType: "SLACK",
   direction: "OUTBOUND",
   name: "Engineering Slack",
-  url: "https://hooks.slack.com/services/T00/B00/secret",
   isActive: true,
   subscribedEvents: ["test_run.completed", "issue.created"],
   endpointHealth: "HEALTHY",
@@ -218,7 +220,6 @@ const baseHmacConfig = {
   adapterType: "GENERIC_HMAC",
   direction: "OUTBOUND",
   name: "QA Audit Sink",
-  url: "https://example.com/audit-sink",
   isActive: true,
   subscribedEvents: ["test_run.completed"],
   endpointHealth: "HEALTHY",
@@ -273,6 +274,27 @@ describe("WebhookOutboundForm", () => {
       isLoading: false,
       refetch: vi.fn().mockResolvedValue({ data: [] }),
     });
+    mockUrlHints.mockResolvedValue({});
+  });
+
+  it("shows a preview of each URL from the server, never the stored value", async () => {
+    mockFindManyWebhookConfig.mockReturnValue({
+      data: [baseSlackConfig],
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    mockUrlHints.mockResolvedValue({
+      "cfg-slack-1": "https://hooks.slack.com/…cret",
+    });
+    render(<WebhookOutboundForm projectId={42} />);
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("webhook-outbound-url-cfg-slack-1")
+      ).toHaveTextContent("https://hooks.slack.com/…cret")
+    );
+    expect(mockUrlHints).toHaveBeenCalledWith({ projectId: 42 });
+    const query = mockFindManyWebhookConfig.mock.calls[0][0];
+    expect(query.select.url).toBeUndefined();
   });
 
   // Test 1: empty state

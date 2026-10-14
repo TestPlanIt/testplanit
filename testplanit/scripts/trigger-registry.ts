@@ -322,6 +322,7 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
       "updatedAt",
       "token",
       "secret",
+      "url",
       "lastReceivedAt",
       "lastDispatchedAt",
       "lastSuccessAt",

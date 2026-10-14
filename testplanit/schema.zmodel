@@ -5800,7 +5800,7 @@ model WebhookConfig {
     // least this (0-100); empty = the pinned and affected tiers.
     autoRunMinScore         Int?
     endpointHealth          EndpointHealth               @default(HEALTHY)
-    url                     String?
+    url                     String?                      @omit
     name                    String?
     lastReceivedAt          DateTime?                    @db.Timestamptz(6)
     lastDispatchedAt        DateTime?                    @db.Timestamptz(6)
