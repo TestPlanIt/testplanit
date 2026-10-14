@@ -1,3 +1,9 @@
+## [1.1.3](https://github.com/TestPlanIt/testplanit/compare/v1.1.2...v1.1.3) (2026-10-14)
+
+### Bug Fixes
+
+* **security:** harden the SSRF guard against IPv4-mapped IPv6 and pin repo fetches ([#682](https://github.com/TestPlanIt/testplanit/issues/682)) ([ff2a859](https://github.com/TestPlanIt/testplanit/commit/ff2a8593d95fca502333b2117546a55442dce618))
+
 ## [1.1.2](https://github.com/TestPlanIt/testplanit/compare/v1.1.1...v1.1.2) (2026-10-14)
 
 ### Bug Fixes
