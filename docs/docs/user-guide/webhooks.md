@@ -225,7 +225,7 @@ Plaintext secrets are never read back from the database. They are returned only 
 
 ## Security
 
-- **Encryption at rest** — Inbound HMAC secrets, ADO credentials, outbound HMAC secrets, and Slack URLs (which are themselves credentials) are encrypted with the same key-management infrastructure used elsewhere in the platform.
+- **Encryption at rest** — Inbound HMAC secrets, ADO credentials, outbound HMAC secrets, and outbound URLs (a Slack URL is itself a credential) are encrypted with the same key-management infrastructure used elsewhere in the platform. After an outbound webhook is saved, its settings show only the URL's origin and last four characters.
 - **Reveal-once UX** — Plaintext secrets and full webhook URLs (with the embedded token) are shown only once per create or rotate. After dismissal, the URL renders with the token redacted.
 - **Redacted logs** — Webhook URLs that contain a token are redacted in application logs. Audit events store webhook config IDs, not secrets.
 - **HTTPS-only outbound** — TestPlanIt rejects `http://` URLs when creating outbound webhooks. (A deployment-only environment override exists for E2E test rigs but is not available through the user interface.)

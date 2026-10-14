@@ -11,6 +11,7 @@ vi.mock("~/utils/encryption", () => ({
   decrypt: vi
     .fn()
     .mockImplementation(async (cipher: string) => `decrypted:${cipher}`),
+  isEncrypted: (value: string) => value.startsWith("sealed:"),
 }));
 
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -254,6 +255,24 @@ describe("dispatchWebhook", () => {
         action: "WEBHOOK_DISPATCHED",
         metadata: expect.objectContaining({ outcome: "success" }),
       })
+    );
+  });
+
+  it("posts to the decrypted URL when the stored URL is encrypted", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    globalThis.fetch = fetchSpy as any;
+    const dbMock = buildDbMock({
+      outboxEvent: baseOutboxEvent,
+      config: baseConfig({ url: "sealed:abc" }),
+    });
+
+    await dispatchWebhook(baseJobData, dbMock);
+
+    expect(fetchSpy.mock.calls[0][0]).toBe("decrypted:sealed:abc");
+    expect(dbMock.webhookConfig.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ omit: { url: false } })
     );
   });
 

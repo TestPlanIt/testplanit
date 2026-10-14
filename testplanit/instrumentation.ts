@@ -57,4 +57,9 @@ export async function register() {
   const { ensureSsoConfigEncrypted } =
     await import("~/lib/auth/ensureSsoConfigEncrypted");
   await ensureSsoConfigEncrypted();
+
+  // And outbound webhook URLs, which for Slack are the credential.
+  const { ensureOutboundWebhookUrlsEncrypted } =
+    await import("~/lib/webhooks/ensureOutboundWebhookUrlsEncrypted");
+  await ensureOutboundWebhookUrlsEncrypted();
 }

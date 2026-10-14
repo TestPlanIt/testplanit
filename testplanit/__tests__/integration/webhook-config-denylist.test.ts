@@ -4,7 +4,8 @@
 // Two distinct guarantees share one registry entry, and only a real Postgres
 // trigger can show either of them:
 //
-//  1. CREDENTIALS NEVER LAND. `token` and `secret` are denylisted, so no
+//  1. CREDENTIALS NEVER LAND. `token`, `secret` and `url` (a Slack URL is
+//     itself a credential) are denylisted, so no
 //     DataChangeLog row — insert or update — may carry them in its
 //     `changed_cols` diff, in the before value or the after value. An
 //     assertion on the key alone would pass against a trigger that kept the
@@ -47,6 +48,7 @@ const STAMP = `wcd-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const DENYLISTED_COLUMNS = [
   "token",
   "secret",
+  "url",
   "lastReceivedAt",
   "lastDispatchedAt",
   "lastSuccessAt",
@@ -69,6 +71,7 @@ describeIntegration("WebhookConfig audit denylist (live DB)", () => {
   const ORIGINAL_SECRET = `${STAMP}-secret-original`;
   const ROTATED_TOKEN = `${STAMP}-token-rotated`;
   const ROTATED_SECRET = `${STAMP}-secret-rotated`;
+  const ORIGINAL_URL = `https://example.invalid/hooks/${STAMP}`;
 
   /** Every audit row this WebhookConfig has ever produced, oldest first. The
    * pk filter is the fixture's own cuid, so concurrent suites on the same
@@ -138,7 +141,7 @@ describeIntegration("WebhookConfig audit denylist (live DB)", () => {
         token: ORIGINAL_TOKEN,
         secret: ORIGINAL_SECRET,
         name: `${STAMP}-hook`,
-        url: "https://example.invalid/hooks/denylist",
+        url: ORIGINAL_URL,
       },
       select: { id: true },
     });
@@ -157,22 +160,23 @@ describeIntegration("WebhookConfig audit denylist (live DB)", () => {
     await db.$disconnect();
   });
 
-  it("captures the insert but never the token or secret", async () => {
+  it("captures the insert but never the token, secret or URL", async () => {
     const rows = await changeLogRows();
     expect(rows).toHaveLength(1);
     expect(rows[0].op).toBe("I");
 
     const captured = rows[0].changed_cols ?? {};
-    // The row IS audited — projectId/name/url are all there — so the
-    // absences below are the denylist, not a missing trigger.
+    // The row IS audited — projectId and name are there — so the absences
+    // below are the denylist, not a missing trigger.
     expect(Object.keys(captured)).toEqual(
-      expect.arrayContaining(["projectId", "name", "url"])
+      expect.arrayContaining(["projectId", "name"])
     );
     for (const column of DENYLISTED_COLUMNS) {
       expect(column in captured).toBe(false);
     }
     expect(JSON.stringify(captured)).not.toContain(ORIGINAL_TOKEN);
     expect(JSON.stringify(captured)).not.toContain(ORIGINAL_SECRET);
+    expect(JSON.stringify(captured)).not.toContain(ORIGINAL_URL);
   });
 
   it("a delivery-telemetry-only update writes no audit row at all", async () => {

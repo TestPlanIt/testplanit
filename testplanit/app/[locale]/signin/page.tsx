@@ -309,6 +309,8 @@ const Signin: NextPage = () => {
 
       const callbackUrl = searchParams.get("callbackUrl") || "/";
       router.push(callbackUrl);
+    } else if (result?.error === "EMAIL_NOT_VERIFIED") {
+      router.push("/verify-email?email=" + encodeURIComponent(data.email));
     } else if (result?.error?.startsWith("2FA_REQUIRED:")) {
       // Extract pending auth token and show 2FA input
       const token = result.error.replace("2FA_REQUIRED:", "");

@@ -196,10 +196,6 @@ const Signup: NextPage = () => {
       return;
     }
 
-    // Check if email verification is required
-    const requireEmailVerification =
-      registrationSettings?.requireEmailVerification ?? true;
-
     let newUser;
     try {
       // Use dedicated signup API endpoint instead of ZenStack
@@ -225,8 +221,8 @@ const Signup: NextPage = () => {
 
       newUser = await response.json().then((r) => r.data);
 
-      // Only send verification email if verification is required
-      if (requireEmailVerification) {
+      // The server decides whether the address still needs confirming.
+      if (!newUser?.emailVerified) {
         await resendVerificationEmail(data.email);
       }
     } catch (err: any) {
@@ -247,6 +243,12 @@ const Signup: NextPage = () => {
         console.error("Failed to send user registration notifications:", error);
         // Don't fail the signup process if notifications fail
       }
+    }
+
+    // An account that still has to confirm its address can't sign in yet.
+    if (!newUser?.emailVerified) {
+      router.push("/verify-email?email=" + encodeURIComponent(data.email));
+      return;
     }
 
     // signin to create a session
@@ -274,12 +276,6 @@ const Signup: NextPage = () => {
       return;
     }
 
-    // A new account that still has to verify its address goes straight to
-    // the verification page; pushing home would race the header's redirect.
-    if (requireEmailVerification) {
-      router.push("/verify-email?email=" + encodeURIComponent(data.email));
-      return;
-    }
     router.push("/");
   }
 

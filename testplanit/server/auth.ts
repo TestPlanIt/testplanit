@@ -30,6 +30,7 @@ import { getCachedSessionUser, touchLastActive } from "~/lib/session-cache";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { isForceSsoEnabled } from "~/lib/utils/force-sso";
+import { needsEmailVerification } from "~/lib/auth/emailVerification";
 import { resolveSsoConfig } from "~/lib/auth/ssoConfig";
 import { db } from "~/server/db";
 import { createCustomDbAdapter } from "./auth-adapter";
@@ -345,7 +346,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             void touchLastActive(session.user.id, user);
           }
 
-          // ONE query for both mid-session guards below.
+          // ONE query for the mid-session guards below.
           //
           // Both MUST read the database directly rather than the projection from
           // getCachedSessionUser: its 60s TTL would let a stale session outlive a
@@ -361,7 +362,12 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           // primary-key lookup and saves a whole round trip.
           const freshUser = await db.user.findUnique({
             where: { id: session.user.id },
-            select: { passwordChangedAt: true, isActive: true },
+            select: {
+              passwordChangedAt: true,
+              isActive: true,
+              emailVerified: true,
+              authMethod: true,
+            },
           });
 
           // SECURITY-03: password changed after this JWT was issued. Only
@@ -391,6 +397,11 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           // missing row does NOT short-circuit (a deleted user is a separate
           // concern handled by the existing not-found behavior downstream).
           if (freshUser && freshUser.isActive === false) {
+            return {} as Session;
+          }
+
+          // A session from before sign-in required a confirmed address.
+          if (freshUser && needsEmailVerification(freshUser)) {
             return {} as Session;
           }
 
@@ -749,7 +760,7 @@ export const authOptions: NextAuthOptions = {
           void touchLastActive(session.user.id, user);
         }
 
-        // ONE query for both mid-session guards below.
+        // ONE query for the mid-session guards below.
         //
         // Both MUST read the database directly rather than the projection from
         // getCachedSessionUser: its 60s TTL would let a stale session outlive a
@@ -766,7 +777,12 @@ export const authOptions: NextAuthOptions = {
         // and saves a whole round trip.
         const freshUser = await db.user.findUnique({
           where: { id: session.user.id },
-          select: { passwordChangedAt: true, isActive: true },
+          select: {
+            passwordChangedAt: true,
+            isActive: true,
+            emailVerified: true,
+            authMethod: true,
+          },
         });
 
         // SECURITY-03: password changed after this JWT was issued. Only
@@ -796,6 +812,11 @@ export const authOptions: NextAuthOptions = {
         // NOT short-circuit (a deleted user is a separate concern handled by the
         // existing not-found behavior downstream).
         if (freshUser && freshUser.isActive === false) {
+          return {} as Session;
+        }
+
+        // A session from before sign-in required a confirmed address.
+        if (freshUser && needsEmailVerification(freshUser)) {
           return {} as Session;
         }
 
@@ -1203,6 +1224,7 @@ function authorize(db: DbClient) {
       failedLoginAttempts: true,
       lockedUntil: true,
       passwordChangedAt: true,
+      emailVerified: true,
     } as const;
     const maybeUser =
       (await db.user.findFirst({
@@ -1303,6 +1325,15 @@ function authorize(db: DbClient) {
           reason: "successful_login",
         }).catch(console.error);
       }
+    }
+
+    // Checked after the password, so it reveals nothing to someone without
+    // it. The sign-in page sends the user on to verify the address.
+    if (needsEmailVerification(maybeUser)) {
+      auditAuthEvent("LOGIN_FAILED", maybeUser.id, credentials.email, {
+        reason: "email_not_verified",
+      }).catch(console.error);
+      throw new Error("EMAIL_NOT_VERIFIED");
     }
 
     // POLICY-04: Check password expiration

@@ -305,7 +305,7 @@ describe("session callback - placement invariants", () => {
 describe("session callback - source-shape sanity", () => {
   const source = readFileSync(join(__dirname, "auth.ts"), "utf-8");
 
-  it("D1: session callbacks select passwordChangedAt and isActive in ONE read", () => {
+  it("D1: session callbacks select passwordChangedAt, isActive and the verification fields in ONE read", () => {
     // Was /select:\s*{\s*isActive:\s*true\s*}/ — a standalone isActive select,
     // which is exactly the second round trip that got merged away. Both session
     // callbacks in this file (the `authOptions` const used by ~176
@@ -313,7 +313,7 @@ describe("session callback - source-shape sanity", () => {
     // NextAuth route handler) must carry the merged shape, or one path silently
     // keeps double-querying.
     const merged = source.match(
-      /select:\s*{\s*passwordChangedAt:\s*true,\s*isActive:\s*true\s*}/g
+      /select:\s*{\s*passwordChangedAt:\s*true,\s*isActive:\s*true,\s*emailVerified:\s*true,\s*authMethod:\s*true,?\s*}/g
     );
     expect(merged).not.toBeNull();
     expect(merged!.length).toBe(2);

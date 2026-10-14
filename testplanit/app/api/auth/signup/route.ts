@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { isEmailServerConfigured } from "~/lib/email/emailConfig";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { isForceSsoEnabled } from "~/lib/utils/force-sso";
 import { db } from "~/server/db";
 
@@ -16,7 +17,7 @@ import { db } from "~/server/db";
  *
  * Security: This endpoint is intentionally public to allow user registration.
  * Access control is handled by:
- * - Email domain restrictions (checked by caller)
+ * - Email domain restrictions, checked here as well as on the sign-up page
  * - Access level and role resolved server-side from registration settings
  *   and the default role, never taken from the request
  * - No sensitive data exposure in response
@@ -72,6 +73,16 @@ export async function POST(req: NextRequest) {
         {
           errorCode: "auth.signup.registrationDisabled",
           error: "Registration is currently disabled",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (!(await isEmailDomainAllowed(validatedData.email))) {
+      return NextResponse.json(
+        {
+          errorCode: "auth.signup.errors.domainRestricted",
+          error: "Registration is restricted to approved email domains",
         },
         { status: 403 }
       );
@@ -136,6 +147,7 @@ export async function POST(req: NextRequest) {
           name: true,
           email: true,
           access: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
