@@ -30,11 +30,12 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import type { SsoConfigSummary } from "~/lib/auth/ssoConfig";
 import { Access, SsoProviderType } from "~/zenstack/models";
 import { Plus, Settings, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type SignInProviderRow = {
@@ -127,6 +128,38 @@ export default function SSOAdminPage() {
   // Magic Link state
   const [magicLinkConfigured, setMagicLinkConfigured] = useState(false);
 
+  // Each provider's identifiers and which secrets are stored; the secrets
+  // themselves stay on the server.
+  const [configSummaries, setConfigSummaries] = useState<
+    Record<string, SsoConfigSummary>
+  >({});
+  useEffect(() => {
+    if (!ssoProviders) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/admin/sso/config-summary");
+        if (!response.ok) return;
+        const body = (await response.json()) as {
+          providers: Record<string, SsoConfigSummary>;
+        };
+        if (!cancelled) setConfigSummaries(body.providers ?? {});
+      } catch (error) {
+        console.error("Failed to load SSO configuration:", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ssoProviders]);
+  const summaryFor = useCallback(
+    (type: SsoProviderType) => {
+      const provider = ssoProviders?.find((p) => p.type === type);
+      return provider ? configSummaries[provider.id] : undefined;
+    },
+    [ssoProviders, configSummaries]
+  );
+
   // Optimistic toggle state — updates immediately on click, syncs with server data
   const [toggleState, setToggleState] = useState<Record<string, boolean>>({});
 
@@ -145,20 +178,12 @@ export default function SSOAdminPage() {
 
   // Check if Google OAuth is configured based on SSO providers data
   useEffect(() => {
-    const googleProvider = ssoProviders?.find(
-      (p) => p.type === SsoProviderType.GOOGLE
-    );
-
-    if (googleProvider?.config) {
-      const config = googleProvider.config as any;
-      setGoogleConfigured(!!(config.clientId && config.clientSecret));
-      if (config.clientId) {
-        setGoogleClientId(config.clientId);
-      }
-    } else {
-      setGoogleConfigured(false);
+    const config = summaryFor(SsoProviderType.GOOGLE);
+    setGoogleConfigured(!!(config?.clientId && config.hasClientSecret));
+    if (config?.clientId) {
+      setGoogleClientId(config.clientId);
     }
-  }, [ssoProviders]);
+  }, [summaryFor]);
 
   // Check if SAML is configured based on SSO providers data
   useEffect(() => {
@@ -181,46 +206,28 @@ export default function SSOAdminPage() {
 
   // Check if Apple Sign In is configured based on SSO providers data
   useEffect(() => {
-    const appleProvider = ssoProviders?.find(
-      (p) => p.type === SsoProviderType.APPLE
-    );
-
-    if (appleProvider?.config) {
-      const config = appleProvider.config as any;
-      // Check if actual configuration values exist
-      if (config.clientId && config.teamId && config.keyId) {
-        setAppleClientId(config.clientId);
-        setAppleTeamId(config.teamId);
-        setAppleKeyId(config.keyId);
-        setApplePrivateKey(config.privateKey || "");
-        setAppleConfigured(true);
-      } else {
-        setAppleConfigured(false);
-      }
+    const config = summaryFor(SsoProviderType.APPLE);
+    if (config?.clientId && config.teamId && config.keyId) {
+      setAppleClientId(config.clientId);
+      setAppleTeamId(config.teamId);
+      setAppleKeyId(config.keyId);
+      setAppleConfigured(config.hasPrivateKey);
     } else {
       setAppleConfigured(false);
     }
-  }, [ssoProviders]);
+  }, [summaryFor]);
 
   // Check if Microsoft SSO is configured based on SSO providers data
   useEffect(() => {
-    const microsoftProvider = ssoProviders?.find(
-      (p) => p.type === SsoProviderType.MICROSOFT
-    );
-
-    if (microsoftProvider?.config) {
-      const config = microsoftProvider.config as any;
-      setMicrosoftConfigured(!!(config.clientId && config.clientSecret));
-      if (config.clientId) {
-        setMicrosoftClientId(config.clientId);
-      }
-      if (config.tenantId) {
-        setMicrosoftTenantId(config.tenantId);
-      }
-    } else {
-      setMicrosoftConfigured(false);
+    const config = summaryFor(SsoProviderType.MICROSOFT);
+    setMicrosoftConfigured(!!(config?.clientId && config.hasClientSecret));
+    if (config?.clientId) {
+      setMicrosoftClientId(config.clientId);
     }
-  }, [ssoProviders]);
+    if (config?.tenantId) {
+      setMicrosoftTenantId(config.tenantId);
+    }
+  }, [summaryFor]);
 
   // Check if Magic Link is configured (requires email settings)
   useEffect(() => {
@@ -265,17 +272,18 @@ export default function SSOAdminPage() {
 
   // Save Google OAuth configuration using ZenStack hooks
   const saveGoogleConfig = async () => {
-    if (!googleClientId || !googleClientSecret) {
+    const hasStoredSecret = !!summaryFor(SsoProviderType.GOOGLE)
+      ?.hasClientSecret;
+    if (!googleClientId || (!googleClientSecret && !hasStoredSecret)) {
       toast.error(t("admin.sso.dialogs.googleOAuth.validation.bothRequired"));
       return;
     }
 
     setIsSavingGoogleConfig(true);
     try {
-      const config = {
-        clientId: googleClientId,
-        clientSecret: googleClientSecret,
-      };
+      // A blank secret keeps the stored one.
+      const config: Record<string, string> = { clientId: googleClientId };
+      if (googleClientSecret) config.clientSecret = googleClientSecret;
 
       const existingProvider = ssoProviders?.find(
         (p) => p.type === SsoProviderType.GOOGLE
@@ -428,19 +436,26 @@ export default function SSOAdminPage() {
 
   // Save Apple configuration using ZenStack hooks
   const saveAppleConfig = async () => {
-    if (!appleClientId || !appleTeamId || !appleKeyId || !applePrivateKey) {
+    const hasStoredKey = !!summaryFor(SsoProviderType.APPLE)?.hasPrivateKey;
+    if (
+      !appleClientId ||
+      !appleTeamId ||
+      !appleKeyId ||
+      (!applePrivateKey && !hasStoredKey)
+    ) {
       toast.error(t("common.dialogs.complete.apple.validation.allRequired"));
       return;
     }
 
     setIsSavingAppleConfig(true);
     try {
-      const config = {
+      // A blank private key keeps the stored one.
+      const config: Record<string, string> = {
         clientId: appleClientId,
         teamId: appleTeamId,
         keyId: appleKeyId,
-        privateKey: applePrivateKey,
       };
+      if (applePrivateKey) config.privateKey = applePrivateKey;
 
       const existingProvider = ssoProviders?.find(
         (p) => p.type === SsoProviderType.APPLE
@@ -520,20 +535,22 @@ export default function SSOAdminPage() {
 
   // Save Microsoft configuration using ZenStack hooks
   const saveMicrosoftConfig = async () => {
-    if (!microsoftClientId || !microsoftClientSecret) {
+    const hasStoredSecret = !!summaryFor(SsoProviderType.MICROSOFT)
+      ?.hasClientSecret;
+    if (!microsoftClientId || (!microsoftClientSecret && !hasStoredSecret)) {
       toast.error(t("admin.sso.dialogs.microsoft.validation.bothRequired"));
       return;
     }
 
     setIsSavingMicrosoftConfig(true);
     try {
+      // A blank secret keeps the stored one; a cleared tenant falls back to
+      // the default.
       const config: Record<string, string> = {
         clientId: microsoftClientId,
-        clientSecret: microsoftClientSecret,
+        tenantId: microsoftTenantId,
       };
-      if (microsoftTenantId) {
-        config.tenantId = microsoftTenantId;
-      }
+      if (microsoftClientSecret) config.clientSecret = microsoftClientSecret;
 
       const existingProvider = ssoProviders?.find(
         (p) => p.type === SsoProviderType.MICROSOFT
@@ -1285,9 +1302,11 @@ export default function SSOAdminPage() {
                 type="password"
                 value={googleClientSecret}
                 onChange={(e) => setGoogleClientSecret(e.target.value)}
-                placeholder={t(
-                  "admin.sso.dialogs.googleOAuth.clientSecretPlaceholder"
-                )}
+                placeholder={
+                  summaryFor(SsoProviderType.GOOGLE)?.hasClientSecret
+                    ? t("admin.integrations.config.leaveBlankToKeep")
+                    : t("admin.sso.dialogs.googleOAuth.clientSecretPlaceholder")
+                }
               />
             </div>
             <div className="text-sm text-muted-foreground">
@@ -1323,7 +1342,10 @@ export default function SSOAdminPage() {
             <Button
               onClick={saveGoogleConfig}
               disabled={
-                isSavingGoogleConfig || !googleClientId || !googleClientSecret
+                isSavingGoogleConfig ||
+                !googleClientId ||
+                (!googleClientSecret &&
+                  !summaryFor(SsoProviderType.GOOGLE)?.hasClientSecret)
               }
             >
               {isSavingGoogleConfig
@@ -1554,9 +1576,11 @@ export default function SSOAdminPage() {
                 className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={applePrivateKey}
                 onChange={(e) => setApplePrivateKey(e.target.value)}
-                placeholder={t(
-                  "common.dialogs.complete.apple.privateKeyPlaceholder"
-                )}
+                placeholder={
+                  summaryFor(SsoProviderType.APPLE)?.hasPrivateKey
+                    ? t("admin.integrations.config.leaveBlankToKeep")
+                    : t("common.dialogs.complete.apple.privateKeyPlaceholder")
+                }
               />
             </div>
             <div className="text-sm text-muted-foreground">
@@ -1596,7 +1620,8 @@ export default function SSOAdminPage() {
                 !appleClientId ||
                 !appleTeamId ||
                 !appleKeyId ||
-                !applePrivateKey
+                (!applePrivateKey &&
+                  !summaryFor(SsoProviderType.APPLE)?.hasPrivateKey)
               }
             >
               {isSavingAppleConfig
@@ -1642,9 +1667,11 @@ export default function SSOAdminPage() {
                 type="password"
                 value={microsoftClientSecret}
                 onChange={(e) => setMicrosoftClientSecret(e.target.value)}
-                placeholder={t(
-                  "admin.sso.dialogs.microsoft.clientSecretPlaceholder"
-                )}
+                placeholder={
+                  summaryFor(SsoProviderType.MICROSOFT)?.hasClientSecret
+                    ? t("admin.integrations.config.leaveBlankToKeep")
+                    : t("admin.sso.dialogs.microsoft.clientSecretPlaceholder")
+                }
               />
             </div>
             <div className="grid gap-2">
@@ -1698,7 +1725,8 @@ export default function SSOAdminPage() {
               disabled={
                 isSavingMicrosoftConfig ||
                 !microsoftClientId ||
-                !microsoftClientSecret
+                (!microsoftClientSecret &&
+                  !summaryFor(SsoProviderType.MICROSOFT)?.hasClientSecret)
               }
             >
               {isSavingMicrosoftConfig

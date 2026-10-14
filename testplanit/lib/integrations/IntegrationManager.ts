@@ -18,6 +18,15 @@ import { RedmineAdapter } from "./adapters/RedmineAdapter";
 import { SimpleUrlAdapter } from "./adapters/SimpleUrlAdapter";
 
 /**
+ * The same client without its access policy. A ZenStack policy client drops
+ * the policy with `$unuseAll()`; a raw client (or a test double) is used as is.
+ */
+function withoutAccessPolicy<T>(db: T): T {
+  const unuseAll = (db as { $unuseAll?: () => T }).$unuseAll;
+  return typeof unuseAll === "function" ? unuseAll.call(db) : db;
+}
+
+/**
  * Central service for managing integrations and their adapters
  */
 export class IntegrationManager {
@@ -126,7 +135,7 @@ export class IntegrationManager {
 
     // Fetch integration from database (use provided client for multi-tenant support)
     const db = dbClient || rawDb;
-    const integration = await db.integration.findUnique({
+    const row = await db.integration.findUnique({
       where: { id: parseInt(integrationId) },
       include: {
         userIntegrationAuths: {
@@ -137,9 +146,16 @@ export class IntegrationManager {
       },
     });
 
-    if (!integration) {
+    if (!row) {
       throw new Error(`Integration not found: ${integrationId}`);
     }
+
+    // A caller's policy client hides the credentials from non-admins.
+    const stored = await withoutAccessPolicy(db).integration.findUnique({
+      where: { id: row.id },
+      select: { credentials: true },
+    });
+    const integration = { ...row, credentials: stored?.credentials ?? null };
 
     // OAuth 2.0 (3LO) integrations are intentionally inactive until a user
     // completes authorization — and the authorization flow itself needs the
@@ -417,7 +433,9 @@ export class IntegrationManager {
   /**
    * Build adapter configuration from integration data
    */
-  private async buildAdapterConfig(integration: Integration): Promise<any> {
+  private async buildAdapterConfig(
+    integration: Integration & { credentials?: unknown }
+  ): Promise<any> {
     const config: any = {
       integrationId: integration.id,
       name: integration.name,

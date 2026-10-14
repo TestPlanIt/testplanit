@@ -15,7 +15,6 @@ const createTestConfig = (
     name: "Test DeepSeek",
     provider: "DEEPSEEK",
     status: "ACTIVE",
-    credentials: {},
     settings: null,
     isDeleted: false,
     deletedAt: null,

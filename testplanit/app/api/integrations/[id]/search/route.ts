@@ -1,4 +1,5 @@
 import { getEnhancedDb } from "@/lib/auth/utils";
+import { baseDb } from "@/lib/db";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import {
   integrationErrorBody,
@@ -71,7 +72,11 @@ export async function GET(
       integration.authType === "PERSONAL_ACCESS_TOKEN"
     ) {
       // For API key/PAT integrations, authentication is stored in the integration itself
-      if (!integration.credentials) {
+      const stored = await baseDb.integration.findUnique({
+        where: { id: integrationId },
+        select: { credentials: true },
+      });
+      if (!stored?.credentials) {
         return Response.json(
           {
             error: "API key or Personal Access Token not configured",

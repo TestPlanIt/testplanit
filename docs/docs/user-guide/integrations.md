@@ -815,6 +815,8 @@ Respect external API limits:
 ### Credential Storage
 
 - Credentials are encrypted at rest using AES-256
+- Only administrators can read an integration's credentials, and they never reach the browser
+- Credentials saved before encryption are encrypted on the next start
 - OAuth tokens stored per user
 - API keys stored at integration level
 - No credentials in logs or error messages

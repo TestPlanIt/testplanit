@@ -781,6 +781,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     if (integrationId) {
       const integration = await baseDb.integration.findUnique({
         where: { id: integrationId },
+        omit: { credentials: false },
       });
 
       if (!integration) {

@@ -94,7 +94,6 @@ const createTestConfig = (
     name: "Test Integration",
     provider: "OPENAI",
     status: "ACTIVE",
-    credentials: {},
     settings: null,
     isDeleted: false,
     deletedAt: null,

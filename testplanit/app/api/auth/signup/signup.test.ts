@@ -47,6 +47,9 @@ describe("POST /api/auth/signup", () => {
     });
   };
 
+  // The server mints the verification token; whatever the body says is ignored.
+  const SERVER_TOKEN = expect.stringMatching(/^[0-9a-f]{64}$/);
+
   const validSignupData = {
     name: "Test User",
     email: "test@example.com",
@@ -110,7 +113,7 @@ describe("POST /api/auth/signup", () => {
           name: "Test User",
           email: "test@example.com",
           password: "hashed-password",
-          emailVerifToken: "verification-token-123",
+          emailVerifToken: SERVER_TOKEN,
           emailVerified: null,
           access: "NONE",
           roleId: 1,
@@ -122,7 +125,7 @@ describe("POST /api/auth/signup", () => {
       });
     });
 
-    it("should store emailVerifToken when verification is required", async () => {
+    it("should store a server-generated emailVerifToken when verification is required, never the submitted one", async () => {
       mockDb.user.findFirst.mockResolvedValue(null);
       mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
@@ -138,7 +141,7 @@ describe("POST /api/auth/signup", () => {
 
       expect(mockDb.user.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          emailVerifToken: "verification-token-123",
+          emailVerifToken: SERVER_TOKEN,
         }),
         select: expect.any(Object),
       });
@@ -235,7 +238,7 @@ describe("POST /api/auth/signup", () => {
       expect(mockDb.user.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           emailVerified: null,
-          emailVerifToken: "verification-token-123",
+          emailVerifToken: SERVER_TOKEN,
         }),
         select: expect.any(Object),
       });
@@ -680,7 +683,7 @@ describe("POST /api/auth/signup", () => {
         expect(mockDb.user.create).toHaveBeenCalledWith({
           data: expect.objectContaining({
             emailVerified: null,
-            emailVerifToken: "verification-token-123",
+            emailVerifToken: SERVER_TOKEN,
           }),
           select: expect.any(Object),
         });

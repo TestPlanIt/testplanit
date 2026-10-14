@@ -218,7 +218,28 @@ describe("LlmManager", () => {
       const adapter2 = await manager.getAdapter(1);
 
       expect(adapter1).toBe(adapter2);
-      expect(mockDb.llmIntegration.findUnique).toHaveBeenCalledTimes(1);
+      // One build: the integration, then its credentials (omitted from the
+      // first read). The second call uses the cached adapter.
+      expect(mockDb.llmIntegration.findUnique).toHaveBeenCalledTimes(2);
+    });
+
+    it("hands the adapter the decrypted key, read with an explicit select", async () => {
+      process.env.ENCRYPTION_KEY ??= "test-encryption-key-for-testing-purposes";
+      const { encrypt } = await import("@/utils/encryption");
+      const sealed = {
+        encrypted: await encrypt(JSON.stringify({ apiKey: "sk-sealed" })),
+      };
+      mockDb.llmIntegration.findUnique
+        .mockResolvedValueOnce(mockLlmIntegration)
+        .mockResolvedValueOnce({ credentials: sealed, provider: "OPENAI" });
+
+      const adapter = await manager.getAdapter(1);
+
+      expect(mockDb.llmIntegration.findUnique).toHaveBeenLastCalledWith({
+        where: { id: 1 },
+        select: { credentials: true, provider: true },
+      });
+      expect((adapter as any).config.apiKey).toBe("sk-sealed");
     });
 
     it("should throw error when integration not found", async () => {

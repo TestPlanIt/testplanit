@@ -30,6 +30,7 @@ import { getCachedSessionUser, touchLastActive } from "~/lib/session-cache";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { isForceSsoEnabled } from "~/lib/utils/force-sso";
+import { resolveSsoConfig } from "~/lib/auth/ssoConfig";
 import { db } from "~/server/db";
 import { createCustomDbAdapter } from "./auth-adapter";
 
@@ -157,8 +158,16 @@ async function getDynamicProviders() {
     });
 
     for (const provider of ssoProviders) {
+      let config: Record<string, string> = {};
+      if (provider.config) {
+        try {
+          config = await resolveSsoConfig(provider.config, provider.type);
+        } catch (error) {
+          console.error(`Failed to read ${provider.type} SSO config:`, error);
+          continue;
+        }
+      }
       if (provider.type === "GOOGLE" && provider.config) {
-        const config = provider.config as any;
         if (config.clientId && config.clientSecret) {
           providers.push(
             GoogleProvider({
@@ -176,7 +185,6 @@ async function getDynamicProviders() {
           );
         }
       } else if (provider.type === "APPLE" && provider.config) {
-        const config = provider.config as any;
         const clientSecret = generateAppleClientSecret(config);
         if (config.clientId && clientSecret) {
           providers.push(
@@ -195,7 +203,6 @@ async function getDynamicProviders() {
           );
         }
       } else if (provider.type === "MICROSOFT" && provider.config) {
-        const config = provider.config as any;
         if (config.clientId && config.clientSecret) {
           providers.push(
             AzureADProvider({

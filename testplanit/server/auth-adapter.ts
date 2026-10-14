@@ -14,18 +14,24 @@ import type {
 } from "next-auth/adapters";
 import { NotificationService } from "~/lib/services/notificationService";
 
-const ACCOUNT_FIELDS: Record<keyof AccountUncheckedCreateInput, true> = {
+/**
+ * The provider's OAuth tokens are left out: sign-in only needs the account
+ * link, and nothing calls the provider with them afterwards.
+ */
+type StoredAccountField = Exclude<
+  keyof AccountUncheckedCreateInput,
+  "refresh_token" | "access_token" | "id_token"
+>;
+
+const ACCOUNT_FIELDS: Record<StoredAccountField, true> = {
   id: true,
   userId: true,
   type: true,
   provider: true,
   providerAccountId: true,
-  refresh_token: true,
-  access_token: true,
   expires_at: true,
   token_type: true,
   scope: true,
-  id_token: true,
   session_state: true,
 };
 

@@ -224,6 +224,10 @@ AZURE_AD_TENANT_ID=your-tenant-id  # Optional, defaults to "common" (multi-tenan
 
 When environment variables are set and no database-configured Microsoft provider exists, a fallback provider is created automatically.
 
+### Credential storage
+
+Client secrets and the Apple private key are encrypted at rest with the instance's `ENCRYPTION_KEY`, and only administrators can read them. They never reach the browser: when you edit a configured provider, the secret field is blank, and leaving it blank keeps the stored value. Secrets saved before encryption are encrypted on the next start.
+
 ### Registration Settings
 
 TestPlanIt provides controls for managing user registration and access. These settings are in the **Registration Settings** card at the bottom of `/admin/sso`.

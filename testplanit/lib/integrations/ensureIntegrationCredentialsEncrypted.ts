@@ -17,7 +17,6 @@ import { isEncryptedCredentialBlob } from "./ensureCodeRepositoryCredentialsEncr
 export interface IntegrationCredentialRewriter {
   integration: {
     findMany(args: {
-      where: { isDeleted: boolean };
       select: { id: true; name: true; provider: true; credentials: true };
     }): Promise<
       Array<{
@@ -47,7 +46,6 @@ export async function encryptLegacyIntegrationCredentials(
   log: (message: string) => void = () => {}
 ): Promise<{ rewritten: number; unreadable: number; total: number }> {
   const integrations = await db.integration.findMany({
-    where: { isDeleted: false },
     select: { id: true, name: true, provider: true, credentials: true },
   });
   let rewritten = 0;

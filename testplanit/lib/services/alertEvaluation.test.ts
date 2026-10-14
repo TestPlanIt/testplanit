@@ -911,6 +911,37 @@ describe("AlertEvaluationService — round two metrics", () => {
     );
   });
 
+  it("names an unnamed webhook by its id, never by its URL", async () => {
+    const secretUrl = "https://hooks.slack.com/services/T000/B000/SECRET";
+    const db = mockDb({
+      rules: [
+        rule({
+          id: 9,
+          metric: "WEBHOOK_FAILURE_RATE",
+          thresholdValue: 25,
+          baselineWindow: 50,
+          minSamples: 10,
+          scopeType: "WEBHOOK",
+          scopeText: "cfg_1",
+        }),
+      ],
+      webhookConfigs: [
+        { id: "cfg_1", name: null, url: secretUrl, project: { name: "Shop" } },
+      ],
+      deliveries: { total: 20, failed: 8 },
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    await service.evaluateScheduled(undefined, "hourly");
+    expect(db.alertEvent.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ subjectName: "cfg_1" }),
+      })
+    );
+    expect(JSON.stringify(db.alertEvent.create.mock.calls)).not.toContain(
+      "SECRET"
+    );
+  });
+
   it("runs the daily pass over project health with the case-set scope", async () => {
     const db = mockDb({
       rules: [

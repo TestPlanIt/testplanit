@@ -184,6 +184,12 @@ export function EditLlmIntegration({
   const { mutateAsync: deleteManyLlmUsage } =
     useClientQueries(schema).llmUsage.useDeleteMany();
   const [testingConnection, setTestingConnection] = useState(false);
+  // What may be shown of the stored credentials: the key never reaches the
+  // browser, only whether one is set.
+  const [storedCredentials, setStoredCredentials] = useState<{
+    endpoint: string | null;
+    hasApiKey: boolean;
+  } | null>(null);
   const [resettingSpend, setResettingSpend] = useState(false);
   const { data: existingIntegrations } = useClientQueries(
     schema
@@ -290,6 +296,8 @@ export function EditLlmIntegration({
           provider: providerType,
           apiKey,
           endpoint,
+          // A blank key lists models with the stored one.
+          llmIntegrationId: integration?.id,
         }),
       });
 
@@ -347,9 +355,11 @@ export function EditLlmIntegration({
     }
 
     // For providers that require an API key, wait until one is provided
+    // or a stored one can stand in.
     if (
       ["OPENAI", "ANTHROPIC", "GEMINI", "DEEPSEEK"].includes(provider) &&
-      !apiKey
+      !apiKey &&
+      !storedCredentials?.hasApiKey
     ) {
       return;
     }
@@ -365,15 +375,45 @@ export function EditLlmIntegration({
     }, 1000); // 1 second delay
 
     return () => clearTimeout(timeoutId);
-  }, [apiKey, endpoint, provider, open]);
+  }, [apiKey, endpoint, provider, open, storedCredentials]);
+
+  // The stored endpoint, and whether a key is set, for this integration.
+  useEffect(() => {
+    if (!integration?.id || !open) return;
+    let cancelled = false;
+    setStoredCredentials(null);
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/admin/llm/integrations/${integration.id}/credentials`
+        );
+        if (!response.ok || cancelled) return;
+        const data = (await response.json()) as {
+          endpoint: string | null;
+          hasApiKey: boolean;
+        };
+        if (cancelled) return;
+        setStoredCredentials(data);
+        if (data.endpoint && !form.getValues("endpoint")) {
+          form.setValue("endpoint", data.endpoint);
+        }
+      } catch (error) {
+        console.error("Failed to load the AI model's credentials:", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [integration?.id, open]);
 
   useEffect(() => {
     if (integration && open) {
       form.reset({
         name: integration.name,
         provider: integration.provider,
-        apiKey: integration.credentials?.apiKey || "",
-        endpoint: integration.credentials?.endpoint || "",
+        apiKey: "",
+        endpoint: "",
         deploymentName: integration.settings?.deploymentName || "",
         defaultModel: integration.llmProviderConfig?.defaultModel || "",
         maxTokensPerRequest:
@@ -408,6 +448,7 @@ export function EditLlmIntegration({
         provider: values.provider,
         apiKey: values.apiKey,
         endpoint: values.endpoint,
+        llmIntegrationId: integration.id,
         deploymentName: values.deploymentName,
         defaultModel: values.defaultModel,
       };
@@ -479,6 +520,7 @@ export function EditLlmIntegration({
             provider: values.provider,
             apiKey: values.apiKey,
             endpoint: values.endpoint,
+            llmIntegrationId: integration.id,
             deploymentName: values.deploymentName,
             defaultModel: values.defaultModel,
           }),
@@ -515,14 +557,19 @@ export function EditLlmIntegration({
           name: values.name,
           provider: values.provider,
           status: values.status,
-          credentials: {
-            ...(integration.credentials || {}),
-            ...(values.apiKey && { apiKey: values.apiKey }),
-            ...(values.endpoint && {
-              endpoint: values.endpoint,
-              baseUrl: values.endpoint,
-            }),
-          },
+          // Only what was typed: the write merges it over the stored
+          // credentials, so a blank key keeps the current one.
+          ...(values.apiKey || values.endpoint
+            ? {
+                credentials: {
+                  ...(values.apiKey && { apiKey: values.apiKey }),
+                  ...(values.endpoint && {
+                    endpoint: values.endpoint,
+                    baseUrl: values.endpoint,
+                  }),
+                },
+              }
+            : {}),
           settings: {
             ...(integration.settings || {}),
             ...(values.deploymentName && {
@@ -844,7 +891,13 @@ export function EditLlmIntegration({
                                 <FormControl>
                                   <Input
                                     type="password"
-                                    placeholder={t("apiKeyPlaceholder")}
+                                    placeholder={
+                                      storedCredentials?.hasApiKey
+                                        ? tIntegrations(
+                                            "config.leaveBlankToKeep"
+                                          )
+                                        : t("apiKeyPlaceholder")
+                                    }
                                     {...field}
                                   />
                                 </FormControl>

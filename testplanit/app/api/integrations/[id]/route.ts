@@ -1,5 +1,5 @@
 import { baseDb } from "@/lib/db";
-import { decrypt, encrypt } from "@/utils/encryption";
+import { encrypt } from "@/utils/encryption";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
@@ -58,18 +58,6 @@ export const GET = withAuditContext(
           { error: "Integration not found" },
           { status: 404 }
         );
-      }
-
-      // Decrypt credentials for admin viewing
-      if (
-        integration.credentials &&
-        typeof integration.credentials === "object" &&
-        "encrypted" in integration.credentials
-      ) {
-        const decrypted = await decrypt(
-          integration.credentials.encrypted as string
-        );
-        integration.credentials = JSON.parse(decrypted);
       }
 
       return NextResponse.json(integration);

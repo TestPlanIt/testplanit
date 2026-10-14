@@ -1,4 +1,5 @@
 import { hash } from "bcrypt";
+import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { isEmailServerConfigured } from "~/lib/email/emailConfig";
@@ -25,7 +26,6 @@ const signupSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(4),
-  emailVerifToken: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
           email: validatedData.email,
           password: hashedPassword,
           emailVerifToken: requireEmailVerification
-            ? validatedData.emailVerifToken
+            ? randomBytes(32).toString("hex")
             : null,
           emailTokenExpires: requireEmailVerification
             ? new Date(Date.now() + 24 * 60 * 60 * 1000)

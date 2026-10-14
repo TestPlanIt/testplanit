@@ -58,7 +58,6 @@ describe("encryptLegacyIntegrationCredentials", () => {
       total: 0,
     });
     expect(findMany).toHaveBeenCalledWith({
-      where: { isDeleted: false },
       select: { id: true, name: true, provider: true, credentials: true },
     });
   });

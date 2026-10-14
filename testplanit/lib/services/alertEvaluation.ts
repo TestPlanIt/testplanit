@@ -1382,13 +1382,13 @@ export class AlertEvaluationService {
       select: {
         id: true,
         name: true,
-        url: true,
         project: { select: { name: true } },
       },
     });
     const fired: FiredAlert[] = [];
     for (const config of configs) {
-      const label = config.name || config.url || config.id;
+      // Never the URL: for Slack or Teams it is the credential.
+      const label = config.name || config.id;
       for (const rule of rules) {
         if (
           rule.scopeType === AlertScopeType.WEBHOOK &&

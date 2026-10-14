@@ -15,7 +15,6 @@ const createTestConfig = (
     name: "Test Azure OpenAI",
     provider: "AZURE_OPENAI",
     status: "ACTIVE",
-    credentials: {},
     settings: {
       deploymentName: "gpt-4",
       apiVersion: "2024-02-01",

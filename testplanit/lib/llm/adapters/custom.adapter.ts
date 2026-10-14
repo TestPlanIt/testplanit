@@ -11,7 +11,6 @@ import { BaseLlmAdapter } from "./base.adapter";
 
 interface CustomLlmSettings {
   endpoint?: string;
-  apiKey?: string;
   requestTemplate?: Record<string, unknown>;
   responseMapping?: Record<string, unknown>;
   streamResponseMapping?: Record<string, unknown>;
@@ -20,7 +19,6 @@ interface CustomLlmSettings {
   errorMessagePath?: string;
   authHeader?: string;
   authPrefix?: string;
-  headers?: Record<string, string>;
   requestFieldMappings?: Record<string, string>;
   modelFieldMappings?: Record<string, string>;
   models?: Array<Record<string, unknown>>;
@@ -81,7 +79,7 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
 
     const settings = config.integration.settings as CustomLlmSettings | null;
     this.endpoint = config.baseUrl || settings?.endpoint || "";
-    this.apiKey = config.apiKey || settings?.apiKey;
+    this.apiKey = config.apiKey;
     this.requestTemplate = settings?.requestTemplate || {};
     this.responseMapping = settings?.responseMapping || {};
     this.streamResponseMapping = settings?.streamResponseMapping || {};
@@ -381,10 +379,7 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
       headers[authHeader] = `${authPrefix} ${this.apiKey}`;
     }
 
-    const settings = this.config.integration
-      .settings as CustomLlmSettings | null;
-    const additionalHeaders = settings?.headers || {};
-    Object.assign(headers, additionalHeaders);
+    Object.assign(headers, this.config.additionalHeaders ?? {});
 
     return headers;
   }
