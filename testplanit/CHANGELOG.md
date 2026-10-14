@@ -1,3 +1,57 @@
+## [1.1.3](https://github.com/TestPlanIt/testplanit/compare/v1.1.2...v1.1.3) (2026-10-14)
+
+### Bug Fixes
+
+* **security:** harden the SSRF guard against IPv4-mapped IPv6 and pin repo fetches ([#682](https://github.com/TestPlanIt/testplanit/issues/682)) ([ff2a859](https://github.com/TestPlanIt/testplanit/commit/ff2a8593d95fca502333b2117546a55442dce618))
+
+## [1.1.2](https://github.com/TestPlanIt/testplanit/compare/v1.1.1...v1.1.2) (2026-10-14)
+
+### Bug Fixes
+
+* **security:** enforce sign-up rules on the server and encrypt outbound webhook URLs ([#681](https://github.com/TestPlanIt/testplanit/issues/681)) ([b5f92f1](https://github.com/TestPlanIt/testplanit/commit/b5f92f11a858fbdccd4a035f844bc635d03573ce))
+
+## [1.1.1](https://github.com/TestPlanIt/testplanit/compare/v1.1.0...v1.1.1) (2026-10-14)
+
+### Bug Fixes
+
+* **security:** restrict and encrypt stored credentials ([#680](https://github.com/TestPlanIt/testplanit/issues/680)) ([8ac061c](https://github.com/TestPlanIt/testplanit/commit/8ac061cbf5704334d94277244772657da3fab58b))
+
+## [1.1.0](https://github.com/TestPlanIt/testplanit/compare/v1.0.14...v1.1.0) (2026-10-13)
+
+### Features
+
+* TestPlanIt 1.1 ([#675](https://github.com/TestPlanIt/testplanit/issues/675)) ([92e88b4](https://github.com/TestPlanIt/testplanit/commit/92e88b4e0e02aa9608330228ce1c316a8bb4cbf7))
+
+## [1.0.14](https://github.com/TestPlanIt/testplanit/compare/v1.0.13...v1.0.14) (2026-10-12)
+
+### Bug Fixes
+
+* **integrations:** create GitHub issues in the linked repository ([#671](https://github.com/TestPlanIt/testplanit/issues/671)) ([#673](https://github.com/TestPlanIt/testplanit/issues/673)) ([a82ff34](https://github.com/TestPlanIt/testplanit/commit/a82ff347013df5f86d149d839a06dd8c1c805265))
+
+## [1.0.13](https://github.com/TestPlanIt/testplanit/compare/v1.0.12...v1.0.13) (2026-10-12)
+
+### Bug Fixes
+
+* **attachments:** make video attachments playable everywhere ([#672](https://github.com/TestPlanIt/testplanit/issues/672)) ([ae55745](https://github.com/TestPlanIt/testplanit/commit/ae55745dda2ba1caaca7dce6f5d48de5d8bd7c8f))
+
+## [1.0.12](https://github.com/TestPlanIt/testplanit/compare/v1.0.11...v1.0.12) (2026-10-02)
+
+### Bug Fixes
+
+* **security:** close privilege escalation and identity reassignment paths ([#662](https://github.com/TestPlanIt/testplanit/issues/662)) ([3319c75](https://github.com/TestPlanIt/testplanit/commit/3319c759ebfb47572c80ae6832dc072ffc582d58))
+
+## [1.0.11](https://github.com/TestPlanIt/testplanit/compare/v1.0.10...v1.0.11) (2026-10-01)
+
+### Bug Fixes
+
+* **reports:** keep Report Builder selections out of the URL and add the missing cs_CZ locale migration ([#660](https://github.com/TestPlanIt/testplanit/issues/660)) ([8d4ccad](https://github.com/TestPlanIt/testplanit/commit/8d4ccadda60d57a1fbe34dcbdbaaca2abd1b2520))
+
+## [1.0.10](https://github.com/TestPlanIt/testplanit/compare/v1.0.9...v1.0.10) (2026-09-25)
+
+### Bug Fixes
+
+* **projects:** state that only No Access restricts a project ([#653](https://github.com/TestPlanIt/testplanit/issues/653)) ([e06d338](https://github.com/TestPlanIt/testplanit/commit/e06d338224349f762877922f7681bcf780104ac6))
+
 ## [1.1.0-beta.37](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.36...v1.1.0-beta.37) (2026-10-05)
 
 ### Features

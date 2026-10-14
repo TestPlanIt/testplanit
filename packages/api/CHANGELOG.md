@@ -1,5 +1,36 @@
 # @testplanit/api
 
+## 1.1.0
+
+### Minor Changes
+
+- [#674](https://github.com/TestPlanIt/testplanit/pull/674) [`733a195`](https://github.com/TestPlanIt/testplanit/commit/733a1956aa0fa16e2de03fa58c37afc146c3ed43) Thanks [@therealbrad](https://github.com/therealbrad)! - Add `getAutomationPlan`, `finishExecution` and the `plan-run` pipeline helper
+
+  When TestPlanIt dispatches a run's automated cases to CI, the job reads the
+  plan of cases to execute. `client.getAutomationPlan(runId, executionId?)`
+  returns it (case ids, titles, class names, `selector.fullName` and the
+  `[123]` / `C123` / `TC123` id tokens the reporters match on);
+  `client.finishExecution(runId, executionId, conclusion)` reports the outcome
+  for targets TestPlanIt cannot poll. The `testplanit plan-run` bin command
+  prints the plan, defaulting to `TESTPLANIT_RUN_ID` / `TESTPLANIT_EXECUTION_ID`.
+
+  `TestRunType` gains `HYBRID`: a manual run that has also received automated
+  results. Reporters pinned to such a run keep working unchanged.
+
+### Patch Changes
+
+- [#674](https://github.com/TestPlanIt/testplanit/pull/674) [`733a195`](https://github.com/TestPlanIt/testplanit/commit/733a1956aa0fa16e2de03fa58c37afc146c3ed43) Thanks [@therealbrad](https://github.com/therealbrad)! - Default to the workflow state marked Default when none is named
+
+  Creating a case, run or session without a state name picked the enabled
+  state with the lowest order, so an admin's Default state was ignored and new
+  items landed in a different state than the web UI puts them in. The MCP
+  `cases_create`, `cases_create_many`, `runs_create` and `sessions_create`
+  tools, and `createTestCase` / `createTestCases` in the API client, now prefer
+  the state marked Default and fall back to the first by order.
+
+  The API client's published build also catches up with `getAutomationPlan`
+  and `finishExecution`, which were in the source but missing from `dist`.
+
 ## 1.0.1
 
 ### Patch Changes
