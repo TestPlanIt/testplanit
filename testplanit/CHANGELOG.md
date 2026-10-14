@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/TestPlanIt/testplanit/compare/v1.1.0...v1.1.1) (2026-10-14)
+
+### Bug Fixes
+
+* **security:** restrict and encrypt stored credentials ([#680](https://github.com/TestPlanIt/testplanit/issues/680)) ([8ac061c](https://github.com/TestPlanIt/testplanit/commit/8ac061cbf5704334d94277244772657da3fab58b))
+
 ## [1.1.0](https://github.com/TestPlanIt/testplanit/compare/v1.0.14...v1.1.0) (2026-10-13)
 
 ### Features
