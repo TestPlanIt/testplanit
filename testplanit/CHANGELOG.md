@@ -1,3 +1,9 @@
+## [1.1.4](https://github.com/TestPlanIt/testplanit/compare/v1.1.3...v1.1.4) (2026-10-14)
+
+### Bug Fixes
+
+* **jira:** read panel run results from the run summary service ([#683](https://github.com/TestPlanIt/testplanit/issues/683)) ([138dfee](https://github.com/TestPlanIt/testplanit/commit/138dfeeb8f4fdcffe64a6b0e43e27f135b51fce1))
+
 ## [1.1.3](https://github.com/TestPlanIt/testplanit/compare/v1.1.2...v1.1.3) (2026-10-14)
 
 ### Bug Fixes
