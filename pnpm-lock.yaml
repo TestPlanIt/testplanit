@@ -108,8 +108,8 @@ importers:
   cli:
     dependencies:
       chalk:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.0.1
+        version: 6.0.1
       commander:
         specifier: ^15.0.0
         version: 15.0.0
@@ -248,14 +248,14 @@ importers:
   forge-app:
     dependencies:
       '@forge/api':
-        specifier: ^8.1.0
-        version: 8.1.0(typescript@6.0.3)
+        specifier: ^8.2.0
+        version: 8.2.0(typescript@6.0.3)
       '@forge/bridge':
         specifier: ^6.3.1
         version: 6.3.1(@types/react@18.3.31)(react@19.3.0)(supports-color@10.2.2)(typescript@6.0.3)
       '@forge/kvs':
-        specifier: ^2.0.6
-        version: 2.0.6(typescript@6.0.3)
+        specifier: ^2.0.7
+        version: 2.0.7(typescript@6.0.3)
       '@forge/react':
         specifier: ^11.17.0
         version: 11.17.0(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prop-types@15.8.1)(react-dom@19.3.0(react@19.3.0))(supports-color@10.2.2)
@@ -814,7 +814,7 @@ importers:
         version: 0.4.1
       dompurify:
         specifier: ^3.4.11
-        version: 3.4.17
+        version: 3.4.16
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.3.0)
@@ -4150,8 +4150,8 @@ packages:
   '@fontsource/inter@5.3.0':
     resolution: {integrity: sha512-RofMylZmjlJEfELXeNHFWBRcSs75rGU/6bV2S2jfnvv/3rPXPGe0LgUJTklcHZ9lM4OZmAVFhcJPnACfb91A3g==}
 
-  '@forge/api@8.1.0':
-    resolution: {integrity: sha512-bUoTDpMDhb0epAO26FunHrTge00/SX8zwsW7VKiX9Uf2DXYWFKw7GlSCmUCi3dqYGUmMi2S3py9Ere1QofTjRw==}
+  '@forge/api@8.2.0':
+    resolution: {integrity: sha512-gXvr7UjjGljUkkjM8JK6IuAh20RRWiMhgNn14o/ouvQWXu6ZZJcM2Ugc/OfVciUW9HFXD6aSuVnYPXYkXBkH6Q==}
     peerDependencies:
       typescript: '>=5.0.0'
     peerDependenciesMeta:
@@ -4237,8 +4237,8 @@ packages:
       typescript:
         optional: true
 
-  '@forge/kvs@2.0.6':
-    resolution: {integrity: sha512-t7BvoxmpQ6jMIMl9+LOlMesDV63Gfodl6ecJIB1S+zq65E/T8/6Ve2Z7yanmtAFNG0xlo01KE5DY2MmyD+rWlQ==}
+  '@forge/kvs@2.0.7':
+    resolution: {integrity: sha512-4qgIqKnB4zyWDk4xwLfCINoXCqX+U9uZW8V7lJUQTyhmdbVBhBk6xlwXLLkFAxqnNypILKs7yv4L6rKj1yuqQQ==}
     peerDependencies:
       typescript: '>=5.0.0'
     peerDependenciesMeta:
@@ -4264,8 +4264,8 @@ packages:
       typescript:
         optional: true
 
-  '@forge/manifest@13.5.0':
-    resolution: {integrity: sha512-LqW/1CRM+1LWGh9OFlUTjsaRC2Icmm5yXxg17u7tu5hrZI7YmkJ2SKGWm1t5h4GdSlTwxUl8nFhFPBLU81jJlg==}
+  '@forge/manifest@13.6.0':
+    resolution: {integrity: sha512-LgapC/jjIibdinF1SueF8Ouv0gTc6M8L2trFfMeFDmNsHmXN17coY/G7zxSh7zhWGTtbzFdL2wOBWf6rigZesg==}
     peerDependencies:
       typescript: '>=5.0.0'
     peerDependenciesMeta:
@@ -8967,8 +8967,8 @@ packages:
     resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
-  chalk@6.0.0:
-    resolution: {integrity: sha512-2uNTXIuTTxk7ciZgAU1BQcgnchcG0xXnrs6jzkQfj9SsRa9M2s5zE8WT96hS6KmG4MzWHSrvH43DF1m4XRkrFg==}
+  chalk@6.0.1:
+    resolution: {integrity: sha512-/Ce6KNm3vIbWdMlNna6RVIZ/ICQxnJxCicet5LBKK9ZffBkqzDw0xh9EiKSljdRtiIQ1S1z4YgcscUUGzNCWrA==}
     engines: {node: '>=22'}
 
   char-regex@1.0.2:
@@ -10036,8 +10036,8 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.4.17:
-    resolution: {integrity: sha512-B/pSlYVHQ58kqISD/yDjuJ1yfzI34m1gF4lAod2bwSRhiN4K5Cl3H8Af7hqB2PmTL911tdEudnnXn5FnhRoz0w==}
+  dompurify@3.4.16:
+    resolution: {integrity: sha512-sqo+pNp3qRhCIpbgRi1y8Tgk27Bo2Ry7w0dC1NBeNTdZChWjz9Xb/KOoZbRP/R6pQZ80Qw8YhXw13hWWBbMRnQ==}
 
   domutils@2.8.0:
     resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
@@ -22444,12 +22444,12 @@ snapshots:
 
   '@fontsource/inter@5.3.0': {}
 
-  '@forge/api@8.1.0(typescript@6.0.3)':
+  '@forge/api@8.2.0(typescript@6.0.3)':
     dependencies:
       '@forge/auth': 1.0.0(typescript@6.0.3)
       '@forge/egress': 3.0.0(typescript@6.0.3)
       '@forge/i18n': 1.0.0(typescript@6.0.3)
-      '@forge/manifest': 13.5.0(typescript@6.0.3)
+      '@forge/manifest': 13.6.0(typescript@6.0.3)
       headers-utils: 3.0.2
     optionalDependencies:
       typescript: 6.0.3
@@ -22694,9 +22694,9 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  '@forge/kvs@2.0.6(typescript@6.0.3)':
+  '@forge/kvs@2.0.7(typescript@6.0.3)':
     dependencies:
-      '@forge/api': 8.1.0(typescript@6.0.3)
+      '@forge/api': 8.2.0(typescript@6.0.3)
     optionalDependencies:
       typescript: 6.0.3
 
@@ -22748,7 +22748,7 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  '@forge/manifest@13.5.0(typescript@6.0.3)':
+  '@forge/manifest@13.6.0(typescript@6.0.3)':
     dependencies:
       '@forge/i18n': 1.0.0(typescript@6.0.3)
       '@sentry/node': 7.106.0
@@ -28147,7 +28147,7 @@ snapshots:
 
   chalk@5.6.2: {}
 
-  chalk@6.0.0: {}
+  chalk@6.0.1: {}
 
   char-regex@1.0.2: {}
 
@@ -29248,7 +29248,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.4.17:
+  dompurify@3.4.16:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -31582,7 +31582,7 @@ snapshots:
     optionalDependencies:
       canvg: 3.0.11
       core-js: 3.50.0
-      dompurify: 3.4.17
+      dompurify: 3.4.16
       html2canvas: 1.4.1
 
   jsx-ast-utils@3.3.5:
@@ -36220,7 +36220,7 @@ snapshots:
       classnames: 2.5.1
       css.escape: 1.5.1
       deep-extend: 0.6.0
-      dompurify: 3.4.17
+      dompurify: 3.4.16
       ieee754: 1.2.1
       immutable: 5.1.9
       js-file-download: 0.4.12
