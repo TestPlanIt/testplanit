@@ -223,7 +223,7 @@ The Webhooks page includes a **Deliveries** tab listing each dispatched attempt 
 - HTTP status code and outcome.
 - Timestamp.
 
-A delivery that was handled but acted on nothing carries a reason starting with `ignored:` (for example `ignored:not_imported` for an issue no Import issues action takes, or `ignored:no_cases` for a run with no linked cases). These appear in muted text and count as succeeded in the status filter. Any other reason, such as `run:no_workflow` or `execute:target_disabled`, is a failure and appears in red.
+A delivery that was handled but acted on nothing carries a reason starting with `ignored:` (for example `ignored:not_imported` for an issue no Import Issues action takes, `ignored:no_cases` for a run with no linked cases, `ignored:has_cases` for an issue whose cases a Generate Test Cases with AI action would duplicate, or `ignored:no_llm` for a project without an active AI model). These appear in muted text and count as succeeded in the status filter. Any other reason, such as `run:no_workflow`, `execute:target_disabled` or `draft:` followed by the model's error, is a failure and appears in red.
 
 - A drawer with the request payload preview and response details for diagnostics.
 

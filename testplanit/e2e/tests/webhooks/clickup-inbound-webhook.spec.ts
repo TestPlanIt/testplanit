@@ -182,5 +182,69 @@ test.describe("ClickUp inbound webhook — admin form + raw-POST coverage", () =
     }
   });
 
+  test("Spec 4 creation event: taskCreated is handled, with or without its first status", async ({
+    request,
+    baseURL,
+  }) => {
+    const post = async (payload: unknown) => {
+      const body = JSON.stringify(payload);
+      return request.post(`${baseURL}/api/webhooks/${configToken}`, {
+        data: body,
+        headers: {
+          "content-type": "application/json",
+          "x-signature": signature(body, CLICKUP_SECRET),
+        },
+      });
+    };
+
+    await test.step("A new task with its first status is an issue event", async () => {
+      const response = await post({
+        event: "taskCreated",
+        task_id: "86c0new01",
+        history_items: [
+          {
+            field: "status",
+            before: { status: null },
+            after: { status: "to do" },
+          },
+          { field: "task_creation", before: null, after: null },
+        ],
+      });
+      expect(response.status()).toBe(200);
+      expect((await response.json()).outcome).toBe("updated");
+    });
+
+    await test.step("A new task without a status item still is", async () => {
+      const response = await post({
+        event: "taskCreated",
+        task_id: "86c0new02",
+        history_items: [],
+      });
+      expect(response.status()).toBe(200);
+      expect((await response.json()).outcome).toBe("updated");
+    });
+
+    const db = createRawDbClient();
+    try {
+      const deliveries = await db.webhookDelivery.findMany({
+        where: {
+          webhookConfigId: configId,
+          eventType: "taskCreated",
+          subjectRef: { in: ["86c0new01", "86c0new02"] },
+        },
+        select: { subjectRef: true, error: true },
+      });
+      expect(deliveries.map((d) => d.subjectRef).sort()).toEqual([
+        "86c0new01",
+        "86c0new02",
+      ]);
+      for (const delivery of deliveries) {
+        expect(delivery.error).not.toBe("no_handler");
+      }
+    } finally {
+      await db.$disconnect();
+    }
+  });
+
   // Cleanup via auto-tracking `api` fixture invoked in beforeAll.
 });

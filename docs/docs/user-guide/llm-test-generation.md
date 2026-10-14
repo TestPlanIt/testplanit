@@ -168,6 +168,10 @@ Because linked cases do not depend on a folder, the panel has meaningful existin
 Parameter and starter-dataset generation is not offered from the Jira panel.
 :::
 
+## Generating from a webhook action
+
+An issue-tracker webhook can draft test cases on its own: a [**Generate Test Cases with AI** action](./webhooks.md#issue-tracker-actions) fires when the tracker reports a new issue, or an issue entering a chosen status, and drafts cases from the issue's title, description, status and priority with the project's AI model. The action chooses the template, state and count, and names the users and groups to tell when the drafts are ready; the drafts land in a folder named after the action, linked to the issue and created by the System user. Image attachments, linked issues, parameters and starter datasets are not part of a webhook-drafted generation.
+
 ## Generation Process
 
 When you click "Generate":

@@ -187,5 +187,72 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
     }
   });
 
+  test("Spec 4 creation events: workitem.created is handled, and an update names its work item, not the update", async ({
+    request,
+    baseURL,
+  }) => {
+    const post = (payload: unknown) =>
+      request.post(`${baseURL}/api/webhooks/${configToken}`, {
+        data: JSON.stringify(payload),
+        headers: {
+          "content-type": "application/json",
+          authorization: basicAuthHeader(ADO_USER, ADO_PASS),
+        },
+      });
+
+    await test.step("A created work item is an issue event, not no_handler", async () => {
+      const response = await post({
+        eventType: "workitem.created",
+        resource: { id: 7001, rev: 1, fields: { "System.State": "New" } },
+      });
+      expect(response.status()).toBe(200);
+      expect((await response.json()).outcome).toBe("updated");
+    });
+
+    await test.step("An update in Azure DevOps's documented shape is keyed by workItemId", async () => {
+      const response = await post({
+        eventType: "workitem.updated",
+        resource: {
+          id: 3,
+          workItemId: 7002,
+          rev: 2,
+          fields: { "System.State": { oldValue: "New", newValue: "Active" } },
+          revision: { id: 7002, fields: { "System.State": "Active" } },
+        },
+      });
+      expect(response.status()).toBe(200);
+      expect((await response.json()).outcome).toBe("updated");
+    });
+
+    const db = createRawDbClient();
+    try {
+      const deliveries = await db.webhookDelivery.findMany({
+        where: {
+          webhookConfigId: configId,
+          eventType: { in: ["workitem.created", "workitem.updated"] },
+          subjectRef: { in: ["7001", "7002"] },
+        },
+        select: { eventType: true, subjectRef: true, error: true },
+      });
+      expect(deliveries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            eventType: "workitem.created",
+            subjectRef: "7001",
+          }),
+          expect.objectContaining({
+            eventType: "workitem.updated",
+            subjectRef: "7002",
+          }),
+        ])
+      );
+      for (const delivery of deliveries) {
+        expect(delivery.error).not.toBe("no_handler");
+      }
+    } finally {
+      await db.$disconnect();
+    }
+  });
+
   // Cleanup via auto-tracking `api` fixture invoked in beforeAll.
 });
