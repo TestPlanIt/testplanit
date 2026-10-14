@@ -18,8 +18,6 @@ vi.mock("~/utils/ssrf", async (importOriginal) => {
   return {
     ...actual,
     assertSsrfSafeResolved: vi.fn().mockResolvedValue(undefined),
-    ssrfSafePinnedFetch: (url: string, init?: RequestInit) =>
-      (globalThis.fetch as typeof fetch)(url, init),
   };
 });
 

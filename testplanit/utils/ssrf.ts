@@ -6,9 +6,6 @@ import {
   isPrivateOrInternalIp,
 } from "~/lib/utils/ssrf";
 
-/** fetch()'s RequestInit plus undici's `dispatcher`, which the DOM types omit. */
-type FetchInitWithDispatcher = RequestInit & { dispatcher?: unknown };
-
 /**
  * Returns true if the URL is safe to make a server-side request to.
  * Blocks localhost, loopback addresses, and private IP ranges.
@@ -135,48 +132,4 @@ export function createPinnedDispatcher(ip: string): Agent {
   return new Agent({
     connect: { lookup: lookupFn } as Record<string, unknown>,
   } as ConstructorParameters<typeof Agent>[0]);
-}
-
-/**
- * fetch() a user-supplied URL with the full SSRF defence: the resolved IP is
- * validated against private/internal ranges (IPv4-mapped IPv6 literals
- * included) and the connection is pinned to that address so DNS cannot rebind
- * between the check and the request. Pass through any RequestInit (headers,
- * signal, redirect mode); the caller still handles redirects, calling this
- * again re-validates and re-pins each hop.
- *
- * Throws the same errors as {@link assertSsrfSafeResolved} when the target is
- * private or unresolvable.
- */
-export async function ssrfSafePinnedFetch(
-  url: string,
-  init: RequestInit = {},
-  allowedHosts?: Set<string>
-): Promise<Response> {
-  const allowed = allowedHosts ?? getAllowedPrivateHosts();
-
-  // Re-parse and re-validate here so the value handed to fetch() is one that
-  // passed the isSsrfSafe barrier guard in this same function. CodeQL
-  // recognises isSsrfSafe as a HostnameSanitizerGuard, so guarding the parsed
-  // href and fetching that href breaks the taint chain to the fetch sink —
-  // the same technique as GitRepoAdapter.sanitizeUrl. It is also a real static
-  // check, before the resolve-time check and connection pin below.
-  const safeHref = new URL(url).href;
-  if (!isSsrfSafe(safeHref, allowed)) {
-    throw new Error(
-      "Request blocked: URL targets a private or internal address"
-    );
-  }
-
-  const pinnedIp = await assertSsrfSafeResolved(safeHref, allowed);
-  const dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
-  try {
-    const fetchInit: FetchInitWithDispatcher = { ...init };
-    if (dispatcher) fetchInit.dispatcher = dispatcher;
-    return await fetch(safeHref, fetchInit as RequestInit);
-  } finally {
-    // close() is graceful: undici lets the in-flight response finish, so the
-    // body stays readable. Fire-and-forget.
-    dispatcher?.close().catch(() => {});
-  }
 }

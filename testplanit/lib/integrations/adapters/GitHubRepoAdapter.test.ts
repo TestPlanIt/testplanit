@@ -12,8 +12,6 @@ vi.stubGlobal("fetch", mockFetch);
 // tests below can use a non-resolving demo hostname.
 vi.mock("~/utils/ssrf", () => ({
   assertSsrfSafeResolved: vi.fn().mockResolvedValue(undefined),
-  ssrfSafePinnedFetch: (url: string, init?: RequestInit) =>
-    (globalThis.fetch as typeof fetch)(url, init),
   isSsrfSafe: vi.fn().mockReturnValue(true),
 }));
 

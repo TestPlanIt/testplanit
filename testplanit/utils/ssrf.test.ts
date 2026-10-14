@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockLookup = vi.hoisted(() => vi.fn());
 const mockGetAllowedPrivateHosts = vi.hoisted(() =>
@@ -21,7 +21,6 @@ import {
   assertSsrfSafeResolved,
   createPinnedDispatcher,
   isSsrfSafe,
-  ssrfSafePinnedFetch,
 } from "./ssrf";
 
 describe("isSsrfSafe", () => {
@@ -351,68 +350,5 @@ describe("createPinnedDispatcher", () => {
     const dispatcher = createPinnedDispatcher("2606:4700::1");
     expect(typeof dispatcher.close).toBe("function");
     await dispatcher.close();
-  });
-});
-
-describe("ssrfSafePinnedFetch", () => {
-  beforeEach(() => {
-    mockLookup.mockReset();
-  });
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("pins the connection for a DNS hostname and preserves the request init", async () => {
-    mockLookup.mockResolvedValueOnce({ address: "140.82.121.4", family: 4 });
-    const fetchMock = vi.fn().mockResolvedValue(new Response("ok"));
-    vi.stubGlobal("fetch", fetchMock);
-
-    const res = await ssrfSafePinnedFetch("https://github.com/api", {
-      headers: { "x-test": "1" },
-      redirect: "manual",
-    });
-
-    expect(res).toBeInstanceOf(Response);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [calledUrl, init] = fetchMock.mock.calls[0];
-    expect(calledUrl).toBe("https://github.com/api");
-    // A pinned dispatcher is attached, and the caller's init survives.
-    expect(init.dispatcher).toBeDefined();
-    expect(init.headers).toEqual({ "x-test": "1" });
-    expect(init.redirect).toBe("manual");
-  });
-
-  it("throws and never fetches when the hostname resolves to a private IP", async () => {
-    mockLookup.mockResolvedValueOnce({ address: "10.0.0.1", family: 4 });
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(
-      ssrfSafePinnedFetch("https://evil.example.com/api")
-    ).rejects.toThrow("private or internal address");
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("blocks an IPv4-mapped IPv6 literal without a DNS lookup", async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(
-      ssrfSafePinnedFetch("https://[::ffff:127.0.0.1]/api")
-    ).rejects.toThrow("private or internal address");
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(mockLookup).not.toHaveBeenCalled();
-  });
-
-  it("fetches a raw public IP literal with no dispatcher and no DNS lookup", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response("ok"));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await ssrfSafePinnedFetch("https://140.82.121.4/api");
-
-    expect(mockLookup).not.toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [, init] = fetchMock.mock.calls[0];
-    expect(init.dispatcher).toBeUndefined();
   });
 });
