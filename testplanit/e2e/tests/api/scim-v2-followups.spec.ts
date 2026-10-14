@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { expect, test } from "../../fixtures";
 
@@ -16,7 +17,7 @@ import { expect, test } from "../../fixtures";
  * Tokens are minted through the admin page (the only mint path), then every
  * SCIM call goes through a bearer-only context the way an IdP would call in.
  */
-const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const uid = () => `${Date.now()}-${randomUUID().slice(0, 8)}`;
 const SCIM = "/api/scim/v2";
 const USER_SCHEMA = "urn:ietf:params:scim:schemas:core:2.0:User";
 

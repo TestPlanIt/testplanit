@@ -56,7 +56,12 @@ vi.mock("next-intl", async () => {
             msg = msg.split(`{${p}}`).join(String(v));
         }
       }
-      return msg.replace(/<\/?\w+>/g, "");
+      let stripped = msg;
+      do {
+        msg = stripped;
+        stripped = msg.replace(/<\/?\w+>/g, "");
+      } while (stripped !== msg);
+      return stripped;
     };
   return {
     useTranslations: (namespace?: string) =>

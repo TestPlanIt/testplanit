@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { expect, test } from "../../fixtures";
 
@@ -10,7 +11,7 @@ import { expect, test } from "../../fixtures";
  * patched and deleted, and the app-side rows are checked through the model
  * API with the admin session.
  */
-const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const uid = () => `${Date.now()}-${randomUUID().slice(0, 8)}`;
 const SCIM = "/api/scim/v2";
 const USER_SCHEMA = "urn:ietf:params:scim:schemas:core:2.0:User";
 const GROUP_SCHEMA = "urn:ietf:params:scim:schemas:core:2.0:Group";

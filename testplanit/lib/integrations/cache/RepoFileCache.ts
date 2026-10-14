@@ -403,7 +403,7 @@ export class RepoFileCache {
       const cached = await this.valkey.get(key);
       return cached ? (JSON.parse(cached) as CompareResult) : null;
     } catch (err) {
-      console.error(`[RepoFileCache] Failed to read compare ${key}:`, err);
+      console.error("[RepoFileCache] Failed to read compare %s:", key, err);
       await this.valkey.del(key).catch(() => {});
       return null;
     }
@@ -421,7 +421,7 @@ export class RepoFileCache {
     try {
       await this.valkey.setex(key, ttlSeconds, JSON.stringify(result));
     } catch (err) {
-      console.error(`[RepoFileCache] Failed to cache compare ${key}:`, err);
+      console.error("[RepoFileCache] Failed to cache compare %s:", key, err);
     }
   }
 
@@ -490,7 +490,7 @@ export class RepoFileCache {
       const cached = await this.valkey.get(key);
       return cached ? (JSON.parse(cached) as T) : null;
     } catch (err) {
-      console.error(`[RepoFileCache] Failed to read ref list ${key}:`, err);
+      console.error("[RepoFileCache] Failed to read ref list %s:", key, err);
       await this.valkey.del(key).catch(() => {});
       return null;
     }
@@ -508,7 +508,7 @@ export class RepoFileCache {
     try {
       await this.valkey.setex(key, ttlSeconds, JSON.stringify(value));
     } catch (err) {
-      console.error(`[RepoFileCache] Failed to cache ref list ${key}:`, err);
+      console.error("[RepoFileCache] Failed to cache ref list %s:", key, err);
     }
   }
 
