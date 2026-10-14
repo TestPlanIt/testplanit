@@ -1,5 +1,8 @@
-import { baseDb as db } from "@/lib/db";
-import { sql } from "kysely";
+import {
+  getTestRunSummary,
+  TestRunNotFoundError,
+  type TestRunSummaryData,
+} from "~/lib/services/testRunSummary";
 import { IntegrationProvider } from "~/zenstack/models";
 
 // Shared by the Jira issue panel's routes: test-info (the panel's initial
@@ -73,122 +76,108 @@ export function collectPanelSessionIds(issues: PanelIssueLinks[]): number[] {
   return [...ids];
 }
 
-// Label for a run case with no live result, shared by the summary and the
-// per-case bar so the two can never disagree.
-const PENDING_STATUS = {
-  name: "Pending",
-  color: { value: "#9ca3af" },
-};
-
 export type TestRunSummary = {
   total: number;
   passedCount: number;
   summaryText: string;
 };
 
-/**
- * Per-run case totals, computed in SQL instead of loading every case of every
- * run. Each case counts under its latest live result's status, or Pending.
- * `summaryText` lists statuses in the order they first appear walking the run
- * in case order, and `passedCount` matches the panel's "Passed" pass rate.
- */
-export async function summarizeTestRuns(
-  testRunIds: number[]
-): Promise<Map<number, TestRunSummary>> {
-  const summaries = new Map<number, TestRunSummary>();
-  if (testRunIds.length === 0) return summaries;
+export type TestRunDisplayItem = {
+  id: number | string;
+  testCaseId?: number;
+  testCaseName?: string;
+  status: { name: string; color: { value: string } };
+  isPending: boolean;
+};
 
-  const rows = (
-    await sql<{
-      test_run_id: number;
-      status_name: string;
-      case_count: number;
-    }>`
-      SELECT
-        trc."testRunId" AS test_run_id,
-        COALESCE(s.name, ${PENDING_STATUS.name}) AS status_name,
-        COUNT(*)::int AS case_count,
-        MIN(trc."order") AS first_order,
-        MIN(trc.id) AS first_id
-      FROM "TestRunCases" trc
-      LEFT JOIN LATERAL (
-        SELECT r."statusId"
-        FROM "TestRunResults" r
-        WHERE r."testRunCaseId" = trc.id AND r."isDeleted" = false
-        ORDER BY r."executedAt" DESC
-        LIMIT 1
-      ) latest ON true
-      LEFT JOIN "Status" s ON s.id = latest."statusId"
-      WHERE trc."testRunId" = ANY(${testRunIds}) AND trc."isDeleted" = false
-      GROUP BY 1, 2
-      ORDER BY trc."testRunId", first_order, first_id
-    `.execute(db.$qb)
-  ).rows;
+// Most segments one run's status bar carries, matching the case-detail cap
+// of getTestRunSummary.
+const MAX_DISPLAY_ITEMS = 1000;
 
-  const parts = new Map<number, string[]>();
-  for (const row of rows) {
-    const summary = summaries.get(row.test_run_id) ?? {
-      total: 0,
-      passedCount: 0,
-      summaryText: "",
-    };
-    summary.total += row.case_count;
-    if (row.status_name === "Passed") summary.passedCount += row.case_count;
-    summaries.set(row.test_run_id, summary);
+function toPanelSummary(summary: TestRunSummaryData): TestRunSummary {
+  return {
+    total: summary.totalCases,
+    passedCount: summary.statusCounts
+      .filter((status) => status.isSuccess)
+      .reduce((sum, status) => sum + status.count, 0),
+    summaryText: summary.statusCounts
+      .map((status) => `${status.count} ${status.statusName}`)
+      .join(", "),
+  };
+}
 
-    const runParts = parts.get(row.test_run_id) ?? [];
-    runParts.push(`${row.case_count} ${row.status_name}`);
-    parts.set(row.test_run_id, runParts);
+// One status-bar segment per case. A pure automated run has no run cases,
+// only results, so its bar is drawn from the per-status counts instead,
+// scaled down when the run is larger than the bar can carry.
+function toDisplayItems(summary: TestRunSummaryData): TestRunDisplayItem[] {
+  if (summary.caseDetails) {
+    return summary.caseDetails.map((item) => ({
+      id: item.id,
+      testCaseId: item.repositoryCaseId,
+      testCaseName: item.caseName,
+      status: { name: item.statusName, color: { value: item.colorValue } },
+      isPending: item.statusId === null,
+    }));
   }
-  for (const [runId, runParts] of parts) {
-    summaries.get(runId)!.summaryText = runParts.join(", ");
-  }
-  return summaries;
+
+  const scale = Math.min(1, MAX_DISPLAY_ITEMS / (summary.totalCases || 1));
+  return summary.statusCounts.flatMap((status) =>
+    Array.from(
+      { length: Math.max(1, Math.round(status.count * scale)) },
+      (_, index) => ({
+        id: `${status.statusId ?? status.statusName}-${index}`,
+        testCaseName: `${status.count} results`,
+        status: {
+          name: status.statusName,
+          color: { value: status.colorValue },
+        },
+        isPending: false,
+      })
+    )
+  );
 }
 
 /**
- * One status-bar segment per case in a run, in case order: the case's latest
- * live result status, or Pending when it has none.
+ * Each linked run's totals, read from getTestRunSummary -- the service behind
+ * the run page's summary -- so the panel and the app count a run the same
+ * way: manual and hybrid runs by run-case status (where automated results
+ * land), pure automated runs by their JUnit results. With `includeItems` the
+ * run also carries its per-case status bar.
  */
-export async function getTestRunDisplayItems(testRunIds: number[]) {
-  const runCases = await db.testRunCases.findMany({
-    where: { testRunId: { in: testRunIds }, isDeleted: false },
-    orderBy: { order: "asc" },
-    select: {
-      id: true,
-      testRunId: true,
-      repositoryCase: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      results: {
-        where: { isDeleted: false },
-        orderBy: { executedAt: "desc" },
-        take: 1,
-        select: {
-          status: {
-            include: {
-              color: true,
-            },
+export async function loadPanelRunSummaries(
+  testRunIds: number[],
+  includeItems = false
+): Promise<
+  Map<number, TestRunSummary & { displayItems?: TestRunDisplayItem[] }>
+> {
+  const entries = await Promise.all(
+    testRunIds.map(async (testRunId) => {
+      try {
+        const summary = await getTestRunSummary(testRunId, {
+          includeCaseDetails: includeItems,
+        });
+        return [
+          testRunId,
+          {
+            ...toPanelSummary(summary),
+            ...(includeItems ? { displayItems: toDisplayItems(summary) } : {}),
           },
-        },
-      },
-    },
-  });
+        ] as const;
+      } catch (error) {
+        if (error instanceof TestRunNotFoundError) return null;
+        throw error;
+      }
+    })
+  );
+  return new Map(entries.filter((entry) => entry !== null));
+}
 
-  const itemsByRun = new Map<number, any[]>();
-  testRunIds.forEach((id) => itemsByRun.set(id, []));
-  for (const runCase of runCases) {
-    const latestResult = runCase.results[0];
-    itemsByRun.get(runCase.testRunId)?.push({
-      id: runCase.id,
-      testCaseId: runCase.repositoryCase?.id,
-      testCaseName: runCase.repositoryCase?.name,
-      status: latestResult ? latestResult.status : PENDING_STATUS,
-      isPending: !latestResult,
-    });
-  }
-  return itemsByRun;
+/** One run's per-case status bar, as loadPanelRunSummaries draws it. */
+export async function getTestRunDisplayItems(
+  testRunId: number
+): Promise<TestRunDisplayItem[]> {
+  return (
+    (await loadPanelRunSummaries([testRunId], true)).get(testRunId)
+      ?.displayItems ?? []
+  );
 }

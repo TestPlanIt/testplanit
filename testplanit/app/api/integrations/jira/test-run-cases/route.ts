@@ -63,11 +63,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const itemsByRun = await getTestRunDisplayItems([testRunId]);
-    return NextResponse.json(
-      { displayItems: itemsByRun.get(testRunId) ?? [] },
-      { headers }
-    );
+    const displayItems = await getTestRunDisplayItems(testRunId);
+    return NextResponse.json({ displayItems }, { headers });
   } catch (error) {
     console.error("Error fetching test run cases:", error);
     return NextResponse.json(
