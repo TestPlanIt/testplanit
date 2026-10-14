@@ -153,12 +153,27 @@ export async function ssrfSafePinnedFetch(
   init: RequestInit = {},
   allowedHosts?: Set<string>
 ): Promise<Response> {
-  const pinnedIp = await assertSsrfSafeResolved(url, allowedHosts);
+  const allowed = allowedHosts ?? getAllowedPrivateHosts();
+
+  // Re-parse and re-validate here so the value handed to fetch() is one that
+  // passed the isSsrfSafe barrier guard in this same function. CodeQL
+  // recognises isSsrfSafe as a HostnameSanitizerGuard, so guarding the parsed
+  // href and fetching that href breaks the taint chain to the fetch sink —
+  // the same technique as GitRepoAdapter.sanitizeUrl. It is also a real static
+  // check, before the resolve-time check and connection pin below.
+  const safeHref = new URL(url).href;
+  if (!isSsrfSafe(safeHref, allowed)) {
+    throw new Error(
+      "Request blocked: URL targets a private or internal address"
+    );
+  }
+
+  const pinnedIp = await assertSsrfSafeResolved(safeHref, allowed);
   const dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
   try {
     const fetchInit: FetchInitWithDispatcher = { ...init };
     if (dispatcher) fetchInit.dispatcher = dispatcher;
-    return await fetch(url, fetchInit as RequestInit);
+    return await fetch(safeHref, fetchInit as RequestInit);
   } finally {
     // close() is graceful: undici lets the in-flight response finish, so the
     // body stays readable. Fire-and-forget.
