@@ -297,6 +297,24 @@ describe("Signin Page", () => {
     expect(screen.queryByTestId("signin-admin-contact")).toBeNull();
   });
 
+  it("sends an account that must confirm its address to the verification page", async () => {
+    const user = userEvent.setup();
+    mockSignIn.mockResolvedValue({ ok: false, error: "EMAIL_NOT_VERIFIED" });
+
+    render(<Signin />);
+    await waitForFormToRender();
+
+    await user.type(screen.getByTestId("email-input"), "test@example.com");
+    await user.type(screen.getByTestId("password-input"), "mypassword");
+    await user.click(screen.getByTestId("signin-button"));
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        "/verify-email?email=test%40example.com"
+      );
+    });
+  });
+
   it("redirects to 2FA setup page when 2FA_SETUP_REQUIRED error is returned", async () => {
     const user = userEvent.setup();
     mockSignIn.mockResolvedValue({

@@ -568,11 +568,23 @@ export function authorizePasswordlessComplete(prisma: PendingAuthDb) {
     const user =
       (await prisma.user.findUnique({
         where: { email: result.email },
-        select: { id: true, email: true, name: true, isActive: true },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          isActive: true,
+          emailVerified: true,
+        },
       })) ??
       (await prisma.user.findFirst({
         where: { email: { equals: result.email, mode: "insensitive" } },
-        select: { id: true, email: true, name: true, isActive: true },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          isActive: true,
+          emailVerified: true,
+        },
       }));
     if (!user || !user.isActive) {
       // Row was created for an unknown address (anti-enumeration) or the
@@ -582,6 +594,14 @@ export function authorizePasswordlessComplete(prisma: PendingAuthDb) {
         reason: user ? "user_inactive" : "user_not_found",
       }).catch(console.error);
       throw new Error(PASSWORDLESS_ERRORS.invalid);
+    }
+
+    // The emailed code proves control of the address, as a magic link does.
+    if (!user.emailVerified) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      });
     }
 
     // Successful LOGIN is audited by the signIn callback in server/auth.ts
