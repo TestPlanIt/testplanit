@@ -14,7 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "@forge/api": "^8.1.0",
-    "@forge/bridge": "^6.3.1",
+    "@forge/bridge": "^7.1.0",
     "@forge/kvs": "^2.0.6",
     "@forge/react": "^11.17.0",
     "@forge/resolver": "^2.0.0",
