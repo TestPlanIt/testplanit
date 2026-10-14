@@ -1,4 +1,5 @@
 import { SsoProviderType } from "~/zenstack/models";
+import { resolveSsoConfig } from "~/lib/auth/ssoConfig";
 import { db } from "~/server/db";
 
 export interface GoogleOAuthConfig {
@@ -26,7 +27,7 @@ export async function getGoogleOAuthConfig(): Promise<GoogleOAuthConfig | null> 
       return null;
     }
 
-    const config = googleProvider.config as any;
+    const config = await resolveSsoConfig(googleProvider.config, "GOOGLE");
 
     // Validate that both clientId and clientSecret exist
     if (!config.clientId || !config.clientSecret) {

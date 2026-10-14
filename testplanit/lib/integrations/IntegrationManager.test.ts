@@ -65,6 +65,12 @@ const mockDb = rawDb as unknown as {
   };
 };
 
+/** Builds of an adapter: the row load, not the credential read after it. */
+const rowLoads = () =>
+  mockDb.integration.findUnique.mock.calls.filter(
+    (call) => (call[0] as { include?: unknown } | undefined)?.include
+  ).length;
+
 describe("IntegrationManager", () => {
   let manager: IntegrationManager;
 
@@ -676,14 +682,14 @@ describe("IntegrationManager", () => {
       const first = await manager.getAdapter("61");
       const stillCached = await manager.getAdapter("61");
       expect(stillCached).toBe(first); // cache hit while token valid
-      expect(mockDb.integration.findUnique).toHaveBeenCalledTimes(1);
+      expect(rowLoads()).toBe(1);
 
       // An hour passes — the cached adapter's token is now expired.
       vi.advanceTimersByTime(3600_000 + 1000);
 
       const afterExpiry = await manager.getAdapter("61");
       expect(afterExpiry).not.toBe(first); // evicted + rebuilt
-      expect(mockDb.integration.findUnique).toHaveBeenCalledTimes(2);
+      expect(rowLoads()).toBe(2);
 
       vi.unstubAllEnvs();
       vi.useRealTimers();
@@ -756,7 +762,48 @@ describe("IntegrationManager", () => {
         allowInactive: true,
       });
 
-      expect(mockDb.integration.findUnique).toHaveBeenCalledTimes(2);
+      expect(rowLoads()).toBe(2);
+    });
+
+    it("reads the credentials without the caller's access policy, which hides them from non-admins", async () => {
+      const unrestricted = {
+        integration: {
+          findUnique: vi.fn().mockResolvedValue({
+            credentials: { email: "test@example.com", apiToken: "test-token" },
+          }),
+        },
+      };
+      const policyClient = {
+        integration: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 7,
+            name: "Jira",
+            provider: "JIRA",
+            status: "ACTIVE",
+            authType: "API_KEY",
+            credentials: null,
+            settings: { baseUrl: "https://policy.atlassian.net" },
+            userIntegrationAuths: [],
+          }),
+        },
+        $unuseAll: () => unrestricted,
+      };
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      global.fetch = mockFetch;
+
+      const adapter = await manager.getAdapter("7", policyClient as never);
+
+      expect(adapter).toBeInstanceOf(JiraAdapter);
+      expect(unrestricted.integration.findUnique).toHaveBeenCalledWith({
+        where: { id: 7 },
+        select: { credentials: true },
+      });
+      expect(JSON.stringify(mockFetch.mock.calls[0][1])).toContain(
+        Buffer.from("test@example.com:test-token").toString("base64")
+      );
     });
 
     it("should throw error when no adapter registered for provider", async () => {

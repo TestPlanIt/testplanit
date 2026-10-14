@@ -38,7 +38,6 @@ const makeConfig = (
     name: "Test Integration",
     provider,
     status: "ACTIVE",
-    credentials: {},
     settings: null,
     isDeleted: false,
     deletedAt: null,

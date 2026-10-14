@@ -14,7 +14,6 @@ const createTestConfig = (
     name: "Test Integration",
     provider: "GEMINI",
     status: "ACTIVE",
-    credentials: {},
     settings: null,
     isDeleted: false,
     deletedAt: null,

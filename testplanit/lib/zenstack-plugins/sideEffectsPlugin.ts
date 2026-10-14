@@ -42,7 +42,7 @@ import {
   normalizeTextLongFieldValueWrite,
   type FieldTypeReader,
 } from "~/lib/richTextColumns";
-import { encrypt } from "@/utils/encryption";
+import { decrypt, encrypt, isEncrypted } from "@/utils/encryption";
 import {
   assertValidFolderParent,
   type FolderReader,
@@ -55,7 +55,10 @@ import {
   assertRunNotReopened,
   type CompletedRunReader,
 } from "~/lib/runReopenGuard";
-import { resolveStoredCredentials } from "~/lib/integrations/credentials";
+import {
+  isSecretCredentialKey,
+  resolveStoredCredentials,
+} from "~/lib/integrations/credentials";
 
 /** Write operations whose args can carry a rich-text column value. */
 const RICH_TEXT_WRITE_OPERATIONS = new Set([
@@ -370,14 +373,41 @@ const CREDENTIAL_WRITE_OPERATIONS = new Set([
   "updateMany",
 ]);
 
-type CredentialReader = {
-  codeRepository: {
-    findUnique(args: {
-      where: Record<string, unknown>;
-      select: { credentials: true; provider: true };
-    }): Promise<{ credentials: unknown; provider: string } | null>;
-  };
+type CredentialModelReader = {
+  findUnique(args: {
+    where: Record<string, unknown>;
+    select: Record<string, true>;
+  }): Promise<Record<string, unknown> | null>;
 };
+
+type CredentialReader = {
+  codeRepository: CredentialModelReader;
+  llmIntegration: CredentialModelReader;
+  integration: CredentialModelReader;
+  ssoProvider: CredentialModelReader;
+};
+
+/**
+ * Where each sealed model keeps its secrets, and the column that names it in
+ * a decryption error.
+ */
+const SEALED_FIELDS: Record<
+  keyof CredentialReader,
+  { field: string; label: string }
+> = {
+  codeRepository: { field: "credentials", label: "provider" },
+  llmIntegration: { field: "credentials", label: "provider" },
+  integration: { field: "credentials", label: "provider" },
+  ssoProvider: { field: "config", label: "type" },
+};
+
+/** The models whose secrets are sealed on every write. */
+const CREDENTIAL_MODELS = {
+  CodeRepository: "codeRepository",
+  LlmIntegration: "llmIntegration",
+  Integration: "integration",
+  SsoProvider: "ssoProvider",
+} as const satisfies Record<string, keyof CredentialReader>;
 
 const isEncryptedBlob = (value: unknown): boolean =>
   typeof value === "object" &&
@@ -385,47 +415,74 @@ const isEncryptedBlob = (value: unknown): boolean =>
   typeof (value as { encrypted?: unknown }).encrypted === "string";
 
 /**
- * Encrypt `credentials` on every CodeRepository write, whatever path it came
- * in on: the admin modal through the model API, a fixture, an import. The
- * stored shape is Integration's `{ encrypted }` blob, which
- * resolveStoredCredentials already reads. An update carrying only some
- * fields (an admin retyped one token) merges over what is stored, so a blank
- * input keeps the current value instead of wiping the rest.
+ * Secrets a writer already encrypted one by one (Integration's older shape)
+ * are opened first, so the sealed blob holds plain values, not ciphertext.
+ */
+async function openPerFieldSecrets(
+  plain: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const opened: Record<string, unknown> = { ...plain };
+  for (const [key, value] of Object.entries(plain)) {
+    if (
+      typeof value === "string" &&
+      isSecretCredentialKey(key) &&
+      isEncrypted(value)
+    ) {
+      opened[key] = await decrypt(value);
+    }
+  }
+  return opened;
+}
+
+/**
+ * Encrypt credentials on every CodeRepository write, whatever path it came
+ * in on: an admin modal through the model API, a fixture, an import.
  */
 export async function encryptCodeRepositoryCredentials(
   operation: string,
   args: Record<string, unknown> | undefined,
-  client: CredentialReader
+  client: Pick<CredentialReader, "codeRepository">
+): Promise<void> {
+  await encryptCredentialsOnWrite("codeRepository", operation, args, client);
+}
+
+/**
+ * Seal a model's secret column on every write into the `{ encrypted }` blob
+ * resolveStoredCredentials reads. An update carrying only some fields (an
+ * admin retyped one key) merges over what is stored, so a blank input keeps
+ * the current value instead of wiping the rest.
+ */
+export async function encryptCredentialsOnWrite<
+  K extends keyof CredentialReader,
+>(
+  modelKey: K,
+  operation: string,
+  args: Record<string, unknown> | undefined,
+  client: Pick<CredentialReader, K>
 ): Promise<void> {
   if (!args || !CREDENTIAL_WRITE_OPERATIONS.has(operation)) return;
-
-  const encryptPlain = async (
-    plain: Record<string, unknown>,
-    existing?: Record<string, string>
-  ) => ({
-    encrypted: await encrypt(JSON.stringify({ ...(existing ?? {}), ...plain })),
-  });
+  const { field, label } = SEALED_FIELDS[modelKey];
 
   const seal = async (
     data: Record<string, unknown> | undefined,
     where?: Record<string, unknown>
   ) => {
-    if (!data || !("credentials" in data)) return;
-    const value = data.credentials;
+    if (!data || !(field in data)) return;
+    const value = data[field];
     if (value === null || value === undefined || isEncryptedBlob(value)) return;
     if (typeof value !== "object" || Array.isArray(value)) return;
-    const plain = value as Record<string, unknown>;
-    let existing: Record<string, string> | undefined;
+    const plain = await openPerFieldSecrets(value as Record<string, unknown>);
+    let existing: Record<string, unknown> | undefined;
     if (where) {
-      const row = await client.codeRepository.findUnique({
+      const row = await (client[modelKey] as CredentialModelReader).findUnique({
         where,
-        select: { credentials: true, provider: true },
+        select: { [field]: true, [label]: true },
       });
       if (row) {
         try {
           existing = await resolveStoredCredentials(
-            row.credentials,
-            row.provider
+            row[field],
+            String(row[label] ?? modelKey)
           );
         } catch {
           // Unreadable stored credentials are what this write replaces.
@@ -433,7 +490,11 @@ export async function encryptCodeRepositoryCredentials(
         }
       }
     }
-    data.credentials = await encryptPlain(plain, existing);
+    data[field] = {
+      encrypted: await encrypt(
+        JSON.stringify({ ...(existing ?? {}), ...plain })
+      ),
+    };
   };
 
   const where = args.where as Record<string, unknown> | undefined;
@@ -466,12 +527,15 @@ export const sideEffectsPlugin = definePlugin(schema, {
 
   // Arg-rewriting business logic that must run before the write SQL.
   onQuery: async ({ model, operation, args, proceed, client }) => {
-    if (model === "CodeRepository") {
+    const credentialModel =
+      CREDENTIAL_MODELS[model as keyof typeof CREDENTIAL_MODELS];
+    if (credentialModel) {
       // The client an onQuery hook receives is ZenStack's un-proxied instance:
       // `$`-members work but model accessors (`client.codeRepository`) do not.
       // A derived client is proxied again and shares the connection; without
       // plugins the read also skips the policy layer and this hook itself.
-      await encryptCodeRepositoryCredentials(
+      await encryptCredentialsOnWrite(
+        credentialModel,
         operation,
         args,
         client.$unuseAll() as unknown as CredentialReader

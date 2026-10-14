@@ -12,6 +12,8 @@ import { Decimal } from "decimal.js";
 import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { baseDb } from "@/lib/db";
+import { loadLlmCredentials } from "@/lib/llm/credentials";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: NextRequest) {
@@ -33,7 +35,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { provider, apiKey, endpoint, deploymentName, defaultModel } = body;
+    const { provider, deploymentName, defaultModel } = body;
+    // Editing an integration: a key left blank means the stored one, which
+    // the dialog never receives.
+    const stored =
+      Number.isInteger(body.llmIntegrationId) && !body.apiKey
+        ? await loadLlmCredentials(baseDb as never, body.llmIntegrationId)
+        : null;
+    const apiKey: string | undefined = body.apiKey || stored?.apiKey;
+    const endpoint: string | undefined =
+      body.endpoint || stored?.endpoint || stored?.baseUrl;
 
     // Testing credentials for provider
 
@@ -44,11 +55,6 @@ export async function POST(request: NextRequest) {
         name: "Test",
         provider,
         status: "ACTIVE",
-        credentials: {
-          apiKey,
-          endpoint,
-          baseUrl: endpoint,
-        },
         settings: {
           deploymentName,
           apiVersion: provider === "AZURE_OPENAI" ? "2024-02-01" : undefined,

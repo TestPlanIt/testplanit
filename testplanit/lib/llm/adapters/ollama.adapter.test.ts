@@ -14,7 +14,6 @@ const createTestConfig = (
     name: "Test Integration",
     provider: "OLLAMA",
     status: "ACTIVE",
-    credentials: {},
     settings: { keepAlive: "10m" },
     isDeleted: false,
     deletedAt: null,

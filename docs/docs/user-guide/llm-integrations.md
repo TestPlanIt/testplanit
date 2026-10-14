@@ -71,7 +71,7 @@ AI-powered features in TestPlanIt:
 3. Configure your preferred AI provider:
 
 ```yaml
-Name: "Production OpenAI"
+Name: 'Production OpenAI'
 Provider: OPENAI
 Model: gpt-4-turbo-preview
 Status: ACTIVE
@@ -147,14 +147,18 @@ Temperature: 0.7
 
 **Note**: Custom LLM endpoints must be compatible with the OpenAI API format. When the endpoint is OpenAI-compatible, the model dropdown is populated automatically from its `/models` listing and [model pricing](#model-pricing) is applied when available; endpoints that don't serve `/models` fall back to manual model entry.
 
+### API key storage
+
+An AI model's API key and endpoint are encrypted at rest with the instance's `ENCRYPTION_KEY`, like integration and code repository credentials, and only administrators can read them. The key never reaches the browser: the **Edit** dialog shows the key field blank, and leaving it blank keeps the current key, including for the model list and **Test Connection**. Type a new key to replace it. Keys saved before encryption are encrypted on the next start.
+
 ### Token Limits
 
 The Add/Edit AI model dialog exposes two separate **output-token** fields rather than a single generic limit:
 
-- **Max Tokens Per Request** — the hard ceiling on the number of *output* tokens the model may generate in one response. Set it to the model's real maximum output (for example, `128000` for Claude Opus/Sonnet, `64000` for Claude Haiku, `65536` for Gemini, `16384` for GPT-4o). It does not limit how much context you send.
+- **Max Tokens Per Request** — the hard ceiling on the number of _output_ tokens the model may generate in one response. Set it to the model's real maximum output (for example, `128000` for Claude Opus/Sonnet, `64000` for Claude Haiku, `65536` for Gemini, `16384` for GPT-4o). It does not limit how much context you send.
 - **Default Max Tokens** — the output length requests on this model ask for (bounded by Max Tokens Per Request). Test Case Generation (every source, including the Jira issue panel), Markdown Test Case Parsing, the Editor Writing Assistant, and Smart Test Case Selection always use this value. Export Code Generation, AI Tag Suggestions, AI Step Derivation, and the Automation Candidates Report use the **Max Output Tokens** from their [Prompt Configuration](../prompt-configurations) instead. Models that think before answering (for example, Claude Opus 5) spend part of this budget on reasoning, so leave room for the reply.
 
-Neither field controls how much source material is *sent* to the model. For QuickScript, the amount of connected-repository code included with each generation is shown read-only as the **Repository Context Budget (QuickScript)** — auto-sized from the selected model's input context window, so larger-context models get more and small local models get a safe amount that won't overflow. There is nothing to configure here.
+Neither field controls how much source material is _sent_ to the model. For QuickScript, the amount of connected-repository code included with each generation is shown read-only as the **Repository Context Budget (QuickScript)** — auto-sized from the selected model's input context window, so larger-context models get more and small local models get a safe amount that won't overflow. There is nothing to configure here.
 
 ### Endpoint URL Requirements
 
@@ -286,13 +290,13 @@ Project admins can override which LLM integration is used for specific AI featur
 
 ### Source Badges
 
-| Badge | Color | Meaning |
-| ------- | ------- | --------- |
-| Project Override | Blue | A per-feature override is set on this project |
-| Disabled (Override) | Orange | The feature is explicitly disabled for this project via override |
-| Prompt Config | Gray | The prompt configuration has a per-prompt LLM assignment |
-| Project Default | Outline | The project's default LLM integration is being used |
-| No LLM configured | Red | No integration is available at any level |
+| Badge               | Color   | Meaning                                                          |
+| ------------------- | ------- | ---------------------------------------------------------------- |
+| Project Override    | Blue    | A per-feature override is set on this project                    |
+| Disabled (Override) | Orange  | The feature is explicitly disabled for this project via override |
+| Prompt Config       | Gray    | The prompt configuration has a per-prompt LLM assignment         |
+| Project Default     | Outline | The project's default LLM integration is being used              |
+| No LLM configured   | Red     | No integration is available at any level                         |
 
 ### Use Cases
 

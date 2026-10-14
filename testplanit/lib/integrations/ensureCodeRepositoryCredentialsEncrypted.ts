@@ -18,7 +18,6 @@ import { resolveStoredCredentials } from "./credentials";
 export interface CredentialRewriter {
   codeRepository: {
     findMany(args: {
-      where: { isDeleted: boolean };
       select: { id: true; name: true; provider: true; credentials: true };
     }): Promise<
       Array<{
@@ -49,7 +48,6 @@ export async function encryptLegacyCodeRepositoryCredentials(
   log: (message: string) => void = () => {}
 ): Promise<{ rewritten: number; unreadable: number; total: number }> {
   const repositories = await db.codeRepository.findMany({
-    where: { isDeleted: false },
     select: { id: true, name: true, provider: true, credentials: true },
   });
   let rewritten = 0;

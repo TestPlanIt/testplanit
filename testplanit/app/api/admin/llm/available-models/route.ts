@@ -1,5 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { baseDb } from "@/lib/db";
+import { loadLlmCredentials } from "@/lib/llm/credentials";
 import { authOptions } from "~/server/auth";
 import {
   assertAllowedUrl,
@@ -24,7 +26,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { provider, apiKey, endpoint } = await request.json();
+    const body = await request.json();
+    const { provider } = body;
+    // Editing an integration: a key left blank means the stored one, which
+    // the dialog never receives.
+    const stored =
+      Number.isInteger(body.llmIntegrationId) && !body.apiKey
+        ? await loadLlmCredentials(baseDb as never, body.llmIntegrationId)
+        : null;
+    const apiKey: string = body.apiKey || stored?.apiKey || "";
+    const endpoint: string | undefined =
+      body.endpoint || stored?.endpoint || stored?.baseUrl;
 
     if (!provider) {
       return NextResponse.json(

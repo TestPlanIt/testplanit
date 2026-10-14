@@ -36,7 +36,7 @@ See [External Database Deployment](external-database-deployment.md) and [Horizon
 | `DATABASE_PRIMARY_STICKY_MS`          | `5000`         | After a write, how long a user's reads stay on the primary so they see their own changes. `0` disables.                                                                               |
 | `AUDIT_TRIGGER_BOOTSTRAP`             | on             | Set to `off` to skip installing the audit triggers at startup, for example when the database role cannot run DDL.                                                                     |
 | `AUDIT_TRIGGER_BOOTSTRAP_FATAL`       | unset          | Set to `1` to abort startup when the audit triggers cannot be installed. Recommended on the worker tier. The default logs the failure and continues.                                  |
-| `CREDENTIAL_ENCRYPTION_BOOTSTRAP`     | unset          | Set to `off` to skip the startup pass that encrypts code repository credentials saved before they were encrypted at rest.                                                             |
+| `CREDENTIAL_ENCRYPTION_BOOTSTRAP`     | unset          | Set to `off` to skip the startup pass that encrypts code repository, issue integration, AI model and SSO provider credentials saved before they were encrypted at rest, and removes sign-in provider tokens stored by earlier versions.                             |
 
 ## Valkey and Job Queues
 

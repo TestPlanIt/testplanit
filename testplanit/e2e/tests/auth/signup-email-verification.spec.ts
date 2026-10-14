@@ -1,3 +1,4 @@
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { expect, test } from "../../fixtures";
 import { SigninPage } from "../../page-objects/signin.page";
 
@@ -21,20 +22,17 @@ test.describe("Sign Up with Email Verification", () => {
   /**
    * Complete sign-up and email verification via real verification URL.
    *
-   * This test uses the admin session (from global storage state) so that
-   * the `request` fixture can query the database for the emailVerifToken.
-   * The actual browser page starts unauthenticated because we navigate to
+   * The emailVerifToken is read straight from the database. The actual browser page starts unauthenticated because we navigate to
    * the signup form directly — the signup API creates a new session after
    * registration which is separate from the admin fixture's session.
    *
    * We create the user via api.createUser (public signup API) WITHOUT
-   * email verification, then retrieve the token via the admin request
-   * context, and navigate the browser to the real verification URL.
+   * email verification, then retrieve the token from the database, and
+   * navigate the browser to the real verification URL.
    */
   test("Complete sign-up and email verification via real verification URL", async ({
     page,
     api,
-    request,
   }, testInfo) => {
     const timestamp = Date.now();
     const testEmail = `test-verify-${timestamp}@example.com`;
@@ -59,28 +57,19 @@ test.describe("Sign Up with Email Verification", () => {
       let emailVerifToken: string | undefined;
 
       await test.step("Retrieve email verification token from the database", async () => {
-        // Retrieve the email verification token from the database via admin API request
-        // (request fixture uses admin session from global storageState)
-        const userResponse = await request.get(
-          `${baseURL}/api/model/user/findFirst`,
-          {
-            params: {
-              q: JSON.stringify({
-                where: { email: testEmail, isDeleted: false },
-                select: { id: true, emailVerifToken: true },
-              }),
-            },
-          }
-        );
-
-        expect(userResponse.ok()).toBe(true);
-        const userData = await userResponse.json();
-
-        const fetchedUserId = userData.data?.id;
-        emailVerifToken = userData.data?.emailVerifToken;
-
-        expect(fetchedUserId).toBeTruthy();
-        expect(emailVerifToken).toBeTruthy();
+        // The token is never exposed over the API, so read it directly.
+        const db = createRawDbClient();
+        try {
+          const user = await db.user.findFirst({
+            where: { email: testEmail, isDeleted: false },
+            select: { id: true, emailVerifToken: true },
+          });
+          expect(user?.id).toBeTruthy();
+          emailVerifToken = user?.emailVerifToken ?? undefined;
+          expect(emailVerifToken).toBeTruthy();
+        } finally {
+          await db.$disconnect();
+        }
       });
 
       // Now navigate the browser (as unauthenticated context via a new page context)

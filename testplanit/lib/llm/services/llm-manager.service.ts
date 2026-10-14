@@ -14,6 +14,7 @@ import {
   getAllowedPrivateHosts,
   isCloudMetadataHostname,
 } from "~/lib/utils/ssrf";
+import { loadLlmCredentials } from "../credentials";
 import { modelSupportsVision } from "../model-capabilities";
 import { estimatePromptTokens } from "../content";
 
@@ -36,12 +37,6 @@ const usageProjectConnect = (request: LlmRequest) => {
     ? { project: { connect: { id: projectId as number } } }
     : {};
 };
-
-interface LlmCredentials {
-  apiKey?: string;
-  endpoint?: string;
-  baseUrl?: string;
-}
 
 // Allowlist of known safe base URLs per provider to prevent SSRF attacks
 const ALLOWED_BASE_URLS: Record<string, string[]> = {
@@ -256,7 +251,11 @@ export class LlmManager {
       );
     }
 
-    const credentials = llmIntegration.credentials as LlmCredentials | null;
+    // `credentials` is omitted from ordinary reads and stored encrypted.
+    const credentials = await loadLlmCredentials(
+      this.db as never,
+      llmIntegrationId
+    );
     const userProvidedBaseUrl = credentials?.endpoint || credentials?.baseUrl;
     const validatedBaseUrl = getValidatedBaseUrl(
       llmIntegration.provider,
@@ -267,6 +266,7 @@ export class LlmManager {
       integration: llmIntegration,
       config: llmIntegration.llmProviderConfig as LlmProviderConfig,
       apiKey: credentials?.apiKey,
+      additionalHeaders: credentials?.headers,
       baseUrl: validatedBaseUrl,
     };
 

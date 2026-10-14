@@ -10,6 +10,10 @@ const recordVideo = process.env.E2E_VIDEO === "on";
 // Set E2E_PROD=on to run against production build (faster, more stable)
 const useProdBuild = process.env.E2E_PROD === "on";
 
+/** Specs that toggle Force SSO, domain restriction or the password policy. */
+const INSTANCE_SETTINGS_SPECS =
+  /admin\/(sso\/sso-provider-management|security\/security-settings)\.spec\.ts$/;
+
 // Optionally report results to a TestPlanIt instance via the local reporter.
 // Inert unless TPI_DOMAIN + TPI_TOKEN + TPI_PROJECT_ID are set, so normal E2E
 // runs are unaffected. Used to dogfood @testplanit/playwright-reporter: with
@@ -126,6 +130,18 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      testIgnore: INSTANCE_SETTINGS_SPECS,
+      teardown: "chromium-instance-settings",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: path.join(__dirname, ".auth/admin.json"),
+      },
+    },
+    {
+      // Runs after the parallel suite: these specs briefly change instance-wide
+      // sign-in settings that would reject another spec's sign-up or sign-in.
+      name: "chromium-instance-settings",
+      testMatch: INSTANCE_SETTINGS_SPECS,
       use: {
         ...devices["Desktop Chrome"],
         storageState: path.join(__dirname, ".auth/admin.json"),
