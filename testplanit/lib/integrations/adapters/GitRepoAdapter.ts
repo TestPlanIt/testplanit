@@ -4,7 +4,11 @@
  * Does NOT extend BaseAdapter (which is for issue tracking, not git file fetching).
  */
 
-import { assertSsrfSafeResolved, isSsrfSafe } from "~/utils/ssrf";
+import {
+  assertSsrfSafeResolved,
+  createPinnedDispatcher,
+  isSsrfSafe,
+} from "~/utils/ssrf";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
 import {
   computeLocalCompare,
@@ -370,14 +374,22 @@ export abstract class GitRepoAdapter {
 
       try {
         const safeUrl = this.sanitizeUrl(url);
-        // Resolve DNS and verify the IP is not private (closes DNS rebinding)
-        await assertSsrfSafeResolved(safeUrl);
-
-        const response = await fetch(safeUrl, {
+        // Resolve DNS, verify the IP is not private, and pin the connection
+        // to it so DNS cannot rebind between the check and the request.
+        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
+        const dispatcher = pinnedIp
+          ? createPinnedDispatcher(pinnedIp)
+          : undefined;
+        const init: RequestInit & { dispatcher?: unknown } = {
           ...options,
           signal: controller.signal,
           redirect: "manual", // prevent redirect-based SSRF bypass
-        });
+        };
+        if (dispatcher) init.dispatcher = dispatcher;
+        const response = await fetch(safeUrl, init);
+        // Graceful close: undici lets the in-flight response finish, so the
+        // body stays readable.
+        dispatcher?.close().catch(() => {});
 
         // If the server redirects, validate the target before following
         if (response.status >= 300 && response.status < 400) {
@@ -480,13 +492,22 @@ export abstract class GitRepoAdapter {
 
       try {
         const safeUrl = this.sanitizeUrl(url);
-        await assertSsrfSafeResolved(safeUrl);
-
-        const response = await fetch(safeUrl, {
+        // Resolve DNS, verify the IP is not private, and pin the connection
+        // to it so DNS cannot rebind between the check and the request.
+        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
+        const dispatcher = pinnedIp
+          ? createPinnedDispatcher(pinnedIp)
+          : undefined;
+        const init: RequestInit & { dispatcher?: unknown } = {
           ...options,
           signal: controller.signal,
-          redirect: "manual",
-        });
+          redirect: "manual", // prevent redirect-based SSRF bypass
+        };
+        if (dispatcher) init.dispatcher = dispatcher;
+        const response = await fetch(safeUrl, init);
+        // Graceful close: undici lets the in-flight response finish, so the
+        // body stays readable.
+        dispatcher?.close().catch(() => {});
 
         if (response.status >= 300 && response.status < 400) {
           return this.followSafeRedirect<string>(
@@ -568,13 +589,22 @@ export abstract class GitRepoAdapter {
 
       try {
         const safeUrl = this.sanitizeUrl(url);
-        await assertSsrfSafeResolved(safeUrl);
-
-        const response = await fetch(safeUrl, {
+        // Resolve DNS, verify the IP is not private, and pin the connection
+        // to it so DNS cannot rebind between the check and the request.
+        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
+        const dispatcher = pinnedIp
+          ? createPinnedDispatcher(pinnedIp)
+          : undefined;
+        const init: RequestInit & { dispatcher?: unknown } = {
           ...options,
           signal: controller.signal,
-          redirect: "manual",
-        });
+          redirect: "manual", // prevent redirect-based SSRF bypass
+        };
+        if (dispatcher) init.dispatcher = dispatcher;
+        const response = await fetch(safeUrl, init);
+        // Graceful close: undici lets the in-flight response finish, so the
+        // body stays readable.
+        dispatcher?.close().catch(() => {});
 
         if (response.status >= 300 && response.status < 400) {
           return this.followSafeRedirect<Buffer>(
@@ -756,7 +786,8 @@ export abstract class GitRepoAdapter {
 
     // Resolve relative redirects against the original request URL
     const redirectUrl = this.sanitizeUrl(new URL(location, response.url).href);
-    await assertSsrfSafeResolved(redirectUrl);
+    const pinnedIp = await assertSsrfSafeResolved(redirectUrl);
+    const dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
 
     // A hop to another host drops the credential, as fetch's own redirect
     // handling would: a signed download URL (an archive handed off to object
@@ -764,14 +795,17 @@ export abstract class GitRepoAdapter {
     // and the token must not reach a host it was never issued for.
     const originalOrigin = response.url ? new URL(response.url).origin : null;
     const sameOrigin = new URL(redirectUrl).origin === originalOrigin;
-    const redirectResponse = await fetch(redirectUrl, {
+    const redirectInit: RequestInit & { dispatcher?: unknown } = {
       ...options,
       headers: sameOrigin
         ? options.headers
         : this.withoutAuthorization(options.headers),
       signal,
       redirect: "error", // no further redirects
-    });
+    };
+    if (dispatcher) redirectInit.dispatcher = dispatcher;
+    const redirectResponse = await fetch(redirectUrl, redirectInit);
+    dispatcher?.close().catch(() => {});
 
     this.trackRateLimitHeaders(redirectResponse);
 

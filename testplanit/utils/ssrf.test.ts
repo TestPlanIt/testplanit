@@ -10,11 +10,18 @@ vi.mock("node:dns/promises", () => ({
   lookup: mockLookup,
 }));
 
-vi.mock("~/lib/utils/ssrf", () => ({
+// Keep the real isPrivateOrInternalIp (the range + IPv4-mapped-IPv6 logic this
+// guard delegates to); only the allowlist getter is stubbed.
+vi.mock("~/lib/utils/ssrf", async (importActual) => ({
+  ...(await importActual<typeof import("~/lib/utils/ssrf")>()),
   getAllowedPrivateHosts: mockGetAllowedPrivateHosts,
 }));
 
-import { assertSsrfSafeResolved, isSsrfSafe } from "./ssrf";
+import {
+  assertSsrfSafeResolved,
+  createPinnedDispatcher,
+  isSsrfSafe,
+} from "./ssrf";
 
 describe("isSsrfSafe", () => {
   describe("blocks localhost", () => {
@@ -85,6 +92,28 @@ describe("isSsrfSafe", () => {
 
     it("blocks fe80:: (link-local)", () => {
       expect(isSsrfSafe("https://[fe80::1]/api")).toBe(false);
+    });
+  });
+
+  // GHSA-x7jm-4fpq-5mhm: an IPv4-mapped IPv6 literal carries a private IPv4
+  // address past a dotted-decimal range list. The WHATWG URL parser also
+  // rewrites the dotted tail to hex (::ffff:127.0.0.1 -> ::ffff:7f00:1), so
+  // both spellings must be blocked.
+  describe("blocks IPv4-mapped IPv6 literals", () => {
+    it("blocks ::ffff:127.0.0.1 (mapped loopback)", () => {
+      expect(isSsrfSafe("https://[::ffff:127.0.0.1]/api")).toBe(false);
+    });
+
+    it("blocks ::ffff:7f00:1 (hex-canonical mapped loopback)", () => {
+      expect(isSsrfSafe("https://[::ffff:7f00:1]/api")).toBe(false);
+    });
+
+    it("blocks ::ffff:10.0.0.1 (mapped RFC 1918)", () => {
+      expect(isSsrfSafe("https://[::ffff:10.0.0.1]/api")).toBe(false);
+    });
+
+    it("blocks ::ffff:169.254.169.254 (mapped cloud metadata)", () => {
+      expect(isSsrfSafe("https://[::ffff:169.254.169.254]/latest")).toBe(false);
     });
   });
 
@@ -242,6 +271,32 @@ describe("assertSsrfSafeResolved", () => {
     });
   });
 
+  // GHSA-x7jm-4fpq-5mhm: skipping every host containing ":" let an IPv4-mapped
+  // IPv6 literal bypass this re-check without DNS. The literal must be
+  // validated numerically instead of waved through.
+  describe("blocks IPv4-mapped IPv6 literals without a DNS lookup", () => {
+    it("throws for ::ffff:127.0.0.1 and never resolves DNS", async () => {
+      await expect(
+        assertSsrfSafeResolved("https://[::ffff:127.0.0.1]/api")
+      ).rejects.toThrow("private or internal address");
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it("throws for the hex-canonical ::ffff:7f00:1", async () => {
+      await expect(
+        assertSsrfSafeResolved("https://[::ffff:7f00:1]/api")
+      ).rejects.toThrow("private or internal address");
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it("throws for mapped cloud metadata ::ffff:169.254.169.254", async () => {
+      await expect(
+        assertSsrfSafeResolved("https://[::ffff:169.254.169.254]/latest")
+      ).rejects.toThrow("private or internal address");
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+  });
+
   describe("handles DNS failures", () => {
     it("throws on DNS resolution failure", async () => {
       mockLookup.mockRejectedValueOnce(new Error("ENOTFOUND"));
@@ -281,5 +336,19 @@ describe("assertSsrfSafeResolved", () => {
 
       expect(mockLookup).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("createPinnedDispatcher", () => {
+  it("returns a closable undici Agent for an IPv4 address", async () => {
+    const dispatcher = createPinnedDispatcher("140.82.121.4");
+    expect(typeof dispatcher.close).toBe("function");
+    await dispatcher.close();
+  });
+
+  it("returns a closable undici Agent for an IPv6 address", async () => {
+    const dispatcher = createPinnedDispatcher("2606:4700::1");
+    expect(typeof dispatcher.close).toBe("function");
+    await dispatcher.close();
   });
 });

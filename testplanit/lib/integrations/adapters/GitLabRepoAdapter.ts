@@ -26,6 +26,7 @@ import {
   MAX_TOTAL_PATCH_BYTES,
 } from "../diff/limits";
 import { parseUnifiedDiff, stripDiffHeaders } from "../diff/parseUnifiedDiff";
+import { assertSsrfSafeResolved, createPinnedDispatcher } from "~/utils/ssrf";
 
 const MAX_FILES = 10000; // Cap to prevent runaway pagination
 const BRANCH_PAGE_SIZE = 100;
@@ -92,10 +93,18 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
       try {
         const safeUrl = this.sanitizeUrl(url);
         await this.applyRateLimit();
-        response = await fetch(safeUrl, {
+        // Resolve, verify, and pin the connection to the validated IP.
+        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
+        const dispatcher = pinnedIp
+          ? createPinnedDispatcher(pinnedIp)
+          : undefined;
+        const init: RequestInit & { dispatcher?: unknown } = {
           headers: this.authHeaders,
           signal: controller.signal,
-        });
+        };
+        if (dispatcher) init.dispatcher = dispatcher;
+        response = await fetch(safeUrl, init);
+        dispatcher?.close().catch(() => {});
       } finally {
         clearTimeout(timeoutId);
       }
