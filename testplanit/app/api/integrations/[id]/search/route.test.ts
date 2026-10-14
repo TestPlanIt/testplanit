@@ -14,6 +14,17 @@ vi.mock("@/lib/auth/utils", () => ({
   getEnhancedDb: vi.fn(),
 }));
 
+// The credential check reads the stored row server-side; serve it the same
+// row the user's client sees.
+vi.mock("@/lib/db", () => ({
+  baseDb: {
+    integration: {
+      findUnique: (...args: unknown[]) =>
+        mockDb.integration.findUnique(...args),
+    },
+  },
+}));
+
 vi.mock("@/lib/integrations/IntegrationManager", () => ({
   IntegrationManager: {
     getInstance: vi.fn(),

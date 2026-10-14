@@ -517,3 +517,35 @@ describe("createUser - source-shape sanity", () => {
     expect(scimColumnWrites).toHaveLength(0);
   });
 });
+
+describe("linkAccount", () => {
+  it("stores the account link without the provider's OAuth tokens", async () => {
+    const mocks = makeDbMocks();
+    mocks.account.create.mockResolvedValue({ id: "acc-1" });
+    const adapter = makeAdapter(mocks);
+
+    await adapter.linkAccount!({
+      userId: "u1",
+      type: "oauth",
+      provider: "google",
+      providerAccountId: "g-123",
+      access_token: "ya29.access",
+      refresh_token: "1//refresh",
+      id_token: "eyJ.id",
+      expires_at: 1700000000,
+      token_type: "Bearer",
+      scope: "openid email",
+    });
+
+    const { data } = mocks.account.create.mock.calls[0][0];
+    expect(data).toEqual({
+      userId: "u1",
+      type: "oauth",
+      provider: "google",
+      providerAccountId: "g-123",
+      expires_at: 1700000000,
+      token_type: "Bearer",
+      scope: "openid email",
+    });
+  });
+});

@@ -141,7 +141,7 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── COV-04: Group A — Top-level project/user entities ─────────────────────
   // lastActiveAt is write-frequent (keep-alive ping every 5 min) — mirrors the existing
   // app-hook isLastActiveOnly skip; denylisting avoids thousands of zero-value rows/day.
-  // password / twoFactorSecret / twoFactorBackupCodes are credential material —
+  // password / twoFactorSecret / twoFactorBackupCodes / emailVerifToken are credential material —
   // denylisted so they never land in the append-only DataChangeLog (SAF-02/04),
   // mirroring the semantic audit's SENSITIVE_FIELDS. These columns are @omit in
   // schema, but the trigger reads raw row values, so it must exclude them itself.
@@ -156,6 +156,7 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
       "password",
       "twoFactorSecret",
       "twoFactorBackupCodes",
+      "emailVerifToken",
     ],
     nameCol: "name",
   },

@@ -43,8 +43,18 @@ export async function register() {
     await import("~/lib/integrations/ensureCodeRepositoryCredentialsEncrypted");
   await ensureCodeRepositoryCredentialsEncrypted();
 
+  // The same for issue-integration credentials saved in an older shape.
+  const { ensureIntegrationCredentialsEncrypted } =
+    await import("~/lib/integrations/ensureIntegrationCredentialsEncrypted");
+  await ensureIntegrationCredentialsEncrypted();
+
   // And AI model API keys, stored in the clear before they were sealed.
   const { ensureLlmCredentialsEncrypted } =
     await import("~/lib/llm/ensureLlmCredentialsEncrypted");
   await ensureLlmCredentialsEncrypted();
+
+  // And SSO provider client secrets and private keys.
+  const { ensureSsoConfigEncrypted } =
+    await import("~/lib/auth/ensureSsoConfigEncrypted");
+  await ensureSsoConfigEncrypted();
 }

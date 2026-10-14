@@ -266,6 +266,7 @@ export class LlmManager {
       integration: llmIntegration,
       config: llmIntegration.llmProviderConfig as LlmProviderConfig,
       apiKey: credentials?.apiKey,
+      additionalHeaders: credentials?.headers,
       baseUrl: validatedBaseUrl,
     };
 

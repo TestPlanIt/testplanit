@@ -65,12 +65,12 @@ model Account {
     type              String
     provider          String
     providerAccountId String
-    refresh_token     String? @db.Text
-    access_token      String? @db.Text
+    refresh_token     String? @db.Text @omit @deny('read', true)
+    access_token      String? @db.Text @omit @deny('read', true)
     expires_at        Int?
     token_type        String?
     scope             String?
-    id_token          String? @db.Text
+    id_token          String? @db.Text @omit @deny('read', true)
     session_state     String?
     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -132,7 +132,7 @@ model User {
     name                                     String                            @length(1) @deny('update', scimGivenName != null)
     email                                    String                            @unique @email @deny('update', scimGivenName != null)
     emailVerified                            DateTime?
-    emailVerifToken                          String?
+    emailVerifToken                          String?                           @omit @deny('read', true)
     emailTokenExpires                        DateTime?
     password                                 String?                           @omit @length(4)
     image                                    String?
@@ -3867,7 +3867,7 @@ model Integration {
     provider             IntegrationProvider
     authType             IntegrationAuthType
     status               IntegrationStatus     @default(INACTIVE)
-    credentials          Json                     // Encrypted OAuth credentials or API keys
+    credentials          Json                  @omit @deny('read', auth().access != 'ADMIN')
     settings             Json?                    // Provider-specific settings
     lastSyncAt           DateTime?
     isDeleted            Boolean               @default(false)
@@ -6451,7 +6451,7 @@ model SsoProvider {
     type       SsoProviderType
     enabled    Boolean            @default(true)
     forceSso   Boolean            @default(false) // Force users to use SSO
-    config     Json?            // Provider-specific configuration
+    config     Json?              @omit @deny('read', auth().access != 'ADMIN')
     createdAt  DateTime           @default(now())
     updatedAt  DateTime           @updatedAt
     samlConfig SamlConfiguration?

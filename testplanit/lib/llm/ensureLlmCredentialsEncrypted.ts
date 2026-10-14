@@ -14,19 +14,28 @@ import { resolveLlmCredentials } from "./credentials";
 export interface LlmCredentialRewriter {
   llmIntegration: {
     findMany(args: {
-      where: { isDeleted: boolean };
-      select: { id: true; name: true; provider: true; credentials: true };
+      select: {
+        id: true;
+        name: true;
+        provider: true;
+        credentials: true;
+        settings: true;
+      };
     }): Promise<
       Array<{
         id: number;
         name: string;
         provider: string;
         credentials: unknown;
+        settings: unknown;
       }>
     >;
     update(args: {
       where: { id: number };
-      data: { credentials: { encrypted: string } };
+      data: {
+        credentials: { encrypted: string };
+        settings?: Record<string, unknown>;
+      };
     }): Promise<unknown>;
   };
 }
@@ -35,28 +44,45 @@ const isEmpty = (value: unknown) =>
   value == null ||
   (typeof value === "object" && Object.keys(value as object).length === 0);
 
+/** Settings keys that hold secrets and belong in the sealed credentials. */
+const SECRET_SETTINGS_KEYS = ["apiKey", "headers"] as const;
+
+const asObject = (value: unknown): Record<string, unknown> | null =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
 /**
- * Seal every integration whose credentials are not yet the encrypted blob.
- * Returns how many were sealed and how many could not be read.
+ * Seal every integration whose credentials are not yet the encrypted blob,
+ * and move an API key or request headers kept in its settings (which every
+ * signed-in user can read) into the sealed credentials. Returns how many
+ * were sealed and how many could not be read.
  */
 export async function encryptLegacyLlmCredentials(
   db: LlmCredentialRewriter,
   log: (message: string) => void = () => {}
 ): Promise<{ rewritten: number; unreadable: number; total: number }> {
   const integrations = await db.llmIntegration.findMany({
-    where: { isDeleted: false },
-    select: { id: true, name: true, provider: true, credentials: true },
+    select: {
+      id: true,
+      name: true,
+      provider: true,
+      credentials: true,
+      settings: true,
+    },
   });
   let rewritten = 0;
   let unreadable = 0;
   for (const row of integrations) {
-    if (
-      isEmpty(row.credentials) ||
-      isEncryptedCredentialBlob(row.credentials)
-    ) {
+    const settings = asObject(row.settings);
+    const misplaced = SECRET_SETTINGS_KEYS.filter(
+      (key) => settings && key in settings
+    );
+    const sealed = isEncryptedCredentialBlob(row.credentials);
+    if ((isEmpty(row.credentials) || sealed) && misplaced.length === 0) {
       continue;
     }
-    let plain: Record<string, string>;
+    let plain: Record<string, unknown>;
     try {
       plain = {
         ...(await resolveLlmCredentials(row.credentials, row.provider)),
@@ -68,10 +94,20 @@ export async function encryptLegacyLlmCredentials(
       );
       continue;
     }
+    let remainingSettings: Record<string, unknown> | undefined;
+    if (settings && misplaced.length > 0) {
+      remainingSettings = { ...settings };
+      for (const key of misplaced) {
+        if (plain[key] === undefined && settings[key])
+          plain[key] = settings[key];
+        delete remainingSettings[key];
+      }
+    }
     await db.llmIntegration.update({
       where: { id: row.id },
       data: {
         credentials: { encrypted: await encrypt(JSON.stringify(plain)) },
+        ...(remainingSettings ? { settings: remainingSettings } : {}),
       },
     });
     rewritten++;

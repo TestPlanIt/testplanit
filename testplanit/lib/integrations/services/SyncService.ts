@@ -708,6 +708,7 @@ export class SyncService {
       // Get the integration
       const integration = await db.integration.findUnique({
         where: { id: integrationId },
+        omit: { credentials: false },
         include: {
           userIntegrationAuths: {
             where: { isActive: true },
@@ -1731,6 +1732,7 @@ export class SyncService {
       // Get the integration
       const integration = await db.integration.findUnique({
         where: { id: integrationId },
+        omit: { credentials: false },
         include: {
           userIntegrationAuths: {
             where: { isActive: true },
@@ -1822,6 +1824,7 @@ export class SyncService {
     try {
       const integration = await db.integration.findUnique({
         where: { id: integrationId },
+        omit: { credentials: false },
         include: {
           userIntegrationAuths: {
             where: { isActive: true },

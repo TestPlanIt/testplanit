@@ -4168,7 +4168,6 @@ export class ApiHelper {
             name: options.name,
             email: options.email,
             password: options.password,
-            emailVerifToken: crypto.randomUUID(),
           },
         }
       );

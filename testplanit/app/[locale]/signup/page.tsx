@@ -3,10 +3,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import {
-  generateEmailVerificationToken,
-  resendVerificationEmail,
-} from "@/components/EmailVerifications";
+import { resendVerificationEmail } from "@/components/EmailVerifications";
 import type { NextPage } from "next";
 import { signIn } from "next-auth/react";
 import { notFound } from "next/navigation";
@@ -214,9 +211,6 @@ const Signup: NextPage = () => {
           name: data.name,
           email: data.email,
           password: data.password,
-          emailVerifToken: requireEmailVerification
-            ? await generateEmailVerificationToken()
-            : undefined,
         }),
       });
 

@@ -4,11 +4,9 @@ import { randomBytes } from "crypto";
 import nodemailer, { type Transporter } from "nodemailer";
 import { db } from "~/server/db";
 
-export const generateEmailVerificationToken = async () => {
-  return randomBytes(32).toString("hex");
-};
+const generateEmailVerificationToken = () => randomBytes(32).toString("hex");
 
-export const sendVerificationEmail = async (email: string, token: string) => {
+const sendVerificationEmail = async (email: string, token: string) => {
   const transporter: Transporter = nodemailer.createTransport({
     host: process.env.EMAIL_SERVER_HOST,
     port: Number(process.env.EMAIL_SERVER_PORT) || 0,
@@ -38,7 +36,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 };
 
 export const resendVerificationEmail = async (email: string) => {
-  const emailVerificationToken = await generateEmailVerificationToken(); // Await the async function
+  const emailVerificationToken = generateEmailVerificationToken();
 
   try {
     await db.user.findFirstOrThrow({
@@ -50,12 +48,12 @@ export const resendVerificationEmail = async (email: string) => {
     await db.user.update({
       where: { email },
       data: {
-        emailVerifToken: await emailVerificationToken,
+        emailVerifToken: emailVerificationToken,
         emailTokenExpires: new Date(Date.now() + 1000 * 60 * 60 * 24), // 24 hours
       },
     });
 
-    await sendVerificationEmail(email, await emailVerificationToken);
+    await sendVerificationEmail(email, emailVerificationToken);
   } catch {
     return false;
   }

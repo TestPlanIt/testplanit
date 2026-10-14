@@ -364,16 +364,13 @@ describe("CustomLlmAdapter", () => {
       expect(body.temp).toBe(0.5);
     });
 
-    it("should include custom headers from settings", async () => {
-      const config = createTestConfig(
-        {},
-        {
-          headers: {
-            "X-Custom-Header": "custom-value",
-            "X-Another-Header": "another-value",
-          },
-        }
-      );
+    it("should include the custom headers kept with the credentials", async () => {
+      const config = createTestConfig({
+        additionalHeaders: {
+          "X-Custom-Header": "custom-value",
+          "X-Another-Header": "another-value",
+        },
+      });
       const adapter = new CustomLlmAdapter(config);
 
       mockFetch.mockResolvedValueOnce({
@@ -392,6 +389,26 @@ describe("CustomLlmAdapter", () => {
       const fetchCall = mockFetch.mock.calls[0];
       expect(fetchCall[1].headers["X-Custom-Header"]).toBe("custom-value");
       expect(fetchCall[1].headers["X-Another-Header"]).toBe("another-value");
+    });
+
+    it("ignores a key or headers left in settings, which every user can read", async () => {
+      const config = createTestConfig(
+        { apiKey: undefined },
+        { apiKey: "settings-key", headers: { "X-Leak": "settings-value" } }
+      );
+      const adapter = new CustomLlmAdapter(config);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ content: "Response" }),
+      });
+      await adapter.chat({
+        messages: [{ role: "user", content: "Hello" }],
+        userId: "user-123",
+        feature: "test",
+      });
+      const headers = mockFetch.mock.calls[0][1].headers;
+      expect(headers.Authorization).toBeUndefined();
+      expect(headers["X-Leak"]).toBeUndefined();
     });
 
     it("should use custom auth header and prefix", async () => {

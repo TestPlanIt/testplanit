@@ -5,10 +5,18 @@ import {
   type LlmCredentialRewriter,
 } from "./ensureLlmCredentialsEncrypted";
 
-type Row = { id: number; name: string; provider: string; credentials: unknown };
+type Row = {
+  id: number;
+  name: string;
+  provider: string;
+  credentials: unknown;
+  settings?: unknown;
+};
 
 function db(rows: Row[]) {
-  const findMany = vi.fn().mockResolvedValue(rows);
+  const findMany = vi
+    .fn()
+    .mockResolvedValue(rows.map((row) => ({ settings: null, ...row })));
   const update = vi.fn().mockResolvedValue({});
   const client: LlmCredentialRewriter = {
     llmIntegration: { findMany, update },
@@ -43,8 +51,13 @@ describe("encryptLegacyLlmCredentials", () => {
       total: 3,
     });
     expect(findMany).toHaveBeenCalledWith({
-      where: { isDeleted: false },
-      select: { id: true, name: true, provider: true, credentials: true },
+      select: {
+        id: true,
+        name: true,
+        provider: true,
+        credentials: true,
+        settings: true,
+      },
     });
     expect(update).toHaveBeenCalledTimes(1);
     const written = update.mock.calls[0][0];
@@ -55,6 +68,57 @@ describe("encryptLegacyLlmCredentials", () => {
     expect(log).toHaveBeenCalledWith(
       "encrypted credentials for AI model #1 Claude"
     );
+  });
+
+  it("moves a key and headers kept in settings into the sealed credentials", async () => {
+    const sealed = {
+      encrypted: await encrypt(JSON.stringify({ endpoint: "https://llm" })),
+    };
+    const { client, update } = db([
+      {
+        id: 4,
+        name: "Custom",
+        provider: "CUSTOM_LLM",
+        credentials: sealed,
+        settings: {
+          apiKey: "sk-custom",
+          headers: { "X-Auth": "secret" },
+          authHeader: "X-Auth",
+        },
+      },
+    ]);
+    expect(await encryptLegacyLlmCredentials(client)).toEqual({
+      rewritten: 1,
+      unreadable: 0,
+      total: 1,
+    });
+    const written = update.mock.calls[0][0];
+    expect(
+      JSON.parse(await decrypt(written.data.credentials.encrypted))
+    ).toEqual({
+      endpoint: "https://llm",
+      apiKey: "sk-custom",
+      headers: { "X-Auth": "secret" },
+    });
+    expect(written.data.settings).toEqual({ authHeader: "X-Auth" });
+  });
+
+  it("keeps the credentials' own key over one left in settings", async () => {
+    const { client, update } = db([
+      {
+        id: 5,
+        name: "Both",
+        provider: "CUSTOM_LLM",
+        credentials: { apiKey: "from-credentials" },
+        settings: { apiKey: "from-settings" },
+      },
+    ]);
+    await encryptLegacyLlmCredentials(client);
+    const written = update.mock.calls[0][0];
+    expect(
+      JSON.parse(await decrypt(written.data.credentials.encrypted))
+    ).toEqual({ apiKey: "from-credentials" });
+    expect(written.data.settings).toEqual({});
   });
 
   it("counts a row it cannot read and moves on", async () => {

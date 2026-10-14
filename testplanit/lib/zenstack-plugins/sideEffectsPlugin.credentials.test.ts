@@ -200,3 +200,113 @@ describe("encryptCredentialsOnWrite for AI model integrations", () => {
     expect(args.data.credentials).toBe(sealed);
   });
 });
+
+describe("encryptCredentialsOnWrite for issue integrations", () => {
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = "test-encryption-key-for-testing-purposes";
+  });
+
+  const integration = (
+    row: { credentials: unknown; provider: string } | null
+  ) => ({
+    integration: { findUnique: vi.fn().mockResolvedValue(row) },
+  });
+
+  it("seals a model-API write instead of storing the token in the clear", async () => {
+    const args = {
+      data: {
+        name: "Jira",
+        provider: "JIRA",
+        credentials: { email: "a@b.c", apiToken: "jira-token" },
+      },
+    };
+    await encryptCredentialsOnWrite(
+      "integration",
+      "create",
+      args,
+      integration(null)
+    );
+    expect(Object.keys(args.data.credentials)).toEqual(["encrypted"]);
+    expect(await open(args.data.credentials)).toEqual({
+      email: "a@b.c",
+      apiToken: "jira-token",
+    });
+  });
+
+  it("opens secrets a writer encrypted one by one before sealing them", async () => {
+    const args = {
+      where: { id: 3 },
+      data: {
+        credentials: {
+          clientId: "id",
+          clientSecret: await encrypt("oauth-secret"),
+        },
+      },
+    };
+    await encryptCredentialsOnWrite(
+      "integration",
+      "update",
+      args,
+      integration({ credentials: {}, provider: "GITHUB" })
+    );
+    expect(await open(args.data.credentials)).toEqual({
+      clientId: "id",
+      clientSecret: "oauth-secret",
+    });
+  });
+});
+
+describe("encryptCredentialsOnWrite for SSO providers", () => {
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = "test-encryption-key-for-testing-purposes";
+  });
+
+  const sso = (row: { config: unknown; type: string } | null) => ({
+    ssoProvider: { findUnique: vi.fn().mockResolvedValue(row) },
+  });
+
+  it("seals a new provider's client secret", async () => {
+    const args = {
+      data: {
+        name: "Google OAuth",
+        type: "GOOGLE",
+        config: { clientId: "gid", clientSecret: "gsecret" },
+      },
+    };
+    await encryptCredentialsOnWrite("ssoProvider", "create", args, sso(null));
+    expect(Object.keys(args.data.config)).toEqual(["encrypted"]);
+    expect(await open(args.data.config)).toEqual({
+      clientId: "gid",
+      clientSecret: "gsecret",
+    });
+  });
+
+  it("keeps the stored private key when an edit leaves it blank", async () => {
+    const stored = {
+      encrypted: await encrypt(
+        JSON.stringify({
+          clientId: "a",
+          teamId: "t",
+          keyId: "k",
+          privateKey: "-----BEGIN PRIVATE KEY-----",
+        })
+      ),
+    };
+    const reader = sso({ config: stored, type: "APPLE" });
+    const args = {
+      where: { id: "apple" },
+      data: { config: { clientId: "b", teamId: "t", keyId: "k2" } },
+    };
+    await encryptCredentialsOnWrite("ssoProvider", "update", args, reader);
+    expect(reader.ssoProvider.findUnique).toHaveBeenCalledWith({
+      where: { id: "apple" },
+      select: { config: true, type: true },
+    });
+    expect(await open(args.data.config)).toEqual({
+      clientId: "b",
+      teamId: "t",
+      keyId: "k2",
+      privateKey: "-----BEGIN PRIVATE KEY-----",
+    });
+  });
+});

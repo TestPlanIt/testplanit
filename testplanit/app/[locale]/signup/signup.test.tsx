@@ -48,7 +48,6 @@ vi.mock("~/app/actions/notifications", () => ({
 
 // Mock EmailVerifications
 vi.mock("@/components/EmailVerifications", () => ({
-  generateEmailVerificationToken: vi.fn().mockResolvedValue("test-token"),
   resendVerificationEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
