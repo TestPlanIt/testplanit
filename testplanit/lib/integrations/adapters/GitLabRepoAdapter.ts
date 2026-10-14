@@ -26,6 +26,7 @@ import {
   MAX_TOTAL_PATCH_BYTES,
 } from "../diff/limits";
 import { parseUnifiedDiff, stripDiffHeaders } from "../diff/parseUnifiedDiff";
+import { ssrfSafePinnedFetch } from "~/utils/ssrf";
 
 const MAX_FILES = 10000; // Cap to prevent runaway pagination
 const BRANCH_PAGE_SIZE = 100;
@@ -92,7 +93,7 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
       try {
         const safeUrl = this.sanitizeUrl(url);
         await this.applyRateLimit();
-        response = await fetch(safeUrl, {
+        response = await ssrfSafePinnedFetch(safeUrl, {
           headers: this.authHeaders,
           signal: controller.signal,
         });

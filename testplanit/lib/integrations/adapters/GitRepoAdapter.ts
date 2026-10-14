@@ -4,7 +4,7 @@
  * Does NOT extend BaseAdapter (which is for issue tracking, not git file fetching).
  */
 
-import { assertSsrfSafeResolved, isSsrfSafe } from "~/utils/ssrf";
+import { isSsrfSafe, ssrfSafePinnedFetch } from "~/utils/ssrf";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
 import {
   computeLocalCompare,
@@ -371,9 +371,7 @@ export abstract class GitRepoAdapter {
       try {
         const safeUrl = this.sanitizeUrl(url);
         // Resolve DNS and verify the IP is not private (closes DNS rebinding)
-        await assertSsrfSafeResolved(safeUrl);
-
-        const response = await fetch(safeUrl, {
+        const response = await ssrfSafePinnedFetch(safeUrl, {
           ...options,
           signal: controller.signal,
           redirect: "manual", // prevent redirect-based SSRF bypass
@@ -480,9 +478,7 @@ export abstract class GitRepoAdapter {
 
       try {
         const safeUrl = this.sanitizeUrl(url);
-        await assertSsrfSafeResolved(safeUrl);
-
-        const response = await fetch(safeUrl, {
+        const response = await ssrfSafePinnedFetch(safeUrl, {
           ...options,
           signal: controller.signal,
           redirect: "manual",
@@ -568,9 +564,7 @@ export abstract class GitRepoAdapter {
 
       try {
         const safeUrl = this.sanitizeUrl(url);
-        await assertSsrfSafeResolved(safeUrl);
-
-        const response = await fetch(safeUrl, {
+        const response = await ssrfSafePinnedFetch(safeUrl, {
           ...options,
           signal: controller.signal,
           redirect: "manual",
@@ -756,15 +750,13 @@ export abstract class GitRepoAdapter {
 
     // Resolve relative redirects against the original request URL
     const redirectUrl = this.sanitizeUrl(new URL(location, response.url).href);
-    await assertSsrfSafeResolved(redirectUrl);
-
     // A hop to another host drops the credential, as fetch's own redirect
     // handling would: a signed download URL (an archive handed off to object
     // storage) authenticates itself and rejects a second Authorization header,
     // and the token must not reach a host it was never issued for.
     const originalOrigin = response.url ? new URL(response.url).origin : null;
     const sameOrigin = new URL(redirectUrl).origin === originalOrigin;
-    const redirectResponse = await fetch(redirectUrl, {
+    const redirectResponse = await ssrfSafePinnedFetch(redirectUrl, {
       ...options,
       headers: sameOrigin
         ? options.headers
