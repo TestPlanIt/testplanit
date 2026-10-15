@@ -116,10 +116,39 @@ export async function upsertLinkedIssueShell(
     }
   }
 
-  return db.issue.upsert({
+  const row = await db.issue.upsert({
     where,
     create: create as IssueUpsertArgs["create"],
     update: effectiveUpdate as IssueUpsertArgs["update"],
     ...(select ? { select: select as IssueUpsertArgs["select"] } : {}),
+  });
+  // The caller's project reaches the row whether this took the create or
+  // the update branch: a row another project imported first is shared, not
+  // taken over.
+  if (
+    typeof create.projectId === "number" &&
+    create.projectId > 0 &&
+    typeof row?.id === "number"
+  ) {
+    await ensureIssueProjectMembership(db, row.id, create.projectId);
+  }
+  return row;
+}
+
+/**
+ * Record that `projectId` reaches `issueId`. Idempotent; absent on clients
+ * that do not expose the model (mocks, narrow transaction clients) it is a
+ * no-op rather than a throw, matching the guarded `findUnique` pre-checks.
+ */
+export async function ensureIssueProjectMembership(
+  db: TxClient,
+  issueId: number,
+  projectId: number
+): Promise<void> {
+  if (typeof db.issueProjectMembership?.upsert !== "function") return;
+  await db.issueProjectMembership.upsert({
+    where: { issueId_projectId: { issueId, projectId } },
+    create: { issueId, projectId },
+    update: {},
   });
 }

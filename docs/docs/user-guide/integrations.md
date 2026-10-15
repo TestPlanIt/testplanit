@@ -506,6 +506,8 @@ After creating an integration, assign it to projects:
 
 **Linking at least one external project is required before you can create issues** through an integration — until you do, the Create Issue dialog reports "Integration Not Configured". A single TestPlanIt project can also connect to **multiple external projects** through one integration. For example, one Jira integration can link to three different Jira projects (e.g., a bug tracking project, a feature project, and an ops project).
 
+The same external project can be linked from more than one TestPlanIt project. An issue that several projects import, resolve by key, or link is **one issue in TestPlanIt, shared by all of them**: each project sees it in its Issues list and can link it to its own test cases, test runs, sessions, and milestones. The project that imported it first is its home project, and only the home project lists it in its Requirements tree.
+
 **To link external projects:**
 
 1. In the integration settings, find the **Linked External Projects** card

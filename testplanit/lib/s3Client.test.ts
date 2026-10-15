@@ -13,6 +13,7 @@ beforeEach(() => {
   process.env = { ...originalEnv };
   delete process.env.AWS_ACCESS_KEY_ID;
   delete process.env.AWS_SECRET_ACCESS_KEY;
+  delete process.env.AWS_SESSION_TOKEN;
   delete process.env.AWS_ENDPOINT_URL;
   delete process.env.AWS_PUBLIC_ENDPOINT_URL;
   delete process.env.AWS_REGION;
@@ -31,6 +32,30 @@ describe("resolveCredentials", () => {
     expect(resolveCredentials()).toEqual({
       credentials: { accessKeyId: "test-key", secretAccessKey: "test-secret" },
     });
+  });
+
+  it("includes the session token when temporary credentials are configured", () => {
+    process.env.AWS_ACCESS_KEY_ID = "test-key";
+    process.env.AWS_SECRET_ACCESS_KEY = "test-secret";
+    process.env.AWS_SESSION_TOKEN = "test-token";
+
+    expect(resolveCredentials()).toEqual({
+      credentials: {
+        accessKeyId: "test-key",
+        secretAccessKey: "test-secret",
+        sessionToken: "test-token",
+      },
+    });
+  });
+
+  it("omits sessionToken rather than passing undefined when it is not set", () => {
+    process.env.AWS_ACCESS_KEY_ID = "test-key";
+    process.env.AWS_SECRET_ACCESS_KEY = "test-secret";
+
+    expect(resolveCredentials()).toEqual({
+      credentials: { accessKeyId: "test-key", secretAccessKey: "test-secret" },
+    });
+    expect(resolveCredentials().credentials).not.toHaveProperty("sessionToken");
   });
 
   // The next four all assert the SAME thing: no `credentials` key whatsoever.

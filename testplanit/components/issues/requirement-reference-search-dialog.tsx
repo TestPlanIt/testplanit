@@ -10,6 +10,7 @@
 // affordance (including its OAuth popup handling) and the
 // DEFECT_SCOPE_WHERE / includeRequirements scoping toggle unchanged.
 
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { stripHtmlTags } from "~/utils/stripHtmlTags";
@@ -204,7 +205,7 @@ export function RequirementReferenceSearchDialog({
   ).issue.useFindMany(
     {
       where: {
-        projectId,
+        AND: [issueInProjectWhere(projectId)],
         ...(includeRequirements ? {} : DEFECT_SCOPE_WHERE),
         // Promotion targets must be synced: a native defect has no tracker
         // identity for the override to pin (the route 400s it).

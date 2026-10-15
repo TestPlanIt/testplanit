@@ -30,6 +30,7 @@ export function resolveRegion(): string | undefined {
 /**
  * Static credentials when both halves are present, otherwise an empty object so
  * the SDK's default provider chain takes over. Spread into the client config.
+ * AWS_SESSION_TOKEN rides along when set so temporary (STS) keys work too.
  *
  * Exported for tests: once this is handed to the SDK it is normalised into an
  * opaque provider function, and on a host that happens to have an instance role
@@ -38,12 +39,25 @@ export function resolveRegion(): string | undefined {
  */
 export function resolveCredentials():
   | Record<string, never>
-  | { credentials: { accessKeyId: string; secretAccessKey: string } } {
+  | {
+      credentials: {
+        accessKeyId: string;
+        secretAccessKey: string;
+        sessionToken?: string;
+      };
+    } {
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+  const sessionToken = process.env.AWS_SESSION_TOKEN;
 
   if (accessKeyId && secretAccessKey) {
-    return { credentials: { accessKeyId, secretAccessKey } };
+    return {
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+        ...(sessionToken ? { sessionToken } : {}),
+      },
+    };
   }
 
   return {};
