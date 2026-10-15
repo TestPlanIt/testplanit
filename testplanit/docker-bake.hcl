@@ -52,6 +52,8 @@ target "_common" {
     GIT_COMMIT = "${GIT_COMMIT}"
     BASE_DOMAIN = "${BASE_DOMAIN}"
   }
+  # Optional: read from the environment when set (see the Dockerfile build stage).
+  secret = ["id=next_actions_key,env=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY"]
 }
 
 # Production image (Next.js server)
@@ -92,6 +94,7 @@ target "_selfhost_common" {
     GIT_COMMIT = "${GIT_COMMIT}"
     SELF_HOSTED = "true"
   }
+  secret = ["id=next_actions_key,env=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY"]
 }
 
 target "production-selfhost" {

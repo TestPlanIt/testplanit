@@ -255,6 +255,17 @@ describe("External API Access Control", () => {
     });
   });
 
+  describe("Version route exemption", () => {
+    it("passes /api/version through without reading the session", async () => {
+      const request = createMockRequest("/api/version", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).toBe(200);
+      expect(mockGetToken).not.toHaveBeenCalled();
+    });
+  });
+
   describe("Unauthenticated requests", () => {
     it("should pass through unauthenticated API requests to route handler", async () => {
       mockGetToken.mockResolvedValue(null);

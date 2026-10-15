@@ -123,6 +123,19 @@ const eslintConfig = [
         },
       ],
 
+      // Next encrypts what an inline server action closes over with
+      // NEXT_SERVER_ACTIONS_ENCRYPTION_KEY, which is fixed and ships inside the
+      // public image (see Dockerfile), so those values would not be secret.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            ":function > BlockStatement > ExpressionStatement[directive='use server']",
+          message:
+            'Define server actions in a "use server" module and pass values as arguments; inline actions encrypt captured values with a key that ships in the public image.',
+        },
+      ],
+
       // Consistently import navigation APIs from `~/lib/navigation`
       "no-restricted-imports": [
         "error",

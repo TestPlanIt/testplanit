@@ -1,6 +1,7 @@
 import { Header } from "@/components/Header";
 import { ReviewGateMutationListener } from "@/components/reviews/ReviewGateMutationListener";
 import { RunGenerationProgressMount } from "@/components/runs/RunGenerationProgressToast";
+import { UpdateAvailableBanner } from "@/components/UpdateAvailableBanner";
 import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
 import { DirectionProvider } from "@radix-ui/react-direction";
 import type { Metadata } from "next";
@@ -54,6 +55,7 @@ export default async function RootLayout(props: any) {
         <DirectionProvider dir={dir}>
           <NextStepOnboarding>
             <UpgradeNotificationChecker />
+            <UpdateAvailableBanner />
             <ReviewGateMutationListener />
             <div className="m-4">
               <div>

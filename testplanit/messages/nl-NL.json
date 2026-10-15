@@ -1038,7 +1038,8 @@
     },
     "by": "door",
     "version": {
-      "prefix": "v"
+      "prefix": "v",
+      "updateAvailable": "TestPlanIt is bijgewerkt. Vernieuw de pagina om door te gaan — niet-opgeslagen wijzigingen op deze pagina kunnen verloren gaan."
     },
     "ui": {
       "tableOfContents": {
