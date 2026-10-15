@@ -3,6 +3,7 @@
  * test-case-generation endpoints.
  */
 
+import type { DbClient } from "~/lib/zenstack";
 import { z } from "zod/v4";
 import type {
   IssueAdapter,
@@ -349,7 +350,7 @@ function buildIssueMatchWhere(
  * be the *raw* client — the caller has already verified project access.
  */
 export async function fetchIssueLinkedCasesContext(
-  db: any,
+  db: DbClient,
   projectId: number,
   ref: IssueCaseLinkRef,
   tokenBudget: number,
@@ -402,7 +403,7 @@ export async function fetchIssueLinkedCasesContext(
  * section, so a case is emitted at most once across the two.
  */
 export async function fetchExistingCasesContext(
-  db: any,
+  db: DbClient,
   projectId: number,
   source: {
     folderId?: number | null;
@@ -457,7 +458,7 @@ export async function fetchExistingCasesContext(
  * does not interfere — the caller has already verified project access.
  */
 export async function fetchHierarchyContext(
-  db: any,
+  db: DbClient,
   projectId: number,
   folderId: number,
   tokenBudget: number,
@@ -524,7 +525,7 @@ export async function fetchHierarchyContext(
   for (const folderIds of groups) {
     if (folderIds.length === 0 || tokensUsed >= tokenBudget) continue;
 
-    const rows = await db.repositoryCases.findMany({
+    const rows: Array<Record<string, any>> = await db.repositoryCases.findMany({
       where: { ...caseWhere, folderId: { in: folderIds } },
       select: { ...caseSelect, folderId: true },
       take: 100, // generous upper bound; token budget will trim

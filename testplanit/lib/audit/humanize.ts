@@ -16,6 +16,8 @@
  * humanization miss must not block an audit write.
  */
 
+import type { DbClient } from "~/lib/zenstack";
+
 /** The injected catalog lookup: returns the display value for (table, field, id), or null. */
 export type LookupFn = (
   table: string,
@@ -436,7 +438,15 @@ export async function humanize(
  * Maps a catalog table name to its Prisma delegate + display column, selecting only that column.
  * Returns null on an unknown table or a missing row (humanize() then falls back to the raw id).
  */
-export function createDbLookup(db: any): LookupFn {
+type LookupDelegate = {
+  findUnique(args: {
+    where: Record<string, unknown>;
+    select: Record<string, unknown>;
+  }): Promise<Record<string, any> | null>;
+};
+
+export function createDbLookup(db: DbClient): LookupFn {
+  const lookupDb = db as unknown as Record<string, LookupDelegate>;
   const delegates: Record<
     string,
     { delegate: string; field: string; stringId?: boolean }
@@ -474,7 +484,7 @@ export function createDbLookup(db: any): LookupFn {
     if (table === "CaseFieldType" || table === "ResultFieldType") {
       const delegate =
         table === "ResultFieldType" ? "resultFields" : "caseFields";
-      const row = await db[delegate].findUnique({
+      const row = await lookupDb[delegate].findUnique({
         where: { id: Number(id) },
         select: { type: { select: { type: true } } },
       });
@@ -484,7 +494,7 @@ export function createDbLookup(db: any): LookupFn {
     if (!meta) {
       return null;
     }
-    const row = await db[meta.delegate].findUnique({
+    const row = await lookupDb[meta.delegate].findUnique({
       where: { id: meta.stringId ? String(id) : Number(id) },
       select: { [meta.field]: true },
     });

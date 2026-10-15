@@ -1,3 +1,4 @@
+import type { DbClient } from "~/lib/zenstack";
 import { describe, expect, it, vi } from "vitest";
 import {
   fetchEngagementExecutionRows,
@@ -47,7 +48,8 @@ describe("resultUnion", () => {
   describe("fetchJunitResultRows", () => {
     it("keeps the date range when grouping by execution date", async () => {
       const findMany = vi.fn().mockResolvedValue([]);
-      const db = { jUnitTestResult: { findMany } };
+      const dbMock = { jUnitTestResult: { findMany } };
+      const db = dbMock as unknown as DbClient & typeof dbMock;
 
       await fetchJunitResultRows(db, 9, true, ["executedAt"], filters, {
         requireTime: true,
@@ -66,10 +68,11 @@ describe("resultUnion", () => {
     it("keeps the date range when grouping by execution date", async () => {
       const manualFindMany = vi.fn().mockResolvedValue([]);
       const junitFindMany = vi.fn().mockResolvedValue([]);
-      const db = {
+      const dbMock = {
         testRunResults: { findMany: manualFindMany },
         jUnitTestResult: { findMany: junitFindMany },
       };
+      const db = dbMock as unknown as DbClient & typeof dbMock;
 
       await fetchEngagementExecutionRows(db, 9, true, ["executedAt"], filters);
 

@@ -1,3 +1,4 @@
+import type { DbClient, TxClient } from "~/lib/zenstack";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod/v4";
@@ -35,7 +36,7 @@ const rowDeleteBodySchema = z.object({
 });
 
 async function resolveCaseAndDataset(
-  db: any,
+  db: DbClient,
   caseId: number
 ): Promise<{
   testCase: { id: number; projectId: number } | null;
@@ -240,7 +241,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await db.$transaction(async (tx: any) => {
+    await db.$transaction(async (tx: TxClient) => {
       // Soft-delete only — feedback_soft_delete invariant.
       await tx.dataSetRow.updateMany({
         where: {

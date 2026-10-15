@@ -1,8 +1,7 @@
-import { ZenStackClient } from "@zenstackhq/orm";
+import { createAppZenStackClient } from "~/lib/zenstackClientFactory";
 import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
 import { Pool } from "pg";
 import { afterAll, describe, expect, it } from "vitest";
-import { schema } from "~/zenstack/schema";
 import { sideEffectsPlugin } from "./sideEffectsPlugin";
 
 /**
@@ -25,7 +24,7 @@ describe("sideEffectsPlugin onQuery client", () => {
     connectionTimeoutMillis: 500,
     max: 1,
   });
-  const client = new ZenStackClient(schema, {
+  const client = createAppZenStackClient({
     dialect: new PostgresDialect({ pool }),
   }).$use(sideEffectsPlugin);
 

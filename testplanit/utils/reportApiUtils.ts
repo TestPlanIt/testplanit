@@ -28,8 +28,8 @@ interface DateFilters {
 interface DimensionDisplayValue {
   name?: string;
   id?: number | string | null;
-  executedAt?: string | null;
-  createdAt?: string | null;
+  executedAt?: string | Date | null;
+  createdAt?: string | Date | null;
   [key: string]: unknown; // Allow additional properties like color, etc.
 }
 
@@ -220,7 +220,13 @@ async function lookupDimensionValues(
     const display = dimension.display(value);
     // Value ids key the filter; date-style dimensions have no id and are
     // excluded from the pickers, but fall back to the date string.
-    const id = display.id ?? display.executedAt ?? display.createdAt ?? null;
+    const dateKey = (v: string | Date | null | undefined) =>
+      v instanceof Date ? v.toISOString() : v;
+    const id =
+      display.id ??
+      dateKey(display.executedAt) ??
+      dateKey(display.createdAt) ??
+      null;
     const name =
       display.name ??
       (typeof display.executedAt === "string"

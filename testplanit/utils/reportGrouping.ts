@@ -17,6 +17,8 @@
  * did, so `reportApiUtils` can map them back to display values unchanged.
  */
 
+import type { DbClient } from "~/lib/zenstack";
+
 type RawResult = Record<string, any>;
 
 interface FieldValue {
@@ -189,7 +191,7 @@ export function groupResults<A>(
  * round trip; the chain is walked in memory with a depth guard against cycles.
  */
 export async function buildFolderAncestorMap(
-  db: any,
+  db: DbClient,
   projectId: number | undefined,
   isProjectSpecific: boolean
 ): Promise<Map<number, number[]>> {
@@ -231,7 +233,7 @@ export async function buildFolderAncestorMap(
  * results from its whole subtree, matching the displayed count.
  */
 export async function getFolderSubtreeIds(
-  db: any,
+  db: DbClient,
   folderId: number
 ): Promise<number[]> {
   const rows: Array<{ id: number }> = await db.$queryRaw`
@@ -255,7 +257,7 @@ export async function getFolderSubtreeIds(
  * repeat or recurse forever.
  */
 export async function getFoldersSubtreeIds(
-  db: any,
+  db: DbClient,
   folderIds: number[]
 ): Promise<number[]> {
   if (folderIds.length === 0) return [];
@@ -281,7 +283,7 @@ export async function getFoldersSubtreeIds(
  * an empty list, which matches no case.
  */
 export async function resolveReportFolderFilter(
-  db: any,
+  db: DbClient,
   rawFolderIds: unknown,
   rawIncludeSubfolders: unknown
 ): Promise<number[] | null> {

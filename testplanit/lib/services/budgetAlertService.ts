@@ -1,3 +1,4 @@
+import type { DbClient } from "~/lib/zenstack";
 import { NotificationType } from "~/zenstack/models";
 import {
   getBillingPeriodKey,
@@ -28,7 +29,7 @@ export interface BudgetCheckResult {
  * with mocked Prisma clients without queue infrastructure.
  */
 export class BudgetAlertService {
-  constructor(private db: any) {}
+  constructor(private db: DbClient) {}
 
   async checkAndAlert(
     llmIntegrationId: number,

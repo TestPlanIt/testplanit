@@ -1,3 +1,4 @@
+import type { DbClient } from "../lib/zenstack";
 import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
@@ -44,7 +45,7 @@ function cancelKey(jobId: string | undefined): string {
  */
 export async function processStepScan(
   job: Job<StepScanJobData>,
-  db: any,
+  db: DbClient,
   redis: {
     get: (key: string) => Promise<string | null>;
     del: (key: string) => Promise<number>;

@@ -1,3 +1,4 @@
+import type { Client } from "@elastic/elasticsearch";
 import { ProjectAccessType } from "~/zenstack/models";
 import { CustomFieldFilter, SearchableEntityType } from "~/types/search";
 
@@ -833,7 +834,7 @@ export function stripNestedClauses(query: any): any {
  * Get counts for each entity type
  */
 export async function getEntityTypeCounts(
-  client: any,
+  client: Client,
   indices: string[],
   query: any
 ): Promise<Record<SearchableEntityType, number>> {

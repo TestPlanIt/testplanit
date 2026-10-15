@@ -16,6 +16,8 @@
  * atomicity (open the `$transaction` at the route boundary).
  */
 
+import type { JsonValue } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 import { updateHasParameters } from "~/lib/services/parameterMaintenance";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { rewriteParameterReferences } from "~/lib/services/parameterReferences";
@@ -25,12 +27,17 @@ import { rewriteParameterReferences } from "~/lib/services/parameterReferences";
 // "set" (DbNull is not `== null`), breaking the SELECT/lookup XOR rule. So OMIT
 // null/undefined Json fields: the column then stores SQL NULL on create and the
 // @@validate sees them as absent.
-function omitNullJsonFields<T extends object>(d: T): T {
+type WithoutNullJson<T> = Omit<T, "defaultValue" | "allowedValuesJson"> & {
+  defaultValue?: JsonValue;
+  allowedValuesJson?: JsonValue;
+};
+
+function omitNullJsonFields<T extends object>(d: T): WithoutNullJson<T> {
   const out = { ...d } as Record<string, unknown>;
   for (const k of ["defaultValue", "allowedValuesJson"]) {
     if (out[k] === null || out[k] === undefined) delete out[k];
   }
-  return out as T;
+  return out as WithoutNullJson<T>;
 }
 
 export interface ParameterMutationSession {
@@ -44,11 +51,11 @@ export interface ParameterCreateData {
   name: string;
   description?: string | null;
   type: "STRING" | "INTEGER" | "BOOLEAN" | "SELECT";
-  defaultValue?: unknown;
+  defaultValue?: JsonValue | null;
   order?: number;
   required?: boolean;
   sensitive?: boolean;
-  allowedValuesJson?: unknown;
+  allowedValuesJson?: JsonValue | null;
   lookupDataSetId?: number | null;
 }
 
@@ -56,11 +63,11 @@ export interface ParameterUpdateData {
   name?: string;
   description?: string | null;
   type?: "STRING" | "INTEGER" | "BOOLEAN" | "SELECT";
-  defaultValue?: unknown;
+  defaultValue?: JsonValue | null;
   order?: number;
   required?: boolean;
   sensitive?: boolean;
-  allowedValuesJson?: unknown;
+  allowedValuesJson?: JsonValue | null;
   lookupDataSetId?: number | null;
 }
 
@@ -72,7 +79,7 @@ function creatorMeta(session: ParameterMutationSession) {
 }
 
 async function bumpVersionAndSnapshot(
-  tx: any,
+  tx: TxClient,
   caseId: number,
   session: ParameterMutationSession
 ) {
@@ -91,7 +98,7 @@ async function bumpVersionAndSnapshot(
 }
 
 export async function createParameterInTransaction(
-  tx: any,
+  tx: TxClient,
   caseId: number,
   data: ParameterCreateData,
   session: ParameterMutationSession
@@ -113,7 +120,7 @@ export async function createParameterInTransaction(
 }
 
 export async function updateParameterInTransaction(
-  tx: any,
+  tx: TxClient,
   caseId: number,
   paramId: number,
   data: ParameterUpdateData,
@@ -145,7 +152,7 @@ export async function updateParameterInTransaction(
 }
 
 export async function softDeleteParameterInTransaction(
-  tx: any,
+  tx: TxClient,
   caseId: number,
   paramId: number,
   session: ParameterMutationSession

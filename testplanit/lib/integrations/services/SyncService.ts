@@ -89,7 +89,7 @@ export interface IssueRefreshResult {
  * Other writers of Issue.data (JiraLinkService manual-link path) layer
  * their own keys (jiraKey/jiraId/linkedAt) and don't collide.
  */
-export interface SyncedIssueData {
+export type SyncedIssueData = {
   labels: string[];
   components: string[];
   /**
@@ -107,7 +107,7 @@ export interface SyncedIssueData {
    * existed self-heal on their next sync (data is rebuilt wholesale).
    */
   createdAt?: string;
-}
+};
 
 export function buildSyncedIssueData(issueData: IssueData): SyncedIssueData {
   const createdAtMs = issueData.createdAt
@@ -146,7 +146,7 @@ export function buildSyncedIssueData(issueData: IssueData): SyncedIssueData {
  * resolvedParentId` as a plain key instead.
  */
 export async function resolveSyncedParentId(
-  db: any,
+  db: DbClient,
   integrationId: number,
   ownerProjectId: number | null,
   parentRef: { id: string; key?: string } | null | undefined
@@ -231,7 +231,7 @@ export async function resolveSyncedParentId(
  * than only the rows that existed when the admin saved.
  */
 export async function resolveSyncedRequirementFlag(
-  db: any,
+  db: DbClient,
   integrationId: number,
   ownerProjectId: number | null,
   designation: RequirementDesignationInput
@@ -2045,7 +2045,7 @@ export class SyncService {
    * point at a real User row, so the project creator is the right surrogate.
    */
   async upsertIssueFromExternal(
-    db: any,
+    db: DbClient,
     integrationId: number,
     projectId: number,
     issueData: IssueData
@@ -2248,7 +2248,7 @@ export class SyncService {
    * Update an existing issue in the local database with fresh data from external system
    */
   private async updateExistingIssue(
-    db: any,
+    db: DbClient,
     integrationId: number,
     issueData: IssueData
   ): Promise<void> {

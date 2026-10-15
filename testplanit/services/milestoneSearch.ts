@@ -1,3 +1,4 @@
+import type { DbClient } from "~/lib/zenstack";
 import type { Milestones } from "~/zenstack/models";
 import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
@@ -160,7 +161,7 @@ export async function syncMilestoneToElasticsearch(
  */
 export async function syncProjectMilestonesToElasticsearch(
   projectId: number,
-  db: any,
+  db: DbClient,
   tenantId?: string
 ): Promise<void> {
   const client = getElasticsearchClient();
@@ -233,8 +234,8 @@ export async function syncProjectMilestonesToElasticsearch(
       isDeleted: milestone.isDeleted,
       createdAt: milestone.createdAt,
       createdById: milestone.createdBy,
-      createdByName: milestone.createdBy.name,
-      createdByImage: milestone.createdBy.image,
+      createdByName: milestone.creator.name,
+      createdByImage: milestone.creator.image,
       searchableContent,
     });
   }

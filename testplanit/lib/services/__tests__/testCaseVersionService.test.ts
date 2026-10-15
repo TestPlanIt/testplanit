@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { TxClient } from "~/lib/zenstack";
 
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 
@@ -73,7 +74,7 @@ function buildTx(testCase: ReturnType<typeof buildTestCaseFixture>) {
     tx: {
       repositoryCases: { findUnique },
       repositoryCaseVersions: { create },
-    },
+    } as unknown as TxClient,
     findUnique,
     create,
   };

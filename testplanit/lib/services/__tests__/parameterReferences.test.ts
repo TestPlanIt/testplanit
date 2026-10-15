@@ -1,3 +1,4 @@
+import type { TxClient } from "~/lib/zenstack";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -27,7 +28,7 @@ function makeTx(opts: FakeTxOptions = {}) {
   const stepUpdates: Array<{ id: number; data: Record<string, unknown> }> = [];
   const rowUpdates: Array<{ id: number; data: Record<string, unknown> }> = [];
 
-  const tx = {
+  const txMock = {
     steps: {
       findMany: vi.fn(async () =>
         (opts.steps ?? []).map((s) => ({
@@ -52,13 +53,14 @@ function makeTx(opts: FakeTxOptions = {}) {
     dataSet: {
       findFirst: vi.fn(async () => {
         if (!opts.rows || opts.rows.length === 0) return null;
-        return {
+        const mock = {
           id: 999,
           ownerCaseId: opts.ownerCaseId ?? 1,
           rows: (opts.rows ?? [])
             .filter((r) => !r.isDeleted)
             .map((r) => ({ id: r.id, valuesJson: r.valuesJson })),
         };
+        return mock as unknown as TxClient & typeof mock;
       }),
     },
     dataSetRow: {
@@ -76,6 +78,7 @@ function makeTx(opts: FakeTxOptions = {}) {
       ),
     },
   };
+  const tx = txMock as unknown as TxClient & typeof txMock;
 
   return { tx, stepUpdates, rowUpdates };
 }
@@ -263,7 +266,7 @@ describe("rewriteParameterReferences", () => {
   });
 
   it("propagates errors from tx.steps.update so caller transaction rolls back", async () => {
-    const tx = {
+    const txMock = {
       steps: {
         findMany: vi.fn(async () => [
           { id: 50, step: docWithMentions(["old"]), expectedResult: null },
@@ -275,6 +278,7 @@ describe("rewriteParameterReferences", () => {
       dataSet: { findFirst: vi.fn(async () => null) },
       dataSetRow: { update: vi.fn() },
     };
+    const tx = txMock as unknown as TxClient & typeof txMock;
     await expect(
       rewriteParameterReferences(tx, 1, "old", "new")
     ).rejects.toThrow(/simulated db failure/);

@@ -1,3 +1,4 @@
+import type { TxClient } from "~/lib/zenstack";
 import { toHumanReadable } from "~/utils/duration";
 
 /**
@@ -26,14 +27,14 @@ export interface ResolvedChange {
  * Foreign-key columns on RepositoryCases and how to resolve each id to a
  * display name. `repositoryId` is intentionally absent — the Repositories
  * model has no name column (it's the per-project container). `tx` is the
- * Prisma transaction client (typed `any`, as the webhook hooks are).
+ * transaction client; ids arrive as number | string from the diff.
  */
 const FK_RESOLVERS: Record<
   string,
   {
     label: string;
     resolve: (
-      tx: any,
+      tx: TxClient,
       id: number | string
     ) => Promise<{ name: string | null; color?: string | null } | null>;
   }
@@ -42,7 +43,7 @@ const FK_RESOLVERS: Record<
     label: "State",
     resolve: async (tx, id) => {
       const r = await tx.workflows.findUnique({
-        where: { id },
+        where: { id: Number(id) },
         select: { name: true, color: { select: { value: true } } },
       });
       return r ? { name: r.name, color: r.color?.value ?? null } : null;
@@ -52,7 +53,7 @@ const FK_RESOLVERS: Record<
     label: "Folder",
     resolve: async (tx, id) => {
       const r = await tx.repositoryFolders.findUnique({
-        where: { id },
+        where: { id: Number(id) },
         select: { name: true },
       });
       return r ? { name: r.name } : null;
@@ -62,7 +63,7 @@ const FK_RESOLVERS: Record<
     label: "Template",
     resolve: async (tx, id) => {
       const r = await tx.templates.findUnique({
-        where: { id },
+        where: { id: Number(id) },
         select: { templateName: true },
       });
       return r ? { name: r.templateName } : null;
@@ -72,7 +73,7 @@ const FK_RESOLVERS: Record<
     label: "Created by",
     resolve: async (tx, id) => {
       const r = await tx.user.findUnique({
-        where: { id },
+        where: { id: String(id) },
         select: { name: true },
       });
       return r ? { name: r.name } : null;
@@ -82,7 +83,7 @@ const FK_RESOLVERS: Record<
     label: "Project",
     resolve: async (tx, id) => {
       const r = await tx.projects.findUnique({
-        where: { id },
+        where: { id: Number(id) },
         select: { name: true },
       });
       return r ? { name: r.name } : null;
@@ -142,7 +143,7 @@ function formatScalar(field: string, v: unknown): string {
  * dropping bookkeeping columns.
  */
 export async function resolveCaseScalarChanges(
-  tx: any,
+  tx: TxClient,
   diff: {
     changedFields: string[];
     before: Record<string, unknown>;

@@ -1,3 +1,4 @@
+import type { TxClient } from "~/lib/zenstack";
 import {
   ParameterType,
   RepositoryCaseSource,
@@ -205,7 +206,7 @@ function convertStepToTipTap(value: any) {
  * A soft-deleted match is restored rather than duplicated.
  */
 async function findOrCreateFolder(
-  tx: any,
+  tx: TxClient,
   params: {
     projectId: number;
     repositoryId: number;

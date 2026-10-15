@@ -26,6 +26,8 @@
  * own query shapes — any semantic change here must be mirrored there.
  */
 
+import type { DbClient } from "~/lib/zenstack";
+
 /**
  * Where-clause for automated durations. Automated results live in
  * JUnitTestResult (duration in `time`, seconds) rather than TestRunResults,
@@ -103,7 +105,7 @@ export function manualResultWhere(
  * groupings — they cannot be placed on a date axis.
  */
 export async function fetchJunitResultRows(
-  db: any,
+  db: DbClient,
   projectId: number | undefined,
   isProjectSpecific: boolean,
   groupBy: string[],
@@ -195,7 +197,7 @@ export function runImpactSelectFor(groupBy: string[]) {
   return {
     impactAnalyses: {
       where: { isDeleted: false },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "desc" as const },
       take: 1,
       select: { trigger: true, configId: true },
     },
@@ -248,7 +250,7 @@ export const engagementUserSelect = {
  * back to their submission time.
  */
 export async function fetchEngagementExecutionRows(
-  db: any,
+  db: DbClient,
   projectId: number | undefined,
   isProjectSpecific: boolean,
   groupBy: string[],

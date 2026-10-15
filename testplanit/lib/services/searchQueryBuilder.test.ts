@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Client } from "@elastic/elasticsearch";
 import { CustomFieldFilter, SearchableEntityType } from "~/types/search";
 import {
   addCustomFieldFilters,
@@ -1364,7 +1365,7 @@ describe("getEntityTypeCounts", () => {
     };
 
     const result = await getEntityTypeCounts(
-      mockClient,
+      mockClient as unknown as Client,
       ["testplanit-repository-cases", "testplanit-test-runs"],
       { bool: { must: [], filter: [] } }
     );
@@ -1398,7 +1399,7 @@ describe("getEntityTypeCounts", () => {
     };
 
     await getEntityTypeCounts(
-      mockClient,
+      mockClient as unknown as Client,
       ["testplanit-sessions"],
       queryWithNested
     );
@@ -1419,7 +1420,7 @@ describe("getEntityTypeCounts", () => {
     };
 
     const result = await getEntityTypeCounts(
-      mockClient,
+      mockClient as unknown as Client,
       ["testplanit-repository-cases", "testplanit-nonexistent"],
       { bool: { must: [], filter: [] } }
     );

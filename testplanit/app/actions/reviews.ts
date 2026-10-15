@@ -1,5 +1,6 @@
 "use server";
 
+import type { TxClient } from "~/lib/zenstack";
 import type { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
@@ -1384,7 +1385,7 @@ export const nudgeReviewRequest = withActionAuditContext(
     // would let the requester immediately nudge again and double-ping the
     // reviewer. Stamp regardless; the webhook is the recoverable half.
     try {
-      await baseDb.$transaction(async (tx: any) => {
+      await baseDb.$transaction(async (tx: TxClient) => {
         await emitReviewReminderEvent(
           {
             reviewRequestId,

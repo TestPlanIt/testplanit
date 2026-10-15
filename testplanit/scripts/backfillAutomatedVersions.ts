@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import { writeFileSync } from "node:fs";
 
+import type { TxClient } from "~/lib/zenstack";
 import { createRawDbClient } from "~/lib/rawDbClient";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 
@@ -203,7 +204,7 @@ async function main(): Promise<void> {
   let failed = 0;
   for (const c of candidates) {
     try {
-      await db.$transaction(async (tx: any) => {
+      await db.$transaction(async (tx: TxClient) => {
         // Bump first: the version service snapshots the row as it stands in
         // this transaction and matches the new currentVersion.
         await tx.repositoryCases.update({

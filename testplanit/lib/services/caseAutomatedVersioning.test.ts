@@ -6,6 +6,7 @@ vi.mock("~/lib/services/testCaseVersionService", () => ({
 
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import {
+  type AutomatedVersioningClient,
   setCaseAutomated,
   snapshotAutomatedFlip,
 } from "./caseAutomatedVersioning";
@@ -25,7 +26,10 @@ describe("caseAutomatedVersioning", () => {
   describe("snapshotAutomatedFlip", () => {
     it("bumps currentVersion before snapshotting with copied field values", async () => {
       const tx = fakeTx({ automated: true });
-      await snapshotAutomatedFlip(tx, 42);
+      await snapshotAutomatedFlip(
+        tx as unknown as AutomatedVersioningClient,
+        42
+      );
 
       expect(tx.repositoryCases.update).toHaveBeenCalledWith({
         where: { id: 42 },
@@ -44,7 +48,12 @@ describe("caseAutomatedVersioning", () => {
   describe("setCaseAutomated", () => {
     it("writes the flag, bumps the version and snapshots on a manual→automated flip", async () => {
       const tx = fakeTx({ automated: false });
-      const flipped = await setCaseAutomated(tx, 7, true, { isDeleted: false });
+      const flipped = await setCaseAutomated(
+        tx as unknown as AutomatedVersioningClient,
+        7,
+        true,
+        { isDeleted: false }
+      );
 
       expect(flipped).toBe(true);
       expect(tx.repositoryCases.update).toHaveBeenCalledWith({
@@ -62,15 +71,26 @@ describe("caseAutomatedVersioning", () => {
 
     it("snapshots a revert (automated→manual) too", async () => {
       const tx = fakeTx({ automated: true });
-      expect(await setCaseAutomated(tx, 7, false)).toBe(true);
+      expect(
+        await setCaseAutomated(
+          tx as unknown as AutomatedVersioningClient,
+          7,
+          false
+        )
+      ).toBe(true);
       expect(createTestCaseVersionInTransaction).toHaveBeenCalledTimes(1);
     });
 
     it("writes the flag without a version when the value is unchanged", async () => {
       const tx = fakeTx({ automated: true });
-      const flipped = await setCaseAutomated(tx, 7, true, {
-        isArchived: false,
-      });
+      const flipped = await setCaseAutomated(
+        tx as unknown as AutomatedVersioningClient,
+        7,
+        true,
+        {
+          isArchived: false,
+        }
+      );
 
       expect(flipped).toBe(false);
       expect(tx.repositoryCases.update).toHaveBeenCalledWith({
@@ -82,9 +102,9 @@ describe("caseAutomatedVersioning", () => {
 
     it("throws when the case does not exist", async () => {
       const tx = fakeTx(null);
-      await expect(setCaseAutomated(tx, 99, true)).rejects.toThrow(
-        "Test case 99 not found"
-      );
+      await expect(
+        setCaseAutomated(tx as unknown as AutomatedVersioningClient, 99, true)
+      ).rejects.toThrow("Test case 99 not found");
       expect(tx.repositoryCases.update).not.toHaveBeenCalled();
     });
   });

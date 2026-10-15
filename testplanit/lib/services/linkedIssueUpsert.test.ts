@@ -8,6 +8,7 @@
 // Run via:
 //   cd testplanit && pnpm exec vitest run lib/services/linkedIssueUpsert.test.ts
 
+import type { TxClient } from "~/lib/zenstack";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -16,12 +17,13 @@ import {
 } from "./linkedIssueUpsert";
 
 function makeDb(existingRow: unknown, upsertResult: unknown = { id: 1 }) {
-  return {
+  const mock = {
     issue: {
       findUnique: vi.fn().mockResolvedValue(existingRow),
       upsert: vi.fn().mockResolvedValue(upsertResult),
     },
   };
+  return mock as unknown as TxClient & typeof mock;
 }
 
 describe("upsertLinkedIssueShell (PROV-06 reviewed raw-write shell)", () => {

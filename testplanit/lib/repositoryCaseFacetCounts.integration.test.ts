@@ -36,10 +36,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { ZenStackClient } from "@zenstackhq/orm";
+import { createAppZenStackClient } from "~/lib/zenstackClientFactory";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { schema } from "~/zenstack/schema";
 import { createDialect } from "~/lib/db/readWriteDialect";
 import {
   matchesPostFetchFilters,
@@ -140,7 +139,7 @@ describeIntegration("repositoryCaseFacetCounts (live scratch DB)", () => {
   const cases: number[] = [];
 
   beforeAll(async () => {
-    client = new ZenStackClient(schema, {
+    client = createAppZenStackClient({
       dialect: createDialect(SCRATCH_URL!, []),
     });
     scratchDb.holder.client = client;

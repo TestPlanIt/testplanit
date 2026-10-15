@@ -20,6 +20,10 @@
  * one outside the reviewed allowlist.
  */
 
+import type { TxClient } from "~/lib/zenstack";
+
+type IssueUpsertArgs = Parameters<TxClient["issue"]["upsert"]>[0];
+
 // Mirrors the field-level @deny predicate in schema.zmodel (Issue model,
 // requirement-lock clause) — change both together. `name` is deliberately
 // NOT locked: it carries the external key and stays writable. `note` is
@@ -73,7 +77,7 @@ interface UpsertLinkedIssueShellArgs {
 }
 
 export async function upsertLinkedIssueShell(
-  db: any,
+  db: TxClient,
   args: UpsertLinkedIssueShellArgs
 ): Promise<any> {
   const { externalId, integrationId, create, update, select } = args;
@@ -114,8 +118,8 @@ export async function upsertLinkedIssueShell(
 
   return db.issue.upsert({
     where,
-    create,
-    update: effectiveUpdate,
-    ...(select ? { select } : {}),
+    create: create as IssueUpsertArgs["create"],
+    update: effectiveUpdate as IssueUpsertArgs["update"],
+    ...(select ? { select: select as IssueUpsertArgs["select"] } : {}),
   });
 }

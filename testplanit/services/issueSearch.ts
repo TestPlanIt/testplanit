@@ -299,7 +299,7 @@ export async function syncIssueToElasticsearch(
  */
 export async function syncProjectIssuesToElasticsearch(
   projectId: number,
-  db: any,
+  db: DbClient,
   tenantId?: string
 ): Promise<void> {
   const client = getElasticsearchClient();

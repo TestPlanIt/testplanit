@@ -3,7 +3,7 @@ import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditGuc, type GucPayload } from "~/lib/audit/gucContext";
 import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
 import { baseDb } from "~/lib/db";
-import type { DbClient } from "~/lib/zenstack";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { getExecutionDispatchQueue } from "~/lib/queues";
 import { JOB_DISPATCH_EXECUTION } from "~/lib/queueNames";
@@ -113,7 +113,7 @@ export async function requestExecution(params: {
 }): Promise<RequestExecutionResult> {
   const env = params.env;
   const db: DbClient = env?.db ?? baseDb;
-  const transaction = <T>(fn: (tx: any) => Promise<T>): Promise<T> =>
+  const transaction = <T>(fn: (tx: TxClient) => Promise<T>): Promise<T> =>
     env ? withAuditGuc(env.db, env.guc, fn) : auditedTransaction(fn);
   const inputError = validateCustomInputs(params.inputs);
   if (inputError) {

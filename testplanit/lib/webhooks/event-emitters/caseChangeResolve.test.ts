@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { TxClient } from "~/lib/zenstack";
 
 import {
   formatFieldValue,
@@ -31,7 +32,7 @@ const tx = {
   projects: {
     findUnique: async () => ({ name: "Demo Project" }),
   },
-};
+} as unknown as TxClient;
 
 describe("resolveCaseScalarChanges", () => {
   it("resolves stateId to the workflow name + color", async () => {
@@ -89,7 +90,9 @@ describe("resolveCaseScalarChanges", () => {
   });
 
   it("falls back to #id when a foreign key can't be resolved", async () => {
-    const emptyTx = { workflows: { findUnique: async () => null } };
+    const emptyTx = {
+      workflows: { findUnique: async () => null },
+    } as unknown as TxClient;
     const changes = await resolveCaseScalarChanges(emptyTx, {
       changedFields: ["stateId"],
       before: { stateId: 14 },

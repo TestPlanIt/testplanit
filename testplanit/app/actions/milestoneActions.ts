@@ -1,5 +1,6 @@
 "use server";
 
+import type { TxClient } from "~/lib/zenstack";
 import { ApplicationArea } from "~/zenstack/models";
 import { z } from "zod/v4";
 import { runWithAuditContext } from "~/lib/auditContext";
@@ -282,7 +283,7 @@ export async function completeMilestoneCascade(
       }
 
       try {
-        await auditedTransaction(async (tx: any) => {
+        await auditedTransaction(async (tx: TxClient) => {
           // Resolve the system-level review-feature flag once for both the
           // testRuns and sessions blocks below. AppConfig read is cheap and
           // hoisting avoids two roundtrips inside this long-lived write tx.

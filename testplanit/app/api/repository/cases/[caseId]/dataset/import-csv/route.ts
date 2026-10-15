@@ -1,3 +1,4 @@
+import type { TxClient } from "~/lib/zenstack";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod/v4";
@@ -188,7 +189,7 @@ export async function POST(
     // Atomic commit.
     const result = await auditedEnhancedTransaction(
       session,
-      async (tx: any) => {
+      async (tx: TxClient) => {
         let dataset = await tx.dataSet.findFirst({
           where: {
             ownerCaseId: caseId,

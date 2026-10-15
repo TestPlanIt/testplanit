@@ -1,3 +1,4 @@
+import type { DbClient } from "~/lib/zenstack";
 import { describe, expect, it, vi } from "vitest";
 import { queryEngagementUserIds } from "~/lib/engagementUserIdsQuery";
 import {
@@ -347,7 +348,7 @@ describe("reportUtils", () => {
       junitSum = 0,
       junitCount = 0,
     } = {}) {
-      return {
+      const mock = {
         testRunResults: {
           findMany: vi.fn().mockResolvedValue(manualRows),
           aggregate: vi
@@ -361,6 +362,7 @@ describe("reportUtils", () => {
           count: vi.fn().mockResolvedValue(junitCount),
         },
       };
+      return mock as unknown as DbClient & typeof mock;
     }
 
     function manualRow(
@@ -508,7 +510,7 @@ describe("reportUtils", () => {
       runs = [] as any[],
       runCount = 0,
     } = {}) {
-      return {
+      const mock = {
         testRunResults: {
           findMany: vi.fn().mockResolvedValue(manualRows),
           count: vi.fn().mockResolvedValue(manualCount),
@@ -522,6 +524,7 @@ describe("reportUtils", () => {
           count: vi.fn().mockResolvedValue(runCount),
         },
       };
+      return mock as unknown as DbClient & typeof mock;
     }
 
     const registry = createTestExecutionMetricRegistry(true);
@@ -750,7 +753,7 @@ describe("reportUtils", () => {
 
   describe("user-engagement user/role/group dimensions", () => {
     function dimensionDb() {
-      return {
+      const mock = {
         projectAssignment: {
           findMany: vi.fn().mockResolvedValue([{ userId: "member" }]),
         },
@@ -764,6 +767,7 @@ describe("reportUtils", () => {
         roles: { findMany: vi.fn().mockResolvedValue([]) },
         groups: { findMany: vi.fn().mockResolvedValue([]) },
       };
+      return mock as unknown as DbClient & typeof mock;
     }
 
     const whereOf = (fn: any) => fn.mock.calls[0][0].where;
@@ -875,7 +879,7 @@ describe("reportUtils", () => {
       sessionAgg = {} as Record<string, any>,
       caseAgg = {} as Record<string, any>,
     } = {}) {
-      return {
+      const mock = {
         testRunResults: {
           findMany: vi.fn().mockResolvedValue(manualRows),
           count: vi.fn().mockResolvedValue(manualCount),
@@ -896,6 +900,7 @@ describe("reportUtils", () => {
           aggregate: vi.fn().mockResolvedValue(caseAgg),
         },
       };
+      return mock as unknown as DbClient & typeof mock;
     }
 
     function manualExecution({
@@ -1097,13 +1102,14 @@ describe("reportUtils", () => {
   // linked through the project's cases, runs, and sessions (Q12).
   describe("issue-tracking population uses project-relevant linkage", () => {
     it("issueCount counts linked issues, not only direct-FK ones", async () => {
-      const db = {
+      const dbMock = {
         issue: {
           findMany: vi
             .fn()
             .mockResolvedValue([{ id: 11 }, { id: 12 }, { id: 13 }]),
         },
       };
+      const db = dbMock as unknown as DbClient & typeof dbMock;
 
       const registry = createIssueTrackingMetricRegistry(true);
       const rows = await registry.issueCount.aggregate(db, 370, [], {});
@@ -1120,13 +1126,14 @@ describe("reportUtils", () => {
     });
 
     it("findProjectIssues scopes to defect rows by default", async () => {
-      const db = {
+      const dbMock = {
         issue: {
           findMany: vi
             .fn()
             .mockResolvedValue([{ id: 11 }, { id: 12 }, { id: 13 }]),
         },
       };
+      const db = dbMock as unknown as DbClient & typeof dbMock;
 
       const registry = createIssueTrackingMetricRegistry(true);
       await registry.issueCount.aggregate(db, 370, [], {});
@@ -1143,11 +1150,12 @@ describe("reportUtils", () => {
     });
 
     it("a caller-supplied where merges on top of the defect-scope default", async () => {
-      const db = {
+      const dbMock = {
         issue: {
           findMany: vi.fn().mockResolvedValue([]),
         },
       };
+      const db = dbMock as unknown as DbClient & typeof dbMock;
 
       const registry = createIssueTrackingDimensionRegistry(true);
       await registry.issueStatus.getValues(db, 370);
@@ -1165,12 +1173,13 @@ describe("reportUtils", () => {
     });
 
     it("cross-project issue-type dimension excludes requirement rows in both queries", async () => {
-      const db = {
+      const dbMock = {
         issue: {
           count: vi.fn().mockResolvedValue(0),
           findMany: vi.fn().mockResolvedValue([]),
         },
       };
+      const db = dbMock as unknown as DbClient & typeof dbMock;
 
       const registry = createIssueTrackingDimensionRegistry(false);
       await registry.issueType.getValues(db, undefined);
@@ -1194,11 +1203,12 @@ describe("reportUtils", () => {
     });
 
     it("cross-project issueCount metric counts only defect rows", async () => {
-      const db = {
+      const dbMock = {
         issue: {
           count: vi.fn().mockResolvedValue(5),
         },
       };
+      const db = dbMock as unknown as DbClient & typeof dbMock;
 
       const registry = createIssueTrackingMetricRegistry(false);
       const rows = await registry.issueCount.aggregate(db, undefined, [], {});
@@ -1215,13 +1225,14 @@ describe("reportUtils", () => {
     });
 
     it("cross-project groupBy dimension aggregates only defect rows", async () => {
-      const db = {
+      const dbMock = {
         issue: {
           groupBy: vi
             .fn()
             .mockResolvedValue([{ status: "Open", _count: { _all: 2 } }]),
         },
       };
+      const db = dbMock as unknown as DbClient & typeof dbMock;
 
       const registry = createIssueTrackingMetricRegistry(false);
       await registry.issueCount.aggregate(db, undefined, ["status"], {});
@@ -1290,7 +1301,7 @@ describe("reportUtils", () => {
         },
       },
     ];
-    const db = {
+    const dbMock = {
       impactAnalysis: { findMany: vi.fn().mockResolvedValue(analyses) },
       projectCodeRepositoryConfig: {
         findMany: vi.fn().mockResolvedValue([
@@ -1312,6 +1323,7 @@ describe("reportUtils", () => {
         ]),
       },
     };
+    const db = dbMock as unknown as DbClient & typeof dbMock;
     const dims = createTestExecutionDimensionRegistry(true) as any;
     const metrics = createTestExecutionMetricRegistry(true) as any;
 

@@ -4,7 +4,7 @@
 // pool by default, or the read/write-splitting dialect when replicas are
 // configured — see lib/db/readWriteDialect.ts):
 //
-//   rawClient    – no plugins. @omit fields are readable here (with an explicit
+//   rawClient    – no plugins beyond the factory's jsonNullPlugin. @omit fields are readable here (with an explicit
 //                  select/omit override) and no access policy is applied. Used
 //                  for system/raw reads, ES-sync feeders, and workers.
 //   baseClient   – rawClient + side-effects (audit logging, Elasticsearch sync,
@@ -16,7 +16,7 @@
 //
 // $use() returns a NEW client that shares the same underlying connection, so all
 // three views run over one pool.
-import { ZenStackClient, type AuthType } from "@zenstackhq/orm";
+import { type AuthType } from "@zenstackhq/orm";
 import { PolicyPlugin } from "@zenstackhq/plugin-policy";
 
 import { buildAuthContext, type UserForAuth } from "./authContext";
@@ -26,6 +26,7 @@ import { schema } from "~/zenstack/schema";
 import { getPoolConfig } from "./db/poolConfig";
 import { createDialect } from "./db/readWriteDialect";
 import { getReplicaUrls } from "./db/replicaConfig";
+import { createAppZenStackClient } from "./zenstackClientFactory";
 import { esSyncPlugin } from "./zenstack-plugins/esSyncPlugin";
 import { repoJobStatusPlugin } from "./zenstack-plugins/repoJobStatusPlugin";
 import { sideEffectsPlugin } from "./zenstack-plugins/sideEffectsPlugin";
@@ -34,7 +35,7 @@ function createClients() {
   // Opt-in read/write splitting: when DATABASE_REPLICA_URLS is set, SELECTs are
   // spread across replicas and writes/transactions stay on the primary; when it
   // is unset this is a plain single-pool Postgres dialect (unchanged behaviour).
-  const rawClient = new ZenStackClient(schema, {
+  const rawClient = createAppZenStackClient({
     // getPoolConfig(): explicit pool sizing + a bounded wait for a free slot.
     // Without it pg defaults to max:10 and an UNBOUNDED connect wait, so a
     // burst of slow queries queues every other request forever (2026-07-23).

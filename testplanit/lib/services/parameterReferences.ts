@@ -19,6 +19,9 @@
  *     caller's responsibility.
  */
 
+import type { JsonObject } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
+
 export interface ParameterReferences {
   stepCount: number;
   expectedCount: number;
@@ -120,7 +123,7 @@ function renameInDoc(
 }
 
 export async function scanParameterReferences(
-  tx: any,
+  tx: TxClient,
   caseId: number,
   paramName: string
 ): Promise<ParameterReferences> {
@@ -171,7 +174,7 @@ export async function scanParameterReferences(
       id: number;
       valuesJson: unknown;
     }>) {
-      const values = (row.valuesJson ?? {}) as Record<string, unknown>;
+      const values = (row.valuesJson ?? {}) as JsonObject;
       if (
         values &&
         typeof values === "object" &&
@@ -193,7 +196,7 @@ export async function scanParameterReferences(
 }
 
 export async function rewriteParameterReferences(
-  tx: any,
+  tx: TxClient,
   caseId: number,
   oldName: string,
   newName: string
@@ -243,7 +246,7 @@ export async function rewriteParameterReferences(
     id: number;
     valuesJson: unknown;
   }>) {
-    const values = (row.valuesJson ?? {}) as Record<string, unknown>;
+    const values = (row.valuesJson ?? {}) as JsonObject;
     if (
       !values ||
       typeof values !== "object" ||
@@ -251,7 +254,7 @@ export async function rewriteParameterReferences(
     ) {
       continue;
     }
-    const next: Record<string, unknown> = { ...values };
+    const next: JsonObject = { ...values };
     next[newName] = next[oldName];
     delete next[oldName];
     await tx.dataSetRow.update({

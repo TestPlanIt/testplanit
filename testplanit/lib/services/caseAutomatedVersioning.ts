@@ -1,3 +1,4 @@
+import type { TxClient } from "~/lib/zenstack";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 
 /**
@@ -27,19 +28,8 @@ import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersi
  * deleted at the flip.
  */
 
-/** The subset of a transaction client the helpers need. */
-export type AutomatedVersioningClient = {
-  repositoryCases: {
-    findUnique(args: {
-      where: { id: number };
-      select: { automated: true };
-    }): Promise<{ automated: boolean } | null>;
-    update(args: {
-      where: { id: number };
-      data: Record<string, unknown>;
-    }): Promise<unknown>;
-  };
-};
+/** The transaction client the helpers run on (the version service needs the full client). */
+export type AutomatedVersioningClient = TxClient;
 
 /**
  * Record a flip of `automated` that has already been written to the case row.

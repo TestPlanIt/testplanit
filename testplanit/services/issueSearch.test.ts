@@ -11,6 +11,7 @@
 // module boundary and every assertion runs against call arguments captured
 // on the mock spies.
 
+import type { DbClient } from "~/lib/zenstack";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getElasticsearchClient } from "./unifiedElasticsearchService";
@@ -89,7 +90,7 @@ describe("issueSearch document construction", () => {
   it("syncProjectIssuesToElasticsearch writes the requirement role on every bulk document", async () => {
     mockClient.bulk.mockResolvedValue({ errors: false, items: [] });
 
-    const db = {
+    const dbMock = {
       issue: {
         findMany: vi
           .fn()
@@ -99,6 +100,7 @@ describe("issueSearch document construction", () => {
           ]),
       },
     };
+    const db = dbMock as unknown as DbClient & typeof dbMock;
 
     await syncProjectIssuesToElasticsearch(100, db);
 
@@ -124,11 +126,12 @@ describe("issueSearch document construction", () => {
     await indexIssue(baseIssue({ id: 1 }) as any);
     const singleDocument = mockClient.index.mock.calls[0][0].document;
 
-    const db = {
+    const dbMock = {
       issue: {
         findMany: vi.fn().mockResolvedValue([baseIssue({ id: 1 })]),
       },
     };
+    const db = dbMock as unknown as DbClient & typeof dbMock;
     await syncProjectIssuesToElasticsearch(100, db);
     const bulkDocument = mockClient.bulk.mock.calls[0][0].body[1];
 
