@@ -1,3 +1,9 @@
+## [1.1.7](https://github.com/TestPlanIt/testplanit/compare/v1.1.6...v1.1.7) (2026-10-15)
+
+### Enhancements
+
+* **app:** tell open tabs when TestPlanIt was redeployed ([#696](https://github.com/TestPlanIt/testplanit/issues/696)) ([e049227](https://github.com/TestPlanIt/testplanit/commit/e0492270feaf1b56ee48d659c06e145fb262fd9c))
+
 ## [1.1.6](https://github.com/TestPlanIt/testplanit/compare/v1.1.5...v1.1.6) (2026-10-15)
 
 ### Bug Fixes
