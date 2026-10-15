@@ -169,7 +169,6 @@
     "@tiptap/extension-horizontal-rule": "^3.32.0",
     "@tiptap/extension-image": "^3.32.0",
     "@tiptap/extension-link": "^3.32.0",
-    "@tiptap/extension-mathematics": "^3.32.0",
     "@tiptap/extension-mention": "^3.32.0",
     "@tiptap/extension-node-range": "^3.32.0",
     "@tiptap/extension-ordered-list": "^3.32.0",
