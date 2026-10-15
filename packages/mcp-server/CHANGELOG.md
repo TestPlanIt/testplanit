@@ -1,5 +1,11 @@
 # @testplanit/mcp-server
 
+## 1.1.1
+
+### Patch Changes
+
+- [#693](https://github.com/TestPlanIt/testplanit/pull/693) [`9f844ad`](https://github.com/TestPlanIt/testplanit/commit/9f844ad71a1f5d7a7804d967b3a26567dc7174f4) Thanks [@therealbrad](https://github.com/therealbrad)! - `testplanit_issues_list` and `testplanit_issues_find_by_key` now return every issue the project can reach, not only the ones it imported first. A tracker ticket is one TestPlanIt issue per integration, shared by every project that imported it, resolved it by key, or linked it to a case, run, session, or milestone. Before this change a second project sharing an integration could not see or link a ticket another project had already imported.
+
 ## 1.1.0
 
 ### Minor Changes
