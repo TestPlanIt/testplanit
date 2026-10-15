@@ -84,6 +84,7 @@ disk. Set **both** to use static credentials.
 
 Setting only one is treated as setting neither. RustFS and other S3-compatible
 services accept static keys only, so those deployments must always set both.
+Temporary (STS) keys also work: set `AWS_SESSION_TOKEN` alongside the pair.
 
 :::
 
