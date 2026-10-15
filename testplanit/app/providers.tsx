@@ -1,6 +1,11 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { useRepositoryCasesInvalidation } from "~/hooks/useRepositoryCasesQuery";
 import { QuerySettingsProvider as ZenStackProvider } from "@zenstackhq/tanstack-query/react";
 import { SessionProvider } from "next-auth/react";
@@ -8,10 +13,19 @@ import type { ReactNode } from "react";
 import { ThemeProvider } from "~/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SearchStateProvider } from "~/lib/contexts/SearchStateContext";
+import {
+  isDeploymentSkewError,
+  reportPossibleSkew,
+} from "~/lib/deploymentSkew";
 import { operationIdFetcher } from "~/lib/zenstackFetcher";
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: reportPossibleSkew }),
+  mutationCache: new MutationCache({ onError: reportPossibleSkew }),
   defaultOptions: {
     queries: {
+      // Keeps the default of 3, minus retries that cannot succeed until reload.
+      retry: (failureCount, error) =>
+        !isDeploymentSkewError(error) && failureCount < 3,
       refetchOnWindowFocus: false,
       refetchOnMount: true,
       refetchOnReconnect: true,

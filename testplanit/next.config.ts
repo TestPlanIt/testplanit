@@ -1,3 +1,4 @@
+import { execSync } from "child_process";
 import path from "path";
 import type { NextConfig } from "next";
 import type { RemotePattern } from "next/dist/shared/lib/image-config";
@@ -16,6 +17,30 @@ const uploadMaxMb = (() => {
   const parsed = Number(process.env.UPLOAD_MAX_MB);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
 })();
+
+// One ID per build, used as Next's own .next/BUILD_ID and inlined into the
+// client and server bundles, so an open tab can tell the server was rebuilt
+// (see /api/version). Dev keeps a fixed value: a define that changes on every
+// restart would invalidate Turbopack's dev cache.
+const resolveBuildId = (): string => {
+  if (process.env.NODE_ENV === "development") return "development";
+  const fromEnv = process.env.BUILD_ID?.trim().replace(/[^\w-]/g, "-");
+  if (fromEnv) return fromEnv;
+  let commit = "nogit";
+  try {
+    commit = execSync("git rev-parse --short=7 HEAD", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+  } catch {
+    // Docker build contexts exclude .git; the timestamp keeps the ID unique.
+  }
+  return `${commit}-${Date.now().toString(36)}`;
+};
+const buildId = resolveBuildId();
+// Any later evaluation of this file in the same build must reuse the same ID.
+process.env.BUILD_ID = buildId;
 
 // Helper function to extract hostname and port from URL
 const parseUrlForPattern = (url: string) => {
@@ -130,6 +155,10 @@ const enableTurbopackBuildCache =
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   output: "standalone",
+  generateBuildId: () => buildId,
+  env: {
+    NEXT_PUBLIC_BUILD_ID: buildId,
+  },
   allowedDevOrigins: buildAllowedDevOrigins(),
   turbopack: {
     resolveAlias: {

@@ -87,6 +87,8 @@ jobs:
 
     - name: Build and push ARM64 images
       working-directory: ./testplanit
+      env:
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
       run: |
         VERSION="${{ github.ref_name }}"
         VERSION_NUM="${VERSION#v}"
@@ -173,6 +175,8 @@ jobs:
 
     - name: Build and push ARM64 images
       working-directory: ./testplanit
+      env:
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
       run: |
         VERSION="${{ github.event.inputs.tag }}"
         VERSION_NUM="${VERSION#v}"

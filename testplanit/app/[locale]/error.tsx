@@ -12,6 +12,7 @@ import {
 import { AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
+import { reportPossibleSkew } from "~/lib/deploymentSkew";
 
 export default function Error({
   error,
@@ -24,6 +25,7 @@ export default function Error({
 
   useEffect(() => {
     console.error(error);
+    reportPossibleSkew(error);
   }, [error]);
 
   return (

@@ -1038,7 +1038,8 @@
     },
     "by": "qua",
     "version": {
-      "prefix": "v"
+      "prefix": "v",
+      "updateAvailable": "TestPlanIt đã được cập nhật. Làm mới để tiếp tục làm việc — những thay đổi chưa lưu trên trang này có thể bị mất."
     },
     "ui": {
       "tableOfContents": {

@@ -66,6 +66,8 @@ jobs:
 
     - name: Build & push amd64 self-host images
       working-directory: ./testplanit
+      env:
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
       run: |
         VERSION="${{ github.event.inputs.tag || github.ref_name }}"; VERSION_NUM="${VERSION#v}"
         REG="ghcr.io/${OWNER_LC}/testplanit-selfhost"
@@ -115,6 +117,8 @@ jobs:
 
     - name: Build & push arm64 self-host images
       working-directory: ./testplanit
+      env:
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
       run: |
         VERSION="${{ github.event.inputs.tag || github.ref_name }}"; VERSION_NUM="${VERSION#v}"
         REG="ghcr.io/${OWNER_LC}/testplanit-selfhost"

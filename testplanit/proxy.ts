@@ -164,9 +164,14 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   const isApiRoute = pathname.startsWith("/api/");
   const isAuthRoute = pathname.startsWith("/api/auth/");
 
-  // Auth, health, and share routes should pass through without any middleware processing
+  // Auth, health, version, and share routes should pass through without any middleware processing
   const isShareRoute = pathname.startsWith("/api/share/");
-  if (isAuthRoute || isShareRoute || pathname === "/api/health") {
+  if (
+    isAuthRoute ||
+    isShareRoute ||
+    pathname === "/api/health" ||
+    pathname === "/api/version"
+  ) {
     return NextResponse.next();
   }
 
