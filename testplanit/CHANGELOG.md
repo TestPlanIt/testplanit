@@ -1,3 +1,9 @@
+## [1.1.8](https://github.com/TestPlanIt/testplanit/compare/v1.1.7...v1.1.8) (2026-10-15)
+
+### Bug Fixes
+
+* **orm:** write nullable Json fields as DbNull on every client ([#694](https://github.com/TestPlanIt/testplanit/issues/694)) ([4542b2f](https://github.com/TestPlanIt/testplanit/commit/4542b2fa35f7cddada2385ed768159b73eb92f75)), closes [#626](https://github.com/TestPlanIt/testplanit/issues/626)
+
 ## [1.1.7](https://github.com/TestPlanIt/testplanit/compare/v1.1.6...v1.1.7) (2026-10-15)
 
 ### Enhancements
