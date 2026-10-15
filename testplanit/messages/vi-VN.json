@@ -3569,7 +3569,7 @@
         "title": "Chọn nguồn yêu cầu",
         "description": "Chọn xem bạn muốn tạo các trường hợp kiểm thử từ một vấn đề hay từ một tài liệu yêu cầu.",
         "folderContextTip": "Các trường hợp kiểm thử hiện có từ \"{folderName}\" và các thư mục cha/con của nó sẽ được sử dụng làm ngữ cảnh để tránh trùng lặp. Hãy chắc chắn rằng bạn đã chọn đúng thư mục trước khi tiếp tục.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" và các thư mục cha/con của nó chứa {count, plural, =1 {# trường hợp thử nghiệm hiện có} other {# trường hợp thử nghiệm hiện có}}. AI sử dụng bao nhiêu có thể phù hợp trong bối cảnh của nó để phù hợp với phong cách của dự án của bạn và tránh trùng lặp.",
         "folderContextEmptyTitle": "Không có trường hợp kiểm thử hiện có để sử dụng làm bối cảnh",
         "folderContextEmpty": "\"{folderName}\" và các thư mục cha/con của nó không có trường hợp kiểm thử nào, do đó AI không có ví dụ về kiểu của dự án bạn hoặc phạm vi hiện có. Để có kết quả tốt hơn, hãy bắt đầu trình tạo từ thư mục nơi những trường hợp kiểm thử này thuộc về, bên cạnh các trường hợp liên quan.",
         "currentFolder": "thư mục hiện tại",
