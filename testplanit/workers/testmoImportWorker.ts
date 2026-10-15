@@ -9,6 +9,7 @@ import type { TestmoImportJob } from "~/zenstack/models";
 import { JsonNull } from "@zenstackhq/orm";
 import type { JsonObject, JsonValue } from "@zenstackhq/orm";
 import type { DbClient, TxClient } from "~/lib/zenstack";
+import { resolveCredentials, resolveRegion } from "~/lib/s3Client";
 import type {
   StepsUncheckedCreateInput,
   TestRunCasesUncheckedCreateInput,
@@ -318,11 +319,8 @@ const AUTOMATION_TRANSACTION_TIMEOUT_MS = parseNumberEnv(
 const bucketName = process.env.AWS_BUCKET_NAME;
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || process.env.AWS_BUCKET_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
+  region: resolveRegion(),
+  ...resolveCredentials(),
   endpoint: process.env.AWS_PUBLIC_ENDPOINT_URL || process.env.AWS_ENDPOINT_URL,
   forcePathStyle: Boolean(process.env.AWS_ENDPOINT_URL),
   maxAttempts: 5, // Retry transient network errors
