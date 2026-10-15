@@ -1,6 +1,6 @@
 import { baseDb } from "~/lib/db";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
-import type { TxClient } from "~/lib/zenstack";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
 import { REQUIREMENT_SCOPE_WHERE } from "./issueRoleScope";
 
@@ -13,7 +13,7 @@ import { REQUIREMENT_SCOPE_WHERE } from "./issueRoleScope";
  * sharing is exactly what `assertSameProject` below exists to prevent.
  */
 export async function buildIssueAncestorMap(
-  db: any,
+  db: DbClient,
   projectId: number
 ): Promise<Map<number, number[]>> {
   const issues: Array<{ id: number; parentId: number | null }> =
@@ -182,7 +182,7 @@ export async function getRequirementSubtreeCount(
  * rather than hang the connection.
  */
 export async function assertNoCycle(
-  db: any,
+  db: DbClient,
   issueId: number,
   newParentId: number | null
 ): Promise<void> {
@@ -215,7 +215,7 @@ export async function assertNoCycle(
  * (id-in filter) rather than two separate lookups.
  */
 export async function assertSameProject(
-  db: any,
+  db: DbClient,
   issueId: number,
   newParentId: number | null
 ): Promise<void> {
@@ -241,7 +241,7 @@ export async function assertSameProject(
  * parent is invalid regardless of cycle status.
  */
 export async function assertValidReparent(
-  db: any,
+  db: DbClient,
   issueId: number,
   newParentId: number | null
 ): Promise<void> {

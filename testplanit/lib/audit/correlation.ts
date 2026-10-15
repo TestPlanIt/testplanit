@@ -40,6 +40,7 @@
  *     it grants no access. The append-only substrate is the integrity boundary, not this projection.
  * ────────────────────────────────────────────────────────────────────────────────────────────────
  */
+import type { DbClient } from "~/lib/zenstack";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import {
   ROLLUP_MAP,
@@ -886,7 +887,7 @@ export async function pollDataChangeLogsOnce(
   const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
   const markProcessed = opts.markProcessed ?? true;
 
-  const cache = createHumanizeCache(createDbLookup(db), {
+  const cache = createHumanizeCache(createDbLookup(db as unknown as DbClient), {
     ttlMs: HUMANIZE_TTL_MS,
   });
 

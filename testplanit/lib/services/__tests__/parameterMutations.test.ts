@@ -1,3 +1,4 @@
+import type { TxClient } from "~/lib/zenstack";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("~/lib/services/parameterMaintenance", () => ({
@@ -38,7 +39,7 @@ interface BuildTxOpts {
 
 function buildTx(opts: BuildTxOpts = {}) {
   const calls: string[] = [];
-  const tx = {
+  const txMock = {
     testCaseParameter: {
       // Create-path is now an upsert so a soft-deleted parameter with
       // the same (testCaseId, name) gets resurrected instead of 23505ing.
@@ -82,6 +83,7 @@ function buildTx(opts: BuildTxOpts = {}) {
       }),
     },
   };
+  const tx = txMock as unknown as TxClient & typeof txMock;
   return { tx, calls };
 }
 

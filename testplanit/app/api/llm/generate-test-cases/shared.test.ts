@@ -1,3 +1,4 @@
+import type { DbClient } from "~/lib/zenstack";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   IssueAdapter,
@@ -509,7 +510,7 @@ describe("existing-case context — issue-linked cases", () => {
         repositoryFolders: {
           findMany: vi.fn(async () => opts.folders ?? []),
         },
-      },
+      } as unknown as DbClient,
     };
   }
 

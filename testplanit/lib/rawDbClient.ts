@@ -5,16 +5,16 @@
 // managing their own lifecycle (e.g. `await db.$disconnect()` in afterAll).
 //
 // This is the raw client: no access policy and no audit/Elasticsearch/webhook
-// side-effects — matching the bare client these call sites used. App runtime
-// code should use lib/zenstack.ts (baseClient / getAuthDb) instead.
-import { ZenStackClient } from "@zenstackhq/orm";
+// side-effects — matching the bare client these call sites used. It still
+// comes from the factory, so nullable Json writes are normalized here too.
+// App runtime code should use lib/zenstack.ts (baseClient / getAuthDb) instead.
 import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
 import { Pool } from "pg";
 
-import { schema } from "~/zenstack/schema";
+import { createAppZenStackClient } from "~/lib/zenstackClientFactory";
 
 export function createRawDbClient() {
-  return new ZenStackClient(schema, {
+  return createAppZenStackClient({
     dialect: new PostgresDialect({
       pool: new Pool({ connectionString: process.env.DATABASE_URL }),
     }),

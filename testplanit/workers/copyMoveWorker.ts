@@ -1,4 +1,5 @@
 import { Job, Worker } from "bullmq";
+import type { DbClient, TxClient } from "../lib/zenstack";
 import { DbNull, JsonNull } from "@zenstackhq/orm";
 import { getAuditContext, runWithAuditContext } from "../lib/auditContext";
 import { buildGucPayload, withAuditGuc } from "../lib/audit/gucContext";
@@ -83,7 +84,7 @@ function cancelKey(jobId: string | undefined): string {
  * will produce exactly one target group.
  */
 async function resolveSharedStepGroup(
-  tx: any,
+  tx: TxClient,
   sourceGroup: {
     id: number;
     name: string;
@@ -224,7 +225,7 @@ function resolveFieldValue(
  * Field options are fetched separately per field to avoid deep nesting alias limits.
  */
 async function fetchTemplateFields(
-  db: any,
+  db: DbClient,
   templateId: number
 ): Promise<
   Array<{
@@ -311,7 +312,7 @@ function jobGucPayload(job: Job<CopyMoveJobData>) {
  */
 async function relocateWithinProject(
   job: Job<CopyMoveJobData>,
-  db: any
+  db: DbClient
 ): Promise<CopyMoveJobResult> {
   const result: CopyMoveJobResult = {
     copiedCount: 0,
@@ -491,7 +492,7 @@ async function relocateWithinProject(
   }
 
   // ── Execute atomically ────────────────────────────────────────────────
-  await withAuditGuc(db, jobGucPayload(job), async (tx: any) => {
+  await withAuditGuc(db, jobGucPayload(job), async (tx: TxClient) => {
     for (const move of caseMoves) {
       await tx.repositoryCases.update({
         where: { id: move.caseId },
@@ -974,7 +975,7 @@ const processor = async (
         const newCaseId = await withAuditGuc(
           db,
           jobGucPayload(job),
-          async (tx: any) => {
+          async (tx: TxClient) => {
             // a. Create-or-restore the target RepositoryCases row.
             const caseFields = {
               repositoryId: targetRepositoryId,
@@ -1021,8 +1022,8 @@ const processor = async (
               await tx.steps.create({
                 data: {
                   testCaseId: newCase.id,
-                  step: step.step,
-                  expectedResult: step.expectedResult,
+                  step: step.step ?? DbNull,
+                  expectedResult: step.expectedResult ?? DbNull,
                   order: step.order,
                   sharedStepGroupId: resolvedSharedStepGroupId,
                 },
@@ -1185,7 +1186,7 @@ const processor = async (
               for (const comment of comments) {
                 await tx.comment.create({
                   data: {
-                    content: comment.content,
+                    content: comment.content ?? JsonNull,
                     projectId: job.data.targetProjectId,
                     repositoryCaseId: newCase.id,
                     creatorId: comment.creatorId,

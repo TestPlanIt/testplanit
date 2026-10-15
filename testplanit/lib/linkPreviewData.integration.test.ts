@@ -24,11 +24,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { ZenStackClient } from "@zenstackhq/orm";
+import { createAppZenStackClient } from "~/lib/zenstackClientFactory";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createDialect } from "~/lib/db/readWriteDialect";
-import { schema } from "~/zenstack/schema";
 import {
   RECORD_KEY_ENABLED_KEY,
   RECORD_KEY_TOKENS_KEY,
@@ -79,7 +78,7 @@ describeIntegration("loadEntityPreview (live scratch DB)", () => {
   const createdConfigKeys: string[] = [];
 
   beforeAll(async () => {
-    client = new ZenStackClient(schema, {
+    client = createAppZenStackClient({
       dialect: createDialect(SCRATCH_URL!, []),
     });
     db = client;

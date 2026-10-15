@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { DbClient } from "~/lib/zenstack";
 
 /**
  * `performIssueRefreshSystem` reports what it did to the local row so the
@@ -289,7 +290,7 @@ describe("upsertIssueFromExternal", () => {
     };
 
     const result = await syncService.upsertIssueFromExternal(
-      db,
+      db as unknown as DbClient,
       3,
       7,
       ISSUE_DATA as any,
@@ -308,7 +309,7 @@ describe("upsertIssueFromExternal", () => {
       issue: { upsert: vi.fn().mockResolvedValue({ id: 5 }) },
     };
     const result = await syncService.upsertIssueFromExternal(
-      db,
+      db as unknown as DbClient,
       3,
       7,
       ISSUE_DATA as any

@@ -1,3 +1,4 @@
+import { DbNull } from "@zenstackhq/orm";
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -432,6 +433,32 @@ describe("CopyMoveWorker", () => {
             testCaseId: 1001,
             step: "Step 1 text",
             expectedResult: "Expected 1",
+            order: 0,
+          }),
+        })
+      );
+    });
+
+    it("DATA-01b: copies a step with no expected result as SQL NULL", async () => {
+      // Reads return SQL NULL as a plain null, which the ORM rejects on a
+      // nullable Json column; the copy must write the DbNull sentinel.
+      const emptyResultCase = {
+        ...mockSourceCase,
+        steps: [
+          { ...mockSourceCase.steps[0], step: null, expectedResult: null },
+        ],
+      };
+      mockDb.repositoryCases.findMany.mockResolvedValue([emptyResultCase]);
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob() as Job);
+
+      expect(mockTx.steps.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            testCaseId: 1001,
+            step: DbNull,
+            expectedResult: DbNull,
             order: 0,
           }),
         })

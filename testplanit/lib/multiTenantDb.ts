@@ -1,13 +1,12 @@
 // lib/multiTenantDb.ts
 // Multi-tenant ZenStack client factory for shared worker containers
 
-import { ZenStackClient } from "@zenstackhq/orm";
 import * as fs from "fs";
 
 import { getPoolConfig } from "~/lib/db/poolConfig";
 import { createDialect } from "~/lib/db/readWriteDialect";
 import { type DbClient } from "~/lib/zenstack";
-import { schema } from "~/zenstack/schema";
+import { createAppZenStackClient } from "~/lib/zenstackClientFactory";
 
 /**
  * Tenant configuration interface
@@ -289,7 +288,7 @@ export function getAllTenantIds(): string[] {
  * Create a ZenStack client for a specific tenant
  */
 function createTenantDbClient(config: TenantConfig): DbClient {
-  const client = new ZenStackClient(schema, {
+  const client = createAppZenStackClient({
     // Per-tenant replicas only (never the process-wide app replica list).
     // Pool sizing is process-wide (see lib/db/poolConfig.ts) and applies per
     // tenant client, so DATABASE_POOL_MAX is multiplied by the tenant count.

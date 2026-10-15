@@ -1,9 +1,8 @@
-import { ZenStackClient } from "@zenstackhq/orm";
 import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
 import { Pool } from "pg";
 import { afterAll, describe, expect, it } from "vitest";
-import { schema } from "~/zenstack/schema";
 import { sideEffectsPlugin } from "./sideEffectsPlugin";
+import { createAppZenStackClient } from "~/lib/zenstackClientFactory";
 
 /**
  * Proves the milestone parent guard is wired into the plugin's onQuery hook.
@@ -22,7 +21,7 @@ describe("sideEffectsPlugin milestone parent guard wiring", () => {
     connectionTimeoutMillis: 500,
     max: 1,
   });
-  const client = new ZenStackClient(schema, {
+  const client = createAppZenStackClient({
     dialect: new PostgresDialect({ pool }),
   }).$use(sideEffectsPlugin);
 

@@ -1,3 +1,4 @@
+import type { DbClient } from "~/lib/zenstack";
 import type { Sessions } from "~/zenstack/models";
 import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
@@ -176,7 +177,7 @@ export async function syncSessionToElasticsearch(
  */
 export async function syncProjectSessionsToElasticsearch(
   projectId: number,
-  db: any,
+  db: DbClient,
   tenantId?: string
 ): Promise<void> {
   const client = getElasticsearchClient();

@@ -1,3 +1,4 @@
+import type { TxClient } from "../lib/zenstack";
 import { Job, Worker } from "bullmq";
 import { DuplicateScanService } from "../lib/services/duplicateScanService";
 import {
@@ -258,7 +259,7 @@ export const processor = async (
 
   // 8. Soft-delete old pending results, then insert new ones atomically
   //    Use a longer timeout for large result sets
-  await db.$transaction(async (tx: any) => {
+  await db.$transaction(async (tx: TxClient) => {
     await tx.duplicateScanResult.updateMany({
       where: {
         projectId: job.data.projectId,

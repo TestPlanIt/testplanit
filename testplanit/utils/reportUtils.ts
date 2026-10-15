@@ -1,4 +1,5 @@
 import { bucketDateIso, type DateGrouping } from "~/lib/reports/dateGrouping";
+import type { DbClient } from "~/lib/zenstack";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { queryEngagementUserIds } from "~/lib/engagementUserIdsQuery";
 import { queryProjectRelevantIssueIds } from "~/lib/projectIssueIdsQuery";
@@ -31,7 +32,7 @@ export { buildDateFilter } from "~/utils/resultUnion";
  * must never import the server-only prisma stack.
  */
 async function findProjectIssues(
-  db: any,
+  db: DbClient,
   projectId: number,
   args: { where?: Record<string, any> } & Record<string, any> = {}
 ) {
@@ -97,7 +98,7 @@ function caseSelectFor(groupBy: string[]) {
  * "unknown" bucket.
  */
 export async function fetchImpactAnalysisRows(
-  db: any,
+  db: DbClient,
   projectId: number | undefined,
   isProjectSpecific: boolean,
   filters?: { startDate?: string; endDate?: string },
@@ -201,7 +202,7 @@ function repositoryCaseSelect(
  * folder dimension is grouped with descendants enabled.
  */
 async function folderGroupingOptions(
-  db: any,
+  db: DbClient,
   projectId: number | undefined,
   isProjectSpecific: boolean,
   groupBy: string[],
@@ -334,7 +335,7 @@ export function createTestExecutionDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (db: any, _projectId?: number) => {
+          getValues: async (db: DbClient, _projectId?: number) => {
             const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
@@ -357,7 +358,7 @@ export function createTestExecutionDimensionRegistry(
     status: {
       id: "status",
       label: "Status",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const runScope = {
           ...(isProjectSpecific && projectId
             ? { projectId: Number(projectId) }
@@ -396,7 +397,7 @@ export function createTestExecutionDimensionRegistry(
     user: {
       id: "user",
       label: "Executor",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const runScope = {
           ...(isProjectSpecific && projectId
             ? { projectId: Number(projectId) }
@@ -428,7 +429,7 @@ export function createTestExecutionDimensionRegistry(
     configuration: {
       id: "configuration",
       label: "Configuration",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const configurations = await db.configurations.findMany({
           where: {
             testRuns: {
@@ -456,7 +457,7 @@ export function createTestExecutionDimensionRegistry(
       id: "date",
       label: "Execution Date",
       getValues: async (
-        db: any,
+        db: DbClient,
         projectId?: number,
         filters?: { startDate?: string; endDate?: string }
       ) => {
@@ -500,7 +501,7 @@ export function createTestExecutionDimensionRegistry(
     testRun: {
       id: "testRun",
       label: "Test Run",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const testRuns = await db.testRuns.findMany({
           where: {
             ...(isProjectSpecific && projectId
@@ -524,7 +525,7 @@ export function createTestExecutionDimensionRegistry(
       // per case across every run, and it covers JUnit results that were
       // matched to a case without ever being added to a run's case list
       // (those have no TestRunCases record at all).
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const runScope = {
           ...(isProjectSpecific && projectId
             ? { projectId: Number(projectId) }
@@ -558,7 +559,7 @@ export function createTestExecutionDimensionRegistry(
       // Dedicated picker lookup with DB-side search and pagination (the
       // full executed-case list is too large to ship per keystroke).
       filterValues: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         opts: { search?: string; ids?: string[]; skip: number; take: number }
       ) => {
@@ -571,7 +572,7 @@ export function createTestExecutionDimensionRegistry(
         const where = {
           ...(opts.ids ? { id: { in: opts.ids.map(Number) } } : {}),
           ...(opts.search
-            ? { name: { contains: opts.search, mode: "insensitive" } }
+            ? { name: { contains: opts.search, mode: "insensitive" as const } }
             : {}),
           OR: [
             { testRuns: { some: { testRun: runScope } } },
@@ -644,7 +645,7 @@ export function createTestExecutionDimensionRegistry(
     milestone: {
       id: "milestone",
       label: "Milestone",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const milestones = await db.milestones.findMany({
           where: {
             testRuns: {
@@ -706,7 +707,7 @@ export function createTestExecutionDimensionRegistry(
       label: "Folder",
       // All non-deleted folders in scope, so both direct and rolled-up
       // (descendants) folder rows resolve to a name in the display lookup.
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const folders = await db.repositoryFolders.findMany({
           where: {
             ...(isProjectSpecific && projectId
@@ -745,7 +746,7 @@ export function createTestExecutionDimensionRegistry(
       id: "codeRepository",
       label: "Code Repository",
       // Repository connections whose analyses composed a run in scope.
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const configs = await db.projectCodeRepositoryConfig.findMany({
           where: {
             ...(isProjectSpecific && projectId
@@ -778,7 +779,7 @@ export function createTestExecutionDimensionRegistry(
       label: "Tag",
       // Tags carried by executed cases in scope. A case with no tags falls into
       // a null "None" group handled by the response formatter.
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const tags = await db.tags.findMany({
           where: {
             isDeleted: false,
@@ -814,7 +815,7 @@ export function createTestExecutionMetricRegistry(
       id: "testResults",
       label: "Test Results Count",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -891,7 +892,7 @@ export function createTestExecutionMetricRegistry(
       id: "passRate",
       label: "Pass Rate (%)",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -999,7 +1000,7 @@ export function createTestExecutionMetricRegistry(
       id: "avgElapsedTime",
       label: "Avg. Elapsed Time",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1101,7 +1102,7 @@ export function createTestExecutionMetricRegistry(
       id: "totalElapsedTime",
       label: "Total Elapsed Time",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1196,7 +1197,7 @@ export function createTestExecutionMetricRegistry(
       label: "Test Result Count", // Slightly different label to avoid exact duplicate
       hidden: true, // Hide from UI but keep for backward compatibility
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1221,7 +1222,7 @@ export function createTestExecutionMetricRegistry(
       id: "testRunCount",
       label: "Test Runs Count",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1357,7 +1358,7 @@ export function createTestExecutionMetricRegistry(
       id: "impactAnalysisCount",
       label: "Impact Analysis Count",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1388,7 +1389,7 @@ export function createTestExecutionMetricRegistry(
       id: "affectedCasesSelected",
       label: "Affected Cases Selected",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1428,7 +1429,7 @@ export function createTestExecutionMetricRegistry(
       // Of the selected cases that were executed in the composed run, the
       // share that failed. Null (not 0) until something selected has run.
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1471,7 +1472,7 @@ export function createTestExecutionMetricRegistry(
       id: "testCaseCount",
       label: "Test Cases Count",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1579,7 +1580,7 @@ export function createRepositoryStatsDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (db: any, _projectId?: number) => {
+          getValues: async (db: DbClient, _projectId?: number) => {
             const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
@@ -1602,7 +1603,7 @@ export function createRepositoryStatsDimensionRegistry(
     template: {
       id: "template",
       label: "Template",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const templates = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
@@ -1634,7 +1635,7 @@ export function createRepositoryStatsDimensionRegistry(
     creator: {
       id: "creator",
       label: "Creator",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const creators = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
@@ -1658,7 +1659,7 @@ export function createRepositoryStatsDimensionRegistry(
     state: {
       id: "state",
       label: "State",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const states = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
@@ -1703,7 +1704,7 @@ export function createRepositoryStatsDimensionRegistry(
     source: {
       id: "source",
       label: "Source",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const sources = await db.repositoryCases.groupBy({
           where: {
             ...(isProjectSpecific && projectId
@@ -1727,7 +1728,7 @@ export function createRepositoryStatsDimensionRegistry(
       label: "Folder",
       // All non-deleted folders so rolled-up (descendants) ancestor folders
       // still resolve to a name in the display lookup.
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const folders = await db.repositoryFolders.findMany({
           where: {
             ...(isProjectSpecific && projectId
@@ -1747,7 +1748,7 @@ export function createRepositoryStatsDimensionRegistry(
     tag: {
       id: "tag",
       label: "Tag",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const tags = await db.tags.findMany({
           where: {
             isDeleted: false,
@@ -1774,7 +1775,7 @@ export function createRepositoryStatsDimensionRegistry(
     date: {
       id: "date",
       label: "Creation Date",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const dates = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
@@ -1815,7 +1816,7 @@ export function createRepositoryStatsDimensionRegistry(
     testCase: {
       id: "testCase",
       label: "Test Case",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const cases = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
@@ -1844,7 +1845,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "testCaseCount",
       label: "Test Case Count",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1900,7 +1901,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "automationRate",
       label: "Automation Rate (%)",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1963,7 +1964,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "automatedCount",
       label: "Automated Cases",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2020,7 +2021,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "manualCount",
       label: "Manual Cases",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2075,7 +2076,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "averageSteps",
       label: "Average Steps per Case",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2145,7 +2146,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "totalSteps",
       label: "Total Steps",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2216,12 +2217,12 @@ export function createUserEngagementDimensionRegistry(
   const scopedProjectId = (projectId?: number) =>
     isProjectSpecific && projectId ? Number(projectId) : undefined;
 
-  const engagedUserIds = (db: any, projectId?: number) =>
+  const engagedUserIds = (db: DbClient, projectId?: number) =>
     queryEngagementUserIds(db, scopedProjectId(projectId));
 
   // The User dimension also lists project members with no activity yet.
   const userDimensionIds = async (
-    db: any,
+    db: DbClient,
     projectId?: number
   ): Promise<string[]> => {
     const scoped = scopedProjectId(projectId);
@@ -2251,7 +2252,7 @@ export function createUserEngagementDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (db: any, _projectId?: number) => {
+          getValues: async (db: DbClient, _projectId?: number) => {
             const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
@@ -2298,7 +2299,7 @@ export function createUserEngagementDimensionRegistry(
     user: {
       id: "user",
       label: "User",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const users = await db.user.findMany({
           where: {
             isDeleted: false,
@@ -2310,7 +2311,7 @@ export function createUserEngagementDimensionRegistry(
         return users;
       },
       filterValues: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         opts: { search?: string; ids?: string[]; skip: number; take: number }
       ) => {
@@ -2324,8 +2325,18 @@ export function createUserEngagementDimensionRegistry(
           ...(opts.search
             ? {
                 OR: [
-                  { name: { contains: opts.search, mode: "insensitive" } },
-                  { email: { contains: opts.search, mode: "insensitive" } },
+                  {
+                    name: {
+                      contains: opts.search,
+                      mode: "insensitive" as const,
+                    },
+                  },
+                  {
+                    email: {
+                      contains: opts.search,
+                      mode: "insensitive" as const,
+                    },
+                  },
                 ],
               }
             : {}),
@@ -2349,7 +2360,7 @@ export function createUserEngagementDimensionRegistry(
     role: {
       id: "role",
       label: "Role",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         // Get roles of users who have any user engagement activity for the project
         const roles = await db.roles.findMany({
           where: {
@@ -2373,7 +2384,7 @@ export function createUserEngagementDimensionRegistry(
     group: {
       id: "group",
       label: "Group",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         // Get groups that contain users who have any user engagement activity for the project
         const groups = await db.groups.findMany({
           where: {
@@ -2399,12 +2410,11 @@ export function createUserEngagementDimensionRegistry(
     date: {
       id: "date",
       label: "Activity Date",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         // Get unique activity dates from various user activities
         const testExecutions = await db.testRunResults.findMany({
           where: {
             isDeleted: false,
-            executedAt: { not: null },
             testRun: {
               ...(isProjectSpecific && projectId
                 ? { projectId: Number(projectId) }
@@ -2499,7 +2509,7 @@ export function createUserEngagementMetricRegistry(
       id: "executionCount",
       label: "Test Executions",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2540,7 +2550,7 @@ export function createUserEngagementMetricRegistry(
       id: "createdCaseCount",
       label: "Created Test Case Count",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2726,7 +2736,7 @@ export function createUserEngagementMetricRegistry(
       id: "sessionResultCount",
       label: "Session Result Count",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2930,7 +2940,7 @@ export function createUserEngagementMetricRegistry(
       id: "averageElapsed",
       label: "Average Time per Execution",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2989,7 +2999,7 @@ export function createUserEngagementMetricRegistry(
       id: "lastActiveDate",
       label: "Last Active Date",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -3130,7 +3140,7 @@ export function createIssueTrackingDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (db: any, _projectId?: number) => {
+          getValues: async (db: DbClient, _projectId?: number) => {
             const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
@@ -3190,7 +3200,7 @@ export function createIssueTrackingDimensionRegistry(
     creator: {
       id: "creator",
       label: "Creator",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         if (isProjectSpecific && projectId) {
           // Project-specific: creators across the project-relevant issues
           const issues = await findProjectIssues(db, Number(projectId), {
@@ -3233,7 +3243,7 @@ export function createIssueTrackingDimensionRegistry(
     issueType: {
       id: "issueType",
       label: "Issue Type",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const results: Array<{
           id: string | null;
           name: string;
@@ -3320,7 +3330,7 @@ export function createIssueTrackingDimensionRegistry(
     issueTracker: {
       id: "issueTracker",
       label: "Issue Tracker",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const results: Array<{
           id: number | null;
           name: string;
@@ -3394,7 +3404,7 @@ export function createIssueTrackingDimensionRegistry(
     issueStatus: {
       id: "issueStatus",
       label: "Issue Status",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         if (isProjectSpecific && projectId) {
           // Project-specific: distinct statuses across the project-relevant
           // issues
@@ -3437,7 +3447,7 @@ export function createIssueTrackingDimensionRegistry(
     priority: {
       id: "priority",
       label: "Priority",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         // Helper to normalize priority for case-insensitive grouping
         const normalizePriority = (priority: string) => {
           const lower = priority.toLowerCase().trim();
@@ -3507,7 +3517,7 @@ export function createIssueTrackingDimensionRegistry(
     date: {
       id: "date",
       label: "Creation Date",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         if (isProjectSpecific && projectId) {
           // Project-specific: creation days across the project-relevant
           // issues
@@ -3580,7 +3590,7 @@ export function createIssueTrackingMetricRegistry(
       id: "issueCount",
       label: "Issue Count",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -3778,7 +3788,7 @@ export function createIssueTrackingMetricRegistry(
           // For simple groupBy without project
           if (!groupBy.includes("projectId")) {
             const rawResults = await db.issue.groupBy({
-              by: groupBy as any[],
+              by: groupBy as Parameters<typeof db.issue.groupBy>[0]["by"],
               where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
               _count: { _all: true },
             });
@@ -3919,7 +3929,11 @@ export function createAutomationTrendsDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (db: any, projectId?: number, filters?: any) => {
+          getValues: async (
+            db: DbClient,
+            projectId?: number,
+            filters?: any
+          ) => {
             const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
@@ -3947,7 +3961,7 @@ export function createAutomationTrendsDimensionRegistry(
     weekEnding: {
       id: "weekEnding",
       label: "Week Ending",
-      getValues: async (db: any, projectId?: number, filters?: any) => {
+      getValues: async (db: DbClient, projectId?: number, filters?: any) => {
         // Get all repository cases within the date range
         const cases = await db.repositoryCases.findMany({
           where: {
@@ -3993,7 +4007,7 @@ export function createAutomationTrendsDimensionRegistry(
     priority: {
       id: "priority",
       label: "Priority",
-      getValues: async (db: any, projectId?: number, filters?: any) => {
+      getValues: async (db: DbClient, projectId?: number, filters?: any) => {
         // Get the priority field
         const priorityField = await db.caseFields.findUnique({
           where: { systemName: "priority" },

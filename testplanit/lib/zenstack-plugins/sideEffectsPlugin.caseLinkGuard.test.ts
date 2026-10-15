@@ -1,13 +1,12 @@
-import { ZenStackClient } from "@zenstackhq/orm";
 import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
 import { Pool } from "pg";
 import { afterAll, describe, expect, it } from "vitest";
-import { schema } from "~/zenstack/schema";
 import {
   CIRCULAR_DEPENDENCY_MESSAGE,
   SELF_LINK_MESSAGE,
 } from "~/lib/caseLinkCycleGuard";
 import { sideEffectsPlugin } from "./sideEffectsPlugin";
+import { createAppZenStackClient } from "~/lib/zenstackClientFactory";
 
 /**
  * Proves the case-link guard is wired into the plugin's onQuery hook for
@@ -29,7 +28,7 @@ describe("sideEffectsPlugin case link guard wiring", () => {
     connectionTimeoutMillis: 500,
     max: 1,
   });
-  const client = new ZenStackClient(schema, {
+  const client = createAppZenStackClient({
     dialect: new PostgresDialect({ pool }),
   }).$use(sideEffectsPlugin);
 

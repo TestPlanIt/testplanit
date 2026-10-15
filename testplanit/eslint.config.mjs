@@ -82,6 +82,25 @@ const eslintConfig = [
         },
       ],
       "@typescript-eslint/no-explicit-any": "off",
+      // Every ORM client is built by createAppZenStackClient() so it carries
+      // the plugins that must never be missing (jsonNullPlugin: a nullable
+      // Json field written as a plain null is rejected by ZenStack). An
+      // `any`-typed client parameter also hides that validation from the
+      // compiler, which is how the copy/move and import bugs got in.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "NewExpression[callee.name='ZenStackClient']",
+          message:
+            "Construct ORM clients with createAppZenStackClient() from ~/lib/zenstackClientFactory so every client carries the app plugins.",
+        },
+        {
+          selector:
+            "Identifier[name=/^(tx|db|client|prisma)$/] > TSTypeAnnotation > TSAnyKeyword",
+          message:
+            "Type database clients as DbClient / TxClient from ~/lib/zenstack; `any` hides ZenStack's input validation.",
+        },
+      ],
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-unused-expressions": "off",
       "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
@@ -160,6 +179,11 @@ const eslintConfig = [
       ],
     },
   },
+  // The factory is the one place a client may be constructed directly.
+  {
+    files: ["lib/zenstackClientFactory.ts"],
+    rules: { "no-restricted-syntax": "off" },
+  },
   // Relax rules that don't apply to test files
   {
     files: [
@@ -180,6 +204,16 @@ const eslintConfig = [
       // Vitest expect().resolves assertions, intentional unawaited promises in
       // setup/teardown). The rule is enforced for production code only.
       "@typescript-eslint/no-floating-promises": "off",
+      // Mocks stand in for the client here; the ban on `new ZenStackClient`
+      // still applies so tests build clients the way the app does.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "NewExpression[callee.name='ZenStackClient']",
+          message:
+            "Construct ORM clients with createAppZenStackClient() from ~/lib/zenstackClientFactory so every client carries the app plugins.",
+        },
+      ],
     },
   },
 ];

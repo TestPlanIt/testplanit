@@ -1,4 +1,5 @@
 import { bucketDateIso, type DateGrouping } from "~/lib/reports/dateGrouping";
+import type { DbClient } from "~/lib/zenstack";
 import { buildDateFilter } from "~/utils/resultUnion";
 
 /**
@@ -65,7 +66,7 @@ type UsageRow = {
  * calendar period, matching the shared report pipeline's date handling.
  */
 async function aggregateUsage<B extends Record<string, unknown>>(
-  db: any,
+  db: DbClient,
   projectId: number | undefined,
   isProjectSpecific: boolean,
   groupBy: string[],
@@ -134,7 +135,7 @@ export function createLlmUsageDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (db: any, _projectId?: number) => {
+          getValues: async (db: DbClient, _projectId?: number) => {
             return db.projects.findMany({
               where: { llmUsages: { some: {} } },
               select: { id: true, name: true },
@@ -151,7 +152,7 @@ export function createLlmUsageDimensionRegistry(
       label: "User",
       // No isDeleted filter: spend by a since-removed user still belongs in
       // a cost report, and the lookup miss would otherwise render "Unknown".
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         return db.user.findMany({
           where: {
             llmUsages: { some: projectScope(isProjectSpecific, projectId) },
@@ -167,7 +168,7 @@ export function createLlmUsageDimensionRegistry(
     feature: {
       id: "feature",
       label: "Feature",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const rows = await db.llmUsage.findMany({
           where: projectScope(isProjectSpecific, projectId),
           select: { feature: true },
@@ -187,7 +188,7 @@ export function createLlmUsageDimensionRegistry(
     model: {
       id: "model",
       label: "Model",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const rows = await db.llmUsage.findMany({
           where: projectScope(isProjectSpecific, projectId),
           select: { model: true },
@@ -207,7 +208,7 @@ export function createLlmUsageDimensionRegistry(
     integration: {
       id: "integration",
       label: "Integration",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         return db.llmIntegration.findMany({
           where: {
             llmUsages: { some: projectScope(isProjectSpecific, projectId) },
@@ -236,7 +237,7 @@ export function createLlmUsageDimensionRegistry(
     date: {
       id: "date",
       label: "Date",
-      getValues: async (db: any, projectId?: number) => {
+      getValues: async (db: DbClient, projectId?: number) => {
         const rows = await db.llmUsage.findMany({
           where: projectScope(isProjectSpecific, projectId),
           select: { createdAt: true },
@@ -272,7 +273,7 @@ export function createLlmUsageMetricRegistry(
   ): {
     id: string;
     aggregate: (
-      db: any,
+      db: DbClient,
       projectId: number | undefined,
       groupBy: string[],
       filters?: any,
@@ -281,7 +282,7 @@ export function createLlmUsageMetricRegistry(
   } => ({
     id,
     aggregate: async (
-      db: any,
+      db: DbClient,
       projectId: number | undefined,
       groupBy: string[],
       filters?: any,
@@ -322,7 +323,7 @@ export function createLlmUsageMetricRegistry(
       id: "totalCost",
       label: "Total Cost",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -351,7 +352,7 @@ export function createLlmUsageMetricRegistry(
       id: "avgLatency",
       label: "Avg. Latency",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -381,7 +382,7 @@ export function createLlmUsageMetricRegistry(
       id: "successRate",
       label: "Success Rate (%)",
       aggregate: async (
-        db: any,
+        db: DbClient,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,

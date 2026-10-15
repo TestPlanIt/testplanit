@@ -1,3 +1,4 @@
+import type { DbClient } from "~/lib/zenstack";
 import { ApplicationArea } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -44,7 +45,7 @@ import { authOptions } from "~/server/auth";
  * pass.
  */
 async function resolveCanReadSensitive(
-  db: any,
+  db: DbClient,
   userId: string
 ): Promise<boolean> {
   const user = await db.user.findUnique({

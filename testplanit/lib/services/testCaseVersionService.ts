@@ -1,6 +1,7 @@
+import type { TxClient } from "~/lib/zenstack";
 import type { User } from "next-auth";
 
-import { DbNull, JsonNull } from "@zenstackhq/orm";
+import { DbNull, JsonNull, type JsonValue } from "@zenstackhq/orm";
 
 /**
  * Service for creating test case versions.
@@ -141,7 +142,7 @@ export async function createTestCaseVersion(
  * @param options - Version creation options
  */
 export async function createTestCaseVersionInTransaction(
-  tx: any, // Prisma transaction client type
+  tx: TxClient,
   caseId: number,
   options: Omit<CreateVersionOptions, "caseId">
 ) {
@@ -240,8 +241,9 @@ export async function createTestCaseVersionInTransaction(
   const issuesArray =
     overrides.issues ??
     testCase.caseIssues.map(
-      (ci: { issue: { id: number; name: string; externalId?: string } }) =>
-        ci.issue
+      (ci: {
+        issue: { id: number; name: string; externalId?: string | null };
+      }) => ci.issue
     );
 
   // Attachments the case carries right now. This used to be hardcoded to `[]`
@@ -282,11 +284,11 @@ export async function createTestCaseVersionInTransaction(
       name: string;
       description: string | null;
       type: string;
-      defaultValue: unknown;
+      defaultValue: JsonValue | null;
       order: number;
       required: boolean;
       sensitive: boolean;
-      allowedValuesJson: unknown;
+      allowedValuesJson: JsonValue | null;
       lookupDataSetId: number | null;
     }) => ({
       id: p.id,
@@ -392,7 +394,7 @@ export async function createTestCaseVersionInTransaction(
       await tx.caseFieldVersionValues.createMany({
         data: copyable.map(
           (fieldValue: {
-            value: unknown;
+            value: JsonValue | null;
             field: { displayName: string | null; systemName: string };
           }) => ({
             versionId: newVersion.id,
