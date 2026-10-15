@@ -1040,7 +1040,8 @@
     },
     "by": "بواسطة",
     "version": {
-      "prefix": "الإصدار"
+      "prefix": "الإصدار",
+      "updateAvailable": "تم تحديث TestPlanIt. قم بالتحديث للمتابعة — قد تفقد التغييرات غير المحفوظة على هذه الصفحة."
     },
     "ui": {
       "tableOfContents": {

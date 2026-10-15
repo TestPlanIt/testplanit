@@ -1040,7 +1040,8 @@
     },
     "by": "von",
     "version": {
-      "prefix": "v"
+      "prefix": "v",
+      "updateAvailable": "TestPlanIt wurde aktualisiert. Aktualisieren Sie die Seite, um weiterarbeiten zu können — nicht gespeicherte Änderungen auf dieser Seite gehen möglicherweise verloren."
     },
     "ui": {
       "tableOfContents": {

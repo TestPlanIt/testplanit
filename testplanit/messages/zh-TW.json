@@ -1040,7 +1040,8 @@
     },
     "by": "經過",
     "version": {
-      "prefix": "v"
+      "prefix": "v",
+      "updateAvailable": "TestPlanIt 已更新。重新整理以繼續工作 — 此頁面上的未保存變更可能會遺失。"
     },
     "ui": {
       "tableOfContents": {

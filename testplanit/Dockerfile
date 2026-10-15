@@ -160,7 +160,14 @@ ENV BASE_DOMAIN=${BASE_DOMAIN}
 WORKDIR /app/testplanit
 # The ZenStack v3 client is generated in the base stage (`pnpm zenstack
 # generate`), which this stage inherits — there is no `prisma generate` anymore.
-RUN npm run build
+# Next salts every server-action ID with NEXT_SERVER_ACTIONS_ENCRYPTION_KEY and
+# generates a random one per build when it's unset, so a fixed key keeps open
+# tabs' actions valid across releases. Optional build secret, never a build arg.
+# Next copies the key into the image's server manifest, so it must not protect
+# anything (eslint forbids inline "use server" closures) and must never be
+# ENCRYPTION_KEY.
+RUN --mount=type=secret,id=next_actions_key,env=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY \
+    npm run build
 
 # ---- Production ----
 FROM node:24-alpine AS production

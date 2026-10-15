@@ -49,6 +49,10 @@ You have several options:
 
 Pull the latest Docker image or code from the repository and run the database migrations. The application will automatically apply any necessary schema changes on startup.
 
+### Why does TestPlanIt ask me to refresh the page?
+
+When TestPlanIt is updated while you have it open, a banner at the top of the page says so. Until you refresh, a page loaded before the update can show empty search results in pickers and fail to save some changes. Select **Refresh** to load the new version. Refreshing discards unsaved changes on the page, so finish or copy them first. If you dismiss the banner, it comes back the next time the page hits the update.
+
 ### Can I migrate from another test management tool?
 
 Yes, TestPlanIt supports importing test cases from CSV files. For specific tools like Testmo, see the [import guide](/docs/import-export). If you need to migrate from a tool that isn't directly supported, you can use the API to programmatically import your data.

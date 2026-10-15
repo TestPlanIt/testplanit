@@ -1040,7 +1040,8 @@
     },
     "by": "ile",
     "version": {
-      "prefix": "v"
+      "prefix": "v",
+      "updateAvailable": "TestPlanIt güncellendi. Çalışmaya devam etmek için sayfayı yenileyin — bu sayfadaki kaydedilmemiş değişiklikler kaybolabilir."
     },
     "ui": {
       "tableOfContents": {

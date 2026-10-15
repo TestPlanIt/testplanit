@@ -1040,7 +1040,8 @@
     },
     "by": "经过",
     "version": {
-      "prefix": "v"
+      "prefix": "v",
+      "updateAvailable": "TestPlanIt已更新。请刷新以继续工作 — 此页面上的未保存更改可能会丢失。"
     },
     "ui": {
       "tableOfContents": {
@@ -3685,7 +3686,7 @@
         "title": "选择需求来源",
         "description": "选择是从问题文档还是需求文档生成测试用例。",
         "folderContextTip": "为避免重复，系统将使用“{folderName}”及其父/子文件夹中的现有测试用例作为上下文。请确保在继续操作前已选择正确的文件夹。",
-        "folderContextCount": "{count, plural, =1 {# 个现有测试用例} other {# 个现有测试用例}}在\"{folderName}\"及其父级/子级文件夹中将用作上下文，以匹配您的项目风格并避免重复。",
+        "folderContextCount": "\"{folderName}\"及其父/子文件夹包含{count, plural, =1 {# 个现有测试用例} other {# 个现有测试用例}}。AI 会尽可能多地使用适合其上下文的测试用例来匹配您项目的风格并避免重复。",
         "folderContextEmptyTitle": "没有现有测试用例可用作上下文",
         "folderContextEmpty": "\"{folderName}\"及其父级/子级文件夹中没有测试用例，因此AI无法参考您的项目风格或现有覆盖范围的示例。为获得更好的结果，请从这些测试用例所属的文件夹中启动生成器，将其放在相关用例的旁边。",
         "currentFolder": "当前文件夹",

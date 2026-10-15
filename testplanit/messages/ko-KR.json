@@ -1040,7 +1040,8 @@
     },
     "by": "~에 의해",
     "version": {
-      "prefix": "다섯"
+      "prefix": "다섯",
+      "updateAvailable": "TestPlanIt이 업데이트되었습니다. 계속 작업하려면 새로 고침하세요 — 이 페이지의 저장되지 않은 변경사항이 손실될 수 있습니다."
     },
     "ui": {
       "tableOfContents": {

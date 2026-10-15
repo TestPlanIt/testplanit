@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { _resetForTesting, isUpdateBannerVisible } from "~/lib/deploymentSkew";
 import { useAsyncComboboxOptions } from "./useAsyncComboboxOptions";
 
 interface Option {
@@ -168,6 +169,20 @@ describe("useAsyncComboboxOptions", () => {
     await waitFor(() => expect(result.current.settled).toBe(true));
     expect(result.current.loading).toBe(false);
     expect(result.current.options).toEqual([]);
+  });
+
+  it("reports a stale-deployment failure it swallows", async () => {
+    _resetForTesting();
+    const { result } = renderOptionsHook(async () => {
+      throw Object.assign(
+        new Error('Server Action "abc" was not found on the server.'),
+        { name: "UnrecognizedActionError" }
+      );
+    });
+
+    await waitFor(() => expect(result.current.settled).toBe(true));
+    expect(isUpdateBannerVisible()).toBe(true);
+    _resetForTesting();
   });
 
   it("goes unsettled again when the dropdown closes", async () => {

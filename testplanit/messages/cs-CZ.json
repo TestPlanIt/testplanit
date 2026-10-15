@@ -1040,7 +1040,8 @@
     },
     "by": "od",
     "version": {
-      "prefix": "v"
+      "prefix": "v",
+      "updateAvailable": "Aplikace TestPlanIt byla aktualizována. Obnovte stránku, abyste mohli pokračovat — neuložené změny na této stránce mohou být ztraceny."
     },
     "ui": {
       "tableOfContents": {

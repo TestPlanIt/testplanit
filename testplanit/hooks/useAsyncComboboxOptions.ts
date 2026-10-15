@@ -2,6 +2,7 @@
 
 import { useDebounce } from "@/components/Debounce";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { reportPossibleSkew } from "~/lib/deploymentSkew";
 
 /** How long typing pauses before options are fetched, so a keystroke burst
  *  doesn't fire a query per character. */
@@ -137,6 +138,7 @@ export function useAsyncComboboxOptions<T>({
         // spinner and reveals the empty state, and an unhandled rejection here
         // would surface as a page-level error overlay for a failed option load.
         console.error("Failed to load combobox options", error);
+        reportPossibleSkew(error);
       })
       .finally(() => {
         if (ignore) return;
