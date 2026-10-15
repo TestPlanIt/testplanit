@@ -1,3 +1,7 @@
+import {
+  collectIssueProjectIds,
+  ISSUE_PROJECT_IDS_SELECT,
+} from "~/lib/issues/projectMembershipWhere";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
@@ -81,37 +85,7 @@ export async function POST(request: Request) {
     // and resolved to project rows (with access control) in a single follow-up.
     const issues = await baseDb.issue.findMany({
       where: { id: { in: issueIds } },
-      select: {
-        id: true,
-        caseIssues: {
-          where: { case: { isDeleted: false } },
-          select: { case: { select: { projectId: true } } },
-        },
-        sessions: {
-          where: { isDeleted: false },
-          select: { projectId: true },
-        },
-        sessionResults: {
-          where: { session: { isDeleted: false } },
-          select: { session: { select: { projectId: true } } },
-        },
-        testRuns: {
-          where: { isDeleted: false },
-          select: { projectId: true },
-        },
-        testRunResults: {
-          where: { testRun: { isDeleted: false } },
-          select: { testRun: { select: { projectId: true } } },
-        },
-        testRunStepResults: {
-          where: { testRunResult: { testRun: { isDeleted: false } } },
-          select: {
-            testRunResult: {
-              select: { testRun: { select: { projectId: true } } },
-            },
-          },
-        },
-      },
+      select: { id: true, ...ISSUE_PROJECT_IDS_SELECT },
     });
 
     // Per-issue set of referenced project IDs, plus the union across all issues
@@ -120,23 +94,8 @@ export async function POST(request: Request) {
     const allProjectIds = new Set<number>();
 
     for (const issue of issues) {
-      const ids = new Set<number>();
-      const add = (projectId: number | null | undefined) => {
-        if (typeof projectId === "number") {
-          ids.add(projectId);
-          allProjectIds.add(projectId);
-        }
-      };
-
-      for (const ci of issue.caseIssues) add(ci.case?.projectId);
-      for (const s of issue.sessions) add(s.projectId);
-      for (const sr of issue.sessionResults) add(sr.session?.projectId);
-      for (const tr of issue.testRuns) add(tr.projectId);
-      for (const trr of issue.testRunResults) add(trr.testRun?.projectId);
-      for (const tsr of issue.testRunStepResults) {
-        add(tsr.testRunResult?.testRun?.projectId);
-      }
-
+      const ids = collectIssueProjectIds(issue);
+      for (const id of ids) allProjectIds.add(id);
       projectIdsByIssue.set(issue.id, ids);
     }
 

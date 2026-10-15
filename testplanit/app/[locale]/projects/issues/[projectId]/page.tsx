@@ -1,5 +1,6 @@
 "use client";
 
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
@@ -210,23 +211,7 @@ function ProjectIssues() {
   // Build project filter for groupBy queries
   const projectFilterForGroupBy = useMemo(() => {
     if (projectId === null) return {};
-    return {
-      OR: [
-        { projectId },
-        // Exclude issues linked only to a soft-deleted case — they must not
-        // surface in the project list. Mirrors the global issues list filter.
-        { caseIssues: { some: { case: { projectId, isDeleted: false } } } },
-        { sessions: { some: { projectId } } },
-        { testRuns: { some: { projectId } } },
-        { sessionResults: { some: { session: { projectId } } } },
-        { testRunResults: { some: { testRun: { projectId } } } },
-        {
-          testRunStepResults: {
-            some: { testRunResult: { testRun: { projectId } } },
-          },
-        },
-      ],
-    };
+    return issueInProjectWhere(projectId);
   }, [projectId]);
 
   // Distinct status/priority/issue type values for the filter dropdowns,
@@ -273,33 +258,7 @@ function ProjectIssues() {
       return null;
     }
 
-    const projectFilter = {
-      OR: [
-        { projectId },
-        // Exclude issues linked only to a soft-deleted case — they must not
-        // surface in the project list. Mirrors the global issues list filter.
-        { caseIssues: { some: { case: { projectId, isDeleted: false } } } },
-        { sessions: { some: { projectId } } },
-        { testRuns: { some: { projectId } } },
-        {
-          sessionResults: {
-            some: { session: { projectId } },
-          },
-        },
-        {
-          testRunResults: {
-            some: { testRun: { projectId } },
-          },
-        },
-        {
-          testRunStepResults: {
-            some: {
-              testRunResult: { testRun: { projectId } },
-            },
-          },
-        },
-      ],
-    };
+    const projectFilter = issueInProjectWhere(projectId);
 
     // Combine search filter and project filter using AND
     const conditions: Array<Record<string, unknown>> = [

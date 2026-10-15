@@ -56,5 +56,5 @@ The table displays the following information for each issue:
 
 ## Access Control
 
-- **Standard Users:** Will only see issues that are linked to entities (Test Cases, Sessions, Test Runs, Results) within the projects they have been assigned to.
+- **Standard Users:** Will only see issues that were imported into, or are linked to entities (Test Cases, Sessions, Test Runs, Results, Milestones) within, the projects they have been assigned to.
 - **Administrators:** Have visibility over all issues across all projects in the system.

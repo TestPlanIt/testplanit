@@ -1,3 +1,4 @@
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import type { AdapterType } from "~/zenstack/models";
 import { ORMError } from "@zenstackhq/orm";
 import type { Mock } from "vitest";
@@ -415,7 +416,7 @@ describe("applyInboundIssueUpdate", () => {
       where: {
         externalKey: "DEMO-42",
         isDeleted: false,
-        project: { id: input.projectId },
+        ...issueInProjectWhere(input.projectId),
       },
       select: { id: true },
     });
@@ -712,7 +713,7 @@ describe("applyInboundIssueUpdate", () => {
       where: {
         externalKey: "octocat/Hello-World#42",
         isDeleted: false,
-        project: { id: input.projectId },
+        ...issueInProjectWhere(input.projectId),
       },
       select: { id: true },
     });

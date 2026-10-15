@@ -687,6 +687,7 @@ model Projects {
     promptConfigId                   String?
     promptConfig                     PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
     issues                           Issue[]
+    issueMemberships                 IssueProjectMembership[]
     llmUsages                        LlmUsage[]
     llmFeatureConfigs                LlmFeatureConfig[]
     llmResponseCaches                LlmResponseCache[]
@@ -3684,11 +3685,13 @@ model Issue {
     testRuns              TestRuns[]
     testRunResults        TestRunResults[]
     testRunStepResults    TestRunStepResults[]
+    // Home project (requirements); other projects see the issue through projectMemberships and links.
     projectId             Int?                        @deny('update', true)
     project               Projects?                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
     integrationId         Int?
     integration           Integration?                @relation(fields: [integrationId], references: [id], onDelete: SetNull)
     milestoneIssues       MilestoneIssue[]
+    projectMemberships    IssueProjectMembership[]
     parentId              Int?                        @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
     parent                Issue?                      @relation("IssueParent", fields: [parentId], references: [id], onDelete: Cascade)
     children              Issue[]                     @relation("IssueParent")
@@ -3734,6 +3737,25 @@ model Issue {
     @@deny('all', auth().access == 'NONE')
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create, read, update', auth().access != null)
+}
+
+// A project that imported or resolved a synced issue. One Issue row per
+// tracker ticket per integration is shared by every project that reaches it.
+model IssueProjectMembership {
+    issueId   Int
+    issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    projectId Int
+    project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+    @@id([issueId, projectId])
+    @@index([projectId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('create', projectId in auth().accessibleProjectIds)
+    @@allow('all', auth().access == 'ADMIN')
 }
 
 enum RequirementOverride {

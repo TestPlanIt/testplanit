@@ -1,3 +1,4 @@
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 
 /**
@@ -84,7 +85,7 @@ export async function replaceImportedCaseIssueLinks(
       where: {
         name: issueName,
         isDeleted: false,
-        projectId,
+        ...issueInProjectWhere(projectId),
         ...DEFECT_SCOPE_WHERE,
       },
     });

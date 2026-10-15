@@ -8,6 +8,7 @@ import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import {
   ISSUE_ROW_INCLUDE,
+  issueInProjectWhere,
   mapIssueRow,
   type RawIssueRow,
 } from "./shared.js";
@@ -49,7 +50,7 @@ export function registerIssuesFindByKey(
         const where: IssueWhereInput = {
           externalKey: input.externalKey,
           isDeleted: false,
-          projectId: input.projectId,
+          AND: [issueInProjectWhere(input.projectId)],
           integration: { provider: input.externalSystem },
         };
         if (input.integrationId !== undefined) {

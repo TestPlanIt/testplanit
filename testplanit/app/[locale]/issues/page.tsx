@@ -91,6 +91,10 @@ function Issues() {
     }
 
     const relations = [
+      // Reads through the membership policy, so an imported issue surfaces
+      // for the projects the viewer can access and no others.
+      { projectMemberships: { some: {} } },
+      { milestoneIssues: { some: { milestone: { isDeleted: false } } } },
       {
         // `Issue.repositoryCases` does not exist in v3; the case link is the
         // explicit `caseIssues` join (RepositoryCaseIssue -> case).
