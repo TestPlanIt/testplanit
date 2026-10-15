@@ -16,6 +16,13 @@ export async function queryProjectRelevantIssueIds(
     SELECT i."id" AS id FROM "Issue" i
       WHERE i."isDeleted" = false AND i."projectId" = ${projectId}
     UNION
+    SELECT m."issueId" AS id FROM "IssueProjectMembership" m
+      WHERE m."projectId" = ${projectId}
+    UNION
+    SELECT mi."issueId" AS id FROM "MilestoneIssue" mi
+      JOIN "Milestones" ms ON ms."id" = mi."milestoneId"
+      WHERE ms."projectId" = ${projectId} AND ms."isDeleted" = false
+    UNION
     SELECT ci."issueId" AS id FROM "RepositoryCaseIssue" ci
       JOIN "RepositoryCases" rc ON rc."id" = ci."caseId"
       WHERE rc."projectId" = ${projectId} AND rc."isDeleted" = false

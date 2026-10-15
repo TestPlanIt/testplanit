@@ -1,12 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Guard scaffold (PROV-05) for SyncService.upsertIssueFromExternal's
- * cross-project protection: a second project's sync of the same external
- * issue must never silently reassign an existing row's projectId. The
- * dedup key (`Issue @@unique([externalId, integrationId])`) carries no
- * projectId, so this guard lives inside the update branch of the upsert
- * itself rather than as a schema constraint.
+ * SyncService.upsertIssueFromExternal's cross-project contract: one Issue row
+ * per tracker ticket per integration is shared by every project that imports
+ * it. The dedup key (`Issue @@unique([externalId, integrationId])`) carries
+ * no projectId, so a second project's import takes the update branch — it
+ * must leave the home project alone and record itself as a member instead.
  *
  * Run: cd testplanit && pnpm exec vitest run lib/integrations/services/SyncService.upsertIssueFromExternal
  */
@@ -16,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ---------------------------------------------------------------------------
 const mockProjectsFindUnique = vi.fn();
 const mockIssueUpsert = vi.fn();
+const mockMembershipUpsert = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
@@ -24,6 +24,9 @@ vi.mock("@/lib/rawDb", () => ({
     },
     issue: {
       upsert: (...args: any[]) => mockIssueUpsert(...args),
+    },
+    issueProjectMembership: {
+      upsert: (...args: any[]) => mockMembershipUpsert(...args),
     },
   },
 }));
@@ -64,69 +67,25 @@ function makeIssueData(overrides: Record<string, any> = {}) {
   };
 }
 
-describe("SyncService.upsertIssueFromExternal cross-project guard (PROV-05)", () => {
+async function setup(existing: Record<string, any> | null) {
+  const syncServiceModule = await import("./SyncService");
+  const service = new syncServiceModule.SyncService();
+  const rawDbModule = await import("@/lib/rawDb");
+  const db = (rawDbModule as any).rawDb;
+  db.issue.findUnique = vi.fn().mockResolvedValue(existing);
+  return { service, db };
+}
+
+describe("SyncService.upsertIssueFromExternal shared across projects", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockProjectsFindUnique.mockResolvedValue({ createdBy: "creator-1" });
+    mockIssueUpsert.mockResolvedValue({ id: 42, projectId: 4 });
+    mockMembershipUpsert.mockResolvedValue({});
   });
 
-  it("throws instead of reassigning projectId when the matched row belongs to another project and has dependents", async () => {
-    const syncServiceModule = await import("./SyncService");
-    const service = new syncServiceModule.SyncService();
-    const rawDbModule = await import("@/lib/rawDb");
-    const db = (rawDbModule as any).rawDb;
-    db.issue.findUnique = vi.fn().mockResolvedValue({
-      id: 42,
-      projectId: 4,
-      _count: { children: 2, caseIssues: 0, milestoneIssues: 0 },
-    });
-    mockIssueUpsert.mockResolvedValue({ id: 555 });
-
-    await expect(
-      (service as any).upsertIssueFromExternal(
-        db,
-        1,
-        7,
-        makeIssueData({ id: "ext-shared" })
-      )
-    ).rejects.toThrow(/Refusing to reassign Issue 42/);
-  });
-
-  it("does not call db.issue.upsert when the guard fires", async () => {
-    const syncServiceModule = await import("./SyncService");
-    const service = new syncServiceModule.SyncService();
-    const rawDbModule = await import("@/lib/rawDb");
-    const db = (rawDbModule as any).rawDb;
-    db.issue.findUnique = vi.fn().mockResolvedValue({
-      id: 42,
-      projectId: 4,
-      _count: { children: 2, caseIssues: 0, milestoneIssues: 0 },
-    });
-    mockIssueUpsert.mockResolvedValue({ id: 555 });
-
-    await expect(
-      (service as any).upsertIssueFromExternal(
-        db,
-        1,
-        7,
-        makeIssueData({ id: "ext-shared" })
-      )
-    ).rejects.toThrow();
-
-    expect(mockIssueUpsert).not.toHaveBeenCalled();
-  });
-
-  it("allows the upsert when the matched row belongs to another project but has no dependents", async () => {
-    const syncServiceModule = await import("./SyncService");
-    const service = new syncServiceModule.SyncService();
-    const rawDbModule = await import("@/lib/rawDb");
-    const db = (rawDbModule as any).rawDb;
-    db.issue.findUnique = vi.fn().mockResolvedValue({
-      id: 42,
-      projectId: 4,
-      _count: { children: 0, caseIssues: 0, milestoneIssues: 0 },
-    });
-    mockIssueUpsert.mockResolvedValue({ id: 555 });
+  it("does not move a row another project imported first", async () => {
+    const { service, db } = await setup({ id: 42, projectId: 4 });
 
     const result = await (service as any).upsertIssueFromExternal(
       db,
@@ -135,30 +94,61 @@ describe("SyncService.upsertIssueFromExternal cross-project guard (PROV-05)", ()
       makeIssueData({ id: "ext-shared" })
     );
 
-    expect(result).toEqual({ id: 555, created: false });
-    expect(mockIssueUpsert).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ id: 42, created: false });
+    const call = mockIssueUpsert.mock.calls[0][0];
+    expect(call.update).not.toHaveProperty("projectId");
+    expect(call.create.projectId).toBe(7);
   });
 
-  it("allows the upsert when the matched row already belongs to the same project", async () => {
-    const syncServiceModule = await import("./SyncService");
-    const service = new syncServiceModule.SyncService();
-    const rawDbModule = await import("@/lib/rawDb");
-    const db = (rawDbModule as any).rawDb;
-    db.issue.findUnique = vi.fn().mockResolvedValue({
-      id: 42,
-      projectId: 7,
-      _count: { children: 3, caseIssues: 2, milestoneIssues: 1 },
-    });
-    mockIssueUpsert.mockResolvedValue({ id: 555 });
+  it("records the importing project as a member of the shared row", async () => {
+    const { service, db } = await setup({ id: 42, projectId: 4 });
 
-    const result = await (service as any).upsertIssueFromExternal(
+    await (service as any).upsertIssueFromExternal(
       db,
       1,
       7,
       makeIssueData({ id: "ext-shared" })
     );
 
-    expect(result).toEqual({ id: 555, created: false });
-    expect(mockIssueUpsert).toHaveBeenCalledTimes(1);
+    expect(mockMembershipUpsert).toHaveBeenCalledWith({
+      where: { issueId_projectId: { issueId: 42, projectId: 7 } },
+      create: { issueId: 42, projectId: 7 },
+      update: {},
+    });
+  });
+
+  it("makes the first importer the home project and a member", async () => {
+    const { service, db } = await setup(null);
+    mockIssueUpsert.mockResolvedValue({ id: 555, projectId: 7 });
+
+    const result = await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({ id: "ext-new" })
+    );
+
+    expect(result).toEqual({ id: 555, created: true });
+    expect(mockIssueUpsert.mock.calls[0][0].create.projectId).toBe(7);
+    expect(mockMembershipUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { issueId_projectId: { issueId: 555, projectId: 7 } },
+      })
+    );
+  });
+
+  it("skips the membership write on a client that does not expose the model", async () => {
+    const { service, db } = await setup({ id: 42, projectId: 4 });
+    const narrowDb = { ...db, issueProjectMembership: undefined };
+
+    await expect(
+      (service as any).upsertIssueFromExternal(
+        narrowDb,
+        1,
+        7,
+        makeIssueData({ id: "ext-shared" })
+      )
+    ).resolves.toEqual({ id: 42, created: false });
+    expect(mockMembershipUpsert).not.toHaveBeenCalled();
   });
 });

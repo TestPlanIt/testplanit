@@ -1,3 +1,4 @@
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { baseDb } from "~/lib/db";
 import { ISSUE_TRACKING_PROVIDERS } from "~/lib/integrations/issueTrackerProviders";
 import { syncService } from "~/lib/integrations/services/SyncService";
@@ -52,8 +53,7 @@ export interface IssueKeyResolution {
    * but under a different current key that TestPlanIt already holds — the
    * ticket was moved or renamed — so nothing needed writing.
    */
-  code?:
-    "empty" | "lookup_cap" | "upstream" | "locked" | "other_project" | "moved";
+  code?: "empty" | "lookup_cap" | "upstream" | "locked" | "moved";
 }
 
 export interface ResolveIssueKeysOptions {
@@ -140,9 +140,11 @@ async function findLocalIssue(
   const row = await baseDb.issue.findFirst({
     where: {
       integrationId,
-      projectId,
       isDeleted: false,
-      OR: [{ externalKey: key }, { externalId: key }],
+      AND: [
+        issueInProjectWhere(projectId),
+        { OR: [{ externalKey: key }, { externalId: key }] },
+      ],
     },
     select: { id: true },
   });
@@ -253,31 +255,15 @@ export async function resolveIssueKeys({
       continue;
     }
 
-    // The sync path matches an existing row on `(integrationId, key)` alone,
-    // so a row this integration already holds for another project takes the
-    // update branch and `createIfMissing` never fires. Name that, rather than
-    // reporting a write that didn't happen.
-    const elsewhere = await baseDb.issue.findFirst({
-      where: {
-        integrationId: resolved.integrationId,
-        isDeleted: false,
-        OR: [{ externalKey: trimmed }, { externalId: trimmed }],
-      },
-      select: { projectId: true },
+    // A row another project imported first takes the update branch and is
+    // recorded as reachable from this project, so the re-read above finds
+    // it. What remains is the sync matching the tracker's answer to a row
+    // under another key: the ticket was moved or renamed, and its current
+    // key is already here.
+    record({
+      error: `'${trimmed}' now has a different key in the tracker (it was moved or renamed); the ticket is already in TestPlanIt under its current key.`,
+      code: "moved",
     });
-    // The sync matched the tracker's answer to a row under another key: the
-    // ticket was moved or renamed, and its current key is already here.
-    record(
-      elsewhere && elsewhere.projectId !== projectId
-        ? {
-            error: `'${trimmed}' is already tracked by project ${elsewhere.projectId} on this integration and cannot be linked from project ${projectId}.`,
-            code: "other_project",
-          }
-        : {
-            error: `'${trimmed}' now has a different key in the tracker (it was moved or renamed); the ticket is already in TestPlanIt under its current key.`,
-            code: "moved",
-          }
-    );
   }
 
   return results;
