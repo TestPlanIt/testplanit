@@ -3686,7 +3686,7 @@
         "title": "اختر مصدر المتطلبات",
         "description": "اختر ما إذا كنت تريد إنشاء حالات اختبار من مشكلة أو من مستند متطلبات.",
         "folderContextTip": "سيتم استخدام حالات الاختبار الموجودة من \"{folderName}\" ومجلداتها الأصلية/الفرعية كسياق لتجنب التكرارات. تأكد من تحديد المجلد الصحيح قبل المتابعة.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\\\"{folderName}\\\" ومجلداتها الأب والفرعية تحتوي على {count, plural, =1 {# حالة اختبار موجودة} other {# حالات اختبار موجودة}}. يستخدم الذكاء الاصطناعي أكبر عدد ممكن يناسب السياق الخاص به لمطابقة أسلوب مشروعك وتجنب التكرار.",
         "folderContextEmptyTitle": "لا توجد حالات اختبار موجودة لاستخدامها كسياق",
         "folderContextEmpty": "\"{folderName}\" والمجلدات الأب/التابعة لها لا تحتوي على حالات اختبار، لذا ليس لدى الذكاء الاصطناعي أمثلة على نمط مشروعك أو التغطية الموجودة. للحصول على نتائج أفضل، ابدأ المولد من المجلد الذي تنتمي إليه حالات الاختبار هذه، بجانب الحالات ذات الصلة.",
         "currentFolder": "المجلد الحالي",
