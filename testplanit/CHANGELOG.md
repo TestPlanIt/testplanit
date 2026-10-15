@@ -1,3 +1,9 @@
+## [1.1.6](https://github.com/TestPlanIt/testplanit/compare/v1.1.5...v1.1.6) (2026-10-15)
+
+### Bug Fixes
+
+* **issues:** let several projects import the same tracker issue ([#693](https://github.com/TestPlanIt/testplanit/issues/693)) ([9f844ad](https://github.com/TestPlanIt/testplanit/commit/9f844ad71a1f5d7a7804d967b3a26567dc7174f4))
+
 ## [1.1.5](https://github.com/TestPlanIt/testplanit/compare/v1.1.4...v1.1.5) (2026-10-15)
 
 ### Bug Fixes
