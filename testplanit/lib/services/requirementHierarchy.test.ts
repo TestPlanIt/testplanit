@@ -9,6 +9,7 @@
 // Run via:
 //   cd testplanit && pnpm exec vitest run lib/services/requirementHierarchy.test.ts
 
+import type { DbClient } from "~/lib/zenstack";
 import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
@@ -26,12 +27,13 @@ function makeDb(
     findMany?: unknown[];
   } = {}
 ) {
-  return {
+  const mock = {
     $queryRaw: vi.fn().mockResolvedValue(overrides.queryRaw ?? []),
     issue: {
       findMany: vi.fn().mockResolvedValue(overrides.findMany ?? []),
     },
   };
+  return mock as unknown as DbClient & typeof mock;
 }
 
 describe("requirementHierarchy guards (HIER-03, app layer)", () => {

@@ -1,3 +1,4 @@
+import type { DbClient } from "~/lib/zenstack";
 import { RepositoryCaseSource, WorkflowScope } from "~/zenstack/models";
 import type { CaseFields, CaseFieldTypes } from "~/zenstack/models";
 import { DbNull, type JsonValue } from "@zenstackhq/orm";
@@ -1345,7 +1346,7 @@ function validateFieldValue(
 }
 
 async function getOrCreateFolder(
-  db: any,
+  db: DbClient,
   projectId: number,
   repositoryId: number,
   folderPath: string,

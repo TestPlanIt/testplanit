@@ -1,3 +1,4 @@
+import type { TxClient } from "../lib/zenstack";
 import { Job, Worker } from "bullmq";
 
 import {
@@ -54,7 +55,7 @@ export const processor = async (
   // an empty progress object on the very first read.
   await job.updateProgress({ processed: 0, total: 0, phase: "starting" });
 
-  const result = await db.$transaction(async (tx: any) => {
+  const result = await db.$transaction(async (tx: TxClient) => {
     return materializeIterations(job.data.testRunId, tx, {
       progressIntervalCases: 50,
       onProgress: async ({ processedCases, totalCases, iterationsSoFar }) => {

@@ -1,3 +1,4 @@
+import type { DbClient, TxClient } from "../lib/zenstack";
 import { Job, Worker } from "bullmq";
 import { runWithAuditContext } from "../lib/auditContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
@@ -81,20 +82,20 @@ export {
  * means the row is gone for good (hard-deleted).
  */
 async function loadReviewSubject(
-  db: any,
+  db: DbClient,
   entityType: "CASE" | "RUN" | "SESSION",
   entityId: number
 ): Promise<{ name: string; isDeleted: boolean } | null> {
-  const model =
-    entityType === "CASE"
-      ? db.repositoryCases
-      : entityType === "RUN"
-        ? db.testRuns
-        : db.sessions;
-  const row = await model.findUnique({
+  const args = {
     where: { id: entityId },
     select: { name: true, isDeleted: true },
-  });
+  } as const;
+  const row =
+    entityType === "CASE"
+      ? await db.repositoryCases.findUnique(args)
+      : entityType === "RUN"
+        ? await db.testRuns.findUnique(args)
+        : await db.sessions.findUnique(args);
   return row ? { name: row.name, isDeleted: row.isDeleted === true } : null;
 }
 
@@ -116,7 +117,7 @@ async function loadReviewSubject(
  * distinguishable from the in-line cancellation.
  */
 async function cancelStaleReview(
-  db: any,
+  db: DbClient,
   req: {
     id: string;
     projectId: number;
@@ -160,7 +161,7 @@ async function cancelStaleReview(
  * caller skips dispatch for that row without throwing.
  */
 async function loadReviewContextForReminder(
-  db: any,
+  db: DbClient,
   req: {
     projectId: number;
     entityType: "CASE" | "RUN" | "SESSION";
@@ -780,7 +781,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
               // system-actor stamp bypasses the user-scope
               // @@deny('update', status != 'PENDING') policy on
               // ReviewRequest in race-condition windows.
-              await db.$transaction(async (tx: any) => {
+              await db.$transaction(async (tx: TxClient) => {
                 await emitReviewReminderEvent(
                   {
                     reviewRequestId: req.id,
@@ -932,7 +933,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
               // Review & Approval gate is deliberately bypassed — it is
               // enforced at the user-facing chokepoints, and a system sweep
               // has no human actor to route an approval to.
-              const updatedRun = await db.$transaction(async (tx: any) => {
+              const updatedRun = await db.$transaction(async (tx: TxClient) => {
                 // Re-check inside the tx: a very late completeTestRun could
                 // land between the scan and this write — completing an
                 // already-completed run again would clobber its state and

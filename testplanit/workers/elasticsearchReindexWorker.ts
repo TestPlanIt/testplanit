@@ -1,3 +1,4 @@
+import type { DbClient } from "../lib/zenstack";
 import { Job, Worker } from "bullmq";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { syncProjectIssuesToElasticsearch } from "~/services/issueSearch";
@@ -50,7 +51,7 @@ export interface ReindexJobData extends MultiTenantJobData {
  * join (~25ms). See lib/projectIssueIds.ts for the same pattern.
  */
 async function countProjectIssuesLinkedToRuns(
-  db: any,
+  db: DbClient,
   projectId: number
 ): Promise<number> {
   const rows = (await db.$queryRaw`

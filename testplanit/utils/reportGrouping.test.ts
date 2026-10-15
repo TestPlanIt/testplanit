@@ -1,3 +1,4 @@
+import type { DbClient } from "~/lib/zenstack";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -123,11 +124,12 @@ describe("reportGrouping", () => {
 
   describe("buildFolderAncestorMap", () => {
     function fakeDb(folders: Array<{ id: number; parentId: number | null }>) {
-      return {
+      const mock = {
         repositoryFolders: {
           findMany: async () => folders,
         },
       };
+      return mock as unknown as DbClient & typeof mock;
     }
 
     it("returns self plus the ancestor chain for each folder", async () => {

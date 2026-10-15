@@ -16,11 +16,9 @@
  *     test, leaving the DB as it was found.
  */
 
-import { ZenStackClient } from "@zenstackhq/orm";
+import { createAppZenStackClient } from "~/lib/zenstackClientFactory";
 import { sql } from "kysely";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-
-import { schema } from "~/zenstack/schema";
 
 import { ReadWriteRoutingDialect } from "./readWriteDialect";
 import { runWithDbRouting, withPrimary, withReplica } from "./routingContext";
@@ -46,7 +44,7 @@ describeIntegration("ReadWriteRoutingDialect (live DB)", () => {
 
   beforeAll(() => {
     const base = process.env.DATABASE_URL as string;
-    client = new ZenStackClient(schema, {
+    client = createAppZenStackClient({
       dialect: new ReadWriteRoutingDialect({
         primaryUrl: tagUrl(base, PRIMARY_APP),
         // Same database standing in as a "replica" — we only assert which pool

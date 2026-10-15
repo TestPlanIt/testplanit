@@ -1,3 +1,5 @@
+import { DbNull } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod/v4";
@@ -80,7 +82,7 @@ export async function POST(
       );
     }
 
-    const result = await db.$transaction(async (tx: any) => {
+    const result = await db.$transaction(async (tx: TxClient) => {
       // Determine the current max version.
       const cur = await tx.dataSetVersion.aggregate({
         where: { dataSetId },
@@ -145,7 +147,7 @@ export async function POST(
           version: nextVersion,
           parametersJson:
             payload.parametersJson === undefined
-              ? null
+              ? DbNull
               : (payload.parametersJson as never),
           rowsJson: payload.rowsJson as never,
           rowCount: payload.rowsJson.length,
