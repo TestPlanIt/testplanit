@@ -10,6 +10,7 @@ vi.mock("../../api.js", () => ({
 
 import { zenstack } from "../../api.js";
 import { registerIssuesList } from "./list.js";
+import { issueInProjectWhere } from "./shared.js";
 
 const mockZenstack = vi.mocked(zenstack);
 
@@ -102,7 +103,8 @@ describe("registerIssuesList", () => {
       },
     });
     const where = getCallBody(0)?.where as Record<string, unknown>;
-    expect(where.projectId).toBe(7);
+    expect(where.AND).toEqual([issueInProjectWhere(7)]);
+    expect(where).not.toHaveProperty("projectId");
     expect(where.isDeleted).toBe(false);
     expect((where.integration as { provider?: string }).provider).toBe("JIRA");
     expect(where.integrationId).toBe(7);
