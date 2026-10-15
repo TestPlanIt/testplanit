@@ -1,3 +1,33 @@
+## [1.1.8](https://github.com/TestPlanIt/testplanit/compare/v1.1.7...v1.1.8) (2026-10-15)
+
+### Bug Fixes
+
+* **orm:** write nullable Json fields as DbNull on every client ([#694](https://github.com/TestPlanIt/testplanit/issues/694)) ([4542b2f](https://github.com/TestPlanIt/testplanit/commit/4542b2fa35f7cddada2385ed768159b73eb92f75)), closes [#626](https://github.com/TestPlanIt/testplanit/issues/626)
+
+## [1.1.7](https://github.com/TestPlanIt/testplanit/compare/v1.1.6...v1.1.7) (2026-10-15)
+
+### Enhancements
+
+* **app:** tell open tabs when TestPlanIt was redeployed ([#696](https://github.com/TestPlanIt/testplanit/issues/696)) ([e049227](https://github.com/TestPlanIt/testplanit/commit/e0492270feaf1b56ee48d659c06e145fb262fd9c))
+
+## [1.1.6](https://github.com/TestPlanIt/testplanit/compare/v1.1.5...v1.1.6) (2026-10-15)
+
+### Bug Fixes
+
+* **issues:** let several projects import the same tracker issue ([#693](https://github.com/TestPlanIt/testplanit/issues/693)) ([9f844ad](https://github.com/TestPlanIt/testplanit/commit/9f844ad71a1f5d7a7804d967b3a26567dc7174f4))
+
+## [1.1.5](https://github.com/TestPlanIt/testplanit/compare/v1.1.4...v1.1.5) (2026-10-15)
+
+### Bug Fixes
+
+* **testmo:** use the shared S3 credential resolution in the import worker ([#692](https://github.com/TestPlanIt/testplanit/issues/692)) ([7ad8332](https://github.com/TestPlanIt/testplanit/commit/7ad83326afb7913fb1f05537da9a04de2efcbf9a)), closes [#691](https://github.com/TestPlanIt/testplanit/issues/691)
+
+## [1.1.4](https://github.com/TestPlanIt/testplanit/compare/v1.1.3...v1.1.4) (2026-10-14)
+
+### Bug Fixes
+
+* **jira:** read panel run results from the run summary service ([#683](https://github.com/TestPlanIt/testplanit/issues/683)) ([138dfee](https://github.com/TestPlanIt/testplanit/commit/138dfeeb8f4fdcffe64a6b0e43e27f135b51fce1))
+
 ## [1.1.3](https://github.com/TestPlanIt/testplanit/compare/v1.1.2...v1.1.3) (2026-10-14)
 
 ### Bug Fixes
