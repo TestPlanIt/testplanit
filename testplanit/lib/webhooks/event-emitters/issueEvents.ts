@@ -91,6 +91,10 @@ async function loadIssueLinkage(
   const linked = await tx.issue.findUnique({
     where: { id: issueId },
     select: {
+      projectMemberships: { select: { projectId: true } },
+      milestoneIssues: {
+        select: { milestone: { select: { projectId: true } } },
+      },
       caseIssues: {
         select: { case: { select: { id: true, projectId: true } } },
       },
@@ -133,6 +137,8 @@ async function loadIssueLinkage(
   const add = (id: number | null | undefined) => {
     if (id != null) projectIds.add(id);
   };
+  for (const m of linked?.projectMemberships ?? []) add(m.projectId);
+  for (const mi of linked?.milestoneIssues ?? []) add(mi.milestone?.projectId);
   for (const ci of caseIssues) add(ci.case?.projectId);
   for (const r of testRuns) add(r.projectId);
   for (const r of testRunResults) add(r.testRun?.projectId);

@@ -36,6 +36,7 @@ vi.mock("./ruleSummary", () => ({
   draftFolderNote: mocks.folderNote,
 }));
 
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { runDraftCases, type DraftCasesJob } from "./draftCases";
 
 const job: DraftCasesJob = {
@@ -81,7 +82,7 @@ function makeDb(
       update: vi.fn().mockResolvedValue({}),
     },
     issue: {
-      findUnique: vi.fn().mockResolvedValue(
+      findFirst: vi.fn().mockResolvedValue(
         opts.issue === undefined
           ? {
               id: 100,
@@ -358,5 +359,15 @@ describe("runDraftCases", () => {
       outcome: "issue_gone",
     });
     expect(mocks.generate).not.toHaveBeenCalled();
+  });
+
+  it("finds the issue through this project's visibility, not its home project", async () => {
+    const db = makeDb();
+    await runDraftCases(db, job);
+    expect(db.issue.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: job.issueId, ...issueInProjectWhere(job.projectId) },
+      })
+    );
   });
 });

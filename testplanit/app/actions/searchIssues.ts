@@ -1,5 +1,6 @@
 "use server";
 
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { getServerAuthSession } from "~/server/auth";
@@ -38,7 +39,7 @@ export async function searchIssues(
     const where: any = {
       isDeleted: false,
       ...DEFECT_SCOPE_WHERE,
-      ...(projectId ? { projectId } : {}),
+      ...(projectId ? { AND: [issueInProjectWhere(projectId)] } : {}),
       ...(term
         ? {
             OR: [

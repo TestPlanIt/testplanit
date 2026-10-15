@@ -1,3 +1,4 @@
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import {
   ParameterType,
   RepositoryCaseSource,
@@ -325,8 +326,8 @@ export async function persistGeneratedTestCases(
         sharedIssue = await tx.issue.findFirst({
           where: {
             id: data.linkIssueId,
-            projectId: data.projectId,
             isDeleted: false,
+            ...issueInProjectWhere(data.projectId),
           },
           select: { id: true, name: true, externalId: true },
         });

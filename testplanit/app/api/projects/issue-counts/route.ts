@@ -27,6 +27,34 @@ export async function POST(request: Request) {
         project_id as "projectId",
         COUNT(DISTINCT issue_id) as "issueCount"
       FROM (
+        -- Issues the project owns
+        SELECT DISTINCT i."projectId" as project_id, i.id as issue_id
+        FROM "Issue" i
+        WHERE i."isDeleted" = false
+          AND i."projectId" = ANY(${projectIds}::int[])
+
+        UNION
+
+        -- Issues the project imported
+        SELECT DISTINCT m."projectId" as project_id, i.id as issue_id
+        FROM "Issue" i
+        INNER JOIN "IssueProjectMembership" m ON i.id = m."issueId"
+        WHERE i."isDeleted" = false
+          AND m."projectId" = ANY(${projectIds}::int[])
+
+        UNION
+
+        -- Issues linked through Milestones
+        SELECT DISTINCT ms."projectId" as project_id, i.id as issue_id
+        FROM "Issue" i
+        INNER JOIN "MilestoneIssue" mi ON i.id = mi."issueId"
+        INNER JOIN "Milestones" ms ON mi."milestoneId" = ms.id
+        WHERE i."isDeleted" = false
+          AND ms."isDeleted" = false
+          AND ms."projectId" = ANY(${projectIds}::int[])
+
+        UNION
+
         -- Issues linked through RepositoryCases
         SELECT DISTINCT rc."projectId" as project_id, i.id as issue_id
         FROM "Issue" i

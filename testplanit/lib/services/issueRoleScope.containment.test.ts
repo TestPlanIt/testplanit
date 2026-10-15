@@ -294,6 +294,10 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   "lib/repositoryCaseFacetCounts.ts",
   "lib/services/jira-link-service.ts",
   "lib/webhooks/services/applyInboundIssueUpdate.ts",
+  // The Draft cases webhook action resolves the one issue its job names by
+  // id, narrowed to issues the rule's project can see; a draft can be asked
+  // for on either row kind, so no role predicate applies.
+  "lib/webhooks/actions/draftCases.ts",
   "components/issues/DeferredIssueManager.tsx",
   "components/issues/ManageSimpleUrlIssues.tsx",
   "components/search/FacetedSearchFilters.tsx",

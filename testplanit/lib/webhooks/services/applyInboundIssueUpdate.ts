@@ -1,3 +1,4 @@
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import type { AdapterType } from "~/zenstack/models";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
@@ -301,17 +302,21 @@ export async function applyInboundIssueUpdate(
         const linkedIssue = await tx.issue.findFirst({
           where: {
             isDeleted: false,
-            project: { id: projectId },
-            OR: [
-              { externalKey: linkedRef.externalKey },
-              ...(linkedRef.externalId && provider
-                ? [
-                    {
-                      externalId: linkedRef.externalId,
-                      integration: { provider },
-                    },
-                  ]
-                : []),
+            AND: [
+              issueInProjectWhere(projectId),
+              {
+                OR: [
+                  { externalKey: linkedRef.externalKey },
+                  ...(linkedRef.externalId && provider
+                    ? [
+                        {
+                          externalId: linkedRef.externalId,
+                          integration: { provider },
+                        },
+                      ]
+                    : []),
+                ],
+              },
             ],
           },
           select: { id: true },

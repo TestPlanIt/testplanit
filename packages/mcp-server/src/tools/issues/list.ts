@@ -8,6 +8,7 @@ import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import {
   ISSUE_ROW_INCLUDE,
+  issueInProjectWhere,
   mapIssueRow,
   type RawIssueRow,
 } from "./shared.js";
@@ -45,7 +46,7 @@ export function registerIssuesList(
       try {
         const limit = input.limit ?? DEFAULT_LIMIT;
         const where: IssueWhereInput = {
-          projectId: input.projectId,
+          AND: [issueInProjectWhere(input.projectId)],
           isDeleted: false,
         };
         // See testplanit/lib/services/issueRoleScope.ts — the app-side

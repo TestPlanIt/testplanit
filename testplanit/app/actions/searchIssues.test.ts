@@ -1,3 +1,4 @@
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockFindMany = vi.fn();
@@ -80,7 +81,7 @@ describe("searchIssues", () => {
 
     expect(mockFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ projectId: 7 }),
+        where: expect.objectContaining({ AND: [issueInProjectWhere(7)] }),
       })
     );
   });
@@ -110,7 +111,10 @@ describe("searchIssues", () => {
 
     const where = mockFindMany.mock.calls[0][0].where;
     expect(where).toEqual(
-      expect.objectContaining({ isRequirement: false, projectId: 7 })
+      expect.objectContaining({
+        isRequirement: false,
+        AND: [issueInProjectWhere(7)],
+      })
     );
   });
 

@@ -1,3 +1,4 @@
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import type { AdapterType } from "~/zenstack/models";
 import { ORMError } from "@zenstackhq/orm";
 import type { Mock } from "vitest";
@@ -490,8 +491,10 @@ describe("applyInboundIssueUpdate", () => {
     expect(mocks.tx.issue.findFirst).toHaveBeenCalledWith({
       where: {
         isDeleted: false,
-        project: { id: input.projectId },
-        OR: [{ externalKey: "DEMO-42" }],
+        AND: [
+          issueInProjectWhere(input.projectId),
+          { OR: [{ externalKey: "DEMO-42" }] },
+        ],
       },
       select: { id: true },
     });
@@ -795,10 +798,14 @@ describe("applyInboundIssueUpdate", () => {
     expect(mocks.tx.issue.findFirst).toHaveBeenCalledWith({
       where: {
         isDeleted: false,
-        project: { id: input.projectId },
-        OR: [
-          { externalKey: "octocat/Hello-World#42" },
-          { externalId: "42", integration: { provider: "GITHUB" } },
+        AND: [
+          issueInProjectWhere(input.projectId),
+          {
+            OR: [
+              { externalKey: "octocat/Hello-World#42" },
+              { externalId: "42", integration: { provider: "GITHUB" } },
+            ],
+          },
         ],
       },
       select: { id: true },

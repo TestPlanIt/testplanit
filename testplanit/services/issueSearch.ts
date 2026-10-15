@@ -17,6 +17,14 @@ type IssueForIndexing = Issue & {
   // Direct project relationship (preferred)
   project?: { id: number; name: string; iconUrl?: string | null } | null;
   // Fallback: Try to get project from any relationship
+  projectMemberships?: Array<{
+    project: { id: number; name: string; iconUrl?: string | null };
+  }>;
+  milestoneIssues?: Array<{
+    milestone: {
+      project: { id: number; name: string; iconUrl?: string | null };
+    };
+  }>;
   caseIssues?: Array<{
     case: { project: { id: number; name: string; iconUrl?: string | null } };
   }>;
@@ -59,9 +67,19 @@ function getProjectFromIssue(issue: IssueForIndexing): {
     return issue.project;
   }
 
-  // Fallback: Try repository cases
+  // Fallback: a project that imported the issue
+  if (issue.projectMemberships?.[0]?.project) {
+    return issue.projectMemberships[0].project;
+  }
+
+  // Try repository cases
   if (issue.caseIssues?.[0]?.case?.project) {
     return issue.caseIssues[0].case.project;
+  }
+
+  // Try milestones
+  if (issue.milestoneIssues?.[0]?.milestone?.project) {
+    return issue.milestoneIssues[0].milestone.project;
   }
 
   // Try sessions
@@ -217,6 +235,14 @@ export async function syncIssueToElasticsearch(
         // Include direct project relationship (preferred)
         project: true,
         // Fallback: Check all possible relationships to find project
+        projectMemberships: {
+          take: 1,
+          include: { project: true },
+        },
+        milestoneIssues: {
+          take: 1,
+          include: { milestone: { include: { project: true } } },
+        },
         caseIssues: {
           take: 1,
           include: {
@@ -323,6 +349,22 @@ export async function syncProjectIssuesToElasticsearch(
         { projectId, project: { isDeleted: false } },
         // Fallback: Find through relationships
         {
+          projectMemberships: {
+            some: { projectId, project: { isDeleted: false } },
+          },
+        },
+        {
+          milestoneIssues: {
+            some: {
+              milestone: {
+                projectId,
+                isDeleted: false,
+                project: { isDeleted: false },
+              },
+            },
+          },
+        },
+        {
           caseIssues: {
             some: { case: { projectId, project: { isDeleted: false } } },
           },
@@ -388,6 +430,22 @@ export async function syncProjectIssuesToElasticsearch(
       // Include direct project relationship (preferred)
       project: true,
       // Fallback relationships
+      projectMemberships: {
+        where: { projectId, project: { isDeleted: false } },
+        take: 1,
+        include: { project: true },
+      },
+      milestoneIssues: {
+        where: {
+          milestone: {
+            projectId,
+            isDeleted: false,
+            project: { isDeleted: false },
+          },
+        },
+        take: 1,
+        include: { milestone: { include: { project: true } } },
+      },
       caseIssues: {
         where: { case: { projectId, project: { isDeleted: false } } },
         take: 1,

@@ -8,6 +8,7 @@
  * once, and that one bad key never takes the batch down with it.
  */
 
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const issueFindFirst = vi.fn();
@@ -143,7 +144,7 @@ describe("resolveIssueKeys", () => {
 
   it("fails one key without failing the others", async () => {
     issueFindFirst.mockImplementation(async (args: any) => {
-      const key = args.where.OR[0].externalKey;
+      const key = args.where.AND[1].OR[0].externalKey;
       return key === "GOOD-1" ? { id: 11 } : null;
     });
     performIssueRefreshSystem.mockResolvedValue({
@@ -183,17 +184,45 @@ describe("resolveIssueKeys", () => {
     expect(projectIntegrationFindMany).not.toHaveBeenCalled();
   });
 
-  it("names the owning project when the row belongs to a different one", async () => {
-    // Local miss, refresh succeeds, but the row it touched is another
-    // project's — createIfMissing never fired.
+  it("resolves a row another project imported first once the refresh shares it", async () => {
+    // Local miss (no membership yet), refresh takes the update branch and
+    // records this project as a member, so the re-read reaches the row.
     issueFindFirst
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ projectId: 99 });
+      .mockResolvedValueOnce({ id: 44 });
 
     const out = await resolveIssueKeys({ projectId: 1, keys: ["PROJ-4"] });
 
-    expect(out.get("PROJ-4")?.error).toMatch(/already tracked by project 99/);
+    expect(out.get("PROJ-4")).toEqual({
+      key: "PROJ-4",
+      issueId: 44,
+      created: true,
+    });
+  });
+
+  it("looks a key up through everything the project can reach, not the home column alone", async () => {
+    issueFindFirst.mockResolvedValue({ id: 11 });
+
+    await resolveIssueKeys({ projectId: 1, keys: ["PROJ-4"] });
+
+    expect(issueFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          AND: [
+            issueInProjectWhere(1),
+            { OR: [{ externalKey: "PROJ-4" }, { externalId: "PROJ-4" }] },
+          ],
+        }),
+      })
+    );
+  });
+
+  it("reports a moved ticket when the refresh matched a row under another key", async () => {
+    issueFindFirst.mockResolvedValue(null);
+
+    const out = await resolveIssueKeys({ projectId: 1, keys: ["PROJ-4"] });
+
+    expect(out.get("PROJ-4")?.code).toBe("moved");
   });
 
   it("says a concurrent sync holds the key rather than claiming it is missing", async () => {

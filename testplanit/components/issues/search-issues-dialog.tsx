@@ -1,5 +1,6 @@
 "use client";
 
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { stripHtmlTags } from "~/utils/stripHtmlTags";
@@ -216,7 +217,7 @@ export function SearchIssuesDialog({
   ).issue.useFindMany(
     {
       where: {
-        projectId,
+        AND: [issueInProjectWhere(projectId)],
         ...(includeRequirements ? {} : DEFECT_SCOPE_WHERE),
         ...(debouncedSearchQuery && {
           OR: [

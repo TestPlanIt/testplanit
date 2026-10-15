@@ -1,5 +1,7 @@
 import { rawDb as defaultDb } from "@/lib/rawDb";
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import {
+  ensureIssueProjectMembership,
   isDetachedRequirement,
   LOCKED_ISSUE_FIELDS,
 } from "~/lib/services/linkedIssueUpsert";
@@ -830,7 +832,7 @@ export class SyncService {
             const allProjectIssues = await db.issue.findMany({
               where: {
                 integrationId,
-                ...(projectId && { projectId: parseInt(projectId) }),
+                ...(projectId && issueInProjectWhere(parseInt(projectId))),
               },
               select: {
                 id: true,
@@ -952,7 +954,7 @@ export class SyncService {
         const totalIssues = await db.issue.count({
           where: {
             integrationId,
-            ...(projectId && { projectId: parseInt(projectId) }),
+            ...(projectId && issueInProjectWhere(parseInt(projectId))),
           },
         });
 
@@ -965,7 +967,7 @@ export class SyncService {
           const localIssues = await db.issue.findMany({
             where: {
               integrationId,
-              ...(projectId && { projectId: parseInt(projectId) }),
+              ...(projectId && issueInProjectWhere(parseInt(projectId))),
             },
             select: {
               id: true,
@@ -2143,41 +2145,17 @@ export class SyncService {
               isRequirement: true,
               requirementDetachedAt: true,
               requirementOverride: true,
-              _count: {
-                select: {
-                  children: true,
-                  caseIssues: true,
-                  milestoneIssues: true,
-                },
-              },
             },
           })
         : null;
 
-    // The dedup key (externalId, integrationId) carries no projectId, so
-    // two TestPlanIt projects sharing one Integration and both mapped to
-    // the same external issue collide on this same row. Refuse to hand
-    // the row to the second project once it has dependents (children,
-    // case links, or milestone links) — reassigning projectId would
-    // orphan them from the project that actually owns them.
-    const dependentsCount = existing
-      ? (existing._count?.children ?? 0) +
-        (existing._count?.caseIssues ?? 0) +
-        (existing._count?.milestoneIssues ?? 0)
-      : 0;
-    if (
-      existing &&
-      existing.projectId != null &&
-      existing.projectId !== projectId &&
-      dependentsCount > 0
-    ) {
-      throw new Error(
-        `Refusing to reassign Issue ${existing.id} from project ${existing.projectId} to ${projectId}: ` +
-          `it has ${existing._count?.children ?? 0} child issue(s), ${existing._count?.caseIssues ?? 0} case link(s), ` +
-          `and ${existing._count?.milestoneIssues ?? 0} milestone link(s) that would be orphaned. ` +
-          `Investigate the overlapping IntegrationProject configuration mapping both projects to the same external project.`
-      );
-    }
+    // The dedup key (externalId, integrationId) carries no projectId: one
+    // row per tracker ticket is shared by every project that imports it.
+    // The first importer becomes the home project (requirement semantics
+    // live there); every later importer is recorded as a member and never
+    // takes the row over. Parent and requirement resolution therefore run
+    // against the home project, not the importer.
+    const homeProjectId = existing?.projectId ?? projectId;
 
     // Resurrect-on-collision: if a prior soft-deleted Issue exists for
     // this (externalId, integrationId), `create` would 23505. Upsert with
@@ -2192,13 +2170,13 @@ export class SyncService {
     const resolvedParentId = await resolveSyncedParentId(
       db,
       integrationId,
-      projectId,
+      homeProjectId,
       issueData.parent
     );
     const configuredIsRequirement = await resolveSyncedRequirementFlag(
       db,
       integrationId,
-      projectId,
+      homeProjectId,
       { issueTypeId: issueData.issueType?.id, labels: issueData.labels }
     );
     // The per-issue tri-state override outranks the config; `undefined`
@@ -2246,6 +2224,8 @@ export class SyncService {
       ...issueFields,
       isDeleted: false,
     };
+    // The home project is set once, on create.
+    delete updateFields.projectId;
     if (isDetachedRequirement(existing)) {
       for (const field of LOCKED_ISSUE_FIELDS) {
         delete updateFields[field];
@@ -2266,6 +2246,8 @@ export class SyncService {
       },
       update: updateFields,
     });
+
+    await ensureIssueProjectMembership(db, upserted.id, projectId);
 
     // Index newly-created issues just like manual import does. Best-effort
     // — search index drift is recoverable, the row commit isn't.

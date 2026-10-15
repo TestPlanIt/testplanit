@@ -1,3 +1,4 @@
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
@@ -132,8 +133,7 @@ export function AddSessionModal({
   const { data: allIssues } = useClientQueries(schema).issue.useFindMany(
     {
       where: {
-        // Filter by projectId
-        projectId: Number(projectId),
+        ...issueInProjectWhere(Number(projectId)),
         isDeleted: false,
       },
       select: { id: true, name: true, externalId: true },

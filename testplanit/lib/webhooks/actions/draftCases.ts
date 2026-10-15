@@ -1,5 +1,6 @@
 import { generateTestCasesForProject } from "~/app/api/llm/generate-test-cases/core";
 import type { IssueData } from "~/app/api/llm/generate-test-cases/shared";
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import {
   getProjectReadiness,
   listProjectTemplates,
@@ -88,8 +89,8 @@ export async function runDraftCases(
   // Tags are generated unless the rule switched them off, as in the wizard.
   const autoGenerateTags = options.autoGenerateTags ?? true;
 
-  const issue = await db.issue.findUnique({
-    where: { id: job.issueId },
+  const issue = await db.issue.findFirst({
+    where: { id: job.issueId, ...issueInProjectWhere(job.projectId) },
     select: {
       id: true,
       name: true,
@@ -98,11 +99,10 @@ export async function runDraftCases(
       status: true,
       priority: true,
       externalKey: true,
-      projectId: true,
       isDeleted: true,
     },
   });
-  if (!issue || issue.projectId !== job.projectId || issue.isDeleted) {
+  if (!issue || issue.isDeleted) {
     return { outcome: "issue_gone" };
   }
 

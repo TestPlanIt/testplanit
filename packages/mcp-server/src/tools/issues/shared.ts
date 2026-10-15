@@ -1,6 +1,7 @@
 import type {
   IssueInclude,
   IssueSelect,
+  IssueWhereInput,
 } from "@db/input";
 import { proseMirrorToMarkdown } from "../../richText.js";
 
@@ -17,6 +18,36 @@ import { proseMirrorToMarkdown } from "../../richText.js";
 // expressed as `LINKED_ARRAYS_INLINE_CAP_PLUS_ONE` so the +1 is intentional,
 // not a magic number.
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * "Visible in this project": the issue's home project, a project that
+ * imported it, or a project holding an entity it is linked to. Mirrors
+ * testplanit/lib/issues/projectMembershipWhere.ts — this package builds and
+ * ships separately from the app and cannot import that module.
+ */
+export function issueInProjectWhere(projectId: number): IssueWhereInput {
+  return {
+    OR: [
+      { projectId },
+      { projectMemberships: { some: { projectId } } },
+      { caseIssues: { some: { case: { projectId, isDeleted: false } } } },
+      {
+        milestoneIssues: {
+          some: { milestone: { projectId, isDeleted: false } },
+        },
+      },
+      { sessions: { some: { projectId } } },
+      { testRuns: { some: { projectId } } },
+      { sessionResults: { some: { session: { projectId } } } },
+      { testRunResults: { some: { testRun: { projectId } } } },
+      {
+        testRunStepResults: {
+          some: { testRunResult: { testRun: { projectId } } },
+        },
+      },
+    ],
+  };
+}
 
 export const ISSUE_ROW_INCLUDE = {
   integration: { select: { id: true, name: true, provider: true } },

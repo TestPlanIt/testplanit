@@ -1,3 +1,4 @@
+import { issueInProjectWhere } from "~/lib/issues/projectMembershipWhere";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import {
   IssueKeyResolutionError,
@@ -65,7 +66,7 @@ export async function resolveImportIssueKeys(
       where: {
         name,
         isDeleted: false,
-        projectId,
+        ...issueInProjectWhere(projectId),
         ...DEFECT_SCOPE_WHERE,
       },
       select: { id: true },
@@ -113,7 +114,7 @@ export async function resolveImportIssueKeys(
       where: {
         id: resolution.issueId,
         isDeleted: false,
-        projectId,
+        ...issueInProjectWhere(projectId),
         ...DEFECT_SCOPE_WHERE,
       },
       select: { id: true },
