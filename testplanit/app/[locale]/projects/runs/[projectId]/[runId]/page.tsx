@@ -1772,7 +1772,7 @@ export default function TestRunPage() {
               <FormLabel>{t("common.fields.description")}</FormLabel>
               <FormControl>
                 {contentLoaded ? (
-                  <div className="min-h-[50px] max-h-[125px] overflow-y-auto border rounded-md">
+                  <div className="min-h-[50px]">
                     <TipTapEditor
                       key={`editing-note-${isEditMode}`}
                       content={noteContent}
@@ -1811,7 +1811,7 @@ export default function TestRunPage() {
               <FormLabel>{t("common.fields.documentation")}</FormLabel>
               <FormControl>
                 {contentLoaded ? (
-                  <div className="min-h-[50px] max-h-[250px] overflow-y-auto border rounded-md">
+                  <div className="min-h-[50px]">
                     <TipTapEditor
                       key={`editing-docs-${isEditMode}`}
                       content={docsContent}
