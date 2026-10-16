@@ -17,9 +17,9 @@ import { NotificationType } from "~/zenstack/models";
 interface NotificationTypePreferencesProps {
   /** The muted set as currently shown (saved value, or the form's draft). */
   value: readonly string[];
-  /** Called with the next muted set while editing. */
+  /** Called with the next muted set whenever a switch is flipped. */
   onChange?: (next: NotificationType[]) => void;
-  /** Off until the profile is in edit mode; the switches then only display. */
+  /** For viewers who may not change the preferences; the switches then only display. */
   readOnly: boolean;
   isAdmin: boolean;
   /** The resolved mode, so the section can say when nothing is delivered. */
@@ -28,9 +28,9 @@ interface NotificationTypePreferencesProps {
 
 /**
  * "What to notify me about": one switch per catalogue entry, on by default.
- * The component is controlled by the profile form: it renders the muted set
- * it is given and reports changes; the form's Save writes them. The muted
- * set stores opt-outs only, so a type added later is on for everyone.
+ * The component is controlled: it renders the muted set it is given and
+ * reports changes; the parent writes them. The muted set stores opt-outs
+ * only, so a type added later is on for everyone.
  */
 export function NotificationTypePreferences({
   value,

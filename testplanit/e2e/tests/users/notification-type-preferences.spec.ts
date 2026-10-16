@@ -160,19 +160,8 @@ test.describe("Per-type notification preferences", () => {
         "notification-type-switch-SHARE_LINK_ACCESSED"
       );
 
-      await test.step("view mode shows every type on, read-only; admin types are hidden", async () => {
+      await test.step("every optional type is on and live; locked types are fixed; admin types are hidden", async () => {
         await expect(shareSwitch).toHaveAttribute("aria-checked", "true");
-        await expect(shareSwitch).toBeDisabled();
-        await expect(
-          page.getByTestId("notification-type-switch-USER_REGISTERED")
-        ).toHaveCount(0);
-        await expect(page.getByTestId("notification-types-reset")).toHaveCount(
-          0
-        );
-      });
-
-      await test.step("edit mode enables the optional switches but not the locked ones", async () => {
-        await page.getByTestId("notification-preferences-edit").click();
         await expect(shareSwitch).toBeEnabled();
         await expect(
           page.getByTestId("notification-type-switch-SYSTEM_ANNOUNCEMENT")
@@ -181,20 +170,19 @@ test.describe("Per-type notification preferences", () => {
           page.getByTestId("notification-type-switch-INTEGRATION_AUTH_EXPIRED")
         ).toBeDisabled();
         await expect(
+          page.getByTestId("notification-type-switch-USER_REGISTERED")
+        ).toHaveCount(0);
+        await expect(
           page.getByTestId("notification-types-reset")
         ).toBeDisabled();
       });
 
-      await test.step("switching the type off and saving persists it", async () => {
+      await test.step("switching the type off persists it at once", async () => {
         await shareSwitch.click();
         await expect(shareSwitch).toHaveAttribute("aria-checked", "false");
         await expect(
           page.getByTestId("notification-types-reset")
         ).toBeEnabled();
-        // Nothing is written until the card is saved.
-        expect(await mutedTypes(request, url, userId)).toEqual([]);
-
-        await page.getByTestId("notification-preferences-save").click();
         await expect
           .poll(() => mutedTypes(request, url, userId), { timeout: 15000 })
           .toEqual(["SHARE_LINK_ACCESSED"]);
@@ -202,7 +190,6 @@ test.describe("Per-type notification preferences", () => {
         await page.reload();
         await openTypePreferences(page);
         await expect(shareSwitch).toHaveAttribute("aria-checked", "false");
-        await expect(shareSwitch).toBeDisabled();
         await expect(
           page.getByTestId("notification-type-switch-WORK_ASSIGNED")
         ).toHaveAttribute("aria-checked", "true");
@@ -217,11 +204,9 @@ test.describe("Per-type notification preferences", () => {
         expect(await count()).toBe(1);
       });
 
-      await test.step("reset to defaults, then save, turns the type back on", async () => {
-        await page.getByTestId("notification-preferences-edit").click();
+      await test.step("reset to defaults turns the type back on", async () => {
         await page.getByTestId("notification-types-reset").click();
         await expect(shareSwitch).toHaveAttribute("aria-checked", "true");
-        await page.getByTestId("notification-preferences-save").click();
         await expect
           .poll(() => mutedTypes(request, url, userId), { timeout: 15000 })
           .toEqual([]);

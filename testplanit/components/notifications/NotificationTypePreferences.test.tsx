@@ -106,7 +106,7 @@ describe("NotificationTypePreferences", () => {
     expect(switchFor("WORK_ASSIGNED")).toHaveAttribute("aria-checked", "true");
   });
 
-  it("is read-only outside edit mode: switches disabled, no reset button", () => {
+  it("is read-only for viewers who cannot edit: switches disabled, no reset button", () => {
     render(
       <NotificationTypePreferences
         value={["MILESTONE_DUE_REMINDER"]}

@@ -287,7 +287,7 @@ Users can configure their notification preferences with these modes:
 
 Below the notification mode, the **What to notify me about** section lists every notification type you can receive, grouped as in the [table above](#notification-types), each with a switch:
 
-- Every switch is **on by default**. Switch a type off to stop it on every channel: the bell, immediate email and the daily digest. Click **Edit** on the Notifications tab, flip the switches, then **Save**.
+- Every switch is **on by default**. Switch a type off to stop it on every channel: the bell, immediate email and the daily digest. Each switch saves as soon as you flip it, like the switches on the Alerts tab.
 - **Always on** types (integration re-authorization, admin announcements) are shown switched on and cannot be changed.
 - Types sent only to administrators appear only on an administrator's profile.
 - **Reset to defaults** turns every type back on.
@@ -300,9 +300,11 @@ Muting a type affects only what _you_ receive. A review request to a role you ho
 Users manage their notification preferences on their Notifications & Alerts page:
 
 1. Open **Notifications & Alerts** from the user menu (or the link in your profile's Preferences section)
-2. Open the **Notifications** tab and click **Edit**
+2. Open the **Notifications** tab
 3. Select your preferred notification mode
-4. Under **What to notify me about**, switch off any type you do not want, then **Save**
+4. Under **What to notify me about**, switch off any type you do not want
+
+Every change is saved as soon as you make it.
 
 ## Email Templates
 

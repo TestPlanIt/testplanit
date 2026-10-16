@@ -71,7 +71,7 @@ Two settings on your **profile page**, under **Preferences**, control notificati
 The email options appear only when an email server is configured for your deployment.
 :::
 
-**What to notify me about** (on the **Notifications** tab of your [Notifications & Alerts](./alerts.md) page, below the notification mode) lists every notification type, grouped, each with a switch that is **on by default**. Click **Edit**, switch a type off to stop it everywhere — bell, immediate email and daily digest — for you alone, then **Save**. **Always on** types cannot be switched off, administrator-only types appear only for administrators, and **Reset to defaults** turns everything back on. Types added in a future release are on automatically.
+**What to notify me about** (on the **Notifications** tab of your [Notifications & Alerts](./alerts.md) page, below the notification mode) lists every notification type, grouped, each with a switch that is **on by default**. Switch a type off to stop it everywhere — bell, immediate email and daily digest — for you alone; each switch saves as soon as you flip it. **Always on** types cannot be switched off, administrator-only types appear only for administrators, and **Reset to defaults** turns everything back on. Types added in a future release are on automatically.
 
 ## Related pages
 
