@@ -3,7 +3,8 @@ import { composeRunFromCases } from "~/lib/webhooks/actions/composeRun";
 import { logWebhookAction } from "~/lib/webhooks/actions/log";
 import { describeCreateRunRule } from "~/lib/webhooks/actions/ruleSummary";
 import { executeAutoRun } from "./autoExecute";
-import type { ImpactAutoRun, ImpactAutoRunAction } from "./types";
+import { buildChangesNodes } from "./buildChangesNote";
+import type { BuildChanges, ImpactAutoRun, ImpactAutoRunAction } from "./types";
 
 export type AutoRunResult =
   | { created: true; testRunId: number; caseCount: number }
@@ -29,7 +30,8 @@ function suggestionFilter(minScore: number | null | undefined) {
  * created by the System user. The first run made from an analysis is linked
  * to it and its suggestions marked accepted, exactly as the dialog records a
  * reviewer's acceptance. A rule composes one run per analysis, so a repeat
- * of the same change reports the run it already made.
+ * of the same change reports the run it already made. `buildChanges`, the
+ * pull requests behind a push, is appended to the run's note when given.
  */
 export async function createRunFromAnalysis(
   db: any,
@@ -39,7 +41,8 @@ export async function createRunFromAnalysis(
     actionId: string | null;
     minScore?: number | null;
   },
-  tenantId?: string
+  tenantId?: string,
+  buildChanges?: BuildChanges | null
 ): Promise<AutoRunResult> {
   const analysis = await db.impactAnalysis.findUnique({
     where: { id: analysisId },
@@ -100,6 +103,7 @@ export async function createRunFromAnalysis(
 
   const actorId = await webhookActorId(db, analysis.project.createdBy);
   const rule = await describeCreateRunRule(db, action);
+  const noteAppendix = buildChangesNodes(buildChanges);
   const composed = await composeRunFromCases(db, {
     projectId: analysis.projectId,
     name: autoRun.label,
@@ -110,6 +114,7 @@ export async function createRunFromAnalysis(
         : [{ label: autoRun.label, url: autoRun.url ?? null }]),
       ...(rule ? [{ label: rule, url: null }] : []),
     ],
+    ...(noteAppendix.length > 0 ? { noteAppendix } : {}),
     createdById: actorId,
     tenantId,
   });
@@ -146,7 +151,8 @@ export async function runAnalysisActions(
   analysisId: number,
   projectId: number,
   autoRun: ImpactAutoRun,
-  tenantId?: string
+  tenantId?: string,
+  buildChanges?: BuildChanges | null
 ): Promise<void> {
   const actions: (
     | ImpactAutoRunAction
@@ -182,7 +188,8 @@ export async function runAnalysisActions(
         analysisId,
         autoRun,
         action,
-        tenantId
+        tenantId,
+        buildChanges
       );
       if (!run.created) {
         if (run.reason === "already_linked" && run.testRunId) {

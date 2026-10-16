@@ -100,6 +100,19 @@ describe("runNote", () => {
       ],
     });
   });
+
+  it("appends the given nodes after the link paragraphs", () => {
+    const appendix = [
+      { type: "paragraph", content: [{ type: "text", text: "More" }] },
+      { type: "bulletList", content: [] },
+    ];
+    expect(
+      runNote([{ label: "main a…b", url: null }], appendix).content
+    ).toEqual([
+      { type: "paragraph", content: [{ type: "text", text: "main a…b" }] },
+      ...appendix,
+    ]);
+  });
 });
 
 describe("composeRunFromCases", () => {

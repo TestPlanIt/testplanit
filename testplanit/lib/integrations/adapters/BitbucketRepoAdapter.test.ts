@@ -1004,6 +1004,61 @@ describe("BitbucketRepoAdapter", () => {
       expect(mockFetch).toHaveBeenCalledTimes(3);
     });
   });
+  describe("pullRequestsForCommit", () => {
+    it("maps the pull requests that contain the commit and sends auth headers", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [
+            {
+              id: 2957,
+              title: "Fixes/ABT-48564 pip activity token crash",
+              links: {
+                html: {
+                  href: "https://bitbucket.org/myworkspace/myrepo/pull-requests/2957",
+                },
+              },
+            },
+            { id: 2960, title: "Sync worker", links: {} },
+          ],
+        })
+      );
+
+      const result = await adapter.pullRequestsForCommit("5ae21ba");
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/commit/5ae21ba/pullrequests?pagelen=10"
+      );
+      expect(mockFetch.mock.calls[0][1].headers.Authorization).toMatch(
+        /^Basic /
+      );
+      expect(result).toEqual([
+        {
+          number: 2957,
+          title: "Fixes/ABT-48564 pip activity token crash",
+          url: "https://bitbucket.org/myworkspace/myrepo/pull-requests/2957",
+        },
+        { number: 2960, title: "Sync worker", url: null },
+      ]);
+    });
+
+    it("returns an empty list for an empty values array", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [] }));
+      await expect(adapter.pullRequestsForCommit("abc")).resolves.toEqual([]);
+    });
+
+    it("returns an empty list on a 404", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ error: { message: "not found" } }, 404)
+      );
+      await expect(adapter.pullRequestsForCommit("abc")).resolves.toEqual([]);
+    });
+
+    it("rethrows other errors", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ error: "boom" }, 401));
+      await expect(adapter.pullRequestsForCommit("abc")).rejects.toThrow(/401/);
+    });
+  });
+
   describe("listPullRequests", () => {
     function makeRawPr(id: number, overrides: Record<string, any> = {}) {
       return {

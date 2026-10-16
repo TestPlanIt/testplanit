@@ -32,6 +32,11 @@ import { runHistoryLayer } from "../lib/services/impact/layers/historyLayer";
 import { excludeGlobsOf } from "../lib/integrations/repoPathPatterns";
 import { createExcludedPathMatcher } from "../lib/services/impact/excludedPaths";
 import { runAnalysisActions } from "../lib/services/impact/autoRun";
+import {
+  botCommitMatcher,
+  collectBuildPullRequests,
+  toBuildChanges,
+} from "../lib/services/impact/buildPullRequests";
 import { runIssueLayer } from "../lib/services/impact/layers/issueLayer";
 import { runPathLayer } from "../lib/services/impact/layers/pathLayer";
 import {
@@ -634,6 +639,29 @@ export const processor = async (
     for (const c of cases) for (const kind of c.layers) layerCounts[kind]++;
     durationsMs[currentPhase] = Date.now() - phaseStartedAt;
 
+    // A push auto-run's note lists the pull requests behind the build. Looked
+    // up here, where the adapter and the range's commits are at hand; a
+    // failure leaves the list out and changes nothing else.
+    let buildChanges: AnalysisResult["buildChanges"];
+    if (job.data.autoRun?.trigger === "push") {
+      try {
+        const collected = await collectBuildPullRequests(
+          adapter,
+          compare.commits,
+          {
+            maxCommits: cfg.buildPullRequestsMaxCommits,
+            excludeCommit: botCommitMatcher(cfg.buildBotCommitPattern),
+          }
+        );
+        if (!collected.unsupported) buildChanges = toBuildChanges(collected);
+      } catch (error) {
+        console.warn(
+          `[impact] pull requests of the build for analysis ${analysisId} not listed:`,
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+    }
+
     const result: AnalysisResult = {
       analysisId,
       baseSha,
@@ -654,6 +682,7 @@ export const processor = async (
         durationsMs,
         thresholds: { affected: cfg.affectedThreshold, min: cfg.minScore },
       },
+      ...(buildChanges ? { buildChanges } : {}),
     };
     await saveResult(db, analysisId, result);
     if (job.data.autoRun) {
@@ -666,7 +695,8 @@ export const processor = async (
           analysisId,
           projectId,
           job.data.autoRun,
-          job.data.tenantId
+          job.data.tenantId,
+          buildChanges
         );
       } catch (error) {
         console.error(

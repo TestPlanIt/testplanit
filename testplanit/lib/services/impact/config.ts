@@ -49,6 +49,13 @@ export interface ImpactConfig {
    * Reads each commit's patch; off, the scan only lists changed paths.
    */
   issueScanSymbolPins: boolean;
+  /** Push auto-runs: newest commits of the range asked for their pull requests. */
+  buildPullRequestsMaxCommits: number;
+  /**
+   * Push auto-runs: commits whose first message line matches are a build
+   * bot's and are left out of the run note. Empty = none.
+   */
+  buildBotCommitPattern: string;
 }
 
 export const IMPACT_CONFIG_DEFAULTS: Readonly<ImpactConfig> = Object.freeze({
@@ -84,6 +91,8 @@ export const IMPACT_CONFIG_DEFAULTS: Readonly<ImpactConfig> = Object.freeze({
   issueImportMaxLookups: 100,
   issueImportFullMaxLookups: 5000,
   issueScanSymbolPins: true,
+  buildPullRequestsMaxCommits: 100,
+  buildBotCommitPattern: "^Update version code to ",
 });
 
 type EnvLike = Record<string, string | undefined>;
@@ -104,6 +113,10 @@ function envNumber(value: string | undefined, fallback: number): number {
 function envFraction(value: string | undefined, fallback: number): number {
   const parsed = envNumber(value, fallback);
   return parsed <= 1 ? parsed : fallback;
+}
+
+function envString(value: string | undefined, fallback: string): string {
+  return value === undefined ? fallback : value;
 }
 
 function envBool(value: string | undefined, fallback: boolean): boolean {
@@ -200,6 +213,14 @@ export function readImpactConfig(env: EnvLike = process.env): ImpactConfig {
     issueScanSymbolPins: envBool(
       env.IMPACT_ISSUE_SCAN_SYMBOL_PINS,
       d.issueScanSymbolPins
+    ),
+    buildPullRequestsMaxCommits: envInt(
+      env.IMPACT_BUILD_PR_MAX_COMMITS,
+      d.buildPullRequestsMaxCommits
+    ),
+    buildBotCommitPattern: envString(
+      env.IMPACT_BUILD_BOT_COMMIT_PATTERN,
+      d.buildBotCommitPattern
     ),
   };
 }

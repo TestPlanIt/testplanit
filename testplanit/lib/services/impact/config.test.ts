@@ -34,6 +34,17 @@ describe("readImpactConfig", () => {
     expect(cfg.thinkingBudget).toBe(1024);
     expect(cfg.linkedExpansion).toBe(true);
     expect(cfg.reuseHours).toBe(24);
+    expect(cfg.buildPullRequestsMaxCommits).toBe(100);
+    expect(cfg.buildBotCommitPattern).toBe("^Update version code to ");
+  });
+
+  it("reads the build pull request knobs, an empty pattern included", () => {
+    const cfg = readImpactConfig({
+      IMPACT_BUILD_PR_MAX_COMMITS: "25",
+      IMPACT_BUILD_BOT_COMMIT_PATTERN: "",
+    });
+    expect(cfg.buildPullRequestsMaxCommits).toBe(25);
+    expect(cfg.buildBotCommitPattern).toBe("");
   });
 
   it("reads overrides from IMPACT_* variables", () => {

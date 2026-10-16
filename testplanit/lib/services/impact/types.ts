@@ -3,7 +3,10 @@
  * routes and UI all speak these.
  */
 
-import type { ChangedFileStatus } from "~/lib/integrations/adapters/GitRepoAdapter";
+import type {
+  ChangedFileStatus,
+  RepoPullRequestRef,
+} from "~/lib/integrations/adapters/GitRepoAdapter";
 import type { DiffHunk } from "~/lib/integrations/diff/parseUnifiedDiff";
 import type { AutoExecuteOptions } from "~/lib/webhooks/actions/schemas";
 import type { WebhookActionTrigger } from "~/zenstack/models";
@@ -216,6 +219,19 @@ export interface AnalysisStats {
 }
 
 /** The engine's output, persisted on ImpactAnalysis.result (minus cases). */
+/**
+ * What a push's commit range was made of: the pull requests merged into it
+ * and the commits no pull request contains. Looked up for push auto-runs
+ * only, and absent when the provider has no per-commit lookup or it failed.
+ */
+export interface BuildChanges {
+  pullRequests: RepoPullRequestRef[];
+  orphanCommits: { shortSha: string; subject: string; url?: string }[];
+  truncated: boolean;
+  /** Commits beyond the lookup cap that were not asked about. */
+  uncheckedCommits: number;
+}
+
 export interface AnalysisResult {
   analysisId: number;
   baseSha: string;
@@ -228,6 +244,7 @@ export interface AnalysisResult {
   summary: string;
   warnings: AnalysisWarning[];
   stats: AnalysisStats;
+  buildChanges?: BuildChanges;
 }
 
 // ---------------------------------------------------------------------------

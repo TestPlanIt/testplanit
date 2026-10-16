@@ -13,6 +13,7 @@ vi.mock("./autoExecute", () => ({
 
 import { SYSTEM_AUTOMATION_USER_ID } from "~/lib/automationUser";
 import { createRunFromAnalysis, runAnalysisActions } from "./autoRun";
+import { buildChangesNodes } from "./buildChangesNote";
 
 type LogRow = {
   webhookActionId: string | null;
@@ -187,6 +188,48 @@ describe("createRunFromAnalysis", () => {
       name: "main a…b (PR #12)",
       links,
     });
+  });
+
+  it("appends the build's pull requests to the note when they were looked up", async () => {
+    const db = makeDb(analysis);
+    const buildChanges = {
+      pullRequests: [
+        { number: 2957, title: "Fix pip", url: "https://bb/pr/2957" },
+      ],
+      orphanCommits: [{ shortSha: "e34a9ac", subject: "Add coverage" }],
+      truncated: false,
+      uncheckedCommits: 0,
+    };
+    await createRunFromAnalysis(
+      db,
+      77,
+      { trigger: "push", label: "master a…b" },
+      rule,
+      undefined,
+      buildChanges
+    );
+    expect(mockCompose.mock.calls[0][1].noteAppendix).toEqual(
+      buildChangesNodes(buildChanges)
+    );
+    expect(mockCompose.mock.calls[0][1].noteAppendix).toHaveLength(4);
+  });
+
+  it("sends no appendix when the build lookup found nothing or did not run", async () => {
+    const db = makeDb(analysis);
+    await createRunFromAnalysis(
+      db,
+      77,
+      { trigger: "push", label: "master a…b" },
+      rule,
+      undefined,
+      {
+        pullRequests: [],
+        orphanCommits: [],
+        truncated: false,
+        uncheckedCommits: 0,
+      }
+    );
+    expect(mockCompose.mock.calls[0][1]).not.toHaveProperty("noteAppendix");
   });
 
   it("adds a line naming the rule and its settings after the event's links", async () => {
@@ -389,6 +432,34 @@ describe("runAnalysisActions", () => {
       data: { subjectRef: "run:300", error: null },
     });
     expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it("hands the build's pull requests to every rule's run", async () => {
+    const db = makeDb(analysis);
+    const buildChanges = {
+      pullRequests: [{ number: 1, title: "One", url: null }],
+      orphanCommits: [],
+      truncated: false,
+      uncheckedCommits: 0,
+    };
+    await runAnalysisActions(
+      db,
+      77,
+      3,
+      {
+        ...autoRun,
+        actions: [
+          { actionId: "act-1", minScore: null },
+          { actionId: "act-2", minScore: 50 },
+        ],
+      },
+      "t-1",
+      buildChanges
+    );
+    expect(mockCompose).toHaveBeenCalledTimes(2);
+    for (const call of mockCompose.mock.calls) {
+      expect(call[1].noteAppendix).toEqual(buildChangesNodes(buildChanges));
+    }
   });
 
   it("composes the single run a job queued before rules existed asked for, with no log and no execution", async () => {

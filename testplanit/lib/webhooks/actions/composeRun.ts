@@ -13,6 +13,13 @@ export interface RunNoteLink {
   url: string | null;
 }
 
+/** A TipTap document node, as the run note editor stores them. */
+export type NoteNode = {
+  type: string;
+  content?: NoteNode[];
+  [key: string]: unknown;
+};
+
 export interface ComposeRunInput {
   projectId: number;
   name: string;
@@ -20,6 +27,8 @@ export interface ComposeRunInput {
   caseIds: number[];
   /** One note paragraph each, so the run shows where it came from. */
   links: RunNoteLink[];
+  /** Nodes appended to the note after the link paragraphs. */
+  noteAppendix?: NoteNode[];
   /** Issues the run is linked to. */
   issueIds?: number[];
   createdById: string;
@@ -30,20 +39,26 @@ export type ComposeRunResult =
   | { created: true; testRunId: number; caseCount: number }
   | { created: false; reason: "no_cases" | "no_workflow" };
 
-/** The run's note: one paragraph per link, its label linked to the URL. */
-export function runNote(links: RunNoteLink[]) {
+/**
+ * The run's note: one paragraph per link, its label linked to the URL, then
+ * whatever the caller appends.
+ */
+export function runNote(links: RunNoteLink[], appendix: NoteNode[] = []) {
   return {
     type: "doc",
-    content: links.map(({ label, url }) => ({
-      type: "paragraph",
-      content: [
-        {
-          type: "text",
-          text: label,
-          ...(url ? { marks: [{ type: "link", attrs: { href: url } }] } : {}),
-        },
-      ],
-    })),
+    content: [
+      ...links.map(({ label, url }) => ({
+        type: "paragraph",
+        content: [
+          {
+            type: "text",
+            text: label,
+            ...(url ? { marks: [{ type: "link", attrs: { href: url } }] } : {}),
+          },
+        ],
+      })),
+      ...appendix,
+    ],
   };
 }
 
@@ -117,7 +132,7 @@ export async function composeRunFromCases(
           name: input.name.slice(0, RUN_NAME_MAX),
           stateId: workflow.id,
           createdById: input.createdById,
-          note: runNote(input.links) as JsonObject,
+          note: runNote(input.links, input.noteAppendix) as JsonObject,
           docs: emptyEditorContent,
           testRunType: "REGULAR",
           testCases: {

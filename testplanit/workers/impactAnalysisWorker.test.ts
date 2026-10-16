@@ -407,6 +407,7 @@ let adapter: {
   listCommits: ReturnType<typeof vi.fn>;
   getFileContentAtCommit: ReturnType<typeof vi.fn>;
   getDefaultBranch: ReturnType<typeof vi.fn>;
+  pullRequestsForCommit: ReturnType<typeof vi.fn>;
 };
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -421,6 +422,7 @@ describe("impactAnalysisWorker", () => {
       listCommits: vi.fn(),
       getFileContentAtCommit: vi.fn(),
       getDefaultBranch: vi.fn(),
+      pullRequestsForCommit: vi.fn().mockResolvedValue([]),
     };
 
     mockUpdateProgress.mockResolvedValue(undefined);
@@ -624,8 +626,10 @@ describe("impactAnalysisWorker", () => {
       ANALYSIS_ID,
       jobData.projectId,
       autoRun,
-      "t-1"
+      "t-1",
+      undefined
     );
+    expect(adapter.pullRequestsForCommit).not.toHaveBeenCalled();
     expect(mockSaveResult.mock.invocationCallOrder[0]).toBeLessThan(
       mockRunAnalysisActions.mock.invocationCallOrder[0]
     );
@@ -636,6 +640,150 @@ describe("impactAnalysisWorker", () => {
     const { processor } = await loadWorker();
     await processor(makeJob());
     expect(mockRunAnalysisActions).not.toHaveBeenCalled();
+  });
+
+  it("lists the build's pull requests for a push auto-run and hands them to the rules", async () => {
+    const { processor } = await loadWorker();
+    const bump = {
+      sha: "2828d02aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      shortSha: "2828d02",
+      message: "Update version code to 904003",
+      authorName: "jenkins",
+      authoredAt: "2026-10-15T23:12:00Z",
+      parents: [],
+    };
+    const merged = {
+      sha: "5ae21baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      shortSha: "5ae21ba",
+      message: "Fix the pip token crash",
+      authorName: "dev",
+      authoredAt: "2026-10-15T22:00:00Z",
+      parents: [],
+    };
+    const orphan = {
+      sha: "e34a9acaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      shortSha: "e34a9ac",
+      message: "Add test coverage\n\nBody",
+      authorName: "dev",
+      authoredAt: "2026-10-15T21:00:00Z",
+      parents: [],
+    };
+    mockGetOrComputeCompare.mockResolvedValue({
+      result: { ...compareFixture(), commits: [bump, merged, orphan] },
+      cached: false,
+    });
+    adapter.pullRequestsForCommit.mockImplementation(async (sha: string) =>
+      sha === merged.sha
+        ? [{ number: 2957, title: "Fix pip", url: "https://bb/pr/2957" }]
+        : []
+    );
+    const autoRun = {
+      trigger: "push",
+      label: "master d0db345…2828d02",
+      actions: [{ actionId: "act-1" }],
+    };
+
+    await processor(makeJob({ data: { ...jobData, autoRun } as any }));
+
+    expect(adapter.pullRequestsForCommit).toHaveBeenCalledTimes(2);
+    expect(adapter.pullRequestsForCommit).not.toHaveBeenCalledWith(bump.sha);
+    const buildChanges = {
+      pullRequests: [
+        { number: 2957, title: "Fix pip", url: "https://bb/pr/2957" },
+      ],
+      orphanCommits: [{ shortSha: "e34a9ac", subject: "Add test coverage" }],
+      truncated: false,
+      uncheckedCommits: 0,
+    };
+    expect(mockRunAnalysisActions).toHaveBeenCalledWith(
+      mockDb,
+      ANALYSIS_ID,
+      jobData.projectId,
+      autoRun,
+      undefined,
+      buildChanges
+    );
+    expect(mockSaveResult.mock.calls[0][2].buildChanges).toEqual(buildChanges);
+  });
+
+  it("still performs the rules when the pull request lookup throws", async () => {
+    const { processor } = await loadWorker();
+    mockGetOrComputeCompare.mockResolvedValue({
+      result: {
+        ...compareFixture(),
+        commits: [
+          {
+            sha: "5ae21baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            shortSha: "5ae21ba",
+            message: "Fix",
+            authorName: "dev",
+            authoredAt: "2026-10-15T22:00:00Z",
+            parents: [],
+          },
+        ],
+      },
+      cached: false,
+    });
+    adapter.pullRequestsForCommit.mockRejectedValue(new Error("HTTP 401"));
+    const autoRun = {
+      trigger: "push",
+      label: "master a…b",
+      actions: [{ actionId: "act-1" }],
+    };
+
+    const out = await processor(
+      makeJob({ data: { ...jobData, autoRun } as any })
+    );
+
+    expect(out.status).toBe("complete");
+    expect(mockRunAnalysisActions.mock.calls[0][5]).toEqual({
+      pullRequests: [],
+      orphanCommits: [{ shortSha: "5ae21ba", subject: "Fix" }],
+      truncated: false,
+      uncheckedCommits: 0,
+    });
+    expect(mockSaveResult).toHaveBeenCalled();
+  });
+
+  it("leaves the build list out for a provider without the lookup", async () => {
+    const { processor } = await loadWorker();
+    const { PullRequestsUnsupportedError } =
+      await import("../lib/integrations/adapters/GitRepoAdapter");
+    mockGetOrComputeCompare.mockResolvedValue({
+      result: {
+        ...compareFixture(),
+        commits: [
+          {
+            sha: "5ae21baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            shortSha: "5ae21ba",
+            message: "Fix",
+            authorName: "dev",
+            authoredAt: "2026-10-15T22:00:00Z",
+            parents: [],
+          },
+        ],
+      },
+      cached: false,
+    });
+    adapter.pullRequestsForCommit.mockRejectedValue(
+      new PullRequestsUnsupportedError("GiteaRepoAdapter")
+    );
+
+    await processor(
+      makeJob({
+        data: {
+          ...jobData,
+          autoRun: {
+            trigger: "push",
+            label: "x",
+            actions: [{ actionId: "act-1" }],
+          },
+        } as any,
+      })
+    );
+
+    expect(mockRunAnalysisActions.mock.calls[0][5]).toBeUndefined();
+    expect(mockSaveResult.mock.calls[0][2].buildChanges).toBeUndefined();
   });
 
   it("only performs the rules for a compose job on an analysis already complete", async () => {
