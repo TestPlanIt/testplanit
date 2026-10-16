@@ -271,6 +271,8 @@ See [Test Impact Analysis](user-guide/impact.md).
 | `IMPACT_ISSUE_IMPORT_MAX_LOOKUPS`           | `100`   | Tracker lookups a refresh-time ticket scan may make to import unknown tickets.                                                                                  |
 | `IMPACT_ISSUE_IMPORT_FULL_MAX_LOOKUPS`      | `5000`  | Tracker lookups a full-history ticket scan may make to import unknown tickets.                                                                                  |
 | `IMPACT_ISSUE_SCAN_SYMBOL_PINS`             | `true`  | Ticket scans read each commit's diff and pin the changed functions or classes; `false` pins whole files only (cheaper on providers without a server-side diff). |
+| `IMPACT_BUILD_PR_MAX_COMMITS`               | `100`   | Push auto-runs: newest commits of the range asked for the pull requests they were merged through, for the run's description.                                 |
+| `IMPACT_BUILD_BOT_COMMIT_PATTERN`           | `^Update version code to ` | Push auto-runs: commits whose first message line matches this regular expression are a build bot's and are left out of the run's description. Empty = none. |
 
 ## Multi-Tenant Deployments
 

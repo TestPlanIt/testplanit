@@ -118,6 +118,18 @@ export interface ListPullRequestsResult {
   hasMore: boolean;
 }
 
+/**
+ * A pull request named by a commit lookup. Separate from RepoPullRequest
+ * because the per-commit endpoints return neither state nor branches.
+ */
+export interface RepoPullRequestRef {
+  number: number;
+  title: string;
+  url: string | null;
+  /** ISO 8601, where the provider returns it. */
+  mergedAt?: string;
+}
+
 /** Thrown by adapters whose provider has no pull request concept. */
 export class PullRequestsUnsupportedError extends Error {
   constructor(provider: string) {
@@ -303,6 +315,14 @@ export abstract class GitRepoAdapter {
   async listPullRequests(
     _opts?: ListPullRequestsOptions
   ): Promise<ListPullRequestsResult> {
+    throw new PullRequestsUnsupportedError(this.constructor.name);
+  }
+
+  /**
+   * The pull requests a commit was merged through, where the provider
+   * indexes that. A commit no pull request contains returns `[]`.
+   */
+  async pullRequestsForCommit(_sha: string): Promise<RepoPullRequestRef[]> {
     throw new PullRequestsUnsupportedError(this.constructor.name);
   }
 

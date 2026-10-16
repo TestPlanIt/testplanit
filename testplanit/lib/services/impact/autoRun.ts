@@ -1,5 +1,5 @@
 import { emptyEditorContent } from "~/app/constants/backend";
-import type { ImpactAutoRun } from "./types";
+import type { BuildChanges, ImpactAutoRun } from "./types";
 
 /** Raw client surface for composing a run from a completed analysis. */
 export interface AutoRunDb {
@@ -23,31 +23,90 @@ export type AutoRunResult =
 
 const RUN_NAME_MAX = 200;
 
+type NoteNode = { type: string; content?: NoteNode[]; [key: string]: unknown };
+
+function paragraph(content: NoteNode[]): NoteNode {
+  return { type: "paragraph", content };
+}
+
+function text(value: string, href?: string | null): NoteNode {
+  return href
+    ? { type: "text", text: value, marks: [{ type: "link", attrs: { href } }] }
+    : { type: "text", text: value };
+}
+
+function bulletList(items: NoteNode[][]): NoteNode {
+  return {
+    type: "bulletList",
+    content: items.map((content) => ({
+      type: "listItem",
+      content: [paragraph(content)],
+    })),
+  };
+}
+
+/**
+ * What a push's build was made of, for the reader: the pull requests, each
+ * title linking to the pull request, then the commits no pull request
+ * contains. Nothing when the lookup found nothing or did not run.
+ */
+function buildChangesNodes(
+  changes: BuildChanges | null | undefined
+): NoteNode[] {
+  if (!changes) return [];
+  const nodes: NoteNode[] = [];
+  if (changes.pullRequests.length > 0) {
+    nodes.push(
+      paragraph([
+        text(`Pull requests in this build (${changes.pullRequests.length})`),
+      ]),
+      bulletList(
+        changes.pullRequests.map((pr) => [
+          text(`PR #${pr.number}: ${pr.title}`, pr.url),
+        ])
+      )
+    );
+  }
+  if (changes.orphanCommits.length > 0) {
+    nodes.push(
+      paragraph([
+        text(`Commits not in a pull request (${changes.orphanCommits.length})`),
+      ]),
+      bulletList(
+        changes.orphanCommits.map((c) => [
+          text(c.shortSha, c.url),
+          text(` ${c.subject}`),
+        ])
+      )
+    );
+  }
+  if (changes.truncated && changes.uncheckedCommits > 0) {
+    nodes.push(
+      paragraph([text(`…and ${changes.uncheckedCommits} more commits`)])
+    );
+  }
+  return nodes;
+}
+
 /**
  * The run's note: one paragraph per link the event left, the label as text
  * and the URL as a link mark, so the run shows where it came from and the
- * reader can get there.
+ * reader can get there; then, for a push whose pull requests were looked
+ * up, what the build was made of.
  */
-function runNote(autoRun: ImpactAutoRun) {
+function runNote(autoRun: ImpactAutoRun, buildChanges?: BuildChanges | null) {
   const links =
     autoRun.links && autoRun.links.length > 0
       ? autoRun.links
       : [{ label: autoRun.label, url: autoRun.url ?? null }];
   return {
     type: "doc",
-    content: links.map(({ label, url }) => ({
-      type: "paragraph",
-      content: url
-        ? [
-            { type: "text", text: `${label} — ` },
-            {
-              type: "text",
-              text: url,
-              marks: [{ type: "link", attrs: { href: url } }],
-            },
-          ]
-        : [{ type: "text", text: label }],
-    })),
+    content: [
+      ...links.map(({ label, url }) =>
+        paragraph(url ? [text(`${label} — `), text(url, url)] : [text(label)])
+      ),
+      ...buildChangesNodes(buildChanges),
+    ],
   };
 }
 
@@ -72,7 +131,8 @@ function suggestionFilter(autoRun: ImpactAutoRun) {
 export async function createRunFromAnalysis(
   db: AutoRunDb,
   analysisId: number,
-  autoRun: ImpactAutoRun
+  autoRun: ImpactAutoRun,
+  buildChanges?: BuildChanges | null
 ): Promise<AutoRunResult> {
   const annotate = async (subjectRef: string | null, error: string | null) => {
     if (!autoRun.deliveryId) return;
@@ -147,7 +207,7 @@ export async function createRunFromAnalysis(
       name: autoRun.label.slice(0, RUN_NAME_MAX),
       stateId: workflow.id,
       createdById: analysis.project.createdBy,
-      note: runNote(autoRun),
+      note: runNote(autoRun, buildChanges),
       docs: emptyEditorContent,
       testRunType: "REGULAR",
       testCases: {

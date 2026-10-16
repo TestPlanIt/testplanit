@@ -18,6 +18,7 @@ import {
   type ListPullRequestsResult,
   type PullRequestState,
   type RepoPullRequest,
+  type RepoPullRequestRef,
 } from "./GitRepoAdapter";
 import {
   MAX_COMPARE_COMMITS,
@@ -287,6 +288,28 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
       url: item?.html_url ?? undefined,
       updatedAt: item?.updated_at ?? undefined,
     };
+  }
+
+  async pullRequestsForCommit(sha: string): Promise<RepoPullRequestRef[]> {
+    let data: any;
+    try {
+      data = await this.makeRequest<any>(
+        `${this.repoUrl}/commits/${encodeURIComponent(sha)}/pulls?per_page=10`,
+        { headers: this.authHeaders }
+      );
+    } catch (err) {
+      if (this.isNotFoundError(err)) return [];
+      throw err;
+    }
+    const items: any[] = Array.isArray(data) ? data : [];
+    return items
+      .map((item): RepoPullRequestRef => ({
+        number: Number(item?.number) || 0,
+        title: String(item?.title ?? ""),
+        url: item?.html_url ?? null,
+        ...(item?.merged_at ? { mergedAt: String(item.merged_at) } : {}),
+      }))
+      .filter((pr) => pr.number > 0);
   }
 
   async compareCommits(
