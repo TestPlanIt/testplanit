@@ -23,6 +23,7 @@ import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { ElapsedTime } from "./ElapsedTime";
 import { sortSummaryItems } from "~/utils/summarySort";
+import { computeStatusBarSegmentWidths } from "~/utils/statusBarSegmentWidths";
 
 interface SessionResultsSummaryProps {
   sessionId: number;
@@ -194,6 +195,14 @@ export function SessionResultsSummary({
   // Check if there are results but no elapsed time recorded
   const totalElapsed = summaryData.totalElapsed;
   const hasElapsed = totalElapsed > 0;
+  const segmentWidths = computeStatusBarSegmentWidths(
+    sortedResults.map((result) => ({
+      elapsed: result.elapsed,
+      isPending: false,
+    })),
+    hasElapsed,
+    5
+  );
 
   return (
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
@@ -202,24 +211,9 @@ export function SessionResultsSummary({
         className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden"
         data-status-bar
       >
-        {sortedResults.map((result, _index) => {
+        {sortedResults.map((result, index) => {
           const color = result.statusColorValue || "#B1B2B3";
-          // Calculate width: equal distribution if no duration, or proportional if durations exist
-
-          // Ensure each segment is visible with a minimum width
-          let width;
-          if (hasElapsed) {
-            // If this result has elapsed time, make it proportional
-            if (result.elapsed && result.elapsed > 0) {
-              width = `${Math.max(5, (result.elapsed / totalElapsed) * 100)}%`;
-            } else {
-              // If no elapsed time but others have it, give it a minimum width
-              width = "5%";
-            }
-          } else {
-            // Equal distribution if no elapsed times
-            width = `${100 / summaryData.results.length}%`;
-          }
+          const width = `${segmentWidths[index]}%`;
 
           // Get issues for this result
           const resultIssues = summaryData.resultIssues.filter((issue) =>

@@ -36,6 +36,7 @@ import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { sortSummaryItems } from "~/utils/summarySort";
+import { computeStatusBarSegmentWidths } from "~/utils/statusBarSegmentWidths";
 
 interface TestRunCasesSummaryProps {
   testRunId: number;
@@ -563,6 +564,10 @@ export function TestRunCasesSummary({
 
   // Handle regular test runs
   const totalItems = summaryData.totalCases;
+  const segmentWidths = computeStatusBarSegmentWidths(
+    sortedCaseDetails,
+    summaryData.totalElapsed > 0
+  );
 
   // Generate summary text from status counts
   const summaryText = summaryData.statusCounts
@@ -601,18 +606,7 @@ export function TestRunCasesSummary({
               ? item.colorValue
               : (firstStatus?.color?.value ?? item.colorValue);
 
-          // Calculate segment width based on total elapsed time
-          const minSegmentWidth = 3;
-          let segmentWidth = 100 / totalItems;
-
-          // If we have elapsed time data, make width proportional to elapsed time
-          if (summaryData.totalElapsed > 0 && !item.isPending) {
-            const proportionalWidth =
-              ((item.elapsed || 0) / summaryData.totalElapsed) * 100;
-            segmentWidth = Math.max(proportionalWidth, minSegmentWidth);
-          } else if (summaryData.totalElapsed > 0 && item.isPending) {
-            segmentWidth = minSegmentWidth;
-          }
+          const segmentWidth = segmentWidths[index];
 
           // Use the item's testRunId if available (for multi-config), otherwise fall back to prop
           const itemTestRunId = item.testRunId || testRunId;
