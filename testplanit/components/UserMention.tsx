@@ -66,8 +66,8 @@ export function UserMention({
 
   const inner = (
     <>
-      {/* Hidden from assistive tech: the link is named by its aria-label, and
-          the initials are not part of it (WCAG 2.5.3 Label in Name). */}
+      {/* Hidden from assistive tech so the link reads "Profile of <name>"
+          without the initials. */}
       <span className="flex shrink-0" aria-hidden="true">
         <Avatar
           alt={user.name ?? ""}
@@ -105,9 +105,11 @@ export function UserMention({
     <Link
       href={`/users/profile/${userId}`}
       className={pillClass}
-      aria-label={`Profile of ${user.name}`}
       data-testid="user-mention"
     >
+      {/* Named from its content, not aria-label, so the visible name is part
+          of the accessible name (WCAG 2.5.3 Label in Name). */}
+      <span className="sr-only">Profile of </span>
       {inner}
     </Link>
   );

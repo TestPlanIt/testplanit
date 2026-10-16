@@ -61,8 +61,8 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
   // Content to display (avatar + name)
   const content = (
     <span className="flex items-center gap-1 min-w-0">
-      {/* Hidden from assistive tech: the link is named by its aria-label, and
-          the initials are not part of it (WCAG 2.5.3 Label in Name). */}
+      {/* Hidden from assistive tech so the link reads "Profile of <name>"
+          without the initials. */}
       <span className="shrink-0" aria-hidden="true">
         <Avatar
           alt={user?.name}
@@ -105,9 +105,11 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
         <Link
           href={`/users/profile/${userId}`}
           className="flex items-center truncate group min-w-0"
-          aria-label={`Profile of ${user?.name}`}
           data-testid={`user-profile-link-${userId}`}
         >
+          {/* Named from its content, not aria-label, so the visible name is
+              part of the accessible name (WCAG 2.5.3 Label in Name). */}
+          <span className="sr-only">Profile of </span>
           {content}
           {!shrinkLink && (
             <LinkIcon className="w-4 h-4 shrink-0 ms-1 opacity-0 group-hover:opacity-100 transition-opacity" />

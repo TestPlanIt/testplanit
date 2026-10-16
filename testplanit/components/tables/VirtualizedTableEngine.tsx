@@ -1097,8 +1097,10 @@ export function VirtualizedTableEngine<TData extends DataRow>({
             viewport so the frozen columns and headers stay aligned. */}
         <div
           ref={scrollRef}
-          // Focusable so keyboard users can scroll rows that have nothing
-          // else to focus (WCAG 2.1.1).
+          // The table body: a rowgroup (a child the table role allows) that
+          // keyboard users can focus to scroll rows with nothing else to
+          // focus (WCAG 2.1.1).
+          role="rowgroup"
           tabIndex={0}
           className={cn(
             "relative min-h-0",
