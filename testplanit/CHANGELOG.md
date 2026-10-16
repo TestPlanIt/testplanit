@@ -1,3 +1,9 @@
+## [1.1.12](https://github.com/TestPlanIt/testplanit/compare/v1.1.11...v1.1.12) (2026-10-16)
+
+### Enhancements
+
+* **execution:** CI jobs report their build URL and push auto-runs list the build's pull requests ([#702](https://github.com/TestPlanIt/testplanit/issues/702)) ([f914199](https://github.com/TestPlanIt/testplanit/commit/f91419922c5ce67c60a5ea856fd2e35a90136f26))
+
 ## [1.1.11](https://github.com/TestPlanIt/testplanit/compare/v1.1.10...v1.1.11) (2026-10-16)
 
 ### Bug Fixes
