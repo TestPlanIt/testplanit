@@ -350,9 +350,11 @@ describe("SessionResultsSummary", () => {
     expect(segments).toHaveLength(3); // Passed, Failed, Skipped
 
     // Total elapsed = 60 + 120 + 0 = 180
-    const expectedWidthPassed = `${Math.max(5, (60 / 180) * 100)}%`; // ~33.3%, >= 5%
-    const expectedWidthFailed = `${Math.max(5, (120 / 180) * 100)}%`; // ~66.7%, >= 5%
-    const expectedWidthSkipped = "5%"; // Min width for 0 elapsed
+    // The 0-elapsed result keeps the 5% minimum and the other two share the
+    // remaining 95% in proportion to their elapsed, so the bar fills exactly.
+    const expectedWidthPassed = `${(60 / 180) * 95}%`;
+    const expectedWidthFailed = `${(120 / 180) * 95}%`;
+    const expectedWidthSkipped = "5%";
 
     // Find segments by href attribute
     let passedSegment: Element | null = null;

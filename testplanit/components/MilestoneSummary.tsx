@@ -38,6 +38,7 @@ import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
 import { sortSummaryItems } from "~/utils/summarySort";
+import { computeStatusBarSegmentWidths } from "~/utils/statusBarSegmentWidths";
 
 interface MilestoneSummaryProps {
   milestoneId: number;
@@ -197,6 +198,11 @@ export function MilestoneSummary({
       .map((s) => s.sourceId)
   ).size;
 
+  const segmentWidths = computeStatusBarSegmentWidths(
+    sortedSegments,
+    summaryData.totalElapsed > 0
+  );
+
   return (
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for milestone items */}
@@ -205,24 +211,12 @@ export function MilestoneSummary({
         data-status-bar
         data-testid="milestone-summary-bar"
       >
-        {sortedSegments.map((segment, _index) => {
+        {sortedSegments.map((segment, index) => {
           const color =
             segment.statusId !== null
               ? segment.colorValue
               : (firstStatus?.color?.value ?? segment.colorValue);
-
-          // Calculate segment width based on elapsed time or item count
-          const minSegmentWidth = 3;
-          let segmentWidth = 100 / summaryData.totalItems;
-
-          // If we have elapsed time data, make width proportional to elapsed time
-          if (summaryData.totalElapsed > 0 && !segment.isPending) {
-            const proportionalWidth =
-              ((segment.elapsed || 0) / summaryData.totalElapsed) * 100;
-            segmentWidth = Math.max(proportionalWidth, minSegmentWidth);
-          } else if (summaryData.totalElapsed > 0 && segment.isPending) {
-            segmentWidth = minSegmentWidth;
-          }
+          const segmentWidth = segmentWidths[index];
 
           const targetUrl =
             segment.type === "test-run"
