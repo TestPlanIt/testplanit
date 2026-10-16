@@ -436,6 +436,15 @@ svg[class*="plot-"] .gantt-task-label text {
   /* 1.4.3 Contrast: same problem on de-emphasized primary text (e.g. breadcrumb links) */
   color: hsl(var(--primary)) !important;
 }
+.accessibledark .text-destructive {
+  /* 1.4.3 Contrast: --destructive is tuned for white text on a red fill and is
+     only 3.1:1 as text on the page; >=4.6:1 on every surface, hovered rows included */
+  color: hsl(0 94% 82%) !important;
+}
+.accessibledark .text-success {
+  /* 1.4.3 Contrast: same for --success (3.5:1 as text); >=4.7:1 on every surface */
+  color: hsl(142 60% 60%) !important;
+}
 :is(.accessible, .accessibledark)
   :is(
     button,

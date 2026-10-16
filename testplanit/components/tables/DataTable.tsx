@@ -336,7 +336,6 @@ function HeadCellContent({
                 role="button"
                 tabIndex={0}
                 className="flex items-center gap-1 whitespace-nowrap cursor-pointer outline-none"
-                aria-label={t("columnOptions")}
               >
                 {flexRender(
                   header.column.columnDef.header,
@@ -347,6 +346,9 @@ function HeadCellContent({
                   className="h-3 w-3 opacity-50"
                   aria-hidden="true"
                 />
+                {/* Named from its content so the visible header label leads
+                    the accessible name (WCAG 2.5.3 Label in Name). */}
+                <span className="sr-only">{t("columnOptions")}</span>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">

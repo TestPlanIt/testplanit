@@ -340,7 +340,7 @@ describe("UserAssignments", () => {
 
     // Descending via the name column's header menu (the standard sort UI).
     const trigger = within(runTable).getAllByRole("button", {
-      name: "columnOptions",
+      name: /columnOptions$/,
     })[0];
     fireEvent.pointerDown(trigger);
     fireEvent.click(screen.getByText("sortDesc"));

@@ -4268,7 +4268,10 @@ function ReportBuilderContent({
                         filterItems.length > 0 && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
-                              <label className="text-sm font-medium">
+                              <label
+                                htmlFor="report-filter-type"
+                                className="text-sm font-medium"
+                              >
                                 {tCommon("ui.search.filters")}
                               </label>
                             </div>
@@ -4281,6 +4284,7 @@ function ReportBuilderContent({
                               onClearAll={handleClearAllFilters}
                             />
                             <ReportFilters
+                              triggerId="report-filter-type"
                               selectedFilter={selectedFilterType}
                               onFilterChange={setSelectedFilterType}
                               filterItems={filterItems}
