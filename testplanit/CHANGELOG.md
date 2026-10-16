@@ -1,3 +1,9 @@
+## [1.1.10](https://github.com/TestPlanIt/testplanit/compare/v1.1.9...v1.1.10) (2026-10-16)
+
+### Bug Fixes
+
+* **i18n:** show line breaks in 11 Spanish help texts ([#700](https://github.com/TestPlanIt/testplanit/issues/700)) ([ea42913](https://github.com/TestPlanIt/testplanit/commit/ea429138a0b1ee96290bd82e7f26bde6561dfc88))
+
 ## [1.1.9](https://github.com/TestPlanIt/testplanit/compare/v1.1.8...v1.1.9) (2026-10-16)
 
 ### Bug Fixes
