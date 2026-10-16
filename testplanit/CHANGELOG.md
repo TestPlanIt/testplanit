@@ -1,3 +1,14 @@
+## [1.2.0-beta.5](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.4...v1.2.0-beta.5) (2026-10-16)
+
+### Bug Fixes
+
+* **runs:** span a hybrid run's dates over its automated results in the runs list ([3574f2a](https://github.com/TestPlanIt/testplanit/commit/3574f2a1dad6dcc80583ad087c6e33efe8c03f14))
+
+### Enhancements
+
+* **execution:** let a CI job report its own build URL ([1d8a6be](https://github.com/TestPlanIt/testplanit/commit/1d8a6beead48f61d301f3200d319f702d2a40fc1))
+* **impact:** list the build's pull requests in a push auto-run's note ([0ba97d9](https://github.com/TestPlanIt/testplanit/commit/0ba97d9833163951899f113850832d6e05aa1c9f))
+
 ## [1.2.0-beta.4](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.3...v1.2.0-beta.4) (2026-10-16)
 
 ### Features
