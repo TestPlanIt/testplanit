@@ -95,8 +95,8 @@ Environment variables take precedence over stored configuration, making them ide
 | ---------- | ------------- |
 | `TESTPLANIT_URL` | TestPlanIt instance URL |
 | `TESTPLANIT_TOKEN` | API token |
-| `TESTPLANIT_RUN_ID` | Set by TestPlanIt when it dispatches a job; `run plan`, `run complete`, `run finish` and `import -r` default to it |
-| `TESTPLANIT_EXECUTION_ID` | Set by TestPlanIt when it dispatches a job; `run plan` and `run finish` default to it |
+| `TESTPLANIT_RUN_ID` | Set by TestPlanIt when it dispatches a job; `run plan`, `run started`, `run complete`, `run finish` and `import -r` default to it |
+| `TESTPLANIT_EXECUTION_ID` | Set by TestPlanIt when it dispatches a job; `run plan`, `run started` and `run finish` default to it |
 
 ```bash
 TESTPLANIT_URL=https://demo.testplanit.com \
@@ -302,6 +302,9 @@ testplanit run plan
 # One selector per line, for a shell shim to feed a runner filter
 testplanit run plan --format lines --selector-field fullName > plan.txt
 
+# Link the execution to this job (generic-webhook targets; Jenkins variables shown)
+testplanit run started --url "$BUILD_URL" --id "$BUILD_NUMBER"
+
 # Mark the run complete once every job has reported
 testplanit run complete
 
@@ -314,6 +317,7 @@ testplanit run finish --conclusion success
 | `run create` | `-n, --name <name>` (required), `-p, --project <id\|name>` (default `$TESTPLANIT_PROJECT_ID`), `--type REGULAR\|JUNIT\|TESTNG\|XUNIT\|NUNIT\|MSTEST\|MOCHA\|CUCUMBER` (default `REGULAR`), `--config <id\|name>`, `--milestone <id\|name>`, `--tags <a,b>` (missing tags are created). Prints only the new run id to stdout |
 | `run plan` | `-r, --run <id>` (default `$TESTPLANIT_RUN_ID`), `--execution <id>` (default `$TESTPLANIT_EXECUTION_ID`; applies that execution's case subset and ref), `-F, --format json\|lines`, `--selector-field selector\|fullName\|title\|className\|id`, `-o, --output <file>` |
 | `run complete` | `-r, --run <id>`, `-p, --project <id>` (read from the run when omitted) |
+| `run started` | `-r, --run <id>`, `--execution <id>`, `--url <url>` (required; the job's own URL, linked from the run page), `--id <id>` (the job's build or run id) |
 | `run finish` | `-r, --run <id>`, `--execution <id>`, `--conclusion success\|failure\|cancelled` (required), `--message <text>` |
 
 `--format lines` prints `selector.fullName` (class name and test name) by default. The CLI never produces framework-specific filter syntax; a short script in your repository turns the lines into the `--grep`, `-k` or `--tests` expression your runner takes.
@@ -350,7 +354,7 @@ jobs:
         run: npx @testplanit/cli import ./test-results/*.xml -p ${{ inputs.TESTPLANIT_PROJECT_ID }}
 ```
 
-TestPlanIt polls a GitHub Actions or GitLab CI job for its outcome, so nothing else is needed. A job started through a generic webhook (Jenkins, for example) ends with `testplanit run finish --conclusion success|failure`. Reserve `run complete` for runs that hold nothing but automated cases; it completes the whole run, manual cases included. The step-by-step guides are under [Automated Execution](./user-guide/automated-execution.md).
+TestPlanIt polls a GitHub Actions or GitLab CI job for its outcome, so nothing else is needed. A job started through a generic webhook (Jenkins, for example) links itself with `testplanit run started --url <job url>` and ends with `testplanit run finish --conclusion success|failure`. Reserve `run complete` for runs that hold nothing but automated cases; it completes the whole run, manual cases included. The step-by-step guides are under [Automated Execution](./user-guide/automated-execution.md).
 
 ### GitHub Actions
 

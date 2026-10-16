@@ -48,7 +48,7 @@ program.addCommand(createConfigCommand());
 // Add import command (supports all formats: junit, testng, xunit, nunit, mstest, mocha, cucumber)
 program.addCommand(createImportCommand());
 
-// Add run command (plan / complete / finish for a dispatched or pre-created run)
+// Add run command (plan / started / complete / finish for a dispatched or pre-created run)
 program.addCommand(createRunCommand());
 
 // Parse arguments

@@ -6,7 +6,7 @@ description: Step-by-step setup for dispatching a test run's automated cases to 
 
 # Jenkins setup
 
-Jenkins receives dispatches through a **generic webhook** execution target and the **Generic Webhook Trigger** plugin, which turns fields of the JSON payload TestPlanIt sends into build variables. Because Jenkins cannot be polled by TestPlanIt, the pipeline reports its own outcome at the end with `testplanit run finish`.
+Jenkins receives dispatches through a **generic webhook** execution target and the **Generic Webhook Trigger** plugin, which turns fields of the JSON payload TestPlanIt sends into build variables. Because Jenkins cannot be polled by TestPlanIt, the pipeline links the execution to its build with `testplanit run started` and reports its own outcome at the end with `testplanit run finish`.
 
 You will create or touch:
 
@@ -95,6 +95,7 @@ The stages read the plan with the CLI, run the planned tests, and report the out
       steps {
         sh 'test -n "$TESTPLANIT_RUN_ID" || { echo "Not started by TestPlanIt"; exit 1; }'
         sh 'npm ci'
+        sh 'npx @testplanit/cli run started --url "$BUILD_URL" --id "$BUILD_NUMBER"'
         sh 'npx @testplanit/cli run plan --format lines --selector-field title > plan.txt'
       }
     }
@@ -113,7 +114,7 @@ The stages read the plan with the CLI, run the planned tests, and report the out
 }
 ```
 
-`run finish` reads `TESTPLANIT_URL`, `TESTPLANIT_TOKEN`, `TESTPLANIT_RUN_ID` and `TESTPLANIT_EXECUTION_ID` from the environment. The optional `--message` is shown on the run page for a failed or cancelled execution. Do not call `run complete` unless the run holds nothing but automated cases.
+`run started` and `run finish` read `TESTPLANIT_URL`, `TESTPLANIT_TOKEN`, `TESTPLANIT_RUN_ID` and `TESTPLANIT_EXECUTION_ID` from the environment. `run started` sends Jenkins' `BUILD_URL` and `BUILD_NUMBER`, so the run page links to this build and shows *Running* from the first step. The optional `--message` on `run finish` is shown on the run page for a failed or cancelled execution. Do not call `run complete` unless the run holds nothing but automated cases.
 
 ## 4. Add the execution target
 
@@ -135,11 +136,11 @@ If Jenkins is on a private network address, the TestPlanIt operator must list it
 ## 5. Execute a run
 
 1. Open a test run with automated cases and click **Execute automated cases**; pick the Jenkins target and, if it declares parameters, choose their values.
-2. The execution chip shows **Dispatched** with a link to the Jenkins job page, **Running** as soon as the first results arrive, then **Job succeeded** or **Job failed** when the pipeline's `post` step calls `run finish`.
+2. The execution chip shows **Dispatched** with a link to the Jenkins job page, then **Running** with a link to the build as soon as the pipeline calls `run started` (or, without that step, when the first results arrive), then **Job succeeded** or **Job failed** when the pipeline's `post` step calls `run finish`.
 3. If the pipeline never calls `run finish` (it crashed before the `post` section, or the trigger was not yet registered), the execution stays *Dispatched* or *Running* until the target's timeout, and can be cancelled from the chip at any time.
 
 ## Notes
 
-- **Where the build number shows.** Jenkins answers the trigger with a queue item, not a build number, so the run page links to the job page rather than a specific build. The `--message` on `run finish` is a good place to name the build.
+- **Where the build number shows.** Jenkins answers the trigger with a queue item, not a build number, so the run page first links to the job page. `run started` replaces that link with the build's own URL. Without it the link stays on the job page, and the `--message` on `run finish` is a good place to name the build.
 - **Several jobs on one trigger.** The plugin starts every job whose token matches. Use a distinct token per TestPlanIt target.
-- **Freestyle jobs** work too: the contributed variables are available as build parameters, and the same CLI calls go into shell steps, with `run finish` in a post-build step.
+- **Freestyle jobs** work too: the contributed variables are available as build parameters, and the same CLI calls go into shell steps, with `run started` first and `run finish` in a post-build step.

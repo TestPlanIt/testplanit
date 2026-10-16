@@ -1,6 +1,7 @@
 /**
  * Automated-execution helpers: the plan a CI job pulls after TestPlanIt
- * dispatches it, finishing an execution explicitly, and completing a run.
+ * dispatches it, reporting the job's own URL, finishing an execution
+ * explicitly, and completing a run.
  *
  * The CLI cannot depend on @testplanit/api (its publish path does not
  * resolve the workspace protocol), so the few host calls it needs are
@@ -115,16 +116,43 @@ export async function getAutomationPlan(
   });
 }
 
+/**
+ * POST /api/test-runs/{runId}/executions/{executionId}/started
+ * The job reports its own URL (and build id) once it starts, so the run page
+ * links to the build rather than to whatever the receiver answered the
+ * dispatch with.
+ */
+export async function startExecution(
+  runId: number,
+  executionId: number,
+  externalUrl: string,
+  externalRunId?: string
+): Promise<{ id: number; status: string }> {
+  return hostJson(`/api/test-runs/${runId}/executions/${executionId}/started`, {
+    method: "POST",
+    body: JSON.stringify({
+      externalUrl,
+      ...(externalRunId ? { externalRunId } : {}),
+    }),
+  });
+}
+
 /** POST /api/test-runs/{runId}/executions/{executionId}/finish */
 export async function finishExecution(
   runId: number,
   executionId: number,
   conclusion: ExecutionConclusion,
-  message?: string
+  message?: string,
+  link: { externalUrl?: string; externalRunId?: string } = {}
 ): Promise<{ id: number; status: string }> {
   return hostJson(`/api/test-runs/${runId}/executions/${executionId}/finish`, {
     method: "POST",
-    body: JSON.stringify({ conclusion, ...(message ? { message } : {}) }),
+    body: JSON.stringify({
+      conclusion,
+      ...(message ? { message } : {}),
+      ...(link.externalUrl ? { externalUrl: link.externalUrl } : {}),
+      ...(link.externalRunId ? { externalRunId: link.externalRunId } : {}),
+    }),
   });
 }
 

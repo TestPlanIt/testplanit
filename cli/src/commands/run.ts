@@ -2,8 +2,8 @@
  * Run Command
  *
  * Helpers for a CI job that TestPlanIt dispatched (or that reports into a
- * pre-created run): read the plan of automated cases, complete the run,
- * finish the execution.
+ * pre-created run): read the plan of automated cases, report the job's own
+ * URL, complete the run, finish the execution.
  */
 
 import { Command } from "commander";
@@ -21,6 +21,7 @@ import {
   parseEnvId,
   PLAN_FORMATS,
   SELECTOR_FIELDS,
+  startExecution,
   TEST_RUN_TYPES,
   type CreatableTestRunType,
   type ExecutionConclusion,
@@ -78,6 +79,9 @@ Examples:
 
   Mark the run complete once every job has reported:
     $ testplanit run complete
+
+  Link the execution to this job as soon as it starts (generic-webhook targets):
+    $ testplanit run started --url "$BUILD_URL" --id "$BUILD_NUMBER"
 
   Tell TestPlanIt the execution finished (generic-webhook targets cannot be polled):
     $ testplanit run finish --conclusion success
@@ -225,6 +229,31 @@ Environment:
     });
 
   cmd
+    .command("started")
+    .description("Report the job's own URL to TestPlanIt once it starts")
+    .option("-r, --run <id>", "Test run ID (default: $TESTPLANIT_RUN_ID)")
+    .option("--execution <id>", "Execution ID (default: $TESTPLANIT_EXECUTION_ID)")
+    .requiredOption("--url <url>", "URL of this job or build, shown on the run page")
+    .option("--id <id>", "The job's own build or run id")
+    .action(async (options) => {
+      requireConfig();
+      const runId = resolveRunId(options.run);
+      const executionId = resolveExecutionId(options.execution, true)!;
+      try {
+        const result = await startExecution(
+          runId,
+          executionId,
+          String(options.url),
+          options.id !== undefined ? String(options.id) : undefined
+        );
+        logger.success(`Execution ${result.id} linked to ${options.url}`);
+      } catch (error) {
+        logger.error(error instanceof Error ? error.message : String(error));
+        process.exit(1);
+      }
+    });
+
+  cmd
     .command("finish")
     .description("Report the execution's outcome to TestPlanIt")
     .option("-r, --run <id>", "Test run ID (default: $TESTPLANIT_RUN_ID)")
@@ -234,6 +263,8 @@ Environment:
       `Outcome: ${EXECUTION_CONCLUSIONS.join(", ")}`
     )
     .option("--message <text>", "Short note stored with the execution")
+    .option("--url <url>", "URL of this job or build, for a job that did not call 'run started'")
+    .option("--id <id>", "The job's own build or run id")
     .action(async (options) => {
       requireConfig();
       const runId = resolveRunId(options.run);
@@ -249,7 +280,13 @@ Environment:
           runId,
           executionId,
           conclusion,
-          options.message
+          options.message,
+          {
+            externalUrl:
+              options.url !== undefined ? String(options.url) : undefined,
+            externalRunId:
+              options.id !== undefined ? String(options.id) : undefined,
+          }
         );
         logger.success(`Execution ${result.id} marked ${result.status}`);
       } catch (error) {
