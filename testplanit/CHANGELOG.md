@@ -1,3 +1,9 @@
+## [1.1.11](https://github.com/TestPlanIt/testplanit/compare/v1.1.10...v1.1.11) (2026-10-16)
+
+### Bug Fixes
+
+* **runs:** fill summary bar segments to full width ([#701](https://github.com/TestPlanIt/testplanit/issues/701)) ([54499dd](https://github.com/TestPlanIt/testplanit/commit/54499ddc82c305b493586c8c74d2d343e798e5f8))
+
 ## [1.1.10](https://github.com/TestPlanIt/testplanit/compare/v1.1.9...v1.1.10) (2026-10-16)
 
 ### Bug Fixes
