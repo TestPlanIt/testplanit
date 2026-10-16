@@ -109,7 +109,7 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
         >
           {/* Named from its content, not aria-label, so the visible name is
               part of the accessible name (WCAG 2.5.3 Label in Name). */}
-          <span className="sr-only">Profile of </span>
+          <span className="sr-only">{"Profile of "}</span>
           {content}
           {!shrinkLink && (
             <LinkIcon className="w-4 h-4 shrink-0 ms-1 opacity-0 group-hover:opacity-100 transition-opacity" />

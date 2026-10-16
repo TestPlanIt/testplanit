@@ -109,7 +109,7 @@ export function UserMention({
     >
       {/* Named from its content, not aria-label, so the visible name is part
           of the accessible name (WCAG 2.5.3 Label in Name). */}
-      <span className="sr-only">Profile of </span>
+      <span className="sr-only">{"Profile of "}</span>
       {inner}
     </Link>
   );
