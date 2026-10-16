@@ -741,9 +741,9 @@ declare class TestPlanItReporter extends WDIOReporter {
     private trackOperation;
     /**
      * Decide whether to write a Cucumber scenario's captured steps to its case,
-     * and write them via the shared mapper. No-op for non-Cucumber frameworks
-     * (D-09). Writes on fresh create when captureSteps is on (D-04), or replaces
-     * existing steps when overwriteSteps is on (D-05).
+     * and write them via the shared mapper. No-op for non-Cucumber frameworks.
+     * Writes on fresh create when captureSteps is on, or replaces
+     * existing steps when overwriteSteps is on.
      */
     private writeScenarioSteps;
     /**
@@ -767,8 +767,8 @@ declare class TestPlanItReporter extends WDIOReporter {
      * Write derived case Steps for a case (ported from the Playwright reporter).
      * Dedups in-flight writes per case id; when `replace` is set, soft-deletes
      * existing steps first and SKIPS the create if the delete fails (never-clobber
-     * guard, CORE-01). Passes `CaseStepRow[]` directly to `createSteps` so the
-     * mapper's `expectedResult` is preserved (D-06).
+     * guard). Passes `CaseStepRow[]` directly to `createSteps` so the
+     * mapper's `expectedResult` is preserved.
      */
     private writeCaseSteps;
     /**
