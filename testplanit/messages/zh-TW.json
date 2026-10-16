@@ -577,6 +577,7 @@
       "addFieldTo": "新增欄位至 {section}",
       "selectTemplates": "選擇模板",
       "selectUsers": "選擇用戶",
+      "selectGroups": "選擇組",
       "selectOption": "選擇一個選項",
       "date": "選擇日期",
       "selectEncoding": "選擇編碼方式...",
@@ -737,7 +738,8 @@
       "adminSamlConfig": "管理員 - SAML 配置",
       "apiDocumentation": "API 文件",
       "sharedContent": "分享內容",
-      "impact": "影響分析"
+      "impact": "影響分析",
+      "alerts": "通知和警報"
     },
     "aria": {
       "userMenu": "使用者選單",
@@ -1660,7 +1662,8 @@
           "scimGroupMemberAdded": "新增成員",
           "scimGroupMemberRemoved": "成員已移除",
           "scimGroupDeleted": "群組已刪除",
-          "scimGroupMemberAddedSummary": "新增成員（批次同步摘要）"
+          "scimGroupMemberAddedSummary": "新增成員（批次同步摘要）",
+          "triggered": "已觸發"
         },
         "iterationResultHelp": "每次記錄迭代結果時觸發－無論是通過、失敗、跳過或其他任何狀態。在長時間的自動化運行中應謹慎使用（每次迭代觸發一次事件）。",
         "events": {
@@ -1741,7 +1744,7 @@
         "inboundGiteaTitle": "Gitea 入站 webhook",
         "inboundGiteaScopeHint": "Gitea <code>issues</code> events 會更新相關的 TestPlanIt 問題。其他事件類型也會被接受，但不會更新問題。",
         "inboundAdoTitle": "Azure DevOps 入站 Webhook",
-        "inboundAdoScopeHint": "Azure DevOps <code>工作項目已更新</code> 事件會更新相關的 TestPlanIt 問題。其他事件也會被接受，但不會更新問題。",
+        "inboundAdoScopeHint": "Azure DevOps <code>workitem.created</code> 和 <code>workitem.updated</code> 事件會更新關聯的 TestPlanIt 問題。其他事件會被接受但不會更新問題。",
         "inboundAdoUsername": "使用者名稱",
         "inboundAdoUsernamePlaceholder": "服務帳戶",
         "inboundAdoUsernameHelp": "已在 Azure DevOps 服務鉤子端進行設定。 TestPlanIt 透過 HTTP 基本驗證對其進行驗證。",
@@ -1758,7 +1761,7 @@
         "setupStepsGithubStep4": "選擇“讓我選擇單一事件”，然後勾選“問題”。",
         "setupStepsGithubStep5": "點選「新增 webhook」。使用下面的「發送測試 webhook」來驗證管道。",
         "setupStepsAdoStep1": "在 Azure DevOps 專案中，前往「專案設定」→「服務掛鉤」→「建立訂閱」。",
-        "setupStepsAdoStep2": "選擇“Web Hooks”作為服務。將觸發器設定為「工作項目已更新」。",
+        "setupStepsAdoStep2": "選擇 \"Web Hooks\" 作為服務。將觸發條件設置為 \"Work item created\"，然後對第二個訂閱重複這些步驟，使用 \"Work item updated\"。",
         "setupStepsAdoStep3": "將要傳送的資源詳細資訊設為“全部”，以便包含 System.State。",
         "setupStepsAdoStep4": "將以下網址貼到網址列。將基本驗證的使用者名稱和密碼設定為您上面輸入的值。",
         "setupStepsAdoStep5": "保存訂閱。使用下面的「發送測試 webhook」來驗證管道。",
@@ -1852,13 +1855,49 @@
         "setupStepsMantisbtStep4": "在 MantisBT 中建立或更新問題；已連結問題的狀態將同步至此處。",
         "inboundChooserClickup": "ClickUp",
         "inboundClickupTitle": "ClickUp 入站 webhook",
-        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code> 事件會更新相關的 TestPlanIt 問題。其他任務事件會被接受，但不會更新問題。",
+        "inboundClickupScopeHint": "ClickUp <code>taskCreated</code> 和 <code>taskStatusUpdated</code> 事件會更新關聯的 TestPlanIt 問題。其他任務事件會被接受但不會更新問題。",
         "inboundClickupRegisterHint": "ClickUp 沒有 webhook 設定頁面：webhook 是通過其 API 建立的，ClickUp 選擇簽署密鑰。將密鑰留空，TestPlanIt 將使用您的 ClickUp 授權在 ClickUp 中為連結的清單註冊此 webhook。",
         "inboundClickupSecret": "Webhook 密鑰（可選）",
         "inboundClickupSecretHelp": "僅在您使用 ClickUp 的建立 Webhook API 自己建立 webhook 時才需要：貼上 ClickUp 返回的密鑰。儲存時加密。",
         "setupStepsClickupStep1": "如果您將密鑰留空，TestPlanIt 已經為連結的清單在 ClickUp 中註冊了此 webhook — 無需在 ClickUp 中進行任何設定。",
         "setupStepsClickupStep2": "如果您透過 ClickUp 的建立 Webhook API 自己註冊了 webhook，請確保其端點是下面的 URL，並將其訂閱到 taskStatusUpdated 事件。",
         "setupStepsClickupStep3": "使用下方的「傳送測試 webhook」來驗證管道。輪換密鑰會在 ClickUp 中註冊新的 webhook。",
+        "actions": {
+          "description": "TestPlanIt 在此 Webhook 收到事件時所執行的操作。操作按列出的順序執行。",
+          "empty": "無操作。事件已記錄，但不會發生任何事情。",
+          "addTitle": "新增操作",
+          "editTitle": "編輯操作",
+          "dialogDescription": "選擇觸發此操作的事件及其執行的操作。",
+          "trigger": {
+            "ISSUE_EVENT": "任何問題事件",
+            "ISSUE_STATUS_ENTERED": "問題狀態變更"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "追蹤工具傳送的關於問題的任何事件。",
+            "ISSUE_CREATED": "TestPlanIt 之前未見過的問題。",
+            "ISSUE_STATUS_ENTERED": "問題移入所選狀態之一。"
+          },
+          "outcome": {
+            "cases_drafted": "測試案例已草擬",
+            "draft_queued": "正在草擬測試案例",
+            "has_cases": "問題已有測試案例",
+            "no_llm": "沒有活躍的 AI 模型",
+            "no_template": "沒有範本",
+            "no_target": "沒有儲存庫或預設狀態",
+            "draft_failed": "草擬失敗",
+            "already_composed": "已為此變更建立運行",
+            "execute_failed": "未要求執行"
+          },
+          "dragToReorder": "拖曳以重新排序",
+          "requirementsOnly": "僅限需求",
+          "requirementsOnlyHelp": "僅限專案將其分類為需求的問題。",
+          "includeChildIssues": "包含子問題",
+          "includeChildIssuesHelp": "也採用連結到問題子問題的測試案例。",
+          "notifyHelp": "當草稿準備好審核時，誰會收到通知。每個人的通知偏好設定仍然適用。",
+          "draftFolderNote": "由 {webhook} Webhook 自動草擬的測試案例。",
+          "draftFolderNoteCases": "由系統使用者草擬；每個案例都連結到其草擬自的問題。",
+          "viewFolder": "檢視資料夾"
+        },
         "codeRepos": {
           "empty": "未連接任何儲存庫以進行影響分析。<link>請先連接一個</link>。",
           "unsupported": "{provider} 儲存庫無法向 TestPlanIt 發送 Webhook。",
@@ -1878,10 +1917,12 @@
           "eventBranchPushHelp": "分析對任何其他分支的每次推送（如拉取請求相對於基本分支），並為每次推送構建執行。",
           "baseBranch": "基本分支",
           "baseBranchHelp": "推送至此分支時會自行分析；拉取請求和其他分支會與其進行比較。留空則使用連線的分支。",
-          "autoExecute": "執行自動化測試用例",
-          "autoExecuteHelp": "執行階段組成後，請求在此目標上執行其自動化測試用例的自動執行。手動測試用例保留在執行階段中供測試人員使用。",
-          "autoExecuteNoTargets": "未為此專案配置執行目標。<link>新增一個</link>以自動執行執行階段。",
-          "autoExecuteTargetMissing": "選定的執行目標已被刪除或停用。執行階段仍然組成，但在您選擇另一個目標之前不會請求執行。",
+          "minScoreHelp": "每個組合的執行會取用分析評分至少達到此值的每個測試案例 (0–100)。留空則取用已釘選和受影響的測試，如同手動啟動的執行一樣。",
+          "minScoreInvalid": "輸入 0 到 100 之間的整數，或留空",
+          "autoExecute": "執行自動化案例",
+          "autoExecuteHelp": "執行組合完成後，請求在此目標上自動執行其自動化案例。手動案例保留在執行中供測試人員使用。",
+          "autoExecuteNoTargets": "此專案未設定執行目標。<link>新增一個</link>以自動執行執行。",
+          "autoExecuteTargetMissing": "選擇的執行目標已刪除或停用。執行仍會組合，但在您選擇另一個目標之前不會要求執行。",
           "autoExecuteSaveError": "無法儲存自動執行設定"
         },
         "inboundEmptyState": "尚無入站 Webhook。<link>新增一個</link>以接收來自問題追蹤器的問題更新，或來自連線儲存庫的拉取請求和推送。",
@@ -1895,7 +1936,8 @@
           "sourceRepositoryHelp": "當開啟拉取請求或推送提交時啟動影響分析並構成測試執行。",
           "noRepositoryAvailable": "每個連線的儲存庫都已有 Webhook 或無法傳送 Webhook。",
           "repositoryPlaceholder": "選擇儲存庫"
-        }
+        },
+        "outboundSubsAlerts": "警報"
       },
       "aiModels": {
         "description": "配置人工智慧模型以實現智慧測試用例生成和分析",
@@ -2045,7 +2087,7 @@
           "branchPlaceholder": "留空則使用倉庫預設分支"
         },
         "pathPatterns": {
-          "description": "QuickScript 可能會讀取為 AI 上下文的存放庫檔案。",
+          "description": "指定 QuickScript 可作為 AI 內容讀取的儲存庫檔案。",
           "pathPlaceholder": "測試/端到端/頁面",
           "exceedsLimit": "總大小超出 AI 情境限制 {overflow}。在匯出過程中，文件會根據與待匯出測試案例的相關性進行排序——相關性最高的文件優先導出，當達到預算上限時，相關性較低的文件將被跳過。如果您希望更精確地控制要匯出的文件，請縮小路徑模式。"
         },
@@ -2108,7 +2150,6 @@
           "pathLabel": "路徑",
           "patternLabel": "圖案",
           "previewFiles": "預覽檔案",
-          "rootHint": "將路徑留空或輸入 . 以從存放庫根目錄開始；路徑 . 搭配模式 **/* 包含每個檔案。",
           "scanningRepo": "正在掃描儲存庫檔案… ({seconds}s)",
           "title": "路徑模式",
           "truncatedBadge": "結果可能不完整（提供者限制）"
@@ -2261,7 +2302,7 @@
           "branchesFallbackHint": "改為輸入分支名稱。"
         },
         "pathPatterns": {
-          "description": "Impact 讀取的應用程式檔案：程式碼釘選檔案選擇器、快取、存放庫標記以及分析忽略的已變更檔案。",
+          "description": "指定 Impact 讀取的應用程式檔案：Code Pin 檔案選擇器、快取、儲存庫標記，以及分析忽略的變更檔案。",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2871,7 +2912,9 @@
         "detailsDisplayMode": {
           "docked": "停靠面板",
           "newWindow": "新窗口"
-        }
+        },
+        "notificationsLabel": "通知",
+        "notificationsMoved": "管理通知和警報"
       },
       "assignments": {
         "title": "作業",
@@ -2980,6 +3023,10 @@
             "label": "AI 步驟已衍生",
             "description": "您啟動的 AI 步驟衍生工作已寫入步驟。"
           },
+          "CASES_DRAFTED": {
+            "label": "AI 草擬的測試案例",
+            "description": "Webhook 操作為問題草擬了測試案例，並將您指定為審核者。"
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "整合需要重新授權",
             "description": "與整合的連線已過期或被撤銷，需要重新連線。"
@@ -2996,9 +3043,9 @@
             "label": "新用戶註冊",
             "description": "新用戶透過表單、SSO 或 SAML 註冊。"
           },
-          "LLM_BUDGET_ALERT": {
-            "label": "AI 預算警報",
-            "description": "LLM 支出超過計費期間的預算閾值。"
+          "ALERT_TRIGGERED": {
+            "label": "警報",
+            "description": "您訂閱的警報因為測試指標超過其監視的線條而觸發。"
           }
         },
         "success": {
@@ -3123,7 +3170,8 @@
       "orange": "橘子",
       "accessible": "無障礙",
       "accessibledark": "無障礙（深色）"
-    }
+    },
+    "myAlerts": "通知和警報"
   },
   "repository": {
     "version": {
@@ -3196,7 +3244,12 @@
       "noStepsInSelectedGroup": "所選組沒有步驟。",
       "sharedGroupSuffix": "（共同步驟）",
       "unnamedSharedGroup": "未命名的共享步驟",
-      "noStepsInSelectedSharedGroup": "所選共用群組沒有步驟。"
+      "noStepsInSelectedSharedGroup": "所選共用群組沒有步驟。",
+      "layout": {
+        "label": "步驟佈局",
+        "stacked": "堆疊",
+        "sideBySide": "並排"
+      }
     },
     "testCase": {
       "toggleAutomated": "切換自動測試",
@@ -3686,7 +3739,7 @@
         "title": "選擇需求來源",
         "description": "選擇是從問題文件還是需求文件產生測試案例。",
         "folderContextTip": "為避免重複，系統將使用「{folderName}」及其父/子資料夾中的現有測試案例作為上下文。請確保在繼續操作前已選擇正確的資料夾。",
-        "folderContextCount": "{count, plural, =1 {# 個現有測試案例} other {# 個現有測試案例}}在 \"{folderName}\" 及其父/子資料夾中將被用作上下文，以符合您專案的風格並避免重複。",
+        "folderContextCount": "\"{folderName}\" 及其父資料夾/子資料夾包含 {count, plural, =1 {# 個現有測試案例} other {# 個現有測試案例}}。AI 使用盡可能多符合其上下文的案例來匹配您專案的風格並避免重複。",
         "folderContextEmptyTitle": "沒有現有測試案例可用作內容",
         "folderContextEmpty": "「{folderName}」及其上層/下層資料夾中沒有測試案例，因此 AI 沒有您專案風格或現有涵蓋範圍的範例。為了獲得更好的結果，請從這些測試案例所屬的資料夾開始產生器，位於相關案例的旁邊。",
         "currentFolder": "目前資料夾",
@@ -4558,7 +4611,7 @@
         "no_candidates": "沒有測試案例符合。",
         "anchor_fetch_capped": "某些引腳檔案僅按路徑符合（達到擷取限制）。",
         "issue_commit_fetch_capped": "某些命名工單的提交未逐檔案讀取（達到擷取限制）；其案例不涵蓋特定檔案。",
-        "paths_excluded_by_settings": "{count, plural, one {# 個變更的檔案已} other {# 個變更的檔案已}}因儲存庫的排除路徑而被忽略。"
+        "paths_excluded_by_settings": "{count, plural, one {# 個已變更的檔案已} other {# 個已變更的檔案已}}因存放庫的排除路徑而被忽略。"
       },
       "actions": {
         "analyze": "分析",
@@ -5510,6 +5563,7 @@
       "scimProvisionerBadge": "SCIM 配置器",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "由SCIM管理。請從SCIM管理頁面進行管理。",
+      "systemUserTooltip": "為 TestPlanIt 自動執行的工作內置的使用者，例如 Webhook 操作。它無法登入或編輯。",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "是的",
       "scimUserLockedTitle": "使用者由 SCIM 管理",
@@ -6180,7 +6234,8 @@
         "stepSequenceMatchCases": "步驟序列匹配用例",
         "testRunCases": "測試運行用例",
         "testRunCaseDataSetSnapshots": "測試運行用例資料集快照",
-        "testRunCaseIterations": "測試運行疊代"
+        "testRunCaseIterations": "測試運行疊代",
+        "alertRules": "警報"
       },
       "table": {
         "title": "已刪除 {itemType}",
@@ -6531,7 +6586,6 @@
         "defaultModelPlaceholder": "gpt-4o、claude-3-5-sonnet-20241022 等。",
         "defaultModelDescription": "預設使用的模型",
         "maxTokensPerRequest": "每次請求的最大令牌數",
-        "maxRequestsPerMinute": "每分鐘最大請求數",
         "costPerInputToken": "每百萬個輸入代幣的成本（美元）",
         "costPerOutputToken": "每百萬個輸出代幣的成本（美元）",
         "monthlyBudget": "每月預算（美元）",
@@ -6910,7 +6964,8 @@
         "markRead": "標記為已讀",
         "markUnread": "標記為未讀",
         "markAllRead": "全部標記為已讀",
-        "deleteAll": "全部刪除"
+        "deleteAll": "全部刪除",
+        "manageAlerts": "管理通知和警報"
       },
       "success": {
         "deleted": "通知已刪除",
@@ -6954,11 +7009,6 @@
         "shareLinkAccessedMessage": "{viewer} 檢視了您分享的報告：\"{shareTitle}\"",
         "viewedYourSharedLink": "我已查看您分享的鏈接",
         "viewedAt": "查看於",
-        "budgetDisclaimer": "預算限制僅供參考，不妨礙實際使用。",
-        "llmBudgetExceededTitle": "法學碩士預算超支",
-        "llmBudgetThresholdTitle": "LLM 預算 {threshold}已使用百分比",
-        "llmBudgetExceededMessage": "{providerName} 已超出其月度預算： {spend} 已花費 {budget} 預算。",
-        "llmBudgetThresholdMessage": "{providerName} 已使用其每月預算的 {threshold}%： {spend} 的 {budget}。",
         "userRegisteredTitle": "新用戶註冊",
         "userRegisteredMessageSso": "{userName} ({userEmail}) 已透過 SSO 註冊",
         "userRegisteredMessageForm": "{userName} ({userEmail}) 已透過註冊表單註冊",
@@ -6997,6 +7047,9 @@
         "aiStepsDerivedTitle": "AI 推導測試步驟已就緒",
         "aiStepsDerivedMessage": "{count, plural, other {# 個測試案例}} 已獲得 AI 推導的步驟 — 請檢查其準確性。",
         "aiStepsDerivedReviewLink": "檢查測試執行",
+        "casesDraftedTitle": "AI 草擬的測試案例已就緒",
+        "casesDraftedMessage": "{count, plural, other {# 個測試案例}} 已為 {issueKey} 草擬 — 請審核其準確性。",
+        "casesDraftedReviewLink": "在 {folderName} 中審核",
         "integrationAuthExpiredTitle": "整合連線已過期",
         "integrationAuthExpiredMessage": "您與「{integrationName}」的連線已過期。請重新連線以繼續問題同步。",
         "integrationAuthExpiredReconnect": "重新連線",
@@ -7008,7 +7061,56 @@
         "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} 已通過，因此分配給您的此案例不再被阻止：",
         "runCaseUnblockedEmailMessage": "測試運行 \"{testRunName}\" 中的 \"{testCaseName}\"（專案 \"{projectName}\") 不再被阻止：\"{prerequisiteName}\" 已通過。已分配給您且已準備好執行。",
         "runCaseUnblockedReason": "您收到此訊息是因為測試案例已分配給您。",
-        "inTestRun": "在測試運行中"
+        "inTestRun": "在測試運行中",
+        "alertTriggeredTitle": "警報已觸發",
+        "alertTriggeredRule": "規則： {ruleName}",
+        "alertTriggeredEmailMessage": "警報 \"{ruleName}\" 在專案 \"{projectName}\" 中為 {subjectLabel} \"{subjectName}\" 觸發： {detail}",
+        "alertTriggeredEmailMessageSystem": "警報 \"{ruleName}\" 為 {subjectLabel} \"{subjectName}\" 觸發： {detail}",
+        "alertTriggeredReason": "您收到此訊息是因為您已訂閱此警報。",
+        "alertSubject": {
+          "CASE": "測試案例",
+          "RUN": "測試運行",
+          "MILESTONE": "里程碑",
+          "SESSION": "工作階段",
+          "PROJECT": "專案",
+          "WEBHOOK": "網路鉤子",
+          "LLM_INTEGRATION": "AI 模型整合",
+          "CODE_REPOSITORY": "儲存庫連接",
+          "INTEGRATION": "整合",
+          "QUEUE": "佇列",
+          "SYSTEM": "安裝"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "結果花費 {elapsed}，距離 {baseline} 的基線偏差為 {deviation}%（超過允許的 {threshold}%）。",
+          "CASE_REGRESSED": "案例在通過其上一個 {passedBefore, plural, other {上一個 # 個結果}} 後失敗。",
+          "CASE_RECOVERED": "案例在失敗其上一個 {failedBefore, plural, other {# 個結果}} 後通過。",
+          "RUN_DURATION_DEVIATION": "運行花費 {elapsed}，距離 {baseline} 的基線偏差為 {deviation}%（超過允許的 {threshold}%）。",
+          "RUN_NOT_PROGRESSING": "運行已 {idleHours, plural, other {# 小時}} 未有新結果（閾值 {threshold}）。",
+          "AUTOMATED_EXECUTION_FAILED": "{target} 上的自動執行以 {status}{error, select, other {： {error}}} 結束",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% 的運行案例在其里程碑到期前 {daysRemaining, plural, other {# 天}} 內無結果（閾值 {threshold}%）。",
+          "RUN_ISSUES_OPENED": "{issues, plural, other {# 個問題}} 連結到運行的結果（閾值 {threshold}）。",
+          "SESSION_OVERRUN": "工作階段花費 {elapsed}，超過 {estimate} 的估計 {overrun}%（超過允許的 {threshold}%）。",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} 個中的 {total} 個需求（{coverage}%） {basis, select, PASSING {有通過的最新結果} other {連結到測試案例}}（閾值 {threshold}%）。",
+          "STALE_CASES": "{stale, plural, other {# 個案例}} 在 {days, plural, other {# 天}} 內無結果（閾值 {threshold}）。",
+          "AUTOMATION_SHARE_BELOW": "{automated} 個中的 {total} 個案例（{automatedPercent}%）是自動化的（閾值 {threshold}%）。",
+          "WEBHOOK_FAILURE_RATE": "最後 {sampleCount} 次交付中的 {failed} 次失敗（{failureRate}%，閾值 {threshold}%）。",
+          "CONSECUTIVE_FAILURES": "案例已連續失敗 {streak, plural, other {# 次}}（閾值 {threshold}）。",
+          "CASE_FLAKY": "在最後 {sampleCount} 個結果中結果翻轉了 {flips, plural, other {# 次}}（閾值 {threshold}）。",
+          "RUN_PASS_RATE_BELOW": "通過率在 {sampleCount} 個結果中為 {passRate}%（閾值 {threshold}%）。",
+          "RUN_FAILURE_COUNT": "{failed, plural, other {# 個結果}} 失敗（閾值 {threshold}）。",
+          "MILESTONE_BEHIND": "里程碑完成 {completion}%，剩餘 {daysRemaining, plural, other {# 天}}（閾值 {threshold}%）。",
+          "MILESTONE_OVERDUE": "里程碑超過其到期日期 {daysOverdue, plural, other {# 天}}。",
+          "LLM_BUDGET_USED": "計費週期的支出為 {spend} 中的 {budget} 月度預算（{percent}%，閾值 {threshold}%）。",
+          "LLM_ERROR_RATE": "最後 {sampleCount} 個請求中的 {failed} 個失敗（{failureRate}%，閾值 {threshold}%）。",
+          "LLM_RATE_LIMITED": "提供者在過去 {hours, plural, other {# 小時}} 內限制速率了 {blocked, plural, other {# 個請求}}（閾值 {threshold}）。",
+          "CODE_REPOSITORY_CACHE_FAILING": "儲存庫快取已 {hours, plural, other {# 小時}} 失敗（閾值 {threshold}）{error, select, other {： {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, other {# 個使用者}} 需要重新授權整合（閾值 {threshold}）。",
+          "QUEUE_FAILED_JOBS": "{failed, plural, other {# 個工作}} 在佇列中失敗（閾值 {threshold}）。",
+          "QUEUE_BACKLOG": "{waiting, plural, other {# 個等待的工作}} 中最舊的已等待 {minutes, plural, other {# 分鐘}}（閾值 {threshold}）。",
+          "AUDIT_BACKLOG": "最舊的未處理稽核變更已 {minutes, plural, other {# 分鐘}}（閾值 {threshold}）。",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, other {# 個帳戶}} 在登入失敗後被鎖定（閾值 {threshold}）。",
+          "NO_AUTOMATED_RESULTS": "過去 {hours, plural, other {# 小時}} 內未收到自動結果（閾值 {threshold}）。"
+        }
       }
     },
     "issues": {
@@ -7587,7 +7689,8 @@
       "SharedSteps": "共同步驟",
       "Issues": "問題",
       "Reporting": "報告",
-      "Settings": "項目設定"
+      "Settings": "專案管理",
+      "Alerts": "警報"
     },
     "WorkflowType": {
       "NOT_STARTED": "尚未開始",
@@ -7645,6 +7748,9 @@
     "businessHours": "{hours, number, ::.0} 個工作小時"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## 標籤\n問題在您的追蹤器中攜帶的標籤。操作僅採用至少具有其中一個的問題；將其留空以採用無論其標籤如何的問題。\n\n- Jira、GitHub、GitLab 和 Gitea：問題的標籤\n- Azure DevOps、ClickUp 和 MantisBT：問題的標籤\n- Redmine：問題的類別\n- 匹配忽略大小寫"
+    },
     "auditLogs": "## 稽核記錄\n查看系統範圍內的稽核記錄，以進行安全性和合規性追蹤",
     "statuses": "## 狀態\n管理測試人員在記錄測試結果時指派的狀態，例如通過、失敗和已封鎖。",
     "configurations": "## 配置\n配置是用於定義測試環境的類別和變體的組合。例如，作業系統/瀏覽器、測試伺服器、語言等。",
@@ -7827,7 +7933,7 @@
       "name": "## 角色名稱\n一個清晰、簡潔、描述性的名稱或關鍵字，用於所有項目。\n\n- 幫助團隊成員快速找到相關的測試案例、測試運行和會話。",
       "isDefault": "## 預設角色\n指示此角色是否為專案的預設角色。\n\n- 預設角色已預先為新使用者選擇。\n- 可隨時變更。",
       "permissions": {
-        "canAddEdit": "## 新增/編輯\n指示此角色是否可以新增和編輯相關的應用程式區域。\n\n- **自動化執行**授予在 CI 供應商上啟動、重試和取消自動化執行的權限。記錄結果仍需要**測試執行結果**新增/編輯，而從儲存庫啟動也需要**測試執行**新增/編輯，因為它建立或擴展執行。",
+        "canAddEdit": "## 新增/編輯\n指示此角色是否可以新增和編輯相關的應用程式區域。\n\n- **自動執行** 授予在 CI 提供者上啟動、重試和取消自動執行的權限。記錄結果仍需要 **測試運行結果** 新增/編輯，從儲存庫啟動還需要 **測試運行** 新增/編輯，因為它建立或擴展運行。\n- **警報** 授予在專案中建立警報以及編輯、暫停和刪除您建立的警報的權限。專案管理員管理每個警報和其他使用者的訂閱；任何人都可以追蹤或離開警報。",
         "canDelete": "## 刪除\n指示此角色是否可以刪除相關的應用程式區域。",
         "canClose": "## 關閉\n指示此角色是否可以關閉相關的應用程式區域。",
         "canApprove": "## 批准\n指示此角色是否可以批准相關應用程式領域的審核請求。僅適用於測試案例庫、測試運行和會話。",
@@ -7858,10 +7964,9 @@
       "maxTokensPerRequest": "## 每次請求的最大 Token 數\n模型在單次回應中可產生的**_輸出_ token 硬性上限**。\n\n- 限制模型**回覆**的長度 — 而非您傳送給它的上下文量\n- 要求超過此限制的請求會**在到達模型之前被拒絕**\n- 請將其設定為您模型真實的最大輸出量 — 例如 Claude Opus/Sonnet 為 `128000`，Claude Haiku 為 `64000`，Gemini 為 `65536`，GPT-4o 為 `16384`\n- 設定過低 → AI 功能會失敗或產生被截斷的輸出",
       "defaultMaxTokens": "## 預設最大詞元數\n此 AI 模型請求所要求的**_輸出_長度**，受限於「每次請求的最大詞元數」。\n\n- **測試案例產生**（每個來源，包括 Jira 問題面板）、**Markdown 測試案例解析**、**編輯器寫作助手**及**智慧測試案例選取**皆一律使用此值 — 不會套用其提示設定中的_最大輸出詞元數_\n- **匯出程式碼產生**、**AI 標籤建議**、**AI 步驟推導**及**自動化候選報告**則改用**管理員 → 提示設定**中各自的_最大輸出詞元數_\n- 在回答前會先「思考」的模型（例如 Claude Opus 5）會將此預算的一部分用於推理 — 請為回覆保留空間\n- 此設定**不會**控制 QuickScript 傳送給模型的儲存庫程式碼量 — 該預算是根據模型的上下文視窗自動推算的\n- 請將其保持在「每次請求的最大詞元數」以下",
       "repoContextBudget": "## 儲存庫上下文預算\nQuickScript 在產生腳本時，會傳送多少已連結儲存庫的程式碼給模型。\n\n- 根據所選模型的輸入上下文視窗**自動設定** — 此處無需進行任何設定\n- 上下文視窗較大的模型(Claude, Gemini, DeepSeek)會獲得更多；小型本地模型則會獲得一個不會溢出的安全數量\n- 更多的上下文能讓腳本更貼合您真實的頁面物件和固定裝置 — 但不會改變產生腳本的長度",
-      "maxRequestsPerMinute": "## 每分鐘最大請求數\n限制每分鐘可向此提供者發出的 API 呼叫次數。\n\n- 設定以符合您的供應商套餐的速率限制。\n- 超出限制的請求將被排隊，不會被拒絕。\n- 請查看您的提供者文件以了解您的套餐限制。",
       "costPerInputToken": "## 每 1M 個輸入權杖的成本（USD）\n傳送給模型的每 **百萬** 個輸入（提示）權杖的美元成本。\n\n- 用於成本追蹤與預算警示\n- 當您的供應商回報模型定價時（LiteLLM、OpenRouter、Together AI）會自動填入 — 在您選擇模型或執行測試連線時套用\n- 否則，請至您供應商的定價頁面查詢\n- 範例：`0.15` = 每百萬個輸入權杖 $0.15",
       "costPerOutputToken": "## 每 1M 個輸出權杖的成本（USD）\n模型產生的每 **百萬** 個輸出（完成）權杖的美元成本。\n\n- 通常高於輸入權杖成本\n- 用於成本追蹤與預算警示\n- 當您的供應商回報模型定價時（LiteLLM、OpenRouter、Together AI）會自動填入 — 在您選擇模型或執行測試連線時套用\n- 否則，請至您供應商的定價頁面查詢\n- 範例：`0.60` = 每百萬個輸出權杖 $0.60",
-      "monthlyBudget": "## 每月預算（美元）\n此整合的選用支出目標。\n\n- 設定為 `0` 可停用預算追蹤。\n- 預算僅供參考，不會影響 LLM 的使用。\n- 您將在達到預算的 80%、90% 和 100% 時收到通知。\n- 費用是根據上述每個代幣的價格計算。",
+      "monthlyBudget": "## 月度預算（美元）\n此整合的可選支出目標。\n\n- 設置為 `0` 以停用預算追蹤\n- 預算 **僅供參考** — 它不會阻止 LLM 使用\n- 一個帶有 **AI 預算已使用** 指標的警報（系統、在通知和警報頁面上）在支出達到您設置的份額時通知其訂閱者；儲存此表單或重置支出讓它在同一時期再次觸發\n- 成本是使用上面的按令牌費率計算的",
       "billingPeriodStartDay": "## 帳單週期起始日\n帳單週期開始的日期（1-31）。\n\n- 預設值 `1` 與日曆月一致。\n- 設定為 `15` 表示每月 15 日至 15 日的週期（例如，與您的供應商發票日期一致）。\n- 值 `29-31` 會自動鎖定到較短月份的最後一天（例如，非閏年的 2 月）。\n- 影響**月度預算**支出窗口和**重置支出**操作。",
       "defaultTemperature": "## 預設溫度\n控制模型回應的隨機性（0–2）。\n\n- **0：**確定性——相同輸入產生相同輸出\n- **0.3：**聚焦——建議用於測試生成與程式碼輸出\n- **1+：**創意——回應更多樣化\n- 個別功能可在提示設定中覆寫此設定",
       "timeout": "## 請求逾時（毫秒）\n在請求被取消前等待回應的時間。\n\n- 數值以毫秒為單位（例如 `30000` = 30 秒）\n- 串流請求（例如程式碼匯出預覽）會忽略此逾時設定\n- 若模型較慢或較大，可增加此數值\n- 範圍：5,000 – 600,000 毫秒",
@@ -8387,8 +8492,9 @@
     "projectRunsFilters": "## 篩選測試運行\n\n切換標籤以縮小列表範圍。標籤同時適用於「進行中」和「已完成」分頁，並會在此裝置上針對此專案記住設定。\n\n- **手動** / **自動化** — 將列表限制為該類型的運行。同時開啟（或同時關閉）兩者將顯示所有運行。\n- **我的測試運行** — 僅顯示您參與的運行：您建立了該運行、您被指派了其中的測試用例，或您在其中記錄了測試結果。",
     "projectSessionsFilters": "## 篩選工作階段\n\n切換晶片以縮小清單範圍。晶片同時套用於「進行中」及「已完成」分頁，並會針對此裝置和此專案記住設定。\n\n- **我的工作階段** — 僅顯示您參與的工作階段：由您建立的工作階段，或指派給您的工作階段。",
     "projectImpact": "## 影響\n連結應用程式的儲存庫，使此專案可以執行測試影響分析：選擇兩個提交以查看變更會影響哪些測試案例，並將測試案例釘選到其涵蓋的程式碼。",
-    "pathPatterns": "## 路徑模式\n每一行將基礎 **路徑** 與 glob **模式** 結合。行會累加：當任何一行符合時，檔案即被包含。\n\n- `src` + `**/*` — `src` 下的所有內容\n- 空白或 `.` + `**/*` — 儲存庫中的每個檔案\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 檔案，但不包括測試\n\n### 排除\n在一行上勾選 **排除** 以移除其檔案，即使其他行包含它們。排除項適用於檔案選擇器和快取，以及對於影響分析的已變更檔案，因此在幾乎每個提取請求上都變更的檔案會停止提取無關的測試案例。至少有一行必須保持未勾選。\n\n- 空白 + `**/CHANGELOG*` — 每個 changelog，在任何深度\n- `app` + `build.gradle.kts` — 只會提升版本的建置檔案",
-    "projectAutomation": "## 自動化執行\n執行目標告知 TestPlanIt 在何處執行此專案的自動化案例：GitHub Actions 工作流程、GitLab CI 管道，或用於任何其他系統的簽名 webhook。執行執行時，TestPlanIt 會使用執行 ID 和計劃 URL 啟動工作；工作會讀取計劃、執行相符的測試，並透過記錄者或 CLI 釘選至該執行來報告結果。目標可以停用而無需刪除。"
+    "pathPatterns": "## 路徑模式\n每一列都會結合一個基本的**路徑**與一個 glob **模式**。列會相加：當任何列符合該檔案時，檔案就會被包含。\n\n- `src` + `**/*` — `src` 下的所有內容\n- 空白或 `.` + `**/*` — 儲存庫中的每個檔案\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 檔案（測試除外）\n\n### 排除\n在列上勾選**排除**，即使另一列包含這些檔案，也要移除其檔案。排除適用於檔案選擇器和快取，對於「影響」，適用於分析的已變更檔案，因此在幾乎每個提取請求上變更的檔案會停止拉取不相關的測試案例。至少有一列必須保持未勾選。\n\n- 空白 + `**/CHANGELOG*` — 每個變更日誌，在任何深度\n- `app` + `build.gradle.kts` — 只會變更版本的建置檔案",
+    "projectAutomation": "## 自動化執行\n執行目標告知 TestPlanIt 在何處執行此專案的自動化案例：GitHub Actions 工作流程、GitLab CI 管道，或用於任何其他系統的簽名 webhook。執行執行時，TestPlanIt 會使用執行 ID 和計劃 URL 啟動工作；工作會讀取計劃、執行相符的測試，並透過記錄者或 CLI 釘選至該執行來報告結果。目標可以停用而無需刪除。",
+    "userAlerts": "## 通知和警報\n**通知偏好設定** 決定您如何被聯絡（應用內、電子郵件、摘要）以及您接收哪些通知類型。\n\n**警報** 監視測試指標，當其超過線條時通知其訂閱者，例如結果耗時比案例常見耗時長 50%、案例連續失敗三次、運行通過率降至 90% 以下或里程碑在還有天數時落後。列表顯示您專案中的每個警報；**通知我** 開關追蹤或離開一個。**新增警報** 在角色具有 **警報** 新增/編輯的任何專案中建立您自己的；專案管理員管理其專案中的每個警報以及其他人的訂閱。警報在其冷卻時間內最多為每個主題觸發一次，並保持沉默，直到有足夠的結果。"
   },
   "reports": {
     "ui": {
@@ -9610,9 +9716,12 @@
       "exists": "存在",
       "not_exists": "不存在"
     },
+    "recordMatches": "{count, plural, other {# 條記錄按 ID 匹配}}",
     "help": {
       "exactPhrases": "確切短語",
       "exactPhrasesDesc": "將字詞用引號括起來，以符合完整的短語：",
+      "ids": "ID",
+      "idsDesc": "輸入 ID（帶或不帶 #）以直接查找記錄。用 OR、逗號或空格分隔多個以查找全部：",
       "proximity": "近距離搜尋",
       "proximityDesc": "彼此相距 N 個位置的單字",
       "booleanOperators": "布林運算符",
@@ -10177,5 +10286,454 @@
     "update": "使用目前對應進行更新",
     "updateConfirm": "「{name}」將使用目前欄位對應和設定進行更新。",
     "savePrompt": "下次要儲存此欄位對應嗎？"
+  },
+  "alerts": {
+    "title": "警報",
+    "description": "您跨專案追蹤的警報，以及這些專案中您可能追蹤的其他警報。",
+    "addRule": "新增警報",
+    "editRule": "編輯警報",
+    "deleteRule": "刪除警報",
+    "deleteConfirm": "刪除警報 \"{name}\"？其訂閱者將停止接收通知，可以從垃圾桶還原。",
+    "pauseTitle": "暫停所有人的此警報？",
+    "pauseConfirm": "\"{name}\" 停止對 {count, plural, =0 {所有人} one {其唯一訂閱者} =2 {其兩個訂閱者} other {其全部 # 個訂閱者}} 觸發，直到有人再次啟用它。要僅停止您自己的通知，改為關閉通知我。",
+    "columns": {
+      "name": "規則",
+      "condition": "條件",
+      "scope": "範圍",
+      "subscribers": "訂閱者",
+      "lastFired": "最後觸發",
+      "enabled": "已啟用",
+      "notifyMe": "通知我",
+      "actions": "操作",
+      "project": "專案"
+    },
+    "neverFired": "絕不",
+    "systemScope": "系統",
+    "systemSubjects": {
+      "audit": "稽核日誌",
+      "lockouts": "使用者帳戶",
+      "automated-results": "自動化結果"
+    },
+    "paused": "已暫停",
+    "filters": {
+      "label": "篩選警報",
+      "on": "開啟",
+      "off": "關閉"
+    },
+    "history": "歷史記錄",
+    "subscribers": "訂閱者",
+    "subscriberCount": "{count, plural, =0 {沒有訂閱者} one {# 個訂閱者} other {# 個訂閱者}}",
+    "toasts": {
+      "created": "規則已建立。",
+      "updated": "規則已更新。",
+      "deleted": "規則已刪除。",
+      "enabled": "規則已啟用。",
+      "disabled": "規則已暫停。",
+      "subscribed": "當此規則觸發時，您將收到通知。",
+      "unsubscribed": "您將不再收到此規則的通知。",
+      "subscriberAdded": "{name} 已訂閱。",
+      "subscriberRemoved": "{name} 已取消訂閱。",
+      "saveError": "無法儲存規則。",
+      "subscriptionError": "無法更新訂閱。"
+    },
+    "form": {
+      "name": "名稱",
+      "namePlaceholder": "例如 結帳流程減速",
+      "description": "描述",
+      "descriptionPlaceholder": "其他訂閱者的可選備註",
+      "metric": "指標",
+      "metricLocked": "警報建立後無法變更指標。改為建立新警報。",
+      "condition": "條件",
+      "scope": "範圍",
+      "scopeType": "監視",
+      "scopeFolder": "資料夾",
+      "scopeTag": "標籤",
+      "scopeCase": "測試案例",
+      "scopeMilestone": "里程碑",
+      "scopeRunName": "運行名稱包含",
+      "scopeRunNamePlaceholder": "例如 每晚",
+      "scopePickFolder": "選擇一個資料夾",
+      "scopePickTag": "選擇一個標籤",
+      "scopePickCase": "選擇一個測試案例",
+      "scopePickMilestone": "選擇一個里程碑",
+      "scopeWebhook": "網路鉤子",
+      "scopePickWebhook": "選擇一個 Webhook",
+      "scopeLlmIntegration": "整合",
+      "scopePickLlmIntegration": "選擇一個整合",
+      "scopeCodeRepository": "儲存庫連接",
+      "scopePickCodeRepository": "選擇一個儲存庫連接",
+      "scopeIntegration": "整合",
+      "scopePickIntegration": "選擇一個整合",
+      "scopeQueue": "佇列",
+      "scopePickQueue": "選擇一個佇列",
+      "systemScope": "系統",
+      "systemScopeHelp": "系統警報監視為整個安裝管理的內容，例如 AI 模型預算。只有管理員可以看到它。",
+      "coverageBasis": "計為涵蓋",
+      "coverageBasisOptions": {
+        "LINKED": "連結到至少一個測試案例",
+        "PASSING": "最新結果通過"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "基線視窗（運行）",
+        "WEBHOOK_FAILURE_RATE": "最後交付",
+        "LLM_ERROR_RATE": "最後請求"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "最少運行",
+        "WEBHOOK_FAILURE_RATE": "最少交付",
+        "LLM_ERROR_RATE": "最少請求"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "里程碑到期前的天數",
+        "STALE_CASES": "無結果的天數",
+        "LLM_RATE_LIMITED": "在最後（小時）內"
+      },
+      "scopeCaseSearch": "按名稱或 ID 搜尋",
+      "direction": "方向",
+      "baselineType": "基線",
+      "baselineWindow": "基線視窗（結果）",
+      "minSamples": "最少結果",
+      "resultSource": "要監視的結果",
+      "evaluateOn": "評估",
+      "daysRemaining": "剩餘天數",
+      "cooldown": "冷卻時間（分鐘）",
+      "cooldownHelp": "在規則為主題觸發後，它會為該主題保持沉默此時長。0 停用冷卻。",
+      "emitWebhook": "發送警報。已觸發 Webhook 事件",
+      "emitWebhookHelp": "已訂閱警報的出站 Webhook 接收相同的有效負載，因此 Slack 或其他工具可以發送它。",
+      "enabled": "已啟用",
+      "audience": "觀眾",
+      "audienceHelp": "當警報觸發時被告知誰。您預設會新增到您建立的警報；任何人都可以離開或重新加入。",
+      "audienceHelpSystem": "當警報觸發時被告知誰。只有管理員才能在系統警報的觀眾中；您預設會被新增。",
+      "searchMembers": "搜尋專案成員",
+      "you": "您",
+      "cannotManageSubscribers": "您可以訂閱或取消訂閱自己。訂閱其他成員需要專案管理權限。",
+      "validation": {
+        "nameRequired": "輸入名稱。",
+        "scopeRequired": "選擇規則監視的內容。",
+        "runNameRequired": "輸入部分運行名稱。",
+        "percentRange": "輸入 {min} 至 {max} 之間的百分比。",
+        "countRange": "輸入 {min} 至 {max} 之間的整數。",
+        "windowRange": "輸入 {min} 至 {max} 個結果之間的視窗。",
+        "minSamplesRange": "輸入 {min} 至 {max} 之間的值。",
+        "minSamplesWindow": "最少結果不能超過基線視窗。",
+        "cooldownRange": "輸入 {min} 至 {max} 之間的分鐘數。",
+        "daysRange": "輸入 {min} 至 {max} 之間的天數。",
+        "windowBelowMinSamples": "基線視窗不能小於最少結果。"
+      },
+      "project": "專案",
+      "projectPlaceholder": "選擇一個專案",
+      "projectHelp": "僅列出您的角色可能會建立警報的專案。",
+      "dialogDescription": "監視一個測試指標，並在其超過您設置的線條時通知觀眾。",
+      "metricSearch": "搜尋指標",
+      "metricNoMatch": "沒有指標相符。",
+      "checkedDaily": "每天檢查",
+      "checkedHourly": "每小時檢查",
+      "needsProject": "首先選擇一個專案。",
+      "followAlert": "通知我",
+      "leaveAlert": "停止通知我",
+      "delivery": "交付",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "偏差 (%)",
+        "CASE_REGRESSED": "閾值",
+        "CONSECUTIVE_FAILURES": "連續失敗",
+        "CASE_FLAKY": "翻轉",
+        "RUN_PASS_RATE_BELOW": "通過率低於 (%)",
+        "RUN_FAILURE_COUNT": "失敗的結果，超過",
+        "RUN_DURATION_DEVIATION": "偏差 (%)",
+        "RUN_NOT_PROGRESSING": "閒置超過（小時）",
+        "AUTOMATED_EXECUTION_FAILED": "閾值",
+        "RUN_UNTESTED_SHARE": "未測試的案例超過 (%)",
+        "RUN_ISSUES_OPENED": "連結的問題，超過",
+        "SESSION_OVERRUN": "超過估計 (%)",
+        "MILESTONE_BEHIND": "完成度低於 (%)",
+        "MILESTONE_OVERDUE": "閾值",
+        "REQUIREMENT_COVERAGE_BELOW": "涵蓋範圍低於 (%)",
+        "STALE_CASES": "過時的案例，超過",
+        "AUTOMATION_SHARE_BELOW": "自動化份額低於 (%)",
+        "WEBHOOK_FAILURE_RATE": "故障率超過 (%)",
+        "LLM_BUDGET_USED": "預算已用 (%)",
+        "LLM_ERROR_RATE": "失敗的請求超過 (%)",
+        "LLM_RATE_LIMITED": "限速請求，至少",
+        "CODE_REPOSITORY_CACHE_FAILING": "失敗至少（小時）",
+        "INTEGRATION_REAUTH_NEEDED": "需要重新授權的使用者，至少",
+        "QUEUE_FAILED_JOBS": "失敗的工作，超過",
+        "QUEUE_BACKLOG": "最舊的等待工作早於（分鐘）",
+        "AUDIT_BACKLOG": "最舊的未處理變更早於（分鐘）",
+        "ACCOUNT_LOCKOUTS": "被鎖定的帳戶，至少",
+        "NO_AUTOMATED_RESULTS": "無自動結果（小時）"
+      }
+    },
+    "direction": {
+      "ABOVE": "以上（較慢）",
+      "BELOW": "以下（較快）",
+      "EITHER": "以上或以下"
+    },
+    "baseline": {
+      "MEAN": "平均",
+      "MEDIAN": "中位數"
+    },
+    "resultSource": {
+      "MANUAL": "手動結果",
+      "AUTOMATED": "自動化結果",
+      "BOTH": "手動和自動化"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "運行完成時",
+      "AS_RESULTS_ARRIVE": "結果到達時"
+    },
+    "scopeType": {
+      "PROJECT": "整個專案",
+      "FOLDER": "資料夾中的案例",
+      "TAG": "帶有標籤的案例",
+      "CASE": "一個測試案例",
+      "RUN_NAME": "名稱包含的運行",
+      "MILESTONE": "一個里程碑",
+      "WEBHOOK": "一個 Webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "所有工作階段",
+      "TAG": "帶有標籤的工作階段"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "所有出站 Webhook",
+      "WEBHOOK": "一個 Webhook"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "所有 AI 模型整合",
+      "LLM_INTEGRATION": "一個整合"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "所有儲存庫連接",
+      "CODE_REPOSITORY": "一個儲存庫連接"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "所有整合",
+      "INTEGRATION": "一個整合"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "所有佇列",
+      "QUEUE": "一個佇列"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "整個安裝"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "所有運行",
+      "TAG": "帶有標籤的運行",
+      "RUN_NAME": "名稱包含的運行"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "所有里程碑",
+      "MILESTONE": "一個里程碑"
+    },
+    "scopeDisplay": {
+      "PROJECT": "整個專案",
+      "FOLDER": "資料夾： {name}",
+      "TAG": "標籤： {name}",
+      "CASE": "案例： {name}",
+      "RUN_NAME": "包含 \"{text}\" 的運行",
+      "MILESTONE": "里程碑： {name}",
+      "WEBHOOK": "Webhook： {name}",
+      "LLM_INTEGRATION": "整合： {name}",
+      "ALL_LLM_INTEGRATIONS": "所有 AI 模型整合",
+      "CODE_REPOSITORY": "儲存庫： {name}",
+      "ALL_CODE_REPOSITORIES": "所有儲存庫連接",
+      "INTEGRATION": "整合： {name}",
+      "ALL_INTEGRATIONS": "所有整合",
+      "QUEUE": "佇列： {name}",
+      "ALL_QUEUES": "所有佇列",
+      "WHOLE_INSTALLATION": "整個安裝",
+      "missing": "（已移除）"
+    },
+    "subjectType": {
+      "CASE": "測試案例",
+      "RUN": "測試運行",
+      "MILESTONE": "里程碑",
+      "SESSION": "工作階段",
+      "PROJECT": "專案",
+      "WEBHOOK": "網路鉤子"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "結果持續時間與基線偏差",
+        "description": "結果耗時比案例最近的結果長或短得多。沒有過去時間的結果會被忽略。",
+        "summary": "結果持續時間比案例最後 {window} 個結果的 {baseline, select, MEAN {平均} other {中位數}} 多 {threshold}% {direction, select, ABOVE {以上} BELOW {以下} other {以上或以下}}，至少 {minSamples} 個結果後"
+      },
+      "CASE_REGRESSED": {
+        "label": "案例衰退",
+        "description": "通過其最近結果的案例現在失敗。捕捉穩定案例上的新鮮故障。",
+        "summary": "案例在通過其最後 {window} 個結果後失敗"
+      },
+      "CASE_RECOVERED": {
+        "label": "案例恢復",
+        "description": "案例在失敗其每一個最後結果後通過。",
+        "summary": "案例在失敗其最後 {window, plural, one {# 個結果} other {# 個結果}} 後通過"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "連續失敗",
+        "description": "案例連續失敗給定次數。",
+        "summary": "案例連續失敗 {threshold, plural, one {# 次} other {# 次}}"
+      },
+      "CASE_FLAKY": {
+        "label": "案例變為不穩定",
+        "description": "案例在其最近結果中反覆在通過和失敗之間翻轉。使用與不穩定測試報告相同的輸入。",
+        "summary": "案例在其最後 {window} 個結果中在通過和失敗之間翻轉至少 {threshold, plural, one {# 次} other {# 次}}"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "運行通過率低於閾值",
+        "description": "運行的通過率（以具有通過或失敗判決的結果計數）下降至百分比以下。",
+        "summary": "一旦至少 {minSamples} 個結果具有判決，運行的通過率就低於 {threshold}%，{evaluateOn, select, AS_RESULTS_ARRIVE {隨著結果到達進行評估} other {在運行完成時進行評估}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "運行故障計數",
+        "description": "運行的失敗結果超過給定數量。",
+        "summary": "運行的失敗結果超過 {threshold, plural, one {# 個} other {# 個}}，{evaluateOn, select, AS_RESULTS_ARRIVE {隨著結果到達進行評估} other {在運行完成時進行評估}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "運行持續時間與基線偏差",
+        "description": "已完成的運行總持續時間偏離其範圍分組在一起的運行（相同標籤或名稱片段）。",
+        "summary": "已完成的運行持續時間比最後 {window} 次運行的 {baseline, select, MEAN {平均} other {中位數}} 多 {threshold}% {direction, select, ABOVE {以上} BELOW {以下} other {以上或以下}}，至少 {minSamples} 次運行後"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "運行未進行",
+        "description": "打開的運行在給定的小時數內沒有新結果。每小時檢查一次。",
+        "summary": "打開的運行超過 {threshold, plural, one {# 小時} other {# 小時}} 沒有新結果"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "自動執行失敗",
+        "description": "運行的自動執行失敗、無法分派或超時。",
+        "summary": "自動執行失敗、無法分派或超時"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "運行未測試份額",
+        "description": "運行案例中太多仍然沒有結果，距離其里程碑到期日期只有幾天。每天檢查。",
+        "summary": "超過 {threshold}% 的運行案例在其里程碑到期前 {days, plural, one {# 天} other {# 天}} 或更少的時間內沒有結果"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "從運行開啟的問題",
+        "description": "超過給定數量的問題連結到運行的結果。",
+        "summary": "超過 {threshold, plural, one {# 個問題} other {# 個問題}} 連結到運行的結果，{evaluateOn, select, AS_RESULTS_ARRIVE {隨著結果到達進行評估} other {在運行完成時進行評估}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "工作階段超過其估計",
+        "description": "已完成的工作階段過去時間超過其估計百分比。",
+        "summary": "已完成的工作階段過去時間超過其估計 {threshold}%"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "里程碑完成落後",
+        "description": "里程碑的運行案例完成度不足，距離其到期日期只有幾天。每天檢查。",
+        "summary": "里程碑完成度低於 {threshold}%，剩餘 {days, plural, one {# 天} other {# 天}} 或更少"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "里程碑逾期",
+        "description": "里程碑的到期日期已過，但尚未完成。每天檢查。",
+        "summary": "里程碑超過其到期日期而未完成"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "需求涵蓋率低於閾值",
+        "description": "少於給定份額的專案需求計為涵蓋。每天檢查。",
+        "summary": "少於 {threshold}% 的需求 {basis, select, PASSING {具有通過的最新結果} other {連結到至少一個測試案例}}"
+      },
+      "STALE_CASES": {
+        "label": "過時案例",
+        "description": "超過給定數量的案例已在沒有結果的情況下持續了多天。每天檢查。",
+        "summary": "超過 {threshold, plural, one {# 個案例} other {# 個案例}} 在 {days, plural, one {# 天} other {# 天}} 內沒有結果"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "自動化份額低於閾值",
+        "description": "範圍內少於給定份額的案例是自動化的。每天檢查。",
+        "summary": "少於 {threshold}% 的案例是自動化的"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Webhook 故障率",
+        "description": "出站 Webhook 的太多最近交付失敗。每小時檢查。",
+        "summary": "出站 Webhook 的最後 {window} 次交付中超過 {threshold}% 失敗，至少 {minSamples} 次交付後"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "AI 預算已用",
+        "description": "AI 模型整合的計費週期支出達到其月度預算的份額。每個整合每個時期最多觸發一次。",
+        "summary": "支出達到整合月度預算的 {threshold}%"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "AI 請求錯誤率",
+        "description": "AI 模型整合的太多最近請求失敗。",
+        "summary": "整合的最後 {window} 個請求中超過 {threshold}% 失敗，至少 {minSamples} 個請求後"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "AI 提供者限速",
+        "description": "提供者反覆限制了 AI 模型整合的請求。",
+        "summary": "提供者在 {days, plural, one {# 小時} other {# 小時}} 內限速了至少 {threshold, plural, one {# 個請求} other {# 個請求}}"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "儲存庫快取失敗",
+        "description": "程式碼儲存庫連接已有一段時間未成功刷新其快取。每小時檢查。",
+        "summary": "儲存庫連接的快取已至少 {threshold, plural, one {# 小時} other {# 小時}} 失敗"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "整合需要重新授權",
+        "description": "許多使用者已失去與整合的連接，需要重新授權。每天檢查。",
+        "summary": "至少 {threshold, plural, one {# 個使用者需要} other {# 個使用者需要}} 重新授權整合"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "佇列失敗的工作",
+        "description": "背景佇列保存太多失敗的工作。每小時檢查。",
+        "summary": "佇列中失敗了超過 {threshold, plural, one {# 個工作} other {# 個工作}}"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "佇列待辦",
+        "description": "背景佇列最舊的等待工作已等待太久，是停止的工作程序的信號。每小時檢查。",
+        "summary": "佇列最舊的等待工作早於 {threshold, plural, one {# 分鐘} other {# 分鐘}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "稽核日誌待辦",
+        "description": "擷取的變更未寫入稽核日誌，是停止的稽核工作程序的信號。每小時檢查。",
+        "summary": "最舊的未處理稽核變更早於 {threshold, plural, one {# 分鐘} other {# 分鐘}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "帳戶鎖定",
+        "description": "多個帳戶因登入失敗後立即被鎖定，這是憑證填充的信號。每小時檢查。",
+        "summary": "至少 {threshold, plural, one {# 個帳戶} other {# 個帳戶}} 在登入失敗後被鎖定"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "無自動化結果",
+        "description": "過去一段時間內沒有自動測試結果從任何管道到達。每天檢查。",
+        "summary": "過去 {threshold, plural, one {# 小時} other {# 小時}} 內沒有自動化結果到達"
+      }
+    },
+    "sourceSummary": "結果： {source, select, MANUAL {手動} AUTOMATED {自動化} other {手動和自動化}}",
+    "historyDialog": {
+      "title": "歷史記錄： {name}",
+      "empty": "此規則尚未觸發。",
+      "columns": {
+        "firedAt": "已觸發",
+        "subject": "主題",
+        "observed": "已觀察",
+        "threshold": "閾值",
+        "notified": "已通知"
+      },
+      "webhookSent": "Webhook 已發送"
+    },
+    "descriptionFor": "警報 {name} 追蹤，以及其專案中的其他警報。",
+    "empty": "您的專案中還沒有警報。",
+    "emptyCanCreate": "您的專案中還沒有警報。新增一個開始。",
+    "pageDescription": "您如何被通知、被告知什麼以及您追蹤的警報。",
+    "pageDescriptionFor": "了解 {name} 如何被通知以及他們追蹤的警報。",
+    "pageTabs": {
+      "alerts": "警報",
+      "notifications": "通知"
+    },
+    "metricGroups": {
+      "CASE": "測試案例結果",
+      "RUN": "測試運行",
+      "SESSION": "工作階段",
+      "MILESTONE": "里程碑",
+      "PROJECT": "專案健康",
+      "WEBHOOK": "Webhook",
+      "LLM_INTEGRATION": "AI 模型",
+      "CODE_REPOSITORY": "程式碼儲存庫",
+      "INTEGRATION": "整合",
+      "QUEUE": "背景佇列",
+      "SYSTEM": "安裝"
+    }
   }
 }

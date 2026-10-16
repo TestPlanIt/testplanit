@@ -2,11 +2,11 @@ name: Semantic Release
 
 on:
   push:
-    # `main` cuts stable releases. `release/v1.1` is a semantic-release
+    # `main` cuts stable releases. `release/v1.2` is a semantic-release
     # prerelease branch (see testplanit/.releaserc.json): every push of
-    # application code cuts the next `v1.1.0-beta.N`, so nobody hand-tags or
+    # application code cuts the next `v1.2.0-beta.N`, so nobody hand-tags or
     # bumps package.json for a beta.
-    branches: [main, release/v1.1]
+    branches: [main, release/v1.2]
     # Only run when the main application code changes — not for docs, packages, or CLI
     paths:
       - 'testplanit/**'
@@ -69,7 +69,7 @@ jobs:
           # relevant changes", or "behind the remote one") leaves the tag set
           # unchanged and does NOT trigger an image build of an
           # already-released version. A set difference (rather than "newest
-          # three-part tag") also sees a prerelease cut on release/v1.1.
+          # three-part tag") also sees a prerelease cut on a release branch.
           git tag -l 'v*' | sort > /tmp/tags-before
 
           npx semantic-release
@@ -100,7 +100,7 @@ jobs:
             exit 1
           fi
           if [[ "$VERSION" == *-* ]]; then
-            # Prerelease (release/v1.1 beta): only the public self-host images
+            # Prerelease (release branch beta): only the public self-host images
             # and chart — the SaaS image has no beta consumer.
             echo "Prerelease $VERSION: skipping the SaaS image build"
           else

@@ -577,6 +577,7 @@
       "addFieldTo": "{section} bölümüne bir alan ekle",
       "selectTemplates": "Şablonları seçin",
       "selectUsers": "Kullanıcıları seçin",
+      "selectGroups": "Grupları seçin",
       "selectOption": "Bir seçenek seçin",
       "date": "Bir tarih seçin",
       "selectEncoding": "Kodlama türünü seçin...",
@@ -737,7 +738,8 @@
       "adminSamlConfig": "Yönetici - SAML Yapılandırması",
       "apiDocumentation": "API Dokümantasyonu",
       "sharedContent": "Paylaşılan İçerik",
-      "impact": "Etki Analizi"
+      "impact": "Etki Analizi",
+      "alerts": "Bildirimler & Uyarılar"
     },
     "aria": {
       "userMenu": "Kullanıcı menüsü",
@@ -1660,7 +1662,8 @@
           "scimGroupMemberAdded": "Üyeler eklendi",
           "scimGroupMemberRemoved": "Üyeler kaldırıldı",
           "scimGroupDeleted": "Grup silindi",
-          "scimGroupMemberAddedSummary": "Üyeler eklendi (toplu senkronizasyon özeti)"
+          "scimGroupMemberAddedSummary": "Üyeler eklendi (toplu senkronizasyon özeti)",
+          "triggered": "Tetiklendi"
         },
         "iterationResultHelp": "Her yineleme sonucu kaydedildiğinde (başarılı, başarısız, atlanmış veya başka herhangi bir durum) tetiklenir. Uzun otomasyon çalıştırmalarında dikkatli kullanın (her yineleme için bir olay).",
         "events": {
@@ -1741,7 +1744,7 @@
         "inboundGiteaTitle": "Gitea gelen web kancası",
         "inboundGiteaScopeHint": "Gitea <code>sorunları</code> olayları, bağlantılı TestPlanIt sorunlarını günceller. Diğer olay türleri kabul edilir ancak sorunları güncellemez.",
         "inboundAdoTitle": "Azure DevOps gelen web kancası",
-        "inboundAdoScopeHint": "Azure DevOps <code>workitem.updated</code> olayları, bağlantılı TestPlanIt sorunlarını günceller. Diğer olaylar kabul edilir ancak sorunları güncellemez.",
+        "inboundAdoScopeHint": "Azure DevOps <code>workitem.created</code> ve <code>workitem.updated</code> olayları, bağlantılı TestPlanIt sorunlarını günceller. Diğer olaylar kabul edilir ancak sorunları güncellemez.",
         "inboundAdoUsername": "Kullanıcı adı",
         "inboundAdoUsernamePlaceholder": "hizmet hesabı",
         "inboundAdoUsernameHelp": "Azure DevOps Service Hook tarafında yapılandırılmıştır. TestPlanIt bunu HTTP Temel Kimlik Doğrulaması aracılığıyla doğrular.",
@@ -1758,7 +1761,7 @@
         "setupStepsGithubStep4": "\"Bana bireysel etkinlikleri seçme olanağı ver\" seçeneğini belirleyin ve \"Sorunlar\"ı işaretleyin.",
         "setupStepsGithubStep5": "\"Web kancası ekle\"ye tıklayın. İşlem hattını doğrulamak için aşağıdaki \"Test web kancası gönder\" seçeneğini kullanın.",
         "setupStepsAdoStep1": "Azure DevOps projenizde, Proje ayarları → Hizmet kancaları → Abonelik oluştur yolunu izleyin.",
-        "setupStepsAdoStep2": "Hizmet olarak \"Web Hooks\"u seçin. Tetikleyiciyi \"İş öğesi güncellendi\" olarak ayarlayın.",
+        "setupStepsAdoStep2": "\"Web Kancaları\" seçin. Tetikleyiciyi \"İş öğesi oluşturuldu\" olarak ayarlayın, ardından \"İş öğesi güncellendi\" ile ikinci bir abonelik için bu adımları tekrarlayın.",
         "setupStepsAdoStep3": "Gönderilecek kaynak ayrıntılarını \"Tüm\" olarak ayarlayın, böylece System.State de dahil edilir.",
         "setupStepsAdoStep4": "Aşağıdaki URL'yi URL alanına yapıştırın. Temel kimlik doğrulama kullanıcı adı ve şifresini yukarıda girdiğiniz değerlerle ayarlayın.",
         "setupStepsAdoStep5": "Aboneliği kaydedin. İşlem hattını doğrulamak için aşağıdaki \"Test webhook'unu gönder\" seçeneğini kullanın.",
@@ -1852,13 +1855,49 @@
         "setupStepsMantisbtStep4": "MantisBT'de bir sorun oluşturun veya güncelleyin; bağlantılı sorunun durumu burada senkronize edilecektir.",
         "inboundChooserClickup": "ClickUp",
         "inboundClickupTitle": "ClickUp gelen web kancası",
-        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code> olayları, bağlantılı TestPlanIt sorunlarını günceller. Diğer görev olayları kabul edilir ancak sorunları güncellemez.",
+        "inboundClickupScopeHint": "ClickUp <code>taskCreated</code> ve <code>taskStatusUpdated</code> olayları, bağlantılı TestPlanIt sorunlarını günceller. Diğer görev olayları kabul edilir ancak sorunları güncellemez.",
         "inboundClickupRegisterHint": "ClickUp'ın web kancası ayarları sayfası yoktur: web kancaları API'si aracılığıyla oluşturulur ve ClickUp imzalama gizli anahtarını seçer. Gizli anahtarı boş bırakın ve TestPlanIt, ClickUp yetkilendirmenizi kullanarak bu web kancasını ClickUp'ta bağlantılı Liste için kaydeder.",
         "inboundClickupSecret": "Web kancası gizli anahtarı (isteğe bağlı)",
         "inboundClickupSecretHelp": "Yalnızca ClickUp'ın Create Webhook API'si ile web kancasını kendiniz oluşturduysanız gereklidir: ClickUp'ın döndürdüğü gizli anahtarı yapıştırın. İstirahat halinde şifreli olarak depolanır.",
         "setupStepsClickupStep1": "Gizli anahtarı boş bıraktıysanız, TestPlanIt zaten bu web kancasını ClickUp'ta bağlantılı Liste için kaydettmiştir — ClickUp'ta yapılandırılacak bir şey yoktur.",
         "setupStepsClickupStep2": "ClickUp'ın Create Webhook API'si aracılığıyla web kancasını kendiniz kaydettiyseniz, bitiş noktasının aşağıdaki URL olduğundan ve taskStatusUpdated olayına abone olduğundan emin olun.",
         "setupStepsClickupStep3": "İşlem hattını doğrulamak için aşağıdaki \"Test web kancası gönder\" seçeneğini kullanın. Gizli anahtarı döndürmek, ClickUp'ta yeni bir web kancası kaydeder.",
+        "actions": {
+          "description": "Bu web kancası bir olay aldığında TestPlanIt'in ne yapacağı. Eylemler listelenen sırayla çalışır.",
+          "empty": "Eylem yok. Olaylar kaydedilir, ancak hiçbir şey olmaz.",
+          "addTitle": "Eylem ekle",
+          "editTitle": "Eylemi düzenle",
+          "dialogDescription": "Bu eylemi tetikleyen olayı ve ne yaptığını seçin.",
+          "trigger": {
+            "ISSUE_EVENT": "Herhangi bir sorun olayı",
+            "ISSUE_STATUS_ENTERED": "Sorun durumu değişiklikleri"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "İzleyicinin bir sorun hakkında gönderdiği herhangi bir olay.",
+            "ISSUE_CREATED": "TestPlanIt'in daha önce görmediği bir sorun.",
+            "ISSUE_STATUS_ENTERED": "Bir sorun seçilen durumlardan birine taşınır."
+          },
+          "outcome": {
+            "cases_drafted": "Test senaryoları taslağı oluşturuldu",
+            "draft_queued": "Test senaryoları taslağı oluşturuluyor",
+            "has_cases": "Sorunun zaten test senaryoları var",
+            "no_llm": "Aktif yapay zeka modeli yok",
+            "no_template": "Şablon yok",
+            "no_target": "Depo veya varsayılan durum yok",
+            "draft_failed": "Taslak oluşturma başarısız oldu",
+            "already_composed": "Bu değişiklik için çalıştırma zaten oluşturuldu",
+            "execute_failed": "Yürütme istenmedi"
+          },
+          "dragToReorder": "Yeniden sıralamak için sürükleyin",
+          "requirementsOnly": "Yalnızca gereksinimler",
+          "requirementsOnlyHelp": "Yalnızca projenin gereksinimler olarak sınıflandırdığı sorunlar.",
+          "includeChildIssues": "Alt sorunları dahil et",
+          "includeChildIssuesHelp": "Sorunun alt sorunlarına bağlantılı test senaryolarını da alın.",
+          "notifyHelp": "Taslaklar incelemeye hazır olduğunda kime bildirilir. Her kişinin bildirim tercihleri hâlâ geçerlidir.",
+          "draftFolderNote": "{webhook} web kancası tarafından otomatik olarak oluşturulan test senaryoları.",
+          "draftFolderNoteCases": "Sistem kullanıcısı tarafından oluşturulan taslak; her vaka, oluşturulduğu soruna bağlıdır.",
+          "viewFolder": "Klasörü görüntüle"
+        },
         "codeRepos": {
           "empty": "Etki Analizi için hiçbir depo bağlı değil. Önce <link>bir tane bağlayın</link>.",
           "unsupported": "{provider} depoları TestPlanIt'e web kancası gönderemez.",
@@ -1878,10 +1917,12 @@
           "eventBranchPushHelp": "Diğer dallar taşımasını analiz edin - bir çekme isteği gibi - taban dalına karşı ve her biri için bir çalıştırma oluşturun.",
           "baseBranch": "Temel dal",
           "baseBranchHelp": "Bu dala taşımalar kendi başlarına analiz edilir; çekme istekleri ve diğer dallar ona karşı karşılaştırılır. Bağlantının dalını kullanmak için boş bırakın.",
-          "autoExecute": "Otomatikleştirilmiş vakaları yürüt",
-          "autoExecuteHelp": "Çalıştırma oluşturulduktan sonra, otomatikleştirilmiş vakaların bu hedefte otomatik olarak yürütülmesini isteyin. Manuel vakalar test ediciler için çalıştırmada kalır.",
-          "autoExecuteNoTargets": "Bu proje için hiçbir yürütme hedefi yapılandırılmamıştır. Çalıştırmaları otomatik olarak yürütmek için <link>bir tane ekleyin</link>.",
-          "autoExecuteTargetMissing": "Seçilen yürütme hedefi silindi veya devre dışı bırakıldı. Çalıştırmalar yine de oluşturulur, ancak başka bir hedef seçene kadar hiçbir yürütme istenmez.",
+          "minScoreHelp": "Oluşturulan her çalıştırma, analizin puanladığı her test durumunu en az bu değerde alır (0–100). Pinlenmiş ve etkilenen testleri el ile başlatılan bir çalıştırma gibi almak için boş bırakın.",
+          "minScoreInvalid": "0 ile 100 arasında tam bir sayı girin veya boş bırakın",
+          "autoExecute": "Otomatikleştirilmiş durumları yürüt",
+          "autoExecuteHelp": "Çalıştırma oluşturulduktan sonra, bu hedefte otomatikleştirilmiş durumlarının otomatik yürütülmesini isteyin. El ile yapılan durumlar çalıştırmada test ediciler için kalır.",
+          "autoExecuteNoTargets": "Bu proje için yapılandırılan yürütme hedefi yok. Çalıştırmaları otomatik olarak yürütmek için <link>bir tane ekleyin</link>.",
+          "autoExecuteTargetMissing": "Seçilen yürütme hedefi silinmiş veya devre dışı bırakılmıştır. Çalıştırmalar hâlâ oluşturulur, ancak başka bir hedef seçene kadar yürütme istenmez.",
           "autoExecuteSaveError": "Otomatik yürütme ayarları kaydedilemedi"
         },
         "inboundEmptyState": "Henüz gelen web kancası yok. Sorun izleyicinizden sorun güncellemeleri almak veya bağlı bir depodan çekme istekleri ve taşımalar almak için <link>birini ekleyin</link>.",
@@ -1895,7 +1936,8 @@
           "sourceRepositoryHelp": "Bir çekme isteği açıldığında veya commit'ler gönderildiğinde Etki analizi başlatın ve bir test çalıştırması oluşturun.",
           "noRepositoryAvailable": "Her bağlı depo zaten bir web kancasına sahip veya web kancası gönderemez.",
           "repositoryPlaceholder": "Bir depo seçin"
-        }
+        },
+        "outboundSubsAlerts": "Uyarılar"
       },
       "aiModels": {
         "description": "Akıllı test senaryosu oluşturma ve analizi için yapay zeka modellerini yapılandırın.",
@@ -2045,7 +2087,7 @@
           "branchPlaceholder": "Deponun varsayılan dalını kullanmak için boş bırakın."
         },
         "pathPatterns": {
-          "description": "QuickScript'in AI bağlamı olarak okuyabileceği depo dosyaları.",
+          "description": "QuickScript'in yapay zeka bağlamı olarak okuyabileceği depo dosyaları.",
           "pathPlaceholder": "testler/e2e/sayfalar",
           "exceedsLimit": "Toplam boyut, yapay zeka bağlam sınırını {overflow}kadar aşıyor. Dışa aktarma sırasında dosyalar, dışa aktarılan test durumuna göre alaka düzeyine göre sıralanır; en alakalı dosyalar önce dahil edilir ve bütçeye ulaşıldığında daha düşük sıralamalı dosyalar atlanır. Hangi dosyaların dahil edileceği konusunda daha fazla kontrol sahibi olmak istiyorsanız, yol kalıplarınızı daraltın."
         },
@@ -2108,7 +2150,6 @@
           "pathLabel": "Yol",
           "patternLabel": "Model",
           "previewFiles": "Dosyaları Önizle",
-          "rootHint": "Yolu boş bırakın veya depo kökünde başlamak için . girin; . yolu pattern **/* ile her dosyayı içerir.",
           "scanningRepo": "Depo dosyaları taranıyor… ({seconds}s)",
           "title": "Yol Desenleri",
           "truncatedBadge": "Sonuçlar eksik olabilir (sağlayıcı sınırlaması)"
@@ -2261,7 +2302,7 @@
           "branchesFallbackHint": "Bunun yerine dal adını yazın."
         },
         "pathPatterns": {
-          "description": "Impact'in hangi uygulama dosyalarını okuduğu: Kod Pin dosya seçici, önbellek, depo işaretçileri ve bir analizin hangi değiştirilmiş dosyaları yoksayacağı.",
+          "description": "Impact'in okuduğu uygulama dosyaları: Kod Sabitlemesi dosya seçici, önbellek, depo işaretleri ve bir analizin yoksayıp saymaması gereken değişmiş dosyalar.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2871,7 +2912,9 @@
         "detailsDisplayMode": {
           "docked": "Sabitlenmiş panel",
           "newWindow": "Yeni pencere"
-        }
+        },
+        "notificationsLabel": "Bildirimler",
+        "notificationsMoved": "Bildirim & Uyarıları Yönet"
       },
       "assignments": {
         "title": "Atamalar",
@@ -2980,6 +3023,10 @@
             "label": "AI adımları türetildi",
             "description": "Başladığınız bir AI adım-türetme işi adımlar yazmıştır."
           },
+          "CASES_DRAFTED": {
+            "label": "Yapay zeka tarafından oluşturulan test senaryoları",
+            "description": "Bir web kancası eylemi bir sorun için test senaryoları oluşturdu ve sizi inceleyici olarak adlandırdı."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Entegrasyon yeniden yetkilendirme gerekiyor",
             "description": "Bir entegrasyonla bağlantınız sona erdi veya iptal edildi ve yeniden bağlanması gerekir."
@@ -2996,9 +3043,9 @@
             "label": "Yeni kullanıcı kayıtları",
             "description": "Yeni bir kullanıcı form, SSO veya SAML aracılığıyla kaydolur."
           },
-          "LLM_BUDGET_ALERT": {
-            "label": "AI bütçe uyarıları",
-            "description": "LLM harcaması fatura döneminin bir bütçe eşiğini aşar."
+          "ALERT_TRIGGERED": {
+            "label": "Uyarılar",
+            "description": "Abone olduğunuz bir uyarı, izlediği test metriği sınırı aştığı için tetiklendi."
           }
         },
         "success": {
@@ -3123,7 +3170,8 @@
       "orange": "Turuncu",
       "accessible": "Erişilebilir",
       "accessibledark": "Erişilebilir (Koyu)"
-    }
+    },
+    "myAlerts": "Bildirimler & Uyarılar"
   },
   "repository": {
     "version": {
@@ -3196,7 +3244,12 @@
       "noStepsInSelectedGroup": "Seçilen grupta herhangi bir adım bulunmamaktadır.",
       "sharedGroupSuffix": "(Ortak Adımlar)",
       "unnamedSharedGroup": "İsimsiz Paylaşılan Adımlar",
-      "noStepsInSelectedSharedGroup": "Seçilen paylaşılan grupta herhangi bir adım bulunmamaktadır."
+      "noStepsInSelectedSharedGroup": "Seçilen paylaşılan grupta herhangi bir adım bulunmamaktadır.",
+      "layout": {
+        "label": "Adım düzeni",
+        "stacked": "Yığılı",
+        "sideBySide": "Yan yana"
+      }
     },
     "testCase": {
       "toggleAutomated": "Otomatik test özelliğini etkinleştir",
@@ -3686,7 +3739,7 @@
         "title": "Gereksinim Kaynağını Seçin",
         "description": "Test senaryolarını bir sorun belgesinden mi yoksa gereksinimler belgesinden mi oluşturacağınızı seçin.",
         "folderContextTip": "\"{folderName}\" ve üst/alt klasörlerindeki mevcut test örnekleri, tekrarları önlemek için bağlam olarak kullanılacaktır. Devam etmeden önce doğru klasörü seçtiğinizden emin olun.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
         "folderContextEmptyTitle": "Bağlam olarak kullanılacak mevcut test durumu yok",
         "folderContextEmpty": "\"{folderName}\" ve onun üst/alt klasörleri test durumu içermediğinden, yapay zeka projenizin stili veya mevcut kapsamının örneklerine sahip değildir. Daha iyi sonuçlar için, üreteciyi bu test durumlarının ait olduğu klasörden, ilgili durumların yanında başlatın.",
         "currentFolder": "mevcut klasör",
@@ -4558,7 +4611,7 @@
         "no_candidates": "Hiçbir test senaryosu eşleşmedi.",
         "anchor_fetch_capped": "Bazı sabitlenmiş dosyalar yalnızca yol tarafından eşleştirildi (getirme sınırına ulaşıldı).",
         "issue_commit_fetch_capped": "Biletleri adlandıran bazı commit'ler dosya dosya okunmadı (getirme sınırına ulaşıldı); kendi senaryoları belirli dosyaları kapsamıyor.",
-        "paths_excluded_by_settings": "{count, plural, one {# değiştirilmiş dosya yok sayıldı} other {# değiştirilmiş dosya yok sayıldı}} depo ayarları tarafından hariç tutulan yollar nedeniyle."
+        "paths_excluded_by_settings": "{count, plural, one {# değişen dosya} other {# değişen dosya}} depo tarafından hariç tutulan yollar nedeniyle göz ardı edildi."
       },
       "actions": {
         "analyze": "Analiz et",
@@ -5510,6 +5563,7 @@
       "scimProvisionerBadge": "SCIM Sağlayıcısı",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
+      "systemUserTooltip": "TestPlanIt'in otomatik olarak yaptığı iş için yerleşik kullanıcı, örneğin web kancası eylemleri. Oturum açamaz veya düzenlenemez.",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Evet",
       "scimUserLockedTitle": "Kullanıcı SCIM tarafından yönetilir.",
@@ -6180,7 +6234,8 @@
         "stepSequenceMatchCases": "Adım Sırası Eşleşme Senaryoları",
         "testRunCases": "Test Çalıştırma Senaryoları",
         "testRunCaseDataSetSnapshots": "Test Çalıştırma Senaryo Veri Kümesi Anlık Görüntüleri",
-        "testRunCaseIterations": "Test Çalıştırma İterasyonları"
+        "testRunCaseIterations": "Test Çalıştırma İterasyonları",
+        "alertRules": "Uyarılar"
       },
       "table": {
         "title": "Silindi {itemType}",
@@ -6531,7 +6586,6 @@
         "defaultModelPlaceholder": "gpt-4o, claude-3-5-sonnet-20241022, vb.",
         "defaultModelDescription": "Varsayılan olarak kullanılacak model",
         "maxTokensPerRequest": "İstek Başına Maksimum Jeton Sayısı",
-        "maxRequestsPerMinute": "Dakika Başına Maksimum İstek Sayısı",
         "costPerInputToken": "1 Milyon Giriş Tokeni Başına Maliyet ($)",
         "costPerOutputToken": "1 Milyon Çıktı Tokeni Başına Maliyet ($)",
         "monthlyBudget": "Aylık Bütçe ($)",
@@ -6910,7 +6964,8 @@
         "markRead": "Okundu olarak işaretle",
         "markUnread": "Okunmamış olarak işaretle",
         "markAllRead": "Tümünü okundu olarak işaretle",
-        "deleteAll": "Tümünü sil"
+        "deleteAll": "Tümünü sil",
+        "manageAlerts": "Bildirim & Uyarıları Yönet"
       },
       "success": {
         "deleted": "Bildirim silindi",
@@ -6954,11 +7009,6 @@
         "shareLinkAccessedMessage": "{viewer} paylaştığınız raporu görüntüledi: \"{shareTitle}\"",
         "viewedYourSharedLink": "Paylaştığınız bağlantıyı görüntüledi",
         "viewedAt": "Görüntülenme yeri:",
-        "budgetDisclaimer": "Bütçe sınırları yalnızca bilgilendirme amaçlıdır ve kullanımı engellemez.",
-        "llmBudgetExceededTitle": "LLM Bütçesi Aşıldı",
-        "llmBudgetThresholdTitle": "LLM Bütçesi {threshold}% Kullanılan",
-        "llmBudgetExceededMessage": "{providerName} aylık bütçesini aştı: {spend} bütçenin {budget} 'ünü harcadı.",
-        "llmBudgetThresholdMessage": "{providerName} aylık bütçesinin {threshold}%'sini kullandı: {spend} / {budget}.",
         "userRegisteredTitle": "Yeni Kullanıcı Kaydı",
         "userRegisteredMessageSso": "{userName} ({userEmail}) SSO aracılığıyla kaydoldu",
         "userRegisteredMessageForm": "{userName} ({userEmail}) kayıt formu aracılığıyla kayıt oldu.",
@@ -6997,6 +7047,9 @@
         "aiStepsDerivedTitle": "Yapay Zeka ile Türetilen Test Adımları Hazır",
         "aiStepsDerivedMessage": "{count, plural, one {# test durumuna} other {# test durumuna}} yapay zeka tarafından türetilmiş adımlar verildi — doğruluğunu inceleyin.",
         "aiStepsDerivedReviewLink": "Test çalıştırmasını incele",
+        "casesDraftedTitle": "Yapay Zeka Tarafından Oluşturulan Test Senaryoları Hazır",
+        "casesDraftedMessage": "{count, plural, one {# test senaryosu} other {# test senaryosu}} {issueKey} için oluşturuldu — doğruluğu için gözden geçirin.",
+        "casesDraftedReviewLink": "{folderName} içinde gözden geçirin",
         "integrationAuthExpiredTitle": "Entegrasyon Bağlantısının Süresi Doldu",
         "integrationAuthExpiredMessage": "\"{integrationName}\" ile bağlantınızın süresi doldu. Sorun senkronizasyonuna devam etmek için yeniden bağlanın.",
         "integrationAuthExpiredReconnect": "Yeniden Bağlan",
@@ -7008,7 +7061,56 @@
         "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} başarılı oldu, bu nedenle size atanan bu senaryo artık engellenmiş değildir:",
         "runCaseUnblockedEmailMessage": "\"{testCaseName}\" test çalışması \"{testRunName}\" içinde (proje \"{projectName}\") artık engellenmiş değildir: \"{prerequisiteName}\" başarılı oldu. Size atanmış ve yürütülmeye hazırdır.",
         "runCaseUnblockedReason": "Test senaryosu size atandığı için bu bildirimi alıyorsunuz.",
-        "inTestRun": "test çalışmasında"
+        "inTestRun": "test çalışmasında",
+        "alertTriggeredTitle": "Uyarı tetiklendi",
+        "alertTriggeredRule": "Kural: {ruleName}",
+        "alertTriggeredEmailMessage": "\"{ruleName}\" uyarısı \"{projectName}\" projesinde \"{subjectName}\" {subjectLabel} için tetiklendi: {detail}",
+        "alertTriggeredEmailMessageSystem": "\"{ruleName}\" uyarısı \"{subjectName}\" {subjectLabel} için tetiklendi: {detail}",
+        "alertTriggeredReason": "Bu uyarıya abone olduğunuz için bu iletiyi alıyorsunuz.",
+        "alertSubject": {
+          "CASE": "test senaryosu",
+          "RUN": "test çalıştırması",
+          "MILESTONE": "dönüm noktası",
+          "SESSION": "oturum",
+          "PROJECT": "proje",
+          "WEBHOOK": "web kancası",
+          "LLM_INTEGRATION": "AI Modeli Entegrasyonu",
+          "CODE_REPOSITORY": "depo bağlantısı",
+          "INTEGRATION": "entegrasyon",
+          "QUEUE": "sıra",
+          "SYSTEM": "kurulum"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "Sonuç {elapsed} sürmüş, {baseline} tabanından {deviation}% uzakta ({threshold}%'den fazlası izin verilmiyor).",
+          "CASE_REGRESSED": "Vaka {passedBefore, plural, one {son sonucundan} other {son # sonucundan}} sonra başarısız oldu.",
+          "CASE_RECOVERED": "Vaka {failedBefore, plural, one {son sonucundan} other {son # sonucundan}} sonra başarılı oldu.",
+          "RUN_DURATION_DEVIATION": "Çalıştırma {elapsed} sürmüş, {baseline} tabanından {deviation}% uzakta ({threshold}%'den fazlası izin verilmiyor).",
+          "RUN_NOT_PROGRESSING": "Çalıştırma {idleHours, plural, one {# saat} other {# saat}} boyunca yeni bir sonuç almadı (eşik {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "{target} üzerinde otomatik yürütme {status} ile sona erdi{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% of the run's cases have no result with {daysRemaining, plural, one {# gün} other {# gün}} before its milestone is due (threshold {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# sorun} other {# sorun}} çalıştırmanın sonuçlarına bağlı (eşik {threshold}).",
+          "SESSION_OVERRUN": "Oturum {elapsed} boyunca {estimate} tahminine karşı, {overrun}% fazla ({threshold}%'den fazlası izin verilmiyor).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} / {total} gereklilik ({coverage}%) {basis, select, PASSING {en son geçen bir sonuca sahip} other {bir test durumuna bağlı}} (eşik {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# vaka} other {# vaka}} {days, plural, one {# gün} other {# gün}} boyunca sonuç almadı (eşik {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} / {total} durum ({automatedPercent}%) otomatikleştirilmiştir (eşik {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "Son {sampleCount} teslimattan {failed} tanesi başarısız oldu ({failureRate}%, eşik {threshold}%).",
+          "CONSECUTIVE_FAILURES": "Vaka {streak, plural, one {# kez} other {# kez}} arka arkaya başarısız oldu (eşik {threshold}).",
+          "CASE_FLAKY": "Sonuç son {sampleCount} sonuç arasında {flips, plural, one {# kez} other {# kez}} değişti (eşik {threshold}).",
+          "RUN_PASS_RATE_BELOW": "Geçiş oranı {passRate}% üzerinde {sampleCount} sonuç (eşik {threshold}%).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# sonuç} other {# sonuç}} başarısız oldu (eşik {threshold}).",
+          "MILESTONE_BEHIND": "The milestone is {completion}% complete with {daysRemaining, plural, one {# gün} other {# gün}} remaining (threshold {threshold}%).",
+          "MILESTONE_OVERDUE": "Dönüm noktası son tarihinden {daysOverdue, plural, one {# gün} other {# gün}} geçti.",
+          "LLM_BUDGET_USED": "Faturalandırma döneminin harcaması {spend} / {budget} aylık bütçe ({percent}%, eşik {threshold}%).",
+          "LLM_ERROR_RATE": "Son {sampleCount} isteğinden {failed} tanesi başarısız oldu ({failureRate}%, eşik {threshold}%).",
+          "LLM_RATE_LIMITED": "Sağlayıcı son {hours, plural, one {# saat} other {# saat}} içinde {blocked, plural, one {# istek} other {# istek}} hız sınırlaması yaptı (eşik {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "Depo önbelleği {hours, plural, one {# saat} other {# saat}} boyunca başarısız (eşik {threshold}){error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# kullanıcının} other {# kullanıcının}} entegrasyonu yeniden yetkilendirmesi gerekir (eşik {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# iş} other {# iş}} sırada başarısız oldu (eşik {threshold}).",
+          "QUEUE_BACKLOG": "{waiting, plural, one {# bekleyen iş} other {# bekleyen iş}} içinde en eski olanı {minutes, plural, one {# dakika} other {# dakika}} bekledi (eşik {threshold}).",
+          "AUDIT_BACKLOG": "İşlenmeyen en eski denetim değişikliği {minutes, plural, one {# dakika} other {# dakika}} eski (eşik {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# hesap} other {# hesap}} başarısız oturum açma işlemlerinden sonra kilitli (eşik {threshold}).",
+          "NO_AUTOMATED_RESULTS": "{hours, plural, one {# saat} other {# saat}} boyunca otomatik sonuç gelmedi (eşik {threshold})."
+        }
       }
     },
     "issues": {
@@ -7587,7 +7689,8 @@
       "SharedSteps": "Paylaşılan Adımlar",
       "Issues": "Sorunlar",
       "Reporting": "Raporlama",
-      "Settings": "Proje Ayarları"
+      "Settings": "Proje Yönetimi",
+      "Alerts": "Uyarılar"
     },
     "WorkflowType": {
       "NOT_STARTED": "Başlamadı",
@@ -7645,6 +7748,9 @@
     "businessHours": "{hours, number, ::.0} iş saati"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## Etiketler\nSorunun izleyicisinde taşıdığı etiketler. Eylem yalnızca bu etiketlerden en az birine sahip bir sorunu alır; etiketler ne olursa olsun sorunları almak için boş bırakın.\n\n- Jira, GitHub, GitLab ve Gitea: sorunun etiketleri\n- Azure DevOps, ClickUp ve MantisBT: sorunun etiketleri\n- Redmine: sorunun kategorisi\n- Eşleştirme büyük ve küçük harfleri yok sayar"
+    },
     "auditLogs": "## Denetim Kayıtları\nGüvenlik ve uyumluluk takibi için sistem genelindeki denetim kaydını görüntüleyin",
     "statuses": "## Durumlar\nTestçilerin bir test sonucu kaydederken atadıkları durumları yönetin, örneğin Başarılı, Başarısız ve Bloke.",
     "configurations": "## Konfigürasyonlar\nKonfigürasyonlar, bir test ortamını tanımlamak için kullanılan kategori ve varyantların birleşimidir. Örneğin, İşletim Sistemi/Tarayıcı, Test Sunucusu, Dil vb.",
@@ -7827,7 +7933,7 @@
       "name": "## Rol Adı\nTüm projelerde kullanılan açık, özlü ve açıklayıcı bir ad veya anahtar kelime(ler).\n\n- Ekip üyelerinin ilgili test senaryolarını, test çalıştırmalarını ve oturumlarını hızlı bir şekilde bulmasına yardımcı olur.",
       "isDefault": "## Varsayılan Rol\nBu rolün projeniz için varsayılan rol olup olmadığını gösterir.\n\n- Varsayılan rol yeni kullanıcılar için önceden seçilmiştir.\n- İstediğiniz zaman değiştirilebilir.",
       "permissions": {
-        "canAddEdit": "## Ekle/Düzenle\nBu rolün ilgili uygulama alanını ekleyip düzenleyebileceğini gösterir.\n\n- **Otomatikleştirilmiş Yürütme** bir CI sağlayıcısında otomatikleştirilmiş yürütmeleri başlatma, yeniden deneme ve iptal etme hakkını verir. Sonuçları kaydetmek yine de **Test Çalıştırması Sonuçları** Ekle/Düzenle'yi gerektirir ve havuzdan bir tane başlatmak da **Test Çalıştırmaları** Ekle/Düzenle'yi gerektirir çünkü bir çalıştırma oluşturur veya genişletir.",
+        "canAddEdit": "## Ekle/Düzenle\nBu rolün ilgili uygulama alanını ekleyip düzenleyebileceğini gösterir.\n\n- **Otomatik Yürütme**, bir CI sağlayıcısında otomatik yürütmeleri başlatma, yeniden deneme ve iptal etme hakkı verir. Sonuçları kaydetme hâlâ **Test Çalıştırması Sonuçları** Ekle/Düzenle gerektirir ve depodan başlatma **Test Çalıştırmaları** Ekle/Düzenle gerektirir çünkü bir çalıştırma oluşturur veya genişletir.\n- **Uyarılar**, projede uyarılar oluşturma ve oluşturduğunuz uyarıları düzenleme, duraklama ve silme hakkı verir. Proje yöneticileri her uyarıyı ve diğer kullanıcıların aboneliklerini yönetir; herkes bir uyarıyı izleyebilir veya terk edebilir.",
         "canDelete": "## Sil\nBu rolün ilgili uygulama alanını silip silemeyeceğini gösterir.",
         "canClose": "## Kapat\nBu rolün ilgili uygulama alanını kapatıp kapatamayacağını gösterir.",
         "canApprove": "## Onayla\nBu rolün ilgili uygulama alanı için inceleme isteklerini onaylayıp onaylayamayacağını gösterir. Yalnızca Test Durumu Deposu, Test Çalıştırmaları ve Oturumlar için geçerlidir.",
@@ -7858,10 +7964,9 @@
       "maxTokensPerRequest": "## İstek Başına Maksimum Token\nModelin tek bir yanıtta üretebileceği **_çıktı_ tokenlarının kesin üst sınırı**.\n\n- Modelin **yanıtının** uzunluğunu sınırlar — ona gönderdiğiniz bağlam miktarını değil\n- Bundan daha fazlasını isteyen istekler **modele ulaşmadan önce reddedilir**\n- Bunu modelinizin gerçek maksimum çıktısına ayarlayın — örneğin Claude Opus/Sonnet için `128000`, Claude Haiku için `64000`, Gemini için `65536`, GPT-4o için `16384`\n- Çok düşükse → yapay zeka özellikleri başarısız olur veya kesilmiş çıktı üretir",
       "defaultMaxTokens": "## Varsayılan Maksimum Token\nBu yapay zeka modelinin isteklerinin talep ettiği **_çıktı_ uzunluğu**, _İstek Başına Maksimum Token_ ile sınırlıdır.\n\n- **Test Senaryosu Oluşturma** (Jira sorun paneli dahil tüm kaynaklar), **Markdown Test Senaryosu Ayrıştırma**, **Editör Yazma Asistanı** ve **Akıllı Test Senaryosu Seçimi** her zaman bu değeri kullanır — bunların İstem Yapılandırması _Maksimum Çıktı Token Sayısı_ uygulanmaz\n- **Dışa Aktarma Kod Üretimi**, **Yapay Zeka Etiket Önerileri**, **Yapay Zeka Adım Türetme** ve **Otomasyon Adayları Raporu**, bunun yerine **Yönetici → İstem Yapılandırması** bölümündeki kendi _Maksimum Çıktı Token Sayısı_ değerlerini kullanır\n- Yanıt vermeden önce düşünen modeller (örn. Claude Opus 5), bu bütçenin bir kısmını akıl yürütmeye harcar — yanıt için yer bırakın\n- QuickScript'in modele ne kadar depo kodu gönderdiğini **kontrol etmez** — bu bütçe modelin bağlam penceresinden otomatik olarak hesaplanır\n- Bunu ≤ _İstek Başına Maksimum Token_ olarak tutun",
       "repoContextBudget": "## Depo Bağlam Bütçesi\nQuickScript'in bir komut dosyası oluştururken bağlı deponuzun kodunun ne kadarını modele beslediği.\n\n- Seçilen modelin girdi bağlam penceresine göre **otomatik olarak ayarlanır** — burada yapılandırılacak bir şey yoktur\n- Daha büyük bağlamlı modeller (Claude, Gemini, DeepSeek) daha fazlasını alır; küçük yerel modeller taşmayacak güvenli bir miktar alır\n- Daha fazla bağlam, komut dosyasını gerçek sayfa nesnelerinize ve fixture'larınıza dayandırır — oluşturulan komut dosyasının uzunluğunu değiştirmez",
-      "maxRequestsPerMinute": "## Dakika Başına Maksimum İstek Sayısı\nBu sağlayıcıya dakikada yapılabilecek API çağrılarının sayısını sınırlar.\n\n- Sağlayıcı planınızın hız sınırına uyacak şekilde ayarlayın\n- Fazla istekler reddedilmez, kuyruğa alınır\n- Planınızın sınırı için sağlayıcınızın belgelerini kontrol edin",
       "costPerInputToken": "## 1M Girdi Token Başına Maliyet (USD)\nModele gönderilen **milyon** girdi (istem) token'ı başına USD cinsinden maliyet.\n\n- Maliyet takibi ve bütçe uyarıları için kullanılır\n- Sağlayıcınız model fiyatlandırmasını bildirdiğinde otomatik olarak doldurulur (LiteLLM, OpenRouter, Together AI) — bir model seçtiğinizde veya Bağlantıyı Test Et işlemini çalıştırdığınızda uygulanır\n- Aksi takdirde, sağlayıcınızın fiyatlandırma sayfasında bulabilirsiniz\n- Örnek: `0.15` = milyon girdi token'ı başına 0,15 $",
       "costPerOutputToken": "## 1M Çıktı Token Başına Maliyet (USD)\nModel tarafından üretilen **milyon** çıktı (tamamlama) token'ı başına USD cinsinden maliyet.\n\n- Genellikle girdi token maliyetinden daha yüksektir\n- Maliyet takibi ve bütçe uyarıları için kullanılır\n- Sağlayıcınız model fiyatlandırmasını bildirdiğinde otomatik olarak doldurulur (LiteLLM, OpenRouter, Together AI) — bir model seçtiğinizde veya Bağlantıyı Test Et işlemini çalıştırdığınızda uygulanır\n- Aksi takdirde, sağlayıcınızın fiyatlandırma sayfasında bulabilirsiniz\n- Örnek: `0.60` = milyon çıktı token'ı başına 0,60 $",
-      "monthlyBudget": "## Aylık Bütçe (USD)\nBu entegrasyon için isteğe bağlı bir harcama hedefi.\n\n- Bütçe takibini devre dışı bırakmak için `0` olarak ayarlayın\n- Bütçe **sadece bilgilendirme amaçlıdır** — LLM kullanımını engellemez\n- Bütçenin %80, %90 ve %100'üne ulaşıldığında bildirim alacaksınız\n- Maliyetler yukarıdaki token başına oranlar kullanılarak hesaplanır",
+      "monthlyBudget": "## Aylık Bütçe (USD)\nBu entegrasyon için isteğe bağlı bir harcama hedefi.\n\n- Bütçe izlemesini devre dışı bırakmak için `0` olarak ayarlayın\n- Bütçe **yalnızca bilgilendirici amaçlıdır** — yapay zeka kullanımını engellemez\n- **Yapay zeka bütçesi kullanılmış** ölçütünü içeren bir uyarı (Sistem, Bildirimler & Uyarılar sayfasında) harcama belirlediğiniz payı ulaştığında abone bilgilendirir; bu formu kaydetme veya harcamayı sıfırlama, aynı dönemde yeniden tetiklemesini sağlar\n- Maliyetler yukarıdaki jetonlar başına oranlar kullanılarak hesaplanır",
       "billingPeriodStartDay": "## Faturalama Dönemi Başlangıç Günü\nFaturalama döneminizin başladığı ayın günü (1–31).\n\n- Varsayılan `1` takvim ayıyla eşleşir\n- 15'ten 15'e döngü için `15` olarak ayarlayın (örneğin, sağlayıcınızın fatura tarihine uyması için)\n- `29–31` değerleri otomatik olarak daha kısa ayların son gününe (artık yıl olmayan yıllarda Şubat vb.) sabitlenir\n- **Aylık Bütçe** harcama penceresini ve **Harcamayı Sıfırla** eylemini etkiler",
       "defaultTemperature": "## Varsayılan Sıcaklık\nModel yanıtlarının rastgeleliğini kontrol eder (0–2).\n\n- **0:** Deterministik — aynı girdi için özdeş çıktı\n- **0.3:** Odaklanmış — test üretimi ve kod çıktısı için önerilir\n- **1+:** Yaratıcı — daha çeşitli yanıtlar\n- Bireysel özellikler bunu İstemi Yapılandırmasında geçersiz kılabilir",
       "timeout": "## İstek Zaman Aşımı (ms)\nİsteğin iptal edilmeden önce yanıt için ne kadar süre bekleneceği.\n\n- Değer milisaniye cinsindendir (örneğin `30000` = 30 saniye)\n- Akış istekleri (örneğin kod dışa aktarma önizlemesi) bu zaman aşımını dikkate almaz\n- Yavaş veya büyük modeller için artırın\n- Aralık: 5.000 – 600.000 ms",
@@ -8387,8 +8492,9 @@
     "projectRunsFilters": "## Test çalıştırmalarını filtreleme\n\nListeyi daraltmak için bir etiketi açıp kapatın. Etiketler hem Aktif hem de Tamamlanmış sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Manuel** / **Otomatik** — listeyi o türdeki çalıştırmalarla sınırlar. Her ikisini de açmak (veya her ikisini de kapatmak) tüm çalıştırmaları gösterir.\n- **Test Çalıştırmalarım** — yalnızca sizin dahil olduğunuz çalıştırmalar: çalıştırmayı siz oluşturdunuz, içinde size bir test durumu atanmış ya da içinde bir test sonucu kaydetmişsiniz.",
     "projectSessionsFilters": "## Oturumları filtreleme\n\nListeyi daraltmak için bir çip seçin/kaldırın. Çipler hem Etkin hem de Tamamlanan sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Oturumlarım** — yalnızca içinde bulunduğunuz oturumlar: oturumu siz oluşturdunuz veya size atanmış.",
     "projectImpact": "## Etki\nUygulama deposunu bağlayın, böylece bu proje test etki analizi çalıştırabilir: iki işlemeyi seçerek değişikliklerin hangi test senaryolarını etkilediğini görün ve test senaryolarını kapsadıkları koda sabitleyin.",
-    "pathPatterns": "## Yol Desenleri\nHer satır bir temel **yolu** bir glob **deseniyle** birleştirir. Satırlar toplanır: bir dosya herhangi bir satır bununla eşleştiğinde dahil edilir.\n\n- `src` + `**/*` — `src` altındaki her şey\n- boş veya `.` + `**/*` — depo içindeki her dosya\n- `src` + `**/!(*.test|*.spec).ts` — testler hariç `.ts` dosyaları\n\n### Hariç Tut\nBir satırda **Hariç Tut** işaretini koyun; dosyalarını başka bir satır bunları dahil etse bile kaldırın. Hariçtutmalar dosya seçiciye ve önbelleğe uygulanır ve Impact için bir analizin değiştirilen dosyalarına uygulanır; bu sayede neredeyse her istek çekmesinde değişen bir dosya ilgisiz test durumlarını çekmekten durdurulur. En az bir satırın işaretsiz kalması gerekir.\n\n- boş + `**/CHANGELOG*` — herhangi bir derinlikte her değişiklik günlüğü\n- `app` + `build.gradle.kts` — yalnızca sürümü güncelleyen bir derleme dosyası",
-    "projectAutomation": "## Otomatikleştirilmiş Yürütme\nYürütme hedefleri, TestPlanIt'e bu projenin otomatikleştirilmiş senaryolarını nerede yürüteceğini söyler: bir GitHub Actions iş akışı, bir GitLab CI işlem hattı veya diğer herhangi bir sistem için imzalı bir web kancası. Bir çalıştırma yürütüldüğünde, TestPlanIt işi çalıştırma kimliği ve bir plan URL'si ile başlatır; iş planı okur, eşleşen testleri çalıştırır ve sonuçları o çalıştırmaya sabitlenmiş bir muhabir veya CLI ile geri bildirir. Hedefler silinmeden devre dışı bırakılabilir."
+    "pathPatterns": "## Yol Desenleri\nHer satır bir temel **yol** ile glob **deseni** birleştirir. Satırlar toplanır: bir dosya herhangi bir satır eşleştiğinde dahil edilir.\n\n- `src` + `**/*` — `src` altındaki her şey\n- boş veya `.` + `**/*` — depodaki her dosya\n- `src` + `**/!(*.test|*.spec).ts` — testler hariç `.ts` dosyaları\n\n### Hariç Tut\nBir satırda **Hariç Tut** işaretini tıklayarak dosyalarını, başka bir satır onları dahil etse bile kaldırın. İstisnalar dosya seçici ve önbelleğe uygulanır ve Etki için bir analizin değiştirilmiş dosyalarına uygulanır, bu nedenle neredeyse her çekme talebinde değişen bir dosya ilgisiz test çalışmalarını çekmez. En az bir satırın işaretsiz kalması gerekir.\n\n- boş + `**/CHANGELOG*` — her changelog, herhangi bir derinlikte\n- `app` + `build.gradle.kts` — yalnızca sürümü güncelleyen bir derleme dosyası",
+    "projectAutomation": "## Otomatikleştirilmiş Yürütme\nYürütme hedefleri, TestPlanIt'e bu projenin otomatikleştirilmiş senaryolarını nerede yürüteceğini söyler: bir GitHub Actions iş akışı, bir GitLab CI işlem hattı veya diğer herhangi bir sistem için imzalı bir web kancası. Bir çalıştırma yürütüldüğünde, TestPlanIt işi çalıştırma kimliği ve bir plan URL'si ile başlatır; iş planı okur, eşleşen testleri çalıştırır ve sonuçları o çalıştırmaya sabitlenmiş bir muhabir veya CLI ile geri bildirir. Hedefler silinmeden devre dışı bırakılabilir.",
+    "userAlerts": "## Bildirimler & Uyarılar\n**Bildirim Tercihleri**, nasıl ulaşıldığınızı (uygulama içi, e-posta, özet) ve hangi bildirim türlerini aldığınızı belirler.\n\n**Uyarılar** bir test metriğini izler ve eşiği aştığında abonelerine bildirimde bulunur. Örneğin, normalde çalışma süresinden %50 daha uzun süren bir sonuç, arka arkaya 3 kez başarısız olan bir test senaryosu, başarı oranı %90'ın altına düşen bir çalıştırma veya yapılacak günleri kalan geride bir dönüm noktası. Liste projelerinizin tüm uyarılarını gösterir; **Beni Bilgilendir** anahtarı birini izler veya terk eder. **Uyarı Ekle**, rolünüzün **Uyarılar** Ekle/Düzenle yetkisine sahip olduğu herhangi bir projede kendi uyarılarınızı oluşturur; proje yöneticileri projelerindeki tüm uyarıları ve diğer kişilerin aboneliklerini yönetir. Bir uyarı, soğutma süresi içinde konu başına en fazla bir kez tetiklenir ve yeterli sonuç elde edene kadar sessiz kalır."
   },
   "reports": {
     "ui": {
@@ -9041,7 +9147,7 @@
         },
         "heatmap": {
           "title": "Proje ve dönem bazında başarısızlık oranı",
-          "help": "Each cell is the project's fail rate for the period; shading reaches full intensity at 35%. The trend column is the change in the fitted fail-rate line over the complete periods. * marks the period in progress.",
+          "help": "Her hücre, dönem için projenin başarısızlık oranıdır; gölgelendirme %35'te tam yoğunluğa ulaşır. Trend sütunu, tüm dönemlerde uygun başarısızlık oranı çizgisindeki değişikliktir. * devam eden dönemi işaretler.",
           "trend": "Eğilim"
         },
         "trend": {
@@ -9610,9 +9716,12 @@
       "exists": "Var",
       "not_exists": "Mevcut değil."
     },
+    "recordMatches": "{count, plural, one {# ID ile eşleşen kayıt} other {# ID ile eşleşen kayıt}}",
     "help": {
       "exactPhrases": "Tam İfadeler",
       "exactPhrasesDesc": "Tam olarak aynı ifadeleri kullanmak için terimleri tırnak içine alın:",
+      "ids": "Kimlikler",
+      "idsDesc": "Bir kaydı doğrudan bulmak için # ile veya olmadan bir kimlik girin. Hepsini bulmak için birkaçını OR, virgül veya boşlukla ayırın:",
       "proximity": "Yakınlık Araması",
       "proximityDesc": "birbirlerinden N pozisyonda bulunan kelimeler",
       "booleanOperators": "Mantıksal Operatörler",
@@ -10177,5 +10286,454 @@
     "update": "Geçerli eşlemeyle güncelle",
     "updateConfirm": "\"{name}\" geçerli sütun eşlemesi ve ayarlarıyla güncellenecek.",
     "savePrompt": "Bu sütun eşlemesini bir sonraki sefer için kaydetmek ister misiniz?"
+  },
+  "alerts": {
+    "title": "Uyarılar",
+    "description": "Projelerinizde izlediğiniz uyarılar ve izleyebileceğiniz projelerindeki uyarılar.",
+    "addRule": "Uyarı Ekle",
+    "editRule": "Uyarıyı Düzenle",
+    "deleteRule": "Uyarıyı Sil",
+    "deleteConfirm": "\"{name}\" uyarısı silinsin mi? Aboneleri bildirim almayı bırakacak ve çöp kutusundan geri yüklenebilir.",
+    "pauseTitle": "Bu uyarı herkes için duraklatılsın mı?",
+    "pauseConfirm": "\"{name}\" durdurup {count, plural, =0 {herkesi} one {tek abonesini} =2 {her iki abonesini} other {tüm # abonesini}} etkileyecektir, sadece sizi değil, birisi yeniden etkinleştirene kadar. Yalnızca kendi bildirimlerinizi durdurmak için, bunun yerine \"Beni Bilgilendir\"i kapatın.",
+    "columns": {
+      "name": "Kural",
+      "condition": "Koşul",
+      "scope": "Kapsam",
+      "subscribers": "Abone",
+      "lastFired": "Son tetikleme",
+      "enabled": "Etkinleştirilmiş",
+      "notifyMe": "Beni Bilgilendir",
+      "actions": "Eylemler",
+      "project": "Proje"
+    },
+    "neverFired": "Asla",
+    "systemScope": "Sistem",
+    "systemSubjects": {
+      "audit": "Denetim günlüğü",
+      "lockouts": "Kullanıcı hesapları",
+      "automated-results": "Otomatik sonuçlar"
+    },
+    "paused": "Duraklatıldı",
+    "filters": {
+      "label": "Uyarıları filtrele",
+      "on": "Açık",
+      "off": "Kapalı"
+    },
+    "history": "Geçmiş",
+    "subscribers": "Abone",
+    "subscriberCount": "{count, plural, =0 {Abone yok} one {# abone} other {# abone}}",
+    "toasts": {
+      "created": "Kural oluşturuldu.",
+      "updated": "Kural güncellendi.",
+      "deleted": "Kural silindi.",
+      "enabled": "Kural etkinleştirildi.",
+      "disabled": "Kural duraklatıldı.",
+      "subscribed": "Bu kural tetiklendiğinde bilgilendirileceksiniz.",
+      "unsubscribed": "Artık bu kural tarafından bilgilendirilmeyeceksiniz.",
+      "subscriberAdded": "{name} abone oldu.",
+      "subscriberRemoved": "{name} abonelikten çıktı.",
+      "saveError": "Kuralı kaydedemedi.",
+      "subscriptionError": "Abonelik güncellenemedi."
+    },
+    "form": {
+      "name": "Ad",
+      "namePlaceholder": "örn. Ödeme akışı yavaşlamaları",
+      "description": "Tanım",
+      "descriptionPlaceholder": "Diğer abonenler için isteğe bağlı not",
+      "metric": "Metrik",
+      "metricLocked": "Metrik, uyarı oluşturulduktan sonra değiştirilemez. Bunun yerine yeni bir uyarı oluşturun.",
+      "condition": "Koşul",
+      "scope": "Kapsam",
+      "scopeType": "İzle",
+      "scopeFolder": "Klasör",
+      "scopeTag": "Etiket",
+      "scopeCase": "Test senaryosu",
+      "scopeMilestone": "Dönüm noktası",
+      "scopeRunName": "Çalıştırma adı içerir",
+      "scopeRunNamePlaceholder": "örn. Gece",
+      "scopePickFolder": "Bir klasör seçin",
+      "scopePickTag": "Bir etiket seçin",
+      "scopePickCase": "Bir test senaryosu seçin",
+      "scopePickMilestone": "Bir dönüm noktası seçin",
+      "scopeWebhook": "Web kancası",
+      "scopePickWebhook": "Bir web kancası seçin",
+      "scopeLlmIntegration": "Entegrasyon",
+      "scopePickLlmIntegration": "Bir entegrasyon seçin",
+      "scopeCodeRepository": "Depo bağlantısı",
+      "scopePickCodeRepository": "Bir depo bağlantısı seçin",
+      "scopeIntegration": "Entegrasyon",
+      "scopePickIntegration": "Bir entegrasyon seçin",
+      "scopeQueue": "Sıra",
+      "scopePickQueue": "Bir sıra seçin",
+      "systemScope": "Sistem",
+      "systemScopeHelp": "Sistem uyarısı tüm yükleme için yönetilen bir şeyi izler, örneğin yapay zeka modeli bütçesi. Yalnızca yöneticiler bunu görür.",
+      "coverageBasis": "Kapsama dahil olarak say",
+      "coverageBasisOptions": {
+        "LINKED": "En az bir test senaryosuna bağlı",
+        "PASSING": "En son sonuç başarılı"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Temel penceresi (çalıştırma)",
+        "WEBHOOK_FAILURE_RATE": "Son teslimatlar",
+        "LLM_ERROR_RATE": "Son istekler"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Minimum çalıştırmalar",
+        "WEBHOOK_FAILURE_RATE": "Minimum teslimatlar",
+        "LLM_ERROR_RATE": "Minimum istekler"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Dönüm noktası son tarihine kadar kalan gün",
+        "STALE_CASES": "Sonuç olmadan geçen gün",
+        "LLM_RATE_LIMITED": "Son (saat) içinde"
+      },
+      "scopeCaseSearch": "Ada veya Kimliğe göre ara",
+      "direction": "Yön",
+      "baselineType": "Temel",
+      "baselineWindow": "Temel penceresi (sonuç)",
+      "minSamples": "Minimum sonuçlar",
+      "resultSource": "İzlenecek sonuçlar",
+      "evaluateOn": "Değerlendir",
+      "daysRemaining": "Kalan gün",
+      "cooldown": "Soğutma (dakika)",
+      "cooldownHelp": "Kural bir konu için tetiklendikten sonra, bu kadar süre sessiz kalır. 0 soğutmayı devre dışı bırakır.",
+      "emitWebhook": "Tetiklenen uyarı webhook olayı gönder",
+      "emitWebhookHelp": "Uyarılara abone olan giden web kancaları aynı yükü aldığından, Slack veya diğer araçlar onu yayınlayabilir.",
+      "enabled": "Etkinleştirilmiş",
+      "audience": "Dinleyici kitlesi",
+      "audienceHelp": "Uyarı tetiklendiğinde kime bildirilir. Oluşturduğunuz uyarılara varsayılan olarak siz eklenir; herkes terk edebilir veya yeniden katılabilir.",
+      "audienceHelpSystem": "Uyarı tetiklendiğinde kime bildirilir. Yalnızca yöneticiler sistem uyarısının dinleyici kitlesinde olabilir; varsayılan olarak siz eklenir.",
+      "searchMembers": "Proje üyelerinde ara",
+      "you": "siz",
+      "cannotManageSubscribers": "Kendinizi abone edebilir veya abonelikten çıkabilirsiniz. Diğer üyeleri abone etmek, proje yönetimi haklarına ihtiyaç duyar.",
+      "validation": {
+        "nameRequired": "Bir ad girin.",
+        "scopeRequired": "Kuralın ne izlediğini seçin.",
+        "runNameRequired": "Bir çalıştırma adının parçasını girin.",
+        "percentRange": "{min} ile {max} arasında bir yüzde girin.",
+        "countRange": "{min} ile {max} arasında bir tam sayı girin.",
+        "windowRange": "{min} ile {max} sonuç arasında bir pencere girin.",
+        "minSamplesRange": "{min} ile {max} arasında bir değer girin.",
+        "minSamplesWindow": "Minimum sonuçlar temel pencereyi aşamaz.",
+        "cooldownRange": "{min} ile {max} arasında dakika girin.",
+        "daysRange": "{min} ile {max} arasında gün girin.",
+        "windowBelowMinSamples": "Temel penceresi minimum sonuçlardan daha küçük olamaz."
+      },
+      "project": "Proje",
+      "projectPlaceholder": "Bir proje seçin",
+      "projectHelp": "Yalnızca uyarı oluşturabileceğiniz projeler listelenir.",
+      "dialogDescription": "Bir test metriğini izleyin ve ayarladığınız çizgiyi geçtiğinde dinleyici kitlesine bildirim gönderin.",
+      "metricSearch": "Metriklerde ara",
+      "metricNoMatch": "Metrik eşleşmesi yok.",
+      "checkedDaily": "Günde kontrol edilir",
+      "checkedHourly": "Saatte kontrol edilir",
+      "needsProject": "Önce bir proje seçin.",
+      "followAlert": "Beni Bilgilendir",
+      "leaveAlert": "Beni bilgilendirmeyi durdur",
+      "delivery": "Teslimat",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "Sapma (%)",
+        "CASE_REGRESSED": "Eşik",
+        "CONSECUTIVE_FAILURES": "Arka arkaya hata",
+        "CASE_FLAKY": "Çevirmeler",
+        "RUN_PASS_RATE_BELOW": "Başarı oranı altında (%)",
+        "RUN_FAILURE_COUNT": "Başarısız sonuçlar, daha fazla",
+        "RUN_DURATION_DEVIATION": "Sapma (%)",
+        "RUN_NOT_PROGRESSING": "Daha fazla boşta (saat)",
+        "AUTOMATED_EXECUTION_FAILED": "Eşik",
+        "RUN_UNTESTED_SHARE": "Test edilmemiş durumlar üzerinde (%)",
+        "RUN_ISSUES_OPENED": "Bağlantılı sorunlar, daha fazla",
+        "SESSION_OVERRUN": "Tahminin %'den fazla (%)",
+        "MILESTONE_BEHIND": "Tamamlanma altında (%)",
+        "MILESTONE_OVERDUE": "Eşik",
+        "REQUIREMENT_COVERAGE_BELOW": "Kapsama altında (%)",
+        "STALE_CASES": "Eski durumlar, daha fazla",
+        "AUTOMATION_SHARE_BELOW": "Otomatik paylaşım altında (%)",
+        "WEBHOOK_FAILURE_RATE": "Başarısızlık oranı üzerinde (%)",
+        "LLM_BUDGET_USED": "Kullanılan bütçe (%)",
+        "LLM_ERROR_RATE": "Başarısız istekler üzerinde (%)",
+        "LLM_RATE_LIMITED": "Hız sınırlaması yapılan istekler, en az",
+        "CODE_REPOSITORY_CACHE_FAILING": "En az (saat) boyunca başarısız",
+        "INTEGRATION_REAUTH_NEEDED": "Yeniden yetkilendirmeye ihtiyaç duyan kullanıcılar, en az",
+        "QUEUE_FAILED_JOBS": "Başarısız işler, daha fazla",
+        "QUEUE_BACKLOG": "En eski bekleme işi daha eski (dakika)",
+        "AUDIT_BACKLOG": "İşlenmeyen en eski değişiklik daha eski (dakika)",
+        "ACCOUNT_LOCKOUTS": "Kilitli hesaplar, en az",
+        "NO_AUTOMATED_RESULTS": "Otomatik sonuçlar yok (saat)"
+      }
+    },
+    "direction": {
+      "ABOVE": "Yukarı (yavaş)",
+      "BELOW": "Aşağı (hızlı)",
+      "EITHER": "Yukarı veya aşağı"
+    },
+    "baseline": {
+      "MEAN": "Ortalama",
+      "MEDIAN": "Medyan"
+    },
+    "resultSource": {
+      "MANUAL": "Manuel sonuçlar",
+      "AUTOMATED": "Otomatik sonuçlar",
+      "BOTH": "Manuel ve otomatik"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "Çalıştırma tamamlandığında",
+      "AS_RESULTS_ARRIVE": "Sonuçlar geldikçe"
+    },
+    "scopeType": {
+      "PROJECT": "Tüm proje",
+      "FOLDER": "Bir klasördeki durumlar",
+      "TAG": "Bir etikete sahip durumlar",
+      "CASE": "Bir test senaryosu",
+      "RUN_NAME": "Adı içeren çalıştırmalar",
+      "MILESTONE": "Bir dönüm noktası",
+      "WEBHOOK": "Bir web kancası"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "Tüm oturumlar",
+      "TAG": "Bir etikete sahip oturumlar"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "Tüm giden web kancaları",
+      "WEBHOOK": "Bir web kancası"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "Tüm yapay zeka modeli entegrasyonları",
+      "LLM_INTEGRATION": "Bir entegrasyon"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "Tüm depo bağlantıları",
+      "CODE_REPOSITORY": "Bir depo bağlantısı"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "Tüm entegrasyonlar",
+      "INTEGRATION": "Bir entegrasyon"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "Tüm sıralar",
+      "QUEUE": "Bir sıra"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "Tüm kurulum"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "Tüm çalıştırmalar",
+      "TAG": "Bir etikete sahip çalıştırmalar",
+      "RUN_NAME": "Adı içeren çalıştırmalar"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "Tüm dönüm noktaları",
+      "MILESTONE": "Bir dönüm noktası"
+    },
+    "scopeDisplay": {
+      "PROJECT": "Tüm proje",
+      "FOLDER": "Klasör: {name}",
+      "TAG": "Etiket: {name}",
+      "CASE": "Vaka: {name}",
+      "RUN_NAME": "\"{text}\" içeren çalıştırmalar",
+      "MILESTONE": "Dönüm noktası: {name}",
+      "WEBHOOK": "Web kancası: {name}",
+      "LLM_INTEGRATION": "Entegrasyon: {name}",
+      "ALL_LLM_INTEGRATIONS": "Tüm yapay zeka modeli entegrasyonları",
+      "CODE_REPOSITORY": "Depo: {name}",
+      "ALL_CODE_REPOSITORIES": "Tüm depo bağlantıları",
+      "INTEGRATION": "Entegrasyon: {name}",
+      "ALL_INTEGRATIONS": "Tüm entegrasyonlar",
+      "QUEUE": "Sıra: {name}",
+      "ALL_QUEUES": "Tüm sıralar",
+      "WHOLE_INSTALLATION": "Tüm kurulum",
+      "missing": "(kaldırıldı)"
+    },
+    "subjectType": {
+      "CASE": "Test senaryosu",
+      "RUN": "Test çalıştırması",
+      "MILESTONE": "Dönüm noktası",
+      "SESSION": "Oturum",
+      "PROJECT": "Proje",
+      "WEBHOOK": "Web kancası"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "Sonuç süresi temelden sapar",
+        "description": "Sonuç, vakanın son sonuçlarından çok daha uzun veya daha kısa sürer. Geçen zaman olmayan sonuçlar yok sayılır.",
+        "summary": "Sonuçtan sonra sonuç süresi, vakanın son {window} sonucunun {baseline, select, MEAN {ortalamasından} other {medyanından}} {threshold}% {direction, select, ABOVE {üstünde} BELOW {altında} other {üstünde veya altında}} olur, en az {minSamples} sonuçtan sonra"
+      },
+      "CASE_REGRESSED": {
+        "label": "Vaka geriledi",
+        "description": "Son sonuçlarını geçen vaka şimdi başarısız oluyor. Kararlı bir durum üzerinde taze bir başarısızlığı yakalar.",
+        "summary": "Vaka son {window} sonucunu geçtikten sonra başarısız olur"
+      },
+      "CASE_RECOVERED": {
+        "label": "Vaka iyileşti",
+        "description": "Vaka, son sonuçlarının tamamını kaybettikten sonra geçer.",
+        "summary": "Vaka son {window, plural, one {# sonucundan} other {# sonucundan}} sonra geçer"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "Arka arkaya hata",
+        "description": "Vaka belirli sayıda arka arkaya başarısız olur.",
+        "summary": "Vaka {threshold, plural, one {# kez} other {# kez}} arka arkaya başarısız olur"
+      },
+      "CASE_FLAKY": {
+        "label": "Vaka talih haline geldi",
+        "description": "Vaka, son sonuçlarında geçme ve başarısızlık arasında tekrarlanan olarak döner. Tavlı Testler raporu ile aynı girdileri kullanır.",
+        "summary": "Vaka son {window} sonucu arasında geçme ve başarısızlık arasında en az {threshold, plural, one {# kez} other {# kez}} döner"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "Çalıştırma başarısızlık oranı eşiğin altında",
+        "description": "Çalıştırmanın başarısızlık veya başarısızlık karası olan sonuçlar üzerinden sayılan başarısızlık oranı bir yüzdenin altına düşer.",
+        "summary": "En az {minSamples} sonucun bir karar aldığı andan itibaren bir çalıştırmanın geçiş oranı {threshold}% altında olur, {evaluateOn, select, AS_RESULTS_ARRIVE {sonuçlar geldikçe değerlendirilir} other {çalıştırma tamamlandığında değerlendirilir}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "Çalıştırma başarısızlık sayısı",
+        "description": "Çalıştırmanın belirli sayıdan fazla başarısız sonucu vardır.",
+        "summary": "Çalıştırmanın {threshold, plural, one {# başarısız sonuçtan} other {# başarısız sonuçtan}} fazlası vardır, {evaluateOn, select, AS_RESULTS_ARRIVE {sonuçlar geldikçe değerlendirilir} other {çalıştırma tamamlandığında değerlendirilir}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "Çalıştırma süresi temelden sapar",
+        "description": "Tamamlanan çalıştırmanın toplam süresi, kapsamının bir araya getirdiği çalıştırmalardan (aynı etiket veya ad parçası) sapar.",
+        "summary": "Tamamlanan çalıştırmanın süresi, son {window} çalıştırmanın {baseline, select, MEAN {ortalamasından} other {medyanından}} {threshold}% {direction, select, ABOVE {üstünde} BELOW {altında} other {üstünde veya altında}} olur, en az {minSamples} çalıştırmadan sonra"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Çalıştırma ilerlemesi yok",
+        "description": "Açık çalıştırma belirli sayıda saat boyunca yeni sonuç almamıştır. Saatte kontrol edilir.",
+        "summary": "Açık çalıştırma {threshold, plural, one {# saatden} other {# saatden}} fazla yeni sonuç almamıştır"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "Otomatik yürütme başarısız oldu",
+        "description": "Çalıştırmanın otomatik yürütmesi başarısız, gönderilemiyor veya zaman aşımı oluyor.",
+        "summary": "Otomatik yürütme başarısız oluyor, gönderilemiyor veya zaman aşımı oluyor"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Çalıştırma test edilmemiş paylaşım",
+        "description": "Çalıştırmanın çok fazla durumunda hâlâ son tarihine kadar kaç gün kaldığı konusunda hiçbir sonuç yok. Günde kontrol edilir.",
+        "summary": "More than {threshold}% of a run's cases have no result with {days, plural, one {# gün} other {# gün}} or fewer before its milestone is due"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Çalıştırmadan açılan sorunlar",
+        "description": "Çalıştırmanın sonuçlarına belirli sayıdan fazla sorun bağlıdır.",
+        "summary": "Çalıştırmanın sonuçlarına {threshold, plural, one {# sorun bağlıdır} other {# sorun bağlıdır}}, {evaluateOn, select, AS_RESULTS_ARRIVE {sonuçlar geldikçe değerlendirilir} other {çalıştırma tamamlandığında değerlendirilir}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "Oturum tahmini aşmış",
+        "description": "Tamamlanan oturumun geçen süresi, tahmini yüzde olarak aşıyor.",
+        "summary": "Tamamlanan oturumun geçen süresi tahmini {threshold}%'den fazla"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "Dönüm noktası tamamlanması geride",
+        "description": "Dönüm noktasının çalıştırma durumları son tarihine kadar kaç gün kaldığı açısından yeterince tamamlanmamıştır. Günde kontrol edilir.",
+        "summary": "A milestone is under {threshold}% complete with {days, plural, one {# gün} other {# gün}} or fewer remaining"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "Dönüm noktası geçti",
+        "description": "Dönüm noktasının son tarihi geçmiş ve tamamlanmamış. Günde kontrol edilir.",
+        "summary": "Dönüm noktası tamamlanmadan son tarihini geçer"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "Gereksinim kapsamı eşiğin altında",
+        "description": "Projenin gereksinimlerinin belirli bir payından daha azı kapsama dahil sayılır. Günde kontrol edilir.",
+        "summary": "Gereksinimlerin {threshold}% altında olanları {basis, select, PASSING {en son geçen bir sonuca sahip} other {en az bir test durumuna bağlı}}"
+      },
+      "STALE_CASES": {
+        "label": "Eski durumlar",
+        "description": "Belirli sayıdan fazla vaka, belirli sayıda gün boyunca sonuç olmadan kaldı. Günde kontrol edilir.",
+        "summary": "More than {threshold, plural, one {# case has} other {# cases have}} had no result in {days, plural, one {# gün} other {# gün}}"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "Otomatik paylaşım eşiğin altında",
+        "description": "Kapsamdaki durumların belirli bir payından daha azı otomatikleştirilmiştir. Günde kontrol edilir.",
+        "summary": "Durumların {threshold}% altında olanları otomatikleştirilmiştir"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Web kancası başarısızlık oranı",
+        "description": "Giden web kancasının çok fazla son teslimi başarısız oldu. Saatte kontrol edilir.",
+        "summary": "Giden bir webhook'un son {window} teslimatının {threshold}% kısmından daha fazlası başarısız olur, en az {minSamples} teslimatın ardından"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "Yapay zeka bütçesi kullanıldı",
+        "description": "Yapay zeka modeli entegrasyonunun faturalandırma döneminin harcaması aylık bütçesinin payına ulaşır. Dönem başına her entegrasyon için bir kez tetiklenir.",
+        "summary": "Harcama, entegrasyonun aylık bütçesinin {threshold}% kısmına ulaşır"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "Yapay zeka istek hata oranı",
+        "description": "Yapay zeka modeli entegrasyonunun çok fazla son isteği başarısız oldu.",
+        "summary": "Entegrasyonun son {window} isteğinin {threshold}% kısmından daha fazlası başarısız olur, en az {minSamples} isteğin ardından"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "Yapay zeka sağlayıcı hız sınırlaması",
+        "description": "Sağlayıcı, yapay zeka modeli entegrasyonunun isteklerini tekrarlanan şekilde azaltmıştır.",
+        "summary": "The provider rate-limited at least {threshold, plural, one {# request} other {# requests}} within {days, plural, one {# saat} other {# saat}}"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "Depo önbelleği başarısız",
+        "description": "Kod depo bağlantısı, önbelleğini başarılı şekilde bir süredir yenilemedi. Saatte kontrol edilir.",
+        "summary": "A repository connection's cache has been failing for at least {threshold, plural, one {# saat} other {# saat}}"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "Entegrasyon yeniden yetkilendirmesi gerekli",
+        "description": "Birçok kullanıcı entegrasyonla bağlantısını kaybetti ve yeniden yetkilendirmesi gerekiyor. Günde kontrol edilir.",
+        "summary": "En az {threshold, plural, one {# kullanıcı yeniden yetkilendirilmesi gerekir} other {# kullanıcı yeniden yetkilendirilmesi gerekir}} bir entegrasyon için"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "Sıra başarısız işler",
+        "description": "Arka plan sırası çok fazla başarısız iş tutar. Saatte kontrol edilir.",
+        "summary": "{threshold, plural, one {# işin} other {# işin}} bir kuyrukta başarısız oldu"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "Sıra biriktirmesi",
+        "description": "Arka plan sırasının en eski bekleme işi çok uzun beklemiştir; durdurulmuş işçi işareti. Saatte kontrol edilir.",
+        "summary": "A queue's oldest waiting job is older than {threshold, plural, one {# dakika} other {# dakika}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "Denetim günlüğü biriktirmesi",
+        "description": "Yakalanan değişiklikler denetim günlüğüne yazılmıyor; durdurulmuş denetim işçi işareti. Saatte kontrol edilir.",
+        "summary": "The oldest unprocessed audit change is older than {threshold, plural, one {# dakika} other {# dakika}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "Hesap kilitlenmeleri",
+        "description": "Başarısız oturum açma işlemlerinden sonra aynı anda birkaç hesap kilitlendi; kimlik bilgisi doldurma işareti. Saatte kontrol edilir.",
+        "summary": "En az {threshold, plural, one {# hesap} other {# hesap}} başarısız oturum açma denemelerinden sonra kilitlidir"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "Otomatik sonuç yok",
+        "description": "Herhangi bir boru hattından bir süredir otomatik test sonucu gelmedi. Günde kontrol edilir.",
+        "summary": "No automated result has arrived for {threshold, plural, one {# saat} other {# saat}}"
+      }
+    },
+    "sourceSummary": "Sonuçlar: {source, select, MANUAL {manuel} AUTOMATED {otomatik} other {manuel ve otomatik}}",
+    "historyDialog": {
+      "title": "Geçmiş: {name}",
+      "empty": "Bu kural henüz tetiklenmedi.",
+      "columns": {
+        "firedAt": "Tetiklendi",
+        "subject": "Konu",
+        "observed": "Gözlemlendi",
+        "threshold": "Eşik",
+        "notified": "Bildirildi"
+      },
+      "webhookSent": "Web kancası gönderildi"
+    },
+    "descriptionFor": "Uyarılar {name} projelerdeki diğer uyarıları ve izlediği uyarıları takip eder.",
+    "empty": "Projelerinizde henüz uyarı yok.",
+    "emptyCanCreate": "Projelerinizde henüz uyarı yok. Başlamak için bir tane ekleyin.",
+    "pageDescription": "Nasıl bilgilendirildiğiniz, size ne söyleneceği ve izlediğiniz uyarılar.",
+    "pageDescriptionFor": "{name}'in nasıl bilgilendirildiği ve izlediği uyarılar.",
+    "pageTabs": {
+      "alerts": "Uyarılar",
+      "notifications": "Bildirimler"
+    },
+    "metricGroups": {
+      "CASE": "Test senaryosu sonuçları",
+      "RUN": "Test çalıştırmaları",
+      "SESSION": "Oturumlar",
+      "MILESTONE": "Dönüm noktaları",
+      "PROJECT": "Proje sağlığı",
+      "WEBHOOK": "Web kancaları",
+      "LLM_INTEGRATION": "Yapay zeka modelleri",
+      "CODE_REPOSITORY": "Kod depoları",
+      "INTEGRATION": "Entegrasyonlar",
+      "QUEUE": "Arka plan kuyrukları",
+      "SYSTEM": "Kurulum"
+    }
   }
 }

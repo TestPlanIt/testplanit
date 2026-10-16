@@ -577,6 +577,7 @@
       "addFieldTo": "Een veld toevoegen aan {section}",
       "selectTemplates": "Selecteer sjablonen",
       "selectUsers": "Selecteer gebruikers",
+      "selectGroups": "Groepen selecteren",
       "selectOption": "Selecteer een optie",
       "date": "Selecteer een datum",
       "selectEncoding": "Codering selecteren...",
@@ -737,7 +738,8 @@
       "adminSamlConfig": "Beheerder - SAML-configuratie",
       "apiDocumentation": "API-documentatie",
       "sharedContent": "Gedeelde inhoud",
-      "impact": "Impactanalyse"
+      "impact": "Impactanalyse",
+      "alerts": "Meldingen en waarschuwingen"
     },
     "aria": {
       "userMenu": "Gebruikersmenu",
@@ -1660,7 +1662,8 @@
           "scimGroupMemberAdded": "Leden toegevoegd",
           "scimGroupMemberRemoved": "Leden verwijderd",
           "scimGroupDeleted": "Groep verwijderd",
-          "scimGroupMemberAddedSummary": "Toegevoegde leden (samenvatting bulksynchronisatie)"
+          "scimGroupMemberAddedSummary": "Toegevoegde leden (samenvatting bulksynchronisatie)",
+          "triggered": "Geactiveerd"
         },
         "iterationResultHelp": "Wordt geactiveerd telkens wanneer een iteratieresultaat wordt vastgelegd — geslaagd, mislukt, overgeslagen of een andere status. Gebruik dit spaarzaam bij lange automatiseringsruns (één gebeurtenis per iteratie).",
         "events": {
@@ -1741,7 +1744,7 @@
         "inboundGiteaTitle": "Gitea inkomende webhook",
         "inboundGiteaScopeHint": "Gitea-problemen <code>en gebeurtenissen</code> werken gekoppelde TestPlanIt-problemen bij. Andere gebeurtenistypen worden geaccepteerd, maar werken geen problemen bij.",
         "inboundAdoTitle": "Azure DevOps inkomende webhook",
-        "inboundAdoScopeHint": "Azure DevOps <code>workitem.updated</code> gebeurtenissen werken gekoppelde TestPlanIt-problemen bij. Andere gebeurtenissen worden geaccepteerd, maar werken de problemen niet bij.",
+        "inboundAdoScopeHint": "Azure DevOps <code>workitem.created</code> en <code>workitem.updated</code> gebeurtenissen werken gekoppelde TestPlanIt-problemen bij. Andere gebeurtenissen worden geaccepteerd, maar werken de problemen niet bij.",
         "inboundAdoUsername": "Gebruikersnaam",
         "inboundAdoUsernamePlaceholder": "serviceaccount",
         "inboundAdoUsernameHelp": "Geconfigureerd aan de kant van de Azure DevOps Service Hook. TestPlanIt verifieert dit via HTTP Basic Auth.",
@@ -1758,7 +1761,7 @@
         "setupStepsGithubStep4": "Kies 'Laat me individuele gebeurtenissen selecteren' en vink 'Problemen' aan.",
         "setupStepsGithubStep5": "Klik op \"Webhook toevoegen\". Gebruik \"Testwebhook verzenden\" hieronder om de pipeline te controleren.",
         "setupStepsAdoStep1": "Ga in je Azure DevOps-project naar Projectinstellingen → Servicehooks → Abonnement maken.",
-        "setupStepsAdoStep2": "Kies 'Web Hooks' als service. Stel de trigger in op 'Werkitem bijgewerkt'.",
+        "setupStepsAdoStep2": "Kies \"Web Hooks\" als de service. Stel Trigger in op \"Work item created\" en herhaal deze stappen voor een tweede abonnement met \"Work item updated\".",
         "setupStepsAdoStep3": "Stel de te verzenden resourcegegevens in op 'Alles', zodat System.State wordt meegenomen.",
         "setupStepsAdoStep4": "Plak de onderstaande URL in het URL-veld. Stel de gebruikersnaam en het wachtwoord voor basisverificatie in op de waarden die u hierboven hebt ingevoerd.",
         "setupStepsAdoStep5": "Sla het abonnement op. Gebruik 'Testwebhook verzenden' hieronder om de pipeline te controleren.",
@@ -1852,13 +1855,49 @@
         "setupStepsMantisbtStep4": "Maak of update een issue in MantisBT; de status van het gekoppelde issue wordt hier gesynchroniseerd.",
         "inboundChooserClickup": "ClickUp",
         "inboundClickupTitle": "ClickUp inkomende webhook",
-        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code> gebeurtenissen werken gekoppelde TestPlanIt-problemen bij. Andere taakgebeurtenissen worden geaccepteerd, maar werken de problemen niet bij.",
+        "inboundClickupScopeHint": "ClickUp <code>taskCreated</code> en <code>taskStatusUpdated</code> gebeurtenissen werken gekoppelde TestPlanIt-problemen bij. Andere taakgebeurtenissen worden geaccepteerd, maar werken de problemen niet bij.",
         "inboundClickupRegisterHint": "ClickUp heeft geen webhooksinstellingenpagina: webhooks worden gemaakt via de API en ClickUp kiest het ondertekeningsgeheim. Laat het geheim leeg en TestPlanIt registreert deze webhook in ClickUp voor de gekoppelde Lijst met behulp van uw ClickUp-autorisatie.",
         "inboundClickupSecret": "Webhookgeheim (optioneel)",
         "inboundClickupSecretHelp": "Alleen nodig als u de webhook zelf hebt gemaakt met ClickUp's Create Webhook API: plak het geheim dat ClickUp heeft geretourneerd. Opgeslagen versleuteld in rust.",
         "setupStepsClickupStep1": "Als u het geheim leeg hebt gelaten, heeft TestPlanIt deze webhook al geregistreerd in ClickUp voor de gekoppelde Lijst — er is niets in te stellen in ClickUp.",
         "setupStepsClickupStep2": "Als u de webhook zelf hebt geregistreerd via ClickUp's Create Webhook API, zorg er dan voor dat het eindpunt de onderstaande URL is en abonneer het op de taskStatusUpdated-gebeurtenis.",
         "setupStepsClickupStep3": "Gebruik \"Testwebhook verzenden\" hieronder om de pijplijn te verifiëren. Het draaien van het geheim registreert een verse webhook in ClickUp.",
+        "actions": {
+          "description": "Wat TestPlanIt doet wanneer deze webhook een gebeurtenis ontvangt. Acties worden in de vermelde volgorde uitgevoerd.",
+          "empty": "Geen acties. Gebeurtenissen worden vastgelegd, maar er gebeurt niets.",
+          "addTitle": "Actie toevoegen",
+          "editTitle": "Actie bewerken",
+          "dialogDescription": "Kies de gebeurtenis die deze actie activeert en wat deze doet.",
+          "trigger": {
+            "ISSUE_EVENT": "Elk probleemgebeurtenis",
+            "ISSUE_STATUS_ENTERED": "Probleemstatus verandert"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "Elke gebeurtenis die de tracker over een probleem verzendt.",
+            "ISSUE_CREATED": "Een probleem dat TestPlanIt nog niet eerder heeft gezien.",
+            "ISSUE_STATUS_ENTERED": "Een probleem gaat naar een van de gekozen statussen."
+          },
+          "outcome": {
+            "cases_drafted": "Testgevallen opgesteld",
+            "draft_queued": "Testgevallen worden opgesteld",
+            "has_cases": "Probleem heeft al testgevallen",
+            "no_llm": "Geen actief AI-model",
+            "no_template": "Geen sjabloon",
+            "no_target": "Geen repository of standaardstatus",
+            "draft_failed": "Opstellen mislukt",
+            "already_composed": "Run al gemaakt voor deze wijziging",
+            "execute_failed": "Uitvoering niet aangevraagd"
+          },
+          "dragToReorder": "Sleep om opnieuw in te delen",
+          "requirementsOnly": "Alleen vereisten",
+          "requirementsOnlyHelp": "Alleen problemen die het project als vereisten classificeert.",
+          "includeChildIssues": "Onderliggende problemen opnemen",
+          "includeChildIssuesHelp": "Neem ook de testgevallen op die zijn gekoppeld aan de onderliggende problemen van het probleem.",
+          "notifyHelp": "Wie wordt ervan op de hoogte gesteld wanneer de concepten klaar zijn om te controleren. De voorkeursinstellingen voor meldingen van elke persoon blijven van toepassing.",
+          "draftFolderNote": "Testgevallen automatisch opgesteld door de {webhook} webhook.",
+          "draftFolderNoteCases": "Opgesteld door de systeemgebruiker; elk geval is gekoppeld aan het probleem waarvoor het is opgesteld.",
+          "viewFolder": "Map weergeven"
+        },
         "codeRepos": {
           "empty": "Geen repositories zijn verbonden voor Impact Analysis. <link>Verbind er eerst één</link>.",
           "unsupported": "{provider} repositories kunnen geen webhooks naar TestPlanIt verzenden.",
@@ -1878,11 +1917,13 @@
           "eventBranchPushHelp": "Analyseer elke push naar een ander branch tegen de basisbranch, zoals een pull request, en stel voor elke push een testrun samen.",
           "baseBranch": "Basisbranch",
           "baseBranchHelp": "Pushen naar deze branch worden op zichzelf geanalyseerd; pull requests en andere branches worden ermee vergeleken. Laat leeg om de branch van de verbinding te gebruiken.",
-          "autoExecute": "Automatische test cases uitvoeren",
-          "autoExecuteHelp": "Nadat de testrun is samengesteld, moet u automatische uitvoering van de geautomatiseerde cases op dit doel aanvragen. Handmatige cases blijven in de testrun voor testers.",
-          "autoExecuteNoTargets": "Er is geen uitvoeringsdoel geconfigureerd voor dit project. <link>Voeg er een toe</link> om testruns automatisch uit te voeren.",
-          "autoExecuteTargetMissing": "Het gekozen uitvoeringsdoel is verwijderd of uitgeschakeld. Testruns worden nog steeds samengesteld, maar er wordt geen uitvoering aangevraagd totdat u een ander doel kiest.",
-          "autoExecuteSaveError": "Kan de instellingen voor automatische uitvoering niet opslaan"
+          "minScoreHelp": "Elke samengestelde run bevat alle testcases die de analyse minstens deze score geeft (0–100). Laat leeg om de vastgezette en beïnvloede tests op te nemen, zoals een handmatig gestarte run doet.",
+          "minScoreInvalid": "Voer een geheel getal in van 0 tot 100, of laat het leeg",
+          "autoExecute": "Geautomatiseerde cases uitvoeren",
+          "autoExecuteHelp": "Vraag na het samenstellen van de run geautomatiseerde uitvoering van de geautomatiseerde cases ervan aan op dit doel. Handmatige cases blijven in de run voor testers.",
+          "autoExecuteNoTargets": "Er is geen uitvoeringsdoel geconfigureerd voor dit project. <link>Voeg er een toe</link> om runs automatisch uit te voeren.",
+          "autoExecuteTargetMissing": "Het gekozen uitvoeringsdoel is verwijderd of uitgeschakeld. Runs worden nog steeds samengesteld, maar er wordt geen uitvoering aangevraagd totdat u een ander doel kiest.",
+          "autoExecuteSaveError": "Kan de instellingen voor geautomatiseerde uitvoering niet opslaan"
         },
         "inboundEmptyState": "Nog geen inkomende webhooks. <link>Voeg één toe</link> om issue-updates van uw issue tracker of pull requests en pushes van een verbonden repository te ontvangen.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -1895,7 +1936,8 @@
           "sourceRepositoryHelp": "Start een impactanalyse en stel een testrun samen wanneer een pull request wordt geopend of commits worden gepusht.",
           "noRepositoryAvailable": "Elke verbonden repository heeft al een webhook of kan geen webhooks verzenden.",
           "repositoryPlaceholder": "Kies een opslagplaats"
-        }
+        },
+        "outboundSubsAlerts": "Waarschuwingen"
       },
       "aiModels": {
         "description": "Configureer AI-modellen voor het genereren en analyseren van intelligente testcases",
@@ -2045,7 +2087,7 @@
           "branchPlaceholder": "Laat dit veld leeg om de standaardbranch van de repository te gebruiken."
         },
         "pathPatterns": {
-          "description": "Welke repository-bestanden QuickScript als AI-context mag lezen.",
+          "description": "Welke repositorybestanden QuickScript mag lezen als AI-context.",
           "pathPlaceholder": "tests/e2e/pagina's",
           "exceedsLimit": "De totale grootte overschrijdt de AI-contextlimiet met {overflow}. Tijdens het exporteren worden bestanden gerangschikt op relevantie voor de te exporteren testcase. De meest relevante bestanden worden als eerste opgenomen en minder relevante bestanden worden overgeslagen wanneer het budget is bereikt. Verfijn uw padpatronen als u meer controle wilt over welke bestanden worden opgenomen."
         },
@@ -2108,7 +2150,6 @@
           "pathLabel": "Pad",
           "patternLabel": "Patroon",
           "previewFiles": "Voorbeeldbestanden",
-          "rootHint": "Laat het pad leeg of voer in . om te starten in de repository-root; pad . met patroon **/* bevat elk bestand.",
           "scanningRepo": "Bestanden in de repository scannen… ({seconds}s)",
           "title": "Padpatronen",
           "truncatedBadge": "De resultaten kunnen onvolledig zijn (beperkingen van de aanbieder)"
@@ -2261,7 +2302,7 @@
           "branchesFallbackHint": "Typ in plaats daarvan de naam van de branch."
         },
         "pathPatterns": {
-          "description": "Welke toepassingsbestanden Impact leest: de Code Pin-bestandskiezer, de cache, repository-markers en welke gewijzigde bestanden een analyse negeert.",
+          "description": "Welke toepassingsbestanden Impact leest: de Code Pin-bestandskiezer, de cache, repositorymarkeringen en welke gewijzigde bestanden een analyse negeert.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2871,7 +2912,9 @@
         "detailsDisplayMode": {
           "docked": "Vastgezet paneel",
           "newWindow": "Nieuw venster"
-        }
+        },
+        "notificationsLabel": "Meldingen",
+        "notificationsMoved": "Meldingen en waarschuwingen beheren"
       },
       "assignments": {
         "title": "Opdrachten",
@@ -2980,6 +3023,10 @@
             "label": "AI-stappen afgeleid",
             "description": "Een AI-stapafleiding-taak die u hebt gestart, heeft stappen geschreven."
           },
+          "CASES_DRAFTED": {
+            "label": "Door AI opgestelde testgevallen",
+            "description": "Een webhook-actie stelde testgevallen voor een probleem op en noemde je als revisor."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integratie moet opnieuw worden geautoriseerd",
             "description": "Uw verbinding met een integratie is verlopen of ingetrokken en moet opnieuw verbonden worden."
@@ -2996,9 +3043,9 @@
             "label": "Nieuwe gebruikersregistraties",
             "description": "Een nieuwe gebruiker meldt zich aan via het formulier, SSO of SAML."
           },
-          "LLM_BUDGET_ALERT": {
-            "label": "AI-budgetwaarschuwingen",
-            "description": "LLM-uitgaven overschrijden een budgetdrempel voor de factureringsperiode."
+          "ALERT_TRIGGERED": {
+            "label": "Waarschuwingen",
+            "description": "Een waarschuwing waarop je bent geabonneerd, wordt geactiveerd omdat een testmetriek de lijn die wordt bewaakt, heeft overschreden."
           }
         },
         "success": {
@@ -3123,7 +3170,8 @@
       "orange": "Oranje",
       "accessible": "Toegankelijk",
       "accessibledark": "Toegankelijk (Donker)"
-    }
+    },
+    "myAlerts": "Meldingen en waarschuwingen"
   },
   "repository": {
     "version": {
@@ -3196,7 +3244,12 @@
       "noStepsInSelectedGroup": "De geselecteerde groep heeft geen stappen.",
       "sharedGroupSuffix": "(Gedeelde stappen)",
       "unnamedSharedGroup": "Naamloze gedeelde stappen",
-      "noStepsInSelectedSharedGroup": "De geselecteerde gedeelde groep heeft geen stappen."
+      "noStepsInSelectedSharedGroup": "De geselecteerde gedeelde groep heeft geen stappen.",
+      "layout": {
+        "label": "Stapindelay",
+        "stacked": "Gestapeld",
+        "sideBySide": "Naast elkaar"
+      }
     },
     "testCase": {
       "toggleAutomated": "Schakel geautomatiseerd testen in",
@@ -3686,7 +3739,7 @@
         "title": "Selecteer Vereistenbron",
         "description": "Kies of u testcases wilt genereren op basis van een probleem of een vereistendocument.",
         "folderContextTip": "Bestaande testgevallen uit \"{folderName}\" en de bijbehorende mappen worden als context gebruikt om duplicaten te voorkomen. Zorg ervoor dat u de juiste map hebt geselecteerd voordat u verdergaat.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
         "folderContextEmptyTitle": "Geen bestaande testcases om als context te gebruiken",
         "folderContextEmpty": "\"{folderName}\" en de bovenliggende/onderliggende mappen bevatten geen testcases, dus de AI heeft geen voorbeelden van uw projectstijl of bestaande dekking. Voor betere resultaten start u de generator vanuit de map waar deze testcases thuishoren, naast gerelateerde cases.",
         "currentFolder": "huidige map",
@@ -5510,6 +5563,7 @@
       "scimProvisionerBadge": "SCIM-leverancier",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina.",
+      "systemUserTooltip": "Ingebouwde gebruiker voor werk dat TestPlanIt automatisch doet, zoals webhook-acties. Het kan niet inloggen of worden bewerkt.",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Ja",
       "scimUserLockedTitle": "De gebruiker wordt beheerd door SCIM.",
@@ -6180,7 +6234,8 @@
         "stepSequenceMatchCases": "Stapsequencematchgevallen",
         "testRunCases": "Testuitvoeringsgevallen",
         "testRunCaseDataSetSnapshots": "Testuitvoeringsdatasetmomentopnamen",
-        "testRunCaseIterations": "Testuitvoeringsiteraties"
+        "testRunCaseIterations": "Testuitvoeringsiteraties",
+        "alertRules": "Waarschuwingen"
       },
       "table": {
         "title": "Verwijderd {itemType}",
@@ -6450,7 +6505,7 @@
         "mantisBTUrl": "MantisBT-URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
         "mantisBTUrlHelp": "De basis-URL van uw MantisBT-instantie",
-        "clickupTeamId": "ClickUp Team (Workspace) ID",
+        "clickupTeamId": "ClickUp Team (Workspace)-ID",
         "clickupTeamIdPlaceholder": "bijv. 9013456789",
         "clickupTeamIdHelp": "Te vinden in de ClickUp URL na app.clickup.com/",
         "clickupListId": "Standaard ClickUp Lijsten-ID",
@@ -6531,7 +6586,6 @@
         "defaultModelPlaceholder": "gpt-4o, claude-3-5-sonnet-20241022, enz.",
         "defaultModelDescription": "Het model dat standaard moet worden gebruikt",
         "maxTokensPerRequest": "Maximaal aantal tokens per aanvraag",
-        "maxRequestsPerMinute": "Maximaal aantal verzoeken per minuut",
         "costPerInputToken": "Kosten per 1 miljoen invoertokens ($)",
         "costPerOutputToken": "Kosten per 1 miljoen outputtokens ($)",
         "monthlyBudget": "Maandelijks budget ($)",
@@ -6910,7 +6964,8 @@
         "markRead": "Markeer als gelezen",
         "markUnread": "Markeer als ongelezen",
         "markAllRead": "Markeer alles als gelezen",
-        "deleteAll": "Verwijder alles"
+        "deleteAll": "Verwijder alles",
+        "manageAlerts": "Meldingen en waarschuwingen beheren"
       },
       "success": {
         "deleted": "Melding verwijderd",
@@ -6954,11 +7009,6 @@
         "shareLinkAccessedMessage": "{viewer} heeft uw gedeelde rapport bekeken: \"{shareTitle}\"",
         "viewedYourSharedLink": "Ik heb je gedeelde link bekeken.",
         "viewedAt": "Bekeken op",
-        "budgetDisclaimer": "Budgetlimieten zijn slechts informatief en belemmeren het gebruik niet.",
-        "llmBudgetExceededTitle": "Budget voor LLM overschreden",
-        "llmBudgetThresholdTitle": "LLM-budget {threshold}% gebruikt",
-        "llmBudgetExceededMessage": "{providerName} heeft zijn maandbudget overschreden: {spend} heeft uitgegeven van het budget van {budget}.",
-        "llmBudgetThresholdMessage": "{providerName} heeft {threshold}% van zijn maandbudget gebruikt: {spend} van {budget}.",
         "userRegisteredTitle": "Nieuwe gebruikersregistratie",
         "userRegisteredMessageSso": "{userName} ({userEmail}) heeft zich geregistreerd via SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) heeft zich geregistreerd via het registratieformulier",
@@ -6997,6 +7047,9 @@
         "aiStepsDerivedTitle": "AI-afgeleide teststappen gereed",
         "aiStepsDerivedMessage": "{count, plural, one {# testcase heeft} other {# testcases hebben}} AI-afgeleide stappen gekregen — controleer op juistheid.",
         "aiStepsDerivedReviewLink": "Testrun controleren",
+        "casesDraftedTitle": "Door AI opgestelde testgevallen klaar",
+        "casesDraftedMessage": "{count, plural, one {# testgeval werd} other {# testgevallen werden}} opgesteld voor {issueKey} — controleer op nauwkeurigheid.",
+        "casesDraftedReviewLink": "Bekijk in {folderName}",
         "integrationAuthExpiredTitle": "Integratieverbinding verlopen",
         "integrationAuthExpiredMessage": "Uw verbinding met \"{integrationName}\" is verlopen. Maak opnieuw verbinding om het synchroniseren van issues te hervatten.",
         "integrationAuthExpiredReconnect": "Opnieuw verbinden",
@@ -7008,7 +7061,56 @@
         "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} geslaagd, dus dit geval dat aan u is toegewezen, is niet langer geblokkeerd:",
         "runCaseUnblockedEmailMessage": "\"{testCaseName}\" in testronde \"{testRunName}\" (project \"{projectName}\") is niet langer geblokkeerd: \"{prerequisiteName}\" geslaagd. Het is aan u toegewezen en klaar om uit te voeren.",
         "runCaseUnblockedReason": "U ontvangt dit omdat de testcase aan u is toegewezen.",
-        "inTestRun": "in testronde"
+        "inTestRun": "in testronde",
+        "alertTriggeredTitle": "Waarschuwing geactiveerd",
+        "alertTriggeredRule": "Regel: {ruleName}",
+        "alertTriggeredEmailMessage": "Waarschuwing \"{ruleName}\" geactiveerd voor {subjectLabel} \"{subjectName}\" in project \"{projectName}\": {detail}",
+        "alertTriggeredEmailMessageSystem": "Waarschuwing \"{ruleName}\" geactiveerd voor {subjectLabel} \"{subjectName}\": {detail}",
+        "alertTriggeredReason": "U ontvangt dit omdat u bent geabonneerd op deze waarschuwing.",
+        "alertSubject": {
+          "CASE": "testgeval",
+          "RUN": "testrun",
+          "MILESTONE": "mijlpaal",
+          "SESSION": "sessie",
+          "PROJECT": "project",
+          "WEBHOOK": "webhook",
+          "LLM_INTEGRATION": "AI-modelintegratie",
+          "CODE_REPOSITORY": "repositoryverbinding",
+          "INTEGRATION": "integratie",
+          "QUEUE": "wachtrij",
+          "SYSTEM": "installatie"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "Het resultaat duurde {elapsed}, {deviation}% afwijking van de basislijn van {baseline} (meer dan {threshold}% toegestaan).",
+          "CASE_REGRESSED": "De zaak mislukte na het slagen van {passedBefore, plural, one {het laatste resultaat} other {zijn laatste # resultaten}}.",
+          "CASE_RECOVERED": "De zaak slaagde na het mislukken van {failedBefore, plural, one {het laatste resultaat} other {zijn laatste # resultaten}}.",
+          "RUN_DURATION_DEVIATION": "De run duurde {elapsed}, {deviation}% afwijking van de basislijn van {baseline} (meer dan {threshold}% toegestaan).",
+          "RUN_NOT_PROGRESSING": "De run heeft {idleHours, plural, one {# uur} other {# uren}} lang geen nieuw resultaat gehad (drempel {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "De geautomatiseerde uitvoering op {target} eindigd met {status}{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% van de gevallen van de run heeft geen resultaat met {daysRemaining, plural, one {# dag} other {# dagen}} voordat de mijlpaal vervalt (drempel {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# probleem is} other {# problemen zijn}} gekoppeld aan de resultaten van de run (drempel {threshold}).",
+          "SESSION_OVERRUN": "De sessie duurde {elapsed} tegen een schatting van {estimate}, {overrun}% voorbij (meer dan {threshold}% toegestaan).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} van {total} vereisten ({coverage}%) {basis, select, PASSING {hebben een succesvol laatste resultaat} other {zijn gekoppeld aan een testgeval}} (drempel {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# zaak heeft} other {# zaken hebben}} {days, plural, one {# dag} other {# dagen}} lang geen resultaat gehad (drempel {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} van {total} gevallen ({automatedPercent}%) zijn geautomatiseerd (drempel {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "{failed} van de laatste {sampleCount} leveringen mislukt ({failureRate}%, drempel {threshold}%).",
+          "CONSECUTIVE_FAILURES": "De zaak is {streak, plural, one {# keer} other {# keer}} achter elkaar mislukt (drempel {threshold}).",
+          "CASE_FLAKY": "De uitkomst flipte {flips, plural, one {# keer} other {# keer}} in de laatste {sampleCount} resultaten (drempel {threshold}).",
+          "RUN_PASS_RATE_BELOW": "Het slagingspercentage is {passRate}% in {sampleCount} resultaten (drempel {threshold}%).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# resultaat heeft} other {# resultaten hebben}} gefaald (drempel {threshold}).",
+          "MILESTONE_BEHIND": "De mijlpaal is {completion}% voltooid met {daysRemaining, plural, one {# dag} other {# dagen}} resterend (drempel {threshold}%).",
+          "MILESTONE_OVERDUE": "De mijlpaal is {daysOverdue, plural, one {# dag} other {# dagen}} voorbij de vervaldatum.",
+          "LLM_BUDGET_USED": "Uitgaven voor de factuurperiode bedragen {spend} van het {budget} maandelijkse budget ({percent}%, drempel {threshold}%).",
+          "LLM_ERROR_RATE": "{failed} van de laatste {sampleCount} verzoeken mislukt ({failureRate}%, drempel {threshold}%).",
+          "LLM_RATE_LIMITED": "De provider beperkte {blocked, plural, one {# verzoek} other {# verzoeken}} in de laatste {hours, plural, one {# uur} other {# uren}} (drempel {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "De repository-cache is {hours, plural, one {# uur} other {# uren}} lang niet aan het falen (drempel {threshold}){error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# gebruiker moet} other {# gebruikers moeten}} de integratie opnieuw autoriseren (drempel {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# taak is} other {# taken zijn}} in de wachtrij mislukt (drempel {threshold}).",
+          "QUEUE_BACKLOG": "De oudste van {waiting, plural, one {# wachtende taak} other {# wachtende taken}} heeft {minutes, plural, one {# minuut} other {# minuten}} gewacht (drempel {threshold}).",
+          "AUDIT_BACKLOG": "De oudste onverwerkte auditwijziging is {minutes, plural, one {# minuut} other {# minuten}} oud (drempel {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# account is} other {# accounts zijn}} vergrendeld na mislukte aanmeldingen (drempel {threshold}).",
+          "NO_AUTOMATED_RESULTS": "Geen geautomatiseerd resultaat is ontvangen voor {hours, plural, one {# uur} other {# uren}} (drempel {threshold})."
+        }
       }
     },
     "issues": {
@@ -7587,7 +7689,8 @@
       "SharedSteps": "Gedeelde stappen",
       "Issues": "Problemen",
       "Reporting": "Rapportage",
-      "Settings": "Projectinstellingen"
+      "Settings": "Projectbeheer",
+      "Alerts": "Waarschuwingen"
     },
     "WorkflowType": {
       "NOT_STARTED": "Nog niet gestart",
@@ -7645,6 +7748,9 @@
     "businessHours": "{hours, number, ::.0} werkuren"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## Labels\nDe labels die het probleem in uw tracker draagt. De actie neemt alleen een probleem op dat ten minste één van deze heeft; laat het leeg om problemen op te nemen ongeacht hun labels.\n\n- Jira, GitHub, GitLab en Gitea: de labels van het probleem\n- Azure DevOps, ClickUp en MantisBT: de tags van het probleem\n- Redmine: de categorie van het probleem\n- Matching negeert hoofd- en kleine letters"
+    },
     "auditLogs": "## Auditlogboeken\nBekijk het systeemwijde auditlogboek voor het bijhouden van beveiliging en naleving",
     "statuses": "## Statussen\nBeheer de statussen die testers toewijzen bij het registreren van een testresultaat, zoals Geslaagd, Mislukt en Geblokkeerd.",
     "configurations": "## Configuraties\nConfiguraties zijn een combinatie van categorieën en varianten die worden gebruikt om een testomgeving te definiëren. Bijvoorbeeld: besturingssysteem/browser, testserver, taal, enz.",
@@ -7827,7 +7933,7 @@
       "name": "## Rolnaam\nEen duidelijke, beknopte, beschrijvende naam of trefwoord(en) die in alle projecten wordt gebruikt.\n\n- Helpt teamleden snel gerelateerde testcases, testruns en sessies te vinden.",
       "isDefault": "## Standaardrol\nGeeft aan of deze rol de standaard is voor uw project.\n\n- Standaardrol is vooraf geselecteerd voor nieuwe gebruikers.\n- Kan op elk moment worden gewijzigd.",
       "permissions": {
-        "canAddEdit": "## Toevoegen/bewerken\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan toevoegen en bewerken.\n\n- **Geautomatiseerde uitvoering** verleent het recht om geautomatiseerde uitvoeringen op een CI-provider te starten, opnieuw uit te voeren en te annuleren. Het vastleggen van de resultaten vereist nog steeds **Testrun-resultaten** Toevoegen/bewerken, en het starten van een vanuit de repository vereist ook **Testruns** Toevoegen/bewerken omdat deze een run maakt of uitbreidt.",
+        "canAddEdit": "## Toevoegen/bewerken\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan toevoegen en bewerken.\n\n- **Geautomatiseerde uitvoering** verleent het recht om geautomatiseerde uitvoeringen op een CI-provider te starten, opnieuw uit te voeren en te annuleren. Het vastleggen van de resultaten vereist nog steeds **Test Run Results** Add/Edit, en het starten van een repository vereist ook **Test Runs** Add/Edit omdat dit een run maakt of uitbreidt.\n- **Waarschuwingen** verleent het recht om waarschuwingen in het project te creëren en degene die u heeft gemaakt, te bewerken, onderbreken en verwijderen. Projectbeheerders beheren elke waarschuwing en de abonnementen van andere gebruikers; iedereen kan een waarschuwing volgen of verlaten.",
         "canDelete": "## Verwijderen\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan verwijderen.",
         "canClose": "## Close\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan sluiten.",
         "canApprove": "## Goedkeuren\nGeeft aan of deze rol beoordelingsverzoeken voor het betreffende toepassingsgebied mag goedkeuren. Is alleen van toepassing op Test Case Repository, Test Runs en Sessions.",
@@ -7858,10 +7964,9 @@
       "maxTokensPerRequest": "## Maximum tokens per verzoek\nDe **absolute limiet op _output_-tokens** die het model in één antwoord mag genereren.\n\n- Beperkt de lengte van het **antwoord** van het model — niet hoeveel context u verstuurt\n- Verzoeken die om meer vragen dan deze limiet worden **geweigerd voordat ze het model bereiken**\n- Stel dit in op de werkelijke maximale output van uw model — bijv. `128000` voor Claude Opus/Sonnet, `64000` voor Claude Haiku, `65536` voor Gemini, `16384` voor GPT-4o\n- Te laag → AI-functies mislukken of produceren afgekapte output",
       "defaultMaxTokens": "## Standaard maximum tokens\nDe **_output_-lengte** die verzoeken bij dit AI-model aanvragen, begrensd door _Maximum tokens per verzoek_.\n\n- **Testgeval genereren** (elke bron, inclusief het Jira-issuepaneel), **Markdown-testgeval parseren**, **Schrijfassistent in editor**, en **Slimme testgevalselectie** gebruiken altijd deze waarde — hun Promptconfiguratie _Maximum uitvoertokens_ wordt niet toegepast\n- **Codegeneratie voor export**, **AI-tagsuggesties**, **AI-stapafleiding**, en het **Rapport automatiseringskandidaten** gebruiken in plaats daarvan hun eigen _Maximum uitvoertokens_ uit **Beheer → Promptconfiguratie**\n- Modellen die nadenken voordat ze antwoorden (bijv. Claude Opus 5) besteden een deel van dit budget aan redeneren — laat ruimte over voor het antwoord\n- Het bepaalt **niet** hoeveel repositorycode QuickScript naar het model stuurt — dat budget wordt automatisch afgeleid van het contextvenster van het model\n- Houd dit ≤ _Maximum tokens per verzoek_",
       "repoContextBudget": "## Repository-contextbudget\nHoeveel code van uw verbonden repository QuickScript naar het model stuurt bij het genereren van een script.\n\n- **Automatisch ingesteld** op basis van het invoercontextvenster van het geselecteerde model — er is hier niets te configureren\n- Modellen met een groter contextvenster (Claude, Gemini, DeepSeek) krijgen meer; kleine lokale modellen krijgen een veilige hoeveelheid die niet zal overlopen\n- Meer context zorgt ervoor dat het script beter aansluit op uw werkelijke page objects en fixtures — het verandert niet hoe lang het gegenereerde script is",
-      "maxRequestsPerMinute": "## Maximaal aantal verzoeken per minuut\nBeperkt het aantal API-aanroepen dat per minuut naar deze provider kan worden gedaan.\n\n- Stel dit in op de limiet van uw providerabonnement.\n- Overtollige verzoeken worden in de wachtrij geplaatst, niet geweigerd.\n- Raadpleeg de documentatie van uw provider voor de limiet van uw abonnement.",
       "costPerInputToken": "## Kosten per 1M invoertokens (USD)\nDe kosten in USD per **miljoen** invoer- (prompt) tokens die naar het model worden verzonden.\n\n- Gebruikt voor kostenbewaking en budgetwaarschuwingen\n- Wordt automatisch ingevuld wanneer uw provider modelprijzen rapporteert (LiteLLM, OpenRouter, Together AI) — toegepast wanneer u een model selecteert of Verbinding testen uitvoert\n- Zoek het anders op de prijzenpagina van uw provider\n- Voorbeeld: `0.15` = $0,15 per miljoen invoertokens",
       "costPerOutputToken": "## Kosten per 1M uitvoertokens (USD)\nDe kosten in USD per **miljoen** uitvoer- (voltooiing) tokens die door het model worden gegenereerd.\n\n- Meestal hoger dan de kosten voor invoertokens\n- Gebruikt voor kostenbewaking en budgetwaarschuwingen\n- Wordt automatisch ingevuld wanneer uw provider modelprijzen rapporteert (LiteLLM, OpenRouter, Together AI) — toegepast wanneer u een model selecteert of Verbinding testen uitvoert\n- Zoek het anders op de prijzenpagina van uw provider\n- Voorbeeld: `0.60` = $0,60 per miljoen uitvoertokens",
-      "monthlyBudget": "## Maandelijks budget (USD)\nEen optioneel bestedingsdoel voor deze integratie.\n\n- Stel in op `0` om budgetbewaking uit te schakelen\n- Het budget is **alleen ter informatie** — het blokkeert het gebruik van LLM niet\n- U ontvangt meldingen bij 80%, 90% en 100% van het budget\n- De kosten worden berekend met behulp van de bovenstaande tarieven per token",
+      "monthlyBudget": "## Maandelijkse budget (USD)\nEen optioneel uitgavendoel voor deze integratie.\n\n- Stel in op `0` om budgettracking uit te schakelen\n- Budget is **alleen informatief** — het blokkeert LLM-gebruik niet\n- Een waarschuwing met de **AI-budget gebruikt** metriek (Systeem, op de pagina Meldingen en waarschuwingen) stelt abonnees op de hoogte wanneer de uitgaven het ingestelde aandeel bereiken; het opslaan van dit formulier of het opnieuw instellen van uitgaven laat het opnieuw in dezelfde periode afgaan\n- Kosten worden berekend met behulp van de bovenstaande per-tokentarieven",
       "billingPeriodStartDay": "## Startdatum factureringsperiode\nDe dag van de maand (1-31) waarop uw factureringsperiode begint.\n\n- Standaardwaarde `1` komt overeen met de kalendermaand.\n- Stel in op `15` voor een cyclus van 15 tot 15 (bijv. om overeen te komen met de factuurdatum van uw leverancier).\n- Waarden `29-31` worden automatisch aangepast aan de laatste dag van kortere maanden (februari in niet-schrikjaren, enz.).\n- Beïnvloedt het uitgavenvenster **Maandelijks budget** en de actie **Uitgaven resetten**.",
       "defaultTemperature": "## Standaardtemperatuur\nRegelt de willekeurigheid van modelreacties (0–2).\n\n- **0:** Deterministisch — identieke uitvoer voor dezelfde invoer\n- **0,3:** Gericht — aanbevolen voor het genereren van tests en code-uitvoer\n- **1+:** Creatief — meer gevarieerde reacties\n- Individuele functies kunnen dit overschrijven in de promptconfiguratie",
       "timeout": "## Time-out voor verzoek (ms)\nHoe lang er gewacht moet worden op een reactie voordat het verzoek wordt geannuleerd.\n\n- De waarde is in milliseconden (bijv. `30000` = 30 seconden)\n- Streamingverzoeken (bijv. code-exportvoorbeeld) negeren deze time-out\n- Verhoog deze waarde voor trage of grote modellen\n- Bereik: 5.000 – 600.000 ms",
@@ -8387,8 +8492,9 @@
     "projectRunsFilters": "## Testruns filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Handmatig** / **Geautomatiseerd** — beperk de lijst tot dat type run. Als u beide inschakelt (of beide uitschakelt), worden alle runs weergegeven.\n- **Mijn testruns** — alleen runs waaraan u deelneemt: u heeft de run aangemaakt, u heeft een testgeval toegewezen gekregen in de run, of u heeft een testresultaat vastgelegd in de run.",
     "projectSessionsFilters": "## Sessies filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Mijn sessies** — alleen sessies waaraan je deelneemt: je hebt de sessie aangemaakt, of ze is aan jou toegewezen.",
     "projectImpact": "## Impact\nVerbind de repository van de toepassing onder test zodat dit project test impact analysis kan uitvoeren: selecteer twee commits om te zien welke testcases de wijzigingen beïnvloeden, en speld testcases vast aan de code die zij dekken.",
-    "pathPatterns": "## Padpatronen\nElke rij combineert een basis **pad** met een glob **patroon**. Rijen tellen op: een bestand wordt opgenomen wanneer een rij ervan overeenkomt.\n\n- `src` + `**/*` — alles onder `src`\n- leeg of `.` + `**/*` — elk bestand in de repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` bestanden behalve tests\n\n### Uitsluiten\nVink **Uitsluiten** aan op een rij om de bestanden ervan te verwijderen, zelfs wanneer een ander rij ze opneemt. Uitsluitingen gelden voor de bestandenkiezer en cache, en voor Impact op de gewijzigde bestanden van een analyse, zodat een bestand dat op bijna elke pull request verandert, geen onverwante testgevallen optrekt. Ten minste één rij moet uitgevinkt blijven.\n\n- leeg + `**/CHANGELOG*` — elk changelog, op elke diepte\n- `app` + `build.gradle.kts` — een bouwbestand dat alleen de versie bijwerkt",
-    "projectAutomation": "## Geautomatiseerde uitvoering\nUitvoeringsdoelen vertellen TestPlanIt waar dit project's geautomatiseerde cases uit te voeren: een GitHub Actions-workflow, een GitLab CI-pipeline, of een ondertekende webhook voor elk ander systeem. Wanneer een run wordt uitgevoerd, start TestPlanIt de taak met het run-id en een plan-URL; de taak leest het plan, voert de overeenkomende tests uit en rapporteert resultaten terug met een reporter of de CLI vastgespeld aan die run. Doelen kunnen worden uitgeschakeld zonder te worden verwijderd."
+    "pathPatterns": "## Padpatronen\nElke rij combineert een basis **pad** met een glob **patroon**. Rijen tellen op: een bestand wordt opgenomen wanneer een rij eraan voldoet.\n\n- `src` + `**/*` — alles onder `src`\n- leeg of `.` + `**/*` — elk bestand in de repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` bestanden behalve tests\n\n### Uitsluiten\nVink **Uitsluiten** aan op een rij om de bestanden ervan te verwijderen, zelfs wanneer een ander rij ze opneemt. Uitsluitingen zijn van toepassing op de bestandskiezer en cache, en voor Impact op de gewijzigde bestanden van een analyse, zodat een bestand dat bij bijna elke pull request verandert, geen niet-gerelateerde testgevallen optrekt. Ten minste één rij moet niet aangevinkt blijven.\n\n- leeg + `**/CHANGELOG*` — elk wijzigingenlogboek, op elke diepte\n- `app` + `build.gradle.kts` — een bouwbestand dat alleen de versie verhoogt",
+    "projectAutomation": "## Geautomatiseerde uitvoering\nUitvoeringsdoelen vertellen TestPlanIt waar dit project's geautomatiseerde cases uit te voeren: een GitHub Actions-workflow, een GitLab CI-pipeline, of een ondertekende webhook voor elk ander systeem. Wanneer een run wordt uitgevoerd, start TestPlanIt de taak met het run-id en een plan-URL; de taak leest het plan, voert de overeenkomende tests uit en rapporteert resultaten terug met een reporter of de CLI vastgespeld aan die run. Doelen kunnen worden uitgeschakeld zonder te worden verwijderd.",
+    "userAlerts": "## Meldingen en waarschuwingen\n**Voorkeursinstellingen voor meldingen** bepalen hoe u wordt bereikt (in-app, e-mail, digest) en welke typen meldingen u überhaupt ontvangt.\n\n**Waarschuwingen** controleren een testmetriek en stellen hun abonnees op de hoogte wanneer deze een lijn overschrijdt, bijvoorbeeld een resultaat dat 50% langer duurt dan de gebruikelijke duur van de zaak, een zaak die drie keer achter elkaar mislukt, een run waarvan het slagingspercentage onder de 90% daalt, of een mijlpaal die achterblijft met nog dagen te gaan. De lijst toont elke waarschuwing in uw projecten; de schakelaar **Meld me** volgt er één of verlaat er één. **Waarschuwing toevoegen** maakt uw eigen in elk project waarin uw rol **Waarschuwingen** Add/Edit heeft; projectbeheerders beheren elke waarschuwing in hun project en de abonnementen van anderen. Een waarschuwing wordt maximaal eenmaal per onderwerp binnen zijn afkoelingsperiode geactiveerd en blijft stil tot deze voldoende resultaten heeft."
   },
   "reports": {
     "ui": {
@@ -9610,9 +9716,12 @@
       "exists": "Bestaat",
       "not_exists": "Bestaat niet"
     },
+    "recordMatches": "{count, plural, one {# record afgestemd op ID} other {# records afgestemd op ID}}",
     "help": {
       "exactPhrases": "Exacte formuleringen",
       "exactPhrasesDesc": "Plaats termen tussen aanhalingstekens zodat ze exact overeenkomen met de formulering:",
+      "ids": "ID's",
+      "idsDesc": "Voer een ID in, met of zonder #, om een record rechtstreeks te zoeken. Scheid meerdere met OF, komma's of spaties om ze allemaal te zoeken:",
       "proximity": "Nabijheidszoekfunctie",
       "proximityDesc": "woorden binnen N posities van elkaar",
       "booleanOperators": "Booleaanse operatoren",
@@ -10177,5 +10286,454 @@
     "update": "Bijwerken met huidige toewijzing",
     "updateConfirm": "\"{name}\" wordt bijgewerkt met de huidige kolomtoewijzing en instellingen.",
     "savePrompt": "Deze kolomtoewijzing voor de volgende keer opslaan?"
+  },
+  "alerts": {
+    "title": "Waarschuwingen",
+    "description": "Waarschuwingen die u volgt in uw projecten, en de waarschuwingen in die projecten die u zou kunnen volgen.",
+    "addRule": "Waarschuwing toevoegen",
+    "editRule": "Waarschuwing bewerken",
+    "deleteRule": "Waarschuwing verwijderen",
+    "deleteConfirm": "De waarschuwing \"{name}\" verwijderen? De abonnees ontvangen geen meldingen meer en het kan uit de prullenbak worden hersteld.",
+    "pauseTitle": "Deze waarschuwing voor iedereen onderbreken?",
+    "pauseConfirm": "\"{name}\" stopt met afgaan voor {count, plural, =0 {iedereen} one {de enige abonnee} =2 {beide abonnees} other {alle # abonnees}}, niet alleen voor u, totdat iemand het opnieuw inschakelt. Om alleen uw eigen meldingen te stoppen, schakel je Meld me uit.",
+    "columns": {
+      "name": "Regel",
+      "condition": "Voorwaarde",
+      "scope": "Domein",
+      "subscribers": "Abonnees",
+      "lastFired": "Laatst geactiveerd",
+      "enabled": "Ingeschakeld",
+      "notifyMe": "Meld me",
+      "actions": "Acties",
+      "project": "Project"
+    },
+    "neverFired": "Nooit",
+    "systemScope": "Systeem",
+    "systemSubjects": {
+      "audit": "Auditlogboek",
+      "lockouts": "Gebruikersaccounts",
+      "automated-results": "Geautomatiseerde resultaten"
+    },
+    "paused": "Onderbroken",
+    "filters": {
+      "label": "Waarschuwingen filteren",
+      "on": "Op",
+      "off": "Uit"
+    },
+    "history": "Geschiedenis",
+    "subscribers": "Abonnees",
+    "subscriberCount": "{count, plural, =0 {Geen abonnees} one {# abonnee} other {# abonnees}}",
+    "toasts": {
+      "created": "Regel aangemaakt.",
+      "updated": "Regel bijgewerkt.",
+      "deleted": "Regel verwijderd.",
+      "enabled": "Regel ingeschakeld.",
+      "disabled": "Regel onderbroken.",
+      "subscribed": "U wordt op de hoogte gesteld wanneer deze regel wordt geactiveerd.",
+      "unsubscribed": "U ontvangt geen meldingen meer van deze regel.",
+      "subscriberAdded": "{name} geabonneerd.",
+      "subscriberRemoved": "{name} afgezegd.",
+      "saveError": "Kan de regel niet opslaan.",
+      "subscriptionError": "Kan het abonnement niet bijwerken."
+    },
+    "form": {
+      "name": "Naam",
+      "namePlaceholder": "bijv. Vertragingen bij kassastroom",
+      "description": "Beschrijving",
+      "descriptionPlaceholder": "Optionele opmerking voor andere abonnees",
+      "metric": "Metriek",
+      "metricLocked": "De metriek kan na het maken van de waarschuwing niet worden gewijzigd. Maak in plaats daarvan een nieuwe waarschuwing.",
+      "condition": "Voorwaarde",
+      "scope": "Domein",
+      "scopeType": "Bekijken",
+      "scopeFolder": "Map",
+      "scopeTag": "Label",
+      "scopeCase": "Testgeval",
+      "scopeMilestone": "Mijlpaal",
+      "scopeRunName": "Runnaam bevat",
+      "scopeRunNamePlaceholder": "bijv. Nachtelijk",
+      "scopePickFolder": "Selecteer een map",
+      "scopePickTag": "Selecteer een label",
+      "scopePickCase": "Selecteer een testgeval",
+      "scopePickMilestone": "Selecteer een mijlpaal",
+      "scopeWebhook": "Webhook",
+      "scopePickWebhook": "Selecteer een webhook",
+      "scopeLlmIntegration": "Integratie",
+      "scopePickLlmIntegration": "Selecteer een integratie",
+      "scopeCodeRepository": "Repositoryverbinding",
+      "scopePickCodeRepository": "Selecteer een repositoryverbinding",
+      "scopeIntegration": "Integratie",
+      "scopePickIntegration": "Selecteer een integratie",
+      "scopeQueue": "Wachtrij",
+      "scopePickQueue": "Selecteer een wachtrij",
+      "systemScope": "Systeem",
+      "systemScopeHelp": "Een systeemwaarschuwing controleert iets dat voor de gehele installatie wordt beheerd, zoals een AI-modelbudget. Alleen beheerders zien het.",
+      "coverageBasis": "Tellen als gedekt",
+      "coverageBasisOptions": {
+        "LINKED": "Gekoppeld aan ten minste één testgeval",
+        "PASSING": "Laatst resultaat geslaagd"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Basislijnvenster (runs)",
+        "WEBHOOK_FAILURE_RATE": "Laatste leveringen",
+        "LLM_ERROR_RATE": "Laatste aanvragen"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Minimale runs",
+        "WEBHOOK_FAILURE_RATE": "Minimale leveringen",
+        "LLM_ERROR_RATE": "Minimale aanvragen"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Dagen voordat de mijlpaal vervalt",
+        "STALE_CASES": "Dagen zonder resultaat",
+        "LLM_RATE_LIMITED": "Binnen het afgelopen (uren)"
+      },
+      "scopeCaseSearch": "Zoeken op naam of ID",
+      "direction": "Richting",
+      "baselineType": "Basislijn",
+      "baselineWindow": "Basislijnvenster (resultaten)",
+      "minSamples": "Minimale resultaten",
+      "resultSource": "Resultaten om te bekijken",
+      "evaluateOn": "Evalueren",
+      "daysRemaining": "Resterende dagen",
+      "cooldown": "Afkoelingsperiode (minuten)",
+      "cooldownHelp": "Nadat de regel voor een onderwerp is geactiveerd, blijft het dit lang stil voor dat onderwerp. 0 schakelt de afkoeling uit.",
+      "emitWebhook": "Een waarschuwing.triggered webhook-gebeurtenis verzenden",
+      "emitWebhookHelp": "Uitgaande webhooks die zijn geabonneerd op Waarschuwingen ontvangen dezelfde payload, zodat Slack of andere tools deze kunnen plaatsen.",
+      "enabled": "Ingeschakeld",
+      "audience": "Publiek",
+      "audienceHelp": "Wie wordt op de hoogte gesteld wanneer de waarschuwing wordt geactiveerd. U wordt standaard toegevoegd aan waarschuwingen die u maakt; iedereen kan weggaan of opnieuw deelnemen.",
+      "audienceHelpSystem": "Wie wordt op de hoogte gesteld wanneer de waarschuwing wordt geactiveerd. Alleen beheerders kunnen in het publiek van een systeemwaarschuwing zijn; u wordt standaard toegevoegd.",
+      "searchMembers": "Zoeken in projectleden",
+      "you": "jij",
+      "cannotManageSubscribers": "U kunt zich zelf abonneren of afmelden. Het abonneren van andere leden vereist projectbeheerdersrechten.",
+      "validation": {
+        "nameRequired": "Voer een naam in.",
+        "scopeRequired": "Kies wat de regel bewaakt.",
+        "runNameRequired": "Voer een deel van een runnaam in.",
+        "percentRange": "Voer een percentage tussen {min} en {max} in.",
+        "countRange": "Voer een geheel getal tussen {min} en {max} in.",
+        "windowRange": "Voer een venster in tussen {min} en {max} resultaten.",
+        "minSamplesRange": "Voer een waarde tussen {min} en {max} in.",
+        "minSamplesWindow": "Minimale resultaten mogen het basislijnvenster niet overschrijden.",
+        "cooldownRange": "Voer minuten in tussen {min} en {max}.",
+        "daysRange": "Voer dagen in tussen {min} en {max}.",
+        "windowBelowMinSamples": "Basislijnvenster kan niet kleiner zijn dan minimale resultaten."
+      },
+      "project": "Project",
+      "projectPlaceholder": "Selecteer een project",
+      "projectHelp": "Alleen projecten waar uw rol waarschuwingen mag maken, worden weergegeven.",
+      "dialogDescription": "Bekijk één testmetriek en meld het publiek wanneer het de lijn die u instelt, overschrijdt.",
+      "metricSearch": "Metrieken zoeken",
+      "metricNoMatch": "Geen metriek komt overeen.",
+      "checkedDaily": "Dagelijks gecontroleerd",
+      "checkedHourly": "Elk uur gecontroleerd",
+      "needsProject": "Selecteer eerst een project.",
+      "followAlert": "Meld me",
+      "leaveAlert": "Stop mij niet meer op de hoogte te stellen",
+      "delivery": "Levering",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "Afwijking (%)",
+        "CASE_REGRESSED": "Drempel",
+        "CONSECUTIVE_FAILURES": "Opeenvolgende mislukkingen",
+        "CASE_FLAKY": "Flips",
+        "RUN_PASS_RATE_BELOW": "Slagingspercentage onder (%)",
+        "RUN_FAILURE_COUNT": "Mislukte resultaten, meer dan",
+        "RUN_DURATION_DEVIATION": "Afwijking (%)",
+        "RUN_NOT_PROGRESSING": "Inactief gedurende meer dan (uren)",
+        "AUTOMATED_EXECUTION_FAILED": "Drempel",
+        "RUN_UNTESTED_SHARE": "Ongeteste zaken voorbij (%)",
+        "RUN_ISSUES_OPENED": "Gekoppelde problemen, meer dan",
+        "SESSION_OVERRUN": "Over de schatting met meer dan (%)",
+        "MILESTONE_BEHIND": "Voltooiing onder (%)",
+        "MILESTONE_OVERDUE": "Drempel",
+        "REQUIREMENT_COVERAGE_BELOW": "Dekking onder (%)",
+        "STALE_CASES": "Verouderde zaken, meer dan",
+        "AUTOMATION_SHARE_BELOW": "Geautomatiseerd aandeel onder (%)",
+        "WEBHOOK_FAILURE_RATE": "Faalpercentage voorbij (%)",
+        "LLM_BUDGET_USED": "Budget gebruikt (%)",
+        "LLM_ERROR_RATE": "Mislukte aanvragen voorbij (%)",
+        "LLM_RATE_LIMITED": "Gethrottelde aanvragen, minstens",
+        "CODE_REPOSITORY_CACHE_FAILING": "Minstens mislukken (uren)",
+        "INTEGRATION_REAUTH_NEEDED": "Gebruikers die opnieuw autorisatie nodig hebben, minstens",
+        "QUEUE_FAILED_JOBS": "Mislukte taken, meer dan",
+        "QUEUE_BACKLOG": "Oudste wachtende taak ouder dan (minuten)",
+        "AUDIT_BACKLOG": "Oudste onverwerkte wijziging ouder dan (minuten)",
+        "ACCOUNT_LOCKOUTS": "Vergrendelde accounts, minstens",
+        "NO_AUTOMATED_RESULTS": "Geen geautomatiseerde resultaten voor (uren)"
+      }
+    },
+    "direction": {
+      "ABOVE": "Boven (langzamer)",
+      "BELOW": "Onder (sneller)",
+      "EITHER": "Boven of onder"
+    },
+    "baseline": {
+      "MEAN": "Gemiddelde",
+      "MEDIAN": "Mediaan"
+    },
+    "resultSource": {
+      "MANUAL": "Handmatige resultaten",
+      "AUTOMATED": "Geautomatiseerde resultaten",
+      "BOTH": "Handmatig en geautomatiseerd"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "Wanneer de run is voltooid",
+      "AS_RESULTS_ARRIVE": "Wanneer resultaten binnenkomen"
+    },
+    "scopeType": {
+      "PROJECT": "Heel project",
+      "FOLDER": "Zaken in een map",
+      "TAG": "Zaken met een label",
+      "CASE": "Eén testgeval",
+      "RUN_NAME": "Runs waarvan de naam bevat",
+      "MILESTONE": "Één mijlpaal",
+      "WEBHOOK": "Één webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "Alle sessies",
+      "TAG": "Sessies met een label"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "Alle uitgaande webhooks",
+      "WEBHOOK": "Eén webhook"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "Alle AI-modelintegraties",
+      "LLM_INTEGRATION": "Eén integratie"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "Alle repositoryverbindingen",
+      "CODE_REPOSITORY": "Eén repositoryverbinding"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "Alle integraties",
+      "INTEGRATION": "Eén integratie"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "Alle wachtrijen",
+      "QUEUE": "Eén wachtrij"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "Hele installatie"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "Alle runs",
+      "TAG": "Runs met een label",
+      "RUN_NAME": "Runs waarvan de naam bevat"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "Alle mijlpalen",
+      "MILESTONE": "Één mijlpaal"
+    },
+    "scopeDisplay": {
+      "PROJECT": "Heel project",
+      "FOLDER": "Map: {name}",
+      "TAG": "Label: {name}",
+      "CASE": "Zaak: {name}",
+      "RUN_NAME": "Runs bevat \"{text}\"",
+      "MILESTONE": "Mijlpaal: {name}",
+      "WEBHOOK": "Webhook: {name}",
+      "LLM_INTEGRATION": "Integratie: {name}",
+      "ALL_LLM_INTEGRATIONS": "Alle AI-modelintegraties",
+      "CODE_REPOSITORY": "Repository: {name}",
+      "ALL_CODE_REPOSITORIES": "Alle repositoryverbindingen",
+      "INTEGRATION": "Integratie: {name}",
+      "ALL_INTEGRATIONS": "Alle integraties",
+      "QUEUE": "Wachtrij: {name}",
+      "ALL_QUEUES": "Alle wachtrijen",
+      "WHOLE_INSTALLATION": "Hele installatie",
+      "missing": "(verwijderd)"
+    },
+    "subjectType": {
+      "CASE": "Testgeval",
+      "RUN": "Testrun",
+      "MILESTONE": "Mijlpaal",
+      "SESSION": "Sessie",
+      "PROJECT": "Project",
+      "WEBHOOK": "Webhook"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "Resultaatduur wijkt af van basislijn",
+        "description": "Een resultaat duurt veel langer of korter dan de recente resultaten van de zaak. Resultaten zonder verstreken tijd worden genegeerd.",
+        "summary": "Een resultaatduur is meer dan {threshold}% {direction, select, ABOVE {boven} BELOW {onder} other {boven of onder}} het {baseline, select, MEAN {gemiddelde} other {mediaan}} van de laatste {window} resultaten van de zaak, na minstens {minSamples} resultaten"
+      },
+      "CASE_REGRESSED": {
+        "label": "Zaak geregredeerd",
+        "description": "Een zaak die zijn recente resultaten heeft doorstaan, mislukt nu. Vangt een verse mislukking op een stabiele zaak.",
+        "summary": "Een zaak mislukt na het slagen van zijn laatste {window} resultaten"
+      },
+      "CASE_RECOVERED": {
+        "label": "Zaak hersteld",
+        "description": "Een zaak slaagt na het mislukken van elk van zijn laatste resultaten.",
+        "summary": "Een zaak slaagt na het mislukken van zijn laatste {window, plural, one {# resultaat} other {# resultaten}}"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "Opeenvolgende mislukkingen",
+        "description": "Een zaak mislukt een bepaald aantal keren achter elkaar.",
+        "summary": "Een zaak mislukt {threshold, plural, one {# keer} other {# keer}} achter elkaar"
+      },
+      "CASE_FLAKY": {
+        "label": "Zaak werd wispelturig",
+        "description": "Een zaak flipt herhaaldelijk tussen slagen en mislukken binnen zijn recente resultaten. Gebruikt dezelfde invoer als het rapport Wispelturige tests.",
+        "summary": "Een zaak flipt tussen slagen en mislukken minstens {threshold, plural, one {# keer} other {# keer}} in zijn laatste {window} resultaten"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "Slagingspercentage run onder drempel",
+        "description": "Een run's slagingspercentage, geteld over resultaten met een slagen- of mislukkingsverdikt, daalt onder een percentage.",
+        "summary": "Een run's slagingspercentage is onder {threshold}% zodra minstens {minSamples} resultaten een verdikt hebben, {evaluateOn, select, AS_RESULTS_ARRIVE {geëvalueerd naarmate resultaten binnenkomen} other {geëvalueerd wanneer de run is voltooid}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "Run mislukkingstelling",
+        "description": "Een run heeft meer dan een bepaald aantal mislukte resultaten.",
+        "summary": "Een run heeft meer dan {threshold, plural, one {# mislukt resultaat} other {# mislukte resultaten}}, {evaluateOn, select, AS_RESULTS_ARRIVE {geëvalueerd naarmate resultaten binnenkomen} other {geëvalueerd wanneer de run is voltooid}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "Run-duur wijkt af van basislijn",
+        "description": "De totale duur van een voltooide run wijkt af van de runs die zijn bereik samen groepeert (dezelfde tag of naamfragment).",
+        "summary": "De duur van een voltooide run is meer dan {threshold}% {direction, select, ABOVE {boven} BELOW {onder} other {boven of onder}} het {baseline, select, MEAN {gemiddelde} other {mediaan}} van de laatste {window} runs, na minstens {minSamples} runs"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Run is niet voortgaand",
+        "description": "Een open run heeft {idleHours, plural, one {# uur} other {# uren}} lang geen nieuw resultaat gehad. Elk uur gecontroleerd.",
+        "summary": "Een open run heeft meer dan {threshold, plural, one {# uur} other {# uren}} lang geen nieuw resultaat gehad"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "Geautomatiseerde uitvoering mislukt",
+        "description": "Een geautomatiseerde uitvoering van een run mislukt, kan niet worden verzonden of loopt uit.",
+        "summary": "Een geautomatiseerde uitvoering mislukt, kan niet worden verzonden of loopt uit"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Ongeteste aandeel in run",
+        "description": "Teveel van de gevallen van een run hebben nog geen resultaat met weinig dagen over voordat de mijlpaal vervalt. Dagelijks gecontroleerd.",
+        "summary": "Meer dan {threshold}% van de gevallen van een run hebben geen resultaat met {days, plural, one {# dag} other {# dagen}} of minder voordat de mijlpaal vervalt"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Problemen geopend vanuit een run",
+        "description": "Meer dan een bepaald aantal problemen zijn gekoppeld aan de resultaten van een run.",
+        "summary": "Meer dan {threshold, plural, one {# probleem is} other {# problemen zijn}} gekoppeld aan de resultaten van een run, {evaluateOn, select, AS_RESULTS_ARRIVE {geëvalueerd naarmate resultaten binnenkomen} other {geëvalueerd wanneer de run is voltooid}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "Sessie overschreed schatting",
+        "description": "De verstreken tijd van een voltooide sessie overschrijdt de schatting met een percentage.",
+        "summary": "De verstreken tijd van een voltooide sessie is meer dan {threshold}% over de schatting"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "Mijlpaalbevorderingsachter",
+        "description": "De run-zaken van een mijlpaal zijn niet genoeg voltooid met weinig dagen over voordat de vervaldatum. Dagelijks gecontroleerd.",
+        "summary": "Een mijlpaal is onder {threshold}% voltooid met {days, plural, one {# dag} other {# dagen}} of minder resterend"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "Mijlpaal verlopen",
+        "description": "De vervaldatum van een mijlpaal is verstreken en deze is niet voltooid. Dagelijks gecontroleerd.",
+        "summary": "Een mijlpaal passeert de vervaldatum zonder voltooid te worden"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "Vereistendekking onder drempel",
+        "description": "Minder dan een bepaald aandeel van de vereisten van het project telt als gedekt. Dagelijks gecontroleerd.",
+        "summary": "Minder dan {threshold}% van de vereisten {basis, select, PASSING {hebben een succesvol laatste resultaat} other {zijn gekoppeld aan ten minste één testgeval}}"
+      },
+      "STALE_CASES": {
+        "label": "Verouderde zaken",
+        "description": "Meer dan een bepaald aantal zaken zijn {days, plural, one {# dag} other {# dagen}} lang zonder resultaat gebleven. Dagelijks gecontroleerd.",
+        "summary": "Meer dan {threshold, plural, one {# zaak is} other {# zaken zijn}} {days, plural, one {# dag} other {# dagen}} zonder resultaat gebleven"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "Geautomatiseerd aandeel onder drempel",
+        "description": "Minder dan een bepaald aandeel van de zaken in bereik zijn geautomatiseerd. Dagelijks gecontroleerd.",
+        "summary": "Minder dan {threshold}% van de zaken zijn geautomatiseerd"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Webhook-faalpercentage",
+        "description": "Teveel van de recente leveringen van een uitgaande webhook zijn mislukt. Elk uur gecontroleerd.",
+        "summary": "Meer dan {threshold}% van een uitgaande webhook's laatste {window} leveringen is mislukt, na minstens {minSamples} leveringen"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "AI-budget gebruikt",
+        "description": "Een AI-modelintegratie's uitgaven voor de factureringsperiode bereikt een deel van het maandelijkse budget. Wordt eenmaal per periode voor elke integratie geactiveerd.",
+        "summary": "Uitgaven bereiken {threshold}% van het maandelijkse budget van de integratie"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "AI-aanvraagfoutfrequentie",
+        "description": "Teveel van de recente aanvragen van een AI-modelintegratie zijn mislukt.",
+        "summary": "Meer dan {threshold}% van de laatste {window} aanvragen van de integratie is mislukt, na minstens {minSamples} aanvragen"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "AI-providersnelheidsbeperking",
+        "description": "De provider heeft herhaaldelijk de aanvragen van een AI-modelintegratie beperkt.",
+        "summary": "De provider heeft minstens {threshold, plural, one {# aanvraag} other {# aanvragen}} beperkt in {days, plural, one {# uur} other {# uren}}"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "Repository-cache mislukt",
+        "description": "Een codeopslagplaatsverbinding heeft de cache al een tijd niet meer met succes vernieuwd. Elk uur gecontroleerd.",
+        "summary": "De cache van een opslagplaatsverbinding is minstens {threshold, plural, one {# uur} other {# uren}} aan het falen"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "Integratiehergoedkeuring nodig",
+        "description": "Veel gebruikers hebben de verbinding met een integratie verbroken en moeten opnieuw autoriseren. Dagelijks gecontroleerd.",
+        "summary": "Minstens {threshold, plural, one {# gebruiker moet} other {# gebruikers moeten}} een integratie opnieuw autoriseren"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "Wachtrij mislukte taken",
+        "description": "Een achtergrondwachtrij bevat teveel mislukte taken. Elk uur gecontroleerd.",
+        "summary": "Meer dan {threshold, plural, one {# taak is} other {# taken zijn}} in een wachtrij mislukt"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "Wachtrij-achterstanden",
+        "description": "De oudste wachtende taak van een achtergrondwachtrij heeft teveel gewacht, het teken van een gestopte werker. Elk uur gecontroleerd.",
+        "summary": "De oudste wachtende taak van een wachtrij is ouder dan {threshold, plural, one {# minuut} other {# minuten}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "Auditlogboek-achterstand",
+        "description": "Vastgelegde wijzigingen worden niet naar het auditlogboek geschreven, het teken van een gestopte auditoriumwerker. Elk uur gecontroleerd.",
+        "summary": "De oudste onverwerkte auditwijziging is ouder dan {threshold, plural, one {# minuut} other {# minuten}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "Accountvergrendelingen",
+        "description": "Verschillende accounts zijn tegelijk na mislukte aanmeldingen vergrendeld, een teken van invulling van referenties. Elk uur gecontroleerd.",
+        "summary": "Minstens {threshold, plural, one {# account is} other {# accounts zijn}} vergrendeld na mislukte aanmeldingen"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "Geen geautomatiseerde resultaten",
+        "description": "Al een tijd lang is geen geautomatiseerde testresultaat van enige pijplijn binnengekomen. Dagelijks gecontroleerd.",
+        "summary": "Geen geautomatiseerd resultaat is ontvangen voor {threshold, plural, one {# uur} other {# uren}}"
+      }
+    },
+    "sourceSummary": "Resultaten: {source, select, MANUAL {handmatig} AUTOMATED {geautomatiseerd} other {handmatig en geautomatiseerd}}",
+    "historyDialog": {
+      "title": "Geschiedenis: {name}",
+      "empty": "Deze regel is nog niet geactiveerd.",
+      "columns": {
+        "firedAt": "Geactiveerd",
+        "subject": "Onderwerp",
+        "observed": "Waargenomen",
+        "threshold": "Drempel",
+        "notified": "Ingesteld"
+      },
+      "webhookSent": "Webhook verzonden"
+    },
+    "descriptionFor": "Waarschuwingen die {name} volgt, en de andere waarschuwingen in de projecten.",
+    "empty": "Er zijn nog geen waarschuwingen in je projecten.",
+    "emptyCanCreate": "Er zijn nog geen waarschuwingen in je projecten. Voeg een toe om te beginnen.",
+    "pageDescription": "Hoe je wordt ingesteld, wat je te horen krijgt, en de waarschuwingen die je volgt.",
+    "pageDescriptionFor": "Hoe {name} wordt ingesteld en de waarschuwingen die ze volgen.",
+    "pageTabs": {
+      "alerts": "Waarschuwingen",
+      "notifications": "Meldingen"
+    },
+    "metricGroups": {
+      "CASE": "Testgeval-resultaten",
+      "RUN": "Testruns",
+      "SESSION": "Sessies",
+      "MILESTONE": "Mijlpalen",
+      "PROJECT": "Projectgezondheid",
+      "WEBHOOK": "Webhooks",
+      "LLM_INTEGRATION": "AI-modellen",
+      "CODE_REPOSITORY": "Codeopslagplaatsen",
+      "INTEGRATION": "Integraties",
+      "QUEUE": "Achtergrondwachtrijen",
+      "SYSTEM": "Installatie"
+    }
   }
 }

@@ -577,6 +577,7 @@
       "addFieldTo": "Přidat pole do {section}",
       "selectTemplates": "Vybrat šablony",
       "selectUsers": "Vybrat uživatele",
+      "selectGroups": "Vyberte skupiny",
       "selectOption": "Vyberte možnost",
       "date": "Vyberte datum",
       "selectEncoding": "Vyberte kódování...",
@@ -737,7 +738,8 @@
       "adminSamlConfig": "Administrace - konfigurace SAML",
       "apiDocumentation": "API dokumentace",
       "sharedContent": "Sdílený obsah",
-      "impact": "Analýza dopadu"
+      "impact": "Analýza dopadu",
+      "alerts": "Oznámení a upozornění"
     },
     "aria": {
       "userMenu": "Uživatelské menu",
@@ -1660,7 +1662,8 @@
           "scimGroupMemberAdded": "Členové přidáni",
           "scimGroupMemberRemoved": "Členové odebráni",
           "scimGroupDeleted": "Skupina odstraněna",
-          "scimGroupMemberAddedSummary": "Členové přidáni (souhrn hromadné synchronizace)"
+          "scimGroupMemberAddedSummary": "Členové přidáni (souhrn hromadné synchronizace)",
+          "triggered": "Spuštěno"
         },
         "iterationResultHelp": "Spustí se při každém zaznamenání výsledku iterace — úspěch, neúspěch, přeskočení nebo jiný stav. Používejte střídmě u dlouhých automatizačních běhů (jedna událost na iteraci).",
         "events": {
@@ -1741,7 +1744,7 @@
         "inboundGiteaTitle": "Příchozí webhook Gitea",
         "inboundGiteaScopeHint": "Události Gitea <code>issues</code> aktualizují propojené problémy TestPlanIt. Ostatní typy událostí jsou přijímány, ale problémy neaktualizují.",
         "inboundAdoTitle": "Příchozí webhook Azure DevOps",
-        "inboundAdoScopeHint": "Události Azure DevOps <code>workitem.updated</code> aktualizují propojené problémy TestPlanIt. Ostatní události jsou přijímány, ale problémy neaktualizují.",
+        "inboundAdoScopeHint": "Azure DevOps <code>workitem.created</code> a <code>workitem.updated</code> události aktualizují propojené problémy TestPlanIt. Ostatní události jsou přijímány, ale neaktualizují problémy.",
         "inboundAdoUsername": "Uživatelské jméno",
         "inboundAdoUsernamePlaceholder": "service-account",
         "inboundAdoUsernameHelp": "Nakonfigurováno na straně Azure DevOps Service Hook. TestPlanIt jej ověřuje pomocí HTTP Basic Auth.",
@@ -1758,7 +1761,7 @@
         "setupStepsGithubStep4": "Zvolte „Let me select individual events“ a zaškrtněte „Issues“.",
         "setupStepsGithubStep5": "Klikněte na „Add webhook“. Pomocí „Odeslat testovací webhook“ níže ověřte pipeline.",
         "setupStepsAdoStep1": "Ve svém projektu Azure DevOps přejděte do Project settings → Service hooks → Create subscription.",
-        "setupStepsAdoStep2": "Zvolte „Web Hooks“ jako službu. Nastavte Trigger na „Work item updated“.",
+        "setupStepsAdoStep2": "Zvolte \"Web Hooks\" jako službu. Nastavte Trigger na \"Work item created\", poté opakujte tyto kroky pro druhé předplatné s \"Work item updated\".",
         "setupStepsAdoStep3": "Nastavte Resource details to send = All, aby byl zahrnut System.State.",
         "setupStepsAdoStep4": "Vložte níže uvedenou URL do pole URL. Nastavte Basic authentication uživatelské jméno a heslo na hodnoty, které jste zadali výše.",
         "setupStepsAdoStep5": "Uložte odběr. Pomocí „Odeslat testovací webhook“ níže ověřte pipeline.",
@@ -1852,13 +1855,49 @@
         "setupStepsMantisbtStep4": "Vytvořte nebo aktualizujte problém v MantisBT; stav propojeného problému se sem synchronizuje.",
         "inboundChooserClickup": "ClickUp",
         "inboundClickupTitle": "Příchozí webhook ClickUp",
-        "inboundClickupScopeHint": "Události ClickUp <code>taskStatusUpdated</code> aktualizují propojené problémy TestPlanIt. Ostatní události úkolů jsou přijímány, ale neaktualizují problémy.",
+        "inboundClickupScopeHint": "ClickUp <code>taskCreated</code> a <code>taskStatusUpdated</code> události aktualizují propojené problémy TestPlanIt. Ostatní události úloh jsou přijímány, ale neaktualizují problémy.",
         "inboundClickupRegisterHint": "ClickUp nemá stránku nastavení webhooků: webhooky se vytvářejí prostřednictvím jeho API a ClickUp si volí podpisový tajemství. Ponechte tajemství prázdné a TestPlanIt zaregistruje tento webhook v ClickUp pro propojený seznam pomocí vaší autorizace ClickUp.",
         "inboundClickupSecret": "Tajemství webhooku (volitelné)",
         "inboundClickupSecretHelp": "Potřebné pouze v případě, že jste si webhook vytvořili sami pomocí ClickUp API Create Webhook: vložte tajemství vrácené ClickUp. Uloženo šifrované v klidu.",
         "setupStepsClickupStep1": "Pokud jste nechali tajemství prázdné, TestPlanIt již zaregistroval tento webhook s ClickUp pro propojený seznam — v ClickUp není co konfigurovat.",
         "setupStepsClickupStep2": "Pokud jste si webhook zaregistrovali sami prostřednictvím ClickUp API Create Webhook, ujistěte se, že jeho koncový bod je následující adresa URL a přihlaste se k události taskStatusUpdated.",
         "setupStepsClickupStep3": "Použijte níže \"Poslat testovací webhook\" k ověření kanálu. Rotace tajemství zaregistruje nový webhook v ClickUp.",
+        "actions": {
+          "description": "Co TestPlanIt dělá, když tento webhook obdrží událost. Akce se provádějí v uvedeném pořadí.",
+          "empty": "Žádné akce. Události jsou zaznamenávány, ale nic se neděje.",
+          "addTitle": "Přidat akci",
+          "editTitle": "Upravit akci",
+          "dialogDescription": "Zvolte událost, která spustí tuto akci, a co dělá.",
+          "trigger": {
+            "ISSUE_EVENT": "Jakákoli událost problému",
+            "ISSUE_STATUS_ENTERED": "Změny stavu problému"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "Jakákoli událost, kterou tracker pošle o problému.",
+            "ISSUE_CREATED": "Problém, který TestPlanIt ještě neviděl.",
+            "ISSUE_STATUS_ENTERED": "Problém se přesune do jednoho ze zvolených stavů."
+          },
+          "outcome": {
+            "cases_drafted": "Testovací případy navrženy",
+            "draft_queued": "Návrh testovacích případů",
+            "has_cases": "Problém již má testovací případy",
+            "no_llm": "Žádný aktivní model AI",
+            "no_template": "Žádná šablona",
+            "no_target": "Žádné úložiště nebo výchozí stav",
+            "draft_failed": "Návrh selhal",
+            "already_composed": "Běh už vytvořen pro tuto změnu",
+            "execute_failed": "Spuštění nebylo požadováno"
+          },
+          "dragToReorder": "Přetažením změníte pořadí",
+          "requirementsOnly": "Pouze požadavky",
+          "requirementsOnlyHelp": "Pouze problémy, které projekt klasifikuje jako požadavky.",
+          "includeChildIssues": "Zahrnout podřízené problémy",
+          "includeChildIssuesHelp": "Vezměte si také testovací případy propojené s podřízenými problémy.",
+          "notifyHelp": "Kdo je informován, když jsou návrhy připraveny ke kontrole. Preference oznámení každé osoby se stále uplatňují.",
+          "draftFolderNote": "Testovací případy automaticky navržené webhookem {webhook}.",
+          "draftFolderNoteCases": "Navrženo uživatelem System; každý případ je propojen s problémem, ze kterého byl navržen.",
+          "viewFolder": "Zobrazit složku"
+        },
         "codeRepos": {
           "empty": "Pro analýzu dopadu není připojeno žádné úložiště. Nejprve <link>připojte nějaký</link>.",
           "unsupported": "Úložiště {provider} nemohou odesílat webhooky do TestPlanIt.",
@@ -1878,10 +1917,12 @@
           "eventBranchPushHelp": "Analyzujte každý push do jakékoli jiné větve oproti základní větvi, podobně jako pull request, a sestavte testovací běh pro každý z nich.",
           "baseBranch": "Základní větev",
           "baseBranchHelp": "Pushe do této větve jsou analyzovány samy o sobě; pull requesty a ostatní větve jsou porovnávány proti ní. Ponechte prázdné pro použití větve připojení.",
-          "autoExecute": "Spouštět automatizované případy",
-          "autoExecuteHelp": "Po složení běhu požádat o automatizované spuštění jeho automatizovaných případů na tomto cíli. Manuální případy zůstanou v běhu pro testery.",
-          "autoExecuteNoTargets": "Pro tento projekt není nakonfigurován žádný cíl spuštění. <link>Přidejte jeden</link> pro automatické spouštění běhů.",
-          "autoExecuteTargetMissing": "Zvolený cíl spuštění byl smazán nebo deaktivován. Běhy jsou stále složeny, ale není požadováno spuštění, dokud si nevyberete jiný cíl.",
+          "minScoreHelp": "Každý složený run obsahuje každý testovací případ, u kterého analýza dosahuje alespoň tohoto skóre (0–100). Ponechte prázdné, aby se zahrnuly připnuté a ovlivněné testy, stejně jako run spuštěný ručně.",
+          "minScoreInvalid": "Zadejte celé číslo od 0 do 100 nebo ponechte prázdné",
+          "autoExecute": "Spustit automatizované případy",
+          "autoExecuteHelp": "Po vytvoření runů požádejte o automatizované spuštění jeho automatizovaných případů na tomto cíli. Manuální případy zůstávají v runu pro testery.",
+          "autoExecuteNoTargets": "Pro tento projekt není nakonfigurován žádný cíl spuštění. <link>Přidejte jeden</link> pro automatické spuštění runů.",
+          "autoExecuteTargetMissing": "Vybraný cíl spuštění byl odstraněn nebo zakázán. Runy se stále vytváří, ale žádné spuštění se nepožaduje, dokud si nevyberete jiný cíl.",
           "autoExecuteSaveError": "Nepodařilo se uložit nastavení automatizovaného spuštění"
         },
         "inboundEmptyState": "Zatím žádné příchozí webhooky. <link>Přidejte jeden</link>, chcete-li přijímat aktualizace položek z vašeho nástroje pro sledování položek nebo pull requesty a pushe z připojeného úložiště.",
@@ -1895,7 +1936,8 @@
           "sourceRepositoryHelp": "Spusťte analýzu dopadu a sestavte testovací běh, když je otevřen pull request nebo odeslány commity.",
           "noRepositoryAvailable": "Každé připojené úložiště již má webhook nebo nemůže webhooky odesílat.",
           "repositoryPlaceholder": "Vyberte úložiště"
-        }
+        },
+        "outboundSubsAlerts": "Upozornění"
       },
       "aiModels": {
         "description": "Nakonfigurujte AI modely pro inteligentní generování a analýzu testovacích případů",
@@ -2045,7 +2087,7 @@
           "branchPlaceholder": "Ponechte prázdné pro použití výchozí větve úložiště"
         },
         "pathPatterns": {
-          "description": "Které soubory úložiště může QuickScript číst jako kontextu AI.",
+          "description": "Které soubory úložiště může QuickScript číst jako kontext AI.",
           "pathPlaceholder": "tests/e2e/pages",
           "exceedsLimit": "Celková velikost přesahuje limit AI kontextu o {overflow}. Během exportu jsou soubory řazeny podle relevance k exportovanému testovacímu případu — nejrelevantnější soubory jsou zahrnuty jako první a soubory s nižším pořadím jsou přeskočeny po dosažení limitu. Pokud chcete mít větší kontrolu nad tím, které soubory jsou zahrnuty, zúžte své vzory cest."
         },
@@ -2108,7 +2150,6 @@
           "pathLabel": "Cesta",
           "patternLabel": "Vzor",
           "previewFiles": "Náhled souborů",
-          "rootHint": "Nechte cestu prázdnou nebo zadejte ., aby se začalo v kořenu úložiště; cesta . se vzorem **/* zahrnuje každý soubor.",
           "scanningRepo": "Skenování souborů repozitáře… ({seconds}s)",
           "title": "Vzory cest",
           "truncatedBadge": "Výsledky mohou být neúplné (omezení poskytovatele)"
@@ -2261,7 +2302,7 @@
           "branchesFallbackHint": "Místo toho zadejte název větve."
         },
         "pathPatterns": {
-          "description": "Které soubory aplikace čte Impact: výběr souborů kódu Pin, mezipaměť, značky úložiště a které změněné soubory analýza ignoruje.",
+          "description": "Které soubory aplikace čte Impact: výběr souborů Code Pin, mezipaměť, značky úložiště a které změněné soubory analýza ignoruje.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2871,7 +2912,9 @@
         "detailsDisplayMode": {
           "docked": "Ukotvený panel",
           "newWindow": "Nové okno"
-        }
+        },
+        "notificationsLabel": "Oznámení",
+        "notificationsMoved": "Spravovat oznámení a upozornění"
       },
       "assignments": {
         "title": "Přiřazení",
@@ -2980,6 +3023,10 @@
             "label": "Kroky odvozené z AI",
             "description": "Úloha odvozování kroků AI, kterou jste spustili, napsala kroky."
           },
+          "CASES_DRAFTED": {
+            "label": "AI-navržené testovací případy",
+            "description": "Akce webhooku navrhla testovací případy pro problém a jmenovala vás jako kontrolora."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integrace vyžaduje nové ověření",
             "description": "Vaše připojení k integraci vypršelo nebo bylo odvoláno a musí být znovu připojeno."
@@ -2996,9 +3043,9 @@
             "label": "Nové registrace uživatelů",
             "description": "Nový uživatel se zaregistruje pomocí formuláře, SSO nebo SAML."
           },
-          "LLM_BUDGET_ALERT": {
-            "label": "Upozornění na rozpočet AI",
-            "description": "Výdaje LLM překročí prahovou hodnotu rozpočtu za fakturační období."
+          "ALERT_TRIGGERED": {
+            "label": "Upozornění",
+            "description": "Upozornění, na které jste se přihlásili, se spustí, protože testovací metrika překročila linii, kterou sleduje."
           }
         },
         "success": {
@@ -3123,7 +3170,8 @@
       "orange": "Oranžový",
       "accessible": "Přístupné",
       "accessibledark": "Přístupné (tmavé)"
-    }
+    },
+    "myAlerts": "Oznámení a upozornění"
   },
   "repository": {
     "version": {
@@ -3196,7 +3244,12 @@
       "noStepsInSelectedGroup": "Vybraná skupina neobsahuje žádné kroky.",
       "sharedGroupSuffix": "(Sdílené kroky)",
       "unnamedSharedGroup": "Nepojmenované sdílené kroky",
-      "noStepsInSelectedSharedGroup": "Vybraná sdílená skupina neobsahuje žádné kroky."
+      "noStepsInSelectedSharedGroup": "Vybraná sdílená skupina neobsahuje žádné kroky.",
+      "layout": {
+        "label": "Rozvržení kroku",
+        "stacked": "Naskládáno",
+        "sideBySide": "Vedle sebe"
+      }
     },
     "testCase": {
       "toggleAutomated": "Přepnout automatizované testování",
@@ -3686,7 +3739,7 @@
         "title": "Vybrat zdroj požadavků",
         "description": "Vyberte, zda chcete generovat testovací případy z problému nebo z dokumentu s požadavky.",
         "folderContextTip": "Existující testovací případy ze složky \"{folderName}\" a jejích nadřazených/podřazených složek budou použity jako kontext, aby se zabránilo duplicitám. Před pokračováním se ujistěte, že jste vybrali správnou složku.",
-        "folderContextCount": "{count, plural, =1 {# existující testovací případ} few {# existující testovací případy} many {# existujících testovacích případů} other {# existujících testovacích případů}} ve složce \"{folderName}\" a jejích nadřazených/podřízených složkách bude použit jako kontext pro sladění se stylem vašeho projektu a zamezení duplikátům.",
+        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
         "folderContextEmptyTitle": "Žádné existující testovací případy k použití jako kontext",
         "folderContextEmpty": "Složka \"{folderName}\" a její nadřazené/podřazené složky neobsahují testovací případy, takže AI nemá příklady stylu vašeho projektu nebo stávajícího pokrytí. Pro lepší výsledky spusťte generátor ze složky, do které tyto testovací případy patří, vedle souvisejících případů.",
         "currentFolder": "aktuální složka",
@@ -5510,6 +5563,7 @@
       "scimProvisionerBadge": "Poskytovatel SCIM",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Spravováno pomocí SCIM. Spravujte na stránce administrace SCIM.",
+      "systemUserTooltip": "Vestavěný uživatel pro práci, kterou TestPlanIt provádí automaticky, jako jsou akce webhooku. Nemůže se přihlásit nebo upravovat.",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Ano",
       "scimUserLockedTitle": "Uživatel je spravován pomocí SCIM",
@@ -6180,7 +6234,8 @@
         "stepSequenceMatchCases": "Případy shody sekvencí kroků",
         "testRunCases": "Případy testovacího běhu",
         "testRunCaseDataSetSnapshots": "Snímky datové sady testovacího běhu",
-        "testRunCaseIterations": "Iterace testovacího běhu"
+        "testRunCaseIterations": "Iterace testovacího běhu",
+        "alertRules": "Upozornění"
       },
       "table": {
         "title": "Smazané {itemType}",
@@ -6531,7 +6586,6 @@
         "defaultModelPlaceholder": "gpt-4o, claude-3-5-sonnet-20241022, atd.",
         "defaultModelDescription": "Model, který se má použít jako výchozí",
         "maxTokensPerRequest": "Maximální počet tokenů na požadavek",
-        "maxRequestsPerMinute": "Maximální počet požadavků za minutu",
         "costPerInputToken": "Cena za 1M vstupních tokenů ($)",
         "costPerOutputToken": "Cena za 1M výstupních tokenů ($)",
         "monthlyBudget": "Měsíční rozpočet ($)",
@@ -6910,7 +6964,8 @@
         "markRead": "Označit jako přečtené",
         "markUnread": "Označit jako nepřečtené",
         "markAllRead": "Označit vše jako přečtené",
-        "deleteAll": "Odstranit vše"
+        "deleteAll": "Odstranit vše",
+        "manageAlerts": "Spravovat oznámení a upozornění"
       },
       "success": {
         "deleted": "Oznámení smazáno",
@@ -6954,11 +7009,6 @@
         "shareLinkAccessedMessage": "{viewer} zobrazil váš sdílený report: \"{shareTitle}\"",
         "viewedYourSharedLink": "zobrazil váš sdílený odkaz",
         "viewedAt": "Zobrazeno v",
-        "budgetDisclaimer": "Limity rozpočtu jsou pouze informativní a nezabraňují použití.",
-        "llmBudgetExceededTitle": "Rozpočet LLM byl překročen",
-        "llmBudgetThresholdTitle": "Rozpočet LLM využit z {threshold}%",
-        "llmBudgetExceededMessage": "{providerName} překročil svůj měsíční rozpočet: utraceno {spend} z rozpočtu {budget}.",
-        "llmBudgetThresholdMessage": "{providerName} využil {threshold}% svého měsíčního rozpočtu: {spend} z {budget}.",
         "userRegisteredTitle": "Registrace nového uživatele",
         "userRegisteredMessageSso": "{userName} ({userEmail}) se zaregistroval přes SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) se zaregistroval prostřednictvím registračního formuláře",
@@ -6997,6 +7047,9 @@
         "aiStepsDerivedTitle": "Kroky testu odvozené AI jsou připraveny",
         "aiStepsDerivedMessage": "{count, plural, one {# testovacímu případu byly přiřazeny} few {# testovacím případům byly přiřazeny} many {# testovacím případům byly přiřazeny} other {# testovacím případům byly přiřazeny}} kroky odvozené pomocí AI — zkontrolujte jejich přesnost.",
         "aiStepsDerivedReviewLink": "Zkontrolovat testovací běh",
+        "casesDraftedTitle": "AI-navržené testovací případy jsou připraveny",
+        "casesDraftedMessage": "{count, plural, one {# testovací případ byl} few {# testovací případy byly} many {# testovacích případů bylo} other {# testovacích případů bylo}} navrženo pro {issueKey} — zkontrolujte přesnost.",
+        "casesDraftedReviewLink": "Zkontrolovat v {folderName}",
         "integrationAuthExpiredTitle": "Platnost připojení integrace vypršela",
         "integrationAuthExpiredMessage": "Platnost vašeho připojení k \"{integrationName}\" vypršela. Znovu se připojte pro obnovení synchronizace úkolů.",
         "integrationAuthExpiredReconnect": "Znovu se připojit",
@@ -7008,7 +7061,56 @@
         "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} proběhl úspěšně, takže tento případ přiřazený vám již není blokován:",
         "runCaseUnblockedEmailMessage": "\"{testCaseName}\" v testovacím běhu \"{testRunName}\" (projekt \"{projectName}\") již není blokován: \"{prerequisiteName}\" proběhl úspěšně. Je vám přiřazen a připraven ke spuštění.",
         "runCaseUnblockedReason": "Tuto zprávu dostáváte, protože vám je testovací případ přiřazen.",
-        "inTestRun": "v testovacím běhu"
+        "inTestRun": "v testovacím běhu",
+        "alertTriggeredTitle": "Upozornění spuštěno",
+        "alertTriggeredRule": "Pravidlo: {ruleName}",
+        "alertTriggeredEmailMessage": "Upozornění \"{ruleName}\" spuštěno pro {subjectLabel} \"{subjectName}\" v projektu \"{projectName}\": {detail}",
+        "alertTriggeredEmailMessageSystem": "Upozornění \"{ruleName}\" spuštěno pro {subjectLabel} \"{subjectName}\": {detail}",
+        "alertTriggeredReason": "Obdrželi jste toto, protože se přihlašujete k tomuto upozornění.",
+        "alertSubject": {
+          "CASE": "testovací případ",
+          "RUN": "testovací běh",
+          "MILESTONE": "milník",
+          "SESSION": "relace",
+          "PROJECT": "projekt",
+          "WEBHOOK": "webhook",
+          "LLM_INTEGRATION": "Integrace modelu AI",
+          "CODE_REPOSITORY": "připojení úložiště",
+          "INTEGRATION": "integrace",
+          "QUEUE": "fronta",
+          "SYSTEM": "instalace"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "Výsledek trval {elapsed}, {deviation}% od výchozího {baseline} (více než {threshold}% povoleno).",
+          "CASE_REGRESSED": "Případ selhal po úspěšném průchodu {passedBefore, plural, one {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
+          "CASE_RECOVERED": "Případ prošel po neúspěšném průchodu {failedBefore, plural, one {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
+          "RUN_DURATION_DEVIATION": "Běh trval {elapsed}, {deviation}% od výchozího {baseline} (více než {threshold}% povoleno).",
+          "RUN_NOT_PROGRESSING": "Běh nemá nový výsledek již {idleHours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "Automatické spuštění na {target} skončilo s {status}{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% případů běhu nemá výsledek s {daysRemaining, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} před splatností milníku (prahová hodnota {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# problém je} few {# problémy jsou} many {# problémů je} other {# problémů je}} propojeno s výsledky běhu (prahová hodnota {threshold}).",
+          "SESSION_OVERRUN": "Relace trvala {elapsed} proti odhadu {estimate}, {overrun}% více (více než {threshold}% povoleno).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} z {total} požadavků ({coverage}%) {basis, select, PASSING {má procházející poslední výsledek} other {je propojen s testovacím případem}} (prahová hodnota {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# případ má} few {# případy mají} many {# případů má} other {# případů má}} žádný výsledek za {days, plural, one {# den} few {# dny} many {# dny} other {# dny}} (prahová hodnota {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} z {total} případů ({automatedPercent}%) jsou automatizovány (prahová hodnota {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "{failed} z posledních {sampleCount} doručení selhalo ({failureRate}%, prahová hodnota {threshold}%).",
+          "CONSECUTIVE_FAILURES": "Případ selhal {streak, plural, one {# krát} few {# krát} many {# krát} other {# krát}} po sobě (prahová hodnota {threshold}).",
+          "CASE_FLAKY": "Výsledek se přepnul {flips, plural, one {# krát} few {# krát} many {# krát} other {# krát}} v posledních {sampleCount} výsledcích (prahová hodnota {threshold}).",
+          "RUN_PASS_RATE_BELOW": "Míra úspěšnosti je {passRate}% v {sampleCount} výsledcích (prahová hodnota {threshold}%).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# výsledek selhal} few {# výsledky selhaly} many {# výsledků selhalo} other {# výsledků selhalo}} (prahová hodnota {threshold}).",
+          "MILESTONE_BEHIND": "Milník je {completion}% hotov s {daysRemaining, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} do zbytku (prahová hodnota {threshold}%).",
+          "MILESTONE_OVERDUE": "Milník je {daysOverdue, plural, one {# den} few {# dny} many {# dny} other {# dny}} po splatnosti.",
+          "LLM_BUDGET_USED": "Výdaje za fakturační období jsou {spend} z {budget} měsíčního rozpočtu ({percent}%, prahová hodnota {threshold}%).",
+          "LLM_ERROR_RATE": "{failed} z posledních {sampleCount} požadavků selhalo ({failureRate}%, prahová hodnota {threshold}%).",
+          "LLM_RATE_LIMITED": "Poskytovatel omezil {blocked, plural, one {# požadavek} few {# požadavky} many {# požadavků} other {# požadavků}} v posledních {hours, plural, one {# hodinę} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "Mezipaměť úložiště selhala již {hours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}){error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# uživatel musí} few {# uživatelé musí} many {# uživatelů musí} other {# uživatelů musí}} znovu ověřit integraci (prahová hodnota {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# úloha selhala} few {# úlohy selhaly} many {# úloh selhalo} other {# úloh selhalo}} ve frontě (prahová hodnota {threshold}).",
+          "QUEUE_BACKLOG": "Nejstarší z {waiting, plural, one {# čekající úlohy} few {# čekajících úloh} many {# čekajících úloh} other {# čekajících úloh}} čeká {minutes, plural, one {# minutu} few {# minuty} many {# minut} other {# minut}} (prahová hodnota {threshold}).",
+          "AUDIT_BACKLOG": "Nejstarší nezpracovaná změna auditu je stará {minutes, plural, one {# minutu} few {# minuty} many {# minut} other {# minut}} (prahová hodnota {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# účet je} few {# účty jsou} many {# účtů je} other {# účtů je}} uzamčen po neúspěšných přihlášeních (prahová hodnota {threshold}).",
+          "NO_AUTOMATED_RESULTS": "Žádný automatizovaný výsledek nebyl přijat za {hours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold})."
+        }
       }
     },
     "issues": {
@@ -7587,7 +7689,8 @@
       "SharedSteps": "Sdílené kroky",
       "Issues": "Problémy",
       "Reporting": "Vytváření sestav",
-      "Settings": "Nastavení projektu"
+      "Settings": "Správa projektu",
+      "Alerts": "Upozornění"
     },
     "WorkflowType": {
       "NOT_STARTED": "Nezahájeno",
@@ -7645,6 +7748,9 @@
     "businessHours": "{hours, number, ::.0} pracovních hodin"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## Štítky\nŠtítky, které problém v trackeru má. Akce vezme pouze problém, který má alespoň jeden z nich; ponechte prázdné, aby se problémy braly bez ohledu na štítky.\n\n- Jira, GitHub, GitLab a Gitea: štítky problému\n- Azure DevOps, ClickUp a MantisBT: značky problému\n- Redmine: kategorie problému\n- Porovnávání ignoruje velikost písmen"
+    },
     "auditLogs": "## Protokoly auditu\nZobrazte celosystémovou stopu auditu pro sledování bezpečnosti a souladu s předpisy",
     "statuses": "## Stavy\nSpravujte stavy, které testeři přiřazují při zaznamenávání výsledku testu, jako Prošel, Neprošel a Blokováno.",
     "configurations": "## Konfigurace\nKonfigurace jsou kombinací kategorií a variant používaných k definování testovacího prostředí. Například OS/prohlížeč, testovací server, jazyk atd.",
@@ -7827,7 +7933,7 @@
       "name": "## Název role\nJasný, stručný a výstižný název nebo klíčové slovo (slova), které se používají napříč všemi projekty.\n\n- Pomáhá členům týmu rychle najít související testovací případy, testovací běhy a relace.",
       "isDefault": "## Výchozí role\nUdává, zda je tato role výchozí pro váš projekt.\n\n- Výchozí role je předvybraná pro nové uživatele\n- Lze kdykoli změnit",
       "permissions": {
-        "canAddEdit": "## Přidat/Upravit\nUdává, zda může tato role přidávat a upravovat související oblast aplikace.\n\n- **Automatizované provedení** uděluje právo spouštět, opakovat a zrušovat automatizovaná provedení u CI poskytovatele. Zaznamenávání výsledků stále vyžaduje **Výsledky testovacích běhů** Přidat/Upravit a spuštění z úložiště také vyžaduje **Testovací běhy** Přidat/Upravit, protože vytváří nebo rozšiřuje běh.",
+        "canAddEdit": "## Přidat/Upravit\nUdává, zda může tato role přidávat a upravovat související oblast aplikace.\n\n- **Automatické spuštění** uděluje právo na spuštění, opakování a zrušení automatizovaných spuštění u poskytovatele CI. Zaznamenání výsledků stále vyžaduje **Výsledky testovacího běhu** Přidat/Upravit a spuštění z úložiště vyžaduje také **Testovací běhy** Přidat/Upravit, protože vytváří nebo rozšiřuje běh.\n- **Upozornění** uděluje právo vytvářet upozornění v projektu a upravovat, pozastavovat a mazat upozornění, která jste vytvořili. Správci projektů spravují všechna upozornění a předplatná jiných uživatelů; kdokoli se může upozornění přihlásit nebo opustit.",
         "canDelete": "## Smazat\nUdává, zda může tato role mazat související oblast aplikace.",
         "canClose": "## Uzavřít\nUdává, zda může tato role uzavírat související oblast aplikace.",
         "canApprove": "## Schválit\nUrčuje, zda tato role může schvalovat žádosti o revizi pro související oblast aplikace. Vztahuje se pouze na Úložiště testovacích případů, testovací běhy a relace.",
@@ -7858,10 +7964,9 @@
       "maxTokensPerRequest": "## Maximální počet tokenů na požadavek\n**Pevný strop na _výstupní_ tokeny**, které může model vygenerovat v jedné odpovědi.\n\n- Omezuje délku **odpovědi** modelu — nikoli množství kontextu, který mu posíláte\n- Požadavky, které žádají o více než tento limit, jsou **odmítnuty ještě před tím, než se dostanou k modelu**\n- Nastavte jej na skutečný maximální výstup vašeho modelu — např. `128000` pro Claude Opus/Sonnet, `64000` pro Claude Haiku, `65536` pro Gemini, `16384` pro GPT-4o\n- Příliš nízká hodnota → funkce AI selžou nebo produkují oříznutý výstup",
       "defaultMaxTokens": "## Výchozí maximální počet tokenů\n**Délka _výstupu_**, o kterou tento AI model při požadavcích žádá, omezená hodnotou _Maximální počet tokenů na požadavek_.\n\n- **Generování testovacích případů** (ze všech zdrojů, včetně panelu problémů Jira), **Analýza testovacích případů z Markdownu**, **Asistent psaní v editoru** a **Chytrý výběr testovacích případů** vždy používají tuto hodnotu — jejich _Maximální počet výstupních tokenů_ z konfigurace promptu se nepoužije\n- **Generování kódu při exportu**, **Návrhy štítků AI**, **Odvozování kroků AI** a **Sestava kandidátů na automatizaci** místo toho používají vlastní _Maximální počet výstupních tokenů_ z **Administrace → Konfigurace promptů**\n- Modely, které před odpovědí přemýšlejí (např. Claude Opus 5), spotřebují část tohoto rozpočtu na uvažování — ponechte prostor pro odpověď\n- **Neurčuje**, kolik kódu repozitáře odešle modelu QuickScript — tento rozpočet se odvozuje automaticky z kontextového okna modelu\n- Udržujte ji ≤ _Maximální počet tokenů na požadavek_",
       "repoContextBudget": "## Rozpočet kontextu repozitáře\nKolik kódu z vašeho připojeného repozitáře QuickScript předá modelu při generování skriptu.\n\n- **Nastavuje se automaticky** podle vstupního kontextového okna vybraného modelu — zde není co konfigurovat\n- Modely s větším kontextem (Claude, Gemini) dostanou více; malé lokální modely dostanou bezpečné množství, které nepřeteče\n- Více kontextu ukotví skript ve vašich skutečných page objektech a fixturách — nemění to délku vygenerovaného skriptu",
-      "maxRequestsPerMinute": "## Maximální počet požadavků za minutu\nOmezuje, kolik volání API lze provést k tomuto poskytovateli za minutu.\n\n- Nastavte podle limitu rychlosti vašeho tarifu u poskytovatele\n- Nadbytečné požadavky jsou zařazeny do fronty, nikoli odmítnuty\n- Limit vašeho tarifu zkontrolujte v dokumentaci poskytovatele",
       "costPerInputToken": "## Náklady na 1 milion vstupních tokenů (USD)\nNáklady v USD na **milion** vstupních (prompt) tokenů odeslaných modelu.\n\n- Používá se pro sledování nákladů a upozornění na rozpočet\n- Automaticky vyplněno, pokud váš poskytovatel uvádí ceny modelu (LiteLLM, OpenRouter, Together AI) — použije se při výběru modelu nebo spuštění Testovacího připojení\n- Jinak jej najdete na stránce s cenami vašeho poskytovatele\n- Příklad: `0.15` = 0,15 USD za milion vstupních tokenů",
       "costPerOutputToken": "## Náklady na 1 milion výstupních tokenů (USD)\nNáklady v USD na **milion** výstupních (completion) tokenů vygenerovaných modelem.\n\n- Obvykle vyšší než náklady na vstupní tokeny\n- Používá se pro sledování nákladů a upozornění na rozpočet\n- Automaticky vyplněno, pokud váš poskytovatel uvádí ceny modelu (LiteLLM, OpenRouter, Together AI) — použije se při výběru modelu nebo spuštění Testovacího připojení\n- Jinak jej najdete na stránce s cenami vašeho poskytovatele\n- Příklad: `0.60` = 0,60 USD za milion výstupních tokenů",
-      "monthlyBudget": "## Měsíční rozpočet (USD)\nVolitelný cíl výdajů pro tuto integraci.\n\n- Nastavením na `0` vypnete sledování rozpočtu\n- Rozpočet je **pouze informativní** — nezabraňuje použití LLM\n- Oznámení obdržíte při dosažení 80 %, 90 % a 100 % rozpočtu\n- Náklady jsou počítány pomocí výše uvedených sazeb za token",
+      "monthlyBudget": "## Měsíční rozpočet (USD)\nVolitelný cíl výdajů pro tuto integraci.\n\n- Nastavte na `0` pro deaktivaci sledování rozpočtu\n- Rozpočet je **pouze pro informaci** — neblokuje používání LLM\n- Upozornění s metrikou **Rozpočet AI použitý** (Systém, na stránce Oznámení a upozornění) upozorní své předplatitele, když výdaje dosáhnou procenta, které nastavíte; uložením tohoto formuláře nebo resetováním výdajů jej může během stejného období znovu spustit\n- Náklady se počítají pomocí výše uvedených sazeb za token",
       "billingPeriodStartDay": "## Počáteční den fakturačního období\nDen v měsíci (1–31), kdy začíná vaše fakturační období.\n\n- Výchozí hodnota `1` odpovídá kalendářnímu měsíci\n- Nastavte na `15` pro cyklus od 15. do 15. (např. aby odpovídal datu fakturace vašeho poskytovatele)\n- Hodnoty `29–31` se automaticky upraví na poslední den kratších měsíců (únor v nepřestupných letech atd.)\n- Ovlivňuje okno výdajů pro **Měsíční rozpočet** a akci **Resetovat výdaje**",
       "defaultTemperature": "## Výchozí teplota\nUrčuje míru náhodnosti odpovědí modelu (0–2).\n\n- **0:** Deterministické — u stejného vstupu vždy stejný výstup\n- **0,3:** Zaměřené — doporučeno pro generování testů a kódu\n- **1+:** Kreativní — pestřejší odpovědi\n- Jednotlivé funkce mohou tuto hodnotu přepsat v konfiguraci promptu",
       "timeout": "## Časový limit požadavku (ms)\nJak dlouho čekat na odpověď, než bude požadavek zrušen.\n\n- Hodnota je v milisekundách (např. `30000` = 30 sekund)\n- Streamované požadavky (např. náhled exportu kódu) tento časový limit ignorují\n- Zvyšte pro pomalé nebo velké modely\n- Rozsah: 5 000 – 600 000 ms",
@@ -8387,8 +8492,9 @@
     "projectRunsFilters": "## Filtrování testovacích běhů\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Manuální** / **Automatizované** — omezí seznam na daný typ běhu. Zapnutí obou (nebo vypnutí obou) zobrazí všechny běhy.\n- **Moje testovací běhy** — pouze běhy, kterých se účastníte: vytvořili jste běh, je vám v něm přiřazen testovací případ, nebo jste v něm zaznamenali výsledek testu.",
     "projectSessionsFilters": "## Filtrování relací\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Moje relace** — pouze relace, kterých se účastníte: vytvořili jste relaci nebo je vám přiřazena.",
     "projectImpact": "## Dopad\nPřipojte úložiště testované aplikace, aby tento projekt mohl spouštět analýzu dopadu testů: vyberte dva commity a zjistěte, které testovací případy jsou změnami ovlivněny, a připněte testovací případy ke kódu, který pokrývají.",
-    "pathPatterns": "## Vzory cest\nKaždý řádek kombinuje základní **cestu** se glob **vzorem**. Řádky se sčítají: soubor je zahrnut, pokud jej odpovídá libovolný řádek.\n\n- `src` + `**/*` — všechno pod `src`\n- prázdné nebo `.` + `**/*` — každý soubor v repozitáři\n- `src` + `**/!(*.test|*.spec).ts` — soubory `.ts` mimo testy\n\n### Vyloučení\nZaškrtněte **Vyloučení** na řádku, abyste odstranili jeho soubory, i když je jiný řádek obsahuje. Vyloučení se vztahují na výběr souborů a mezipaměť, a pro Impact na změněné soubory analýzy, takže soubor, který se mění téměř v každém pull requestu, přestane stahovat nesouvisející testovací případy. Nejméně jeden řádek musí zůstat nezaškrtnutý.\n\n- prázdné + `**/CHANGELOG*` — každý changelog v libovolné hloubce\n- `app` + `build.gradle.kts` — soubor buildu, který pouze zvyšuje verzi",
-    "projectAutomation": "## Automatizované provedení\nCíle provedení říkají TestPlanIt, kde spustit automatizované případy tohoto projektu: pracovní postup GitHub Actions, kanál GitLab CI nebo podepsaný webhook pro libovolný jiný systém. Když je běh spuštěn, TestPlanIt spustí úlohu s ID běhu a adresou URL plánu; úloha přečte plán, spustí odpovídající testy a vrátí výsledky pomocí reportéra nebo CLI připnutého k tomuto běhu. Cíle mohou být zakázány bez jejich odstranění."
+    "pathPatterns": "## Vzory cest\nKaždý řádek kombinuje základní **cestu** se **vzorem** glob. Řádky se sčítají: soubor je zahrnut, pokud jej některý řádek vyhovuje.\n\n- `src` + `**/*` — vše pod `src`\n- prázdné nebo `.` + `**/*` — každý soubor v úložišti\n- `src` + `**/!(*.test|*.spec).ts` — soubory `.ts` kromě testů\n\n### Vyloučit\nZaškrtněte **Vyloučit** na řádku, abyste odebrali jeho soubory i v případě, že je jiný řádek zahrnuje. Vyloučení se vztahují na selektor souborů a mezipaměť, a pro dopad na změněné soubory analýzy, takže soubor, který se mění téměř v každém pull requestu, přestane stahovat nesouvisející testovací případy. Alespoň jeden řádek musí zůstat nezaškrtnutý.\n\n- prázdné + `**/CHANGELOG*` — každý changelog v kterékoliv hloubce\n- `app` + `build.gradle.kts` — soubor sestavení, který pouze zvyšuje verzi",
+    "projectAutomation": "## Automatizované provedení\nCíle provedení říkají TestPlanIt, kde spustit automatizované případy tohoto projektu: pracovní postup GitHub Actions, kanál GitLab CI nebo podepsaný webhook pro libovolný jiný systém. Když je běh spuštěn, TestPlanIt spustí úlohu s ID běhu a adresou URL plánu; úloha přečte plán, spustí odpovídající testy a vrátí výsledky pomocí reportéra nebo CLI připnutého k tomuto běhu. Cíle mohou být zakázány bez jejich odstranění.",
+    "userAlerts": "## Oznámení a upozornění\n**Předvolby oznámení** rozhodují, jak vás dosáhneme (v aplikaci, e-mail, přehled) a které typy oznámení vůbec obdržíte.\n\n**Upozornění** sledují testovací metriku a upozorňují své předplatitele, když překročí linii, například výsledek, který trvá o 50% déle než obvyklá doba případu, případ, který selže třikrát za sebou, běh, jehož míra úspěšnosti klesne pod 90%, nebo milník, který je pozadu s dny do konce. Seznam ukazuje každé upozornění ve vašich projektech; přepínač **Upozornit mě** se přihlašuje nebo opouští jeden. **Přidat upozornění** vytváří vaše vlastní v jakémkoli projektu, kde má vaše role **Upozornění** Přidat/Upravit; správci projektů spravují všechna upozornění v jejich projektu a předplatná ostatních lidí. Upozornění se v rámci svého chladícího cyklu spustí maximálně jednou na subjekt a zůstane tiché, dokud nemá dostatek výsledků."
   },
   "reports": {
     "ui": {
@@ -9037,7 +9143,7 @@
           "allProjects": "Všechny vybrané projekty",
           "period": "{grouping, select, weekly {Týden od {date}} other {{date}}}",
           "partialPeriod": "{grouping, select, weekly {Týden od {period}} other {{period}}} (probíhá)",
-          "rateTrend": "{rate} trend"
+          "rateTrend": "Trend {rate}"
         },
         "heatmap": {
           "title": "Míra selhání podle projektu a období",
@@ -9610,9 +9716,12 @@
       "exists": "Existuje",
       "not_exists": "Neexistuje"
     },
+    "recordMatches": "{count, plural, one {# záznam odpovídající ID} few {# záznamy odpovídající ID} many {# záznamů odpovídajících ID} other {# záznamů odpovídajících ID}}",
     "help": {
       "exactPhrases": "Přesné fráze",
       "exactPhrasesDesc": "Chcete-li vyhledat přesné fráze, uzavřete výrazy do uvozovek:",
+      "ids": "ID",
+      "idsDesc": "Zadejte ID s # nebo bez něj, abyste našli záznam přímo. Oddělte několik pomocí OR, čárek nebo mezer, abyste je našli všechny:",
       "proximity": "Vyhledávání podle blízkosti",
       "proximityDesc": "slova vzdálená od sebe maximálně N pozic",
       "booleanOperators": "Booleovské operátory",
@@ -10177,5 +10286,454 @@
     "update": "Aktualizovat pomocí aktuálního mapování",
     "updateConfirm": "„{name}",
     "savePrompt": "Uložit toto mapování sloupců pro příště?"
+  },
+  "alerts": {
+    "title": "Upozornění",
+    "description": "Upozornění, která sledujete ve vašich projektech, a upozornění v těchto projektech, kterých se můžete účastnit.",
+    "addRule": "Přidat upozornění",
+    "editRule": "Upravit upozornění",
+    "deleteRule": "Smazat upozornění",
+    "deleteConfirm": "Smazat upozornění \"{name}\"? Jeho předplatitelé přestanou dostávat oznámení a může být obnoven z koše.",
+    "pauseTitle": "Pozastavit toto upozornění pro všechny?",
+    "pauseConfirm": "\"{name}\" se přestane spouštět pro {count, plural, =0 {všechny} one {jeho jediného předplatitele} =2 {oba jeho předplatitele} other {všech # jeho předplatitelů}}, ne jen pro vás, dokud jej někdo znovu nepovolí. Chcete-li zastavit pouze svá vlastní oznámení, místo toho vypněte Upozornit mě.",
+    "columns": {
+      "name": "Pravidlo",
+      "condition": "Podmínka",
+      "scope": "Rozsah",
+      "subscribers": "Předplatitelé",
+      "lastFired": "Naposledy spuštěno",
+      "enabled": "Povoleno",
+      "notifyMe": "Upozornit mě",
+      "actions": "Akce",
+      "project": "Projekt"
+    },
+    "neverFired": "Nikdy",
+    "systemScope": "Systém",
+    "systemSubjects": {
+      "audit": "Protokol auditu",
+      "lockouts": "Uživatelské účty",
+      "automated-results": "Automatizované výsledky"
+    },
+    "paused": "Pozastaveno",
+    "filters": {
+      "label": "Filtrovat upozornění",
+      "on": "Zapnuto",
+      "off": "Vypnuto"
+    },
+    "history": "Historie",
+    "subscribers": "Předplatitelé",
+    "subscriberCount": "{count, plural, =0 {Žádní předplatitelé} one {# předplatitel} other {# předplatitelů}}",
+    "toasts": {
+      "created": "Pravidlo vytvořeno.",
+      "updated": "Pravidlo aktualizováno.",
+      "deleted": "Pravidlo odstraněno.",
+      "enabled": "Pravidlo povoleno.",
+      "disabled": "Pravidlo pozastaveno.",
+      "subscribed": "Budete upozorněni, když se toto pravidlo spustí.",
+      "unsubscribed": "Nebudete více upozorňováni tímto pravidlem.",
+      "subscriberAdded": "{name} se přihlásil.",
+      "subscriberRemoved": "{name} se odhlásil.",
+      "saveError": "Nepodařilo se uložit pravidlo.",
+      "subscriptionError": "Nepodařilo se aktualizovat předplatné."
+    },
+    "form": {
+      "name": "Název",
+      "namePlaceholder": "např. Zpomalení toku v nákupním košíku",
+      "description": "Popis",
+      "descriptionPlaceholder": "Volitelná poznámka pro ostatní předplatitele",
+      "metric": "Metrika",
+      "metricLocked": "Metriku nelze změnit po vytvoření upozornění. Místo toho vytvořte nové upozornění.",
+      "condition": "Podmínka",
+      "scope": "Rozsah",
+      "scopeType": "Sledovat",
+      "scopeFolder": "Složka",
+      "scopeTag": "Štítek",
+      "scopeCase": "Testovací případ",
+      "scopeMilestone": "Milník",
+      "scopeRunName": "Název běhu obsahuje",
+      "scopeRunNamePlaceholder": "např. Noční",
+      "scopePickFolder": "Vyberte složku",
+      "scopePickTag": "Vyberte štítek",
+      "scopePickCase": "Vyberte testovací případ",
+      "scopePickMilestone": "Vyberte milník",
+      "scopeWebhook": "Webhook",
+      "scopePickWebhook": "Vyberte webhook",
+      "scopeLlmIntegration": "Integrace",
+      "scopePickLlmIntegration": "Vyberte integraci",
+      "scopeCodeRepository": "Připojení úložiště",
+      "scopePickCodeRepository": "Vyberte připojení úložiště",
+      "scopeIntegration": "Integrace",
+      "scopePickIntegration": "Vyberte integraci",
+      "scopeQueue": "Fronta",
+      "scopePickQueue": "Vyberte frontu",
+      "systemScope": "Systém",
+      "systemScopeHelp": "Upozornění systému sleduje něco spravovaného pro celou instalaci, například rozpočet modelu AI. Vidí jej pouze správci.",
+      "coverageBasis": "Počítat jako pokryté",
+      "coverageBasisOptions": {
+        "LINKED": "Propojeno s alespoň jedním testovacím případem",
+        "PASSING": "Poslední výsledek prošel"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Okno výchozího nastavení (běhy)",
+        "WEBHOOK_FAILURE_RATE": "Poslední doručení",
+        "LLM_ERROR_RATE": "Poslední požadavky"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Minimální běhy",
+        "WEBHOOK_FAILURE_RATE": "Minimální doručení",
+        "LLM_ERROR_RATE": "Minimální požadavky"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Dny před splatností milníku",
+        "STALE_CASES": "Dny bez výsledku",
+        "LLM_RATE_LIMITED": "Během posledních (hodin)"
+      },
+      "scopeCaseSearch": "Hledat podle názvu nebo ID",
+      "direction": "Směr",
+      "baselineType": "Výchozí nastavení",
+      "baselineWindow": "Okno výchozího nastavení (výsledky)",
+      "minSamples": "Minimální výsledky",
+      "resultSource": "Výsledky k sledování",
+      "evaluateOn": "Vyhodnotit",
+      "daysRemaining": "Zbývající dny",
+      "cooldown": "Chladící doba (minuty)",
+      "cooldownHelp": "Poté, co se pravidlo spustí pro subjekt, pro daný subjekt bude mlčet tak dlouho. 0 deaktivuje chladící dobu.",
+      "emitWebhook": "Odeslat událost webhooku alert.triggered",
+      "emitWebhookHelp": "Odchozí webhoky přihlášené k Upozornění obdrží stejnou datovou část, aby mohly příspěvky publikovat nástroje Slack nebo jiné.",
+      "enabled": "Povoleno",
+      "audience": "Publikum",
+      "audienceHelp": "Kdo je upozorněn, když se upozornění spustí. Jste přidáni ve výchozím nastavení do upozornění, která vytvoříte; kdokoli se může odhlásit nebo znovu připojit.",
+      "audienceHelpSystem": "Kdo je upozorněn, když se upozornění spustí. V publiku upozornění systému mohou být pouze správci; jste přidáni ve výchozím nastavení.",
+      "searchMembers": "Hledat členy projektu",
+      "you": "vy",
+      "cannotManageSubscribers": "Můžete se přihlásit nebo odhlásit sami. Přihlášení jiných členů vyžaduje práva správy projektů.",
+      "validation": {
+        "nameRequired": "Zadejte název.",
+        "scopeRequired": "Zvolte, co pravidlo sleduje.",
+        "runNameRequired": "Zadejte část názvu běhu.",
+        "percentRange": "Zadejte procento mezi {min} a {max}.",
+        "countRange": "Zadejte celé číslo mezi {min} a {max}.",
+        "windowRange": "Zadejte okno mezi {min} a {max} výsledky.",
+        "minSamplesRange": "Zadejte hodnotu mezi {min} a {max}.",
+        "minSamplesWindow": "Minimální výsledky nemohou překročit okno výchozího nastavení.",
+        "cooldownRange": "Zadejte minuty mezi {min} a {max}.",
+        "daysRange": "Zadejte dny mezi {min} a {max}.",
+        "windowBelowMinSamples": "Okno výchozího nastavení nesmí být menší než minimální výsledky."
+      },
+      "project": "Projekt",
+      "projectPlaceholder": "Vyberte projekt",
+      "projectHelp": "Jsou uvedeny pouze projekty, kde vaše role může vytvářet upozornění.",
+      "dialogDescription": "Sledujte jednu testovací metriku a upozorňujte publikum, když překročí linii, kterou nastavíte.",
+      "metricSearch": "Hledat metriky",
+      "metricNoMatch": "Žádná metrika neodpovídá.",
+      "checkedDaily": "Kontrolováno denně",
+      "checkedHourly": "Kontrolováno každou hodinu",
+      "needsProject": "Nejdříve vyberte projekt.",
+      "followAlert": "Upozornit mě",
+      "leaveAlert": "Přestaňte mě upozorňovat",
+      "delivery": "Doručení",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "Odchylka (%)",
+        "CASE_REGRESSED": "Prahová hodnota",
+        "CONSECUTIVE_FAILURES": "Selhání za sebou",
+        "CASE_FLAKY": "Přepnutí",
+        "RUN_PASS_RATE_BELOW": "Míra úspěšnosti pod (%)",
+        "RUN_FAILURE_COUNT": "Neúspěšné výsledky, více než",
+        "RUN_DURATION_DEVIATION": "Odchylka (%)",
+        "RUN_NOT_PROGRESSING": "Nečinnost déle než (hodin)",
+        "AUTOMATED_EXECUTION_FAILED": "Prahová hodnota",
+        "RUN_UNTESTED_SHARE": "Netestované případy přes (%)",
+        "RUN_ISSUES_OPENED": "Propojené problémy, více než",
+        "SESSION_OVERRUN": "Více než odhad o více (%)",
+        "MILESTONE_BEHIND": "Dokončení pod (%)",
+        "MILESTONE_OVERDUE": "Prahová hodnota",
+        "REQUIREMENT_COVERAGE_BELOW": "Pokrytí pod (%)",
+        "STALE_CASES": "Staré případy, více než",
+        "AUTOMATION_SHARE_BELOW": "Automatizovaný podíl pod (%)",
+        "WEBHOOK_FAILURE_RATE": "Míra selhání přes (%)",
+        "LLM_BUDGET_USED": "Rozpočet použitý (%)",
+        "LLM_ERROR_RATE": "Neúspěšné požadavky přes (%)",
+        "LLM_RATE_LIMITED": "Požadavky s omezenou rychlostí, alespoň",
+        "CODE_REPOSITORY_CACHE_FAILING": "Selhávání alespoň (hodin)",
+        "INTEGRATION_REAUTH_NEEDED": "Uživatelé potřebující znovu ověření, alespoň",
+        "QUEUE_FAILED_JOBS": "Neúspěšné úlohy, více než",
+        "QUEUE_BACKLOG": "Nejstarší čekající úloha starší než (minuty)",
+        "AUDIT_BACKLOG": "Nejstarší nezpracovaná změna starší než (minuty)",
+        "ACCOUNT_LOCKOUTS": "Uzamčené účty, alespoň",
+        "NO_AUTOMATED_RESULTS": "Bez automatizovaných výsledků pro (hodin)"
+      }
+    },
+    "direction": {
+      "ABOVE": "Výše (pomalejší)",
+      "BELOW": "Níže (rychlejší)",
+      "EITHER": "Výše nebo níže"
+    },
+    "baseline": {
+      "MEAN": "Průměr",
+      "MEDIAN": "Medián"
+    },
+    "resultSource": {
+      "MANUAL": "Manuální výsledky",
+      "AUTOMATED": "Automatizované výsledky",
+      "BOTH": "Manuální a automatizované"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "Když se běh dokončí",
+      "AS_RESULTS_ARRIVE": "Jak přicházejí výsledky"
+    },
+    "scopeType": {
+      "PROJECT": "Celý projekt",
+      "FOLDER": "Případy ve složce",
+      "TAG": "Případy se štítkem",
+      "CASE": "Jeden testovací případ",
+      "RUN_NAME": "Běhy, jejichž název obsahuje",
+      "MILESTONE": "Jeden milník",
+      "WEBHOOK": "Jeden webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "Všechny relace",
+      "TAG": "Relace se štítkem"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "Všechny odchozí webhoky",
+      "WEBHOOK": "Jeden webhook"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "Všechny integrace modelů AI",
+      "LLM_INTEGRATION": "Jedna integrace"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "Všechna připojení úložiště",
+      "CODE_REPOSITORY": "Jedno připojení úložiště"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "Všechny integrace",
+      "INTEGRATION": "Jedna integrace"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "Všechny fronty",
+      "QUEUE": "Jedna fronta"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "Celá instalace"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "Všechny běhy",
+      "TAG": "Běhy se štítkem",
+      "RUN_NAME": "Běhy, jejichž název obsahuje"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "Všechny milníky",
+      "MILESTONE": "Jeden milník"
+    },
+    "scopeDisplay": {
+      "PROJECT": "Celý projekt",
+      "FOLDER": "Složka: {name}",
+      "TAG": "Štítek: {name}",
+      "CASE": "Případ: {name}",
+      "RUN_NAME": "Běhy obsahující \"{text}\"",
+      "MILESTONE": "Milník: {name}",
+      "WEBHOOK": "Webhook: {name}",
+      "LLM_INTEGRATION": "Integrace: {name}",
+      "ALL_LLM_INTEGRATIONS": "Všechny integrace modelů AI",
+      "CODE_REPOSITORY": "Úložiště: {name}",
+      "ALL_CODE_REPOSITORIES": "Všechna připojení úložiště",
+      "INTEGRATION": "Integrace: {name}",
+      "ALL_INTEGRATIONS": "Všechny integrace",
+      "QUEUE": "Fronta: {name}",
+      "ALL_QUEUES": "Všechny fronty",
+      "WHOLE_INSTALLATION": "Celá instalace",
+      "missing": "(odebráno)"
+    },
+    "subjectType": {
+      "CASE": "Testovací případ",
+      "RUN": "Testovací běh",
+      "MILESTONE": "Milník",
+      "SESSION": "Relace",
+      "PROJECT": "Projekt",
+      "WEBHOOK": "Webhook"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "Doba trvání výsledku se odchyluje od výchozího nastavení",
+        "description": "Výsledek trvá mnohem déle nebo kratší dobu než nedávné výsledky případu. Výsledky bez uplynulého času se ignorují.",
+        "summary": "Doba trvání výsledku je více než {threshold}% {direction, select, ABOVE {výše} BELOW {níže} other {výše nebo níže}} {baseline, select, MEAN {průměru} other {mediánu}} posledních {window} výsledků případu, po minimálně {minSamples} výsledcích"
+      },
+      "CASE_REGRESSED": {
+        "label": "Případ se regresoval",
+        "description": "Případ, který prošel svými nedávnými výsledky, nyní selže. Zachytí nové selhání stabilního případu.",
+        "summary": "Případ selže po průchodu posledních {window} výsledků"
+      },
+      "CASE_RECOVERED": {
+        "label": "Případ se zotavil",
+        "description": "Případ prošel po neúspěšném průchodu každého ze svých posledních výsledků.",
+        "summary": "Případ prošel po selhání posledních {window, plural, one {# výsledku} few {# výsledků} many {# výsledků} other {# výsledků}}"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "Postupné selhání",
+        "description": "Případ selže daný počet krát za sebou.",
+        "summary": "Případ selže {threshold, plural, one {# krát} few {# krát} many {# krát} other {# krát}} za sebou"
+      },
+      "CASE_FLAKY": {
+        "label": "Případ se stal nestabilní",
+        "description": "Případ se opakovaně přepíná mezi úspěchem a selháním v rámci svých nedávných výsledků. Používá stejné vstupy jako zpráva Flaky Tests.",
+        "summary": "Případ se přepíná mezi úspěchem a selháním minimálně {threshold, plural, one {# krát} few {# krát} many {# krát} other {# krát}} v posledních {window} výsledcích"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "Míra úspěšnosti běhu pod prahovou hodnotou",
+        "description": "Míra úspěšnosti běhu, počítaná nad výsledky s výsledkem úspěchu nebo selhání, klesne pod procento.",
+        "summary": "Míra úspěšnosti běhu je pod {threshold}% jakmile je k dispozici minimálně {minSamples} výsledků s výsledkem, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno jak přicházejí výsledky} other {vyhodnoceno po dokončení běhu}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "Počet selhání běhu",
+        "description": "Běh má více než daný počet neúspěšných výsledků.",
+        "summary": "Běh má více než {threshold, plural, one {# neúspěšný výsledek} few {# neúspěšné výsledky} many {# neúspěšných výsledků} other {# neúspěšných výsledků}}, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno jak přicházejí výsledky} other {vyhodnoceno po dokončení běhu}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "Doba trvání běhu se odchyluje od výchozího nastavení",
+        "description": "Celková doba trvání dokončeného běhu se odchyluje od běhů, které jeho rozsah seskupuje dohromady (stejný štítek nebo fragment názvu).",
+        "summary": "Doba trvání dokončeného běhu je více než {threshold}% {direction, select, ABOVE {výše} BELOW {níže} other {výše nebo níže}} {baseline, select, MEAN {průměru} other {mediánu}} posledních {window} běhů, po minimálně {minSamples} běhech"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Běh nepostupuje",
+        "description": "Otevřený běh nemá nový výsledek daný počet hodin. Kontrolováno každou hodinu.",
+        "summary": "Otevřený běh nemá nový výsledek po dobu více než {threshold, plural, one {# hodiny} few {# hodin} many {# hodin} other {# hodin}}"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "Automatické spuštění selhalo",
+        "description": "Automatické spuštění běhu se nezdaří, nelze jej odeslat nebo vypršel časový limit.",
+        "summary": "Automatické spuštění se nezdaří, nelze jej odeslat nebo vypršel časový limit"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Podíl netestovaných v běhu",
+        "description": "Příliš mnoho případů běhu stále nemá výsledek s několika málo dny před splatností milníku. Kontrolováno denně.",
+        "summary": "Více než {threshold}% případů běhu nemá výsledek s {days, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} nebo méně před splatností milníku"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Problémy otevřené z běhu",
+        "description": "Více než daný počet problémů je propojen s výsledky běhu.",
+        "summary": "Více než {threshold, plural, one {# problém je} few {# problémy jsou} many {# problémů je} other {# problémů je}} propojen s výsledky běhu, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno jak přicházejí výsledky} other {vyhodnoceno po dokončení běhu}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "Relace překročila odhad",
+        "description": "Uplynulý čas dokončené relace překročuje její odhad o procento.",
+        "summary": "Uplynulý čas dokončené relace je více než {threshold}% nad jejím odhadem"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "Milník je pozadu",
+        "description": "Případy běhu milníku nejsou dost dokončeny s několika málo dny před splatností. Kontrolováno denně.",
+        "summary": "Milník je pod {threshold}% hotov s {days, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} nebo méně zbývajícím"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "Milník je po splatnosti",
+        "description": "Splatnost milníku již uplynula a není dokončen. Kontrolováno denně.",
+        "summary": "Milník překračuje svůj termín bez dokončení"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "Pokrytí požadavků pod prahovou hodnotou",
+        "description": "Méně než daný podíl požadavků projektu se počítá jako pokryté. Kontrolováno denně.",
+        "summary": "Méně než {threshold}% požadavků {basis, select, PASSING {mají procházející poslední výsledek} other {je propojen s alespoň jedním testovacím případem}}"
+      },
+      "STALE_CASES": {
+        "label": "Staré případy",
+        "description": "Více než daný počet případů přešlo bez výsledku daný počet dní. Kontrolováno denně.",
+        "summary": "Více než {threshold, plural, one {# případ má} few {# případy mají} many {# případů má} other {# případů má}} žádný výsledek za {days, plural, one {# den} few {# dny} many {# dny} other {# dny}}"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "Podíl automatizace pod prahovou hodnotou",
+        "description": "Méně než daný podíl případů v rozsahu jsou automatizovány. Kontrolováno denně.",
+        "summary": "Méně než {threshold}% případů je automatizováno"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Míra selhání webhooku",
+        "description": "Příliš mnoho nedávných doručení odchozího webhooku selhalo. Kontrolováno každou hodinu.",
+        "summary": "Více než {threshold}% posledních {window} doručení odchozího webhooku selhalo, po minimálně {minSamples} doručeních"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "Rozpočet AI použitý",
+        "description": "Výdaje integrace modelu AI za své fakturační období dosáhnou podílu jeho měsíčního rozpočtu. Spustí se jednou za období pro každou integraci.",
+        "summary": "Výdaje dosáhnou {threshold}% měsíčního rozpočtu integrace"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "Míra chyby požadavku AI",
+        "description": "Příliš mnoho nedávných požadavků integrace modelu AI selhalo.",
+        "summary": "Více než {threshold}% posledních {window} požadavků integrace selhalo, po minimálně {minSamples} požadavcích"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "Omezování rychlosti poskytovatele AI",
+        "description": "Poskytovatel opakovaně omezoval požadavky integrace modelu AI.",
+        "summary": "Poskytovatel omezil alespoň {threshold, plural, one {# požadavek} few {# požadavky} many {# požadavků} other {# požadavků}} během {days, plural, one {# hodiny} few {# hodin} many {# hodin} other {# hodin}}"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "Mezipaměť úložiště selhává",
+        "description": "Připojení úložiště kódu neobnovilo svou mezipaměť úspěšně chvíli. Kontrolováno každou hodinu.",
+        "summary": "Mezipaměť připojení úložiště selhává již více než {threshold, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}}"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "Opětovné ověření integrace je nutné",
+        "description": "Mnoho uživatelů ztratilo připojení k integraci a musí se znovu ověřit. Kontrolováno denně.",
+        "summary": "Alespoň {threshold, plural, one {# uživatel musí} few {# uživatelé musí} many {# uživatelů musí} other {# uživatelů musí}} znovu ověřit integraci"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "Neúspěšné úlohy fronty",
+        "description": "Fronta na pozadí obsahuje příliš mnoho neúspěšných úloh. Kontrolováno každou hodinu.",
+        "summary": "Více než {threshold, plural, one {# úloha selhala} few {# úlohy selhaly} many {# úloh selhalo} other {# úloh selhalo}} ve frontě"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "Fronta je přetížena",
+        "description": "Nejstarší čekající úloha fronty na pozadí čeká příliš dlouho, znamení zastaveného pracovníka. Kontrolováno každou hodinu.",
+        "summary": "Nejstarší čekající úloha fronty je starší než {threshold, plural, one {# minuta} few {# minuty} many {# minut} other {# minut}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "Neuvolnění záznamů auditu",
+        "description": "Zachycené změny se nezapisují do protokolu auditu, znamení zastaveného pracovníka auditu. Kontrolováno každou hodinu.",
+        "summary": "Nejstarší nezpracovaná změna auditu je starší než {threshold, plural, one {# minuta} few {# minuty} many {# minut} other {# minut}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "Uzamčení účtů",
+        "description": "Několik účtů je zároveň uzamčeno po neúspěšných přihlášeních, znamení útoku na vyplňování přihlašovacích údajů. Kontrolováno každou hodinu.",
+        "summary": "Alespoň {threshold, plural, one {# účet je} few {# účty jsou} many {# účtů je} other {# účtů je}} uzamčen po neúspěšných přihlášeních"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "Bez automatizovaných výsledků",
+        "description": "Žádný automatizovaný testovací výsledek nepřišel z žádného potrubí nějakou dobu. Kontrolováno denně.",
+        "summary": "Žádný automatizovaný výsledek nebyl přijat za {threshold, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}}"
+      }
+    },
+    "sourceSummary": "Výsledky: {source, select, MANUAL {manuální} AUTOMATED {automatizované} other {manuální a automatizované}}",
+    "historyDialog": {
+      "title": "Historie: {name}",
+      "empty": "Toto pravidlo se ještě nespustilo.",
+      "columns": {
+        "firedAt": "Spuštěno",
+        "subject": "Subjekt",
+        "observed": "Pozorováno",
+        "threshold": "Prahová hodnota",
+        "notified": "Oznámeno"
+      },
+      "webhookSent": "Webhook odeslán"
+    },
+    "descriptionFor": "Upozornění {name} sleduje a další upozornění v jejich projektech.",
+    "empty": "Ve vašich projektech ještě nejsou žádná upozornění.",
+    "emptyCanCreate": "Ve vašich projektech ještě nejsou žádná upozornění. Přidejte si jeden, aby mohli začít.",
+    "pageDescription": "Jak jste upozorňováni, co vám řekneme a která upozornění sledujete.",
+    "pageDescriptionFor": "Jak {name} je upozorňován a která upozornění sledují.",
+    "pageTabs": {
+      "alerts": "Upozornění",
+      "notifications": "Oznámení"
+    },
+    "metricGroups": {
+      "CASE": "Výsledky testovacího případu",
+      "RUN": "Testovací běhy",
+      "SESSION": "Relace",
+      "MILESTONE": "Milníky",
+      "PROJECT": "Stav projektu",
+      "WEBHOOK": "Webhoky",
+      "LLM_INTEGRATION": "Modely AI",
+      "CODE_REPOSITORY": "Úložiště kódu",
+      "INTEGRATION": "Integrace",
+      "QUEUE": "Fronty na pozadí",
+      "SYSTEM": "Instalace"
+    }
   }
 }

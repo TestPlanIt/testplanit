@@ -1,6 +1,6 @@
 // Publish pre-release packages from a release branch under the `beta` npm tag.
 //
-// A release branch (today `release/v1.1`, a semantic-release prerelease branch
+// A release branch (today `release/v1.2`, a semantic-release prerelease branch
 // for the app) carries package changes that depend on the unreleased app line
 // and therefore cannot ship to `latest` — a user on the released app would
 // install them and hit missing endpoints. They go out under the `beta`
@@ -12,7 +12,7 @@
 // why most packages/* versions here trail or equal npm). Cutting a pre-release
 // is instead a deliberate manual step: set the package's version to an
 // explicit pre-release on the release branch and push. Versions track the
-// app's line — `1.1.0-beta.N` for release/v1.1 — which is ahead of every
+// app's line — `1.2.0-beta.N` for release/v1.2 — which is ahead of every
 // packages/* `latest`.
 //
 // That drives the safety gate below: this script publishes a package ONLY when

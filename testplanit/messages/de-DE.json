@@ -577,6 +577,7 @@
       "addFieldTo": "Feld zu {section} hinzufügen",
       "selectTemplates": "Vorlagen auswählen",
       "selectUsers": "Benutzer auswählen",
+      "selectGroups": "Gruppen auswählen",
       "selectOption": "Wählen Sie eine Option aus",
       "date": "Wählen Sie ein Datum aus",
       "selectEncoding": "Kodierung auswählen...",
@@ -737,7 +738,8 @@
       "adminSamlConfig": "Admin - SAML-Konfiguration",
       "apiDocumentation": "API-Dokumentation",
       "sharedContent": "Gemeinsame Inhalte",
-      "impact": "Auswirkungsanalyse"
+      "impact": "Auswirkungsanalyse",
+      "alerts": "Benachrichtigungen & Warnmeldungen"
     },
     "aria": {
       "userMenu": "Benutzermenü",
@@ -1660,7 +1662,8 @@
           "scimGroupMemberAdded": "Mitglieder hinzugefügt",
           "scimGroupMemberRemoved": "Mitglieder entfernt",
           "scimGroupDeleted": "Gruppe gelöscht",
-          "scimGroupMemberAddedSummary": "Hinzugefügte Mitglieder (Zusammenfassung der Massensynchronisierung)"
+          "scimGroupMemberAddedSummary": "Hinzugefügte Mitglieder (Zusammenfassung der Massensynchronisierung)",
+          "triggered": "Ausgelöst"
         },
         "iterationResultHelp": "Wird jedes Mal ausgelöst, wenn ein Iterationsergebnis aufgezeichnet wird – ob erfolgreich, fehlgeschlagen, übersprungen oder ein anderer Status. Bei langen Automatisierungsläufen sparsam verwenden (ein Ereignis pro Iteration).",
         "events": {
@@ -1741,7 +1744,7 @@
         "inboundGiteaTitle": "Gitea Inbound-Webhook",
         "inboundGiteaScopeHint": "Gitea <code>veröffentlicht</code> Ereignisse, die mit TestPlanIt verknüpft sind. Andere Ereignistypen werden akzeptiert, aber keine Probleme aktualisieren.",
         "inboundAdoTitle": "Azure DevOps eingehender Webhook",
-        "inboundAdoScopeHint": "Azure DevOps-Ereignisse <code>workitem.updated</code> aktualisieren verknüpfte TestPlanIt-Tickets. Andere Ereignisse werden zwar akzeptiert, aktualisieren aber keine Tickets.",
+        "inboundAdoScopeHint": "Azure DevOps <code>workitem.created</code> und <code>workitem.updated</code> Ereignisse aktualisieren verknüpfte TestPlanIt-Tickets. Andere Ereignisse werden akzeptiert, aktualisieren aber keine Tickets.",
         "inboundAdoUsername": "Benutzername",
         "inboundAdoUsernamePlaceholder": "Servicekonto",
         "inboundAdoUsernameHelp": "Die Konfiguration erfolgt auf der Azure DevOps Service Hook-Seite. TestPlanIt überprüft dies über HTTP-Basisauthentifizierung.",
@@ -1758,7 +1761,7 @@
         "setupStepsGithubStep4": "Wählen Sie „Einzelne Ereignisse auswählen“ und aktivieren Sie „Tickets“.",
         "setupStepsGithubStep5": "Klicken Sie auf „Webhook hinzufügen“. Verwenden Sie anschließend „Test-Webhook senden“, um die Pipeline zu überprüfen.",
         "setupStepsAdoStep1": "Gehen Sie in Ihrem Azure DevOps-Projekt zu Projekteinstellungen → Diensthooks → Abonnement erstellen.",
-        "setupStepsAdoStep2": "Wählen Sie als Dienst „Web Hooks“ aus. Stellen Sie den Auslöser auf „Arbeitselement aktualisiert“ ein.",
+        "setupStepsAdoStep2": "Wählen Sie \"Web Hooks\" als Dienst aus. Setzen Sie den Auslöser auf \"Work item created\" und wiederholen Sie diese Schritte für ein zweites Abonnement mit \"Work item updated\".",
         "setupStepsAdoStep3": "Stellen Sie die zu sendenden Ressourcendetails auf „Alle“ ein, damit auch System.State enthalten ist.",
         "setupStepsAdoStep4": "Fügen Sie die unten stehende URL in das URL-Feld ein. Legen Sie Benutzername und Passwort für die Basisauthentifizierung auf die oben eingegebenen Werte fest.",
         "setupStepsAdoStep5": "Speichern Sie das Abonnement. Verwenden Sie unten „Test-Webhook senden“, um die Pipeline zu überprüfen.",
@@ -1852,13 +1855,49 @@
         "setupStepsMantisbtStep4": "Erstellen oder aktualisieren Sie ein Problem in MantisBT; der Status des verknüpften Problems wird hier synchronisiert.",
         "inboundChooserClickup": "ClickUp",
         "inboundClickupTitle": "ClickUp Inbound-Webhook",
-        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code>-Ereignisse aktualisieren verknüpfte TestPlanIt-Probleme. Andere Task-Ereignisse werden akzeptiert, aktualisieren aber keine Probleme.",
+        "inboundClickupScopeHint": "ClickUp <code>taskCreated</code> und <code>taskStatusUpdated</code> Ereignisse aktualisieren verknüpfte TestPlanIt-Tickets. Andere Task-Ereignisse werden akzeptiert, aktualisieren aber keine Tickets.",
         "inboundClickupRegisterHint": "ClickUp hat keine Webhook-Einstellungsseite: Webhooks werden über seine API erstellt, und ClickUp wählt das Signierungsgeheimnis. Lassen Sie das Geheimnis leer, und TestPlanIt registriert diesen Webhook in ClickUp für die verknüpfte Liste mit Ihrer ClickUp-Autorisierung.",
         "inboundClickupSecret": "Webhook-Geheimnis (optional)",
         "inboundClickupSecretHelp": "Nur erforderlich, wenn Sie den Webhook selbst mit der ClickUp-API zum Erstellen von Webhooks erstellt haben: Fügen Sie das Geheimnis ein, das ClickUp zurückgegeben hat. Verschlüsselt im Ruhezustand gespeichert.",
         "setupStepsClickupStep1": "Wenn Sie das Geheimnis leer gelassen haben, hat TestPlanIt diesen Webhook bereits bei ClickUp für die verknüpfte Liste registriert – es gibt nichts zu konfigurieren in ClickUp.",
         "setupStepsClickupStep2": "Wenn Sie den Webhook selbst über die ClickUp-API zum Erstellen von Webhooks registriert haben, stellen Sie sicher, dass sein Endpunkt die folgende URL ist und abonnieren Sie das Ereignis taskStatusUpdated.",
         "setupStepsClickupStep3": "Verwenden Sie \"Webhook testen\" unten, um die Pipeline zu überprüfen. Das Rotieren des Geheimnisses registriert einen neuen Webhook in ClickUp.",
+        "actions": {
+          "description": "Was TestPlanIt tut, wenn dieser Webhook ein Ereignis erhält. Aktionen werden in der angegebenen Reihenfolge ausgeführt.",
+          "empty": "Keine Aktionen. Ereignisse werden aufgezeichnet, aber es passiert nichts.",
+          "addTitle": "Aktion hinzufügen",
+          "editTitle": "Aktion bearbeiten",
+          "dialogDescription": "Wählen Sie das Ereignis, das diese Aktion auslöst, und was sie tut.",
+          "trigger": {
+            "ISSUE_EVENT": "Beliebiges Issue-Ereignis",
+            "ISSUE_STATUS_ENTERED": "Issue-Status ändert sich"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "Jedes Ereignis, das der Tracker über ein Issue sendet.",
+            "ISSUE_CREATED": "Ein Issue, das TestPlanIt noch nicht gesehen hat.",
+            "ISSUE_STATUS_ENTERED": "Ein Issue wechselt in einen der gewählten Status."
+          },
+          "outcome": {
+            "cases_drafted": "Testfälle entworfen",
+            "draft_queued": "Testfälle werden entworfen",
+            "has_cases": "Issue hat bereits Testfälle",
+            "no_llm": "Kein aktives KI-Modell",
+            "no_template": "Keine Vorlage",
+            "no_target": "Kein Repository oder Standardstatus",
+            "draft_failed": "Entwurf fehlgeschlagen",
+            "already_composed": "Durchlauf bereits für diese Änderung erstellt",
+            "execute_failed": "Ausführung nicht angefordert"
+          },
+          "dragToReorder": "Zum Neuordnen ziehen",
+          "requirementsOnly": "Nur Anforderungen",
+          "requirementsOnlyHelp": "Nur Tickets, die das Projekt als Anforderungen einstuft.",
+          "includeChildIssues": "Untergeordnete Issues einbeziehen",
+          "includeChildIssuesHelp": "Nehmen Sie auch die Testfälle auf, die mit den untergeordneten Issues des Tickets verknüpft sind.",
+          "notifyHelp": "Wer wird benachrichtigt, wenn die Entwürfe zur Überprüfung bereit sind. Die Benachrichtigungseinstellungen jeder Person gelten weiterhin.",
+          "draftFolderNote": "Testfälle, die automatisch vom Webhook {webhook} entworfen wurden.",
+          "draftFolderNoteCases": "Vom Systembenutzer entworfen; jeder Fall ist mit dem Ticket verknüpft, aus dem er entworfen wurde.",
+          "viewFolder": "Ordner anzeigen"
+        },
         "codeRepos": {
           "empty": "Keine Repositorys sind für die Auswirkungsanalyse verbunden. <link>Verbinden Sie zuerst eines</link>.",
           "unsupported": "{provider}-Repositorys können keine Webhooks an TestPlanIt senden.",
@@ -1878,10 +1917,12 @@
           "eventBranchPushHelp": "Analysieren Sie jeden Push zu einem anderen Zweig gegen den Basiszweig, wie einen Pull-Request, und verfassen Sie einen Testlauf für jeden.",
           "baseBranch": "Basis-Zweig",
           "baseBranchHelp": "Pushes zu diesem Zweig werden von selbst analysiert; Pull-Anfragen und andere Zweige werden damit verglichen. Leer lassen, um den Standard-Zweig der Verbindung zu verwenden.",
+          "minScoreHelp": "Jede zusammengesetzte Testabfolge enthält alle Testfälle, deren Analyseergebnis mindestens diese Punktzahl aufweist (0–100). Lassen Sie dieses Feld leer, um die angehefteten und betroffenen Tests wie bei einer manuell gestarteten Abfolge zu übernehmen.",
+          "minScoreInvalid": "Geben Sie eine ganze Zahl von 0 bis 100 ein, oder lassen Sie das Feld leer",
           "autoExecute": "Automatisierte Fälle ausführen",
-          "autoExecuteHelp": "Nachdem der Lauf erstellt wurde, fordern Sie die automatisierte Ausführung seiner automatisierten Fälle auf diesem Ziel an. Manuelle Fälle bleiben im Lauf für Tester.",
-          "autoExecuteNoTargets": "Für dieses Projekt ist kein Ausführungsziel konfiguriert. <link>Fügen Sie eines hinzu</link>, um Läufe automatisch auszuführen.",
-          "autoExecuteTargetMissing": "Das gewählte Ausführungsziel wurde gelöscht oder deaktiviert. Läufe werden immer noch erstellt, aber keine Ausführung wird angefordert, bis Sie ein anderes Ziel wählen.",
+          "autoExecuteHelp": "Nach dem Erstellen der Testabfolge wird die automatisierte Ausführung ihrer automatisierten Fälle auf diesem Ziel angefordert. Manuelle Fälle bleiben in der Abfolge für Tester.",
+          "autoExecuteNoTargets": "Für dieses Projekt ist kein Ausführungsziel konfiguriert. <link>Fügen Sie eines hinzu</link>, um Testabfolgen automatisch auszuführen.",
+          "autoExecuteTargetMissing": "Das ausgewählte Ausführungsziel wurde gelöscht oder deaktiviert. Testabfolgen werden weiterhin erstellt, aber es wird keine Ausführung angefordert, bis Sie ein anderes Ziel auswählen.",
           "autoExecuteSaveError": "Die Einstellungen für die automatisierte Ausführung konnten nicht gespeichert werden"
         },
         "inboundEmptyState": "Noch keine eingehenden Webhooks. <link>Fügen Sie eines hinzu</link>, um Problemupdates von Ihrem Issue-Tracker oder Pull-Anfragen und Pushes aus einem verbundenen Repository zu erhalten.",
@@ -1895,7 +1936,8 @@
           "sourceRepositoryHelp": "Starten Sie eine Auswirkungsanalyse und verfassen Sie einen Testlauf, wenn ein Pull-Request geöffnet oder Commits gepusht werden.",
           "noRepositoryAvailable": "Jedes verbundene Repository hat bereits einen Webhook oder kann keine Webhooks senden.",
           "repositoryPlaceholder": "Repository auswählen"
-        }
+        },
+        "outboundSubsAlerts": "Warnmeldungen"
       },
       "aiModels": {
         "description": "KI-Modelle für die intelligente Generierung und Analyse von Testfällen konfigurieren",
@@ -2108,7 +2150,6 @@
           "pathLabel": "Weg",
           "patternLabel": "Muster",
           "previewFiles": "Vorschau der Dateien",
-          "rootHint": "Lassen Sie den Pfad leer oder geben Sie . ein, um am Repository-Stammverzeichnis zu beginnen; path . mit pattern **/* bezieht jede Datei ein.",
           "scanningRepo": "Repository-Dateien werden durchsucht… ({seconds}s)",
           "title": "Pfadmuster",
           "truncatedBadge": "Die Ergebnisse können unvollständig sein (Anbieterbeschränkung)"
@@ -2261,7 +2302,7 @@
           "branchesFallbackHint": "Geben Sie stattdessen den Namen des Zweigs ein."
         },
         "pathPatterns": {
-          "description": "Welche Anwendungsdateien Impact liest: den Code Pin Dateibrowser, den Cache, Repository-Marker und welche geänderten Dateien eine Analyse ignoriert.",
+          "description": "Welche Anwendungsdateien Impact liest: die Code-Pin-Dateiauswahl, den Cache, Repository-Marker und welche geänderten Dateien eine Analyse ignoriert.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2871,7 +2912,9 @@
         "detailsDisplayMode": {
           "docked": "Angedocktes Panel",
           "newWindow": "Neues Fenster"
-        }
+        },
+        "notificationsLabel": "Benachrichtigungen",
+        "notificationsMoved": "Benachrichtigungen & Warnmeldungen verwalten"
       },
       "assignments": {
         "title": "Aufgaben",
@@ -2980,6 +3023,10 @@
             "label": "KI-Schritte abgeleitet",
             "description": "Ein KI-Schritt-Ableitungs-Job, den Sie gestartet haben, hat Schritte geschrieben."
           },
+          "CASES_DRAFTED": {
+            "label": "KI-entworfene Testfälle",
+            "description": "Eine Webhook-Aktion hat Testfälle für ein Issue entworfen und Sie als Reviewer benannt."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integration benötigt erneute Autorisierung",
             "description": "Ihre Verbindung zu einer Integration ist abgelaufen oder wurde widerrufen und muss erneut verbunden werden."
@@ -2996,9 +3043,9 @@
             "label": "Neue Benutzerregistrierungen",
             "description": "Ein neuer Benutzer meldet sich über das Formular, SSO oder SAML an."
           },
-          "LLM_BUDGET_ALERT": {
-            "label": "KI-Budgetwarnungen",
-            "description": "LLM-Ausgaben überschreiten eine Budgetschwelle für die Abrechnung."
+          "ALERT_TRIGGERED": {
+            "label": "Warnmeldungen",
+            "description": "Eine Warnmeldung, die Sie abonniert haben, wird ausgelöst, weil eine Testkennzahl die Grenze überschreitet, die sie überwacht."
           }
         },
         "success": {
@@ -3123,7 +3170,8 @@
       "orange": "Orange",
       "accessible": "Zugänglich",
       "accessibledark": "Barrierefrei (Dunkel)"
-    }
+    },
+    "myAlerts": "Benachrichtigungen & Warnmeldungen"
   },
   "repository": {
     "version": {
@@ -3196,7 +3244,12 @@
       "noStepsInSelectedGroup": "Die ausgewählte Gruppe enthält keine Schritte.",
       "sharedGroupSuffix": "(Gemeinsame Schritte)",
       "unnamedSharedGroup": "Unbenannte gemeinsame Schritte",
-      "noStepsInSelectedSharedGroup": "Die ausgewählte gemeinsame Gruppe enthält keine Schritte."
+      "noStepsInSelectedSharedGroup": "Die ausgewählte gemeinsame Gruppe enthält keine Schritte.",
+      "layout": {
+        "label": "Schritt-Layout",
+        "stacked": "Gestapelt",
+        "sideBySide": "Nebeneinander"
+      }
     },
     "testCase": {
       "toggleAutomated": "Automatisierte Tests umschalten",
@@ -3686,7 +3739,7 @@
         "title": "Anforderungsquelle auswählen",
         "description": "Wählen Sie aus, ob Testfälle aus einem Ticket oder einem Anforderungsdokument generiert werden sollen.",
         "folderContextTip": "Vorhandene Testfälle aus \"{folderName}\" und dessen übergeordneten/untergeordneten Ordnern werden als Kontext verwendet, um Duplikate zu vermeiden. Stellen Sie sicher, dass Sie den richtigen Ordner ausgewählt haben, bevor Sie fortfahren.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
         "folderContextEmptyTitle": "Keine vorhandenen Testfälle als Kontext verfügbar",
         "folderContextEmpty": "\"{folderName}\" und dessen übergeordnete/untergeordnete Ordner enthalten keine Testfälle, daher hat die KI keine Beispiele für den Stil oder die vorhandene Abdeckung Ihres Projekts. Starten Sie den Generator für bessere Ergebnisse im Ordner, in dem diese Testfälle gehören, neben verwandten Fällen.",
         "currentFolder": "aktueller Ordner",
@@ -5510,6 +5563,7 @@
       "scimProvisionerBadge": "SCIM-Provisioner",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Verwaltet von SCIM. Verwaltung über die SCIM-Administrationsseite.",
+      "systemUserTooltip": "Integrierter Benutzer für Arbeiten, die TestPlanIt automatisch ausführt, z. B. Webhook-Aktionen. Er kann sich nicht anmelden oder bearbeitet werden.",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Ja",
       "scimUserLockedTitle": "Der Benutzer wird von SCIM verwaltet.",
@@ -6180,7 +6234,8 @@
         "stepSequenceMatchCases": "Schrittsequenz-Übereinstimmungsfälle",
         "testRunCases": "Testlauffälle",
         "testRunCaseDataSetSnapshots": "Testlauf-Dataset-Snapshots",
-        "testRunCaseIterations": "Testlauf-Iterationen"
+        "testRunCaseIterations": "Testlauf-Iterationen",
+        "alertRules": "Warnmeldungen"
       },
       "table": {
         "title": "Gelöscht {itemType}",
@@ -6450,7 +6505,7 @@
         "mantisBTUrl": "MantisBT-URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
         "mantisBTUrlHelp": "Die Basis-URL Ihrer MantisBT-Instanz",
-        "clickupTeamId": "ClickUp Team (Workspace) ID",
+        "clickupTeamId": "ClickUp-Team-(Arbeitsbereich)-ID",
         "clickupTeamIdPlaceholder": "z.B. 9013456789",
         "clickupTeamIdHelp": "Befindet sich in der ClickUp-URL nach app.clickup.com/",
         "clickupListId": "Standard ClickUp List ID",
@@ -6531,7 +6586,6 @@
         "defaultModelPlaceholder": "gpt-4o, claude-3-5-sonnet-20241022, usw.",
         "defaultModelDescription": "Das standardmäßig zu verwendende Modell",
         "maxTokensPerRequest": "Maximale Anzahl an Token pro Anfrage",
-        "maxRequestsPerMinute": "Maximale Anfragen pro Minute",
         "costPerInputToken": "Kosten pro 1 Million Input-Tokens ($)",
         "costPerOutputToken": "Kosten pro 1 Million Output-Token ($)",
         "monthlyBudget": "Monatliches Budget ($)",
@@ -6910,7 +6964,8 @@
         "markRead": "Als gelesen markieren",
         "markUnread": "Als ungelesen markieren",
         "markAllRead": "Alle als gelesen markieren",
-        "deleteAll": "Alles löschen"
+        "deleteAll": "Alles löschen",
+        "manageAlerts": "Benachrichtigungen & Warnmeldungen verwalten"
       },
       "success": {
         "deleted": "Benachrichtigung gelöscht",
@@ -6954,11 +7009,6 @@
         "shareLinkAccessedMessage": "{viewer} hat Ihren freigegebenen Bericht angesehen: \"{shareTitle}\"",
         "viewedYourSharedLink": "Ich habe Ihren geteilten Link angesehen.",
         "viewedAt": "Gesehen am",
-        "budgetDisclaimer": "Die Budgetgrenzen dienen lediglich der Information und verhindern die Nutzung nicht.",
-        "llmBudgetExceededTitle": "LLM-Budget überschritten",
-        "llmBudgetThresholdTitle": "LLM-Budget {threshold}% Ausgeschöpft",
-        "llmBudgetExceededMessage": "{providerName} hat sein monatliches Budget überschritten: {spend} hat von {budget} Budget ausgegeben.",
-        "llmBudgetThresholdMessage": "{providerName} hat {threshold}% seines monatlichen Budgets verwendet: {spend} von {budget}.",
         "userRegisteredTitle": "Neue Benutzerregistrierung",
         "userRegisteredMessageSso": "{userName} ({userEmail}) hat sich über SSO registriert",
         "userRegisteredMessageForm": "{userName} ({userEmail}) hat sich über das Anmeldeformular registriert",
@@ -6997,6 +7047,9 @@
         "aiStepsDerivedTitle": "KI-abgeleitete Testschritte bereit",
         "aiStepsDerivedMessage": "{count, plural, one {# Testfall wurde} other {# Testfälle wurden}} mit KI-abgeleiteten Schritten versehen — auf Richtigkeit prüfen.",
         "aiStepsDerivedReviewLink": "Testlauf überprüfen",
+        "casesDraftedTitle": "KI-entworfene Testfälle bereit",
+        "casesDraftedMessage": "{count, plural, one {# Testfall wurde} other {# Testfälle wurden}} für {issueKey} entworfen — überprüfen Sie auf Richtigkeit.",
+        "casesDraftedReviewLink": "Überprüfung in {folderName}",
         "integrationAuthExpiredTitle": "Integrationsverbindung abgelaufen",
         "integrationAuthExpiredMessage": "Ihre Verbindung zu \"{integrationName}\" ist abgelaufen. Stellen Sie die Verbindung erneut her, um die Issue-Synchronisierung fortzusetzen.",
         "integrationAuthExpiredReconnect": "Erneut verbinden",
@@ -7008,7 +7061,56 @@
         "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} bestanden, daher ist dieser Testfall, der Ihnen zugewiesen ist, nicht mehr blockiert:",
         "runCaseUnblockedEmailMessage": "\"{testCaseName}\" in Testlauf \"{testRunName}\" (Projekt \"{projectName}\") ist nicht mehr blockiert: \"{prerequisiteName}\" bestanden. Es ist Ihnen zugewiesen und bereit zur Ausführung.",
         "runCaseUnblockedReason": "Sie erhalten dies, weil der Testfall Ihnen zugewiesen ist.",
-        "inTestRun": "in Testlauf"
+        "inTestRun": "in Testlauf",
+        "alertTriggeredTitle": "Warnmeldung ausgelöst",
+        "alertTriggeredRule": "Regel: {ruleName}",
+        "alertTriggeredEmailMessage": "Warnmeldung \"{ruleName}\" wurde für {subjectLabel} \"{subjectName}\" in Projekt \"{projectName}\" ausgelöst: {detail}",
+        "alertTriggeredEmailMessageSystem": "Warnmeldung \"{ruleName}\" wurde für {subjectLabel} \"{subjectName}\" ausgelöst: {detail}",
+        "alertTriggeredReason": "Sie erhalten dies, weil Sie diese Warnmeldung abonniert haben.",
+        "alertSubject": {
+          "CASE": "Testfall",
+          "RUN": "Testdurchlauf",
+          "MILESTONE": "Meilenstein",
+          "SESSION": "Sitzung",
+          "PROJECT": "Projekt",
+          "WEBHOOK": "Webhook",
+          "LLM_INTEGRATION": "KI-Modellintegration",
+          "CODE_REPOSITORY": "Repository-Verbindung",
+          "INTEGRATION": "Integration",
+          "QUEUE": "Warteschlange",
+          "SYSTEM": "Installation"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "Das Ergebnis dauerte {elapsed}, {deviation}% abweichend von der Baseline von {baseline} (mehr als {threshold}% zulässig).",
+          "CASE_REGRESSED": "Der Fall fehlgeschlagen nach bestandenem {passedBefore, plural, one {seinen letzten Ergebnis} other {seinen letzten # Ergebnisse}}.",
+          "CASE_RECOVERED": "Der Fall bestanden nach Fehler {failedBefore, plural, one {seinen letzten Ergebnis} other {seinen letzten # Ergebnisse}}.",
+          "RUN_DURATION_DEVIATION": "Der Durchlauf dauerte {elapsed}, {deviation}% abweichend von der Baseline von {baseline} (mehr als {threshold}% zulässig).",
+          "RUN_NOT_PROGRESSING": "Der Durchlauf hat {idleHours, plural, one {# Stunde} other {# Stunden}} lang kein neues Ergebnis (Schwelle {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "Die automatisierte Ausführung auf {target} endete mit {status}{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% der Fälle des Durchlaufs haben kein Ergebnis mit {daysRemaining, plural, one {# Tag} other {# Tagen}} bis zum Fälligkeitsdatum des Meilensteins (Schwelle {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# Ticket ist} other {# Tickets sind}} mit den Ergebnissen des Durchlaufs verknüpft (Schwelle {threshold}).",
+          "SESSION_OVERRUN": "Die Sitzung dauerte {elapsed} gegen eine Schätzung von {estimate}, {overrun}% über (mehr als {threshold}% zulässig).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} von {total} Anforderungen ({coverage}%) {basis, select, PASSING {haben ein bestandenes letztes Ergebnis} other {sind mit einem Testfall verknüpft}} (Schwelle {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis (Schwelle {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} von {total} Fällen ({automatedPercent}%) sind automatisiert (Schwelle {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "{failed} der letzten {sampleCount} Lieferungen fehlgeschlagen ({failureRate}%, Schwelle {threshold}%).",
+          "CONSECUTIVE_FAILURES": "Der Fall hat {streak, plural, one {# Mal} other {# Male}} hintereinander fehlgeschlagen (Schwelle {threshold}).",
+          "CASE_FLAKY": "Das Ergebnis wechselte {flips, plural, one {# Mal} other {# Male}} in den letzten {sampleCount} Ergebnissen (Schwelle {threshold}).",
+          "RUN_PASS_RATE_BELOW": "Die Bestehensquote liegt bei {passRate}% über {sampleCount} Ergebnisse (Schwelle {threshold}%).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# Ergebnis hat} other {# Ergebnisse haben}} fehlgeschlagen (Schwelle {threshold}).",
+          "MILESTONE_BEHIND": "Der Meilenstein ist zu {completion}% abgeschlossen mit {daysRemaining, plural, one {# Tag} other {# Tagen}} verbleibend (Schwelle {threshold}%).",
+          "MILESTONE_OVERDUE": "Der Meilenstein ist {daysOverdue, plural, one {# Tag} other {# Tage}} nach seinem Fälligkeitsdatum.",
+          "LLM_BUDGET_USED": "Ausgaben für den Abrechnungszeitraum sind {spend} des monatlichen Budgets von {budget} ({percent}%, Schwelle {threshold}%).",
+          "LLM_ERROR_RATE": "{failed} der letzten {sampleCount} Anfragen fehlgeschlagen ({failureRate}%, Schwelle {threshold}%).",
+          "LLM_RATE_LIMITED": "Der Anbieter hat {blocked, plural, one {# Anfrage} other {# Anfragen}} in den letzten {hours, plural, one {# Stunde} other {# Stunden}} begrenzt (Schwelle {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "Der Repository-Cache hat {hours, plural, one {# Stunde} other {# Stunden}} lang nicht funktioniert (Schwelle {threshold}){error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# Benutzer muss} other {# Benutzer müssen}} die Integration erneut autorisieren (Schwelle {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# Job hat} other {# Jobs haben}} in der Warteschlange fehlgeschlagen (Schwelle {threshold}).",
+          "QUEUE_BACKLOG": "Der älteste von {waiting, plural, one {# wartenden Job} other {# wartenden Jobs}} hat {minutes, plural, one {# Minute} other {# Minuten}} gewartet (Schwelle {threshold}).",
+          "AUDIT_BACKLOG": "Die älteste unverarbeitete Audit-Änderung ist {minutes, plural, one {# Minute} other {# Minuten}} alt (Schwelle {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# Konto ist} other {# Konten sind}} nach fehlgeschlagenen Anmeldeversuchen gesperrt (Schwelle {threshold}).",
+          "NO_AUTOMATED_RESULTS": "Kein automatisiertes Ergebnis ist seit {hours, plural, one {# Stunde} other {# Stunden}} angekommen (Schwelle {threshold})."
+        }
       }
     },
     "issues": {
@@ -7587,7 +7689,8 @@
       "SharedSteps": "Gemeinsame Schritte",
       "Issues": "Probleme",
       "Reporting": "Berichterstattung",
-      "Settings": "Projekteinstellungen"
+      "Settings": "Projektverwaltung",
+      "Alerts": "Warnmeldungen"
     },
     "WorkflowType": {
       "NOT_STARTED": "Nicht gestartet",
@@ -7645,6 +7748,9 @@
     "businessHours": "{hours, number, ::.0} Geschäftsstunden"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## Labels\nDie Tags, die das Ticket in Ihrem Tracker trägt. Die Aktion nimmt nur ein Ticket auf, das mindestens eines dieser Tags hat; lassen Sie es leer, um Tickets unabhängig von ihren Labels zu erfassen.\n\n- Jira, GitHub, GitLab und Gitea: die Labels des Tickets\n- Azure DevOps, ClickUp und MantisBT: die Tags des Tickets\n- Redmine: die Kategorie des Tickets\n- Der Abgleich ignoriert Groß- und Kleinschreibung"
+    },
     "auditLogs": "## Audit-Protokolle\nSystemweites Prüfprotokoll zur Überwachung von Sicherheit und Compliance anzeigen",
     "statuses": "## Status\nVerwalten Sie die Statuswerte, die Tester bei der Erfassung eines Testergebnisses zuweisen, wie z. B. Bestanden, Fehlgeschlagen und Blockiert.",
     "configurations": "## Konfigurationen\nKonfigurationen sind eine Kombination aus Kategorien und Varianten, die zur Definition einer Testumgebung verwendet werden. Beispiele hierfür sind Betriebssystem/Browser, Testserver, Sprache usw.",
@@ -7827,7 +7933,7 @@
       "name": "## Rollenname\nEin klarer, prägnanter und beschreibender Name oder ein oder mehrere Schlüsselwörter, die in allen Projekten verwendet werden.\n\n– Hilft Teammitgliedern, schnell zugehörige Testfälle, Testläufe und Sitzungen zu finden.",
       "isDefault": "## Standardrolle\nGibt an, ob diese Rolle die Standardrolle für Ihr Projekt ist.\n\n- Die Standardrolle ist für neue Benutzer vorausgewählt.\n- Kann jederzeit geändert werden.",
       "permissions": {
-        "canAddEdit": "## Hinzufügen/Bearbeiten\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich hinzufügen und bearbeiten kann.\n\n- **Automatisierte Ausführung** erteilt das Recht, automatisierte Ausführungen auf einem CI-Anbieter zu starten, zu wiederholen und abzubrechen. Die Aufzeichnung der Ergebnisse benötigt weiterhin **Testlaufergebnisse** Hinzufügen/Bearbeiten, und das Starten aus dem Repository benötigt auch **Testläufe** Hinzufügen/Bearbeiten, da dadurch ein Lauf erstellt oder erweitert wird.",
+        "canAddEdit": "## Hinzufügen/Bearbeiten\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich hinzufügen und bearbeiten kann.\n\n- **Automatisierte Ausführung** gewährt das Recht, automatisierte Ausführungen auf einem CI-Anbieter zu starten, zu wiederholen und abzubrechen. Das Aufzeichnen der Ergebnisse erfordert immer noch **Test-Run-Ergebnisse** Hinzufügen/Bearbeiten, und das Starten eines aus dem Repository erfordert auch **Test Runs** Hinzufügen/Bearbeiten, da es einen Durchlauf erstellt oder erweitert.\n- **Warnmeldungen** gewährt das Recht, Warnmeldungen im Projekt zu erstellen und diejenigen zu bearbeiten, zu pausieren und zu löschen, die Sie erstellt haben. Projektadministratoren verwalten jede Warnmeldung und die Abonnements anderer Benutzer; jeder kann einer Warnmeldung folgen oder sie verlassen.",
         "canDelete": "## Löschen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich löschen kann.",
         "canClose": "## Schließen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich schließen kann.",
         "canApprove": "## Genehmigen\nGibt an, ob diese Rolle Überprüfungsanfragen für den zugehörigen Anwendungsbereich genehmigen kann. Gilt nur für Testfall-Repository, Testläufe und Sitzungen.",
@@ -7858,10 +7964,9 @@
       "maxTokensPerRequest": "## Max Tokens Per Request\nDie **feste Obergrenze für _Ausgabe_-Tokens**, die das Modell in einer einzelnen Antwort erzeugen darf.\n\n- Begrenzt die Länge der **Antwort** des Modells — nicht, wie viel Kontext du ihm sendest\n- Anfragen, die mehr als dieses Limit verlangen, werden **abgelehnt, bevor sie das Modell erreichen**\n- Setze es auf das tatsächliche maximale Ausgabelimit deines Modells — z. B. `128000` für Claude Opus/Sonnet, `64000` für Claude Haiku, `65536` für Gemini, `16384` für GPT-4o\n- Zu niedrig → KI-Funktionen schlagen fehl oder erzeugen abgeschnittene Ausgaben",
       "defaultMaxTokens": "## Standard-Max-Tokens\nDie **_Ausgabe_-Länge**, die dieses KI-Modell anfordert, begrenzt durch _Max Tokens Per Request_.\n\n- **Testfallgenerierung** (jede Quelle, einschließlich des Jira-Issue-Panels), **Markdown-Testfall-Parsing**, **Editor-Schreibassistent** und **Intelligente Testfallauswahl** verwenden immer diesen Wert — ihre Prompt-Config-_Max Output Tokens_ werden nicht angewendet\n- **Export-Codegenerierung**, **KI-Tag-Vorschläge**, **KI-Schritt-Ableitung** und der **Bericht zu Automatisierungskandidaten** verwenden stattdessen ihre eigenen _Max Output Tokens_ aus **Admin → Prompt Config**\n- Modelle, die vor der Antwort nachdenken (z. B. Claude Opus 5), verbrauchen einen Teil dieses Budgets für das Reasoning — lassen Sie Raum für die Antwort\n- Es steuert **nicht**, wie viel Repository-Code QuickScript an das Modell sendet — dieses Budget wird automatisch aus dem Kontextfenster des Modells abgeleitet\n- Halten Sie es ≤ _Max Tokens Per Request_",
       "repoContextBudget": "## Repository-Kontextbudget\nWie viel Code Ihres verbundenen Repositorys QuickScript dem Modell bei der Skriptgenerierung zuführt.\n\n- **Wird automatisch festgelegt** anhand des Eingabekontextfensters des ausgewählten Modells – hier gibt es nichts zu konfigurieren\n- Modelle mit größerem Kontext (Claude, Gemini, DeepSeek) erhalten mehr; kleine lokale Modelle erhalten eine sichere Menge, die nicht überläuft\n- Mehr Kontext verankert das Skript in Ihren echten Page Objects und Fixtures – es ändert nicht, wie lang das generierte Skript ist",
-      "maxRequestsPerMinute": "## Maximale Anfragen pro Minute\nBegrenzt die Anzahl der API-Aufrufe, die pro Minute an diesen Anbieter gesendet werden können.\n\n- Entsprechend dem Ratenlimit Ihres Anbietertarifs einstellen.\n- Überschüssige Anfragen werden in eine Warteschlange gestellt, nicht abgelehnt.\n- Informationen zum Limit Ihres Tarifs finden Sie in der Dokumentation Ihres Anbieters.",
       "costPerInputToken": "## Kosten pro 1 Million Input-Token (USD)\nDie Kosten in USD pro **Million** gesendeter Input- (Prompt-) Token an das Modell.\n\n- Wird zur Kostenverfolgung und für Budgetwarnungen verwendet\n- Wird automatisch ausgefüllt, wenn Ihr Anbieter die Modellpreise meldet (LiteLLM, OpenRouter, Together AI) — angewendet, wenn Sie ein Modell auswählen oder eine Testverbindung durchführen\n- Andernfalls finden Sie diese Angabe auf der Preisseite Ihres Anbieters\n- Beispiel: `0.15` = 0,15 $ pro Million Input-Token",
       "costPerOutputToken": "## Kosten pro 1 Million Output-Token (USD)\nDie Kosten in USD pro **Million** vom Modell generierter Output- (Completion-) Token.\n\n- In der Regel höher als die Kosten für Input-Token\n- Wird zur Kostenverfolgung und für Budgetwarnungen verwendet\n- Wird automatisch ausgefüllt, wenn Ihr Anbieter die Modellpreise meldet (LiteLLM, OpenRouter, Together AI) — angewendet, wenn Sie ein Modell auswählen oder eine Testverbindung durchführen\n- Andernfalls finden Sie diese Angabe auf der Preisseite Ihres Anbieters\n- Beispiel: `0.60` = 0,60 $ pro Million Output-Token",
-      "monthlyBudget": "## Monatliches Budget (USD)\nEin optionales Ausgabenziel für diese Integration.\n\n- Auf „0“ setzen, um die Budgetverfolgung zu deaktivieren.\n- Das Budget dient **nur zu Informationszwecken** – es schränkt die Nutzung von LLM nicht ein.\n- Sie erhalten Benachrichtigungen bei 80 %, 90 % und 100 % des Budgets.\n- Die Kosten werden anhand der oben genannten Token-Preise berechnet.",
+      "monthlyBudget": "## Monatliches Budget (USD)\nEin optionales Ausgabenziel für diese Integration.\n\n- Auf `0` setzen, um Budget-Tracking zu deaktivieren\n- Das Budget ist **nur informativ** — es blockiert die LLM-Nutzung nicht\n- Eine Warnmeldung mit der Metrik **KI-Budget verwendet** (System, auf der Seite Benachrichtigungen & Warnmeldungen) benachrichtigt ihre Abonnenten, wenn die Ausgaben den eingestellten Anteil erreichen; das Speichern dieses Formulars oder das Zurücksetzen der Ausgaben ermöglicht es, erneut im gleichen Zeitraum abzufeuern\n- Die Kosten werden nach den obigen Pro-Token-Sätzen berechnet",
       "billingPeriodStartDay": "## Beginn des Abrechnungszeitraums\nDer Tag im Monat (1–31), an dem Ihr Abrechnungszeitraum beginnt.\n\n– Standardwert „1“ entspricht dem Kalendermonat.\n– Auf „15“ setzen für einen Zyklus vom 15. bis 15. (z. B. passend zum Rechnungsdatum Ihres Anbieters).\n– Die Werte „29–31“ werden automatisch auf den letzten Tag kürzerer Monate begrenzt (Februar in Nicht-Schaltjahren usw.).\n– Beeinflusst das Ausgabenfenster für das **Monatsbudget** und die Aktion **Ausgaben zurücksetzen**.",
       "defaultTemperature": "## Standardtemperatur\nSteuert die Zufälligkeit der Modellantworten (0–2).\n\n- **0:** Deterministisch – identische Ausgabe bei gleicher Eingabe\n- **0.3:** Fokussiert – empfohlen für Testgenerierung und Codeausgabe\n- **1+:** Kreativ – vielfältigere Antworten\n- Einzelne Funktionen können dies in der Prompt-Konfiguration überschreiben.",
       "timeout": "## Anfrage-Timeout (ms)\nWie lange soll auf eine Antwort gewartet werden, bevor die Anfrage abgebrochen wird?\n\n- Wert in Millisekunden (z. B. `30000` = 30 Sekunden)\n- Streaming-Anfragen (z. B. Code-Export-Vorschau) ignorieren dieses Timeout.\n- Für langsame oder große Modelle erhöhen.\n- Bereich: 5.000 – 600.000 ms",
@@ -8387,8 +8492,9 @@
     "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Tabs „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Testlauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Testläufe angezeigt.\n- **Meine Testläufe** — nur Testläufe, an denen Sie beteiligt sind: Sie haben den Testlauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst.",
     "projectSessionsFilters": "## Sitzungen filtern\n\nAktivieren Sie einen Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Registerkarten \"Aktiv\" als auch \"Abgeschlossen\" und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Meine Sitzungen** — nur Sitzungen, an denen Sie beteiligt sind: Sie haben die Sitzung erstellt oder sie wurde Ihnen zugewiesen.",
     "projectImpact": "## Impact\nVerbinden Sie das Repository der zu testenden Anwendung, damit dieses Projekt Testauswirkungsanalysen ausführen kann: Wählen Sie zwei Commits aus, um zu sehen, welche Testfälle die Änderungen betreffen, und heften Sie Testfälle an den von ihnen abgedeckten Code.",
-    "pathPatterns": "## Pfadmuster\nJede Zeile kombiniert einen Basis-**Pfad** mit einem Glob-**Muster**. Zeilen addieren sich: Eine Datei wird einbezogen, wenn eine Zeile sie erfasst.\n\n- `src` + `**/*` — alles unter `src`\n- leer oder `.` + `**/*` — jede Datei im Repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts`-Dateien außer Tests\n\n### Ausschließen\nAktivieren Sie **Ausschließen** in einer Zeile, um ihre Dateien zu entfernen, auch wenn eine andere Zeile sie einbezieht. Ausschlüsse gelten für die Dateiauswahl und den Cache, und für Impact auf die geänderten Dateien einer Analyse, sodass eine Datei, die sich bei fast jedem Pull Request ändert, keine unrelated Test Cases einzieht. Mindestens eine Zeile muss deaktiviert bleiben.\n\n- leer + `**/CHANGELOG*` — jedes Changelog in beliebiger Tiefe\n- `app` + `build.gradle.kts` — eine Build-Datei, die nur die Version erhöht",
-    "projectAutomation": "## Automatisierte Ausführung\nAusführungsziele teilen TestPlanIt mit, wo die automatisierten Fälle dieses Projekts ausgeführt werden sollen: ein GitHub Actions-Workflow, eine GitLab CI-Pipeline oder ein signierter Webhook für jedes andere System. Wenn ein Lauf ausgeführt wird, startet TestPlanIt den Auftrag mit der Laufkennung und einer Plan-URL; der Auftrag liest den Plan, führt die passenden Tests aus und meldet die Ergebnisse mit einem Reporter oder der an diesen Lauf angehefteten CLI zurück. Ziele können deaktiviert werden, ohne gelöscht zu werden."
+    "pathPatterns": "## Pfadmuster\nJede Zeile kombiniert einen Basis-**Pfad** mit einem Glob-**Muster**. Zeilen addieren sich: Eine Datei wird eingebunden, wenn ein beliebiges Muster darauf passt.\n\n- `src` + `**/*` — alles unter `src`\n- leer oder `.` + `**/*` — jede Datei im Repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts`-Dateien außer Tests\n\n### Ausschließen\nAktivieren Sie **Ausschließen** in einer Zeile, um ihre Dateien zu entfernen, auch wenn eine andere Zeile sie einbindet. Ausschlüsse gelten für die Dateiauswahl und den Cache und für Impact auf die geänderten Dateien einer Analyse, sodass eine Datei, die sich bei fast jedem Pull Request ändert, keine unabhängigen Testfälle einbezieht. Mindestens eine Zeile muss deaktiviert bleiben.\n\n- leer + `**/CHANGELOG*` — jedes Changelog, in jeder Tiefe\n- `app` + `build.gradle.kts` — eine Build-Datei, die nur die Version erhöht",
+    "projectAutomation": "## Automatisierte Ausführung\nAusführungsziele teilen TestPlanIt mit, wo die automatisierten Fälle dieses Projekts ausgeführt werden sollen: ein GitHub Actions-Workflow, eine GitLab CI-Pipeline oder ein signierter Webhook für jedes andere System. Wenn ein Lauf ausgeführt wird, startet TestPlanIt den Auftrag mit der Laufkennung und einer Plan-URL; der Auftrag liest den Plan, führt die passenden Tests aus und meldet die Ergebnisse mit einem Reporter oder der an diesen Lauf angehefteten CLI zurück. Ziele können deaktiviert werden, ohne gelöscht zu werden.",
+    "userAlerts": "## Benachrichtigungen & Warnmeldungen\n**Benachrichtigungseinstellungen** bestimmen, wie Sie erreicht werden (in-App, E-Mail, Digest) und welche Benachrichtigungstypen Sie überhaupt erhalten.\n\n**Warnmeldungen** beobachten eine Testkennzahl und benachrichtigen ihre Abonnenten, wenn sie eine Grenze überschreitet, z. B. ein Ergebnis, das 50% länger dauert als die übliche Dauer des Falls, ein Fall, der dreimal hintereinander fehlschlägt, ein Durchlauf, dessen Bestehensquote unter 90% sinkt, oder ein Meilenstein, der sich verzögert und noch Tage verbleibend sind. Die Liste zeigt jede Warnmeldung in Ihren Projekten; der Schalter **Benachrichtige mich** folgt oder verlässt eine. **Warnmeldung hinzufügen** erstellt Ihre eigene in jedem Projekt, in dem Ihre Rolle **Warnmeldungen** Hinzufügen/Bearbeiten hat; Projektadministratoren verwalten jede Warnmeldung in ihrem Projekt und die Abonnements anderer Personen. Eine Warnmeldung wird höchstens einmal pro Thema innerhalb ihres Cooldowns abgefeuert und bleibt stumm, bis sie genug Ergebnisse hat."
   },
   "reports": {
     "ui": {
@@ -9610,9 +9716,12 @@
       "exists": "Existiert",
       "not_exists": "Existiert nicht"
     },
+    "recordMatches": "{count, plural, one {# Datensatz nach ID abgeglichen} other {# Datensätze nach ID abgeglichen}}",
     "help": {
       "exactPhrases": "Genaue Formulierungen",
       "exactPhrasesDesc": "Um exakte Formulierungen zu erhalten, sollten Begriffe in Anführungszeichen gesetzt werden:",
+      "ids": "IDs",
+      "idsDesc": "Geben Sie eine ID ein, mit oder ohne #, um einen Datensatz direkt zu finden. Trennen Sie mehrere mit OR, Kommas oder Leerzeichen, um alle zu finden:",
       "proximity": "Nähesuche",
       "proximityDesc": "Wörter innerhalb von N Positionen voneinander",
       "booleanOperators": "Boolesche Operatoren",
@@ -10177,5 +10286,454 @@
     "update": "Mit aktueller Zuordnung aktualisieren",
     "updateConfirm": "\"{name}\" wird mit der aktuellen Spaltenzuordnung und den Einstellungen aktualisiert.",
     "savePrompt": "Diese Spaltenzuordnung für nächstes Mal speichern?"
+  },
+  "alerts": {
+    "title": "Warnmeldungen",
+    "description": "Warnmeldungen, denen Sie in Ihren Projekten folgen, und die Warnmeldungen in diesen Projekten, denen Sie folgen könnten.",
+    "addRule": "Warnmeldung hinzufügen",
+    "editRule": "Warnmeldung bearbeiten",
+    "deleteRule": "Warnmeldung löschen",
+    "deleteConfirm": "Die Warnmeldung \"{name}\" löschen? Ihre Abonnenten erhalten keine Benachrichtigungen mehr und sie kann aus dem Papierkorb wiederhergestellt werden.",
+    "pauseTitle": "Diese Warnmeldung für alle pausieren?",
+    "pauseConfirm": "\"{name}\" wird für {count, plural, =0 {alle} one {seinen einzigen Abonnenten} =2 {beide seiner Abonnenten} other {alle # seiner Abonnenten}} nicht mehr ausgelöst, nicht nur für Sie, bis jemand sie wieder aktiviert. Um nur Ihre eigenen Benachrichtigungen zu stoppen, schalten Sie stattdessen \"Benachrichtige mich\" aus.",
+    "columns": {
+      "name": "Regel",
+      "condition": "Bedingung",
+      "scope": "Umfang",
+      "subscribers": "Abonnenten",
+      "lastFired": "Zuletzt ausgelöst",
+      "enabled": "Aktiviert",
+      "notifyMe": "Benachrichtige mich",
+      "actions": "Aktionen",
+      "project": "Projekt"
+    },
+    "neverFired": "Niemals",
+    "systemScope": "System",
+    "systemSubjects": {
+      "audit": "Audit-Protokoll",
+      "lockouts": "Benutzerkonten",
+      "automated-results": "Automatisierte Ergebnisse"
+    },
+    "paused": "Angehalten",
+    "filters": {
+      "label": "Warnmeldungen filtern",
+      "on": "An",
+      "off": "Aus"
+    },
+    "history": "Verlauf",
+    "subscribers": "Abonnenten",
+    "subscriberCount": "{count, plural, =0 {Keine Abonnenten} one {# Abonnent} other {# Abonnenten}}",
+    "toasts": {
+      "created": "Regel erstellt.",
+      "updated": "Regel aktualisiert.",
+      "deleted": "Regel gelöscht.",
+      "enabled": "Regel aktiviert.",
+      "disabled": "Regel pausiert.",
+      "subscribed": "Sie werden benachrichtigt, wenn diese Regel ausgelöst wird.",
+      "unsubscribed": "Sie werden nicht mehr von dieser Regel benachrichtigt.",
+      "subscriberAdded": "{name} abonniert.",
+      "subscriberRemoved": "{name} nicht abonniert.",
+      "saveError": "Die Regel konnte nicht gespeichert werden.",
+      "subscriptionError": "Das Abonnement konnte nicht aktualisiert werden."
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "z. B. Kassenlangsamkeit",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Optionale Notiz für andere Abonnenten",
+      "metric": "Metrik",
+      "metricLocked": "Die Metrik kann nach der Erstellung der Warnmeldung nicht geändert werden. Erstellen Sie stattdessen eine neue Warnmeldung.",
+      "condition": "Bedingung",
+      "scope": "Umfang",
+      "scopeType": "Beobachtung",
+      "scopeFolder": "Ordner",
+      "scopeTag": "Tag",
+      "scopeCase": "Testfall",
+      "scopeMilestone": "Meilenstein",
+      "scopeRunName": "Run-Name enthält",
+      "scopeRunNamePlaceholder": "z. B. Nachtschicht",
+      "scopePickFolder": "Wählen Sie einen Ordner aus",
+      "scopePickTag": "Wählen Sie ein Tag aus",
+      "scopePickCase": "Wählen Sie einen Testfall aus",
+      "scopePickMilestone": "Wählen Sie einen Meilenstein aus",
+      "scopeWebhook": "Webhook",
+      "scopePickWebhook": "Wählen Sie einen Webhook aus",
+      "scopeLlmIntegration": "Anbindung",
+      "scopePickLlmIntegration": "Wählen Sie eine Integration aus",
+      "scopeCodeRepository": "Repository-Verbindung",
+      "scopePickCodeRepository": "Wählen Sie eine Repository-Verbindung aus",
+      "scopeIntegration": "Anbindung",
+      "scopePickIntegration": "Wählen Sie eine Integration aus",
+      "scopeQueue": "Warteschlange",
+      "scopePickQueue": "Wählen Sie eine Warteschlange aus",
+      "systemScope": "System",
+      "systemScopeHelp": "Eine Systemwarnmeldung beobachtet etwas, das für die gesamte Installation verwaltet wird, z. B. ein KI-Modellbudget. Nur Administratoren können es sehen.",
+      "coverageBasis": "Als abgedeckt zählen",
+      "coverageBasisOptions": {
+        "LINKED": "Mit mindestens einem Testfall verknüpft",
+        "PASSING": "Letztes Ergebnis bestanden"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Baseline-Fenster (Durchläufe)",
+        "WEBHOOK_FAILURE_RATE": "Letzte Lieferungen",
+        "LLM_ERROR_RATE": "Letzte Anfragen"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Minimale Durchläufe",
+        "WEBHOOK_FAILURE_RATE": "Mindestlieferungen",
+        "LLM_ERROR_RATE": "Mindeststanfragen"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Tage bis zur Fälligkeit des Meilensteins",
+        "STALE_CASES": "Tage ohne Ergebnis",
+        "LLM_RATE_LIMITED": "Innerhalb der letzten (Stunden)"
+      },
+      "scopeCaseSearch": "Nach Name oder ID suchen",
+      "direction": "Richtung",
+      "baselineType": "Baseline",
+      "baselineWindow": "Baseline-Fenster (Ergebnisse)",
+      "minSamples": "Minimale Ergebnisse",
+      "resultSource": "Zu beobachtende Ergebnisse",
+      "evaluateOn": "Evaluieren",
+      "daysRemaining": "Verbleibende Tage",
+      "cooldown": "Cooldown (Minuten)",
+      "cooldownHelp": "Nachdem die Regel für ein Thema ausgelöst wurde, schweigt es für dieses Thema diese lange. 0 deaktiviert das Cooldown.",
+      "emitWebhook": "Senden Sie ein alert.triggered Webhook-Ereignis",
+      "emitWebhookHelp": "Ausgehende Webhooks, die sich auf \"Warnmeldungen\" abonniert haben, erhalten die gleiche Nutzlast, damit Slack oder andere Tools sie posten können.",
+      "enabled": "Aktiviert",
+      "audience": "Publikum",
+      "audienceHelp": "Wer wird benachrichtigt, wenn die Warnmeldung ausgelöst wird. Sie werden standardmäßig zu Warnmeldungen hinzugefügt, die Sie erstellen; jeder kann eine verlassen oder erneut beitreten.",
+      "audienceHelpSystem": "Wer wird benachrichtigt, wenn die Warnmeldung ausgelöst wird. Nur Administratoren können im Publikum einer Systemwarnmeldung sein; Sie werden standardmäßig hinzugefügt.",
+      "searchMembers": "Projektmitglieder durchsuchen",
+      "you": "Sie",
+      "cannotManageSubscribers": "Sie können sich selbst abonnieren oder abmelden. Das Abonnieren anderer Mitglieder erfordert Projektverwaltungsrechte.",
+      "validation": {
+        "nameRequired": "Geben Sie einen Namen ein.",
+        "scopeRequired": "Wählen Sie aus, was die Regel beobachtet.",
+        "runNameRequired": "Geben Sie einen Teil eines Run-Namens ein.",
+        "percentRange": "Geben Sie einen Prozentsatz zwischen {min} und {max} ein.",
+        "countRange": "Geben Sie eine ganze Zahl zwischen {min} und {max} ein.",
+        "windowRange": "Geben Sie ein Fenster zwischen {min} und {max} Ergebnissen ein.",
+        "minSamplesRange": "Geben Sie einen Wert zwischen {min} und {max} ein.",
+        "minSamplesWindow": "Minimale Ergebnisse können das Baseline-Fenster nicht überschreiten.",
+        "cooldownRange": "Geben Sie Minuten zwischen {min} und {max} ein.",
+        "daysRange": "Geben Sie Tage zwischen {min} und {max} ein.",
+        "windowBelowMinSamples": "Das Baseline-Fenster kann nicht kleiner als die minimalen Ergebnisse sein."
+      },
+      "project": "Projekt",
+      "projectPlaceholder": "Wählen Sie ein Projekt aus",
+      "projectHelp": "Es werden nur Projekte aufgelistet, in denen Ihre Rolle möglicherweise Warnmeldungen erstellen kann.",
+      "dialogDescription": "Beobachtung einer Testkennzahl und Benachrichtigung des Publikums, wenn sie die von Ihnen festgelegte Grenze überschreitet.",
+      "metricSearch": "Metriken durchsuchen",
+      "metricNoMatch": "Keine Metrik stimmt überein.",
+      "checkedDaily": "Täglich überprüft",
+      "checkedHourly": "Stündlich überprüft",
+      "needsProject": "Wählen Sie zunächst ein Projekt aus.",
+      "followAlert": "Benachrichtige mich",
+      "leaveAlert": "Benachrichtige mich nicht mehr",
+      "delivery": "Lieferung",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "Abweichung (%)",
+        "CASE_REGRESSED": "Schwelle",
+        "CONSECUTIVE_FAILURES": "Fehler in Folge",
+        "CASE_FLAKY": "Überschläge",
+        "RUN_PASS_RATE_BELOW": "Bestehensquote unter (%)",
+        "RUN_FAILURE_COUNT": "Fehlgeschlagene Ergebnisse, mehr als",
+        "RUN_DURATION_DEVIATION": "Abweichung (%)",
+        "RUN_NOT_PROGRESSING": "Untätig für mehr als (Stunden)",
+        "AUTOMATED_EXECUTION_FAILED": "Schwelle",
+        "RUN_UNTESTED_SHARE": "Ungetestete Fälle über (%)",
+        "RUN_ISSUES_OPENED": "Verknüpfte Probleme, mehr als",
+        "SESSION_OVERRUN": "Über der Schätzung um mehr als (%)",
+        "MILESTONE_BEHIND": "Fertigstellung unter (%)",
+        "MILESTONE_OVERDUE": "Schwelle",
+        "REQUIREMENT_COVERAGE_BELOW": "Abdeckung unter (%)",
+        "STALE_CASES": "Abgelaufene Fälle, mehr als",
+        "AUTOMATION_SHARE_BELOW": "Automatisierter Anteil unter (%)",
+        "WEBHOOK_FAILURE_RATE": "Ausfallrate über (%)",
+        "LLM_BUDGET_USED": "Budget verwendet (%)",
+        "LLM_ERROR_RATE": "Fehlgeschlagene Anfragen über (%)",
+        "LLM_RATE_LIMITED": "Anfragen mit Rate-Limit, mindestens",
+        "CODE_REPOSITORY_CACHE_FAILING": "Fehlschlagen für mindestens (Stunden)",
+        "INTEGRATION_REAUTH_NEEDED": "Benutzer, die erneut autorisiert werden müssen, mindestens",
+        "QUEUE_FAILED_JOBS": "Fehlgeschlagene Jobs, mehr als",
+        "QUEUE_BACKLOG": "Der älteste wartende Job älter als (Minuten)",
+        "AUDIT_BACKLOG": "Älteste unverarbeitete Änderung älter als (Minuten)",
+        "ACCOUNT_LOCKOUTS": "Gesperrte Konten, mindestens",
+        "NO_AUTOMATED_RESULTS": "Kein automatisiertes Ergebnis für (Stunden)"
+      }
+    },
+    "direction": {
+      "ABOVE": "Oben (langsamer)",
+      "BELOW": "Unten (schneller)",
+      "EITHER": "Oben oder unten"
+    },
+    "baseline": {
+      "MEAN": "Durchschnitt",
+      "MEDIAN": "Median"
+    },
+    "resultSource": {
+      "MANUAL": "Manuelle Ergebnisse",
+      "AUTOMATED": "Automatisierte Ergebnisse",
+      "BOTH": "Manuell und automatisiert"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "Wenn der Durchlauf abgeschlossen ist",
+      "AS_RESULTS_ARRIVE": "Während Ergebnisse ankommen"
+    },
+    "scopeType": {
+      "PROJECT": "Ganzes Projekt",
+      "FOLDER": "Fälle in einem Ordner",
+      "TAG": "Fälle mit einem Tag",
+      "CASE": "Ein Testfall",
+      "RUN_NAME": "Läufe, deren Name enthält",
+      "MILESTONE": "Ein Meilenstein",
+      "WEBHOOK": "Ein Webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "Alle Sitzungen",
+      "TAG": "Sitzungen mit einem Tag"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "Alle ausgehenden Webhooks",
+      "WEBHOOK": "Ein Webhook"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "Alle KI-Modellintegrationen",
+      "LLM_INTEGRATION": "Eine Integration"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "Alle Repository-Verbindungen",
+      "CODE_REPOSITORY": "Eine Repository-Verbindung"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "Alle Integrationen",
+      "INTEGRATION": "Eine Integration"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "Alle Warteschlangen",
+      "QUEUE": "Eine Warteschlange"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "Ganze Installation"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "Alle Durchläufe",
+      "TAG": "Läufe mit einem Tag",
+      "RUN_NAME": "Läufe, deren Name enthält"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "Alle Meilensteine",
+      "MILESTONE": "Ein Meilenstein"
+    },
+    "scopeDisplay": {
+      "PROJECT": "Ganzes Projekt",
+      "FOLDER": "Ordner: {name}",
+      "TAG": "Tag: {name}",
+      "CASE": "Fall: {name}",
+      "RUN_NAME": "Läufe, die \"{text}\" enthalten",
+      "MILESTONE": "Meilenstein: {name}",
+      "WEBHOOK": "Webhook: {name}",
+      "LLM_INTEGRATION": "Anbindung: {name}",
+      "ALL_LLM_INTEGRATIONS": "Alle KI-Modellintegrationen",
+      "CODE_REPOSITORY": "Repository: {name}",
+      "ALL_CODE_REPOSITORIES": "Alle Repository-Verbindungen",
+      "INTEGRATION": "Anbindung: {name}",
+      "ALL_INTEGRATIONS": "Alle Integrationen",
+      "QUEUE": "Warteschlange: {name}",
+      "ALL_QUEUES": "Alle Warteschlangen",
+      "WHOLE_INSTALLATION": "Ganze Installation",
+      "missing": "(entfernt)"
+    },
+    "subjectType": {
+      "CASE": "Testfall",
+      "RUN": "Testdurchlauf",
+      "MILESTONE": "Meilenstein",
+      "SESSION": "Sitzung",
+      "PROJECT": "Projekt",
+      "WEBHOOK": "Webhook"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "Die Ergebnisdauer weicht von der Baseline ab",
+        "description": "Ein Ergebnis dauert viel länger oder kürzer als die letzten Ergebnisse des Falles. Ergebnisse ohne verstrichene Zeit werden ignoriert.",
+        "summary": "Die Dauer eines Ergebnisses liegt mehr als {threshold}% {direction, select, ABOVE {über} BELOW {unter} other {über oder unter}} dem {baseline, select, MEAN {Durchschnitt} other {Median}} der letzten {window} Ergebnisse des Falles, nach mindestens {minSamples} Ergebnissen"
+      },
+      "CASE_REGRESSED": {
+        "label": "Fall rückgängig gemacht",
+        "description": "Ein Fall, der seine letzten Ergebnisse bestanden hat, schlägt jetzt fehl. Erfasst einen frischen Fehler bei einem stabilen Fall.",
+        "summary": "Ein Fall schlägt fehl, nachdem er die letzten {window} Ergebnisse bestanden hat"
+      },
+      "CASE_RECOVERED": {
+        "label": "Fall wiederhergestellt",
+        "description": "Ein Fall besteht nach Fehler bei allen seinen letzten Ergebnissen.",
+        "summary": "Ein Fall besteht nach Fehler bei {window, plural, one {# Ergebnis} other {# Ergebnisse}}"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "Aufeinanderfolgende Fehler",
+        "description": "Ein Fall schlägt mehrere Male hintereinander fehl.",
+        "summary": "Ein Fall schlägt {threshold, plural, one {# Mal} other {# Male}} hintereinander fehl"
+      },
+      "CASE_FLAKY": {
+        "label": "Fall wurde instabil",
+        "description": "Ein Fall wechselt in seinen letzten Ergebnissen wiederholt zwischen Bestanden und Fehler. Verwendet die gleichen Eingaben wie der Bericht \"Instabile Tests\".",
+        "summary": "Ein Fall wechselt zwischen Bestanden und Fehler mindestens {threshold, plural, one {# Mal} other {# Male}} über die letzten {window} Ergebnisse"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "Durchlaufquote unter Schwelle",
+        "description": "Die Bestehensquote eines Durchlaufs, gezählt über Ergebnisse mit einem Bestanden- oder Fehler-Urteil, fällt unter einen Prozentsatz.",
+        "summary": "Die Bestehensquote eines Durchlaufs liegt unter {threshold}%, sobald mindestens {minSamples} Ergebnisse ein Urteil haben, {evaluateOn, select, AS_RESULTS_ARRIVE {bewertet, während Ergebnisse ankommen} other {bewertet, wenn der Durchlauf abgeschlossen ist}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "Durchlauffehlerzahl",
+        "description": "Ein Durchlauf hat mehr als eine bestimmte Anzahl fehlgeschlagener Ergebnisse.",
+        "summary": "Ein Durchlauf hat mehr als {threshold, plural, one {# fehlgeschlagenes Ergebnis} other {# fehlgeschlagene Ergebnisse}}, {evaluateOn, select, AS_RESULTS_ARRIVE {bewertet, während Ergebnisse ankommen} other {bewertet, wenn der Durchlauf abgeschlossen ist}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "Durchlaufdauer weicht von Baseline ab",
+        "description": "Die Gesamtdauer eines abgeschlossenen Durchlaufs weicht von den Läufen ab, die sein Umfang zusammenfasst (gleiches Tag oder Name-Fragment).",
+        "summary": "Die Dauer eines abgeschlossenen Durchlaufs liegt mehr als {threshold}% {direction, select, ABOVE {über} BELOW {unter} other {über oder unter}} dem {baseline, select, MEAN {Durchschnitt} other {Median}} der letzten {window} Durchläufe, nach mindestens {minSamples} Durchläufen"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Durchlauf macht keine Fortschritte",
+        "description": "Ein offener Durchlauf hat {hours, plural, one {# Stunde} other {# Stunden}} lang kein neues Ergebnis. Wird stündlich überprüft.",
+        "summary": "Ein offener Durchlauf hat seit mehr als {threshold, plural, one {# Stunde} other {# Stunden}} kein neues Ergebnis"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "Automatisierte Ausführung fehlgeschlagen",
+        "description": "Eine automatisierte Ausführung eines Durchlaufs schlägt fehl, kann nicht versendet werden oder überschreitet das Zeitlimit.",
+        "summary": "Eine automatisierte Ausführung schlägt fehl, kann nicht versendet werden oder überschreitet das Zeitlimit"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Ungetesteter Anteil des Durchlaufs",
+        "description": "Zu viele der Fälle eines Durchlaufs haben kein Ergebnis mit wenigen Tagen verbleibend vor der Fälligkeit des Meilensteins. Wird täglich überprüft.",
+        "summary": "Mehr als {threshold}% der Fälle eines Durchlaufs haben kein Ergebnis mit {days, plural, one {# Tag} other {# Tagen}} oder weniger vor der Fälligkeit des Meilensteins"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Probleme, die von einem Durchlauf geöffnet werden",
+        "description": "Mehr als eine bestimmte Anzahl von Problemen ist mit den Ergebnissen eines Durchlaufs verknüpft.",
+        "summary": "Mehr als {threshold, plural, one {# Problem ist} other {# Probleme sind}} mit den Ergebnissen eines Durchlaufs verknüpft, {evaluateOn, select, AS_RESULTS_ARRIVE {bewertet, während Ergebnisse ankommen} other {bewertet, wenn der Durchlauf abgeschlossen ist}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "Sitzung hat Schätzung überschritten",
+        "description": "Die verstrichene Zeit einer abgeschlossenen Sitzung überschreitet ihre Schätzung um einen Prozentsatz.",
+        "summary": "Die verstrichene Zeit einer abgeschlossenen Sitzung liegt mehr als {threshold}% über ihrer Schätzung"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "Meilenstein-Fertigstellung verzögert",
+        "description": "Die Läufe eines Meilensteins sind nicht genug abgeschlossen mit wenigen Tagen verbleibend bis zum Fälligkeitsdatum. Wird täglich überprüft.",
+        "summary": "Ein Meilenstein ist unter {threshold}% abgeschlossen mit {days, plural, one {# Tag} other {# Tagen}} oder weniger verbleibend"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "Meilenstein überfällig",
+        "description": "Das Fälligkeitsdatum eines Meilensteins ist verstrichen und er ist nicht abgeschlossen. Wird täglich überprüft.",
+        "summary": "Ein Meilenstein verstreicht sein Fälligkeitsdatum, ohne abgeschlossen zu werden"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "Anforderungsabdeckung unter Schwelle",
+        "description": "Weniger als ein bestimmter Anteil der Anforderungen des Projekts zählt als abgedeckt. Wird täglich überprüft.",
+        "summary": "Weniger als {threshold}% der Anforderungen {basis, select, PASSING {haben ein bestandenes letztes Ergebnis} other {sind mit mindestens einem Testfall verknüpft}}"
+      },
+      "STALE_CASES": {
+        "label": "Abgelaufene Fälle",
+        "description": "Mehr als eine bestimmte Anzahl von Fällen hatten {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis. Wird täglich überprüft.",
+        "summary": "Mehr als {threshold, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "Automatisierter Anteil unter Schwelle",
+        "description": "Weniger als ein bestimmter Anteil der Fälle in der Reichweite sind automatisiert. Wird täglich überprüft.",
+        "summary": "Weniger als {threshold}% der Fälle sind automatisiert"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Webhook-Ausfallrate",
+        "description": "Zu viele der letzten Lieferungen eines ausgehenden Webhooks sind fehlgeschlagen. Wird stündlich überprüft.",
+        "summary": "Mehr als {threshold}% der letzten {window} Lieferungen eines ausgehenden Webhooks sind fehlgeschlagen, nach mindestens {minSamples} Lieferungen"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "KI-Budget verwendet",
+        "description": "Die Ausgaben einer KI-Modellintegration für ihren Abrechnungszeitraum erreichen einen Anteil ihres monatlichen Budgets. Wird einmal pro Zeitraum für jede Integration abgefeuert.",
+        "summary": "Die Ausgaben erreichen {threshold}% des monatlichen Budgets der Integration"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "KI-Anfragefehlerquote",
+        "description": "Zu viele der letzten Anfragen einer KI-Modellintegration sind fehlgeschlagen.",
+        "summary": "Mehr als {threshold}% der letzten {window} Anfragen der Integration sind fehlgeschlagen, nach mindestens {minSamples} Anfragen"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "KI-Anbieter-Rate-Limiting",
+        "description": "Der Anbieter hat die Anfragen einer KI-Modellintegration wiederholt gedrosselt.",
+        "summary": "Der Anbieter hat mindestens {threshold, plural, one {# Anfrage} other {# Anfragen}} innerhalb von {days, plural, one {# Stunde} other {# Stunden}} mit Rate-Limit belegt"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "Repository-Cache fehlgeschlagen",
+        "description": "Eine Code-Repository-Verbindung hat ihren Cache längere Zeit erfolgreich nicht aktualisiert. Wird stündlich überprüft.",
+        "summary": "Der Cache einer Repository-Verbindung ist mindestens {threshold, plural, one {# Stunde} other {# Stunden}} lang fehlgeschlagen"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "Integration erneut zu autorisieren",
+        "description": "Viele Benutzer haben ihre Verbindung zu einer Integration verloren und müssen sich erneut autorisieren. Wird täglich überprüft.",
+        "summary": "Mindestens {threshold, plural, one {# Benutzer muss} other {# Benutzer müssen}} eine Integration erneut autorisieren"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "Warteschlange fehlgeschlagene Jobs",
+        "description": "Eine Hintergrund-Warteschlange enthält zu viele fehlgeschlagene Jobs. Wird stündlich überprüft.",
+        "summary": "Mehr als {threshold, plural, one {# Job hat} other {# Jobs haben}} in einer Warteschlange fehlgeschlagen"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "Warteschlangen-Rückstand",
+        "description": "Der älteste wartende Job einer Hintergrund-Warteschlange hat zu lange gewartet, ein Zeichen eines gestoppten Workers. Wird stündlich überprüft.",
+        "summary": "Der älteste wartende Job einer Warteschlange ist älter als {threshold, plural, one {# Minute} other {# Minuten}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "Audit-Protokoll-Rückstand",
+        "description": "Erfasste Änderungen werden nicht in das Audit-Protokoll geschrieben, ein Zeichen eines gestoppten Audit-Workers. Wird stündlich überprüft.",
+        "summary": "Die älteste unverarbeitete Audit-Änderung ist älter als {threshold, plural, one {# Minute} other {# Minuten}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "Konto-Sperren",
+        "description": "Mehrere Konten sind nach fehlgeschlagenen Anmeldeversuchen auf einmal gesperrt, ein Zeichen von Anmeldedaten-Stuffing. Wird stündlich überprüft.",
+        "summary": "Mindestens {threshold, plural, one {# Konto ist} other {# Konten sind}} nach fehlgeschlagenen Anmeldeversuchen gesperrt"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "Keine automatisierten Ergebnisse",
+        "description": "Kein automatisiertes Testergebnis ist eine Weile von einer Pipeline angekommen. Wird täglich überprüft.",
+        "summary": "Kein automatisiertes Ergebnis ist seit {threshold, plural, one {# Stunde} other {# Stunden}} angekommen"
+      }
+    },
+    "sourceSummary": "Ergebnisse: {source, select, MANUAL {manuell} AUTOMATED {automatisiert} other {manuell und automatisiert}}",
+    "historyDialog": {
+      "title": "Verlauf: {name}",
+      "empty": "Diese Regel wurde noch nicht ausgelöst.",
+      "columns": {
+        "firedAt": "Ausgelöst",
+        "subject": "Thema",
+        "observed": "Beobachtet",
+        "threshold": "Schwelle",
+        "notified": "Benachrichtigt"
+      },
+      "webhookSent": "Webhook gesendet"
+    },
+    "descriptionFor": "Warnmeldungen, denen {name} folgt, und die anderen Warnmeldungen in ihren Projekten.",
+    "empty": "Es gibt noch keine Warnmeldungen in Ihren Projekten.",
+    "emptyCanCreate": "Es gibt noch keine Warnmeldungen in Ihren Projekten. Fügen Sie eine hinzu, um zu beginnen.",
+    "pageDescription": "Wie Sie benachrichtigt werden, was Ihnen mitgeteilt wird, und welche Warnmeldungen Sie befolgen.",
+    "pageDescriptionFor": "Wie {name} benachrichtigt wird und welche Warnmeldungen sie befolgen.",
+    "pageTabs": {
+      "alerts": "Warnmeldungen",
+      "notifications": "Benachrichtigungen"
+    },
+    "metricGroups": {
+      "CASE": "Testfall-Ergebnisse",
+      "RUN": "Testläufe",
+      "SESSION": "Sitzungen",
+      "MILESTONE": "Meilensteine",
+      "PROJECT": "Projekt-Gesundheit",
+      "WEBHOOK": "Webhooks",
+      "LLM_INTEGRATION": "KI-Modelle",
+      "CODE_REPOSITORY": "Code-Repositories",
+      "INTEGRATION": "Integrationen",
+      "QUEUE": "Hintergrund-Warteschlangen",
+      "SYSTEM": "Installation"
+    }
   }
 }

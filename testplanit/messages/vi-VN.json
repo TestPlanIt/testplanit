@@ -577,6 +577,7 @@
       "addFieldTo": "Thêm trường vào {section}",
       "selectTemplates": "Chọn mẫu",
       "selectUsers": "Chọn người dùng",
+      "selectGroups": "Chọn nhóm",
       "selectOption": "Chọn một tùy chọn",
       "date": "Chọn ngày",
       "selectEncoding": "Chọn mã hóa...",
@@ -737,7 +738,8 @@
       "adminSamlConfig": "Quản trị viên - Cấu hình SAML",
       "apiDocumentation": "Tài liệu API",
       "sharedContent": "Nội dung được chia sẻ",
-      "impact": "Phân tích ảnh hưởng"
+      "impact": "Phân tích ảnh hưởng",
+      "alerts": "Thông báo & Cảnh báo"
     },
     "aria": {
       "userMenu": "Menu người dùng",
@@ -1660,7 +1662,8 @@
           "scimGroupMemberAdded": "Các thành viên đã thêm",
           "scimGroupMemberRemoved": "Thành viên bị loại bỏ",
           "scimGroupDeleted": "Nhóm đã bị xóa",
-          "scimGroupMemberAddedSummary": "Thành viên đã được thêm (tóm tắt đồng bộ hàng loạt)"
+          "scimGroupMemberAddedSummary": "Thành viên đã được thêm (tóm tắt đồng bộ hàng loạt)",
+          "triggered": "Được kích hoạt"
         },
         "iterationResultHelp": "Sự kiện này được kích hoạt mỗi khi kết quả của một vòng lặp được ghi lại — đạt, không đạt, bỏ qua hoặc bất kỳ trạng thái nào khác. Nên sử dụng tiết kiệm trong các lần chạy tự động hóa dài (một sự kiện cho mỗi vòng lặp).",
         "events": {
@@ -1741,7 +1744,7 @@
         "inboundGiteaTitle": "Webhook đến của Gitea",
         "inboundGiteaScopeHint": "Sự kiện Gitea <code>cập nhật các sự kiện</code> được liên kết với các sự kiện TestPlanIt. Các loại sự kiện khác được chấp nhận nhưng không cập nhật sự kiện.",
         "inboundAdoTitle": "Webhook đến từ Azure DevOps",
-        "inboundAdoScopeHint": "Sự kiện Azure DevOps <code>workitem.updated</code> cập nhật các vấn đề TestPlanIt được liên kết. Các sự kiện khác được chấp nhận nhưng không cập nhật vấn đề.",
+        "inboundAdoScopeHint": "Các sự kiện Azure DevOps <code>workitem.created</code> và <code>workitem.updated</code> cập nhật các vấn đề TestPlanIt được liên kết. Các sự kiện khác được chấp nhận nhưng không cập nhật vấn đề.",
         "inboundAdoUsername": "Tên người dùng",
         "inboundAdoUsernamePlaceholder": "tài khoản dịch vụ",
         "inboundAdoUsernameHelp": "Được cấu hình ở phía Hook của Azure DevOps Service. TestPlanIt xác minh điều này thông qua xác thực HTTP Basic Auth.",
@@ -1758,7 +1761,7 @@
         "setupStepsGithubStep4": "Chọn \"Cho phép tôi chọn từng sự kiện riêng lẻ\" và đánh dấu vào ô \"Sự cố\".",
         "setupStepsGithubStep5": "Nhấp vào \"Thêm webhook\". Sử dụng \"Gửi webhook thử nghiệm\" bên dưới để xác minh pipeline.",
         "setupStepsAdoStep1": "Trong dự án Azure DevOps của bạn, hãy vào Cài đặt dự án → Kết nối dịch vụ → Tạo đăng ký.",
-        "setupStepsAdoStep2": "Chọn \"Web Hooks\" làm dịch vụ. Đặt Trigger là \"Work item updated\".",
+        "setupStepsAdoStep2": "Chọn \"Web Hooks\" làm dịch vụ. Đặt Trigger thành \"Work item created\", sau đó lặp lại các bước này để có một đăng ký thứ hai với \"Work item updated\".",
         "setupStepsAdoStep3": "Đặt chi tiết tài nguyên cần gửi = Tất cả để bao gồm cả System.State.",
         "setupStepsAdoStep4": "Dán URL bên dưới vào ô URL. Đặt tên người dùng và mật khẩu xác thực cơ bản thành các giá trị bạn đã nhập ở trên.",
         "setupStepsAdoStep5": "Lưu lại đăng ký. Sử dụng chức năng \"Gửi webhook thử nghiệm\" bên dưới để xác minh quy trình.",
@@ -1852,13 +1855,49 @@
         "setupStepsMantisbtStep4": "Tạo hoặc cập nhật một sự cố trong MantisBT; trạng thái của sự cố được liên kết sẽ đồng bộ tại đây.",
         "inboundChooserClickup": "ClickUp",
         "inboundClickupTitle": "Webhook đến của ClickUp",
-        "inboundClickupScopeHint": "Các sự kiện ClickUp <code>taskStatusUpdated</code> cập nhật các vấn đề TestPlanIt được liên kết. Các sự kiện tác vụ khác được chấp nhận nhưng không cập nhật vấn đề.",
+        "inboundClickupScopeHint": "Các sự kiện ClickUp <code>taskCreated</code> và <code>taskStatusUpdated</code> cập nhật các vấn đề TestPlanIt được liên kết. Các sự kiện tác vụ khác được chấp nhận nhưng không cập nhật vấn đề.",
         "inboundClickupRegisterHint": "ClickUp không có trang cài đặt webhook: webhooks được tạo thông qua API của nó, và ClickUp chọn bí mật ký. Để trống bí mật và TestPlanIt đăng ký webhook này trong ClickUp cho Danh sách được liên kết bằng cách sử dụng ủy quyền ClickUp của bạn.",
         "inboundClickupSecret": "Bí mật webhook (tùy chọn)",
         "inboundClickupSecretHelp": "Chỉ cần thiết nếu bạn tự tạo webhook bằng Create Webhook API của ClickUp: dán bí mật mà ClickUp trả về. Được lưu trữ được mã hóa khi đang chờ.",
         "setupStepsClickupStep1": "Nếu bạn để trống bí mật, TestPlanIt đã đăng ký webhook này với ClickUp cho Danh sách được liên kết — không có gì để cấu hình trong ClickUp.",
         "setupStepsClickupStep2": "Nếu bạn tự đăng ký webhook thông qua Create Webhook API của ClickUp, hãy đảm bảo điểm cuối của nó là URL dưới đây và đăng ký nó cho sự kiện taskStatusUpdated.",
         "setupStepsClickupStep3": "Sử dụng \"Gửi webhook kiểm thử\" dưới đây để xác minh đường ống. Xoay bí mật đăng ký một webhook mới trong ClickUp.",
+        "actions": {
+          "description": "Những gì TestPlanIt làm khi webhook này nhận được một sự kiện. Các hành động chạy theo thứ tự được liệt kê.",
+          "empty": "Không có hành động. Các sự kiện được ghi lại, nhưng không có gì xảy ra.",
+          "addTitle": "Thêm hành động",
+          "editTitle": "Chỉnh sửa hành động",
+          "dialogDescription": "Chọn sự kiện kích hoạt hành động này và nó làm gì.",
+          "trigger": {
+            "ISSUE_EVENT": "Bất kỳ sự kiện vấn đề nào",
+            "ISSUE_STATUS_ENTERED": "Trạng thái vấn đề thay đổi"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "Bất kỳ sự kiện nào mà trình theo dõi gửi về một vấn đề.",
+            "ISSUE_CREATED": "Một vấn đề mà TestPlanIt chưa từng thấy trước đây.",
+            "ISSUE_STATUS_ENTERED": "Một vấn đề chuyển vào một trong những trạng thái đã chọn."
+          },
+          "outcome": {
+            "cases_drafted": "Các trường hợp thử nghiệm được soạn thảo",
+            "draft_queued": "Soạn thảo các trường hợp thử nghiệm",
+            "has_cases": "Vấn đề đã có các trường hợp thử nghiệm",
+            "no_llm": "Không có mô hình AI đang hoạt động",
+            "no_template": "Không có bản mẫu",
+            "no_target": "Không có kho lưu trữ hoặc trạng thái mặc định",
+            "draft_failed": "Soạn thảo thất bại",
+            "already_composed": "Chạy đã được tạo cho thay đổi này",
+            "execute_failed": "Không yêu cầu thực thi"
+          },
+          "dragToReorder": "Kéo để sắp xếp lại",
+          "requirementsOnly": "Chỉ yêu cầu",
+          "requirementsOnlyHelp": "Chỉ những vấn đề mà dự án phân loại là yêu cầu.",
+          "includeChildIssues": "Bao gồm các vấn đề con",
+          "includeChildIssuesHelp": "Cũng lấy các trường hợp thử nghiệm được liên kết với các vấn đề con của vấn đề.",
+          "notifyHelp": "Ai được thông báo khi các bản soạn thảo sẵn sàng để xem xét. Tùy chọn thông báo của mỗi người vẫn áp dụng.",
+          "draftFolderNote": "Các trường hợp thử nghiệm được soạn thảo tự động bởi webhook {webhook}.",
+          "draftFolderNoteCases": "Được soạn thảo bởi người dùng Hệ thống; mỗi trường hợp được liên kết với vấn đề mà nó được soạn thảo từ đó.",
+          "viewFolder": "Xem thư mục"
+        },
         "codeRepos": {
           "empty": "Không có kho lưu trữ nào được kết nối cho Phân tích ảnh hưởng. <link>Kết nối một</link> trước tiên.",
           "unsupported": "{provider} các kho lưu trữ không thể gửi webhook tới TestPlanIt.",
@@ -1878,11 +1917,13 @@
           "eventBranchPushHelp": "Phân tích mỗi lần đẩy lên bất kỳ nhánh nào khác so với nhánh cơ sở, giống như yêu cầu kéo, và soạn một lần chạy cho mỗi lần.",
           "baseBranch": "Nhánh cơ sở",
           "baseBranchHelp": "Các lần đẩy lên nhánh này được phân tích riêng; các yêu cầu kéo và các nhánh khác được so sánh với nó. Để trống để sử dụng nhánh của kết nối.",
-          "autoExecute": "Thực thi các trường hợp tự động",
-          "autoExecuteHelp": "Sau khi lần chạy được soạn thảo, hãy yêu cầu thực thi tự động các trường hợp tự động của nó trên mục tiêu này. Các trường hợp thủ công vẫn ở trong lần chạy cho người kiểm tra.",
-          "autoExecuteNoTargets": "Không có mục tiêu thực thi nào được cấu hình cho dự án này. <link>Thêm một</link> để thực thi các lần chạy tự động.",
-          "autoExecuteTargetMissing": "Mục tiêu thực thi đã chọn đã bị xóa hoặc vô hiệu hóa. Các lần chạy vẫn được soạn thảo, nhưng không có yêu cầu thực thi cho đến khi bạn chọn mục tiêu khác.",
-          "autoExecuteSaveError": "Không thể lưu cài đặt thực thi tự động"
+          "minScoreHelp": "Mỗi lần chạy được soạn sẽ lấy mọi trường hợp kiểm thử mà phân tích xếp hạng ít nhất điều này (0–100). Để trống để lấy các bài kiểm thử được ghim và bị ảnh hưởng, như một lần chạy được bắt đầu bằng tay.",
+          "minScoreInvalid": "Nhập một số nguyên từ 0 đến 100 hoặc để trống",
+          "autoExecute": "Thực hiện các trường hợp tự động",
+          "autoExecuteHelp": "Sau khi lần chạy được soạn, yêu cầu thực hiện tự động các trường hợp tự động của nó trên mục tiêu này. Các trường hợp thủ công vẫn ở trong lần chạy cho các nhà kiểm thử.",
+          "autoExecuteNoTargets": "Không có mục tiêu thực hiện nào được cấu hình cho dự án này. <link>Thêm một</link> để thực hiện chạy tự động.",
+          "autoExecuteTargetMissing": "Mục tiêu thực hiện được chọn đã bị xóa hoặc bị vô hiệu hóa. Các lần chạy vẫn được soạn, nhưng không có yêu cầu thực hiện cho đến khi bạn chọn mục tiêu khác.",
+          "autoExecuteSaveError": "Không thể lưu cài đặt thực hiện tự động"
         },
         "inboundEmptyState": "Chưa có webhook đến. <link>Thêm một</link> để nhận cập nhật vấn đề từ công cụ theo dõi vấn đề của bạn, hoặc yêu cầu kéo và lần đẩy từ kho lưu trữ được kết nối.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -1895,7 +1936,8 @@
           "sourceRepositoryHelp": "Bắt đầu phân tích tác động và soạn một lần chạy thử nghiệm khi yêu cầu kéo được mở hoặc các lần cam kết được đẩy.",
           "noRepositoryAvailable": "Mọi kho lưu trữ được kết nối đều có webhook hoặc không thể gửi webhook.",
           "repositoryPlaceholder": "Chọn một kho lưu trữ"
-        }
+        },
+        "outboundSubsAlerts": "Cảnh báo"
       },
       "aiModels": {
         "description": "Cấu hình các mô hình AI để tạo và phân tích trường hợp kiểm thử thông minh.",
@@ -2045,7 +2087,7 @@
           "branchPlaceholder": "Để trống nếu muốn sử dụng nhánh mặc định của kho lưu trữ."
         },
         "pathPatterns": {
-          "description": "Tệp kho lưu trữ nào mà QuickScript có thể đọc làm ngữ cảnh AI.",
+          "description": "Những tệp kho lưu trữ nào mà QuickScript có thể đọc làm ngữ cảnh AI.",
           "pathPlaceholder": "bài kiểm tra/e2e/trang",
           "exceedsLimit": "Tổng kích thước vượt quá giới hạn ngữ cảnh AI là {overflow}. Trong quá trình xuất, các tệp được xếp hạng theo mức độ liên quan đến trường hợp thử nghiệm đang được xuất — các tệp liên quan nhất được đưa vào trước và các tệp được xếp hạng thấp hơn sẽ bị bỏ qua khi đạt đến giới hạn ngân sách. Thu hẹp các mẫu đường dẫn của bạn nếu bạn muốn kiểm soát nhiều hơn các tệp được bao gồm."
         },
@@ -2108,7 +2150,6 @@
           "pathLabel": "Con đường",
           "patternLabel": "Mẫu",
           "previewFiles": "Xem trước tệp",
-          "rootHint": "Để trống đường dẫn hoặc nhập . để bắt đầu tại thư mục gốc của kho; path . với pattern **/* bao gồm mọi tệp.",
           "scanningRepo": "Đang quét các tệp kho lưu trữ… ({seconds}s)",
           "title": "Các kiểu đường đi",
           "truncatedBadge": "Kết quả có thể không đầy đủ (giới hạn của nhà cung cấp)"
@@ -2261,7 +2302,7 @@
           "branchesFallbackHint": "Nhập tên nhánh thay vào đó."
         },
         "pathPatterns": {
-          "description": "Tệp ứng dụng nào mà Impact đọc: trình chọn tệp Code Pin, bộ nhớ đệm, điểm đánh dấu kho lưu trữ và tệp đã thay đổi nào mà phân tích bỏ qua.",
+          "description": "Những tệp ứng dụng nào mà Impact đọc: trình chọn tệp Code Pin, bộ đệm, các dấu hiệu kho lưu trữ và những tệp nào đã thay đổi mà phân tích bỏ qua.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2871,7 +2912,9 @@
         "detailsDisplayMode": {
           "docked": "Bảng điều khiển đã nằm sẵn",
           "newWindow": "Cửa sổ mới"
-        }
+        },
+        "notificationsLabel": "Thông báo",
+        "notificationsMoved": "Quản lý Thông báo & Cảnh báo"
       },
       "assignments": {
         "title": "Nhiệm vụ được giao",
@@ -2980,6 +3023,10 @@
             "label": "Các bước AI được lấy",
             "description": "Một công việc lấy bước AI bạn bắt đầu đã viết các bước."
           },
+          "CASES_DRAFTED": {
+            "label": "Các trường hợp thử nghiệm được AI soạn thảo",
+            "description": "Một hành động webhook đã soạn thảo các trường hợp thử nghiệm cho một vấn đề và gọi bạn là người xem xét."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Tích hợp cần được ủy quyền lại",
             "description": "Kết nối của bạn với một tích hợp hết hạn hoặc bị thu hồi và phải được kết nối lại."
@@ -2996,9 +3043,9 @@
             "label": "Đăng ký người dùng mới",
             "description": "Một người dùng mới đăng ký thông qua biểu mẫu, SSO hoặc SAML."
           },
-          "LLM_BUDGET_ALERT": {
-            "label": "Cảnh báo ngân sách AI",
-            "description": "Chi tiêu LLM vượt quá ngưỡng ngân sách cho kỳ hóa đơn."
+          "ALERT_TRIGGERED": {
+            "label": "Cảnh báo",
+            "description": "Một cảnh báo bạn được đăng ký kích hoạt vì số liệu kiểm tra vượt qua dòng nó theo dõi."
           }
         },
         "success": {
@@ -3123,7 +3170,8 @@
       "orange": "Quả cam",
       "accessible": "Có thể truy cập",
       "accessibledark": "Dễ tiếp cận (Tối)"
-    }
+    },
+    "myAlerts": "Thông báo & Cảnh báo"
   },
   "repository": {
     "version": {
@@ -3196,7 +3244,12 @@
       "noStepsInSelectedGroup": "Nhóm được chọn không có bước nào.",
       "sharedGroupSuffix": "(Các bước chung)",
       "unnamedSharedGroup": "Các bước chung không tên",
-      "noStepsInSelectedSharedGroup": "Nhóm chia sẻ được chọn không có bước nào."
+      "noStepsInSelectedSharedGroup": "Nhóm chia sẻ được chọn không có bước nào.",
+      "layout": {
+        "label": "Bố cục bước",
+        "stacked": "Xếp chồng",
+        "sideBySide": "Cạnh nhau"
+      }
     },
     "testCase": {
       "toggleAutomated": "Bật/tắt kiểm thử tự động",
@@ -4558,7 +4611,7 @@
         "no_candidates": "Không có trường hợp kiểm thử nào khớp.",
         "anchor_fetch_capped": "Một số tệp được ghim được khớp theo đường dẫn chỉ (đã đạt giới hạn tìm nạp).",
         "issue_commit_fetch_capped": "Một số cam kết đặt tên vé không được đọc từng tệp (đã đạt giới hạn tìm nạp); các trường hợp của họ không bao gồm các tệp cụ thể.",
-        "paths_excluded_by_settings": "{count, plural, other {# tệp được thay đổi đã}} bị bỏ qua vì các đường dẫn được loại trừ của kho lưu trữ."
+        "paths_excluded_by_settings": "{count, plural, other {# tệp đã thay đổi được}} bỏ qua vì các đường dẫn loại trừ của kho lưu trữ."
       },
       "actions": {
         "analyze": "Phân tích",
@@ -5510,6 +5563,7 @@
       "scimProvisionerBadge": "Bộ cung cấp SCIM",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM.",
+      "systemUserTooltip": "Người dùng tích hợp cho công việc TestPlanIt làm tự động, chẳng hạn như hành động webhook. Nó không thể đăng nhập hoặc chỉnh sửa.",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Đúng",
       "scimUserLockedTitle": "Người dùng được quản lý bởi SCIM",
@@ -6180,7 +6234,8 @@
         "stepSequenceMatchCases": "Trường hợp Trùng khớp Trình tự Bước",
         "testRunCases": "Các trường hợp chạy thử nghiệm",
         "testRunCaseDataSetSnapshots": "Ảnh chụp nhanh Tập dữ liệu Lần chạy thử nghiệm",
-        "testRunCaseIterations": "Lần Lặp lại Chạy thử nghiệm"
+        "testRunCaseIterations": "Lần Lặp lại Chạy thử nghiệm",
+        "alertRules": "Cảnh báo"
       },
       "table": {
         "title": "Đã xóa {itemType}",
@@ -6531,7 +6586,6 @@
         "defaultModelPlaceholder": "gpt-4o, claude-3-5-sonnet-20241022, v.v.",
         "defaultModelDescription": "Mô hình được sử dụng mặc định",
         "maxTokensPerRequest": "Số lượng token tối đa cho mỗi yêu cầu",
-        "maxRequestsPerMinute": "Số lượng yêu cầu tối đa mỗi phút",
         "costPerInputToken": "Chi phí cho mỗi 1 triệu mã thông báo đầu vào ($)",
         "costPerOutputToken": "Chi phí cho mỗi 1 triệu token đầu ra ($)",
         "monthlyBudget": "Ngân sách hàng tháng ($)",
@@ -6910,7 +6964,8 @@
         "markRead": "Đánh dấu là đã đọc",
         "markUnread": "Đánh dấu là chưa đọc",
         "markAllRead": "Đánh dấu tất cả là đã đọc",
-        "deleteAll": "Xóa tất cả"
+        "deleteAll": "Xóa tất cả",
+        "manageAlerts": "Quản lý Thông báo & Cảnh báo"
       },
       "success": {
         "deleted": "Thông báo đã bị xóa",
@@ -6954,11 +7009,6 @@
         "shareLinkAccessedMessage": "{viewer} đã xem báo cáo được chia sẻ của bạn: \"{shareTitle}\"",
         "viewedYourSharedLink": "đã xem liên kết được chia sẻ của bạn",
         "viewedAt": "Đã xem vào lúc",
-        "budgetDisclaimer": "Các giới hạn ngân sách chỉ mang tính chất tham khảo và không ngăn cản việc sử dụng.",
-        "llmBudgetExceededTitle": "Ngân sách chương trình LLM đã bị vượt quá.",
-        "llmBudgetThresholdTitle": "Ngân sách LLM {threshold}% Đã sử dụng",
-        "llmBudgetExceededMessage": "{providerName} đã vượt quá ngân sách hàng tháng: {spend} đã chi tiêu trong số {budget} ngân sách.",
-        "llmBudgetThresholdMessage": "{providerName} đã sử dụng {threshold}% ngân sách hàng tháng của mình: {spend} trong số {budget}.",
         "userRegisteredTitle": "Đăng ký người dùng mới",
         "userRegisteredMessageSso": "{userName} ({userEmail}) đã đăng ký qua SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) đã đăng ký thông qua mẫu đăng ký",
@@ -6997,6 +7047,9 @@
         "aiStepsDerivedTitle": "Các bước thử nghiệm được AI suy luận đã sẵn sàng",
         "aiStepsDerivedMessage": "{count, plural, other {# trường hợp thử nghiệm}} đã được cung cấp các bước do AI suy luận — hãy xem xét lại độ chính xác.",
         "aiStepsDerivedReviewLink": "Xem xét lần chạy thử nghiệm",
+        "casesDraftedTitle": "Các Trường hợp Thử nghiệm Được AI Soạn thảo Sẵn sàng",
+        "casesDraftedMessage": "{count, plural, one {# trường hợp thử nghiệm đã} other {# trường hợp thử nghiệm đã}} được soạn thảo cho {issueKey} — hãy xem xét lại độ chính xác.",
+        "casesDraftedReviewLink": "Xem xét trong {folderName}",
         "integrationAuthExpiredTitle": "Kết nối tích hợp đã hết hạn",
         "integrationAuthExpiredMessage": "Kết nối của bạn tới \"{integrationName}\" đã hết hạn. Kết nối lại để tiếp tục đồng bộ vấn đề.",
         "integrationAuthExpiredReconnect": "Kết nối lại",
@@ -7008,7 +7061,56 @@
         "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} đã vượt qua, vì vậy trường hợp kiểm thử được gán cho bạn không còn bị chặn:",
         "runCaseUnblockedEmailMessage": "\"{testCaseName}\" trong lần chạy kiểm thử \"{testRunName}\" (dự án \"{projectName}\") không còn bị chặn: \"{prerequisiteName}\" đã vượt qua. Nó được gán cho bạn và sẵn sàng để thực thi.",
         "runCaseUnblockedReason": "Bạn nhận được tin nhắn này vì test case được gán cho bạn.",
-        "inTestRun": "trong lần chạy kiểm thử"
+        "inTestRun": "trong lần chạy kiểm thử",
+        "alertTriggeredTitle": "Cảnh báo được kích hoạt",
+        "alertTriggeredRule": "Quy tắc: {ruleName}",
+        "alertTriggeredEmailMessage": "Cảnh báo \"{ruleName}\" được kích hoạt cho {subjectLabel} \"{subjectName}\" trong dự án \"{projectName}\": {detail}",
+        "alertTriggeredEmailMessageSystem": "Cảnh báo \"{ruleName}\" được kích hoạt cho {subjectLabel} \"{subjectName}\": {detail}",
+        "alertTriggeredReason": "Bạn nhận được điều này vì bạn được đăng ký cảnh báo này.",
+        "alertSubject": {
+          "CASE": "trường hợp thử nghiệm",
+          "RUN": "chạy thử nghiệm",
+          "MILESTONE": "cột mốc",
+          "SESSION": "phiên",
+          "PROJECT": "dự án",
+          "WEBHOOK": "webhook",
+          "LLM_INTEGRATION": "Tích hợp mô hình AI",
+          "CODE_REPOSITORY": "kết nối kho lưu trữ",
+          "INTEGRATION": "tích hợp",
+          "QUEUE": "hàng đợi",
+          "SYSTEM": "cài đặt"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "Kết quả mất {elapsed}, {deviation}% so với đường cơ sở {baseline} (nhiều hơn {threshold}% được phép).",
+          "CASE_REGRESSED": "Trường hợp thất bại sau khi vượt qua {passedBefore, plural, one {kết quả cuối cùng của nó} other {# kết quả cuối cùng của nó}}.",
+          "CASE_RECOVERED": "Trường hợp vượt qua sau khi thất bại {failedBefore, plural, one {kết quả cuối cùng của nó} other {# kết quả cuối cùng của nó}}.",
+          "RUN_DURATION_DEVIATION": "Lần chạy mất {elapsed}, {deviation}% so với đường cơ sở {baseline} (nhiều hơn {threshold}% được phép).",
+          "RUN_NOT_PROGRESSING": "Lần chạy không có kết quả mới trong {idleHours, plural, one {# giờ} other {# giờ}} (ngưỡng {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "Quá trình thực thi tự động trên {target} kết thúc với {status}{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% số trường hợp chạy không có kết quả trong {daysRemaining, plural, one {# ngày} other {# ngày}} trước khi cột mốc của nó đến hạn (ngưỡng {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# vấn đề là} other {# vấn đề là}} được liên kết với kết quả chạy (ngưỡng {threshold}).",
+          "SESSION_OVERRUN": "Phiên mất {elapsed} so với ước tính {estimate}, {overrun}% quá (nhiều hơn {threshold}% được phép).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} trong {total} yêu cầu ({coverage}%) {basis, select, PASSING {có kết quả mới nhất vượt qua} other {được liên kết với một trường hợp thử nghiệm}} (ngưỡng {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# trường hợp đã} other {# trường hợp đã}} không có kết quả trong {days, plural, one {# ngày} other {# ngày}} (ngưỡng {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} của {total} trường hợp ({automatedPercent}%) được tự động hóa (ngưỡng {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "{failed} trong {sampleCount} lần gửi cuối cùng không thành công ({failureRate}%, ngưỡng {threshold}%).",
+          "CONSECUTIVE_FAILURES": "Trường hợp đã thất bại {streak, plural, one {# lần} other {# lần}} liên tiếp (ngưỡng {threshold}).",
+          "CASE_FLAKY": "Kết quả lật {flips, plural, one {# lần} other {# lần}} trên {sampleCount} kết quả cuối cùng (ngưỡng {threshold}).",
+          "RUN_PASS_RATE_BELOW": "Tỷ lệ vượt qua là {passRate}% trên {sampleCount} kết quả (ngưỡng {threshold}%).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# kết quả đã} other {# kết quả đã}} thất bại (ngưỡng {threshold}).",
+          "MILESTONE_BEHIND": "Cột mốc là {completion}% hoàn thành với {daysRemaining, plural, one {# ngày} other {# ngày}} còn lại (ngưỡng {threshold}%).",
+          "MILESTONE_OVERDUE": "Cột mốc là {daysOverdue, plural, one {# ngày} other {# ngày}} quá hạn của nó.",
+          "LLM_BUDGET_USED": "Chi tiêu cho kỳ thanh toán là {spend} của ngân sách {budget} hàng tháng ({percent}%, ngưỡng {threshold}%).",
+          "LLM_ERROR_RATE": "{failed} trong {sampleCount} yêu cầu cuối cùng không thành công ({failureRate}%, ngưỡng {threshold}%).",
+          "LLM_RATE_LIMITED": "Nhà cung cấp rate-limited {blocked, plural, one {# yêu cầu} other {# yêu cầu}} trong {hours, plural, one {# giờ} other {# giờ}} cuối cùng (ngưỡng {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "Bộ đệm kho lưu trữ đã thất bại trong {hours, plural, one {# giờ} other {# giờ}} (ngưỡng {threshold}){error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# người dùng cần} other {# người dùng cần}} ủy quyền lại tích hợp (ngưỡng {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# công việc đã} other {# công việc đã}} thất bại trong hàng đợi (ngưỡng {threshold}).",
+          "QUEUE_BACKLOG": "Công việc chờ đợi cũ nhất {waiting, plural, one {# công việc chờ đợi} other {# công việc chờ đợi}} đã chờ {minutes, plural, one {# phút} other {# phút}} (ngưỡng {threshold}).",
+          "AUDIT_BACKLOG": "Thay đổi kiểm toán chưa xử lý cũ nhất là {minutes, plural, one {# phút} other {# phút}} tuổi (ngưỡng {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# tài khoản là} other {# tài khoản là}} bị khóa sau các lần đăng nhập thất bại (ngưỡng {threshold}).",
+          "NO_AUTOMATED_RESULTS": "Không có kết quả tự động nào trong {hours, plural, one {# giờ} other {# giờ}} (ngưỡng {threshold})."
+        }
       }
     },
     "issues": {
@@ -7587,7 +7689,8 @@
       "SharedSteps": "Các bước chung",
       "Issues": "Vấn đề",
       "Reporting": "Báo cáo",
-      "Settings": "Cài đặt dự án"
+      "Settings": "Quản lý Dự án",
+      "Alerts": "Cảnh báo"
     },
     "WorkflowType": {
       "NOT_STARTED": "Chưa bắt đầu",
@@ -7645,6 +7748,9 @@
     "businessHours": "{hours, number, ::.0} giờ làm việc"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## Nhãn\nCác thẻ mà vấn đề mang trong trình theo dõi của bạn. Hành động chỉ lấy một vấn đề có ít nhất một trong những điều này; để nó trống để lấy các vấn đề bất kể nhãn của chúng.\n\n- Jira, GitHub, GitLab và Gitea: nhãn của vấn đề\n- Azure DevOps, ClickUp và MantisBT: thẻ của vấn đề\n- Redmine: danh mục của vấn đề\n- Khớp bỏ qua hoa và chữ thường"
+    },
     "auditLogs": "## Nhật ký kiểm toán\nXem nhật ký kiểm toán toàn hệ thống để theo dõi bảo mật và tuân thủ",
     "statuses": "## Trạng thái\nQuản lý các trạng thái mà người kiểm thử gán khi ghi nhận kết quả kiểm thử, chẳng hạn như Đạt, Không đạt và Bị chặn.",
     "configurations": "## Cấu hình\nCấu hình là sự kết hợp của các danh mục và biến thể được sử dụng để xác định môi trường thử nghiệm. Ví dụ: Hệ điều hành/Trình duyệt, Máy chủ thử nghiệm, Ngôn ngữ, v.v.",
@@ -7827,7 +7933,7 @@
       "name": "## Tên vai trò\nMột tên hoặc từ khóa rõ ràng, ngắn gọn, mô tả được sử dụng trong tất cả các dự án.\n\n- Giúp các thành viên nhóm nhanh chóng tìm thấy các trường hợp kiểm thử, các lần chạy thử nghiệm và các phiên liên quan.",
       "isDefault": "## Vai trò mặc định\nCho biết liệu vai trò này có phải là vai trò mặc định cho dự án của bạn hay không.\n\n- Vai trò mặc định được chọn sẵn cho người dùng mới\n- Có thể thay đổi bất cứ lúc nào",
       "permissions": {
-        "canAddEdit": "## Thêm/Chỉnh sửa\nCho biết liệu vai trò này có thể thêm và chỉnh sửa khu vực ứng dụng liên quan hay không.\n\n- **Thực thi Tự động** cấp quyền bắt đầu, thử lại và hủy các thực thi tự động trên nhà cung cấp CI. Ghi lại kết quả vẫn cần **Kết quả Lần chạy Kiểm thử** Thêm/Chỉnh sửa, và bắt đầu từ kho lưu trữ cũng cần **Lần chạy Kiểm thử** Thêm/Chỉnh sửa vì nó tạo hoặc mở rộng một lần chạy.",
+        "canAddEdit": "## Thêm/Chỉnh sửa\nCho biết liệu vai trò này có thể thêm và chỉnh sửa khu vực ứng dụng liên quan hay không.\n\n- **Quá trình thực thi tự động** cho phép quyền bắt đầu, thử lại và hủy quá trình thực thi tự động trên nhà cung cấp CI. Ghi lại kết quả vẫn cần **Kết quả Chạy Thử nghiệm** Thêm/Chỉnh sửa, và bắt đầu từ kho lưu trữ cũng cần **Chạy Thử nghiệm** Thêm/Chỉnh sửa vì nó tạo hoặc mở rộng một lần chạy.\n- **Cảnh báo** cho phép quyền tạo cảnh báo trong dự án và chỉnh sửa, tạm dừng và xóa những cảnh báo bạn đã tạo. Quản trị viên dự án quản lý mọi cảnh báo và đăng ký của người dùng khác; bất kỳ ai cũng có thể theo dõi hoặc rời khỏi cảnh báo.",
         "canDelete": "## Xóa\nCho biết liệu vai trò này có thể xóa khu vực ứng dụng liên quan hay không.",
         "canClose": "## Đóng\nCho biết liệu vai trò này có thể đóng khu vực ứng dụng liên quan hay không.",
         "canApprove": "## Phê duyệt\nCho biết liệu vai trò này có thể phê duyệt các yêu cầu xem xét cho khu vực ứng dụng liên quan hay không. Chỉ áp dụng cho Kho lưu trữ trường hợp thử nghiệm, Chạy thử nghiệm và Phiên.",
@@ -7858,10 +7964,9 @@
       "maxTokensPerRequest": "## Số Token Tối Đa Mỗi Yêu Cầu\n**Giới hạn cứng về số token _đầu ra_** mà mô hình có thể tạo ra trong một phản hồi.\n\n- Giới hạn độ dài **phản hồi** của mô hình — không phải lượng ngữ cảnh bạn gửi cho nó\n- Các yêu cầu yêu cầu nhiều hơn giới hạn này sẽ bị **từ chối trước khi đến được mô hình**\n- Đặt giá trị này bằng đầu ra tối đa thực tế của mô hình của bạn — ví dụ: `128000` cho Claude Opus/Sonnet, `64000` cho Claude Haiku, `65536` cho Gemini, `16384` cho GPT-4o\n- Quá thấp → các tính năng AI sẽ thất bại hoặc tạo ra đầu ra bị cắt ngắn",
       "defaultMaxTokens": "## Số Token Tối Đa Mặc Định\n**Độ dài _đầu ra_** mà các yêu cầu trên mô hình AI này yêu cầu, bị giới hạn bởi _Số Token Tối Đa Mỗi Yêu Cầu_.\n\n- **Tạo Trường Hợp Kiểm Thử** (mọi nguồn, kể cả bảng vấn đề Jira), **Phân Tích Trường Hợp Kiểm Thử Markdown**, **Trợ Lý Viết Trong Trình Soạn Thảo**, và **Lựa Chọn Trường Hợp Kiểm Thử Thông Minh** luôn sử dụng giá trị này — _Số Token Đầu Ra Tối Đa_ trong Cấu Hình Prompt của chúng không được áp dụng\n- **Tạo Mã Xuất**, **Gợi Ý Thẻ AI**, **Suy Ra Bước AI**, và **Báo Cáo Ứng Viên Tự Động Hóa** sử dụng _Số Token Đầu Ra Tối Đa_ riêng của chúng từ **Admin → Cấu Hình Prompt** thay vào đó\n- Các mô hình suy nghĩ trước khi trả lời (ví dụ: Claude Opus 5) sử dụng một phần ngân sách này cho việc suy luận — hãy chừa chỗ cho phản hồi\n- Nó **không** kiểm soát lượng mã repository mà QuickScript gửi cho mô hình — ngân sách đó được tự động tính toán từ cửa sổ ngữ cảnh của mô hình\n- Giữ giá trị này ≤ _Số Token Tối Đa Mỗi Yêu Cầu_",
       "repoContextBudget": "## Ngân Sách Ngữ Cảnh Repository\nLượng mã trong repository đã kết nối mà QuickScript cung cấp cho mô hình khi tạo script.\n\n- **Được đặt tự động** từ cửa sổ ngữ cảnh đầu vào của mô hình đã chọn — không có gì cần cấu hình ở đây\n- Các mô hình có cửa sổ ngữ cảnh lớn hơn (Claude, Gemini, DeepSeek) sẽ nhận được nhiều hơn; các mô hình cục bộ nhỏ sẽ nhận được một lượng an toàn để không bị tràn\n- Nhiều ngữ cảnh hơn giúp script gắn kết chặt chẽ hơn với các page object và fixture thực tế của bạn — nó không thay đổi độ dài của script được tạo ra",
-      "maxRequestsPerMinute": "## Số lượng yêu cầu tối đa mỗi phút\nGiới hạn số lượng cuộc gọi API có thể được thực hiện đến nhà cung cấp này mỗi phút.\n\n- Đặt để phù hợp với giới hạn tốc độ của gói dịch vụ của nhà cung cấp\n- Các yêu cầu vượt quá sẽ được xếp vào hàng đợi, không bị từ chối\n- Kiểm tra tài liệu của nhà cung cấp để biết giới hạn của gói dịch vụ của bạn",
       "costPerInputToken": "## Chi Phí Trên Mỗi 1 Triệu Token Đầu Vào (USD)\nChi phí bằng USD cho mỗi **triệu** token đầu vào (prompt) được gửi đến mô hình.\n\n- Được sử dụng để theo dõi chi phí và cảnh báo ngân sách\n- Được tự động điền khi nhà cung cấp của bạn báo cáo giá mô hình (LiteLLM, OpenRouter, Together AI) — áp dụng khi bạn chọn một mô hình hoặc chạy Kiểm Tra Kết Nối\n- Nếu không, hãy tìm trên trang giá của nhà cung cấp\n- Ví dụ: `0.15` = $0.15 trên mỗi triệu token đầu vào",
       "costPerOutputToken": "## Chi Phí Trên Mỗi 1 Triệu Token Đầu Ra (USD)\nChi phí bằng USD cho mỗi **triệu** token đầu ra (hoàn thành) được mô hình tạo ra.\n\n- Thường cao hơn chi phí token đầu vào\n- Được sử dụng để theo dõi chi phí và cảnh báo ngân sách\n- Được tự động điền khi nhà cung cấp của bạn báo cáo giá mô hình (LiteLLM, OpenRouter, Together AI) — áp dụng khi bạn chọn một mô hình hoặc chạy Kiểm Tra Kết Nối\n- Nếu không, hãy tìm trên trang giá của nhà cung cấp\n- Ví dụ: `0.60` = $0.60 trên mỗi triệu token đầu ra",
-      "monthlyBudget": "## Ngân sách hàng tháng (USD)\nMục tiêu chi tiêu tùy chọn cho tích hợp này.\n\n- Đặt thành `0` để tắt theo dõi ngân sách\n- Ngân sách chỉ mang tính chất **thông tin** — nó không chặn việc sử dụng LLM\n- Bạn sẽ nhận được thông báo khi đạt 80%, 90% và 100% ngân sách\n- Chi phí được tính toán dựa trên tỷ giá mỗi token ở trên",
+      "monthlyBudget": "## Ngân sách hàng tháng (USD)\nMục tiêu chi tiêu tùy chọn cho tích hợp này.\n\n- Đặt thành `0` để vô hiệu hóa theo dõi ngân sách\n- Ngân sách **chỉ mang tính chất thông tin** — nó không chặn việc sử dụng LLM\n- Cảnh báo với số liệu **Ngân sách AI đã sử dụng** (Hệ thống, trên trang Thông báo & Cảnh báo) thông báo cho những người đăng ký khi chi tiêu đạt tỷ lệ phần trăm bạn đặt; lưu biểu mẫu này hoặc đặt lại chi tiêu cho phép nó bắt lửa lại trong cùng kỳ\n- Chi phí được tính bằng cách sử dụng tỷ giá trên mỗi mã thông báo ở trên",
       "billingPeriodStartDay": "## Ngày bắt đầu kỳ thanh toán\nNgày trong tháng (1–31) khi kỳ thanh toán của bạn bắt đầu.\n\n- Mặc định là `1` tương ứng với tháng dương lịch\n- Đặt thành `15` cho chu kỳ từ ngày 15 đến ngày 15 (ví dụ: để khớp với ngày hóa đơn của nhà cung cấp)\n- Các giá trị `29–31` tự động giới hạn ở ngày cuối cùng của các tháng ngắn hơn (tháng 2 trong năm không nhuận, v.v.)\n- Ảnh hưởng đến cửa sổ chi tiêu **Ngân sách hàng tháng** và hành động **Đặt lại chi tiêu**",
       "defaultTemperature": "## Nhiệt độ mặc định\nĐiều khiển tính ngẫu nhiên của phản hồi mô hình (0–2).\n\n- **0:** Xác định — đầu ra giống hệt nhau cho cùng một đầu vào\n- **0.3:** Tập trung — được khuyến nghị để tạo kiểm thử và xuất mã\n- **1+:** Sáng tạo — phản hồi đa dạng hơn\n- Các tính năng riêng lẻ có thể ghi đè cài đặt này trong Cấu hình lời nhắc",
       "timeout": "## Thời gian chờ yêu cầu (ms)\nThời gian chờ phản hồi trước khi yêu cầu bị hủy.\n\n- Giá trị tính bằng mili giây (ví dụ: `30000` = 30 giây)\n- Các yêu cầu truyền tải dữ liệu (ví dụ: xem trước xuất mã) sẽ bỏ qua thời gian chờ này\n- Tăng giá trị cho các mô hình chậm hoặc lớn\n- Phạm vi: 5.000 – 600.000 ms",
@@ -8387,8 +8492,9 @@
     "projectRunsFilters": "## Lọc lần chạy thử nghiệm\n\nBật/tắt một thẻ để thu hẹp danh sách. Các thẻ áp dụng cho cả tab Đang hoạt động và Đã hoàn thành, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Thủ công** / **Tự động** — giới hạn danh sách theo loại lần chạy đó. Bật cả hai (hoặc tắt cả hai) sẽ hiển thị tất cả các lần chạy.\n- **Lần chạy thử nghiệm của tôi** — chỉ các lần chạy bạn tham gia: bạn đã tạo lần chạy, bạn được gán một trường hợp kiểm thử trong đó, hoặc bạn đã ghi lại một kết quả kiểm thử trong đó.",
     "projectSessionsFilters": "## Lọc phiên\n\nBật một chip để thu hẹp danh sách. Các chip áp dụng cho cả tab Đang hoạt động và Đã hoàn tất, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Phiên của tôi** — chỉ các phiên bạn tham gia: bạn đã tạo phiên, hoặc phiên được giao cho bạn.",
     "projectImpact": "## Tác động\nKết nối kho lưu trữ của ứng dụng đang được kiểm thử để dự án này có thể chạy phân tích tác động kiểm thử: chọn hai commit để xem trường hợp kiểm thử nào mà các thay đổi ảnh hưởng, và ghim các trường hợp kiểm thử vào mã mà chúng bao phủ.",
-    "pathPatterns": "## Mẫu Đường Dẫn\nMỗi hàng kết hợp một **đường dẫn** cơ sở với một **mẫu** glob. Các hàng cộng dồn: một tệp được bao gồm khi bất kỳ hàng nào khớp với nó.\n\n- `src` + `**/*` — mọi thứ dưới `src`\n- trống hoặc `.` + `**/*` — mọi tệp trong kho lưu trữ\n- `src` + `**/!(*.test|*.spec).ts` — các tệp `.ts` ngoại trừ các bài kiểm tra\n\n### Loại Trừ\nĐánh dấu **Loại Trừ** trên một hàng để xóa các tệp của nó ngay cả khi một hàng khác bao gồm chúng. Các loại trừ áp dụng cho bộ chọn tệp và bộ đệm, và đối với Tác Động đối với các tệp đã thay đổi của một phân tích, vì vậy một tệp thay đổi trong hầu hết mọi yêu cầu kéo ngừng kéo vào các trường hợp kiểm tra không liên quan. Ít nhất một hàng phải vẫn chưa được đánh dấu.\n\n- trống + `**/CHANGELOG*` — mọi changelog, ở bất kỳ độ sâu nào\n- `app` + `build.gradle.kts` — một tệp xây dựng chỉ nâng cấp phiên bản",
-    "projectAutomation": "## Thực thi Tự động\nCác mục tiêu thực thi cho TestPlanIt biết nơi thực thi các trường hợp tự động của dự án này: quy trình làm việc GitHub Actions, đường ống GitLab CI, hoặc webhook được ký cho bất kỳ hệ thống nào khác. Khi một lần chạy được thực thi, TestPlanIt bắt đầu công việc với id lần chạy và URL kế hoạch; công việc đọc kế hoạch, chạy các kiểm thử phù hợp, và báo cáo kết quả trở lại với một trình báo cáo hoặc CLI được ghim vào lần chạy đó. Các mục tiêu có thể bị vô hiệu hóa mà không bị xóa."
+    "pathPatterns": "## Mẫu Đường Dẫn\nMỗi hàng kết hợp một **đường dẫn** cơ bản với một **mẫu** glob. Các hàng cộng lại: một tệp được bao gồm khi bất kỳ hàng nào khớp với nó.\n\n- `src` + `**/*` — mọi thứ dưới `src`\n- trống hoặc `.` + `**/*` — mọi tệp trong kho lưu trữ\n- `src` + `**/!(*.test|*.spec).ts` — các tệp `.ts` ngoại trừ các bài kiểm tra\n\n### Loại trừ\nChọn **Loại trừ** trên một hàng để loại bỏ các tệp của nó ngay cả khi một hàng khác bao gồm chúng. Các loại trừ áp dụng cho trình chọn tệp và bộ nhớ cache, và đối với Impact áp dụng cho các tệp đã thay đổi của một phân tích, do đó một tệp thay đổi trên hầu hết mọi yêu cầu kéo sẽ ngừng kéo vào các trường hợp thử nghiệm không liên quan. Ít nhất một hàng phải giữ nguyên không được chọn.\n\n- trống + `**/CHANGELOG*` — mọi changelog, ở bất kỳ độ sâu nào\n- `app` + `build.gradle.kts` — một tệp xây dựng chỉ thay đổi phiên bản",
+    "projectAutomation": "## Thực thi Tự động\nCác mục tiêu thực thi cho TestPlanIt biết nơi thực thi các trường hợp tự động của dự án này: quy trình làm việc GitHub Actions, đường ống GitLab CI, hoặc webhook được ký cho bất kỳ hệ thống nào khác. Khi một lần chạy được thực thi, TestPlanIt bắt đầu công việc với id lần chạy và URL kế hoạch; công việc đọc kế hoạch, chạy các kiểm thử phù hợp, và báo cáo kết quả trở lại với một trình báo cáo hoặc CLI được ghim vào lần chạy đó. Các mục tiêu có thể bị vô hiệu hóa mà không bị xóa.",
+    "userAlerts": "## Thông báo & Cảnh báo\n**Tùy chọn Thông báo** quyết định cách bạn được tiếp cận (trong ứng dụng, email, tóm tắt) và những loại thông báo nào bạn nhận được. **Cảnh báo** theo dõi số liệu kiểm tra và thông báo cho những người đăng ký khi nó vượt qua một dòng, ví dụ một kết quả mất 50% lâu hơn thời gian thông thường của trường hợp, một trường hợp thất bại ba lần liên tiếp, một lần chạy có tỷ lệ vượt qua dưới 90%, hoặc một cột mốc phía sau với ngày để đi. Danh sách hiển thị mọi cảnh báo trong các dự án của bạn; công tắc **Thông báo cho tôi** theo dõi hoặc rời khỏi một. **Thêm Cảnh báo** tạo ra của riêng bạn trong bất kỳ dự án nào nơi vai trò của bạn có **Cảnh báo** Thêm/Chỉnh sửa; quản trị viên dự án quản lý mọi cảnh báo trong dự án của họ và đăng ký của mọi người khác. Cảnh báo kích hoạt tối đa một lần mỗi chủ đề trong thời gian hạ nhiệt và giữ im lặng cho đến khi nó có đủ kết quả."
   },
   "reports": {
     "ui": {
@@ -9610,9 +9716,12 @@
       "exists": "Tồn tại",
       "not_exists": "Không tồn tại"
     },
+    "recordMatches": "{count, plural, one {# bản ghi được phù hợp theo ID} other {# bản ghi được phù hợp theo ID}}",
     "help": {
       "exactPhrases": "Cụm từ chính xác",
       "exactPhrasesDesc": "Đặt các thuật ngữ trong dấu ngoặc kép để khớp chính xác với các cụm từ:",
+      "ids": "ID",
+      "idsDesc": "Nhập ID, có hoặc không có #, để tìm bản ghi trực tiếp. Tách một số cách khác nhau bằng OR, dấu phẩy hoặc dấu cách để tìm tất cả:",
       "proximity": "Tìm kiếm theo khoảng cách",
       "proximityDesc": "các từ nằm trong phạm vi N vị trí của nhau",
       "booleanOperators": "Toán tử Boolean",
@@ -10177,5 +10286,454 @@
     "update": "Cập nhật với ánh xạ hiện tại",
     "updateConfirm": "\"{name}\" sẽ được cập nhật với ánh xạ cột hiện tại và cài đặt.",
     "savePrompt": "Lưu ánh xạ cột này cho lần tiếp theo?"
+  },
+  "alerts": {
+    "title": "Cảnh báo",
+    "description": "Cảnh báo bạn theo dõi trên các dự án của bạn, và cảnh báo trong những dự án đó mà bạn có thể theo dõi.",
+    "addRule": "Thêm Cảnh báo",
+    "editRule": "Chỉnh sửa Cảnh báo",
+    "deleteRule": "Xóa Cảnh báo",
+    "deleteConfirm": "Xóa cảnh báo \"{name}\"? Những người đăng ký của nó sẽ không còn nhận được thông báo và nó có thể được khôi phục từ thùng rác.",
+    "pauseTitle": "Tạm dừng cảnh báo này cho mọi người?",
+    "pauseConfirm": "\"{name}\" ngừng bắt lửa cho {count, plural, =0 {mọi người} one {người đăng ký duy nhất của nó} =2 {cả hai người đăng ký} other {tất cả # người đăng ký}}, không chỉ bạn, cho đến khi ai đó bật nó lại. Để dừng thông báo của riêng bạn, hãy tắt Thông báo cho tôi.",
+    "columns": {
+      "name": "Quy tắc",
+      "condition": "Điều kiện",
+      "scope": "Phạm vi",
+      "subscribers": "Những người đăng ký",
+      "lastFired": "Lần kích hoạt cuối cùng",
+      "enabled": "Đã bật",
+      "notifyMe": "Thông báo cho tôi",
+      "actions": "Hành động",
+      "project": "Dự án"
+    },
+    "neverFired": "Không bao giờ",
+    "systemScope": "Hệ thống",
+    "systemSubjects": {
+      "audit": "Nhật ký kiểm toán",
+      "lockouts": "Tài khoản người dùng",
+      "automated-results": "Kết quả tự động"
+    },
+    "paused": "Tạm dừng",
+    "filters": {
+      "label": "Lọc cảnh báo",
+      "on": "Bật",
+      "off": "Tắt"
+    },
+    "history": "Lịch sử",
+    "subscribers": "Những người đăng ký",
+    "subscriberCount": "{count, plural, =0 {Không có người đăng ký} one {# người đăng ký} other {# người đăng ký}}",
+    "toasts": {
+      "created": "Quy tắc được tạo.",
+      "updated": "Quy tắc đã được cập nhật.",
+      "deleted": "Quy tắc đã bị xóa.",
+      "enabled": "Quy tắc đã được bật.",
+      "disabled": "Quy tắc tạm dừng.",
+      "subscribed": "Bạn sẽ được thông báo khi quy tắc này kích hoạt.",
+      "unsubscribed": "Bạn sẽ không còn được thông báo bởi quy tắc này.",
+      "subscriberAdded": "{name} được đăng ký.",
+      "subscriberRemoved": "{name} không được đăng ký.",
+      "saveError": "Không thể lưu quy tắc.",
+      "subscriptionError": "Không thể cập nhật đăng ký."
+    },
+    "form": {
+      "name": "Tên",
+      "namePlaceholder": "ví dụ Sự chậm lại của luồng thanh toán",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Ghi chú tùy chọn cho những người đăng ký khác",
+      "metric": "Số liệu",
+      "metricLocked": "Số liệu không thể được thay đổi sau khi tạo cảnh báo. Thay vào đó, hãy tạo cảnh báo mới.",
+      "condition": "Điều kiện",
+      "scope": "Phạm vi",
+      "scopeType": "Xem",
+      "scopeFolder": "Thư mục",
+      "scopeTag": "Nhãn",
+      "scopeCase": "Trường hợp thử nghiệm",
+      "scopeMilestone": "Cột mốc",
+      "scopeRunName": "Tên chạy chứa",
+      "scopeRunNamePlaceholder": "ví dụ Nightly",
+      "scopePickFolder": "Chọn một thư mục",
+      "scopePickTag": "Chọn một thẻ",
+      "scopePickCase": "Chọn một trường hợp thử nghiệm",
+      "scopePickMilestone": "Chọn cột mốc",
+      "scopeWebhook": "Webhook",
+      "scopePickWebhook": "Chọn một webhook",
+      "scopeLlmIntegration": "Tích hợp",
+      "scopePickLlmIntegration": "Chọn tích hợp",
+      "scopeCodeRepository": "Kết nối kho lưu trữ",
+      "scopePickCodeRepository": "Chọn kết nối kho lưu trữ",
+      "scopeIntegration": "Tích hợp",
+      "scopePickIntegration": "Chọn tích hợp",
+      "scopeQueue": "Hàng đợi",
+      "scopePickQueue": "Chọn hàng đợi",
+      "systemScope": "Hệ thống",
+      "systemScopeHelp": "Cảnh báo hệ thống theo dõi một cái gì đó được quản trị cho toàn bộ cài đặt, chẳng hạn như ngân sách mô hình AI. Chỉ quản trị viên mới thấy nó.",
+      "coverageBasis": "Tính là được bảo hiểm",
+      "coverageBasisOptions": {
+        "LINKED": "Được liên kết với ít nhất một trường hợp thử nghiệm",
+        "PASSING": "Kết quả mới nhất đã vượt qua"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Cửa sổ đường cơ sở (chạy)",
+        "WEBHOOK_FAILURE_RATE": "Giao hàng cuối cùng",
+        "LLM_ERROR_RATE": "Yêu cầu cuối cùng"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Chạy tối thiểu",
+        "WEBHOOK_FAILURE_RATE": "Giao hàng tối thiểu",
+        "LLM_ERROR_RATE": "Yêu cầu tối thiểu"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Ngày trước khi cột mốc đến hạn",
+        "STALE_CASES": "Ngày không có kết quả",
+        "LLM_RATE_LIMITED": "Trong những giờ cuối cùng (giờ)"
+      },
+      "scopeCaseSearch": "Tìm kiếm theo tên hoặc ID",
+      "direction": "Phương hướng",
+      "baselineType": "Đường cơ sở",
+      "baselineWindow": "Cửa sổ đường cơ sở (kết quả)",
+      "minSamples": "Kết quả tối thiểu",
+      "resultSource": "Kết quả để xem",
+      "evaluateOn": "Đánh giá",
+      "daysRemaining": "Ngày còn lại",
+      "cooldown": "Thời gian hạ nhiệt (phút)",
+      "cooldownHelp": "Sau khi quy tắc kích hoạt cho một chủ đề, nó giữ im lặng cho chủ đề đó trong thời gian này. 0 vô hiệu hóa thời gian hạ nhiệt.",
+      "emitWebhook": "Gửi sự kiện webhook alert.triggered",
+      "emitWebhookHelp": "Webhooks gửi đi được đăng ký Cảnh báo nhận cùng một trọng tải, vì vậy Slack hoặc các công cụ khác có thể đăng nó.",
+      "enabled": "Đã bật",
+      "audience": "Đối tượng",
+      "audienceHelp": "Ai được thông báo khi cảnh báo kích hoạt. Bạn được thêm theo mặc định để cảnh báo bạn tạo; bất kỳ ai cũng có thể rời khỏi hoặc tham gia lại.",
+      "audienceHelpSystem": "Ai được thông báo khi cảnh báo kích hoạt. Chỉ quản trị viên mới có thể ở trong đối tượng của cảnh báo hệ thống; bạn được thêm theo mặc định.",
+      "searchMembers": "Tìm kiếm thành viên dự án",
+      "you": "bạn",
+      "cannotManageSubscribers": "Bạn có thể đăng ký hoặc bỏ đăng ký chính mình. Đăng ký các thành viên khác cần quyền quản trị dự án.",
+      "validation": {
+        "nameRequired": "Nhập tên.",
+        "scopeRequired": "Chọn những gì quy tắc xem.",
+        "runNameRequired": "Nhập phần của tên chạy.",
+        "percentRange": "Nhập phần trăm từ {min} đến {max}.",
+        "countRange": "Nhập toàn bộ số từ {min} đến {max}.",
+        "windowRange": "Nhập cửa sổ từ {min} đến {max} kết quả.",
+        "minSamplesRange": "Nhập giá trị từ {min} đến {max}.",
+        "minSamplesWindow": "Kết quả tối thiểu không thể vượt quá cửa sổ đường cơ sở.",
+        "cooldownRange": "Nhập phút từ {min} đến {max}.",
+        "daysRange": "Nhập ngày từ {min} đến {max}.",
+        "windowBelowMinSamples": "Cửa sổ đường cơ sở không thể nhỏ hơn kết quả tối thiểu."
+      },
+      "project": "Dự án",
+      "projectPlaceholder": "Chọn một dự án",
+      "projectHelp": "Chỉ các dự án nơi vai trò của bạn có thể tạo cảnh báo được liệt kê.",
+      "dialogDescription": "Xem một số liệu kiểm tra và thông báo cho đối tượng khi nó vượt qua dòng bạn đặt.",
+      "metricSearch": "Tìm kiếm số liệu",
+      "metricNoMatch": "Không có số liệu nào khớp.",
+      "checkedDaily": "Kiểm tra hàng ngày",
+      "checkedHourly": "Kiểm tra mỗi giờ",
+      "needsProject": "Trước tiên chọn một dự án.",
+      "followAlert": "Thông báo cho tôi",
+      "leaveAlert": "Dừng thông báo cho tôi",
+      "delivery": "Giao hàng",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "Độ lệch (%)",
+        "CASE_REGRESSED": "Ngưỡng",
+        "CONSECUTIVE_FAILURES": "Thất bại liên tiếp",
+        "CASE_FLAKY": "Lật",
+        "RUN_PASS_RATE_BELOW": "Tỷ lệ vượt qua dưới (%)",
+        "RUN_FAILURE_COUNT": "Kết quả không thành công, nhiều hơn",
+        "RUN_DURATION_DEVIATION": "Độ lệch (%)",
+        "RUN_NOT_PROGRESSING": "Không hoạt động lâu hơn (giờ)",
+        "AUTOMATED_EXECUTION_FAILED": "Ngưỡng",
+        "RUN_UNTESTED_SHARE": "Các trường hợp chưa được kiểm tra vượt quá (%)",
+        "RUN_ISSUES_OPENED": "Vấn đề được liên kết, nhiều hơn",
+        "SESSION_OVERRUN": "Vượt quá ước tính nhiều hơn (%)",
+        "MILESTONE_BEHIND": "Hoàn thành dưới (%)",
+        "MILESTONE_OVERDUE": "Ngưỡng",
+        "REQUIREMENT_COVERAGE_BELOW": "Phạm vi dưới (%)",
+        "STALE_CASES": "Trường hợp cũ, nhiều hơn",
+        "AUTOMATION_SHARE_BELOW": "Chia sẻ tự động dưới (%)",
+        "WEBHOOK_FAILURE_RATE": "Tỷ lệ thất bại vượt quá (%)",
+        "LLM_BUDGET_USED": "Ngân sách được sử dụng (%)",
+        "LLM_ERROR_RATE": "Yêu cầu không thành công vượt quá (%)",
+        "LLM_RATE_LIMITED": "Yêu cầu bị rate-limited, ít nhất",
+        "CODE_REPOSITORY_CACHE_FAILING": "Thất bại ít nhất (giờ)",
+        "INTEGRATION_REAUTH_NEEDED": "Người dùng cần ủy quyền lại, ít nhất",
+        "QUEUE_FAILED_JOBS": "Công việc thất bại, nhiều hơn",
+        "QUEUE_BACKLOG": "Công việc chờ đợi cũ nhất cũ hơn (phút)",
+        "AUDIT_BACKLOG": "Thay đổi chưa xử lý cũ nhất cũ hơn (phút)",
+        "ACCOUNT_LOCKOUTS": "Tài khoản bị khóa, ít nhất",
+        "NO_AUTOMATED_RESULTS": "Không có kết quả tự động cho (giờ)"
+      }
+    },
+    "direction": {
+      "ABOVE": "Trên (chậm hơn)",
+      "BELOW": "Dưới (nhanh hơn)",
+      "EITHER": "Phía trên hoặc phía dưới"
+    },
+    "baseline": {
+      "MEAN": "Có nghĩa là",
+      "MEDIAN": "Trung bình"
+    },
+    "resultSource": {
+      "MANUAL": "Kết quả thủ công",
+      "AUTOMATED": "Kết quả tự động",
+      "BOTH": "Thủ công và tự động"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "Khi lần chạy hoàn thành",
+      "AS_RESULTS_ARRIVE": "Khi các kết quả đến"
+    },
+    "scopeType": {
+      "PROJECT": "Toàn bộ dự án",
+      "FOLDER": "Các trường hợp trong thư mục",
+      "TAG": "Các trường hợp với thẻ",
+      "CASE": "Một trường hợp thử nghiệm",
+      "RUN_NAME": "Chạy có tên chứa",
+      "MILESTONE": "Một cột mốc",
+      "WEBHOOK": "Một webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "Tất cả các phiên",
+      "TAG": "Phiên với thẻ"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "Tất cả webhook gửi đi",
+      "WEBHOOK": "Một webhook"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "Tất cả tích hợp mô hình AI",
+      "LLM_INTEGRATION": "Một tích hợp"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "Tất cả kết nối kho lưu trữ",
+      "CODE_REPOSITORY": "Một kết nối kho lưu trữ"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "Tất cả tích hợp",
+      "INTEGRATION": "Một tích hợp"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "Tất cả các hàng đợi",
+      "QUEUE": "Một hàng đợi"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "Toàn bộ cài đặt"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "Tất cả chạy",
+      "TAG": "Chạy với thẻ",
+      "RUN_NAME": "Chạy có tên chứa"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "Tất cả các cột mốc",
+      "MILESTONE": "Một cột mốc"
+    },
+    "scopeDisplay": {
+      "PROJECT": "Toàn bộ dự án",
+      "FOLDER": "Thư mục: {name}",
+      "TAG": "Thẻ: {name}",
+      "CASE": "Trường hợp: {name}",
+      "RUN_NAME": "Chạy chứa \"{text}\"",
+      "MILESTONE": "Cột mốc: {name}",
+      "WEBHOOK": "Webhook: {name}",
+      "LLM_INTEGRATION": "Tích hợp: {name}",
+      "ALL_LLM_INTEGRATIONS": "Tất cả tích hợp mô hình AI",
+      "CODE_REPOSITORY": "Kho lưu trữ: {name}",
+      "ALL_CODE_REPOSITORIES": "Tất cả kết nối kho lưu trữ",
+      "INTEGRATION": "Tích hợp: {name}",
+      "ALL_INTEGRATIONS": "Tất cả tích hợp",
+      "QUEUE": "Hàng đợi: {name}",
+      "ALL_QUEUES": "Tất cả các hàng đợi",
+      "WHOLE_INSTALLATION": "Toàn bộ cài đặt",
+      "missing": "(đã xóa)"
+    },
+    "subjectType": {
+      "CASE": "Trường hợp thử nghiệm",
+      "RUN": "Chạy thử nghiệm",
+      "MILESTONE": "Cột mốc",
+      "SESSION": "Phiên",
+      "PROJECT": "Dự án",
+      "WEBHOOK": "Webhook"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "Thời lượng kết quả lệch khỏi đường cơ sở",
+        "description": "Một kết quả mất nhiều thời gian hơn hoặc ngắn hơn kết quả gần đây của trường hợp. Kết quả không có thời gian trôi qua được bỏ qua.",
+        "summary": "Thời lượng kết quả nhiều hơn {threshold}% {direction, select, ABOVE {trên} BELOW {dưới} other {trên hoặc dưới}} {baseline, select, MEAN {trung bình} other {trung bình}} của {window} kết quả gần đây của trường hợp, sau ít nhất {minSamples} kết quả"
+      },
+      "CASE_REGRESSED": {
+        "label": "Trường hợp bị suy giảm",
+        "description": "Một trường hợp đã vượt qua kết quả gần đây của nó bây giờ thất bại. Bắt được một thất bại mới trên một trường hợp ổn định.",
+        "summary": "Một trường hợp thất bại sau khi vượt qua {window} kết quả gần đây của nó"
+      },
+      "CASE_RECOVERED": {
+        "label": "Trường hợp hồi phục",
+        "description": "Một trường hợp vượt qua sau khi thất bại tất cả các kết quả gần đây của nó.",
+        "summary": "Một trường hợp vượt qua sau khi thất bại {window, plural, one {# kết quả} other {# kết quả}}"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "Những thất bại liên tiếp",
+        "description": "Một trường hợp thất bại một số lần nhất định liên tiếp.",
+        "summary": "Một trường hợp thất bại {threshold, plural, one {# lần} other {# lần}} liên tiếp"
+      },
+      "CASE_FLAKY": {
+        "label": "Trường hợp trở nên không ổn định",
+        "description": "Một trường hợp lật giữa vượt qua và thất bại lặp lại trong kết quả gần đây của nó. Sử dụng các đầu vào tương tự như báo cáo Kiểm tra Flaky.",
+        "summary": "Một trường hợp lật giữa vượt qua và thất bại ít nhất {threshold, plural, one {# lần} other {# lần}} qua {window} kết quả gần đây"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "Tỷ lệ vượt qua chạy dưới ngưỡng",
+        "description": "Tỷ lệ vượt qua của lần chạy, được đếm trên kết quả có phán quyết vượt qua hoặc thất bại, giảm xuống dưới một phần trăm.",
+        "summary": "Tỷ lệ vượt qua của lần chạy dưới {threshold}% một khi ít nhất {minSamples} kết quả có phán quyết, {evaluateOn, select, AS_RESULTS_ARRIVE {đánh giá khi các kết quả đến} other {đánh giá khi lần chạy hoàn thành}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "Số lượng lần chạy thất bại",
+        "description": "Một lần chạy có nhiều hơn một số lượng nhất định kết quả không thành công.",
+        "summary": "Một lần chạy có nhiều hơn {threshold, plural, one {# kết quả thất bại} other {# kết quả thất bại}}, {evaluateOn, select, AS_RESULTS_ARRIVE {đánh giá khi các kết quả đến} other {đánh giá khi lần chạy hoàn thành}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "Thời lượng chạy lệch khỏi đường cơ sở",
+        "description": "Tổng thời lượng của lần chạy hoàn thành lệch khỏi các lần chạy nhóm phạm vi của nó với nhau (cùng một thẻ hoặc đoạn tên).",
+        "summary": "Thời lượng của lần chạy hoàn thành nhiều hơn {threshold}% {direction, select, ABOVE {trên} BELOW {dưới} other {trên hoặc dưới}} {baseline, select, MEAN {trung bình} other {trung bình}} của {window} lần chạy cuối cùng, sau ít nhất {minSamples} chạy"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Chạy không tiến bộ",
+        "description": "Một lần chạy mở không có kết quả mới trong một số giờ nhất định. Kiểm tra hàng giờ.",
+        "summary": "Một lần chạy mở không có kết quả mới trong hơn {threshold, plural, one {# giờ} other {# giờ}}"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "Quá trình thực thi tự động thất bại",
+        "description": "Một quá trình thực thi tự động của một lần chạy thất bại, không thể được gửi đi, hoặc hết thời gian chờ.",
+        "summary": "Một quá trình thực thi tự động thất bại, không thể được gửi đi, hoặc hết thời gian chờ"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Chạy chia sẻ chưa được kiểm tra",
+        "description": "Quá nhiều trường hợp của một lần chạy vẫn không có kết quả với ít ngày còn lại trước khi cột mốc của nó đến hạn. Kiểm tra hàng ngày.",
+        "summary": "Nhiều hơn {threshold}% trường hợp chạy không có kết quả với {days, plural, one {# ngày} other {# ngày}} hoặc ít hơn trước khi cột mốc của nó đến hạn"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Vấn đề được mở từ lần chạy",
+        "description": "Nhiều hơn một số lượng nhất định vấn đề được liên kết với kết quả chạy.",
+        "summary": "Nhiều hơn {threshold, plural, one {# vấn đề là} other {# vấn đề là}} được liên kết với kết quả chạy, {evaluateOn, select, AS_RESULTS_ARRIVE {đánh giá khi các kết quả đến} other {đánh giá khi lần chạy hoàn thành}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "Phiên vượt quá ước tính của nó",
+        "description": "Thời gian trôi qua của phiên hoàn thành vượt quá ước tính của nó theo phần trăm.",
+        "summary": "Thời gian trôi qua của phiên hoàn thành nhiều hơn {threshold}% vượt quá ước tính của nó"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "Hoàn thành cột mốc phía sau",
+        "description": "Các trường hợp chạy của cột mốc không được hoàn thành đủ với ít ngày còn lại trước khi hạn chót của nó. Kiểm tra hàng ngày.",
+        "summary": "Cột mốc dưới {threshold}% hoàn thành với {days, plural, one {# ngày} other {# ngày}} hoặc ít hơn còn lại"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "Cột mốc bị trì hoãn",
+        "description": "Hạn chót của cột mốc đã qua và nó không hoàn thành. Kiểm tra hàng ngày.",
+        "summary": "Cột mốc vượt qua hạn chót mà không hoàn thành"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "Phạm vi yêu cầu dưới ngưỡng",
+        "description": "Ít hơn một chia sẻ nhất định yêu cầu dự án tính là được bảo hiểm. Kiểm tra hàng ngày.",
+        "summary": "Ít hơn {threshold}% yêu cầu {basis, select, PASSING {có kết quả mới nhất vượt qua} other {được liên kết với ít nhất một trường hợp thử nghiệm}}"
+      },
+      "STALE_CASES": {
+        "label": "Trường hợp cũ",
+        "description": "Nhiều hơn một số lượng nhất định trường hợp đã từng không có kết quả trong một số ngày nhất định. Kiểm tra hàng ngày.",
+        "summary": "Nhiều hơn {threshold, plural, one {# trường hợp đã} other {# trường hợp đã}} không có kết quả trong {days, plural, one {# ngày} other {# ngày}}"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "Chia sẻ tự động dưới ngưỡng",
+        "description": "Ít hơn một chia sẻ nhất định trường hợp trong phạm vi được tự động hóa. Kiểm tra hàng ngày.",
+        "summary": "Ít hơn {threshold}% trường hợp được tự động hóa"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Tỷ lệ thất bại của webhook",
+        "description": "Quá nhiều lần gửi gần đây của webhook gửi đi không thành công. Kiểm tra hàng giờ.",
+        "summary": "Nhiều hơn {threshold}% {window} lần gửi gần đây của webhook gửi đi không thành công, sau ít nhất {minSamples} giao hàng"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "Ngân sách AI được sử dụng",
+        "description": "Chi tiêu tích hợp mô hình AI cho kỳ thanh toán của nó đạt chia sẻ ngân sách hàng tháng. Kích hoạt một lần mỗi kỳ cho mỗi tích hợp.",
+        "summary": "Chi tiêu đạt {threshold}% ngân sách hàng tháng của tích hợp"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "Tỷ lệ lỗi yêu cầu AI",
+        "description": "Quá nhiều yêu cầu gần đây của tích hợp mô hình AI không thành công.",
+        "summary": "Nhiều hơn {threshold}% {window} yêu cầu gần đây của tích hợp không thành công, sau ít nhất {minSamples} yêu cầu"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "Giới hạn tỷ lệ nhà cung cấp AI",
+        "description": "Nhà cung cấp đã điều chỉnh các yêu cầu tích hợp mô hình AI của một cách lặp lại.",
+        "summary": "Nhà cung cấp rate-limited ít nhất {threshold, plural, one {# yêu cầu} other {# yêu cầu}} trong {days, plural, one {# giờ} other {# giờ}}"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "Bộ đệm kho lưu trữ không thành công",
+        "description": "Kết nối kho lưu trữ mã không làm mới thành công bộ đệm của nó trong một thời gian. Kiểm tra hàng giờ.",
+        "summary": "Bộ đệm kết nối kho lưu trữ không thành công trong ít nhất {threshold, plural, one {# giờ} other {# giờ}}"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "Cần ủy quyền lại tích hợp",
+        "description": "Nhiều người dùng đã mất kết nối của họ với tích hợp và cần ủy quyền lại. Kiểm tra hàng ngày.",
+        "summary": "Ít nhất {threshold, plural, one {# người dùng cần} other {# người dùng cần}} ủy quyền lại tích hợp"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "Hàng đợi công việc không thành công",
+        "description": "Hàng đợi latar plan giữ quá nhiều công việc thất bại. Kiểm tra hàng giờ.",
+        "summary": "Nhiều hơn {threshold, plural, one {# công việc đã} other {# công việc đã}} thất bại trong hàng đợi"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "Backlog hàng đợi",
+        "description": "Công việc chờ đợi cũ nhất của hàng đợi latar plan đã chờ quá lâu, dấu hiệu của một công nhân đã dừng. Kiểm tra hàng giờ.",
+        "summary": "Công việc chờ đợi cũ nhất của hàng đợi cũ hơn {threshold, plural, one {# phút} other {# phút}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "Backlog nhật ký kiểm toán",
+        "description": "Các thay đổi được chụp không được viết vào nhật ký kiểm toán, dấu hiệu của một công nhân kiểm toán đã dừng. Kiểm tra hàng giờ.",
+        "summary": "Thay đổi kiểm toán chưa xử lý cũ nhất cũ hơn {threshold, plural, one {# phút} other {# phút}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "Khóa tài khoản",
+        "description": "Một số tài khoản bị khóa sau các lần đăng nhập không thành công cùng một lúc, dấu hiệu của các yêu cầu xâm nhập thông tin xác thực. Kiểm tra hàng giờ.",
+        "summary": "Ít nhất {threshold, plural, one {# tài khoản là} other {# tài khoản là}} bị khóa sau các lần đăng nhập không thành công"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "Không có kết quả tự động",
+        "description": "Không có kết quả kiểm tra tự động nào đã tới từ bất kỳ đường ống nào trong một thời gian. Kiểm tra hàng ngày.",
+        "summary": "Không có kết quả tự động nào đã tới trong {threshold, plural, one {# giờ} other {# giờ}}"
+      }
+    },
+    "sourceSummary": "Kết quả: {source, select, MANUAL {thủ công} AUTOMATED {tự động} other {thủ công và tự động}}",
+    "historyDialog": {
+      "title": "Lịch sử: {name}",
+      "empty": "Quy tắc này chưa bắt lửa.",
+      "columns": {
+        "firedAt": "Bắt lửa",
+        "subject": "Chủ đề",
+        "observed": "Quan sát",
+        "threshold": "Ngưỡng",
+        "notified": "Đã thông báo"
+      },
+      "webhookSent": "Webhook đã gửi"
+    },
+    "descriptionFor": "Cảnh báo {name} theo dõi, và cảnh báo khác trong các dự án của họ.",
+    "empty": "Chưa có cảnh báo nào trong các dự án của bạn.",
+    "emptyCanCreate": "Chưa có cảnh báo nào trong các dự án của bạn. Thêm một cái để bắt đầu.",
+    "pageDescription": "Cách bạn được thông báo, những gì bạn được nói đến, và cảnh báo bạn theo dõi.",
+    "pageDescriptionFor": "Cách {name} được thông báo và cảnh báo họ theo dõi.",
+    "pageTabs": {
+      "alerts": "Cảnh báo",
+      "notifications": "Thông báo"
+    },
+    "metricGroups": {
+      "CASE": "Kết quả trường hợp thử nghiệm",
+      "RUN": "Chạy thử nghiệm",
+      "SESSION": "Phiên",
+      "MILESTONE": "Các cột mốc",
+      "PROJECT": "Sức khỏe dự án",
+      "WEBHOOK": "Webhooks",
+      "LLM_INTEGRATION": "Mô hình AI",
+      "CODE_REPOSITORY": "Kho lưu trữ mã nguồn",
+      "INTEGRATION": "Tích hợp",
+      "QUEUE": "Hàng đợi công việc latar plan",
+      "SYSTEM": "Cài đặt"
+    }
   }
 }

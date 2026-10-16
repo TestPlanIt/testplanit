@@ -577,6 +577,7 @@
       "addFieldTo": "添加字段到{section}",
       "selectTemplates": "选择模板",
       "selectUsers": "选择用户",
+      "selectGroups": "选择组",
       "selectOption": "选择一个选项",
       "date": "选择日期",
       "selectEncoding": "选择编码方式...",
@@ -737,7 +738,8 @@
       "adminSamlConfig": "管理员 - SAML 配置",
       "apiDocumentation": "API 文档",
       "sharedContent": "共享内容",
-      "impact": "影响分析"
+      "impact": "影响分析",
+      "alerts": "通知和警报"
     },
     "aria": {
       "userMenu": "用户菜单",
@@ -1660,7 +1662,8 @@
           "scimGroupMemberAdded": "新增成员",
           "scimGroupMemberRemoved": "成员已移除",
           "scimGroupDeleted": "群组已删除",
-          "scimGroupMemberAddedSummary": "新增成员（批量同步摘要）"
+          "scimGroupMemberAddedSummary": "新增成员（批量同步摘要）",
+          "triggered": "已触发"
         },
         "iterationResultHelp": "每次记录迭代结果时触发——无论是通过、失败、跳过还是其他任何状态。在长时间的自动化运行中应谨慎使用（每次迭代触发一次事件）。",
         "events": {
@@ -1741,7 +1744,7 @@
         "inboundGiteaTitle": "Gitea 入站 webhook",
         "inboundGiteaScopeHint": "Gitea <code>issues</code> events 会更新关联的 TestPlanIt 问题。其他事件类型也会被接受，但不会更新问题。",
         "inboundAdoTitle": "Azure DevOps 入站 Webhook",
-        "inboundAdoScopeHint": "Azure DevOps <code>工作项已更新</code> 事件会更新关联的 TestPlanIt 问题。其他事件也会被接受，但不会更新问题。",
+        "inboundAdoScopeHint": "Azure DevOps <code>workitem.created</code> 和 <code>workitem.updated</code> 事件会更新关联的 TestPlanIt 问题。其他事件也会被接受，但不会更新问题。",
         "inboundAdoUsername": "用户名",
         "inboundAdoUsernamePlaceholder": "服务帐户",
         "inboundAdoUsernameHelp": "已在 Azure DevOps 服务钩子端进行配置。TestPlanIt 通过 HTTP 基本身份验证对其进行验证。",
@@ -1758,7 +1761,7 @@
         "setupStepsGithubStep4": "选择“让我选择单个事件”，然后勾选“问题”。",
         "setupStepsGithubStep5": "点击“添加 webhook”。使用下面的“发送测试 webhook”来验证管道。",
         "setupStepsAdoStep1": "在 Azure DevOps 项目中，转到项目设置 → 服务挂钩 → 创建订阅。",
-        "setupStepsAdoStep2": "选择“Web Hooks”作为服务。将触发器设置为“工作项已更新”。",
+        "setupStepsAdoStep2": "选择",
         "setupStepsAdoStep3": "将要发送的资源详细信息设置为“全部”，以便包含 System.State。",
         "setupStepsAdoStep4": "将下方网址粘贴到网址栏中。将基本身份验证的用户名和密码设置为您上方输入的值。",
         "setupStepsAdoStep5": "保存订阅。使用下面的“发送测试 webhook”来验证管道。",
@@ -1852,13 +1855,49 @@
         "setupStepsMantisbtStep4": "在 MantisBT 中创建或更新一个问题；关联问题的状态将在此处同步。",
         "inboundChooserClickup": "ClickUp",
         "inboundClickupTitle": "ClickUp 入站 webhook",
-        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code> 事件会更新关联的 TestPlanIt 问题。其他任务事件可被接受但不会更新问题。",
+        "inboundClickupScopeHint": "ClickUp <code>taskCreated</code> 和 <code>taskStatusUpdated</code> 事件会更新关联的 TestPlanIt 问题。其他任务事件也会被接受，但不会更新问题。",
         "inboundClickupRegisterHint": "ClickUp 没有 webhook 设置页面：webhook 通过其 API 创建，ClickUp 选择签名密钥。将密钥留空，TestPlanIt 将使用您的 ClickUp 授权在 ClickUp 中为关联的列表注册此 webhook。",
         "inboundClickupSecret": "Webhook 密钥（可选）",
         "inboundClickupSecretHelp": "仅在您使用 ClickUp 的 Create Webhook API 自己创建 webhook 时需要：粘贴 ClickUp 返回的密钥。静止时加密存储。",
         "setupStepsClickupStep1": "如果您将密钥留空，TestPlanIt 已为关联的列表在 ClickUp 中注册了此 webhook — ClickUp 中无需配置任何内容。",
         "setupStepsClickupStep2": "如果您通过 ClickUp 的 Create Webhook API 自己注册了 webhook，请确保其端点是下面的 URL，并将其订阅到 taskStatusUpdated 事件。",
         "setupStepsClickupStep3": "使用下面的",
+        "actions": {
+          "description": "TestPlanIt 在此 webhook 接收事件时所执行的操作。操作按列出的顺序运行。",
+          "empty": "无操作。事件会被记录，但不会发生任何事情。",
+          "addTitle": "添加操作",
+          "editTitle": "编辑操作",
+          "dialogDescription": "选择触发此操作的事件以及它执行的操作。",
+          "trigger": {
+            "ISSUE_EVENT": "任何问题事件",
+            "ISSUE_STATUS_ENTERED": "问题状态更改"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "跟踪器发送的关于问题的任何事件。",
+            "ISSUE_CREATED": "TestPlanIt 之前未见过的问题。",
+            "ISSUE_STATUS_ENTERED": "问题进入所选状态之一。"
+          },
+          "outcome": {
+            "cases_drafted": "测试用例已起草",
+            "draft_queued": "正在起草测试用例",
+            "has_cases": "问题已有测试用例",
+            "no_llm": "无活动的 AI 模型",
+            "no_template": "无模板",
+            "no_target": "无存储库或默认状态",
+            "draft_failed": "起草失败",
+            "already_composed": "已为此更改创建运行",
+            "execute_failed": "未请求执行"
+          },
+          "dragToReorder": "拖动以重新排序",
+          "requirementsOnly": "仅需求",
+          "requirementsOnlyHelp": "仅项目分类为需求的问题。",
+          "includeChildIssues": "包含子问题",
+          "includeChildIssuesHelp": "同时获取链接到问题子问题的测试用例。",
+          "notifyHelp": "草稿准备好供审查时，通知谁。每个人的通知首选项仍然适用。",
+          "draftFolderNote": "由 {webhook} webhook 自动起草的测试用例。",
+          "draftFolderNoteCases": "由系统用户起草；每个案例都链接到它所起草的问题。",
+          "viewFolder": "查看文件夹"
+        },
         "codeRepos": {
           "empty": "没有为影响分析连接任何存储库。请先<link>连接一个</link>。",
           "unsupported": "{provider} 存储库无法向 TestPlanIt 发送 Webhook。",
@@ -1878,10 +1917,12 @@
           "eventBranchPushHelp": "分析对任何其他分支的每次推送，就像拉取请求一样，与基础分支进行比较，并为每次推送组成一个运行。",
           "baseBranch": "基础分支",
           "baseBranchHelp": "对此分支的推送将独立进行分析；拉取请求和其他分支将与其进行比较。留空以使用连接的分支。",
+          "minScoreHelp": "每个组成的运行都会采用分析评分至少为此值(0-100)的每个测试用例。留空则采用已固定和受影响的测试,就像手动启动的运行一样。",
+          "minScoreInvalid": "输入0到100之间的整数,或留空",
           "autoExecute": "执行自动化用例",
-          "autoExecuteHelp": "运行编排完成后，请求在此目标上自动执行其自动化用例。手动用例保留在运行中供测试人员使用。",
+          "autoExecuteHelp": "运行组成后,请求在此目标上自动执行其自动化用例。手动用例保留在运行中供测试人员使用。",
           "autoExecuteNoTargets": "未为此项目配置执行目标。<link>添加一个</link>以自动执行运行。",
-          "autoExecuteTargetMissing": "所选的执行目标已删除或已禁用。运行仍会编排，但在您选择另一个目标之前不会请求执行。",
+          "autoExecuteTargetMissing": "所选的执行目标已删除或禁用。运行仍会组成,但在您选择另一个目标之前不会请求执行。",
           "autoExecuteSaveError": "无法保存自动执行设置"
         },
         "inboundEmptyState": "还没有入站 webhook。<link>添加一个</link>以接收来自您的问题跟踪器的问题更新，或来自连接的存储库的拉取请求和推送。",
@@ -1895,7 +1936,8 @@
           "sourceRepositoryHelp": "当打开拉取请求或推送提交时，启动影响分析并组成测试运行。",
           "noRepositoryAvailable": "每个连接的存储库已有一个 webhook 或无法发送 webhook。",
           "repositoryPlaceholder": "选择一个存储库"
-        }
+        },
+        "outboundSubsAlerts": "警报"
       },
       "aiModels": {
         "description": "配置人工智能模型以实现智能测试用例生成和分析",
@@ -2045,7 +2087,7 @@
           "branchPlaceholder": "留空则使用仓库默认分支"
         },
         "pathPatterns": {
-          "description": "QuickScript 可以作为 AI 上下文读取的存储库文件。",
+          "description": "指定 QuickScript 可以作为 AI 上下文读取的存储库文件。",
           "pathPlaceholder": "测试/端到端/页面",
           "exceedsLimit": "总大小超出 AI 上下文限制 {overflow}。导出过程中，文件会根据与待导出测试用例的相关性进行排序——相关性最高的文件优先导出，当达到预算上限时，相关性较低的文件将被跳过。如果您希望更精确地控制要导出的文件，请缩小路径模式。"
         },
@@ -2108,7 +2150,6 @@
           "pathLabel": "路径",
           "patternLabel": "模式",
           "previewFiles": "预览文件",
-          "rootHint": "将路径留空或输入 . 以从存储库根目录开始；路径 . 与模式 **/* 包含每个文件。",
           "scanningRepo": "正在扫描存储库文件… ({seconds}s)",
           "title": "路径模式",
           "truncatedBadge": "结果可能不完整（受提供商限制）"
@@ -2261,7 +2302,7 @@
           "branchesFallbackHint": "改为键入分支名称。"
         },
         "pathPatterns": {
-          "description": "Impact 读取的应用程序文件：代码 Pin 文件选择器、缓存、存储库标记以及分析忽略的已更改文件。",
+          "description": "Impact 读取的应用程序文件:代码 Pin 文件选择器、缓存、存储库标记以及分析忽略的已更改文件。",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2871,7 +2912,9 @@
         "detailsDisplayMode": {
           "docked": "停靠面板",
           "newWindow": "新窗口"
-        }
+        },
+        "notificationsLabel": "通知",
+        "notificationsMoved": "管理通知和警报"
       },
       "assignments": {
         "title": "作业",
@@ -2980,6 +3023,10 @@
             "label": "AI 步骤已推导",
             "description": "您启动的 AI 步骤推导作业已编写步骤。"
           },
+          "CASES_DRAFTED": {
+            "label": "AI 起草的测试用例",
+            "description": "webhook 操作为问题起草了测试用例，并将您列为审阅者。"
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "集成需要重新授权",
             "description": "与集成的连接已过期或被撤销，必须重新连接。"
@@ -2996,9 +3043,9 @@
             "label": "新用户注册",
             "description": "新用户通过表单、SSO 或 SAML 注册。"
           },
-          "LLM_BUDGET_ALERT": {
-            "label": "AI 预算警报",
-            "description": "LLM 支出跨越计费期间的预算阈值。"
+          "ALERT_TRIGGERED": {
+            "label": "警报",
+            "description": "您订阅的警报会因测试指标超过其监视的界限而触发。"
           }
         },
         "success": {
@@ -3123,7 +3170,8 @@
       "orange": "橙子",
       "accessible": "无障碍",
       "accessibledark": "无障碍（深色）"
-    }
+    },
+    "myAlerts": "通知和警报"
   },
   "repository": {
     "version": {
@@ -3196,7 +3244,12 @@
       "noStepsInSelectedGroup": "所选组没有步骤。",
       "sharedGroupSuffix": "（共同步骤）",
       "unnamedSharedGroup": "未命名的共享步骤",
-      "noStepsInSelectedSharedGroup": "所选共享组没有步骤。"
+      "noStepsInSelectedSharedGroup": "所选共享组没有步骤。",
+      "layout": {
+        "label": "步骤布局",
+        "stacked": "堆叠",
+        "sideBySide": "并排"
+      }
     },
     "testCase": {
       "toggleAutomated": "切换自动测试",
@@ -4558,7 +4611,7 @@
         "no_candidates": "没有匹配的测试用例。",
         "anchor_fetch_capped": "某些固定文件只按路径匹配（已达到获取限制）。",
         "issue_commit_fetch_capped": "某些命名工单的提交未被逐个文件读取（已达到获取限制）；其用例不覆盖特定文件。",
-        "paths_excluded_by_settings": "{count, plural, one {# 个变更的文件被} other {# 个变更的文件被}}忽略，因为它被仓库的排除路径所过滤。"
+        "paths_excluded_by_settings": "{count, plural, other {# 个更改的文件}} 由于存储库的排除路径而被忽略。"
       },
       "actions": {
         "analyze": "分析",
@@ -5510,6 +5563,7 @@
       "scimProvisionerBadge": "SCIM 配置器",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "由SCIM管理。请从SCIM管理页面进行管理。",
+      "systemUserTooltip": "用于 TestPlanIt 自动执行的工作（如 webhook 操作）的内置用户。它无法登录或编辑。",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "是的",
       "scimUserLockedTitle": "用户由 SCIM 管理",
@@ -6180,7 +6234,8 @@
         "stepSequenceMatchCases": "步骤序列匹配用例",
         "testRunCases": "测试运行用例",
         "testRunCaseDataSetSnapshots": "测试运行数据集快照",
-        "testRunCaseIterations": "测试运行迭代"
+        "testRunCaseIterations": "测试运行迭代",
+        "alertRules": "警报"
       },
       "table": {
         "title": "已删除 {itemType}",
@@ -6531,7 +6586,6 @@
         "defaultModelPlaceholder": "gpt-4o、claude-3-5-sonnet-20241022 等。",
         "defaultModelDescription": "默认使用的模型",
         "maxTokensPerRequest": "每次请求的最大令牌数",
-        "maxRequestsPerMinute": "每分钟最大请求数",
         "costPerInputToken": "每百万个输入代币的成本（美元）",
         "costPerOutputToken": "每百万个输出代币的成本（美元）",
         "monthlyBudget": "每月预算（美元）",
@@ -6910,7 +6964,8 @@
         "markRead": "标记为已读",
         "markUnread": "标记为未读",
         "markAllRead": "全部标记为已读",
-        "deleteAll": "全部删除"
+        "deleteAll": "全部删除",
+        "manageAlerts": "管理通知和警报"
       },
       "success": {
         "deleted": "通知已删除",
@@ -6954,11 +7009,6 @@
         "shareLinkAccessedMessage": "{viewer} 查看了您共享的报告：\"{shareTitle}\"",
         "viewedYourSharedLink": "我已查看您分享的链接",
         "viewedAt": "查看于",
-        "budgetDisclaimer": "预算限制仅供参考，并不妨碍实际使用。",
-        "llmBudgetExceededTitle": "法学硕士预算超支",
-        "llmBudgetThresholdTitle": "LLM 预算 {threshold}已用百分比",
-        "llmBudgetExceededMessage": "{providerName} 已超出其月度预算： {spend} 已花费 {budget} 预算。",
-        "llmBudgetThresholdMessage": "{providerName} 已使用其每月预算的 {threshold}%： {spend} 的 {budget}。",
         "userRegisteredTitle": "新用户注册",
         "userRegisteredMessageSso": "{userName} ({userEmail}) 已通过 SSO 注册",
         "userRegisteredMessageForm": "{userName} ({userEmail}) 已通过注册表单注册",
@@ -6997,6 +7047,9 @@
         "aiStepsDerivedTitle": "AI 生成的测试步骤已就绪",
         "aiStepsDerivedMessage": "{count, plural, other {# 个测试用例已}}获得 AI 生成的步骤 — 请检查其准确性。",
         "aiStepsDerivedReviewLink": "查看测试运行",
+        "casesDraftedTitle": "AI 起草的测试用例已就绪",
+        "casesDraftedMessage": "{count, plural, one {# 个测试用例已} other {# 个测试用例已}}为 {issueKey} 起草 — 请检查其准确性。",
+        "casesDraftedReviewLink": "在 {folderName} 中审查",
         "integrationAuthExpiredTitle": "集成连接已过期",
         "integrationAuthExpiredMessage": "您与“{integrationName}”的连接已过期。请重新连接以恢复问题同步。",
         "integrationAuthExpiredReconnect": "重新连接",
@@ -7008,7 +7061,56 @@
         "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} 已通过，因此分配给您的此用例不再被阻止：",
         "runCaseUnblockedEmailMessage": "测试运行 \"{testRunName}\"（项目 \"{projectName}\")中的 \"{testCaseName}\" 不再被阻止：\"{prerequisiteName}\" 已通过。它已分配给您，准备好执行。",
         "runCaseUnblockedReason": "您收到此消息是因为测试用例已分配给您。",
-        "inTestRun": "在测试运行中"
+        "inTestRun": "在测试运行中",
+        "alertTriggeredTitle": "警报已触发",
+        "alertTriggeredRule": "规则：{ruleName}",
+        "alertTriggeredEmailMessage": "警报 \"{ruleName}\" 在项目 \"{projectName}\" 中的 {subjectLabel} \"{subjectName}\" 上触发：{detail}",
+        "alertTriggeredEmailMessageSystem": "警报 \"{ruleName}\" 为 {subjectLabel} \"{subjectName}\" 触发：{detail}",
+        "alertTriggeredReason": "您收到此通知是因为您订阅了此警报。",
+        "alertSubject": {
+          "CASE": "测试用例",
+          "RUN": "测试运行",
+          "MILESTONE": "里程碑",
+          "SESSION": "会话",
+          "PROJECT": "项目",
+          "WEBHOOK": "网络钩子",
+          "LLM_INTEGRATION": "AI 模型集成",
+          "CODE_REPOSITORY": "代码库连接",
+          "INTEGRATION": "集成",
+          "QUEUE": "队列",
+          "SYSTEM": "安装"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "结果耗时 {elapsed}，距离基线 {baseline} 的 {deviation}%（允许超过 {threshold}%）。",
+          "CASE_REGRESSED": "在通过其最后 {passedBefore, plural, one {# 个结果} other {# 个结果}} 后，用例失败。",
+          "CASE_RECOVERED": "在失败其最后 {failedBefore, plural, one {# 个结果} other {# 个结果}} 后，用例通过。",
+          "RUN_DURATION_DEVIATION": "运行耗时 {elapsed}，距离基线 {baseline} 的 {deviation}%（允许超过 {threshold}%）。",
+          "RUN_NOT_PROGRESSING": "运行已 {idleHours, plural, one {# 小时} other {# 小时}} 无新结果（阈值 {threshold}）。",
+          "AUTOMATED_EXECUTION_FAILED": "在 {target} 上的自动化执行以 {status}{error, select, other {: {error}}} 结束",
+          "RUN_UNTESTED_SHARE": "运行案例中有 {untestedPercent}% 无结果，距离其里程碑到期还有 {daysRemaining, plural, one {# 天} other {# 天}}（阈值 {threshold}%）。",
+          "RUN_ISSUES_OPENED": "链接到运行结果的 {issues, plural, one {# 个问题} other {# 个问题}}（阈值 {threshold}）。",
+          "SESSION_OVERRUN": "会话耗时 {elapsed}，估计值为 {estimate}，超支 {overrun}%（允许超过 {threshold}%）。",
+          "REQUIREMENT_COVERAGE_BELOW": "在 {total} 个需求中，{covered} 个（{coverage}%）{basis, select, PASSING {具有通过的最新结果} other {已链接到测试用例}}（阈值 {threshold}%）。",
+          "STALE_CASES": "{stale, plural, one {# 个用例} other {# 个用例}} {days, plural, one {# 天} other {# 天}} 内无结果（阈值 {threshold}）。",
+          "AUTOMATION_SHARE_BELOW": "{total} 个用例中有 {automated} 个（{automatedPercent}%）已自动化（阈值 {threshold}%）。",
+          "WEBHOOK_FAILURE_RATE": "最后 {sampleCount} 个交付中有 {failed} 个失败（{failureRate}%，阈值 {threshold}%）。",
+          "CONSECUTIVE_FAILURES": "用例连续失败 {streak, plural, one {# 次} other {# 次}}（阈值 {threshold}）。",
+          "CASE_FLAKY": "在最后 {sampleCount} 个结果中，结果翻转了 {flips, plural, one {# 次} other {# 次}}（阈值 {threshold}）。",
+          "RUN_PASS_RATE_BELOW": "在 {sampleCount} 个结果中，通过率为 {passRate}%（阈值 {threshold}%）。",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# 个结果} other {# 个结果}} 失败（阈值 {threshold}）。",
+          "MILESTONE_BEHIND": "里程碑已完成 {completion}%，剩余 {daysRemaining, plural, one {# 天} other {# 天}}（阈值 {threshold}%）。",
+          "MILESTONE_OVERDUE": "里程碑逾期 {daysOverdue, plural, one {# 天} other {# 天}}。",
+          "LLM_BUDGET_USED": "计费期间支出为 {spend}（月度预算 {budget} 的 {percent}%，阈值 {threshold}%）。",
+          "LLM_ERROR_RATE": "最后 {sampleCount} 个请求中有 {failed} 个失败（{failureRate}%，阈值 {threshold}%）。",
+          "LLM_RATE_LIMITED": "提供商在最后 {hours, plural, one {# 小时} other {# 小时}} 内限流了 {blocked, plural, one {# 个请求} other {# 个请求}}（阈值 {threshold}）。",
+          "CODE_REPOSITORY_CACHE_FAILING": "代码库缓存已失败 {hours, plural, one {# 小时} other {# 小时}}（阈值 {threshold}）{error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# 个用户需要} other {# 个用户需要}}重新授权集成（阈值 {threshold}）。",
+          "QUEUE_FAILED_JOBS": "队列中 {failed, plural, one {# 个作业} other {# 个作业}} 失败（阈值 {threshold}）。",
+          "QUEUE_BACKLOG": "{waiting, plural, one {# 个等待作业} other {# 个等待作业}} 中最早的已等待 {minutes, plural, one {# 分钟} other {# 分钟}}（阈值 {threshold}）。",
+          "AUDIT_BACKLOG": "最早未处理的审计更改已有 {minutes, plural, one {# 分钟} other {# 分钟}}（阈值 {threshold}）。",
+          "ACCOUNT_LOCKOUTS": "登录失败后 {locked, plural, one {# 个帐户} other {# 个帐户}} 被锁定（阈值 {threshold}）。",
+          "NO_AUTOMATED_RESULTS": "{hours, plural, one {# 小时} other {# 小时}} 内无自动化结果到达（阈值 {threshold}）。"
+        }
       }
     },
     "issues": {
@@ -7587,7 +7689,8 @@
       "SharedSteps": "共同步骤",
       "Issues": "问题",
       "Reporting": "报告",
-      "Settings": "项目设置"
+      "Settings": "项目管理",
+      "Alerts": "警报"
     },
     "WorkflowType": {
       "NOT_STARTED": "尚未开始",
@@ -7645,6 +7748,9 @@
     "businessHours": "{hours, number, ::.0} 个工作小时"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## 标签\n问题在您的跟踪器中携带的标签。操作仅获取至少有其中一个的问题；将其留空以获取任何标签的问题。\n\n- Jira、GitHub、GitLab 和 Gitea：问题的标签\n- Azure DevOps、ClickUp 和 MantisBT：问题的标签\n- Redmine：问题的类别\n- 匹配忽略大小写"
+    },
     "auditLogs": "## 审计日志\n查看系统范围内的审计跟踪，以进行安全性和合规性跟踪",
     "statuses": "## 状态\n管理测试人员在记录测试结果时分配的状态，例如已通过、失败和已阻止。",
     "configurations": "## 配置\n配置是用于定义测试环境的各种类别和变体的组合。例如，操作系统/浏览器、测试服务器、语言等。",
@@ -7827,7 +7933,7 @@
       "name": "## 角色名称\n一个清晰、简洁、描述性的名称或关键词，用于所有项目。\n\n- 帮助团队成员快速找到相关的测试用例、测试运行和会话。",
       "isDefault": "## 默认角色\n指示此角色是否为项目的默认角色。\n\n- 默认角色已预先为新用户选择。\n- 可随时更改。",
       "permissions": {
-        "canAddEdit": "## 添加/编辑\n指示此角色是否可以添加和编辑相关的应用程序区域。\n\n- **自动化执行** 授予在 CI 提供程序上启动、重试和取消自动化执行的权利。记录结果仍需要 **测试运行结果** 添加/编辑权限，从仓库启动还需要 **测试运行** 添加/编辑权限，因为它会创建或扩展运行。",
+        "canAddEdit": "## 添加/编辑\n指示此角色是否可以添加和编辑相关的应用程序区域。\n\n- **自动化执行** 授予在 CI 提供程序上启动、重试和取消自动化执行的权利。记录结果仍需要 **测试运行结果** 添加/编辑，从存储库启动也需要 **测试运行** 添加/编辑，因为它创建或扩展了一个运行。\n- **警报** 授予在项目中创建警报以及编辑、暂停和删除您创建的警报的权利。项目管理员管理每个警报和其他用户的订阅；任何人都可以跟随或离开警报。",
         "canDelete": "## 删除\n指示此角色是否可以删除相关的应用程序区域。",
         "canClose": "## 关闭\n指示此角色是否可以关闭相关的应用程序区域。",
         "canApprove": "## 批准\n指示此角色是否可以批准相关应用程序领域的审核请求。仅适用于测试用例库、测试运行和会话。",
@@ -7858,10 +7964,9 @@
       "maxTokensPerRequest": "## 每次请求的最大令牌数\n模型在单次响应中可生成的**输出**令牌数的**硬性上限**。\n\n- 限制模型**回复**的长度 — 而不是您发送给它的上下文量\n- 超过此限制的请求会在**到达模型之前被拒绝**\n- 请将其设置为您模型的实际最大输出量 — 例如，Claude Opus/Sonnet 为 `128000`，Claude Haiku 为 `64000`，Gemini 为 `65536`，GPT-4o 为 `16384`\n- 设置过低 → AI 功能将失败或生成被截断的输出",
       "defaultMaxTokens": "## 默认最大令牌数\n此 AI 模型请求的**输出**长度，受限于*每次请求的最大令牌数*。\n\n- **测试用例生成**（所有来源，包括 Jira 问题面板）、**Markdown 测试用例解析**、**编辑器写作助手**和**智能测试用例选择**始终使用此值 — 它们提示配置中的*最大输出令牌数*不会被应用\n- **导出代码生成**、**AI 标签建议**、**AI 步骤推导**和**自动化候选报告**则使用**管理 → 提示配置**中各自的*最大输出令牌数*\n- 在回答前进行思考的模型（例如 Claude Opus 5）会将此预算的一部分用于推理 — 请为回复留出空间\n- 它**不**控制 QuickScript 向模型发送多少仓库代码 — 该预算会根据模型的上下文窗口自动确定\n- 请保持其 ≤ *每次请求的最大令牌数*",
       "repoContextBudget": "## 仓库上下文预算\n生成脚本时，QuickScript 向模型提供的已连接仓库代码的数量。\n\n- 根据所选模型的输入上下文窗口**自动设置** — 此处无需进行任何配置\n- 上下文窗口更大的模型（Claude、Gemini、DeepSeek）会获得更多；较小的本地模型会获得一个不会溢出的安全数量\n- 更多的上下文能让脚本更贴合您真实的页面对象和测试夹具 — 但不会改变生成脚本的长度",
-      "maxRequestsPerMinute": "## 每分钟最大请求数\n限制每分钟可向此提供商发出的 API 调用次数。\n\n- 设置以匹配您的提供商套餐的速率限制。\n- 超出限制的请求将被排队，不会被拒绝。\n- 请查看您的提供商文档以了解您的套餐限制。",
       "costPerInputToken": "## 每 1M 输入 Token 的成本（美元）\n发送给模型的每**百万**个输入（提示）Token 的美元成本。\n\n- 用于成本跟踪和预算提醒\n- 当您的提供商报告模型定价时（LiteLLM、OpenRouter、Together AI），系统会在您选择模型或运行测试连接时自动填写\n- 否则，请在您提供商的定价页面上查找\n- 示例：`0.15` = 每百万输入 Token 0.15 美元",
       "costPerOutputToken": "## 每 1M 输出 Token 的成本（美元）\n模型生成的每**百万**个输出（补全）Token 的美元成本。\n\n- 通常高于输入 Token 成本\n- 用于成本跟踪和预算提醒\n- 当您的提供商报告模型定价时（LiteLLM、OpenRouter、Together AI），系统会在您选择模型或运行测试连接时自动填写\n- 否则，请在您提供商的定价页面上查找\n- 示例：`0.60` = 每百万输出 Token 0.60 美元",
-      "monthlyBudget": "## 月度预算（美元）\n此集成的可选支出目标。\n\n- 设置为 `0` 可禁用预算跟踪。\n- 预算仅供参考，不会影响 LLM 的使用。\n- 您将在达到预算的 80%、90% 和 100% 时收到通知。\n- 费用按上述每个代币的价格计算。",
+      "monthlyBudget": "## 月度预算 (USD)\n此集成的可选支出目标。\n\n- 设置为 `0` 以禁用预算跟踪\n- 预算**仅供参考** — 不会阻止 LLM 使用\n- 具有 **AI 预算已使用** 指标（系统，在",
       "billingPeriodStartDay": "## 账单周期起始日\n账单周期开始的日期（1-31）。\n\n- 默认值 `1` 与日历月一致。\n- 设置为 `15` 表示每月 15 日到 15 日的周期（例如，与您的供应商发票日期一致）。\n- 值 `29-31` 会自动锁定到较短月份的最后一天（例如，非闰年的 2 月）。\n- 影响**月度预算**支出窗口和**重置支出**操作。",
       "defaultTemperature": "## 默认温度\n控制模型响应的随机性（0-2）。\n\n- **0:** 确定性 — 相同输入输出相同\n- **0.3:** 聚焦 — 推荐用于测试生成和代码输出\n- **1+:** 创造性 — 响应更加多样化\n- 单个功能可以在提示配置中覆盖此设置",
       "timeout": "## 请求超时 (毫秒)\n请求被取消前等待响应的时间。\n\n- 值以毫秒为单位（例如 `30000` = 30 秒）\n- 流式请求（例如代码导出预览）忽略此超时\n- 对于运行缓慢或模型较大的请求，增加此超时时间\n- 范围：5,000 – 600,000 毫秒",
@@ -8387,8 +8492,9 @@
     "projectRunsFilters": "## 筛选测试运行\n\n切换标签以缩小列表范围。标签同时适用于“活动”和“已完成”标签页,并会在此设备上为该项目记住您的选择。\n\n- **手动** / **自动化** — 将列表限制为该类型的运行。同时开启(或同时关闭)两者将显示所有运行。\n- **我的测试运行** — 仅显示您参与的运行:您创建了该运行、您被分配了其中的测试用例,或您在其中记录了测试结果。",
     "projectSessionsFilters": "## 筛选会话\n\n切换标签以缩小列表范围。标签同时适用于“进行中”和“已完成”选项卡,并会在此设备上为该项目记住相应设置。\n\n- **我的会话** — 仅显示您参与的会话:由您创建的会话,或分配给您的会话。",
     "projectImpact": "## 影响\n连接应用程序代码的仓库，以便此项目可以运行测试影响分析：选择两个提交以查看更改影响哪些测试用例，并将测试用例固定到其覆盖的代码。",
-    "pathPatterns": "## 路径模式\n每一行将基础**路径**与通配符**模式**组合在一起。行按顺序叠加：当任何一行匹配文件时，该文件将被包含。\n\n- `src` + `**/*` — `src` 下的所有内容\n- 空白或 `.` + `**/*` — 存储库中的每个文件\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 文件，除了测试\n\n### 排除\n在某一行上勾选**排除**以移除其文件，即使另一行包含它们。排除适用于文件选择器和缓存，对于影响分析的已更改文件也适用，因此在几乎每个拉取请求中都会更改的文件会停止引入不相关的测试用例。至少有一行必须保持未勾选状态。\n\n- 空白 + `**/CHANGELOG*` — 每个变更日志，在任何深度\n- `app` + `build.gradle.kts` — 仅更新版本的构建文件",
-    "projectAutomation": "## 自动化执行\n执行目标告诉 TestPlanIt 在哪里执行此项目的自动化用例：GitHub Actions 工作流、GitLab CI 管道或任何其他系统的已签名网络钩子。当运行被执行时，TestPlanIt 使用运行 id 和计划 URL 启动任务；任务读取计划，运行匹配的测试，并使用记者或 CLI 将结果报告回来。目标可以在不删除的情况下禁用。"
+    "pathPatterns": "## 路径模式\n每行将基础**路径**与 glob **模式**结合在一起。行会叠加：当任何行与文件匹配时，文件将被包含。\n\n- `src` + `**/*` — `src` 下的所有内容\n- 空白或 `.` + `**/*` — 仓库中的每个文件\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 文件，但测试文件除外\n\n### 排除\n在行上勾选**排除**以移除其文件，即使另一行包含它们。排除项适用于文件选择器和缓存，以及针对分析的已更改文件的影响分析，因此在几乎每个拉取请求上都会更改的文件会停止拉入不相关的测试用例。至少一行必须保持未勾选状态。\n\n- 空白 + `**/CHANGELOG*` — 每个更新日志，在任何深度\n- `app` + `build.gradle.kts` — 仅用于版本更新的构建文件",
+    "projectAutomation": "## 自动化执行\n执行目标告诉 TestPlanIt 在哪里执行此项目的自动化用例：GitHub Actions 工作流、GitLab CI 管道或任何其他系统的已签名网络钩子。当运行被执行时，TestPlanIt 使用运行 id 和计划 URL 启动任务；任务读取计划，运行匹配的测试，并使用记者或 CLI 将结果报告回来。目标可以在不删除的情况下禁用。",
+    "userAlerts": "## 通知和警报\n**通知偏好设置**决定了您如何收到通知（应用内、电子邮件、摘要）以及您收到哪些类型的通知。\n\n**警报**监视测试指标，当指标超过阈值时通知订阅者。例如，某个结果耗时比该用例的常规耗时长50%，某个用例连续失败三次，某个运行的通过率降至90%以下，或某个里程碑在还有天数的情况下已落后。列表显示您项目中的每个警报；**通知我**开关可订阅或取消订阅某个警报。**添加警报**在您的角色具有**警报**添加/编辑权限的任何项目中创建您自己的警报；项目管理员管理其项目中的每个警报和其他人的订阅。警报在其冷却期内对于每个主题最多触发一次，并保持沉默直到收到足够的结果。"
   },
   "reports": {
     "ui": {
@@ -9610,9 +9716,12 @@
       "exists": "存在",
       "not_exists": "不存在"
     },
+    "recordMatches": "{count, plural, one {# 条按 ID 匹配的记录} other {# 条按 ID 匹配的记录}}",
     "help": {
       "exactPhrases": "确切短语",
       "exactPhrasesDesc": "将词语用引号括起来，以匹配完整的短语：",
+      "ids": "ID",
+      "idsDesc": "输入 ID（带或不带 #）以直接查找记录。使用 OR、逗号或空格分隔多个记录以查找全部：",
       "proximity": "近距离搜索",
       "proximityDesc": "彼此相距 N 个位置的单词",
       "booleanOperators": "布尔运算符",
@@ -10177,5 +10286,454 @@
     "update": "使用当前映射更新",
     "updateConfirm": "\"{name}\" 将使用当前列映射和设置进行更新。",
     "savePrompt": "下次保存此列映射吗？"
+  },
+  "alerts": {
+    "title": "警报",
+    "description": "您在各个项目中关注的警报，以及这些项目中您可以关注的其他警报。",
+    "addRule": "添加警报",
+    "editRule": "编辑警报",
+    "deleteRule": "删除警报",
+    "deleteConfirm": "删除警报\"{name}\"？其订阅者将停止接收通知，可从垃圾箱恢复。",
+    "pauseTitle": "暂停所有人的此警报？",
+    "pauseConfirm": "\"{name}\"将停止为{count, plural, =0 {所有人} one {其唯一订阅者} =2 {其两个订阅者} other {其全部 # 个订阅者}}触发，不仅仅是您，直到有人再次启用它。要仅停止您自己的通知，请改为关闭通知我。",
+    "columns": {
+      "name": "规则",
+      "condition": "条件",
+      "scope": "范围",
+      "subscribers": "订阅者",
+      "lastFired": "最后触发",
+      "enabled": "已启用",
+      "notifyMe": "通知我",
+      "actions": "操作",
+      "project": "项目"
+    },
+    "neverFired": "从不",
+    "systemScope": "系统",
+    "systemSubjects": {
+      "audit": "审计日志",
+      "lockouts": "用户账户",
+      "automated-results": "自动化结果"
+    },
+    "paused": "已暂停",
+    "filters": {
+      "label": "筛选警报",
+      "on": "开启",
+      "off": "关闭"
+    },
+    "history": "历史",
+    "subscribers": "订阅者",
+    "subscriberCount": "{count, plural, =0 {无订阅者} one {# 个订阅者} other {# 个订阅者}}",
+    "toasts": {
+      "created": "规则已创建。",
+      "updated": "规则已更新。",
+      "deleted": "规则已删除。",
+      "enabled": "规则已启用。",
+      "disabled": "规则已暂停。",
+      "subscribed": "此规则触发时，您将收到通知。",
+      "unsubscribed": "您将不再收到此规则的通知。",
+      "subscriberAdded": "{name} 已订阅。",
+      "subscriberRemoved": "{name} 已取消订阅。",
+      "saveError": "无法保存规则。",
+      "subscriptionError": "无法更新订阅。"
+    },
+    "form": {
+      "name": "名称",
+      "namePlaceholder": "例如 结账流程变慢",
+      "description": "描述",
+      "descriptionPlaceholder": "其他订阅者的可选注释",
+      "metric": "指标",
+      "metricLocked": "警报创建后无法更改指标。请改为创建新警报。",
+      "condition": "条件",
+      "scope": "范围",
+      "scopeType": "监视",
+      "scopeFolder": "文件夹",
+      "scopeTag": "标签",
+      "scopeCase": "测试用例",
+      "scopeMilestone": "里程碑",
+      "scopeRunName": "运行名称包含",
+      "scopeRunNamePlaceholder": "例如 每晚",
+      "scopePickFolder": "选择一个文件夹",
+      "scopePickTag": "选择一个标签",
+      "scopePickCase": "选择一个测试用例",
+      "scopePickMilestone": "选择一个里程碑",
+      "scopeWebhook": "网络钩子",
+      "scopePickWebhook": "选择一个 webhook",
+      "scopeLlmIntegration": "集成",
+      "scopePickLlmIntegration": "选择一个集成",
+      "scopeCodeRepository": "存储库连接",
+      "scopePickCodeRepository": "选择一个存储库连接",
+      "scopeIntegration": "集成",
+      "scopePickIntegration": "选择一个集成",
+      "scopeQueue": "队列",
+      "scopePickQueue": "选择一个队列",
+      "systemScope": "系统",
+      "systemScopeHelp": "系统警报监视为整个安装配置的内容，例如 AI 模型预算。只有管理员可以看到它。",
+      "coverageBasis": "计为已覆盖",
+      "coverageBasisOptions": {
+        "LINKED": "链接到至少一个测试用例",
+        "PASSING": "最新结果已通过"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "基准窗口（运行）",
+        "WEBHOOK_FAILURE_RATE": "最后交付",
+        "LLM_ERROR_RATE": "最后请求"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "最少运行数",
+        "WEBHOOK_FAILURE_RATE": "最少交付次数",
+        "LLM_ERROR_RATE": "最少请求数"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "里程碑到期前的天数",
+        "STALE_CASES": "没有结果的天数",
+        "LLM_RATE_LIMITED": "在过去（小时）内"
+      },
+      "scopeCaseSearch": "按名称或 ID 搜索",
+      "direction": "方向",
+      "baselineType": "基准",
+      "baselineWindow": "基准窗口（结果）",
+      "minSamples": "最少结果数",
+      "resultSource": "要监视的结果",
+      "evaluateOn": "评估",
+      "daysRemaining": "剩余天数",
+      "cooldown": "冷却时间（分钟）",
+      "cooldownHelp": "规则针对某个主题触发后，在该主题上保持沉默这么长时间。0 禁用冷却。",
+      "emitWebhook": "发送 alert.triggered webhook 事件",
+      "emitWebhookHelp": "订阅警报的出站 webhook 会收到相同的有效载荷，因此 Slack 或其他工具可以发送它。",
+      "enabled": "已启用",
+      "audience": "受众",
+      "audienceHelp": "警报触发时谁会收到通知。默认情况下，您会被添加到您创建的警报中；任何人都可以离开或重新加入。",
+      "audienceHelpSystem": "警报触发时谁会收到通知。只有管理员可以在系统警报的受众中；默认情况下您会被添加。",
+      "searchMembers": "搜索项目成员",
+      "you": "您",
+      "cannotManageSubscribers": "您可以订阅或取消订阅自己。订阅其他成员需要项目管理权限。",
+      "validation": {
+        "nameRequired": "输入名称。",
+        "scopeRequired": "选择规则监视的内容。",
+        "runNameRequired": "输入运行名称的一部分。",
+        "percentRange": "输入 {min} 到 {max} 之间的百分比。",
+        "countRange": "输入 {min} 到 {max} 之间的整数。",
+        "windowRange": "输入 {min} 到 {max} 个结果之间的窗口。",
+        "minSamplesRange": "输入 {min} 到 {max} 之间的值。",
+        "minSamplesWindow": "最少结果数不能超过基准窗口。",
+        "cooldownRange": "输入 {min} 到 {max} 分钟。",
+        "daysRange": "输入 {min} 到 {max} 天。",
+        "windowBelowMinSamples": "基准窗口不能小于最少结果数。"
+      },
+      "project": "项目",
+      "projectPlaceholder": "选择一个项目",
+      "projectHelp": "仅列出您的角色可能创建警报的项目。",
+      "dialogDescription": "监视一个测试指标，当指标超过您设置的阈值时通知受众。",
+      "metricSearch": "搜索指标",
+      "metricNoMatch": "没有指标匹配。",
+      "checkedDaily": "每日检查",
+      "checkedHourly": "每小时检查",
+      "needsProject": "先选择一个项目。",
+      "followAlert": "通知我",
+      "leaveAlert": "停止通知我",
+      "delivery": "交付",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "偏差 (%)",
+        "CASE_REGRESSED": "阈值",
+        "CONSECUTIVE_FAILURES": "连续失败",
+        "CASE_FLAKY": "翻转",
+        "RUN_PASS_RATE_BELOW": "通过率低于 (%)",
+        "RUN_FAILURE_COUNT": "失败结果，超过",
+        "RUN_DURATION_DEVIATION": "偏差 (%)",
+        "RUN_NOT_PROGRESSING": "空闲超过（小时）",
+        "AUTOMATED_EXECUTION_FAILED": "阈值",
+        "RUN_UNTESTED_SHARE": "未测试用例超过 (%)",
+        "RUN_ISSUES_OPENED": "链接问题，超过",
+        "SESSION_OVERRUN": "超过估计值超过 (%)",
+        "MILESTONE_BEHIND": "完成度低于 (%)",
+        "MILESTONE_OVERDUE": "阈值",
+        "REQUIREMENT_COVERAGE_BELOW": "覆盖度低于 (%)",
+        "STALE_CASES": "陈旧用例，超过",
+        "AUTOMATION_SHARE_BELOW": "自动化份额低于 (%)",
+        "WEBHOOK_FAILURE_RATE": "失败率超过 (%)",
+        "LLM_BUDGET_USED": "已用预算 (%)",
+        "LLM_ERROR_RATE": "失败请求超过 (%)",
+        "LLM_RATE_LIMITED": "速率限制请求，至少",
+        "CODE_REPOSITORY_CACHE_FAILING": "故障时间至少（小时）",
+        "INTEGRATION_REAUTH_NEEDED": "需要重新授权的用户，至少",
+        "QUEUE_FAILED_JOBS": "失败的作业，超过",
+        "QUEUE_BACKLOG": "最早等待的作业早于（分钟）",
+        "AUDIT_BACKLOG": "最早未处理的更改早于（分钟）",
+        "ACCOUNT_LOCKOUTS": "锁定的账户，至少",
+        "NO_AUTOMATED_RESULTS": "无自动结果（小时）"
+      }
+    },
+    "direction": {
+      "ABOVE": "高于（较慢）",
+      "BELOW": "低于（较快）",
+      "EITHER": "高于或低于"
+    },
+    "baseline": {
+      "MEAN": "平均值",
+      "MEDIAN": "中位数"
+    },
+    "resultSource": {
+      "MANUAL": "手动结果",
+      "AUTOMATED": "自动化结果",
+      "BOTH": "手动和自动化"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "运行完成时",
+      "AS_RESULTS_ARRIVE": "结果到达时"
+    },
+    "scopeType": {
+      "PROJECT": "整个项目",
+      "FOLDER": "文件夹中的用例",
+      "TAG": "带有标签的用例",
+      "CASE": "一个测试用例",
+      "RUN_NAME": "运行名称包含的运行",
+      "MILESTONE": "一个里程碑",
+      "WEBHOOK": "一个 webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "所有会话",
+      "TAG": "带有标签的会话"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "所有出站 webhook",
+      "WEBHOOK": "一个 webhook"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "所有 AI 模型集成",
+      "LLM_INTEGRATION": "一个集成"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "所有存储库连接",
+      "CODE_REPOSITORY": "一个存储库连接"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "所有集成",
+      "INTEGRATION": "一个集成"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "所有队列",
+      "QUEUE": "一个队列"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "整个安装"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "所有运行",
+      "TAG": "带有标签的运行",
+      "RUN_NAME": "运行名称包含的运行"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "所有里程碑",
+      "MILESTONE": "一个里程碑"
+    },
+    "scopeDisplay": {
+      "PROJECT": "整个项目",
+      "FOLDER": "文件夹：{name}",
+      "TAG": "标签：{name}",
+      "CASE": "用例：{name}",
+      "RUN_NAME": "包含\"{text}\"的运行",
+      "MILESTONE": "里程碑：{name}",
+      "WEBHOOK": "Webhook：{name}",
+      "LLM_INTEGRATION": "集成：{name}",
+      "ALL_LLM_INTEGRATIONS": "所有 AI 模型集成",
+      "CODE_REPOSITORY": "存储库：{name}",
+      "ALL_CODE_REPOSITORIES": "所有存储库连接",
+      "INTEGRATION": "集成：{name}",
+      "ALL_INTEGRATIONS": "所有集成",
+      "QUEUE": "队列：{name}",
+      "ALL_QUEUES": "所有队列",
+      "WHOLE_INSTALLATION": "整个安装",
+      "missing": "（已移除）"
+    },
+    "subjectType": {
+      "CASE": "测试用例",
+      "RUN": "测试运行",
+      "MILESTONE": "里程碑",
+      "SESSION": "会话",
+      "PROJECT": "项目",
+      "WEBHOOK": "网络钩子"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "结果时长与基准偏离",
+        "description": "结果的耗时比用例最近的结果长得多或短得多。没有耗时的结果将被忽略。",
+        "summary": "结果的时长超过该用例最后 {window} 个结果的 {baseline, select, MEAN {平均值} other {中位数}} 的 {threshold}% {direction, select, ABOVE {或以上} BELOW {或以下} other {或以上或以下}}，在至少 {minSamples} 个结果后"
+      },
+      "CASE_REGRESSED": {
+        "label": "用例回归",
+        "description": "最近通过的用例现在失败。捕捉稳定用例的新失败。",
+        "summary": "用例在通过其最后 {window} 个结果后失败"
+      },
+      "CASE_RECOVERED": {
+        "label": "用例恢复",
+        "description": "用例在每次其最后一个结果都失败后通过。",
+        "summary": "用例在失败其最后 {window, plural, one {# 个结果} other {# 个结果}}后通过"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "连续失败",
+        "description": "用例连续失败给定次数。",
+        "summary": "用例连续失败 {threshold, plural, one {# 次} other {# 次}}"
+      },
+      "CASE_FLAKY": {
+        "label": "用例变得易变",
+        "description": "用例在最近的结果中反复在通过和失败之间翻转。使用与易变测试报告相同的输入。",
+        "summary": "用例在其最后 {window} 个结果中的通过和失败之间至少翻转 {threshold, plural, one {# 次} other {# 次}}"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "运行通过率低于阈值",
+        "description": "运行的通过率（根据通过或失败判决的结果计算）低于百分比。",
+        "summary": "一旦至少 {minSamples} 个结果有判决，运行的通过率低于 {threshold}%，{evaluateOn, select, AS_RESULTS_ARRIVE {随着结果到达进行评估} other {运行完成时进行评估}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "运行失败计数",
+        "description": "运行的失败结果数超过给定数字。",
+        "summary": "运行有超过 {threshold, plural, one {# 个失败结果} other {# 个失败结果}}，{evaluateOn, select, AS_RESULTS_ARRIVE {随着结果到达进行评估} other {运行完成时进行评估}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "运行时长与基准偏离",
+        "description": "已完成的运行的总时长与其范围分组在一起的运行不同（相同的标签或名称片段）。",
+        "summary": "已完成的运行的时长超过最后 {window} 次运行的 {baseline, select, MEAN {平均值} other {中位数}} 的 {threshold}% {direction, select, ABOVE {或以上} BELOW {或以下} other {或以上或以下}}，在至少 {minSamples} 次运行后"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "运行未进行",
+        "description": "开放式运行在给定的小时数内没有新结果。每小时检查一次。",
+        "summary": "开放式运行在超过 {threshold, plural, one {# 小时} other {# 小时}}内没有新结果"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "自动化执行失败",
+        "description": "运行的自动化执行失败、无法调度或超时。",
+        "summary": "自动化执行失败、无法调度或超时"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "运行未测试份额",
+        "description": "运行的过多用例仍然没有结果，而在其里程碑到期前还剩几天。每日检查。",
+        "summary": "在其里程碑到期前仅有 {days, plural, one {# 天} other {# 天}}的情况下，运行中超过 {threshold}% 的用例没有结果"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "从运行打开的问题",
+        "description": "超过给定数量的问题链接到运行的结果。",
+        "summary": "超过 {threshold, plural, one {# 个问题已} other {# 个问题已}}链接到运行的结果，{evaluateOn, select, AS_RESULTS_ARRIVE {随着结果到达进行评估} other {运行完成时进行评估}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "会话超过其估计",
+        "description": "已完成的会话的经过时间超过其估计值。",
+        "summary": "已完成的会话的经过时间超过其估计值超过 {threshold}%"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "里程碑完成度落后",
+        "description": "里程碑的运行用例未完成足够，距离到期日期还剩几天。每日检查。",
+        "summary": "里程碑完成度低于 {threshold}%，剩余 {days, plural, one {# 天} other {# 天}}"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "里程碑逾期",
+        "description": "里程碑的到期日期已过，但未完成。每日检查。",
+        "summary": "里程碑超过到期日期而未完成"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "需求覆盖度低于阈值",
+        "description": "项目需求中计为已覆盖的份额少于给定的值。每日检查。",
+        "summary": "少于 {threshold}% 的需求 {basis, select, PASSING {具有通过的最新结果} other {链接到至少一个测试用例}}"
+      },
+      "STALE_CASES": {
+        "label": "陈旧用例",
+        "description": "超过给定数量的用例在一定的天数内都没有获得结果。每日检查。",
+        "summary": "超过 {threshold, plural, one {# 个用例在} other {# 个用例在}} {days, plural, one {# 天} other {# 天}}内没有结果"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "自动化份额低于阈值",
+        "description": "范围内的自动化用例少于给定的份额。每日检查。",
+        "summary": "少于 {threshold}% 的用例已自动化"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Webhook 失败率",
+        "description": "出站 webhook 的太多最近交付失败。每小时检查一次。",
+        "summary": "出站 webhook 最后 {window} 次交付中超过 {threshold}% 失败，在至少 {minSamples} 次交付后"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "AI 预算已使用",
+        "description": "AI 模型集成在其计费周期内的支出达到其月度预算的份额。每个周期为每个集成触发一次。",
+        "summary": "支出达到集成月度预算的 {threshold}%"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "AI 请求错误率",
+        "description": "AI 模型集成的太多最近请求失败。",
+        "summary": "集成最后 {window} 次请求中超过 {threshold}% 失败，在至少 {minSamples} 次请求后"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "AI 提供商速率限制",
+        "description": "提供商重复限制 AI 模型集成的请求。",
+        "summary": "提供商在 {days, plural, one {# 小时} other {# 小时}}内对至少 {threshold, plural, one {# 个请求} other {# 个请求}}进行了速率限制"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "存储库缓存故障",
+        "description": "代码存储库连接有一段时间没有成功刷新其缓存。每小时检查一次。",
+        "summary": "存储库连接的缓存故障至少 {threshold, plural, one {# 小时} other {# 小时}}"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "集成需要重新授权",
+        "description": "许多用户已失去与集成的连接，需要重新授权。每日检查。",
+        "summary": "至少 {threshold, plural, one {# 个用户需要} other {# 个用户需要}}重新授权集成"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "队列失败的作业",
+        "description": "后台队列中包含太多失败的作业。每小时检查一次。",
+        "summary": "队列中超过 {threshold, plural, one {# 个作业已} other {# 个作业已}}失败"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "队列积压",
+        "description": "后台队列中最早等待的作业已等待太长时间，这是停止的工作人员的标志。每小时检查一次。",
+        "summary": "队列中最早等待的作业早于 {threshold, plural, one {# 分钟} other {# 分钟}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "审计日志积压",
+        "description": "捕获的更改未被写入审计日志，这是停止的审计工作人员的标志。每小时检查一次。",
+        "summary": "最早未处理的审计更改早于 {threshold, plural, one {# 分钟} other {# 分钟}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "账户锁定",
+        "description": "多个账户因登录失败而同时锁定，这是凭证填充的标志。每小时检查一次。",
+        "summary": "至少 {threshold, plural, one {# 个账户已} other {# 个账户已}}因登录失败而锁定"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "无自动化结果",
+        "description": "有一段时间没有任何管道中的自动测试结果到达。每日检查。",
+        "summary": "没有自动化结果抵达 {threshold, plural, one {# 小时} other {# 小时}}"
+      }
+    },
+    "sourceSummary": "结果：{source, select, MANUAL {手动} AUTOMATED {自动化} other {手动和自动化}}",
+    "historyDialog": {
+      "title": "历史：{name}",
+      "empty": "此规则尚未触发。",
+      "columns": {
+        "firedAt": "触发时间",
+        "subject": "主题",
+        "observed": "观察到",
+        "threshold": "阈值",
+        "notified": "已通知"
+      },
+      "webhookSent": "Webhook 已发送"
+    },
+    "descriptionFor": "警报 {name} 关注，以及其项目中的其他警报。",
+    "empty": "您的项目中还没有任何警报。",
+    "emptyCanCreate": "您的项目中还没有任何警报。添加一个以开始使用。",
+    "pageDescription": "您收到通知的方式、告知您的内容以及您关注的警报。",
+    "pageDescriptionFor": "如何通知 {name} 以及他们关注的警报。",
+    "pageTabs": {
+      "alerts": "警报",
+      "notifications": "通知"
+    },
+    "metricGroups": {
+      "CASE": "测试用例结果",
+      "RUN": "测试运行",
+      "SESSION": "会话",
+      "MILESTONE": "里程碑",
+      "PROJECT": "项目健康",
+      "WEBHOOK": "Webhook",
+      "LLM_INTEGRATION": "AI 模型",
+      "CODE_REPOSITORY": "代码存储库",
+      "INTEGRATION": "集成",
+      "QUEUE": "后台队列",
+      "SYSTEM": "安装"
+    }
   }
 }
