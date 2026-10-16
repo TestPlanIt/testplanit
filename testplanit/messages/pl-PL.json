@@ -503,6 +503,7 @@
       "complete": {
         "title": "Pełny przebieg testu",
         "description": "Czy na pewno chcesz ukończyć ten test?",
+        "allCasesCompletedDescription": "Każdy przypadek testowy w tym przebiegu ma teraz wynik. Czy chciałbyś ukończyć ten przebieg testowy?",
         "warning": "Po zakończeniu testu nie będzie można go modyfikować.",
         "completing": "Zakończenie...",
         "apple": {

@@ -503,6 +503,7 @@
       "complete": {
         "title": "Teste completo",
         "description": "Tem certeza de que deseja concluir este teste?",
+        "allCasesCompletedDescription": "Todos os casos de teste nesta execução agora têm um resultado. Você gostaria de completar esta execução de teste?",
         "warning": "Uma vez concluído, o teste não poderá ser modificado.",
         "completing": "Concluindo...",
         "apple": {

@@ -21,6 +21,7 @@ vi.mock("~/lib/db", () => ({
     },
     testRunCases: {
       findFirst: vi.fn(),
+      count: vi.fn(),
     },
     testRunResults: {
       findFirst: vi.fn(),
@@ -178,6 +179,9 @@ describe("Submit Result API Route", () => {
     });
     (baseDb.user.findUnique as any).mockResolvedValue(baseUser);
     (baseDb.testRunCases.findFirst as any).mockResolvedValue(baseRunCase);
+    // Run-progress default: other cases still lack a result, so the
+    // all-cases-completed prompt stays off for every pre-existing test path.
+    (baseDb.testRunCases.count as any).mockResolvedValue(1);
     // Justification-on-override defaults: no prior attempt → check is a no-op,
     // so every pre-existing test path is unaffected.
     (baseDb.testRunResults.findFirst as any).mockResolvedValue(null);
@@ -352,6 +356,64 @@ describe("Submit Result API Route", () => {
     expect(txMocks.testRuns.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { stateId: 3 },
+    });
+    expect(data.runProgress).toEqual({ allCasesJustCompleted: false });
+  });
+
+  describe("run progress (all-cases-completed prompt)", () => {
+    it("reports allCasesJustCompleted when no case in the run is left without a completed status", async () => {
+      (baseDb.testRunCases.count as any).mockResolvedValue(0);
+
+      const response = await POST(createRequest(validBody));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.runProgress).toEqual({ allCasesJustCompleted: true });
+      expect(baseDb.testRunCases.count).toHaveBeenCalledWith({
+        where: {
+          testRunId: 1,
+          isDeleted: false,
+          OR: [{ statusId: null }, { status: { isCompleted: false } }],
+        },
+      });
+    });
+
+    it("does not report completion while other cases still lack a completed status", async () => {
+      (baseDb.testRunCases.count as any).mockResolvedValue(2);
+
+      const data = await (await POST(createRequest(validBody))).json();
+
+      expect(data.runProgress).toEqual({ allCasesJustCompleted: false });
+    });
+
+    it("skips the check when the case already had a completed status, so re-recording never prompts", async () => {
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue({
+        ...baseRunCase,
+        status: { isSuccess: true, isCompleted: true },
+      });
+      (baseDb.testRunCases.count as any).mockResolvedValue(0);
+
+      const data = await (await POST(createRequest(validBody))).json();
+
+      expect(data.runProgress).toEqual({ allCasesJustCompleted: false });
+      expect(baseDb.testRunCases.count).not.toHaveBeenCalled();
+    });
+
+    it("still returns the written result when the progress check fails", async () => {
+      (baseDb.testRunCases.count as any).mockRejectedValue(
+        new Error("db hiccup")
+      );
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      const response = await POST(createRequest(validBody));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.result.id).toBe(999);
+      expect(data.runProgress).toEqual({ allCasesJustCompleted: false });
+      consoleError.mockRestore();
     });
   });
 

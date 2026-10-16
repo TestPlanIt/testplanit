@@ -503,6 +503,7 @@
       "complete": {
         "title": "Volledige testrun",
         "description": "Weet u zeker dat u deze testrun wilt voltooien?",
+        "allCasesCompletedDescription": "Elke testcase in deze run heeft nu een resultaat. Wilt u deze testruns voltooien?",
         "warning": "Nadat de testrun is voltooid, kan deze niet meer worden gewijzigd.",
         "completing": "Bezig met voltooien...",
         "apple": {

@@ -503,6 +503,7 @@
       "complete": {
         "title": "Vollständiger Testlauf",
         "description": "Sind Sie sicher, dass Sie diesen Testlauf durchführen möchten?",
+        "allCasesCompletedDescription": "Jeder Testfall in dieser Testausführung hat jetzt ein Ergebnis. Möchten Sie diese Testausführung abschließen?",
         "warning": "Nach Abschluss des Testlaufs kann dieser nicht mehr verändert werden.",
         "completing": "Wird abgeschlossen...",
         "apple": {

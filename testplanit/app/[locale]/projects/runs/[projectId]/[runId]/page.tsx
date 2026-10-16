@@ -161,6 +161,10 @@ import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
 } from "../DuplicateTestRunDialog";
 import CompleteTestRunDialog from "./CompleteTestRunDialog";
+import {
+  TEST_RUN_ALL_CASES_COMPLETED_EVENT,
+  type TestRunAllCasesCompletedDetail,
+} from "~/lib/test-run-result-submit";
 import { DistributeAssignmentsModal } from "./DistributeAssignmentsModal";
 import { DeleteTestRunModal } from "./DeleteTestRun";
 import JunitChartsPanel from "./JunitChartsPanel";
@@ -327,6 +331,10 @@ export default function TestRunPage() {
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  // True when the complete dialog was opened by the all-cases-completed
+  // prompt below rather than by the Complete action.
+  const [completePromptedByResults, setCompletePromptedByResults] =
+    useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [selectedTestCaseIds, setSelectedTestCaseIds] = useState<number[]>([]);
   const [selectedIssues, setSelectedIssues] = useState<number[]>([]);
@@ -709,6 +717,25 @@ export default function TestRunPage() {
     [runSelection, automatedRunCases]
   );
   const [executeDialogOpen, setExecuteDialogOpen] = useState(false);
+
+  // A manually recorded result just gave every case in this run a result:
+  // offer to complete the run, but only to someone allowed to close runs.
+  // The submit helper raises the event once per <100% → 100% transition, so
+  // no local dedupe is needed beyond ignoring other runs' events.
+  const isRunCompleted = !!testRunData?.isCompleted;
+  useEffect(() => {
+    if (!canCloseRun || isRunCompleted) return;
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<TestRunAllCasesCompletedDetail>)
+        .detail;
+      if (detail?.testRunId !== Number(runId)) return;
+      setCompletePromptedByResults(true);
+      setIsCompleteDialogOpen(true);
+    };
+    window.addEventListener(TEST_RUN_ALL_CASES_COMPLETED_EVENT, handler);
+    return () =>
+      window.removeEventListener(TEST_RUN_ALL_CASES_COMPLETED_EVENT, handler);
+  }, [canCloseRun, isRunCompleted, runId]);
   const [retryOf, setRetryOf] = useState<TestRunExecutionRow | null>(null);
   const { data: jUnitSuites, isLoading: isJUnitLoading } = useClientQueries(
     schema
@@ -2091,16 +2118,6 @@ export default function TestRunPage() {
                                 },
                               ]}
                             />
-                            {isCompleteDialogOpen && (
-                              <CompleteTestRunDialog
-                                open={isCompleteDialogOpen}
-                                onClose={() => setIsCompleteDialogOpen(false)}
-                                testRunId={Number(runId)}
-                                projectId={Number(projectId)}
-                                stateId={testRunData?.stateId || 0}
-                                stateName={testRunData?.state?.name || ""}
-                              />
-                            )}
                           </div>
                           {/* Row 2: composition lock/unlock */}
                           <div className="flex items-center gap-1">
@@ -2802,6 +2819,22 @@ export default function TestRunPage() {
           testRunId={Number(runId)}
           testRunName={testRunData.name || ""}
           onPrepareCloneDataAndProceed={handlePrepareCloneDataAndProceed}
+        />
+      )}
+      {/* Rendered outside the view/edit-mode header branches so the
+          all-cases-completed prompt can open it from either mode. */}
+      {isCompleteDialogOpen && canCloseRun && !testRunData?.isCompleted && (
+        <CompleteTestRunDialog
+          open={isCompleteDialogOpen}
+          onClose={() => {
+            setIsCompleteDialogOpen(false);
+            setCompletePromptedByResults(false);
+          }}
+          testRunId={Number(runId)}
+          projectId={Number(projectId)}
+          stateId={testRunData?.stateId || 0}
+          stateName={testRunData?.state?.name || ""}
+          promptedByAllCasesCompleted={completePromptedByResults}
         />
       )}
       {canAddEditRun &&

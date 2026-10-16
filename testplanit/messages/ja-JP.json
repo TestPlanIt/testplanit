@@ -503,6 +503,7 @@
       "complete": {
         "title": "完全なテスト実行",
         "description": "このテスト実行を完了してもよろしいですか?",
+        "allCasesCompletedDescription": "このテスト実行のすべてのテストケースに結果があります。このテスト実行を完了しますか？",
         "warning": "完了すると、テスト実行を変更できなくなります。",
         "completing": "完了中...",
         "apple": {

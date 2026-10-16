@@ -48,6 +48,12 @@ interface CompleteTestRunDialogProps {
   projectId: number;
   stateId: number;
   stateName: string;
+  /**
+   * The dialog was opened by the app because a recorded result gave every
+   * case in the run a result, not by the user clicking Complete. Swaps the
+   * description so the unprompted dialog explains itself.
+   */
+  promptedByAllCasesCompleted?: boolean;
 }
 
 const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
@@ -57,6 +63,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
   projectId,
   stateId,
   stateName: _stateName,
+  promptedByAllCasesCompleted = false,
 }) => {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -155,7 +162,11 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div>{t("common.dialogs.complete.description")}</div>
+          <div>
+            {promptedByAllCasesCompleted
+              ? t("common.dialogs.complete.allCasesCompletedDescription")
+              : t("common.dialogs.complete.description")}
+          </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">

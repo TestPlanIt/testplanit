@@ -503,6 +503,7 @@
       "complete": {
         "title": "Chạy thử nghiệm hoàn tất",
         "description": "Bạn có chắc chắn muốn hoàn thành lần chạy thử này không?",
+        "allCasesCompletedDescription": "Mọi test case trong lần chạy này hiện đã có kết quả. Bạn có muốn hoàn thành lần chạy test này không?",
         "warning": "Sau khi hoàn tất, kết quả chạy thử nghiệm sẽ không thể chỉnh sửa được nữa.",
         "completing": "Đang hoàn tất...",
         "apple": {

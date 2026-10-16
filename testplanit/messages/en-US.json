@@ -503,6 +503,7 @@
       "complete": {
         "title": "Complete Test Run",
         "description": "Are you sure you want to complete this test run?",
+        "allCasesCompletedDescription": "Every test case in this run now has a result. Would you like to complete this test run?",
         "warning": "Once completed, the test run will not be able to be modified.",
         "completing": "Completing...",
         "apple": {

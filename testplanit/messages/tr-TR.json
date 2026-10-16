@@ -503,6 +503,7 @@
       "complete": {
         "title": "Test Çalıştırması Tamamlandı",
         "description": "Bu test çalışmasını tamamlamak istediğinizden emin misiniz?",
+        "allCasesCompletedDescription": "Bu çalışmadaki her test durumunun artık bir sonucu var. Bu test çalışmasını tamamlamak ister misiniz?",
         "warning": "Test işlemi tamamlandıktan sonra, üzerinde herhangi bir değişiklik yapılamayacaktır.",
         "completing": "Tamamlanıyor...",
         "apple": {

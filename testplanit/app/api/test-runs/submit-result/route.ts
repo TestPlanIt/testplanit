@@ -225,9 +225,10 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         id: true,
         assignedToId: true,
         repositoryCaseId: true,
-        // Pre-write pass state, so the handoff below fires only on a
-        // not-passed → passed transition.
-        status: { select: { isSuccess: true } },
+        // Pre-write state: isSuccess so the handoff below fires only on a
+        // not-passed → passed transition; isCompleted so the run-progress
+        // check fires only when this result moves the run to 100%.
+        status: { select: { isSuccess: true, isCompleted: true } },
         repositoryCase: {
           select: { automated: true, templateId: true, name: true },
         },
@@ -910,7 +911,35 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       });
     }
 
-    return NextResponse.json({ result });
+    // Did this result move the run from <100% to 100% completed cases? Only
+    // a case whose prior status was not completed can raise the completed
+    // count, so re-recording an already-completed case never prompts. Read
+    // after commit so a concurrent bulk submission sees its siblings' writes
+    // (the client dedupes a double fire). Best-effort: the result is already
+    // written, so a failure here must not fail the response.
+    let allCasesJustCompleted = false;
+    if (runCase.status?.isCompleted !== true) {
+      try {
+        const remaining = await baseDb.testRunCases.count({
+          where: {
+            testRunId: input.testRunId,
+            isDeleted: false,
+            OR: [{ statusId: null }, { status: { isCompleted: false } }],
+          },
+        });
+        allCasesJustCompleted = remaining === 0;
+      } catch (err) {
+        console.error(
+          `Run progress check failed after result for run ${input.testRunId}:`,
+          err
+        );
+      }
+    }
+
+    return NextResponse.json({
+      result,
+      runProgress: { allCasesJustCompleted },
+    });
   } catch (error) {
     if (isDependencyGateError(error)) {
       return NextResponse.json(

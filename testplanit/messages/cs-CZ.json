@@ -503,6 +503,7 @@
       "complete": {
         "title": "Dokončit testovací běh",
         "description": "Opravdu chcete tento testovací běh dokončit?",
+        "allCasesCompletedDescription": "Každý testovací případ v tomto běhu má nyní výsledek. Chcete dokončit tento testovací běh?",
         "warning": "Po dokončení nebude možné testovací běh upravovat.",
         "completing": "Dokončování...",
         "apple": {

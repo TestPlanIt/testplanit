@@ -503,6 +503,7 @@
       "complete": {
         "title": "完成测试运行",
         "description": "您确定要完成此次测试运行吗？",
+        "allCasesCompletedDescription": "此运行中的每个测试用例现在都有结果。您想完成此测试运行吗？",
         "warning": "测试运行完成后将无法修改。",
         "completing": "完成……",
         "apple": {

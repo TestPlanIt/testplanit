@@ -503,6 +503,7 @@
       "complete": {
         "title": "Completar prueba",
         "description": "¿Estás seguro de que quieres completar esta ejecución de prueba?",
+        "allCasesCompletedDescription": "Cada caso de prueba en esta ejecución ahora tiene un resultado. ¿Desea completar esta ejecución de prueba?",
         "warning": "Una vez completado, la ejecución de la prueba no podrá ser modificada.",
         "completing": "Completando...",
         "apple": {

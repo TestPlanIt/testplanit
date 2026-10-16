@@ -503,6 +503,7 @@
       "complete": {
         "title": "Essai complet",
         "description": "Êtes-vous sûr de vouloir effectuer cet essai ?",
+        "allCasesCompletedDescription": "Chaque cas de test dans cette exécution a maintenant un résultat. Souhaitez-vous terminer cette exécution de test ?",
         "warning": "Une fois terminé, l'essai ne pourra plus être modifié.",
         "completing": "Terminé...",
         "apple": {

@@ -36,6 +36,23 @@ export interface SubmitTestRunResultResponse {
   result: {
     id: number;
   };
+  runProgress?: {
+    /** This result moved the run from <100% to 100% completed cases. */
+    allCasesJustCompleted: boolean;
+  };
+}
+
+/**
+ * Window event raised when a submitted result moves its run to 100%
+ * completed cases. The run detail page listens and offers to complete the
+ * run; results are recorded from several components (case details, the
+ * Add Result modal, iteration panels), so the single submit helper is the
+ * one place that knows.
+ */
+export const TEST_RUN_ALL_CASES_COMPLETED_EVENT = "testRunAllCasesCompleted";
+
+export interface TestRunAllCasesCompletedDetail {
+  testRunId: number;
 }
 
 export type SubmitResultError = Error & {
@@ -248,6 +265,7 @@ export async function submitTestRunResult(
     code?: string;
     blockedBy?: SubmitResultError["blockedBy"];
     result?: SubmitTestRunResultResponse["result"];
+    runProgress?: SubmitTestRunResultResponse["runProgress"];
   } | null;
 
   if (!response.ok || !payload?.result) {
@@ -258,6 +276,18 @@ export async function submitTestRunResult(
     error.code = payload?.code;
     error.blockedBy = payload?.blockedBy;
     throw error;
+  }
+
+  if (
+    payload.runProgress?.allCasesJustCompleted &&
+    typeof window !== "undefined"
+  ) {
+    window.dispatchEvent(
+      new CustomEvent<TestRunAllCasesCompletedDetail>(
+        TEST_RUN_ALL_CASES_COMPLETED_EVENT,
+        { detail: { testRunId: input.testRunId } }
+      )
+    );
   }
 
   return payload.result;
