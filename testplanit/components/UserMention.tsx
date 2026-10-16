@@ -66,13 +66,17 @@ export function UserMention({
 
   const inner = (
     <>
-      <Avatar
-        alt={user.name ?? ""}
-        height={16}
-        width={16}
-        image={user.image ?? ""}
-        showTooltip={false}
-      />
+      {/* Hidden from assistive tech: the link is named by its aria-label, and
+          the initials are not part of it (WCAG 2.5.3 Label in Name). */}
+      <span className="flex shrink-0" aria-hidden="true">
+        <Avatar
+          alt={user.name ?? ""}
+          height={16}
+          width={16}
+          image={user.image ?? ""}
+          showTooltip={false}
+        />
+      </span>
       {isCurrentUser && (
         <Star className="w-3 h-3 min-w-3 fill-current shrink-0" />
       )}

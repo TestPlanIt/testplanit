@@ -61,7 +61,9 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
   // Content to display (avatar + name)
   const content = (
     <span className="flex items-center gap-1 min-w-0">
-      <span className="shrink-0">
+      {/* Hidden from assistive tech: the link is named by its aria-label, and
+          the initials are not part of it (WCAG 2.5.3 Label in Name). */}
+      <span className="shrink-0" aria-hidden="true">
         <Avatar
           alt={user?.name}
           height={20}

@@ -964,7 +964,6 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                                 role="button"
                                 tabIndex={0}
                                 className="flex min-w-0 cursor-pointer items-center gap-1 outline-none"
-                                aria-label={t("columnOptions")}
                               >
                                 <TruncatedHeaderLabel>
                                   {flexRender(
@@ -977,6 +976,12 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                                   className="h-3 w-3 shrink-0 opacity-50"
                                   aria-hidden="true"
                                 />
+                                {/* Named from its content so the visible
+                                    header label leads the accessible name
+                                    (WCAG 2.5.3 Label in Name). */}
+                                <span className="sr-only">
+                                  {t("columnOptions")}
+                                </span>
                               </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
@@ -1092,6 +1097,9 @@ export function VirtualizedTableEngine<TData extends DataRow>({
             viewport so the frozen columns and headers stay aligned. */}
         <div
           ref={scrollRef}
+          // Focusable so keyboard users can scroll rows that have nothing
+          // else to focus (WCAG 2.1.1).
+          tabIndex={0}
           className={cn(
             "relative min-h-0",
             enableColumnPinning

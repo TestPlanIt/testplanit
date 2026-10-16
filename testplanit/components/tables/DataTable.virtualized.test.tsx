@@ -512,7 +512,9 @@ describe("DataTable (virtualized mode)", () => {
 
   it("renders no header column menu when no menu handler is wired", () => {
     renderTable();
-    expect(screen.queryByLabelText("columnOptions")).not.toBeInTheDocument();
+    expect(
+      screen.queryAllByRole("button", { name: /columnOptions$/ })
+    ).toHaveLength(0);
     // The plain sort-cycle buttons remain.
     expect(screen.getAllByLabelText("sort").length).toBeGreaterThan(0);
   });
@@ -520,7 +522,7 @@ describe("DataTable (virtualized mode)", () => {
   it("offers explicit sort directions through the header column menu", () => {
     const onSortColumn = vi.fn();
     renderTable({ onSortColumn, enableColumnPinning: false });
-    const triggers = screen.getAllByLabelText("columnOptions");
+    const triggers = screen.getAllByRole("button", { name: /columnOptions$/ });
     expect(triggers).toHaveLength(2);
     // The cycling sort button is replaced by the menu trigger.
     expect(screen.queryByLabelText("sort")).not.toBeInTheDocument();
@@ -532,7 +534,7 @@ describe("DataTable (virtualized mode)", () => {
   it("routes Hide column through onHideColumn", () => {
     const onHideColumn = vi.fn();
     renderTable({ onHideColumn, enableColumnPinning: false });
-    const triggers = screen.getAllByLabelText("columnOptions");
+    const triggers = screen.getAllByRole("button", { name: /columnOptions$/ });
     fireEvent.pointerDown(triggers[1]);
     fireEvent.click(screen.getByText("hideColumn"));
     expect(onHideColumn).toHaveBeenCalledWith("count");
