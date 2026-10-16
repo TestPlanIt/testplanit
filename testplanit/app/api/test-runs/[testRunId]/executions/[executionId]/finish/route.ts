@@ -3,6 +3,10 @@ import { z } from "zod";
 import { baseDb } from "~/lib/db";
 import { finalizeExecution } from "~/lib/execution/dispatch";
 import {
+  externalLinkFields,
+  externalLinkPatch,
+} from "~/lib/execution/externalLink";
+import {
   authenticateRunRequest,
   isRouteResponse,
   parseId,
@@ -13,6 +17,7 @@ import { getCurrentTenantId } from "~/lib/multiTenantDb";
 const bodySchema = z.object({
   conclusion: z.enum(["success", "failure", "cancelled"]),
   message: z.string().max(1024).optional(),
+  ...externalLinkFields,
 });
 
 /**
@@ -20,6 +25,7 @@ const bodySchema = z.object({
  * Explicit completion from the CI side (`testplanit run finish`). Needed for
  * generic-webhook targets, which TestPlanIt cannot poll; harmless for the
  * others. The run itself stays open — completing it is a separate decision.
+ * A job that never called `/started` can still hand over its own URL here.
  */
 export async function POST(
   request: NextRequest,
@@ -76,6 +82,7 @@ export async function POST(
     error: status === "SUCCEEDED" ? null : (body.message ?? null),
     actorUserId: ctx.userId,
     tenantId: getCurrentTenantId(),
+    extra: externalLinkPatch(body),
   });
   return NextResponse.json({ id: execution.id, status });
 }

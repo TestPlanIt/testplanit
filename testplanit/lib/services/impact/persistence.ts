@@ -63,6 +63,7 @@ export function toResultRecord(result: AnalysisResult) {
     warnings: result.warnings,
     stats: result.stats,
     diff: result.diff,
+    ...(result.buildChanges ? { buildChanges: result.buildChanges } : {}),
   };
 }
 

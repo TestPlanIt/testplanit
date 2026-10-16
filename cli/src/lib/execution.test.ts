@@ -13,6 +13,7 @@ import {
   getAutomationPlan,
   parseEnvId,
   selectorValue,
+  startExecution,
   type AutomationPlan,
 } from "./execution.js";
 
@@ -118,6 +119,30 @@ describe("host calls", () => {
     await expect(getAutomationPlan(999)).rejects.toThrow("Test run not found");
   });
 
+  it("reports the job's own URL and build id", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { id: 7, status: "RUNNING" }));
+    await expect(
+      startExecution(42, 7, "https://ci.example.com/job/x/11/", "11")
+    ).resolves.toEqual({ id: 7, status: "RUNNING" });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      "https://testplanit.example.com/api/test-runs/42/executions/7/started"
+    );
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({
+      externalUrl: "https://ci.example.com/job/x/11/",
+      externalRunId: "11",
+    });
+  });
+
+  it("omits the build id when none is given", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { id: 7, status: "RUNNING" }));
+    await startExecution(42, 7, "https://ci.example.com/job/x/11/");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      externalUrl: "https://ci.example.com/job/x/11/",
+    });
+  });
+
   it("finishes an execution", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { id: 7, status: "SUCCEEDED" }));
     await expect(finishExecution(42, 7, "success", "all green")).resolves.toEqual({
@@ -130,6 +155,19 @@ describe("host calls", () => {
     );
     expect(init.method).toBe("POST");
     expect(JSON.parse(init.body)).toEqual({ conclusion: "success", message: "all green" });
+  });
+
+  it("passes the job's link along with the conclusion when given", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { id: 7, status: "FAILED" }));
+    await finishExecution(42, 7, "failure", undefined, {
+      externalUrl: "https://ci.example.com/job/x/11/",
+      externalRunId: "11",
+    });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      conclusion: "failure",
+      externalUrl: "https://ci.example.com/job/x/11/",
+      externalRunId: "11",
+    });
   });
 
   it("completes a run: resolves the project, the DONE state, then updates", async () => {

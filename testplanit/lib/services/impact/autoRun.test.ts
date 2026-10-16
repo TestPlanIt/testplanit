@@ -138,6 +138,119 @@ describe("createRunFromAnalysis", () => {
     );
   });
 
+  it("appends the build's pull requests and orphan commits to the note", async () => {
+    const db = makeDb(analysis);
+    await createRunFromAnalysis(
+      db,
+      77,
+      {
+        trigger: "push",
+        label: "master d0db345…2828d02",
+        url: "https://bitbucket.org/acme/app/branches/compare/2828d02..d0db345",
+      },
+      {
+        pullRequests: [
+          {
+            number: 2957,
+            title: "Fixes/ABT-48564 pip activity token crash",
+            url: "https://bitbucket.org/acme/app/pull-requests/2957",
+          },
+          { number: 2960, title: "Sync worker", url: null },
+        ],
+        orphanCommits: [
+          {
+            shortSha: "e34a9ac",
+            subject: "Add test coverage for Share With Public",
+            url: "https://bitbucket.org/acme/app/commits/e34a9ac",
+          },
+        ],
+        truncated: true,
+        uncheckedCommits: 3,
+      }
+    );
+    const note = db.testRuns.create.mock.calls[0][0].data.note;
+    expect(note.content).toHaveLength(6);
+    expect(note.content[0].content[0].text).toBe("master d0db345…2828d02 — ");
+    expect(note.content[1]).toEqual({
+      type: "paragraph",
+      content: [{ type: "text", text: "Pull requests in this build (2)" }],
+    });
+    expect(note.content[2]).toEqual({
+      type: "bulletList",
+      content: [
+        {
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "PR #2957: Fixes/ABT-48564 pip activity token crash",
+                  marks: [
+                    {
+                      type: "link",
+                      attrs: {
+                        href: "https://bitbucket.org/acme/app/pull-requests/2957",
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "PR #2960: Sync worker" }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(note.content[3].content[0].text).toBe(
+      "Commits not in a pull request (1)"
+    );
+    expect(note.content[4].content[0].content[0].content).toEqual([
+      {
+        type: "text",
+        text: "e34a9ac",
+        marks: [
+          {
+            type: "link",
+            attrs: { href: "https://bitbucket.org/acme/app/commits/e34a9ac" },
+          },
+        ],
+      },
+      { type: "text", text: " Add test coverage for Share With Public" },
+    ]);
+    expect(note.content[5].content[0].text).toBe("…and 3 more commits");
+  });
+
+  it("writes exactly the link paragraphs when the build lookup found nothing", async () => {
+    const db = makeDb(analysis);
+    await createRunFromAnalysis(
+      db,
+      77,
+      { trigger: "push", label: "main a…b" },
+      {
+        pullRequests: [],
+        orphanCommits: [],
+        truncated: false,
+        uncheckedCommits: 0,
+      }
+    );
+    expect(db.testRuns.create.mock.calls[0][0].data.note).toEqual({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "main a…b" }] },
+      ],
+    });
+  });
+
   it("writes the label alone when the event had no link", async () => {
     const db = makeDb(analysis);
     await createRunFromAnalysis(db, 77, { trigger: "push", label: "main a…b" });

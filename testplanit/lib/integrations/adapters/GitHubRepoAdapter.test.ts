@@ -705,6 +705,42 @@ describe("GitHubRepoAdapter", () => {
     });
   });
 
+  describe("pullRequestsForCommit", () => {
+    it("maps the pull requests that contain the commit", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          {
+            number: 12,
+            title: "Fix checkout",
+            html_url: "https://github.com/myorg/myrepo/pull/12",
+            merged_at: "2026-10-15T10:00:00Z",
+          },
+        ])
+      );
+
+      const result = await adapter.pullRequestsForCommit("abc123");
+
+      expect(mockFetch.mock.calls[0][0]).toContain(
+        "/repos/myorg/myrepo/commits/abc123/pulls?per_page=10"
+      );
+      expect(result).toEqual([
+        {
+          number: 12,
+          title: "Fix checkout",
+          url: "https://github.com/myorg/myrepo/pull/12",
+          mergedAt: "2026-10-15T10:00:00Z",
+        },
+      ]);
+    });
+
+    it("returns an empty list on a 404", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ message: "Not Found" }, 404)
+      );
+      await expect(adapter.pullRequestsForCommit("abc")).resolves.toEqual([]);
+    });
+  });
+
   describe("listPullRequests", () => {
     function makeRawPull(number: number, overrides: Record<string, any> = {}) {
       return {

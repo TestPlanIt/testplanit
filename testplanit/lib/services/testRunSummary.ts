@@ -16,9 +16,11 @@ export type {
   PerCaseIterationCounts,
 } from "./testRunSummary-shared";
 export { aggregateRunCounts } from "./testRunSummary-shared";
-import type {
-  TestRunSummaryData,
-  PerCaseIterationCounts,
+import {
+  earliestIso,
+  latestIso,
+  type PerCaseIterationCounts,
+  type TestRunSummaryData,
 } from "./testRunSummary-shared";
 
 /**
@@ -137,24 +139,6 @@ export async function getTestRunSummary(
       projectIds: [testRun.projectId],
     })),
   };
-}
-
-function earliestIso(
-  a: string | null | undefined,
-  b: string | null | undefined
-): string | null {
-  if (!a) return b ?? null;
-  if (!b) return a;
-  return a < b ? a : b;
-}
-
-function latestIso(
-  a: string | null | undefined,
-  b: string | null | undefined
-): string | null {
-  if (!a) return b ?? null;
-  if (!b) return a;
-  return a > b ? a : b;
 }
 
 /**

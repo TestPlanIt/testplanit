@@ -17,6 +17,7 @@ import {
   type ListPullRequestsResult,
   type PullRequestState,
   type RepoPullRequest,
+  type RepoPullRequestRef,
 } from "./GitRepoAdapter";
 import {
   MAX_COMPARE_COMMITS,
@@ -260,6 +261,28 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
       };
     });
     return { pullRequests, hasMore: items.length === perPage };
+  }
+
+  async pullRequestsForCommit(sha: string): Promise<RepoPullRequestRef[]> {
+    let data: any;
+    try {
+      data = await this.makeRequest<any>(
+        `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/commits/${encodeURIComponent(sha)}/merge_requests`,
+        { headers: this.authHeaders }
+      );
+    } catch (err) {
+      if (this.isNotFoundError(err)) return [];
+      throw err;
+    }
+    const items: any[] = Array.isArray(data) ? data : [];
+    return items
+      .map((item): RepoPullRequestRef => ({
+        number: Number(item?.iid) || Number(item?.id) || 0,
+        title: String(item?.title ?? ""),
+        url: item?.web_url ?? null,
+        ...(item?.merged_at ? { mergedAt: String(item.merged_at) } : {}),
+      }))
+      .filter((pr) => pr.number > 0);
   }
 
   async compareCommits(

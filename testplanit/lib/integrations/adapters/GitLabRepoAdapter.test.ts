@@ -670,6 +670,42 @@ describe("GitLabRepoAdapter", () => {
       expect(result.files).toHaveLength(1);
     });
   });
+  describe("pullRequestsForCommit", () => {
+    it("maps the merge requests that contain the commit", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          {
+            iid: 7,
+            id: 9001,
+            title: "Fix checkout",
+            web_url: "https://gitlab.com/mygroup/myproject/-/merge_requests/7",
+            merged_at: null,
+          },
+        ])
+      );
+
+      const result = await adapter.pullRequestsForCommit("abc123");
+
+      expect(mockFetch.mock.calls[0][0]).toContain(
+        "/api/v4/projects/mygroup%2Fmyproject/repository/commits/abc123/merge_requests"
+      );
+      expect(result).toEqual([
+        {
+          number: 7,
+          title: "Fix checkout",
+          url: "https://gitlab.com/mygroup/myproject/-/merge_requests/7",
+        },
+      ]);
+    });
+
+    it("returns an empty list on a 404", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ message: "404 Not Found" }, 404)
+      );
+      await expect(adapter.pullRequestsForCommit("abc")).resolves.toEqual([]);
+    });
+  });
+
   describe("listPullRequests", () => {
     function makeRawMr(iid: number, overrides: Record<string, any> = {}) {
       return {

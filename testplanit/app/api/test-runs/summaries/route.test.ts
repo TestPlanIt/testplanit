@@ -26,7 +26,10 @@ vi.mock("~/utils/testResultTypes", () => ({
 
 import { getServerSession } from "next-auth";
 import { baseDb } from "~/lib/db";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import {
+  isAutomatedTestRunType,
+  isHybridTestRunType,
+} from "~/utils/testResultTypes";
 
 describe("Test Run Summaries (Batch) API Route", () => {
   const mockSession = {
@@ -208,6 +211,56 @@ describe("Test Run Summaries (Batch) API Route", () => {
       expect(data.summaries[1].lastResultAt).toBe("2026-07-22T15:30:00.000Z");
       expect(data.summaries[2].firstResultAt).toBeNull();
       expect(data.summaries[2].lastResultAt).toBeNull();
+    });
+
+    it("spans a hybrid run's window over its automated results when it has no manual ones", async () => {
+      (baseDb.testRuns.findMany as any).mockResolvedValue([
+        {
+          id: 7,
+          testRunType: "HYBRID",
+          forecastManual: null,
+          projectId: 10,
+          createdAt: new Date("2026-10-15T23:10:00.000Z"),
+          state: { workflowType: "IN_PROGRESS" },
+          issues: [],
+        },
+      ]);
+      (isHybridTestRunType as any).mockImplementation(
+        (type: string) => type === "HYBRID"
+      );
+      (baseDb.$queryRaw as any)
+        .mockResolvedValueOnce([]) // comments counts
+        .mockResolvedValueOnce([]) // manual status counts
+        .mockResolvedValueOnce([]) // manual elapsed
+        .mockResolvedValueOnce([]) // manual estimates
+        .mockResolvedValueOnce([]) // manual case details
+        .mockResolvedValueOnce([]) // manual result windows — none: results came by import
+        .mockResolvedValueOnce([
+          {
+            testRunId: 7,
+            status: "PASSED",
+            testType: "JUNIT",
+            count: BigInt(16),
+          },
+        ]) // automated result aggregates
+        .mockResolvedValueOnce([]) // automated time totals
+        .mockResolvedValueOnce([
+          {
+            testRunId: 7,
+            firstResultAt: new Date("2026-10-15T23:16:17.661Z"),
+            lastResultAt: new Date("2026-10-15T23:21:57.425Z"),
+          },
+        ]) // automated result windows
+        .mockResolvedValueOnce([]); // import activity
+
+      const response = await GET(createRequest({ testRunIds: "7" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.summaries[7].testRunType).toBe("HYBRID");
+      expect(data.summaries[7].junitSummary?.totalTests).toBe(16);
+      expect(data.summaries[7].firstResultAt).toBe("2026-10-15T23:16:17.661Z");
+      expect(data.summaries[7].lastResultAt).toBe("2026-10-15T23:21:57.425Z");
     });
 
     it("parses comma-separated test run IDs correctly", async () => {
