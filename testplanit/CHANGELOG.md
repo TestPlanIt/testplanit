@@ -1,3 +1,9 @@
+## [1.2.0-beta.2](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.1...v1.2.0-beta.2) (2026-10-16)
+
+### Bug Fixes
+
+* **a11y:** pass the accessibility gate and build 1.2 beta images ([8e073bc](https://github.com/TestPlanIt/testplanit/commit/8e073bc92a61af403489c023349a08697402a271)), closes [#698](https://github.com/TestPlanIt/testplanit/issues/698)
+
 ## [1.2.0-beta.1](https://github.com/TestPlanIt/testplanit/compare/v1.1.8...v1.2.0-beta.1) (2026-10-16)
 
 ### Features
