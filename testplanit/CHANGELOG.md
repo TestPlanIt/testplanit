@@ -1,3 +1,10 @@
+## [1.1.9](https://github.com/TestPlanIt/testplanit/compare/v1.1.8...v1.1.9) (2026-10-16)
+
+### Bug Fixes
+
+* **a11y:** name table header menus and profile links from their visible text ([#699](https://github.com/TestPlanIt/testplanit/issues/699)) ([bbda532](https://github.com/TestPlanIt/testplanit/commit/bbda532af6eb9d342f826dec4b2b4f1931b9a127)), closes [#698](https://github.com/TestPlanIt/testplanit/issues/698)
+* **deps:** resolve 18 of 21 open Dependabot alerts ([#698](https://github.com/TestPlanIt/testplanit/issues/698)) ([a70654f](https://github.com/TestPlanIt/testplanit/commit/a70654f10b25a3aba9ff4f10dc89978b4562f6bc))
+
 ## [1.1.8](https://github.com/TestPlanIt/testplanit/compare/v1.1.7...v1.1.8) (2026-10-15)
 
 ### Bug Fixes
