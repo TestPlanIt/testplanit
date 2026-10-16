@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { baseDb } from "~/lib/db";
+import { earliestIso, latestIso } from "~/lib/services/testRunSummary-shared";
 import { authOptions } from "~/server/auth";
 import {
   isAutomatedTestRunType,
@@ -180,13 +181,31 @@ export async function GET(req: NextRequest) {
                 : tr.createdAt
               ).toISOString()
             : undefined;
-        const hybridAutomation = isHybrid
-          ? junitSummaries.get(tr.id)?.junitSummary
+        // A hybrid run's automated results are the junit batch's, so its
+        // execution window spans both result tables, as the per-run summary
+        // reports it; a run fed by automation alone has no manual window.
+        const hybridAutomated = isHybrid
+          ? junitSummaries.get(tr.id)
           : undefined;
+        const hybridAutomation =
+          hybridAutomated?.junitSummary &&
+          hybridAutomated.junitSummary.totalTests > 0
+            ? hybridAutomated
+            : undefined;
         summaries[tr.id] = {
           ...summary,
-          ...(hybridAutomation && hybridAutomation.totalTests > 0
-            ? { junitSummary: hybridAutomation }
+          ...(hybridAutomation
+            ? {
+                junitSummary: hybridAutomation.junitSummary,
+                firstResultAt: earliestIso(
+                  summary.firstResultAt,
+                  hybridAutomation.firstResultAt
+                ),
+                lastResultAt: latestIso(
+                  summary.lastResultAt,
+                  hybridAutomation.lastResultAt
+                ),
+              }
             : {}),
           testRunType: tr.testRunType,
           workflowType: tr.state?.workflowType,

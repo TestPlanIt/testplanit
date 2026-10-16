@@ -170,3 +170,23 @@ export function aggregateRunCounts(
     completionPct,
   };
 }
+
+/** The earlier of two ISO timestamps; a missing side yields the other. */
+export function earliestIso(
+  a: string | null | undefined,
+  b: string | null | undefined
+): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return a < b ? a : b;
+}
+
+/** The later of two ISO timestamps; a missing side yields the other. */
+export function latestIso(
+  a: string | null | undefined,
+  b: string | null | undefined
+): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return a > b ? a : b;
+}
