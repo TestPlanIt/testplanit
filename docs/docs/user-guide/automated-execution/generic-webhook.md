@@ -8,7 +8,7 @@ description: Connect any CI system or custom runner — Buildkite, CircleCI, Azu
 
 A **generic webhook** target makes TestPlanIt POST a signed JSON request to a URL you configure whenever a run is executed. Anything that can receive an HTTP request and start a job works: Buildkite, CircleCI, Azure Pipelines, Argo, a small relay service in front of your CI, or Jenkins ([its own guide](jenkins.md)).
 
-Because TestPlanIt cannot ask a generic receiver how the job is doing, the job reports its own outcome with `testplanit run finish`.
+Because TestPlanIt cannot ask a generic receiver how the job is doing, the job links the execution to itself with `testplanit run started` and reports its own outcome with `testplanit run finish`.
 
 ## The request
 
@@ -96,8 +96,23 @@ Compute the HMAC over the **raw** request body, byte for byte, not over a re-ser
 
 1. Verify the signature and respond **2xx** quickly. Start the job asynchronously if starting it takes long; TestPlanIt gives up on the request after 10 seconds.
 2. Pass `runId`, `executionId`, `projectId`, `appUrl` and `planUrl` into the job's environment as `TESTPLANIT_RUN_ID`, `TESTPLANIT_EXECUTION_ID`, `TESTPLANIT_PROJECT_ID`, `TESTPLANIT_URL` and `TESTPLANIT_PLAN_URL`, together with the job's own TestPlanIt API token as `TESTPLANIT_TOKEN` (CLI) and `TESTPLANIT_API_TOKEN` (reporters).
-3. In the job, read the plan, run the planned tests and report results; see [Reporting results back](reporting-results.md).
-4. End the job with `testplanit run finish --conclusion success|failure|cancelled`. Without it the execution shows *Running* once results arrive and waits for the target's timeout.
+3. As the job's first step, report its own URL so the run page links to this job rather than to whatever the receiver answered the dispatch with:
+
+   ```sh
+   testplanit run started --url "$BUILD_URL" --id "$BUILD_NUMBER"
+   ```
+
+   Replace the Jenkins variables with your CI's equivalents. Without the CLI, call the endpoint directly:
+
+   ```sh
+   curl -sf -X POST "$TESTPLANIT_URL/api/test-runs/$TESTPLANIT_RUN_ID/executions/$TESTPLANIT_EXECUTION_ID/started" \
+     -H "Authorization: Bearer $TESTPLANIT_TOKEN" -H "Content-Type: application/json" \
+     -d "{\"externalUrl\":\"$BUILD_URL\",\"externalRunId\":\"$BUILD_NUMBER\"}"
+   ```
+
+   The step is optional: without it the chip links to the URL the receiver returned, or shows no link. `run started` also moves the execution to *Running*, and may be called again by a retried job.
+4. In the job, read the plan, run the planned tests and report results; see [Reporting results back](reporting-results.md).
+5. End the job with `testplanit run finish --conclusion success|failure|cancelled`. Without it the execution shows *Running* once results arrive and waits for the target's timeout. `run finish` accepts the same `--url` and `--id` for a job that did not call `run started`.
 
 A minimal relay for Buildkite, for example, verifies the signature and calls Buildkite's *create build* API with the fields above as build environment variables; a CircleCI relay calls the *trigger pipeline* API with them as pipeline parameters. Azure Pipelines can be reached the same way through *runs*, with the fields as template parameters or variables.
 

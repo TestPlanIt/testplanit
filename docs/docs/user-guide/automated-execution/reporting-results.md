@@ -14,7 +14,7 @@ Whichever CI started it, the dispatched job does the same four things: read the 
 | --- | --- | --- |
 | `TESTPLANIT_URL` | CLI, reporters | The TestPlanIt base URL; sent with the dispatch |
 | `TESTPLANIT_RUN_ID` | CLI, reporters | The run to attach results to; sent with the dispatch |
-| `TESTPLANIT_EXECUTION_ID` | CLI | The execution; sent with the dispatch. Makes `run plan` return only the requested cases and lets `run finish` know what to finish |
+| `TESTPLANIT_EXECUTION_ID` | CLI | The execution; sent with the dispatch. Makes `run plan` return only the requested cases and tells `run started` and `run finish` which execution to update |
 | `TESTPLANIT_PROJECT_ID` | CLI import, reporters | The project; sent with the dispatch |
 | `TESTPLANIT_TOKEN` | CLI | The job's API token, from the CI secret store |
 | `TESTPLANIT_API_TOKEN` | Playwright and WebdriverIO reporters | The same API token |
@@ -144,9 +144,9 @@ A result that matches no case is skipped by the reporters unless `autoCreateTest
 | Target | How the execution ends |
 | --- | --- |
 | GitHub Actions, GitLab CI with an access token | TestPlanIt polls the job; nothing to do |
-| GitLab CI with a trigger token, Jenkins, generic webhook | The job calls `npx @testplanit/cli run finish --conclusion success` (or `failure`, `cancelled`) as its last step |
+| GitLab CI with a trigger token, Jenkins, generic webhook | The job calls `npx @testplanit/cli run started --url <job url>` as its first step and `npx @testplanit/cli run finish --conclusion success` (or `failure`, `cancelled`) as its last |
 | Any | Completing the run also ends its execution as *Job succeeded* |
 
-`run finish` accepts `--message "<text>"`, shown on the run page for a failed or cancelled execution.
+`run started` puts the job's own URL on the run page and moves the execution to *Running*; it matters for generic-webhook targets, where the dispatch reply has no build to link to (Jenkins answers with a queue item). `run finish` accepts `--message "<text>"`, shown on the run page for a failed or cancelled execution.
 
 Reserve `run complete` for runs that contain nothing but automated cases; it completes the whole run, manual cases included. Runs created by **Execute automated test** on a single case complete themselves.
