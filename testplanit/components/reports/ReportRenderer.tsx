@@ -710,7 +710,9 @@ export function ReportRenderer({
             </div>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
-            <div className="flex-1 min-h-0 w-full overflow-auto">
+            {/* Focusable so keyboard users can scroll a report whose content
+                has nothing else to focus (WCAG 2.1.1). */}
+            <div className="flex-1 min-h-0 w-full overflow-auto" tabIndex={0}>
               {/* The traceability report's visualization: coverage donut
                   + stat tiles (its legend) + a coverage-by-hierarchy
                   breakdown, all computed from the same rows the table

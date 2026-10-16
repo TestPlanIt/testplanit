@@ -4009,7 +4009,10 @@ function ReportBuilderContent({
                       {(matchesReportType(reportType, "automation-trends") ||
                         isResultsTrend) && (
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">
+                          <label
+                            htmlFor="report-date-grouping"
+                            className="text-sm font-medium"
+                          >
                             {tReports("dateGrouping.label")}
                           </label>
                           <Select
@@ -4018,7 +4021,10 @@ function ReportBuilderContent({
                               setDateGrouping(value)
                             }
                           >
-                            <SelectTrigger data-testid="report-date-grouping">
+                            <SelectTrigger
+                              id="report-date-grouping"
+                              data-testid="report-date-grouping"
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -4672,7 +4678,10 @@ function ReportBuilderContent({
                         filterItems.length > 0 && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
-                              <label className="text-sm font-medium">
+                              <label
+                                htmlFor="report-filter-type"
+                                className="text-sm font-medium"
+                              >
                                 {tCommon("ui.search.filters")}
                               </label>
                             </div>
@@ -4685,6 +4694,7 @@ function ReportBuilderContent({
                               onClearAll={handleClearAllFilters}
                             />
                             <ReportFilters
+                              triggerId="report-filter-type"
                               selectedFilter={selectedFilterType}
                               onFilterChange={setSelectedFilterType}
                               filterItems={filterItems}
@@ -4872,7 +4882,10 @@ function ReportBuilderContent({
                           covers, once the date dimension is selected. */}
                       {dimensions.some((d) => d.value === "date") && (
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">
+                          <label
+                            htmlFor="date-grouping-select"
+                            className="text-sm font-medium"
+                          >
                             {tReports("dateGrouping.label")}
                           </label>
                           <Select
@@ -4881,7 +4894,10 @@ function ReportBuilderContent({
                               setDateGrouping(value)
                             }
                           >
-                            <SelectTrigger data-testid="date-grouping-select">
+                            <SelectTrigger
+                              id="date-grouping-select"
+                              data-testid="date-grouping-select"
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

@@ -70,6 +70,8 @@ interface ReportFiltersProps {
     values: Array<string | number> | null
   ) => void;
   totalCount?: number;
+  /** id for the filter-type select, so a visible label can name it */
+  triggerId?: string;
 }
 
 /** Filter ids with a bespoke branch below; everything else uses the
@@ -88,6 +90,7 @@ export function ReportFilters({
   selectedValues,
   onValuesChange,
   totalCount,
+  triggerId,
 }: ReportFiltersProps) {
   const tFilters = useTranslations("reports.ui.filters");
   const tGlobal = useTranslations();
@@ -146,7 +149,7 @@ export function ReportFilters({
   return (
     <div className="flex flex-col w-full space-y-4 overflow-hidden p-0.5">
       <Select value={selectedFilter} onValueChange={onFilterChange}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger id={triggerId} className="w-full">
           <SelectValue placeholder={tFilters("selectFilter")} />
         </SelectTrigger>
         <SelectContent>

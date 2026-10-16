@@ -1018,7 +1018,8 @@ test.describe("Sorting", () => {
         name: "Column options",
       });
       await expect(sortButton).toBeVisible();
-      await expect(sortButton).toHaveAttribute("aria-label", "Column options");
+      // The visible column label leads the accessible name (WCAG 2.5.3).
+      await expect(sortButton).toHaveAccessibleName(/Name.*Column options/);
 
       // Verify the sort icon has an accessible name
       const sortIcon = sortButton.getByRole("img").first();

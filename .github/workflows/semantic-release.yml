@@ -72,7 +72,13 @@ jobs:
           # three-part tag") also sees a prerelease cut on a release branch.
           git tag -l 'v*' | sort > /tmp/tags-before
 
+          # A step that fails after the tag is pushed (e.g. the GitHub plugin
+          # commenting on released issues) still leaves a published release, so
+          # record the tag and let the image builds run before failing the step.
+          set +e
           npx semantic-release
+          SR_EXIT=$?
+          set -e
 
           git tag -l 'v*' | sort > /tmp/tags-after
           NEW_TAG=$(comm -13 /tmp/tags-before /tmp/tags-after | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$' | tail -1)
@@ -84,13 +90,14 @@ jobs:
             echo "No new release (tag set unchanged); skipping image builds"
             echo "released=false" >> $GITHUB_OUTPUT
           fi
+          exit $SR_EXIT
 
       # Both image builds must be dispatched explicitly. semantic-release tags
       # its own `chore(release): X [skip ci]` commit, and GitHub honours
       # [skip ci] natively for tag pushes — so the `on: push: tags` triggers in
       # release.yml and release-selfhost.yml never fire for a released version.
       - name: Trigger image builds
-        if: steps.release.outputs.released == 'true' && steps.release.outputs.version != '' && steps.release.outputs.version != 'v'
+        if: ${{ !cancelled() && steps.release.outputs.released == 'true' && steps.release.outputs.version != '' && steps.release.outputs.version != 'v' }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
