@@ -1,3 +1,13 @@
+## [1.2.0-beta.4](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.3...v1.2.0-beta.4) (2026-10-16)
+
+### Features
+
+* **runs:** offer to complete a run when a manual result gives every case a result ([8772901](https://github.com/TestPlanIt/testplanit/commit/87729016d2a88544443767d4c33706ffc81c6430))
+
+### Bug Fixes
+
+* **runs:** fill summary bar segments to full width ([5187eb2](https://github.com/TestPlanIt/testplanit/commit/5187eb28ed8aa9b9dcd605412193f35119880dd6))
+
 ## [1.2.0-beta.3](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.2...v1.2.0-beta.3) (2026-10-16)
 
 ### Bug Fixes
