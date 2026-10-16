@@ -374,14 +374,18 @@ export function NotificationBell({
         )}
       </ScrollArea>
       <div className="border-t px-4 py-2 flex">
-        <Link
-          href={`/users/profile/${session?.user?.id ?? ""}/alerts`}
-          className="inline-flex items-center gap-1 text-sm font-medium text-primary no-underline hover:underline"
-          data-testid="notification-panel-alerts-link"
+        <DropdownMenuItem
+          asChild
+          className="w-auto cursor-pointer gap-1 px-0 py-0 font-medium text-primary no-underline hover:underline focus:bg-transparent focus:text-primary focus:underline"
         >
-          <BellRing className="h-4 w-4" />
-          {t("actions.manageAlerts")}
-        </Link>
+          <Link
+            href={`/users/profile/${session?.user?.id ?? ""}/alerts`}
+            data-testid="notification-panel-alerts-link"
+          >
+            <BellRing className="h-4 w-4" />
+            {t("actions.manageAlerts")}
+          </Link>
+        </DropdownMenuItem>
       </div>
     </>
   );
