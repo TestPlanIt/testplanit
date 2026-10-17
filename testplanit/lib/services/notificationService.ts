@@ -2,6 +2,7 @@ import { ApplicationArea, NotificationType } from "~/zenstack/models";
 import { getCurrentTenantId } from "../multiTenantDb";
 import { JOB_CREATE_NOTIFICATION } from "../queueNames";
 import { getNotificationQueue } from "../queues";
+import { formatHoursAsRelativeDuration } from "~/utils/duration";
 
 interface CreateNotificationParams {
   userId: string;
@@ -862,7 +863,7 @@ export class NotificationService {
           : "session";
 
     const title = "Review still pending";
-    const message = `Reminder: ${params.requesterName}'s review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}" is still waiting on you (${params.hoursPending}h pending).`;
+    const message = `Reminder: ${params.requesterName}'s review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}" is still waiting on you (pending for ${formatHoursAsRelativeDuration(params.hoursPending)}).`;
 
     await Promise.all(
       params.targetUserIds.map((userId) =>

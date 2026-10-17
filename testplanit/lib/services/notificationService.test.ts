@@ -1137,7 +1137,7 @@ describe("NotificationService", () => {
         expect(payload.message).toContain(label);
         expect(payload.message).toContain('"Login flow"');
         expect(payload.message).toContain('"Project X"');
-        expect(payload.message).toContain("36h pending");
+        expect(payload.message).toContain("pending for 1 day");
       }
     );
 

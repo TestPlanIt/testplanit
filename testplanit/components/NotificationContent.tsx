@@ -11,6 +11,7 @@ import TextFromJson from "@/components/TextFromJson";
 import { ExternalLink, Megaphone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
+import { formatHoursAsRelativeDuration } from "~/utils/duration";
 
 interface NotificationContentProps {
   notification: any;
@@ -608,6 +609,10 @@ export function NotificationContent({
                 <div className="text-xs">
                   {t("reviewReminderHoursPending", {
                     hoursPending: data.hoursPending,
+                    pendingFor: formatHoursAsRelativeDuration(
+                      data.hoursPending,
+                      locale
+                    ),
                   })}
                 </div>
               )}

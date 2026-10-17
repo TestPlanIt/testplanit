@@ -861,6 +861,7 @@ describe("EmailWorker", () => {
       const placeholders = messageCall?.[2] as any;
       expect(placeholders.actorName).toBe("Alice Requester");
       expect(placeholders.hoursPending).toBe(36);
+      expect(placeholders.pendingFor).toBe("1 day");
       expect(placeholders.entityName).toBe("Login flow");
       expect(placeholders.projectName).toBe("Project Alpha");
     });
@@ -934,6 +935,7 @@ describe("EmailWorker", () => {
       const placeholders = messageCall?.[2] as any;
       expect(placeholders.actorName).toBe("Alice Requester");
       expect(placeholders.hoursPending).toBe(36);
+      expect(placeholders.pendingFor).toBe("1 day");
 
       // URL composed for the digest entry
       const digestArgs = mockSendDigestEmail.mock.calls[0][0];

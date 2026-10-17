@@ -26,6 +26,7 @@ import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import { isTipTapContent, tiptapToHtml } from "../utils/tiptapToHtml";
+import { formatHoursAsRelativeDuration } from "../utils/duration";
 
 interface SendNotificationEmailJobData extends MultiTenantJobData {
   notificationId: string;
@@ -357,6 +358,10 @@ const processor = async (job: Job) => {
               entityName: data.entityName ?? "",
               projectName: data.projectName ?? "",
               hoursPending: data.hoursPending ?? 0,
+              pendingFor: formatHoursAsRelativeDuration(
+                data.hoursPending ?? 0,
+                userLocale
+              ),
               count: reviewBulkCount ?? 0,
             }
           );
@@ -770,6 +775,10 @@ const processor = async (job: Job) => {
                   entityName: data.entityName ?? "",
                   projectName: data.projectName ?? "",
                   hoursPending: data.hoursPending ?? 0,
+                  pendingFor: formatHoursAsRelativeDuration(
+                    data.hoursPending ?? 0,
+                    userLocale
+                  ),
                   count: reviewBulkCount ?? 0,
                 }
               );

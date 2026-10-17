@@ -1,5 +1,6 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
 import { buildBody, projectNameOf, titleAndProject, url } from "./_shared";
+import { formatHoursAsRelativeDuration } from "~/utils/duration";
 
 type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
 
@@ -108,7 +109,7 @@ export function formatReviewReminderBlocks(
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*Pending for:* ${data.hoursPending}h`,
+        text: `*Pending for:* ${formatHoursAsRelativeDuration(data.hoursPending)}`,
       },
     });
   }
