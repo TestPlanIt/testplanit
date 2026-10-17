@@ -1,3 +1,20 @@
+## [1.2.0-beta.6](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.5...v1.2.0-beta.6) (2026-10-17)
+
+### Features
+
+* **repository:** stage test cases privately and create them in a batch ([616b4e2](https://github.com/TestPlanIt/testplanit/commit/616b4e24c9c31658f7234972356da829933398a7)), closes [#650](https://github.com/TestPlanIt/testplanit/issues/650)
+
+### Bug Fixes
+
+* **notifications:** close the bell menu when Manage Notifications & Alerts is selected ([4cfc7f7](https://github.com/TestPlanIt/testplanit/commit/4cfc7f71f1b1c22d0ef2b8f2ffd14559c8677d3f))
+* **runs:** let a run's description and documentation grow to their content ([d0354db](https://github.com/TestPlanIt/testplanit/commit/d0354db6918f528ae7b2d4e2179390ae94150cf2))
+
+### Enhancements
+
+* **import:** name unmapped required fields and block Next until they are mapped ([0a35eda](https://github.com/TestPlanIt/testplanit/commit/0a35eda3f0b256686cef70b5d2294b97fe9683aa))
+* **notifications:** save notification preferences as they change, like the alert switches ([37574b3](https://github.com/TestPlanIt/testplanit/commit/37574b3516163afa7a9eb1b59084d8f9758ad953))
+* **reviews:** show how long a review reminder has been pending as days or hours ([e4a8e69](https://github.com/TestPlanIt/testplanit/commit/e4a8e694901dbd208cbfe727f808439d9aceda6d))
+
 ## [1.2.0-beta.5](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.4...v1.2.0-beta.5) (2026-10-16)
 
 ### Bug Fixes
