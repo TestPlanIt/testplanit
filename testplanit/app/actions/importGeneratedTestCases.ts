@@ -38,6 +38,7 @@ export async function importGeneratedTestCases(
       persistGeneratedTestCases(input, {
         userId: session.user.id,
         userName: session.user.name || "Unknown User",
+        access: session.user.access ?? null,
       })
   );
 }

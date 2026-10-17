@@ -5,6 +5,7 @@ import { authorizeProjectApiRequest } from "~/lib/api/authorizeProjectApiRequest
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import { resolveTagByName } from "~/lib/services/tagResolution";
 import {
@@ -30,9 +31,12 @@ import {
 // its own; doing so would double-count.
 
 const stepSchema = z.object({
+  // Plain text, Markdown, HTML or a serialized Tiptap document.
   text: z.string().optional(),
   expectedResult: z.string().optional(),
   order: z.number().int().nonnegative().optional(),
+  // A row that references a shared step group, as the Add Case form stores it.
+  sharedStepGroupId: z.number().int().positive().optional(),
 });
 
 const caseSchema = z.object({
@@ -48,12 +52,18 @@ const caseSchema = z.object({
     .array(z.union([z.number().int().positive(), z.string().min(1)]))
     .optional(),
   customFields: z.record(z.string(), z.any()).optional(),
+  automated: z.boolean().optional(),
+  // Estimated duration in seconds.
+  estimate: z.number().int().nonnegative().optional(),
   // Tracker issue keys ("PROJ-123") to attach to this case. Resolved
   // server-side against the project's issue-tracker integration, creating the
   // local Issue row when the key has never been seen here — so a script or an
   // agent no longer needs a human to open the ticket in the UI first. A key
   // that can't be resolved fails its own case, never the batch.
   issues: z.array(z.string().min(1).max(255)).max(50).optional(),
+  // Ids of issues already linked to the project (the shape the Add Case
+  // form holds), for callers inside the app such as the My Drafts list.
+  issueIds: z.array(z.number().int().positive()).max(50).optional(),
 });
 
 const bulkCreateSchema = z.object({
@@ -255,12 +265,35 @@ export const POST = withAuditContext(
         }
       }
 
+      // ── Issue ids must name defects of this project ───────────────────
+      // A case links to defects (the Add Case form's issue picker); a
+      // requirement id, or an id from another project, fails its case.
+      const givenIssueIds = new Set(valid.flatMap((c) => c.issueIds ?? []));
+      const liveIssueIds = new Set(
+        givenIssueIds.size > 0
+          ? (
+              await baseDb.issue.findMany({
+                where: {
+                  id: { in: [...givenIssueIds] },
+                  projectId,
+                  ...DEFECT_SCOPE_WHERE,
+                },
+                select: { id: true },
+              })
+            ).map((i) => i.id)
+          : []
+      );
+
       const withResolvableIssues: IndexedCase[] = [];
       const issueIdsByCase = new Map<string, number[]>();
       for (const c of valid) {
         const keys = c.issues ?? [];
         const failures: string[] = [];
         const issueIds: number[] = [];
+        for (const id of c.issueIds ?? []) {
+          if (liveIssueIds.has(id)) issueIds.push(id);
+          else failures.push(`Issue ${id} is not an issue of this project.`);
+        }
         for (const key of keys) {
           const resolution = issueKeyResults.get(key);
           if (resolution?.issueId != null) {
@@ -321,18 +354,25 @@ export const POST = withAuditContext(
         withValidTags.push(c);
       }
 
-      // ── Group valid cases by effective (folderId, stateName) ──────────────
-      const groups = new Map<string, IndexedCase[]>();
+      // ── Group consecutive cases by effective (folderId, stateName) ────────
+      // Each run becomes one importer transaction. Runs rather than a full
+      // partition so the cases land in the order they were sent: every run
+      // reads the folder's max order before it writes, and a batch that
+      // alternates states would otherwise be reordered by state.
+      const groups: IndexedCase[][] = [];
+      let lastKey: string | null = null;
       for (const c of withValidTags) {
         const folderId = c.folderId ?? data.folderId;
         const stateName = c.stateName ?? data.stateName ?? "";
         const key = `${folderId}::${stateName}`;
-        const arr = groups.get(key) ?? [];
-        arr.push(c);
-        groups.set(key, arr);
+        if (key !== lastKey) {
+          groups.push([]);
+          lastKey = key;
+        }
+        groups[groups.length - 1].push(c);
       }
 
-      for (const groupCases of groups.values()) {
+      for (const groupCases of groups) {
         const first = groupCases[0];
         const folderId = first.folderId ?? data.folderId;
         const stateName = first.stateName ?? data.stateName;
@@ -404,6 +444,9 @@ export const POST = withAuditContext(
             .map(({ s }) => ({
               step: s.text,
               expectedResult: s.expectedResult,
+              ...(s.sharedStepGroupId
+                ? { sharedStepGroupId: s.sharedStepGroupId }
+                : {}),
             }));
           const issueIds = issueIdsByCase.get(c.__id);
           return {
@@ -413,6 +456,8 @@ export const POST = withAuditContext(
             ...(tagIds.size > 0 ? { tagIds: [...tagIds] } : {}),
             ...(steps ? { steps } : {}),
             ...(issueIds?.length ? { issueIds } : {}),
+            ...(c.automated !== undefined ? { automated: c.automated } : {}),
+            ...(c.estimate !== undefined ? { estimate: c.estimate } : {}),
           };
         });
 
@@ -438,6 +483,7 @@ export const POST = withAuditContext(
           userId,
           userName: userName || "Unknown User",
           canEditRestrictedFields,
+          access: auth.actor.access ?? null,
         });
 
         if (res.status === "error") {

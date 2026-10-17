@@ -9,6 +9,7 @@ import {
   newerCaseDraft,
   readLocalCaseDraft,
   reviveCaseDraftValues,
+  savedCaseDraftKey,
   writeLocalCaseDraft,
   CASE_DRAFT_PAYLOAD_VERSION,
   type CaseDraftPayload,
@@ -272,5 +273,11 @@ describe("local mirror", () => {
       throw new Error("SecurityError");
     });
     expect(() => clearLocalCaseDraft(key)).not.toThrow();
+  });
+});
+
+describe("savedCaseDraftKey", () => {
+  it("builds a saved draft key per draft id", () => {
+    expect(savedCaseDraftKey("abc")).toBe("saved:abc");
   });
 });

@@ -191,6 +191,12 @@ export interface ImportAuthor {
   userName: string;
   /** False when the author may not set restricted fields (strict mode). */
   canEditRestrictedFields?: boolean;
+  /**
+   * The author's system access. A system admin creates a case directly in
+   * a review-gated state, as the editors let them pick one; anyone else is
+   * remapped to the last state before the gate.
+   */
+  access?: string | null;
 }
 
 function convertStepToTipTap(value: any) {
@@ -487,7 +493,8 @@ export async function persistGeneratedTestCases(
           tx,
           data.projectId,
           WorkflowScope.CASES,
-          data.stateId
+          data.stateId,
+          author.access
         )) ?? data.stateId;
       let effectiveStateName = data.stateName;
       if (effectiveStateId !== data.stateId) {

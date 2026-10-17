@@ -74,9 +74,16 @@ import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CaseDraftStatus } from "@/components/caseDrafts/CaseDraftStatus";
 import { RestoreCaseDraftDialog } from "@/components/caseDrafts/RestoreCaseDraftDialog";
+import { SaveDraftDialog } from "@/components/caseDrafts/SaveDraftDialog";
+import {
+  useSavedCaseDrafts,
+  type SavedCaseDraft,
+} from "~/hooks/useSavedCaseDrafts";
 import { useCaseDraft } from "~/hooks/useCaseDraft";
 import {
+  buildCaseDraftPayload,
   caseDraftDigest,
+  isCaseDraftPayload,
   reviveCaseDraftValues,
   type CaseDraftExtras,
 } from "~/lib/services/caseDraft";
@@ -218,7 +225,7 @@ const mapFieldToZodType = (field: any, t: (key: any) => string) => {
   }
 };
 
-const createFormSchema = (fields: any[], t: (key: any) => string) => {
+export const createFormSchema = (fields: any[], t: (key: any) => string) => {
   const baseSchema = {
     name: z.string().min(2, {
       error: t("common.errors.caseNameRequired"),
@@ -283,6 +290,8 @@ interface AddCaseProps {
   folderId: number;
   open: boolean;
   onClose: () => void;
+  /** A saved single-case draft to reopen; the form starts from its values. */
+  savedDraft?: SavedCaseDraft | null;
 }
 
 interface FormValues {
@@ -294,7 +303,12 @@ interface FormValues {
   [key: string]: any;
 }
 
-export function AddCase({ folderId, open, onClose }: AddCaseProps) {
+export function AddCase({
+  folderId,
+  open,
+  onClose,
+  savedDraft = null,
+}: AddCaseProps) {
   const t = useTranslations();
   const locale = useLocale();
   const { data: session } = useSession();
@@ -551,6 +565,14 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     baselineDigest: draftBaseline,
   });
 
+  // Saved (named) drafts: the one this form was opened from, if any, and the
+  // Save draft action that writes the form into a new or that same draft.
+  const savedDrafts = useSavedCaseDrafts(numericProjectId, session?.user?.id);
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(
+    savedDraft?.id ?? null
+  );
+  const [saveDraftOpen, setSaveDraftOpen] = useState(false);
+
   const { data: tags } = useClientQueries(schema).tags.useFindMany({
     where: {
       isDeleted: false,
@@ -728,8 +750,27 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     if (open) {
       // Reset template ready state when dialog opens
       setIsTemplateReady(false);
+      // A saved draft being reopened supplies the starting values and the
+      // template. It is applied here, on every run of this effect, because
+      // the effect re-runs as its data settles and each run resets the form;
+      // a one-shot restore would be wiped by the next run.
+      const draftPayload =
+        savedDraft && isCaseDraftPayload(savedDraft.payload)
+          ? savedDraft.payload
+          : null;
+      const draftValues = draftPayload
+        ? (reviveCaseDraftValues(draftPayload) as Partial<FormValues>)
+        : null;
+      const draftedTemplateId =
+        typeof draftValues?.templateId === "number" &&
+        templates?.some((template) => template.id === draftValues.templateId)
+          ? draftValues.templateId
+          : null;
       const initialTemplateId =
-        defaultTemplateId || (templates && templates[0]?.id) || null;
+        draftedTemplateId ||
+        defaultTemplateId ||
+        (templates && templates[0]?.id) ||
+        null;
       setSelectedTemplateId(initialTemplateId);
       const defaultValues: Partial<FormValues> = {
         name: "",
@@ -772,13 +813,31 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         // We have a template ID but templates might still be loading
         // The other useEffect will handle enabling when template loads
       }
-      reset(defaultValues as FormValues);
+      const startValues = draftValues
+        ? ({
+            ...defaultValues,
+            ...draftValues,
+            templateId: initialTemplateId ?? 0,
+          } as FormValues)
+        : (defaultValues as FormValues);
+      reset(startValues);
+      // The template effect resets to the template's defaults when the
+      // selected template settles; the drafted values are parked for it to
+      // lay back over those defaults.
+      pendingRestoreValuesRef.current = draftValues ? startValues : null;
+      if (draftValues) setDraftRestoreNonce((n) => n + 1);
       setSelectedFiles([]);
       setSelectedLinks([]);
-      setSelectedTags([]);
-      setLinkedIssueIds([]);
-      // The extras are being emptied in this same pass, so the baseline is
-      // computed against empty ones rather than whatever the refs still hold.
+      setSelectedTags(draftPayload?.extras.tags ?? []);
+      setLinkedIssueIds(draftPayload?.extras.issues ?? []);
+      setInlineParameters(
+        (draftPayload?.extras.inlineParameters ?? []) as InlineParameter[]
+      );
+      setInlineDatasetRows(
+        (draftPayload?.extras.inlineDatasetRows ?? []) as InlineDatasetRow[]
+      );
+      // The baseline is the template defaults with empty extras, so a
+      // reopened draft reads as unsaved work and keeps auto-saving.
       setDraftBaseline(
         caseDraftDigest(defaultValues as Record<string, unknown>, {
           tags: [],
@@ -788,7 +847,15 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         })
       );
     }
-  }, [open, reset, defaultTemplateId, defaultWorkflowId, templates, setValue]);
+  }, [
+    open,
+    reset,
+    defaultTemplateId,
+    defaultWorkflowId,
+    templates,
+    setValue,
+    savedDraft,
+  ]);
 
   const handleTemplateChange = (val: number) => {
     // Temporarily disable the name field while switching templates
@@ -888,6 +955,60 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     reset(values);
     setDraftRestoreNonce((n) => n + 1);
     setIsTemplateReady(true);
+  };
+
+  useEffect(() => {
+    if (open) return;
+    setSavedDraftId(null);
+    setSaveDraftOpen(false);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    setSavedDraftId(savedDraft?.id ?? null);
+  }, [open, savedDraft]);
+
+  /**
+   * Stages the form as it stands: a new staged case, or the one this form
+   * was opened from. The staged case is named after the test case; when the
+   * test case has no name yet, the user is asked for one and it becomes the
+   * test case's name. Validation problems do not block staging; only Create
+   * is blocked by them. The auto-saved recovery copy is spent once the work
+   * lives in a staged case.
+   */
+  const handleSaveDraft = async (name: string) => {
+    const currentName = (form.getValues("name") as string | undefined)?.trim();
+    if (!currentName) {
+      form.setValue("name", name, { shouldDirty: true });
+    }
+    const values = form.getValues() as Record<string, unknown>;
+    const payload = buildCaseDraftPayload(values, draftExtras);
+    const problems = formSchema.safeParse(values);
+    const input = {
+      name,
+      folderId,
+      payload,
+      rowCount: 1,
+      problemCount: problems.success ? 0 : problems.error.issues.length,
+    };
+    try {
+      if (savedDraftId) {
+        await savedDrafts.update(savedDraftId, input);
+      } else {
+        const id = await savedDrafts.save(input);
+        setSavedDraftId(id);
+      }
+      toast.success(t("repository.savedDrafts.saved"), {
+        position: "bottom-right",
+      });
+      draft.clear();
+      onClose();
+    } catch {
+      toast.error(t("repository.savedDrafts.saveFailed"), {
+        position: "bottom-right",
+      });
+      throw new Error("save failed");
+    }
   };
 
   if (!session || !session.user.access) {
@@ -1255,8 +1376,17 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         // Scoping by projectId + dropping `refetchType: "all"` (refetching
         // even inactive queries app-wide) takes typical post-save latency
         // from "freeze 1-2s" to a single render of the visible folder view.
-        // The case now exists, so the draft that described it is spent.
+        // The case now exists, so the draft that described it is spent —
+        // the auto-saved recovery copy and, when the form was opened from
+        // one, the saved draft.
         draft.clear();
+        if (savedDraftId) {
+          savedDrafts.remove(savedDraftId).catch(() => {
+            toast.error(t("repository.savedDrafts.deleteFailed"), {
+              position: "bottom-right",
+            });
+          });
+        }
         onClose();
         setIsSubmitting(false);
 
@@ -1708,6 +1838,21 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                 {t("common.cancel")}
               </Button>
               <Button
+                variant="secondary"
+                type="button"
+                onClick={() => {
+                  const caseName = (
+                    form.getValues("name") as string | undefined
+                  )?.trim();
+                  if (caseName) void handleSaveDraft(caseName).catch(() => {});
+                  else setSaveDraftOpen(true);
+                }}
+                disabled={isSubmitting || !isTemplateReady}
+                data-testid="case-save-draft-button"
+              >
+                {t("repository.savedDrafts.saveDraft")}
+              </Button>
+              <Button
                 type="submit"
                 disabled={
                   isSubmitting || isLoadingSharedStepGroups || !isTemplateReady
@@ -1725,10 +1870,17 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
           </form>
         </Form>
         <RestoreCaseDraftDialog
-          draft={draft.pendingRestore}
+          draft={savedDraft ? null : draft.pendingRestore}
           scopeKind="folder"
           onRestore={handleRestoreDraft}
           onDiscard={draft.discardRestore}
+        />
+        <SaveDraftDialog
+          open={saveDraftOpen}
+          onOpenChange={setSaveDraftOpen}
+          defaultName=""
+          mode="save"
+          onSubmit={handleSaveDraft}
         />
       </DialogContent>
     </Dialog>

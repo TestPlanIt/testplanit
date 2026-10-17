@@ -196,6 +196,20 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
         isLoading: false,
       }),
     },
+    // The My Drafts list checks drafts against templates and states.
+    templates: {
+      useFindMany: () => ({ data: [], isLoading: false }),
+    },
+    workflows: {
+      useFindMany: () => ({ data: [], isLoading: false }),
+    },
+    // The My Drafts button lists the user's saved drafts; none here.
+    caseDraft: {
+      useFindMany: () => ({ data: [], isLoading: false }),
+      useCreate: () => ({ mutateAsync: vi.fn() }),
+      useUpdate: () => ({ mutateAsync: vi.fn() }),
+      useDelete: () => ({ mutateAsync: vi.fn() }),
+    },
   }),
 }));
 

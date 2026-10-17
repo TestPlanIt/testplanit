@@ -2226,27 +2226,36 @@ model RepositoryCases {
 
 // Auto-saved in-progress case edits. Shape and lifecycle: lib/services/caseDraft.ts
 model CaseDraft {
-    id          String             @id @default(uuid())
-    projectId   Int                @deny('update', true)
-    project     Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    userId      String             @deny('update', true)
-    user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id           String             @id @default(uuid())
+    projectId    Int                @deny('update', true)
+    project      Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    userId       String             @deny('update', true)
+    user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
     // "case:<id>" or "folder:<id>" — a non-null key so the unique index below bites
-    draftKey    String
-    caseId      Int?
-    case        RepositoryCases?   @relation(fields: [caseId], references: [id], onDelete: Cascade)
-    folderId    Int?
-    folder      RepositoryFolders? @relation(fields: [folderId], references: [id], onDelete: Cascade)
-    payload     Json
-    baseVersion Int?
-    createdAt   DateTime           @default(now()) @db.Timestamptz(6)
-    updatedAt   DateTime           @updatedAt @db.Timestamptz(6)
+    draftKey     String
+    caseId       Int?
+    case         RepositoryCases?   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    folderId     Int?
+    folder       RepositoryFolders? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+    payload      Json
+    baseVersion  Int?
+    // A draft the author saved on purpose (named, kept until created or
+    // deleted) as opposed to the auto-saved recovery copy the retention job
+    // purges. Saved drafts use a "saved:<uuid>" draftKey so a folder can hold
+    // any number of them.
+    isSaved      Boolean            @default(false)
+    name         String?
+    rowCount     Int                @default(1)
+    problemCount Int                @default(0)
+    createdAt    DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime           @updatedAt @db.Timestamptz(6)
 
     @@unique([userId, draftKey])
     @@index([updatedAt])
     @@index([projectId])
     @@index([caseId])
     @@index([folderId])
+    @@index([userId, isSaved])
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')

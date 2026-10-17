@@ -9,9 +9,11 @@
  * no webhook or notification. Adding CaseDraft to any of those registries would
  * silently break that guarantee.
  *
- * Two scopes exist, distinguished by `draftKey`:
- *   - `case:<id>`   an edit in progress on an existing case
- *   - `folder:<id>` a new case being authored into that folder
+ * Three kinds of draft exist, distinguished by `draftKey`:
+ *   - `case:<id>`   an auto-saved edit in progress on an existing case
+ *   - `folder:<id>` an auto-saved new case being authored into that folder
+ *   - `saved:<uuid>` a draft the author saved on purpose (`isSaved`), named
+ *     and kept until it is created from the My Drafts list or deleted
  *
  * Drafts live in two places at once. localStorage is written synchronously on
  * every change so a crash loses at most the last keystroke; the server row is
@@ -246,4 +248,9 @@ export function newerCaseDraft(
   if (!a) return b;
   if (!b) return a;
   return Date.parse(a.savedAt) >= Date.parse(b.savedAt) ? a : b;
+}
+
+/** The draftKey of a saved (named) draft; several may target one folder. */
+export function savedCaseDraftKey(id: string): string {
+  return `saved:${id}`;
 }

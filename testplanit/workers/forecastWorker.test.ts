@@ -833,7 +833,7 @@ describe("JOB_PURGE_STALE_CASE_DRAFTS", () => {
       FIXED_NOW.getTime() - CASE_DRAFT_RETENTION_DAYS * 24 * 60 * 60 * 1000
     );
     expect(mockDb.caseDraft.deleteMany).toHaveBeenCalledWith({
-      where: { updatedAt: { lt: cutoff } },
+      where: { updatedAt: { lt: cutoff }, isSaved: false },
     });
     expect(result).toMatchObject({ status: "completed", successCount: 3 });
   });
@@ -847,6 +847,15 @@ describe("JOB_PURGE_STALE_CASE_DRAFTS", () => {
 
     const arg = mockDb.caseDraft.deleteMany.mock.calls[0][0];
     expect(Object.keys(arg.where.updatedAt)).toEqual(["lt"]);
+  });
+
+  it("never sweeps a draft the author saved on purpose", async () => {
+    mockDb.caseDraft.deleteMany.mockResolvedValue({ count: 0 });
+
+    await runProcessor();
+
+    const arg = mockDb.caseDraft.deleteMany.mock.calls[0][0];
+    expect(arg.where.isSaved).toBe(false);
   });
 
   it("propagates a purge failure so BullMQ retries the job", async () => {

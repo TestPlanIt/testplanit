@@ -24,6 +24,11 @@ your work survives switching to another browser or machine.
 Everything in the editor is captured: the name, steps, expected results, rich
 text fields, custom fields, tags, and issues.
 
+Auto-save is a safety net for the case you are writing now. To keep a case for
+later on purpose, and to create several such cases together, stage it instead;
+see [Staged Test Cases](./staged-test-cases.md). Staged cases are not subject
+to the retention described below.
+
 :::note Attachments are not included
 Files you have selected but not yet uploaded are not part of a draft. Browsers do
 not allow a page to re-open a file you picked before a reload. Attach files again

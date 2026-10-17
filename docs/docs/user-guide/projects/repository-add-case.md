@@ -50,6 +50,7 @@ The Add Case dialog uses a resizable two-panel layout:
 ## Actions
 
 - **Cancel**: Closes the dialog and discards the test case you were writing.
+- **Stage Case**: Keeps the case privately under a name, without creating it, and closes the dialog. Reopen it later from **My Staged Cases** on the repository page, or create several staged cases at once; see [Staged Test Cases](./staged-test-cases.md).
 - **Create**: Validates the input fields and creates the new test case in the selected folder. It also creates the initial version (Version 1) of the test case.
 
 ## Auto-Save

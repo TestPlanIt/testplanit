@@ -267,6 +267,7 @@ const sidebars: SidebarsConfig = {
                   },
                   items: [
                     'user-guide/projects/repository-add-case', // Corresponds to repository-add-case.md
+                    'user-guide/projects/staged-test-cases', // Private staged cases + batch create
                     'user-guide/projects/repository-case-details', // Add Test Case Details page
                     'user-guide/projects/repository-case-versions', // Add Test Case Versions page
                     'user-guide/projects/case-draft-autosave', // Auto-save and draft recovery

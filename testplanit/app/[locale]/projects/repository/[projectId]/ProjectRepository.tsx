@@ -71,6 +71,7 @@ import {
   ChevronsUpDown,
   CircleCheckBig,
   CirclePlus,
+  NotebookPen,
   Download,
   FolderDown,
   FolderPlus,
@@ -122,6 +123,11 @@ import {
 import { usePathname, useRouter } from "~/lib/navigation";
 import { useFolderStats } from "~/lib/useFolderStats";
 import { AddCase } from "./AddCase";
+import { StagedCasesSheet } from "./StagedCasesSheet";
+import {
+  useSavedCaseDrafts,
+  type SavedCaseDraft,
+} from "~/hooks/useSavedCaseDrafts";
 import { AddFolder } from "./AddFolder";
 import Cases, { type CaseNav } from "./Cases";
 import type { RunCaseSelection } from "~/lib/execution/selection";
@@ -478,6 +484,16 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   );
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addCaseOpen, setAddCaseOpen] = useState(false);
+  /** A staged case being reopened in the Add Case form. */
+  const [addCaseDraft, setAddCaseDraft] = useState<SavedCaseDraft | null>(null);
+  const [stagedCasesOpen, setStagedCasesOpen] = useState(false);
+  // The count for the "My Staged Cases" action's label; the sheet shares the
+  // same query, so this costs no extra request.
+  const { drafts: stagedCases } = useSavedCaseDrafts(
+    Number(projectIdParam),
+    session?.user?.id
+  );
+  const [addCaseFolderId, setAddCaseFolderId] = useState<number | null>(null);
   const [generateWizardOpen, setGenerateWizardOpen] = useState(false);
 
   // Collapse the list-pane header actions (Import / Generate / Add Case) into
@@ -2485,6 +2501,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                       testId: "generate-cases-button",
                                     },
                                     {
+                                      key: "stagedCases",
+                                      icon: NotebookPen,
+                                      label:
+                                        stagedCases.length > 0
+                                          ? `${t("repository.savedDrafts.title")} (${stagedCases.length})`
+                                          : t("repository.savedDrafts.title"),
+                                      onClick: () => setStagedCasesOpen(true),
+                                      hidden: !canAddEdit,
+                                      testId: "staged-cases-button",
+                                    },
+                                    {
                                       key: "addCase",
                                       icon: CirclePlus,
                                       label: t("repository.cases.addCase"),
@@ -2495,11 +2522,56 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     },
                                   ]}
                                 />
+                                {canAddEdit && (
+                                  <StagedCasesSheet
+                                    projectId={Number(projectIdParam)}
+                                    open={stagedCasesOpen}
+                                    onOpenChange={setStagedCasesOpen}
+                                    onCasesCreated={() =>
+                                      void refetchFolderStats()
+                                    }
+                                    onOpenDraft={(draft) => {
+                                      // The Add Case form needs a folder. A
+                                      // draft whose folder is gone opens in
+                                      // the selected folder instead.
+                                      let folderForDraft = draft.folderId;
+                                      if (!folderForDraft) {
+                                        if (!selectedFolderId) {
+                                          toast.error(
+                                            t(
+                                              "repository.savedDrafts.selectFolderFirst"
+                                            )
+                                          );
+                                          return;
+                                        }
+                                        folderForDraft = selectedFolderId;
+                                        toast.info(
+                                          t(
+                                            "repository.savedDrafts.folderFallback",
+                                            {
+                                              folder: selectedFolderName ?? "",
+                                            }
+                                          )
+                                        );
+                                      }
+                                      setAddCaseDraft(draft);
+                                      setAddCaseFolderId(folderForDraft);
+                                      setAddCaseOpen(true);
+                                    }}
+                                  />
+                                )}
                                 {addCaseOpen && (
                                   <AddCase
-                                    folderId={selectedFolderId ?? 0}
+                                    folderId={
+                                      addCaseFolderId ?? selectedFolderId ?? 0
+                                    }
                                     open={addCaseOpen}
-                                    onClose={() => setAddCaseOpen(false)}
+                                    onClose={() => {
+                                      setAddCaseOpen(false);
+                                      setAddCaseDraft(null);
+                                      setAddCaseFolderId(null);
+                                    }}
+                                    savedDraft={addCaseDraft}
                                   />
                                 )}
                               </div>
