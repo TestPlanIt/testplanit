@@ -1053,8 +1053,10 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           // Deleted outright rather than soft-deleted: a draft is scratch
           // space, never a record of anything, and a tombstoned one would
           // still trip the unique (userId, draftKey) index on the next edit.
+          // Only the auto-saved recovery copies age out; a draft the author
+          // saved on purpose stays until they create or delete it.
           const { count } = await db.caseDraft.deleteMany({
-            where: { updatedAt: { lt: cutoff } },
+            where: { updatedAt: { lt: cutoff }, isSaved: false },
           });
           successCount = count;
           console.log(

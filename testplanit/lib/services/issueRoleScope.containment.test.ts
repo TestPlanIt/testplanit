@@ -166,6 +166,11 @@ const SCOPED_FILES = [
   // assertion further down is the only thing that would catch someone
   // quietly deleting the spread from inside an otherwise-intact call.
   "app/api/report-builder/project-health/route.ts",
+  // Bulk case creation links the `issueIds` a caller passes (the Add Case
+  // form's defect picker, via the staged-cases list) and spreads
+  // DEFECT_SCOPE_WHERE plus projectId into its single issue findMany, so a
+  // requirement id or a foreign project's id fails that case.
+  "app/api/projects/[projectId]/cases/bulk-create/route.ts",
   // 25-08's load-all requirement list (26.2-05: rebuilt as a DataTable-based
   // tree-table, replacing the earlier react-arborist tree) spreads
   // REQUIREMENT_SCOPE_WHERE (the other half of this module's mirror pair,
@@ -628,6 +633,12 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
           minimum: 3,
           reason:
             "1 import + 2 uses (issue-creator distribution, issue-date series) — this route has no test file of its own, so this is the only guard against a silent regression",
+        },
+        {
+          file: "app/api/projects/[projectId]/cases/bulk-create/route.ts",
+          minimum: 2,
+          reason:
+            "1 import + 1 use in the issueIds existence check — the route's unit test mocks issue.findMany, so only this floor keeps the defect scope on the query",
         },
         {
           file: "lib/services/alertEvaluation.ts",

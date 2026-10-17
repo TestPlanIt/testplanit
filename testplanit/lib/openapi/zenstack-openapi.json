@@ -687884,6 +687884,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -687901,6 +687920,9 @@
           "user",
           "draftKey",
           "payload",
+          "isSaved",
+          "rowCount",
+          "problemCount",
           "createdAt",
           "updatedAt"
         ]
@@ -687970,6 +687992,18 @@
             "type": "boolean"
           },
           "baseVersion": {
+            "type": "boolean"
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "boolean"
+          },
+          "rowCount": {
+            "type": "boolean"
+          },
+          "problemCount": {
             "type": "boolean"
           },
           "createdAt": {
@@ -688188,6 +688222,49 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -688371,6 +688448,49 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -688527,6 +688647,49 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -688668,6 +688831,49 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntWithAggregatesFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntWithAggregatesFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -688766,6 +688972,25 @@
               }
             ]
           },
+          "isSaved": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "rowCount": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "problemCount": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
           "createdAt": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -688793,6 +689018,10 @@
           "folderId",
           "payload",
           "baseVersion",
+          "isSaved",
+          "name",
+          "rowCount",
+          "problemCount",
           "createdAt",
           "updatedAt"
         ]
@@ -688822,6 +689051,18 @@
             "type": "boolean"
           },
           "baseVersion": {
+            "type": "boolean"
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "boolean"
+          },
+          "rowCount": {
+            "type": "boolean"
+          },
+          "problemCount": {
             "type": "boolean"
           },
           "createdAt": {
@@ -688862,6 +689103,18 @@
           "baseVersion": {
             "type": "integer"
           },
+          "isSaved": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "integer"
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "integer"
           },
@@ -688881,6 +689134,10 @@
           "folderId",
           "payload",
           "baseVersion",
+          "isSaved",
+          "name",
+          "rowCount",
+          "problemCount",
           "createdAt",
           "updatedAt",
           "_all"
@@ -688908,6 +689165,18 @@
             "type": "boolean"
           },
           "baseVersion": {
+            "type": "boolean"
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "boolean"
+          },
+          "rowCount": {
+            "type": "boolean"
+          },
+          "problemCount": {
             "type": "boolean"
           },
           "createdAt": {
@@ -688991,6 +689260,46 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -689037,6 +689346,18 @@
             "type": "boolean"
           },
           "baseVersion": {
+            "type": "boolean"
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "boolean"
+          },
+          "rowCount": {
+            "type": "boolean"
+          },
+          "problemCount": {
             "type": "boolean"
           },
           "createdAt": {
@@ -689120,6 +689441,46 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -689158,6 +689519,12 @@
           },
           "baseVersion": {
             "type": "boolean"
+          },
+          "rowCount": {
+            "type": "boolean"
+          },
+          "problemCount": {
+            "type": "boolean"
           }
         }
       },
@@ -689174,6 +689541,12 @@
             "type": "boolean"
           },
           "baseVersion": {
+            "type": "boolean"
+          },
+          "rowCount": {
+            "type": "boolean"
+          },
+          "problemCount": {
             "type": "boolean"
           }
         }
@@ -689220,6 +689593,26 @@
                 "type": "integer"
               }
             ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           }
         }
       },
@@ -689257,6 +689650,26 @@
             ]
           },
           "baseVersion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "problemCount": {
             "oneOf": [
               {
                 "type": "null"
@@ -689369,6 +689782,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -689434,6 +689866,9 @@
           "userId",
           "draftKey",
           "payload",
+          "isSaved",
+          "rowCount",
+          "problemCount",
           "createdAt",
           "updatedAt"
         ]
@@ -689464,6 +689899,25 @@
                 "type": "integer"
               }
             ]
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
           },
           "createdAt": {
             "type": "string",
@@ -689534,6 +689988,49 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -689617,6 +690114,49 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -689694,6 +690234,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -689736,6 +690295,25 @@
                 "type": "integer"
               }
             ]
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
           },
           "createdAt": {
             "type": "string",
@@ -689811,6 +690389,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -689867,6 +690464,49 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -689983,6 +690623,49 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -690078,6 +690761,25 @@
                 "type": "integer"
               }
             ]
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
           },
           "createdAt": {
             "type": "string",
@@ -690384,6 +691086,49 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -690732,6 +691477,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -690806,6 +691570,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -690862,6 +691645,49 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -690978,6 +691804,49 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -691073,6 +691942,25 @@
                 "type": "integer"
               }
             ]
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
           },
           "createdAt": {
             "type": "string",
@@ -691379,6 +692267,49 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -691727,6 +692658,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -691795,6 +692745,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -691852,6 +692821,49 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -691965,6 +692977,49 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -692053,6 +693108,25 @@
                 "type": "integer"
               }
             ]
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
           },
           "createdAt": {
             "type": "string",
@@ -692357,6 +693431,49 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -692705,6 +693822,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -692773,6 +693909,25 @@
               }
             ]
           },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -692830,6 +693985,49 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -692943,6 +694141,49 @@
               }
             ]
           },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -693031,6 +694272,25 @@
                 "type": "integer"
               }
             ]
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "problemCount": {
+            "type": "integer"
           },
           "createdAt": {
             "type": "string",
@@ -693335,6 +694595,49 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "isSaved": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rowCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "problemCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
