@@ -21,7 +21,14 @@ import { ApplicationArea } from "~/zenstack/models";
 import type { Attachments } from "~/zenstack/models";
 import type { JsonValue } from "@zenstackhq/orm";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bug, ListChecks, LockIcon, SearchCheck, Trash } from "lucide-react";
+import {
+  Asterisk,
+  Bug,
+  ListChecks,
+  LockIcon,
+  SearchCheck,
+  Trash,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
@@ -1317,7 +1324,9 @@ export function EditResultModal({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                   {isRestricted && (
                     <span
@@ -1355,7 +1364,9 @@ export function EditResultModal({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                   {isRestricted && (
                     <span
@@ -1400,7 +1411,9 @@ export function EditResultModal({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                   {isRestricted && (
                     <span
@@ -1460,7 +1473,9 @@ export function EditResultModal({
                     <FormLabel className="flex items-center gap-1">
                       {displayName}
                       {isRequired && (
-                        <span className="text-destructive">{"*"}</span>
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                       )}
                       {isRestricted && (
                         <span
@@ -1506,7 +1521,9 @@ export function EditResultModal({
                 <FormLabel className="flex items-center gap-1">
                   {`${displayName} (${fieldType})`}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                   {isRestricted && (
                     <span

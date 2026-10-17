@@ -49,6 +49,7 @@ import { Separator } from "@/components/ui/separator";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Attachments, SessionResults, User } from "~/zenstack/models";
 import {
+  Asterisk,
   ChevronRight,
   Clock,
   Copy,
@@ -1126,7 +1127,11 @@ export function SessionResultsList({
           <FormItem>
             <FormLabel className="flex items-center gap-1">
               {displayName}
-              {isRequired && <span className="text-destructive">{"*"}</span>}
+              {isRequired && (
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              )}
             </FormLabel>
             <FormControl>
               <Input
@@ -1146,7 +1151,11 @@ export function SessionResultsList({
           <FormItem>
             <FormLabel className="flex items-center gap-1">
               {displayName}
-              {isRequired && <span className="text-destructive">{"*"}</span>}
+              {isRequired && (
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              )}
             </FormLabel>
             <FormControl>
               <Input
@@ -1168,7 +1177,11 @@ export function SessionResultsList({
           <FormItem>
             <FormLabel className="flex items-center gap-1">
               {displayName}
-              {isRequired && <span className="text-destructive">{"*"}</span>}
+              {isRequired && (
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              )}
             </FormLabel>
             <FormControl>
               <Select
@@ -1213,7 +1226,9 @@ export function SessionResultsList({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                 </FormLabel>
                 <FormControl>
@@ -1238,7 +1253,11 @@ export function SessionResultsList({
           <FormItem>
             <FormLabel className="flex items-center gap-1">
               {`${displayName} (${fieldType})`}
-              {isRequired && <span className="text-destructive">{"*"}</span>}
+              {isRequired && (
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              )}
             </FormLabel>
             <FormControl>
               <Input

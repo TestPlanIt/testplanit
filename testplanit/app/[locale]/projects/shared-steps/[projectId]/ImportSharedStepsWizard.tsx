@@ -1,7 +1,6 @@
 "use client";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,11 +32,13 @@ import {
 } from "@/components/import/SavedImportMappings";
 import {
   AlertCircle,
+  Asterisk,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { cn } from "~/utils";
 import { useParams } from "next/navigation";
 import Papa from "papaparse";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -584,9 +585,13 @@ export function ImportSharedStepsWizard({
     error?: string;
   }) => (
     <div>
-      <Label className={error ? "text-destructive" : ""}>
+      <Label className={cn("flex items-center", error && "text-destructive")}>
         {children}
-        {required && <span className="text-destructive ms-1">{"*"}</span>}
+        {required && (
+          <sup>
+            <Asterisk className="w-3 h-3 text-destructive" />
+          </sup>
+        )}
       </Label>
       {error && <p className="text-destructive text-sm mt-1">{error}</p>}
     </div>
@@ -735,6 +740,21 @@ export function ImportSharedStepsWizard({
             {t("importWizard.page2.requiredFieldsWarning", {
               count: getUnmappedRequiredFields().length,
             })}
+            <ul
+              className="mt-1 list-disc ps-5"
+              data-testid="import-unmapped-required-fields"
+            >
+              {getUnmappedRequiredFields().map((field) => (
+                <li key={field.id}>
+                  <span className="flex items-center">
+                    {field.displayName}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </AlertDescription>
         </Alert>
       )}
@@ -768,9 +788,9 @@ export function ImportSharedStepsWizard({
                     <SelectItem key={field.id} value={field.id}>
                       {field.displayName}
                       {field.isRequired && (
-                        <Badge variant="secondary" className="ms-2">
-                          {tCommon("fields.required")}
-                        </Badge>
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                       )}
                     </SelectItem>
                   ))}
@@ -945,7 +965,11 @@ export function ImportSharedStepsWizard({
           )}
 
           {currentPage < 3 ? (
-            <Button onClick={handleNextPage} data-testid="next-button">
+            <Button
+              onClick={handleNextPage}
+              disabled={currentPage === 2 && !canProceedToPage3()}
+              data-testid="next-button"
+            >
               {tCommon("actions.next")}
               <ChevronRight className="h-4 w-4" />
             </Button>

@@ -27,6 +27,7 @@ import type {
 } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  Asterisk,
   Bug,
   Combine,
   Layers,
@@ -1680,7 +1681,9 @@ export function AddResultModal({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                   {isRestricted && ( // Add LockIcon
                     <span
@@ -1719,7 +1722,9 @@ export function AddResultModal({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                   {isRestricted && ( // Add LockIcon
                     <span
@@ -1764,7 +1769,9 @@ export function AddResultModal({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                   {isRestricted && ( // Add LockIcon
                     <span
@@ -1853,7 +1860,9 @@ export function AddResultModal({
                     <FormLabel className="flex items-center gap-1">
                       {displayName}
                       {isRequired && (
-                        <span className="text-destructive">{"*"}</span>
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                       )}
                       {isRestricted && ( // Add LockIcon
                         <span
@@ -1901,7 +1910,9 @@ export function AddResultModal({
                   <FormLabel className="flex items-center gap-1">
                     {`${displayName} (${fieldType})`}
                     {isRequired && (
-                      <span className="text-destructive">{"*"}</span>
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                     )}
                     {isRestricted && ( // Add LockIcon
                       <span

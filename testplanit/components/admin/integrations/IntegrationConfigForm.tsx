@@ -18,7 +18,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IntegrationAuthType, IntegrationProvider } from "~/zenstack/models";
-import { AlertTriangle, Check, Copy, Info, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  Asterisk,
+  Check,
+  Copy,
+  Info,
+  RefreshCw,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -460,7 +467,9 @@ export function IntegrationConfigForm({
             <FormLabel className="flex items-center">
               {getFieldLabel(field.label)}
               {field.required && (
-                <span className="text-destructive ms-1">{"*"}</span>
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               )}
               {field.help && (
                 <HelpPopover

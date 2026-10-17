@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useCallback, useMemo, useState } from "react";
@@ -73,10 +74,12 @@ function DescriptionField({
   return (
     <FormItem>
       <div className="flex items-center gap-2">
-        <FormLabel>
+        <FormLabel className="flex items-center">
           {field.name}
           {field.required && (
-            <span className="text-destructive ms-1">{"*"}</span>
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
           )}
         </FormLabel>
         {field.description && (
@@ -161,10 +164,12 @@ function UserPickerField({
   return (
     <FormItem>
       <div className="flex items-center gap-2">
-        <FormLabel>
+        <FormLabel className="flex items-center">
           {field.name}
           {field.required && (
-            <span className="text-destructive ms-1">{"*"}</span>
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
           )}
         </FormLabel>
         {field.description && (
@@ -220,9 +225,13 @@ function LabelsInput({
 
   return (
     <FormItem>
-      <FormLabel>
+      <FormLabel className="flex items-center">
         {field.name}
-        {field.required && <span className="text-destructive ms-1">{"*"}</span>}
+        {field.required && (
+          <sup>
+            <Asterisk className="w-3 h-3 text-destructive" />
+          </sup>
+        )}
       </FormLabel>
       <FormControl>
         <div className="space-y-2">
@@ -352,10 +361,12 @@ export function DynamicJiraField({
       return (
         <FormItem>
           <div className="flex items-center gap-2">
-            <FormLabel>
+            <FormLabel className="flex items-center">
               {field.name}
               {field.required && (
-                <span className="text-destructive ms-1">{"*"}</span>
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               )}
             </FormLabel>
             {field.description && (
@@ -401,10 +412,12 @@ export function DynamicJiraField({
         render={({ field: formField }) => (
           <FormItem>
             <div className="flex items-center gap-2">
-              <FormLabel>
+              <FormLabel className="flex items-center">
                 {field.name}
                 {field.required && (
-                  <span className="text-destructive ms-1">{"*"}</span>
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                 )}
               </FormLabel>
               {field.description && (
@@ -445,10 +458,12 @@ export function DynamicJiraField({
           render={({ field: formField }) => (
             <FormItem>
               <div className="flex items-center gap-2">
-                <FormLabel>
+                <FormLabel className="flex items-center">
                   {field.name}
                   {field.required && (
-                    <span className="text-destructive ms-1">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                 </FormLabel>
                 {field.description && (
@@ -511,10 +526,12 @@ export function DynamicJiraField({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>
+                    <FormLabel className="flex items-center">
                       {field.name}
                       {field.required && (
-                        <span className="text-destructive ms-1">{"*"}</span>
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                       )}
                     </FormLabel>
                     {field.allowedValues && field.allowedValues[0] && (
@@ -566,10 +583,12 @@ export function DynamicJiraField({
           name={field.key}
           render={({ field: formField }) => (
             <FormItem>
-              <FormLabel>
+              <FormLabel className="flex items-center">
                 {field.name}
                 {field.required && (
-                  <span className="text-destructive ms-1">{"*"}</span>
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                 )}
               </FormLabel>
               <FormControl>
@@ -608,10 +627,12 @@ export function DynamicJiraField({
             render={({ field: _formField }) => (
               <FormItem>
                 <div className="flex items-center gap-2">
-                  <FormLabel>
+                  <FormLabel className="flex items-center">
                     {field.name}
                     {field.required && (
-                      <span className="text-destructive ms-1">{"*"}</span>
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                     )}
                   </FormLabel>
                   {field.description && (
@@ -659,10 +680,12 @@ export function DynamicJiraField({
         name={field.key}
         render={({ field: formField }) => (
           <FormItem>
-            <FormLabel>
+            <FormLabel className="flex items-center">
               {field.name}
               {field.required && (
-                <span className="text-destructive ms-1">{"*"}</span>
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               )}
             </FormLabel>
             <FormControl>
