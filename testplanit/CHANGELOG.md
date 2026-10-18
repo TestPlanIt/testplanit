@@ -1,3 +1,9 @@
+## [1.2.0-beta.7](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.6...v1.2.0-beta.7) (2026-10-18)
+
+### Enhancements
+
+* **repository:** show staged cases in other projects and create from the selection only ([dbba58c](https://github.com/TestPlanIt/testplanit/commit/dbba58c224bb6d8e21e62a4a2fbf5532c8c89571))
+
 ## [1.2.0-beta.6](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.5...v1.2.0-beta.6) (2026-10-17)
 
 ### Features
