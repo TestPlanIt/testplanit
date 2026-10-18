@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} problème} other {{count} problèmes}}",
       "updated": "Mis à jour il y a {age}",
       "createSelected": "{count, plural, =0 {Créer la sélection} other {Créer {count} sélectionnés}}",
-      "createAll": "{count, plural, =1 {Créer 1} =2 {Créer les deux} other {Créer tous les {count}}}",
       "createdToast": "{count, plural, one {{count} cas de test créé} other {{count} cas de test créés}}",
       "failedToast": "{count, plural, one {{count} cas en attente n'a pas pu être créé} other {{count} cas en attente n'ont pas pu être créés}}",
       "problemFolder": "Le dossier a été supprimé. Ouvrez le cas en attente pour choisir un dossier.",
@@ -3985,7 +3984,9 @@
       "problemState": "L'état n'existe plus. Ouvrez le cas en attente pour en choisir un.",
       "problemField": "{field} : {message}",
       "notCreated": "Non créé : {message}",
-      "openToFix": "Ouvrez le cas en attente pour le corriger."
+      "openToFix": "Ouvrez le cas en attente pour le corriger.",
+      "elsewhereTitle": "Vous avez également des cas préparés dans",
+      "elsewhereCount": "{count, plural, one {{count} cas préparé} other {{count} cas préparés}}"
     },
     "filterBar": {
       "addFilter": "Ajouter un filtre",

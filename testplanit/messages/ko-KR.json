@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count}개 문제} other {{count}개 문제}}",
       "updated": "{age} 이전에 업데이트됨",
       "createSelected": "{count, plural, =0 {선택한 항목 생성} other {선택한 {count}개 생성}}",
-      "createAll": "{count, plural, =1 {1개 생성} =2 {둘 다 생성} other {모두 {count}개 생성}}",
       "createdToast": "{count, plural, one {{count}개 테스트 케이스 생성됨} other {{count}개 테스트 케이스 생성됨}}",
       "failedToast": "{count, plural, one {{count}개 스테이징된 케이스를 생성할 수 없음} other {{count}개 스테이징된 케이스를 생성할 수 없음}}",
       "problemFolder": "폴더가 삭제되었습니다. 스테이징된 케이스를 열어서 폴더를 선택하세요.",
@@ -3985,7 +3984,9 @@
       "problemState": "상태가 더 이상 존재하지 않습니다. 스테이징된 케이스를 열어서 다른 항목을 선택하세요.",
       "problemField": "{field}: {message}",
       "notCreated": "생성되지 않음: {message}",
-      "openToFix": "스테이징된 케이스를 열어서 수정하세요."
+      "openToFix": "스테이징된 케이스를 열어서 수정하세요.",
+      "elsewhereTitle": "다음 위치에 스테이징된 케이스도 있습니다",
+      "elsewhereCount": "{count, plural, one {{count} 스테이징된 케이스} other {{count} 스테이징된 케이스}}"
     },
     "filterBar": {
       "addFilter": "필터 추가",

@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} sorun} other {{count} sorun}}",
       "updated": "{age} önce güncellendi",
       "createSelected": "{count, plural, =0 {Seçilenleri oluştur} other {{count} seçileni oluştur}}",
-      "createAll": "{count, plural, =1 {1 tane oluştur} =2 {Her ikisini de oluştur} other {Tümünü {count} oluştur}}",
       "createdToast": "{count, plural, one {{count} test senaryosu oluşturuldu} other {{count} test senaryosu oluşturuldu}}",
       "failedToast": "{count, plural, one {{count} hazırlanan senaryo oluşturulamadı} other {{count} hazırlanan senaryo oluşturulamadı}}",
       "problemFolder": "Klasör silindi. Hazırlanan senaryoyu açarak bir klasör seçin.",
@@ -3985,7 +3984,9 @@
       "problemState": "Durum artık yok. Açarak birini seçin.",
       "problemField": "{field}: {message}",
       "notCreated": "Oluşturulmadı: {message}",
-      "openToFix": "Düzeltmek için hazırlanan senaryoyu açın."
+      "openToFix": "Düzeltmek için hazırlanan senaryoyu açın.",
+      "elsewhereTitle": "Ayrıca hazırlanan test durumlarınız bulunmaktadır",
+      "elsewhereCount": "{count, plural, one {{count} hazırlanan test durumu} other {{count} hazırlanan test durumları}}"
     },
     "filterBar": {
       "addFilter": "Filtre Ekle",

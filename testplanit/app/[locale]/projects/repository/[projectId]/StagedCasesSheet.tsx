@@ -1,6 +1,7 @@
 "use client";
 
 import { SaveDraftDialog } from "@/components/caseDrafts/SaveDraftDialog";
+import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,8 +53,10 @@ import { toast } from "sonner";
 import { notifyRepositoryCasesChanged } from "~/hooks/useRepositoryCasesQuery";
 import {
   useSavedCaseDrafts,
+  useStagedCasesElsewhere,
   type SavedCaseDraft,
 } from "~/hooks/useSavedCaseDrafts";
+import { Link } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
 import { schema } from "~/zenstack/schema";
 import { createFormSchema } from "./AddCase";
@@ -107,6 +110,7 @@ export function StagedCasesSheet({
     projectId,
     session?.user?.id
   );
+  const elsewhere = useStagedCasesElsewhere(projectId, session?.user?.id);
   const [renaming, setRenaming] = useState<SavedCaseDraft | null>(null);
   const [deleting, setDeleting] = useState<SavedCaseDraft | null>(null);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
@@ -500,17 +504,38 @@ export function StagedCasesSheet({
               </ul>
             )}
           </div>
+          {elsewhere.length > 0 && (
+            <div
+              className="border-t pt-3 text-sm"
+              data-testid="staged-cases-elsewhere"
+            >
+              <p className="text-muted-foreground">{t("elsewhereTitle")}</p>
+              <ul className="mt-1 space-y-1">
+                {elsewhere.map((entry) => (
+                  <li
+                    key={entry.projectId}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <ProjectNameDisplay
+                      projectId={entry.projectId}
+                      projectName={entry.projectName}
+                      iconUrl={entry.projectIconUrl}
+                      fitContainer
+                    />
+                    <Link
+                      href={`/projects/repository/${entry.projectId}?staged=1`}
+                      className="shrink-0 text-primary underline-offset-4 hover:underline"
+                      data-testid={`staged-cases-elsewhere-${entry.projectId}`}
+                    >
+                      {t("elsewhereCount", { count: entry.count })}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {drafts.length > 0 && (
             <SheetFooter className="flex-row items-center justify-end gap-2 border-t pt-3">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={creating || creatable.length === 0}
-                onClick={() => void createDrafts(creatable)}
-                data-testid="staged-cases-create-all"
-              >
-                {t("createAll", { count: creatable.length })}
-              </Button>
               <Button
                 type="button"
                 disabled={creating || selectedCreatable.length === 0}

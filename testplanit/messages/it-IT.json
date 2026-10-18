@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} problema} other {{count} problemi}}",
       "updated": "Aggiornato {age}",
       "createSelected": "{count, plural, =0 {Crea selezionati} other {Crea {count} selezionati}}",
-      "createAll": "{count, plural, =1 {Crea 1} =2 {Crea entrambi} other {Crea tutti {count}}}}",
       "createdToast": "{count, plural, one {{count} caso di test creato} other {{count} casi di test creati}}",
       "failedToast": "{count, plural, one {{count} caso in sospeso non potrebbe essere creato} other {{count} casi in sospeso non potrebbero essere creati}}",
       "problemFolder": "La cartella è stata eliminata. Apri il caso in sospeso per scegliere una cartella.",
@@ -3985,7 +3984,9 @@
       "problemState": "Lo stato non esiste più. Apri il caso in sospeso per sceglierne uno.",
       "problemField": "{field}: {message}",
       "notCreated": "Non creato: {message}",
-      "openToFix": "Apri il caso in sospeso per risolverlo."
+      "openToFix": "Apri il caso in sospeso per risolverlo.",
+      "elsewhereTitle": "Hai anche casi in sospeso in",
+      "elsewhereCount": "{count, plural, one {{count} caso in sospeso} other {{count} casi in sospeso}}"
     },
     "filterBar": {
       "addFilter": "Aggiungi filtro",

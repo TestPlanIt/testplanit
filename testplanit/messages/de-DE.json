@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} Problem} other {{count} Probleme}}",
       "updated": "Aktualisiert {age}",
       "createSelected": "{count, plural, =0 {Ausgewählte erstellen} other {{count} ausgewählte erstellen}}",
-      "createAll": "{count, plural, =1 {1 erstellen} =2 {Beide erstellen} other {Alle {count} erstellen}}",
       "createdToast": "{count, plural, one {{count} Testfall erstellt} other {{count} Testfälle erstellt}}",
       "failedToast": "{count, plural, one {{count} bereitgestellter Fall konnte nicht erstellt werden} other {{count} bereitgestellte Fälle konnten nicht erstellt werden}}",
       "problemFolder": "Der Ordner wurde gelöscht. Öffnen Sie den bereitgestellten Fall, um einen Ordner auszuwählen.",
@@ -3985,7 +3984,9 @@
       "problemState": "Der Status existiert nicht mehr. Öffnen Sie den bereitgestellten Fall, um einen auszuwählen.",
       "problemField": "{field}: {message}",
       "notCreated": "Nicht erstellt: {message}",
-      "openToFix": "Öffnen Sie den bereitgestellten Fall, um ihn zu beheben."
+      "openToFix": "Öffnen Sie den bereitgestellten Fall, um ihn zu beheben.",
+      "elsewhereTitle": "Du hast auch bereitgestellte Fälle in",
+      "elsewhereCount": "{count, plural, one {{count} bereitgestellter Fall} other {{count} bereitgestellte Fälle}}"
     },
     "filterBar": {
       "addFilter": "Filter hinzufügen",

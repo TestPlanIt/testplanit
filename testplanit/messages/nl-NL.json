@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} probleem} other {{count} problemen}}",
       "updated": "Bijgewerkt {age}",
       "createSelected": "{count, plural, =0 {Geselecteerde aanmaken} other {{count} geselecteerde aanmaken}}",
-      "createAll": "{count, plural, =1 {1 aanmaken} =2 {Beide aanmaken} other {Alle {count} aanmaken}}",
       "createdToast": "{count, plural, one {{count} testcase aangemaakt} other {{count} testcases aangemaakt}}",
       "failedToast": "{count, plural, one {{count} gefaseerde case kon niet worden aangemaakt} other {{count} gefaseerde cases konden niet worden aangemaakt}}",
       "problemFolder": "De map is verwijderd. Open de gefaseerde case om een map te kiezen.",
@@ -3985,7 +3984,9 @@
       "problemState": "De status bestaat niet meer. Open de gefaseerde case om er een te kiezen.",
       "problemField": "{field}: {message}",
       "notCreated": "Niet aangemaakt: {message}",
-      "openToFix": "Open de gefaseerde case om het op te lossen."
+      "openToFix": "Open de gefaseerde case om het op te lossen.",
+      "elsewhereTitle": "U hebt ook voorbereide gevallen in",
+      "elsewhereCount": "{count, plural, one {{count} voorbereide geval} other {{count} voorbereide gevallen}}"
     },
     "filterBar": {
       "addFilter": "Filter toevoegen",

@@ -3,10 +3,12 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { useCallback } from "react";
 import {
+  countStagedCasesByProject,
   isCaseDraftPayload,
   savedCaseDraftKey,
   toCaseDraftColumn,
   type CaseDraftPayload,
+  type StagedCaseProjectCount,
 } from "~/lib/services/caseDraft";
 import { schema } from "~/zenstack/schema";
 
@@ -133,4 +135,33 @@ export function useSavedCaseDrafts(projectId: number, userId?: string) {
   );
 
   return { drafts, isLoading, save, update, remove };
+}
+
+/**
+ * How many cases the user has staged in each OTHER project, so the sheet can
+ * remind them where their staged work lives. The policy already limits the
+ * rows to the author's own and to projects they can add cases in.
+ */
+export function useStagedCasesElsewhere(
+  projectId: number,
+  userId?: string
+): StagedCaseProjectCount[] {
+  const client = useClientQueries(schema);
+  const enabled = !!userId && Number.isFinite(projectId) && projectId > 0;
+  const { data } = client.caseDraft.useFindMany(
+    {
+      where: {
+        userId: userId ?? "",
+        isSaved: true,
+        projectId: { not: projectId },
+        project: { isDeleted: false },
+      },
+      select: {
+        projectId: true,
+        project: { select: { name: true, iconUrl: true } },
+      },
+    },
+    { enabled }
+  );
+  return countStagedCasesByProject(data ?? []);
 }

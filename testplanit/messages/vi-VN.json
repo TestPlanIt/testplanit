@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} vấn đề} other {{count} vấn đề}}",
       "updated": "Cập nhật {age}",
       "createSelected": "{count, plural, =0 {Tạo các mục đã chọn} other {Tạo {count} mục đã chọn}}",
-      "createAll": "{count, plural, =1 {Tạo 1} =2 {Tạo cả hai} other {Tạo tất cả {count}}}",
       "createdToast": "{count, plural, one {{count} trường hợp kiểm thử đã được tạo} other {{count} các trường hợp kiểm thử đã được tạo}}",
       "failedToast": "{count, plural, one {{count} trường hợp đã sắp xếp không thể được tạo} other {{count} các trường hợp đã sắp xếp không thể được tạo}}",
       "problemFolder": "Thư mục đã bị xóa. Mở trường hợp đã sắp xếp để chọn một thư mục.",
@@ -3985,7 +3984,9 @@
       "problemState": "Trạng thái không còn tồn tại. Mở trường hợp đã sắp xếp để chọn một trạng thái.",
       "problemField": "{field}: {message}",
       "notCreated": "Chưa tạo: {message}",
-      "openToFix": "Mở trường hợp đã sắp xếp để sửa nó."
+      "openToFix": "Mở trường hợp đã sắp xếp để sửa nó.",
+      "elsewhereTitle": "Bạn cũng có các trường hợp đã được dàn dựng trong",
+      "elsewhereCount": "{count, plural, other {{count} các trường hợp đã được dàn dựng}}"
     },
     "filterBar": {
       "addFilter": "Thêm bộ lọc",

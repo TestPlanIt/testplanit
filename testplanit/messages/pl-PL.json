@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} problem} few {{count} problemy} many {{count} problemów} other {{count} problemów}}",
       "updated": "Zaktualizowano {age}",
       "createSelected": "{count, plural, =0 {Utwórz wybrane} one {Utwórz {count} wybrany} few {Utwórz {count} wybrane} many {Utwórz {count} wybranych} other {Utwórz {count} wybranych}}",
-      "createAll": "{count, plural, =1 {Utwórz 1} =2 {Utwórz oba} one {Utwórz {count}} few {Utwórz wszystkie {count}} many {Utwórz wszystkie {count}} other {Utwórz wszystkie {count}}}",
       "createdToast": "{count, plural, one {{count} przypadek testowy utworzony} few {{count} przypadki testowe utworzone} many {{count} przypadków testowych utworzonych} other {{count} przypadków testowych utworzonych}}",
       "failedToast": "{count, plural, one {{count} przygotowany przypadek nie mógł być utworzony} few {{count} przygotowane przypadki nie mogły być utworzone} many {{count} przygotowanych przypadków nie mogło być utworzonych} other {{count} przygotowanych przypadków nie mogło być utworzonych}}",
       "problemFolder": "Folder został usunięty. Otwórz przygotowany przypadek, aby wybrać folder.",
@@ -3985,7 +3984,9 @@
       "problemState": "Stan już nie istnieje. Otwórz przygotowany przypadek, aby wybrać jeden.",
       "problemField": "{field}: {message}",
       "notCreated": "Nie utworzono: {message}",
-      "openToFix": "Otwórz przygotowany przypadek, aby go naprawić."
+      "openToFix": "Otwórz przygotowany przypadek, aby go naprawić.",
+      "elsewhereTitle": "Masz również przygotowane sprawy w",
+      "elsewhereCount": "{count, plural, one {{count} staged case} other {{count} staged cases}}"
     },
     "filterBar": {
       "addFilter": "Dodaj filtr",

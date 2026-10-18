@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} problém} few {{count} problémy} many {{count} problémů} other {{count} problémů}}",
       "updated": "Aktualizováno {age}",
       "createSelected": "{count, plural, =0 {Vytvořit vybrané} other {Vytvořit {count} vybraných}}",
-      "createAll": "{count, plural, =1 {Create 1} =2 {Create both} other {Create all {count}}}",
       "createdToast": "{count, plural, one {{count} testovací případ vytvořen} few {{count} testovací případy vytvořeny} many {{count} testovacích případů vytvořeno} other {{count} testovacích případů vytvořeno}}",
       "failedToast": "{count, plural, one {{count} připravovaný případ se nepodařilo vytvořit} few {{count} připravované případy se nepodařilo vytvořit} many {{count} připravovaných případů se nepodařilo vytvořit} other {{count} připravovaných případů se nepodařilo vytvořit}}",
       "problemFolder": "Složka byla odstraněna. Otevřete připravovaný případ a vyberte si složku.",
@@ -3985,7 +3984,9 @@
       "problemState": "Stav již neexistuje. Otevřete připravovaný případ a vyberte si jeden.",
       "problemField": "{field}: {message}",
       "notCreated": "Nevytvořeno: {message}",
-      "openToFix": "Otevřete připravovaný případ a opravte jej."
+      "openToFix": "Otevřete připravovaný případ a opravte jej.",
+      "elsewhereTitle": "Máte také připravené případy v",
+      "elsewhereCount": "{count, plural, one {{count} připravený případ} few {{count} připravené případy} many {{count} připravených případů} other {{count} připravených případů}}"
     },
     "filterBar": {
       "addFilter": "Přidat filtr",

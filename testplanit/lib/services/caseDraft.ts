@@ -254,3 +254,37 @@ export function newerCaseDraft(
 export function savedCaseDraftKey(id: string): string {
   return `saved:${id}`;
 }
+
+/** A project the user has staged cases in, with how many. */
+export interface StagedCaseProjectCount {
+  projectId: number;
+  projectName: string;
+  projectIconUrl: string | null;
+  count: number;
+}
+
+/**
+ * Group staged-case rows by project, most staged first, so the My Staged
+ * Cases sheet can point at the other projects a user staged cases in.
+ */
+export function countStagedCasesByProject(
+  rows: {
+    projectId: number;
+    project: { name: string; iconUrl?: string | null };
+  }[]
+): StagedCaseProjectCount[] {
+  const counts = new Map<number, StagedCaseProjectCount>();
+  for (const row of rows) {
+    const entry = counts.get(row.projectId) ?? {
+      projectId: row.projectId,
+      projectName: row.project.name,
+      projectIconUrl: row.project.iconUrl ?? null,
+      count: 0,
+    };
+    entry.count += 1;
+    counts.set(row.projectId, entry);
+  }
+  return [...counts.values()].sort(
+    (a, b) => b.count - a.count || a.projectName.localeCompare(b.projectName)
+  );
+}

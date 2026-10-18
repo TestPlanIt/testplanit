@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} problema} other {{count} problemas}}",
       "updated": "Actualizado {age}",
       "createSelected": "{count, plural, =0 {Crear seleccionados} other {Crear {count} seleccionados}}",
-      "createAll": "{count, plural, =1 {Crear 1} =2 {Crear ambos} other {Crear todos {count}}}}",
       "createdToast": "{count, plural, one {{count} caso de prueba creado} other {{count} casos de prueba creados}}",
       "failedToast": "{count, plural, one {{count} caso preparado no se pudo crear} other {{count} casos preparados no se pudieron crear}}",
       "problemFolder": "La carpeta fue eliminada. Abre el caso preparado para elegir una carpeta.",
@@ -3985,7 +3984,9 @@
       "problemState": "El estado ya no existe. Abre el caso preparado para elegir uno.",
       "problemField": "{field}: {message}",
       "notCreated": "No creado: {message}",
-      "openToFix": "Abre el caso preparado para solucionarlo."
+      "openToFix": "Abre el caso preparado para solucionarlo.",
+      "elsewhereTitle": "También tienes casos preparados en",
+      "elsewhereCount": "{count, plural, one {{count} caso preparado} other {{count} casos preparados}}"
     },
     "filterBar": {
       "addFilter": "Añadir filtro",

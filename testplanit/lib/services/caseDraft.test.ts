@@ -9,6 +9,7 @@ import {
   newerCaseDraft,
   readLocalCaseDraft,
   reviveCaseDraftValues,
+  countStagedCasesByProject,
   savedCaseDraftKey,
   writeLocalCaseDraft,
   CASE_DRAFT_PAYLOAD_VERSION,
@@ -279,5 +280,28 @@ describe("local mirror", () => {
 describe("savedCaseDraftKey", () => {
   it("builds a saved draft key per draft id", () => {
     expect(savedCaseDraftKey("abc")).toBe("saved:abc");
+  });
+});
+
+describe("countStagedCasesByProject", () => {
+  it("counts per project, most staged first, then by name", () => {
+    expect(
+      countStagedCasesByProject([
+        { projectId: 2, project: { name: "Web", iconUrl: "/web.png" } },
+        { projectId: 1, project: { name: "Android" } },
+        { projectId: 2, project: { name: "Web", iconUrl: "/web.png" } },
+        { projectId: 3, project: { name: "Cloud", iconUrl: null } },
+      ])
+    ).toEqual([
+      {
+        projectId: 2,
+        projectName: "Web",
+        projectIconUrl: "/web.png",
+        count: 2,
+      },
+      { projectId: 1, projectName: "Android", projectIconUrl: null, count: 1 },
+      { projectId: 3, projectName: "Cloud", projectIconUrl: null, count: 1 },
+    ]);
+    expect(countStagedCasesByProject([])).toEqual([]);
   });
 });

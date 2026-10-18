@@ -63,8 +63,10 @@ test.describe("Saved case drafts", () => {
       await action.click();
       const sheet = page.getByTestId("staged-cases-sheet");
       await expect(sheet).toBeVisible();
-      await expect(sheet.locator("li")).toHaveCount(2);
-      await expect(sheet.getByTestId("staged-cases-create-all")).toBeEnabled({
+      await expect(
+        sheet.locator('[data-testid^="staged-cases-item-"]')
+      ).toHaveCount(2);
+      await expect(sheet.getByTestId("staged-cases-select-all")).toBeEnabled({
         timeout: 15_000,
       });
       await page.getByTestId("staged-cases-select-all").click();
@@ -123,17 +125,71 @@ test.describe("Saved case drafts", () => {
         "repository-actions-menu"
       );
       const sheet = page.getByTestId("staged-cases-sheet");
-      const item = sheet.locator("li").filter({ hasText: name });
+      const item = sheet
+        .locator('[data-testid^="staged-cases-item-"]')
+        .filter({ hasText: name });
       await expect(item).toBeVisible();
-      await expect(sheet.getByTestId("staged-cases-create-all")).toBeEnabled({
-        timeout: 15_000,
-      });
-      await page.getByTestId("staged-cases-create-all").click();
+      await expect(
+        item.locator('[data-testid^="staged-cases-select-"]')
+      ).toBeEnabled({ timeout: 15_000 });
+      await item.locator('[data-testid^="staged-cases-select-"]').click();
+      await page.getByTestId("staged-cases-create-selected").click();
       await expect(page.getByTestId("staged-cases-empty")).toBeVisible({
         timeout: 20_000,
       });
       await page.keyboard.press("Escape");
       await repositoryPage.verifyTestCaseExists(name);
+    });
+  });
+  test("the sheet points at other projects where the user has staged cases", async ({
+    api,
+    page,
+  }) => {
+    const repositoryPage = new RepositoryPage(page);
+    const here = await setupProjectAndFolder(api);
+    const elsewhere = await setupProjectAndFolder(api);
+    const name = `Staged elsewhere ${Date.now()}`;
+
+    await test.step("Stage a case in the other project", async () => {
+      await repositoryPage.goto(elsewhere.projectId);
+      await repositoryPage.selectFolder(elsewhere.folderId);
+      await repositoryPage.openAddCaseModal();
+      await page
+        .getByTestId("add-case-dialog")
+        .getByTestId("case-name-input")
+        .fill(name);
+      await page.getByTestId("case-save-draft-button").click();
+      await expect(page.getByTestId("add-case-dialog")).toHaveCount(0, {
+        timeout: 10_000,
+      });
+    });
+
+    await test.step("This project's sheet names it, and the link lands with the sheet open", async () => {
+      await repositoryPage.goto(here.projectId);
+      await repositoryPage.selectFolder(here.folderId);
+      await clickOverflowAction(
+        page,
+        "staged-cases-button",
+        "repository-actions-menu"
+      );
+      const link = page.getByTestId(
+        `staged-cases-elsewhere-${elsewhere.projectId}`
+      );
+      await expect(link).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("staged-cases-elsewhere")).toContainText(
+        "1"
+      );
+      await link.click();
+      await expect(page).toHaveURL(
+        new RegExp(`/projects/repository/${elsewhere.projectId}\\?.*staged=1`)
+      );
+      const sheet = page.getByTestId("staged-cases-sheet");
+      await expect(sheet).toBeVisible({ timeout: 15_000 });
+      await expect(
+        sheet
+          .locator('[data-testid^="staged-cases-item-"]')
+          .filter({ hasText: name })
+      ).toBeVisible();
     });
   });
 });

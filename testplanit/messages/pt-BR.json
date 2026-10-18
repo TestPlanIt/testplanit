@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} problema} other {{count} problemas}}",
       "updated": "Atualizado {age}",
       "createSelected": "{count, plural, =0 {Criar selecionados} other {Criar {count} selecionados}}",
-      "createAll": "{count, plural, =1 {Criar 1} =2 {Criar ambos} other {Criar todos os {count}}}}",
       "createdToast": "{count, plural, one {{count} caso de teste criado} other {{count} casos de teste criados}}",
       "failedToast": "{count, plural, one {{count} caso em rascunho não pôde ser criado} other {{count} casos em rascunho não puderam ser criados}}",
       "problemFolder": "A pasta foi excluída. Abra o caso em rascunho para escolher uma pasta.",
@@ -3985,7 +3984,9 @@
       "problemState": "O estado não existe mais. Abra o caso em rascunho para escolher um.",
       "problemField": "{field}: {message}",
       "notCreated": "Não criado: {message}",
-      "openToFix": "Abra o caso em rascunho para corrigi-lo."
+      "openToFix": "Abra o caso em rascunho para corrigi-lo.",
+      "elsewhereTitle": "Você também tem casos preparados em",
+      "elsewhereCount": "{count, plural, one {{count} caso preparado} other {{count} casos preparados}}"
     },
     "filterBar": {
       "addFilter": "Adicionar filtro",

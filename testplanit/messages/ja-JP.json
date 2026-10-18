@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} 個の問題} other {{count} 個の問題}}",
       "updated": "{age} に更新",
       "createSelected": "{count, plural, =0 {選択したものを作成} other {{count} 個選択したものを作成}}",
-      "createAll": "{count, plural, =1 {1 を作成} =2 {両方を作成} other {すべて {count} を作成}}",
       "createdToast": "{count, plural, one {{count} 個のテストケースが作成されました} other {{count} 個のテストケースが作成されました}}",
       "failedToast": "{count, plural, one {{count} 個のステージングされたケースを作成できませんでした} other {{count} 個のステージングされたケースを作成できませんでした}}",
       "problemFolder": "フォルダーが削除されました。ステージングされたケースを開いてフォルダーを選択してください。",
@@ -3985,7 +3984,9 @@
       "problemState": "状態が存在しなくなりました。ステージングされたケースを開いて選択してください。",
       "problemField": "{field}: {message}",
       "notCreated": "作成されていません: {message}",
-      "openToFix": "ステージングされたケースを開いて修正してください。"
+      "openToFix": "ステージングされたケースを開いて修正してください。",
+      "elsewhereTitle": "以下にもステージングされたケースがあります",
+      "elsewhereCount": "{count, plural, other {{count} ステージングされたケース}}"
     },
     "filterBar": {
       "addFilter": "フィルターを追加",

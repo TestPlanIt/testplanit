@@ -3977,7 +3977,6 @@
       "problemCount": "{count, plural, one {{count} проблема} few {{count} проблемы} many {{count} проблем} other {{count} проблем}}",
       "updated": "Обновлено {age}",
       "createSelected": "{count, plural, =0 {Создать выбранные} one {Создать {count} выбранный} few {Создать {count} выбранные} many {Создать {count} выбранных} other {Создать {count} выбранных}}",
-      "createAll": "{count, plural, =1 {Создать 1} =2 {Создать оба} other {Создать все {count}}}",
       "createdToast": "{count, plural, one {{count} тестовый случай создан} few {{count} тестовых случая создано} many {{count} тестовых случаев создано} other {{count} тестовых случаев создано}}",
       "failedToast": "{count, plural, one {{count} подготовленный тестовый случай не удалось создать} few {{count} подготовленных тестовых случая не удалось создать} many {{count} подготовленных тестовых случаев не удалось создать} other {{count} подготовленных тестовых случаев не удалось создать}}",
       "problemFolder": "Папка была удалена. Откройте подготовленный тестовый случай, чтобы выбрать папку.",
@@ -3985,7 +3984,9 @@
       "problemState": "Состояние больше не существует. Откройте подготовленный тестовый случай, чтобы выбрать другое.",
       "problemField": "{field}: {message}",
       "notCreated": "Не создано: {message}",
-      "openToFix": "Откройте подготовленный тестовый случай, чтобы исправить его."
+      "openToFix": "Откройте подготовленный тестовый случай, чтобы исправить его.",
+      "elsewhereTitle": "У вас также есть сохраненные случаи в",
+      "elsewhereCount": "{count, plural, one {{count} staged case} other {{count} staged cases}}"
     },
     "filterBar": {
       "addFilter": "Добавить фильтр",

@@ -42,6 +42,9 @@ it was last updated.
 - **Open** a staged case (click it) to review or change it in the Add Case
   dialog. **Create** there creates that one case and removes it from the list.
 - **Rename** (which renames the test case) or **Delete** a staged case from its menu.
+- If you have staged cases in other projects, the bottom of the list names
+  those projects with their counts; each name opens that project's repository
+  with its staged cases shown, so nothing you staged is out of reach.
 - A staged case that cannot be created as it stands shows a problem count;
   hover it to see why. This happens when its folder was deleted, its template
   is no longer assigned to the project, its state no longer exists, or a
@@ -49,8 +52,8 @@ it was last updated.
 
 ## Creating several at once
 
-Tick the staged cases you want and click **Create selected**, or click
-**Create all** to create every one that has no problems. The cases are created
+Tick the staged cases you want (**Select All** ticks every one that has no
+problems) and click **Create selected**. The cases are created
 in list order, each in its own target folder, exactly as the Add Case dialog
 would create them: the same template, field values, tags, linked issues,
 steps, and first version, and the same [review gate](../review-approvals.md)

@@ -487,6 +487,19 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   /** A staged case being reopened in the Add Case form. */
   const [addCaseDraft, setAddCaseDraft] = useState<SavedCaseDraft | null>(null);
   const [stagedCasesOpen, setStagedCasesOpen] = useState(false);
+  // `?staged=1` (the link from another project's sheet) opens the sheet on
+  // arrival, once per project: the page rewrites its own URL parameters
+  // often while that one is still in the address bar, and a close must stay
+  // closed. Client-side navigation between projects reuses this component,
+  // so a state initializer would not see the new URL.
+  const stagedParam = searchParams.get("staged");
+  const stagedOpenedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (stagedParam !== "1") return;
+    if (stagedOpenedForRef.current === projectIdParam) return;
+    stagedOpenedForRef.current = projectIdParam;
+    setStagedCasesOpen(true);
+  }, [stagedParam, projectIdParam]);
   // The count for the "My Staged Cases" action's label; the sheet shares the
   // same query, so this costs no extra request.
   const { drafts: stagedCases } = useSavedCaseDrafts(
