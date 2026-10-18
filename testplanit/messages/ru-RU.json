@@ -3986,7 +3986,7 @@
       "notCreated": "Не создано: {message}",
       "openToFix": "Откройте подготовленный тестовый случай, чтобы исправить его.",
       "elsewhereTitle": "У вас также есть сохраненные случаи в",
-      "elsewhereCount": "{count, plural, one {{count} staged case} other {{count} staged cases}}"
+      "elsewhereCount": "{count, plural, one {{count} подготовленный случай} few {{count} подготовленных случая} many {{count} подготовленных случаев} other {{count} подготовленных случаев}}"
     },
     "filterBar": {
       "addFilter": "Добавить фильтр",

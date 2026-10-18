@@ -3986,7 +3986,7 @@
       "notCreated": "Nie utworzono: {message}",
       "openToFix": "Otwórz przygotowany przypadek, aby go naprawić.",
       "elsewhereTitle": "Masz również przygotowane sprawy w",
-      "elsewhereCount": "{count, plural, one {{count} staged case} other {{count} staged cases}}"
+      "elsewhereCount": "{count, plural, one {{count} przygotowany przypadek} few {{count} przygotowane przypadki} many {{count} przygotowanych przypadków} other {{count} przygotowanych przypadków}}"
     },
     "filterBar": {
       "addFilter": "Dodaj filtr",
