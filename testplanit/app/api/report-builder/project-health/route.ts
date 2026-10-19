@@ -5,6 +5,7 @@ import { getMilestoneCaseCompletion } from "~/lib/services/effectiveCaseStatus";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { buildDateFilter } from "~/utils/reportUtils";
+import { sortReportRows } from "~/utils/reportRowSort";
 
 // Note: Project health uses custom milestone and issue-based logic
 // This doesn't fit the existing shared patterns but could be a candidate
@@ -550,6 +551,8 @@ export async function POST(req: NextRequest) {
       projectId?: unknown;
       dimensions?: unknown;
       metrics?: unknown;
+      sortColumn?: string | null;
+      sortDirection?: string | null;
     };
     try {
       body = await req.json();
@@ -766,8 +769,18 @@ export async function POST(req: NextRequest) {
       return hasNonZeroCountMetric;
     });
 
-    // Sort results by Activity Date if date dimension is used
-    if (dimensions.includes("date")) {
+    // A header sort wins; otherwise a date series stays chronological.
+    if (body.sortColumn && body.sortDirection) {
+      sortReportRows(filteredResults, {
+        dimensions,
+        metricConfigs: metrics.map((m: string) => ({
+          id: m,
+          label: METRIC_REGISTRY[m].label,
+        })),
+        sortColumn: body.sortColumn,
+        sortDirection: body.sortDirection,
+      });
+    } else if (dimensions.includes("date")) {
       filteredResults.sort((a: any, b: any) => {
         const dateA = a.date?.createdAt;
         const dateB = b.date?.createdAt;

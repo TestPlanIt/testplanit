@@ -502,9 +502,11 @@ export async function handleAutomationTrendsPOST(
 
     // Sort the data (default: oldest period first for trend visualization)
     if (sortColumn) {
+      // The table's period column is id "period"; the row carries periodStart.
+      const sortKey = sortColumn === "period" ? "periodStart" : sortColumn;
       periodData.sort((a, b) => {
-        const aVal = a[sortColumn];
-        const bVal = b[sortColumn];
+        const aVal = a[sortKey];
+        const bVal = b[sortKey];
 
         if (typeof aVal === "string" && typeof bVal === "string") {
           return sortDirection === "asc"
