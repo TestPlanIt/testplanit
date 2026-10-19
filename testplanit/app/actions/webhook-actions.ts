@@ -15,8 +15,11 @@ import {
   AVAILABLE_ACTIONS,
   parseWebhookAction,
   type AutoExecuteOptions,
+  type CaseFilter,
   type DraftCasesOptions,
 } from "~/lib/webhooks/actions/schemas";
+import { loadProjectFilterRegistry } from "~/lib/repository/projectFilterRegistry";
+import { coerceFilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
   getProjectReadiness,
   templateBelongsToProject,
@@ -86,9 +89,27 @@ async function checkAutoExecute(
 }
 
 /**
- * Whether the project's tracker issues can be requirements: requirements
- * are on for the project and its integration names the requirement types.
+ * A Create test run rule's test case filters have to be ones the project's
+ * repository offers today, with the values coerced the way the repository
+ * stores them; the checked filters replace the raw ones in `options`.
  */
+async function checkCaseFilter(
+  projectId: number,
+  options: Record<string, unknown>
+): Promise<string | null> {
+  const raw = options.caseFilter as CaseFilter | undefined;
+  if (!raw) return null;
+  const { registry } = await loadProjectFilterRegistry(baseDb, projectId);
+  const checked: CaseFilter = [];
+  for (const predicate of raw) {
+    const coerced = coerceFilterPredicate(predicate, registry);
+    if (!coerced) return "A test case filter doesn't apply to this project";
+    checked.push(coerced);
+  }
+  options.caseFilter = checked;
+  return null;
+}
+
 /**
  * A Draft test cases rule needs an AI model to call, and its template,
  * state, users and groups must be the project's own.
@@ -144,6 +165,10 @@ async function checkDraftCases(
   return null;
 }
 
+/**
+ * Whether the project's tracker issues can be requirements: requirements
+ * are on for the project and its integration names the requirement types.
+ */
 async function classifiesRequirements(projectId: number): Promise<boolean> {
   const project = await baseDb.projects.findUnique({
     where: { id: projectId },
@@ -170,7 +195,8 @@ const VALIDATION_MESSAGES = {
  * Create a rule on an inbound webhook, or change one. The trigger has to
  * suit the webhook (repository events for a repository webhook, issue
  * events for a tracker webhook) and the action the trigger; an auto-execute
- * target has to be a live, enabled target of the project.
+ * target has to be a live, enabled target of the project, and test case
+ * filters ones the project's repository offers.
  */
 export async function saveWebhookAction(input: {
   projectId: number;
@@ -210,6 +236,8 @@ export async function saveWebhookAction(input: {
       parsed.options.autoExecute as AutoExecuteOptions | undefined
     );
     if (targetError) return { success: false, error: targetError };
+    const filterError = await checkCaseFilter(projectId, parsed.options);
+    if (filterError) return { success: false, error: filterError };
     const draftError = await checkDraftCases(
       projectId,
       input.action,

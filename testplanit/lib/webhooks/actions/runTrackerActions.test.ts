@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   getIssueSubtreeIds: vi.fn(),
   webhookActorId: vi.fn(),
   enqueueDraftCases: vi.fn(),
+  describeCaseFilter: vi.fn(),
 }));
 
 vi.mock("~/lib/integrations/services/SyncService", () => ({
@@ -26,6 +27,9 @@ vi.mock("./enqueueDraftCases", () => ({
 }));
 vi.mock("./composeRun", () => ({
   composeRunFromCases: mocks.composeRunFromCases,
+}));
+vi.mock("./caseFilter", () => ({
+  describeCaseFilter: mocks.describeCaseFilter,
 }));
 
 import {
@@ -410,6 +414,40 @@ describe("runTrackerActions", () => {
       where: { id: "del-1" },
       data: { subjectRef: "run:500", error: null },
     });
+  });
+
+  it("hands the rule's test case filters to the composer and names them in the run's description", async () => {
+    const caseFilter = [
+      { dimension: "automated", operator: "is", values: [1] },
+    ];
+    mocks.describeCaseFilter.mockResolvedValueOnce("Automation: Is Automated");
+    mocks.performIssueRefreshSystem.mockResolvedValue({
+      success: true,
+      issue: outcome({ created: true }),
+    });
+    const db = makeDb([rule({ id: "run-1", options: { caseFilter } })]);
+
+    await runTrackerActions(db, job);
+
+    expect(mocks.describeCaseFilter).toHaveBeenCalledWith(db, 7, caseFilter);
+    expect(mocks.composeRunFromCases).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        caseIds: [11, 12],
+        caseFilter,
+        links: [
+          {
+            label: "DEMO-42: Checkout totals",
+            url: "https://jira.example/browse/DEMO-42",
+          },
+          {
+            label:
+              "Issue created → Create Test Run · Test case filters: Automation: Is Automated",
+            url: null,
+          },
+        ],
+      })
+    );
   });
 
   it("creates a run when the issue enters a chosen status (case-insensitive), naming the status", async () => {

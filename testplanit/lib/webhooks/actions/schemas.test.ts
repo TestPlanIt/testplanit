@@ -201,6 +201,35 @@ describe("parseWebhookAction", () => {
     ).toEqual({ ok: true, filter: {}, options: { includeChildIssues: true } });
   });
 
+  it("keeps a rule's test case filters on either source, dropping an empty list", () => {
+    const caseFilter = [
+      { dimension: "automated", operator: "is", values: [1] },
+      { dimension: "field_12", operator: "in", values: ["31", 32] },
+    ];
+    expect(
+      parseWebhookAction("repository", {
+        trigger: "CODE_PUSH",
+        action: "CREATE_RUN",
+        options: { minScore: 50, caseFilter },
+      })
+    ).toEqual({ ok: true, filter: {}, options: { minScore: 50, caseFilter } });
+    expect(
+      parseWebhookAction("tracker", {
+        trigger: "ISSUE_CREATED",
+        action: "CREATE_RUN",
+        options: { caseFilter },
+      })
+    ).toEqual({ ok: true, filter: {}, options: { caseFilter } });
+    expect(
+      parseWebhookAction("tracker", {
+        trigger: "ISSUE_CREATED",
+        action: "CREATE_RUN",
+        options: { caseFilter: [] },
+      })
+    ).toEqual({ ok: true, filter: {}, options: {} });
+    expect(readCreateRunOptions({ caseFilter }).caseFilter).toEqual(caseFilter);
+  });
+
   it("keeps auto-execute with its ref and inputs, dropping an empty ref", () => {
     expect(
       parseWebhookAction("repository", {
@@ -238,6 +267,26 @@ describe("parseWebhookAction", () => {
       { autoExecute: { targetId: 0 } },
       { autoExecute: { targetId: 4, inputs: { a: 1 } } },
       { autoExecute: { ref: "main" } },
+      { caseFilter: "automated" },
+      { caseFilter: [{ dimension: "1bad", operator: "is", values: [1] }] },
+      { caseFilter: [{ dimension: "tags", operator: "", values: [] }] },
+      { caseFilter: [{ dimension: "tags", operator: "any", values: [true] }] },
+      {
+        caseFilter: Array.from({ length: 51 }, () => ({
+          dimension: "tags",
+          operator: "any",
+          values: [1],
+        })),
+      },
+      {
+        caseFilter: [
+          {
+            dimension: "tags",
+            operator: "any",
+            values: Array.from({ length: 201 }, (_, i) => i),
+          },
+        ],
+      },
     ]) {
       expect(
         parseWebhookAction("repository", {

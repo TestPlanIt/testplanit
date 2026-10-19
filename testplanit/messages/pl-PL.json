@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Tylko problemy, które projekt klasyfikuje jako wymagania.",
           "includeChildIssues": "Uwzględnij problemy potomne",
           "includeChildIssuesHelp": "Również weź przypadki testowe powiązane z problemami potomnymi tego problemu.",
+          "caseFilter": "Filtry przypadków testowych",
+          "caseFilterHelp": "Do serii trafiają tylko przypadki testowe spełniające każdy filtr. Pozostaw puste, aby wziąć każdy przypadek testowy wybrany przez akcję.",
           "notifyHelp": "Kto jest powiadamiany, gdy szkice są gotowe do przeglądu. Preferencje powiadomień każdej osoby nadal mają zastosowanie.",
           "draftFolderNote": "Przypadki testowe opracowane automatycznie przez webhook {webhook}.",
           "draftFolderNoteCases": "Opracowane przez użytkownika System; każdy przypadek jest powiązany z problemem, z którego został opracowany.",

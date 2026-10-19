@@ -8,7 +8,10 @@ import type {
   RepoPullRequestRef,
 } from "~/lib/integrations/adapters/GitRepoAdapter";
 import type { DiffHunk } from "~/lib/integrations/diff/parseUnifiedDiff";
-import type { AutoExecuteOptions } from "~/lib/webhooks/actions/schemas";
+import type {
+  AutoExecuteOptions,
+  CaseFilter,
+} from "~/lib/webhooks/actions/schemas";
 import type { WebhookActionTrigger } from "~/zenstack/models";
 import type { CodePinKind } from "./pinMatcher";
 
@@ -310,6 +313,8 @@ export interface ImpactAutoRunAction {
   trigger?: WebhookActionTrigger;
   branch?: string | null;
   minScore?: number | null;
+  /** The rule's test case filters; only matching cases go in the run. */
+  caseFilter?: CaseFilter | null;
   autoExecute?: AutoExecuteOptions | null;
 }
 

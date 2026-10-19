@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Nur Tickets, die das Projekt als Anforderungen einstuft.",
           "includeChildIssues": "Untergeordnete Issues einbeziehen",
           "includeChildIssuesHelp": "Nehmen Sie auch die Testfälle auf, die mit den untergeordneten Issues des Tickets verknüpft sind.",
+          "caseFilter": "Testfall-Filter",
+          "caseFilterHelp": "Nur die Testfälle, die jeden Filter erfüllen, werden in den Lauf aufgenommen. Lassen Sie das Feld leer, um jeden Testfall auszuwählen, den die Aktion auswählt.",
           "notifyHelp": "Wer wird benachrichtigt, wenn die Entwürfe zur Überprüfung bereit sind. Die Benachrichtigungseinstellungen jeder Person gelten weiterhin.",
           "draftFolderNote": "Testfälle, die automatisch vom Webhook {webhook} entworfen wurden.",
           "draftFolderNoteCases": "Vom Systembenutzer entworfen; jeder Fall ist mit dem Ticket verknüpft, aus dem er entworfen wurde.",

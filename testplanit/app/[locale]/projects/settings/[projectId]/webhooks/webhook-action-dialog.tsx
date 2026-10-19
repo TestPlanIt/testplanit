@@ -28,10 +28,16 @@ import {
   triggersFor,
   type WebhookActionSource,
 } from "~/lib/webhooks/actions/schemas";
+import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import type {
   WebhookActionTrigger,
   WebhookActionType,
 } from "~/zenstack/models";
+import {
+  WebhookActionCaseFilter,
+  caseFilterForSave,
+  useProjectCaseFilterOptions,
+} from "./webhook-action-case-filter";
 import {
   WebhookAutoExecuteFields,
   autoExecuteDraftFrom,
@@ -125,6 +131,9 @@ function WebhookActionDialogBody({
   const [includeChildIssues, setIncludeChildIssues] = useState(
     savedRun.includeChildIssues === true
   );
+  const [caseFilter, setCaseFilter] = useState<FilterPredicate[]>(
+    (savedRun.caseFilter as FilterPredicate[] | undefined) ?? []
+  );
   const [draft, setDraft] = useState<DraftCasesDraft>(
     draftCasesDraftFrom(rule?.action === "DRAFT_CASES" ? rule.options : null)
   );
@@ -132,6 +141,10 @@ function WebhookActionDialogBody({
 
   const actions = availableActionsFor(trigger);
   const isRepository = source === "repository";
+  const caseFilterOptions = useProjectCaseFilterOptions(
+    projectId,
+    action === "CREATE_RUN"
+  );
 
   function chooseTrigger(next: WebhookActionTrigger) {
     setTrigger(next);
@@ -154,6 +167,7 @@ function WebhookActionDialogBody({
       delete options.minScore;
       delete options.autoExecute;
       delete options.includeChildIssues;
+      delete options.caseFilter;
       if (!isRepository && includeChildIssues) {
         options.includeChildIssues = true;
       }
@@ -165,6 +179,8 @@ function WebhookActionDialogBody({
         }
         options.minScore = parsed;
       }
+      const filters = caseFilterForSave(caseFilter, caseFilterOptions);
+      if (filters.length > 0) options.caseFilter = filters;
       const execute = autoExecuteFromDraft(autoExecute);
       if (execute) options.autoExecute = execute;
     }
@@ -313,6 +329,14 @@ function WebhookActionDialogBody({
                 {tCodeRepos("minScoreHelp")}
               </p>
             </div>
+          )}
+
+          {action === "CREATE_RUN" && (
+            <WebhookActionCaseFilter
+              options={caseFilterOptions}
+              value={caseFilter}
+              onChange={setCaseFilter}
+            />
           )}
 
           {action === "CREATE_RUN" && (

@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Chỉ những vấn đề mà dự án phân loại là yêu cầu.",
           "includeChildIssues": "Bao gồm các vấn đề con",
           "includeChildIssuesHelp": "Cũng lấy các trường hợp thử nghiệm được liên kết với các vấn đề con của vấn đề.",
+          "caseFilter": "Bộ lọc trường hợp kiểm thử",
+          "caseFilterHelp": "Chỉ những trường hợp kiểm thử phù hợp với mọi bộ lọc mới được đưa vào lần chạy. Để trống để lấy mọi trường hợp kiểm thử mà hành động chọn.",
           "notifyHelp": "Ai được thông báo khi các bản soạn thảo sẵn sàng để xem xét. Tùy chọn thông báo của mỗi người vẫn áp dụng.",
           "draftFolderNote": "Các trường hợp thử nghiệm được soạn thảo tự động bởi webhook {webhook}.",
           "draftFolderNoteCases": "Được soạn thảo bởi người dùng Hệ thống; mỗi trường hợp được liên kết với vấn đề mà nó được soạn thảo từ đó.",

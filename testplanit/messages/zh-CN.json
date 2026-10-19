@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "仅项目分类为需求的问题。",
           "includeChildIssues": "包含子问题",
           "includeChildIssuesHelp": "同时获取链接到问题子问题的测试用例。",
+          "caseFilter": "测试用例筛选器",
+          "caseFilterHelp": "只有与每个筛选器匹配的测试用例才会进入运行。留空以获取操作选择的每个测试用例。",
           "notifyHelp": "草稿准备好供审查时，通知谁。每个人的通知首选项仍然适用。",
           "draftFolderNote": "由 {webhook} webhook 自动起草的测试用例。",
           "draftFolderNoteCases": "由系统用户起草；每个案例都链接到它所起草的问题。",

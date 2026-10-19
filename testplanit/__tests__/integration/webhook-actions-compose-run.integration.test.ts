@@ -5,7 +5,8 @@
  *     raw client: who the run is created as, its workflow state, note, issue
  *     links and case order; which cases it refuses; the test_run.created
  *     outbox row and the TestRuns CDC row, both attributed to the System user
- *     and written in the run's own transaction.
+ *     and written in the run's own transaction; the rule's test case filters
+ *     (a custom field, a tag, automation, a text match) over real rows.
  *   - runAnalysisActions (lib/services/impact/autoRun.ts) over real
  *     ImpactAnalysis / ImpactAnalysisCase rows: one run per rule, the rule's
  *     log rows, repeat deliveries, a hand-linked analysis, the legacy single
@@ -45,6 +46,11 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
     codeConfigId: 0,
     webhookConfigId: "",
     issueId: 0,
+    priorityFieldId: 0,
+    highOptionId: 0,
+    lowOptionId: 0,
+    componentFieldId: 0,
+    tagId: 0,
   };
 
   async function makeProject(name: string, assignWorkflows: boolean) {
@@ -72,6 +78,11 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
       isArchived?: boolean;
       repositoryId?: number;
       folderId?: number;
+      automated?: boolean;
+      /** Priority option id, Component text, and whether the tag is on it. */
+      priority?: number;
+      component?: string;
+      tagged?: boolean;
     } = {}
   ): Promise<number> {
     const row = await db.repositoryCases.create({
@@ -85,6 +96,18 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
         creatorId: fx.creatorId,
         isDeleted: opts.isDeleted ?? false,
         isArchived: opts.isArchived ?? false,
+        automated: opts.automated ?? false,
+        ...(opts.tagged ? { caseTags: { create: [{ tagId: fx.tagId }] } } : {}),
+        caseFieldValues: {
+          create: [
+            ...(opts.priority !== undefined
+              ? [{ fieldId: fx.priorityFieldId, value: opts.priority }]
+              : []),
+            ...(opts.component !== undefined
+              ? [{ fieldId: fx.componentFieldId, value: opts.component }]
+              : []),
+          ],
+        },
       },
       select: { id: true },
     });
@@ -202,6 +225,61 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
       select: { id: true },
     });
     fx.webhookConfigId = webhook.id;
+
+    // A Dropdown and a Text String field on the project's template, and a
+    // tag, for the test case filters.
+    await db.templateProjectAssignment.create({
+      data: { templateId: fx.templateId, projectId: fx.projectId },
+    });
+    const dropdown = await db.caseFieldTypes.findUnique({
+      where: { type: "Dropdown" },
+      select: { id: true },
+    });
+    const text = await db.caseFieldTypes.findUnique({
+      where: { type: "Text String" },
+      select: { id: true },
+    });
+    if (!dropdown || !text) throw new Error("Seed the database first (types)");
+    const priority = await db.caseFields.create({
+      data: {
+        displayName: `Priority ${STAMP}`,
+        systemName: `priority_${STAMP}`,
+        typeId: dropdown.id,
+        templates: { create: [{ templateId: fx.templateId }] },
+        fieldOptions: {
+          create: [
+            { fieldOption: { create: { name: `High ${STAMP}`, order: 0 } } },
+            { fieldOption: { create: { name: `Low ${STAMP}`, order: 1 } } },
+          ],
+        },
+      },
+      select: {
+        id: true,
+        fieldOptions: {
+          select: { fieldOption: { select: { id: true, name: true } } },
+        },
+      },
+    });
+    fx.priorityFieldId = priority.id;
+    for (const { fieldOption } of priority.fieldOptions) {
+      if (fieldOption.name.startsWith("High")) fx.highOptionId = fieldOption.id;
+      else fx.lowOptionId = fieldOption.id;
+    }
+    const component = await db.caseFields.create({
+      data: {
+        displayName: `Component ${STAMP}`,
+        systemName: `component_${STAMP}`,
+        typeId: text.id,
+        templates: { create: [{ templateId: fx.templateId }] },
+      },
+      select: { id: true },
+    });
+    fx.componentFieldId = component.id;
+    const tag = await db.tags.create({
+      data: { name: `smoke-${STAMP}` },
+      select: { id: true },
+    });
+    fx.tagId = tag.id;
   });
 
   afterAll(async () => {
@@ -217,6 +295,14 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
         .delete({ where: { id: fx.codeRepositoryId } })
         .catch(() => {});
     }
+    for (const id of [fx.priorityFieldId, fx.componentFieldId]) {
+      if (id) await db.caseFields.delete({ where: { id } }).catch(() => {});
+    }
+    for (const id of [fx.highOptionId, fx.lowOptionId]) {
+      if (id) await db.fieldOptions.delete({ where: { id } }).catch(() => {});
+    }
+    if (fx.tagId)
+      await db.tags.delete({ where: { id: fx.tagId } }).catch(() => {});
   });
 
   describe("composeRunFromCases", () => {
@@ -357,6 +443,94 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
       });
       if (!result.created) throw new Error("not created");
       expect(await runCaseIds(result.testRunId)).toEqual([draft, ready]);
+    });
+
+    it("keeps only the cases matching every one of the rule's test case filters, skipping a filter on a field the project lacks", async () => {
+      const match = await makeCase(fx.projectId, "cf-match", {
+        automated: true,
+        priority: fx.highOptionId,
+        component: "Checkout",
+        tagged: true,
+      });
+      const lowPriority = await makeCase(fx.projectId, "cf-low", {
+        automated: true,
+        priority: fx.lowOptionId,
+        component: "Checkout",
+        tagged: true,
+      });
+      const manual = await makeCase(fx.projectId, "cf-manual", {
+        automated: false,
+        priority: fx.highOptionId,
+        component: "Checkout",
+        tagged: true,
+      });
+      const untagged = await makeCase(fx.projectId, "cf-untagged", {
+        automated: true,
+        priority: fx.highOptionId,
+        component: "Checkout",
+      });
+      const otherComponent = await makeCase(fx.projectId, "cf-payments", {
+        automated: true,
+        priority: fx.highOptionId,
+        component: "Payments",
+        tagged: true,
+      });
+      const alsoMatch = await makeCase(fx.projectId, "cf-match-2", {
+        automated: true,
+        priority: fx.highOptionId,
+        component: "Checkout flow",
+        tagged: true,
+      });
+      const caseFilter = [
+        {
+          dimension: `field_${fx.priorityFieldId}`,
+          operator: "in",
+          values: [fx.highOptionId],
+        },
+        { dimension: "automated", operator: "is", values: [1] },
+        { dimension: "tags", operator: "any", values: [fx.tagId] },
+        {
+          dimension: `field_${fx.componentFieldId}`,
+          operator: "contains",
+          values: ["check"],
+        },
+        { dimension: "field_999999", operator: "in", values: [1] },
+      ];
+
+      const result = await composeRunFromCases(db, {
+        projectId: fx.projectId,
+        name: `filtered ${STAMP}`,
+        caseIds: [
+          alsoMatch,
+          lowPriority,
+          manual,
+          match,
+          untagged,
+          otherComponent,
+        ],
+        caseFilter,
+        links: [{ label: "pr", url: null }],
+        createdById: SYSTEM_AUTOMATION_USER_ID,
+      });
+
+      expect(result).toMatchObject({
+        created: true,
+        caseCount: 2,
+        caseIds: [alsoMatch, match],
+      });
+      if (!result.created) throw new Error("not created");
+      expect(await runCaseIds(result.testRunId)).toEqual([alsoMatch, match]);
+
+      expect(
+        await composeRunFromCases(db, {
+          projectId: fx.projectId,
+          name: `filtered-out ${STAMP}`,
+          caseIds: [lowPriority, manual],
+          caseFilter,
+          links: [{ label: "pr", url: null }],
+          createdById: SYSTEM_AUTOMATION_USER_ID,
+        })
+      ).toEqual({ created: false, reason: "no_cases" });
     });
 
     it("writes the test_run.created outbox row and the TestRuns CDC row as the System user, in the run's transaction", async () => {
@@ -638,6 +812,82 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
         [strict, "already_composed", strictLog.testRunId],
         [loose, "already_composed", looseLog.testRunId],
       ]);
+    });
+
+    it("narrows a rule's run by its test case filters, names them in the note, and accepts only the cases taken", async () => {
+      const { analysisId, c95, c80, c50, c45 } = await makeAnalysis();
+      await db.caseFieldValues.create({
+        data: {
+          testCaseId: c95,
+          fieldId: fx.priorityFieldId,
+          value: fx.lowOptionId,
+        },
+      });
+      await db.caseFieldValues.create({
+        data: {
+          testCaseId: c80,
+          fieldId: fx.priorityFieldId,
+          value: fx.highOptionId,
+        },
+      });
+      await db.repositoryCases.update({
+        where: { id: c80 },
+        data: { automated: true },
+      });
+      const caseFilter = [
+        {
+          dimension: `field_${fx.priorityFieldId}`,
+          operator: "in",
+          values: [fx.highOptionId],
+        },
+        { dimension: "automated", operator: "is", values: [1] },
+      ];
+      const actionId = await makeAction({ caseFilter });
+      const deliveryId = await makeDelivery();
+
+      await runAnalysisActions(db, analysisId, fx.projectId, {
+        trigger: "pull_request",
+        label: `PR #8: Filtered ${STAMP}`,
+        url: "https://git.example/pr/8",
+        deliveryId,
+        webhookConfigId: fx.webhookConfigId,
+        actions: [
+          {
+            actionId,
+            trigger: "CODE_PULL_REQUEST" as const,
+            minScore: 40,
+            caseFilter,
+          },
+        ],
+      });
+
+      const [log] = await logsFor(analysisId);
+      expect(log).toMatchObject({ outcome: "run_created", caseCount: 1 });
+      expect(await runCaseIds(log.testRunId)).toEqual([c80]);
+      const run = await db.testRuns.findUnique({
+        where: { id: log.testRunId },
+        select: { note: true },
+      });
+      const texts = noteTexts(run.note);
+      expect(texts[texts.length - 1]).toBe(
+        `Pull requests → Create Test Run · Minimum score: 40 · Test case filters: Priority ${STAMP}: Is any of High ${STAMP}; Automation: Is Automated`
+      );
+
+      const analysis = await db.impactAnalysis.findUnique({
+        where: { id: analysisId },
+        select: {
+          testRunId: true,
+          cases: { select: { caseId: true, accepted: true } },
+        },
+      });
+      expect(analysis.testRunId).toBe(log.testRunId);
+      const accepted = new Map(
+        analysis.cases.map((c: any) => [c.caseId, c.accepted] as const)
+      );
+      expect(accepted.get(c80)).toBe(true);
+      expect(accepted.get(c95)).toBe(false);
+      expect(accepted.get(c50)).toBe(false);
+      expect(accepted.get(c45)).toBeNull();
     });
 
     it("treats a run linked to the analysis by hand as every rule's run", async () => {

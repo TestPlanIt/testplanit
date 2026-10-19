@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Uniquement les problèmes que le projet classe comme exigences.",
           "includeChildIssues": "Inclure les problèmes enfants",
           "includeChildIssuesHelp": "Prenez également les cas de test liés aux problèmes enfants du problème.",
+          "caseFilter": "Filtres de cas de test",
+          "caseFilterHelp": "Seuls les cas de test correspondant à chaque filtre entrent dans l'exécution. Laissez vide pour prendre chaque cas de test que l'action sélectionne.",
           "notifyHelp": "Qui est informé lorsque les brouillons sont prêts à être examinés. Les préférences de notification de chaque personne s'appliquent toujours.",
           "draftFolderNote": "Cas de test automatiquement rédigés par le webhook {webhook}.",
           "draftFolderNoteCases": "Rédigé par l'utilisateur Système; chaque cas est lié au problème dont il a été tiré.",

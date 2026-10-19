@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Solo problemas que el proyecto clasifica como requisitos.",
           "includeChildIssues": "Incluir problemas secundarios",
           "includeChildIssuesHelp": "También toma los casos de prueba vinculados a los problemas secundarios del problema.",
+          "caseFilter": "Filtros de casos de prueba",
+          "caseFilterHelp": "Solo los casos de prueba que coinciden con todos los filtros se incluyen en la ejecución. Déjelo vacío para incluir todos los casos de prueba que selecciona la acción.",
           "notifyHelp": "Quién es notificado cuando los borradores están listos para revisar. Las preferencias de notificación de cada persona aún se aplican.",
           "draftFolderNote": "Casos de prueba elaborados automáticamente por el webhook {webhook}.",
           "draftFolderNoteCases": "Elaborado por el usuario del sistema; cada caso está vinculado al problema del que se elaboró.",

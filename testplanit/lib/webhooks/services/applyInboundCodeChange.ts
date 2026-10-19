@@ -224,6 +224,7 @@ export async function applyInboundCodeChange(
           trigger: rule.trigger,
           branch: event!.kind === "push" ? event!.branch : null,
           minScore: options.minScore ?? null,
+          caseFilter: options.caseFilter ?? null,
           autoExecute: options.autoExecute ?? null,
         };
       });

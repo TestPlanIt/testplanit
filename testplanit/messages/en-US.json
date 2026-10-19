@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Only issues the project classifies as requirements.",
           "includeChildIssues": "Include child issues",
           "includeChildIssuesHelp": "Also take the test cases linked to the issue's child issues.",
+          "caseFilter": "Test case filters",
+          "caseFilterHelp": "Only the test cases matching every filter go in the run. Leave empty to take every test case the action selects.",
           "notifyHelp": "Who is told when the drafts are ready to review. Each person's notification preferences still apply.",
           "draftFolderNote": "Test cases drafted automatically by the {webhook} webhook.",
           "draftFolderNoteCases": "Drafted by the System user; each case is linked to the issue it was drafted from.",

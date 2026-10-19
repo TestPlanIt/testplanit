@@ -27,9 +27,10 @@ function suggestionFilter(minScore: number | null | undefined) {
  * Compose the test run one Create test run rule asked for: every case the
  * completed analysis put in the pinned or affected tier, or, when the rule
  * sets a minimum score, every case scoring at least that, in score order,
- * created by the System user. The first run made from an analysis is linked
- * to it and its suggestions marked accepted, exactly as the dialog records a
- * reviewer's acceptance. A rule composes one run per analysis, so a repeat
+ * narrowed by the rule's test case filters, created by the System user. The
+ * first run made from an analysis is linked to it and the cases the run
+ * took marked accepted, exactly as the dialog records a reviewer's
+ * acceptance. A rule composes one run per analysis, so a repeat
  * of the same change reports the run it already made. `buildChanges`, the
  * pull requests behind a push, is appended to the run's note when given.
  */
@@ -37,7 +38,10 @@ export async function createRunFromAnalysis(
   db: any,
   analysisId: number,
   autoRun: ImpactAutoRun,
-  action: Pick<ImpactAutoRunAction, "trigger" | "branch" | "autoExecute"> & {
+  action: Pick<
+    ImpactAutoRunAction,
+    "trigger" | "branch" | "autoExecute" | "caseFilter"
+  > & {
     actionId: string | null;
     minScore?: number | null;
   },
@@ -102,12 +106,18 @@ export async function createRunFromAnalysis(
   }
 
   const actorId = await webhookActorId(db, analysis.project.createdBy);
-  const rule = await describeCreateRunRule(db, action);
+  const rule = await describeCreateRunRule(db, {
+    ...action,
+    projectId: analysis.projectId,
+  });
   const noteAppendix = buildChangesNodes(buildChanges);
   const composed = await composeRunFromCases(db, {
     projectId: analysis.projectId,
     name: autoRun.label,
     caseIds: analysis.cases.map((c: { caseId: number }) => c.caseId),
+    ...(action.caseFilter && action.caseFilter.length > 0
+      ? { caseFilter: action.caseFilter }
+      : {}),
     links: [
       ...(autoRun.links && autoRun.links.length > 0
         ? autoRun.links
@@ -121,7 +131,7 @@ export async function createRunFromAnalysis(
   if (!composed.created) return composed;
 
   if (!analysis.testRunId) {
-    const caseIds = analysis.cases.map((c: { caseId: number }) => c.caseId);
+    const caseIds = composed.caseIds;
     const reviewedAt = new Date();
     await db.impactAnalysis.update({
       where: { id: analysisId },

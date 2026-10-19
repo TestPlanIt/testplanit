@@ -244,9 +244,15 @@ describe("applyInboundCodeChange", () => {
     );
   });
 
-  it("hands each matching rule's minimum score and execution to the analysis, one run each", async () => {
+  const smokeFilter = [{ dimension: "tags", operator: "any", values: [2] }];
+
+  it("hands each matching rule's minimum score, test case filters and execution to the analysis, one run each", async () => {
     rules = [
-      { id: "act-1", trigger: "CODE_PULL_REQUEST", options: { minScore: 70 } },
+      {
+        id: "act-1",
+        trigger: "CODE_PULL_REQUEST",
+        options: { minScore: 70, caseFilter: smokeFilter },
+      },
       {
         id: "act-2",
         trigger: "CODE_PULL_REQUEST",
@@ -280,6 +286,7 @@ describe("applyInboundCodeChange", () => {
         trigger: "CODE_PULL_REQUEST",
         branch: null,
         minScore: 70,
+        caseFilter: smokeFilter,
         autoExecute: null,
       },
       {
@@ -287,6 +294,7 @@ describe("applyInboundCodeChange", () => {
         trigger: "CODE_PULL_REQUEST",
         branch: null,
         minScore: null,
+        caseFilter: null,
         autoExecute: { targetId: 4, ref: "main" },
       },
       // unreadable options act with none
@@ -295,6 +303,7 @@ describe("applyInboundCodeChange", () => {
         trigger: "CODE_PULL_REQUEST",
         branch: null,
         minScore: null,
+        caseFilter: null,
         autoExecute: null,
       },
     ]);
@@ -314,6 +323,7 @@ describe("applyInboundCodeChange", () => {
         trigger: "CODE_PUSH",
         branch: "main",
         minScore: null,
+        caseFilter: null,
         autoExecute: null,
       },
     ]);
@@ -329,6 +339,7 @@ describe("applyInboundCodeChange", () => {
         trigger: "CODE_BRANCH_PUSH",
         branch: "feature",
         minScore: null,
+        caseFilter: null,
         autoExecute: null,
       },
     ]);

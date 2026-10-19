@@ -40,6 +40,11 @@ vi.mock("~/lib/services/jira-panel-generation", () => ({
 vi.mock("~/lib/auditContext", () => ({
   runWithAuditContext: (_ctx: unknown, fn: () => unknown) => fn(),
 }));
+const { mockLoadRegistry } = vi.hoisted(() => ({ mockLoadRegistry: vi.fn() }));
+vi.mock("~/lib/repository/projectFilterRegistry", () => ({
+  loadProjectFilterRegistry: (...a: unknown[]) => mockLoadRegistry(...a),
+}));
+import { buildFilterDimensions } from "~/lib/repository/filterDimensions";
 
 import {
   deleteWebhookAction,
@@ -275,6 +280,49 @@ describe("webhook-actions server actions", () => {
       expect(db.webhookAction.updateMany).not.toHaveBeenCalled();
     });
 
+    it("stores test case filters the project's repository offers, coerced, and refuses others", async () => {
+      mockLoadRegistry.mockResolvedValue({
+        registry: buildFilterDimensions({
+          dynamicFields: [{ fieldId: 12, type: "Dropdown" }],
+        }),
+        fieldLabels: { field_12: "Priority" },
+      });
+
+      const result = await saveWebhookAction({
+        ...base,
+        options: {
+          caseFilter: [
+            { dimension: "field_12", operator: "in", values: ["31", 32] },
+            { dimension: "automated", operator: "is", values: ["1"] },
+          ],
+        },
+      });
+
+      expect(result).toEqual({ success: true, id: "act-new" });
+      expect(mockLoadRegistry).toHaveBeenCalledWith(db, 42);
+      expect(db.webhookAction.create.mock.calls[0][0].data.options).toEqual({
+        caseFilter: [
+          { dimension: "field_12", operator: "in", values: [31, 32] },
+          { dimension: "automated", operator: "is", values: [1] },
+        ],
+      });
+
+      for (const caseFilter of [
+        [{ dimension: "field_99", operator: "in", values: [1] }],
+        [{ dimension: "status", operator: "in", values: [1] }],
+        [{ dimension: "automated", operator: "in", values: [1] }],
+        [{ dimension: "tags", operator: "any", values: ["x"] }],
+      ]) {
+        expect(
+          await saveWebhookAction({ ...base, options: { caseFilter } })
+        ).toEqual({
+          success: false,
+          error: "A test case filter doesn't apply to this project",
+        });
+      }
+      expect(db.webhookAction.create).toHaveBeenCalledTimes(1);
+    });
+
     it("creates a rule at the end of the webhook's list", async () => {
       const result = await saveWebhookAction({
         ...base,
@@ -287,6 +335,7 @@ describe("webhook-actions server actions", () => {
         orderBy: { order: "desc" },
         select: { order: true },
       });
+      expect(mockLoadRegistry).not.toHaveBeenCalled();
       expect(db.webhookAction.create).toHaveBeenCalledWith({
         data: {
           trigger: "CODE_PULL_REQUEST",

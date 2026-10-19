@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Pouze problémy, které projekt klasifikuje jako požadavky.",
           "includeChildIssues": "Zahrnout podřízené problémy",
           "includeChildIssuesHelp": "Vezměte si také testovací případy propojené s podřízenými problémy.",
+          "caseFilter": "Filtry testovacích případů",
+          "caseFilterHelp": "Do spuštění jdou pouze testovací případy odpovídající každému filtru. Nechte prázdné, aby se vzaly všechny testovací případy, které akce vybere.",
           "notifyHelp": "Kdo je informován, když jsou návrhy připraveny ke kontrole. Preference oznámení každé osoby se stále uplatňují.",
           "draftFolderNote": "Testovací případy automaticky navržené webhookem {webhook}.",
           "draftFolderNoteCases": "Navrženo uživatelem System; každý případ je propojen s problémem, ze kterého byl navržen.",

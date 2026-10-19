@@ -18,6 +18,7 @@ const {
   mockDelete,
   mockDialog,
   mockToastError,
+  mockCaseFilterOptions,
 } = vi.hoisted(() => ({
   mockRules: vi.fn(),
   mockLogs: vi.fn(),
@@ -28,6 +29,7 @@ const {
   mockDelete: vi.fn(),
   mockDialog: vi.fn(),
   mockToastError: vi.fn(),
+  mockCaseFilterOptions: vi.fn(),
 }));
 
 vi.mock("next-intl", () => ({
@@ -86,6 +88,21 @@ vi.mock("./webhook-action-dialog", () => ({
     ) : null;
   },
 }));
+vi.mock("./webhook-action-case-filter", () => ({
+  useProjectCaseFilterOptions: (...a: unknown[]) => {
+    mockCaseFilterOptions(...a);
+    return {
+      registry: new Map(),
+      viewOptions: undefined,
+      dynamicFieldLabels: {},
+      ready: true,
+    };
+  },
+  useCaseFilterText: () => (predicate: any) =>
+    predicate.dimension === "gone"
+      ? null
+      : `${predicate.dimension}: ${predicate.operator} ${predicate.values.join(", ")}`,
+}));
 vi.mock("~/lib/navigation", () => ({
   Link: ({ children, href, ...rest }: any) => (
     <a href={href} {...rest}>
@@ -140,7 +157,14 @@ const prRule = {
   trigger: "CODE_PULL_REQUEST",
   action: "CREATE_RUN",
   filter: {},
-  options: { minScore: 70, autoExecute: { targetId: 4 } },
+  options: {
+    minScore: 70,
+    caseFilter: [
+      { dimension: "automated", operator: "is", values: [1] },
+      { dimension: "gone", operator: "in", values: [9] },
+    ],
+    autoExecute: { targetId: 4 },
+  },
 };
 const pushRule = {
   id: "act-2",
@@ -220,6 +244,9 @@ describe("WebhookActionsSection", () => {
     );
     expect(pr).toHaveTextContent("repository.cases.createTestRun");
     expect(pr).toHaveTextContent("runs.impact.affected.minScore: 70");
+    expect(pr).toHaveTextContent("automated: is 1");
+    expect(pr).not.toHaveTextContent("gone");
+    expect(mockCaseFilterOptions).toHaveBeenCalledWith(42, true);
     expect(pr).toHaveTextContent("automation.execute.target: Smoke suite");
     expect(screen.queryByTestId("webhook-action-problem-act-1")).toBeNull();
     expect(screen.getByTestId("webhook-action-enabled-act-1")).toBeChecked();
