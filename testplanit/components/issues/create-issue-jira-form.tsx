@@ -65,6 +65,8 @@ interface CreateIssueJiraFormProps {
   /** @deprecated Use projectIntegrationId — kept for backward compat */
   issueTypeId?: string;
   onIssueCreated?: (issue: any) => void;
+  /** Link the created issue to this failure signature (server-side, idempotent). */
+  failureSignatureId?: number;
   defaultValues?: {
     title?: string;
     /**
@@ -88,6 +90,7 @@ export function CreateIssueJiraForm({
   projectKey: _legacyProjectKey,
   issueTypeId: _legacyIssueTypeId,
   onIssueCreated,
+  failureSignatureId,
   defaultValues,
 }: CreateIssueJiraFormProps) {
   const t = useTranslations();
@@ -429,6 +432,9 @@ export function CreateIssueJiraForm({
         title: data.summary,
         description: data.description, // This will be TipTap JSON, adapter will convert to ADF
         customFields: {} as Record<string, any>,
+        ...(failureSignatureId
+          ? { failureSignatureId: String(failureSignatureId) }
+          : {}),
       };
 
       // Add other fields

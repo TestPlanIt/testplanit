@@ -46,6 +46,7 @@ const entryPoints = [
   "workers/executionDispatchWorker.ts",
   "workers/alertWorker.ts",
   "workers/webhookActionsWorker.ts",
+  "workers/failureTriageWorker.ts",
   "scheduler.ts",
 ];
 

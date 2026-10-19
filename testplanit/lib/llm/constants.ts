@@ -16,6 +16,7 @@ export const LLM_FEATURES = {
   AUTOMATION_CANDIDATES: "automation_candidates",
   DERIVE_CASE_STEPS: "derive_case_steps",
   IMPACT_ANALYSIS: "impact_analysis",
+  FAILURE_TRIAGE: "failure_triage",
 } as const;
 
 export type LlmFeature = (typeof LLM_FEATURES)[keyof typeof LLM_FEATURES];
@@ -212,6 +213,56 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
         "Newline-delimited positional JSON rows: [id, name, folder?, tags[]?, fields?]",
     },
   ],
+  [LLM_FEATURES.FAILURE_TRIAGE]: [
+    {
+      name: "EXCEPTION_TYPE",
+      description: "Exception or assertion type shared by the cluster",
+    },
+    {
+      name: "FAILURE_MESSAGE",
+      description: "Failure message of the most recent occurrence",
+    },
+    {
+      name: "STACK_TRACE",
+      description:
+        "Stack trace / failure body of the most recent occurrence (truncated)",
+    },
+    {
+      name: "SYSTEM_ERR",
+      description:
+        "stderr captured with the most recent occurrence (truncated, may be empty)",
+    },
+    {
+      name: "OCCURRENCE_COUNT",
+      description: "How many results belong to the cluster",
+    },
+    {
+      name: "CASE_COUNT",
+      description: "How many distinct test cases failed this way",
+    },
+    {
+      name: "RUN_COUNT",
+      description: "How many test runs contain the cluster",
+    },
+    {
+      name: "FIRST_SEEN",
+      description: "When the cluster was first seen (ISO timestamp)",
+    },
+    {
+      name: "LAST_SEEN",
+      description: "When the cluster was last seen (ISO timestamp)",
+    },
+    {
+      name: "FLAKY_CANDIDATE",
+      description:
+        "yes/no: the affected cases flip between pass and fail in their recent history",
+    },
+    {
+      name: "AFFECTED_CASES",
+      description:
+        "Up to 10 affected case names with their recent pass/fail verdicts",
+    },
+  ],
 };
 
 /**
@@ -233,4 +284,5 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
   [LLM_FEATURES.AUTOMATION_CANDIDATES]: "Automation Candidates Report",
   [LLM_FEATURES.DERIVE_CASE_STEPS]: "AI Step Derivation",
   [LLM_FEATURES.IMPACT_ANALYSIS]: "Impact: Affected Test Selection",
+  [LLM_FEATURES.FAILURE_TRIAGE]: "Failure Triage Classification",
 };

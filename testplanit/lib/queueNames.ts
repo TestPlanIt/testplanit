@@ -37,6 +37,11 @@ export const ALERT_QUEUE_NAME = "alerts";
 // receiver has answered.
 export const WEBHOOK_ACTIONS_QUEUE_NAME = "webhook-actions";
 export const JOB_RUN_TRACKER_ACTIONS = "run-tracker-actions";
+// Failure triage: group automated failures into signatures and classify them.
+export const FAILURE_TRIAGE_QUEUE_NAME = "failure-triage";
+export const JOB_TRIAGE_RUN = "triage-run";
+export const JOB_TRIAGE_BACKFILL = "triage-backfill";
+export const JOB_CLASSIFY_SIGNATURES = "classify-signatures";
 export const JOB_DRAFT_CASES = "draft-cases";
 export const JOB_EVALUATE_ALERT_RESULT = "evaluate-alert-result";
 export const JOB_EVALUATE_ALERT_JUNIT_RESULT = "evaluate-alert-junit-result";
@@ -92,4 +97,5 @@ export const ALL_QUEUE_NAMES = [
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
   ALERT_QUEUE_NAME,
   WEBHOOK_ACTIONS_QUEUE_NAME,
+  FAILURE_TRIAGE_QUEUE_NAME,
 ] as const;

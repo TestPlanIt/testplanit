@@ -1,3 +1,7 @@
+import {
+  ClassificationBadge,
+  KnownIssueBadge,
+} from "@/components/triage/badges";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
 import { RecordId } from "@/components/RecordId";
@@ -67,6 +71,22 @@ export function getJunitColumns({
                 </TooltipContent>
               </Tooltip>
             )}
+            {row.original.failureSignature &&
+              row.original.failureSignature.classification !==
+                "UNCLASSIFIED" && (
+                <ClassificationBadge
+                  classification={row.original.failureSignature.classification}
+                  source={row.original.failureSignature.classificationSource}
+                  className="ms-1 shrink-0"
+                />
+              )}
+            {row.original.failureSignature &&
+              row.original.failureSignature.issues?.length > 0 && (
+                <KnownIssueBadge
+                  count={row.original.failureSignature.issues.length}
+                  className="ms-1 shrink-0"
+                />
+              )}
             {!isDeleted && (
               <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             )}

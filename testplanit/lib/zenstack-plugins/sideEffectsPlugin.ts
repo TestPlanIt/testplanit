@@ -186,6 +186,8 @@ export const GUC_MODELS = new Set<string>([
   "WebhookConfig",
   "WebhookAction",
   "ImpactAnalysis",
+  "FailureSignature",
+  "CaseQuarantine",
   // Admin-config catalog — CDC-only, no semantic (captureAuditEvent /
   // auditSystemConfigChange) coverage for general edits, so no double-logging.
   "Workflows",
@@ -1036,6 +1038,9 @@ export const sideEffectsPlugin = definePlugin(schema, {
             (error) =>
               console.error("[alerts] automated result enqueue failed:", error)
           );
+          await enqueueFailureTriageForJUnitResults(tx, after).catch((error) =>
+            console.error("[failure-triage] enqueue failed:", error)
+          );
           break;
         }
 
@@ -1318,6 +1323,62 @@ async function enqueueAlertEvaluationsForResults(
 }
 
 /** Same as above for reporter (JUnit) results, which reach the run via their suite. */
+/**
+ * Failure triage: one debounced per-run job per result burst, so the worker
+ * groups a run's FAILURE/ERROR rows after they have all landed. Gated on the
+ * project flag so a project that turned triage off costs nothing here.
+ */
+async function enqueueFailureTriageForJUnitResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  const failed = rows.filter(
+    (row) =>
+      row?.id &&
+      row.testSuiteId != null &&
+      (row.type === "FAILURE" || row.type === "ERROR")
+  );
+  if (
+    failed.length === 0 ||
+    typeof tx.jUnitTestSuite?.findMany !== "function"
+  ) {
+    return;
+  }
+  const suiteIds = [...new Set(failed.map((row) => Number(row.testSuiteId)))];
+  const suites = await tx.jUnitTestSuite.findMany({
+    where: { id: { in: suiteIds } },
+    select: {
+      id: true,
+      testRun: {
+        select: {
+          id: true,
+          projectId: true,
+          project: { select: { failureTriageEnabled: true } },
+        },
+      },
+    },
+  });
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const { enqueueFailureTriageForRun } =
+    await import("~/lib/services/triage/enqueue");
+  const tenantId = getCurrentTenantId();
+  const seenRuns = new Set<number>();
+  for (const suite of suites) {
+    const run = suite.testRun as {
+      id: number;
+      projectId: number;
+      project: { failureTriageEnabled: boolean } | null;
+    };
+    if (!run?.project?.failureTriageEnabled || seenRuns.has(run.id)) continue;
+    seenRuns.add(run.id);
+    void enqueueFailureTriageForRun({
+      testRunId: run.id,
+      projectId: run.projectId,
+      tenantId,
+    });
+  }
+}
+
 async function enqueueAlertEvaluationsForJUnitResults(
   tx: TxClient,
   rows: any[]

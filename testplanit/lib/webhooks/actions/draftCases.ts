@@ -116,7 +116,7 @@ export async function runDraftCases(
     return { outcome: "has_cases" };
   }
 
-  const readiness = await getProjectReadiness(job.projectId);
+  const readiness = await getProjectReadiness(job.projectId, db);
   if (!readiness.hasActiveLlm) {
     await log({ outcome: "no_llm" });
     await annotate("ignored:no_llm");
@@ -124,8 +124,8 @@ export async function runDraftCases(
   }
 
   const templateId =
-    options.templateId ?? (await defaultTemplateId(job.projectId));
-  const loaded = templateId ? await loadTemplateData(templateId) : null;
+    options.templateId ?? (await defaultTemplateId(db, job.projectId));
+  const loaded = templateId ? await loadTemplateData(templateId, db) : null;
   if (!loaded) {
     await log({ outcome: "no_template" });
     await annotate("draft:no_template");
@@ -149,9 +149,14 @@ export async function runDraftCases(
       statuses:
         rule.trigger === "ISSUE_STATUS_ENTERED" ? filter.statuses : undefined,
     })) ?? loaded.template.name;
-  const target = await resolveImportTarget(job.projectId, actorId, {
-    newFolderName: ruleLine,
-  });
+  const target = await resolveImportTarget(
+    job.projectId,
+    actorId,
+    {
+      newFolderName: ruleLine,
+    },
+    db
+  );
   if (!target) {
     await log({ outcome: "no_target" });
     await annotate("draft:no_target");
@@ -269,8 +274,11 @@ export async function runDraftCases(
   };
 }
 
-async function defaultTemplateId(projectId: number): Promise<number | null> {
-  const templates = await listProjectTemplates(projectId);
+async function defaultTemplateId(
+  db: any,
+  projectId: number
+): Promise<number | null> {
+  const templates = await listProjectTemplates(projectId, db);
   return (templates.find((t) => t.isDefault) ?? templates[0])?.id ?? null;
 }
 

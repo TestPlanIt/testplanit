@@ -196,7 +196,8 @@ describe("runDraftCases", () => {
       {
         newFolderName:
           "Issue status changes → Generate Test Cases with AI · Ready",
-      }
+      },
+      expect.anything()
     );
     expect(mocks.folderNote).toHaveBeenCalledWith({
       webhook: { name: null, adapterType: "JIRA" },
@@ -210,7 +211,7 @@ describe("runDraftCases", () => {
       data: { docs: { type: "doc", content: [] } },
     });
     // The default template, since the rule names none.
-    expect(mocks.loadTemplate).toHaveBeenCalledWith(4);
+    expect(mocks.loadTemplate).toHaveBeenCalledWith(4, expect.anything());
     expect(mocks.generate).toHaveBeenCalledWith(
       expect.objectContaining({
         projectId: 7,

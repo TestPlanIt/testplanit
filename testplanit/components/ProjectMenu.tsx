@@ -42,6 +42,7 @@ import {
   SquareStack,
   Tags as TagsIcon,
   Webhook,
+  Microscope,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -161,11 +162,12 @@ export default function ProjectsMenu({
   const { data: project } = useClientQueries(schema).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
-      select: { requirementsEnabled: true },
+      select: { requirementsEnabled: true, failureTriageEnabled: true },
     },
     { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
   );
   const requirementsEnabled = project?.requirementsEnabled === true;
+  const failureTriageEnabled = project?.failureTriageEnabled === true;
 
   // Permission check for Shared Steps
   const safeProjectId = projectId ? String(projectId) : "";
@@ -271,6 +273,17 @@ export default function ProjectsMenu({
       id: "test-runs-link",
       section: "management",
     },
+    ...(failureTriageEnabled
+      ? [
+          {
+            icon: Microscope,
+            label: tCommon("pageTitles.triage"),
+            path: "triage",
+            id: "project-triage-link",
+            section: "management" as MenuSection,
+          },
+        ]
+      : []),
     {
       icon: SessionsIcon,
       label: t("common.fields.sessions"),
@@ -364,6 +377,13 @@ export default function ProjectsMenu({
             label: tCommon("pageTitles.automation"),
             path: "settings/automation",
             id: "settings-automation-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: Microscope,
+            label: tCommon("pageTitles.triage"),
+            path: "settings/triage",
+            id: "settings-triage-link",
             section: "settings" as MenuSection,
           },
           {

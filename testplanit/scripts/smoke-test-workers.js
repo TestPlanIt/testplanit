@@ -64,6 +64,7 @@ const WORKERS = [
   "auditLogRetentionWorker",
   "datasetLeaseSweepWorker",
   "executionDispatchWorker",
+  "failureTriageWorker",
 ];
 
 const entryPoints = [

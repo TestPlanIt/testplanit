@@ -588,6 +588,27 @@ html:not(.accessible):not(.accessibledark)
   background-color: hsl(var(--tp-table-row-nested-hover));
 }
 
+/* A selected row (e.g. a cluster picked as a filter) is the row surface mixed
+   toward the primary colour, so it reads in every theme; the pinned cell takes
+   the same fill for the reason given above. Hover deepens the mix slightly. */
+.table-row-surface-selected,
+.table-row-surface-selected .table-row-surface {
+  background-color: color-mix(
+    in srgb,
+    hsl(var(--tp-table-row)),
+    hsl(var(--primary)) 22%
+  );
+}
+
+.table-row-surface-selected:hover,
+.table-row-surface-selected:hover .table-row-surface {
+  background-color: color-mix(
+    in srgb,
+    hsl(var(--tp-table-row)),
+    hsl(var(--primary)) 30%
+  );
+}
+
 /* One colour on both axes so row dividers and column separators match: the row
    itself (div-based table), its cells' inline-end borders, and the bottom
    border below. The divider has to be drawn on the cells for DataTable, whose

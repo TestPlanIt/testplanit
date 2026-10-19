@@ -87,7 +87,8 @@ interface CreateIssueDialogProps {
     | "sessionResult"
     | "testRun"
     | "testRunResult"
-    | "testRunStepResult";
+    | "testRunStepResult"
+    | "failureSignature";
   entityId?: number;
 }
 
@@ -488,6 +489,12 @@ export function CreateIssueDialog({
                 connect: [{ id: entityId }],
               };
               break;
+            case "failureSignature":
+              // Explicit FailureSignatureIssue join (failure triage).
+              createData.failureSignatures = {
+                create: [{ signatureId: entityId }],
+              };
+              break;
           }
         }
 
@@ -563,6 +570,12 @@ export function CreateIssueDialog({
             case "testRunStepResult":
               createData.testRunStepResults = {
                 connect: [{ id: entityId }],
+              };
+              break;
+            case "failureSignature":
+              // Explicit FailureSignatureIssue join (failure triage).
+              createData.failureSignatures = {
+                create: [{ signatureId: entityId }],
               };
               break;
           }

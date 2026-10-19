@@ -337,6 +337,20 @@ module.exports = {
       },
     },
     {
+      name: "failure-triage-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/failureTriageWorker.ts"
+        : "dist/workers/failureTriageWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("512M", { shared: true }),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
       name: "step-scan-worker",
       script: isDev ? "tsx" : "node",
       args: isDev
