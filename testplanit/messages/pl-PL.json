@@ -740,7 +740,8 @@
       "apiDocumentation": "Dokumentacja API",
       "sharedContent": "Udostępniana treść",
       "impact": "Analiza wpływu",
-      "alerts": "Powiadomienia i alerty"
+      "alerts": "Powiadomienia i alerty",
+      "triage": "Triage awarii"
     },
     "aria": {
       "userMenu": "Menu użytkownika",
@@ -3959,36 +3960,36 @@
       }
     },
     "savedDrafts": {
-      "title": "Moje przygotowane przypadki",
-      "description": "Przypadki testowe, które napisałeś i przygotowałeś zamiast je tworzyć. Tylko ty je widzisz. Otwórz jeden, aby go przejrzeć, lub utwórz kilka naraz.",
-      "empty": "W tym projekcie nie masz żadnych przygotowanych przypadków testowych.",
+      "title": "Moje etapy przypadków",
+      "description": "Przypadki testowe, które napisałeś i przygotowałeś zamiast tworzyć. Tylko Ty możesz je zobaczyć. Otwórz jeden, aby go przejrzeć, lub utwórz kilka naraz.",
+      "empty": "Nie masz przygotowanych przypadków testowych w tym projekcie.",
       "saveDraft": "Przygotuj przypadek",
       "saveTitle": "Nazwij przypadek testowy",
       "renameTitle": "Zmień nazwę przypadku testowego",
-      "saveDescription": "Przygotowany przypadek testowy jest wyświetlany pod swoją nazwą. Tylko ty go widzisz; nic nie zostaje dodane do repozytorium, dopóki go nie utworzysz.",
+      "saveDescription": "Przygotowany przypadek testowy jest wymieniany pod jego nazwą. Tylko Ty możesz go zobaczyć; nic nie jest dodawane do repozytorium, dopóki go nie utworzysz.",
       "saved": "Przypadek testowy przygotowany",
-      "saveFailed": "Nie udało się przygotować przypadku testowego",
+      "saveFailed": "Nie można przygotować przypadku testowego",
       "renamed": "Nazwa przygotowanego przypadku zmieniona",
       "deleted": "Przygotowany przypadek usunięty",
-      "deleteFailed": "Nie udało się usunąć przygotowanego przypadku",
+      "deleteFailed": "Nie można usunąć przygotowanego przypadku",
       "deleteTitle": "Usunąć ten przygotowany przypadek?",
-      "deleteDescription": "\"{name}\" zostanie usunięty. Nigdy nie został utworzony, więc nic się więcej nie zmieni.",
+      "deleteDescription": "\"{name}\" zostanie usunięty. Nigdy nie został utworzony, więc nic więcej się nie zmienia.",
       "folderDeleted": "Folder usunięty",
       "folderFallback": "Folder przygotowanego przypadku został usunięty; przypadek zostanie utworzony w \"{folder}\".",
       "selectFolderFirst": "Wybierz folder przed otwarciem tego przygotowanego przypadku.",
-      "problemCount": "{count, plural, one {{count} problem} few {{count} problemy} many {{count} problemów} other {{count} problemów}}",
+      "problemCount": "{count, plural, one {{count} problem} other {{count} problems}}",
       "updated": "Zaktualizowano {age}",
-      "createSelected": "{count, plural, =0 {Utwórz wybrane} one {Utwórz {count} wybrany} few {Utwórz {count} wybrane} many {Utwórz {count} wybranych} other {Utwórz {count} wybranych}}",
-      "createdToast": "{count, plural, one {{count} przypadek testowy utworzony} few {{count} przypadki testowe utworzone} many {{count} przypadków testowych utworzonych} other {{count} przypadków testowych utworzonych}}",
-      "failedToast": "{count, plural, one {{count} przygotowany przypadek nie mógł być utworzony} few {{count} przygotowane przypadki nie mogły być utworzone} many {{count} przygotowanych przypadków nie mogło być utworzonych} other {{count} przygotowanych przypadków nie mogło być utworzonych}}",
+      "createSelected": "{count, plural, =0 {Utwórz wybrane} other {Utwórz {count} wybranych}}",
+      "createdToast": "{count, plural, one {{count} przypadek testowy utworzony} other {{count} przypadków testowych utworzonych}}",
+      "failedToast": "{count, plural, one {{count} przygotowany przypadek nie mógł być utworzony} other {{count} przygotowanych przypadków nie mogło być utworzonych}}",
       "problemFolder": "Folder został usunięty. Otwórz przygotowany przypadek, aby wybrać folder.",
       "problemTemplate": "Szablon nie jest już przypisany do tego projektu. Otwórz przygotowany przypadek, aby wybrać jeden.",
       "problemState": "Stan już nie istnieje. Otwórz przygotowany przypadek, aby wybrać jeden.",
       "problemField": "{field}: {message}",
       "notCreated": "Nie utworzono: {message}",
-      "openToFix": "Otwórz przygotowany przypadek, aby go naprawić.",
-      "elsewhereTitle": "Masz również przygotowane sprawy w",
-      "elsewhereCount": "{count, plural, one {{count} przygotowany przypadek} few {{count} przygotowane przypadki} many {{count} przygotowanych przypadków} other {{count} przygotowanych przypadków}}"
+      "openToFix": "Otwórz przygotowany przypadek, aby to naprawić.",
+      "elsewhereTitle": "Masz również przygotowane przypadki w",
+      "elsewhereCount": "{count, plural, one {{count} przygotowany przypadek} other {{count} przygotowanych przypadków}}"
     },
     "filterBar": {
       "addFilter": "Dodaj filtr",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Ponowione",
-      "clear": "Wyczyść filtry"
+      "clear": "Wyczyść wszystkie filtry"
     },
     "impact": {
       "title": "Wpływ",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Generuj przypadki testowe z adresu URL (testowanie aplikacji)",
         "automation_candidates": "Raport kandydatów do automatyzacji",
         "derive_case_steps": "Generowanie kroków przez AI",
-        "impact_analysis": "Wpływ: Wybór testów pod wpływem"
+        "impact_analysis": "Wpływ: Wybór testów pod wpływem",
+        "failure_triage": "Klasyfikacja Triage awarii"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Dzienniki audytu",
         "budget-alerts": "Alerty budżetowe",
         "auto-tag": "Automatyczne tagowanie AI",
+        "failure-triage": "Triage awarii",
         "repo-cache": "Pamięć podręczna repozytorium",
         "copy-move": "Kopiuj i przenieś",
         "duplicate-scan": "Duplikat skanowania",
@@ -7077,8 +7080,8 @@
         "reviewCancelledEmailMessage": "{actorName} anulował prośbę o recenzję w {entityLabel} „{entityName}” w projekcie „{projectName}”.",
         "reviewReminderTitle": "Recenzja wciąż w toku",
         "reviewReminderAction": "nadal czekam na Twoją recenzję",
-        "reviewReminderEmailMessage": "Przypomnienie: prośba o przegląd od użytkownika {actorName} na {entityLabel} \"{entityName}\" w projekcie \"{projectName}\" oczekuje od {pendingFor}.",
-        "reviewReminderHoursPending": "Oczekuje od {pendingFor}",
+        "reviewReminderEmailMessage": "Przypomnienie: prośba recenzji od użytkownika {actorName} dotycząca {entityLabel} \"{entityName}\" w projekcie \"{projectName}\" oczekuje na rozpatrzenie przez {pendingFor}.",
+        "reviewReminderHoursPending": "Oczekiwanie na {pendingFor}",
         "aiStepsDerivedTitle": "Kroki testowe wygenerowane przez AI są gotowe",
         "aiStepsDerivedMessage": "Do {count, plural, one {# przypadku testowego} few {# przypadków testowych} many {# przypadków testowych} other {# przypadku testowego}} dodano kroki wygenerowane przez AI — sprawdź ich poprawność.",
         "aiStepsDerivedReviewLink": "Przejrzyj przebieg testu",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Wpływ\nPołącz repozytorium aplikacji poddawanej testom, aby ten projekt mógł uruchamiać analizę wpływu testów: wybierz dwa commity, aby zobaczyć, które przypadki testowe są przez zmiany dotknięte, i przypinaj przypadki testowe do kodu, który obejmują.",
     "pathPatterns": "## Wzorce ścieżek\nKażdy wiersz łączy bazową **ścieżkę** ze **wzorem** glob. Wiersze się sumują: plik jest uwzględniany, gdy pasuje do niego dowolny wiersz.\n\n- `src` + `**/*` — wszystko w `src`\n- puste lub `.` + `**/*` — każdy plik w repozytorium\n- `src` + `**/!(*.test|*.spec).ts` — pliki `.ts` z wyjątkiem testów\n\n### Wyklucz\nZaznacz **Wyklucz** w wierszu, aby usunąć jego pliki, nawet jeśli inny wiersz je uwzględnia. Wykluczenia dotyczą selektora plików i pamięci podręcznej, a w przypadku Impact — zmienionych plików analizy, więc plik, który zmienia się przy prawie każdym pull requeście, przestaje ściągać niepowiązane przypadki testowe. Co najmniej jeden wiersz musi pozostać niezaznaczony.\n\n- puste + `**/CHANGELOG*` — każdy changelog, na dowolnej głębokości\n- `app` + `build.gradle.kts` — plik kompilacji, który tylko podnosi wersję",
     "projectAutomation": "## Zautomatyzowane wykonanie\nCele wykonania informują TestPlanIt, gdzie wykonać zautomatyzowane przypadki testowe tego projektu: przepływ pracy GitHub Actions, potok GitLab CI lub podpisany webhook dla każdego innego systemu. Gdy przebieg jest wykonywany, TestPlanIt uruchamia zadanie z ID przebiegu i adresem URL planu; zadanie odczytuje plan, uruchamia pasujące testy i raportuje wyniki z powrotem za pomocą reportera lub CLI przypiętego do tego przebiegu. Cele mogą być wyłączone bez usuwania.",
-    "userAlerts": "## Powiadomienia i alerty\n**Preferencje powiadomień** decydują o tym, jak się z Tobą skontaktować (w aplikacji, e-mail, kompilacja) i które typy powiadomień w ogóle otrzymujesz.\n\n**Alerty** monitorują metrykę testowania i powiadamiają ich subskrybentów, gdy przekroczy linię, na przykład wynik zajmujący 50% dłużej niż zwykły czas trwania przypadku, przypadek, który nie powiedzie się trzy razy z rzędu, przebieg, którego współczynnik przejścia spada poniżej 90%, lub kamień milowy, który pozostaje w tyle z biegiem dni. Lista pokazuje każdy alert w Twoich projektach; przełącznik **Powiadom mnie** obserwuje lub opuszcza jeden. **Dodaj alert** tworzy własny w dowolnym projekcie, w którym Twoja rola ma **Alerty** Dodaj/Edytuj; administratorzy projektu zarządzają każdym alertem w swoim projekcie i subskrypcjami innych osób. Alert uruchamia się co najwyżej raz na podmiot w jego okresie chłodzenia i pozostaje cichy, dopóki nie będzie wystarczająco dużo wyników."
+    "userAlerts": "## Powiadomienia i alerty\n**Preferencje powiadomień** decydują o tym, jak się z Tobą skontaktować (w aplikacji, e-mail, kompilacja) i które typy powiadomień w ogóle otrzymujesz.\n\n**Alerty** monitorują metrykę testowania i powiadamiają ich subskrybentów, gdy przekroczy linię, na przykład wynik zajmujący 50% dłużej niż zwykły czas trwania przypadku, przypadek, który nie powiedzie się trzy razy z rzędu, przebieg, którego współczynnik przejścia spada poniżej 90%, lub kamień milowy, który pozostaje w tyle z biegiem dni. Lista pokazuje każdy alert w Twoich projektach; przełącznik **Powiadom mnie** obserwuje lub opuszcza jeden. **Dodaj alert** tworzy własny w dowolnym projekcie, w którym Twoja rola ma **Alerty** Dodaj/Edytuj; administratorzy projektu zarządzają każdym alertem w swoim projekcie i subskrypcjami innych osób. Alert uruchamia się co najwyżej raz na podmiot w jego okresie chłodzenia i pozostaje cichy, dopóki nie będzie wystarczająco dużo wyników.",
+    "projectTriage": "## Triage awarii\nAutomatyczne awarie, które mają taki sam wyjątek, wiadomość i górne ramki stosu, są grupowane w jedną **sygnaturę**. Każda sygnatura pokazuje, jak często się pojawiała, które przypadki testowe i przebiegi jej dotyczyły, oraz opinię AI na temat tego, czy jest to błąd produktu, błąd testu, problem środowiska czy zmienność. Rozwiąż lub zignoruj sygnaturę po jej obsłużeniu; sama się otworzy, jeśli awaria wróci.",
+    "projectTriageSettings": "## Ustawienia Triage awarii\nGrouping runs on every automated result that arrives and costs nothing. AI classification uses the AI model assigned to the **Failure Triage Classification** feature on the AI Models page; turn it off here to keep grouping without any AI calls. **Analyze existing results** groups every automated failure already recorded in this project."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Integracje",
       "QUEUE": "Kolejki zadań w tle",
       "SYSTEM": "Instalacja"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Otwarte",
+      "RESOLVED": "Rozwiązane",
+      "IGNORED": "Ignorowane"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Niesklasyfikowane",
+      "PRODUCT_BUG": "Błąd produktu",
+      "TEST_BUG": "Błąd testu",
+      "ENVIRONMENT": "Środowisko",
+      "FLAKY": "Zmienność"
+    },
+    "source": {
+      "AI": "Sklasyfikowane przez AI",
+      "labelAI": "AI",
+      "labelMANUAL": "Ręczne"
+    },
+    "columns": {
+      "classification": "Klasyfikacja",
+      "occurrences": "Wystąpienia",
+      "firstSeen": "Najpierw widziano",
+      "lastSeen": "Ostatnio widziano",
+      "classifiedBy": "Sklasyfikowane przez"
+    },
+    "filters": {
+      "searchPlaceholder": "Wyszukaj podpisy...",
+      "flakyOnly": "Kandydaci na zmienność",
+      "sourceAll": "AI lub ręczne"
+    },
+    "actions": {
+      "resolve": "Rozwiąż",
+      "ignore": "Zignoruj",
+      "classify": "Sklasyfikuj za pomocą AI",
+      "setClassification": "Ustaw klasyfikację"
+    },
+    "detail": {
+      "exceptionType": "Typ wyjątku",
+      "normalizedMessage": "Znormalizowana wiadomość",
+      "frames": "Górne ramki stosu",
+      "sampleTrace": "Ostatnia awaria",
+      "affectedCases": "{count, plural, one {# dotknięty przypadek testowy} few {# dotknięte przypadki testowe} many {# dotkniętych przypadków testowych} other {# dotkniętego przypadku testowego}}",
+      "recentOccurrences": "{count, plural, one {# niedawne wystąpienie} few {# niedawne wystąpienia} many {# niedawnych wystąpień} other {# niedawnego wystąpienia}}",
+      "rationale": "Uzasadnienie",
+      "suggestedIssueTitle": "Sugerowany tytuł problemu",
+      "nextStep": "Sugerowany następny krok",
+      "noAi": "Nie sklasyfikowane przez AI.",
+      "noDetails": "Ta awaria nie zawierała wiadomości ani śladu stosu, więc jest pogrupowana według przypadku testowego.",
+      "notesPlaceholder": "Notatki dla zespołu...",
+      "lastRun": "Ostatni przebieg",
+      "aiSuggestion": "Sugestia AI",
+      "unlinkConfirmDescription": "To usuwa problem z tej sygnatury. Problem sam w sobie jest zachowywany i można go ponownie połączyć później.",
+      "signatureLabel": "Sygnatura awarii",
+      "affectedCasesLabel": "Dotknięte przypadki testowe"
+    },
+    "flakyCandidate": "Kandydat na zmienność",
+    "flakyCandidateHint": "Dotknięte przypadki testowe przechodzą między pozytywnym i negatywnym wynikiem w ich niedawnej historii.",
+    "knownIssue": "Znany problem",
+    "notGrouped": "{count, plural, one {# awaria nie jest jeszcze pogrupowana} few {# awarie nie są jeszcze pogrupowane} many {# awarii nie jest jeszcze pogrupowanych} other {# awarii nie jest jeszcze pogrupowanych}}",
+    "runPanel": {
+      "title": "Klastry awarii",
+      "inRun": "{count, plural, one {# w tym przebiegu} few {# w tym przebiegu} many {# w tym przebiegu} other {# w tym przebiegu}}",
+      "hint": "Kliknij klaster, aby filtrować poniższe wyniki.",
+      "open": "Wyświetl sygnaturę",
+      "inRunColumn": "W tym przebiegu",
+      "selectedClusters": "{count, plural, one {# wybrany klaster} few {# wybrane klastry} many {# wybranych klastrów} other {# wybranego klastra}}",
+      "clearSelected": "Wyczyść wybrane klastry"
+    },
+    "toasts": {
+      "updated": "Sygnatura zaktualizowana",
+      "updateFailed": "Nie można zaktualizować sygnatury",
+      "classifyQueued": "Żądana klasyfikacja AI",
+      "noAiModel": "Brak modelu AI skonfigurowanego dla tej funkcji",
+      "issueLinked": "Problem powiązany"
+    },
+    "empty": {
+      "title": "Brak sygnatur awarii",
+      "description": "Sygnatury pojawiają się tutaj, gdy pojawią się zautomatyzowane wyniki z awariami. Aby pogrupować awarie już zarejestrowane w tym projekcie, użyj opcji Analyze existing results w ustawieniach Failure Triage."
+    },
+    "settings": {
+      "description": "Pogrupuj zautomatyzowane awarie w sygnatury i pozwól AI je sklasyfikować.",
+      "enableLabel": "Włącz Triage awarii",
+      "enableDescription": "Pogrupuj każdą zautomatyzowaną awarię w tym projekcie według wyjątku, wiadomości i ramek stosu, gdy wyniki się pojawią.",
+      "autoClassifyLabel": "Sklasyfikuj nowe sygnatury za pomocą AI",
+      "autoClassifyDescription": "Poproś model AI projektu o sklasyfikowanie każdej nowej sygnatury jako błędu produktu, błędu testu, problemu środowiska lub zmienności. Wymaga modelu AI przypisanego do funkcji Failure Triage Classification.",
+      "backfillLabel": "Przeanalizuj istniejące wyniki",
+      "backfillDescription": "Pogrupuj każdą zautomatyzowaną awarię już zarejestrowaną w tym projekcie. Uruchamia się w tle.",
+      "backfillStarted": "Analiza rozpoczęta",
+      "backfillRunning": "Analiza w toku... {processed, plural, one {# awaria pogrupowana} few {# awarie pogrupowane} many {# awarii pogrupowanych} other {# awarię pogrupowaną}}",
+      "backfillDone": "Analiza ukończona",
+      "backfillFailed": "Analiza nie powiodła się",
+      "backfillQueueUnavailable": "Kolejka zadań w tle jest niedostępna",
+      "enabledToast": "Triage awarii włączony",
+      "disabledToast": "Triage awarii wyłączony",
+      "autoClassifyOnToast": "Klasyfikacja AI włączona",
+      "autoClassifyOffToast": "Klasyfikacja AI wyłączona",
+      "openTriage": "Otwórz Triage awarii"
     }
   }
 }

@@ -740,7 +740,8 @@
       "apiDocumentation": "Documentação da API",
       "sharedContent": "Conteúdo compartilhado",
       "impact": "Análise de Impacto",
-      "alerts": "Notificações e alertas"
+      "alerts": "Notificações e alertas",
+      "triage": "Triagem de Falhas"
     },
     "aria": {
       "userMenu": "Menu do usuário",
@@ -3959,34 +3960,34 @@
       }
     },
     "savedDrafts": {
-      "title": "Meus Casos em Rascunho",
-      "description": "Casos de teste que você escreveu e colocou em rascunho em vez de criar. Apenas você pode vê-los. Abra um para revisar ou crie vários de uma vez.",
-      "empty": "Você não tem casos de teste em rascunho neste projeto.",
-      "saveDraft": "Colocar Caso em Rascunho",
+      "title": "Meus Casos Preparados",
+      "description": "Casos de teste que você escreveu e preparou em vez de criar. Apenas você pode vê-los. Abra um para revisá-lo ou crie vários de uma vez.",
+      "empty": "Você não tem casos de teste preparados neste projeto.",
+      "saveDraft": "Preparar Caso",
       "saveTitle": "Nomeie o caso de teste",
       "renameTitle": "Renomear caso de teste",
-      "saveDescription": "Um caso de teste em rascunho é listado com seu nome. Apenas você pode vê-lo; nada é adicionado ao repositório até que você o crie.",
-      "saved": "Caso de teste colocado em rascunho",
-      "saveFailed": "O caso de teste não pôde ser colocado em rascunho",
-      "renamed": "Caso em rascunho renomeado",
-      "deleted": "Caso em rascunho excluído",
-      "deleteFailed": "O caso em rascunho não pôde ser excluído",
-      "deleteTitle": "Excluir este caso em rascunho?",
-      "deleteDescription": "\"{name}\" será excluído. Nunca foi criado, então nada mais muda.",
+      "saveDescription": "Um caso de teste preparado é listado sob seu nome. Apenas você pode vê-lo; nada é adicionado ao repositório até que você o crie.",
+      "saved": "Caso de teste preparado",
+      "saveFailed": "O caso de teste não pôde ser preparado",
+      "renamed": "Caso preparado renomeado",
+      "deleted": "Caso preparado excluído",
+      "deleteFailed": "O caso preparado não pôde ser excluído",
+      "deleteTitle": "Excluir este caso preparado?",
+      "deleteDescription": "\"{name}\" será excluído. Nunca foi criado, portanto nada mais muda.",
       "folderDeleted": "Pasta excluída",
-      "folderFallback": "A pasta do caso em rascunho foi excluída; o caso será criado em \"{folder}\".",
-      "selectFolderFirst": "Selecione uma pasta antes de abrir este caso em rascunho.",
+      "folderFallback": "A pasta do caso preparado foi excluída; o caso será criado em \"{folder}\".",
+      "selectFolderFirst": "Selecione uma pasta antes de abrir este caso preparado.",
       "problemCount": "{count, plural, one {{count} problema} other {{count} problemas}}",
       "updated": "Atualizado {age}",
       "createSelected": "{count, plural, =0 {Criar selecionados} other {Criar {count} selecionados}}",
       "createdToast": "{count, plural, one {{count} caso de teste criado} other {{count} casos de teste criados}}",
-      "failedToast": "{count, plural, one {{count} caso em rascunho não pôde ser criado} other {{count} casos em rascunho não puderam ser criados}}",
-      "problemFolder": "A pasta foi excluída. Abra o caso em rascunho para escolher uma pasta.",
-      "problemTemplate": "O modelo não está mais atribuído a este projeto. Abra o caso em rascunho para escolher um.",
-      "problemState": "O estado não existe mais. Abra o caso em rascunho para escolher um.",
+      "failedToast": "{count, plural, one {{count} caso preparado não pôde ser criado} other {{count} casos preparados não puderam ser criados}}",
+      "problemFolder": "A pasta foi excluída. Abra o caso preparado para escolher uma pasta.",
+      "problemTemplate": "O modelo não está mais atribuído a este projeto. Abra o caso preparado para escolher um.",
+      "problemState": "O estado não existe mais. Abra o caso preparado para escolher um.",
       "problemField": "{field}: {message}",
       "notCreated": "Não criado: {message}",
-      "openToFix": "Abra o caso em rascunho para corrigi-lo.",
+      "openToFix": "Abra o caso preparado para corrigi-lo.",
       "elsewhereTitle": "Você também tem casos preparados em",
       "elsewhereCount": "{count, plural, one {{count} caso preparado} other {{count} casos preparados}}"
     },
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Repetido",
-      "clear": "Limpar filtros"
+      "clear": "Limpar todos os filtros"
     },
     "impact": {
       "title": "Impacto",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Gerar casos de teste a partir de URL (Teste de Aplicativos)",
         "automation_candidates": "Relatório de Candidatos à Automação",
         "derive_case_steps": "Derivação de Passos por IA",
-        "impact_analysis": "Impacto: Seleção de Teste Afetado"
+        "impact_analysis": "Impacto: Seleção de Teste Afetado",
+        "failure_triage": "Classificação de Triagem de Falhas"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Registros de auditoria",
         "budget-alerts": "Alertas orçamentários",
         "auto-tag": "Etiquetagem automática por IA",
+        "failure-triage": "Triagem de Falhas",
         "repo-cache": "Cache do repositório",
         "copy-move": "Copiar e mover",
         "duplicate-scan": "Leitura duplicada",
@@ -7078,7 +7081,7 @@
         "reviewReminderTitle": "Análise ainda pendente",
         "reviewReminderAction": "Ainda aguardamos sua avaliação de",
         "reviewReminderEmailMessage": "Lembrete: a solicitação de revisão de {actorName} em {entityLabel} \"{entityName}\" no projeto \"{projectName}\" está pendente há {pendingFor}.",
-        "reviewReminderHoursPending": "Pendente há {pendingFor}",
+        "reviewReminderHoursPending": "Aguardando {pendingFor}",
         "aiStepsDerivedTitle": "Passos de Teste Derivados por IA Prontos",
         "aiStepsDerivedMessage": "{count, plural, one {# caso de teste recebeu} other {# casos de teste receberam}} passos derivados por IA — revise a precisão.",
         "aiStepsDerivedReviewLink": "Revisar execução de teste",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Impacto\nConecte o repositório da aplicação em teste para que este projeto possa executar análise de impacto de testes: escolha dois commits para ver quais casos de teste as alterações afetam e fixe casos de teste ao código que cobrem.",
     "pathPatterns": "## Padrões de Caminho\nCada linha combina um **caminho** base com um **padrão** glob. As linhas se acumulam: um arquivo é incluído quando qualquer linha corresponde a ele.\n\n- `src` + `**/*` — tudo sob `src`\n- em branco ou `.` + `**/*` — cada arquivo no repositório\n- `src` + `**/!(*.test|*.spec).ts` — arquivos `.ts` exceto testes\n\n### Excluir\nMarque **Excluir** em uma linha para remover seus arquivos mesmo quando outra linha os inclui. As exclusões se aplicam ao seletor de arquivos e ao cache, e para Impacto aos arquivos alterados de uma análise, portanto, um arquivo que muda em quase todos os pull requests deixa de incluir casos de teste não relacionados. Pelo menos uma linha deve permanecer desmarcada.\n\n- em branco + `**/CHANGELOG*` — cada changelog, em qualquer profundidade\n- `app` + `build.gradle.kts` — um arquivo de compilação que apenas atualiza a versão",
     "projectAutomation": "## Execução Automatizada\nOs destinos de execução dizem ao TestPlanIt onde executar os casos automatizados deste projeto: um workflow GitHub Actions, um pipeline GitLab CI ou um webhook assinado para qualquer outro sistema. Quando uma execução é executada, o TestPlanIt inicia o trabalho com a ID da execução e uma URL do plano; o trabalho lê o plano, executa os testes correspondentes e relata os resultados de volta com um reporter ou o CLI fixado nessa execução. Os destinos podem ser desabilitados sem serem excluídos.",
-    "userAlerts": "## Notificações e alertas\n**Preferências de notificação** decidem como você é contatado (no aplicativo, email, resumo) e quais tipos de notificação você recebe.\n\n**Alertas** monitoram uma métrica de teste e notificam seus assinantes quando ela cruza uma linha, por exemplo, um resultado que leva 50% mais tempo do que a duração usual do caso, um caso que falha três vezes seguidas, uma execução cuja taxa de aprovação cai abaixo de 90%, ou um marco que está atrasado com dias restantes. A lista mostra todos os alertas em seus projetos; a chave **Notifique-me** segue ou sai de um. **Adicionar alerta** cria o seu próprio em qualquer projeto em que sua função tenha **Alertas** Adicionar/Editar; os administradores de projeto gerenciam todos os alertas em seu projeto e as inscrições de outras pessoas. Um alerta dispara no máximo uma vez por assunto dentro de seu período de repouso e fica silencioso até ter resultados suficientes."
+    "userAlerts": "## Notificações e alertas\n**Preferências de notificação** decidem como você é contatado (no aplicativo, email, resumo) e quais tipos de notificação você recebe.\n\n**Alertas** monitoram uma métrica de teste e notificam seus assinantes quando ela cruza uma linha, por exemplo, um resultado que leva 50% mais tempo do que a duração usual do caso, um caso que falha três vezes seguidas, uma execução cuja taxa de aprovação cai abaixo de 90%, ou um marco que está atrasado com dias restantes. A lista mostra todos os alertas em seus projetos; a chave **Notifique-me** segue ou sai de um. **Adicionar alerta** cria o seu próprio em qualquer projeto em que sua função tenha **Alertas** Adicionar/Editar; os administradores de projeto gerenciam todos os alertas em seu projeto e as inscrições de outras pessoas. Um alerta dispara no máximo uma vez por assunto dentro de seu período de repouso e fica silencioso até ter resultados suficientes.",
+    "projectTriage": "## Triagem de Falhas\nFalhas automatizadas que compartilham a mesma exceção, mensagem e frames de pilha superiores são agrupadas em uma **assinatura**. Cada assinatura mostra com que frequência ocorreu, quais casos de teste e execuções ela tocou e a interpretação da IA sobre se é um bug do produto, um bug do teste, um problema de ambiente ou instabilidade. Resolva ou ignore uma assinatura depois que ela for tratada; ela reabre automaticamente se a falha retornar.",
+    "projectTriageSettings": "## Configurações de Triagem de Falhas\nO agrupamento de execuções em todos os resultados automatizados que chegam não custa nada. A classificação de IA usa o modelo de IA atribuído ao recurso **Classificação de Triagem de Falhas** na página Modelos de IA; desative aqui para manter o agrupamento sem chamadas de IA. **Analisar resultados existentes** agrupa todas as falhas automatizadas já registradas neste projeto."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Integrações",
       "QUEUE": "Filas de trabalhos em segundo plano",
       "SYSTEM": "Instalação"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Aberto",
+      "RESOLVED": "Resolvido",
+      "IGNORED": "Ignorado"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Não classificado",
+      "PRODUCT_BUG": "Bug do produto",
+      "TEST_BUG": "Bug de teste",
+      "ENVIRONMENT": "Ambiente",
+      "FLAKY": "Instável"
+    },
+    "source": {
+      "AI": "Classificado por IA",
+      "labelAI": "IA",
+      "labelMANUAL": "Manual"
+    },
+    "columns": {
+      "classification": "Classificação",
+      "occurrences": "Ocorrências",
+      "firstSeen": "Visto primeiro",
+      "lastSeen": "Visto pela última vez",
+      "classifiedBy": "Classificado por"
+    },
+    "filters": {
+      "searchPlaceholder": "Pesquisar assinaturas...",
+      "flakyOnly": "Candidatos instáveis",
+      "sourceAll": "IA ou manual"
+    },
+    "actions": {
+      "resolve": "Resolver",
+      "ignore": "Ignorar",
+      "classify": "Classificar com IA",
+      "setClassification": "Definir classificação"
+    },
+    "detail": {
+      "exceptionType": "Tipo de exceção",
+      "normalizedMessage": "Mensagem normalizada",
+      "frames": "Frames de pilha superiores",
+      "sampleTrace": "Falha mais recente",
+      "affectedCases": "{count, plural, one {# caso de teste afetado} other {# casos de teste afetados}}",
+      "recentOccurrences": "{count, plural, one {# ocorrência recente} other {# ocorrências recentes}}",
+      "rationale": "Justificativa",
+      "suggestedIssueTitle": "Título da issue sugerida",
+      "nextStep": "Próximo passo sugerido",
+      "noAi": "Ainda não classificado por IA.",
+      "noDetails": "Esta falha não continha mensagem nem rastreamento de pilha, portanto é agrupada por caso de teste.",
+      "notesPlaceholder": "Notas para o time...",
+      "lastRun": "Última execução",
+      "aiSuggestion": "Sugestão de IA",
+      "unlinkConfirmDescription": "Isto remove a issue desta assinatura. A issue em si é mantida e pode ser vinculada novamente mais tarde.",
+      "signatureLabel": "Assinatura de falha",
+      "affectedCasesLabel": "Casos de teste afetados"
+    },
+    "flakyCandidate": "Candidato instável",
+    "flakyCandidateHint": "Os casos de teste afetados alternam entre sucesso e falha no histórico recente.",
+    "knownIssue": "Issue conhecida",
+    "notGrouped": "{count, plural, one {# falha ainda não agrupada} other {# falhas ainda não agrupadas}}",
+    "runPanel": {
+      "title": "Clusters de falhas",
+      "inRun": "{count, plural, one {# nesta execução} other {# nesta execução}}",
+      "hint": "Clique em um cluster para filtrar os resultados abaixo.",
+      "open": "Visualizar assinatura",
+      "inRunColumn": "Nesta execução",
+      "selectedClusters": "{count, plural, one {# cluster selecionado} other {# clusters selecionados}}",
+      "clearSelected": "Limpar os clusters selecionados"
+    },
+    "toasts": {
+      "updated": "Assinatura atualizada",
+      "updateFailed": "Não foi possível atualizar a assinatura",
+      "classifyQueued": "Classificação de IA solicitada",
+      "noAiModel": "Nenhum modelo de IA está configurado para este recurso",
+      "issueLinked": "Issue vinculada"
+    },
+    "empty": {
+      "title": "Nenhuma assinatura de falha ainda",
+      "description": "Assinaturas aparecem aqui conforme resultados automatizados com falhas chegam. Para agrupar falhas já registradas neste projeto, use Analisar resultados existentes nas configurações de Triagem de Falhas."
+    },
+    "settings": {
+      "description": "Agrupe falhas automatizadas em assinaturas e deixe a IA classificá-las.",
+      "enableLabel": "Ativar Triagem de Falhas",
+      "enableDescription": "Agrupe todas as falhas automatizadas neste projeto por exceção, mensagem e frames de pilha conforme os resultados chegam.",
+      "autoClassifyLabel": "Classificar novas assinaturas com IA",
+      "autoClassifyDescription": "Peça ao modelo de IA do projeto para classificar cada nova assinatura como um bug de produto, bug de teste, problema de ambiente ou instabilidade. Requer um modelo de IA atribuído ao recurso Classificação de Triagem de Falhas.",
+      "backfillLabel": "Analisar resultados existentes",
+      "backfillDescription": "Agrupe todas as falhas automatizadas já registradas neste projeto. Executa em segundo plano.",
+      "backfillStarted": "Análise iniciada",
+      "backfillRunning": "Analisando... {processed, plural, one {# falha agrupada} other {# falhas agrupadas}}",
+      "backfillDone": "Análise concluída",
+      "backfillFailed": "Análise falhou",
+      "backfillQueueUnavailable": "A fila de tarefas em segundo plano não está disponível",
+      "enabledToast": "Triagem de Falhas ativada",
+      "disabledToast": "Triagem de Falhas desativada",
+      "autoClassifyOnToast": "Classificação de IA ativada",
+      "autoClassifyOffToast": "Classificação de IA desativada",
+      "openTriage": "Abrir Triagem de Falhas"
     }
   }
 }

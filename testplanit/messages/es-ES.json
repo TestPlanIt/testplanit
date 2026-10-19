@@ -740,7 +740,8 @@
       "apiDocumentation": "Documentación de la API",
       "sharedContent": "Contenido compartido",
       "impact": "Análisis de impacto",
-      "alerts": "Notificaciones y Alertas"
+      "alerts": "Notificaciones y Alertas",
+      "triage": "Clasificación de fallos"
     },
     "aria": {
       "userMenu": "Menú de usuario",
@@ -3965,16 +3966,16 @@
       "saveDraft": "Preparar caso",
       "saveTitle": "Nombra el caso de prueba",
       "renameTitle": "Renombrar caso de prueba",
-      "saveDescription": "Un caso de prueba preparado se enumera bajo su nombre. Solo tú puedes verlo; nada se añade al repositorio hasta que lo crees.",
+      "saveDescription": "Un caso de prueba preparado se enumera con su nombre. Solo tú puedes verlo; nada se añade al repositorio hasta que lo crees.",
       "saved": "Caso de prueba preparado",
-      "saveFailed": "El caso de prueba no se pudo preparar",
+      "saveFailed": "No se pudo preparar el caso de prueba",
       "renamed": "Caso preparado renombrado",
       "deleted": "Caso preparado eliminado",
-      "deleteFailed": "El caso preparado no se pudo eliminar",
+      "deleteFailed": "No se pudo eliminar el caso preparado",
       "deleteTitle": "¿Eliminar este caso preparado?",
       "deleteDescription": "\"{name}\" será eliminado. Nunca fue creado, así que nada más cambia.",
       "folderDeleted": "Carpeta eliminada",
-      "folderFallback": "La carpeta del caso preparado fue eliminada; el caso se creará en \"{folder}\".",
+      "folderFallback": "La carpeta del caso preparado fue eliminada; el caso será creado en \"{folder}\".",
       "selectFolderFirst": "Selecciona una carpeta antes de abrir este caso preparado.",
       "problemCount": "{count, plural, one {{count} problema} other {{count} problemas}}",
       "updated": "Actualizado {age}",
@@ -3986,7 +3987,7 @@
       "problemState": "El estado ya no existe. Abre el caso preparado para elegir uno.",
       "problemField": "{field}: {message}",
       "notCreated": "No creado: {message}",
-      "openToFix": "Abre el caso preparado para solucionarlo.",
+      "openToFix": "Abre el caso preparado para arreglarlo.",
       "elsewhereTitle": "También tienes casos preparados en",
       "elsewhereCount": "{count, plural, one {{count} caso preparado} other {{count} casos preparados}}"
     },
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Reintentado",
-      "clear": "Limpiar filtros"
+      "clear": "Borrar todos los filtros"
     },
     "impact": {
       "title": "Impacto",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Generar casos de prueba a partir de una URL (Pruebas de aplicaciones)",
         "automation_candidates": "Informe de candidatos para la automatización",
         "derive_case_steps": "Derivación de pasos por IA",
-        "impact_analysis": "Impacto: selección de pruebas afectadas"
+        "impact_analysis": "Impacto: selección de pruebas afectadas",
+        "failure_triage": "Clasificación de fallos"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Registros de auditoría",
         "budget-alerts": "Alertas presupuestarias",
         "auto-tag": "Etiquetado automático con IA",
+        "failure-triage": "Clasificación de fallos",
         "repo-cache": "Caché del repositorio",
         "copy-move": "Copiar y mover",
         "duplicate-scan": "Escaneo duplicado",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Impacto\nConecte el repositorio de la aplicación bajo prueba para que este proyecto pueda ejecutar análisis de impacto de prueba: elija dos confirmaciones para ver qué casos de prueba afectan los cambios e fije casos de prueba al código que cubren.",
     "pathPatterns": "## Patrones de ruta\nCada fila combina una **ruta** base con un **patrón** glob. Las filas se suman: un archivo se incluye cuando coincide con cualquier fila.\n\n- `src` + `**/*` — todo bajo `src`\n- en blanco o `.` + `**/*` — cada archivo en el repositorio\n- `src` + `**/!(*.test|*.spec).ts` — archivos `.ts` excepto pruebas\n\n### Excluir\nMarca **Excluir** en una fila para eliminar sus archivos incluso cuando otra fila los incluye. Las exclusiones se aplican al selector de archivos y caché, y para Impact a los archivos cambiados de un análisis, por lo que un archivo que cambia en casi todas las solicitudes de extracción deja de incluir casos de prueba no relacionados. Al menos una fila debe permanecer sin marcar.\n\n- en blanco + `**/CHANGELOG*` — cada registro de cambios, en cualquier profundidad\n- `app` + `build.gradle.kts` — un archivo de compilación que solo actualiza la versión",
     "projectAutomation": "## Ejecución automatizada\nLos objetivos de ejecución le indican a TestPlanIt dónde ejecutar los casos automatizados de este proyecto: un flujo de trabajo de GitHub Actions, una canalización de GitLab CI o un webhook firmado para cualquier otro sistema. Cuando se ejecuta una ejecución, TestPlanIt inicia el trabajo con el id de ejecución y una URL de plan; el trabajo lee el plan, ejecuta las pruebas coincidentes e informa los resultados con un reportero o la CLI fijada en esa ejecución. Los objetivos se pueden deshabilitar sin ser eliminados.",
-    "userAlerts": "## Notificaciones y Alertas\n**Preferencias de Notificación** deciden cómo se comunica con usted (en la aplicación, correo electrónico, resumen) y qué tipos de notificación recibe en absoluto.\n\n**Alertas** vigilan una métrica de prueba y notifican a sus suscriptores cuando cruza una línea, por ejemplo, un resultado que tarda 50% más que la duración habitual del caso, un caso que falla tres veces seguidas, una ejecución cuya tasa de aprobación cae por debajo del 90%, o un hito que está atrasado con días por venir. La lista muestra cada alerta en sus proyectos; el interruptor **Notificarme** sigue o deja uno. **Agregar Alerta** crea la suya propia en cualquier proyecto donde su rol tenga **Alertas** Agregar/Editar; los administradores de proyectos gestionan cada alerta en su proyecto y las suscripciones de otras personas. Una alerta se dispara como máximo una vez por tema dentro de su enfriamiento y permanece en silencio hasta que tenga suficientes resultados."
+    "userAlerts": "## Notificaciones y Alertas\n**Preferencias de Notificación** deciden cómo se comunica con usted (en la aplicación, correo electrónico, resumen) y qué tipos de notificación recibe en absoluto.\n\n**Alertas** vigilan una métrica de prueba y notifican a sus suscriptores cuando cruza una línea, por ejemplo, un resultado que tarda 50% más que la duración habitual del caso, un caso que falla tres veces seguidas, una ejecución cuya tasa de aprobación cae por debajo del 90%, o un hito que está atrasado con días por venir. La lista muestra cada alerta en sus proyectos; el interruptor **Notificarme** sigue o deja uno. **Agregar Alerta** crea la suya propia en cualquier proyecto donde su rol tenga **Alertas** Agregar/Editar; los administradores de proyectos gestionan cada alerta en su proyecto y las suscripciones de otras personas. Una alerta se dispara como máximo una vez por tema dentro de su enfriamiento y permanece en silencio hasta que tenga suficientes resultados.",
+    "projectTriage": "## Clasificación de fallos\nLos fallos automatizados que comparten la misma excepción, mensaje y marcos de pila superior se agrupan en una **firma**. Cada firma muestra con qué frecuencia ocurrió, qué casos de prueba y ejecuciones afectó, y la opinión de la IA sobre si es un error de producto, un error de prueba, un problema ambiental o inestable. Resuelve o ignora una firma una vez que se maneja; se reabre por sí sola si el fallo vuelve.",
+    "projectTriageSettings": "## Configuración de Clasificación de fallos\nAgrupar ejecuciones en cada resultado automatizado que llegue y no cuesta nada. La clasificación de IA utiliza el modelo de IA asignado a la característica **Clasificación de fallos** en la página Modelos de IA; desactívalo aquí para mantener el agrupamiento sin llamadas de IA. **Analizar resultados existentes** agrupa cada fallo automatizado ya registrado en este proyecto."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Integraciones",
       "QUEUE": "Colas de fondo",
       "SYSTEM": "Instalación"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Abierto",
+      "RESOLVED": "Resuelto",
+      "IGNORED": "Ignorado"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Sin clasificar",
+      "PRODUCT_BUG": "Error de producto",
+      "TEST_BUG": "Error de prueba",
+      "ENVIRONMENT": "Ambiente",
+      "FLAKY": "Inestable"
+    },
+    "source": {
+      "AI": "Clasificado por IA",
+      "labelAI": "IA",
+      "labelMANUAL": "Manual"
+    },
+    "columns": {
+      "classification": "Clasificación",
+      "occurrences": "Ocurrencias",
+      "firstSeen": "Visto por primera vez",
+      "lastSeen": "Visto por última vez",
+      "classifiedBy": "Clasificado por"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar firmas...",
+      "flakyOnly": "Candidatos inestables",
+      "sourceAll": "IA o manual"
+    },
+    "actions": {
+      "resolve": "Resolver",
+      "ignore": "Ignorar",
+      "classify": "Clasificar con IA",
+      "setClassification": "Establecer clasificación"
+    },
+    "detail": {
+      "exceptionType": "Tipo de excepción",
+      "normalizedMessage": "Mensaje normalizado",
+      "frames": "Marcos de pila principales",
+      "sampleTrace": "Fallo más reciente",
+      "affectedCases": "{count, plural, one {# caso de prueba afectado} other {# casos de prueba afectados}}",
+      "recentOccurrences": "{count, plural, one {# ocurrencia reciente} other {# ocurrencias recientes}}",
+      "rationale": "Justificación",
+      "suggestedIssueTitle": "Título de incidencia sugerido",
+      "nextStep": "Próximo paso sugerido",
+      "noAi": "Aún no clasificado por IA.",
+      "noDetails": "Este fallo no tenía mensaje ni seguimiento de pila, por lo que se agrupa por caso de prueba.",
+      "notesPlaceholder": "Notas para el equipo...",
+      "lastRun": "Última ejecución",
+      "aiSuggestion": "Sugerencia de IA",
+      "unlinkConfirmDescription": "Esto elimina la incidencia de esta firma. La incidencia en sí se conserva y puede vincularse nuevamente más adelante.",
+      "signatureLabel": "Firma de fallo",
+      "affectedCasesLabel": "Casos de prueba afectados"
+    },
+    "flakyCandidate": "Candidato inestable",
+    "flakyCandidateHint": "Los casos de prueba afectados alternan entre pasar y fallar en su historial reciente.",
+    "knownIssue": "Incidencia conocida",
+    "notGrouped": "{count, plural, one {# fallo no agrupado aún} other {# fallos no agrupados aún}}",
+    "runPanel": {
+      "title": "Clústeres de fallos",
+      "inRun": "{count, plural, one {# en esta ejecución} other {# en esta ejecución}}",
+      "hint": "Haz clic en un clúster para filtrar los resultados a continuación.",
+      "open": "Ver firma",
+      "inRunColumn": "En esta ejecución",
+      "selectedClusters": "{count, plural, one {# clúster seleccionado} other {# clústeres seleccionados}}",
+      "clearSelected": "Borrar los clústeres seleccionados"
+    },
+    "toasts": {
+      "updated": "Firma actualizada",
+      "updateFailed": "No se pudo actualizar la firma",
+      "classifyQueued": "Clasificación de IA solicitada",
+      "noAiModel": "No hay modelo de IA configurado para esta característica",
+      "issueLinked": "Incidencia vinculada"
+    },
+    "empty": {
+      "title": "Aún no hay firmas de fallo",
+      "description": "Las firmas aparecen aquí a medida que llegan resultados automatizados con fallos. Para agrupar fallos ya registrados en este proyecto, utiliza Analizar resultados existentes en la configuración de Clasificación de fallos."
+    },
+    "settings": {
+      "description": "Agrupa fallos automatizados en firmas y deja que la IA los clasifique.",
+      "enableLabel": "Habilitar Clasificación de fallos",
+      "enableDescription": "Agrupa cada fallo automatizado en este proyecto por excepción, mensaje y marcos de pila a medida que llegan los resultados.",
+      "autoClassifyLabel": "Clasificar nuevas firmas con IA",
+      "autoClassifyDescription": "Pídele al modelo de IA del proyecto que clasifique cada nueva firma como un error de producto, error de prueba, problema ambiental o inestable. Necesita un modelo de IA asignado a la característica Clasificación de fallos.",
+      "backfillLabel": "Analizar resultados existentes",
+      "backfillDescription": "Agrupa cada fallo automatizado ya registrado en este proyecto. Se ejecuta en segundo plano.",
+      "backfillStarted": "Análisis iniciado",
+      "backfillRunning": "Analizando... {processed, plural, one {# fallo agrupado} other {# fallos agrupados}}",
+      "backfillDone": "Análisis completado",
+      "backfillFailed": "Análisis fallido",
+      "backfillQueueUnavailable": "La cola de trabajos en segundo plano no está disponible",
+      "enabledToast": "Clasificación de fallos habilitada",
+      "disabledToast": "Clasificación de fallos deshabilitada",
+      "autoClassifyOnToast": "Clasificación de IA habilitada",
+      "autoClassifyOffToast": "Clasificación de IA deshabilitada",
+      "openTriage": "Abrir Clasificación de fallos"
     }
   }
 }

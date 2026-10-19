@@ -740,7 +740,8 @@
       "apiDocumentation": "Documentation de l'API",
       "sharedContent": "Contenu partagé",
       "impact": "Analyse d'impact",
-      "alerts": "Notifications et alertes"
+      "alerts": "Notifications et alertes",
+      "triage": "Triage des défaillances"
     },
     "aria": {
       "userMenu": "Menu utilisateur",
@@ -3959,34 +3960,34 @@
       }
     },
     "savedDrafts": {
-      "title": "Mes cas en attente",
-      "description": "Les cas de test que vous avez rédigés et mis en attente au lieu de les créer. Seul vous pouvez les voir. Ouvrez-en un pour l'examiner ou créez-en plusieurs à la fois.",
-      "empty": "Vous n'avez aucun cas de test en attente dans ce projet.",
-      "saveDraft": "Mettre en attente le cas",
+      "title": "Mes cas préparés",
+      "description": "Cas de test que vous avez écrits et préparés au lieu de les créer. Seul vous pouvez les voir. Ouvrez-en un pour l'examiner, ou créez-en plusieurs à la fois.",
+      "empty": "Vous n'avez aucun cas de test préparé dans ce projet.",
+      "saveDraft": "Préparer un cas",
       "saveTitle": "Nommez le cas de test",
       "renameTitle": "Renommer le cas de test",
-      "saveDescription": "Un cas de test en attente est listé sous son nom. Seul vous pouvez le voir ; rien n'est ajouté au référentiel jusqu'à ce que vous le créiez.",
-      "saved": "Cas de test mis en attente",
-      "saveFailed": "Le cas de test n'a pas pu être mis en attente",
-      "renamed": "Cas en attente renommé",
-      "deleted": "Cas en attente supprimé",
-      "deleteFailed": "Le cas en attente n'a pas pu être supprimé",
-      "deleteTitle": "Supprimer ce cas en attente ?",
+      "saveDescription": "Un cas de test préparé est répertorié sous son nom. Seul vous pouvez le voir ; rien n'est ajouté au référentiel tant que vous ne le créez pas.",
+      "saved": "Cas de test préparé",
+      "saveFailed": "Le cas de test n'a pas pu être préparé",
+      "renamed": "Cas préparé renommé",
+      "deleted": "Cas préparé supprimé",
+      "deleteFailed": "Le cas préparé n'a pas pu être supprimé",
+      "deleteTitle": "Supprimer ce cas préparé ?",
       "deleteDescription": "\"{name}\" sera supprimé. Il n'a jamais été créé, donc rien d'autre ne change.",
       "folderDeleted": "Dossier supprimé",
-      "folderFallback": "Le dossier du cas en attente a été supprimé ; le cas sera créé dans \"{folder}\".",
-      "selectFolderFirst": "Sélectionnez un dossier avant d'ouvrir ce cas en attente.",
+      "folderFallback": "Le dossier du cas préparé a été supprimé ; le cas sera créé dans \"{folder}\".",
+      "selectFolderFirst": "Sélectionnez un dossier avant d'ouvrir ce cas préparé.",
       "problemCount": "{count, plural, one {{count} problème} other {{count} problèmes}}",
-      "updated": "Mis à jour il y a {age}",
+      "updated": "Mis à jour {age}",
       "createSelected": "{count, plural, =0 {Créer la sélection} other {Créer {count} sélectionnés}}",
       "createdToast": "{count, plural, one {{count} cas de test créé} other {{count} cas de test créés}}",
-      "failedToast": "{count, plural, one {{count} cas en attente n'a pas pu être créé} other {{count} cas en attente n'ont pas pu être créés}}",
-      "problemFolder": "Le dossier a été supprimé. Ouvrez le cas en attente pour choisir un dossier.",
-      "problemTemplate": "Le modèle n'est plus attribué à ce projet. Ouvrez le cas en attente pour en choisir un.",
-      "problemState": "L'état n'existe plus. Ouvrez le cas en attente pour en choisir un.",
+      "failedToast": "{count, plural, one {{count} cas préparé n'a pas pu être créé} other {{count} cas préparés n'ont pas pu être créés}}",
+      "problemFolder": "Le dossier a été supprimé. Ouvrez le cas préparé pour choisir un dossier.",
+      "problemTemplate": "Le modèle n'est plus assigné à ce projet. Ouvrez le cas préparé pour en choisir un.",
+      "problemState": "L'état n'existe plus. Ouvrez le cas préparé pour en choisir un.",
       "problemField": "{field} : {message}",
       "notCreated": "Non créé : {message}",
-      "openToFix": "Ouvrez le cas en attente pour le corriger.",
+      "openToFix": "Ouvrez le cas préparé pour le corriger.",
       "elsewhereTitle": "Vous avez également des cas préparés dans",
       "elsewhereCount": "{count, plural, one {{count} cas préparé} other {{count} cas préparés}}"
     },
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Réessayé",
-      "clear": "Effacer les filtres"
+      "clear": "Effacer tous les filtres"
     },
     "impact": {
       "title": "Impact",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Générer des cas de test à partir d'une URL (tests d'application)",
         "automation_candidates": "Rapport des candidats à l'automatisation",
         "derive_case_steps": "Dérivation des étapes par IA",
-        "impact_analysis": "Impact : sélection de tests affectés"
+        "impact_analysis": "Impact : sélection de tests affectés",
+        "failure_triage": "Classification du triage des défaillances"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Journaux d'audit",
         "budget-alerts": "Alertes budgétaires",
         "auto-tag": "Étiquetage automatique par IA",
+        "failure-triage": "Triage des défaillances",
         "repo-cache": "Cache du dépôt",
         "copy-move": "Copier et déplacer",
         "duplicate-scan": "Analyse en double",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Impact\nConnectez le dépôt de l'application testée pour que ce projet puisse exécuter l'analyse d'impact des tests : choisissez deux commits pour voir quels cas de test les modifications affectent et épinglez les cas de test au code qu'ils couvrent.",
     "pathPatterns": "## Motifs de chemin\nChaque ligne combine un **chemin** de base avec un **motif** glob. Les lignes s'ajoutent : un fichier est inclus si une ligne le correspond.\n\n- `src` + `**/*` — tout sous `src`\n- vide ou `.` + `**/*` — chaque fichier du référentiel\n- `src` + `**/!(*.test|*.spec).ts` — fichiers `.ts` sauf les tests\n\n### Exclure\nCochez **Exclure** sur une ligne pour supprimer ses fichiers même si une autre ligne les inclut. Les exclusions s'appliquent au sélecteur de fichiers et au cache, et pour Impact aux fichiers modifiés d'une analyse, de sorte qu'un fichier qui change à presque chaque pull request cesse de tirer dans les cas de test non liés. Au moins une ligne doit rester décochée.\n\n- vide + `**/CHANGELOG*` — chaque changelog, à n'importe quel niveau\n- `app` + `build.gradle.kts` — un fichier de compilation qui ne fait que bumper la version",
     "projectAutomation": "## Exécution automatisée\nLes cibles d'exécution indiquent à TestPlanIt où exécuter les cas automatisés de ce projet : un workflow GitHub Actions, un pipeline GitLab CI ou un webhook signé pour tout autre système. Lorsqu'une exécution est exécutée, TestPlanIt démarre le travail avec l'ID d'exécution et une URL de plan ; le travail lit le plan, exécute les tests correspondants et rapporte les résultats avec un rapporteur ou le CLI épinglé à cette exécution. Les cibles peuvent être désactivées sans être supprimées.",
-    "userAlerts": "## Notifications et alertes\n**Préférences de notification** Décidez comment vous êtes contacté (in-app, e-mail, résumé) et les types de notifications que vous recevez du tout.\n\n**Alertes** Surveillez une métrique de test et notifiez leurs abonnés lorsqu'elle dépasse une ligne, par exemple un résultat qui prend 50% plus de temps que la durée habituelle du cas, un cas qui échoue trois fois d'affilée, une exécution dont le taux de réussite tombe en dessous de 90%, ou un jalon qui est en retard avec des jours à faire. La liste montre chaque alerte dans vos projets; l'interrupteur **M'avertir** suit ou quitte un. **Ajouter une alerte** crée la vôtre dans n'importe quel projet où votre rôle a **Alertes** Ajouter/Modifier; les administrateurs de projet gèrent chaque alerte dans leur projet et les abonnements des autres personnes. Une alerte se déclenche au maximum une fois par sujet dans son délai d'attente et reste silencieuse jusqu'à ce qu'elle ait suffisamment de résultats."
+    "userAlerts": "## Notifications et alertes\n**Préférences de notification** Décidez comment vous êtes contacté (in-app, e-mail, résumé) et les types de notifications que vous recevez du tout.\n\n**Alertes** Surveillez une métrique de test et notifiez leurs abonnés lorsqu'elle dépasse une ligne, par exemple un résultat qui prend 50% plus de temps que la durée habituelle du cas, un cas qui échoue trois fois d'affilée, une exécution dont le taux de réussite tombe en dessous de 90%, ou un jalon qui est en retard avec des jours à faire. La liste montre chaque alerte dans vos projets; l'interrupteur **M'avertir** suit ou quitte un. **Ajouter une alerte** crée la vôtre dans n'importe quel projet où votre rôle a **Alertes** Ajouter/Modifier; les administrateurs de projet gèrent chaque alerte dans leur projet et les abonnements des autres personnes. Une alerte se déclenche au maximum une fois par sujet dans son délai d'attente et reste silencieuse jusqu'à ce qu'elle ait suffisamment de résultats.",
+    "projectTriage": "## Triage des défaillances\nLes défaillances automatisées qui partagent la même exception, le même message et les mêmes cadres de pile supérieurs sont regroupées dans une **signature**. Chaque signature indique la fréquence d'occurrence, les cas de test et les séries qu'elle a touchés, et l'avis de l'IA sur le fait qu'il s'agisse d'un bogue de produit, d'un bogue de test, d'un problème d'environnement ou d'un problème instable. Résolvez ou ignorez une signature une fois qu'elle est traitée ; elle se réouvre d'elle-même si la défaillance revient.",
+    "projectTriageSettings": "## Paramètres du triage des défaillances\nLe regroupement des séries sur chaque résultat automatisé qui arrive ne coûte rien. La classification par l'IA utilise le modèle d'IA assigné à la fonctionnalité **Classification du triage des défaillances** sur la page Modèles d'IA ; désactivez-la ici pour continuer le regroupement sans aucun appel à l'IA. **Analyser les résultats existants** regroupe chaque défaillance automatisée déjà enregistrée dans ce projet."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Intégrations",
       "QUEUE": "Files d'attente en arrière-plan",
       "SYSTEM": "Installation"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Ouvert",
+      "RESOLVED": "Résolu",
+      "IGNORED": "Ignoré"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Non classifié",
+      "PRODUCT_BUG": "Bogue de produit",
+      "TEST_BUG": "Bogue de test",
+      "ENVIRONMENT": "Environnement",
+      "FLAKY": "Instable"
+    },
+    "source": {
+      "AI": "Classifié par l'IA",
+      "labelAI": "IA",
+      "labelMANUAL": "Manuel"
+    },
+    "columns": {
+      "classification": "Classification",
+      "occurrences": "Occurrences",
+      "firstSeen": "Première occurrence",
+      "lastSeen": "Dernière occurrence",
+      "classifiedBy": "Classifié par"
+    },
+    "filters": {
+      "searchPlaceholder": "Rechercher des signatures...",
+      "flakyOnly": "Candidats instables",
+      "sourceAll": "IA ou manuel"
+    },
+    "actions": {
+      "resolve": "Résoudre",
+      "ignore": "Ignorer",
+      "classify": "Classifier avec l'IA",
+      "setClassification": "Définir la classification"
+    },
+    "detail": {
+      "exceptionType": "Type d'exception",
+      "normalizedMessage": "Message normalisé",
+      "frames": "Cadres de pile supérieurs",
+      "sampleTrace": "Dernière défaillance",
+      "affectedCases": "{count, plural, one {# cas de test affecté} other {# cas de test affectés}}",
+      "recentOccurrences": "{count, plural, one {# occurrence récente} other {# occurrences récentes}}",
+      "rationale": "Justification",
+      "suggestedIssueTitle": "Titre de problème suggéré",
+      "nextStep": "Étape suivante suggérée",
+      "noAi": "Pas encore classifié par l'IA.",
+      "noDetails": "Cette défaillance ne contenait aucun message ni trace de pile, elle est donc regroupée par cas de test.",
+      "notesPlaceholder": "Notes pour l'équipe...",
+      "lastRun": "Dernière série",
+      "aiSuggestion": "Suggestion de l'IA",
+      "unlinkConfirmDescription": "Cela supprime le problème de cette signature. Le problème lui-même est conservé et peut être lié à nouveau ultérieurement.",
+      "signatureLabel": "Signature de défaillance",
+      "affectedCasesLabel": "Cas de test affectés"
+    },
+    "flakyCandidate": "Candidat instable",
+    "flakyCandidateHint": "Les cas de test affectés oscillent entre la réussite et l'échec dans leur historique récent.",
+    "knownIssue": "Problème connu",
+    "notGrouped": "{count, plural, one {# défaillance pas encore regroupée} other {# défaillances pas encore regroupées}}",
+    "runPanel": {
+      "title": "Grappes de défaillances",
+      "inRun": "{count, plural, one {# dans cette série} other {# dans cette série}}",
+      "hint": "Cliquez sur une grappe pour filtrer les résultats ci-dessous.",
+      "open": "Afficher la signature",
+      "inRunColumn": "Dans cette série",
+      "selectedClusters": "{count, plural, one {# grappe sélectionnée} other {# grappes sélectionnées}}",
+      "clearSelected": "Effacer les grappes sélectionnées"
+    },
+    "toasts": {
+      "updated": "Signature mise à jour",
+      "updateFailed": "Impossible de mettre à jour la signature",
+      "classifyQueued": "Classification par l'IA demandée",
+      "noAiModel": "Aucun modèle d'IA n'est configuré pour cette fonctionnalité",
+      "issueLinked": "Problème lié"
+    },
+    "empty": {
+      "title": "Aucune signature de défaillance pour l'instant",
+      "description": "Les signatures apparaissent ici à mesure que les résultats automatisés avec des défaillances arrivent. Pour regrouper les défaillances déjà enregistrées dans ce projet, utilisez Analyser les résultats existants dans les paramètres du triage des défaillances."
+    },
+    "settings": {
+      "description": "Regroupez les défaillances automatisées en signatures et laissez l'IA les classer.",
+      "enableLabel": "Activer le triage des défaillances",
+      "enableDescription": "Regroupez chaque défaillance automatisée dans ce projet par exception, message et cadres de pile à mesure que les résultats arrivent.",
+      "autoClassifyLabel": "Classifier les nouvelles signatures avec l'IA",
+      "autoClassifyDescription": "Demandez au modèle d'IA du projet de classer chaque nouvelle signature comme un bogue de produit, un bogue de test, un problème d'environnement ou instable. Nécessite un modèle d'IA assigné à la fonctionnalité Classification du triage des défaillances.",
+      "backfillLabel": "Analyser les résultats existants",
+      "backfillDescription": "Regroupez chaque défaillance automatisée déjà enregistrée dans ce projet. S'exécute en arrière-plan.",
+      "backfillStarted": "Analyse démarrée",
+      "backfillRunning": "Analyse en cours... {processed, plural, one {# défaillance regroupée} other {# défaillances regroupées}}",
+      "backfillDone": "Analyse complète",
+      "backfillFailed": "L'analyse a échoué",
+      "backfillQueueUnavailable": "La file d'attente des tâches en arrière-plan n'est pas disponible",
+      "enabledToast": "Triage des défaillances activé",
+      "disabledToast": "Triage des défaillances désactivé",
+      "autoClassifyOnToast": "Classification par l'IA activée",
+      "autoClassifyOffToast": "Classification par l'IA désactivée",
+      "openTriage": "Ouvrir le triage des défaillances"
     }
   }
 }

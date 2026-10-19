@@ -740,7 +740,8 @@
       "apiDocumentation": "API 文件",
       "sharedContent": "分享內容",
       "impact": "影響分析",
-      "alerts": "通知和警報"
+      "alerts": "通知和警報",
+      "triage": "失敗分級"
     },
     "aria": {
       "userMenu": "使用者選單",
@@ -3960,35 +3961,35 @@
     },
     "savedDrafts": {
       "title": "我的暫存案例",
-      "description": "您撰寫並暫存而不是建立的測試案例。只有您可以看到它們。開啟一個進行審閱，或一次建立多個。",
+      "description": "您撰寫並暫存的測試案例，而非建立測試案例。只有您可以看到。打開其中一個進行審查，或一次建立多個。",
       "empty": "您在此專案中沒有暫存的測試案例。",
       "saveDraft": "暫存案例",
-      "saveTitle": "為測試案例命名",
+      "saveTitle": "命名測試案例",
       "renameTitle": "重新命名測試案例",
-      "saveDescription": "暫存的測試案例以其名稱列出。只有您可以看到它；在您建立之前，不會向存放庫添加任何內容。",
+      "saveDescription": "暫存的測試案例按其名稱列出。只有您可以看到；在您建立之前，沒有任何內容會添加到儲存庫。",
       "saved": "測試案例已暫存",
       "saveFailed": "無法暫存測試案例",
       "renamed": "暫存案例已重新命名",
       "deleted": "暫存案例已刪除",
       "deleteFailed": "無法刪除暫存案例",
       "deleteTitle": "刪除此暫存案例？",
-      "deleteDescription": "「{name}」將被刪除。它從未被建立，因此不會有其他變化。",
+      "deleteDescription": "\"{name}\" 將被刪除。它從未被建立，所以沒有其他內容改變。",
       "folderDeleted": "資料夾已刪除",
-      "folderFallback": "暫存案例的資料夾已刪除；該案例將在「{folder}」中建立。",
-      "selectFolderFirst": "在開啟此暫存案例之前，請先選擇一個資料夾。",
+      "folderFallback": "暫存案例的資料夾已刪除；案例將在 \"{folder}\" 中建立。",
+      "selectFolderFirst": "打開此暫存案例之前，請先選擇資料夾。",
       "problemCount": "{count, plural, one {{count} 個問題} other {{count} 個問題}}",
-      "updated": "更新時間 {age}",
-      "createSelected": "{count, plural, =0 {建立所選項目} other {建立 {count} 個所選項目}}",
+      "updated": "更新於 {age}",
+      "createSelected": "{count, plural, =0 {建立已選取的} other {建立 {count} 個已選取的}}",
       "createdToast": "{count, plural, one {{count} 個測試案例已建立} other {{count} 個測試案例已建立}}",
       "failedToast": "{count, plural, one {{count} 個暫存案例無法建立} other {{count} 個暫存案例無法建立}}",
-      "problemFolder": "資料夾已刪除。開啟暫存案例以選擇資料夾。",
-      "problemTemplate": "範本不再指派到此專案。開啟暫存案例以選擇一個。",
-      "problemState": "狀態不再存在。開啟暫存案例以選擇一個。",
+      "problemFolder": "資料夾已刪除。打開暫存案例以選擇資料夾。",
+      "problemTemplate": "範本不再指派給此專案。打開暫存案例以選擇一個。",
+      "problemState": "狀態已不存在。打開暫存案例以選擇一個。",
       "problemField": "{field}：{message}",
       "notCreated": "未建立：{message}",
-      "openToFix": "開啟暫存案例以修正此問題。",
-      "elsewhereTitle": "您也在其他位置有暫存的案例",
-      "elsewhereCount": "{count, plural, other {{count} 個暫存案例}}"
+      "openToFix": "打開暫存案例以修復它。",
+      "elsewhereTitle": "您還在以下項目中有暫存案例",
+      "elsewhereCount": "{count, plural, one {{count} 個暫存案例} other {{count} 個暫存案例}}"
     },
     "filterBar": {
       "addFilter": "新增篩選器",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "已重試",
-      "clear": "清除過濾器"
+      "clear": "清除所有篩選"
     },
     "impact": {
       "title": "影響",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "從 URL 產生測試用例（應用程式測試）",
         "automation_candidates": "自動化候選報告",
         "derive_case_steps": "AI 步驟推導",
-        "impact_analysis": "影響：受影響測試選擇"
+        "impact_analysis": "影響：受影響測試選擇",
+        "failure_triage": "失敗分級分類"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "審計日誌",
         "budget-alerts": "預算警報",
         "auto-tag": "AI自動標籤",
+        "failure-triage": "失敗分級",
         "repo-cache": "儲存庫快取",
         "copy-move": "複製和移動",
         "duplicate-scan": "重複掃描",
@@ -7077,8 +7080,8 @@
         "reviewCancelledEmailMessage": "{actorName} 取消了對 {entityLabel} \"{entityName}\" 在項目 \"{projectName} \" 中的審查請求。",
         "reviewReminderTitle": "審核仍在進行中",
         "reviewReminderAction": "仍在等待您的評論",
-        "reviewReminderEmailMessage": "提醒：{actorName} 在專案「{projectName}」中針對 {entityLabel}「{entityName}」的審核請求已待處理 {pendingFor}。",
-        "reviewReminderHoursPending": "待處理時間 {pendingFor}",
+        "reviewReminderEmailMessage": "提醒：{actorName} 在專案 \"{projectName}\" 中針對 {entityLabel} \"{entityName}\" 的審核請求已待處理 {pendingFor}。",
+        "reviewReminderHoursPending": "等待 {pendingFor}",
         "aiStepsDerivedTitle": "AI 推導測試步驟已就緒",
         "aiStepsDerivedMessage": "{count, plural, other {# 個測試案例}} 已獲得 AI 推導的步驟 — 請檢查其準確性。",
         "aiStepsDerivedReviewLink": "檢查測試執行",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## 影響\n連結應用程式的儲存庫，使此專案可以執行測試影響分析：選擇兩個提交以查看變更會影響哪些測試案例，並將測試案例釘選到其涵蓋的程式碼。",
     "pathPatterns": "## 路徑模式\n每一列都會結合一個基本的**路徑**與一個 glob **模式**。列會相加：當任何列符合該檔案時，檔案就會被包含。\n\n- `src` + `**/*` — `src` 下的所有內容\n- 空白或 `.` + `**/*` — 儲存庫中的每個檔案\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 檔案（測試除外）\n\n### 排除\n在列上勾選**排除**，即使另一列包含這些檔案，也要移除其檔案。排除適用於檔案選擇器和快取，對於「影響」，適用於分析的已變更檔案，因此在幾乎每個提取請求上變更的檔案會停止拉取不相關的測試案例。至少有一列必須保持未勾選。\n\n- 空白 + `**/CHANGELOG*` — 每個變更日誌，在任何深度\n- `app` + `build.gradle.kts` — 只會變更版本的建置檔案",
     "projectAutomation": "## 自動化執行\n執行目標告知 TestPlanIt 在何處執行此專案的自動化案例：GitHub Actions 工作流程、GitLab CI 管道，或用於任何其他系統的簽名 webhook。執行執行時，TestPlanIt 會使用執行 ID 和計劃 URL 啟動工作；工作會讀取計劃、執行相符的測試，並透過記錄者或 CLI 釘選至該執行來報告結果。目標可以停用而無需刪除。",
-    "userAlerts": "## 通知和警報\n**通知偏好設定** 決定您如何被聯絡（應用內、電子郵件、摘要）以及您接收哪些通知類型。\n\n**警報** 監視測試指標，當其超過線條時通知其訂閱者，例如結果耗時比案例常見耗時長 50%、案例連續失敗三次、運行通過率降至 90% 以下或里程碑在還有天數時落後。列表顯示您專案中的每個警報；**通知我** 開關追蹤或離開一個。**新增警報** 在角色具有 **警報** 新增/編輯的任何專案中建立您自己的；專案管理員管理其專案中的每個警報以及其他人的訂閱。警報在其冷卻時間內最多為每個主題觸發一次，並保持沉默，直到有足夠的結果。"
+    "userAlerts": "## 通知和警報\n**通知偏好設定** 決定您如何被聯絡（應用內、電子郵件、摘要）以及您接收哪些通知類型。\n\n**警報** 監視測試指標，當其超過線條時通知其訂閱者，例如結果耗時比案例常見耗時長 50%、案例連續失敗三次、運行通過率降至 90% 以下或里程碑在還有天數時落後。列表顯示您專案中的每個警報；**通知我** 開關追蹤或離開一個。**新增警報** 在角色具有 **警報** 新增/編輯的任何專案中建立您自己的；專案管理員管理其專案中的每個警報以及其他人的訂閱。警報在其冷卻時間內最多為每個主題觸發一次，並保持沉默，直到有足夠的結果。",
+    "projectTriage": "## 失敗分級\n自動化失敗會根據相同的例外、訊息和頂部堆疊框架分組為一個 **簽名**。每個簽名顯示發生的頻率、它涉及的測試案例和執行，以及人工智慧對其是否為產品缺陷、測試缺陷、環境問題或不穩定的判斷。簽名在處理後標記為已解決或忽略；如果失敗再次出現，它會自動重新打開。",
+    "projectTriageSettings": "## 失敗分級設定\n每當自動化結果到達時對執行進行分組，無需任何費用。人工智慧分類使用指派給 AI 模型頁面上 **失敗分級分類** 功能的人工智慧模型；在此關閉它可以在沒有任何人工智慧呼叫的情況下保持分組。**分析現有結果** 對此專案中已記錄的每個自動化失敗進行分組。"
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "整合",
       "QUEUE": "背景佇列",
       "SYSTEM": "安裝"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "開啟",
+      "RESOLVED": "已解決",
+      "IGNORED": "忽略"
+    },
+    "classification": {
+      "UNCLASSIFIED": "未分類",
+      "PRODUCT_BUG": "產品缺陷",
+      "TEST_BUG": "測試缺陷",
+      "ENVIRONMENT": "環境",
+      "FLAKY": "不穩定"
+    },
+    "source": {
+      "AI": "由人工智慧分類",
+      "labelAI": "人工智慧",
+      "labelMANUAL": "手動"
+    },
+    "columns": {
+      "classification": "分類",
+      "occurrences": "發生次數",
+      "firstSeen": "首次出現",
+      "lastSeen": "最後出現",
+      "classifiedBy": "分類者"
+    },
+    "filters": {
+      "searchPlaceholder": "搜尋簽名……",
+      "flakyOnly": "不穩定候選",
+      "sourceAll": "人工智慧或手動"
+    },
+    "actions": {
+      "resolve": "解決",
+      "ignore": "忽略",
+      "classify": "使用人工智慧分類",
+      "setClassification": "設定分類"
+    },
+    "detail": {
+      "exceptionType": "例外類型",
+      "normalizedMessage": "標準化訊息",
+      "frames": "頂部堆疊框架",
+      "sampleTrace": "最新失敗",
+      "affectedCases": "{count, plural, one {# 個受影響的測試案例} other {# 個受影響的測試案例}}",
+      "recentOccurrences": "{count, plural, one {# 個最近的發生} other {# 個最近的發生}}",
+      "rationale": "基本原理",
+      "suggestedIssueTitle": "建議的問題標題",
+      "nextStep": "建議的下一步",
+      "noAi": "尚未由人工智慧分類。",
+      "noDetails": "此失敗沒有訊息或堆疊追蹤，因此按測試案例分組。",
+      "notesPlaceholder": "團隊的備註……",
+      "lastRun": "最後執行",
+      "aiSuggestion": "人工智慧建議",
+      "unlinkConfirmDescription": "這會從此簽名中移除問題。問題本身將被保留，可日後重新連結。",
+      "signatureLabel": "失敗簽名",
+      "affectedCasesLabel": "受影響的測試案例"
+    },
+    "flakyCandidate": "不穩定候選",
+    "flakyCandidateHint": "受影響的測試案例在最近的歷史記錄中在通過和失敗之間切換。",
+    "knownIssue": "已知問題",
+    "notGrouped": "{count, plural, one {# 個失敗尚未分組} other {# 個失敗尚未分組}}",
+    "runPanel": {
+      "title": "失敗叢集",
+      "inRun": "{count, plural, one {此執行中 # 個} other {此執行中 # 個}}",
+      "hint": "按一下叢集以篩選下面的結果。",
+      "open": "檢視簽名",
+      "inRunColumn": "在此執行中",
+      "selectedClusters": "{count, plural, one {# 個叢集已選取} other {# 個叢集已選取}}",
+      "clearSelected": "清除所選的叢集"
+    },
+    "toasts": {
+      "updated": "簽名已更新",
+      "updateFailed": "無法更新簽名",
+      "classifyQueued": "已請求人工智慧分類",
+      "noAiModel": "此功能未配置人工智慧模型",
+      "issueLinked": "問題已連結"
+    },
+    "empty": {
+      "title": "尚無失敗簽名",
+      "description": "簽名在自動化結果到達時顯示在此處。若要對此專案中已記錄的失敗進行分組，請在失敗分級設定中使用分析現有結果。"
+    },
+    "settings": {
+      "description": "將自動化失敗分組為簽名並讓人工智慧分類它們。",
+      "enableLabel": "啟用失敗分級",
+      "enableDescription": "當結果到達時，按例外、訊息和堆疊框架將此專案中的每個自動化失敗分組。",
+      "autoClassifyLabel": "使用人工智慧分類新簽名",
+      "autoClassifyDescription": "要求專案的人工智慧模型將每個新簽名分類為產品缺陷、測試缺陷、環境問題或不穩定。需要指派給失敗分級分類功能的人工智慧模型。",
+      "backfillLabel": "分析現有結果",
+      "backfillDescription": "對此專案中已記錄的每個自動化失敗進行分組。在背景中執行。",
+      "backfillStarted": "分析已啟動",
+      "backfillRunning": "分析中... {processed, plural, one {# 個失敗已分組} other {# 個失敗已分組}}",
+      "backfillDone": "分析完成",
+      "backfillFailed": "分析失敗",
+      "backfillQueueUnavailable": "背景工作佇列不可用",
+      "enabledToast": "失敗分級已啟用",
+      "disabledToast": "失敗分級已停用",
+      "autoClassifyOnToast": "人工智慧分類已啟用",
+      "autoClassifyOffToast": "人工智慧分類已停用",
+      "openTriage": "打開失敗分級"
     }
   }
 }

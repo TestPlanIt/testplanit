@@ -740,7 +740,8 @@
       "apiDocumentation": "API 문서",
       "sharedContent": "공유 콘텐츠",
       "impact": "영향 분석",
-      "alerts": "알림 & 경고"
+      "alerts": "알림 & 경고",
+      "triage": "장애 분류"
     },
     "aria": {
       "userMenu": "사용자 메뉴",
@@ -3959,36 +3960,36 @@
       }
     },
     "savedDrafts": {
-      "title": "내 스테이징된 사례",
-      "description": "작성하고 스테이징한 테스트 케이스입니다. 생성되지 않았으므로 본인만 볼 수 있습니다. 하나를 열어서 검토하거나 여러 개를 한 번에 생성하세요.",
-      "empty": "이 프로젝트에 스테이징된 테스트 케이스가 없습니다.",
-      "saveDraft": "케이스 스테이징",
+      "title": "내 준비된 케이스",
+      "description": "작성하고 준비한 테스트 케이스입니다. 오직 당신만 볼 수 있습니다. 하나를 열어서 검토하거나 여러 개를 한 번에 생성하세요.",
+      "empty": "이 프로젝트에 준비된 테스트 케이스가 없습니다.",
+      "saveDraft": "케이스 준비",
       "saveTitle": "테스트 케이스 이름 지정",
       "renameTitle": "테스트 케이스 이름 변경",
-      "saveDescription": "스테이징된 테스트 케이스는 이름으로 나열됩니다. 본인만 볼 수 있으며, 생성할 때까지 저장소에 아무것도 추가되지 않습니다.",
-      "saved": "테스트 케이스가 스테이징되었습니다",
-      "saveFailed": "테스트 케이스를 스테이징할 수 없습니다",
-      "renamed": "스테이징된 케이스 이름이 변경되었습니다",
-      "deleted": "스테이징된 케이스가 삭제되었습니다",
-      "deleteFailed": "스테이징된 케이스를 삭제할 수 없습니다",
-      "deleteTitle": "이 스테이징된 케이스를 삭제하시겠습니까?",
-      "deleteDescription": "\"{name}\"이 삭제됩니다. 생성되지 않았으므로 다른 변경 사항은 없습니다.",
+      "saveDescription": "준비된 테스트 케이스는 이름으로 나열됩니다. 오직 당신만 볼 수 있으며, 생성할 때까지 저장소에 추가되지 않습니다.",
+      "saved": "테스트 케이스가 준비되었습니다",
+      "saveFailed": "테스트 케이스를 준비할 수 없습니다",
+      "renamed": "준비된 케이스의 이름이 변경되었습니다",
+      "deleted": "준비된 케이스가 삭제되었습니다",
+      "deleteFailed": "준비된 케이스를 삭제할 수 없습니다",
+      "deleteTitle": "이 준비된 케이스를 삭제하시겠습니까?",
+      "deleteDescription": "\"{name}\"이(가) 삭제됩니다. 이것은 생성되지 않았으므로 다른 것은 변경되지 않습니다.",
       "folderDeleted": "폴더가 삭제되었습니다",
-      "folderFallback": "스테이징된 케이스의 폴더가 삭제되었습니다. 케이스가 \"{folder}\"에 생성됩니다.",
-      "selectFolderFirst": "이 스테이징된 케이스를 열기 전에 폴더를 선택하세요.",
-      "problemCount": "{count, plural, one {{count}개 문제} other {{count}개 문제}}",
-      "updated": "{age} 이전에 업데이트됨",
-      "createSelected": "{count, plural, =0 {선택한 항목 생성} other {선택한 {count}개 생성}}",
-      "createdToast": "{count, plural, one {{count}개 테스트 케이스 생성됨} other {{count}개 테스트 케이스 생성됨}}",
-      "failedToast": "{count, plural, one {{count}개 스테이징된 케이스를 생성할 수 없음} other {{count}개 스테이징된 케이스를 생성할 수 없음}}",
-      "problemFolder": "폴더가 삭제되었습니다. 스테이징된 케이스를 열어서 폴더를 선택하세요.",
-      "problemTemplate": "템플릿이 더 이상 이 프로젝트에 할당되지 않습니다. 스테이징된 케이스를 열어서 다른 항목을 선택하세요.",
-      "problemState": "상태가 더 이상 존재하지 않습니다. 스테이징된 케이스를 열어서 다른 항목을 선택하세요.",
+      "folderFallback": "준비된 케이스의 폴더가 삭제되었으므로 케이스는 \"{folder}\"에서 생성됩니다.",
+      "selectFolderFirst": "이 준비된 케이스를 열기 전에 폴더를 선택하세요.",
+      "problemCount": "{count, plural, one {{count} 문제} other {{count} 문제}}",
+      "updated": "{age}에 업데이트됨",
+      "createSelected": "{count, plural, =0 {선택된 항목 생성} other {선택된 {count}개 생성}}",
+      "createdToast": "{count, plural, one {{count}개 테스트 케이스가 생성됨} other {{count}개 테스트 케이스가 생성됨}}",
+      "failedToast": "{count, plural, one {{count}개 준비된 케이스를 생성할 수 없습니다} other {{count}개 준비된 케이스를 생성할 수 없습니다}}",
+      "problemFolder": "폴더가 삭제되었습니다. 준비된 케이스를 열어서 폴더를 선택하세요.",
+      "problemTemplate": "템플릿이 더 이상 이 프로젝트에 할당되지 않았습니다. 준비된 케이스를 열어서 하나를 선택하세요.",
+      "problemState": "상태가 더 이상 존재하지 않습니다. 준비된 케이스를 열어서 하나를 선택하세요.",
       "problemField": "{field}: {message}",
       "notCreated": "생성되지 않음: {message}",
-      "openToFix": "스테이징된 케이스를 열어서 수정하세요.",
-      "elsewhereTitle": "다음 위치에 스테이징된 케이스도 있습니다",
-      "elsewhereCount": "{count, plural, one {{count} 스테이징된 케이스} other {{count} 스테이징된 케이스}}"
+      "openToFix": "준비된 케이스를 열어서 수정하세요.",
+      "elsewhereTitle": "다음에서도 준비된 케이스가 있습니다",
+      "elsewhereCount": "{count, plural, one {{count}개 준비된 케이스} other {{count}개 준비된 케이스}}"
     },
     "filterBar": {
       "addFilter": "필터 추가",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "재시도됨",
-      "clear": "필터 지우기"
+      "clear": "모든 필터 지우기"
     },
     "impact": {
       "title": "영향",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "URL에서 테스트 케이스 생성 (애플리케이션 테스트)",
         "automation_candidates": "자동화 후보 보고서",
         "derive_case_steps": "AI 단계 도출",
-        "impact_analysis": "영향: 영향을 받는 테스트 선택"
+        "impact_analysis": "영향: 영향을 받는 테스트 선택",
+        "failure_triage": "장애 분류"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "감사 로그",
         "budget-alerts": "예산 알림",
         "auto-tag": "AI 자동 태그",
+        "failure-triage": "장애 분류",
         "repo-cache": "저장소 캐시",
         "copy-move": "복사 및 이동",
         "duplicate-scan": "중복 스캔",
@@ -7077,7 +7080,7 @@
         "reviewCancelledEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 취소했습니다.",
         "reviewReminderTitle": "검토는 아직 진행 중입니다.",
         "reviewReminderAction": "아직 귀하의 리뷰를 기다리고 있습니다.",
-        "reviewReminderEmailMessage": "알림: {actorName}님의 프로젝트 \"{projectName}\"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청이 {pendingFor} 동안 보류 중입니다.",
+        "reviewReminderEmailMessage": "알림: {actorName}님의 {entityLabel} \"{entityName}\" 프로젝트 \"{projectName}\"에 대한 검토 요청이 {pendingFor}동안 보류 중입니다.",
         "reviewReminderHoursPending": "{pendingFor} 동안 보류 중",
         "aiStepsDerivedTitle": "AI 기반 테스트 단계 준비 완료",
         "aiStepsDerivedMessage": "{count, plural, other {테스트 케이스 #개}}에 AI가 도출한 단계가 추가되었습니다 — 정확성을 검토하세요.",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## 영향\n테스트 중인 애플리케이션의 저장소를 연결하여 이 프로젝트가 테스트 영향 분석을 실행할 수 있도록 합니다: 두 개의 커밋을 선택하여 변경 사항이 어떤 테스트 케이스에 영향을 주는지 확인하고, 테스트 케이스를 자신이 커버하는 코드로 고정합니다.",
     "pathPatterns": "## 경로 패턴\n각 행은 기본 **경로**와 glob **패턴**을 결합합니다. 행이 누적됩니다: 파일은 행이 일치할 때 포함됩니다.\n\n- `src` + `**/*` — `src` 아래의 모든 항목\n- 공백 또는 `.` + `**/*` — 저장소의 모든 파일\n- `src` + `**/!(*.test|*.spec).ts` — 테스트를 제외한 `.ts` 파일\n\n### 제외\n행에서 **제외**를 확인하여 다른 행이 포함할 때도 해당 파일을 제거합니다. 제외는 파일 선택기 및 캐시에 적용되며, 영향 분석의 변경된 파일에 적용되므로, 거의 모든 pull 요청에서 변경되는 파일은 관련 없는 테스트 케이스를 가져오기 중지합니다. 최소한 하나의 행은 선택되지 않은 상태로 유지되어야 합니다.\n\n- 공백 + `**/CHANGELOG*` — 모든 깊이의 모든 changelog\n- `app` + `build.gradle.kts` — 버전만 범프하는 빌드 파일",
     "projectAutomation": "## 자동화된 실행\n실행 대상은 TestPlanIt에 이 프로젝트의 자동화된 케이스를 실행할 위치를 알려줍니다: GitHub Actions 워크플로, GitLab CI 파이프라인 또는 다른 시스템을 위한 서명된 웹훅입니다. 실행이 실행되면 TestPlanIt은 실행 ID와 계획 URL로 작업을 시작합니다. 작업은 계획을 읽고 일치하는 테스트를 실행한 후 해당 실행에 고정된 리포터 또는 CLI로 결과를 다시 보고합니다. 대상은 삭제하지 않고 비활성화할 수 있습니다.",
-    "userAlerts": "## 알림 & 경고\n**알림 기본 설정**은 연락 방법(앱 내, 이메일, 다이제스트)과 수신할 알림 유형을 결정합니다.\n\n**경고**는 테스트 메트릭을 모니터링하고 임계값을 초과할 때 구독자에게 알립니다. 예를 들어 케이스의 일반적인 기간보다 50% 더 오래 걸리는 결과, 연속으로 실패하는 케이스, 통과율이 90% 아래로 떨어지는 실행, 또는 마감일을 얼마 남겨두고 뒤처진 마일스톤 등입니다. 목록은 프로젝트의 모든 경고를 표시합니다. **알림** 스위치는 하나를 팔로우하거나 떠납니다. **경고 추가**는 역할에 **경고** 추가/편집이 있는 모든 프로젝트에서 직접 만듭니다. 프로젝트 관리자는 프로젝트의 모든 경고 및 다른 사람의 구독을 관리합니다. 경고는 쿨다운 내에서 대상당 최대 1회 발동되며 충분한 결과가 있을 때까지 침묵을 유지합니다."
+    "userAlerts": "## 알림 & 경고\n**알림 기본 설정**은 연락 방법(앱 내, 이메일, 다이제스트)과 수신할 알림 유형을 결정합니다.\n\n**경고**는 테스트 메트릭을 모니터링하고 임계값을 초과할 때 구독자에게 알립니다. 예를 들어 케이스의 일반적인 기간보다 50% 더 오래 걸리는 결과, 연속으로 실패하는 케이스, 통과율이 90% 아래로 떨어지는 실행, 또는 마감일을 얼마 남겨두고 뒤처진 마일스톤 등입니다. 목록은 프로젝트의 모든 경고를 표시합니다. **알림** 스위치는 하나를 팔로우하거나 떠납니다. **경고 추가**는 역할에 **경고** 추가/편집이 있는 모든 프로젝트에서 직접 만듭니다. 프로젝트 관리자는 프로젝트의 모든 경고 및 다른 사람의 구독을 관리합니다. 경고는 쿨다운 내에서 대상당 최대 1회 발동되며 충분한 결과가 있을 때까지 침묵을 유지합니다.",
+    "projectTriage": "## 장애 분류\n자동화된 장애가 동일한 예외, 메시지 및 상위 스택 프레임을 공유하면 하나의 **서명**으로 그룹화됩니다. 각 서명은 발생 빈도, 영향을 받은 테스트 케이스 및 실행, 그리고 AI가 제품 버그인지, 테스트 버그인지, 환경 문제인지 또는 불안정한지 여부를 표시합니다. 서명이 처리되면 이를 해결하거나 무시하십시오. 장애가 다시 발생하면 자동으로 다시 열립니다.",
+    "projectTriageSettings": "## 장애 분류 설정\n모든 도착하는 자동화된 결과에 대한 실행 그룹화는 비용이 들지 않습니다. AI 분류는 AI 모델 페이지의 **장애 분류** 기능에 할당된 AI 모델을 사용합니다. 여기서 AI 호출 없이 그룹화를 유지하려면 끕니다. **기존 결과 분석**은 이 프로젝트에 이미 기록된 모든 자동화된 장애를 그룹화합니다."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "통합",
       "QUEUE": "백그라운드 대기열",
       "SYSTEM": "설치"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "열려 있음",
+      "RESOLVED": "해결됨",
+      "IGNORED": "무시됨"
+    },
+    "classification": {
+      "UNCLASSIFIED": "분류되지 않음",
+      "PRODUCT_BUG": "제품 버그",
+      "TEST_BUG": "테스트 버그",
+      "ENVIRONMENT": "환경",
+      "FLAKY": "불안정함"
+    },
+    "source": {
+      "AI": "AI로 분류됨",
+      "labelAI": "AI",
+      "labelMANUAL": "수동"
+    },
+    "columns": {
+      "classification": "분류",
+      "occurrences": "발생 횟수",
+      "firstSeen": "처음 발견",
+      "lastSeen": "마지막 발견",
+      "classifiedBy": "분류 기준"
+    },
+    "filters": {
+      "searchPlaceholder": "서명 검색...",
+      "flakyOnly": "불안정한 후보",
+      "sourceAll": "AI 또는 수동"
+    },
+    "actions": {
+      "resolve": "해결",
+      "ignore": "무시",
+      "classify": "AI로 분류",
+      "setClassification": "분류 설정"
+    },
+    "detail": {
+      "exceptionType": "예외 유형",
+      "normalizedMessage": "정규화된 메시지",
+      "frames": "상위 스택 프레임",
+      "sampleTrace": "최근 장애",
+      "affectedCases": "{count, plural, one {영향을 받는 # 테스트 케이스} other {영향을 받는 # 테스트 케이스}}",
+      "recentOccurrences": "{count, plural, one {최근 발생 # 건} other {최근 발생 # 건}}",
+      "rationale": "근거",
+      "suggestedIssueTitle": "제안된 문제 제목",
+      "nextStep": "제안된 다음 단계",
+      "noAi": "아직 AI로 분류되지 않았습니다.",
+      "noDetails": "이 장애는 메시지나 스택 추적이 없으므로 테스트 케이스별로 그룹화됩니다.",
+      "notesPlaceholder": "팀을 위한 메모...",
+      "lastRun": "마지막 실행",
+      "aiSuggestion": "AI 제안",
+      "unlinkConfirmDescription": "이렇게 하면 이 서명에서 문제가 제거됩니다. 문제 자체는 유지되며 나중에 다시 연결할 수 있습니다.",
+      "signatureLabel": "장애 서명",
+      "affectedCasesLabel": "영향을 받는 테스트 케이스"
+    },
+    "flakyCandidate": "불안정한 후보",
+    "flakyCandidateHint": "영향을 받는 테스트 케이스는 최근 기록에서 성공과 실패를 오갑니다.",
+    "knownIssue": "알려진 문제",
+    "notGrouped": "{count, plural, one {아직 그룹화되지 않은 # 장애} other {아직 그룹화되지 않은 # 장애}}",
+    "runPanel": {
+      "title": "장애 클러스터",
+      "inRun": "{count, plural, one {이 실행에서 #개} other {이 실행에서 #개}}",
+      "hint": "클러스터를 클릭하여 아래 결과를 필터링합니다.",
+      "open": "서명 보기",
+      "inRunColumn": "이 실행에서",
+      "selectedClusters": "{count, plural, one {선택된 # 클러스터} other {선택된 # 클러스터}}",
+      "clearSelected": "선택된 클러스터 지우기"
+    },
+    "toasts": {
+      "updated": "서명이 업데이트되었습니다",
+      "updateFailed": "서명을 업데이트할 수 없습니다",
+      "classifyQueued": "AI 분류가 요청되었습니다",
+      "noAiModel": "이 기능에 대해 구성된 AI 모델이 없습니다",
+      "issueLinked": "문제가 연결되었습니다"
+    },
+    "empty": {
+      "title": "아직 장애 서명이 없습니다",
+      "description": "서명은 자동화된 결과가 도착하면서 여기에 나타납니다. 이 프로젝트에 이미 기록된 장애를 그룹화하려면 장애 분류 설정에서 기존 결과 분석을 사용하세요."
+    },
+    "settings": {
+      "description": "자동화된 장애를 서명으로 그룹화하고 AI로 분류하도록 하세요.",
+      "enableLabel": "장애 분류 활성화",
+      "enableDescription": "결과가 도착하면서 이 프로젝트의 모든 자동화된 장애를 예외, 메시지 및 스택 프레임별로 그룹화합니다.",
+      "autoClassifyLabel": "AI로 새 서명 분류",
+      "autoClassifyDescription": "프로젝트의 AI 모델에 각 새 서명을 제품 버그, 테스트 버그, 환경 문제 또는 불안정함으로 분류하도록 요청합니다. 장애 분류 기능에 할당된 AI 모델이 필요합니다.",
+      "backfillLabel": "기존 결과 분석",
+      "backfillDescription": "이 프로젝트에 이미 기록된 모든 자동화된 장애를 그룹화합니다. 백그라운드에서 실행됩니다.",
+      "backfillStarted": "분석 시작됨",
+      "backfillRunning": "분석 중... {processed, plural, one {# 장애가 그룹화됨} other {# 장애가 그룹화됨}}",
+      "backfillDone": "분석 완료",
+      "backfillFailed": "분석 실패",
+      "backfillQueueUnavailable": "백그라운드 작업 큐를 사용할 수 없습니다",
+      "enabledToast": "장애 분류 활성화됨",
+      "disabledToast": "장애 분류 비활성화됨",
+      "autoClassifyOnToast": "AI 분류 활성화됨",
+      "autoClassifyOffToast": "AI 분류 비활성화됨",
+      "openTriage": "장애 분류 열기"
     }
   }
 }

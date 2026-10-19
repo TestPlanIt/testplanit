@@ -740,7 +740,8 @@
       "apiDocumentation": "API-documentatie",
       "sharedContent": "Gedeelde inhoud",
       "impact": "Impactanalyse",
-      "alerts": "Meldingen en waarschuwingen"
+      "alerts": "Meldingen en waarschuwingen",
+      "triage": "Foutclassificatie"
     },
     "aria": {
       "userMenu": "Gebruikersmenu",
@@ -3959,36 +3960,36 @@
       }
     },
     "savedDrafts": {
-      "title": "Mijn gefaseerde testcases",
-      "description": "Testcases die je hebt geschreven en gefaseerd in plaats van aangemaakt. Alleen jij kunt ze zien. Open er een om deze te controleren, of maak er meerdere tegelijk aan.",
-      "empty": "Je hebt geen gefaseerde testcases in dit project.",
-      "saveDraft": "Testcase faseren",
+      "title": "Mijn voorbereide cases",
+      "description": "Testcases die u hebt geschreven en voorbereide in plaats van aan te maken. Alleen u kunt deze zien. Open er een om deze te controleren, of maak er meerdere tegelijk aan.",
+      "empty": "U hebt geen voorbereide testcases in dit project.",
+      "saveDraft": "Case voorbereiden",
       "saveTitle": "Noem de testcase",
       "renameTitle": "Testcase hernoemen",
-      "saveDescription": "Een gefaseerde testcase staat vermeld onder zijn naam. Alleen jij kunt hem zien; niets wordt aan de repository toegevoegd totdat je hem aanmaakt.",
-      "saved": "Testcase gefaseerd",
-      "saveFailed": "De testcase kon niet worden gefaseerd",
-      "renamed": "Gefaseerde case hernoemd",
-      "deleted": "Gefaseerde case verwijderd",
-      "deleteFailed": "De gefaseerde case kon niet worden verwijderd",
-      "deleteTitle": "Deze gefaseerde case verwijderen?",
+      "saveDescription": "Een voorbereide testcase wordt vermeld onder de naam ervan. Alleen u kunt deze zien; niets wordt aan de repository toegevoegd totdat u deze aanmaakt.",
+      "saved": "Testcase voorbereide",
+      "saveFailed": "De testcase kon niet worden voorbereide",
+      "renamed": "Voorbereide case hernoemd",
+      "deleted": "Voorbereide case verwijderd",
+      "deleteFailed": "De voorbereide case kon niet worden verwijderd",
+      "deleteTitle": "Deze voorbereide case verwijderen?",
       "deleteDescription": "\"{name}\" wordt verwijderd. Het is nooit aangemaakt, dus niets anders verandert.",
       "folderDeleted": "Map verwijderd",
-      "folderFallback": "De map van de gefaseerde case is verwijderd; de case wordt aangemaakt in \"{folder}\".",
-      "selectFolderFirst": "Selecteer een map voordat je deze gefaseerde case opent.",
+      "folderFallback": "De map van de voorbereide case is verwijderd; de case wordt gemaakt in \"{folder}\".",
+      "selectFolderFirst": "Selecteer een map voordat u deze voorbereide case opent.",
       "problemCount": "{count, plural, one {{count} probleem} other {{count} problemen}}",
       "updated": "Bijgewerkt {age}",
-      "createSelected": "{count, plural, =0 {Geselecteerde aanmaken} other {{count} geselecteerde aanmaken}}",
+      "createSelected": "{count, plural, =0 {Geselecteerde aanmaken} other {Geselecteerde {count} aanmaken}}",
       "createdToast": "{count, plural, one {{count} testcase aangemaakt} other {{count} testcases aangemaakt}}",
-      "failedToast": "{count, plural, one {{count} gefaseerde case kon niet worden aangemaakt} other {{count} gefaseerde cases konden niet worden aangemaakt}}",
-      "problemFolder": "De map is verwijderd. Open de gefaseerde case om een map te kiezen.",
-      "problemTemplate": "De sjabloon is niet meer aan dit project toegewezen. Open de gefaseerde case om er een te kiezen.",
-      "problemState": "De status bestaat niet meer. Open de gefaseerde case om er een te kiezen.",
+      "failedToast": "{count, plural, one {{count} voorbereide case kon niet worden aangemaakt} other {{count} voorbereide cases konden niet worden aangemaakt}}",
+      "problemFolder": "De map is verwijderd. Open de voorbereide case om een map te kiezen.",
+      "problemTemplate": "De sjabloon is niet langer aan dit project toegewezen. Open de voorbereide case om er een te kiezen.",
+      "problemState": "De status bestaat niet meer. Open de voorbereide case om er een te kiezen.",
       "problemField": "{field}: {message}",
       "notCreated": "Niet aangemaakt: {message}",
-      "openToFix": "Open de gefaseerde case om het op te lossen.",
-      "elsewhereTitle": "U hebt ook voorbereide gevallen in",
-      "elsewhereCount": "{count, plural, one {{count} voorbereide geval} other {{count} voorbereide gevallen}}"
+      "openToFix": "Open de voorbereide case om dit op te lossen.",
+      "elsewhereTitle": "U hebt ook voorbereide cases in",
+      "elsewhereCount": "{count, plural, one {{count} voorbereide case} other {{count} voorbereide cases}}"
     },
     "filterBar": {
       "addFilter": "Filter toevoegen",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Opnieuw geprobeerd",
-      "clear": "Filters wissen"
+      "clear": "Alle filters wissen"
     },
     "impact": {
       "title": "Gevolgen",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Testcases genereren vanuit URL (applicatietesten)",
         "automation_candidates": "Rapport over automatiseringskandidaten",
         "derive_case_steps": "AI-afleiding van stappen",
-        "impact_analysis": "Impact: beïnvloede testeselectie"
+        "impact_analysis": "Impact: beïnvloede testeselectie",
+        "failure_triage": "Foutclassificatie"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Auditlogboeken",
         "budget-alerts": "Budgetwaarschuwingen",
         "auto-tag": "AI-automatische tagging",
+        "failure-triage": "Foutclassificatie",
         "repo-cache": "Repositorycache",
         "copy-move": "Kopiëren en verplaatsen",
         "duplicate-scan": "Dubbele scan",
@@ -7077,8 +7080,8 @@
         "reviewCancelledEmailMessage": "{actorName} heeft het beoordelingsverzoek voor {entityLabel} \"{entityName}\" in project \"{projectName} \" geannuleerd.",
         "reviewReminderTitle": "Beoordeling nog in behandeling",
         "reviewReminderAction": "wacht nog steeds op uw beoordeling van",
-        "reviewReminderEmailMessage": "Herinnering: Het beoordelingsverzoek van {actorName} voor {entityLabel} \"{entityName}\" in project \"{projectName}\" is al {pendingFor} in behandeling.",
-        "reviewReminderHoursPending": "In behandeling sinds {pendingFor}",
+        "reviewReminderEmailMessage": "Herinnering: Het beoordelingsverzoek van {actorName} op {entityLabel} \"{entityName}\" in project \"{projectName}\" is al {pendingFor} in behandeling.",
+        "reviewReminderHoursPending": "In afwachting van {pendingFor}",
         "aiStepsDerivedTitle": "AI-afgeleide teststappen gereed",
         "aiStepsDerivedMessage": "{count, plural, one {# testcase heeft} other {# testcases hebben}} AI-afgeleide stappen gekregen — controleer op juistheid.",
         "aiStepsDerivedReviewLink": "Testrun controleren",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Impact\nVerbind de repository van de toepassing onder test zodat dit project test impact analysis kan uitvoeren: selecteer twee commits om te zien welke testcases de wijzigingen beïnvloeden, en speld testcases vast aan de code die zij dekken.",
     "pathPatterns": "## Padpatronen\nElke rij combineert een basis **pad** met een glob **patroon**. Rijen tellen op: een bestand wordt opgenomen wanneer een rij eraan voldoet.\n\n- `src` + `**/*` — alles onder `src`\n- leeg of `.` + `**/*` — elk bestand in de repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` bestanden behalve tests\n\n### Uitsluiten\nVink **Uitsluiten** aan op een rij om de bestanden ervan te verwijderen, zelfs wanneer een ander rij ze opneemt. Uitsluitingen zijn van toepassing op de bestandskiezer en cache, en voor Impact op de gewijzigde bestanden van een analyse, zodat een bestand dat bij bijna elke pull request verandert, geen niet-gerelateerde testgevallen optrekt. Ten minste één rij moet niet aangevinkt blijven.\n\n- leeg + `**/CHANGELOG*` — elk wijzigingenlogboek, op elke diepte\n- `app` + `build.gradle.kts` — een bouwbestand dat alleen de versie verhoogt",
     "projectAutomation": "## Geautomatiseerde uitvoering\nUitvoeringsdoelen vertellen TestPlanIt waar dit project's geautomatiseerde cases uit te voeren: een GitHub Actions-workflow, een GitLab CI-pipeline, of een ondertekende webhook voor elk ander systeem. Wanneer een run wordt uitgevoerd, start TestPlanIt de taak met het run-id en een plan-URL; de taak leest het plan, voert de overeenkomende tests uit en rapporteert resultaten terug met een reporter of de CLI vastgespeld aan die run. Doelen kunnen worden uitgeschakeld zonder te worden verwijderd.",
-    "userAlerts": "## Meldingen en waarschuwingen\n**Voorkeursinstellingen voor meldingen** bepalen hoe u wordt bereikt (in-app, e-mail, digest) en welke typen meldingen u überhaupt ontvangt.\n\n**Waarschuwingen** controleren een testmetriek en stellen hun abonnees op de hoogte wanneer deze een lijn overschrijdt, bijvoorbeeld een resultaat dat 50% langer duurt dan de gebruikelijke duur van de zaak, een zaak die drie keer achter elkaar mislukt, een run waarvan het slagingspercentage onder de 90% daalt, of een mijlpaal die achterblijft met nog dagen te gaan. De lijst toont elke waarschuwing in uw projecten; de schakelaar **Meld me** volgt er één of verlaat er één. **Waarschuwing toevoegen** maakt uw eigen in elk project waarin uw rol **Waarschuwingen** Add/Edit heeft; projectbeheerders beheren elke waarschuwing in hun project en de abonnementen van anderen. Een waarschuwing wordt maximaal eenmaal per onderwerp binnen zijn afkoelingsperiode geactiveerd en blijft stil tot deze voldoende resultaten heeft."
+    "userAlerts": "## Meldingen en waarschuwingen\n**Voorkeursinstellingen voor meldingen** bepalen hoe u wordt bereikt (in-app, e-mail, digest) en welke typen meldingen u überhaupt ontvangt.\n\n**Waarschuwingen** controleren een testmetriek en stellen hun abonnees op de hoogte wanneer deze een lijn overschrijdt, bijvoorbeeld een resultaat dat 50% langer duurt dan de gebruikelijke duur van de zaak, een zaak die drie keer achter elkaar mislukt, een run waarvan het slagingspercentage onder de 90% daalt, of een mijlpaal die achterblijft met nog dagen te gaan. De lijst toont elke waarschuwing in uw projecten; de schakelaar **Meld me** volgt er één of verlaat er één. **Waarschuwing toevoegen** maakt uw eigen in elk project waarin uw rol **Waarschuwingen** Add/Edit heeft; projectbeheerders beheren elke waarschuwing in hun project en de abonnementen van anderen. Een waarschuwing wordt maximaal eenmaal per onderwerp binnen zijn afkoelingsperiode geactiveerd en blijft stil tot deze voldoende resultaten heeft.",
+    "projectTriage": "## Foutclassificatie\nGeautomatiseerde fouten die dezelfde uitzondering, bericht en bovenste stackframes delen, worden in één **handtekening** gegroepeerd. Elke handtekening toont hoe vaak het is gebeurd, welke testcases en runs het heeft geraakt, en de AI's beoordeling of het een productfout, een testfout, een omgevingsprobleem of willekeurig is. Los een handtekening op of negeer deze nadat deze is afgehandeld; deze opent vanzelf opnieuw als de fout terugkomt.",
+    "projectTriageSettings": "## Foutclassificatie-instellingen\nGroeperen op alle geautomatiseerde resultaten die binnenkomen en kost niets. AI-classificatie maakt gebruik van het AI-model dat is toegewezen aan de **Foutclassificatie**-functie op de pagina AI-modellen; schakel deze hier uit om groepering zonder AI-aanroepen te behouden. **Bestaande resultaten analyseren** groepeert elke geautomatiseerde fout die al in dit project is opgenomen."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Integraties",
       "QUEUE": "Achtergrondwachtrijen",
       "SYSTEM": "Installatie"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Open",
+      "RESOLVED": "Opgelost",
+      "IGNORED": "Genegeerd"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Niet-geclassificeerd",
+      "PRODUCT_BUG": "Productfout",
+      "TEST_BUG": "Testfout",
+      "ENVIRONMENT": "Omgeving",
+      "FLAKY": "Willekeurig"
+    },
+    "source": {
+      "AI": "Geclassificeerd door AI",
+      "labelAI": "AI",
+      "labelMANUAL": "Handmatig"
+    },
+    "columns": {
+      "classification": "Classificatie",
+      "occurrences": "Voorvallen",
+      "firstSeen": "Eerst gezien",
+      "lastSeen": "Laatst gezien",
+      "classifiedBy": "Geclassificeerd door"
+    },
+    "filters": {
+      "searchPlaceholder": "Handtekeningen zoeken...",
+      "flakyOnly": "Willekeurige kandidaten",
+      "sourceAll": "AI of handmatig"
+    },
+    "actions": {
+      "resolve": "Oplossen",
+      "ignore": "Negeren",
+      "classify": "Classificeer met AI",
+      "setClassification": "Stel classificatie in"
+    },
+    "detail": {
+      "exceptionType": "Uitzonderingstype",
+      "normalizedMessage": "Genormaliseerd bericht",
+      "frames": "Bovenste stackframes",
+      "sampleTrace": "Nieuwste fout",
+      "affectedCases": "{count, plural, one {# betrokken testcase} other {# betrokken testcases}}",
+      "recentOccurrences": "{count, plural, one {# recent voorkomen} other {# recente voorvallen}}",
+      "rationale": "Motivering",
+      "suggestedIssueTitle": "Voorgestelde paginatitel",
+      "nextStep": "Voorgestelde volgende stap",
+      "noAi": "Nog niet geclassificeerd door AI.",
+      "noDetails": "Deze fout bevatte geen bericht of stack-tracering, dus deze wordt gegroepeerd op testcase.",
+      "notesPlaceholder": "Opmerkingen voor het team...",
+      "lastRun": "Vorige run",
+      "aiSuggestion": "AI-suggestie",
+      "unlinkConfirmDescription": "Dit verwijdert het probleem uit deze handtekening. Het probleem zelf blijft behouden en kan later opnieuw worden gekoppeld.",
+      "signatureLabel": "Fouthandtekening",
+      "affectedCasesLabel": "Betrokken testcases"
+    },
+    "flakyCandidate": "Willekeurige kandidaat",
+    "flakyCandidateHint": "De betrokken testcases schommelen tussen slagen en mislukking in hun recente geschiedenis.",
+    "knownIssue": "Bekend probleem",
+    "notGrouped": "{count, plural, one {# fout nog niet gegroepeerd} other {# fouten nog niet gegroepeerd}}",
+    "runPanel": {
+      "title": "Foutclusters",
+      "inRun": "{count, plural, one {# in deze run} other {# in deze run}}",
+      "hint": "Klik op een cluster om de onderstaande resultaten te filteren.",
+      "open": "Handtekening weergeven",
+      "inRunColumn": "In deze run",
+      "selectedClusters": "{count, plural, one {# cluster geselecteerd} other {# clusters geselecteerd}}",
+      "clearSelected": "Wis de geselecteerde clusters"
+    },
+    "toasts": {
+      "updated": "Handtekening bijgewerkt",
+      "updateFailed": "Kon de handtekening niet bijwerken",
+      "classifyQueued": "AI-classificatie aangevraagd",
+      "noAiModel": "Geen AI-model is geconfigureerd voor deze functie",
+      "issueLinked": "Probleem gekoppeld"
+    },
+    "empty": {
+      "title": "Nog geen fouthandtekeningen",
+      "description": "Handtekeningen verschijnen hier naarmate geautomatiseerde resultaten met fouten binnenkomen. Gebruik Bestaande resultaten analyseren in de Foutclassificatie-instellingen om fouten die al in dit project zijn opgenomen, te groeperen."
+    },
+    "settings": {
+      "description": "Groepeer geautomatiseerde fouten in handtekeningen en laat AI deze classificeren.",
+      "enableLabel": "Foutclassificatie inschakelen",
+      "enableDescription": "Groepeer elke geautomatiseerde fout in dit project op uitzondering, bericht en stackframes naarmate resultaten binnenkomen.",
+      "autoClassifyLabel": "Nieuwe handtekeningen met AI classificeren",
+      "autoClassifyDescription": "Vraag het AI-model van het project om elke nieuwe handtekening te classificeren als een productfout, testfout, omgevingsprobleem of willekeurig. Vereist een AI-model dat is toegewezen aan de functie Foutclassificatie.",
+      "backfillLabel": "Bestaande resultaten analyseren",
+      "backfillDescription": "Groepeer elke geautomatiseerde fout die al in dit project is opgenomen. Wordt op de achtergrond uitgevoerd.",
+      "backfillStarted": "Analyse gestart",
+      "backfillRunning": "Analyseren... {processed, plural, one {# fout gegroepeerd} other {# fouten gegroepeerd}}",
+      "backfillDone": "Analyse voltooid",
+      "backfillFailed": "Analyse mislukt",
+      "backfillQueueUnavailable": "Achtergrondjobwachtrij is niet beschikbaar",
+      "enabledToast": "Foutclassificatie ingeschakeld",
+      "disabledToast": "Foutclassificatie uitgeschakeld",
+      "autoClassifyOnToast": "AI-classificatie ingeschakeld",
+      "autoClassifyOffToast": "AI-classificatie uitgeschakeld",
+      "openTriage": "Open foutclassificatie"
     }
   }
 }

@@ -740,7 +740,8 @@
       "apiDocumentation": "API 文档",
       "sharedContent": "共享内容",
       "impact": "影响分析",
-      "alerts": "通知和警报"
+      "alerts": "通知和警报",
+      "triage": "失败分类"
     },
     "aria": {
       "userMenu": "用户菜单",
@@ -3960,35 +3961,35 @@
     },
     "savedDrafts": {
       "title": "我的暂存案例",
-      "description": "您编写并暂存的测试用例，而不是创建。只有您可以看到它们。打开一个进行审查，或一次创建多个。",
+      "description": "您编写和暂存的测试用例，而不是创建的测试用例。只有您可以看到它们。打开一个进行审核，或同时创建多个。",
       "empty": "您在此项目中没有暂存的测试用例。",
       "saveDraft": "暂存案例",
-      "saveTitle": "命名测试用例",
+      "saveTitle": "为测试用例命名",
       "renameTitle": "重命名测试用例",
-      "saveDescription": "暂存的测试用例以其名称列出。只有您可以看到它；在您创建它之前，没有任何内容添加到存储库中。",
+      "saveDescription": "暂存的测试用例以其名称列出。只有您可以看到它；在您创建它之前，没有任何内容被添加到存储库中。",
       "saved": "测试用例已暂存",
       "saveFailed": "无法暂存测试用例",
       "renamed": "暂存案例已重命名",
       "deleted": "暂存案例已删除",
       "deleteFailed": "无法删除暂存案例",
       "deleteTitle": "删除此暂存案例？",
-      "deleteDescription": "\"{name}\"将被删除。它从未创建过，所以没有其他变化。",
+      "deleteDescription": "\"{name}\"将被删除。它从未被创建，因此没有其他任何变化。",
       "folderDeleted": "文件夹已删除",
       "folderFallback": "暂存案例的文件夹已删除；该案例将在\"{folder}\"中创建。",
-      "selectFolderFirst": "打开此暂存案例之前，请选择一个文件夹。",
+      "selectFolderFirst": "在打开此暂存案例之前，请选择一个文件夹。",
       "problemCount": "{count, plural, one {{count} 个问题} other {{count} 个问题}}",
       "updated": "更新于 {age}",
-      "createSelected": "{count, plural, =0 {创建选定项} other {创建 {count} 个选定项}}",
+      "createSelected": "{count, plural, =0 {创建已选择} other {创建 {count} 个已选择}}",
       "createdToast": "{count, plural, one {{count} 个测试用例已创建} other {{count} 个测试用例已创建}}",
       "failedToast": "{count, plural, one {{count} 个暂存案例无法创建} other {{count} 个暂存案例无法创建}}",
-      "problemFolder": "文件夹已删除。打开暂存案例以选择文件夹。",
+      "problemFolder": "文件夹已删除。打开暂存案例以选择一个文件夹。",
       "problemTemplate": "模板不再分配给此项目。打开暂存案例以选择一个。",
       "problemState": "状态不再存在。打开暂存案例以选择一个。",
       "problemField": "{field}：{message}",
       "notCreated": "未创建：{message}",
       "openToFix": "打开暂存案例以修复它。",
-      "elsewhereTitle": "您在其他地方还有暂存的用例",
-      "elsewhereCount": "{count, plural, other {{count} 暂存的用例}}"
+      "elsewhereTitle": "您还在以下位置有暂存案例",
+      "elsewhereCount": "{count, plural, one {{count} 个暂存案例} other {{count} 个暂存案例}}"
     },
     "filterBar": {
       "addFilter": "添加筛选器",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "已重试",
-      "clear": "清除过滤器"
+      "clear": "清除所有过滤器"
     },
     "impact": {
       "title": "影响",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "从 URL 生成测试用例（应用程序测试）",
         "automation_candidates": "自动化候选报告",
         "derive_case_steps": "AI 步骤推导",
-        "impact_analysis": "影响：受影响测试选择"
+        "impact_analysis": "影响：受影响测试选择",
+        "failure_triage": "失败分类分类"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "审计日志",
         "budget-alerts": "预算警报",
         "auto-tag": "AI自动标签",
+        "failure-triage": "失败分类",
         "repo-cache": "存储库缓存",
         "copy-move": "复制和移动",
         "duplicate-scan": "重复扫描",
@@ -7077,8 +7080,8 @@
         "reviewCancelledEmailMessage": "{actorName} 取消了对 {entityLabel} \"{entityName}\" 在项目 \"{projectName} \" 中的审查请求。",
         "reviewReminderTitle": "审核仍在进行中",
         "reviewReminderAction": "仍在等待您的评论",
-        "reviewReminderEmailMessage": "提醒：{actorName}对项目\"{projectName}\"中{entityLabel}\"{entityName}\"的审核请求已待处理 {pendingFor}。",
-        "reviewReminderHoursPending": "待处理 {pendingFor}",
+        "reviewReminderEmailMessage": "提醒：{actorName}对项目\"{projectName}\"中{entityLabel}\"{entityName}\"的审核请求已等待 {pendingFor}。",
+        "reviewReminderHoursPending": "等待 {pendingFor}",
         "aiStepsDerivedTitle": "AI 生成的测试步骤已就绪",
         "aiStepsDerivedMessage": "{count, plural, other {# 个测试用例已}}获得 AI 生成的步骤 — 请检查其准确性。",
         "aiStepsDerivedReviewLink": "查看测试运行",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## 影响\n连接应用程序代码的仓库，以便此项目可以运行测试影响分析：选择两个提交以查看更改影响哪些测试用例，并将测试用例固定到其覆盖的代码。",
     "pathPatterns": "## 路径模式\n每行将基础**路径**与 glob **模式**结合在一起。行会叠加：当任何行与文件匹配时，文件将被包含。\n\n- `src` + `**/*` — `src` 下的所有内容\n- 空白或 `.` + `**/*` — 仓库中的每个文件\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 文件，但测试文件除外\n\n### 排除\n在行上勾选**排除**以移除其文件，即使另一行包含它们。排除项适用于文件选择器和缓存，以及针对分析的已更改文件的影响分析，因此在几乎每个拉取请求上都会更改的文件会停止拉入不相关的测试用例。至少一行必须保持未勾选状态。\n\n- 空白 + `**/CHANGELOG*` — 每个更新日志，在任何深度\n- `app` + `build.gradle.kts` — 仅用于版本更新的构建文件",
     "projectAutomation": "## 自动化执行\n执行目标告诉 TestPlanIt 在哪里执行此项目的自动化用例：GitHub Actions 工作流、GitLab CI 管道或任何其他系统的已签名网络钩子。当运行被执行时，TestPlanIt 使用运行 id 和计划 URL 启动任务；任务读取计划，运行匹配的测试，并使用记者或 CLI 将结果报告回来。目标可以在不删除的情况下禁用。",
-    "userAlerts": "## 通知和警报\n**通知偏好设置**决定了您如何收到通知（应用内、电子邮件、摘要）以及您收到哪些类型的通知。\n\n**警报**监视测试指标，当指标超过阈值时通知订阅者。例如，某个结果耗时比该用例的常规耗时长50%，某个用例连续失败三次，某个运行的通过率降至90%以下，或某个里程碑在还有天数的情况下已落后。列表显示您项目中的每个警报；**通知我**开关可订阅或取消订阅某个警报。**添加警报**在您的角色具有**警报**添加/编辑权限的任何项目中创建您自己的警报；项目管理员管理其项目中的每个警报和其他人的订阅。警报在其冷却期内对于每个主题最多触发一次，并保持沉默直到收到足够的结果。"
+    "userAlerts": "## 通知和警报\n**通知偏好设置**决定了您如何收到通知（应用内、电子邮件、摘要）以及您收到哪些类型的通知。\n\n**警报**监视测试指标，当指标超过阈值时通知订阅者。例如，某个结果耗时比该用例的常规耗时长50%，某个用例连续失败三次，某个运行的通过率降至90%以下，或某个里程碑在还有天数的情况下已落后。列表显示您项目中的每个警报；**通知我**开关可订阅或取消订阅某个警报。**添加警报**在您的角色具有**警报**添加/编辑权限的任何项目中创建您自己的警报；项目管理员管理其项目中的每个警报和其他人的订阅。警报在其冷却期内对于每个主题最多触发一次，并保持沉默直到收到足够的结果。",
+    "projectTriage": "## 失败分类\n共享相同异常、消息和顶部堆栈帧的自动化失败被分组为一个**签名**。每个签名显示它发生的频率、它接触的测试用例和运行，以及AI对它是否是产品缺陷、测试缺陷、环境问题或不稳定的看法。处理签名后解决或忽略它；如果失败回来，它会自动重新打开。",
+    "projectTriageSettings": "## 失败分类设置\n在每个到达的自动化结果上进行分组运行，不费任何费用。AI分类使用分配给AI模型页面上**失败分类分类**功能的AI模型；在此处关闭它以继续分组而不进行任何AI调用。**分析现有结果**将此项目中已记录的每个自动化失败分组。"
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "集成",
       "QUEUE": "后台队列",
       "SYSTEM": "安装"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "打开",
+      "RESOLVED": "已解决",
+      "IGNORED": "已忽略"
+    },
+    "classification": {
+      "UNCLASSIFIED": "未分类",
+      "PRODUCT_BUG": "产品缺陷",
+      "TEST_BUG": "测试缺陷",
+      "ENVIRONMENT": "环境",
+      "FLAKY": "不稳定"
+    },
+    "source": {
+      "AI": "由AI分类",
+      "labelAI": "AI",
+      "labelMANUAL": "手动"
+    },
+    "columns": {
+      "classification": "分类",
+      "occurrences": "发生次数",
+      "firstSeen": "首次出现",
+      "lastSeen": "最后出现",
+      "classifiedBy": "分类者"
+    },
+    "filters": {
+      "searchPlaceholder": "搜索签名……",
+      "flakyOnly": "不稳定候选",
+      "sourceAll": "AI或手动"
+    },
+    "actions": {
+      "resolve": "解决",
+      "ignore": "忽略",
+      "classify": "使用AI分类",
+      "setClassification": "设置分类"
+    },
+    "detail": {
+      "exceptionType": "异常类型",
+      "normalizedMessage": "规范化消息",
+      "frames": "顶部堆栈帧",
+      "sampleTrace": "最新失败",
+      "affectedCases": "{count, plural, one {# 个受影响的测试用例} other {# 个受影响的测试用例}}",
+      "recentOccurrences": "{count, plural, one {# 次最近发生} other {# 次最近发生}}",
+      "rationale": "原因",
+      "suggestedIssueTitle": "建议的问题标题",
+      "nextStep": "建议的下一步",
+      "noAi": "尚未由AI分类。",
+      "noDetails": "此失败未携带任何消息或堆栈跟踪，因此按测试用例分组。",
+      "notesPlaceholder": "团队备注……",
+      "lastRun": "最后运行",
+      "aiSuggestion": "AI建议",
+      "unlinkConfirmDescription": "这将从此签名中删除问题。问题本身会被保留，之后可以再次链接。",
+      "signatureLabel": "失败签名",
+      "affectedCasesLabel": "受影响的测试用例"
+    },
+    "flakyCandidate": "不稳定候选",
+    "flakyCandidateHint": "受影响的测试用例在其最近历史中在通过和失败之间切换。",
+    "knownIssue": "已知问题",
+    "notGrouped": "{count, plural, one {# 个失败尚未分组} other {# 个失败尚未分组}}",
+    "runPanel": {
+      "title": "失败群集",
+      "inRun": "{count, plural, one {# 在此运行中} other {# 在此运行中}}",
+      "hint": "点击一个群集以过滤下面的结果。",
+      "open": "查看签名",
+      "inRunColumn": "在此运行中",
+      "selectedClusters": "{count, plural, one {# 个群集已选择} other {# 个群集已选择}}",
+      "clearSelected": "清除选定的群集"
+    },
+    "toasts": {
+      "updated": "签名已更新",
+      "updateFailed": "无法更新签名",
+      "classifyQueued": "已请求AI分类",
+      "noAiModel": "未为此功能配置AI模型",
+      "issueLinked": "问题已链接"
+    },
+    "empty": {
+      "title": "尚无失败签名",
+      "description": "随着自动化结果和失败的到达，签名会出现在此处。要将此项目中已记录的失败分组，请在失败分类设置中使用分析现有结果。"
+    },
+    "settings": {
+      "description": "将自动化失败分组为签名，并让AI对其进行分类。",
+      "enableLabel": "启用失败分类",
+      "enableDescription": "在结果到达时，按异常、消息和堆栈帧对此项目中的每个自动化失败进行分组。",
+      "autoClassifyLabel": "使用AI对新签名进行分类",
+      "autoClassifyDescription": "要求项目的AI模型将每个新签名分类为产品缺陷、测试缺陷、环境问题或不稳定。需要向失败分类分类功能分配AI模型。",
+      "backfillLabel": "分析现有结果",
+      "backfillDescription": "对此项目中已记录的每个自动化失败进行分组。在后台运行。",
+      "backfillStarted": "分析已开始",
+      "backfillRunning": "分析中...{processed, plural, one {# 个失败已分组} other {# 个失败已分组}}",
+      "backfillDone": "分析完成",
+      "backfillFailed": "分析失败",
+      "backfillQueueUnavailable": "后台作业队列不可用",
+      "enabledToast": "失败分类已启用",
+      "disabledToast": "失败分类已禁用",
+      "autoClassifyOnToast": "AI分类已启用",
+      "autoClassifyOffToast": "AI分类已禁用",
+      "openTriage": "打开失败分类"
     }
   }
 }

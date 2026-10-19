@@ -740,7 +740,8 @@
       "apiDocumentation": "Tài liệu API",
       "sharedContent": "Nội dung được chia sẻ",
       "impact": "Phân tích ảnh hưởng",
-      "alerts": "Thông báo & Cảnh báo"
+      "alerts": "Thông báo & Cảnh báo",
+      "triage": "Phân loại lỗi"
     },
     "aria": {
       "userMenu": "Menu người dùng",
@@ -3959,36 +3960,36 @@
       }
     },
     "savedDrafts": {
-      "title": "Các trường hợp tôi đã sắp xếp",
-      "description": "Các trường hợp kiểm thử mà bạn đã viết và sắp xếp thay vì tạo. Chỉ bạn có thể nhìn thấy chúng. Mở một trường hợp để xem lại nó, hoặc tạo nhiều trường hợp cùng một lúc.",
-      "empty": "Bạn không có các trường hợp kiểm thử đã sắp xếp trong dự án này.",
-      "saveDraft": "Sắp xếp trường hợp",
+      "title": "Các trường hợp được chuẩn bị của tôi",
+      "description": "Các trường hợp kiểm thử mà bạn đã viết và chuẩn bị thay vì tạo. Chỉ bạn mới có thể nhìn thấy chúng. Mở một trường hợp để xem xét hoặc tạo nhiều trường hợp cùng một lúc.",
+      "empty": "Bạn không có trường hợp kiểm thử được chuẩn bị nào trong dự án này.",
+      "saveDraft": "Chuẩn bị trường hợp",
       "saveTitle": "Đặt tên cho trường hợp kiểm thử",
       "renameTitle": "Đổi tên trường hợp kiểm thử",
-      "saveDescription": "Một trường hợp kiểm thử đã sắp xếp được liệt kê theo tên của nó. Chỉ bạn có thể nhìn thấy nó; không có gì được thêm vào kho lưu trữ cho đến khi bạn tạo nó.",
-      "saved": "Trường hợp kiểm thử đã được sắp xếp",
-      "saveFailed": "Không thể sắp xếp trường hợp kiểm thử",
-      "renamed": "Trường hợp đã sắp xếp đã được đổi tên",
-      "deleted": "Trường hợp đã sắp xếp đã bị xóa",
-      "deleteFailed": "Không thể xóa trường hợp đã sắp xếp",
-      "deleteTitle": "Xóa trường hợp đã sắp xếp này?",
-      "deleteDescription": "\"{name}\" sẽ bị xóa. Nó chưa bao giờ được tạo, vì vậy không có gì khác thay đổi.",
+      "saveDescription": "Một trường hợp kiểm thử được chuẩn bị được liệt kê dưới tên của nó. Chỉ bạn mới có thể nhìn thấy nó; không có gì được thêm vào kho lưu trữ cho đến khi bạn tạo nó.",
+      "saved": "Trường hợp kiểm thử đã được chuẩn bị",
+      "saveFailed": "Không thể chuẩn bị trường hợp kiểm thử",
+      "renamed": "Trường hợp được chuẩn bị đã được đổi tên",
+      "deleted": "Trường hợp được chuẩn bị đã bị xóa",
+      "deleteFailed": "Không thể xóa trường hợp được chuẩn bị",
+      "deleteTitle": "Xóa trường hợp được chuẩn bị này?",
+      "deleteDescription": "\"{name}\" sẽ bị xóa. Nó không bao giờ được tạo, vì vậy không có gì thay đổi khác.",
       "folderDeleted": "Thư mục đã bị xóa",
-      "folderFallback": "Thư mục của trường hợp đã sắp xếp đã bị xóa; trường hợp sẽ được tạo trong \"{folder}\".",
-      "selectFolderFirst": "Chọn một thư mục trước khi mở trường hợp đã sắp xếp này.",
+      "folderFallback": "Thư mục của trường hợp được chuẩn bị đã bị xóa; trường hợp sẽ được tạo trong \"{folder}\".",
+      "selectFolderFirst": "Chọn một thư mục trước khi mở trường hợp được chuẩn bị này.",
       "problemCount": "{count, plural, one {{count} vấn đề} other {{count} vấn đề}}",
-      "updated": "Cập nhật {age}",
-      "createSelected": "{count, plural, =0 {Tạo các mục đã chọn} other {Tạo {count} mục đã chọn}}",
-      "createdToast": "{count, plural, one {{count} trường hợp kiểm thử đã được tạo} other {{count} các trường hợp kiểm thử đã được tạo}}",
-      "failedToast": "{count, plural, one {{count} trường hợp đã sắp xếp không thể được tạo} other {{count} các trường hợp đã sắp xếp không thể được tạo}}",
-      "problemFolder": "Thư mục đã bị xóa. Mở trường hợp đã sắp xếp để chọn một thư mục.",
-      "problemTemplate": "Mẫu không còn được gán cho dự án này. Mở trường hợp đã sắp xếp để chọn một mẫu.",
-      "problemState": "Trạng thái không còn tồn tại. Mở trường hợp đã sắp xếp để chọn một trạng thái.",
+      "updated": "Đã cập nhật {age}",
+      "createSelected": "{count, plural, =0 {Tạo được chọn} other {Tạo {count} được chọn}}",
+      "createdToast": "{count, plural, one {{count} trường hợp thử nghiệm đã được tạo} other {{count} trường hợp thử nghiệm đã được tạo}}",
+      "failedToast": "{count, plural, one {{count} trường hợp được chuẩn bị không thể được tạo} other {{count} trường hợp được chuẩn bị không thể được tạo}}",
+      "problemFolder": "Thư mục đã bị xóa. Mở trường hợp được chuẩn bị để chọn một thư mục.",
+      "problemTemplate": "Mẫu không còn được gán cho dự án này. Mở trường hợp được chuẩn bị để chọn một mẫu.",
+      "problemState": "Trạng thái không còn tồn tại. Mở trường hợp được chuẩn bị để chọn một trạng thái.",
       "problemField": "{field}: {message}",
-      "notCreated": "Chưa tạo: {message}",
-      "openToFix": "Mở trường hợp đã sắp xếp để sửa nó.",
-      "elsewhereTitle": "Bạn cũng có các trường hợp đã được dàn dựng trong",
-      "elsewhereCount": "{count, plural, other {{count} các trường hợp đã được dàn dựng}}"
+      "notCreated": "Không được tạo: {message}",
+      "openToFix": "Mở trường hợp được chuẩn bị để khắc phục.",
+      "elsewhereTitle": "Bạn cũng có các trường hợp được chuẩn bị trong",
+      "elsewhereCount": "{count, plural, one {{count} trường hợp được chuẩn bị} other {{count} trường hợp được chuẩn bị}}"
     },
     "filterBar": {
       "addFilter": "Thêm bộ lọc",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Đã thử lại",
-      "clear": "Xóa bộ lọc"
+      "clear": "Xóa tất cả bộ lọc"
     },
     "impact": {
       "title": "Ảnh hưởng",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Tạo trường hợp kiểm thử từ URL (Kiểm thử ứng dụng)",
         "automation_candidates": "Báo cáo ứng viên tự động hóa",
         "derive_case_steps": "Suy luận bước bằng AI",
-        "impact_analysis": "Tác động: Lựa chọn bài kiểm tra bị ảnh hưởng"
+        "impact_analysis": "Tác động: Lựa chọn bài kiểm tra bị ảnh hưởng",
+        "failure_triage": "Phân loại lỗi tự động"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Nhật ký kiểm toán",
         "budget-alerts": "Cảnh báo ngân sách",
         "auto-tag": "Tự động gắn thẻ bằng AI",
+        "failure-triage": "Phân loại lỗi",
         "repo-cache": "Bộ nhớ đệm kho lưu trữ",
         "copy-move": "Sao chép & Di chuyển",
         "duplicate-scan": "Quét bản sao",
@@ -7078,7 +7081,7 @@
         "reviewReminderTitle": "Đang chờ xem xét",
         "reviewReminderAction": "vẫn đang chờ đánh giá của bạn về",
         "reviewReminderEmailMessage": "Nhắc nhở: Yêu cầu xem xét của {actorName} đối với {entityLabel} \"{entityName}\" trong dự án \"{projectName}\" đã bị chờ xử lý trong {pendingFor}.",
-        "reviewReminderHoursPending": "Chờ xử lý trong {pendingFor}",
+        "reviewReminderHoursPending": "Đang chờ xử lý trong {pendingFor}",
         "aiStepsDerivedTitle": "Các bước thử nghiệm được AI suy luận đã sẵn sàng",
         "aiStepsDerivedMessage": "{count, plural, other {# trường hợp thử nghiệm}} đã được cung cấp các bước do AI suy luận — hãy xem xét lại độ chính xác.",
         "aiStepsDerivedReviewLink": "Xem xét lần chạy thử nghiệm",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Tác động\nKết nối kho lưu trữ của ứng dụng đang được kiểm thử để dự án này có thể chạy phân tích tác động kiểm thử: chọn hai commit để xem trường hợp kiểm thử nào mà các thay đổi ảnh hưởng, và ghim các trường hợp kiểm thử vào mã mà chúng bao phủ.",
     "pathPatterns": "## Mẫu Đường Dẫn\nMỗi hàng kết hợp một **đường dẫn** cơ bản với một **mẫu** glob. Các hàng cộng lại: một tệp được bao gồm khi bất kỳ hàng nào khớp với nó.\n\n- `src` + `**/*` — mọi thứ dưới `src`\n- trống hoặc `.` + `**/*` — mọi tệp trong kho lưu trữ\n- `src` + `**/!(*.test|*.spec).ts` — các tệp `.ts` ngoại trừ các bài kiểm tra\n\n### Loại trừ\nChọn **Loại trừ** trên một hàng để loại bỏ các tệp của nó ngay cả khi một hàng khác bao gồm chúng. Các loại trừ áp dụng cho trình chọn tệp và bộ nhớ cache, và đối với Impact áp dụng cho các tệp đã thay đổi của một phân tích, do đó một tệp thay đổi trên hầu hết mọi yêu cầu kéo sẽ ngừng kéo vào các trường hợp thử nghiệm không liên quan. Ít nhất một hàng phải giữ nguyên không được chọn.\n\n- trống + `**/CHANGELOG*` — mọi changelog, ở bất kỳ độ sâu nào\n- `app` + `build.gradle.kts` — một tệp xây dựng chỉ thay đổi phiên bản",
     "projectAutomation": "## Thực thi Tự động\nCác mục tiêu thực thi cho TestPlanIt biết nơi thực thi các trường hợp tự động của dự án này: quy trình làm việc GitHub Actions, đường ống GitLab CI, hoặc webhook được ký cho bất kỳ hệ thống nào khác. Khi một lần chạy được thực thi, TestPlanIt bắt đầu công việc với id lần chạy và URL kế hoạch; công việc đọc kế hoạch, chạy các kiểm thử phù hợp, và báo cáo kết quả trở lại với một trình báo cáo hoặc CLI được ghim vào lần chạy đó. Các mục tiêu có thể bị vô hiệu hóa mà không bị xóa.",
-    "userAlerts": "## Thông báo & Cảnh báo\n**Tùy chọn Thông báo** quyết định cách bạn được tiếp cận (trong ứng dụng, email, tóm tắt) và những loại thông báo nào bạn nhận được. **Cảnh báo** theo dõi số liệu kiểm tra và thông báo cho những người đăng ký khi nó vượt qua một dòng, ví dụ một kết quả mất 50% lâu hơn thời gian thông thường của trường hợp, một trường hợp thất bại ba lần liên tiếp, một lần chạy có tỷ lệ vượt qua dưới 90%, hoặc một cột mốc phía sau với ngày để đi. Danh sách hiển thị mọi cảnh báo trong các dự án của bạn; công tắc **Thông báo cho tôi** theo dõi hoặc rời khỏi một. **Thêm Cảnh báo** tạo ra của riêng bạn trong bất kỳ dự án nào nơi vai trò của bạn có **Cảnh báo** Thêm/Chỉnh sửa; quản trị viên dự án quản lý mọi cảnh báo trong dự án của họ và đăng ký của mọi người khác. Cảnh báo kích hoạt tối đa một lần mỗi chủ đề trong thời gian hạ nhiệt và giữ im lặng cho đến khi nó có đủ kết quả."
+    "userAlerts": "## Thông báo & Cảnh báo\n**Tùy chọn Thông báo** quyết định cách bạn được tiếp cận (trong ứng dụng, email, tóm tắt) và những loại thông báo nào bạn nhận được. **Cảnh báo** theo dõi số liệu kiểm tra và thông báo cho những người đăng ký khi nó vượt qua một dòng, ví dụ một kết quả mất 50% lâu hơn thời gian thông thường của trường hợp, một trường hợp thất bại ba lần liên tiếp, một lần chạy có tỷ lệ vượt qua dưới 90%, hoặc một cột mốc phía sau với ngày để đi. Danh sách hiển thị mọi cảnh báo trong các dự án của bạn; công tắc **Thông báo cho tôi** theo dõi hoặc rời khỏi một. **Thêm Cảnh báo** tạo ra của riêng bạn trong bất kỳ dự án nào nơi vai trò của bạn có **Cảnh báo** Thêm/Chỉnh sửa; quản trị viên dự án quản lý mọi cảnh báo trong dự án của họ và đăng ký của mọi người khác. Cảnh báo kích hoạt tối đa một lần mỗi chủ đề trong thời gian hạ nhiệt và giữ im lặng cho đến khi nó có đủ kết quả.",
+    "projectTriage": "## Phân loại lỗi\nNhững lỗi tự động chia sẻ cùng một ngoại lệ, thông báo và các khung ngăn xếp hàng đầu được nhóm thành một **chữ ký**. Mỗi chữ ký hiển thị tần suất xảy ra, các trường hợp kiểm thử và lần chạy nào được chạm vào, cũng như đánh giá của AI về liệu đó là lỗi sản phẩm, lỗi thử nghiệm, vấn đề môi trường hay không ổn định. Giải quyết hoặc bỏ qua một chữ ký khi nó được xử lý; nó tự động mở lại nếu lỗi xuất hiện trở lại.",
+    "projectTriageSettings": "## Cài đặt phân loại lỗi\nNhóm chạy trên mọi kết quả tự động mà đến và không tốn kém gì. Phân loại AI sử dụng mô hình AI được gán cho tính năng **Phân loại lỗi tự động** trên trang AI Models; tắt nó ở đây để giữ nhóm mà không cần bất kỳ lệnh gọi AI nào. **Phân tích kết quả hiện tại** nhóm mọi lỗi tự động đã được ghi lại trong dự án này."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Tích hợp",
       "QUEUE": "Hàng đợi công việc latar plan",
       "SYSTEM": "Cài đặt"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Mở",
+      "RESOLVED": "Đã giải quyết",
+      "IGNORED": "Đã bỏ qua"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Chưa được phân loại",
+      "PRODUCT_BUG": "Lỗi sản phẩm",
+      "TEST_BUG": "Lỗi thử nghiệm",
+      "ENVIRONMENT": "Môi trường",
+      "FLAKY": "Không ổn định"
+    },
+    "source": {
+      "AI": "Được phân loại bởi AI",
+      "labelAI": "Trí tuệ nhân tạo",
+      "labelMANUAL": "Thủ công"
+    },
+    "columns": {
+      "classification": "Phân loại",
+      "occurrences": "Lần xuất hiện",
+      "firstSeen": "Lần đầu tiên nhìn thấy",
+      "lastSeen": "Lần cuối cùng nhìn thấy",
+      "classifiedBy": "Được phân loại bởi"
+    },
+    "filters": {
+      "searchPlaceholder": "Tìm kiếm chữ ký...",
+      "flakyOnly": "Ứng viên không ổn định",
+      "sourceAll": "AI hoặc thủ công"
+    },
+    "actions": {
+      "resolve": "Giải quyết",
+      "ignore": "Bỏ qua",
+      "classify": "Phân loại với AI",
+      "setClassification": "Đặt phân loại"
+    },
+    "detail": {
+      "exceptionType": "Loại ngoại lệ",
+      "normalizedMessage": "Thông báo được chuẩn hóa",
+      "frames": "Các khung ngăn xếp hàng đầu",
+      "sampleTrace": "Lỗi mới nhất",
+      "affectedCases": "{count, plural, other {# trường hợp kiểm thử bị ảnh hưởng}}",
+      "recentOccurrences": "{count, plural, other {# lần xuất hiện gần đây}}",
+      "rationale": "Lý do",
+      "suggestedIssueTitle": "Tiêu đề vấn đề được đề xuất",
+      "nextStep": "Bước tiếp theo được đề xuất",
+      "noAi": "Chưa được phân loại bởi AI.",
+      "noDetails": "Lỗi này không có thông báo hoặc dấu vết ngăn xếp, vì vậy nó được nhóm theo trường hợp kiểm thử.",
+      "notesPlaceholder": "Ghi chú cho đội...",
+      "lastRun": "Lần chạy cuối",
+      "aiSuggestion": "Gợi ý của AI",
+      "unlinkConfirmDescription": "Việc này sẽ xóa vấn đề khỏi chữ ký này. Vấn đề vẫn được giữ lại và có thể liên kết lại sau.",
+      "signatureLabel": "Chữ ký lỗi",
+      "affectedCasesLabel": "Các trường hợp kiểm thử bị ảnh hưởng"
+    },
+    "flakyCandidate": "Ứng viên không ổn định",
+    "flakyCandidateHint": "Các trường hợp kiểm thử bị ảnh hưởng chuyển đổi giữa vượt qua và không vượt qua trong lịch sử gần đây của chúng.",
+    "knownIssue": "Vấn đề đã biết",
+    "notGrouped": "{count, plural, other {# lỗi chưa được nhóm}}",
+    "runPanel": {
+      "title": "Cụm lỗi",
+      "inRun": "{count, plural, other {# trong lần chạy này}}",
+      "hint": "Nhấp vào một cụm để lọc kết quả bên dưới.",
+      "open": "Xem chữ ký",
+      "inRunColumn": "Trong lần chạy này",
+      "selectedClusters": "{count, plural, other {# cụm được chọn}}",
+      "clearSelected": "Xóa các cụm được chọn"
+    },
+    "toasts": {
+      "updated": "Chữ ký đã được cập nhật",
+      "updateFailed": "Không thể cập nhật chữ ký",
+      "classifyQueued": "Yêu cầu phân loại AI đã được gửi",
+      "noAiModel": "Không có mô hình AI nào được cấu hình cho tính năng này",
+      "issueLinked": "Vấn đề đã được liên kết"
+    },
+    "empty": {
+      "title": "Chưa có chữ ký lỗi nào",
+      "description": "Chữ ký xuất hiện ở đây khi các kết quả tự động với các lỗi đến. Để nhóm các lỗi đã được ghi lại trong dự án này, hãy sử dụng Phân tích kết quả hiện tại trong cài đặt Phân loại lỗi."
+    },
+    "settings": {
+      "description": "Nhóm các lỗi tự động thành chữ ký và để AI phân loại chúng.",
+      "enableLabel": "Bật phân loại lỗi",
+      "enableDescription": "Nhóm mọi lỗi tự động trong dự án này theo ngoại lệ, thông báo và khung ngăn xếp khi kết quả đến.",
+      "autoClassifyLabel": "Phân loại chữ ký mới với AI",
+      "autoClassifyDescription": "Yêu cầu mô hình AI của dự án phân loại từng chữ ký mới là lỗi sản phẩm, lỗi thử nghiệm, vấn đề môi trường hay không ổn định. Cần một mô hình AI được gán cho tính năng Phân loại lỗi tự động.",
+      "backfillLabel": "Phân tích kết quả hiện tại",
+      "backfillDescription": "Nhóm mọi lỗi tự động đã được ghi lại trong dự án này. Chạy trong nền.",
+      "backfillStarted": "Đã bắt đầu phân tích",
+      "backfillRunning": "Đang phân tích... {processed, plural, other {# lỗi đã được nhóm}}",
+      "backfillDone": "Phân tích hoàn tất",
+      "backfillFailed": "Phân tích thất bại",
+      "backfillQueueUnavailable": "Hàng đợi công việc nền không khả dụng",
+      "enabledToast": "Đã bật phân loại lỗi",
+      "disabledToast": "Đã tắt phân loại lỗi",
+      "autoClassifyOnToast": "Đã bật phân loại AI",
+      "autoClassifyOffToast": "Đã tắt phân loại AI",
+      "openTriage": "Mở phân loại lỗi"
     }
   }
 }

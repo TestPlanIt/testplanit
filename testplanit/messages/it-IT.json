@@ -740,7 +740,8 @@
       "apiDocumentation": "Documentazione API",
       "sharedContent": "Contenuti condivisi",
       "impact": "Analisi di impatto",
-      "alerts": "Notifiche e avvisi"
+      "alerts": "Notifiche e avvisi",
+      "triage": "Triage dei Fallimenti"
     },
     "aria": {
       "userMenu": "Menu utente",
@@ -3959,36 +3960,36 @@
       }
     },
     "savedDrafts": {
-      "title": "I miei casi in sospeso",
-      "description": "Casi di test che hai scritto e messo in sospeso invece di creare. Solo tu puoi vederli. Aprirne uno per rivederlo o crearne diversi contemporaneamente.",
-      "empty": "Non hai casi di test in sospeso in questo progetto.",
-      "saveDraft": "Metti in sospeso il caso",
-      "saveTitle": "Dai un nome al caso di test",
-      "renameTitle": "Rinomina il caso di test",
-      "saveDescription": "Un caso di test in sospeso è elencato con il suo nome. Solo tu puoi vederlo; nulla viene aggiunto al repository finché non lo crei.",
-      "saved": "Caso di test messo in sospeso",
-      "saveFailed": "Impossibile mettere in sospeso il caso di test",
-      "renamed": "Caso in sospeso rinominato",
-      "deleted": "Caso in sospeso eliminato",
-      "deleteFailed": "Impossibile eliminare il caso in sospeso",
-      "deleteTitle": "Eliminare questo caso in sospeso?",
-      "deleteDescription": "\"{name}\" verrà eliminato. Non è mai stato creato, quindi nulla cambia.",
+      "title": "Miei Casi in Staging",
+      "description": "Casi di test che hai scritto e messo in stage invece di crearli. Solo tu puoi vederli. Aprine uno per rivederlo, oppure creane diversi contemporaneamente.",
+      "empty": "Non hai casi di test in stage in questo progetto.",
+      "saveDraft": "Metti in Stage il Caso",
+      "saveTitle": "Assegna un nome al caso di test",
+      "renameTitle": "Rinomina caso di test",
+      "saveDescription": "Un caso di test in stage è elencato con il suo nome. Solo tu puoi vederlo; nulla viene aggiunto al repository finché non lo crei.",
+      "saved": "Caso di test messo in stage",
+      "saveFailed": "Il caso di test non poteva essere messo in stage",
+      "renamed": "Caso in stage rinominato",
+      "deleted": "Caso in stage eliminato",
+      "deleteFailed": "Il caso in stage non poteva essere eliminato",
+      "deleteTitle": "Eliminare questo caso in stage?",
+      "deleteDescription": "\"{name}\" verrà eliminato. Non è mai stato creato, quindi nient'altro cambia.",
       "folderDeleted": "Cartella eliminata",
-      "folderFallback": "La cartella del caso in sospeso è stata eliminata; il caso verrà creato in \"{folder}\".",
-      "selectFolderFirst": "Seleziona una cartella prima di aprire questo caso in sospeso.",
+      "folderFallback": "La cartella del caso in stage è stata eliminata; il caso verrà creato in \"{folder}\".",
+      "selectFolderFirst": "Seleziona una cartella prima di aprire questo caso in stage.",
       "problemCount": "{count, plural, one {{count} problema} other {{count} problemi}}",
       "updated": "Aggiornato {age}",
       "createSelected": "{count, plural, =0 {Crea selezionati} other {Crea {count} selezionati}}",
       "createdToast": "{count, plural, one {{count} caso di test creato} other {{count} casi di test creati}}",
-      "failedToast": "{count, plural, one {{count} caso in sospeso non potrebbe essere creato} other {{count} casi in sospeso non potrebbero essere creati}}",
-      "problemFolder": "La cartella è stata eliminata. Apri il caso in sospeso per scegliere una cartella.",
-      "problemTemplate": "Il modello non è più assegnato a questo progetto. Apri il caso in sospeso per sceglierne uno.",
-      "problemState": "Lo stato non esiste più. Apri il caso in sospeso per sceglierne uno.",
+      "failedToast": "{count, plural, one {{count} caso in stage non poteva essere creato} other {{count} casi in stage non potevano essere creati}}",
+      "problemFolder": "La cartella è stata eliminata. Apri il caso in stage per scegliere una cartella.",
+      "problemTemplate": "Il modello non è più assegnato a questo progetto. Apri il caso in stage per sceglierne uno.",
+      "problemState": "Lo stato non esiste più. Apri il caso in stage per sceglierne uno.",
       "problemField": "{field}: {message}",
       "notCreated": "Non creato: {message}",
-      "openToFix": "Apri il caso in sospeso per risolverlo.",
-      "elsewhereTitle": "Hai anche casi in sospeso in",
-      "elsewhereCount": "{count, plural, one {{count} caso in sospeso} other {{count} casi in sospeso}}"
+      "openToFix": "Apri il caso in stage per risolverlo.",
+      "elsewhereTitle": "Hai anche casi in stage in",
+      "elsewhereCount": "{count, plural, one {{count} caso in stage} other {{count} casi in stage}}"
     },
     "filterBar": {
       "addFilter": "Aggiungi filtro",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Ripetuto",
-      "clear": "Cancella filtri"
+      "clear": "Cancella tutti i filtri"
     },
     "impact": {
       "title": "Impatto",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Genera casi di test da URL (test dell'applicazione)",
         "automation_candidates": "Rapporto sui candidati all'automazione",
         "derive_case_steps": "Derivazione dei passaggi AI",
-        "impact_analysis": "Impact: Selezione di test interessati"
+        "impact_analysis": "Impact: Selezione di test interessati",
+        "failure_triage": "Classificazione Triage dei Fallimenti"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Registri di controllo",
         "budget-alerts": "Avvisi di bilancio",
         "auto-tag": "Etichettatura automatica tramite IA",
+        "failure-triage": "Triage dei Fallimenti",
         "repo-cache": "Cache del repository",
         "copy-move": "Copia e sposta",
         "duplicate-scan": "Scansione duplicata",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Impatto\nCollegare il repository dell'applicazione in prova in modo che questo progetto possa eseguire l'analisi di impatto del test: scegli due commit per vedere quali casi di test i cambiamenti interessano e blocca i casi di test al codice che coprono.",
     "pathPatterns": "## Modelli di Percorso\nOgni riga combina un **percorso** di base con un **modello** glob. Le righe si sommano: un file è incluso quando corrisponde a una qualsiasi riga.\n\n- `src` + `**/*` — tutto sotto `src`\n- vuoto o `.` + `**/*` — ogni file nel repository\n- `src` + `**/!(*.test|*.spec).ts` — file `.ts` tranne i test\n\n### Escludi\nSpunta **Escludi** su una riga per rimuovere i suoi file anche quando un'altra riga li include. Le esclusioni si applicano al selettore di file e alla cache e, per Impact, ai file modificati di un'analisi, in modo che un file che cambia quasi ad ogni pull request smetta di richiamare i casi di test non correlati. Almeno una riga deve rimanere deselezionata.\n\n- vuoto + `**/CHANGELOG*` — ogni changelog, a qualsiasi profondità\n- `app` + `build.gradle.kts` — un file di build che incrementa solo la versione",
     "projectAutomation": "## Esecuzione automatizzata\nI bersagli di esecuzione indicano a TestPlanIt dove eseguire i casi automatizzati di questo progetto: un workflow di GitHub Actions, una pipeline di GitLab CI, o un webhook firmato per qualsiasi altro sistema. Quando un'esecuzione viene eseguita, TestPlanIt avvia il lavoro con l'ID dell'esecuzione e un URL del piano; il lavoro legge il piano, esegue i test corrispondenti e segnala i risultati con un reporter o la CLI bloccati su quella esecuzione. I bersagli possono essere disabilitati senza essere eliminati.",
-    "userAlerts": "## Notifiche e avvisi\n**Preferenze di notifica** decidono come sei raggiunto (in-app, email, digest) e quali tipi di notifica ricevi in generale.\n\n**Alerts** monitorano una metrica di test e notificano i loro abbonati quando supera una linea, ad esempio un risultato che impiega il 50% in più del solito per il caso, un caso che fallisce tre volte di fila, un'esecuzione il cui tasso di superamento scende sotto il 90% o una pietra miliare che è indietro con giorni a disposizione. L'elenco mostra ogni avviso nei tuoi progetti; l'interruttore **Notificami** segue o lascia uno. **Aggiungi avviso** crea il tuo in qualsiasi progetto in cui il tuo ruolo ha **Alerts** Add/Edit; gli amministratori del progetto gestiscono ogni avviso nel loro progetto e gli abbonamenti di altre persone. Un avviso si attiva al massimo una volta per soggetto entro il suo cooldown e rimane silenzioso finché non ha abbastanza risultati."
+    "userAlerts": "## Notifiche e avvisi\n**Preferenze di notifica** decidono come sei raggiunto (in-app, email, digest) e quali tipi di notifica ricevi in generale.\n\n**Alerts** monitorano una metrica di test e notificano i loro abbonati quando supera una linea, ad esempio un risultato che impiega il 50% in più del solito per il caso, un caso che fallisce tre volte di fila, un'esecuzione il cui tasso di superamento scende sotto il 90% o una pietra miliare che è indietro con giorni a disposizione. L'elenco mostra ogni avviso nei tuoi progetti; l'interruttore **Notificami** segue o lascia uno. **Aggiungi avviso** crea il tuo in qualsiasi progetto in cui il tuo ruolo ha **Alerts** Add/Edit; gli amministratori del progetto gestiscono ogni avviso nel loro progetto e gli abbonamenti di altre persone. Un avviso si attiva al massimo una volta per soggetto entro il suo cooldown e rimane silenzioso finché non ha abbastanza risultati.",
+    "projectTriage": "## Triage dei Fallimenti\nI fallimenti automatizzati che condividono la stessa eccezione, messaggio e frame di stack superiori vengono raggruppati in una **firma**. Ogni firma mostra la frequenza con cui si è verificata, quali casi di test e run ha toccato, e la lettura dell'IA sul fatto che sia un bug del prodotto, un bug del test, un problema ambientale o instabile. Risolvi o ignora una firma una volta che viene gestita; si riaprirà da sola se il fallimento ritorna.",
+    "projectTriageSettings": "## Impostazioni Triage dei Fallimenti\nRaggruppare i run su ogni risultato automatizzato che arriva non costa nulla. La classificazione AI utilizza il modello AI assegnato alla funzionalità **Classificazione Triage dei Fallimenti** nella pagina Modelli AI; disattivala qui per mantenere il raggruppamento senza alcuna chiamata AI. **Analizza risultati esistenti** raggruppa ogni fallimento automatizzato già registrato in questo progetto."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Integrazioni",
       "QUEUE": "Code di lavoro in background",
       "SYSTEM": "Installazione"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Aperto",
+      "RESOLVED": "Risolto",
+      "IGNORED": "Ignorato"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Non classificato",
+      "PRODUCT_BUG": "Bug del prodotto",
+      "TEST_BUG": "Bug del test",
+      "ENVIRONMENT": "Ambiente",
+      "FLAKY": "Instabile"
+    },
+    "source": {
+      "AI": "Classificato dall'IA",
+      "labelAI": "IA",
+      "labelMANUAL": "Manuale"
+    },
+    "columns": {
+      "classification": "Classificazione",
+      "occurrences": "Occorrenze",
+      "firstSeen": "Primo avvistamento",
+      "lastSeen": "Ultimo avvistamento",
+      "classifiedBy": "Classificato da"
+    },
+    "filters": {
+      "searchPlaceholder": "Ricerca firme...",
+      "flakyOnly": "Candidati instabili",
+      "sourceAll": "IA o manuale"
+    },
+    "actions": {
+      "resolve": "Risolvi",
+      "ignore": "Ignora",
+      "classify": "Classifica con IA",
+      "setClassification": "Imposta classificazione"
+    },
+    "detail": {
+      "exceptionType": "Tipo di eccezione",
+      "normalizedMessage": "Messaggio normalizzato",
+      "frames": "Frame di stack superiori",
+      "sampleTrace": "Fallimento più recente",
+      "affectedCases": "{count, plural, one {# caso di test interessato} other {# casi di test interessati}}",
+      "recentOccurrences": "{count, plural, one {# occorrenza recente} other {# occorrenze recenti}}",
+      "rationale": "Razionale",
+      "suggestedIssueTitle": "Titolo del problema suggerito",
+      "nextStep": "Passo successivo suggerito",
+      "noAi": "Non ancora classificato dall'IA.",
+      "noDetails": "Questo fallimento non aveva messaggio o traccia di stack, quindi viene raggruppato per caso di test.",
+      "notesPlaceholder": "Note per il team...",
+      "lastRun": "Ultimo run",
+      "aiSuggestion": "Suggerimento IA",
+      "unlinkConfirmDescription": "Questo rimuove il problema da questa firma. Il problema stesso viene conservato e può essere collegato di nuovo in seguito.",
+      "signatureLabel": "Firma di fallimento",
+      "affectedCasesLabel": "Casi di test interessati"
+    },
+    "flakyCandidate": "Candidato instabile",
+    "flakyCandidateHint": "I casi di test interessati oscillano tra passaggio e fallimento nella loro cronologia recente.",
+    "knownIssue": "Problema noto",
+    "notGrouped": "{count, plural, one {# fallimento non ancora raggruppato} other {# fallimenti non ancora raggruppati}}",
+    "runPanel": {
+      "title": "Cluster di fallimenti",
+      "inRun": "{count, plural, one {# in questo run} other {# in questo run}}",
+      "hint": "Fai clic su un cluster per filtrare i risultati di seguito.",
+      "open": "Visualizza firma",
+      "inRunColumn": "In questo run",
+      "selectedClusters": "{count, plural, one {# cluster selezionato} other {# cluster selezionati}}",
+      "clearSelected": "Cancella i cluster selezionati"
+    },
+    "toasts": {
+      "updated": "Firma aggiornata",
+      "updateFailed": "Impossibile aggiornare la firma",
+      "classifyQueued": "Classificazione IA richiesta",
+      "noAiModel": "Nessun modello IA è configurato per questa funzionalità",
+      "issueLinked": "Problema collegato"
+    },
+    "empty": {
+      "title": "Nessuna firma di fallimento ancora",
+      "description": "Le firme compaiono qui quando arrivano risultati automatizzati con fallimenti. Per raggruppare i fallimenti già registrati in questo progetto, utilizza Analizza risultati esistenti nelle impostazioni di Triage dei Fallimenti."
+    },
+    "settings": {
+      "description": "Raggruppa i fallimenti automatizzati in firme e lascia che l'IA li classifichi.",
+      "enableLabel": "Abilita Triage dei Fallimenti",
+      "enableDescription": "Raggruppa ogni fallimento automatizzato in questo progetto per eccezione, messaggio e frame di stack mentre arrivano i risultati.",
+      "autoClassifyLabel": "Classifica nuove firme con IA",
+      "autoClassifyDescription": "Chiedi al modello IA del progetto di classificare ogni nuova firma come bug del prodotto, bug del test, problema ambientale o instabile. Richiede un modello IA assegnato alla funzionalità Classificazione Triage dei Fallimenti.",
+      "backfillLabel": "Analizza risultati esistenti",
+      "backfillDescription": "Raggruppa ogni fallimento automatizzato già registrato in questo progetto. Viene eseguito in background.",
+      "backfillStarted": "Analisi avviata",
+      "backfillRunning": "Analisi in corso... {processed, plural, one {# fallimento raggruppato} other {# fallimenti raggruppati}}",
+      "backfillDone": "Analisi completata",
+      "backfillFailed": "Analisi non riuscita",
+      "backfillQueueUnavailable": "La coda dei processi in background non è disponibile",
+      "enabledToast": "Triage dei Fallimenti abilitato",
+      "disabledToast": "Triage dei Fallimenti disabilitato",
+      "autoClassifyOnToast": "Classificazione IA abilitata",
+      "autoClassifyOffToast": "Classificazione IA disabilitata",
+      "openTriage": "Apri Triage dei Fallimenti"
     }
   }
 }

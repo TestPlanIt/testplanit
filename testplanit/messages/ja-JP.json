@@ -740,7 +740,8 @@
       "apiDocumentation": "APIドキュメント",
       "sharedContent": "共有コンテンツ",
       "impact": "影響分析",
-      "alerts": "通知とアラート"
+      "alerts": "通知とアラート",
+      "triage": "障害トリアージ"
     },
     "aria": {
       "userMenu": "ユーザーメニュー",
@@ -3959,36 +3960,36 @@
       }
     },
     "savedDrafts": {
-      "title": "ステージングしたケース",
-      "description": "作成した代わりにステージングしたテストケース。あなただけが見ることができます。1つ開いてレビューするか、複数を一度に作成してください。",
-      "empty": "このプロジェクトにステージングされたテストケースがありません。",
+      "title": "ステージングされたケース",
+      "description": "あなたが作成してステージングした代わりに作成されたテストケース。あなただけが見ることができます。開いてレビューするか、一度に複数作成します。",
+      "empty": "このプロジェクトではステージングされたテストケースはありません。",
       "saveDraft": "ケースをステージング",
-      "saveTitle": "テストケースに名前を付ける",
+      "saveTitle": "テストケースに名前を付けてください",
       "renameTitle": "テストケースの名前を変更",
-      "saveDescription": "ステージングされたテストケースは、その名前の下にリストされます。あなただけが見ることができます。リポジトリには、作成するまで何も追加されません。",
-      "saved": "テストケースをステージングしました",
+      "saveDescription": "ステージングされたテストケースはその名前で表示されます。あなただけが見ることができます。リポジトリには作成するまで何も追加されません。",
+      "saved": "テストケースがステージングされました",
       "saveFailed": "テストケースをステージングできませんでした",
-      "renamed": "ステージングされたケースの名前を変更しました",
-      "deleted": "ステージングされたケースを削除しました",
-      "deleteFailed": "ステージングされたケースを削除できませんでした",
-      "deleteTitle": "このステージングされたケースを削除しますか？",
-      "deleteDescription": "\"{name}\" が削除されます。作成されたことがないため、他に変わることはありません。",
-      "folderDeleted": "フォルダーを削除しました",
-      "folderFallback": "ステージングされたケースのフォルダーが削除されました。ケースは \"{folder}\" に作成されます。",
-      "selectFolderFirst": "このステージングされたケースを開く前にフォルダーを選択します。",
-      "problemCount": "{count, plural, one {{count} 個の問題} other {{count} 個の問題}}",
-      "updated": "{age} に更新",
-      "createSelected": "{count, plural, =0 {選択したものを作成} other {{count} 個選択したものを作成}}",
-      "createdToast": "{count, plural, one {{count} 個のテストケースが作成されました} other {{count} 個のテストケースが作成されました}}",
-      "failedToast": "{count, plural, one {{count} 個のステージングされたケースを作成できませんでした} other {{count} 個のステージングされたケースを作成できませんでした}}",
-      "problemFolder": "フォルダーが削除されました。ステージングされたケースを開いてフォルダーを選択してください。",
-      "problemTemplate": "テンプレートがこのプロジェクトに割り当てられなくなりました。ステージングされたケースを開いて選択してください。",
-      "problemState": "状態が存在しなくなりました。ステージングされたケースを開いて選択してください。",
+      "renamed": "ステージングケースの名前が変更されました",
+      "deleted": "ステージングケースが削除されました",
+      "deleteFailed": "ステージングケースを削除できませんでした",
+      "deleteTitle": "このステージングケースを削除しますか？",
+      "deleteDescription": "\"{name}\"が削除されます。作成されたことがないため、他に何も変わりません。",
+      "folderDeleted": "フォルダが削除されました",
+      "folderFallback": "ステージングケースのフォルダが削除されました。ケースは\"{folder}\"に作成されます。",
+      "selectFolderFirst": "このステージングケースを開く前にフォルダを選択してください。",
+      "problemCount": "{count, plural, one {{count}個の問題} other {{count}個の問題}}",
+      "updated": "{age}に更新されました",
+      "createSelected": "{count, plural, =0 {選択項目を作成} other {選択された{count}を作成}}",
+      "createdToast": "{count, plural, one {{count}個のテストケースが作成されました} other {{count}個のテストケースが作成されました}}",
+      "failedToast": "{count, plural, one {{count}個のステージングケースを作成できませんでした} other {{count}個のステージングケースを作成できませんでした}}",
+      "problemFolder": "フォルダが削除されました。ステージングケースを開いてフォルダを選択してください。",
+      "problemTemplate": "テンプレートはこのプロジェクトに割り当てられなくなりました。ステージングケースを開いて選択してください。",
+      "problemState": "状態は存在しなくなりました。ステージングケースを開いて選択してください。",
       "problemField": "{field}: {message}",
       "notCreated": "作成されていません: {message}",
-      "openToFix": "ステージングされたケースを開いて修正してください。",
-      "elsewhereTitle": "以下にもステージングされたケースがあります",
-      "elsewhereCount": "{count, plural, other {{count} ステージングされたケース}}"
+      "openToFix": "ステージングケースを開いて修正してください。",
+      "elsewhereTitle": "次の場所にもステージングケースがあります",
+      "elsewhereCount": "{count, plural, one {{count}個のステージングケース} other {{count}個のステージングケース}}"
     },
     "filterBar": {
       "addFilter": "フィルターを追加",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "リトライ済み",
-      "clear": "フィルターをクリア"
+      "clear": "すべてのフィルターをクリア"
     },
     "impact": {
       "title": "影響",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "URLからテストケースを生成する（アプリケーションテスト）",
         "automation_candidates": "自動化候補者レポート",
         "derive_case_steps": "AIステップ導出",
-        "impact_analysis": "影響: 影響を受けたテスト選択"
+        "impact_analysis": "影響: 影響を受けたテスト選択",
+        "failure_triage": "障害トリアージの分類"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "監査ログ",
         "budget-alerts": "予算アラート",
         "auto-tag": "AI自動タグ付け",
+        "failure-triage": "障害トリアージ",
         "repo-cache": "リポジトリキャッシュ",
         "copy-move": "コピー＆移動",
         "duplicate-scan": "重複スキャン",
@@ -7077,8 +7080,8 @@
         "reviewCancelledEmailMessage": "{actorName} は、プロジェクト \"{projectName} \" の {entityLabel} \"{entityName}\" のレビュー要求をキャンセルしました。",
         "reviewReminderTitle": "審査はまだ保留中です",
         "reviewReminderAction": "まだレビューをお待ちしています",
-        "reviewReminderEmailMessage": "リマインダー: {actorName}によるプロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" のレビュー依頼は、{pendingFor} 保留中です。",
-        "reviewReminderHoursPending": "{pendingFor} 保留中",
+        "reviewReminderEmailMessage": "リマインダー: {actorName}によるプロジェクト\"{projectName}\"の{entityLabel}\"{entityName}\"のレビュー依頼は{pendingFor}間保留されています。",
+        "reviewReminderHoursPending": "{pendingFor}保留中",
         "aiStepsDerivedTitle": "AI導出のテストステップの準備が完了しました",
         "aiStepsDerivedMessage": "{count, plural, other {#件のテストケース}}にAI導出のステップが付与されました — 正確性を確認してください。",
         "aiStepsDerivedReviewLink": "テスト実行を確認",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## インパクト\nテスト対象のアプリケーションのリポジトリを接続して、このプロジェクトがテストインパクト分析を実行できるようにします：2つのコミットを選択して、変更がどのテストケースに影響を与えるかを確認し、テストケースをそれらがカバーするコードにピン留めします。",
     "pathPatterns": "## パスパターン\n各行は基本的な**パス**とグロブ**パターン**を組み合わせます。行は累積されます。任意の行がファイルに一致する場合、ファイルが含まれます。\n\n- `src` + `**/*` — `src`の下のすべて\n- 空白または`.` + `**/*` — リポジトリ内のすべてのファイル\n- `src` + `**/!(*.test|*.spec).ts` — テストを除く`.ts`ファイル\n\n### 除外\n行で**除外**をチェックして、別の行が含める場合でもそのファイルを削除します。除外はファイルピッカーとキャッシュに適用され、インパクト分析の変更されたファイルに対して適用されるため、ほぼすべてのプルリクエストで変更されるファイルは関連のないテストケースを取得できなくなります。少なくとも1行はチェックなしのままにしておく必要があります。\n\n- 空白 + `**/CHANGELOG*` — あらゆる深さのすべてのチェンジログ\n- `app` + `build.gradle.kts` — バージョンをバンプするだけのビルドファイル",
     "projectAutomation": "## 自動化実行\n実行ターゲットは、このプロジェクトの自動化されたケースをどこで実行するかをTestPlanItに伝えます：GitHub Actionsワークフロー、GitLab CIパイプライン、または他のシステムの署名付きウェブフック。実行が実行されると、TestPlanItはジョブを実行IDと計画URLで開始します。ジョブは計画を読み取り、一致するテストを実行して、その実行にピン留めされたレポーターまたはCLIで結果を報告します。ターゲットは削除せずに無効にできます。",
-    "userAlerts": "## 通知とアラート\n**通知設定** は、連絡する方法（アプリ内、メール、ダイジェスト）と、受け取る通知タイプを決定します。\n\n**アラート** はテストメトリクスを監視し、境界線を超えたときに購読者に通知します。例えば、結果が通常より50%長くかかる、ケースが3回連続で失敗する、成功率が90%以下に低下するランなど、または期限までのマイルストーンです。リストはプロジェクト内のすべてのアラートを表示します。**通知してください** スイッチはいずれかに従うか退出します。**アラートを追加** は、ロールが **アラート** 追加/編集を持つプロジェクトで独自に作成します。プロジェクト管理者はプロジェクト内のすべてのアラートと他のユーザーのサブスクリプションを管理します。アラートはクールダウン内の被験体あたり最大1回発火し、十分な結果を得るまで沈黙したままです。"
+    "userAlerts": "## 通知とアラート\n**通知設定** は、連絡する方法（アプリ内、メール、ダイジェスト）と、受け取る通知タイプを決定します。\n\n**アラート** はテストメトリクスを監視し、境界線を超えたときに購読者に通知します。例えば、結果が通常より50%長くかかる、ケースが3回連続で失敗する、成功率が90%以下に低下するランなど、または期限までのマイルストーンです。リストはプロジェクト内のすべてのアラートを表示します。**通知してください** スイッチはいずれかに従うか退出します。**アラートを追加** は、ロールが **アラート** 追加/編集を持つプロジェクトで独自に作成します。プロジェクト管理者はプロジェクト内のすべてのアラートと他のユーザーのサブスクリプションを管理します。アラートはクールダウン内の被験体あたり最大1回発火し、十分な結果を得るまで沈黙したままです。",
+    "projectTriage": "## 障害トリアージ\n同じ例外、メッセージ、トップスタックフレームを共有する自動失敗は**署名**にグループ化されます。各署名は、それが発生した頻度、それが触れたテストケースと実行、およびそれが製品バグ、テストバグ、環境問題またはflakiness についてのAIの見方を示します。署名が処理されたら、それを解決または無視します。失敗が戻った場合、それは自動的に再度開きます。",
+    "projectTriageSettings": "## 障害トリアージ設定\n自動結果に到達するすべての実行をグループ化し、何も費用がかかりません。AI分類は、AIモデルページの**障害トリアージ分類**機能に割り当てられたAIモデルを使用します。ここで無効にしてAI呼び出しなしでグループ化を保つます。**既存の結果を分析**すると、このプロジェクトに既に記録されているすべての自動失敗をグループ化します。"
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "統合",
       "QUEUE": "バックグラウンドキュー",
       "SYSTEM": "インストレーション"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "開く",
+      "RESOLVED": "解決済み",
+      "IGNORED": "無視"
+    },
+    "classification": {
+      "UNCLASSIFIED": "未分類",
+      "PRODUCT_BUG": "製品バグ",
+      "TEST_BUG": "テストバグ",
+      "ENVIRONMENT": "環境",
+      "FLAKY": "不安定"
+    },
+    "source": {
+      "AI": "AIで分類されました",
+      "labelAI": "AI",
+      "labelMANUAL": "手動"
+    },
+    "columns": {
+      "classification": "分類",
+      "occurrences": "発生数",
+      "firstSeen": "最初に確認",
+      "lastSeen": "最後に確認",
+      "classifiedBy": "分類者"
+    },
+    "filters": {
+      "searchPlaceholder": "署名を検索…",
+      "flakyOnly": "不安定候補",
+      "sourceAll": "AIまたは手動"
+    },
+    "actions": {
+      "resolve": "解決",
+      "ignore": "無視",
+      "classify": "AIで分類",
+      "setClassification": "分類を設定"
+    },
+    "detail": {
+      "exceptionType": "例外タイプ",
+      "normalizedMessage": "正規化されたメッセージ",
+      "frames": "トップスタックフレーム",
+      "sampleTrace": "最新の失敗",
+      "affectedCases": "{count, plural, one {# 個の影響を受けるテストケース} other {# 個の影響を受けるテストケース}}",
+      "recentOccurrences": "{count, plural, one {# 個の最近の出現} other {# 個の最近の出現}}",
+      "rationale": "根拠",
+      "suggestedIssueTitle": "推奨される問題のタイトル",
+      "nextStep": "推奨される次のステップ",
+      "noAi": "まだAIで分類されていません。",
+      "noDetails": "この失敗にはメッセージまたはスタックトレースがなかったため、テストケースでグループ化されます。",
+      "notesPlaceholder": "チームのためのメモ…",
+      "lastRun": "最後の実行",
+      "aiSuggestion": "AI提案",
+      "unlinkConfirmDescription": "これにより、この署名から問題が削除されます。問題自体は保持され、後で再度リンクできます。",
+      "signatureLabel": "障害署名",
+      "affectedCasesLabel": "影響を受けたテストケース"
+    },
+    "flakyCandidate": "不安定な候補",
+    "flakyCandidateHint": "影響を受けたテストケースは最近の履歴でパスと失敗を切り替えます。",
+    "knownIssue": "既知の問題",
+    "notGrouped": "{count, plural, one {# 個の失敗がまだグループ化されていません} other {# 個の失敗がまだグループ化されていません}}",
+    "runPanel": {
+      "title": "障害クラスタ",
+      "inRun": "{count, plural, one {# このランの中で} other {# このランの中で}}",
+      "hint": "クラスタをクリックして、以下の結果をフィルタリングします。",
+      "open": "署名を表示",
+      "inRunColumn": "このランで",
+      "selectedClusters": "{count, plural, one {# クラスタが選択されました} other {# クラスタが選択されました}}",
+      "clearSelected": "選択されたクラスタをクリア"
+    },
+    "toasts": {
+      "updated": "署名が更新されました",
+      "updateFailed": "署名を更新できませんでした",
+      "classifyQueued": "AI分類がリクエストされました",
+      "noAiModel": "この機能用にAIモデルが設定されていません",
+      "issueLinked": "問題がリンクされました"
+    },
+    "empty": {
+      "title": "まだ障害署名がありません",
+      "description": "署名は、自動化された結果が失敗して到着すると、ここに表示されます。このプロジェクトに既に記録されている失敗をグループ化するには、障害トリアージ設定の既存の結果を分析を使用します。"
+    },
+    "settings": {
+      "description": "自動化された失敗を署名にグループ化し、AIに分類させます。",
+      "enableLabel": "障害トリアージを有効にする",
+      "enableDescription": "結果が到着すると、このプロジェクトのすべての自動失敗を例外、メッセージ、スタックフレーム別にグループ化します。",
+      "autoClassifyLabel": "AIで新しい署名を分類する",
+      "autoClassifyDescription": "プロジェクトのAIモデルに、各新しい署名を製品バグ、テストバグ、環境問題または不安定として分類するよう依頼します。障害トリアージ分類機能に割り当てられたAIモデルが必要です。",
+      "backfillLabel": "既存の結果を分析",
+      "backfillDescription": "このプロジェクトに既に記録されているすべての自動失敗をグループ化します。バックグラウンドで実行されます。",
+      "backfillStarted": "分析が開始されました",
+      "backfillRunning": "分析中... {processed, plural, one {# 個の失敗がグループ化されました} other {# 個の失敗がグループ化されました}}",
+      "backfillDone": "分析完了",
+      "backfillFailed": "分析に失敗しました",
+      "backfillQueueUnavailable": "バックグラウンドジョブキューが利用できません",
+      "enabledToast": "障害トリアージが有効になりました",
+      "disabledToast": "障害トリアージが無効になりました",
+      "autoClassifyOnToast": "AI分類が有効になりました",
+      "autoClassifyOffToast": "AI分類が無効になりました",
+      "openTriage": "障害トリアージを開く"
     }
   }
 }

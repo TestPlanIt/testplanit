@@ -740,7 +740,8 @@
       "apiDocumentation": "API-Dokumentation",
       "sharedContent": "Gemeinsame Inhalte",
       "impact": "Auswirkungsanalyse",
-      "alerts": "Benachrichtigungen & Warnmeldungen"
+      "alerts": "Benachrichtigungen & Warnmeldungen",
+      "triage": "Fehler-Triage"
     },
     "aria": {
       "userMenu": "Benutzermenü",
@@ -3959,36 +3960,36 @@
       }
     },
     "savedDrafts": {
-      "title": "Meine bereitgestellten Fälle",
-      "description": "Testfälle, die Sie geschrieben und bereitgestellt haben, statt sie zu erstellen. Nur Sie können sie sehen. Öffnen Sie einen, um ihn zu überprüfen, oder erstellen Sie mehrere auf einmal.",
-      "empty": "Sie haben keine bereitgestellten Testfälle in diesem Projekt.",
-      "saveDraft": "Fall bereitstellen",
-      "saveTitle": "Benennen Sie den Testfall",
+      "title": "Meine gestaffelten Fälle",
+      "description": "Testfälle, die Sie geschrieben und gestaffelt haben, anstatt sie zu erstellen. Nur Sie können sie sehen. Öffnen Sie einen, um ihn zu überprüfen, oder erstellen Sie mehrere auf einmal.",
+      "empty": "Sie haben keine gestaffelten Testfälle in diesem Projekt.",
+      "saveDraft": "Fall einreihen",
+      "saveTitle": "Testfall benennen",
       "renameTitle": "Testfall umbenennen",
-      "saveDescription": "Ein bereitgestellter Testfall wird unter seinem Namen aufgelistet. Nur Sie können ihn sehen; nichts wird zum Repository hinzugefügt, bis Sie ihn erstellen.",
-      "saved": "Testfall bereitgestellt",
-      "saveFailed": "Der Testfall konnte nicht bereitgestellt werden",
-      "renamed": "Bereitgestellter Fall umbenannt",
-      "deleted": "Bereitgestellter Fall gelöscht",
-      "deleteFailed": "Der bereitgestellte Fall konnte nicht gelöscht werden",
-      "deleteTitle": "Diesen bereitgestellten Fall löschen?",
-      "deleteDescription": "\"{name}\" wird gelöscht. Es wurde nie erstellt, daher ändert sich nichts anderes.",
+      "saveDescription": "Ein gestaffelter Testfall wird unter seinem Namen aufgelistet. Nur Sie können ihn sehen; nichts wird dem Repository hinzugefügt, bis Sie ihn erstellen.",
+      "saved": "Testfall eingereiht",
+      "saveFailed": "Der Testfall konnte nicht eingereiht werden",
+      "renamed": "Eingereiht Fall umbenannt",
+      "deleted": "Eingereiht Fall gelöscht",
+      "deleteFailed": "Der eingereiht Fall konnte nicht gelöscht werden",
+      "deleteTitle": "Diesen eingereiht Fall löschen?",
+      "deleteDescription": "\"{name}\" wird gelöscht. Es wurde nie erstellt, daher ändert sich sonst nichts.",
       "folderDeleted": "Ordner gelöscht",
-      "folderFallback": "Der Ordner des bereitgestellten Falls wurde gelöscht; der Fall wird in \"{folder}\" erstellt.",
-      "selectFolderFirst": "Wählen Sie einen Ordner aus, bevor Sie diesen bereitgestellten Fall öffnen.",
+      "folderFallback": "Der Ordner des eingereiht Falls wurde gelöscht; der Fall wird in \"{folder}\" erstellt.",
+      "selectFolderFirst": "Wählen Sie einen Ordner aus, bevor Sie diesen eingereiht Fall öffnen.",
       "problemCount": "{count, plural, one {{count} Problem} other {{count} Probleme}}",
       "updated": "Aktualisiert {age}",
-      "createSelected": "{count, plural, =0 {Ausgewählte erstellen} other {{count} ausgewählte erstellen}}",
+      "createSelected": "{count, plural, =0 {Ausgewählte erstellen} other {{count} Ausgewählte erstellen}}",
       "createdToast": "{count, plural, one {{count} Testfall erstellt} other {{count} Testfälle erstellt}}",
-      "failedToast": "{count, plural, one {{count} bereitgestellter Fall konnte nicht erstellt werden} other {{count} bereitgestellte Fälle konnten nicht erstellt werden}}",
-      "problemFolder": "Der Ordner wurde gelöscht. Öffnen Sie den bereitgestellten Fall, um einen Ordner auszuwählen.",
-      "problemTemplate": "Die Vorlage ist diesem Projekt nicht mehr zugeordnet. Öffnen Sie den bereitgestellten Fall, um eine auszuwählen.",
-      "problemState": "Der Status existiert nicht mehr. Öffnen Sie den bereitgestellten Fall, um einen auszuwählen.",
+      "failedToast": "{count, plural, one {{count} eingereiht Fall konnte nicht erstellt werden} other {{count} eingereiht Fälle konnten nicht erstellt werden}}",
+      "problemFolder": "Der Ordner wurde gelöscht. Öffnen Sie den eingereiht Fall, um einen Ordner auszuwählen.",
+      "problemTemplate": "Die Vorlage ist nicht mehr diesem Projekt zugewiesen. Öffnen Sie den eingereiht Fall, um eine auszuwählen.",
+      "problemState": "Der Status existiert nicht mehr. Öffnen Sie den eingereiht Fall, um einen auszuwählen.",
       "problemField": "{field}: {message}",
       "notCreated": "Nicht erstellt: {message}",
-      "openToFix": "Öffnen Sie den bereitgestellten Fall, um ihn zu beheben.",
-      "elsewhereTitle": "Du hast auch bereitgestellte Fälle in",
-      "elsewhereCount": "{count, plural, one {{count} bereitgestellter Fall} other {{count} bereitgestellte Fälle}}"
+      "openToFix": "Öffnen Sie den eingereiht Fall, um ihn zu beheben.",
+      "elsewhereTitle": "Sie haben auch eingereiht Fälle in",
+      "elsewhereCount": "{count, plural, one {{count} eingereiht Fall} other {{count} eingereiht Fälle}}"
     },
     "filterBar": {
       "addFilter": "Filter hinzufügen",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Wiederholt",
-      "clear": "Filter löschen"
+      "clear": "Alle Filter löschen"
     },
     "impact": {
       "title": "Auswirkung",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Testfälle aus URL generieren (Anwendungstests)",
         "automation_candidates": "Bericht über Automatisierungskandidaten",
         "derive_case_steps": "KI-Schrittableitung",
-        "impact_analysis": "Auswirkung: Auswahl der betroffenen Tests"
+        "impact_analysis": "Auswirkung: Auswahl der betroffenen Tests",
+        "failure_triage": "Fehler-Triage Klassifizierung"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Audit-Protokolle",
         "budget-alerts": "Budgetwarnungen",
         "auto-tag": "KI-Auto-Tag",
+        "failure-triage": "Fehler-Triage",
         "repo-cache": "Repository-Cache",
         "copy-move": "Kopieren & Verschieben",
         "duplicate-scan": "Duplikatscan",
@@ -7077,8 +7080,8 @@
         "reviewCancelledEmailMessage": "{actorName} hat die Überprüfungsanfrage für {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" abgebrochen.",
         "reviewReminderTitle": "Die Überprüfung steht noch aus.",
         "reviewReminderAction": "wartet noch auf Ihre Bewertung von",
-        "reviewReminderEmailMessage": "Erinnerung: Die Überprüfungsanfrage von {actorName} am {entityLabel} \"{entityName}\" im Projekt \"{projectName}\" ist seit {pendingFor} ausstehend.",
-        "reviewReminderHoursPending": "Ausstehend seit {pendingFor}",
+        "reviewReminderEmailMessage": "Erinnerung: Die Überprüfungsanfrage von {actorName} für {entityLabel} \"{entityName}\" im Projekt \"{projectName}\" ist seit {pendingFor} ausstehend.",
+        "reviewReminderHoursPending": "Ausstehend für {pendingFor}",
         "aiStepsDerivedTitle": "KI-abgeleitete Testschritte bereit",
         "aiStepsDerivedMessage": "{count, plural, one {# Testfall wurde} other {# Testfälle wurden}} mit KI-abgeleiteten Schritten versehen — auf Richtigkeit prüfen.",
         "aiStepsDerivedReviewLink": "Testlauf überprüfen",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Impact\nVerbinden Sie das Repository der zu testenden Anwendung, damit dieses Projekt Testauswirkungsanalysen ausführen kann: Wählen Sie zwei Commits aus, um zu sehen, welche Testfälle die Änderungen betreffen, und heften Sie Testfälle an den von ihnen abgedeckten Code.",
     "pathPatterns": "## Pfadmuster\nJede Zeile kombiniert einen Basis-**Pfad** mit einem Glob-**Muster**. Zeilen addieren sich: Eine Datei wird eingebunden, wenn ein beliebiges Muster darauf passt.\n\n- `src` + `**/*` — alles unter `src`\n- leer oder `.` + `**/*` — jede Datei im Repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts`-Dateien außer Tests\n\n### Ausschließen\nAktivieren Sie **Ausschließen** in einer Zeile, um ihre Dateien zu entfernen, auch wenn eine andere Zeile sie einbindet. Ausschlüsse gelten für die Dateiauswahl und den Cache und für Impact auf die geänderten Dateien einer Analyse, sodass eine Datei, die sich bei fast jedem Pull Request ändert, keine unabhängigen Testfälle einbezieht. Mindestens eine Zeile muss deaktiviert bleiben.\n\n- leer + `**/CHANGELOG*` — jedes Changelog, in jeder Tiefe\n- `app` + `build.gradle.kts` — eine Build-Datei, die nur die Version erhöht",
     "projectAutomation": "## Automatisierte Ausführung\nAusführungsziele teilen TestPlanIt mit, wo die automatisierten Fälle dieses Projekts ausgeführt werden sollen: ein GitHub Actions-Workflow, eine GitLab CI-Pipeline oder ein signierter Webhook für jedes andere System. Wenn ein Lauf ausgeführt wird, startet TestPlanIt den Auftrag mit der Laufkennung und einer Plan-URL; der Auftrag liest den Plan, führt die passenden Tests aus und meldet die Ergebnisse mit einem Reporter oder der an diesen Lauf angehefteten CLI zurück. Ziele können deaktiviert werden, ohne gelöscht zu werden.",
-    "userAlerts": "## Benachrichtigungen & Warnmeldungen\n**Benachrichtigungseinstellungen** bestimmen, wie Sie erreicht werden (in-App, E-Mail, Digest) und welche Benachrichtigungstypen Sie überhaupt erhalten.\n\n**Warnmeldungen** beobachten eine Testkennzahl und benachrichtigen ihre Abonnenten, wenn sie eine Grenze überschreitet, z. B. ein Ergebnis, das 50% länger dauert als die übliche Dauer des Falls, ein Fall, der dreimal hintereinander fehlschlägt, ein Durchlauf, dessen Bestehensquote unter 90% sinkt, oder ein Meilenstein, der sich verzögert und noch Tage verbleibend sind. Die Liste zeigt jede Warnmeldung in Ihren Projekten; der Schalter **Benachrichtige mich** folgt oder verlässt eine. **Warnmeldung hinzufügen** erstellt Ihre eigene in jedem Projekt, in dem Ihre Rolle **Warnmeldungen** Hinzufügen/Bearbeiten hat; Projektadministratoren verwalten jede Warnmeldung in ihrem Projekt und die Abonnements anderer Personen. Eine Warnmeldung wird höchstens einmal pro Thema innerhalb ihres Cooldowns abgefeuert und bleibt stumm, bis sie genug Ergebnisse hat."
+    "userAlerts": "## Benachrichtigungen & Warnmeldungen\n**Benachrichtigungseinstellungen** bestimmen, wie Sie erreicht werden (in-App, E-Mail, Digest) und welche Benachrichtigungstypen Sie überhaupt erhalten.\n\n**Warnmeldungen** beobachten eine Testkennzahl und benachrichtigen ihre Abonnenten, wenn sie eine Grenze überschreitet, z. B. ein Ergebnis, das 50% länger dauert als die übliche Dauer des Falls, ein Fall, der dreimal hintereinander fehlschlägt, ein Durchlauf, dessen Bestehensquote unter 90% sinkt, oder ein Meilenstein, der sich verzögert und noch Tage verbleibend sind. Die Liste zeigt jede Warnmeldung in Ihren Projekten; der Schalter **Benachrichtige mich** folgt oder verlässt eine. **Warnmeldung hinzufügen** erstellt Ihre eigene in jedem Projekt, in dem Ihre Rolle **Warnmeldungen** Hinzufügen/Bearbeiten hat; Projektadministratoren verwalten jede Warnmeldung in ihrem Projekt und die Abonnements anderer Personen. Eine Warnmeldung wird höchstens einmal pro Thema innerhalb ihres Cooldowns abgefeuert und bleibt stumm, bis sie genug Ergebnisse hat.",
+    "projectTriage": "## Fehler-Triage\nAutomatisierte Fehler, die dieselbe Ausnahme, Nachricht und oberen Stack-Frames teilen, werden in eine **Signatur** gruppiert. Jede Signatur zeigt, wie oft sie auftrat, welche Testfälle und Läufe sie betroffen hat, und die Bewertung der KI, ob es sich um einen Produktfehler, einen Testfehler, ein Umgebungsproblem oder Flakiness handelt. Lösen Sie eine Signatur auf oder ignorieren Sie sie, sobald sie behandelt ist; sie öffnet sich von selbst wieder, wenn der Fehler zurückkommt.",
+    "projectTriageSettings": "## Fehler-Triage Einstellungen\nGruppierung läuft auf jeden automatisierten Ergebnis, das ankommt, und kostet nichts. Die KI-Klassifizierung verwendet das KI-Modell, das der Funktion **Fehler-Triage Klassifizierung** auf der Seite KI-Modelle zugewiesen ist; schalten Sie es hier aus, um die Gruppierung ohne KI-Aufrufe beizubehalten. **Vorhandene Ergebnisse analysieren** gruppiert jeden automatisierten Fehler, der bereits in diesem Projekt aufgezeichnet ist."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Integrationen",
       "QUEUE": "Hintergrund-Warteschlangen",
       "SYSTEM": "Installation"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Offen",
+      "RESOLVED": "Gelöst",
+      "IGNORED": "Ignoriert"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Unklassifiziert",
+      "PRODUCT_BUG": "Produktfehler",
+      "TEST_BUG": "Testfehler",
+      "ENVIRONMENT": "Umgebung",
+      "FLAKY": "Instabil"
+    },
+    "source": {
+      "AI": "Klassifiziert von KI",
+      "labelAI": "KI",
+      "labelMANUAL": "Manuell"
+    },
+    "columns": {
+      "classification": "Klassifizierung",
+      "occurrences": "Vorkommen",
+      "firstSeen": "Zuerst gesehen",
+      "lastSeen": "Zuletzt gesehen",
+      "classifiedBy": "Klassifiziert von"
+    },
+    "filters": {
+      "searchPlaceholder": "Signaturen durchsuchen...",
+      "flakyOnly": "Flaky-Kandidaten",
+      "sourceAll": "KI oder manuell"
+    },
+    "actions": {
+      "resolve": "Beheben",
+      "ignore": "Ignorieren",
+      "classify": "Mit KI klassifizieren",
+      "setClassification": "Klassifizierung festlegen"
+    },
+    "detail": {
+      "exceptionType": "Ausnahmeart",
+      "normalizedMessage": "Normalisierte Nachricht",
+      "frames": "Oberen Stack-Frames",
+      "sampleTrace": "Letzter Fehler",
+      "affectedCases": "{count, plural, one {# betroffener Testfall} other {# betroffene Testfälle}}",
+      "recentOccurrences": "{count, plural, one {# aktuelles Vorkommen} other {# aktuelle Vorkommen}}",
+      "rationale": "Begründung",
+      "suggestedIssueTitle": "Vorgeschlagener Problemtitel",
+      "nextStep": "Vorgeschlagener nächster Schritt",
+      "noAi": "Noch nicht von KI klassifiziert.",
+      "noDetails": "Dieser Fehler hatte keine Nachricht oder Stack-Spur, daher wird er nach Testfall gruppiert.",
+      "notesPlaceholder": "Notizen für das Team...",
+      "lastRun": "Letzter Lauf",
+      "aiSuggestion": "KI-Vorschlag",
+      "unlinkConfirmDescription": "Dadurch wird das Ticket von dieser Signatur entfernt. Das Ticket selbst bleibt erhalten und kann später erneut verknüpft werden.",
+      "signatureLabel": "Fehlersignatur",
+      "affectedCasesLabel": "Betroffene Testfälle"
+    },
+    "flakyCandidate": "Flaky-Kandidat",
+    "flakyCandidateHint": "Die betroffenen Testfälle wechseln zwischen Erfolg und Misserfolg in ihrer jüngsten Geschichte.",
+    "knownIssue": "Bekanntes Problem",
+    "notGrouped": "{count, plural, one {# Fehler noch nicht gruppiert} other {# Fehler noch nicht gruppiert}}",
+    "runPanel": {
+      "title": "Fehlerclustern",
+      "inRun": "{count, plural, one {# in diesem Lauf} other {# in diesem Lauf}}",
+      "hint": "Klicken Sie auf einen Cluster, um die unten stehenden Ergebnisse zu filtern.",
+      "open": "Signatur anzeigen",
+      "inRunColumn": "In diesem Lauf",
+      "selectedClusters": "{count, plural, one {# Cluster ausgewählt} other {# Cluster ausgewählt}}",
+      "clearSelected": "Löschen Sie die ausgewählten Cluster"
+    },
+    "toasts": {
+      "updated": "Signatur aktualisiert",
+      "updateFailed": "Die Signatur konnte nicht aktualisiert werden",
+      "classifyQueued": "KI-Klassifizierung angefordert",
+      "noAiModel": "Für diese Funktion ist kein KI-Modell konfiguriert",
+      "issueLinked": "Ticket verknüpft"
+    },
+    "empty": {
+      "title": "Noch keine Fehlersignaturen",
+      "description": "Signaturen erscheinen hier, wenn automatisierte Ergebnisse mit Fehlern ankommen. Um bereits in diesem Projekt aufgezeichnete Fehler zu gruppieren, verwenden Sie \"Vorhandene Ergebnisse analysieren\" in den Fehler-Triage-Einstellungen."
+    },
+    "settings": {
+      "description": "Gruppieren Sie automatisierte Fehler in Signaturen und lassen Sie die KI sie klassifizieren.",
+      "enableLabel": "Fehler-Triage aktivieren",
+      "enableDescription": "Gruppieren Sie jeden automatisierten Fehler in diesem Projekt nach Ausnahme, Nachricht und Stack-Frames, wenn Ergebnisse ankommen.",
+      "autoClassifyLabel": "Neue Signaturen mit KI klassifizieren",
+      "autoClassifyDescription": "Bitten Sie das KI-Modell des Projekts, jede neue Signatur als Produktfehler, Testfehler, Umgebungsproblem oder Flakiness zu klassifizieren. Benötigt ein KI-Modell, das der Fehler-Triage-Klassifizierungsfunktion zugewiesen ist.",
+      "backfillLabel": "Vorhandene Ergebnisse analysieren",
+      "backfillDescription": "Gruppieren Sie jeden automatisierten Fehler, der bereits in diesem Projekt aufgezeichnet ist. Läuft im Hintergrund.",
+      "backfillStarted": "Analyse gestartet",
+      "backfillRunning": "Analysieren... {processed, plural, one {# Fehler gruppiert} other {# Fehler gruppiert}}",
+      "backfillDone": "Analyse abgeschlossen",
+      "backfillFailed": "Analyse fehlgeschlagen",
+      "backfillQueueUnavailable": "Background-Job-Warteschlange ist nicht verfügbar",
+      "enabledToast": "Fehler-Triage aktiviert",
+      "disabledToast": "Fehler-Triage deaktiviert",
+      "autoClassifyOnToast": "KI-Klassifizierung aktiviert",
+      "autoClassifyOffToast": "KI-Klassifizierung deaktiviert",
+      "openTriage": "Fehler-Triage öffnen"
     }
   }
 }

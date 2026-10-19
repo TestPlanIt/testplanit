@@ -740,7 +740,8 @@
       "apiDocumentation": "API dokumentace",
       "sharedContent": "Sdílený obsah",
       "impact": "Analýza dopadu",
-      "alerts": "Oznámení a upozornění"
+      "alerts": "Oznámení a upozornění",
+      "triage": "Selhání třídění"
     },
     "aria": {
       "userMenu": "Uživatelské menu",
@@ -3959,34 +3960,34 @@
       }
     },
     "savedDrafts": {
-      "title": "Moje připravované případy",
-      "description": "Testovací případy, které jste napsali a připravili místo vytvoření. Vidíte je pouze vy. Otevřete si jeden k přezkumu nebo vytvořte několik najednou.",
-      "empty": "V tomto projektu nemáte žádné připravované testovací případy.",
+      "title": "Moje připravené případy",
+      "description": "Testovací případy, které jste napsali a připravili místo vytvoření. Vidíte je pouze vy. Otevřete jeden z nich k přezkoumání nebo vytvořte několik najednou.",
+      "empty": "V tomto projektu nemáte žádné připravené testovací případy.",
       "saveDraft": "Připravit případ",
       "saveTitle": "Pojmenujte testovací případ",
       "renameTitle": "Přejmenovat testovací případ",
-      "saveDescription": "Připravovaný testovací případ je uveden pod jeho názvem. Vidíte ho pouze vy; do úložiště se nic nepřidá, dokud ho nevytvoříte.",
+      "saveDescription": "Připravený testovací případ je uveden pod jeho názvem. Vidíte jej pouze vy; do úložiště se nic nepřidá, dokud jej nevytvoříte.",
       "saved": "Testovací případ připraven",
       "saveFailed": "Testovací případ se nepodařilo připravit",
-      "renamed": "Připravovaný případ přejmenován",
-      "deleted": "Připravovaný případ odstraněn",
-      "deleteFailed": "Připravovaný případ se nepodařilo odstranit",
-      "deleteTitle": "Odstranit tento připravovaný případ?",
-      "deleteDescription": "\"{name}\" bude odstraněn. Nikdy nebyl vytvořen, takže se nic dalšího nezmění.",
-      "folderDeleted": "Složka odstraněna",
-      "folderFallback": "Složka připravovaného případu byla odstraněna; případ bude vytvořen v \"{folder}\".",
-      "selectFolderFirst": "Před otevřením tohoto připravovaného případu vyberte složku.",
+      "renamed": "Připravený případ přejmenován",
+      "deleted": "Připravený případ smazán",
+      "deleteFailed": "Připravený případ se nepodařilo smazat",
+      "deleteTitle": "Smazat tento připravený případ?",
+      "deleteDescription": "\"{name}\" bude smazán. Nikdy nebyl vytvořen, takže se nic jiného nezmění.",
+      "folderDeleted": "Složka smazána",
+      "folderFallback": "Složka připraveného případu byla smazána; případ bude vytvořen v \"{folder}\".",
+      "selectFolderFirst": "Před otevřením tohoto připraveného případu vyberte složku.",
       "problemCount": "{count, plural, one {{count} problém} few {{count} problémy} many {{count} problémů} other {{count} problémů}}",
       "updated": "Aktualizováno {age}",
       "createSelected": "{count, plural, =0 {Vytvořit vybrané} other {Vytvořit {count} vybraných}}",
       "createdToast": "{count, plural, one {{count} testovací případ vytvořen} few {{count} testovací případy vytvořeny} many {{count} testovacích případů vytvořeno} other {{count} testovacích případů vytvořeno}}",
-      "failedToast": "{count, plural, one {{count} připravovaný případ se nepodařilo vytvořit} few {{count} připravované případy se nepodařilo vytvořit} many {{count} připravovaných případů se nepodařilo vytvořit} other {{count} připravovaných případů se nepodařilo vytvořit}}",
-      "problemFolder": "Složka byla odstraněna. Otevřete připravovaný případ a vyberte si složku.",
-      "problemTemplate": "Šablona již není přiřazena tomuto projektu. Otevřete připravovaný případ a vyberte si jednu.",
-      "problemState": "Stav již neexistuje. Otevřete připravovaný případ a vyberte si jeden.",
+      "failedToast": "{count, plural, one {{count} připravený případ se nepodařilo vytvořit} few {{count} připravené případy se nepodařilo vytvořit} many {{count} připravených případů se nepodařilo vytvořit} other {{count} připravených případů se nepodařilo vytvořit}}",
+      "problemFolder": "Složka byla smazána. Otevřete připravený případ a vyberte složku.",
+      "problemTemplate": "Šablona již není přiřazena tomuto projektu. Otevřete připravený případ a vyberte jednu.",
+      "problemState": "Stav již neexistuje. Otevřete připravený případ a vyberte jeden.",
       "problemField": "{field}: {message}",
       "notCreated": "Nevytvořeno: {message}",
-      "openToFix": "Otevřete připravovaný případ a opravte jej.",
+      "openToFix": "Otevřete připravený případ a opravte jej.",
       "elsewhereTitle": "Máte také připravené případy v",
       "elsewhereCount": "{count, plural, one {{count} připravený případ} few {{count} připravené případy} many {{count} připravených případů} other {{count} připravených případů}}"
     },
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Opakováno",
-      "clear": "Vymazat filtry"
+      "clear": "Vymazat všechny filtry"
     },
     "impact": {
       "title": "Dopad",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Generovat testovací případy z URL (testování aplikace)",
         "automation_candidates": "Report kandidátů na automatizaci",
         "derive_case_steps": "Odvození kroků pomocí AI",
-        "impact_analysis": "Dopad: Výběr postižených testů"
+        "impact_analysis": "Dopad: Výběr postižených testů",
+        "failure_triage": "Třídění selhání klasifikace"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Auditní záznamy",
         "budget-alerts": "Upozornění na rozpočet",
         "auto-tag": "Automatické štítkování AI",
+        "failure-triage": "Selhání třídění",
         "repo-cache": "Mezipaměť úložiště",
         "copy-move": "Kopírovat a přesunout",
         "duplicate-scan": "Kontrola duplicit",
@@ -7077,8 +7080,8 @@
         "reviewCancelledEmailMessage": "{actorName} zrušil žádost o revizi na {entityLabel} \"{entityName}\" v projektu \"{projectName}\".",
         "reviewReminderTitle": "Revize stále čeká na vyřízení",
         "reviewReminderAction": "stále čeká na vaši revizi",
-        "reviewReminderEmailMessage": "Připomenutí: Žádost o přezkum od uživatele {actorName} na {entityLabel} \"{entityName}\" v projektu \"{projectName}\" čeká {pendingFor}.",
-        "reviewReminderHoursPending": "Čeká se {pendingFor}",
+        "reviewReminderEmailMessage": "Připomenutí: žádost uživatele {actorName} o kontrolu na {entityLabel} \"{entityName}\" v projektu \"{projectName}\" čeká {pendingFor}.",
+        "reviewReminderHoursPending": "Čeká {pendingFor}",
         "aiStepsDerivedTitle": "Kroky testu odvozené AI jsou připraveny",
         "aiStepsDerivedMessage": "{count, plural, one {# testovacímu případu byly přiřazeny} few {# testovacím případům byly přiřazeny} many {# testovacím případům byly přiřazeny} other {# testovacím případům byly přiřazeny}} kroky odvozené pomocí AI — zkontrolujte jejich přesnost.",
         "aiStepsDerivedReviewLink": "Zkontrolovat testovací běh",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Dopad\nPřipojte úložiště testované aplikace, aby tento projekt mohl spouštět analýzu dopadu testů: vyberte dva commity a zjistěte, které testovací případy jsou změnami ovlivněny, a připněte testovací případy ke kódu, který pokrývají.",
     "pathPatterns": "## Vzory cest\nKaždý řádek kombinuje základní **cestu** se **vzorem** glob. Řádky se sčítají: soubor je zahrnut, pokud jej některý řádek vyhovuje.\n\n- `src` + `**/*` — vše pod `src`\n- prázdné nebo `.` + `**/*` — každý soubor v úložišti\n- `src` + `**/!(*.test|*.spec).ts` — soubory `.ts` kromě testů\n\n### Vyloučit\nZaškrtněte **Vyloučit** na řádku, abyste odebrali jeho soubory i v případě, že je jiný řádek zahrnuje. Vyloučení se vztahují na selektor souborů a mezipaměť, a pro dopad na změněné soubory analýzy, takže soubor, který se mění téměř v každém pull requestu, přestane stahovat nesouvisející testovací případy. Alespoň jeden řádek musí zůstat nezaškrtnutý.\n\n- prázdné + `**/CHANGELOG*` — každý changelog v kterékoliv hloubce\n- `app` + `build.gradle.kts` — soubor sestavení, který pouze zvyšuje verzi",
     "projectAutomation": "## Automatizované provedení\nCíle provedení říkají TestPlanIt, kde spustit automatizované případy tohoto projektu: pracovní postup GitHub Actions, kanál GitLab CI nebo podepsaný webhook pro libovolný jiný systém. Když je běh spuštěn, TestPlanIt spustí úlohu s ID běhu a adresou URL plánu; úloha přečte plán, spustí odpovídající testy a vrátí výsledky pomocí reportéra nebo CLI připnutého k tomuto běhu. Cíle mohou být zakázány bez jejich odstranění.",
-    "userAlerts": "## Oznámení a upozornění\n**Předvolby oznámení** rozhodují, jak vás dosáhneme (v aplikaci, e-mail, přehled) a které typy oznámení vůbec obdržíte.\n\n**Upozornění** sledují testovací metriku a upozorňují své předplatitele, když překročí linii, například výsledek, který trvá o 50% déle než obvyklá doba případu, případ, který selže třikrát za sebou, běh, jehož míra úspěšnosti klesne pod 90%, nebo milník, který je pozadu s dny do konce. Seznam ukazuje každé upozornění ve vašich projektech; přepínač **Upozornit mě** se přihlašuje nebo opouští jeden. **Přidat upozornění** vytváří vaše vlastní v jakémkoli projektu, kde má vaše role **Upozornění** Přidat/Upravit; správci projektů spravují všechna upozornění v jejich projektu a předplatná ostatních lidí. Upozornění se v rámci svého chladícího cyklu spustí maximálně jednou na subjekt a zůstane tiché, dokud nemá dostatek výsledků."
+    "userAlerts": "## Oznámení a upozornění\n**Předvolby oznámení** rozhodují, jak vás dosáhneme (v aplikaci, e-mail, přehled) a které typy oznámení vůbec obdržíte.\n\n**Upozornění** sledují testovací metriku a upozorňují své předplatitele, když překročí linii, například výsledek, který trvá o 50% déle než obvyklá doba případu, případ, který selže třikrát za sebou, běh, jehož míra úspěšnosti klesne pod 90%, nebo milník, který je pozadu s dny do konce. Seznam ukazuje každé upozornění ve vašich projektech; přepínač **Upozornit mě** se přihlašuje nebo opouští jeden. **Přidat upozornění** vytváří vaše vlastní v jakémkoli projektu, kde má vaše role **Upozornění** Přidat/Upravit; správci projektů spravují všechna upozornění v jejich projektu a předplatná ostatních lidí. Upozornění se v rámci svého chladícího cyklu spustí maximálně jednou na subjekt a zůstane tiché, dokud nemá dostatek výsledků.",
+    "projectTriage": "## Selhání třídění\nAutomatizovaná selhání, která sdílejí stejnou výjimku, zprávu a horní stack frames, jsou seskupena do jedné **podpisy**. Každý podpis ukazuje, jak často se stalo, které testovací případy a běhy se dotkly, a umělou inteligenci číst, zda jde o chybu produktu, chybu testu, problém prostředí nebo flakiness. Vyřešit nebo ignorovat podpis po jeho vyřešení; znovu se otevře, pokud se selhání vrátí.",
+    "projectTriageSettings": "## Nastavení selhání třídění\nGroupování běhů na každém automatizovaném výsledku, který přichází, a nic to nestojí. Klasifikace umělé inteligence používá model umělé inteligence přiřazený funkci **Třídění selhání klasifikace** na stránce Modely umělé inteligence; vypněte jej zde, abyste zachovali seskupování bez jakýchkoli volání umělé inteligence. **Analyzovat existující výsledky** seskupuje všechna automatizovaná selhání již zaznamenána v tomto projektu."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Integrace",
       "QUEUE": "Fronty na pozadí",
       "SYSTEM": "Instalace"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Otevřít",
+      "RESOLVED": "Vyřešeno",
+      "IGNORED": "Ignorováno"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Neklasifikováno",
+      "PRODUCT_BUG": "Chyba produktu",
+      "TEST_BUG": "Chyba testu",
+      "ENVIRONMENT": "Prostředí",
+      "FLAKY": "Nestabilní"
+    },
+    "source": {
+      "AI": "Klasifikováno umělou inteligencí",
+      "labelAI": "AI",
+      "labelMANUAL": "Manuální"
+    },
+    "columns": {
+      "classification": "Klasifikace",
+      "occurrences": "Výskyty",
+      "firstSeen": "Poprvé viděno",
+      "lastSeen": "Naposledy viděno",
+      "classifiedBy": "Klasifikováno od"
+    },
+    "filters": {
+      "searchPlaceholder": "Hledat podpisy...",
+      "flakyOnly": "Kandidáti na flaky",
+      "sourceAll": "AI nebo manuální"
+    },
+    "actions": {
+      "resolve": "Vyřešit",
+      "ignore": "Ignorovat",
+      "classify": "Klasifikovat s umělou inteligencí",
+      "setClassification": "Nastavit klasifikaci"
+    },
+    "detail": {
+      "exceptionType": "Typ výjimky",
+      "normalizedMessage": "Normalizovaná zpráva",
+      "frames": "Horní stack frames",
+      "sampleTrace": "Poslední selhání",
+      "affectedCases": "{count, plural, one {# ovlivněný testovací případ} few {# ovlivněné testovací případy} many {# ovlivněných testovacích případů} other {# ovlivněných testovacích případů}}",
+      "recentOccurrences": "{count, plural, one {# nedávný výskyt} few {# nedávné výskyty} many {# nedávných výskytů} other {# nedávných výskytů}}",
+      "rationale": "Zdůvodnění",
+      "suggestedIssueTitle": "Navrhovaný název problému",
+      "nextStep": "Navrhovaný další krok",
+      "noAi": "Dosud není klasifikováno umělou inteligencí.",
+      "noDetails": "Toto selhání nemělo zprávu nebo stack trace, takže je seskupeno podle testovacího případu.",
+      "notesPlaceholder": "Poznámky pro tým...",
+      "lastRun": "Poslední běh",
+      "aiSuggestion": "Návrh AI",
+      "unlinkConfirmDescription": "Tím se odstraní problém z tohoto podpisu. Sám problém je zachován a lze jej později propojit znovu.",
+      "signatureLabel": "Podpis selhání",
+      "affectedCasesLabel": "Ovlivněné testovací případy"
+    },
+    "flakyCandidate": "Kandidát na flaky",
+    "flakyCandidateHint": "Postižené testovací případy se v nedávné historii překloňují mezi úspěchem a neúspěchem.",
+    "knownIssue": "Známý problém",
+    "notGrouped": "{count, plural, one {# selhání dosud není seskupeno} few {# selhání dosud nejsou seskupena} many {# selhání dosud není seskupeno} other {# selhání dosud není seskupeno}}",
+    "runPanel": {
+      "title": "Clustery selhání",
+      "inRun": "{count, plural, one {# v tomto běhu} other {# v tomto běhu}}",
+      "hint": "Kliknutím na cluster filtrujete níže uvedené výsledky.",
+      "open": "Zobrazit podpis",
+      "inRunColumn": "V tomto běhu",
+      "selectedClusters": "{count, plural, one {# vybraný cluster} few {# vybrané clustery} many {# vybraných clusterů} other {# vybraných clusterů}}",
+      "clearSelected": "Vymazat vybrané clustery"
+    },
+    "toasts": {
+      "updated": "Podpis aktualizován",
+      "updateFailed": "Nepodařilo se aktualizovat podpis",
+      "classifyQueued": "Klasifikace AI vyžádána",
+      "noAiModel": "Pro tuto funkci není nakonfigurován žádný model AI",
+      "issueLinked": "Problém propojen"
+    },
+    "empty": {
+      "title": "Zatím žádné podpisy selhání",
+      "description": "Podpisy se zde zobrazují, když dorazí automatizované výsledky se selháním. Chcete-li seskupit selhání již zaznamenená v tomto projektu, použijte Analyzovat existující výsledky v nastavení Selhání třídění."
+    },
+    "settings": {
+      "description": "Seskupte automatizovaná selhání do podpisů a nechte je klasifikovat umělou inteligencí.",
+      "enableLabel": "Povolit třídění selhání",
+      "enableDescription": "Seskupte každé automatizované selhání v tomto projektu podle výjimky, zprávy a stack frames, když dorazí výsledky.",
+      "autoClassifyLabel": "Klasifikovat nové podpisy pomocí AI",
+      "autoClassifyDescription": "Požádejte model AI projektu, aby klasifikoval každý nový podpis jako chybu produktu, chybu testu, problém prostředí nebo flaky. Vyžaduje model AI přiřazený funkci Třídění selhání klasifikace.",
+      "backfillLabel": "Analyzovat existující výsledky",
+      "backfillDescription": "Seskupte všechna automatizovaná selhání již zaznamenána v tomto projektu. Běží na pozadí.",
+      "backfillStarted": "Analýza zahájena",
+      "backfillRunning": "Analýza... {processed, plural, one {# selhání seskupeno} few {# selhání seskupena} many {# selhání seskupeno} other {# selhání seskupeno}}",
+      "backfillDone": "Analýza dokončena",
+      "backfillFailed": "Analýza se nezdařila",
+      "backfillQueueUnavailable": "Fronta úloh na pozadí není k dispozici",
+      "enabledToast": "Třídění selhání povoleno",
+      "disabledToast": "Třídění selhání zakázáno",
+      "autoClassifyOnToast": "Klasifikace AI povolena",
+      "autoClassifyOffToast": "Klasifikace AI zakázána",
+      "openTriage": "Otevřít třídění selhání"
     }
   }
 }

@@ -740,7 +740,8 @@
       "apiDocumentation": "API Dokümantasyonu",
       "sharedContent": "Paylaşılan İçerik",
       "impact": "Etki Analizi",
-      "alerts": "Bildirimler & Uyarılar"
+      "alerts": "Bildirimler & Uyarılar",
+      "triage": "Hata Sınıflandırması"
     },
     "aria": {
       "userMenu": "Kullanıcı menüsü",
@@ -3959,36 +3960,36 @@
       }
     },
     "savedDrafts": {
-      "title": "Hazırlanan Vakalarım",
-      "description": "Yazdığınız ve oluşturmak yerine hazırladığınız test senaryoları. Yalnızca siz bunları görebilirsiniz. Birini gözden geçirmek için açın veya aynı anda birkaçını oluşturun.",
-      "empty": "Bu projede hazırlanan test senaryonuz yok.",
-      "saveDraft": "Senaryoyu Hazırla",
-      "saveTitle": "Test senaryosunun adını yazın",
-      "renameTitle": "Test senaryosunun adını değiştirin",
-      "saveDescription": "Hazırlanan bir test senaryosu adının altında listelenir. Yalnızca siz bunu görebilirsiniz; onu oluşturana kadar hiçbir şey deposuna eklenmez.",
+      "title": "Hazırladığım Durumlar",
+      "description": "Yazdığınız ve oluşturmak yerine hazırladığınız test senaryoları. Yalnızca siz görebilirsiniz. Gözden geçirmek için birini açın veya birkaçını aynı anda oluşturun.",
+      "empty": "Bu projede hazırlanmış test senaryonuz yok.",
+      "saveDraft": "Durumu Hazırla",
+      "saveTitle": "Test senaryosunu adlandırın",
+      "renameTitle": "Test senaryosunu yeniden adlandırın",
+      "saveDescription": "Hazırlanmış test senaryosu adı altında listelenir. Yalnızca siz görebilirsiniz; onu oluşturana kadar depoya hiçbir şey eklenmez.",
       "saved": "Test senaryosu hazırlandı",
       "saveFailed": "Test senaryosu hazırlanamadı",
-      "renamed": "Hazırlanan senaryo yeniden adlandırıldı",
-      "deleted": "Hazırlanan senaryo silindi",
-      "deleteFailed": "Hazırlanan senaryo silinemedi",
-      "deleteTitle": "Bu hazırlanan senaryo silinsin mi?",
-      "deleteDescription": "\"{name}\" silinecek. Hiçbir zaman oluşturulmadığı için başka hiçbir şey değişmez.",
+      "renamed": "Hazırlanmış durum yeniden adlandırıldı",
+      "deleted": "Hazırlanmış durum silindi",
+      "deleteFailed": "Hazırlanmış durum silinemedi",
+      "deleteTitle": "Bu hazırlanmış durum silinsin mi?",
+      "deleteDescription": "\"{name}\" silinecektir. Hiç oluşturulmadığından başka hiçbir şey değişmez.",
       "folderDeleted": "Klasör silindi",
-      "folderFallback": "Hazırlanan senaryonun klasörü silindi; senaryo \"{folder}\" dizininde oluşturulacak.",
-      "selectFolderFirst": "Bu hazırlanan senaryoyu açmadan önce bir klasör seçin.",
+      "folderFallback": "Hazırlanmış durumun klasörü silindi; durum \"{folder}\" klasöründe oluşturulacaktır.",
+      "selectFolderFirst": "Bu hazırlanmış durumu açmadan önce bir klasör seçin.",
       "problemCount": "{count, plural, one {{count} sorun} other {{count} sorun}}",
-      "updated": "{age} önce güncellendi",
+      "updated": "{age} tarihinde güncellendi",
       "createSelected": "{count, plural, =0 {Seçilenleri oluştur} other {{count} seçileni oluştur}}",
       "createdToast": "{count, plural, one {{count} test senaryosu oluşturuldu} other {{count} test senaryosu oluşturuldu}}",
-      "failedToast": "{count, plural, one {{count} hazırlanan senaryo oluşturulamadı} other {{count} hazırlanan senaryo oluşturulamadı}}",
-      "problemFolder": "Klasör silindi. Hazırlanan senaryoyu açarak bir klasör seçin.",
-      "problemTemplate": "Şablon artık bu projeye atanmamış. Açarak birini seçin.",
-      "problemState": "Durum artık yok. Açarak birini seçin.",
+      "failedToast": "{count, plural, one {{count} hazırlanmış durum oluşturulamadı} other {{count} hazırlanmış durum oluşturulamadı}}",
+      "problemFolder": "Klasör silindi. Hazırlanmış durumu açarak bir klasör seçin.",
+      "problemTemplate": "Şablon artık bu projeye atanmamıştır. Hazırlanmış durumu açarak birini seçin.",
+      "problemState": "Durum artık mevcut değil. Hazırlanmış durumu açarak birini seçin.",
       "problemField": "{field}: {message}",
       "notCreated": "Oluşturulmadı: {message}",
-      "openToFix": "Düzeltmek için hazırlanan senaryoyu açın.",
-      "elsewhereTitle": "Ayrıca hazırlanan test durumlarınız bulunmaktadır",
-      "elsewhereCount": "{count, plural, one {{count} hazırlanan test durumu} other {{count} hazırlanan test durumları}}"
+      "openToFix": "Düzeltmek için hazırlanmış durumu açın.",
+      "elsewhereTitle": "Ayrıca hazırlanmış durumlarınız var",
+      "elsewhereCount": "{count, plural, one {{count} hazırlanmış durum} other {{count} hazırlanmış durum}}"
     },
     "filterBar": {
       "addFilter": "Filtre Ekle",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Yeniden Denendi",
-      "clear": "Filtreleri temizle"
+      "clear": "Tüm filtreleri temizle"
     },
     "impact": {
       "title": "Etki",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "URL'den Test Senaryoları Oluşturma (Uygulama Testi)",
         "automation_candidates": "Otomasyon Adayları Raporu",
         "derive_case_steps": "Yapay Zeka Adım Türetme",
-        "impact_analysis": "Etki: Etkilenen Test Seçimi"
+        "impact_analysis": "Etki: Etkilenen Test Seçimi",
+        "failure_triage": "Hata Sınıflandırması Sınıflandırması"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Denetim Kayıtları",
         "budget-alerts": "Bütçe Uyarıları",
         "auto-tag": "Yapay Zeka Otomatik Etiketleme",
+        "failure-triage": "Hata Sınıflandırması",
         "repo-cache": "Depo Önbelleği",
         "copy-move": "Kopyala ve Taşı",
         "duplicate-scan": "Kopya Tarama",
@@ -7077,8 +7080,8 @@
         "reviewCancelledEmailMessage": "{actorName} , {entityLabel} \"{entityName}\" projesindeki \"{projectName} \" inceleme isteğini iptal etti.",
         "reviewReminderTitle": "İnceleme henüz sonuçlanmadı.",
         "reviewReminderAction": "Hâlâ sizin değerlendirmenizi bekliyor.",
-        "reviewReminderEmailMessage": "Hatırlatma: {actorName}'ın {entityLabel} \"{entityName}\" hakkındaki inceleme isteği, \"{projectName}\" projesinde {pendingFor} süredir beklemede.",
-        "reviewReminderHoursPending": "{pendingFor} süredir bekleniyor",
+        "reviewReminderEmailMessage": "Hatırlatma: {actorName}'ın {entityLabel} \"{entityName}\" hakkındaki inceleme isteği \"{projectName}\" projesinde {pendingFor} süredir beklemede.",
+        "reviewReminderHoursPending": "{pendingFor} süredir beklemede",
         "aiStepsDerivedTitle": "Yapay Zeka ile Türetilen Test Adımları Hazır",
         "aiStepsDerivedMessage": "{count, plural, one {# test durumuna} other {# test durumuna}} yapay zeka tarafından türetilmiş adımlar verildi — doğruluğunu inceleyin.",
         "aiStepsDerivedReviewLink": "Test çalıştırmasını incele",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Etki\nUygulama deposunu bağlayın, böylece bu proje test etki analizi çalıştırabilir: iki işlemeyi seçerek değişikliklerin hangi test senaryolarını etkilediğini görün ve test senaryolarını kapsadıkları koda sabitleyin.",
     "pathPatterns": "## Yol Desenleri\nHer satır bir temel **yol** ile glob **deseni** birleştirir. Satırlar toplanır: bir dosya herhangi bir satır eşleştiğinde dahil edilir.\n\n- `src` + `**/*` — `src` altındaki her şey\n- boş veya `.` + `**/*` — depodaki her dosya\n- `src` + `**/!(*.test|*.spec).ts` — testler hariç `.ts` dosyaları\n\n### Hariç Tut\nBir satırda **Hariç Tut** işaretini tıklayarak dosyalarını, başka bir satır onları dahil etse bile kaldırın. İstisnalar dosya seçici ve önbelleğe uygulanır ve Etki için bir analizin değiştirilmiş dosyalarına uygulanır, bu nedenle neredeyse her çekme talebinde değişen bir dosya ilgisiz test çalışmalarını çekmez. En az bir satırın işaretsiz kalması gerekir.\n\n- boş + `**/CHANGELOG*` — her changelog, herhangi bir derinlikte\n- `app` + `build.gradle.kts` — yalnızca sürümü güncelleyen bir derleme dosyası",
     "projectAutomation": "## Otomatikleştirilmiş Yürütme\nYürütme hedefleri, TestPlanIt'e bu projenin otomatikleştirilmiş senaryolarını nerede yürüteceğini söyler: bir GitHub Actions iş akışı, bir GitLab CI işlem hattı veya diğer herhangi bir sistem için imzalı bir web kancası. Bir çalıştırma yürütüldüğünde, TestPlanIt işi çalıştırma kimliği ve bir plan URL'si ile başlatır; iş planı okur, eşleşen testleri çalıştırır ve sonuçları o çalıştırmaya sabitlenmiş bir muhabir veya CLI ile geri bildirir. Hedefler silinmeden devre dışı bırakılabilir.",
-    "userAlerts": "## Bildirimler & Uyarılar\n**Bildirim Tercihleri**, nasıl ulaşıldığınızı (uygulama içi, e-posta, özet) ve hangi bildirim türlerini aldığınızı belirler.\n\n**Uyarılar** bir test metriğini izler ve eşiği aştığında abonelerine bildirimde bulunur. Örneğin, normalde çalışma süresinden %50 daha uzun süren bir sonuç, arka arkaya 3 kez başarısız olan bir test senaryosu, başarı oranı %90'ın altına düşen bir çalıştırma veya yapılacak günleri kalan geride bir dönüm noktası. Liste projelerinizin tüm uyarılarını gösterir; **Beni Bilgilendir** anahtarı birini izler veya terk eder. **Uyarı Ekle**, rolünüzün **Uyarılar** Ekle/Düzenle yetkisine sahip olduğu herhangi bir projede kendi uyarılarınızı oluşturur; proje yöneticileri projelerindeki tüm uyarıları ve diğer kişilerin aboneliklerini yönetir. Bir uyarı, soğutma süresi içinde konu başına en fazla bir kez tetiklenir ve yeterli sonuç elde edene kadar sessiz kalır."
+    "userAlerts": "## Bildirimler & Uyarılar\n**Bildirim Tercihleri**, nasıl ulaşıldığınızı (uygulama içi, e-posta, özet) ve hangi bildirim türlerini aldığınızı belirler.\n\n**Uyarılar** bir test metriğini izler ve eşiği aştığında abonelerine bildirimde bulunur. Örneğin, normalde çalışma süresinden %50 daha uzun süren bir sonuç, arka arkaya 3 kez başarısız olan bir test senaryosu, başarı oranı %90'ın altına düşen bir çalıştırma veya yapılacak günleri kalan geride bir dönüm noktası. Liste projelerinizin tüm uyarılarını gösterir; **Beni Bilgilendir** anahtarı birini izler veya terk eder. **Uyarı Ekle**, rolünüzün **Uyarılar** Ekle/Düzenle yetkisine sahip olduğu herhangi bir projede kendi uyarılarınızı oluşturur; proje yöneticileri projelerindeki tüm uyarıları ve diğer kişilerin aboneliklerini yönetir. Bir uyarı, soğutma süresi içinde konu başına en fazla bir kez tetiklenir ve yeterli sonuç elde edene kadar sessiz kalır.",
+    "projectTriage": "## Hata Sınıflandırması\nAynı istisna, mesaj ve üst yığın çerçevelerini paylaşan otomatik hatalar bir **imza** altında gruplandırılır. Her imza ne kadar sık meydana geldiğini, hangi test senaryoları ve çalışmaları etkilediğini ve yapay zekanın bunun bir ürün hatası, bir test hatası, bir ortam sorunu veya değişken olup olmadığına dair görüşünü gösterir. İmza işlendikten sonra çözün veya yoksayın; hata geri gelirse kendiliğinden yeniden açılır.",
+    "projectTriageSettings": "## Hata Sınıflandırması ayarları\nHer otomatik sonuç gelişinde çalışmaları gruplandırmak hiçbir şey maliyetli değildir. Yapay zeka sınıflandırması, AI Modelleri sayfasında **Hata Sınıflandırması Sınıflandırması** özelliğine atanan yapay zeka modelini kullanır; herhangi bir yapay zeka çağrısı olmadan gruplandırmayı devam ettirmek için burada kapatın. **Mevcut sonuçları analiz et**, bu projede zaten kaydedilmiş olan her otomatik hatayı gruplandırır."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Entegrasyonlar",
       "QUEUE": "Arka plan kuyrukları",
       "SYSTEM": "Kurulum"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Açık",
+      "RESOLVED": "Çözüldü",
+      "IGNORED": "Yoksayıldı"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Sınıflandırılmamış",
+      "PRODUCT_BUG": "Ürün hatası",
+      "TEST_BUG": "Test hatası",
+      "ENVIRONMENT": "Ortam",
+      "FLAKY": "Değişken"
+    },
+    "source": {
+      "AI": "Yapay zeka tarafından sınıflandırıldı",
+      "labelAI": "Yapay Zeka",
+      "labelMANUAL": "Manuel"
+    },
+    "columns": {
+      "classification": "Sınıflandırma",
+      "occurrences": "Oluşumlar",
+      "firstSeen": "İlk görüldü",
+      "lastSeen": "Son görüldü",
+      "classifiedBy": "Tarafından sınıflandırıldı"
+    },
+    "filters": {
+      "searchPlaceholder": "İmzaları ara...",
+      "flakyOnly": "Değişken adayları",
+      "sourceAll": "Yapay zeka veya manuel"
+    },
+    "actions": {
+      "resolve": "Çöz",
+      "ignore": "Yoksay",
+      "classify": "Yapay zeka ile sınıflandır",
+      "setClassification": "Sınıflandırmayı ayarla"
+    },
+    "detail": {
+      "exceptionType": "İstisna türü",
+      "normalizedMessage": "Normalleştirilmiş mesaj",
+      "frames": "Üst yığın çerçeveleri",
+      "sampleTrace": "Son hata",
+      "affectedCases": "{count, plural, one {# etkilenen test senaryosu} other {# etkilenen test senaryosu}}",
+      "recentOccurrences": "{count, plural, one {# son oluşum} other {# son oluşumlar}}",
+      "rationale": "Mantık",
+      "suggestedIssueTitle": "Önerilen sorun başlığı",
+      "nextStep": "Önerilen sonraki adım",
+      "noAi": "Henüz yapay zeka tarafından sınıflandırılmadı.",
+      "noDetails": "Bu hatanın hiçbir mesajı veya yığın izlemesi olmadığından test senaryosuna göre gruplandırılır.",
+      "notesPlaceholder": "Takım için notlar...",
+      "lastRun": "Son çalışma",
+      "aiSuggestion": "Yapay zeka önerisi",
+      "unlinkConfirmDescription": "Bu, sorunu bu imzadan kaldırır. Sorunun kendisi saklanır ve daha sonra yeniden bağlanabilir.",
+      "signatureLabel": "Hata imzası",
+      "affectedCasesLabel": "Etkilenen test senaryoları"
+    },
+    "flakyCandidate": "Değişken adayı",
+    "flakyCandidateHint": "Etkilenen test senaryoları son geçmişlerinde başarılı ve başarısız arasında dalgalanır.",
+    "knownIssue": "Bilinen sorun",
+    "notGrouped": "{count, plural, one {# hata henüz gruplandırılmadı} other {# hatalar henüz gruplandırılmadı}}",
+    "runPanel": {
+      "title": "Hata kümeleri",
+      "inRun": "{count, plural, one {# bu çalışmada} other {# bu çalışmada}}",
+      "hint": "Aşağıdaki sonuçları filtrelemek için bir kümeye tıklayın.",
+      "open": "İmzayı görüntüle",
+      "inRunColumn": "Bu çalışmada",
+      "selectedClusters": "{count, plural, one {# küme seçildi} other {# kümeler seçildi}}",
+      "clearSelected": "Seçili kümeleri temizle"
+    },
+    "toasts": {
+      "updated": "İmza güncellendi",
+      "updateFailed": "İmza güncellenemedi",
+      "classifyQueued": "Yapay zeka sınıflandırması istendi",
+      "noAiModel": "Bu özellik için yapılandırılmış yapay zeka modeli yok",
+      "issueLinked": "Sorun bağlandı"
+    },
+    "empty": {
+      "title": "Henüz hata imzası yok",
+      "description": "İmzalar, otomatik sonuçlar hatalarla geldikçe burada görünür. Bu projede zaten kaydedilmiş olan hataları gruplandırmak için Hata Sınıflandırması ayarlarında Mevcut sonuçları analiz et seçeneğini kullanın."
+    },
+    "settings": {
+      "description": "Otomatik hataları imzalar halinde gruplandırın ve yapay zekanın bunları sınıflandırmasına izin verin.",
+      "enableLabel": "Hata Sınıflandırmasını Etkinleştir",
+      "enableDescription": "Bu projede her otomatik hatayı istisna, mesaj ve yığın çerçevelerine göre sonuçlar geldikçe gruplandırın.",
+      "autoClassifyLabel": "Yeni imzaları yapay zeka ile sınıflandır",
+      "autoClassifyDescription": "Projenin yapay zeka modelinden her yeni imzayı bir ürün hatası, test hatası, ortam sorunu veya değişken olarak sınıflandırmasını isteyin. Hata Sınıflandırması Sınıflandırması özelliğine atanan bir yapay zeka modeli gerekir.",
+      "backfillLabel": "Mevcut sonuçları analiz et",
+      "backfillDescription": "Bu projede zaten kaydedilmiş olan her otomatik hatayı gruplandırın. Arka planda çalışır.",
+      "backfillStarted": "Analiz başlatıldı",
+      "backfillRunning": "Analiz ediliyor... {processed, plural, one {# hata gruplandırıldı} other {# hatalar gruplandırıldı}}",
+      "backfillDone": "Analiz tamamlandı",
+      "backfillFailed": "Analiz başarısız oldu",
+      "backfillQueueUnavailable": "Arka plan işi kuyruk kullanılamıyor",
+      "enabledToast": "Hata Sınıflandırması etkinleştirildi",
+      "disabledToast": "Hata Sınıflandırması devre dışı bırakıldı",
+      "autoClassifyOnToast": "Yapay zeka sınıflandırması etkinleştirildi",
+      "autoClassifyOffToast": "Yapay zeka sınıflandırması devre dışı bırakıldı",
+      "openTriage": "Hata Sınıflandırmasını Aç"
     }
   }
 }
