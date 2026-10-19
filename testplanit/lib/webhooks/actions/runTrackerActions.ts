@@ -52,7 +52,8 @@ export type TrackerActionsResult =
  * then create a test run for every Create test run rule the event fires —
  * an issue new to TestPlanIt, or one that moved into a chosen status —
  * from the cases linked to the issue (and its child issues when the rule
- * says so), created by the System user and linked to the issue.
+ * says so) that match the rule's test case filters, created by the System
+ * user and linked to the issue.
  */
 export async function runTrackerActions(
   db: any,
@@ -219,18 +220,25 @@ export async function runTrackerActions(
         }
       );
       const label = `${issue.key}: ${issue.title}`;
+      const caseFilter =
+        options.caseFilter && options.caseFilter.length > 0
+          ? { caseFilter: options.caseFilter }
+          : {};
       const ruleLine = await describeCreateRunRule(db, {
         trigger: rule.trigger,
         statuses:
           rule.trigger === "ISSUE_STATUS_ENTERED" && issue.status
             ? [issue.status]
             : undefined,
+        ...caseFilter,
+        projectId: job.projectId,
         autoExecute: options.autoExecute ?? null,
       });
       const composed = await composeRunFromCases(db, {
         projectId: job.projectId,
         name: label,
         caseIds: links.map((link) => link.caseId),
+        ...caseFilter,
         links: [
           { label, url: issue.url },
           ...(ruleLine ? [{ label: ruleLine, url: null }] : []),

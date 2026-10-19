@@ -1,4 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
+
+const { mockDescribeCaseFilter } = vi.hoisted(() => ({
+  mockDescribeCaseFilter: vi.fn(),
+}));
+vi.mock("./caseFilter", () => ({
+  describeCaseFilter: (...a: unknown[]) => mockDescribeCaseFilter(...a),
+}));
+
 import {
   describeCreateRunRule,
   describeDraftCasesRule,
@@ -68,6 +76,52 @@ describe("describeCreateRunRule", () => {
     expect(
       await describeCreateRunRule(db, { trigger: "ISSUE_EVENT", statuses: [] })
     ).toBe("Any issue event → Create Test Run");
+  });
+
+  it("names the rule's test case filters when it knows the project", async () => {
+    const caseFilter = [
+      { dimension: "automated", operator: "is", values: [1] },
+    ];
+    mockDescribeCaseFilter.mockResolvedValueOnce(
+      "Automation: Is Automated; Tag: Any of smoke"
+    );
+    expect(
+      await describeCreateRunRule(db, {
+        trigger: "CODE_PULL_REQUEST",
+        minScore: 90,
+        caseFilter,
+        projectId: 3,
+        autoExecute: { targetId: 4 },
+      })
+    ).toBe(
+      "Pull requests → Create Test Run · Minimum score: 90 · Test case filters: Automation: Is Automated; Tag: Any of smoke · Target: Nightly CI"
+    );
+    expect(mockDescribeCaseFilter).toHaveBeenCalledWith(db, 3, caseFilter);
+  });
+
+  it("leaves the filters out when none apply, when naming them fails, or without a project", async () => {
+    const caseFilter = [{ dimension: "field_99", operator: "in", values: [1] }];
+    mockDescribeCaseFilter.mockResolvedValueOnce(null);
+    expect(
+      await describeCreateRunRule(db, {
+        trigger: "ISSUE_CREATED",
+        caseFilter,
+        projectId: 3,
+      })
+    ).toBe("Issue created → Create Test Run");
+    mockDescribeCaseFilter.mockRejectedValueOnce(new Error("db down"));
+    expect(
+      await describeCreateRunRule(db, {
+        trigger: "ISSUE_CREATED",
+        caseFilter,
+        projectId: 3,
+      })
+    ).toBe("Issue created → Create Test Run");
+    mockDescribeCaseFilter.mockClear();
+    expect(
+      await describeCreateRunRule(db, { trigger: "ISSUE_CREATED", caseFilter })
+    ).toBe("Issue created → Create Test Run");
+    expect(mockDescribeCaseFilter).not.toHaveBeenCalled();
   });
 
   it("says nothing for a job queued before rules carried their trigger", async () => {

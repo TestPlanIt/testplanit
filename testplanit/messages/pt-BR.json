@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Apenas problemas que o projeto classifica como requisitos.",
           "includeChildIssues": "Incluir problemas filhos",
           "includeChildIssuesHelp": "Também considere os casos de teste vinculados aos problemas filhos do problema.",
+          "caseFilter": "Filtros de casos de teste",
+          "caseFilterHelp": "Apenas os casos de teste que correspondem a todos os filtros entram na execução. Deixe em branco para usar todos os casos de teste que a ação seleciona.",
           "notifyHelp": "Quem é informado quando os rascunhos estão prontos para revisão. As preferências de notificação de cada pessoa ainda se aplicam.",
           "draftFolderNote": "Casos de teste rascunhados automaticamente pelo webhook {webhook}.",
           "draftFolderNoteCases": "Rascunhado pelo usuário do Sistema; cada caso está vinculado ao problema do qual foi rascunhado.",

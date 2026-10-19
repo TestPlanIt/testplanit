@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Yalnızca projenin gereksinimler olarak sınıflandırdığı sorunlar.",
           "includeChildIssues": "Alt sorunları dahil et",
           "includeChildIssuesHelp": "Sorunun alt sorunlarına bağlantılı test senaryolarını da alın.",
+          "caseFilter": "Test senaryosu filtreleri",
+          "caseFilterHelp": "Yalnızca her filtreyle eşleşen test senaryoları çalıştırmaya girer. İşlemin seçtiği her test senaryosunu almak için boş bırakın.",
           "notifyHelp": "Taslaklar incelemeye hazır olduğunda kime bildirilir. Her kişinin bildirim tercihleri hâlâ geçerlidir.",
           "draftFolderNote": "{webhook} web kancası tarafından otomatik olarak oluşturulan test senaryoları.",
           "draftFolderNoteCases": "Sistem kullanıcısı tarafından oluşturulan taslak; her vaka, oluşturulduğu soruna bağlıdır.",

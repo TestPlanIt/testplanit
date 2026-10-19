@@ -109,7 +109,59 @@ describe("createRunFromAnalysis", () => {
       created: true,
       testRunId: nextRunId++,
       caseCount: input.caseIds.length,
+      caseIds: input.caseIds,
     }));
+  });
+
+  it("hands the rule's test case filters to the composer and accepts only the cases the run took", async () => {
+    const db = makeDb(analysis);
+    const caseFilter = [
+      { dimension: "automated", operator: "is", values: [1] },
+    ];
+    mockCompose.mockResolvedValueOnce({
+      created: true,
+      testRunId: 300,
+      caseCount: 1,
+      caseIds: [11],
+    });
+
+    const result = await createRunFromAnalysis(db, 77, autoRun, {
+      actionId: "act-1",
+      trigger: "CODE_PULL_REQUEST",
+      caseFilter,
+    });
+
+    expect(result).toEqual({
+      created: true,
+      testRunId: 300,
+      caseCount: 1,
+      caseIds: [11],
+    });
+    expect(mockCompose.mock.calls[0][1]).toMatchObject({
+      caseIds: [10, 11],
+      caseFilter,
+    });
+    expect(db.impactAnalysisCase.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { analysisId: 77, suggested: true, caseId: { in: [11] } },
+        data: expect.objectContaining({ accepted: true }),
+      })
+    );
+    expect(db.impactAnalysisCase.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { analysisId: 77, suggested: true, caseId: { notIn: [11] } },
+        data: expect.objectContaining({ accepted: false }),
+      })
+    );
+  });
+
+  it("passes no filters to the composer when the rule has none", async () => {
+    const db = makeDb(analysis);
+    await createRunFromAnalysis(db, 77, autoRun, {
+      actionId: "act-1",
+      caseFilter: [],
+    });
+    expect(mockCompose.mock.calls[0][1]).not.toHaveProperty("caseFilter");
   });
 
   it("composes a run of the affected cases as the System user, links it, and marks the acceptance", async () => {
@@ -117,7 +169,12 @@ describe("createRunFromAnalysis", () => {
 
     const result = await createRunFromAnalysis(db, 77, autoRun, rule, "t-1");
 
-    expect(result).toEqual({ created: true, testRunId: 300, caseCount: 2 });
+    expect(result).toEqual({
+      created: true,
+      testRunId: 300,
+      caseCount: 2,
+      caseIds: [10, 11],
+    });
     expect(
       db.impactAnalysis.findUnique.mock.calls[0][0].select.cases.where
     ).toEqual({ suggested: true, tier: { in: ["pinned", "affected"] } });
@@ -373,6 +430,7 @@ describe("createRunFromAnalysis", () => {
       created: true,
       testRunId: 300,
       caseCount: 2,
+      caseIds: [10, 11],
     });
     expect(db.impactAnalysis.update).not.toHaveBeenCalled();
     expect(db.impactAnalysisCase.updateMany).not.toHaveBeenCalled();

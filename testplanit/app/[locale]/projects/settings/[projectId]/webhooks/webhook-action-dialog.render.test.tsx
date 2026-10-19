@@ -52,6 +52,32 @@ vi.mock("./webhook-action-tracker-filter", async (importOriginal) => ({
     <div data-testid="webhook-action-tracker-filter" />
   ),
 }));
+// The filter bar's own data loading is covered by its render tests; here the
+// section's presence and what it hands back on save matter. "Ready" with an
+// empty registry would drop every filter, so the stub reports not ready.
+vi.mock("./webhook-action-case-filter", () => ({
+  useProjectCaseFilterOptions: () => ({
+    registry: new Map(),
+    viewOptions: undefined,
+    dynamicFieldLabels: {},
+    ready: false,
+  }),
+  caseFilterForSave: (value: unknown) => value,
+  WebhookActionCaseFilter: ({ value, onChange }: any) => (
+    <div data-testid="webhook-action-case-filter" data-count={value.length}>
+      <button
+        type="button"
+        data-testid="case-filter-add-automated"
+        onClick={() =>
+          onChange([
+            ...value,
+            { dimension: "automated", operator: "is", values: [1] },
+          ])
+        }
+      />
+    </div>
+  ),
+}));
 vi.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children, open }: any) => (open ? <div>{children}</div> : null),
   DialogContent: ({ children, ...rest }: any) => (
@@ -174,6 +200,9 @@ describe("WebhookActionDialog", () => {
     expect(screen.getByTestId("webhook-action-type")).toBeDisabled();
     expect(screen.getByTestId("webhook-action-min-score")).toBeInTheDocument();
     expect(
+      screen.getByTestId("webhook-action-case-filter")
+    ).toBeInTheDocument();
+    expect(
       screen.getByTestId("webhook-action-auto-execute")
     ).toBeInTheDocument();
   });
@@ -188,6 +217,7 @@ describe("WebhookActionDialog", () => {
     ]);
     expect(optionValues("webhook-action-type")).toEqual(["IMPORT_ISSUE"]);
     expect(screen.queryByTestId("webhook-action-min-score")).toBeNull();
+    expect(screen.queryByTestId("webhook-action-case-filter")).toBeNull();
     expect(screen.queryByTestId("webhook-action-auto-execute")).toBeNull();
 
     fireEvent.change(screen.getByTestId("webhook-action-trigger"), {
@@ -202,8 +232,11 @@ describe("WebhookActionDialog", () => {
     fireEvent.change(screen.getByTestId("webhook-action-type"), {
       target: { value: "CREATE_RUN" },
     });
-    // tracker rules have no minimum score but can execute and take children
+    // tracker rules have no minimum score but can execute, filter and take children
     expect(screen.queryByTestId("webhook-action-min-score")).toBeNull();
+    expect(
+      screen.getByTestId("webhook-action-case-filter")
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId("webhook-action-auto-execute")
     ).toBeInTheDocument();
@@ -262,6 +295,43 @@ describe("WebhookActionDialog", () => {
       expect(mockSave).not.toHaveBeenCalled();
     }
   );
+
+  it("saves the test case filters with the rule, starting from the saved ones", async () => {
+    const saved = [{ dimension: "tags", operator: "any", values: [2] }];
+    renderDialog({
+      rule: {
+        id: "act-1",
+        order: 0,
+        isEnabled: true,
+        trigger: "CODE_PUSH",
+        action: "CREATE_RUN",
+        filter: {},
+        options: { minScore: 40, caseFilter: saved },
+      },
+    });
+    expect(screen.getByTestId("webhook-action-case-filter")).toHaveAttribute(
+      "data-count",
+      "1"
+    );
+
+    fireEvent.click(screen.getByTestId("case-filter-add-automated"));
+    fireEvent.click(screen.getByTestId("webhook-action-save"));
+
+    await waitFor(() =>
+      expect(mockSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "act-1",
+          options: {
+            minScore: 40,
+            caseFilter: [
+              ...saved,
+              { dimension: "automated", operator: "is", values: [1] },
+            ],
+          },
+        })
+      )
+    );
+  });
 
   it("saves the auto-execute target and ref with the rule", async () => {
     renderDialog();

@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "프로젝트에서 요구사항으로 분류하는 이슈만입니다.",
           "includeChildIssues": "하위 이슈 포함",
           "includeChildIssuesHelp": "이슈의 하위 이슈에 연결된 테스트 케이스도 가져옵니다.",
+          "caseFilter": "테스트 케이스 필터",
+          "caseFilterHelp": "작업이 선택한 모든 필터와 일치하는 테스트 케이스만 실행에 포함됩니다. 모든 테스트 케이스를 가져오려면 비워두세요.",
           "notifyHelp": "초안이 검토 준비가 되었을 때 누가 알림을 받을지 결정합니다. 각 사람의 알림 기본 설정이 여전히 적용됩니다.",
           "draftFolderNote": "{webhook} 웹훅에 의해 자동으로 작성된 테스트 케이스입니다.",
           "draftFolderNoteCases": "시스템 사용자가 작성했으며, 각 케이스는 작성된 이슈에 연결됩니다.",

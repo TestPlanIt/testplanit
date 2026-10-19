@@ -7,10 +7,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format } from "date-fns";
 import { type LucideIcon, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
+import { formatFilterChipText } from "~/lib/repository/filterChipText";
 import type { FilterDimension } from "~/lib/repository/filterDimensions";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import { getDateFnsLocale } from "~/utils/locales";
@@ -58,32 +58,21 @@ export function FilterChip({
   const t = useTranslations();
   const locale = useLocale();
 
-  const chipText = useMemo(() => {
-    const operatorLabel = t(
-      chipOperatorLabelKey(predicate.operator, predicate.values.length)
-    );
-    const formatValue = (value: string | number): string => {
-      const option = options.find((o) => String(o.id) === String(value));
-      if (option) return option.name;
-      if (dimension.valueType === "date") {
-        const parsed = new Date(String(value));
-        if (!isNaN(parsed.getTime())) {
-          return format(parsed, "PP", { locale: getDateFnsLocale(locale) });
-        }
-      }
-      if (
-        typeof value === "number" &&
-        (dimension.valueType === "number" || dimension.valueType === "steps")
-      ) {
-        return value.toLocaleString(locale);
-      }
-      return String(value);
-    };
-    const valuesText = predicate.values.map(formatValue).join(", ");
-    return valuesText
-      ? `${label}: ${operatorLabel} ${valuesText}`
-      : `${label}: ${operatorLabel}`;
-  }, [t, predicate, options, dimension.valueType, label, locale]);
+  const chipText = useMemo(
+    () =>
+      formatFilterChipText({
+        dimension,
+        predicate,
+        label,
+        operatorLabel: t(
+          chipOperatorLabelKey(predicate.operator, predicate.values.length)
+        ),
+        options,
+        localeTag: locale,
+        dateLocale: getDateFnsLocale(locale),
+      }),
+    [t, predicate, options, dimension, label, locale]
+  );
 
   return (
     <Badge

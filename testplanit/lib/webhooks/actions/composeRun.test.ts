@@ -17,6 +17,12 @@ const {
 vi.mock("~/lib/services/runCaseEligibility", () => ({
   filterEligibleCaseIds: (...a: unknown[]) => mockFilterEligible(...a),
 }));
+const { mockApplyCaseFilter } = vi.hoisted(() => ({
+  mockApplyCaseFilter: vi.fn(),
+}));
+vi.mock("./caseFilter", () => ({
+  applyCaseFilter: (...a: unknown[]) => mockApplyCaseFilter(...a),
+}));
 vi.mock("~/lib/webhooks/event-emitters/testRunEvents", () => ({
   emitTestRunCreated: (...a: unknown[]) => mockEmit(...a),
 }));
@@ -145,7 +151,12 @@ describe("composeRunFromCases", () => {
       issueIds: [7, 8],
     });
 
-    expect(result).toEqual({ created: true, testRunId: 300, caseCount: 3 });
+    expect(result).toEqual({
+      created: true,
+      testRunId: 300,
+      caseCount: 3,
+      caseIds: [12, 10, 11],
+    });
     expect(db.repositoryCases.findMany).toHaveBeenCalledWith({
       where: {
         id: { in: [12, 10, 11] },
@@ -209,10 +220,56 @@ describe("composeRunFromCases", () => {
     expect(mockFilterEligible.mock.calls[0][1].repositoryCaseIds).toEqual([
       11, 10,
     ]);
-    expect(result).toEqual({ created: true, testRunId: 300, caseCount: 1 });
+    expect(result).toEqual({
+      created: true,
+      testRunId: 300,
+      caseCount: 1,
+      caseIds: [11],
+    });
     expect(tx.testRuns.create.mock.calls[0][0].data.testCases.create).toEqual([
       { repositoryCase: { connect: { id: 11 } }, order: 0 },
     ]);
+  });
+
+  it("narrows the eligible cases through the rule's test case filters", async () => {
+    const { db, tx } = setup();
+    const caseFilter = [
+      { dimension: "automated", operator: "is", values: [1] },
+    ];
+    mockApplyCaseFilter.mockResolvedValueOnce([10]);
+
+    const result = await composeRunFromCases(db, { ...input, caseFilter });
+
+    expect(result).toEqual({
+      created: true,
+      testRunId: 300,
+      caseCount: 1,
+      caseIds: [10],
+    });
+    expect(mockApplyCaseFilter).toHaveBeenCalledWith(
+      db,
+      3,
+      [12, 10, 11],
+      caseFilter
+    );
+    expect(tx.testRuns.create.mock.calls[0][0].data.testCases).toEqual({
+      create: [{ repositoryCase: { connect: { id: 10 } }, order: 0 }],
+    });
+  });
+
+  it("makes no run when no case passes the filters, and skips them when empty", async () => {
+    const { db } = setup();
+    mockApplyCaseFilter.mockResolvedValueOnce([]);
+    expect(
+      await composeRunFromCases(db, {
+        ...input,
+        caseFilter: [{ dimension: "tags", operator: "any", values: [9] }],
+      })
+    ).toEqual({ created: false, reason: "no_cases" });
+
+    mockApplyCaseFilter.mockClear();
+    await composeRunFromCases(db, { ...input, caseFilter: [] });
+    expect(mockApplyCaseFilter).not.toHaveBeenCalled();
   });
 
   it("links no issues when none are given", async () => {
@@ -293,6 +350,7 @@ describe("composeRunFromCases", () => {
       created: true,
       testRunId: 300,
       caseCount: 3,
+      caseIds: [12, 10, 11],
     });
     await new Promise((r) => setTimeout(r, 0));
     expect(spy).toHaveBeenCalledTimes(2);

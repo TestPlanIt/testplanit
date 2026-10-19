@@ -1,4 +1,10 @@
 import { z } from "zod/v4";
+import {
+  filterPredicateInputSchema,
+  MAX_FILTER_PREDICATES,
+  MAX_VALUES_PER_PREDICATE,
+  type FilterPredicateInput,
+} from "~/lib/schemas/repositoryFilterPredicates";
 import type {
   WebhookActionTrigger,
   WebhookActionType,
@@ -93,11 +99,30 @@ export const autoExecuteOptionsSchema = z.object({
 });
 export type AutoExecuteOptions = z.infer<typeof autoExecuteOptionsSchema>;
 
+/**
+ * The repository's filter predicates, in the shape the FilterBar and saved
+ * views store them. Checked structurally here; which dimensions exist is the
+ * project's business, so the save path validates against its registry and
+ * the run path reads leniently, as a saved view is.
+ */
+export const caseFilterSchema = z
+  .array(
+    filterPredicateInputSchema.extend({
+      values: z
+        .array(z.union([z.string(), z.number()]))
+        .max(MAX_VALUES_PER_PREDICATE),
+    })
+  )
+  .max(MAX_FILTER_PREDICATES);
+export type CaseFilter = FilterPredicateInput[];
+
 export const createRunOptionsSchema = z.object({
   /** Repository rules: take every suggested case scoring at least this. */
   minScore: z.number().int().min(0).max(100).optional(),
   /** Tracker rules: also take the cases linked to the issue's child issues. */
   includeChildIssues: z.boolean().optional(),
+  /** Only the selected cases matching every one of these go in the run. */
+  caseFilter: caseFilterSchema.optional(),
   autoExecute: autoExecuteOptionsSchema.optional(),
 });
 export type CreateRunOptions = z.infer<typeof createRunOptionsSchema>;
@@ -180,6 +205,9 @@ export function parseWebhookAction(
     else delete options.minScore;
     const autoExecute = options.autoExecute as AutoExecuteOptions | undefined;
     if (autoExecute && !autoExecute.ref) delete autoExecute.ref;
+    if (Array.isArray(options.caseFilter) && options.caseFilter.length === 0) {
+      delete options.caseFilter;
+    }
   }
   return { ok: true, filter, options };
 }

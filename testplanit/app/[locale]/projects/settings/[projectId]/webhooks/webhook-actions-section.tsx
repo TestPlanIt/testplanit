@@ -59,6 +59,7 @@ import {
   setWebhookActionEnabled,
 } from "~/app/actions/webhook-actions";
 import { Link } from "~/lib/navigation";
+import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import {
   readCreateRunOptions,
@@ -67,6 +68,10 @@ import {
   type WebhookActionSource,
 } from "~/lib/webhooks/actions/schemas";
 import { schema } from "~/zenstack/schema";
+import {
+  useCaseFilterText,
+  useProjectCaseFilterOptions,
+} from "./webhook-action-case-filter";
 import {
   WebhookActionDialog,
   type WebhookActionRow,
@@ -214,6 +219,17 @@ export function WebhookActionsSection({
   });
 
   const savedRules = (rulesData ?? []) as WebhookActionRow[];
+  // Named on a Create test run rule's filter badges; only fetched when one
+  // carries filters.
+  const caseFilterOptions = useProjectCaseFilterOptions(
+    projectId,
+    savedRules.some(
+      (rule) =>
+        rule.action === "CREATE_RUN" &&
+        (readCreateRunOptions(rule.options).caseFilter?.length ?? 0) > 0
+    )
+  );
+  const caseFilterText = useCaseFilterText(caseFilterOptions);
   // The dropped order shows at once; the saved order takes over after refetch.
   const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
   const rules = pendingOrder
@@ -376,6 +392,10 @@ export function WebhookActionsSection({
     }
     if (options.minScore !== undefined) {
       out.push({ label: `${tImpact("minScore")}: ${options.minScore}` });
+    }
+    for (const predicate of options.caseFilter ?? []) {
+      const label = caseFilterText(predicate as FilterPredicate);
+      if (label) out.push({ label });
     }
     if (options.autoExecute) {
       const target = targets?.find(

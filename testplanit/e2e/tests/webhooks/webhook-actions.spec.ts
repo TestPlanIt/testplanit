@@ -20,6 +20,8 @@ import {
  *   survives a reload.
  * - A rule's "Execute automated cases" option needs an enabled execution
  *   target; deleting the chosen target flags the rule and the dialog.
+ * - A Create test run rule's test case filters are edited with the
+ *   repository's filter bar, listed on the rule and stored on it.
  * - An issue tracker webhook lists its Import issues rule; a status rule
  *   can't be saved until it names a status, and saves its filter. A
  *   Generate Test Cases with AI rule needs an active AI model and saves
@@ -285,6 +287,95 @@ test.describe("Inbound webhook actions", () => {
         select: { options: true },
       });
       expect(saved?.options).toMatchObject({ minScore: 40 });
+    });
+  });
+
+  test("an action's test case filters are shown, edited with the repository's filter bar and saved", async ({
+    page,
+    api,
+  }) => {
+    const { projectId, connectionId } = await createRepositoryConnection(
+      api,
+      `Filters ${uid()}`
+    );
+    const {
+      actionIds: [actionId],
+    } = await seedRepositoryWebhook(db, {
+      projectId,
+      codeRepositoryConfigId: connectionId,
+      actions: [
+        {
+          trigger: "CODE_PULL_REQUEST",
+          options: {
+            caseFilter: [
+              { dimension: "automated", operator: "is", values: [1] },
+            ],
+          },
+        },
+      ],
+    });
+    const row = page.getByTestId(`webhook-action-row-${actionId}`);
+    const dialog = page.getByTestId("webhook-action-dialog");
+
+    await test.step("The row names the saved filter", async () => {
+      await openWebhooksPage(page, projectId);
+      await expect(row).toContainText("Automation: Is Automated");
+    });
+
+    await test.step("Add a Parameterized filter in the dialog and save", async () => {
+      await row.getByTestId(`webhook-action-edit-${actionId}`).click();
+      await expect(dialog).toBeVisible();
+      const filters = dialog.getByTestId("webhook-action-case-filter");
+      await expect(
+        filters.getByTestId("filter-chip-automated-is")
+      ).toBeVisible();
+
+      await filters.getByTestId("filter-bar-add").click();
+      await page.getByTestId("filter-dimension-option-parameterized").click();
+      await expect(
+        filters.getByTestId("filter-chip-parameterized-is")
+      ).toBeVisible();
+      // The new chip opens its editor; clicking the title closes it.
+      await dialog.getByText("Edit action").click();
+      await dialog.getByTestId("webhook-action-save").click();
+      await expect(dialog).toBeHidden();
+
+      await expect(row).toContainText("Automation: Is Automated");
+      await expect(row).toContainText("Parameterization: Is Parameterized");
+      const saved = await db.webhookAction.findUnique({
+        where: { id: actionId },
+        select: { options: true },
+      });
+      expect(saved?.options).toEqual({
+        caseFilter: [
+          { dimension: "automated", operator: "is", values: [1] },
+          { dimension: "parameterized", operator: "is", values: [1] },
+        ],
+      });
+    });
+
+    await test.step("Remove the Automation filter and save", async () => {
+      await row.getByTestId(`webhook-action-edit-${actionId}`).click();
+      await expect(dialog).toBeVisible();
+      const filters = dialog.getByTestId("webhook-action-case-filter");
+      await filters.getByTestId("filter-chip-automated-is-remove").click();
+      await expect(
+        filters.getByTestId("filter-chip-automated-is")
+      ).toBeHidden();
+      await dialog.getByTestId("webhook-action-save").click();
+      await expect(dialog).toBeHidden();
+
+      await expect(row).not.toContainText("Automation: Is Automated");
+      await expect(row).toContainText("Parameterization: Is Parameterized");
+      const saved = await db.webhookAction.findUnique({
+        where: { id: actionId },
+        select: { options: true },
+      });
+      expect(saved?.options).toEqual({
+        caseFilter: [
+          { dimension: "parameterized", operator: "is", values: [1] },
+        ],
+      });
     });
   });
 

@@ -1894,6 +1894,8 @@
           "requirementsOnlyHelp": "Alleen problemen die het project als vereisten classificeert.",
           "includeChildIssues": "Onderliggende problemen opnemen",
           "includeChildIssuesHelp": "Neem ook de testgevallen op die zijn gekoppeld aan de onderliggende problemen van het probleem.",
+          "caseFilter": "Testcase filters",
+          "caseFilterHelp": "Alleen de testcases die met elk filter overeenkomen, gaan in de uitvoering. Laat leeg om elke testcase die de actie selecteert, op te nemen.",
           "notifyHelp": "Wie wordt ervan op de hoogte gesteld wanneer de concepten klaar zijn om te controleren. De voorkeursinstellingen voor meldingen van elke persoon blijven van toepassing.",
           "draftFolderNote": "Testgevallen automatisch opgesteld door de {webhook} webhook.",
           "draftFolderNoteCases": "Opgesteld door de systeemgebruiker; elk geval is gekoppeld aan het probleem waarvoor het is opgesteld.",

@@ -1,6 +1,7 @@
 import { getServerTranslation } from "~/lib/server-translations";
 import type { JSONContent } from "@tiptap/core";
 import type { AdapterType, WebhookActionTrigger } from "~/zenstack/models";
+import { describeCaseFilter } from "./caseFilter";
 import type { AutoExecuteOptions, WebhookActionFilter } from "./schemas";
 
 /** Stored text a webhook writes is in the default locale; it has no viewer. */
@@ -42,7 +43,8 @@ async function triggerLabel(rule: {
 /**
  * One line for a run's description naming the rule that composed it and its
  * settings, e.g. "Pull requests → Create Test Run · Minimum score: 90 ·
- * Target: Nightly CI", built from the same labels the Actions list shows.
+ * Test case filters: Automation: Is Automated · Target: Nightly CI", built
+ * from the same labels the Actions list shows.
  */
 export async function describeCreateRunRule(
   db: any,
@@ -50,6 +52,9 @@ export async function describeCreateRunRule(
     trigger?: WebhookActionTrigger | null;
     branch?: string | null;
     minScore?: number | null;
+    /** The rule's test case filters, named only when `projectId` is given. */
+    caseFilter?: unknown;
+    projectId?: number;
     autoExecute?: AutoExecuteOptions | null;
     /** Tracker rules: the statuses an issue entered. */
     statuses?: string[];
@@ -64,6 +69,22 @@ export async function describeCreateRunRule(
   }
   if (typeof rule.minScore === "number") {
     parts.push(`${await t("runs.impact.affected.minScore")}: ${rule.minScore}`);
+  }
+  if (
+    rule.projectId !== undefined &&
+    Array.isArray(rule.caseFilter) &&
+    rule.caseFilter.length > 0
+  ) {
+    const filters = await describeCaseFilter(
+      db,
+      rule.projectId,
+      rule.caseFilter
+    ).catch(() => null);
+    if (filters) {
+      parts.push(
+        `${await t("projects.settings.webhooks.actions.caseFilter")}: ${filters}`
+      );
+    }
   }
   if (rule.autoExecute) {
     const target = await db.executionTarget

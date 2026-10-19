@@ -22,12 +22,18 @@ import {
   Workflow,
 } from "lucide-react";
 
+import {
+  chipOperatorLabelKey,
+  DIMENSION_LABEL_KEYS,
+  editorOperatorLabelKey,
+} from "~/lib/repository/filterDimensionLabels";
 import { type FilterDimension } from "~/lib/repository/filterDimensions";
 
 /**
  * Presentation metadata for filter dimensions. The registry
  * (lib/repository/filterDimensions.ts) stays UI-free so it remains importable
- * from server routes; icons and label keys live here instead. Icons and
+ * from server routes; icons live here and label keys in
+ * lib/repository/filterDimensionLabels.ts, which the worker shares. Icons and
  * labels match the ViewSelector axis items so the Add-filter picker reads the
  * same as the "View by" dropdown.
  */
@@ -37,28 +43,29 @@ export interface DimensionPresentation {
   labelKey: string;
 }
 
+const DIMENSION_ICONS: Readonly<Record<string, LucideIcon>> = {
+  templates: LayoutTemplate,
+  states: Workflow,
+  creators: User,
+  automated: Bot,
+  parameterized: SquareStack,
+  attachments: Paperclip,
+  codePins: Pin,
+  inReview: MessageSquareWarning,
+  tags: Tags,
+  issues: Bug,
+  status: CircleCheckBig,
+  assignedTo: UserCog,
+};
+
 export const DIMENSION_PRESENTATION: Readonly<
   Record<string, DimensionPresentation>
-> = {
-  templates: { icon: LayoutTemplate, labelKey: "common.fields.template" },
-  states: { icon: Workflow, labelKey: "common.fields.state" },
-  creators: { icon: User, labelKey: "reports.dimensions.creator" },
-  automated: { icon: Bot, labelKey: "repository.views.byAutomation" },
-  parameterized: {
-    icon: SquareStack,
-    labelKey: "repository.views.byParameterized",
-  },
-  attachments: { icon: Paperclip, labelKey: "common.fields.attachments" },
-  codePins: { icon: Pin, labelKey: "repository.codePins.title" },
-  inReview: {
-    icon: MessageSquareWarning,
-    labelKey: "repository.views.byReview",
-  },
-  tags: { icon: Tags, labelKey: "repository.views.byTag" },
-  issues: { icon: Bug, labelKey: "repository.views.byIssue" },
-  status: { icon: CircleCheckBig, labelKey: "common.actions.status" },
-  assignedTo: { icon: UserCog, labelKey: "common.fields.assignedTo" },
-};
+> = Object.fromEntries(
+  Object.entries(DIMENSION_ICONS).map(([key, icon]) => [
+    key,
+    { icon, labelKey: DIMENSION_LABEL_KEYS[key] },
+  ])
+);
 
 const DYNAMIC_FIELD_TYPE_ICONS: Readonly<Record<string, LucideIcon>> = {
   Dropdown: ChevronsUpDown,
@@ -98,43 +105,4 @@ export function getDimensionLabel(
   return dynamicFieldLabels?.[dimension.key] ?? dimension.key;
 }
 
-/**
- * Label key for an operator as shown on a chip. Bare `any`/`none` (no values)
- * read as has-value / is-empty; with values they read as any-of / none-of
- * (spec §5).
- */
-export function chipOperatorLabelKey(
-  operator: string,
-  valueCount: number
-): string {
-  if (operator === "any") {
-    return valueCount === 0
-      ? "common.operators.hasValue"
-      : "common.operators.anyOf";
-  }
-  if (operator === "none") {
-    return valueCount === 0
-      ? "common.operators.isEmpty"
-      : "common.operators.noneOf";
-  }
-  if (operator === "all") return "common.operators.allOf";
-  return `common.operators.${operator}`;
-}
-
-/**
- * Label key for an operator inside the chip editor's operator Select, where
- * the value list sits directly below — `any`/`none` always read as
- * any-of / none-of there (bare-ness is emergent from an empty selection).
- */
-export function editorOperatorLabelKey(operator: string): string {
-  switch (operator) {
-    case "any":
-      return "common.operators.anyOf";
-    case "all":
-      return "common.operators.allOf";
-    case "none":
-      return "common.operators.noneOf";
-    default:
-      return `common.operators.${operator}`;
-  }
-}
+export { chipOperatorLabelKey, editorOperatorLabelKey };

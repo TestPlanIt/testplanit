@@ -2,6 +2,7 @@ import type { JsonObject } from "@zenstackhq/orm";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { buildGucPayload, withAuditGuc } from "~/lib/audit/gucContext";
 import { filterEligibleCaseIds } from "~/lib/services/runCaseEligibility";
+import { applyCaseFilter } from "./caseFilter";
 import { emitTestRunCreated } from "~/lib/webhooks/event-emitters/testRunEvents";
 import { updateTestRunForecast } from "~/services/forecastService";
 import { syncTestRunToElasticsearch } from "~/services/testRunSearch";
@@ -25,6 +26,8 @@ export interface ComposeRunInput {
   name: string;
   /** In the order the run should list them. */
   caseIds: number[];
+  /** The rule's test case filters; only the cases matching every one go in. */
+  caseFilter?: unknown;
   /** One note paragraph each, so the run shows where it came from. */
   links: RunNoteLink[];
   /** Nodes appended to the note after the link paragraphs. */
@@ -36,7 +39,7 @@ export interface ComposeRunInput {
 }
 
 export type ComposeRunResult =
-  | { created: true; testRunId: number; caseCount: number }
+  | { created: true; testRunId: number; caseCount: number; caseIds: number[] }
   | { created: false; reason: "no_cases" | "no_workflow" };
 
 /**
@@ -65,9 +68,10 @@ export function runNote(links: RunNoteLink[], appendix: NoteNode[] = []) {
 /**
  * Create the test run a webhook action asked for from a list of cases: only
  * the project's live cases the run may take (drafts stay out when the
- * project says so), under the default run workflow state, linked to the
- * given issues. Runs on the worker's plain client, so the created event,
- * forecast and search index the app's own writes trigger are done here.
+ * project says so) that match the rule's test case filters, under the
+ * default run workflow state, linked to the given issues. Runs on the
+ * worker's plain client, so the created event, forecast and search index the
+ * app's own writes trigger are done here.
  */
 export async function composeRunFromCases(
   db: any,
@@ -89,10 +93,14 @@ export async function composeRunFromCases(
       })
     ).map((c: { id: number }) => c.id)
   );
-  const caseIds = await filterEligibleCaseIds(db, {
+  const eligible = await filterEligibleCaseIds(db, {
     projectId: input.projectId,
     repositoryCaseIds: requested.filter((id) => live.has(id)),
   });
+  const caseIds =
+    Array.isArray(input.caseFilter) && input.caseFilter.length > 0
+      ? await applyCaseFilter(db, input.projectId, eligible, input.caseFilter)
+      : eligible;
   if (caseIds.length === 0) return { created: false, reason: "no_cases" };
 
   const workflow =
@@ -163,5 +171,10 @@ export async function composeRunFromCases(
     )
   );
 
-  return { created: true, testRunId: run.id, caseCount: caseIds.length };
+  return {
+    created: true,
+    testRunId: run.id,
+    caseCount: caseIds.length,
+    caseIds,
+  };
 }
