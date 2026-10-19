@@ -29,7 +29,8 @@ The application uses the following background processes:
 17. **Dataset Lease Sweep Worker** - Reaps expired dataset-row leases (test-data reservations) roughly once a minute
 18. **Alert Worker** - Evaluates alert rules when results land, when runs complete, when automated executions fail and sessions complete, and on hourly and daily scheduled passes
 19. **Webhook Actions Worker** - Runs an issue-tracker webhook's [actions](./user-guide/webhooks.md#issue-tracker-actions) (importing the issue, creating test runs, drafting test cases with AI) after the webhook has been answered
-20. **Scheduler** - Sets up recurring jobs (cron jobs)
+20. **Failure Triage Worker** - Groups automated failures into signatures and asks the project's LLM to classify them
+21. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -129,6 +130,14 @@ The application uses the following background processes:
 - Reports a phase per step and persists the affected-test list to the analysis record
 - Default concurrency: 1 (each job can involve provider API calls and multiple LLM batches)
 - Location: `workers/impactAnalysisWorker.ts`
+
+### Failure Triage Worker
+
+- Consumes the `failure-triage` BullMQ queue: a debounced job per test run whenever automated FAILURE/ERROR results arrive, a per-project backfill started from the project's settings, and on-demand classification jobs
+- Fingerprints each failure (exception type, message with volatile values masked, top application stack frames), attaches it to the matching `FailureSignature` in the project or creates one, recomputes the signature's occurrence/case/run counters, and flags signatures whose cases flip between pass and fail
+- When the project allows auto-classification and an LLM provider resolves for the `failure_triage` feature, classifies new signatures as product bug, test bug, environment or flaky
+- Default concurrency: 2 (overridable via `FAILURE_TRIAGE_CONCURRENCY`)
+- Location: `workers/failureTriageWorker.ts`
 
 ### Webhook Dispatch Worker
 

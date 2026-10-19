@@ -32,6 +32,7 @@ const createIssueSchema = z.object({
   sessionId: z.string().optional(),
   testRunResultId: z.string().optional(),
   testRunStepResultId: z.string().optional(),
+  failureSignatureId: z.string().optional(),
 });
 
 export async function POST(
@@ -383,7 +384,8 @@ export async function POST(
       validatedData.testRunId ||
       validatedData.sessionId ||
       validatedData.testRunResultId ||
-      validatedData.testRunStepResultId
+      validatedData.testRunStepResultId ||
+      validatedData.failureSignatureId
     ) {
       // Entity links to (re)connect on both create and update. The test-case
       // link is handled separately via the RepositoryCaseIssue join after the
@@ -470,6 +472,16 @@ export async function POST(
         await baseDb.repositoryCaseIssue.upsert({
           where: { caseId_issueId: { caseId, issueId: issue.id } },
           create: { caseId, issueId: issue.id },
+          update: {},
+        });
+      }
+      // Failure triage: an issue created from a signature page is its known
+      // issue. Same explicit join, same idempotent upsert.
+      if (validatedData.failureSignatureId) {
+        const signatureId = parseInt(validatedData.failureSignatureId);
+        await baseDb.failureSignatureIssue.upsert({
+          where: { signatureId_issueId: { signatureId, issueId: issue.id } },
+          create: { signatureId, issueId: issue.id },
           update: {},
         });
       }

@@ -17,7 +17,12 @@
  */
 
 type OwnerTable =
-  "RepositoryCases" | "TestRuns" | "Sessions" | "Projects" | "ImpactAnalysis";
+  | "RepositoryCases"
+  | "TestRuns"
+  | "Sessions"
+  | "Projects"
+  | "ImpactAnalysis"
+  | "FailureSignature";
 
 /** Direct: the row's owning entity id is `<fkCol>` on the row itself. */
 interface DirectRollup {
@@ -72,6 +77,12 @@ export const ROLLUP_MAP: Record<string, RollupConfig> = {
 
   // ── Impact family ───────────────────────────────────────────────────────────
   ImpactAnalysisCase: { ownerTable: "ImpactAnalysis", fkCol: "analysisId" },
+
+  // ── Failure triage family ───────────────────────────────────────────────────
+  FailureSignatureIssue: {
+    ownerTable: "FailureSignature",
+    fkCol: "signatureId",
+  },
 
   // ── Runs family ─────────────────────────────────────────────────────────────
   TestRunCases: { ownerTable: "TestRuns", fkCol: "testRunId" },

@@ -146,6 +146,7 @@ import TestRunCasesSummary from "~/components/TestRunCasesSummary";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useTestRunCaseDetail } from "~/hooks/useTestRunCaseDetail";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
+import { RunFailureClusters } from "@/components/triage/RunFailureClusters";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
@@ -752,6 +753,40 @@ export default function TestRunPage() {
                 },
                 attachments: {
                   where: { isDeleted: false },
+                },
+                failureSignature: {
+                  select: {
+                    id: true,
+                    title: true,
+                    classification: true,
+                    classificationSource: true,
+                    aiConfidence: true,
+                    status: true,
+                    issues: {
+                      select: {
+                        issue: {
+                          select: {
+                            id: true,
+                            name: true,
+                            externalId: true,
+                            externalUrl: true,
+                            externalKey: true,
+                            title: true,
+                            description: true,
+                            externalStatus: true,
+                            priority: true,
+                            lastSyncedAt: true,
+                            data: true,
+                            issueTypeName: true,
+                            issueTypeIconUrl: true,
+                            integration: {
+                              select: { id: true, provider: true, name: true },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
                 },
                 repositoryCase: {
                   select: {
@@ -1535,6 +1570,14 @@ export default function TestRunPage() {
   // Retries tiles (right panel) preset them, so the state lives here.
   const [junitFacets, setJunitFacets] =
     useState<JunitFacetFilters>(EMPTY_JUNIT_FACETS);
+  const toggleSignatureFacet = useCallback((signatureId: number) => {
+    setJunitFacets((prev) => ({
+      ...prev,
+      signatureIds: prev.signatureIds.includes(signatureId)
+        ? prev.signatureIds.filter((id) => id !== signatureId)
+        : [...prev.signatureIds, signatureId],
+    }));
+  }, []);
   const handleFlakyTileClick = useCallback(
     () => setJunitFacets((prev) => ({ ...prev, flakyOnly: true })),
     []
@@ -1582,6 +1625,8 @@ export default function TestRunPage() {
         linksTo: result.repositoryCase?.linksTo || [],
         isDeleted: result.repositoryCase?.isDeleted || false,
         attachments: result.attachments || [],
+        failureSignatureId: result.failureSignatureId ?? null,
+        failureSignature: result.failureSignature ?? null,
       }))
     );
     // Mark every attempt row of a fail-then-pass case so the table can badge
@@ -2356,6 +2401,12 @@ export default function TestRunPage() {
                     {isJUnitRun ? (
                       <>
                         {narrativeFields}
+                        <RunFailureClusters
+                          projectId={Number(projectId)}
+                          rows={junitTestCases}
+                          selectedSignatureIds={junitFacets.signatureIds}
+                          onToggleSignature={toggleSignatureFacet}
+                        />
                         <PaginationProvider>
                           <JunitResultsPanel
                             t={t}
@@ -2434,6 +2485,12 @@ export default function TestRunPage() {
                             </div>
                             {/* The manual case table above owns `page` and
                                 `pageSize`; this table pages independently. */}
+                            <RunFailureClusters
+                              projectId={Number(projectId)}
+                              rows={junitTestCases}
+                              selectedSignatureIds={junitFacets.signatureIds}
+                              onToggleSignature={toggleSignatureFacet}
+                            />
                             <PaginationProvider
                               pageParam="resultsPage"
                               pageSizeParam="resultsPageSize"

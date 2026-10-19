@@ -120,6 +120,12 @@ export default function JunitResultsPanel({
       }
       if (facets.flakyOnly && !tc.isFlaky) return false;
       if (facets.retriedOnly && !tc.isRetried) return false;
+      if (
+        facets.signatureIds.length > 0 &&
+        !facets.signatureIds.includes(tc.failureSignatureId)
+      ) {
+        return false;
+      }
       return true;
     });
   }, [sortedJunitTestCases, facets]);

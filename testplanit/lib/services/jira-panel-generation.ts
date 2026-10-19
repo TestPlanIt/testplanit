@@ -7,7 +7,13 @@
  * cores.
  */
 
-import { baseDb as db } from "@/lib/db";
+import { baseDb } from "@/lib/db";
+
+/**
+ * The client every helper reads through. Defaults to the web instance's own
+ * database; a shared multi-tenant worker must pass the job's tenant client.
+ */
+export type GenerationDb = typeof baseDb;
 import { IntegrationProvider, WorkflowScope } from "~/zenstack/models";
 import type { TemplateData } from "@/api/llm/generate-test-cases/shared";
 import type { ImportInput } from "@/lib/services/testCaseImport";
@@ -30,8 +36,10 @@ export interface GenerationProject {
  */
 export async function listGenerationProjects(
   integrationId: number,
-  issueProjectKey?: string | null
+  issueProjectKey?: string | null,
+  client: GenerationDb = baseDb
 ): Promise<GenerationProject[]> {
+  const db = client;
   const projectIntegrations = await db.projectIntegration.findMany({
     where: {
       integrationId,
@@ -77,8 +85,10 @@ export interface TemplateOption {
 
 /** Templates assigned to the project (the wizard's template picker source). */
 export async function listProjectTemplates(
-  projectId: number
+  projectId: number,
+  client: GenerationDb = baseDb
 ): Promise<TemplateOption[]> {
+  const db = client;
   const templates = await db.templates.findMany({
     where: {
       isDeleted: false,
@@ -108,8 +118,10 @@ export interface ProjectReadiness {
  * failing at save time.
  */
 export async function getProjectReadiness(
-  projectId: number
+  projectId: number,
+  client: GenerationDb = baseDb
 ): Promise<ProjectReadiness> {
+  const db = client;
   const [repository, defaultWorkflow, projectLlmCount, globalLlmCount] =
     await Promise.all([
       db.repositories.findFirst({
@@ -155,8 +167,10 @@ export async function getProjectReadiness(
  */
 export async function templateBelongsToProject(
   templateId: number,
-  projectId: number
+  projectId: number,
+  client: GenerationDb = baseDb
 ): Promise<boolean> {
+  const db = client;
   const assignment = await db.templateProjectAssignment.findUnique({
     where: { templateId_projectId: { templateId, projectId } },
     select: { templateId: true },
@@ -184,8 +198,10 @@ export interface FieldMapping {
  * template doesn't exist / isn't usable.
  */
 export async function loadTemplateData(
-  templateId: number
+  templateId: number,
+  client: GenerationDb = baseDb
 ): Promise<{ template: TemplateData; fieldMappings: FieldMapping[] } | null> {
+  const db = client;
   const template = await db.templates.findFirst({
     where: { id: templateId, isDeleted: false },
     select: {
@@ -275,8 +291,10 @@ export interface FolderOption {
 
 /** All folders in the project, for the panel's (hierarchical) folder picker. */
 export async function listProjectFolders(
-  projectId: number
+  projectId: number,
+  client: GenerationDb = baseDb
 ): Promise<FolderOption[]> {
+  const db = client;
   return db.repositoryFolders.findMany({
     where: { projectId, isDeleted: false },
     orderBy: [{ parentId: "asc" }, { order: "asc" }, { name: "asc" }],
@@ -292,8 +310,10 @@ export async function listProjectFolders(
  */
 export async function suggestFolderForIssue(
   projectId: number,
-  issue: { issueKey?: string | null; issueId?: string | null }
+  issue: { issueKey?: string | null; issueId?: string | null },
+  client: GenerationDb = baseDb
 ): Promise<number | null> {
+  const db = client;
   const issueKey = issue.issueKey || undefined;
   const issueId = issue.issueId || undefined;
   if (!issueKey && !issueId) return null;
@@ -385,8 +405,10 @@ export interface ImportTarget {
 export async function resolveImportTarget(
   projectId: number,
   authorUserId: string,
-  options: { folderId?: number | null; newFolderName?: string | null } = {}
+  options: { folderId?: number | null; newFolderName?: string | null } = {},
+  client: GenerationDb = baseDb
 ): Promise<ImportTarget | null> {
+  const db = client;
   const project = await db.projects.findFirst({
     where: { id: projectId, isDeleted: false },
     select: { id: true, name: true },

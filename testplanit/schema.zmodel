@@ -200,6 +200,9 @@ model User {
     createdCaseLinks                         RepositoryCaseLink[]              @relation("UserCreatedCaseLinks")
     createdCodePins                          RepositoryCaseCodePin[]           @relation("UserCreatedCodePins")
     createdImpactAnalyses                    ImpactAnalysis[]                  @relation("ImpactAnalysisCreatedBy")
+    classifiedFailureSignatures              FailureSignature[]                @relation("FailureSignatureClassifiedBy")
+    resolvedFailureSignatures                FailureSignature[]                @relation("FailureSignatureResolvedBy")
+    caseQuarantines                          CaseQuarantine[]                  @relation("CaseQuarantineCreatedBy")
     createdExecutionTargets                  ExecutionTarget[]                 @relation("ExecutionTargetCreatedBy")
     requestedTestRunExecutions               TestRunExecution[]                @relation("TestRunExecutionRequestedBy")
     reviewedImpactAnalysisCases              ImpactAnalysisCase[]              @relation("ImpactAnalysisCaseReviewedBy")
@@ -719,6 +722,10 @@ model Projects {
     defaultCaseExportTemplate        CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
     quickScriptEnabled               Boolean                               @default(false)
     impactEnabled                    Boolean                               @default(false)
+    /// Group automated failures into signatures (deterministic, no LLM cost).
+    failureTriageEnabled             Boolean                               @default(true)
+    /// Ask the project's LLM to classify new signatures as they appear.
+    failureTriageAutoClassify        Boolean                               @default(true)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
     junitIterationPropertyNames      String[]                              @default([])
     reviewWorkflowEnabled            Boolean                               @default(false)
@@ -736,6 +743,8 @@ model Projects {
     stepSequenceMatches              StepSequenceMatch[]
     reviewRequests                   ReviewRequest[]
     caseDrafts                       CaseDraft[]
+    failureSignatures                FailureSignature[]
+    caseQuarantines                  CaseQuarantine[]
     alertRules                       AlertRule[]
     alertEvents                      AlertEvent[]
 
@@ -2149,6 +2158,7 @@ model RepositoryCases {
     linksFrom               RepositoryCaseLink[]         @relation("CaseALinks")
     linksTo                 RepositoryCaseLink[]         @relation("CaseBLinks")
     codePins                RepositoryCaseCodePin[]
+    quarantine              CaseQuarantine?
     impactAnalysisCases     ImpactAnalysisCase[]
     duplicateScanResultsA   DuplicateScanResult[]        @relation("DuplicateCaseA")
     duplicateScanResultsB   DuplicateScanResult[]        @relation("DuplicateCaseB")
@@ -3720,6 +3730,7 @@ model Issue {
     integrationId         Int?
     integration           Integration?                @relation(fields: [integrationId], references: [id], onDelete: SetNull)
     milestoneIssues       MilestoneIssue[]
+    failureSignatures     FailureSignatureIssue[]
     projectMemberships    IssueProjectMembership[]
     parentId              Int?                        @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
     parent                Issue?                      @relation("IssueParent", fields: [parentId], references: [id], onDelete: Cascade)
@@ -4625,33 +4636,37 @@ model JUnitTestSuite {
 }
 
 model JUnitTestResult {
-    id               Int             @id @default(autoincrement())
-    type             JUnitResultType
-    message          String?
-    content          String?
-    repositoryCaseId Int
-    repositoryCase   RepositoryCases @relation("JUnitResultCase", fields: [repositoryCaseId], references: [id], onDelete: Cascade)
-    executedAt       DateTime?       @db.Timestamptz(6)
-    time             Float?
-    assertions       Int?
-    file             String?
-    line             Int?
-    worker           String?
-    systemOut        String?
-    systemErr        String?
-    testSuiteId      Int
-    testSuite        JUnitTestSuite  @relation(fields: [testSuiteId], references: [id], onDelete: Cascade)
-    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
-    createdById      String          @deny('update', true)
-    createdBy        User            @relation(fields: [createdById], references: [id])
-    statusId         Int?
-    status           Status?         @relation(fields: [statusId], references: [id])
-    attachments      Attachments[]
+    id                 Int               @id @default(autoincrement())
+    type               JUnitResultType
+    message            String?
+    content            String?
+    repositoryCaseId   Int
+    repositoryCase     RepositoryCases   @relation("JUnitResultCase", fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    executedAt         DateTime?         @db.Timestamptz(6)
+    time               Float?
+    assertions         Int?
+    file               String?
+    line               Int?
+    worker             String?
+    systemOut          String?
+    systemErr          String?
+    testSuiteId        Int
+    testSuite          JUnitTestSuite    @relation(fields: [testSuiteId], references: [id], onDelete: Cascade)
+    createdAt          DateTime          @default(now()) @db.Timestamptz(6)
+    createdById        String            @deny('update', true)
+    createdBy          User              @relation(fields: [createdById], references: [id])
+    statusId           Int?
+    status             Status?           @relation(fields: [statusId], references: [id])
+    attachments        Attachments[]
+    // Failure triage: the signature this FAILURE/ERROR result was grouped into.
+    failureSignatureId Int?
+    failureSignature   FailureSignature? @relation("FailureSignatureResults", fields: [failureSignatureId], references: [id], onDelete: SetNull)
 
     @@index([testSuiteId])
     @@index([repositoryCaseId])
     @@index([repositoryCaseId, executedAt(sort: Desc)]) // Optimize "latest result per case" queries
     @@index([createdById])
+    @@index([failureSignatureId, executedAt(sort: Desc)])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -7319,4 +7334,219 @@ model DataChangeLog {
     @@deny('all', true)
     @@deny('update', true)
     @@deny('delete', true)
+}
+
+// ─── Failure triage ──────────────────────────────────────────────────────────
+
+enum FailureFingerprintKind {
+    STACK
+    MESSAGE
+    NONE
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum FailureClassification {
+    UNCLASSIFIED
+    PRODUCT_BUG
+    TEST_BUG
+    ENVIRONMENT
+    FLAKY
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum FailureClassificationSource {
+    AI
+    MANUAL
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum FailureSignatureStatus {
+    OPEN
+    RESOLVED
+    IGNORED
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+/// One cluster of automated failures that share a fingerprint (exception type,
+/// normalized message, top application frames). Written by the failure-triage
+/// worker; people change only status, classification, notes and issue links.
+model FailureSignature {
+    id                    Int                          @id @default(autoincrement())
+    projectId             Int                          @deny('update', true)
+    project               Projects                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    fingerprint           String                       @deny('update', true)
+    kind                  FailureFingerprintKind       @deny('update', true)
+    title                 String                       @deny('update', true)
+    exceptionType         String?                      @deny('update', true)
+    normalizedMessage     String?                      @deny('update', true)
+    frames                String[]                     @default([]) @deny('update', true)
+    firstSeenAt           DateTime                     @db.Timestamptz(6) @deny('update', true)
+    lastSeenAt            DateTime                     @db.Timestamptz(6) @deny('update', true)
+    occurrenceCount       Int                          @default(0) @deny('update', true)
+    caseCount             Int                          @default(0) @deny('update', true)
+    runCount              Int                          @default(0) @deny('update', true)
+    /// Set when the affected cases flip between pass and fail in their recent history.
+    flakyCandidate        Boolean                      @default(false) @deny('update', true)
+    status                FailureSignatureStatus       @default(OPEN)
+    resolvedAt            DateTime?                    @db.Timestamptz(6)
+    resolvedById          String?
+    resolvedBy            User?                        @relation("FailureSignatureResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+    /// Effective classification: a person's choice when classifiedById is set, else the AI's.
+    classification        FailureClassification        @default(UNCLASSIFIED)
+    classificationSource  FailureClassificationSource?
+    classifiedAt          DateTime?                    @db.Timestamptz(6)
+    classifiedById        String?
+    classifiedBy          User?                        @relation("FailureSignatureClassifiedBy", fields: [classifiedById], references: [id], onDelete: SetNull)
+    aiClassification      FailureClassification?       @deny('update', true)
+    aiConfidence          Float?                       @deny('update', true)
+    aiRationale           String?                      @deny('update', true)
+    aiSuggestedIssueTitle String?                      @deny('update', true)
+    aiSuggestedNextStep   String?                      @deny('update', true)
+    aiModel               String?                      @deny('update', true)
+    aiClassifiedAt        DateTime?                    @db.Timestamptz(6) @deny('update', true)
+    notes                 Json?
+    results               JUnitTestResult[]            @relation("FailureSignatureResults")
+    issues                FailureSignatureIssue[]
+    quarantines           CaseQuarantine[]
+    createdAt             DateTime                     @default(now()) @db.Timestamptz(6)
+    updatedAt             DateTime                     @updatedAt
+
+    @@unique([projectId, fingerprint])
+    @@index([projectId, status, lastSeenAt(sort: Desc)])
+    @@index([projectId, classification])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@allow('read', projectId in auth().accessibleProjectIds)
+
+    // Same gate as recording a result: the people who run tests triage them.
+    @@allow('update',
+        projectId in auth().adminProjectIds ||
+        project.creator.id == auth().id ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+/// Issues linked to a failure signature ("known issue").
+model FailureSignatureIssue {
+    signatureId Int
+    signature   FailureSignature @relation(fields: [signatureId], references: [id], onDelete: Cascade)
+    issueId     Int
+    issue       Issue            @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    createdAt   DateTime         @default(now()) @db.Timestamptz(6)
+
+    @@id([signatureId, issueId])
+    @@index([issueId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@allow('read', signature.projectId in auth().accessibleProjectIds)
+
+    @@allow('create,delete',
+        signature.projectId in auth().adminProjectIds ||
+        signature.project.creator.id == auth().id ||
+        signature.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        signature.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        signature.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        signature.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        signature.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        (signature.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (signature.project.assignedUsers?[user.id == auth().id] &&
+         signature.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         signature.project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (signature.project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         signature.project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+/// A quarantined case keeps running and recording results, but its automated
+/// failures are excluded from run pass/fail and shown as a separate count.
+/// Releasing a quarantine deletes the row; the audit log keeps the history.
+model CaseQuarantine {
+    id          Int               @id @default(autoincrement())
+    caseId      Int               @unique @deny('update', true)
+    case        RepositoryCases   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    projectId   Int               @deny('update', true)
+    project     Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    signatureId Int?
+    signature   FailureSignature? @relation(fields: [signatureId], references: [id], onDelete: SetNull)
+    reason      String?
+    createdById String            @deny('update', true)
+    createdBy   User              @relation("CaseQuarantineCreatedBy", fields: [createdById], references: [id])
+    createdAt   DateTime          @default(now()) @db.Timestamptz(6)
+
+    @@index([projectId])
+    @@index([signatureId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@allow('read', projectId in auth().accessibleProjectIds)
+
+    @@allow('create,update,delete',
+        projectId in auth().adminProjectIds ||
+        project.creator.id == auth().id ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
 }

@@ -85,6 +85,31 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   },
   { table: "ImpactAnalysisCase", denylist: [] },
 
+  // ── Failure triage family ─────────────────────────────────────────────────
+  {
+    // Counters and timestamps churn on every result burst; only the
+    // human-facing fields (status, classification, notes) are worth a row.
+    table: "FailureSignature",
+    denylist: [
+      "createdAt",
+      "updatedAt",
+      "firstSeenAt",
+      "lastSeenAt",
+      "occurrenceCount",
+      "caseCount",
+      "runCount",
+      "flakyCandidate",
+    ],
+    nameCol: "title",
+    projectCol: "projectId",
+  },
+  { table: "FailureSignatureIssue", pkCol: "signatureId", denylist: [] },
+  {
+    table: "CaseQuarantine",
+    denylist: ["createdAt"],
+    projectCol: "projectId",
+  },
+
   // ── Runs family ───────────────────────────────────────────────────────────
   {
     // readyToCompleteNotifiedAt is bookkeeping for the "ready to complete"

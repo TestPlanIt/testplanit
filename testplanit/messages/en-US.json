@@ -740,7 +740,8 @@
       "apiDocumentation": "API Documentation",
       "sharedContent": "Shared Content",
       "impact": "Impact Analysis",
-      "alerts": "Notifications & Alerts"
+      "alerts": "Notifications & Alerts",
+      "triage": "Failure Triage"
     },
     "aria": {
       "userMenu": "User menu",
@@ -4512,7 +4513,7 @@
     },
     "junitFilters": {
       "retried": "Retried",
-      "clear": "Clear filters"
+      "clear": "Clear all filters"
     },
     "impact": {
       "title": "Impact",
@@ -6764,7 +6765,8 @@
         "generate_from_url_app": "Generate Test Cases from URL (Application Testing)",
         "automation_candidates": "Automation Candidates Report",
         "derive_case_steps": "AI Step Derivation",
-        "impact_analysis": "Impact: Affected Test Selection"
+        "impact_analysis": "Impact: Affected Test Selection",
+        "failure_triage": "Failure Triage Classification"
       }
     },
     "elasticsearch": {
@@ -6841,6 +6843,7 @@
         "audit-logs": "Audit Logs",
         "budget-alerts": "Budget Alerts",
         "auto-tag": "AI Auto-Tag",
+        "failure-triage": "Failure Triage",
         "repo-cache": "Repository Cache",
         "copy-move": "Copy & Move",
         "duplicate-scan": "Duplicate Scan",
@@ -8529,7 +8532,9 @@
     "projectImpact": "## Impact\nConnect the repository of the application under test so this project can run test impact analysis: pick two commits to see which test cases the changes affect, and pin test cases to the code they cover.",
     "pathPatterns": "## Path Patterns\nEach row combines a base **path** with a glob **pattern**. Rows add up: a file is included when any row matches it.\n\n- `src` + `**/*` — everything under `src`\n- blank or `.` + `**/*` — every file in the repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` files except tests\n\n### Exclude\nTick **Exclude** on a row to remove its files even when another row includes them. Exclusions apply to the file picker and cache, and for Impact to the changed files of an analysis, so a file that changes on almost every pull request stops pulling in unrelated test cases. At least one row must stay unticked.\n\n- blank + `**/CHANGELOG*` — every changelog, at any depth\n- `app` + `build.gradle.kts` — a build file that only bumps the version",
     "projectAutomation": "## Automated Execution\nExecution targets tell TestPlanIt where to execute this project's automated cases: a GitHub Actions workflow, a GitLab CI pipeline, or a signed webhook for any other system. When a run is executed, TestPlanIt starts the job with the run id and a plan URL; the job reads the plan, runs the matching tests, and reports results back with a reporter or the CLI pinned to that run. Targets can be disabled without being deleted.",
-    "userAlerts": "## Notifications & Alerts\n**Notification Preferences** decide how you are reached (in-app, email, digest) and which notification types you receive at all.\n\n**Alerts** watch a testing metric and notify their subscribers when it crosses a line, for example a result that takes 50% longer than the case's usual duration, a case that fails three times in a row, a run whose pass rate drops under 90%, or a milestone that is behind with days to go. The list shows every alert in your projects; the **Notify me** switch follows or leaves one. **Add Alert** creates your own in any project where your role has **Alerts** Add/Edit; project administrators manage every alert in their project and other people's subscriptions. An alert fires at most once per subject within its cooldown and stays silent until it has enough results."
+    "userAlerts": "## Notifications & Alerts\n**Notification Preferences** decide how you are reached (in-app, email, digest) and which notification types you receive at all.\n\n**Alerts** watch a testing metric and notify their subscribers when it crosses a line, for example a result that takes 50% longer than the case's usual duration, a case that fails three times in a row, a run whose pass rate drops under 90%, or a milestone that is behind with days to go. The list shows every alert in your projects; the **Notify me** switch follows or leaves one. **Add Alert** creates your own in any project where your role has **Alerts** Add/Edit; project administrators manage every alert in their project and other people's subscriptions. An alert fires at most once per subject within its cooldown and stays silent until it has enough results.",
+    "projectTriage": "## Failure Triage\nAutomated failures that share the same exception, message and top stack frames are grouped into one **signature**. Each signature shows how often it happened, which test cases and runs it touched, and the AI's read on whether it is a product bug, a test bug, an environment problem or flaky. Resolve or ignore a signature once it is handled; it reopens by itself if the failure comes back.",
+    "projectTriageSettings": "## Failure Triage settings\nGrouping runs on every automated result that arrives and costs nothing. AI classification uses the AI model assigned to the **Failure Triage Classification** feature on the AI Models page; turn it off here to keep grouping without any AI calls. **Analyze existing results** groups every automated failure already recorded in this project."
   },
   "reports": {
     "ui": {
@@ -10769,6 +10774,105 @@
       "INTEGRATION": "Integrations",
       "QUEUE": "Background queues",
       "SYSTEM": "Installation"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Open",
+      "RESOLVED": "Resolved",
+      "IGNORED": "Ignored"
+    },
+    "classification": {
+      "UNCLASSIFIED": "Unclassified",
+      "PRODUCT_BUG": "Product bug",
+      "TEST_BUG": "Test bug",
+      "ENVIRONMENT": "Environment",
+      "FLAKY": "Flaky"
+    },
+    "source": {
+      "AI": "Classified by AI",
+      "labelAI": "AI",
+      "labelMANUAL": "Manual"
+    },
+    "columns": {
+      "classification": "Classification",
+      "occurrences": "Occurrences",
+      "firstSeen": "First seen",
+      "lastSeen": "Last seen",
+      "classifiedBy": "Classified by"
+    },
+    "filters": {
+      "searchPlaceholder": "Search signatures...",
+      "flakyOnly": "Flaky candidates",
+      "sourceAll": "AI or manual"
+    },
+    "actions": {
+      "resolve": "Resolve",
+      "ignore": "Ignore",
+      "classify": "Classify with AI",
+      "setClassification": "Set classification"
+    },
+    "detail": {
+      "exceptionType": "Exception type",
+      "normalizedMessage": "Normalized message",
+      "frames": "Top stack frames",
+      "sampleTrace": "Latest failure",
+      "affectedCases": "{count, plural, one {# affected test case} other {# affected test cases}}",
+      "recentOccurrences": "{count, plural, one {# recent occurrence} other {# recent occurrences}}",
+      "rationale": "Rationale",
+      "suggestedIssueTitle": "Suggested issue title",
+      "nextStep": "Suggested next step",
+      "noAi": "Not classified by AI yet.",
+      "noDetails": "This failure carried no message or stack trace, so it is grouped by test case.",
+      "notesPlaceholder": "Notes for the team...",
+      "lastRun": "Last run",
+      "aiSuggestion": "AI suggestion",
+      "unlinkConfirmDescription": "This removes the issue from this signature. The issue itself is kept and can be linked again later.",
+      "signatureLabel": "Failure signature",
+      "affectedCasesLabel": "Affected test cases"
+    },
+    "flakyCandidate": "Flaky candidate",
+    "flakyCandidateHint": "The affected test cases flip between pass and fail in their recent history.",
+    "knownIssue": "Known issue",
+    "notGrouped": "{count, plural, one {# failure not grouped yet} other {# failures not grouped yet}}",
+    "runPanel": {
+      "title": "Failure clusters",
+      "inRun": "{count, plural, one {# in this run} other {# in this run}}",
+      "hint": "Click a cluster to filter the results below.",
+      "open": "View signature",
+      "inRunColumn": "In this run",
+      "selectedClusters": "{count, plural, one {# cluster selected} other {# clusters selected}}",
+      "clearSelected": "Clear the selected clusters"
+    },
+    "toasts": {
+      "updated": "Signature updated",
+      "updateFailed": "Could not update the signature",
+      "classifyQueued": "AI classification requested",
+      "noAiModel": "No AI model is configured for this feature",
+      "issueLinked": "Issue linked"
+    },
+    "empty": {
+      "title": "No failure signatures yet",
+      "description": "Signatures appear here as automated results with failures arrive. To group failures already recorded in this project, use Analyze existing results in the Failure Triage settings."
+    },
+    "settings": {
+      "description": "Group automated failures into signatures and let AI classify them.",
+      "enableLabel": "Enable Failure Triage",
+      "enableDescription": "Group every automated failure in this project by exception, message and stack frames as results arrive.",
+      "autoClassifyLabel": "Classify new signatures with AI",
+      "autoClassifyDescription": "Ask the project's AI model to classify each new signature as a product bug, test bug, environment problem or flaky. Needs an AI model assigned to the Failure Triage Classification feature.",
+      "backfillLabel": "Analyze existing results",
+      "backfillDescription": "Group every automated failure already recorded in this project. Runs in the background.",
+      "backfillStarted": "Analysis started",
+      "backfillRunning": "Analyzing... {processed, plural, one {# failure grouped} other {# failures grouped}}",
+      "backfillDone": "Analysis complete",
+      "backfillFailed": "Analysis failed",
+      "backfillQueueUnavailable": "Background job queue is not available",
+      "enabledToast": "Failure Triage enabled",
+      "disabledToast": "Failure Triage disabled",
+      "autoClassifyOnToast": "AI classification enabled",
+      "autoClassifyOffToast": "AI classification disabled",
+      "openTriage": "Open Failure Triage"
     }
   }
 }

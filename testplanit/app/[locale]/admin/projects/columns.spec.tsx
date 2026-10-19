@@ -144,6 +144,8 @@ const testProject: ExtendedProjects = {
   defaultCaseExportTemplateId: null,
   quickScriptEnabled: false,
   impactEnabled: false,
+  failureTriageEnabled: true,
+  failureTriageAutoClassify: true,
   junitIterationPropertyNames: [],
   reviewWorkflowEnabled: true,
   requireResultFlipJustification: false,

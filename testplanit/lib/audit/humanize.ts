@@ -100,6 +100,13 @@ const CATALOG_BY_COLUMN: Record<
   ImpactAnalysisCase: {
     caseId: { table: "RepositoryCases", field: "name" },
   },
+  FailureSignatureIssue: {
+    issueId: { table: "Issue", field: "title" },
+  },
+  CaseQuarantine: {
+    caseId: { table: "RepositoryCases", field: "name" },
+    signatureId: { table: "FailureSignature", field: "title" },
+  },
   default: {
     statusId: { table: "Status", field: "name" },
     workflowId: { table: "Workflows", field: "name" },

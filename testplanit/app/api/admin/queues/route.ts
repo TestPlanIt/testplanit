@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
       "scim-access-recompute": 1,
       alerts: 2,
       "webhook-actions": 2,
+      "failure-triage": 2,
     };
 
     // Get configured concurrency from environment (or use defaults)
@@ -166,6 +167,11 @@ export async function GET(request: NextRequest) {
       "webhook-actions": parseInt(
         process.env.WEBHOOK_ACTIONS_CONCURRENCY ||
           String(defaultConcurrency["webhook-actions"]),
+        10
+      ),
+      "failure-triage": parseInt(
+        process.env.FAILURE_TRIAGE_CONCURRENCY ||
+          String(defaultConcurrency["failure-triage"]),
         10
       ),
     };
