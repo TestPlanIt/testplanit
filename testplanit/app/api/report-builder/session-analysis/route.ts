@@ -3,6 +3,7 @@ import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { buildDateFilter } from "@/utils/reportUtils";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { sortReportRows } from "~/utils/reportRowSort";
 
 // Note: Session analysis uses custom session-specific logic
 // This handles unique session dimensions like assignedTo, template, state, etc.
@@ -922,8 +923,15 @@ export async function POST(req: NextRequest) {
     // Convert result map to array
     const results = Array.from(resultMap.values());
 
-    // Sort results by Creation Date if date dimension is used
-    if (dimensions.includes("date")) {
+    // A header sort wins; otherwise a date series stays chronological.
+    if (requestBody.sortColumn && requestBody.sortDirection) {
+      sortReportRows(results, {
+        dimensions,
+        metricConfigs,
+        sortColumn: requestBody.sortColumn,
+        sortDirection: requestBody.sortDirection,
+      });
+    } else if (dimensions.includes("date")) {
       results.sort((a: any, b: any) => {
         const dateA = a.date?.createdAt;
         const dateB = b.date?.createdAt;

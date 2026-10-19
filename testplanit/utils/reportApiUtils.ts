@@ -15,6 +15,7 @@ import {
   type DateGrouping,
 } from "~/lib/reports/dateGrouping";
 import { authOptions } from "~/server/auth";
+import { sortReportRows } from "~/utils/reportRowSort";
 
 // Type for Prisma client
 type Prisma = typeof baseDb;
@@ -851,90 +852,11 @@ async function handleCrossProjectAggregation({
 
   // Apply sorting if specified
   if (sortColumn && sortDirection) {
-    results.sort((a: ReportRow, b: ReportRow) => {
-      // Determine if sortColumn is a dimension or metric
-      let aVal, bVal;
-
-      // Check if it's a dimension
-      if (dimensions.includes(sortColumn)) {
-        const _dimData = a[sortColumn];
-        const _dimDataB = b[sortColumn];
-
-        // Handle different dimension types
-        if (sortColumn === "date") {
-          // Try both executedAt and createdAt fields
-          const dateA = a[sortColumn] as DimensionDisplayValue | undefined;
-          const dateB = b[sortColumn] as DimensionDisplayValue | undefined;
-          aVal = dateA?.executedAt || dateA?.createdAt;
-          bVal = dateB?.executedAt || dateB?.createdAt;
-        } else {
-          // For other dimensions, sort by name or id
-          const dimA = a[sortColumn] as DimensionDisplayValue | undefined;
-          const dimB = b[sortColumn] as DimensionDisplayValue | undefined;
-          aVal = dimA?.name || dimA?.id;
-          bVal = dimB?.name || dimB?.id;
-        }
-      } else {
-        // It's a metric - need to find the metric config by matching the backend ID
-        // The sortColumn is a backend metric ID (e.g., 'testResultCount')
-        // The metricConfigs have the label that's used as the key in the result object
-
-        // Try to find the metric config that matches the sortColumn
-        // This could be by id or by checking if the config represents this metric
-        const metricConfig = metricConfigs.find((mc: MetricConfig) => {
-          // Some metrics have different frontend IDs but backend labels
-          // Map common cases:
-          if (sortColumn === "testResultCount" && mc.id === "testResults")
-            return true;
-          if (sortColumn === "testRunCount" && mc.id === "testRunCount")
-            return true;
-          if (sortColumn === "testCaseCount" && mc.id === "testCaseCount")
-            return true;
-          if (sortColumn === "passRate" && mc.id === "passRate") return true;
-          if (sortColumn === "avgElapsed" && mc.id === "avgElapsedTime")
-            return true;
-          if (sortColumn === "sumElapsed" && mc.id === "totalElapsedTime")
-            return true;
-
-          // Also try direct ID match as fallback
-          return mc.id === sortColumn;
-        });
-
-        if (metricConfig) {
-          const metricLabel = metricConfig.label;
-          aVal = a[metricLabel];
-          bVal = b[metricLabel];
-        } else {
-          // Fallback: use the sortColumn directly as the key
-          aVal = a[sortColumn];
-          bVal = b[sortColumn];
-        }
-      }
-
-      // Handle null/undefined values
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      const multiplier = sortDirection === "asc" ? 1 : -1;
-
-      // Handle dates
-      if (
-        sortColumn === "date" ||
-        aVal instanceof Date ||
-        bVal instanceof Date
-      ) {
-        const aTime = new Date(aVal as string | number | Date).getTime();
-        const bTime = new Date(bVal as string | number | Date).getTime();
-        return (aTime - bTime) * multiplier;
-      }
-
-      // Handle numbers
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return (aVal - bVal) * multiplier;
-      }
-
-      // Handle strings
-      return String(aVal).localeCompare(String(bVal)) * multiplier;
+    sortReportRows(results, {
+      dimensions,
+      metricConfigs,
+      sortColumn,
+      sortDirection,
     });
   } else if (dimensions.includes("date")) {
     // Default sort by date if date dimension is used (for backward compatibility)
@@ -1210,133 +1132,11 @@ async function handleProjectSpecificAggregation({
 
   // Apply sorting if specified
   if (sortColumn && sortDirection) {
-    results.sort((a: ReportRow, b: ReportRow) => {
-      // Determine if sortColumn is a dimension or metric
-      let aVal, bVal;
-
-      // Check if it's a dimension
-      if (dimensions.includes(sortColumn)) {
-        const _dimData = a[sortColumn];
-        const _dimDataB = b[sortColumn];
-
-        // Handle different dimension types
-        if (sortColumn === "date") {
-          // Try both executedAt and createdAt fields
-          const dateA = a[sortColumn] as DimensionDisplayValue | undefined;
-          const dateB = b[sortColumn] as DimensionDisplayValue | undefined;
-          aVal = dateA?.executedAt || dateA?.createdAt;
-          bVal = dateB?.executedAt || dateB?.createdAt;
-        } else {
-          // For other dimensions, sort by name or id
-          const dimA = a[sortColumn] as DimensionDisplayValue | undefined;
-          const dimB = b[sortColumn] as DimensionDisplayValue | undefined;
-          aVal = dimA?.name || dimA?.id;
-          bVal = dimB?.name || dimB?.id;
-        }
-      } else {
-        // It's a metric - need to find the metric config by matching the backend ID
-        // The sortColumn is a backend metric ID (e.g., 'testResultCount')
-        // The metricConfigs have the label that's used as the key in the result object
-
-        // Try to find the metric config that matches the sortColumn
-        // This could be by id or by checking if the config represents this metric
-        const metricConfig = metricConfigs.find((mc: MetricConfig) => {
-          // Some metrics have different frontend IDs but backend labels
-          // Map common cases:
-          if (sortColumn === "testResultCount" && mc.id === "testResults")
-            return true;
-          if (sortColumn === "testRunCount" && mc.id === "testRunCount")
-            return true;
-          if (sortColumn === "testCaseCount" && mc.id === "testCaseCount")
-            return true;
-          if (sortColumn === "passRate" && mc.id === "passRate") return true;
-          if (sortColumn === "avgElapsed" && mc.id === "avgElapsedTime")
-            return true;
-          if (sortColumn === "sumElapsed" && mc.id === "totalElapsedTime")
-            return true;
-
-          // Also try direct ID match as fallback
-          return mc.id === sortColumn;
-        });
-
-        if (metricConfig) {
-          const metricLabel = metricConfig.label;
-          aVal = a[metricLabel];
-          bVal = b[metricLabel];
-        } else {
-          // Fallback: use the sortColumn directly as the key
-          aVal = a[sortColumn];
-          bVal = b[sortColumn];
-        }
-      }
-
-      // Handle null/undefined values
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      const multiplier = sortDirection === "asc" ? 1 : -1;
-
-      // Handle dates
-      if (
-        sortColumn === "date" ||
-        aVal instanceof Date ||
-        bVal instanceof Date
-      ) {
-        const aTime = new Date(aVal as string | number | Date).getTime();
-        const bTime = new Date(bVal as string | number | Date).getTime();
-        return (aTime - bTime) * multiplier;
-      }
-
-      // Handle numbers with stable secondary sort by date
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        const numComparison = (aVal - bVal) * multiplier;
-
-        // If values are equal, use date as secondary sort for stable sorting
-        if (
-          numComparison === 0 &&
-          dimensions.includes("date") &&
-          sortColumn !== "date"
-        ) {
-          const dateA = a.date as DimensionDisplayValue | undefined;
-          const dateB = b.date as DimensionDisplayValue | undefined;
-          const dateAValue = dateA?.executedAt || dateA?.createdAt;
-          const dateBValue = dateB?.executedAt || dateB?.createdAt;
-
-          if (dateAValue && dateBValue) {
-            return (
-              new Date(dateAValue as string).getTime() -
-              new Date(dateBValue as string).getTime()
-            );
-          }
-        }
-
-        return numComparison;
-      }
-
-      // Handle strings
-      const stringComparison =
-        String(aVal).localeCompare(String(bVal)) * multiplier;
-
-      // If values are equal, use date as secondary sort for stable sorting
-      if (
-        stringComparison === 0 &&
-        dimensions.includes("date") &&
-        sortColumn !== "date"
-      ) {
-        const dateA = a.date as DimensionDisplayValue | undefined;
-        const dateB = b.date as DimensionDisplayValue | undefined;
-        const dateAValue = dateA?.executedAt || dateA?.createdAt;
-        const dateBValue = dateB?.executedAt || dateB?.createdAt;
-
-        if (dateAValue && dateBValue) {
-          return (
-            new Date(dateAValue as string).getTime() -
-            new Date(dateBValue as string).getTime()
-          );
-        }
-      }
-
-      return stringComparison;
+    sortReportRows(results, {
+      dimensions,
+      metricConfigs,
+      sortColumn,
+      sortDirection,
     });
   } else if (dimensions.includes("date") && !(sortColumn && sortDirection)) {
     // Default sort by date if date dimension is used (for backward compatibility)

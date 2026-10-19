@@ -93,6 +93,48 @@ describe("sortPreBuiltReportRows", () => {
     ]);
   });
 
+  // automation-trends' Period column has id "period" but renders the row's
+  // periodStart/periodEnd window; without the override its sort flipped the
+  // header chrome and reordered nothing.
+  it("automation-trends: the period column sorts by the period's start instant", () => {
+    const rows = [
+      {
+        periodStart: "2026-03-02T00:00:00.000Z",
+        periodEnd: "2026-03-08T23:59:59.999Z",
+      },
+      {
+        periodStart: "2026-01-05T00:00:00.000Z",
+        periodEnd: "2026-01-11T23:59:59.999Z",
+      },
+      {
+        periodStart: "2026-02-02T00:00:00.000Z",
+        periodEnd: "2026-02-08T23:59:59.999Z",
+      },
+    ];
+    const desc = sortPreBuiltReportRows("automation-trends", rows, {
+      column: "period",
+      direction: "desc",
+    });
+    expect(desc.map((r) => r.periodStart.slice(0, 7))).toEqual([
+      "2026-03",
+      "2026-02",
+      "2026-01",
+    ]);
+    const asc = sortPreBuiltReportRows(
+      "cross-project-automation-trends",
+      rows,
+      {
+        column: "period",
+        direction: "asc",
+      }
+    );
+    expect(asc.map((r) => r.periodStart.slice(0, 7))).toEqual([
+      "2026-01",
+      "2026-02",
+      "2026-03",
+    ]);
+  });
+
   it("keeps nulls LAST under either direction — an empty cell is an absence, not a smallest value", () => {
     const rows = [
       { lastExecutedAt: null },
