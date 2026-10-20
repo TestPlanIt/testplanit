@@ -741,7 +741,7 @@
       "sharedContent": "共享内容",
       "impact": "影响分析",
       "alerts": "通知和警报",
-      "triage": "失败分类"
+      "triage": "失败模式"
     },
     "aria": {
       "userMenu": "用户菜单",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "主要的",
       "fields": "田野",
+      "rootCauses": "根本原因",
       "appConfig": "应用程序配置",
       "recordKeys": "记录键",
       "imports": "数据导入",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "您确定要删除 {name} 里程碑类型吗？"
       }
     },
+    "rootCauses": {
+      "description": "失败模式分配给分组失败的根本原因。AI 使用每个描述从此列表中选择。",
+      "filterPlaceholder": "筛选根本原因……",
+      "reordered": "根本原因已重新排序",
+      "descriptionPlaceholder": "此根本原因何时适用？AI 使用此文本来决定。",
+      "columns": {
+        "signatures": "模式"
+      },
+      "add": {
+        "button": "添加根本原因",
+        "title": "添加根本原因"
+      },
+      "edit": {
+        "title": "编辑根本原因"
+      },
+      "errors": {
+        "nameExists": "已存在同名的根本原因"
+      },
+      "delete": {
+        "confirmMessage": "您确定要删除 {name} 根本原因吗？",
+        "inUse": "{count, plural, other {# 个失败模式使用它。}}",
+        "moveLabel": "{count, plural, one {将模式移动到} other {将 # 个模式移动到}}"
+      }
+    },
     "issue_config": {
       "link_title": "链接问题跟踪器",
       "link_description": "配置手动链接问题的基本 URL。当仅使用外部 ID 链接问题时，此基本 URL 将添加到完整链接的前面。",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "自动化候选报告",
         "derive_case_steps": "AI 步骤推导",
         "impact_analysis": "影响：受影响测试选择",
-        "failure_triage": "失败分类分类"
+        "failure_triage": "失败模式：根本原因"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "审计日志",
         "budget-alerts": "预算警报",
         "auto-tag": "AI自动标签",
-        "failure-triage": "失败分类",
+        "failure-triage": "失败模式",
         "repo-cache": "存储库缓存",
         "copy-move": "复制和移动",
         "duplicate-scan": "重复扫描",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "在 {target} 上的自动化执行以 {status}{error, select, other {: {error}}} 结束",
           "RUN_UNTESTED_SHARE": "运行案例中有 {untestedPercent}% 无结果，距离其里程碑到期还有 {daysRemaining, plural, one {# 天} other {# 天}}（阈值 {threshold}%）。",
           "RUN_ISSUES_OPENED": "链接到运行结果的 {issues, plural, one {# 个问题} other {# 个问题}}（阈值 {threshold}）。",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# 个失败模式首次出现} other {# 个失败模式首次出现}}在运行中（阈值 {threshold}）。",
           "SESSION_OVERRUN": "会话耗时 {elapsed}，估计值为 {estimate}，超支 {overrun}%（允许超过 {threshold}%）。",
           "REQUIREMENT_COVERAGE_BELOW": "在 {total} 个需求中，{covered} 个（{coverage}%）{basis, select, PASSING {具有通过的最新结果} other {已链接到测试用例}}（阈值 {threshold}%）。",
           "STALE_CASES": "{stale, plural, one {# 个用例} other {# 个用例}} {days, plural, one {# 天} other {# 天}} 内无结果（阈值 {threshold}）。",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "测试运行结果",
       "TestRunResultRestrictedFields": "测试运行结果受限字段",
       "AutomatedExecution": "自动化执行",
+      "FailurePatterns": "失败模式",
       "Sessions": "会议",
       "SessionsRestrictedFields": "会话受限字段",
       "ClosedSessions": "闭门会议",
@@ -7971,7 +7998,7 @@
       "name": "## 角色名称\n一个清晰、简洁、描述性的名称或关键词，用于所有项目。\n\n- 帮助团队成员快速找到相关的测试用例、测试运行和会话。",
       "isDefault": "## 默认角色\n指示此角色是否为项目的默认角色。\n\n- 默认角色已预先为新用户选择。\n- 可随时更改。",
       "permissions": {
-        "canAddEdit": "## 添加/编辑\n指示此角色是否可以添加和编辑相关的应用程序区域。\n\n- **自动化执行** 授予在 CI 提供程序上启动、重试和取消自动化执行的权利。记录结果仍需要 **测试运行结果** 添加/编辑，从存储库启动也需要 **测试运行** 添加/编辑，因为它创建或扩展了一个运行。\n- **警报** 授予在项目中创建警报以及编辑、暂停和删除您创建的警报的权利。项目管理员管理每个警报和其他用户的订阅；任何人都可以跟随或离开警报。",
+        "canAddEdit": "## 添加/编辑\n表示此角色是否可以添加和编辑相关应用区域。\n\n- **自动执行** 授予在 CI 提供商上启动、重试和取消自动执行的权限。记录结果仍然需要 **测试运行结果** 添加/编辑，从存储库启动还需要 **测试运行** 添加/编辑，因为它会创建或扩展运行。\n- **失败模式** 授予设置或清除失败模式根本原因或要求 AI 提供原因、解决、忽略或重新打开、编辑其注释、链接和取消链接问题以及隔离或发布其测试用例的权限。任何有权访问项目的人都可以看到其失败模式；项目管理员管理失败模式设置。\n- **警报** 授予在项目中创建警报以及编辑、暂停和删除您创建的警报的权限。项目管理员管理每个警报和其他用户的订阅；任何人都可以关注或离开警报。",
         "canDelete": "## 删除\n指示此角色是否可以删除相关的应用程序区域。",
         "canClose": "## 关闭\n指示此角色是否可以关闭相关的应用程序区域。",
         "canApprove": "## 批准\n指示此角色是否可以批准相关应用程序领域的审核请求。仅适用于测试用例库、测试运行和会话。",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## 路径模式\n每行将基础**路径**与 glob **模式**结合在一起。行会叠加：当任何行与文件匹配时，文件将被包含。\n\n- `src` + `**/*` — `src` 下的所有内容\n- 空白或 `.` + `**/*` — 仓库中的每个文件\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 文件，但测试文件除外\n\n### 排除\n在行上勾选**排除**以移除其文件，即使另一行包含它们。排除项适用于文件选择器和缓存，以及针对分析的已更改文件的影响分析，因此在几乎每个拉取请求上都会更改的文件会停止拉入不相关的测试用例。至少一行必须保持未勾选状态。\n\n- 空白 + `**/CHANGELOG*` — 每个更新日志，在任何深度\n- `app` + `build.gradle.kts` — 仅用于版本更新的构建文件",
     "projectAutomation": "## 自动化执行\n执行目标告诉 TestPlanIt 在哪里执行此项目的自动化用例：GitHub Actions 工作流、GitLab CI 管道或任何其他系统的已签名网络钩子。当运行被执行时，TestPlanIt 使用运行 id 和计划 URL 启动任务；任务读取计划，运行匹配的测试，并使用记者或 CLI 将结果报告回来。目标可以在不删除的情况下禁用。",
     "userAlerts": "## 通知和警报\n**通知偏好设置**决定了您如何收到通知（应用内、电子邮件、摘要）以及您收到哪些类型的通知。\n\n**警报**监视测试指标，当指标超过阈值时通知订阅者。例如，某个结果耗时比该用例的常规耗时长50%，某个用例连续失败三次，某个运行的通过率降至90%以下，或某个里程碑在还有天数的情况下已落后。列表显示您项目中的每个警报；**通知我**开关可订阅或取消订阅某个警报。**添加警报**在您的角色具有**警报**添加/编辑权限的任何项目中创建您自己的警报；项目管理员管理其项目中的每个警报和其他人的订阅。警报在其冷却期内对于每个主题最多触发一次，并保持沉默直到收到足够的结果。",
-    "projectTriage": "## 失败分类\n共享相同异常、消息和顶部堆栈帧的自动化失败被分组为一个**签名**。每个签名显示它发生的频率、它接触的测试用例和运行，以及AI对它是否是产品缺陷、测试缺陷、环境问题或不稳定的看法。处理签名后解决或忽略它；如果失败回来，它会自动重新打开。",
-    "projectTriageSettings": "## 失败分类设置\n在每个到达的自动化结果上进行分组运行，不费任何费用。AI分类使用分配给AI模型页面上**失败分类分类**功能的AI模型；在此处关闭它以继续分组而不进行任何AI调用。**分析现有结果**将此项目中已记录的每个自动化失败分组。"
+    "projectTriage": "## 失败模式\n共享相同异常、消息和顶部堆栈帧的自动故障被分组为一个 **失败模式**。每个模式显示发生的频率、它涉及的测试用例和运行，以及 AI 对其根本原因的看法（产品错误、测试错误、环境或默认不稳定）。一旦模式得到处理，解决或忽略它；如果故障再次出现，它会自动重新打开。",
+    "projectTriageSettings": "## 失败模式设置\n每当自动结果到达时，对运行进行分组，无需任何费用。AI 根本原因建议使用分配给 AI 模型页面上的 **失败模式：根本原因** 功能的 AI 模型；在此处关闭它以保持分组而无需任何 AI 调用。**分析现有结果** 对此项目中已记录的每个自动故障进行分组。",
+    "projectQuarantine": "## 隔离的测试用例\n隔离的测试用例继续运行和记录结果，但其失败被排除在运行通过/失败之外，并显示为单独的计数。在修复原因时从失败模式中隔离用例。一旦该用例连续通过失败模式设置中设置的次数后，隔离会自动解除，除非它被标记为手动发布；在此处或从模式随时发布它。",
+    "rootCauses": "## 根本原因\n失败模式通过 AI 或手动分配给分组失败的根本原因。每个都有 AI 读取的描述，以决定何时适用。重命名、重新着色或重新排序它们，添加您自己的，或删除您不使用的；删除一个会使其模式没有根本原因。",
+    "rootCauseDescription": "## 描述\nAI 读取此描述以决定根本原因何时适用于失败模式，因此请描述指向它的证据。"
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "阈值",
         "RUN_UNTESTED_SHARE": "未测试用例超过 (%)",
         "RUN_ISSUES_OPENED": "链接问题，超过",
+        "NEW_FAILURE_SIGNATURES": "新失败模式，多于",
         "SESSION_OVERRUN": "超过估计值超过 (%)",
         "MILESTONE_BEHIND": "完成度低于 (%)",
         "MILESTONE_OVERDUE": "阈值",
@@ -10654,6 +10685,11 @@
         "description": "超过给定数量的问题链接到运行的结果。",
         "summary": "超过 {threshold, plural, one {# 个问题已} other {# 个问题已}}链接到运行的结果，{evaluateOn, select, AS_RESULTS_ARRIVE {随着结果到达进行评估} other {运行完成时进行评估}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "运行中的新失败模式",
+        "description": "运行引入项目之前未见过的失败模式。需要为项目启用失败模式。",
+        "summary": "超过 {threshold, plural, one {# 个失败模式首次出现} other {# 个失败模式首次出现}}在运行中，{evaluateOn, select, AS_RESULTS_ARRIVE {随着结果到达时评估} other {运行完成时评估}}"
+      },
       "SESSION_OVERRUN": {
         "label": "会话超过其估计",
         "description": "已完成的会话的经过时间超过其估计值。",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "已解决",
       "IGNORED": "已忽略"
     },
-    "classification": {
-      "UNCLASSIFIED": "未分类",
-      "PRODUCT_BUG": "产品缺陷",
-      "TEST_BUG": "测试缺陷",
-      "ENVIRONMENT": "环境",
-      "FLAKY": "不稳定"
-    },
+    "unclassified": "无根本原因",
     "source": {
-      "AI": "由AI分类",
+      "AI": "AI 建议的根本原因",
       "labelAI": "AI",
       "labelMANUAL": "手动"
     },
     "columns": {
-      "classification": "分类",
+      "classification": "根本原因",
       "occurrences": "发生次数",
       "firstSeen": "首次出现",
       "lastSeen": "最后出现",
-      "classifiedBy": "分类者"
+      "classifiedBy": "设置者"
     },
     "filters": {
-      "searchPlaceholder": "搜索签名……",
+      "searchPlaceholder": "搜索失败模式……",
       "flakyOnly": "不稳定候选",
-      "sourceAll": "AI或手动"
+      "sourceAll": "由任何人设置",
+      "sourceAi": "由 AI 设置",
+      "sourceManual": "手动设置",
+      "sourceNone": "未设置"
     },
     "actions": {
       "resolve": "解决",
       "ignore": "忽略",
-      "classify": "使用AI分类",
-      "setClassification": "设置分类"
+      "classify": "使用 AI 建议根本原因",
+      "setClassification": "设置根本原因"
     },
     "detail": {
       "exceptionType": "异常类型",
@@ -10822,13 +10855,13 @@
       "rationale": "原因",
       "suggestedIssueTitle": "建议的问题标题",
       "nextStep": "建议的下一步",
-      "noAi": "尚未由AI分类。",
+      "noAi": "尚无 AI 建议。",
       "noDetails": "此失败未携带任何消息或堆栈跟踪，因此按测试用例分组。",
       "notesPlaceholder": "团队备注……",
       "lastRun": "最后运行",
       "aiSuggestion": "AI建议",
-      "unlinkConfirmDescription": "这将从此签名中删除问题。问题本身会被保留，之后可以再次链接。",
-      "signatureLabel": "失败签名",
+      "unlinkConfirmDescription": "这会从此失败模式中移除该问题。问题本身会被保留，之后可以再次链接。",
+      "signatureLabel": "失败模式",
       "affectedCasesLabel": "受影响的测试用例"
     },
     "flakyCandidate": "不稳定候选",
@@ -10836,31 +10869,31 @@
     "knownIssue": "已知问题",
     "notGrouped": "{count, plural, one {# 个失败尚未分组} other {# 个失败尚未分组}}",
     "runPanel": {
-      "title": "失败群集",
+      "title": "失败模式",
       "inRun": "{count, plural, one {# 在此运行中} other {# 在此运行中}}",
-      "hint": "点击一个群集以过滤下面的结果。",
-      "open": "查看签名",
+      "hint": "单击一个模式以筛选下面的结果。",
+      "open": "查看模式",
       "inRunColumn": "在此运行中",
-      "selectedClusters": "{count, plural, one {# 个群集已选择} other {# 个群集已选择}}",
-      "clearSelected": "清除选定的群集"
+      "selectedClusters": "{count, plural, one {已选择 # 个模式} other {已选择 # 个模式}}",
+      "clearSelected": "清除选定的模式"
     },
     "toasts": {
-      "updated": "签名已更新",
-      "updateFailed": "无法更新签名",
-      "classifyQueued": "已请求AI分类",
+      "updated": "失败模式已更新",
+      "updateFailed": "无法更新失败模式",
+      "classifyQueued": "已请求 AI 根本原因建议",
       "noAiModel": "未为此功能配置AI模型",
       "issueLinked": "问题已链接"
     },
     "empty": {
-      "title": "尚无失败签名",
-      "description": "随着自动化结果和失败的到达，签名会出现在此处。要将此项目中已记录的失败分组，请在失败分类设置中使用分析现有结果。"
+      "title": "尚无失败模式",
+      "description": "随着自动结果和失败的到达，失败模式会显示在这里。要对已在此项目中记录的失败进行分组，请在失败模式设置中使用"
     },
     "settings": {
-      "description": "将自动化失败分组为签名，并让AI对其进行分类。",
-      "enableLabel": "启用失败分类",
+      "description": "将自动化失败分组为模式，并让 AI 建议其根本原因。",
+      "enableLabel": "启用失败模式",
       "enableDescription": "在结果到达时，按异常、消息和堆栈帧对此项目中的每个自动化失败进行分组。",
-      "autoClassifyLabel": "使用AI对新签名进行分类",
-      "autoClassifyDescription": "要求项目的AI模型将每个新签名分类为产品缺陷、测试缺陷、环境问题或不稳定。需要向失败分类分类功能分配AI模型。",
+      "autoClassifyLabel": "使用 AI 建议根本原因",
+      "autoClassifyDescription": "要求项目的 AI 模型从根本原因目录中为每个新失败模式选择根本原因。需要为失败模式指定 AI 模型：根本原因功能。",
       "backfillLabel": "分析现有结果",
       "backfillDescription": "对此项目中已记录的每个自动化失败进行分组。在后台运行。",
       "backfillStarted": "分析已开始",
@@ -10868,11 +10901,47 @@
       "backfillDone": "分析完成",
       "backfillFailed": "分析失败",
       "backfillQueueUnavailable": "后台作业队列不可用",
-      "enabledToast": "失败分类已启用",
-      "disabledToast": "失败分类已禁用",
-      "autoClassifyOnToast": "AI分类已启用",
-      "autoClassifyOffToast": "AI分类已禁用",
-      "openTriage": "打开失败分类"
+      "enabledToast": "失败模式已启用",
+      "disabledToast": "失败模式已禁用",
+      "autoClassifyOnToast": "AI 根本原因建议已启用",
+      "autoClassifyOffToast": "AI 根本原因建议已禁用",
+      "autoReleaseLabel": "自动释放隔离，之后",
+      "autoReleasePassesLabel": "连续通过次数",
+      "autoReleaseDescription": "隔离的测试用例在隔离后连续通过此次数后将被释放。跳过的结果将被忽略。标记为\"保持直到手动释放\"的隔离保持不变。",
+      "autoReleaseOnToast": "自动释放已启用",
+      "autoReleaseOffToast": "自动释放已禁用",
+      "autoReleasePassesSaved": "{count, plural, one {隔离在 # 次连续通过后释放} other {隔离在 # 次连续通过后释放}}",
+      "autoReleasePassesInvalid": "输入 1 到 100 之间的通过次数",
+      "openTriage": "打开失败模式"
+    },
+    "quarantine": {
+      "label": "已隔离",
+      "title": "隔离的测试用例",
+      "hint": "隔离测试用例的失败排除在运行通过/失败之外，并单独计算。测试用例继续运行并记录结果。",
+      "metricHint": "此运行中隔离测试用例的失败。它们不计入通过率。",
+      "action": "隔离",
+      "actionAll": "隔离受影响的测试用例",
+      "release": "释放",
+      "reasonLabel": "原因",
+      "reasonPlaceholder": "为什么隔离此测试用例？（可选）",
+      "keepLabel": "保持隔离直到手动释放",
+      "keepHint": "跳过项目在连续通过次数后的自动释放。",
+      "dialogTitle": "{count, plural, one {隔离 # 个测试用例} other {隔离 # 个测试用例}}",
+      "releaseConfirmTitle": "从隔离中释放？",
+      "releaseConfirmDescription": "测试用例的失败再次计入运行通过/失败。",
+      "quarantinedToast": "{count, plural, one {# 个测试用例隔离} other {# 个测试用例隔离}}",
+      "releasedToast": "测试用例已从隔离中释放",
+      "failedToast": "无法更新隔离",
+      "listButton": "{count, plural, =0 {隔离的测试用例} one {# 个隔离的测试用例} other {# 个隔离的测试用例}}",
+      "columns": {
+        "signature": "失败模式",
+        "by": "隔离者",
+        "since": "自",
+        "releasePolicy": "释放"
+      },
+      "releaseAuto": "{count, plural, one {# 次连续通过后自动} other {# 次连续通过后自动}}",
+      "releaseManual": "手动",
+      "empty": "此项目中没有隔离的测试用例。"
     }
   }
 }

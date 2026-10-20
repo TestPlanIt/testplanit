@@ -84,7 +84,7 @@ interface CreateIssueJiraFormProps {
 export function CreateIssueJiraForm({
   open,
   onOpenChange,
-  projectId: _projectId,
+  projectId,
   integrationId,
   projectIntegrationId,
   projectKey: _legacyProjectKey,
@@ -432,6 +432,8 @@ export function CreateIssueJiraForm({
         title: data.summary,
         description: data.description, // This will be TipTap JSON, adapter will convert to ADF
         customFields: {} as Record<string, any>,
+        // Internal TestPlanIt project for the stored issue
+        testplanitProjectId: projectId,
         ...(failureSignatureId
           ? { failureSignatureId: String(failureSignatureId) }
           : {}),

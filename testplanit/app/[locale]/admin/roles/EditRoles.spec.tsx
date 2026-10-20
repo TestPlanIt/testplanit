@@ -206,6 +206,34 @@ describe("EditRole", () => {
     });
   });
 
+  test("FailurePatterns row has an Add/Edit switch and no Delete switch", async () => {
+    renderWithProvider();
+
+    await waitFor(() => {
+      expect(screen.getByRole("table")).toBeInTheDocument();
+    });
+
+    const rows = screen.getAllByRole("row");
+    const failurePatternsRow = rows.find((row) =>
+      row.textContent?.includes("FailurePatterns")
+    );
+    expect(failurePatternsRow).toBeTruthy();
+
+    const addEditSwitches = failurePatternsRow?.querySelectorAll(
+      '[role="switch"][aria-label="FailurePatterns common.permissions.addEdit"]'
+    );
+    expect(addEditSwitches?.length ?? 0).toBe(1);
+
+    const deleteSwitches = failurePatternsRow?.querySelectorAll(
+      '[aria-label$="common.actions.delete"]'
+    );
+    expect(deleteSwitches?.length ?? 0).toBe(0);
+    // Cells: area, Add/Edit, Delete, Complete, Approve, Read Sensitive
+    expect(failurePatternsRow?.querySelectorAll("td")[2]?.textContent).toBe(
+      "-"
+    );
+  });
+
   test("canClose shown only for TestRuns and Sessions rows", async () => {
     renderWithProvider();
 

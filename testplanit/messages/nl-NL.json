@@ -741,7 +741,7 @@
       "sharedContent": "Gedeelde inhoud",
       "impact": "Impactanalyse",
       "alerts": "Meldingen en waarschuwingen",
-      "triage": "Foutclassificatie"
+      "triage": "Foutpatronen"
     },
     "aria": {
       "userMenu": "Gebruikersmenu",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Voornaamst",
       "fields": "Velden",
+      "rootCauses": "Hoofdoorzaken",
       "appConfig": "Toepassingsconfiguratie",
       "recordKeys": "Recordsleutels",
       "imports": "Gegevensimport",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "Weet je zeker dat je het mijlpaaltype {name} wilt verwijderen?"
       }
     },
+    "rootCauses": {
+      "description": "De hoofdoorzaken die Foutpatronen toewijst aan gegroepeerde fouten. De AI kiest uit deze lijst met behulp van elke beschrijving.",
+      "filterPlaceholder": "Hoofdoorzaken filteren...",
+      "reordered": "Hoofdoorzaken opnieuw geordend",
+      "descriptionPlaceholder": "Wanneer is deze hoofdoorzaak van toepassing? De AI gebruikt deze tekst om te bepalen.",
+      "columns": {
+        "signatures": "Patronen"
+      },
+      "add": {
+        "button": "Hoofdoorzaak toevoegen",
+        "title": "Hoofdoorzaak toevoegen"
+      },
+      "edit": {
+        "title": "Hoofdoorzaak bewerken"
+      },
+      "errors": {
+        "nameExists": "Een hoofdoorzaak met deze naam bestaat al"
+      },
+      "delete": {
+        "confirmMessage": "Weet je zeker dat je de hoofdoorzaak {name} wilt verwijderen?",
+        "inUse": "{count, plural, one {# foutpatroon gebruikt het.} other {# foutpatronen gebruiken het.}}",
+        "moveLabel": "{count, plural, one {Verplaats het patroon naar} other {Verplaats de # patronen naar}}"
+      }
+    },
     "issue_config": {
       "link_title": "Link Probleem Tracker",
       "link_description": "Configureer de basis-URL voor handmatig gekoppelde issues. Wanneer u een issue koppelt met alleen een externe ID, wordt deze basis-URL voorafgegaan om de volledige link te creëren.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Rapport over automatiseringskandidaten",
         "derive_case_steps": "AI-afleiding van stappen",
         "impact_analysis": "Impact: beïnvloede testeselectie",
-        "failure_triage": "Foutclassificatie"
+        "failure_triage": "Foutpatronen: Hoofdoorzaak"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Auditlogboeken",
         "budget-alerts": "Budgetwaarschuwingen",
         "auto-tag": "AI-automatische tagging",
-        "failure-triage": "Foutclassificatie",
+        "failure-triage": "Foutpatronen",
         "repo-cache": "Repositorycache",
         "copy-move": "Kopiëren en verplaatsen",
         "duplicate-scan": "Dubbele scan",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "De geautomatiseerde uitvoering op {target} eindigd met {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% van de gevallen van de run heeft geen resultaat met {daysRemaining, plural, one {# dag} other {# dagen}} voordat de mijlpaal vervalt (drempel {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# probleem is} other {# problemen zijn}} gekoppeld aan de resultaten van de run (drempel {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# foutpatroon verscheen} other {# foutpatronen verschenen}} voor het eerst in de run (drempel {threshold}).",
           "SESSION_OVERRUN": "De sessie duurde {elapsed} tegen een schatting van {estimate}, {overrun}% voorbij (meer dan {threshold}% toegestaan).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} van {total} vereisten ({coverage}%) {basis, select, PASSING {hebben een succesvol laatste resultaat} other {zijn gekoppeld aan een testgeval}} (drempel {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# zaak heeft} other {# zaken hebben}} {days, plural, one {# dag} other {# dagen}} lang geen resultaat gehad (drempel {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "Testresultaten",
       "TestRunResultRestrictedFields": "Beperkte velden voor testresultaten",
       "AutomatedExecution": "Geautomatiseerde uitvoering",
+      "FailurePatterns": "Foutpatronen",
       "Sessions": "Sessies",
       "SessionsRestrictedFields": "Sessie beperkte velden",
       "ClosedSessions": "Gesloten sessies",
@@ -7971,7 +7998,7 @@
       "name": "## Rolnaam\nEen duidelijke, beknopte, beschrijvende naam of trefwoord(en) die in alle projecten wordt gebruikt.\n\n- Helpt teamleden snel gerelateerde testcases, testruns en sessies te vinden.",
       "isDefault": "## Standaardrol\nGeeft aan of deze rol de standaard is voor uw project.\n\n- Standaardrol is vooraf geselecteerd voor nieuwe gebruikers.\n- Kan op elk moment worden gewijzigd.",
       "permissions": {
-        "canAddEdit": "## Toevoegen/bewerken\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan toevoegen en bewerken.\n\n- **Geautomatiseerde uitvoering** verleent het recht om geautomatiseerde uitvoeringen op een CI-provider te starten, opnieuw uit te voeren en te annuleren. Het vastleggen van de resultaten vereist nog steeds **Test Run Results** Add/Edit, en het starten van een repository vereist ook **Test Runs** Add/Edit omdat dit een run maakt of uitbreidt.\n- **Waarschuwingen** verleent het recht om waarschuwingen in het project te creëren en degene die u heeft gemaakt, te bewerken, onderbreken en verwijderen. Projectbeheerders beheren elke waarschuwing en de abonnementen van andere gebruikers; iedereen kan een waarschuwing volgen of verlaten.",
+        "canAddEdit": "## Toevoegen/Bewerken\nGeeft aan of deze rol kan toevoegen en bewerken in het gerelateerde toepassingsgebied.\n\n- **Geautomatiseerde uitvoering** verleent het recht om geautomatiseerde uitvoeringen op een CI-provider te starten, opnieuw uit te voeren en te annuleren. Het opnemen van de resultaten vereist nog steeds **Testuitvoeringsresultaten** Toevoegen/Bewerken, en het starten vanuit de repository vereist ook **Testruns** Toevoegen/Bewerken omdat het een run maakt of uitbreidt.\n- **Foutpatronen** verleent het recht om de hoofdoorzaak van een foutpatroon in te stellen of uit te schakelen, of de AI om één te vragen, op te lossen, te negeren of opnieuw te openen, de notities ervan te bewerken, problemen te koppelen en los te koppelen, en testcases in quarantaine te plaatsen of vrijgeven. Iedereen met toegang tot het project kan de foutpatronen zien; projectbeheerders beheren de instellingen voor Foutpatronen.\n- **Waarschuwingen** verleent het recht om waarschuwingen in het project te maken en de waarschuwingen die je hebt gemaakt, te bewerken, pauze in te stellen en te verwijderen. Projectbeheerders beheren elke waarschuwing en abonnementen van andere gebruikers; iedereen kan een waarschuwing volgen of verlaten.",
         "canDelete": "## Verwijderen\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan verwijderen.",
         "canClose": "## Close\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan sluiten.",
         "canApprove": "## Goedkeuren\nGeeft aan of deze rol beoordelingsverzoeken voor het betreffende toepassingsgebied mag goedkeuren. Is alleen van toepassing op Test Case Repository, Test Runs en Sessions.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## Padpatronen\nElke rij combineert een basis **pad** met een glob **patroon**. Rijen tellen op: een bestand wordt opgenomen wanneer een rij eraan voldoet.\n\n- `src` + `**/*` — alles onder `src`\n- leeg of `.` + `**/*` — elk bestand in de repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` bestanden behalve tests\n\n### Uitsluiten\nVink **Uitsluiten** aan op een rij om de bestanden ervan te verwijderen, zelfs wanneer een ander rij ze opneemt. Uitsluitingen zijn van toepassing op de bestandskiezer en cache, en voor Impact op de gewijzigde bestanden van een analyse, zodat een bestand dat bij bijna elke pull request verandert, geen niet-gerelateerde testgevallen optrekt. Ten minste één rij moet niet aangevinkt blijven.\n\n- leeg + `**/CHANGELOG*` — elk wijzigingenlogboek, op elke diepte\n- `app` + `build.gradle.kts` — een bouwbestand dat alleen de versie verhoogt",
     "projectAutomation": "## Geautomatiseerde uitvoering\nUitvoeringsdoelen vertellen TestPlanIt waar dit project's geautomatiseerde cases uit te voeren: een GitHub Actions-workflow, een GitLab CI-pipeline, of een ondertekende webhook voor elk ander systeem. Wanneer een run wordt uitgevoerd, start TestPlanIt de taak met het run-id en een plan-URL; de taak leest het plan, voert de overeenkomende tests uit en rapporteert resultaten terug met een reporter of de CLI vastgespeld aan die run. Doelen kunnen worden uitgeschakeld zonder te worden verwijderd.",
     "userAlerts": "## Meldingen en waarschuwingen\n**Voorkeursinstellingen voor meldingen** bepalen hoe u wordt bereikt (in-app, e-mail, digest) en welke typen meldingen u überhaupt ontvangt.\n\n**Waarschuwingen** controleren een testmetriek en stellen hun abonnees op de hoogte wanneer deze een lijn overschrijdt, bijvoorbeeld een resultaat dat 50% langer duurt dan de gebruikelijke duur van de zaak, een zaak die drie keer achter elkaar mislukt, een run waarvan het slagingspercentage onder de 90% daalt, of een mijlpaal die achterblijft met nog dagen te gaan. De lijst toont elke waarschuwing in uw projecten; de schakelaar **Meld me** volgt er één of verlaat er één. **Waarschuwing toevoegen** maakt uw eigen in elk project waarin uw rol **Waarschuwingen** Add/Edit heeft; projectbeheerders beheren elke waarschuwing in hun project en de abonnementen van anderen. Een waarschuwing wordt maximaal eenmaal per onderwerp binnen zijn afkoelingsperiode geactiveerd en blijft stil tot deze voldoende resultaten heeft.",
-    "projectTriage": "## Foutclassificatie\nGeautomatiseerde fouten die dezelfde uitzondering, bericht en bovenste stackframes delen, worden in één **handtekening** gegroepeerd. Elke handtekening toont hoe vaak het is gebeurd, welke testcases en runs het heeft geraakt, en de AI's beoordeling of het een productfout, een testfout, een omgevingsprobleem of willekeurig is. Los een handtekening op of negeer deze nadat deze is afgehandeld; deze opent vanzelf opnieuw als de fout terugkomt.",
-    "projectTriageSettings": "## Foutclassificatie-instellingen\nGroeperen op alle geautomatiseerde resultaten die binnenkomen en kost niets. AI-classificatie maakt gebruik van het AI-model dat is toegewezen aan de **Foutclassificatie**-functie op de pagina AI-modellen; schakel deze hier uit om groepering zonder AI-aanroepen te behouden. **Bestaande resultaten analyseren** groepeert elke geautomatiseerde fout die al in dit project is opgenomen."
+    "projectTriage": "## Foutpatronen\nGeautomatiseerde fouten die dezelfde uitzondering, bericht en bovenste stack frames delen, worden gegroepeerd in één **foutpatroon**. Elk patroon laat zien hoe vaak het voorkwam, welke testcases en runs het aanraakte, en wat de AI ervan denkt (productbug, testbug, omgeving of standaard flaky). Zet een patroon op opgelost of genegeerd zodra het afgehandeld is; het heropent automatisch als de fout terugkomt.",
+    "projectTriageSettings": "## Instellingen voor Foutpatronen\nRuns groeperen op elk geautomatiseerd resultaat dat aankomt en kost niets. AI-voorstelling van hoofdoorzaak gebruikt het AI-model dat is toegewezen aan de **Foutpatronen: Hoofdoorzaak**-functie op de pagina AI-modellen; zet het hier uit om groepering zonder AI-oproepen te houden. **Bestaande resultaten analyseren** groepeert alle geautomatiseerde fouten die al in dit project zijn opgenomen.",
+    "projectQuarantine": "## In quarantaine geplaatste testcases\nEen in quarantaine geplaatste testcase blijft draaien en resultaten opnemen, maar de fouten ervan worden buiten de pass/fail van de run gelaten en weergegeven als een aparte telling. Plaats een case in quarantaine vanuit een foutpatroon terwijl de oorzaak wordt opgelost. De quarantaine wordt automatisch opgeheven zodra de case het aantal keren na elkaar heeft doorstaan dat is ingesteld in de instellingen voor Foutpatronen, tenzij deze was gemarkeerd om handmatig te worden vrijgegeven; geef het hier of vanuit het patroon op elk moment vrij.",
+    "rootCauses": "## Hoofdoorzaken\nDe hoofdoorzaken die Foutpatronen toewijst aan gegroepeerde fouten, door AI of handmatig. Elk heeft een beschrijving die de AI leest om te bepalen wanneer het van toepassing is. Hernoem, verander de kleur of herorden ze, voeg je eigen toe, of verwijder de oorzaken die je niet gebruikt; het verwijderen van één laat de patronen ervan zonder hoofdoorzaak.",
+    "rootCauseDescription": "## Beschrijving\nDe AI leest deze beschrijving om te bepalen wanneer de hoofdoorzaak van toepassing is op een foutpatroon, dus beschrijf het bewijs dat ernaar wijst."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Drempel",
         "RUN_UNTESTED_SHARE": "Ongeteste zaken voorbij (%)",
         "RUN_ISSUES_OPENED": "Gekoppelde problemen, meer dan",
+        "NEW_FAILURE_SIGNATURES": "Nieuwe foutpatronen, meer dan",
         "SESSION_OVERRUN": "Over de schatting met meer dan (%)",
         "MILESTONE_BEHIND": "Voltooiing onder (%)",
         "MILESTONE_OVERDUE": "Drempel",
@@ -10654,6 +10685,11 @@
         "description": "Meer dan een bepaald aantal problemen zijn gekoppeld aan de resultaten van een run.",
         "summary": "Meer dan {threshold, plural, one {# probleem is} other {# problemen zijn}} gekoppeld aan de resultaten van een run, {evaluateOn, select, AS_RESULTS_ARRIVE {geëvalueerd naarmate resultaten binnenkomen} other {geëvalueerd wanneer de run is voltooid}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Nieuwe foutpatronen in een run",
+        "description": "Een run introduceert foutpatronen die het project nog niet eerder heeft gezien. Vereist dat Foutpatronen voor het project is ingeschakeld.",
+        "summary": "Meer dan {threshold, plural, one {# foutpatroon verschijnt} other {# foutpatronen verschijnen}} voor het eerst in een run, {evaluateOn, select, AS_RESULTS_ARRIVE {beoordeeld wanneer resultaten binnenkomen} other {beoordeeld wanneer de run voltooid is}}"
+      },
       "SESSION_OVERRUN": {
         "label": "Sessie overschreed schatting",
         "description": "De verstreken tijd van een voltooide sessie overschrijdt de schatting met een percentage.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "Opgelost",
       "IGNORED": "Genegeerd"
     },
-    "classification": {
-      "UNCLASSIFIED": "Niet-geclassificeerd",
-      "PRODUCT_BUG": "Productfout",
-      "TEST_BUG": "Testfout",
-      "ENVIRONMENT": "Omgeving",
-      "FLAKY": "Willekeurig"
-    },
+    "unclassified": "Geen hoofdoorzaak",
     "source": {
-      "AI": "Geclassificeerd door AI",
+      "AI": "Hoofdoorzaak voorgesteld door AI",
       "labelAI": "AI",
       "labelMANUAL": "Handmatig"
     },
     "columns": {
-      "classification": "Classificatie",
+      "classification": "Hoofdoorzaak",
       "occurrences": "Voorvallen",
       "firstSeen": "Eerst gezien",
       "lastSeen": "Laatst gezien",
-      "classifiedBy": "Geclassificeerd door"
+      "classifiedBy": "Ingesteld door"
     },
     "filters": {
-      "searchPlaceholder": "Handtekeningen zoeken...",
+      "searchPlaceholder": "Foutpatronen zoeken...",
       "flakyOnly": "Willekeurige kandidaten",
-      "sourceAll": "AI of handmatig"
+      "sourceAll": "Ingesteld door iedereen",
+      "sourceAi": "Ingesteld door AI",
+      "sourceManual": "Ingesteld handmatig",
+      "sourceNone": "Niet ingesteld"
     },
     "actions": {
       "resolve": "Oplossen",
       "ignore": "Negeren",
-      "classify": "Classificeer met AI",
-      "setClassification": "Stel classificatie in"
+      "classify": "Hoofdoorzaak voorstellen met AI",
+      "setClassification": "Hoofdoorzaak instellen"
     },
     "detail": {
       "exceptionType": "Uitzonderingstype",
@@ -10822,13 +10855,13 @@
       "rationale": "Motivering",
       "suggestedIssueTitle": "Voorgestelde paginatitel",
       "nextStep": "Voorgestelde volgende stap",
-      "noAi": "Nog niet geclassificeerd door AI.",
+      "noAi": "Nog geen AI-voorstel.",
       "noDetails": "Deze fout bevatte geen bericht of stack-tracering, dus deze wordt gegroepeerd op testcase.",
       "notesPlaceholder": "Opmerkingen voor het team...",
       "lastRun": "Vorige run",
       "aiSuggestion": "AI-suggestie",
-      "unlinkConfirmDescription": "Dit verwijdert het probleem uit deze handtekening. Het probleem zelf blijft behouden en kan later opnieuw worden gekoppeld.",
-      "signatureLabel": "Fouthandtekening",
+      "unlinkConfirmDescription": "Dit verwijdert het probleem van dit foutpatroon. Het probleem zelf blijft behouden en kan later opnieuw worden gekoppeld.",
+      "signatureLabel": "Foutpatroon",
       "affectedCasesLabel": "Betrokken testcases"
     },
     "flakyCandidate": "Willekeurige kandidaat",
@@ -10836,31 +10869,31 @@
     "knownIssue": "Bekend probleem",
     "notGrouped": "{count, plural, one {# fout nog niet gegroepeerd} other {# fouten nog niet gegroepeerd}}",
     "runPanel": {
-      "title": "Foutclusters",
+      "title": "Foutpatronen",
       "inRun": "{count, plural, one {# in deze run} other {# in deze run}}",
-      "hint": "Klik op een cluster om de onderstaande resultaten te filteren.",
-      "open": "Handtekening weergeven",
+      "hint": "Klik op een patroon om de onderstaande resultaten te filteren.",
+      "open": "Patroon weergeven",
       "inRunColumn": "In deze run",
-      "selectedClusters": "{count, plural, one {# cluster geselecteerd} other {# clusters geselecteerd}}",
-      "clearSelected": "Wis de geselecteerde clusters"
+      "selectedClusters": "{count, plural, one {# patroon geselecteerd} other {# patronen geselecteerd}}",
+      "clearSelected": "Wis de geselecteerde patronen"
     },
     "toasts": {
-      "updated": "Handtekening bijgewerkt",
-      "updateFailed": "Kon de handtekening niet bijwerken",
-      "classifyQueued": "AI-classificatie aangevraagd",
+      "updated": "Foutpatroon bijgewerkt",
+      "updateFailed": "Kon het foutpatroon niet bijwerken",
+      "classifyQueued": "AI-voorstel voor hoofdoorzaak aangevraagd",
       "noAiModel": "Geen AI-model is geconfigureerd voor deze functie",
       "issueLinked": "Probleem gekoppeld"
     },
     "empty": {
-      "title": "Nog geen fouthandtekeningen",
-      "description": "Handtekeningen verschijnen hier naarmate geautomatiseerde resultaten met fouten binnenkomen. Gebruik Bestaande resultaten analyseren in de Foutclassificatie-instellingen om fouten die al in dit project zijn opgenomen, te groeperen."
+      "title": "Nog geen foutpatronen",
+      "description": "Foutpatronen verschijnen hier wanneer geautomatiseerde resultaten met fouten binnenkomen. Om fouten die al in dit project zijn opgenomen te groeperen, gebruikt u Bestaande resultaten analyseren in de instellingen voor Foutpatronen."
     },
     "settings": {
-      "description": "Groepeer geautomatiseerde fouten in handtekeningen en laat AI deze classificeren.",
-      "enableLabel": "Foutclassificatie inschakelen",
+      "description": "Groepeer geautomatiseerde fouten in patronen en laat AI hun hoofdoorzaak voorstellen.",
+      "enableLabel": "Foutpatronen inschakelen",
       "enableDescription": "Groepeer elke geautomatiseerde fout in dit project op uitzondering, bericht en stackframes naarmate resultaten binnenkomen.",
-      "autoClassifyLabel": "Nieuwe handtekeningen met AI classificeren",
-      "autoClassifyDescription": "Vraag het AI-model van het project om elke nieuwe handtekening te classificeren als een productfout, testfout, omgevingsprobleem of willekeurig. Vereist een AI-model dat is toegewezen aan de functie Foutclassificatie.",
+      "autoClassifyLabel": "Hoofdoorzaken voorstellen met AI",
+      "autoClassifyDescription": "Vraag het AI-model van het project om een hoofdoorzaak voor elk nieuw foutpatroon uit de Hoofdoorzaken-catalogus te kiezen. Vereist dat een AI-model is toegewezen aan de functie Foutpatronen: Hoofdoorzaak.",
       "backfillLabel": "Bestaande resultaten analyseren",
       "backfillDescription": "Groepeer elke geautomatiseerde fout die al in dit project is opgenomen. Wordt op de achtergrond uitgevoerd.",
       "backfillStarted": "Analyse gestart",
@@ -10868,11 +10901,47 @@
       "backfillDone": "Analyse voltooid",
       "backfillFailed": "Analyse mislukt",
       "backfillQueueUnavailable": "Achtergrondjobwachtrij is niet beschikbaar",
-      "enabledToast": "Foutclassificatie ingeschakeld",
-      "disabledToast": "Foutclassificatie uitgeschakeld",
-      "autoClassifyOnToast": "AI-classificatie ingeschakeld",
-      "autoClassifyOffToast": "AI-classificatie uitgeschakeld",
-      "openTriage": "Open foutclassificatie"
+      "enabledToast": "Foutpatronen ingeschakeld",
+      "disabledToast": "Foutpatronen uitgeschakeld",
+      "autoClassifyOnToast": "AI-voorstellen voor hoofdoorzaak ingeschakeld",
+      "autoClassifyOffToast": "AI-voorstellen voor hoofdoorzaak uitgeschakeld",
+      "autoReleaseLabel": "Quarantaine automatisch opheffen na",
+      "autoReleasePassesLabel": "opeenvolgende geslaagde pogingen",
+      "autoReleaseDescription": "Een in quarantaine geplaatste testcase wordt vrijgegeven zodra deze zo veel keer achter elkaar is geslaagd sinds deze in quarantaine werd geplaatst. Overgeslagen resultaten worden genegeerd. Een quarantaine die is gemarkeerd met \"behouden totdat handmatig vrijgegeven\" blijft.",
+      "autoReleaseOnToast": "Automatische vrijgave ingeschakeld",
+      "autoReleaseOffToast": "Automatische vrijgave uitgeschakeld",
+      "autoReleasePassesSaved": "{count, plural, one {Quarantaine wordt opgeheven na # opeenvolgende geslaagde poging} other {Quarantaine wordt opgeheven na # opeenvolgende geslaagde pogingen}}",
+      "autoReleasePassesInvalid": "Voer een aantal pogingen tussen 1 en 100 in",
+      "openTriage": "Foutpatronen openen"
+    },
+    "quarantine": {
+      "label": "In quarantaine",
+      "title": "In quarantaine geplaatste testcases",
+      "hint": "Fouten van in quarantaine geplaatste testcases worden buiten de pass/fail van de run gelaten en afzonderlijk geteld. De testcase blijft draaien en resultaten opnemen.",
+      "metricHint": "Fouten van in quarantaine geplaatste testcases in deze run. Deze tellen niet mee voor het percentage geslaagd.",
+      "action": "In quarantaine plaatsen",
+      "actionAll": "Betrokken testcases in quarantaine plaatsen",
+      "release": "Vrijgeven",
+      "reasonLabel": "Reden",
+      "reasonPlaceholder": "Waarom is deze testcase in quarantaine geplaatst? (optioneel)",
+      "keepLabel": "Houd in quarantaine totdat handmatig vrijgegeven",
+      "keepHint": "Slaat de automatische vrijgave van het project na opeenvolgende geslaagde pogingen over.",
+      "dialogTitle": "{count, plural, one {# testcase in quarantaine plaatsen} other {# testcases in quarantaine plaatsen}}",
+      "releaseConfirmTitle": "Uit quarantaine vrijgeven?",
+      "releaseConfirmDescription": "De fouten van de testcase tellen weer mee voor de pass/fail van de run.",
+      "quarantinedToast": "{count, plural, one {# testcase in quarantaine geplaatst} other {# testcases in quarantaine geplaatst}}",
+      "releasedToast": "Testcase uit quarantaine vrijgegeven",
+      "failedToast": "Kon de quarantaine niet bijwerken",
+      "listButton": "{count, plural, =0 {In quarantaine geplaatste testcases} one {# in quarantaine geplaatste testcase} other {# in quarantaine geplaatste testcases}}",
+      "columns": {
+        "signature": "Foutpatroon",
+        "by": "In quarantaine geplaatst door",
+        "since": "Sinds",
+        "releasePolicy": "Vrijgeven"
+      },
+      "releaseAuto": "{count, plural, one {Automatisch na # opeenvolgende geslaagde poging} other {Automatisch na # opeenvolgende geslaagde pogingen}}",
+      "releaseManual": "Handmatig",
+      "empty": "Er zijn geen testcases in quarantaine geplaatst in dit project."
     }
   }
 }

@@ -741,7 +741,7 @@
       "sharedContent": "Gemeinsame Inhalte",
       "impact": "Auswirkungsanalyse",
       "alerts": "Benachrichtigungen & Warnmeldungen",
-      "triage": "Fehler-Triage"
+      "triage": "Fehlermuster"
     },
     "aria": {
       "userMenu": "Benutzermenü",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Hauptsächlich",
       "fields": "Felder",
+      "rootCauses": "Grundursachen",
       "appConfig": "Anwendungskonfiguration",
       "recordKeys": "Datensatzschlüssel",
       "imports": "Datenimporte",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "Möchten Sie den Meilensteintyp {name} wirklich löschen?"
       }
     },
+    "rootCauses": {
+      "description": "Die Grundursachen, die Fehlermuster für gruppierte Fehler zuweist. Die KI wählt aus dieser Liste anhand jeder Beschreibung.",
+      "filterPlaceholder": "Grundursachen filtern...",
+      "reordered": "Grundursachen neu angeordnet",
+      "descriptionPlaceholder": "Wann gilt diese Grundursache? Die KI nutzt diesen Text, um zu entscheiden.",
+      "columns": {
+        "signatures": "Muster"
+      },
+      "add": {
+        "button": "Grundursache hinzufügen",
+        "title": "Grundursache hinzufügen"
+      },
+      "edit": {
+        "title": "Grundursache bearbeiten"
+      },
+      "errors": {
+        "nameExists": "Eine Grundursache mit diesem Namen existiert bereits"
+      },
+      "delete": {
+        "confirmMessage": "Möchten Sie die Grundursache {name} wirklich löschen?",
+        "inUse": "{count, plural, one {# Fehlermuster nutzt sie.} other {# Fehlermuster nutzen sie.}}",
+        "moveLabel": "{count, plural, one {Muster verschieben zu} other {# Muster verschieben zu}}"
+      }
+    },
     "issue_config": {
       "link_title": "Link-Problem-Tracker",
       "link_description": "Konfigurieren Sie die Basis-URL für manuell verknüpfte Vorgänge. Wenn ein Vorgang nur über eine externe ID verknüpft wird, wird diese Basis-URL vorangestellt, um den vollständigen Link zu erstellen.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Bericht über Automatisierungskandidaten",
         "derive_case_steps": "KI-Schrittableitung",
         "impact_analysis": "Auswirkung: Auswahl der betroffenen Tests",
-        "failure_triage": "Fehler-Triage Klassifizierung"
+        "failure_triage": "Fehlermuster: Grundursache"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Audit-Protokolle",
         "budget-alerts": "Budgetwarnungen",
         "auto-tag": "KI-Auto-Tag",
-        "failure-triage": "Fehler-Triage",
+        "failure-triage": "Fehlermuster",
         "repo-cache": "Repository-Cache",
         "copy-move": "Kopieren & Verschieben",
         "duplicate-scan": "Duplikatscan",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "Die automatisierte Ausführung auf {target} endete mit {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% der Fälle des Durchlaufs haben kein Ergebnis mit {daysRemaining, plural, one {# Tag} other {# Tagen}} bis zum Fälligkeitsdatum des Meilensteins (Schwelle {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# Ticket ist} other {# Tickets sind}} mit den Ergebnissen des Durchlaufs verknüpft (Schwelle {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# Fehlermuster ist} other {# Fehlermuster sind}} zum ersten Mal in der Ausführung angezeigt (Schwelle {threshold}).",
           "SESSION_OVERRUN": "Die Sitzung dauerte {elapsed} gegen eine Schätzung von {estimate}, {overrun}% über (mehr als {threshold}% zulässig).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} von {total} Anforderungen ({coverage}%) {basis, select, PASSING {haben ein bestandenes letztes Ergebnis} other {sind mit einem Testfall verknüpft}} (Schwelle {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis (Schwelle {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "Ergebnisse des Testlaufs",
       "TestRunResultRestrictedFields": "Testlauf-Ergebnis – Eingeschränkte Felder",
       "AutomatedExecution": "Automatisierte Ausführung",
+      "FailurePatterns": "Fehlermuster",
       "Sessions": "Sitzungen",
       "SessionsRestrictedFields": "Sitzungen – Eingeschränkte Felder",
       "ClosedSessions": "Geschlossene Sitzungen",
@@ -7971,7 +7998,7 @@
       "name": "## Rollenname\nEin klarer, prägnanter und beschreibender Name oder ein oder mehrere Schlüsselwörter, die in allen Projekten verwendet werden.\n\n– Hilft Teammitgliedern, schnell zugehörige Testfälle, Testläufe und Sitzungen zu finden.",
       "isDefault": "## Standardrolle\nGibt an, ob diese Rolle die Standardrolle für Ihr Projekt ist.\n\n- Die Standardrolle ist für neue Benutzer vorausgewählt.\n- Kann jederzeit geändert werden.",
       "permissions": {
-        "canAddEdit": "## Hinzufügen/Bearbeiten\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich hinzufügen und bearbeiten kann.\n\n- **Automatisierte Ausführung** gewährt das Recht, automatisierte Ausführungen auf einem CI-Anbieter zu starten, zu wiederholen und abzubrechen. Das Aufzeichnen der Ergebnisse erfordert immer noch **Test-Run-Ergebnisse** Hinzufügen/Bearbeiten, und das Starten eines aus dem Repository erfordert auch **Test Runs** Hinzufügen/Bearbeiten, da es einen Durchlauf erstellt oder erweitert.\n- **Warnmeldungen** gewährt das Recht, Warnmeldungen im Projekt zu erstellen und diejenigen zu bearbeiten, zu pausieren und zu löschen, die Sie erstellt haben. Projektadministratoren verwalten jede Warnmeldung und die Abonnements anderer Benutzer; jeder kann einer Warnmeldung folgen oder sie verlassen.",
+        "canAddEdit": "## Hinzufügen/Bearbeiten\nGibt an, ob diese Rolle das zugehörige Anwendungsbereich hinzufügen und bearbeiten kann.\n\n- **Automatisierte Ausführung** erteilt das Recht, automatisierte Ausführungen bei einem CI-Anbieter zu starten, zu wiederholen und abzubrechen. Das Aufzeichnen der Ergebnisse erfordert jedoch immer noch **Testergebnisse** Hinzufügen/Bearbeiten, und das Starten aus dem Repository benötigt auch **Testausführungen** Hinzufügen/Bearbeiten, da dies eine Ausführung erstellt oder erweitert.\n- **Fehlermuster** erteilt das Recht, die Grundursache eines Fehlermusters festzulegen oder zu löschen, die KI um eine Empfehlung zu bitten, es zu beheben, zu ignorieren oder erneut zu öffnen, seine Notizen zu bearbeiten, Probleme zu verknüpfen und zu trennen sowie Testfälle unter Quarantäne zu stellen oder freizugeben. Jeder mit Zugriff auf das Projekt kann dessen Fehlermuster sehen; Projektadministratoren verwalten die Einstellungen für Fehlermuster.\n- **Warnmeldungen** erteilt das Recht, Warnmeldungen im Projekt zu erstellen und die von Ihnen erstellten zu bearbeiten, anzuhalten und zu löschen. Projektadministratoren verwalten alle Warnmeldungen und Abos anderer Benutzer; jeder kann eine Warnmeldung folgen oder verlassen.",
         "canDelete": "## Löschen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich löschen kann.",
         "canClose": "## Schließen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich schließen kann.",
         "canApprove": "## Genehmigen\nGibt an, ob diese Rolle Überprüfungsanfragen für den zugehörigen Anwendungsbereich genehmigen kann. Gilt nur für Testfall-Repository, Testläufe und Sitzungen.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## Pfadmuster\nJede Zeile kombiniert einen Basis-**Pfad** mit einem Glob-**Muster**. Zeilen addieren sich: Eine Datei wird eingebunden, wenn ein beliebiges Muster darauf passt.\n\n- `src` + `**/*` — alles unter `src`\n- leer oder `.` + `**/*` — jede Datei im Repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts`-Dateien außer Tests\n\n### Ausschließen\nAktivieren Sie **Ausschließen** in einer Zeile, um ihre Dateien zu entfernen, auch wenn eine andere Zeile sie einbindet. Ausschlüsse gelten für die Dateiauswahl und den Cache und für Impact auf die geänderten Dateien einer Analyse, sodass eine Datei, die sich bei fast jedem Pull Request ändert, keine unabhängigen Testfälle einbezieht. Mindestens eine Zeile muss deaktiviert bleiben.\n\n- leer + `**/CHANGELOG*` — jedes Changelog, in jeder Tiefe\n- `app` + `build.gradle.kts` — eine Build-Datei, die nur die Version erhöht",
     "projectAutomation": "## Automatisierte Ausführung\nAusführungsziele teilen TestPlanIt mit, wo die automatisierten Fälle dieses Projekts ausgeführt werden sollen: ein GitHub Actions-Workflow, eine GitLab CI-Pipeline oder ein signierter Webhook für jedes andere System. Wenn ein Lauf ausgeführt wird, startet TestPlanIt den Auftrag mit der Laufkennung und einer Plan-URL; der Auftrag liest den Plan, führt die passenden Tests aus und meldet die Ergebnisse mit einem Reporter oder der an diesen Lauf angehefteten CLI zurück. Ziele können deaktiviert werden, ohne gelöscht zu werden.",
     "userAlerts": "## Benachrichtigungen & Warnmeldungen\n**Benachrichtigungseinstellungen** bestimmen, wie Sie erreicht werden (in-App, E-Mail, Digest) und welche Benachrichtigungstypen Sie überhaupt erhalten.\n\n**Warnmeldungen** beobachten eine Testkennzahl und benachrichtigen ihre Abonnenten, wenn sie eine Grenze überschreitet, z. B. ein Ergebnis, das 50% länger dauert als die übliche Dauer des Falls, ein Fall, der dreimal hintereinander fehlschlägt, ein Durchlauf, dessen Bestehensquote unter 90% sinkt, oder ein Meilenstein, der sich verzögert und noch Tage verbleibend sind. Die Liste zeigt jede Warnmeldung in Ihren Projekten; der Schalter **Benachrichtige mich** folgt oder verlässt eine. **Warnmeldung hinzufügen** erstellt Ihre eigene in jedem Projekt, in dem Ihre Rolle **Warnmeldungen** Hinzufügen/Bearbeiten hat; Projektadministratoren verwalten jede Warnmeldung in ihrem Projekt und die Abonnements anderer Personen. Eine Warnmeldung wird höchstens einmal pro Thema innerhalb ihres Cooldowns abgefeuert und bleibt stumm, bis sie genug Ergebnisse hat.",
-    "projectTriage": "## Fehler-Triage\nAutomatisierte Fehler, die dieselbe Ausnahme, Nachricht und oberen Stack-Frames teilen, werden in eine **Signatur** gruppiert. Jede Signatur zeigt, wie oft sie auftrat, welche Testfälle und Läufe sie betroffen hat, und die Bewertung der KI, ob es sich um einen Produktfehler, einen Testfehler, ein Umgebungsproblem oder Flakiness handelt. Lösen Sie eine Signatur auf oder ignorieren Sie sie, sobald sie behandelt ist; sie öffnet sich von selbst wieder, wenn der Fehler zurückkommt.",
-    "projectTriageSettings": "## Fehler-Triage Einstellungen\nGruppierung läuft auf jeden automatisierten Ergebnis, das ankommt, und kostet nichts. Die KI-Klassifizierung verwendet das KI-Modell, das der Funktion **Fehler-Triage Klassifizierung** auf der Seite KI-Modelle zugewiesen ist; schalten Sie es hier aus, um die Gruppierung ohne KI-Aufrufe beizubehalten. **Vorhandene Ergebnisse analysieren** gruppiert jeden automatisierten Fehler, der bereits in diesem Projekt aufgezeichnet ist."
+    "projectTriage": "## Fehlermuster\nAutomatisierte Fehler, die dieselbe Ausnahme, Nachricht und oberste Stack-Frames teilen, werden in ein **Fehlermuster** gruppiert. Jedes Muster zeigt, wie oft es vorkam, welche Testfälle und Ausführungen es betroffen hat, und die Einschätzung der KI zu dessen Grundursache (Produktfehler, Testfehler, Umgebung oder standardmäßig instabil). Beheben Sie ein Muster, wenn es bearbeitet ist, oder ignorieren Sie es; es öffnet sich selbst erneut, wenn der Fehler erneut auftritt.",
+    "projectTriageSettings": "## Einstellungen für Fehlermuster\nAlle automatisierten Ergebnisse werden gruppiert, wenn sie ankommen, und kosten nichts. Die KI-Empfehlung zur Grundursache verwendet das KI-Modell, das der Funktion **Fehlermuster: Grundursache** auf der Seite \"KI-Modelle\" zugewiesen ist; deaktivieren Sie diese Option hier, um die Gruppierung ohne KI-Aufrufe beizubehalten. **Vorhandene Ergebnisse analysieren** gruppiert alle bereits in diesem Projekt aufgezeichneten automatisierten Fehler.",
+    "projectQuarantine": "## Unter Quarantäne stehende Testfälle\nEin unter Quarantäne stehender Testfall führt weiter aus und zeichnet Ergebnisse auf, aber dessen Fehler werden von der Ausführung Pass/Fail ausgeschlossen und als separate Anzahl angezeigt. Stellen Sie einen Testfall unter Quarantäne, während die Grundursache behoben wird. Die Quarantäne wird automatisch aufgehoben, wenn der Testfall so oft erfolgreich ist, wie in den Einstellungen für Fehlermuster angegeben, sofern nicht markiert, dass er von Hand freigegeben werden soll; geben Sie ihn hier oder vom Muster jederzeit frei.",
+    "rootCauses": "## Grundursachen\nDie Grundursachen, die Fehlermuster KI oder von Hand zuweisen. Jede hat eine Beschreibung, die die KI liest, um zu entscheiden, wann sie angewendet wird. Benennen Sie sie um, färben Sie sie neu, ordnen Sie sie neu an, fügen Sie eigene hinzu, oder löschen Sie die, die Sie nicht verwenden; das Löschen hinterlässt die Muster ohne Grundursache.",
+    "rootCauseDescription": "## Beschreibung\nDie KI liest diese Beschreibung, um zu entscheiden, wann die Grundursache auf ein Fehlermuster angewendet wird. Beschreiben Sie also die Beweise, die darauf hinweisen."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Schwelle",
         "RUN_UNTESTED_SHARE": "Ungetestete Fälle über (%)",
         "RUN_ISSUES_OPENED": "Verknüpfte Probleme, mehr als",
+        "NEW_FAILURE_SIGNATURES": "Neue Fehlermuster, mehr als",
         "SESSION_OVERRUN": "Über der Schätzung um mehr als (%)",
         "MILESTONE_BEHIND": "Fertigstellung unter (%)",
         "MILESTONE_OVERDUE": "Schwelle",
@@ -10654,6 +10685,11 @@
         "description": "Mehr als eine bestimmte Anzahl von Problemen ist mit den Ergebnissen eines Durchlaufs verknüpft.",
         "summary": "Mehr als {threshold, plural, one {# Problem ist} other {# Probleme sind}} mit den Ergebnissen eines Durchlaufs verknüpft, {evaluateOn, select, AS_RESULTS_ARRIVE {bewertet, während Ergebnisse ankommen} other {bewertet, wenn der Durchlauf abgeschlossen ist}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Neue Fehlermuster in einer Ausführung",
+        "description": "Eine Ausführung führt Fehlermuster ein, die das Projekt zuvor nicht gesehen hat. Erfordert Fehlermuster, die für das Projekt aktiviert sind.",
+        "summary": "Mehr als {threshold, plural, one {# Fehlermuster erscheint} other {# Fehlermuster erscheinen}} zum ersten Mal in einer Ausführung, {evaluateOn, select, AS_RESULTS_ARRIVE {bewertet, wenn Ergebnisse eintreffen} other {bewertet, wenn die Ausführung abgeschlossen ist}}"
+      },
       "SESSION_OVERRUN": {
         "label": "Sitzung hat Schätzung überschritten",
         "description": "Die verstrichene Zeit einer abgeschlossenen Sitzung überschreitet ihre Schätzung um einen Prozentsatz.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "Gelöst",
       "IGNORED": "Ignoriert"
     },
-    "classification": {
-      "UNCLASSIFIED": "Unklassifiziert",
-      "PRODUCT_BUG": "Produktfehler",
-      "TEST_BUG": "Testfehler",
-      "ENVIRONMENT": "Umgebung",
-      "FLAKY": "Instabil"
-    },
+    "unclassified": "Keine Grundursache",
     "source": {
-      "AI": "Klassifiziert von KI",
+      "AI": "Grundursache von KI vorgeschlagen",
       "labelAI": "KI",
       "labelMANUAL": "Manuell"
     },
     "columns": {
-      "classification": "Klassifizierung",
+      "classification": "Grundursache",
       "occurrences": "Vorkommen",
       "firstSeen": "Zuerst gesehen",
       "lastSeen": "Zuletzt gesehen",
-      "classifiedBy": "Klassifiziert von"
+      "classifiedBy": "Festgelegt von"
     },
     "filters": {
-      "searchPlaceholder": "Signaturen durchsuchen...",
+      "searchPlaceholder": "Fehlermuster durchsuchen...",
       "flakyOnly": "Flaky-Kandidaten",
-      "sourceAll": "KI oder manuell"
+      "sourceAll": "Festgelegt von jedem",
+      "sourceAi": "Festgelegt von KI",
+      "sourceManual": "Von Hand festgelegt",
+      "sourceNone": "Nicht festgelegt"
     },
     "actions": {
       "resolve": "Beheben",
       "ignore": "Ignorieren",
-      "classify": "Mit KI klassifizieren",
-      "setClassification": "Klassifizierung festlegen"
+      "classify": "Grundursache mit KI vorschlagen",
+      "setClassification": "Grundursache festlegen"
     },
     "detail": {
       "exceptionType": "Ausnahmeart",
@@ -10822,13 +10855,13 @@
       "rationale": "Begründung",
       "suggestedIssueTitle": "Vorgeschlagener Problemtitel",
       "nextStep": "Vorgeschlagener nächster Schritt",
-      "noAi": "Noch nicht von KI klassifiziert.",
+      "noAi": "Noch keine KI-Empfehlung.",
       "noDetails": "Dieser Fehler hatte keine Nachricht oder Stack-Spur, daher wird er nach Testfall gruppiert.",
       "notesPlaceholder": "Notizen für das Team...",
       "lastRun": "Letzter Lauf",
       "aiSuggestion": "KI-Vorschlag",
-      "unlinkConfirmDescription": "Dadurch wird das Ticket von dieser Signatur entfernt. Das Ticket selbst bleibt erhalten und kann später erneut verknüpft werden.",
-      "signatureLabel": "Fehlersignatur",
+      "unlinkConfirmDescription": "Dies entfernt das Ticket von diesem Fehlermuster. Das Ticket selbst wird beibehalten und kann später erneut verknüpft werden.",
+      "signatureLabel": "Fehlermuster",
       "affectedCasesLabel": "Betroffene Testfälle"
     },
     "flakyCandidate": "Flaky-Kandidat",
@@ -10836,31 +10869,31 @@
     "knownIssue": "Bekanntes Problem",
     "notGrouped": "{count, plural, one {# Fehler noch nicht gruppiert} other {# Fehler noch nicht gruppiert}}",
     "runPanel": {
-      "title": "Fehlerclustern",
+      "title": "Fehlermuster",
       "inRun": "{count, plural, one {# in diesem Lauf} other {# in diesem Lauf}}",
-      "hint": "Klicken Sie auf einen Cluster, um die unten stehenden Ergebnisse zu filtern.",
-      "open": "Signatur anzeigen",
+      "hint": "Klicken Sie auf ein Muster, um die unten aufgeführten Ergebnisse zu filtern.",
+      "open": "Muster anzeigen",
       "inRunColumn": "In diesem Lauf",
-      "selectedClusters": "{count, plural, one {# Cluster ausgewählt} other {# Cluster ausgewählt}}",
-      "clearSelected": "Löschen Sie die ausgewählten Cluster"
+      "selectedClusters": "{count, plural, one {# Muster ausgewählt} other {# Muster ausgewählt}}",
+      "clearSelected": "Löschen Sie die ausgewählten Muster"
     },
     "toasts": {
-      "updated": "Signatur aktualisiert",
-      "updateFailed": "Die Signatur konnte nicht aktualisiert werden",
-      "classifyQueued": "KI-Klassifizierung angefordert",
+      "updated": "Fehlermuster aktualisiert",
+      "updateFailed": "Fehlermuster konnte nicht aktualisiert werden",
+      "classifyQueued": "Anfrage zur KI-Grundursachen-Empfehlung gesendet",
       "noAiModel": "Für diese Funktion ist kein KI-Modell konfiguriert",
       "issueLinked": "Ticket verknüpft"
     },
     "empty": {
-      "title": "Noch keine Fehlersignaturen",
-      "description": "Signaturen erscheinen hier, wenn automatisierte Ergebnisse mit Fehlern ankommen. Um bereits in diesem Projekt aufgezeichnete Fehler zu gruppieren, verwenden Sie \"Vorhandene Ergebnisse analysieren\" in den Fehler-Triage-Einstellungen."
+      "title": "Noch keine Fehlermuster",
+      "description": "Fehlermuster werden hier angezeigt, wenn automatisierte Ergebnisse mit Fehlern ankommen. Um bereits in diesem Projekt aufgezeichnete Fehler zu gruppieren, verwenden Sie \"Vorhandene Ergebnisse analysieren\" in den Einstellungen für Fehlermuster."
     },
     "settings": {
-      "description": "Gruppieren Sie automatisierte Fehler in Signaturen und lassen Sie die KI sie klassifizieren.",
-      "enableLabel": "Fehler-Triage aktivieren",
+      "description": "Gruppieren Sie automatisierte Fehler in Muster und lassen Sie die KI deren Grundursache vorschlagen.",
+      "enableLabel": "Fehlermuster aktivieren",
       "enableDescription": "Gruppieren Sie jeden automatisierten Fehler in diesem Projekt nach Ausnahme, Nachricht und Stack-Frames, wenn Ergebnisse ankommen.",
-      "autoClassifyLabel": "Neue Signaturen mit KI klassifizieren",
-      "autoClassifyDescription": "Bitten Sie das KI-Modell des Projekts, jede neue Signatur als Produktfehler, Testfehler, Umgebungsproblem oder Flakiness zu klassifizieren. Benötigt ein KI-Modell, das der Fehler-Triage-Klassifizierungsfunktion zugewiesen ist.",
+      "autoClassifyLabel": "Grundursachen mit KI vorschlagen",
+      "autoClassifyDescription": "Bitten Sie das KI-Modell des Projekts, eine Grundursache für jedes neue Fehlermuster aus dem Katalog \"Grundursachen\" auszuwählen. Erfordert ein KI-Modell, das der Funktion \"Fehlermuster: Grundursache\" zugewiesen ist.",
       "backfillLabel": "Vorhandene Ergebnisse analysieren",
       "backfillDescription": "Gruppieren Sie jeden automatisierten Fehler, der bereits in diesem Projekt aufgezeichnet ist. Läuft im Hintergrund.",
       "backfillStarted": "Analyse gestartet",
@@ -10868,11 +10901,47 @@
       "backfillDone": "Analyse abgeschlossen",
       "backfillFailed": "Analyse fehlgeschlagen",
       "backfillQueueUnavailable": "Background-Job-Warteschlange ist nicht verfügbar",
-      "enabledToast": "Fehler-Triage aktiviert",
-      "disabledToast": "Fehler-Triage deaktiviert",
-      "autoClassifyOnToast": "KI-Klassifizierung aktiviert",
-      "autoClassifyOffToast": "KI-Klassifizierung deaktiviert",
-      "openTriage": "Fehler-Triage öffnen"
+      "enabledToast": "Fehlermuster aktiviert",
+      "disabledToast": "Fehlermuster deaktiviert",
+      "autoClassifyOnToast": "KI-Grundursachen-Vorschläge aktiviert",
+      "autoClassifyOffToast": "KI-Grundursachen-Vorschläge deaktiviert",
+      "autoReleaseLabel": "Quarantäne automatisch freigeben nach",
+      "autoReleasePassesLabel": "aufeinanderfolgende erfolgreiche Durchläufe",
+      "autoReleaseDescription": "Ein unter Quarantäne stehender Testfall wird freigegeben, wenn er dieses Limit aufeinanderfolgender erfolgreicher Durchläufe seit der Quarantäne erreicht hat. Übersprungene Ergebnisse werden ignoriert. Eine Quarantäne, die auf \"manuell freigeben\" markiert ist, bleibt.",
+      "autoReleaseOnToast": "Automatische Freigabe aktiviert",
+      "autoReleaseOffToast": "Automatische Freigabe deaktiviert",
+      "autoReleasePassesSaved": "{count, plural, one {Quarantäne wird nach # aufeinanderfolgenden erfolgreichen Durchlauf freigegeben} other {Quarantäne wird nach # aufeinanderfolgenden erfolgreichen Durchläufen freigegeben}}",
+      "autoReleasePassesInvalid": "Geben Sie eine Anzahl von Durchläufen zwischen 1 und 100 ein",
+      "openTriage": "Fehlermuster öffnen"
+    },
+    "quarantine": {
+      "label": "Unter Quarantäne",
+      "title": "Unter Quarantäne stehende Testfälle",
+      "hint": "Fehler eines unter Quarantäne stehenden Testfalls werden von der Ausführung Pass/Fail ausgeschlossen und separat gezählt. Der Testfall führt weiter aus und zeichnet Ergebnisse auf.",
+      "metricHint": "Fehler von unter Quarantäne stehenden Testfällen in dieser Ausführung. Sie werden nicht auf die Erfolgsquote angerechnet.",
+      "action": "Unter Quarantäne stellen",
+      "actionAll": "Betroffene Testfälle unter Quarantäne stellen",
+      "release": "Freigeben",
+      "reasonLabel": "Grund",
+      "reasonPlaceholder": "Warum wird dieser Testfall unter Quarantäne gestellt? (optional)",
+      "keepLabel": "Unter Quarantäne halten, bis manuell freigegeben",
+      "keepHint": "Überspringt die automatische Freigabe des Projekts nach aufeinanderfolgenden erfolgreichen Durchläufen.",
+      "dialogTitle": "{count, plural, one {# Testfall unter Quarantäne stellen} other {# Testfälle unter Quarantäne stellen}}",
+      "releaseConfirmTitle": "Aus Quarantäne freigeben?",
+      "releaseConfirmDescription": "Die Fehler des Testfalls werden wieder auf die Ausführung Pass/Fail angerechnet.",
+      "quarantinedToast": "{count, plural, one {# Testfall unter Quarantäne gestellt} other {# Testfälle unter Quarantäne gestellt}}",
+      "releasedToast": "Testfall aus Quarantäne freigegeben",
+      "failedToast": "Quarantäne konnte nicht aktualisiert werden",
+      "listButton": "{count, plural, =0 {Unter Quarantäne stehende Testfälle} one {# unter Quarantäne stehender Testfall} other {# unter Quarantäne stehende Testfälle}}",
+      "columns": {
+        "signature": "Fehlermuster",
+        "by": "Unter Quarantäne gestellt von",
+        "since": "Seit",
+        "releasePolicy": "Freigabe"
+      },
+      "releaseAuto": "{count, plural, one {Automatisch nach # aufeinanderfolgenden erfolgreichen Durchlauf} other {Automatisch nach # aufeinanderfolgenden erfolgreichen Durchläufen}}",
+      "releaseManual": "Von Hand",
+      "empty": "In diesem Projekt sind keine Testfälle unter Quarantäne gestellt."
     }
   }
 }

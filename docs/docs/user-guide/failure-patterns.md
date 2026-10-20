@@ -29,7 +29,7 @@ Root causes are a catalogue that system administrators manage under **Administra
 | **Environment** | Infrastructure or configuration rather than code: connection refused, DNS, missing credentials, browser or driver start-up, CI runner problems. |
 | **Flaky** | Intermittent. The same cases pass and fail without a code change. A pass/fail history with many flips is the main evidence. |
 
-The AI picks from the catalogue using each entry's description, so an added root cause such as *Data setup* or *Third-party outage* is available to the AI as soon as it has a description. Its answer comes with a rationale, a suggested issue title and a suggested next step. The pattern shows whether its root cause came from AI or from a person, and the list can be filtered by root cause and by that. Anyone who can record results can override it from the pattern page with **Set root cause**; a root cause set by hand always wins, and the AI suggestion stays visible underneath for reference. **Suggest root cause with AI** asks for a fresh suggestion at any time.
+The AI picks from the catalogue using each entry's description, so an added root cause such as *Data setup* or *Third-party outage* is available to the AI as soon as it has a description. Its answer comes with a rationale, a suggested issue title and a suggested next step. The pattern shows whether its root cause came from AI or from a person, and the list can be filtered by root cause and by that. Anyone with the **Failure Patterns** add/edit permission can override it from the pattern page with **Set root cause**; a root cause set by hand always wins, and the AI suggestion stays visible underneath for reference. **Suggest root cause with AI** asks for a fresh suggestion at any time.
 
 A pattern is flagged as a **flaky candidate** from history alone, without AI: at least half of its test cases flipped between pass and fail two or more times in their last ten automated verdicts.
 
@@ -68,4 +68,4 @@ The **New failure patterns in a run** [alert](alerts.md) fires when a run introd
 
 ## Permissions
 
-Everyone who can see the project can see its failure patterns. Changing status, root cause, notes, issue links and quarantine needs the **Failure Patterns** add/edit permission on the user's role (project admins always have it). When the permission was introduced, every role received the Failure Patterns right it effectively had before, from its Test Runs add/edit. Settings and **Analyze existing results** are for project admins; the root cause catalogue is for system administrators.
+Everyone who can see the project can see its failure patterns. Changing status, root cause, notes, issue links and quarantine needs the **Failure Patterns** add/edit permission on the user's role (project admins always have it). Settings and **Analyze existing results** are for project admins; the root cause catalogue is for system administrators.

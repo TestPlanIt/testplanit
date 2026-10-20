@@ -741,7 +741,7 @@
       "sharedContent": "Paylaşılan İçerik",
       "impact": "Etki Analizi",
       "alerts": "Bildirimler & Uyarılar",
-      "triage": "Hata Sınıflandırması"
+      "triage": "Başarısızlık Desenleri"
     },
     "aria": {
       "userMenu": "Kullanıcı menüsü",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Ana",
       "fields": "Tarlalar",
+      "rootCauses": "Temel Nedenler",
       "appConfig": "Uygulama Yapılandırması",
       "recordKeys": "Kayıt Anahtarları",
       "imports": "Veri İçe Aktarımları",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "{name} Kilometre Taşı Türünü silmek istediğinizden emin misiniz?"
       }
     },
+    "rootCauses": {
+      "description": "Başarısızlık Desenleri'nin gruplandırılmış hatalara atadığı temel nedenler. AI, her açıklama kullanarak bu listeden seçim yapar.",
+      "filterPlaceholder": "Temel nedenleri filtrele...",
+      "reordered": "Temel nedenler yeniden düzenlendi",
+      "descriptionPlaceholder": "Bu temel neden ne zaman uygulanır? AI bunu kullanarak karar verir.",
+      "columns": {
+        "signatures": "Desenleri"
+      },
+      "add": {
+        "button": "Temel Neden Ekle",
+        "title": "Temel Neden Ekle"
+      },
+      "edit": {
+        "title": "Temel Nedeni Düzenle"
+      },
+      "errors": {
+        "nameExists": "Bu isimde bir temel neden zaten mevcut"
+      },
+      "delete": {
+        "confirmMessage": "{name} temel nedenini silmek istediğinizden emin misiniz?",
+        "inUse": "{count, plural, one {# başarısızlık deseni bunu kullanır.} other {# başarısızlık desenleri bunu kullanır.}}",
+        "moveLabel": "{count, plural, one {Deseni şuraya taşı} other {# desenleri şuraya taşı}}"
+      }
+    },
     "issue_config": {
       "link_title": "Bağlantı Sorun Takipçisi",
       "link_description": "Manuel olarak bağlantı verilen sorunlar için temel URL'yi yapılandırın. Yalnızca Harici Kimlik kullanarak bir soruna bağlantı verirken, tam bağlantıyı oluşturmak için bu Temel URL öne eklenecektir.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Otomasyon Adayları Raporu",
         "derive_case_steps": "Yapay Zeka Adım Türetme",
         "impact_analysis": "Etki: Etkilenen Test Seçimi",
-        "failure_triage": "Hata Sınıflandırması Sınıflandırması"
+        "failure_triage": "Başarısızlık Desenleri: Temel Neden"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Denetim Kayıtları",
         "budget-alerts": "Bütçe Uyarıları",
         "auto-tag": "Yapay Zeka Otomatik Etiketleme",
-        "failure-triage": "Hata Sınıflandırması",
+        "failure-triage": "Başarısızlık Desenleri",
         "repo-cache": "Depo Önbelleği",
         "copy-move": "Kopyala ve Taşı",
         "duplicate-scan": "Kopya Tarama",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "{target} üzerinde otomatik yürütme {status} ile sona erdi{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% of the run's cases have no result with {daysRemaining, plural, one {# gün} other {# gün}} before its milestone is due (threshold {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# sorun} other {# sorun}} çalıştırmanın sonuçlarına bağlı (eşik {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# başarısızlık deseni ilk kez göründü} other {# başarısızlık desenleri ilk kez göründü}} çalıştırma sırasında (eşik {threshold}).",
           "SESSION_OVERRUN": "Oturum {elapsed} boyunca {estimate} tahminine karşı, {overrun}% fazla ({threshold}%'den fazlası izin verilmiyor).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} / {total} gereklilik ({coverage}%) {basis, select, PASSING {en son geçen bir sonuca sahip} other {bir test durumuna bağlı}} (eşik {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# vaka} other {# vaka}} {days, plural, one {# gün} other {# gün}} boyunca sonuç almadı (eşik {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "Test Çalıştırma Sonuçları",
       "TestRunResultRestrictedFields": "Test Çalıştırma Sonucu Kısıtlı Alanlar",
       "AutomatedExecution": "Otomatikleştirilmiş Yürütme",
+      "FailurePatterns": "Başarısızlık Desenleri",
       "Sessions": "Oturumlar",
       "SessionsRestrictedFields": "Oturum Kısıtlı Alanları",
       "ClosedSessions": "Kapalı Oturumlar",
@@ -7971,7 +7998,7 @@
       "name": "## Rol Adı\nTüm projelerde kullanılan açık, özlü ve açıklayıcı bir ad veya anahtar kelime(ler).\n\n- Ekip üyelerinin ilgili test senaryolarını, test çalıştırmalarını ve oturumlarını hızlı bir şekilde bulmasına yardımcı olur.",
       "isDefault": "## Varsayılan Rol\nBu rolün projeniz için varsayılan rol olup olmadığını gösterir.\n\n- Varsayılan rol yeni kullanıcılar için önceden seçilmiştir.\n- İstediğiniz zaman değiştirilebilir.",
       "permissions": {
-        "canAddEdit": "## Ekle/Düzenle\nBu rolün ilgili uygulama alanını ekleyip düzenleyebileceğini gösterir.\n\n- **Otomatik Yürütme**, bir CI sağlayıcısında otomatik yürütmeleri başlatma, yeniden deneme ve iptal etme hakkı verir. Sonuçları kaydetme hâlâ **Test Çalıştırması Sonuçları** Ekle/Düzenle gerektirir ve depodan başlatma **Test Çalıştırmaları** Ekle/Düzenle gerektirir çünkü bir çalıştırma oluşturur veya genişletir.\n- **Uyarılar**, projede uyarılar oluşturma ve oluşturduğunuz uyarıları düzenleme, duraklama ve silme hakkı verir. Proje yöneticileri her uyarıyı ve diğer kullanıcıların aboneliklerini yönetir; herkes bir uyarıyı izleyebilir veya terk edebilir.",
+        "canAddEdit": "## Ekle/Düzenle\nBu rolün ilgili uygulama alanını ekleyip düzenleyebilip düzenleme yeteneğini belirtir.\n\n- **Otomatik Yürütme** bir CI sağlayıcısında otomatik yürütmeleri başlatma, yeniden deneme ve iptal etme hakkı verir. Sonuçları kaydedilmek için yine de **Test Çalıştırması Sonuçları** Ekle/Düzenle gerekir ve depo'dan başlatmak için de **Test Çalıştırmaları** Ekle/Düzenle gerekir çünkü bir çalıştırma oluşturur veya genişletir.\n- **Başarısızlık Desenleri** bir başarısızlık deseninin temel nedenini ayarlama veya temizleme ve AI'dan isteme, çözme, yoksayma veya yeniden açma, notlarını düzenleme, sorunları bağlama ve bağlantısını kesme ve test durumlarını karantinaya alma veya serbest bırakma hakkı verir. Projeye erişimi olan herkes başarısızlık desenlerini görebilir; proje yöneticileri Başarısızlık Desenleri ayarlarını yönetir.\n- **Uyarılar** projede uyarı oluşturma ve oluşturduğunuz uyarıları düzenleme, duraklatma ve silme hakkı verir. Proje yöneticileri her uyarıyı ve diğer kullanıcıların aboneliklerini yönetir; herkes bir uyarıyı izleyebilir veya bırakabilir.",
         "canDelete": "## Sil\nBu rolün ilgili uygulama alanını silip silemeyeceğini gösterir.",
         "canClose": "## Kapat\nBu rolün ilgili uygulama alanını kapatıp kapatamayacağını gösterir.",
         "canApprove": "## Onayla\nBu rolün ilgili uygulama alanı için inceleme isteklerini onaylayıp onaylayamayacağını gösterir. Yalnızca Test Durumu Deposu, Test Çalıştırmaları ve Oturumlar için geçerlidir.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## Yol Desenleri\nHer satır bir temel **yol** ile glob **deseni** birleştirir. Satırlar toplanır: bir dosya herhangi bir satır eşleştiğinde dahil edilir.\n\n- `src` + `**/*` — `src` altındaki her şey\n- boş veya `.` + `**/*` — depodaki her dosya\n- `src` + `**/!(*.test|*.spec).ts` — testler hariç `.ts` dosyaları\n\n### Hariç Tut\nBir satırda **Hariç Tut** işaretini tıklayarak dosyalarını, başka bir satır onları dahil etse bile kaldırın. İstisnalar dosya seçici ve önbelleğe uygulanır ve Etki için bir analizin değiştirilmiş dosyalarına uygulanır, bu nedenle neredeyse her çekme talebinde değişen bir dosya ilgisiz test çalışmalarını çekmez. En az bir satırın işaretsiz kalması gerekir.\n\n- boş + `**/CHANGELOG*` — her changelog, herhangi bir derinlikte\n- `app` + `build.gradle.kts` — yalnızca sürümü güncelleyen bir derleme dosyası",
     "projectAutomation": "## Otomatikleştirilmiş Yürütme\nYürütme hedefleri, TestPlanIt'e bu projenin otomatikleştirilmiş senaryolarını nerede yürüteceğini söyler: bir GitHub Actions iş akışı, bir GitLab CI işlem hattı veya diğer herhangi bir sistem için imzalı bir web kancası. Bir çalıştırma yürütüldüğünde, TestPlanIt işi çalıştırma kimliği ve bir plan URL'si ile başlatır; iş planı okur, eşleşen testleri çalıştırır ve sonuçları o çalıştırmaya sabitlenmiş bir muhabir veya CLI ile geri bildirir. Hedefler silinmeden devre dışı bırakılabilir.",
     "userAlerts": "## Bildirimler & Uyarılar\n**Bildirim Tercihleri**, nasıl ulaşıldığınızı (uygulama içi, e-posta, özet) ve hangi bildirim türlerini aldığınızı belirler.\n\n**Uyarılar** bir test metriğini izler ve eşiği aştığında abonelerine bildirimde bulunur. Örneğin, normalde çalışma süresinden %50 daha uzun süren bir sonuç, arka arkaya 3 kez başarısız olan bir test senaryosu, başarı oranı %90'ın altına düşen bir çalıştırma veya yapılacak günleri kalan geride bir dönüm noktası. Liste projelerinizin tüm uyarılarını gösterir; **Beni Bilgilendir** anahtarı birini izler veya terk eder. **Uyarı Ekle**, rolünüzün **Uyarılar** Ekle/Düzenle yetkisine sahip olduğu herhangi bir projede kendi uyarılarınızı oluşturur; proje yöneticileri projelerindeki tüm uyarıları ve diğer kişilerin aboneliklerini yönetir. Bir uyarı, soğutma süresi içinde konu başına en fazla bir kez tetiklenir ve yeterli sonuç elde edene kadar sessiz kalır.",
-    "projectTriage": "## Hata Sınıflandırması\nAynı istisna, mesaj ve üst yığın çerçevelerini paylaşan otomatik hatalar bir **imza** altında gruplandırılır. Her imza ne kadar sık meydana geldiğini, hangi test senaryoları ve çalışmaları etkilediğini ve yapay zekanın bunun bir ürün hatası, bir test hatası, bir ortam sorunu veya değişken olup olmadığına dair görüşünü gösterir. İmza işlendikten sonra çözün veya yoksayın; hata geri gelirse kendiliğinden yeniden açılır.",
-    "projectTriageSettings": "## Hata Sınıflandırması ayarları\nHer otomatik sonuç gelişinde çalışmaları gruplandırmak hiçbir şey maliyetli değildir. Yapay zeka sınıflandırması, AI Modelleri sayfasında **Hata Sınıflandırması Sınıflandırması** özelliğine atanan yapay zeka modelini kullanır; herhangi bir yapay zeka çağrısı olmadan gruplandırmayı devam ettirmek için burada kapatın. **Mevcut sonuçları analiz et**, bu projede zaten kaydedilmiş olan her otomatik hatayı gruplandırır."
+    "projectTriage": "## Başarısızlık Desenleri\nAynı istisna, ileti ve üst yığın çerçeveleri paylaşan otomatik başarısızlıklar bir **başarısızlık desenine** gruplandırılır. Her desen, ne sıklıkta oluştuğunu, hangi test durumlarına ve çalıştırmalara dokunduğunu ve AI'nin temel nedeni hakkındaki görüşünü (ürün hatası, test hatası, ortam veya varsayılan olarak değişken) gösterir. Bir desen işlendikten sonra çözün veya yoksayın; başarısızlık geri gelirse kendiliğinden yeniden açılır.",
+    "projectTriageSettings": "## Başarısızlık Desenleri ayarları\nHer otomatik sonuç geldiğinde çalıştırmaları gruplandırma ve hiçbir maliyeti yoktur. AI temel nedeni önerisi, AI Modelleri sayfasında **Başarısızlık Desenleri: Temel Neden** özelliğine atanan AI modelini kullanır; herhangi bir AI çağrısı yapmadan gruplandırmayı devam ettirmek için burada kapatın. **Mevcut sonuçları analiz et** bu projede zaten kaydedilmiş her otomatik başarısızlığı gruplandırır.",
+    "projectQuarantine": "## Karantinaya alınan test durumları\nKarantinaya alınmış bir test durumu çalışmaya ve sonuçları kaydetmeye devam eder, ancak başarısızlıkları çalıştırma geçme/başarısızlıktan çıkarılır ve ayrı bir sayı olarak gösterilir. Neden düzeltilirken test durumunu bir başarısızlık deseninden karantinaya alın. Karantina, Başarısızlık Desenleri ayarlarında belirlenen sayıda arka arkaya test durumu geçtikten sonra kendiliğinden kaldırılır; el ile işaretlenmişse, burada veya desenden herhangi bir zamanda serbest bırakın.",
+    "rootCauses": "## Temel Nedenler\nBaşarısızlık Desenleri'nin yapay zeka veya elle atadığı temel nedenler. Her birinin, AI'nin ne zaman uygulandığına karar vermesi için okuduğu bir açıklaması vardır. Adlarını değiştirin, yeniden renklendirin veya yeniden sıralayın, kendinizinkini ekleyin veya kullanmadığınızları silin; birini silmek desenleri temel nedensiz bırakır.",
+    "rootCauseDescription": "## Açıklama\nAI, temel nedenin bir başarısızlık desenine ne zaman uygulandığına karar vermek için bu açıklamayı okur, bu nedenle ona işaret eden kanıtları açıklayın."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Eşik",
         "RUN_UNTESTED_SHARE": "Test edilmemiş durumlar üzerinde (%)",
         "RUN_ISSUES_OPENED": "Bağlantılı sorunlar, daha fazla",
+        "NEW_FAILURE_SIGNATURES": "Yeni başarısızlık desenleri, daha fazlası",
         "SESSION_OVERRUN": "Tahminin %'den fazla (%)",
         "MILESTONE_BEHIND": "Tamamlanma altında (%)",
         "MILESTONE_OVERDUE": "Eşik",
@@ -10654,6 +10685,11 @@
         "description": "Çalıştırmanın sonuçlarına belirli sayıdan fazla sorun bağlıdır.",
         "summary": "Çalıştırmanın sonuçlarına {threshold, plural, one {# sorun bağlıdır} other {# sorun bağlıdır}}, {evaluateOn, select, AS_RESULTS_ARRIVE {sonuçlar geldikçe değerlendirilir} other {çalıştırma tamamlandığında değerlendirilir}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Çalıştırmada yeni başarısızlık desenleri",
+        "description": "Bir çalıştırma, projenin daha önce görmediği başarısızlık desenleri getirir. Proje için Başarısızlık Desenleri etkin olması gerekir.",
+        "summary": "{threshold, plural, one {# başarısızlık deseni ilk kez göründü} other {# başarısızlık desenleri ilk kez göründü}} bir çalıştırmada, {evaluateOn, select, AS_RESULTS_ARRIVE {sonuçlar gelirken değerlendirilir} other {çalıştırma tamamlandığında değerlendirilir}}"
+      },
       "SESSION_OVERRUN": {
         "label": "Oturum tahmini aşmış",
         "description": "Tamamlanan oturumun geçen süresi, tahmini yüzde olarak aşıyor.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "Çözüldü",
       "IGNORED": "Yoksayıldı"
     },
-    "classification": {
-      "UNCLASSIFIED": "Sınıflandırılmamış",
-      "PRODUCT_BUG": "Ürün hatası",
-      "TEST_BUG": "Test hatası",
-      "ENVIRONMENT": "Ortam",
-      "FLAKY": "Değişken"
-    },
+    "unclassified": "Temel neden yok",
     "source": {
-      "AI": "Yapay zeka tarafından sınıflandırıldı",
+      "AI": "AI tarafından önerilen temel neden",
       "labelAI": "Yapay Zeka",
       "labelMANUAL": "Manuel"
     },
     "columns": {
-      "classification": "Sınıflandırma",
+      "classification": "Temel neden",
       "occurrences": "Oluşumlar",
       "firstSeen": "İlk görüldü",
       "lastSeen": "Son görüldü",
-      "classifiedBy": "Tarafından sınıflandırıldı"
+      "classifiedBy": "Ayarlanmış"
     },
     "filters": {
-      "searchPlaceholder": "İmzaları ara...",
+      "searchPlaceholder": "Başarısızlık desenleri ara...",
       "flakyOnly": "Değişken adayları",
-      "sourceAll": "Yapay zeka veya manuel"
+      "sourceAll": "Herkese göre ayarlanan",
+      "sourceAi": "AI tarafından ayarlanan",
+      "sourceManual": "Elle ayarlanan",
+      "sourceNone": "Ayarlanmadı"
     },
     "actions": {
       "resolve": "Çöz",
       "ignore": "Yoksay",
-      "classify": "Yapay zeka ile sınıflandır",
-      "setClassification": "Sınıflandırmayı ayarla"
+      "classify": "AI ile temel neden öner",
+      "setClassification": "Temel nedeni ayarla"
     },
     "detail": {
       "exceptionType": "İstisna türü",
@@ -10822,13 +10855,13 @@
       "rationale": "Mantık",
       "suggestedIssueTitle": "Önerilen sorun başlığı",
       "nextStep": "Önerilen sonraki adım",
-      "noAi": "Henüz yapay zeka tarafından sınıflandırılmadı.",
+      "noAi": "Henüz AI önerisi yok.",
       "noDetails": "Bu hatanın hiçbir mesajı veya yığın izlemesi olmadığından test senaryosuna göre gruplandırılır.",
       "notesPlaceholder": "Takım için notlar...",
       "lastRun": "Son çalışma",
       "aiSuggestion": "Yapay zeka önerisi",
-      "unlinkConfirmDescription": "Bu, sorunu bu imzadan kaldırır. Sorunun kendisi saklanır ve daha sonra yeniden bağlanabilir.",
-      "signatureLabel": "Hata imzası",
+      "unlinkConfirmDescription": "Bu, sorunu bu başarısızlık deseninden kaldırır. Sorunun kendisi saklanır ve daha sonra yeniden bağlanabilir.",
+      "signatureLabel": "Başarısızlık deseni",
       "affectedCasesLabel": "Etkilenen test senaryoları"
     },
     "flakyCandidate": "Değişken adayı",
@@ -10836,31 +10869,31 @@
     "knownIssue": "Bilinen sorun",
     "notGrouped": "{count, plural, one {# hata henüz gruplandırılmadı} other {# hatalar henüz gruplandırılmadı}}",
     "runPanel": {
-      "title": "Hata kümeleri",
+      "title": "Başarısızlık desenleri",
       "inRun": "{count, plural, one {# bu çalışmada} other {# bu çalışmada}}",
-      "hint": "Aşağıdaki sonuçları filtrelemek için bir kümeye tıklayın.",
-      "open": "İmzayı görüntüle",
+      "hint": "Aşağıdaki sonuçları filtrelemek için bir desene tıklayın.",
+      "open": "Deseni görüntüle",
       "inRunColumn": "Bu çalışmada",
-      "selectedClusters": "{count, plural, one {# küme seçildi} other {# kümeler seçildi}}",
-      "clearSelected": "Seçili kümeleri temizle"
+      "selectedClusters": "{count, plural, one {# desen seçildi} other {# desen seçildi}}",
+      "clearSelected": "Seçilen desenleri temizle"
     },
     "toasts": {
-      "updated": "İmza güncellendi",
-      "updateFailed": "İmza güncellenemedi",
-      "classifyQueued": "Yapay zeka sınıflandırması istendi",
+      "updated": "Başarısızlık deseni güncellendi",
+      "updateFailed": "Başarısızlık deseni güncellenemedi",
+      "classifyQueued": "AI temel nedeni önerisi istendi",
       "noAiModel": "Bu özellik için yapılandırılmış yapay zeka modeli yok",
       "issueLinked": "Sorun bağlandı"
     },
     "empty": {
-      "title": "Henüz hata imzası yok",
-      "description": "İmzalar, otomatik sonuçlar hatalarla geldikçe burada görünür. Bu projede zaten kaydedilmiş olan hataları gruplandırmak için Hata Sınıflandırması ayarlarında Mevcut sonuçları analiz et seçeneğini kullanın."
+      "title": "Henüz başarısızlık deseni yok",
+      "description": "Başarısızlık desenleri, otomatik sonuçlar başarısızlıklar gelirken burada görünür. Bu projede zaten kaydedilmiş başarısızlıkları gruplandırmak için Başarısızlık Desenleri ayarlarında Mevcut sonuçları analiz et kullanın."
     },
     "settings": {
-      "description": "Otomatik hataları imzalar halinde gruplandırın ve yapay zekanın bunları sınıflandırmasına izin verin.",
-      "enableLabel": "Hata Sınıflandırmasını Etkinleştir",
+      "description": "Otomatik başarısızlıkları desenlere gruplandırın ve AI'nin temel nedenlerini önerilmesine izin verin.",
+      "enableLabel": "Başarısızlık Desenleri'ni Etkinleştir",
       "enableDescription": "Bu projede her otomatik hatayı istisna, mesaj ve yığın çerçevelerine göre sonuçlar geldikçe gruplandırın.",
-      "autoClassifyLabel": "Yeni imzaları yapay zeka ile sınıflandır",
-      "autoClassifyDescription": "Projenin yapay zeka modelinden her yeni imzayı bir ürün hatası, test hatası, ortam sorunu veya değişken olarak sınıflandırmasını isteyin. Hata Sınıflandırması Sınıflandırması özelliğine atanan bir yapay zeka modeli gerekir.",
+      "autoClassifyLabel": "AI ile temel nedenleri öner",
+      "autoClassifyDescription": "Projenin AI modelinin her yeni başarısızlık deseni için Temel Nedenler kataloğundan bir temel neden seçmesini isteyin. Başarısızlık Desenleri: Temel Neden özelliğine atanan bir AI modeli gerektirir.",
       "backfillLabel": "Mevcut sonuçları analiz et",
       "backfillDescription": "Bu projede zaten kaydedilmiş olan her otomatik hatayı gruplandırın. Arka planda çalışır.",
       "backfillStarted": "Analiz başlatıldı",
@@ -10868,11 +10901,47 @@
       "backfillDone": "Analiz tamamlandı",
       "backfillFailed": "Analiz başarısız oldu",
       "backfillQueueUnavailable": "Arka plan işi kuyruk kullanılamıyor",
-      "enabledToast": "Hata Sınıflandırması etkinleştirildi",
-      "disabledToast": "Hata Sınıflandırması devre dışı bırakıldı",
-      "autoClassifyOnToast": "Yapay zeka sınıflandırması etkinleştirildi",
-      "autoClassifyOffToast": "Yapay zeka sınıflandırması devre dışı bırakıldı",
-      "openTriage": "Hata Sınıflandırmasını Aç"
+      "enabledToast": "Başarısızlık Desenleri etkinleştirildi",
+      "disabledToast": "Başarısızlık Desenleri devre dışı bırakıldı",
+      "autoClassifyOnToast": "AI temel nedeni önerileri etkinleştirildi",
+      "autoClassifyOffToast": "AI temel nedeni önerileri devre dışı bırakıldı",
+      "autoReleaseLabel": "Karantinayı otomatik olarak yayın",
+      "autoReleasePassesLabel": "ardışık geçişler",
+      "autoReleaseDescription": "Karantinaya alınan bir test durumu, karantinaya alındığından bu yana bu kadar kez arka arkaya geçtikten sonra serbest bırakılır. Atlanan sonuçlar yoksayılır. \"Elle serbest bırakılıncaya kadar tut\" olarak işaretlenmiş karantina kalır.",
+      "autoReleaseOnToast": "Otomatik yayın etkinleştirildi",
+      "autoReleaseOffToast": "Otomatik yayın devre dışı bırakıldı",
+      "autoReleasePassesSaved": "{count, plural, one {Karantina # ardışık geçişten sonra serbest bırakılır} other {Karantina # ardışık geçişten sonra serbest bırakılır}}",
+      "autoReleasePassesInvalid": "1 ile 100 arasında bir geçiş sayısı girin",
+      "openTriage": "Başarısızlık Desenleri'ni Aç"
+    },
+    "quarantine": {
+      "label": "Karantinaya alındı",
+      "title": "Karantinaya alınan test durumları",
+      "hint": "Karantinaya alınan bir test durumunun başarısızlıkları çalıştırma geçme/başarısızlıktan çıkarılır ve ayrı olarak sayılır. Test durumu çalışmaya ve sonuçları kaydetmeye devam eder.",
+      "metricHint": "Bu çalıştırmada karantinaya alınan test durumlarının başarısızlıkları. Geçiş oranına karşı sayılmazlar.",
+      "action": "Karantinaya al",
+      "actionAll": "Etkilenen test durumlarını karantinaya al",
+      "release": "Serbest bırak",
+      "reasonLabel": "Sebep",
+      "reasonPlaceholder": "Bu test durumu neden karantinaya alındı? (isteğe bağlı)",
+      "keepLabel": "Elle serbest bırakılıncaya kadar karantinaya al",
+      "keepHint": "Ardışık geçişlerden sonra otomatik yayını atlar.",
+      "dialogTitle": "{count, plural, one {# test durumunu karantinaya al} other {# test durumlarını karantinaya al}}",
+      "releaseConfirmTitle": "Karantinadan serbest bırakılsın mı?",
+      "releaseConfirmDescription": "Test durumunun başarısızlıkları yeniden çalıştırma geçme/başarısızlığına karşı sayılır.",
+      "quarantinedToast": "{count, plural, one {# test durumu karantinaya alındı} other {# test durumları karantinaya alındı}}",
+      "releasedToast": "Test durumu karantinadan serbest bırakıldı",
+      "failedToast": "Karantina güncellenemedi",
+      "listButton": "{count, plural, =0 {Karantinaya alınan test durumları} one {# karantinaya alınan test durumu} other {# karantinaya alınan test durumları}}",
+      "columns": {
+        "signature": "Başarısızlık deseni",
+        "by": "Karantinaya alınan",
+        "since": "Başlama",
+        "releasePolicy": "Serbest bırak"
+      },
+      "releaseAuto": "{count, plural, one {# ardışık geçişten sonra otomatik} other {# ardışık geçişten sonra otomatik}}",
+      "releaseManual": "Elle",
+      "empty": "Bu projede karantinaya alınan test durumları yok."
     }
   }
 }

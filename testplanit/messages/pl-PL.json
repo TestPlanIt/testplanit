@@ -741,7 +741,7 @@
       "sharedContent": "Udostępniana treść",
       "impact": "Analiza wpływu",
       "alerts": "Powiadomienia i alerty",
-      "triage": "Triage awarii"
+      "triage": "Wzorce awarii"
     },
     "aria": {
       "userMenu": "Menu użytkownika",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Główny",
       "fields": "Pola",
+      "rootCauses": "Przyczyny główne",
       "appConfig": "Konfiguracja aplikacji",
       "recordKeys": "Klucze rekordów",
       "imports": "Import danych",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "Czy na pewno chcesz usunąć typ kamienia milowego {name}?"
       }
     },
+    "rootCauses": {
+      "description": "Przyczyny główne, które Wzorce awarii przypisuje do zgrupowanych awarii. Sztuczna inteligencja wybiera z tej listy, używając każdego opisu.",
+      "filterPlaceholder": "Filtruj przyczyny główne...",
+      "reordered": "Przyczyny główne zostały zmienione",
+      "descriptionPlaceholder": "Kiedy ta przyczyna główna ma zastosowanie? Sztuczna inteligencja używa tego tekstu do podjęcia decyzji.",
+      "columns": {
+        "signatures": "Wzorce"
+      },
+      "add": {
+        "button": "Dodaj przyczynę główną",
+        "title": "Dodaj przyczynę główną"
+      },
+      "edit": {
+        "title": "Edytuj przyczynę główną"
+      },
+      "errors": {
+        "nameExists": "Przyczyna główna o tej nazwie już istnieje"
+      },
+      "delete": {
+        "confirmMessage": "Czy na pewno chcesz usunąć przyczynę główną {name}?",
+        "inUse": "{count, plural, one {# wzorzec awarii go używa.} few {# wzorce awarii go używają.} many {# wzorców awarii go używa.} other {# wzorców awarii go używa.}}",
+        "moveLabel": "{count, plural, one {Przenieś wzorzec do} few {Przenieś # wzorce do} many {Przenieś # wzorców do} other {Przenieś # wzorców do}}"
+      }
+    },
     "issue_config": {
       "link_title": "Śledzenie problemów z linkami",
       "link_description": "Skonfiguruj adres URL bazowy dla ręcznie połączonych zgłoszeń. Podczas łączenia zgłoszenia przy użyciu tylko identyfikatora zewnętrznego, ten adres URL bazowy zostanie dodany na początku, aby utworzyć pełny link.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Raport kandydatów do automatyzacji",
         "derive_case_steps": "Generowanie kroków przez AI",
         "impact_analysis": "Wpływ: Wybór testów pod wpływem",
-        "failure_triage": "Klasyfikacja Triage awarii"
+        "failure_triage": "Wzorce awarii: przyczyna główna"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Dzienniki audytu",
         "budget-alerts": "Alerty budżetowe",
         "auto-tag": "Automatyczne tagowanie AI",
-        "failure-triage": "Triage awarii",
+        "failure-triage": "Wzorce awarii",
         "repo-cache": "Pamięć podręczna repozytorium",
         "copy-move": "Kopiuj i przenieś",
         "duplicate-scan": "Duplikat skanowania",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "Automatyczne wykonanie na {target} zakończyło się z {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% przypadków przebiegu nie ma wyniku z {daysRemaining, plural, one {# dniem} few {# dniami} many {# dniami} other {# dniem}} do upływu terminu kamienia milowego (próg {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# problem jest} few {# problemy są} many {# problemów} other {# problemem jest}} powiązany z wynikami przebiegu (próg {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# wzorzec awarii pojawił się} few {# wzorce awarii pojawiły się} many {# wzorców awarii pojawiło się} other {# wzorców awarii pojawiło się}} po raz pierwszy w uruchomieniu (próg {threshold}).",
           "SESSION_OVERRUN": "Sesja trwała {elapsed} w stosunku do szacunku {estimate}, {overrun}% ponad (więcej niż {threshold}% dozwolone).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} z {total} wymagań ({coverage}%) {basis, select, PASSING {ma przechodzący ostatni wynik} other {jest powiązane z przypadkiem testowym}} (próg {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# sprawa miała} few {# sprawy miały} many {# spraw} other {# sprawa miała}} żaden wynik przez {days, plural, one {# dzień} few {# dni} many {# dni} other {# dzień}} (próg {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "Wyniki testu",
       "TestRunResultRestrictedFields": "Pola ograniczone wyniku testu",
       "AutomatedExecution": "Zautomatyzowane wykonanie",
+      "FailurePatterns": "Wzorce awarii",
       "Sessions": "Sesje",
       "SessionsRestrictedFields": "Pola ograniczone dla sesji",
       "ClosedSessions": "Sesje zamknięte",
@@ -7971,7 +7998,7 @@
       "name": "## Nazwa roli\nJasna, zwięzła, opisowa nazwa lub słowo(a) kluczowe używane we wszystkich projektach.\n\n— Pomaga członkom zespołu szybko znaleźć powiązane przypadki testowe, przebiegi testów i sesje.",
       "isDefault": "## Rola domyślna\nWskazuje, czy ta rola jest domyślna dla Twojego projektu.\n\n— Rola domyślna jest wstępnie wybrana dla nowych użytkowników.\n— Można ją zmienić w dowolnym momencie.",
       "permissions": {
-        "canAddEdit": "## Dodaj/Edytuj\nWskazuje, czy ta rola może dodawać i edytować powiązany obszar aplikacji.\n\n- **Automatyczne wykonanie** udziela prawa do uruchamiania, ponawiania i anulowania automatycznych wykonań u dostawcy CI. Rejestracja wyników nadal wymaga **Wyników przebiegu testowego** Dodaj/Edytuj, a uruchomienie z repozytorium wymaga również **Przebiegi testowe** Dodaj/Edytuj, ponieważ tworzy lub rozszerza przebieg.\n- **Alerty** udzielają prawa do tworzenia alertów w projekcie oraz edytowania, wstrzymywania i usuwania tych, które utworzyłeś. Administratorzy projektu zarządzają każdym alertem i subskrypcjami innych użytkowników; każdy może obserwować lub opuścić alert.",
+        "canAddEdit": "## Dodaj/Edytuj\nWskazuje, czy ta rola może dodawać i edytować powiązany obszar aplikacji.\n\n- **Automatyczne wykonanie** przyznaje prawo do uruchamiania, ponownego próbowania i anulowania automatycznych wykonań u dostawcy CI. Rejestrowanie wyników nadal wymaga **Wyniki przebiegów testowych** Dodaj/Edytuj, a uruchomienie z repozytorium wymaga również **Przebiegi testowe** Dodaj/Edytuj, ponieważ tworzy lub rozszerza przebieg.\n- **Wzorce awarii** przyznaje prawo do ustawiania lub czyszczenia przyczyny głównej wzorca awarii lub proszenia o nią sztuczną inteligencję, rozwiązywania, ignorowania lub ponownego otwierania go, edytowania jego notatek, linkowania i odlinkowania problemów oraz kwarantanny lub zwolnienia jego przypadków testowych. Każdy mający dostęp do projektu może zobaczyć jego wzorce awarii; administratorzy projektów zarządzają ustawieniami Wzorców awarii.\n- **Alerty** przyznaje prawo do tworzenia alertów w projekcie i edytowania, wstrzymywania i usuwania utworzonych alertów. Administratorzy projektów zarządzają każdym alertem i subskrypcjami innych użytkowników; każdy może śledzić lub opuścić alert.",
         "canDelete": "## Usuń\nWskazuje, czy ta rola może usunąć powiązany obszar aplikacji.",
         "canClose": "## Zamknij\nWskazuje, czy ta rola może zamknąć powiązany obszar aplikacji.",
         "canApprove": "## Zatwierdź\nWskazuje, czy ta rola może zatwierdzać prośby o recenzję dla powiązanego obszaru aplikacji. Dotyczy tylko repozytorium przypadków testowych, przebiegów testów i sesji.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## Wzorce ścieżek\nKażdy wiersz łączy bazową **ścieżkę** ze **wzorem** glob. Wiersze się sumują: plik jest uwzględniany, gdy pasuje do niego dowolny wiersz.\n\n- `src` + `**/*` — wszystko w `src`\n- puste lub `.` + `**/*` — każdy plik w repozytorium\n- `src` + `**/!(*.test|*.spec).ts` — pliki `.ts` z wyjątkiem testów\n\n### Wyklucz\nZaznacz **Wyklucz** w wierszu, aby usunąć jego pliki, nawet jeśli inny wiersz je uwzględnia. Wykluczenia dotyczą selektora plików i pamięci podręcznej, a w przypadku Impact — zmienionych plików analizy, więc plik, który zmienia się przy prawie każdym pull requeście, przestaje ściągać niepowiązane przypadki testowe. Co najmniej jeden wiersz musi pozostać niezaznaczony.\n\n- puste + `**/CHANGELOG*` — każdy changelog, na dowolnej głębokości\n- `app` + `build.gradle.kts` — plik kompilacji, który tylko podnosi wersję",
     "projectAutomation": "## Zautomatyzowane wykonanie\nCele wykonania informują TestPlanIt, gdzie wykonać zautomatyzowane przypadki testowe tego projektu: przepływ pracy GitHub Actions, potok GitLab CI lub podpisany webhook dla każdego innego systemu. Gdy przebieg jest wykonywany, TestPlanIt uruchamia zadanie z ID przebiegu i adresem URL planu; zadanie odczytuje plan, uruchamia pasujące testy i raportuje wyniki z powrotem za pomocą reportera lub CLI przypiętego do tego przebiegu. Cele mogą być wyłączone bez usuwania.",
     "userAlerts": "## Powiadomienia i alerty\n**Preferencje powiadomień** decydują o tym, jak się z Tobą skontaktować (w aplikacji, e-mail, kompilacja) i które typy powiadomień w ogóle otrzymujesz.\n\n**Alerty** monitorują metrykę testowania i powiadamiają ich subskrybentów, gdy przekroczy linię, na przykład wynik zajmujący 50% dłużej niż zwykły czas trwania przypadku, przypadek, który nie powiedzie się trzy razy z rzędu, przebieg, którego współczynnik przejścia spada poniżej 90%, lub kamień milowy, który pozostaje w tyle z biegiem dni. Lista pokazuje każdy alert w Twoich projektach; przełącznik **Powiadom mnie** obserwuje lub opuszcza jeden. **Dodaj alert** tworzy własny w dowolnym projekcie, w którym Twoja rola ma **Alerty** Dodaj/Edytuj; administratorzy projektu zarządzają każdym alertem w swoim projekcie i subskrypcjami innych osób. Alert uruchamia się co najwyżej raz na podmiot w jego okresie chłodzenia i pozostaje cichy, dopóki nie będzie wystarczająco dużo wyników.",
-    "projectTriage": "## Triage awarii\nAutomatyczne awarie, które mają taki sam wyjątek, wiadomość i górne ramki stosu, są grupowane w jedną **sygnaturę**. Każda sygnatura pokazuje, jak często się pojawiała, które przypadki testowe i przebiegi jej dotyczyły, oraz opinię AI na temat tego, czy jest to błąd produktu, błąd testu, problem środowiska czy zmienność. Rozwiąż lub zignoruj sygnaturę po jej obsłużeniu; sama się otworzy, jeśli awaria wróci.",
-    "projectTriageSettings": "## Ustawienia Triage awarii\nGrouping runs on every automated result that arrives and costs nothing. AI classification uses the AI model assigned to the **Failure Triage Classification** feature on the AI Models page; turn it off here to keep grouping without any AI calls. **Analyze existing results** groups every automated failure already recorded in this project."
+    "projectTriage": "## Wzorce awarii\nAutomatyczne awarie, które współdzielą ten sam wyjątek, wiadomość i górne ramki stosu, są grupowane w jeden **wzorzec awarii**. Każdy wzorzec pokazuje, jak często się zdarzył, które przypadki testowe i uruchomienia go dotknęły, oraz ocenę sztucznej inteligencji dotyczącą jego przyczyny głównej (błąd produktu, błąd testu, środowisko lub słaby domyślnie). Rozwiąż lub zignoruj wzorzec po jego obsłużeniu; ponownie się otworzy, jeśli awaria powróci.",
+    "projectTriageSettings": "## Ustawienia Wzorców awarii\nGrupowanie uruchomień na każdym automatycznym wyniku, który nadchodzi i nic nie kosztuje. Sugestia przyczyny głównej sztucznej inteligencji używa modelu sztucznej inteligencji przypisanego do funkcji **Wzorce awarii: Przyczyna główna** na stronie Modele sztucznej inteligencji; wyłącz to tutaj, aby kontynuować grupowanie bez żadnych wywołań sztucznej inteligencji. **Analizuj istniejące wyniki** grupuje każdą automatyczną awarię już zarejestrowaną w tym projekcie.",
+    "projectQuarantine": "## Kwarantanna przypadków testowych\nPrzypadek testowy w kwarantannie nadal działa i rejestruje wyniki, ale jego awarie są pozostawiane poza przebiegiem pass/fail i pokazywane jako oddzielna liczba. Umieść przypadek w kwarantannie ze wzorca awarii, podczas gdy przyczyna jest naprawiana. Kwarantanna zostaje podniesiona automatycznie po tym, jak przypadek przejdzie tyle razy z rzędu, ile ustawiono w ustawieniach Wzorców awarii, chyba że był oznaczony do ręcznego zwolnienia; zwolnij go tutaj lub ze wzorca w dowolnym momencie.",
+    "rootCauses": "## Przyczyny główne\nPrzyczyny główne, które Wzorce awarii przypisuje do zgrupowanych awarii, przez sztuczną inteligencję lub ręcznie. Każda ma opis, który sztuczna inteligencja czyta, aby zdecydować, kiedy ma zastosowanie. Zmień nazwę, ponownie pokoloruj lub zmień kolejność, dodaj własne lub usuń te, których nie używasz; usunięcie jednej pozostawia jej wzorce bez przyczyny głównej.",
+    "rootCauseDescription": "## Opis\nSztuczna inteligencja czyta ten opis, aby zdecydować, kiedy przyczyna główna ma zastosowanie do wzorca awarii, więc opisz dowody wskazujące na nią."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Próg",
         "RUN_UNTESTED_SHARE": "Przypadki nieprzetestowane powyżej (%)",
         "RUN_ISSUES_OPENED": "Powiązane problemy, więcej niż",
+        "NEW_FAILURE_SIGNATURES": "Nowe wzorce awarii, więcej niż",
         "SESSION_OVERRUN": "Ponad szacunek o więcej niż (%)",
         "MILESTONE_BEHIND": "Ukończenie poniżej (%)",
         "MILESTONE_OVERDUE": "Próg",
@@ -10654,6 +10685,11 @@
         "description": "Więcej niż dana liczba problemów jest powiązana z wynikami przebiegu.",
         "summary": "Więcej niż {threshold, plural, one {# problem jest} few {# problemy są} many {# problemów} other {# problemem jest}} powiązane z wynikami przebiegu, {evaluateOn, select, AS_RESULTS_ARRIVE {oceniany w miarę napływu wyników} other {oceniany po zakończeniu przebiegu}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Nowe wzorce awarii w uruchomieniu",
+        "description": "Uruchomienie wprowadza wzorce awarii, które projekt wcześniej nie widział. Wymaga włączonych Wzorców awarii dla projektu.",
+        "summary": "Więcej niż {threshold, plural, one {# wzorzec awarii pojawia się} few {# wzorce awarii pojawiają się} many {# wzorców awarii pojawia się} other {# wzorców awarii pojawia się}} po raz pierwszy w uruchomieniu, {evaluateOn, select, AS_RESULTS_ARRIVE {oceniane w miarę przychodzenia wyników} other {oceniane po ukończeniu uruchomienia}}"
+      },
       "SESSION_OVERRUN": {
         "label": "Sesja przekroczyła swój szacunek",
         "description": "Czas trwania ukończonej sesji przekracza jej szacunek o procent.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "Rozwiązane",
       "IGNORED": "Ignorowane"
     },
-    "classification": {
-      "UNCLASSIFIED": "Niesklasyfikowane",
-      "PRODUCT_BUG": "Błąd produktu",
-      "TEST_BUG": "Błąd testu",
-      "ENVIRONMENT": "Środowisko",
-      "FLAKY": "Zmienność"
-    },
+    "unclassified": "Brak przyczyny głównej",
     "source": {
-      "AI": "Sklasyfikowane przez AI",
+      "AI": "Przyczyna główna sugerowana przez sztuczną inteligencję",
       "labelAI": "AI",
       "labelMANUAL": "Ręczne"
     },
     "columns": {
-      "classification": "Klasyfikacja",
+      "classification": "Przyczyna główna",
       "occurrences": "Wystąpienia",
       "firstSeen": "Najpierw widziano",
       "lastSeen": "Ostatnio widziano",
-      "classifiedBy": "Sklasyfikowane przez"
+      "classifiedBy": "Ustawione przez"
     },
     "filters": {
-      "searchPlaceholder": "Wyszukaj podpisy...",
+      "searchPlaceholder": "Wyszukaj wzorce awarii...",
       "flakyOnly": "Kandydaci na zmienność",
-      "sourceAll": "AI lub ręczne"
+      "sourceAll": "Ustawione przez kogokolwiek",
+      "sourceAi": "Ustawione przez sztuczną inteligencję",
+      "sourceManual": "Ustawione ręcznie",
+      "sourceNone": "Nie ustawiono"
     },
     "actions": {
       "resolve": "Rozwiąż",
       "ignore": "Zignoruj",
-      "classify": "Sklasyfikuj za pomocą AI",
-      "setClassification": "Ustaw klasyfikację"
+      "classify": "Zasugeruj przyczynę główną za pomocą sztucznej inteligencji",
+      "setClassification": "Ustaw przyczynę główną"
     },
     "detail": {
       "exceptionType": "Typ wyjątku",
@@ -10822,13 +10855,13 @@
       "rationale": "Uzasadnienie",
       "suggestedIssueTitle": "Sugerowany tytuł problemu",
       "nextStep": "Sugerowany następny krok",
-      "noAi": "Nie sklasyfikowane przez AI.",
+      "noAi": "Brak sugestii sztucznej inteligencji jeszcze.",
       "noDetails": "Ta awaria nie zawierała wiadomości ani śladu stosu, więc jest pogrupowana według przypadku testowego.",
       "notesPlaceholder": "Notatki dla zespołu...",
       "lastRun": "Ostatni przebieg",
       "aiSuggestion": "Sugestia AI",
-      "unlinkConfirmDescription": "To usuwa problem z tej sygnatury. Problem sam w sobie jest zachowywany i można go ponownie połączyć później.",
-      "signatureLabel": "Sygnatura awarii",
+      "unlinkConfirmDescription": "To usuwa problem z tego wzorca awarii. Sam problem zostaje zachowany i można go ponownie połączyć później.",
+      "signatureLabel": "Wzorzec awarii",
       "affectedCasesLabel": "Dotknięte przypadki testowe"
     },
     "flakyCandidate": "Kandydat na zmienność",
@@ -10836,31 +10869,31 @@
     "knownIssue": "Znany problem",
     "notGrouped": "{count, plural, one {# awaria nie jest jeszcze pogrupowana} few {# awarie nie są jeszcze pogrupowane} many {# awarii nie jest jeszcze pogrupowanych} other {# awarii nie jest jeszcze pogrupowanych}}",
     "runPanel": {
-      "title": "Klastry awarii",
+      "title": "Wzorce awarii",
       "inRun": "{count, plural, one {# w tym przebiegu} few {# w tym przebiegu} many {# w tym przebiegu} other {# w tym przebiegu}}",
-      "hint": "Kliknij klaster, aby filtrować poniższe wyniki.",
-      "open": "Wyświetl sygnaturę",
+      "hint": "Kliknij wzorzec, aby filtrować wyniki poniżej.",
+      "open": "Wyświetl wzorzec",
       "inRunColumn": "W tym przebiegu",
-      "selectedClusters": "{count, plural, one {# wybrany klaster} few {# wybrane klastry} many {# wybranych klastrów} other {# wybranego klastra}}",
-      "clearSelected": "Wyczyść wybrane klastry"
+      "selectedClusters": "{count, plural, one {Wybrany # wzorzec} few {Wybrane # wzorce} many {Wybranych # wzorców} other {Wybranych # wzorców}}",
+      "clearSelected": "Wyczyść wybrane wzorce"
     },
     "toasts": {
-      "updated": "Sygnatura zaktualizowana",
-      "updateFailed": "Nie można zaktualizować sygnatury",
-      "classifyQueued": "Żądana klasyfikacja AI",
+      "updated": "Wzorzec awarii zaktualizowany",
+      "updateFailed": "Nie można zaktualizować wzorca awarii",
+      "classifyQueued": "Zażądano sugestii przyczyny głównej sztucznej inteligencji",
       "noAiModel": "Brak modelu AI skonfigurowanego dla tej funkcji",
       "issueLinked": "Problem powiązany"
     },
     "empty": {
-      "title": "Brak sygnatur awarii",
-      "description": "Sygnatury pojawiają się tutaj, gdy pojawią się zautomatyzowane wyniki z awariami. Aby pogrupować awarie już zarejestrowane w tym projekcie, użyj opcji Analyze existing results w ustawieniach Failure Triage."
+      "title": "Brak wzorców awarii",
+      "description": "Wzorce awarii pojawiają się tutaj, gdy automatyczne wyniki z awariami przychodzą. Aby zgrupować awarie już zarejestrowane w tym projekcie, użyj opcji Analizuj istniejące wyniki w ustawieniach Wzorców awarii."
     },
     "settings": {
-      "description": "Pogrupuj zautomatyzowane awarie w sygnatury i pozwól AI je sklasyfikować.",
-      "enableLabel": "Włącz Triage awarii",
+      "description": "Grupuj automatyczne awarie w wzorce i pozwól sztucznej inteligencji zasugerować ich przyczynę główną.",
+      "enableLabel": "Włącz Wzorce awarii",
       "enableDescription": "Pogrupuj każdą zautomatyzowaną awarię w tym projekcie według wyjątku, wiadomości i ramek stosu, gdy wyniki się pojawią.",
-      "autoClassifyLabel": "Sklasyfikuj nowe sygnatury za pomocą AI",
-      "autoClassifyDescription": "Poproś model AI projektu o sklasyfikowanie każdej nowej sygnatury jako błędu produktu, błędu testu, problemu środowiska lub zmienności. Wymaga modelu AI przypisanego do funkcji Failure Triage Classification.",
+      "autoClassifyLabel": "Zasugeruj przyczyny główne za pomocą sztucznej inteligencji",
+      "autoClassifyDescription": "Poproś model sztucznej inteligencji projektu, aby wybrał przyczynę główną dla każdego nowego wzorca awarii z katalogu Przyczyn głównych. Wymaga modelu sztucznej inteligencji przypisanego do funkcji Wzorce awarii: Przyczyna główna.",
       "backfillLabel": "Przeanalizuj istniejące wyniki",
       "backfillDescription": "Pogrupuj każdą zautomatyzowaną awarię już zarejestrowaną w tym projekcie. Uruchamia się w tle.",
       "backfillStarted": "Analiza rozpoczęta",
@@ -10868,11 +10901,47 @@
       "backfillDone": "Analiza ukończona",
       "backfillFailed": "Analiza nie powiodła się",
       "backfillQueueUnavailable": "Kolejka zadań w tle jest niedostępna",
-      "enabledToast": "Triage awarii włączony",
-      "disabledToast": "Triage awarii wyłączony",
-      "autoClassifyOnToast": "Klasyfikacja AI włączona",
-      "autoClassifyOffToast": "Klasyfikacja AI wyłączona",
-      "openTriage": "Otwórz Triage awarii"
+      "enabledToast": "Wzorce awarii włączone",
+      "disabledToast": "Wzorce awarii wyłączone",
+      "autoClassifyOnToast": "Sugestie przyczyny głównej sztucznej inteligencji włączone",
+      "autoClassifyOffToast": "Sugestie przyczyny głównej sztucznej inteligencji wyłączone",
+      "autoReleaseLabel": "Zwolnij kwarantannę automatycznie po",
+      "autoReleasePassesLabel": "kolejnych przejściach",
+      "autoReleaseDescription": "Przypadek testowy w kwarantannie jest zwalniany po tym, jak przejdzie tyle razy z rzędu od momentu umieszczenia go w kwarantannie. Pominięte wyniki są ignorowane. Kwarantanna oznaczona \"utrzymuj do zwolnienia ręcznie\" pozostaje.",
+      "autoReleaseOnToast": "Automatyczne zwolnienie włączone",
+      "autoReleaseOffToast": "Automatyczne zwolnienie wyłączone",
+      "autoReleasePassesSaved": "{count, plural, one {Kwarantanna jest zwalniana po # kolejnym przejściu} few {Kwarantanna jest zwalniana po # kolejnych przejściach} many {Kwarantanna jest zwalniana po # kolejnych przejściach} other {Kwarantanna jest zwalniana po # kolejnych przejściach}}",
+      "autoReleasePassesInvalid": "Podaj liczbę przejść od 1 do 100",
+      "openTriage": "Otwórz Wzorce awarii"
+    },
+    "quarantine": {
+      "label": "W kwarantannie",
+      "title": "Przypadki testowe w kwarantannie",
+      "hint": "Awarie przypadku testowego w kwarantannie są pozostawiane poza przebiegiem pass/fail i liczane oddzielnie. Przypadek testowy nadal działa i rejestruje wyniki.",
+      "metricHint": "Awarie przypadków testowych w kwarantannie w tym przebiegu. Nie liczą się w stosunku przebiegów.",
+      "action": "Umieść w kwarantannie",
+      "actionAll": "Umieść w kwarantannie przypadki testowe, na które wpływ",
+      "release": "Zwolnij",
+      "reasonLabel": "Powód",
+      "reasonPlaceholder": "Dlaczego ten przypadek testowy jest w kwarantannie? (opcjonalnie)",
+      "keepLabel": "Utrzymuj w kwarantannie do zwolnienia ręcznie",
+      "keepHint": "Pomija automatyczne zwolnienie projektu po kolejnych przejściach.",
+      "dialogTitle": "{count, plural, one {Umieść w kwarantannie # przypadek testowy} few {Umieść w kwarantannie # przypadki testowe} many {Umieść w kwarantannie # przypadków testowych} other {Umieść w kwarantannie # przypadków testowych}}",
+      "releaseConfirmTitle": "Zwolnić z kwarantanny?",
+      "releaseConfirmDescription": "Awarie przypadku testowego ponownie liczą się w stosunku przebiegów pass/fail.",
+      "quarantinedToast": "{count, plural, one {# przypadek testowy umieszczony w kwarantannie} few {# przypadki testowe umieszczone w kwarantannie} many {# przypadków testowych umieszczonych w kwarantannie} other {# przypadków testowych umieszczonych w kwarantannie}}",
+      "releasedToast": "Przypadek testowy zwolniony z kwarantanny",
+      "failedToast": "Nie można zaktualizować kwarantanny",
+      "listButton": "{count, plural, =0 {Przypadki testowe w kwarantannie} one {# przypadek testowy w kwarantannie} few {# przypadki testowe w kwarantannie} many {# przypadków testowych w kwarantannie} other {# przypadków testowych w kwarantannie}}",
+      "columns": {
+        "signature": "Wzorzec awarii",
+        "by": "W kwarantannie przez",
+        "since": "Od",
+        "releasePolicy": "Zwolnij"
+      },
+      "releaseAuto": "{count, plural, one {Automatyczne po # kolejnym przejściu} few {Automatyczne po # kolejnych przejściach} many {Automatyczne po # kolejnych przejściach} other {Automatyczne po # kolejnych przejściach}}",
+      "releaseManual": "Ręcznie",
+      "empty": "W tym projekcie żaden przypadek testowy nie jest w kwarantannie."
     }
   }
 }

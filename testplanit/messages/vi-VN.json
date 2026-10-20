@@ -741,7 +741,7 @@
       "sharedContent": "Nội dung được chia sẻ",
       "impact": "Phân tích ảnh hưởng",
       "alerts": "Thông báo & Cảnh báo",
-      "triage": "Phân loại lỗi"
+      "triage": "Các mẫu lỗi"
     },
     "aria": {
       "userMenu": "Menu người dùng",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Chủ yếu",
       "fields": "Các cánh đồng",
+      "rootCauses": "Nguyên nhân gốc",
       "appConfig": "Cấu hình ứng dụng",
       "recordKeys": "Khóa bản ghi",
       "imports": "Nhập dữ liệu",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "Bạn có chắc chắn muốn xóa Loại cột mốc {name} không?"
       }
     },
+    "rootCauses": {
+      "description": "Các nguyên nhân gốc mà Failure Patterns gán cho các lỗi được nhóm lại. AI chọn từ danh sách này bằng cách sử dụng mô tả của mỗi mục.",
+      "filterPlaceholder": "Lọc các nguyên nhân gốc...",
+      "reordered": "Các nguyên nhân gốc được sắp xếp lại",
+      "descriptionPlaceholder": "Nguyên nhân gốc này áp dụng khi nào? AI sử dụng văn bản này để quyết định.",
+      "columns": {
+        "signatures": "Mẫu"
+      },
+      "add": {
+        "button": "Thêm nguyên nhân gốc",
+        "title": "Thêm nguyên nhân gốc"
+      },
+      "edit": {
+        "title": "Chỉnh sửa nguyên nhân gốc"
+      },
+      "errors": {
+        "nameExists": "Nguyên nhân gốc có tên này đã tồn tại"
+      },
+      "delete": {
+        "confirmMessage": "Bạn có chắc chắn muốn xóa nguyên nhân gốc {name} không?",
+        "inUse": "{count, plural, one {# mẫu lỗi sử dụng nó.} other {# mẫu lỗi sử dụng nó.}}",
+        "moveLabel": "{count, plural, one {Di chuyển mẫu đến} other {Di chuyển # mẫu đến}}"
+      }
+    },
     "issue_config": {
       "link_title": "Công cụ theo dõi sự cố liên kết",
       "link_description": "Cấu hình URL cơ sở cho các sự cố được liên kết thủ công. Khi liên kết một sự cố chỉ bằng ID bên ngoài, URL cơ sở này sẽ được thêm vào đầu để tạo liên kết đầy đủ.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Báo cáo ứng viên tự động hóa",
         "derive_case_steps": "Suy luận bước bằng AI",
         "impact_analysis": "Tác động: Lựa chọn bài kiểm tra bị ảnh hưởng",
-        "failure_triage": "Phân loại lỗi tự động"
+        "failure_triage": "Các mẫu lỗi: Nguyên nhân gốc"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Nhật ký kiểm toán",
         "budget-alerts": "Cảnh báo ngân sách",
         "auto-tag": "Tự động gắn thẻ bằng AI",
-        "failure-triage": "Phân loại lỗi",
+        "failure-triage": "Các mẫu lỗi",
         "repo-cache": "Bộ nhớ đệm kho lưu trữ",
         "copy-move": "Sao chép & Di chuyển",
         "duplicate-scan": "Quét bản sao",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "Quá trình thực thi tự động trên {target} kết thúc với {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% số trường hợp chạy không có kết quả trong {daysRemaining, plural, one {# ngày} other {# ngày}} trước khi cột mốc của nó đến hạn (ngưỡng {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# vấn đề là} other {# vấn đề là}} được liên kết với kết quả chạy (ngưỡng {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# mẫu lỗi đã xuất hiện} other {# mẫu lỗi đã xuất hiện}} lần đầu tiên trong lần chạy (ngưỡng {threshold}).",
           "SESSION_OVERRUN": "Phiên mất {elapsed} so với ước tính {estimate}, {overrun}% quá (nhiều hơn {threshold}% được phép).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} trong {total} yêu cầu ({coverage}%) {basis, select, PASSING {có kết quả mới nhất vượt qua} other {được liên kết với một trường hợp thử nghiệm}} (ngưỡng {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# trường hợp đã} other {# trường hợp đã}} không có kết quả trong {days, plural, one {# ngày} other {# ngày}} (ngưỡng {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "Kết quả chạy thử nghiệm",
       "TestRunResultRestrictedFields": "Kết quả chạy thử nghiệm - Các trường bị hạn chế",
       "AutomatedExecution": "Thực thi Tự động",
+      "FailurePatterns": "Các mẫu lỗi",
       "Sessions": "Phiên họp",
       "SessionsRestrictedFields": "Các trường bị hạn chế của phiên",
       "ClosedSessions": "Phiên họp kín",
@@ -7971,7 +7998,7 @@
       "name": "## Tên vai trò\nMột tên hoặc từ khóa rõ ràng, ngắn gọn, mô tả được sử dụng trong tất cả các dự án.\n\n- Giúp các thành viên nhóm nhanh chóng tìm thấy các trường hợp kiểm thử, các lần chạy thử nghiệm và các phiên liên quan.",
       "isDefault": "## Vai trò mặc định\nCho biết liệu vai trò này có phải là vai trò mặc định cho dự án của bạn hay không.\n\n- Vai trò mặc định được chọn sẵn cho người dùng mới\n- Có thể thay đổi bất cứ lúc nào",
       "permissions": {
-        "canAddEdit": "## Thêm/Chỉnh sửa\nCho biết liệu vai trò này có thể thêm và chỉnh sửa khu vực ứng dụng liên quan hay không.\n\n- **Quá trình thực thi tự động** cho phép quyền bắt đầu, thử lại và hủy quá trình thực thi tự động trên nhà cung cấp CI. Ghi lại kết quả vẫn cần **Kết quả Chạy Thử nghiệm** Thêm/Chỉnh sửa, và bắt đầu từ kho lưu trữ cũng cần **Chạy Thử nghiệm** Thêm/Chỉnh sửa vì nó tạo hoặc mở rộng một lần chạy.\n- **Cảnh báo** cho phép quyền tạo cảnh báo trong dự án và chỉnh sửa, tạm dừng và xóa những cảnh báo bạn đã tạo. Quản trị viên dự án quản lý mọi cảnh báo và đăng ký của người dùng khác; bất kỳ ai cũng có thể theo dõi hoặc rời khỏi cảnh báo.",
+        "canAddEdit": "## Thêm/Chỉnh sửa\nChi phối việc vai trò này có thể thêm và chỉnh sửa vùng ứng dụng liên quan.\n\n- **Thực thi tự động** cấp quyền bắt đầu, thử lại và hủy các quá trình thực thi tự động trên nhà cung cấp CI. Ghi lại kết quả vẫn cần **Kết quả chạy kiểm thử** Thêm/Chỉnh sửa, và bắt đầu một từ kho lưu trữ cũng cần **Chạy kiểm thử** Thêm/Chỉnh sửa vì nó tạo ra hoặc mở rộng một lần chạy.\n- **Các mẫu lỗi** cấp quyền đặt hoặc xóa nguyên nhân gốc của mẫu lỗi hoặc yêu cầu AI để có được một, giải quyết, bỏ qua hoặc mở lại nó, chỉnh sửa ghi chú của nó, liên kết và hủy liên kết các vấn đề, và cách ly hoặc phát hành các trường hợp kiểm thử của nó. Bất kỳ ai có quyền truy cập vào dự án đều có thể thấy các mẫu lỗi của nó; quản trị viên dự án quản lý cài đặt Các mẫu lỗi.\n- **Cảnh báo** cấp quyền tạo cảnh báo trong dự án và chỉnh sửa, tạm dừng và xóa các cảnh báo bạn đã tạo. Quản trị viên dự án quản lý mọi cảnh báo và đăng ký của người dùng khác; bất kỳ ai cũng có thể theo dõi hoặc rời khỏi cảnh báo.",
         "canDelete": "## Xóa\nCho biết liệu vai trò này có thể xóa khu vực ứng dụng liên quan hay không.",
         "canClose": "## Đóng\nCho biết liệu vai trò này có thể đóng khu vực ứng dụng liên quan hay không.",
         "canApprove": "## Phê duyệt\nCho biết liệu vai trò này có thể phê duyệt các yêu cầu xem xét cho khu vực ứng dụng liên quan hay không. Chỉ áp dụng cho Kho lưu trữ trường hợp thử nghiệm, Chạy thử nghiệm và Phiên.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## Mẫu Đường Dẫn\nMỗi hàng kết hợp một **đường dẫn** cơ bản với một **mẫu** glob. Các hàng cộng lại: một tệp được bao gồm khi bất kỳ hàng nào khớp với nó.\n\n- `src` + `**/*` — mọi thứ dưới `src`\n- trống hoặc `.` + `**/*` — mọi tệp trong kho lưu trữ\n- `src` + `**/!(*.test|*.spec).ts` — các tệp `.ts` ngoại trừ các bài kiểm tra\n\n### Loại trừ\nChọn **Loại trừ** trên một hàng để loại bỏ các tệp của nó ngay cả khi một hàng khác bao gồm chúng. Các loại trừ áp dụng cho trình chọn tệp và bộ nhớ cache, và đối với Impact áp dụng cho các tệp đã thay đổi của một phân tích, do đó một tệp thay đổi trên hầu hết mọi yêu cầu kéo sẽ ngừng kéo vào các trường hợp thử nghiệm không liên quan. Ít nhất một hàng phải giữ nguyên không được chọn.\n\n- trống + `**/CHANGELOG*` — mọi changelog, ở bất kỳ độ sâu nào\n- `app` + `build.gradle.kts` — một tệp xây dựng chỉ thay đổi phiên bản",
     "projectAutomation": "## Thực thi Tự động\nCác mục tiêu thực thi cho TestPlanIt biết nơi thực thi các trường hợp tự động của dự án này: quy trình làm việc GitHub Actions, đường ống GitLab CI, hoặc webhook được ký cho bất kỳ hệ thống nào khác. Khi một lần chạy được thực thi, TestPlanIt bắt đầu công việc với id lần chạy và URL kế hoạch; công việc đọc kế hoạch, chạy các kiểm thử phù hợp, và báo cáo kết quả trở lại với một trình báo cáo hoặc CLI được ghim vào lần chạy đó. Các mục tiêu có thể bị vô hiệu hóa mà không bị xóa.",
     "userAlerts": "## Thông báo & Cảnh báo\n**Tùy chọn Thông báo** quyết định cách bạn được tiếp cận (trong ứng dụng, email, tóm tắt) và những loại thông báo nào bạn nhận được. **Cảnh báo** theo dõi số liệu kiểm tra và thông báo cho những người đăng ký khi nó vượt qua một dòng, ví dụ một kết quả mất 50% lâu hơn thời gian thông thường của trường hợp, một trường hợp thất bại ba lần liên tiếp, một lần chạy có tỷ lệ vượt qua dưới 90%, hoặc một cột mốc phía sau với ngày để đi. Danh sách hiển thị mọi cảnh báo trong các dự án của bạn; công tắc **Thông báo cho tôi** theo dõi hoặc rời khỏi một. **Thêm Cảnh báo** tạo ra của riêng bạn trong bất kỳ dự án nào nơi vai trò của bạn có **Cảnh báo** Thêm/Chỉnh sửa; quản trị viên dự án quản lý mọi cảnh báo trong dự án của họ và đăng ký của mọi người khác. Cảnh báo kích hoạt tối đa một lần mỗi chủ đề trong thời gian hạ nhiệt và giữ im lặng cho đến khi nó có đủ kết quả.",
-    "projectTriage": "## Phân loại lỗi\nNhững lỗi tự động chia sẻ cùng một ngoại lệ, thông báo và các khung ngăn xếp hàng đầu được nhóm thành một **chữ ký**. Mỗi chữ ký hiển thị tần suất xảy ra, các trường hợp kiểm thử và lần chạy nào được chạm vào, cũng như đánh giá của AI về liệu đó là lỗi sản phẩm, lỗi thử nghiệm, vấn đề môi trường hay không ổn định. Giải quyết hoặc bỏ qua một chữ ký khi nó được xử lý; nó tự động mở lại nếu lỗi xuất hiện trở lại.",
-    "projectTriageSettings": "## Cài đặt phân loại lỗi\nNhóm chạy trên mọi kết quả tự động mà đến và không tốn kém gì. Phân loại AI sử dụng mô hình AI được gán cho tính năng **Phân loại lỗi tự động** trên trang AI Models; tắt nó ở đây để giữ nhóm mà không cần bất kỳ lệnh gọi AI nào. **Phân tích kết quả hiện tại** nhóm mọi lỗi tự động đã được ghi lại trong dự án này."
+    "projectTriage": "## Các mẫu lỗi\nCác lỗi tự động chia sẻ cùng một ngoại lệ, thông báo và các khung ngăn xếp hàng đầu được nhóm lại thành một **mẫu lỗi**. Mỗi mẫu hiển thị tần suất xảy ra, các trường hợp kiểm thử và chạy nào được chạm vào, và cách đọc AI về nguyên nhân gốc của nó (lỗi sản phẩm, lỗi kiểm thử, môi trường hoặc không ổn định theo mặc định). Giải quyết hoặc bỏ qua một mẫu khi nó được xử lý; nó tự động mở lại nếu lỗi quay lại.",
+    "projectTriageSettings": "## Cài đặt các mẫu lỗi\nNhóm các lần chạy trên mọi kết quả tự động đến và không tốn gì. Gợi ý nguyên nhân gốc AI sử dụng mô hình AI được gán cho tính năng **Các mẫu lỗi: Nguyên nhân gốc** trên trang Mô hình AI; tắt nó ở đây để tiếp tục nhóm mà không cần bất kỳ cuộc gọi AI nào. **Phân tích các kết quả hiện tại** nhóm mọi lỗi tự động đã được ghi lại trong dự án này.",
+    "projectQuarantine": "## Các trường hợp kiểm thử bị cách ly\nMột trường hợp kiểm thử bị cách ly tiếp tục chạy và ghi lại kết quả, nhưng các lỗi của nó bị loại khỏi quá trình chạy thành công/thất bại và hiển thị là số đếm riêng. Cách ly một trường hợp khỏi mẫu lỗi trong khi nguyên nhân đang được khắc phục. Việc cách ly tự động nâng lên khi trường hợp đã vượt qua số lần liên tiếp được đặt trong cài đặt Các mẫu lỗi, trừ khi nó được đánh dấu để được phát hành bằng tay; phát hành nó ở đây hoặc từ mẫu bất kỳ lúc nào.",
+    "rootCauses": "## Nguyên nhân gốc\nCác nguyên nhân gốc mà Các mẫu lỗi gán cho các lỗi được nhóm lại, theo AI hoặc bằng tay. Mỗi cái có mô tả mà AI đọc để quyết định khi nó áp dụng. Đổi tên, tô màu lại hoặc sắp xếp lại chúng, thêm của riêng bạn, hoặc xóa những cái bạn không sử dụng; việc xóa một cái sẽ để lại các mẫu của nó mà không có nguyên nhân gốc.",
+    "rootCauseDescription": "## Mô tả\nAI đọc mô tả này để quyết định khi nào nguyên nhân gốc áp dụng cho mẫu lỗi, vì vậy hãy mô tả bằng chứng chỉ vào nó."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Ngưỡng",
         "RUN_UNTESTED_SHARE": "Các trường hợp chưa được kiểm tra vượt quá (%)",
         "RUN_ISSUES_OPENED": "Vấn đề được liên kết, nhiều hơn",
+        "NEW_FAILURE_SIGNATURES": "Các mẫu lỗi mới, nhiều hơn",
         "SESSION_OVERRUN": "Vượt quá ước tính nhiều hơn (%)",
         "MILESTONE_BEHIND": "Hoàn thành dưới (%)",
         "MILESTONE_OVERDUE": "Ngưỡng",
@@ -10654,6 +10685,11 @@
         "description": "Nhiều hơn một số lượng nhất định vấn đề được liên kết với kết quả chạy.",
         "summary": "Nhiều hơn {threshold, plural, one {# vấn đề là} other {# vấn đề là}} được liên kết với kết quả chạy, {evaluateOn, select, AS_RESULTS_ARRIVE {đánh giá khi các kết quả đến} other {đánh giá khi lần chạy hoàn thành}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Các mẫu lỗi mới trong một lần chạy",
+        "description": "Một lần chạy giới thiệu các mẫu lỗi mà dự án chưa bao giờ thấy trước đây. Cần Các mẫu lỗi được bật cho dự án.",
+        "summary": "Nhiều hơn {threshold, plural, one {# mẫu lỗi xuất hiện} other {# mẫu lỗi xuất hiện}} lần đầu tiên trong một lần chạy, {evaluateOn, select, AS_RESULTS_ARRIVE {được đánh giá khi kết quả đến} other {được đánh giá khi lần chạy hoàn thành}}"
+      },
       "SESSION_OVERRUN": {
         "label": "Phiên vượt quá ước tính của nó",
         "description": "Thời gian trôi qua của phiên hoàn thành vượt quá ước tính của nó theo phần trăm.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "Đã giải quyết",
       "IGNORED": "Đã bỏ qua"
     },
-    "classification": {
-      "UNCLASSIFIED": "Chưa được phân loại",
-      "PRODUCT_BUG": "Lỗi sản phẩm",
-      "TEST_BUG": "Lỗi thử nghiệm",
-      "ENVIRONMENT": "Môi trường",
-      "FLAKY": "Không ổn định"
-    },
+    "unclassified": "Không có nguyên nhân gốc",
     "source": {
-      "AI": "Được phân loại bởi AI",
+      "AI": "Nguyên nhân gốc được AI gợi ý",
       "labelAI": "Trí tuệ nhân tạo",
       "labelMANUAL": "Thủ công"
     },
     "columns": {
-      "classification": "Phân loại",
+      "classification": "Nguyên nhân gốc",
       "occurrences": "Lần xuất hiện",
       "firstSeen": "Lần đầu tiên nhìn thấy",
       "lastSeen": "Lần cuối cùng nhìn thấy",
-      "classifiedBy": "Được phân loại bởi"
+      "classifiedBy": "Được đặt bởi"
     },
     "filters": {
-      "searchPlaceholder": "Tìm kiếm chữ ký...",
+      "searchPlaceholder": "Tìm kiếm các mẫu lỗi...",
       "flakyOnly": "Ứng viên không ổn định",
-      "sourceAll": "AI hoặc thủ công"
+      "sourceAll": "Được đặt bởi bất kỳ ai",
+      "sourceAi": "Được đặt bởi AI",
+      "sourceManual": "Được đặt bằng tay",
+      "sourceNone": "Chưa được thiết lập"
     },
     "actions": {
       "resolve": "Giải quyết",
       "ignore": "Bỏ qua",
-      "classify": "Phân loại với AI",
-      "setClassification": "Đặt phân loại"
+      "classify": "Gợi ý nguyên nhân gốc bằng AI",
+      "setClassification": "Đặt nguyên nhân gốc"
     },
     "detail": {
       "exceptionType": "Loại ngoại lệ",
@@ -10822,13 +10855,13 @@
       "rationale": "Lý do",
       "suggestedIssueTitle": "Tiêu đề vấn đề được đề xuất",
       "nextStep": "Bước tiếp theo được đề xuất",
-      "noAi": "Chưa được phân loại bởi AI.",
+      "noAi": "Chưa có gợi ý từ AI.",
       "noDetails": "Lỗi này không có thông báo hoặc dấu vết ngăn xếp, vì vậy nó được nhóm theo trường hợp kiểm thử.",
       "notesPlaceholder": "Ghi chú cho đội...",
       "lastRun": "Lần chạy cuối",
       "aiSuggestion": "Gợi ý của AI",
-      "unlinkConfirmDescription": "Việc này sẽ xóa vấn đề khỏi chữ ký này. Vấn đề vẫn được giữ lại và có thể liên kết lại sau.",
-      "signatureLabel": "Chữ ký lỗi",
+      "unlinkConfirmDescription": "Thao tác này sẽ xóa vấn đề khỏi mẫu lỗi này. Vấn đề vẫn được giữ lại và có thể được liên kết lại sau này.",
+      "signatureLabel": "Mẫu lỗi",
       "affectedCasesLabel": "Các trường hợp kiểm thử bị ảnh hưởng"
     },
     "flakyCandidate": "Ứng viên không ổn định",
@@ -10836,31 +10869,31 @@
     "knownIssue": "Vấn đề đã biết",
     "notGrouped": "{count, plural, other {# lỗi chưa được nhóm}}",
     "runPanel": {
-      "title": "Cụm lỗi",
+      "title": "Các mẫu lỗi",
       "inRun": "{count, plural, other {# trong lần chạy này}}",
-      "hint": "Nhấp vào một cụm để lọc kết quả bên dưới.",
-      "open": "Xem chữ ký",
+      "hint": "Nhấp vào mẫu để lọc các kết quả bên dưới.",
+      "open": "Xem mẫu",
       "inRunColumn": "Trong lần chạy này",
-      "selectedClusters": "{count, plural, other {# cụm được chọn}}",
-      "clearSelected": "Xóa các cụm được chọn"
+      "selectedClusters": "{count, plural, one {# mẫu được chọn} other {# mẫu được chọn}}",
+      "clearSelected": "Xóa các mẫu được chọn"
     },
     "toasts": {
-      "updated": "Chữ ký đã được cập nhật",
-      "updateFailed": "Không thể cập nhật chữ ký",
-      "classifyQueued": "Yêu cầu phân loại AI đã được gửi",
+      "updated": "Mẫu lỗi đã được cập nhật",
+      "updateFailed": "Không thể cập nhật mẫu lỗi",
+      "classifyQueued": "Đã yêu cầu gợi ý nguyên nhân gốc AI",
       "noAiModel": "Không có mô hình AI nào được cấu hình cho tính năng này",
       "issueLinked": "Vấn đề đã được liên kết"
     },
     "empty": {
-      "title": "Chưa có chữ ký lỗi nào",
-      "description": "Chữ ký xuất hiện ở đây khi các kết quả tự động với các lỗi đến. Để nhóm các lỗi đã được ghi lại trong dự án này, hãy sử dụng Phân tích kết quả hiện tại trong cài đặt Phân loại lỗi."
+      "title": "Chưa có mẫu lỗi nào",
+      "description": "Các mẫu lỗi xuất hiện ở đây khi các kết quả tự động có lỗi đến. Để nhóm các lỗi đã được ghi lại trong dự án này, hãy sử dụng Phân tích các kết quả hiện tại trong cài đặt Các mẫu lỗi."
     },
     "settings": {
-      "description": "Nhóm các lỗi tự động thành chữ ký và để AI phân loại chúng.",
-      "enableLabel": "Bật phân loại lỗi",
+      "description": "Nhóm các lỗi tự động thành mẫu và cho phép AI gợi ý nguyên nhân gốc của chúng.",
+      "enableLabel": "Bật các mẫu lỗi",
       "enableDescription": "Nhóm mọi lỗi tự động trong dự án này theo ngoại lệ, thông báo và khung ngăn xếp khi kết quả đến.",
-      "autoClassifyLabel": "Phân loại chữ ký mới với AI",
-      "autoClassifyDescription": "Yêu cầu mô hình AI của dự án phân loại từng chữ ký mới là lỗi sản phẩm, lỗi thử nghiệm, vấn đề môi trường hay không ổn định. Cần một mô hình AI được gán cho tính năng Phân loại lỗi tự động.",
+      "autoClassifyLabel": "Gợi ý nguyên nhân gốc bằng AI",
+      "autoClassifyDescription": "Yêu cầu mô hình AI của dự án chọn nguyên nhân gốc cho mỗi mẫu lỗi mới từ danh mục Nguyên nhân gốc. Cần một mô hình AI được gán cho tính năng Các mẫu lỗi: Nguyên nhân gốc.",
       "backfillLabel": "Phân tích kết quả hiện tại",
       "backfillDescription": "Nhóm mọi lỗi tự động đã được ghi lại trong dự án này. Chạy trong nền.",
       "backfillStarted": "Đã bắt đầu phân tích",
@@ -10868,11 +10901,47 @@
       "backfillDone": "Phân tích hoàn tất",
       "backfillFailed": "Phân tích thất bại",
       "backfillQueueUnavailable": "Hàng đợi công việc nền không khả dụng",
-      "enabledToast": "Đã bật phân loại lỗi",
-      "disabledToast": "Đã tắt phân loại lỗi",
-      "autoClassifyOnToast": "Đã bật phân loại AI",
-      "autoClassifyOffToast": "Đã tắt phân loại AI",
-      "openTriage": "Mở phân loại lỗi"
+      "enabledToast": "Các mẫu lỗi đã được bật",
+      "disabledToast": "Các mẫu lỗi đã bị vô hiệu hóa",
+      "autoClassifyOnToast": "Gợi ý nguyên nhân gốc AI đã được bật",
+      "autoClassifyOffToast": "Gợi ý nguyên nhân gốc AI đã bị vô hiệu hóa",
+      "autoReleaseLabel": "Tự động phát hành cách ly sau",
+      "autoReleasePassesLabel": "những lần chạy liên tiếp thành công",
+      "autoReleaseDescription": "Một trường hợp kiểm thử bị cách ly được phát hành khi nó đã vượt qua nhiều lần liên tiếp kể từ khi nó được cách ly. Các kết quả được bỏ qua bị bỏ qua. Một cách ly được đánh dấu \"giữ cho đến khi được phát hành bằng tay\" vẫn được giữ lại.",
+      "autoReleaseOnToast": "Phát hành tự động đã được bật",
+      "autoReleaseOffToast": "Phát hành tự động đã bị vô hiệu hóa",
+      "autoReleasePassesSaved": "{count, plural, one {Cách ly được phát hành sau # lần chạy liên tiếp thành công} other {Cách ly được phát hành sau # lần chạy liên tiếp thành công}}",
+      "autoReleasePassesInvalid": "Nhập số lần chạy từ 1 đến 100",
+      "openTriage": "Mở các mẫu lỗi"
+    },
+    "quarantine": {
+      "label": "Bị cách ly",
+      "title": "Các trường hợp kiểm thử bị cách ly",
+      "hint": "Các lỗi của trường hợp kiểm thử bị cách ly bị loại khỏi quá trình chạy thành công/thất bại và được đếm riêng. Trường hợp kiểm thử tiếp tục chạy và ghi lại kết quả.",
+      "metricHint": "Các lỗi của các trường hợp kiểm thử bị cách ly trong lần chạy này. Chúng không tính vào tỷ lệ thành công.",
+      "action": "Cách ly",
+      "actionAll": "Cách ly các trường hợp kiểm thử bị ảnh hưởng",
+      "release": "Phát hành",
+      "reasonLabel": "Lý do",
+      "reasonPlaceholder": "Tại sao trường hợp kiểm thử này bị cách ly? (tùy chọn)",
+      "keepLabel": "Giữ cách ly cho đến khi được phát hành bằng tay",
+      "keepHint": "Bỏ qua phát hành tự động sau những lần chạy liên tiếp thành công.",
+      "dialogTitle": "{count, plural, one {Cách ly # trường hợp kiểm thử} other {Cách ly # trường hợp kiểm thử}}",
+      "releaseConfirmTitle": "Phát hành khỏi cách ly?",
+      "releaseConfirmDescription": "Các lỗi của trường hợp kiểm thử lại tính vào quá trình chạy thành công/thất bại.",
+      "quarantinedToast": "{count, plural, one {# trường hợp kiểm thử bị cách ly} other {# trường hợp kiểm thử bị cách ly}}",
+      "releasedToast": "Trường hợp kiểm thử được phát hành khỏi cách ly",
+      "failedToast": "Không thể cập nhật cách ly",
+      "listButton": "{count, plural, =0 {Các trường hợp kiểm thử bị cách ly} one {# trường hợp kiểm thử bị cách ly} other {# trường hợp kiểm thử bị cách ly}}",
+      "columns": {
+        "signature": "Mẫu lỗi",
+        "by": "Cách ly bởi",
+        "since": "Kể từ",
+        "releasePolicy": "Phát hành"
+      },
+      "releaseAuto": "{count, plural, one {Tự động sau # lần chạy liên tiếp thành công} other {Tự động sau # lần chạy liên tiếp thành công}}",
+      "releaseManual": "Bằng tay",
+      "empty": "Không có trường hợp kiểm thử nào bị cách ly trong dự án này."
     }
   }
 }

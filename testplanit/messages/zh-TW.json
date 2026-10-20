@@ -741,7 +741,7 @@
       "sharedContent": "分享內容",
       "impact": "影響分析",
       "alerts": "通知和警報",
-      "triage": "失敗分級"
+      "triage": "故障模式"
     },
     "aria": {
       "userMenu": "使用者選單",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "主要的",
       "fields": "田野",
+      "rootCauses": "根本原因",
       "appConfig": "應用程式配置",
       "recordKeys": "記錄鍵",
       "imports": "數據導入",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "您確定要刪除 {name} 里程碑類型嗎？"
       }
     },
+    "rootCauses": {
+      "description": "故障模式分配給分組故障的根本原因。AI 使用此清單中的各項描述進行選擇。",
+      "filterPlaceholder": "篩選根本原因……",
+      "reordered": "根本原因已重新排序",
+      "descriptionPlaceholder": "此根本原因何時適用？AI 使用此文字來決定。",
+      "columns": {
+        "signatures": "模式"
+      },
+      "add": {
+        "button": "新增根本原因",
+        "title": "新增根本原因"
+      },
+      "edit": {
+        "title": "編輯根本原因"
+      },
+      "errors": {
+        "nameExists": "已存在同名根本原因"
+      },
+      "delete": {
+        "confirmMessage": "您確定要刪除 {name} 根本原因嗎？",
+        "inUse": "{count, plural, one {# 個故障模式正在使用它。} other {# 個故障模式正在使用它。}}",
+        "moveLabel": "{count, plural, one {將該模式移至} other {將這 # 個模式移至}}"
+      }
+    },
     "issue_config": {
       "link_title": "連結問題追蹤器",
       "link_description": "配置手動連結問題的基本 URL。當僅使用外部 ID 連結問題時，此基本 URL 將會新增至完整連結的前面。",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "自動化候選報告",
         "derive_case_steps": "AI 步驟推導",
         "impact_analysis": "影響：受影響測試選擇",
-        "failure_triage": "失敗分級分類"
+        "failure_triage": "故障模式：根本原因"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "審計日誌",
         "budget-alerts": "預算警報",
         "auto-tag": "AI自動標籤",
-        "failure-triage": "失敗分級",
+        "failure-triage": "故障模式",
         "repo-cache": "儲存庫快取",
         "copy-move": "複製和移動",
         "duplicate-scan": "重複掃描",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "{target} 上的自動執行以 {status}{error, select, other {： {error}}} 結束",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% 的運行案例在其里程碑到期前 {daysRemaining, plural, other {# 天}} 內無結果（閾值 {threshold}%）。",
           "RUN_ISSUES_OPENED": "{issues, plural, other {# 個問題}} 連結到運行的結果（閾值 {threshold}）。",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# 個故障模式首次出現} other {# 個故障模式首次出現}}在此次執行中（閾值 {threshold}）。",
           "SESSION_OVERRUN": "工作階段花費 {elapsed}，超過 {estimate} 的估計 {overrun}%（超過允許的 {threshold}%）。",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} 個中的 {total} 個需求（{coverage}%） {basis, select, PASSING {有通過的最新結果} other {連結到測試案例}}（閾值 {threshold}%）。",
           "STALE_CASES": "{stale, plural, other {# 個案例}} 在 {days, plural, other {# 天}} 內無結果（閾值 {threshold}）。",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "測試運行結果",
       "TestRunResultRestrictedFields": "測試運行結果受限字段",
       "AutomatedExecution": "自動化執行",
+      "FailurePatterns": "故障模式",
       "Sessions": "會議",
       "SessionsRestrictedFields": "會話受限字段",
       "ClosedSessions": "閉門會議",
@@ -7971,7 +7998,7 @@
       "name": "## 角色名稱\n一個清晰、簡潔、描述性的名稱或關鍵字，用於所有項目。\n\n- 幫助團隊成員快速找到相關的測試案例、測試運行和會話。",
       "isDefault": "## 預設角色\n指示此角色是否為專案的預設角色。\n\n- 預設角色已預先為新使用者選擇。\n- 可隨時變更。",
       "permissions": {
-        "canAddEdit": "## 新增/編輯\n指示此角色是否可以新增和編輯相關的應用程式區域。\n\n- **自動執行** 授予在 CI 提供者上啟動、重試和取消自動執行的權限。記錄結果仍需要 **測試運行結果** 新增/編輯，從儲存庫啟動還需要 **測試運行** 新增/編輯，因為它建立或擴展運行。\n- **警報** 授予在專案中建立警報以及編輯、暫停和刪除您建立的警報的權限。專案管理員管理每個警報和其他使用者的訂閱；任何人都可以追蹤或離開警報。",
+        "canAddEdit": "## 新增/編輯\n表示此角色是否可以新增和編輯相關的應用程序區域。\n\n- **自動化執行**授予在 CI 提供程序上啟動、重試和取消自動化執行的權限。記錄結果仍需要**測試執行結果**新增/編輯，從儲存庫啟動也需要**測試執行**新增/編輯，因為它會建立或擴展執行。\n- **故障模式**授予設定或清除故障模式的根本原因或請求 AI 建議的權限、解決、忽略或重新開啟它、編輯其備註、連結和解除連結問題，以及隔離或發佈其測試案例。任何擁有專案存取權的人都可以看到其故障模式；專案管理員管理故障模式設定。\n- **警報**授予在專案中建立警報以及編輯、暫停和刪除您建立的警報的權限。專案管理員管理每個警報和其他使用者的訂閱；任何人都可以跟隨或離開警報。",
         "canDelete": "## 刪除\n指示此角色是否可以刪除相關的應用程式區域。",
         "canClose": "## 關閉\n指示此角色是否可以關閉相關的應用程式區域。",
         "canApprove": "## 批准\n指示此角色是否可以批准相關應用程式領域的審核請求。僅適用於測試案例庫、測試運行和會話。",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## 路徑模式\n每一列都會結合一個基本的**路徑**與一個 glob **模式**。列會相加：當任何列符合該檔案時，檔案就會被包含。\n\n- `src` + `**/*` — `src` 下的所有內容\n- 空白或 `.` + `**/*` — 儲存庫中的每個檔案\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 檔案（測試除外）\n\n### 排除\n在列上勾選**排除**，即使另一列包含這些檔案，也要移除其檔案。排除適用於檔案選擇器和快取，對於「影響」，適用於分析的已變更檔案，因此在幾乎每個提取請求上變更的檔案會停止拉取不相關的測試案例。至少有一列必須保持未勾選。\n\n- 空白 + `**/CHANGELOG*` — 每個變更日誌，在任何深度\n- `app` + `build.gradle.kts` — 只會變更版本的建置檔案",
     "projectAutomation": "## 自動化執行\n執行目標告知 TestPlanIt 在何處執行此專案的自動化案例：GitHub Actions 工作流程、GitLab CI 管道，或用於任何其他系統的簽名 webhook。執行執行時，TestPlanIt 會使用執行 ID 和計劃 URL 啟動工作；工作會讀取計劃、執行相符的測試，並透過記錄者或 CLI 釘選至該執行來報告結果。目標可以停用而無需刪除。",
     "userAlerts": "## 通知和警報\n**通知偏好設定** 決定您如何被聯絡（應用內、電子郵件、摘要）以及您接收哪些通知類型。\n\n**警報** 監視測試指標，當其超過線條時通知其訂閱者，例如結果耗時比案例常見耗時長 50%、案例連續失敗三次、運行通過率降至 90% 以下或里程碑在還有天數時落後。列表顯示您專案中的每個警報；**通知我** 開關追蹤或離開一個。**新增警報** 在角色具有 **警報** 新增/編輯的任何專案中建立您自己的；專案管理員管理其專案中的每個警報以及其他人的訂閱。警報在其冷卻時間內最多為每個主題觸發一次，並保持沉默，直到有足夠的結果。",
-    "projectTriage": "## 失敗分級\n自動化失敗會根據相同的例外、訊息和頂部堆疊框架分組為一個 **簽名**。每個簽名顯示發生的頻率、它涉及的測試案例和執行，以及人工智慧對其是否為產品缺陷、測試缺陷、環境問題或不穩定的判斷。簽名在處理後標記為已解決或忽略；如果失敗再次出現，它會自動重新打開。",
-    "projectTriageSettings": "## 失敗分級設定\n每當自動化結果到達時對執行進行分組，無需任何費用。人工智慧分類使用指派給 AI 模型頁面上 **失敗分級分類** 功能的人工智慧模型；在此關閉它可以在沒有任何人工智慧呼叫的情況下保持分組。**分析現有結果** 對此專案中已記錄的每個自動化失敗進行分組。"
+    "projectTriage": "## 故障模式\n共享相同異常、訊息和最上層堆疊框架的自動化故障會分組到一個**故障模式**中。每個模式都會顯示它發生的頻率、它觸及的測試案例和執行，以及 AI 對其根本原因的看法（產品錯誤、測試錯誤、環境或預設的不穩定）。解決或忽略一個模式後，如果故障再次出現，它會自動重新開啟。",
+    "projectTriageSettings": "## 故障模式設定\n在每個到達的自動化結果上分組執行，成本為零。AI 根本原因建議使用指派給 AI 模型頁面上**故障模式：根本原因**功能的 AI 模型；在此關閉它以保持分組而無需任何 AI 呼叫。**分析現有結果**會將此專案中已記錄的每個自動化故障進行分組。",
+    "projectQuarantine": "## 隔離的測試案例\n隔離的測試案例會繼續執行和記錄結果，但其故障被排除在執行通過/失敗之外，並顯示為單獨的計數。當原因被修復時，從故障模式隔離一個案例。隔離會自動解除，一旦該案例按照故障模式設定中設定的次數連續通過，除非它被標記為手動發佈；在此處或從模式發佈，無論何時。",
+    "rootCauses": "## 根本原因\n故障模式分配給分組故障的根本原因，由 AI 或手動分配。每個都有 AI 讀取以決定何時適用的描述。重新命名、重新著色或重新排序它們、新增您自己的，或刪除您不使用的；刪除一個會留下其模式沒有根本原因。",
+    "rootCauseDescription": "## 描述\nAI 讀取此描述以決定根本原因何時適用於故障模式，因此請描述指向它的證據。"
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "閾值",
         "RUN_UNTESTED_SHARE": "未測試的案例超過 (%)",
         "RUN_ISSUES_OPENED": "連結的問題，超過",
+        "NEW_FAILURE_SIGNATURES": "新故障模式，超過",
         "SESSION_OVERRUN": "超過估計 (%)",
         "MILESTONE_BEHIND": "完成度低於 (%)",
         "MILESTONE_OVERDUE": "閾值",
@@ -10654,6 +10685,11 @@
         "description": "超過給定數量的問題連結到運行的結果。",
         "summary": "超過 {threshold, plural, one {# 個問題} other {# 個問題}} 連結到運行的結果，{evaluateOn, select, AS_RESULTS_ARRIVE {隨著結果到達進行評估} other {在運行完成時進行評估}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "執行中的新故障模式",
+        "description": "執行引入了專案以前未見過的故障模式。需要為專案啟用故障模式。",
+        "summary": "超過 {threshold, plural, one {# 個故障模式首次出現} other {# 個故障模式首次出現}}在執行中，{evaluateOn, select, AS_RESULTS_ARRIVE {在結果到達時評估} other {在執行完成時評估}}"
+      },
       "SESSION_OVERRUN": {
         "label": "工作階段超過其估計",
         "description": "已完成的工作階段過去時間超過其估計百分比。",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "已解決",
       "IGNORED": "忽略"
     },
-    "classification": {
-      "UNCLASSIFIED": "未分類",
-      "PRODUCT_BUG": "產品缺陷",
-      "TEST_BUG": "測試缺陷",
-      "ENVIRONMENT": "環境",
-      "FLAKY": "不穩定"
-    },
+    "unclassified": "無根本原因",
     "source": {
-      "AI": "由人工智慧分類",
+      "AI": "AI 建議的根本原因",
       "labelAI": "人工智慧",
       "labelMANUAL": "手動"
     },
     "columns": {
-      "classification": "分類",
+      "classification": "根本原因",
       "occurrences": "發生次數",
       "firstSeen": "首次出現",
       "lastSeen": "最後出現",
-      "classifiedBy": "分類者"
+      "classifiedBy": "設定者"
     },
     "filters": {
-      "searchPlaceholder": "搜尋簽名……",
+      "searchPlaceholder": "搜尋故障模式……",
       "flakyOnly": "不穩定候選",
-      "sourceAll": "人工智慧或手動"
+      "sourceAll": "由任何人設定",
+      "sourceAi": "由 AI 設定",
+      "sourceManual": "手動設定",
+      "sourceNone": "未設定"
     },
     "actions": {
       "resolve": "解決",
       "ignore": "忽略",
-      "classify": "使用人工智慧分類",
-      "setClassification": "設定分類"
+      "classify": "使用 AI 建議根本原因",
+      "setClassification": "設定根本原因"
     },
     "detail": {
       "exceptionType": "例外類型",
@@ -10822,13 +10855,13 @@
       "rationale": "基本原理",
       "suggestedIssueTitle": "建議的問題標題",
       "nextStep": "建議的下一步",
-      "noAi": "尚未由人工智慧分類。",
+      "noAi": "尚無 AI 建議。",
       "noDetails": "此失敗沒有訊息或堆疊追蹤，因此按測試案例分組。",
       "notesPlaceholder": "團隊的備註……",
       "lastRun": "最後執行",
       "aiSuggestion": "人工智慧建議",
-      "unlinkConfirmDescription": "這會從此簽名中移除問題。問題本身將被保留，可日後重新連結。",
-      "signatureLabel": "失敗簽名",
+      "unlinkConfirmDescription": "這將從此故障模式移除問題。問題本身將被保留，可日後重新連結。",
+      "signatureLabel": "故障模式",
       "affectedCasesLabel": "受影響的測試案例"
     },
     "flakyCandidate": "不穩定候選",
@@ -10836,31 +10869,31 @@
     "knownIssue": "已知問題",
     "notGrouped": "{count, plural, one {# 個失敗尚未分組} other {# 個失敗尚未分組}}",
     "runPanel": {
-      "title": "失敗叢集",
+      "title": "故障模式",
       "inRun": "{count, plural, one {此執行中 # 個} other {此執行中 # 個}}",
-      "hint": "按一下叢集以篩選下面的結果。",
-      "open": "檢視簽名",
+      "hint": "點擊一個模式以篩選下面的結果。",
+      "open": "查看模式",
       "inRunColumn": "在此執行中",
-      "selectedClusters": "{count, plural, one {# 個叢集已選取} other {# 個叢集已選取}}",
-      "clearSelected": "清除所選的叢集"
+      "selectedClusters": "{count, plural, one {已選取 # 個模式} other {已選取 # 個模式}}",
+      "clearSelected": "清除選定的模式"
     },
     "toasts": {
-      "updated": "簽名已更新",
-      "updateFailed": "無法更新簽名",
-      "classifyQueued": "已請求人工智慧分類",
+      "updated": "故障模式已更新",
+      "updateFailed": "無法更新故障模式",
+      "classifyQueued": "AI 根本原因建議已請求",
       "noAiModel": "此功能未配置人工智慧模型",
       "issueLinked": "問題已連結"
     },
     "empty": {
-      "title": "尚無失敗簽名",
-      "description": "簽名在自動化結果到達時顯示在此處。若要對此專案中已記錄的失敗進行分組，請在失敗分級設定中使用分析現有結果。"
+      "title": "尚無故障模式",
+      "description": "當自動化結果帶有故障到達時，故障模式會出現在此處。要將此專案中已記錄的故障分組，請使用故障模式設定中的分析現有結果。"
     },
     "settings": {
-      "description": "將自動化失敗分組為簽名並讓人工智慧分類它們。",
-      "enableLabel": "啟用失敗分級",
+      "description": "將自動化故障分組為模式，並讓 AI 建議其根本原因。",
+      "enableLabel": "啟用故障模式",
       "enableDescription": "當結果到達時，按例外、訊息和堆疊框架將此專案中的每個自動化失敗分組。",
-      "autoClassifyLabel": "使用人工智慧分類新簽名",
-      "autoClassifyDescription": "要求專案的人工智慧模型將每個新簽名分類為產品缺陷、測試缺陷、環境問題或不穩定。需要指派給失敗分級分類功能的人工智慧模型。",
+      "autoClassifyLabel": "使用 AI 建議根本原因",
+      "autoClassifyDescription": "要求專案的 AI 模型從根本原因目錄中為每個新故障模式選擇一個根本原因。需要將 AI 模型指派給故障模式：根本原因功能。",
       "backfillLabel": "分析現有結果",
       "backfillDescription": "對此專案中已記錄的每個自動化失敗進行分組。在背景中執行。",
       "backfillStarted": "分析已啟動",
@@ -10868,11 +10901,47 @@
       "backfillDone": "分析完成",
       "backfillFailed": "分析失敗",
       "backfillQueueUnavailable": "背景工作佇列不可用",
-      "enabledToast": "失敗分級已啟用",
-      "disabledToast": "失敗分級已停用",
-      "autoClassifyOnToast": "人工智慧分類已啟用",
-      "autoClassifyOffToast": "人工智慧分類已停用",
-      "openTriage": "打開失敗分級"
+      "enabledToast": "已啟用故障模式",
+      "disabledToast": "已停用故障模式",
+      "autoClassifyOnToast": "已啟用 AI 根本原因建議",
+      "autoClassifyOffToast": "已停用 AI 根本原因建議",
+      "autoReleaseLabel": "在以下後自動解除隔離",
+      "autoReleasePassesLabel": "連續通過",
+      "autoReleaseDescription": "隔離的測試案例在自隔離以來連續通過此次數後被釋放。跳過的結果將被忽略。標記為「保留直到手動釋放」的隔離保持不變。",
+      "autoReleaseOnToast": "已啟用自動解除隔離",
+      "autoReleaseOffToast": "已停用自動解除隔離",
+      "autoReleasePassesSaved": "{count, plural, one {在 # 個連續通過後解除隔離} other {在 # 個連續通過後解除隔離}}",
+      "autoReleasePassesInvalid": "輸入 1 到 100 之間的通過次數",
+      "openTriage": "開啟故障模式"
+    },
+    "quarantine": {
+      "label": "已隔離",
+      "title": "隔離的測試案例",
+      "hint": "隔離測試案例的故障被排除在執行通過/失敗之外，並單獨計數。測試案例繼續執行和記錄結果。",
+      "metricHint": "此次執行中隔離測試案例的故障。它們不計入通過率。",
+      "action": "隔離",
+      "actionAll": "隔離受影響的測試案例",
+      "release": "解除隔離",
+      "reasonLabel": "原因",
+      "reasonPlaceholder": "為什麼隔離此測試案例？（選填）",
+      "keepLabel": "保持隔離直到手動解除隔離",
+      "keepHint": "略過專案在連續通過後的自動解除隔離。",
+      "dialogTitle": "{count, plural, one {隔離 # 個測試案例} other {隔離 # 個測試案例}}",
+      "releaseConfirmTitle": "從隔離中解除嗎？",
+      "releaseConfirmDescription": "測試案例的故障再次計入執行通過/失敗。",
+      "quarantinedToast": "{count, plural, one {# 個測試案例已隔離} other {# 個測試案例已隔離}}",
+      "releasedToast": "測試案例已從隔離中解除",
+      "failedToast": "無法更新隔離",
+      "listButton": "{count, plural, =0 {隔離的測試案例} one {# 個隔離測試案例} other {# 個隔離測試案例}}",
+      "columns": {
+        "signature": "故障模式",
+        "by": "隔離人員",
+        "since": "自",
+        "releasePolicy": "解除隔離"
+      },
+      "releaseAuto": "{count, plural, one {在 # 個連續通過後自動} other {在 # 個連續通過後自動}}",
+      "releaseManual": "手動",
+      "empty": "此專案中沒有隔離的測試案例。"
     }
   }
 }

@@ -35,6 +35,11 @@ interface DeleteFailureClassificationProps {
 
 const CLEAR = "none";
 
+// Re-point affected patterns in id batches. The policy client runs a
+// post-update check on each updateMany whose query grows one term per row, so
+// one unbounded updateMany overflows the stack on a heavily used root cause.
+const REPOINT_BATCH_SIZE = 500;
+
 /**
  * Soft-deletes a root cause. Signatures that carry it are moved to the
  * chosen root cause (a merge, recorded as set by the admin) or to none.
@@ -58,6 +63,10 @@ export function DeleteFailureClassification({
   const { mutateAsync: update } = queries.failureClassification.useUpdate();
   const { mutateAsync: updateSignatures } =
     queries.failureSignature.useUpdateMany();
+  const affectedSignatures = queries.failureSignature.useFindMany(
+    { where: { classificationId: classification.id }, select: { id: true } },
+    { enabled: false }
+  );
   const { data: others } = queries.failureClassification.useFindMany(
     {
       where: { isDeleted: false, id: { not: classification.id } },
@@ -73,23 +82,27 @@ export function DeleteFailureClassification({
     setIsSubmitting(true);
     try {
       if (inUse) {
-        await updateSignatures({
-          where: { classificationId: classification.id },
-          data:
-            targetId !== CLEAR
-              ? {
-                  classificationId: Number(targetId),
-                  classificationSource: "MANUAL",
-                  classifiedAt: new Date(),
-                  classifiedById: session?.user?.id ?? null,
-                }
-              : {
-                  classificationId: null,
-                  classificationSource: null,
-                  classifiedAt: null,
-                  classifiedById: null,
-                },
-        });
+        const { data: rows } = await affectedSignatures.refetch();
+        const ids = (rows ?? []).map((row) => row.id);
+        for (let i = 0; i < ids.length; i += REPOINT_BATCH_SIZE) {
+          await updateSignatures({
+            where: { id: { in: ids.slice(i, i + REPOINT_BATCH_SIZE) } },
+            data:
+              targetId !== CLEAR
+                ? {
+                    classificationId: Number(targetId),
+                    classificationSource: "MANUAL",
+                    classifiedAt: new Date(),
+                    classifiedById: session?.user?.id ?? null,
+                  }
+                : {
+                    classificationId: null,
+                    classificationSource: null,
+                    classifiedAt: null,
+                    classifiedById: null,
+                  },
+          });
+        }
       }
       await update({
         where: { id: classification.id },

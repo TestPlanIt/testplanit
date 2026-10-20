@@ -723,13 +723,13 @@ model Projects {
     quickScriptEnabled               Boolean                               @default(false)
     impactEnabled                    Boolean                               @default(false)
     /// Group automated failures into signatures (deterministic, no LLM cost).
-    failureTriageEnabled             Boolean                               @default(true)
+    failureTriageEnabled             Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
     /// Ask the project's LLM to classify new signatures as they appear.
-    failureTriageAutoClassify        Boolean                               @default(true)
+    failureTriageAutoClassify        Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
     /// Quarantine lifts itself once a case passes this many times in a row
     /// after being quarantined (0 or the switch off = only released by hand).
-    quarantineAutoRelease            Boolean                               @default(true)
-    quarantineAutoReleasePasses      Int                                   @default(5)
+    quarantineAutoRelease            Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    quarantineAutoReleasePasses      Int                                   @default(5) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
     junitIterationPropertyNames      String[]                              @default([])
     reviewWorkflowEnabled            Boolean                               @default(false)
@@ -4665,7 +4665,8 @@ model JUnitTestResult {
     status             Status?           @relation(fields: [statusId], references: [id])
     attachments        Attachments[]
     // Failure triage: the signature this FAILURE/ERROR result was grouped into.
-    failureSignatureId Int?
+    // Assigned by the failure-triage worker only.
+    failureSignatureId Int?              @deny('update', true)
     failureSignature   FailureSignature? @relation("FailureSignatureResults", fields: [failureSignatureId], references: [id], onDelete: SetNull)
 
     @@index([testSuiteId])
@@ -4685,6 +4686,8 @@ model JUnitTestResult {
     @@allow('read',
         testSuite.testRun.projectId in auth().accessibleProjectIds
     )
+
+    @@deny('create', failureSignatureId != null)
 
     @@allow('create,update', auth().id == createdById)
     @@allow('all', auth().access == 'ADMIN')
@@ -7453,7 +7456,20 @@ model FailureSignature {
 
     @@allow('read', projectId in auth().accessibleProjectIds)
 
-    // Same gate as recording a result: the people who run tests triage them.
+    // Whoever sets the root cause or resolves a pattern is recorded as
+    // themselves; clearing either, or leaving it unchanged, is always fine.
+    @@deny('post-update', classifiedById != null && classifiedById != auth().id &&
+        (before().classifiedById == null || classifiedById != before().classifiedById))
+    @@deny('post-update', resolvedById != null && resolvedById != auth().id &&
+        (before().resolvedById == null || resolvedById != before().resolvedById))
+    // Only the triage worker attributes a root cause to the AI.
+    @@deny('post-update', classificationSource == 'AI' &&
+        (before().classificationSource == null || before().classificationSource != 'AI' ||
+         (classificationId == null && before().classificationId != null) ||
+         (classificationId != null && before().classificationId == null) ||
+         classificationId != before().classificationId))
+
+    // Failure Patterns add/edit (or project admin): root cause, status, notes.
     @@allow('update',
         projectId in auth().adminProjectIds ||
         project.creator.id == auth().id ||
@@ -7531,7 +7547,7 @@ model CaseQuarantine {
     case              RepositoryCases   @relation(fields: [caseId], references: [id], onDelete: Cascade)
     projectId         Int               @deny('update', true)
     project           Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    signatureId       Int?
+    signatureId       Int?              @deny('update', true)
     signature         FailureSignature? @relation(fields: [signatureId], references: [id], onDelete: SetNull)
     reason            String?
     /// Opt this case out of the project's automatic release.
@@ -7545,6 +7561,12 @@ model CaseQuarantine {
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
+
+    // The case and the pattern belong to the quarantine's own project, and the
+    // quarantine is recorded in the name of whoever creates it.
+    @@deny('create', case.projectId != projectId)
+    @@deny('create', signatureId != null && signature.projectId != projectId)
+    @@deny('create', createdById != auth().id)
 
     @@allow('read', projectId in auth().accessibleProjectIds)
 

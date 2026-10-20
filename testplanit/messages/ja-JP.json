@@ -741,7 +741,7 @@
       "sharedContent": "共有コンテンツ",
       "impact": "影響分析",
       "alerts": "通知とアラート",
-      "triage": "障害トリアージ"
+      "triage": "障害パターン"
     },
     "aria": {
       "userMenu": "ユーザーメニュー",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "主要",
       "fields": "フィールド",
+      "rootCauses": "根本原因",
       "appConfig": "アプリケーション構成",
       "recordKeys": "レコードキー",
       "imports": "データのインポート",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "マイルストーンタイプ {name} を削除してもよろしいですか？"
       }
     },
+    "rootCauses": {
+      "description": "障害パターンが故障のグループに割り当てる根本原因。AIは各説明を使用してこのリストから選択します。",
+      "filterPlaceholder": "フィルターする根本原因…",
+      "reordered": "根本原因が並べ替えられました",
+      "descriptionPlaceholder": "この根本原因はいつ適用されますか？AIはこのテキストを使用して判断します。",
+      "columns": {
+        "signatures": "パターン"
+      },
+      "add": {
+        "button": "根本原因を追加",
+        "title": "根本原因を追加"
+      },
+      "edit": {
+        "title": "根本原因を編集"
+      },
+      "errors": {
+        "nameExists": "この名前の根本原因は既に存在します"
+      },
+      "delete": {
+        "confirmMessage": "{name}根本原因を削除してもよろしいですか？",
+        "inUse": "{count, plural, other {# 件の障害パターンがそれを使用しています。}}",
+        "moveLabel": "{count, plural, other {# 件のパターンを}}"
+      }
+    },
     "issue_config": {
       "link_title": "リンク問題トラッカー",
       "link_description": "手動でリンクされた課題のベースURLを設定します。外部IDのみを使用して課題をリンクする場合、このベースURLが先頭に追加され、完全なリンクが作成されます。",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "自動化候補者レポート",
         "derive_case_steps": "AIステップ導出",
         "impact_analysis": "影響: 影響を受けたテスト選択",
-        "failure_triage": "障害トリアージの分類"
+        "failure_triage": "障害パターン：根本原因"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "監査ログ",
         "budget-alerts": "予算アラート",
         "auto-tag": "AI自動タグ付け",
-        "failure-triage": "障害トリアージ",
+        "failure-triage": "障害パターン",
         "repo-cache": "リポジトリキャッシュ",
         "copy-move": "コピー＆移動",
         "duplicate-scan": "重複スキャン",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "{target} での自動実行は {status}{error, select, other {: {error}}} で終了しました",
           "RUN_UNTESTED_SHARE": "実行ケースの {untestedPercent}% にはマイルストーン期限 {daysRemaining, plural, one {# 日} other {# 日}} 前に結果がありません（閾値 {threshold}%）。",
           "RUN_ISSUES_OPENED": "実行の結果にリンクされている {issues, plural, one {# 課題} other {# 課題}}（閾値 {threshold}）。",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, other {# 件の障害パターンが}}実行中に初めて表示されました（閾値 {threshold}）。",
           "SESSION_OVERRUN": "セッションに {elapsed} 時間かかり、見積 {estimate} に対して {overrun}% オーバーです（許可 {threshold}% 以下）。",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} / {total} 要件（{coverage}%）{basis, select, PASSING {は最新の結果が成功している} other {テストケースにリンクされている}}（閾値 {threshold}%）。",
           "STALE_CASES": "{stale, plural, one {# ケースが} other {# ケースが}} {days, plural, one {# 日} other {# 日}} 間結果を得ていません（閾値 {threshold}）。",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "テスト実行結果",
       "TestRunResultRestrictedFields": "テスト実行結果の制限フィールド",
       "AutomatedExecution": "自動化実行",
+      "FailurePatterns": "障害パターン",
       "Sessions": "セッション",
       "SessionsRestrictedFields": "セッション制限フィールド",
       "ClosedSessions": "クローズドセッション",
@@ -7971,7 +7998,7 @@
       "name": "## ロール名\nすべてのプロジェクトで使用される、明確で簡潔な説明的な名前またはキーワード。\n\n- チームメンバーが関連するテストケース、テスト実行、およびセッションをすばやく見つけるのに役立ちます。",
       "isDefault": "## デフォルトのロール\nこのロールがプロジェクトのデフォルトかどうかを示します。\n\n- デフォルトのロールは新しいユーザーには事前に選択されています\n- いつでも変更できます",
       "permissions": {
-        "canAddEdit": "## 追加/編集\nこのロールが関連するアプリケーション領域を追加および編集できるかどうかを示します。\n\n- **自動実行** は、CI プロバイダーで自動実行を開始、再試行、キャンセルする権限を付与します。結果の記録には引き続き **テスト実行結果** 追加/編集が必要であり、リポジトリから開始する場合、実行を作成または拡張するため **テスト実行** 追加/編集も必要です。\n- **アラート** はプロジェクトでアラートを作成し、作成したアラートを編集、一時停止、削除する権限を付与します。プロジェクト管理者は全員のアラートと他のユーザーのサブスクリプションを管理します。誰でもアラートを完了するか退出できます。",
+        "canAddEdit": "## 追加/編集\nこのロールが関連するアプリケーション領域を追加・編集できるかどうかを示します。\n\n- **自動実行** は、CIプロバイダーで自動実行を開始、再試行、キャンセルする権利を付与します。結果を記録するには、**テスト実行結果** の追加/編集が必要であり、リポジトリから開始する場合は、実行を作成または拡張するため **テスト実行** の追加/編集も必要です。\n- **障害パターン** は、障害パターンの根本原因を設定または削除し、AIに1つを求める、解決、無視または再度開く、メモを編集し、問題をリンクおよびリンク解除し、テストケースを隔離またはリリースする権利を付与します。プロジェクトにアクセスできる誰もが障害パターンを見ることができます。プロジェクト管理者が障害パターン設定を管理します。\n- **アラート** は、プロジェクトでアラートを作成し、作成したアラートを編集、一時停止、削除する権利を付与します。プロジェクト管理者は、すべてのアラートと他のユーザーのサブスクリプションを管理します。誰もがアラートをフォローするか離脱できます。",
         "canDelete": "## 削除\nこのロールが関連するアプリケーション領域を削除できるかどうかを示します。",
         "canClose": "## 閉じる\nこのロールが関連するアプリケーション領域を閉じることができるかどうかを示します。",
         "canApprove": "## 承認\nこのロールが関連するアプリケーション領域のレビュー要求を承認できるかどうかを示します。テストケースリポジトリ、テスト実行、およびセッションにのみ適用されます。",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## パスパターン\n各行は基本的な**パス**とグロブ**パターン**を組み合わせます。行は累積されます。任意の行がファイルに一致する場合、ファイルが含まれます。\n\n- `src` + `**/*` — `src`の下のすべて\n- 空白または`.` + `**/*` — リポジトリ内のすべてのファイル\n- `src` + `**/!(*.test|*.spec).ts` — テストを除く`.ts`ファイル\n\n### 除外\n行で**除外**をチェックして、別の行が含める場合でもそのファイルを削除します。除外はファイルピッカーとキャッシュに適用され、インパクト分析の変更されたファイルに対して適用されるため、ほぼすべてのプルリクエストで変更されるファイルは関連のないテストケースを取得できなくなります。少なくとも1行はチェックなしのままにしておく必要があります。\n\n- 空白 + `**/CHANGELOG*` — あらゆる深さのすべてのチェンジログ\n- `app` + `build.gradle.kts` — バージョンをバンプするだけのビルドファイル",
     "projectAutomation": "## 自動化実行\n実行ターゲットは、このプロジェクトの自動化されたケースをどこで実行するかをTestPlanItに伝えます：GitHub Actionsワークフロー、GitLab CIパイプライン、または他のシステムの署名付きウェブフック。実行が実行されると、TestPlanItはジョブを実行IDと計画URLで開始します。ジョブは計画を読み取り、一致するテストを実行して、その実行にピン留めされたレポーターまたはCLIで結果を報告します。ターゲットは削除せずに無効にできます。",
     "userAlerts": "## 通知とアラート\n**通知設定** は、連絡する方法（アプリ内、メール、ダイジェスト）と、受け取る通知タイプを決定します。\n\n**アラート** はテストメトリクスを監視し、境界線を超えたときに購読者に通知します。例えば、結果が通常より50%長くかかる、ケースが3回連続で失敗する、成功率が90%以下に低下するランなど、または期限までのマイルストーンです。リストはプロジェクト内のすべてのアラートを表示します。**通知してください** スイッチはいずれかに従うか退出します。**アラートを追加** は、ロールが **アラート** 追加/編集を持つプロジェクトで独自に作成します。プロジェクト管理者はプロジェクト内のすべてのアラートと他のユーザーのサブスクリプションを管理します。アラートはクールダウン内の被験体あたり最大1回発火し、十分な結果を得るまで沈黙したままです。",
-    "projectTriage": "## 障害トリアージ\n同じ例外、メッセージ、トップスタックフレームを共有する自動失敗は**署名**にグループ化されます。各署名は、それが発生した頻度、それが触れたテストケースと実行、およびそれが製品バグ、テストバグ、環境問題またはflakiness についてのAIの見方を示します。署名が処理されたら、それを解決または無視します。失敗が戻った場合、それは自動的に再度開きます。",
-    "projectTriageSettings": "## 障害トリアージ設定\n自動結果に到達するすべての実行をグループ化し、何も費用がかかりません。AI分類は、AIモデルページの**障害トリアージ分類**機能に割り当てられたAIモデルを使用します。ここで無効にしてAI呼び出しなしでグループ化を保つます。**既存の結果を分析**すると、このプロジェクトに既に記録されているすべての自動失敗をグループ化します。"
+    "projectTriage": "## 障害パターン\n同じ例外、メッセージ、トップスタックフレームを共有する自動化された障害は、1つの**障害パターン**にグループ化されます。各パターンは、発生頻度、影響を受けたテストケースと実行、およびAIの根本原因（製品バグ、テストバグ、環境またはデフォルトではflaky）を示します。パターンが処理されたら、解決または無視します。障害が戻った場合、それは自動的に再度開きます。",
+    "projectTriageSettings": "## 障害パターン設定\nすべての自動化された結果が到着するたびにグループ化を実行し、コストはかかりません。AI根本原因提案は、AIモデルページの**障害パターン：根本原因** 機能に割り当てられたAIモデルを使用します。ここでそれをオフにして、AIコールなしでグループ化を続けます。**既存の結果を分析** は、このプロジェクトに既に記録されているすべての自動化された障害をグループ化します。",
+    "projectQuarantine": "## 隔離されたテストケース\n隔離されたテストケースは実行を続けて結果を記録しますが、その障害は実行パス/失敗から除外され、別個のカウントとして表示されます。原因が修正されている間に、障害パターンからケースを隔離します。隔離は、ケースが障害パターン設定で設定された回数を連続してパスすると自動的に解除されます。手動でリリースするようにマークされていない場合。ここまたはパターンからいつでもそれをリリースします。",
+    "rootCauses": "## 根本原因\n障害パターンがAIまたは手動でグループ化された障害に割り当てる根本原因。各々は、AIがいつそれが適用されるかを決定するために読む説明を持っています。名前を変更、色を変更、または並べ替え、独自のを追加、または使用しないものを削除します。1つを削除すると、そのパターンは根本原因なしになります。",
+    "rootCauseDescription": "## 説明\nAIはこの説明を読んで、根本原因が障害パターンに適用される時期を判断するため、それを指す証拠を説明します。"
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "閾値",
         "RUN_UNTESTED_SHARE": "未テストケース以上（%）",
         "RUN_ISSUES_OPENED": "リンクされた課題、以上",
+        "NEW_FAILURE_SIGNATURES": "新しい障害パターン、以上",
         "SESSION_OVERRUN": "見積を超える以上（%）",
         "MILESTONE_BEHIND": "完了以下（%）",
         "MILESTONE_OVERDUE": "閾値",
@@ -10654,6 +10685,11 @@
         "description": "実行結果にリンクされている与えられた数以上の課題。",
         "summary": "実行結果にリンクされている {threshold, plural, other {# 件の課題}} 以上で、{evaluateOn, select, AS_RESULTS_ARRIVE {結果が到着すると評価} other {実行が完了すると評価}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "実行での新しい障害パターン",
+        "description": "実行は、プロジェクトが以前に見たことのない障害パターンを導入します。プロジェクトに対して有効にされた障害パターンが必要です。",
+        "summary": "{threshold, plural, other {# 件以上の障害パターンが}}実行で初めて表示され、{evaluateOn, select, AS_RESULTS_ARRIVE {結果が到着するにつれて評価された} other {実行完了時に評価された}}"
+      },
       "SESSION_OVERRUN": {
         "label": "セッションが見積を超えました",
         "description": "完了したセッションの経過時間がパーセンテージで見積を超えます。",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "解決済み",
       "IGNORED": "無視"
     },
-    "classification": {
-      "UNCLASSIFIED": "未分類",
-      "PRODUCT_BUG": "製品バグ",
-      "TEST_BUG": "テストバグ",
-      "ENVIRONMENT": "環境",
-      "FLAKY": "不安定"
-    },
+    "unclassified": "根本原因なし",
     "source": {
-      "AI": "AIで分類されました",
+      "AI": "AIが提案した根本原因",
       "labelAI": "AI",
       "labelMANUAL": "手動"
     },
     "columns": {
-      "classification": "分類",
+      "classification": "根本原因",
       "occurrences": "発生数",
       "firstSeen": "最初に確認",
       "lastSeen": "最後に確認",
-      "classifiedBy": "分類者"
+      "classifiedBy": "設定者"
     },
     "filters": {
-      "searchPlaceholder": "署名を検索…",
+      "searchPlaceholder": "障害パターンを検索…",
       "flakyOnly": "不安定候補",
-      "sourceAll": "AIまたは手動"
+      "sourceAll": "誰でも設定",
+      "sourceAi": "AIが設定",
+      "sourceManual": "手動で設定",
+      "sourceNone": "未設定"
     },
     "actions": {
       "resolve": "解決",
       "ignore": "無視",
-      "classify": "AIで分類",
-      "setClassification": "分類を設定"
+      "classify": "AIで根本原因を提案",
+      "setClassification": "根本原因を設定"
     },
     "detail": {
       "exceptionType": "例外タイプ",
@@ -10822,13 +10855,13 @@
       "rationale": "根拠",
       "suggestedIssueTitle": "推奨される問題のタイトル",
       "nextStep": "推奨される次のステップ",
-      "noAi": "まだAIで分類されていません。",
+      "noAi": "AIの提案はまだありません。",
       "noDetails": "この失敗にはメッセージまたはスタックトレースがなかったため、テストケースでグループ化されます。",
       "notesPlaceholder": "チームのためのメモ…",
       "lastRun": "最後の実行",
       "aiSuggestion": "AI提案",
-      "unlinkConfirmDescription": "これにより、この署名から問題が削除されます。問題自体は保持され、後で再度リンクできます。",
-      "signatureLabel": "障害署名",
+      "unlinkConfirmDescription": "これにより、この障害パターンから問題が削除されます。問題自体は保持され、後で再度リンクできます。",
+      "signatureLabel": "障害パターン",
       "affectedCasesLabel": "影響を受けたテストケース"
     },
     "flakyCandidate": "不安定な候補",
@@ -10836,31 +10869,31 @@
     "knownIssue": "既知の問題",
     "notGrouped": "{count, plural, one {# 個の失敗がまだグループ化されていません} other {# 個の失敗がまだグループ化されていません}}",
     "runPanel": {
-      "title": "障害クラスタ",
+      "title": "障害パターン",
       "inRun": "{count, plural, one {# このランの中で} other {# このランの中で}}",
-      "hint": "クラスタをクリックして、以下の結果をフィルタリングします。",
-      "open": "署名を表示",
+      "hint": "パターンをクリックして、以下の結果をフィルター処理します。",
+      "open": "パターンを表示",
       "inRunColumn": "このランで",
-      "selectedClusters": "{count, plural, one {# クラスタが選択されました} other {# クラスタが選択されました}}",
-      "clearSelected": "選択されたクラスタをクリア"
+      "selectedClusters": "{count, plural, other {# 件のパターンが選択されました}}",
+      "clearSelected": "選択したパターンをクリア"
     },
     "toasts": {
-      "updated": "署名が更新されました",
-      "updateFailed": "署名を更新できませんでした",
-      "classifyQueued": "AI分類がリクエストされました",
+      "updated": "障害パターンが更新されました",
+      "updateFailed": "障害パターンを更新できませんでした",
+      "classifyQueued": "AIルートコーズサジェスチョンがリクエストされました",
       "noAiModel": "この機能用にAIモデルが設定されていません",
       "issueLinked": "問題がリンクされました"
     },
     "empty": {
-      "title": "まだ障害署名がありません",
-      "description": "署名は、自動化された結果が失敗して到着すると、ここに表示されます。このプロジェクトに既に記録されている失敗をグループ化するには、障害トリアージ設定の既存の結果を分析を使用します。"
+      "title": "まだ障害パターンはありません",
+      "description": "障害パターンは、失敗を伴う自動化された結果が到着するにつれてここに表示されます。このプロジェクトに既に記録されている障害をグループ化するには、障害パターン設定で既存の結果を分析を使用します。"
     },
     "settings": {
-      "description": "自動化された失敗を署名にグループ化し、AIに分類させます。",
-      "enableLabel": "障害トリアージを有効にする",
+      "description": "自動化された障害をパターンにグループ化し、AIに根本原因を提案させます。",
+      "enableLabel": "障害パターンを有効化",
       "enableDescription": "結果が到着すると、このプロジェクトのすべての自動失敗を例外、メッセージ、スタックフレーム別にグループ化します。",
-      "autoClassifyLabel": "AIで新しい署名を分類する",
-      "autoClassifyDescription": "プロジェクトのAIモデルに、各新しい署名を製品バグ、テストバグ、環境問題または不安定として分類するよう依頼します。障害トリアージ分類機能に割り当てられたAIモデルが必要です。",
+      "autoClassifyLabel": "AIで根本原因を提案",
+      "autoClassifyDescription": "プロジェクトのAIモデルに、根本原因カタログから各新しい障害パターンの根本原因を選択するよう求めます。障害パターン：根本原因機能に割り当てられたAIモデルが必要です。",
       "backfillLabel": "既存の結果を分析",
       "backfillDescription": "このプロジェクトに既に記録されているすべての自動失敗をグループ化します。バックグラウンドで実行されます。",
       "backfillStarted": "分析が開始されました",
@@ -10868,11 +10901,47 @@
       "backfillDone": "分析完了",
       "backfillFailed": "分析に失敗しました",
       "backfillQueueUnavailable": "バックグラウンドジョブキューが利用できません",
-      "enabledToast": "障害トリアージが有効になりました",
-      "disabledToast": "障害トリアージが無効になりました",
-      "autoClassifyOnToast": "AI分類が有効になりました",
-      "autoClassifyOffToast": "AI分類が無効になりました",
-      "openTriage": "障害トリアージを開く"
+      "enabledToast": "障害パターンが有効化されました",
+      "disabledToast": "障害パターンが無効化されました",
+      "autoClassifyOnToast": "AIルートコーズサジェスチョンが有効化されました",
+      "autoClassifyOffToast": "AIルートコーズサジェスチョンが無効化されました",
+      "autoReleaseLabel": "自動隔離解除の後",
+      "autoReleasePassesLabel": "連続パス",
+      "autoReleaseDescription": "隔離されたテストケースは、隔離されてからこの回数連続してパスすると、リリースされます。スキップされた結果は無視されます。「手動でリリースするまで保持」とマークされた隔離は保持されます。",
+      "autoReleaseOnToast": "自動リリースが有効化されました",
+      "autoReleaseOffToast": "自動リリースが無効化されました",
+      "autoReleasePassesSaved": "{count, plural, other {隔離は # 件の連続パスの後にリリースされます}}",
+      "autoReleasePassesInvalid": "1～100の連続パス数を入力してください",
+      "openTriage": "障害パターンを開く"
+    },
+    "quarantine": {
+      "label": "隔離",
+      "title": "隔離されたテストケース",
+      "hint": "隔離されたテストケースの障害は、実行パス/失敗から除外され、個別にカウントされます。テストケースは実行を続けて結果を記録します。",
+      "metricHint": "この実行での隔離されたテストケースの障害。それらはパスレートに対してカウントされません。",
+      "action": "隔離",
+      "actionAll": "影響を受けたテストケースを隔離",
+      "release": "リリース",
+      "reasonLabel": "理由",
+      "reasonPlaceholder": "なぜこのテストケースが隔離されていますか？（オプション）",
+      "keepLabel": "手動でリリースされるまで隔離を維持",
+      "keepHint": "連続パス後のプロジェクトの自動リリースをスキップします。",
+      "dialogTitle": "{count, plural, other {# 件のテストケースを隔離}}",
+      "releaseConfirmTitle": "隔離からリリースしますか？",
+      "releaseConfirmDescription": "テストケースの障害は、実行パス/失敗に対して再度カウントされます。",
+      "quarantinedToast": "{count, plural, other {# 件のテストケースが隔離されました}}",
+      "releasedToast": "テストケースが隔離からリリースされました",
+      "failedToast": "隔離を更新できませんでした",
+      "listButton": "{count, plural, =0 {隔離されたテストケース} other {# 件の隔離されたテストケース}}",
+      "columns": {
+        "signature": "障害パターン",
+        "by": "隔離者",
+        "since": "以来",
+        "releasePolicy": "リリース"
+      },
+      "releaseAuto": "{count, plural, other {自動的に # 件の連続パスの後}}",
+      "releaseManual": "手動",
+      "empty": "このプロジェクトでは、隔離されたテストケースはありません。"
     }
   }
 }

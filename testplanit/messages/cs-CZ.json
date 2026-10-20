@@ -741,7 +741,7 @@
       "sharedContent": "Sdílený obsah",
       "impact": "Analýza dopadu",
       "alerts": "Oznámení a upozornění",
-      "triage": "Selhání třídění"
+      "triage": "Selhání vzorů"
     },
     "aria": {
       "userMenu": "Uživatelské menu",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Hlavní",
       "fields": "Pole",
+      "rootCauses": "Hlavní příčiny",
       "appConfig": "Konfigurace aplikace",
       "recordKeys": "Klíče záznamů",
       "imports": "Importy dat",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "Opravdu chcete smazat typ milníku {name}?"
       }
     },
+    "rootCauses": {
+      "description": "Hlavní příčiny, které Failure Patterns přiřazuje k seskupeným selháním. AI si vybírá ze seznamu pomocí jednotlivých popisů.",
+      "filterPlaceholder": "Filtrovat hlavní příčiny...",
+      "reordered": "Hlavní příčiny přeuspořádány",
+      "descriptionPlaceholder": "Kdy se tato hlavní příčina vztahuje? AI pomocí tohoto textu rozhoduje.",
+      "columns": {
+        "signatures": "Vzory"
+      },
+      "add": {
+        "button": "Přidat hlavní příčinu",
+        "title": "Přidat hlavní příčinu"
+      },
+      "edit": {
+        "title": "Upravit hlavní příčinu"
+      },
+      "errors": {
+        "nameExists": "Hlavní příčina s tímto názvem již existuje"
+      },
+      "delete": {
+        "confirmMessage": "Opravdu chcete odstranit hlavní příčinu {name}?",
+        "inUse": "{count, plural, one {# vzor selhání ji používá.} few {# vzory selhání jej používají.} many {# vzorů selhání jej používá.} other {# vzorů selhání jej používá.}}",
+        "moveLabel": "{count, plural, one {Přesunout vzor na} few {Přesunout # vzory na} many {Přesunout # vzorů na} other {Přesunout # vzorů na}}"
+      }
+    },
     "issue_config": {
       "link_title": "Propojit nástroj pro sledování problémů",
       "link_description": "Nakonfigurujte základní URL pro ručně propojené problémy. Při propojování problému pouze pomocí externího ID bude tato základní URL předřazena pro vytvoření úplného odkazu.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Report kandidátů na automatizaci",
         "derive_case_steps": "Odvození kroků pomocí AI",
         "impact_analysis": "Dopad: Výběr postižených testů",
-        "failure_triage": "Třídění selhání klasifikace"
+        "failure_triage": "Failure Patterns: Hlavní příčina"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Auditní záznamy",
         "budget-alerts": "Upozornění na rozpočet",
         "auto-tag": "Automatické štítkování AI",
-        "failure-triage": "Selhání třídění",
+        "failure-triage": "Vzory selhání",
         "repo-cache": "Mezipaměť úložiště",
         "copy-move": "Kopírovat a přesunout",
         "duplicate-scan": "Kontrola duplicit",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "Automatické spuštění na {target} skončilo s {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% případů běhu nemá výsledek s {daysRemaining, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} před splatností milníku (prahová hodnota {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# problém je} few {# problémy jsou} many {# problémů je} other {# problémů je}} propojeno s výsledky běhu (prahová hodnota {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# vzor selhání se objevil} few {# vzory selhání se objevily} many {# vzorů selhání se objevilo} other {# vzorů selhání se objevilo}} poprvé v běhu (práh {threshold}).",
           "SESSION_OVERRUN": "Relace trvala {elapsed} proti odhadu {estimate}, {overrun}% více (více než {threshold}% povoleno).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} z {total} požadavků ({coverage}%) {basis, select, PASSING {má procházející poslední výsledek} other {je propojen s testovacím případem}} (prahová hodnota {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# případ má} few {# případy mají} many {# případů má} other {# případů má}} žádný výsledek za {days, plural, one {# den} few {# dny} many {# dny} other {# dny}} (prahová hodnota {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "Výsledky testovacího běhu",
       "TestRunResultRestrictedFields": "Omezená pole výsledku testovacího běhu",
       "AutomatedExecution": "Automatizované provedení",
+      "FailurePatterns": "Vzory selhání",
       "Sessions": "Relace",
       "SessionsRestrictedFields": "Omezená pole relací",
       "ClosedSessions": "Uzavřené relace",
@@ -7971,7 +7998,7 @@
       "name": "## Název role\nJasný, stručný a výstižný název nebo klíčové slovo (slova), které se používají napříč všemi projekty.\n\n- Pomáhá členům týmu rychle najít související testovací případy, testovací běhy a relace.",
       "isDefault": "## Výchozí role\nUdává, zda je tato role výchozí pro váš projekt.\n\n- Výchozí role je předvybraná pro nové uživatele\n- Lze kdykoli změnit",
       "permissions": {
-        "canAddEdit": "## Přidat/Upravit\nUdává, zda může tato role přidávat a upravovat související oblast aplikace.\n\n- **Automatické spuštění** uděluje právo na spuštění, opakování a zrušení automatizovaných spuštění u poskytovatele CI. Zaznamenání výsledků stále vyžaduje **Výsledky testovacího běhu** Přidat/Upravit a spuštění z úložiště vyžaduje také **Testovací běhy** Přidat/Upravit, protože vytváří nebo rozšiřuje běh.\n- **Upozornění** uděluje právo vytvářet upozornění v projektu a upravovat, pozastavovat a mazat upozornění, která jste vytvořili. Správci projektů spravují všechna upozornění a předplatná jiných uživatelů; kdokoli se může upozornění přihlásit nebo opustit.",
+        "canAddEdit": "## Přidat/Upravit\nUdává, zda tato role může přidávat a upravovat související aplikační oblast.\n\n- **Automatické spouštění** uděluje právo spouštět, opakovat a rušit automatizovaná spouštění u poskytovatele CI. Zaznamenávání výsledků stále vyžaduje **Výsledky testovacího běhu** Přidat/Upravit a spuštění z úložiště také vyžaduje **Testovací běhy** Přidat/Upravit, protože vytváří nebo prodlužuje běh.\n- **Failure Patterns** uděluje právo nastavit nebo vymazat hlavní příčinu vzoru selhání nebo požádat AI, vyřešit, ignorovat nebo znovu otevřít, upravit jeho poznámky, propojit a odpojit problémy a karanténu nebo uvolnit své testovací případy. Každý s přístupem k projektu může vidět jeho vzory selhání; správci projektů spravují nastavení Failure Patterns.\n- **Upozornění** uděluje právo vytvářet upozornění v projektu a upravovat, pozastavovat a odstraňovat ty, které jste vytvořili. Správci projektů spravují všechna upozornění a odběry jiných uživatelů; každý se může přihlásit nebo opustit upozornění.",
         "canDelete": "## Smazat\nUdává, zda může tato role mazat související oblast aplikace.",
         "canClose": "## Uzavřít\nUdává, zda může tato role uzavírat související oblast aplikace.",
         "canApprove": "## Schválit\nUrčuje, zda tato role může schvalovat žádosti o revizi pro související oblast aplikace. Vztahuje se pouze na Úložiště testovacích případů, testovací běhy a relace.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## Vzory cest\nKaždý řádek kombinuje základní **cestu** se **vzorem** glob. Řádky se sčítají: soubor je zahrnut, pokud jej některý řádek vyhovuje.\n\n- `src` + `**/*` — vše pod `src`\n- prázdné nebo `.` + `**/*` — každý soubor v úložišti\n- `src` + `**/!(*.test|*.spec).ts` — soubory `.ts` kromě testů\n\n### Vyloučit\nZaškrtněte **Vyloučit** na řádku, abyste odebrali jeho soubory i v případě, že je jiný řádek zahrnuje. Vyloučení se vztahují na selektor souborů a mezipaměť, a pro dopad na změněné soubory analýzy, takže soubor, který se mění téměř v každém pull requestu, přestane stahovat nesouvisející testovací případy. Alespoň jeden řádek musí zůstat nezaškrtnutý.\n\n- prázdné + `**/CHANGELOG*` — každý changelog v kterékoliv hloubce\n- `app` + `build.gradle.kts` — soubor sestavení, který pouze zvyšuje verzi",
     "projectAutomation": "## Automatizované provedení\nCíle provedení říkají TestPlanIt, kde spustit automatizované případy tohoto projektu: pracovní postup GitHub Actions, kanál GitLab CI nebo podepsaný webhook pro libovolný jiný systém. Když je běh spuštěn, TestPlanIt spustí úlohu s ID běhu a adresou URL plánu; úloha přečte plán, spustí odpovídající testy a vrátí výsledky pomocí reportéra nebo CLI připnutého k tomuto běhu. Cíle mohou být zakázány bez jejich odstranění.",
     "userAlerts": "## Oznámení a upozornění\n**Předvolby oznámení** rozhodují, jak vás dosáhneme (v aplikaci, e-mail, přehled) a které typy oznámení vůbec obdržíte.\n\n**Upozornění** sledují testovací metriku a upozorňují své předplatitele, když překročí linii, například výsledek, který trvá o 50% déle než obvyklá doba případu, případ, který selže třikrát za sebou, běh, jehož míra úspěšnosti klesne pod 90%, nebo milník, který je pozadu s dny do konce. Seznam ukazuje každé upozornění ve vašich projektech; přepínač **Upozornit mě** se přihlašuje nebo opouští jeden. **Přidat upozornění** vytváří vaše vlastní v jakémkoli projektu, kde má vaše role **Upozornění** Přidat/Upravit; správci projektů spravují všechna upozornění v jejich projektu a předplatná ostatních lidí. Upozornění se v rámci svého chladícího cyklu spustí maximálně jednou na subjekt a zůstane tiché, dokud nemá dostatek výsledků.",
-    "projectTriage": "## Selhání třídění\nAutomatizovaná selhání, která sdílejí stejnou výjimku, zprávu a horní stack frames, jsou seskupena do jedné **podpisy**. Každý podpis ukazuje, jak často se stalo, které testovací případy a běhy se dotkly, a umělou inteligenci číst, zda jde o chybu produktu, chybu testu, problém prostředí nebo flakiness. Vyřešit nebo ignorovat podpis po jeho vyřešení; znovu se otevře, pokud se selhání vrátí.",
-    "projectTriageSettings": "## Nastavení selhání třídění\nGroupování běhů na každém automatizovaném výsledku, který přichází, a nic to nestojí. Klasifikace umělé inteligence používá model umělé inteligence přiřazený funkci **Třídění selhání klasifikace** na stránce Modely umělé inteligence; vypněte jej zde, abyste zachovali seskupování bez jakýchkoli volání umělé inteligence. **Analyzovat existující výsledky** seskupuje všechna automatizovaná selhání již zaznamenána v tomto projektu."
+    "projectTriage": "## Failure Patterns\nAutomatizovaná selhání, která sdílejí stejnou výjimku, zprávu a horní rámce zásobníku, se seskupují do jednoho **vzoru selhání**. Každý vzor ukazuje, jak často se stalo, které testovací případy a běhy se dotkly, a názor AI na jeho hlavní příčinu (chyba produktu, chyba testu, prostředí nebo instabilní ve výchozím nastavení). Vyřešte nebo ignorujte vzor, jakmile je zpracován; znovu se otevře sám, pokud se selhání vrátí.",
+    "projectTriageSettings": "## Nastavení Failure Patterns\nSeskupování běhů na každém automatizovaném výsledku, který přijde, a nic nestojí. Návrh AI hlavní příčiny používá model AI přiřazený funkci **Failure Patterns: Root Cause** na stránce Modely AI; vypněte jej zde, abyste zachovali seskupování bez jakýchkoli volání AI. **Analyzovat existující výsledky** seskupuje každé automatizované selhání již zaznamenané v tomto projektu.",
+    "projectQuarantine": "## Karanténa testovacích případů\nKaranténa testovacího případu pokračuje v běhu a zaznamenávání výsledků, ale její selhání jsou vynechána z průchodu/selhání běhu a zobrazena jako samostatný počet. Karanténu případu z vzoru selhání, zatímco se příčina řeší. Karanténa se sama zvedne, jakmile případ projde několikrát po sobě nastavené v nastavení Failure Patterns, pokud nebyl označen k ručnímu uvolnění; uvolněte jej zde nebo ze vzoru kdykoli.",
+    "rootCauses": "## Hlavní příčiny\nHlavní příčiny, které Failure Patterns přiřazuje k seskupeným selháním, automaticky nebo ručně. Každá má popis, který AI čte, aby se rozhodla, kdy se vztahuje. Přejmenujte, překolorujte nebo přeuspořádejte, přidejte své vlastní nebo odstraňte ty, které nepoužíváte; odstranění ponechá její vzory bez hlavní příčiny.",
+    "rootCauseDescription": "## Popis\nAI čte tento popis, aby se rozhodla, kdy se hlavní příčina vztahuje na vzor selhání, takže popište důkazy, které na ni ukazují."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Prahová hodnota",
         "RUN_UNTESTED_SHARE": "Netestované případy přes (%)",
         "RUN_ISSUES_OPENED": "Propojené problémy, více než",
+        "NEW_FAILURE_SIGNATURES": "Nové vzory selhání, více než",
         "SESSION_OVERRUN": "Více než odhad o více (%)",
         "MILESTONE_BEHIND": "Dokončení pod (%)",
         "MILESTONE_OVERDUE": "Prahová hodnota",
@@ -10654,6 +10685,11 @@
         "description": "Více než daný počet problémů je propojen s výsledky běhu.",
         "summary": "Více než {threshold, plural, one {# problém je} few {# problémy jsou} many {# problémů je} other {# problémů je}} propojen s výsledky běhu, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno jak přicházejí výsledky} other {vyhodnoceno po dokončení běhu}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Nové vzory selhání v běhu",
+        "description": "Běh zavádí vzory selhání, které projekt ještě neviděl. Vyžaduje Failure Patterns povolenou pro projekt.",
+        "summary": "Více než {threshold, plural, one {# vzor selhání se objeví} few {# vzory selhání se objeví} many {# vzorů selhání se objeví} other {# vzorů selhání se objeví}} poprvé v běhu, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno, když výsledky přijdou} other {vyhodnoceno, když se běh dokončí}}"
+      },
       "SESSION_OVERRUN": {
         "label": "Relace překročila odhad",
         "description": "Uplynulý čas dokončené relace překročuje její odhad o procento.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "Vyřešeno",
       "IGNORED": "Ignorováno"
     },
-    "classification": {
-      "UNCLASSIFIED": "Neklasifikováno",
-      "PRODUCT_BUG": "Chyba produktu",
-      "TEST_BUG": "Chyba testu",
-      "ENVIRONMENT": "Prostředí",
-      "FLAKY": "Nestabilní"
-    },
+    "unclassified": "Žádná hlavní příčina",
     "source": {
-      "AI": "Klasifikováno umělou inteligencí",
+      "AI": "Hlavní příčina navržena AI",
       "labelAI": "AI",
       "labelMANUAL": "Manuální"
     },
     "columns": {
-      "classification": "Klasifikace",
+      "classification": "Hlavní příčina",
       "occurrences": "Výskyty",
       "firstSeen": "Poprvé viděno",
       "lastSeen": "Naposledy viděno",
-      "classifiedBy": "Klasifikováno od"
+      "classifiedBy": "Nastaveno"
     },
     "filters": {
-      "searchPlaceholder": "Hledat podpisy...",
+      "searchPlaceholder": "Hledat vzory selhání...",
       "flakyOnly": "Kandidáti na flaky",
-      "sourceAll": "AI nebo manuální"
+      "sourceAll": "Nastaveno kýmkoli",
+      "sourceAi": "Nastaveno AI",
+      "sourceManual": "Nastaveno ručně",
+      "sourceNone": "Nenastaveno"
     },
     "actions": {
       "resolve": "Vyřešit",
       "ignore": "Ignorovat",
-      "classify": "Klasifikovat s umělou inteligencí",
-      "setClassification": "Nastavit klasifikaci"
+      "classify": "Navrhnout hlavní příčinu s AI",
+      "setClassification": "Nastavit hlavní příčinu"
     },
     "detail": {
       "exceptionType": "Typ výjimky",
@@ -10822,13 +10855,13 @@
       "rationale": "Zdůvodnění",
       "suggestedIssueTitle": "Navrhovaný název problému",
       "nextStep": "Navrhovaný další krok",
-      "noAi": "Dosud není klasifikováno umělou inteligencí.",
+      "noAi": "Zatím žádný návrh AI.",
       "noDetails": "Toto selhání nemělo zprávu nebo stack trace, takže je seskupeno podle testovacího případu.",
       "notesPlaceholder": "Poznámky pro tým...",
       "lastRun": "Poslední běh",
       "aiSuggestion": "Návrh AI",
-      "unlinkConfirmDescription": "Tím se odstraní problém z tohoto podpisu. Sám problém je zachován a lze jej později propojit znovu.",
-      "signatureLabel": "Podpis selhání",
+      "unlinkConfirmDescription": "Tím se problém z tohoto vzoru selhání odstraní. Samotný problém se uchovává a lze jej znovu připojit později.",
+      "signatureLabel": "Vzor selhání",
       "affectedCasesLabel": "Ovlivněné testovací případy"
     },
     "flakyCandidate": "Kandidát na flaky",
@@ -10836,31 +10869,31 @@
     "knownIssue": "Známý problém",
     "notGrouped": "{count, plural, one {# selhání dosud není seskupeno} few {# selhání dosud nejsou seskupena} many {# selhání dosud není seskupeno} other {# selhání dosud není seskupeno}}",
     "runPanel": {
-      "title": "Clustery selhání",
+      "title": "Vzory selhání",
       "inRun": "{count, plural, one {# v tomto běhu} other {# v tomto běhu}}",
-      "hint": "Kliknutím na cluster filtrujete níže uvedené výsledky.",
-      "open": "Zobrazit podpis",
+      "hint": "Kliknutím na vzor níže filtrujte výsledky.",
+      "open": "Zobrazit vzor",
       "inRunColumn": "V tomto běhu",
-      "selectedClusters": "{count, plural, one {# vybraný cluster} few {# vybrané clustery} many {# vybraných clusterů} other {# vybraných clusterů}}",
-      "clearSelected": "Vymazat vybrané clustery"
+      "selectedClusters": "{count, plural, one {# vybraný vzor} few {# vybrané vzory} many {# vybraných vzorů} other {# vybraných vzorů}}",
+      "clearSelected": "Vymazat vybrané vzory"
     },
     "toasts": {
-      "updated": "Podpis aktualizován",
-      "updateFailed": "Nepodařilo se aktualizovat podpis",
-      "classifyQueued": "Klasifikace AI vyžádána",
+      "updated": "Vzor selhání aktualizován",
+      "updateFailed": "Nepodařilo se aktualizovat vzor selhání",
+      "classifyQueued": "Požadavek na návrh AI hlavní příčiny odeslán do fronty",
       "noAiModel": "Pro tuto funkci není nakonfigurován žádný model AI",
       "issueLinked": "Problém propojen"
     },
     "empty": {
-      "title": "Zatím žádné podpisy selhání",
-      "description": "Podpisy se zde zobrazují, když dorazí automatizované výsledky se selháním. Chcete-li seskupit selhání již zaznamenená v tomto projektu, použijte Analyzovat existující výsledky v nastavení Selhání třídění."
+      "title": "Zatím žádné vzory selhání",
+      "description": "Vzory selhání se zde objevují, jakmile přijdou automatizované výsledky se selháním. Chcete-li seskupit selhání již zaznamenána v tomto projektu, použijte Analyze existing results v nastavení Failure Patterns."
     },
     "settings": {
-      "description": "Seskupte automatizovaná selhání do podpisů a nechte je klasifikovat umělou inteligencí.",
-      "enableLabel": "Povolit třídění selhání",
+      "description": "Seskupujte automatizovaná selhání do vzorů a nechte AI navrhnout jejich hlavní příčinu.",
+      "enableLabel": "Povolit Failure Patterns",
       "enableDescription": "Seskupte každé automatizované selhání v tomto projektu podle výjimky, zprávy a stack frames, když dorazí výsledky.",
-      "autoClassifyLabel": "Klasifikovat nové podpisy pomocí AI",
-      "autoClassifyDescription": "Požádejte model AI projektu, aby klasifikoval každý nový podpis jako chybu produktu, chybu testu, problém prostředí nebo flaky. Vyžaduje model AI přiřazený funkci Třídění selhání klasifikace.",
+      "autoClassifyLabel": "Navrhnout hlavní příčiny s AI",
+      "autoClassifyDescription": "Požádejte model AI projektu, aby si vybral hlavní příčinu pro každý nový vzor selhání z katalogu Root Causes. Vyžaduje model AI přiřazený funkci Failure Patterns: Root Cause.",
       "backfillLabel": "Analyzovat existující výsledky",
       "backfillDescription": "Seskupte všechna automatizovaná selhání již zaznamenána v tomto projektu. Běží na pozadí.",
       "backfillStarted": "Analýza zahájena",
@@ -10868,11 +10901,47 @@
       "backfillDone": "Analýza dokončena",
       "backfillFailed": "Analýza se nezdařila",
       "backfillQueueUnavailable": "Fronta úloh na pozadí není k dispozici",
-      "enabledToast": "Třídění selhání povoleno",
-      "disabledToast": "Třídění selhání zakázáno",
-      "autoClassifyOnToast": "Klasifikace AI povolena",
-      "autoClassifyOffToast": "Klasifikace AI zakázána",
-      "openTriage": "Otevřít třídění selhání"
+      "enabledToast": "Failure Patterns povoleny",
+      "disabledToast": "Failure Patterns zakázány",
+      "autoClassifyOnToast": "Návrhy AI hlavní příčiny povoleny",
+      "autoClassifyOffToast": "Návrhy AI hlavní příčiny zakázány",
+      "autoReleaseLabel": "Automaticky uvolnit karanténu po",
+      "autoReleasePassesLabel": "po sobě jdoucí průchody",
+      "autoReleaseDescription": "Karanténa testovacího případu se uvolní poté, co bude úspěšně projít tolikrát po sobě od doby, kdy byla karanténa zavedena. Přeskočené výsledky se ignorují. Karanténa označená \"ponechat až do ručního uvolnění\" zůstává.",
+      "autoReleaseOnToast": "Automatické uvolnění povoleno",
+      "autoReleaseOffToast": "Automatické uvolnění zakázáno",
+      "autoReleasePassesSaved": "{count, plural, one {Karanténa se uvolní po # po sobě jdoucího průchodu} few {Karanténa se uvolní po # po sobě jdoucích průchodech} many {Karanténa se uvolní po # po sobě jdoucích průchodech} other {Karanténa se uvolní po # po sobě jdoucích průchodech}}",
+      "autoReleasePassesInvalid": "Zadejte počet průchodů mezi 1 a 100",
+      "openTriage": "Otevřít Failure Patterns"
+    },
+    "quarantine": {
+      "label": "V karanténě",
+      "title": "Karanténa testovacích případů",
+      "hint": "Selhání karanténního testovacího případu jsou vynechána z průchodu/selhání běhu a počítána odděleně. Testovací případ pokračuje v běhu a zaznamenávání výsledků.",
+      "metricHint": "Selhání testovacích případů v karanténě v tomto běhu. Nezapočítávají se do procenta úspěšnosti.",
+      "action": "Karanténa",
+      "actionAll": "Karanténa postižených testovacích případů",
+      "release": "Uvolnit",
+      "reasonLabel": "Důvod",
+      "reasonPlaceholder": "Proč je tento testovací případ v karanténě? (volitelné)",
+      "keepLabel": "Zachovat v karanténě až do ručního uvolnění",
+      "keepHint": "Přeskakuje automatické uvolnění projektu po po sobě jdoucích průchodech.",
+      "dialogTitle": "{count, plural, one {Karanténa # testovací případ} few {Karanténa # testovací případy} many {Karanténa # testovacích případů} other {Karanténa # testovacích případů}}",
+      "releaseConfirmTitle": "Uvolnit z karantény?",
+      "releaseConfirmDescription": "Selhání testovacího případu se znovu počítají v průchodu/selhání běhu.",
+      "quarantinedToast": "{count, plural, one {# testovací případ v karanténě} few {# testovací případy v karanténě} many {# testovacích případů v karanténě} other {# testovacích případů v karanténě}}",
+      "releasedToast": "Testovací případ uvolněn z karantény",
+      "failedToast": "Nepodařilo se aktualizovat karanténu",
+      "listButton": "{count, plural, =0 {Testovací případy v karanténě} one {# testovací případ v karanténě} other {# testovacích případů v karanténě}}",
+      "columns": {
+        "signature": "Vzor selhání",
+        "by": "Karanténa nastavena",
+        "since": "Od",
+        "releasePolicy": "Uvolnit"
+      },
+      "releaseAuto": "{count, plural, one {Automaticky po # po sobě jdoucího průchodu} few {Automaticky po # po sobě jdoucích průchodech} many {Automaticky po # po sobě jdoucích průchodech} other {Automaticky po # po sobě jdoucích průchodech}}",
+      "releaseManual": "Ručně",
+      "empty": "V tomto projektu nejsou v karanténě žádné testovací případy."
     }
   }
 }

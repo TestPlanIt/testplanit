@@ -741,7 +741,7 @@
       "sharedContent": "공유 콘텐츠",
       "impact": "영향 분석",
       "alerts": "알림 & 경고",
-      "triage": "장애 분류"
+      "triage": "실패 패턴"
     },
     "aria": {
       "userMenu": "사용자 메뉴",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "기본",
       "fields": "전지",
+      "rootCauses": "근본 원인",
       "appConfig": "애플리케이션 구성",
       "recordKeys": "레코드 키",
       "imports": "데이터 가져오기",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "마일스톤 유형 {name} 을 삭제하시겠습니까?"
       }
     },
+    "rootCauses": {
+      "description": "실패 패턴이 그룹화된 실패에 할당하는 근본 원인입니다. AI는 각 설명을 사용하여 이 목록에서 선택합니다.",
+      "filterPlaceholder": "근본 원인 필터링...",
+      "reordered": "근본 원인이 재정렬되었습니다",
+      "descriptionPlaceholder": "이 근본 원인이 언제 적용되나요? AI는 이 텍스트를 사용하여 결정합니다.",
+      "columns": {
+        "signatures": "패턴"
+      },
+      "add": {
+        "button": "근본 원인 추가",
+        "title": "근본 원인 추가"
+      },
+      "edit": {
+        "title": "근본 원인 편집"
+      },
+      "errors": {
+        "nameExists": "이 이름의 근본 원인이 이미 존재합니다"
+      },
+      "delete": {
+        "confirmMessage": "{name} 근본 원인을 삭제하시겠습니까?",
+        "inUse": "{count, plural, other {# 실패 패턴이 사용합니다.}}",
+        "moveLabel": "{count, plural, other {# 패턴을 다음 위치로 이동}}"
+      }
+    },
     "issue_config": {
       "link_title": "링크 문제 추적기",
       "link_description": "수동으로 연결된 이슈에 대한 기본 URL을 구성합니다. 외부 ID만 사용하여 이슈를 연결할 경우, 이 기본 URL이 앞에 추가되어 전체 링크가 생성됩니다.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "자동화 후보 보고서",
         "derive_case_steps": "AI 단계 도출",
         "impact_analysis": "영향: 영향을 받는 테스트 선택",
-        "failure_triage": "장애 분류"
+        "failure_triage": "실패 패턴: 근본 원인"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "감사 로그",
         "budget-alerts": "예산 알림",
         "auto-tag": "AI 자동 태그",
-        "failure-triage": "장애 분류",
+        "failure-triage": "실패 패턴",
         "repo-cache": "저장소 캐시",
         "copy-move": "복사 및 이동",
         "duplicate-scan": "중복 스캔",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "{target}의 자동화된 실행이 {status}{error, select, other {: {error}}}로 종료되었습니다",
           "RUN_UNTESTED_SHARE": "마일스톤이 만료될 때까지 {daysRemaining, plural, one {# 일} other {# 일}} 남은 상태에서 실행의 {untestedPercent}%에 결과가 없습니다(임계값 {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# 이슈가} other {# 이슈가}} 실행 결과에 연결되어 있습니다(임계값 {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, other {# 실패 패턴이}} 실행에서 처음으로 나타났습니다(임계값 {threshold}).",
           "SESSION_OVERRUN": "세션이 {estimate} 예상치에 비해 {elapsed}를 소요했으며, {overrun}% 초과입니다({threshold}% 이상 허용 안 됨).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered}개 중 {total}개 요구사항({coverage}%) {basis, select, PASSING {최신 결과가 통과했음} other {테스트 케이스에 연결됨}}(임계값 {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# 케이스가} other {# 케이스가}} {days, plural, one {# 일} other {# 일}} 동안 결과가 없었습니다(임계값 {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "테스트 실행 결과",
       "TestRunResultRestrictedFields": "테스트 실행 결과 제한된 필드",
       "AutomatedExecution": "자동화된 실행",
+      "FailurePatterns": "실패 패턴",
       "Sessions": "세션",
       "SessionsRestrictedFields": "세션 제한 필드",
       "ClosedSessions": "비공개 세션",
@@ -7971,7 +7998,7 @@
       "name": "## 역할 이름\n모든 프로젝트에서 사용되는 명확하고 간결하며 설명적인 이름 또는 키워드입니다.\n\n- 팀 구성원이 관련 테스트 케이스, 테스트 실행 및 세션을 빠르게 찾을 수 있도록 도와줍니다.",
       "isDefault": "## 기본 역할\n이 역할이 프로젝트의 기본 역할인지 여부를 나타냅니다.\n\n- 신규 사용자의 경우 기본 역할이 미리 선택됩니다.\n- 언제든지 변경할 수 있습니다.",
       "permissions": {
-        "canAddEdit": "## 추가/편집\n이 역할이 관련 애플리케이션 영역을 추가하고 편집할 수 있는지 여부를 나타냅니다.\n\n- **자동화된 실행**은 CI 공급자에서 자동화된 실행을 시작, 재시도 및 취소할 수 있는 권한을 부여합니다. 결과 기록에는 여전히 **테스트 실행 결과** 추가/편집이 필요하며, 리포지토리에서 시작하려면 실행을 생성하거나 확장하기 때문에 **테스트 실행** 추가/편집도 필요합니다.\n- **경고**는 프로젝트에서 경고를 생성하고 작성한 경고를 편집, 일시 중지 및 삭제할 수 있는 권한을 부여합니다. 프로젝트 관리자는 모든 경고와 다른 사용자의 구독을 관리합니다. 누구나 경고를 팔로우하거나 떠날 수 있습니다.",
+        "canAddEdit": "## 추가/편집\n이 역할이 관련 애플리케이션 영역을 추가하고 편집할 수 있는지 여부를 나타냅니다.\n\n- **자동화된 실행**은 CI 제공자에서 자동화된 실행을 시작, 재시도 및 취소할 권리를 부여합니다. 결과 기록에는 여전히 **테스트 실행 결과** 추가/편집이 필요하며, 저장소에서 시작하려면 실행을 생성하거나 확장하므로 **테스트 실행** 추가/편집도 필요합니다.\n- **실패 패턴**은 실패 패턴의 근본 원인을 설정하거나 지우거나 AI에 요청하고, 해결, 무시 또는 다시 열고, 메모를 편집하고, 문제를 연결 및 연결 해제하고, 테스트 케이스를 격리하거나 해제할 권리를 부여합니다. 프로젝트에 액세스할 수 있는 사람은 누구나 실패 패턴을 볼 수 있습니다. 프로젝트 관리자는 실패 패턴 설정을 관리합니다.\n- **경고**는 프로젝트에서 경고를 만들고 사용자가 만든 경고를 편집, 일시 중지 및 삭제할 권리를 부여합니다. 프로젝트 관리자는 모든 경고 및 다른 사용자의 구독을 관리합니다. 누구든지 경고를 팔로우하거나 떠날 수 있습니다.",
         "canDelete": "## 삭제\n이 역할이 관련 애플리케이션 영역을 삭제할 수 있는지 여부를 나타냅니다.",
         "canClose": "## 닫기\n이 역할이 관련 애플리케이션 영역을 닫을 수 있는지 여부를 나타냅니다.",
         "canApprove": "## 승인\n이 역할이 관련 애플리케이션 영역에 대한 검토 요청을 승인할 수 있는지 여부를 나타냅니다. 테스트 케이스 저장소, 테스트 실행 및 세션에만 적용됩니다.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## 경로 패턴\n각 행은 기본 **경로**와 glob **패턴**을 결합합니다. 행이 누적됩니다: 파일은 행이 일치할 때 포함됩니다.\n\n- `src` + `**/*` — `src` 아래의 모든 항목\n- 공백 또는 `.` + `**/*` — 저장소의 모든 파일\n- `src` + `**/!(*.test|*.spec).ts` — 테스트를 제외한 `.ts` 파일\n\n### 제외\n행에서 **제외**를 확인하여 다른 행이 포함할 때도 해당 파일을 제거합니다. 제외는 파일 선택기 및 캐시에 적용되며, 영향 분석의 변경된 파일에 적용되므로, 거의 모든 pull 요청에서 변경되는 파일은 관련 없는 테스트 케이스를 가져오기 중지합니다. 최소한 하나의 행은 선택되지 않은 상태로 유지되어야 합니다.\n\n- 공백 + `**/CHANGELOG*` — 모든 깊이의 모든 changelog\n- `app` + `build.gradle.kts` — 버전만 범프하는 빌드 파일",
     "projectAutomation": "## 자동화된 실행\n실행 대상은 TestPlanIt에 이 프로젝트의 자동화된 케이스를 실행할 위치를 알려줍니다: GitHub Actions 워크플로, GitLab CI 파이프라인 또는 다른 시스템을 위한 서명된 웹훅입니다. 실행이 실행되면 TestPlanIt은 실행 ID와 계획 URL로 작업을 시작합니다. 작업은 계획을 읽고 일치하는 테스트를 실행한 후 해당 실행에 고정된 리포터 또는 CLI로 결과를 다시 보고합니다. 대상은 삭제하지 않고 비활성화할 수 있습니다.",
     "userAlerts": "## 알림 & 경고\n**알림 기본 설정**은 연락 방법(앱 내, 이메일, 다이제스트)과 수신할 알림 유형을 결정합니다.\n\n**경고**는 테스트 메트릭을 모니터링하고 임계값을 초과할 때 구독자에게 알립니다. 예를 들어 케이스의 일반적인 기간보다 50% 더 오래 걸리는 결과, 연속으로 실패하는 케이스, 통과율이 90% 아래로 떨어지는 실행, 또는 마감일을 얼마 남겨두고 뒤처진 마일스톤 등입니다. 목록은 프로젝트의 모든 경고를 표시합니다. **알림** 스위치는 하나를 팔로우하거나 떠납니다. **경고 추가**는 역할에 **경고** 추가/편집이 있는 모든 프로젝트에서 직접 만듭니다. 프로젝트 관리자는 프로젝트의 모든 경고 및 다른 사람의 구독을 관리합니다. 경고는 쿨다운 내에서 대상당 최대 1회 발동되며 충분한 결과가 있을 때까지 침묵을 유지합니다.",
-    "projectTriage": "## 장애 분류\n자동화된 장애가 동일한 예외, 메시지 및 상위 스택 프레임을 공유하면 하나의 **서명**으로 그룹화됩니다. 각 서명은 발생 빈도, 영향을 받은 테스트 케이스 및 실행, 그리고 AI가 제품 버그인지, 테스트 버그인지, 환경 문제인지 또는 불안정한지 여부를 표시합니다. 서명이 처리되면 이를 해결하거나 무시하십시오. 장애가 다시 발생하면 자동으로 다시 열립니다.",
-    "projectTriageSettings": "## 장애 분류 설정\n모든 도착하는 자동화된 결과에 대한 실행 그룹화는 비용이 들지 않습니다. AI 분류는 AI 모델 페이지의 **장애 분류** 기능에 할당된 AI 모델을 사용합니다. 여기서 AI 호출 없이 그룹화를 유지하려면 끕니다. **기존 결과 분석**은 이 프로젝트에 이미 기록된 모든 자동화된 장애를 그룹화합니다."
+    "projectTriage": "## 실패 패턴\n같은 예외, 메시지 및 최상위 스택 프레임을 공유하는 자동화된 실패는 하나의 **실패 패턴**으로 그룹화됩니다. 각 패턴은 발생 빈도, 영향을 미친 테스트 케이스 및 실행, AI의 근본 원인에 대한 의견(기본적으로 제품 버그, 테스트 버그, 환경 또는 불안정함)을 보여줍니다. 패턴이 처리되면 해결하거나 무시하세요. 실패가 다시 발생하면 자동으로 다시 열립니다.",
+    "projectTriageSettings": "## 실패 패턴 설정\n모든 자동화된 결과에서 실행을 그룹화하고 비용이 들지 않습니다. AI 근본 원인 제안은 AI 모델 페이지에서 **실패 패턴: 근본 원인** 기능에 할당된 AI 모델을 사용합니다. AI 호출 없이 그룹화를 유지하려면 여기에서 이를 끕니다. **기존 결과 분석**은 이 프로젝트에 이미 기록된 모든 자동화된 실패를 그룹화합니다.",
+    "projectQuarantine": "## 격리된 테스트 케이스\n격리된 테스트 케이스는 실행을 계속하고 결과를 기록하지만, 실패는 실행 통과/실패에서 제외되고 별도 개수로 표시됩니다. 원인이 해결되는 동안 실패 패턴에서 케이스를 격리하세요. 격리는 실패 패턴 설정에 설정된 횟수만큼 케이스가 통과되면 자동으로 해제됩니다(수동으로 해제하도록 표시되지 않은 경우). 패턴에서 또는 여기에서 언제든지 해제하세요.",
+    "rootCauses": "## 근본 원인\n실패 패턴이 그룹화된 실패에 할당하는 근본 원인은 AI 또는 수동으로 할당합니다. 각각은 AI가 적용 시기를 결정하기 위해 읽는 설명을 가지고 있습니다. 이름을 바꾸거나, 색을 다시 지정하거나, 순서를 재정렬하거나, 자신의 이름을 추가하거나, 사용하지 않는 이름을 삭제하세요. 하나를 삭제하면 해당 패턴이 근본 원인 없이 유지됩니다.",
+    "rootCauseDescription": "## 설명\nAI는 이 설명을 읽어 근본 원인이 실패 패턴에 적용될 시기를 결정하므로 그것을 가리키는 증거를 설명하세요."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "임계값",
         "RUN_UNTESTED_SHARE": "테스트되지 않은 케이스 초과(%)",
         "RUN_ISSUES_OPENED": "연결된 이슈, 다음보다 많음",
+        "NEW_FAILURE_SIGNATURES": "새 실패 패턴, 다음보다 많음",
         "SESSION_OVERRUN": "예상치 초과(%)",
         "MILESTONE_BEHIND": "완료도 미만(%)",
         "MILESTONE_OVERDUE": "임계값",
@@ -10654,6 +10685,11 @@
         "description": "실행의 결과에 주어진 수보다 많은 이슈가 연결되어 있습니다.",
         "summary": "실행의 결과에 {threshold, plural, one {# 이슈가} other {# 이슈가}} 연결되어 있으며, {evaluateOn, select, AS_RESULTS_ARRIVE {결과가 도착할 때 평가됨} other {실행이 완료될 때 평가됨}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "실행의 새 실패 패턴",
+        "description": "실행이 프로젝트에서 이전에 보지 못한 실패 패턴을 도입합니다. 프로젝트에 실패 패턴이 활성화되어 있어야 합니다.",
+        "summary": "{threshold, plural, other {# 실패 패턴이}} 실행에서 처음으로 나타나면, {evaluateOn, select, AS_RESULTS_ARRIVE {결과가 도착할 때 평가됨} other {실행이 완료될 때 평가됨}}"
+      },
       "SESSION_OVERRUN": {
         "label": "세션이 예상을 초과함",
         "description": "완료된 세션의 경과 시간이 예상을 백분율 초과합니다.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "해결됨",
       "IGNORED": "무시됨"
     },
-    "classification": {
-      "UNCLASSIFIED": "분류되지 않음",
-      "PRODUCT_BUG": "제품 버그",
-      "TEST_BUG": "테스트 버그",
-      "ENVIRONMENT": "환경",
-      "FLAKY": "불안정함"
-    },
+    "unclassified": "근본 원인 없음",
     "source": {
-      "AI": "AI로 분류됨",
+      "AI": "AI에서 제안한 근본 원인",
       "labelAI": "AI",
       "labelMANUAL": "수동"
     },
     "columns": {
-      "classification": "분류",
+      "classification": "근본 원인",
       "occurrences": "발생 횟수",
       "firstSeen": "처음 발견",
       "lastSeen": "마지막 발견",
-      "classifiedBy": "분류 기준"
+      "classifiedBy": "설정자"
     },
     "filters": {
-      "searchPlaceholder": "서명 검색...",
+      "searchPlaceholder": "실패 패턴 검색...",
       "flakyOnly": "불안정한 후보",
-      "sourceAll": "AI 또는 수동"
+      "sourceAll": "누구든 설정",
+      "sourceAi": "AI에서 설정",
+      "sourceManual": "수동으로 설정",
+      "sourceNone": "설정되지 않음"
     },
     "actions": {
       "resolve": "해결",
       "ignore": "무시",
-      "classify": "AI로 분류",
-      "setClassification": "분류 설정"
+      "classify": "AI로 근본 원인 제안",
+      "setClassification": "근본 원인 설정"
     },
     "detail": {
       "exceptionType": "예외 유형",
@@ -10822,13 +10855,13 @@
       "rationale": "근거",
       "suggestedIssueTitle": "제안된 문제 제목",
       "nextStep": "제안된 다음 단계",
-      "noAi": "아직 AI로 분류되지 않았습니다.",
+      "noAi": "아직 AI 제안이 없습니다.",
       "noDetails": "이 장애는 메시지나 스택 추적이 없으므로 테스트 케이스별로 그룹화됩니다.",
       "notesPlaceholder": "팀을 위한 메모...",
       "lastRun": "마지막 실행",
       "aiSuggestion": "AI 제안",
-      "unlinkConfirmDescription": "이렇게 하면 이 서명에서 문제가 제거됩니다. 문제 자체는 유지되며 나중에 다시 연결할 수 있습니다.",
-      "signatureLabel": "장애 서명",
+      "unlinkConfirmDescription": "이렇게 하면 이 실패 패턴에서 이슈가 제거됩니다. 이슈 자체는 유지되며 나중에 다시 연결할 수 있습니다.",
+      "signatureLabel": "실패 패턴",
       "affectedCasesLabel": "영향을 받는 테스트 케이스"
     },
     "flakyCandidate": "불안정한 후보",
@@ -10836,31 +10869,31 @@
     "knownIssue": "알려진 문제",
     "notGrouped": "{count, plural, one {아직 그룹화되지 않은 # 장애} other {아직 그룹화되지 않은 # 장애}}",
     "runPanel": {
-      "title": "장애 클러스터",
+      "title": "실패 패턴",
       "inRun": "{count, plural, one {이 실행에서 #개} other {이 실행에서 #개}}",
-      "hint": "클러스터를 클릭하여 아래 결과를 필터링합니다.",
-      "open": "서명 보기",
+      "hint": "패턴을 클릭하여 아래 결과를 필터링하세요.",
+      "open": "패턴 보기",
       "inRunColumn": "이 실행에서",
-      "selectedClusters": "{count, plural, one {선택된 # 클러스터} other {선택된 # 클러스터}}",
-      "clearSelected": "선택된 클러스터 지우기"
+      "selectedClusters": "{count, plural, other {선택된 패턴 #}}",
+      "clearSelected": "선택한 패턴 지우기"
     },
     "toasts": {
-      "updated": "서명이 업데이트되었습니다",
-      "updateFailed": "서명을 업데이트할 수 없습니다",
-      "classifyQueued": "AI 분류가 요청되었습니다",
+      "updated": "실패 패턴이 업데이트되었습니다",
+      "updateFailed": "실패 패턴을 업데이트할 수 없습니다",
+      "classifyQueued": "AI 근본 원인 제안이 요청되었습니다",
       "noAiModel": "이 기능에 대해 구성된 AI 모델이 없습니다",
       "issueLinked": "문제가 연결되었습니다"
     },
     "empty": {
-      "title": "아직 장애 서명이 없습니다",
-      "description": "서명은 자동화된 결과가 도착하면서 여기에 나타납니다. 이 프로젝트에 이미 기록된 장애를 그룹화하려면 장애 분류 설정에서 기존 결과 분석을 사용하세요."
+      "title": "아직 실패 패턴이 없습니다",
+      "description": "실패 패턴은 자동화된 결과 실패가 도착하면 여기에 표시됩니다. 이 프로젝트에 이미 기록된 실패를 그룹화하려면 실패 패턴 설정에서 기존 결과 분석을 사용하세요."
     },
     "settings": {
-      "description": "자동화된 장애를 서명으로 그룹화하고 AI로 분류하도록 하세요.",
-      "enableLabel": "장애 분류 활성화",
+      "description": "자동화된 실패를 패턴으로 그룹화하고 AI가 근본 원인을 제안하도록 합니다.",
+      "enableLabel": "실패 패턴 활성화",
       "enableDescription": "결과가 도착하면서 이 프로젝트의 모든 자동화된 장애를 예외, 메시지 및 스택 프레임별로 그룹화합니다.",
-      "autoClassifyLabel": "AI로 새 서명 분류",
-      "autoClassifyDescription": "프로젝트의 AI 모델에 각 새 서명을 제품 버그, 테스트 버그, 환경 문제 또는 불안정함으로 분류하도록 요청합니다. 장애 분류 기능에 할당된 AI 모델이 필요합니다.",
+      "autoClassifyLabel": "AI로 근본 원인 제안",
+      "autoClassifyDescription": "프로젝트의 AI 모델에 근본 원인 카탈로그에서 각 새 실패 패턴의 근본 원인을 선택하도록 요청하세요. 실패 패턴: 근본 원인 기능에 할당된 AI 모델이 필요합니다.",
       "backfillLabel": "기존 결과 분석",
       "backfillDescription": "이 프로젝트에 이미 기록된 모든 자동화된 장애를 그룹화합니다. 백그라운드에서 실행됩니다.",
       "backfillStarted": "분석 시작됨",
@@ -10868,11 +10901,47 @@
       "backfillDone": "분석 완료",
       "backfillFailed": "분석 실패",
       "backfillQueueUnavailable": "백그라운드 작업 큐를 사용할 수 없습니다",
-      "enabledToast": "장애 분류 활성화됨",
-      "disabledToast": "장애 분류 비활성화됨",
-      "autoClassifyOnToast": "AI 분류 활성화됨",
-      "autoClassifyOffToast": "AI 분류 비활성화됨",
-      "openTriage": "장애 분류 열기"
+      "enabledToast": "실패 패턴 활성화됨",
+      "disabledToast": "실패 패턴 비활성화됨",
+      "autoClassifyOnToast": "AI 근본 원인 제안 활성화됨",
+      "autoClassifyOffToast": "AI 근본 원인 제안 비활성화됨",
+      "autoReleaseLabel": "다음 후 격리 자동 해제",
+      "autoReleasePassesLabel": "연속 통과",
+      "autoReleaseDescription": "격리된 테스트 케이스는 격리된 이후 이 횟수만큼 연속으로 통과하면 해제됩니다. 건너뛴 결과는 무시됩니다. \"수동으로 해제할 때까지 유지\" 표시된 격리는 유지됩니다.",
+      "autoReleaseOnToast": "자동 해제 활성화됨",
+      "autoReleaseOffToast": "자동 해제 비활성화됨",
+      "autoReleasePassesSaved": "{count, plural, other {# 연속 통과 후 격리 해제}}",
+      "autoReleasePassesInvalid": "1~100 사이의 통과 횟수를 입력하세요",
+      "openTriage": "실패 패턴 열기"
+    },
+    "quarantine": {
+      "label": "격리됨",
+      "title": "격리된 테스트 케이스",
+      "hint": "격리된 테스트 케이스의 실패는 실행 통과/실패에서 제외되고 별도로 계산됩니다. 테스트 케이스는 계속 실행되고 결과를 기록합니다.",
+      "metricHint": "이 실행에서 격리된 테스트 케이스의 실패입니다. 통과율에 포함되지 않습니다.",
+      "action": "격리",
+      "actionAll": "영향을 받은 테스트 케이스 격리",
+      "release": "해제",
+      "reasonLabel": "이유",
+      "reasonPlaceholder": "이 테스트 케이스가 격리된 이유는 무엇입니까? (선택 사항)",
+      "keepLabel": "수동으로 해제될 때까지 격리 유지",
+      "keepHint": "연속 통과 후 프로젝트의 자동 해제를 건너뜁니다.",
+      "dialogTitle": "{count, plural, other {테스트 케이스 # 격리}}",
+      "releaseConfirmTitle": "격리 해제하시겠습니까?",
+      "releaseConfirmDescription": "테스트 케이스의 실패가 다시 실행 통과/실패에 포함됩니다.",
+      "quarantinedToast": "{count, plural, other {테스트 케이스 # 격리됨}}",
+      "releasedToast": "테스트 케이스가 격리 해제되었습니다",
+      "failedToast": "격리를 업데이트할 수 없습니다",
+      "listButton": "{count, plural, =0 {격리된 테스트 케이스} other {격리된 테스트 케이스 #}}",
+      "columns": {
+        "signature": "실패 패턴",
+        "by": "격리한 사람",
+        "since": "이후",
+        "releasePolicy": "해제"
+      },
+      "releaseAuto": "{count, plural, other {# 연속 통과 후 자동}}",
+      "releaseManual": "수동으로",
+      "empty": "이 프로젝트에서는 격리된 테스트 케이스가 없습니다."
     }
   }
 }

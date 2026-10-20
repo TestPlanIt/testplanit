@@ -741,7 +741,7 @@
       "sharedContent": "Contenuti condivisi",
       "impact": "Analisi di impatto",
       "alerts": "Notifiche e avvisi",
-      "triage": "Triage dei Fallimenti"
+      "triage": "Schemi di errori"
     },
     "aria": {
       "userMenu": "Menu utente",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Principale",
       "fields": "Campi",
+      "rootCauses": "Cause principali",
       "appConfig": "Configurazione dell'applicazione",
       "recordKeys": "Chiavi dei record",
       "imports": "Importazioni di dati",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "Sei sicuro di voler eliminare il tipo di traguardo {name}?"
       }
     },
+    "rootCauses": {
+      "description": "Le cause principali che Schemi di errori assegna agli errori raggruppati. L'IA sceglie da questo elenco utilizzando ogni descrizione.",
+      "filterPlaceholder": "Filtra cause principali...",
+      "reordered": "Cause principali riordinate",
+      "descriptionPlaceholder": "Quando si applica questa causa principale? L'IA utilizza questo testo per decidere.",
+      "columns": {
+        "signatures": "Schemi"
+      },
+      "add": {
+        "button": "Aggiungi causa principale",
+        "title": "Aggiungi causa principale"
+      },
+      "edit": {
+        "title": "Modifica causa principale"
+      },
+      "errors": {
+        "nameExists": "Esiste già una causa principale con questo nome"
+      },
+      "delete": {
+        "confirmMessage": "Sei sicuro di voler eliminare la causa principale {name}?",
+        "inUse": "{count, plural, one {# schema di errori lo utilizza.} other {# schemi di errori lo utilizzano.}}",
+        "moveLabel": "{count, plural, one {Sposta lo schema in} other {Sposta i # schemi in}}"
+      }
+    },
     "issue_config": {
       "link_title": "Tracker dei problemi dei link",
       "link_description": "Configura l'URL di base per i problemi collegati manualmente. Quando si collega un problema utilizzando solo un ID esterno, questo URL di base verrà anteposto per creare il collegamento completo.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Rapporto sui candidati all'automazione",
         "derive_case_steps": "Derivazione dei passaggi AI",
         "impact_analysis": "Impact: Selezione di test interessati",
-        "failure_triage": "Classificazione Triage dei Fallimenti"
+        "failure_triage": "Schemi di errori: Causa principale"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Registri di controllo",
         "budget-alerts": "Avvisi di bilancio",
         "auto-tag": "Etichettatura automatica tramite IA",
-        "failure-triage": "Triage dei Fallimenti",
+        "failure-triage": "Schemi di errori",
         "repo-cache": "Cache del repository",
         "copy-move": "Copia e sposta",
         "duplicate-scan": "Scansione duplicata",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "L'esecuzione automatizzata su {target} è terminata con {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% dei casi dell'esecuzione non ha alcun risultato con {daysRemaining, plural, one {# giorno} other {# giorni}} prima della scadenza della pietra miliare (soglia {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# problema è} other {# problemi sono}} collegati ai risultati dell'esecuzione (soglia {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# schema di errori apparso} other {# schemi di errori apparsi}} per la prima volta nell'esecuzione (soglia {threshold}).",
           "SESSION_OVERRUN": "La sessione ha impiegato {elapsed} rispetto a una stima di {estimate}, {overrun}% in più (più del {threshold}% consentito).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} di {total} requisiti ({coverage}%) {basis, select, PASSING {hanno un risultato ultimo positivo} other {sono collegati a un caso di test}} (soglia {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# caso non ha} other {# casi non hanno}} avuto alcun risultato in {days, plural, one {# giorno} other {# giorni}} (soglia {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "Risultati del test",
       "TestRunResultRestrictedFields": "Campi riservati del risultato dell'esecuzione del test",
       "AutomatedExecution": "Esecuzione automatizzata",
+      "FailurePatterns": "Schemi di errori",
       "Sessions": "Sessioni",
       "SessionsRestrictedFields": "Campi riservati alle sessioni",
       "ClosedSessions": "Sessioni chiuse",
@@ -7971,7 +7998,7 @@
       "name": "## Nome ruolo\nUn nome o una o più parole chiave chiare, concise e descrittive, utilizzate in tutti i progetti.\n\n- Aiuta i membri del team a trovare rapidamente casi di test, esecuzioni di test e sessioni correlate.",
       "isDefault": "## Ruolo predefinito\nIndica se questo ruolo è quello predefinito per il tuo progetto.\n\n- Il ruolo predefinito è preselezionato per i nuovi utenti\n- Può essere modificato in qualsiasi momento",
       "permissions": {
-        "canAddEdit": "## Aggiungi/Modifica\nIndica se questo ruolo può aggiungere e modificare l'area di applicazione correlata.\n\n- **Automated Execution** concede il diritto di avviare, riprovare e annullare le esecuzioni automatizzate su un provider CI. La registrazione dei risultati richiede comunque **Test Run Results** Add/Edit e l'avvio da repository richiede anche **Test Runs** Add/Edit perché crea o estende un'esecuzione.\n- **Alerts** concede il diritto di creare avvisi nel progetto e di modificare, mettere in pausa ed eliminare quelli che hai creato. Gli amministratori del progetto gestiscono ogni avviso e gli abbonamenti di altri utenti; chiunque può seguire o lasciare un avviso.",
+        "canAddEdit": "## Aggiungi/Modifica\nIndica se questo ruolo può aggiungere e modificare l'area dell'applicazione correlata.\n\n- **Esecuzione automatizzata** concede il diritto di avviare, riprovare e annullare le esecuzioni automatizzate su un provider CI. La registrazione dei risultati richiede ancora **Risultati esecuzione test** Aggiungi/Modifica e l'avvio da un repository richiede anche **Esecuzioni test** Aggiungi/Modifica perché crea o estende un'esecuzione.\n- **Schemi di errori** concede il diritto di impostare o cancellare la causa principale di uno schema di errori o chiedere all'IA di calcolarne una, risolverlo, ignorarlo o riaprirlo, modificarne le note, collegare e scollegare problemi, e mettere in quarantena o rilasciare i relativi casi di test. Chiunque abbia accesso al progetto può visualizzare i suoi schemi di errori; gli amministratori del progetto gestiscono le impostazioni di Schemi di errori.\n- **Avvisi** concede il diritto di creare avvisi nel progetto e di modificare, sospendere ed eliminare quelli creati. Gli amministratori del progetto gestiscono ogni avviso e gli abbonamenti di altri utenti; chiunque può seguire o abbandonare un avviso.",
         "canDelete": "## Elimina\nIndica se questo ruolo può eliminare l'area di applicazione correlata.",
         "canClose": "## Chiudi\nIndica se questo ruolo può chiudere l'area dell'applicazione correlata.",
         "canApprove": "## Approva\nIndica se questo ruolo può approvare le richieste di revisione per l'area applicativa correlata. Si applica solo a Repository dei casi di test, Esecuzioni di test e Sessioni.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## Modelli di Percorso\nOgni riga combina un **percorso** di base con un **modello** glob. Le righe si sommano: un file è incluso quando corrisponde a una qualsiasi riga.\n\n- `src` + `**/*` — tutto sotto `src`\n- vuoto o `.` + `**/*` — ogni file nel repository\n- `src` + `**/!(*.test|*.spec).ts` — file `.ts` tranne i test\n\n### Escludi\nSpunta **Escludi** su una riga per rimuovere i suoi file anche quando un'altra riga li include. Le esclusioni si applicano al selettore di file e alla cache e, per Impact, ai file modificati di un'analisi, in modo che un file che cambia quasi ad ogni pull request smetta di richiamare i casi di test non correlati. Almeno una riga deve rimanere deselezionata.\n\n- vuoto + `**/CHANGELOG*` — ogni changelog, a qualsiasi profondità\n- `app` + `build.gradle.kts` — un file di build che incrementa solo la versione",
     "projectAutomation": "## Esecuzione automatizzata\nI bersagli di esecuzione indicano a TestPlanIt dove eseguire i casi automatizzati di questo progetto: un workflow di GitHub Actions, una pipeline di GitLab CI, o un webhook firmato per qualsiasi altro sistema. Quando un'esecuzione viene eseguita, TestPlanIt avvia il lavoro con l'ID dell'esecuzione e un URL del piano; il lavoro legge il piano, esegue i test corrispondenti e segnala i risultati con un reporter o la CLI bloccati su quella esecuzione. I bersagli possono essere disabilitati senza essere eliminati.",
     "userAlerts": "## Notifiche e avvisi\n**Preferenze di notifica** decidono come sei raggiunto (in-app, email, digest) e quali tipi di notifica ricevi in generale.\n\n**Alerts** monitorano una metrica di test e notificano i loro abbonati quando supera una linea, ad esempio un risultato che impiega il 50% in più del solito per il caso, un caso che fallisce tre volte di fila, un'esecuzione il cui tasso di superamento scende sotto il 90% o una pietra miliare che è indietro con giorni a disposizione. L'elenco mostra ogni avviso nei tuoi progetti; l'interruttore **Notificami** segue o lascia uno. **Aggiungi avviso** crea il tuo in qualsiasi progetto in cui il tuo ruolo ha **Alerts** Add/Edit; gli amministratori del progetto gestiscono ogni avviso nel loro progetto e gli abbonamenti di altre persone. Un avviso si attiva al massimo una volta per soggetto entro il suo cooldown e rimane silenzioso finché non ha abbastanza risultati.",
-    "projectTriage": "## Triage dei Fallimenti\nI fallimenti automatizzati che condividono la stessa eccezione, messaggio e frame di stack superiori vengono raggruppati in una **firma**. Ogni firma mostra la frequenza con cui si è verificata, quali casi di test e run ha toccato, e la lettura dell'IA sul fatto che sia un bug del prodotto, un bug del test, un problema ambientale o instabile. Risolvi o ignora una firma una volta che viene gestita; si riaprirà da sola se il fallimento ritorna.",
-    "projectTriageSettings": "## Impostazioni Triage dei Fallimenti\nRaggruppare i run su ogni risultato automatizzato che arriva non costa nulla. La classificazione AI utilizza il modello AI assegnato alla funzionalità **Classificazione Triage dei Fallimenti** nella pagina Modelli AI; disattivala qui per mantenere il raggruppamento senza alcuna chiamata AI. **Analizza risultati esistenti** raggruppa ogni fallimento automatizzato già registrato in questo progetto."
+    "projectTriage": "## Schemi di errori\nGli errori automatizzati che condividono la stessa eccezione, messaggio e i principali frame dello stack vengono raggruppati in uno **schema di errori**. Ogni schema mostra quanto spesso è accaduto, quali casi di test e esecuzioni ha toccato e il parere dell'IA sulla sua causa principale (bug del prodotto, bug del test, ambiente o instabile per impostazione predefinita). Risolvi o ignora uno schema una volta gestito; si riapre automaticamente se l'errore ritorna.",
+    "projectTriageSettings": "## Impostazioni Schemi di errori\nIl raggruppamento delle esecuzioni su ogni risultato automatizzato che arriva non costa nulla. Il suggerimento della causa principale dell'IA utilizza il modello di IA assegnato alla funzione **Schemi di errori: Causa principale** nella pagina Modelli di IA; disattivalo qui per mantenere il raggruppamento senza alcuna chiamata all'IA. **Analizza i risultati esistenti** raggruppa ogni errore automatizzato già registrato in questo progetto.",
+    "projectQuarantine": "## Casi di test in quarantena\nUn caso di test in quarantena continua a essere eseguito e registra i risultati, ma i suoi errori vengono esclusi dal passaggio/fallimento dell'esecuzione e mostrati come conteggio separato. Metti in quarantena un caso da uno schema di errori mentre la causa è in fase di correzione. La quarantena si solleva automaticamente una volta che il caso ha superato il numero di volte consecutive impostato nelle impostazioni di Schemi di errori, a meno che non sia stato contrassegnato per essere rilasciato manualmente; rilascialo qui o dallo schema in qualsiasi momento.",
+    "rootCauses": "## Cause principali\nLe cause principali che Schemi di errori assegna agli errori raggruppati, dall'IA o manualmente. Ognuna ha una descrizione che l'IA legge per decidere quando si applica. Rinomina, riccolora o riordina, aggiungi le tue, o elimina quelle che non usi; l'eliminazione di una lascia i suoi schemi senza una causa principale.",
+    "rootCauseDescription": "## Descrizione\nL'IA legge questa descrizione per decidere quando la causa principale si applica a uno schema di errori, quindi descrivi le prove che la indicano."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Soglia",
         "RUN_UNTESTED_SHARE": "Casi non testati su (%)",
         "RUN_ISSUES_OPENED": "Problemi collegati, più di",
+        "NEW_FAILURE_SIGNATURES": "Nuovi schemi di errori, più di",
         "SESSION_OVERRUN": "Oltre la stima di più di (%)",
         "MILESTONE_BEHIND": "Completamento sotto (%)",
         "MILESTONE_OVERDUE": "Soglia",
@@ -10654,6 +10685,11 @@
         "description": "Più di un determinato numero di problemi sono collegati ai risultati di un'esecuzione.",
         "summary": "Più di {threshold, plural, one {# problema è} other {# problemi sono}} collegati ai risultati di un'esecuzione, {evaluateOn, select, AS_RESULTS_ARRIVE {valutato man mano che i risultati arrivano} other {valutato al completamento dell'esecuzione}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Nuovi schemi di errori in un'esecuzione",
+        "description": "Un'esecuzione introduce schemi di errori che il progetto non aveva mai visto prima. Richiede Schemi di errori abilitati per il progetto.",
+        "summary": "Più di {threshold, plural, one {# schema di errori appare} other {# schemi di errori appaiono}} per la prima volta in un'esecuzione, {evaluateOn, select, AS_RESULTS_ARRIVE {valutato mentre i risultati arrivano} other {valutato quando l'esecuzione si completa}}"
+      },
       "SESSION_OVERRUN": {
         "label": "La sessione ha superato la sua stima",
         "description": "Il tempo trascorso di una sessione completata supera la sua stima di una percentuale.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "Risolto",
       "IGNORED": "Ignorato"
     },
-    "classification": {
-      "UNCLASSIFIED": "Non classificato",
-      "PRODUCT_BUG": "Bug del prodotto",
-      "TEST_BUG": "Bug del test",
-      "ENVIRONMENT": "Ambiente",
-      "FLAKY": "Instabile"
-    },
+    "unclassified": "Nessuna causa principale",
     "source": {
-      "AI": "Classificato dall'IA",
+      "AI": "Causa principale suggerita dall'IA",
       "labelAI": "IA",
       "labelMANUAL": "Manuale"
     },
     "columns": {
-      "classification": "Classificazione",
+      "classification": "Causa principale",
       "occurrences": "Occorrenze",
       "firstSeen": "Primo avvistamento",
       "lastSeen": "Ultimo avvistamento",
-      "classifiedBy": "Classificato da"
+      "classifiedBy": "Impostato da"
     },
     "filters": {
-      "searchPlaceholder": "Ricerca firme...",
+      "searchPlaceholder": "Cerca schemi di errori...",
       "flakyOnly": "Candidati instabili",
-      "sourceAll": "IA o manuale"
+      "sourceAll": "Impostato da chiunque",
+      "sourceAi": "Impostato dall'IA",
+      "sourceManual": "Impostato manualmente",
+      "sourceNone": "Non impostato"
     },
     "actions": {
       "resolve": "Risolvi",
       "ignore": "Ignora",
-      "classify": "Classifica con IA",
-      "setClassification": "Imposta classificazione"
+      "classify": "Suggerisci causa principale con l'IA",
+      "setClassification": "Imposta causa principale"
     },
     "detail": {
       "exceptionType": "Tipo di eccezione",
@@ -10822,13 +10855,13 @@
       "rationale": "Razionale",
       "suggestedIssueTitle": "Titolo del problema suggerito",
       "nextStep": "Passo successivo suggerito",
-      "noAi": "Non ancora classificato dall'IA.",
+      "noAi": "Nessun suggerimento dell'IA ancora.",
       "noDetails": "Questo fallimento non aveva messaggio o traccia di stack, quindi viene raggruppato per caso di test.",
       "notesPlaceholder": "Note per il team...",
       "lastRun": "Ultimo run",
       "aiSuggestion": "Suggerimento IA",
-      "unlinkConfirmDescription": "Questo rimuove il problema da questa firma. Il problema stesso viene conservato e può essere collegato di nuovo in seguito.",
-      "signatureLabel": "Firma di fallimento",
+      "unlinkConfirmDescription": "Questo rimuove il problema da questo schema di errori. Il problema stesso viene conservato e può essere collegato di nuovo in seguito.",
+      "signatureLabel": "Schema di errori",
       "affectedCasesLabel": "Casi di test interessati"
     },
     "flakyCandidate": "Candidato instabile",
@@ -10836,31 +10869,31 @@
     "knownIssue": "Problema noto",
     "notGrouped": "{count, plural, one {# fallimento non ancora raggruppato} other {# fallimenti non ancora raggruppati}}",
     "runPanel": {
-      "title": "Cluster di fallimenti",
+      "title": "Schemi di errori",
       "inRun": "{count, plural, one {# in questo run} other {# in questo run}}",
-      "hint": "Fai clic su un cluster per filtrare i risultati di seguito.",
-      "open": "Visualizza firma",
+      "hint": "Fai clic su uno schema per filtrare i risultati sottostanti.",
+      "open": "Visualizza schema",
       "inRunColumn": "In questo run",
-      "selectedClusters": "{count, plural, one {# cluster selezionato} other {# cluster selezionati}}",
-      "clearSelected": "Cancella i cluster selezionati"
+      "selectedClusters": "{count, plural, one {# schema selezionato} other {# schemi selezionati}}",
+      "clearSelected": "Cancella gli schemi selezionati"
     },
     "toasts": {
-      "updated": "Firma aggiornata",
-      "updateFailed": "Impossibile aggiornare la firma",
-      "classifyQueued": "Classificazione IA richiesta",
+      "updated": "Schema di errori aggiornato",
+      "updateFailed": "Impossibile aggiornare lo schema di errori",
+      "classifyQueued": "Suggerimento della causa principale dell'IA richiesto",
       "noAiModel": "Nessun modello IA è configurato per questa funzionalità",
       "issueLinked": "Problema collegato"
     },
     "empty": {
-      "title": "Nessuna firma di fallimento ancora",
-      "description": "Le firme compaiono qui quando arrivano risultati automatizzati con fallimenti. Per raggruppare i fallimenti già registrati in questo progetto, utilizza Analizza risultati esistenti nelle impostazioni di Triage dei Fallimenti."
+      "title": "Nessuno schema di errori ancora",
+      "description": "Gli schemi di errori appaiono qui mentre gli errori automatizzati arrivano con i risultati. Per raggruppare gli errori già registrati in questo progetto, utilizza Analizza i risultati esistenti nelle impostazioni di Schemi di errori."
     },
     "settings": {
-      "description": "Raggruppa i fallimenti automatizzati in firme e lascia che l'IA li classifichi.",
-      "enableLabel": "Abilita Triage dei Fallimenti",
+      "description": "Raggruppa gli errori automatizzati in schemi e lascia che l'IA suggerisca la loro causa principale.",
+      "enableLabel": "Abilita Schemi di errori",
       "enableDescription": "Raggruppa ogni fallimento automatizzato in questo progetto per eccezione, messaggio e frame di stack mentre arrivano i risultati.",
-      "autoClassifyLabel": "Classifica nuove firme con IA",
-      "autoClassifyDescription": "Chiedi al modello IA del progetto di classificare ogni nuova firma come bug del prodotto, bug del test, problema ambientale o instabile. Richiede un modello IA assegnato alla funzionalità Classificazione Triage dei Fallimenti.",
+      "autoClassifyLabel": "Suggerisci cause principali con l'IA",
+      "autoClassifyDescription": "Chiedi al modello di IA del progetto di scegliere una causa principale per ogni nuovo schema di errori dal catalogo Cause principali. Richiede un modello di IA assegnato alla funzione Schemi di errori: Causa principale.",
       "backfillLabel": "Analizza risultati esistenti",
       "backfillDescription": "Raggruppa ogni fallimento automatizzato già registrato in questo progetto. Viene eseguito in background.",
       "backfillStarted": "Analisi avviata",
@@ -10868,11 +10901,47 @@
       "backfillDone": "Analisi completata",
       "backfillFailed": "Analisi non riuscita",
       "backfillQueueUnavailable": "La coda dei processi in background non è disponibile",
-      "enabledToast": "Triage dei Fallimenti abilitato",
-      "disabledToast": "Triage dei Fallimenti disabilitato",
-      "autoClassifyOnToast": "Classificazione IA abilitata",
-      "autoClassifyOffToast": "Classificazione IA disabilitata",
-      "openTriage": "Apri Triage dei Fallimenti"
+      "enabledToast": "Schemi di errori abilitati",
+      "disabledToast": "Schemi di errori disabilitati",
+      "autoClassifyOnToast": "Suggerimenti della causa principale dell'IA abilitati",
+      "autoClassifyOffToast": "Suggerimenti della causa principale dell'IA disabilitati",
+      "autoReleaseLabel": "Rilascia la quarantena automaticamente dopo",
+      "autoReleasePassesLabel": "passaggi consecutivi",
+      "autoReleaseDescription": "Un caso di test in quarantena viene rilasciato una volta che ha superato questo numero di volte consecutive da quando è stato messo in quarantena. I risultati saltati vengono ignorati. Una quarantena contrassegnata \"mantieni fino al rilascio manuale\" rimane.",
+      "autoReleaseOnToast": "Rilascio automatico abilitato",
+      "autoReleaseOffToast": "Rilascio automatico disabilitato",
+      "autoReleasePassesSaved": "{count, plural, one {La quarantena viene rilasciata dopo # passaggio consecutivo} other {La quarantena viene rilasciata dopo # passaggi consecutivi}}",
+      "autoReleasePassesInvalid": "Immetti un numero di passaggi tra 1 e 100",
+      "openTriage": "Apri Schemi di errori"
+    },
+    "quarantine": {
+      "label": "In quarantena",
+      "title": "Casi di test in quarantena",
+      "hint": "Gli errori di un caso di test in quarantena vengono esclusi dal passaggio/fallimento dell'esecuzione e conteggiati separatamente. Il caso di test continua a essere eseguito e a registrare i risultati.",
+      "metricHint": "Errori di casi di test in quarantena in questa esecuzione. Non contano rispetto al tasso di passaggio.",
+      "action": "Quarantena",
+      "actionAll": "Metti in quarantena i casi di test interessati",
+      "release": "Rilascia",
+      "reasonLabel": "Motivo",
+      "reasonPlaceholder": "Perché questo caso di test è in quarantena? (facoltativo)",
+      "keepLabel": "Mantieni in quarantena fino al rilascio manuale",
+      "keepHint": "Salta il rilascio automatico del progetto dopo passaggi consecutivi.",
+      "dialogTitle": "{count, plural, one {Quarantena # caso di test} other {Quarantena # casi di test}}",
+      "releaseConfirmTitle": "Rilascia dalla quarantena?",
+      "releaseConfirmDescription": "Gli errori del caso di test contano di nuovo rispetto al passaggio/fallimento dell'esecuzione.",
+      "quarantinedToast": "{count, plural, one {# caso di test messo in quarantena} other {# casi di test messi in quarantena}}",
+      "releasedToast": "Caso di test rilasciato dalla quarantena",
+      "failedToast": "Impossibile aggiornare la quarantena",
+      "listButton": "{count, plural, =0 {Casi di test in quarantena} one {# caso di test in quarantena} other {# casi di test in quarantena}}",
+      "columns": {
+        "signature": "Schema di errori",
+        "by": "Messo in quarantena da",
+        "since": "Da",
+        "releasePolicy": "Rilascia"
+      },
+      "releaseAuto": "{count, plural, one {Automatico dopo # passaggio consecutivo} other {Automatico dopo # passaggi consecutivi}}",
+      "releaseManual": "Manualmente",
+      "empty": "Nessun caso di test è messo in quarantena in questo progetto."
     }
   }
 }

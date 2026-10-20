@@ -649,6 +649,9 @@ export function CreateIssueDialog({
             case "testRunStepResult":
               payload.testRunStepResultId = entityId.toString();
               break;
+            case "failureSignature":
+              payload.failureSignatureId = entityId.toString();
+              break;
           }
         }
 

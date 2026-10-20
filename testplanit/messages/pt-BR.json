@@ -741,7 +741,7 @@
       "sharedContent": "Conteúdo compartilhado",
       "impact": "Análise de Impacto",
       "alerts": "Notificações e alertas",
-      "triage": "Triagem de Falhas"
+      "triage": "Padrões de Falha"
     },
     "aria": {
       "userMenu": "Menu do usuário",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Principal",
       "fields": "Campos",
+      "rootCauses": "Causas Raiz",
       "appConfig": "Configuração do aplicativo",
       "recordKeys": "Chaves de Registro",
       "imports": "Importação de dados",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "Tem certeza de que deseja excluir o tipo de marco {name}?"
       }
     },
+    "rootCauses": {
+      "description": "As causas raiz que os Padrões de Falha atribuem a falhas agrupadas. A IA escolhe desta lista usando cada descrição.",
+      "filterPlaceholder": "Filtrar causas raiz...",
+      "reordered": "Causas raiz reordenadas",
+      "descriptionPlaceholder": "Quando esta causa raiz se aplica? A IA usa este texto para decidir.",
+      "columns": {
+        "signatures": "Padrões"
+      },
+      "add": {
+        "button": "Adicionar Causa Raiz",
+        "title": "Adicionar Causa Raiz"
+      },
+      "edit": {
+        "title": "Editar Causa Raiz"
+      },
+      "errors": {
+        "nameExists": "Uma causa raiz com este nome já existe"
+      },
+      "delete": {
+        "confirmMessage": "Tem certeza de que deseja excluir a causa raiz {name}?",
+        "inUse": "{count, plural, one {# padrão de falha o usa.} other {# padrões de falha o usam.}}",
+        "moveLabel": "{count, plural, one {Mover o padrão para} other {Mover os # padrões para}}"
+      }
+    },
     "issue_config": {
       "link_title": "Rastreador de Problemas de Links",
       "link_description": "Configure o URL base para problemas vinculados manualmente. Ao vincular um problema usando apenas um ID externo, este URL base será adicionado para criar o link completo.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Relatório de Candidatos à Automação",
         "derive_case_steps": "Derivação de Passos por IA",
         "impact_analysis": "Impacto: Seleção de Teste Afetado",
-        "failure_triage": "Classificação de Triagem de Falhas"
+        "failure_triage": "Padrões de Falha: Causa Raiz"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Registros de auditoria",
         "budget-alerts": "Alertas orçamentários",
         "auto-tag": "Etiquetagem automática por IA",
-        "failure-triage": "Triagem de Falhas",
+        "failure-triage": "Padrões de Falha",
         "repo-cache": "Cache do repositório",
         "copy-move": "Copiar e mover",
         "duplicate-scan": "Leitura duplicada",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "A execução automatizada em {target} terminou com {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% dos casos da execução não têm resultado com {daysRemaining, plural, one {# dia} other {# dias}} antes do vencimento do marco (limite {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# problema está} other {# problemas estão}} vinculados aos resultados da execução (limite {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# padrão de falha apareceu} other {# padrões de falha apareceram}} pela primeira vez na execução (limite {threshold}).",
           "SESSION_OVERRUN": "A sessão levou {elapsed} em relação a uma estimativa de {estimate}, {overrun}% acima (mais de {threshold}% permitido).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} de {total} requisitos ({coverage}%) {basis, select, PASSING {têm um resultado mais recente passando} other {estão vinculados a um caso de teste}} (limite {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# caso não tem} other {# casos não têm}} resultado em {days, plural, one {# dia} other {# dias}} (limite {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "Resultados do teste",
       "TestRunResultRestrictedFields": "Campos restritos do resultado da execução do teste",
       "AutomatedExecution": "Execução Automatizada",
+      "FailurePatterns": "Padrões de Falha",
       "Sessions": "Sessões",
       "SessionsRestrictedFields": "Campos restritos de sessão",
       "ClosedSessions": "Sessões fechadas",
@@ -7971,7 +7998,7 @@
       "name": "## Nome da função\nUm nome ou palavra(s)-chave clara(s), concisa(s) e descritiva(s) que seja(m) usada(s) em todos os projetos.\n\n- Ajuda os membros da equipe a encontrar rapidamente casos de teste, execuções de teste e sessões relacionadas.",
       "isDefault": "## Função Padrão\nIndica se esta função é a padrão para o seu projeto.\n\n- A função padrão é pré-selecionada para novos usuários.\n- Pode ser alterada a qualquer momento.",
       "permissions": {
-        "canAddEdit": "## Adicionar/Editar\nIndica se esta função pode adicionar e editar a área de aplicação relacionada.\n\n- **Execução automatizada** concede o direito de iniciar, tentar novamente e cancelar execuções automatizadas em um provedor de CI. O registro dos resultados ainda precisa de **Resultados de teste de execução** Adicionar/Editar e iniciar um do repositório também precisa de **Testes de execução** Adicionar/Editar porque cria ou estende uma execução.\n- **Alertas** concede o direito de criar alertas no projeto e editar, pausar e excluir os que você criou. Os administradores de projeto gerenciam todos os alertas e as inscrições de outros usuários; qualquer pessoa pode seguir ou sair de um alerta.",
+        "canAddEdit": "## Adicionar/Editar\nIndica se este papel pode adicionar e editar a área de aplicação relacionada.\n\n- **Execução Automatizada** concede o direito de iniciar, tentar novamente e cancelar execuções automatizadas em um provedor de CI. O registro dos resultados ainda precisa de **Resultados de Execução de Teste** Adicionar/Editar, e iniciar um do repositório também precisa de **Execuções de Teste** Adicionar/Editar porque cria ou estende uma execução.\n- **Padrões de Falha** concede o direito de definir ou limpar a causa raiz de um padrão de falha ou pedir um à IA, resolver, ignorar ou reabrir, editar suas notas, vincular e desvincular issues, e colocar em quarentena ou liberar seus casos de teste. Qualquer um com acesso ao projeto pode ver seus padrões de falha; os administradores do projeto gerenciam as configurações de Padrões de Falha.\n- **Alertas** concede o direito de criar alertas no projeto e editar, pausar e deletar os que você criou. Os administradores do projeto gerenciam todos os alertas e as assinaturas de outros usuários; qualquer um pode seguir ou deixar um alerta.",
         "canDelete": "## Excluir\nIndica se esta função pode excluir a área de aplicação relacionada.",
         "canClose": "## Fechar\nIndica se esta função pode fechar a área de aplicação relacionada.",
         "canApprove": "## Aprovar\nIndica se esta função pode aprovar solicitações de revisão para a área de aplicação relacionada. Aplica-se somente ao Repositório de Casos de Teste, Execuções de Teste e Sessões.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## Padrões de Caminho\nCada linha combina um **caminho** base com um **padrão** glob. As linhas se acumulam: um arquivo é incluído quando qualquer linha corresponde a ele.\n\n- `src` + `**/*` — tudo sob `src`\n- em branco ou `.` + `**/*` — cada arquivo no repositório\n- `src` + `**/!(*.test|*.spec).ts` — arquivos `.ts` exceto testes\n\n### Excluir\nMarque **Excluir** em uma linha para remover seus arquivos mesmo quando outra linha os inclui. As exclusões se aplicam ao seletor de arquivos e ao cache, e para Impacto aos arquivos alterados de uma análise, portanto, um arquivo que muda em quase todos os pull requests deixa de incluir casos de teste não relacionados. Pelo menos uma linha deve permanecer desmarcada.\n\n- em branco + `**/CHANGELOG*` — cada changelog, em qualquer profundidade\n- `app` + `build.gradle.kts` — um arquivo de compilação que apenas atualiza a versão",
     "projectAutomation": "## Execução Automatizada\nOs destinos de execução dizem ao TestPlanIt onde executar os casos automatizados deste projeto: um workflow GitHub Actions, um pipeline GitLab CI ou um webhook assinado para qualquer outro sistema. Quando uma execução é executada, o TestPlanIt inicia o trabalho com a ID da execução e uma URL do plano; o trabalho lê o plano, executa os testes correspondentes e relata os resultados de volta com um reporter ou o CLI fixado nessa execução. Os destinos podem ser desabilitados sem serem excluídos.",
     "userAlerts": "## Notificações e alertas\n**Preferências de notificação** decidem como você é contatado (no aplicativo, email, resumo) e quais tipos de notificação você recebe.\n\n**Alertas** monitoram uma métrica de teste e notificam seus assinantes quando ela cruza uma linha, por exemplo, um resultado que leva 50% mais tempo do que a duração usual do caso, um caso que falha três vezes seguidas, uma execução cuja taxa de aprovação cai abaixo de 90%, ou um marco que está atrasado com dias restantes. A lista mostra todos os alertas em seus projetos; a chave **Notifique-me** segue ou sai de um. **Adicionar alerta** cria o seu próprio em qualquer projeto em que sua função tenha **Alertas** Adicionar/Editar; os administradores de projeto gerenciam todos os alertas em seu projeto e as inscrições de outras pessoas. Um alerta dispara no máximo uma vez por assunto dentro de seu período de repouso e fica silencioso até ter resultados suficientes.",
-    "projectTriage": "## Triagem de Falhas\nFalhas automatizadas que compartilham a mesma exceção, mensagem e frames de pilha superiores são agrupadas em uma **assinatura**. Cada assinatura mostra com que frequência ocorreu, quais casos de teste e execuções ela tocou e a interpretação da IA sobre se é um bug do produto, um bug do teste, um problema de ambiente ou instabilidade. Resolva ou ignore uma assinatura depois que ela for tratada; ela reabre automaticamente se a falha retornar.",
-    "projectTriageSettings": "## Configurações de Triagem de Falhas\nO agrupamento de execuções em todos os resultados automatizados que chegam não custa nada. A classificação de IA usa o modelo de IA atribuído ao recurso **Classificação de Triagem de Falhas** na página Modelos de IA; desative aqui para manter o agrupamento sem chamadas de IA. **Analisar resultados existentes** agrupa todas as falhas automatizadas já registradas neste projeto."
+    "projectTriage": "## Padrões de Falha\nFalhas automatizadas que compartilham a mesma exceção, mensagem e os principais frames de pilha são agrupadas em um **padrão de falha**. Cada padrão mostra com que frequência aconteceu, quais casos de teste e execuções tocou, e a opinião da IA sobre sua causa raiz (bug do produto, bug do teste, ambiente ou instável por padrão). Resolva ou ignore um padrão depois que for tratado; ele reabre automaticamente se a falha retornar.",
+    "projectTriageSettings": "## Configurações de Padrões de Falha\nO agrupamento de execuções em cada resultado automatizado que chega não custa nada. A sugestão de causa raiz de IA usa o modelo de IA atribuído ao recurso **Padrões de Falha: Causa Raiz** na página Modelos de IA; desative-o aqui para manter o agrupamento sem nenhuma chamada de IA. **Analisar resultados existentes** agrupa todas as falhas automatizadas já registradas neste projeto.",
+    "projectQuarantine": "## Casos de teste em quarentena\nUm caso de teste em quarentena continua executando e registrando resultados, mas suas falhas são deixadas de fora do pass/fail da execução e mostradas como uma contagem separada. Coloque em quarentena um caso enquanto a causa está sendo corrigida. A quarentena é suspensa automaticamente uma vez que o caso tenha passado o número de vezes consecutivas definido nas configurações de Padrões de Falha, a menos que tenha sido marcado para ser liberado manualmente; libere-o aqui ou do padrão a qualquer momento.",
+    "rootCauses": "## Causas Raiz\nAs causas raiz que os Padrões de Falha atribuem a falhas agrupadas, por IA ou manualmente. Cada uma tem uma descrição que a IA lê para decidir quando se aplica. Renomeie, recolora ou reordene-as, adicione as suas próprias, ou delete as que não usa; deletar uma deixa seus padrões sem uma causa raiz.",
+    "rootCauseDescription": "## Descrição\nA IA lê esta descrição para decidir quando a causa raiz se aplica a um padrão de falha, então descreva a evidência que aponta para ela."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Limite",
         "RUN_UNTESTED_SHARE": "Casos não testados acima (%)",
         "RUN_ISSUES_OPENED": "Problemas vinculados, mais de",
+        "NEW_FAILURE_SIGNATURES": "Novos padrões de falha, mais de",
         "SESSION_OVERRUN": "Acima da estimativa por mais de (%)",
         "MILESTONE_BEHIND": "Conclusão abaixo (%)",
         "MILESTONE_OVERDUE": "Limite",
@@ -10654,6 +10685,11 @@
         "description": "Mais de um determinado número de problemas estão vinculados aos resultados de uma execução.",
         "summary": "Mais de {threshold, plural, one {# problema está} other {# problemas estão}} vinculados aos resultados de uma execução, {evaluateOn, select, AS_RESULTS_ARRIVE {avaliado conforme os resultados chegam} other {avaliado quando a execução é concluída}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Novos padrões de falha em uma execução",
+        "description": "Uma execução introduz padrões de falha que o projeto ainda não viu. Precisa que Padrões de Falha estejam ativados para o projeto.",
+        "summary": "Mais de {threshold, plural, one {# padrão de falha aparece} other {# padrões de falha aparecem}} pela primeira vez em uma execução, {evaluateOn, select, AS_RESULTS_ARRIVE {avaliado conforme os resultados chegam} other {avaliado quando a execução é concluída}}"
+      },
       "SESSION_OVERRUN": {
         "label": "Sessão ultrapassou sua estimativa",
         "description": "O tempo decorrido de uma sessão concluída excede sua estimativa por uma porcentagem.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "Resolvido",
       "IGNORED": "Ignorado"
     },
-    "classification": {
-      "UNCLASSIFIED": "Não classificado",
-      "PRODUCT_BUG": "Bug do produto",
-      "TEST_BUG": "Bug de teste",
-      "ENVIRONMENT": "Ambiente",
-      "FLAKY": "Instável"
-    },
+    "unclassified": "Nenhuma causa raiz",
     "source": {
-      "AI": "Classificado por IA",
+      "AI": "Causa raiz sugerida pela IA",
       "labelAI": "IA",
       "labelMANUAL": "Manual"
     },
     "columns": {
-      "classification": "Classificação",
+      "classification": "Causa raiz",
       "occurrences": "Ocorrências",
       "firstSeen": "Visto primeiro",
       "lastSeen": "Visto pela última vez",
-      "classifiedBy": "Classificado por"
+      "classifiedBy": "Definido por"
     },
     "filters": {
-      "searchPlaceholder": "Pesquisar assinaturas...",
+      "searchPlaceholder": "Pesquisar padrões de falha...",
       "flakyOnly": "Candidatos instáveis",
-      "sourceAll": "IA ou manual"
+      "sourceAll": "Definido por qualquer um",
+      "sourceAi": "Definido por IA",
+      "sourceManual": "Definido manualmente",
+      "sourceNone": "Não definido"
     },
     "actions": {
       "resolve": "Resolver",
       "ignore": "Ignorar",
-      "classify": "Classificar com IA",
-      "setClassification": "Definir classificação"
+      "classify": "Sugerir causa raiz com IA",
+      "setClassification": "Definir causa raiz"
     },
     "detail": {
       "exceptionType": "Tipo de exceção",
@@ -10822,13 +10855,13 @@
       "rationale": "Justificativa",
       "suggestedIssueTitle": "Título da issue sugerida",
       "nextStep": "Próximo passo sugerido",
-      "noAi": "Ainda não classificado por IA.",
+      "noAi": "Nenhuma sugestão de IA ainda.",
       "noDetails": "Esta falha não continha mensagem nem rastreamento de pilha, portanto é agrupada por caso de teste.",
       "notesPlaceholder": "Notas para o time...",
       "lastRun": "Última execução",
       "aiSuggestion": "Sugestão de IA",
-      "unlinkConfirmDescription": "Isto remove a issue desta assinatura. A issue em si é mantida e pode ser vinculada novamente mais tarde.",
-      "signatureLabel": "Assinatura de falha",
+      "unlinkConfirmDescription": "Isso remove a issue deste padrão de falha. A issue em si é mantida e pode ser vinculada novamente mais tarde.",
+      "signatureLabel": "Padrão de falha",
       "affectedCasesLabel": "Casos de teste afetados"
     },
     "flakyCandidate": "Candidato instável",
@@ -10836,31 +10869,31 @@
     "knownIssue": "Issue conhecida",
     "notGrouped": "{count, plural, one {# falha ainda não agrupada} other {# falhas ainda não agrupadas}}",
     "runPanel": {
-      "title": "Clusters de falhas",
+      "title": "Padrões de falha",
       "inRun": "{count, plural, one {# nesta execução} other {# nesta execução}}",
-      "hint": "Clique em um cluster para filtrar os resultados abaixo.",
-      "open": "Visualizar assinatura",
+      "hint": "Clique em um padrão para filtrar os resultados abaixo.",
+      "open": "Ver padrão",
       "inRunColumn": "Nesta execução",
-      "selectedClusters": "{count, plural, one {# cluster selecionado} other {# clusters selecionados}}",
-      "clearSelected": "Limpar os clusters selecionados"
+      "selectedClusters": "{count, plural, one {# padrão selecionado} other {# padrões selecionados}}",
+      "clearSelected": "Limpar os padrões selecionados"
     },
     "toasts": {
-      "updated": "Assinatura atualizada",
-      "updateFailed": "Não foi possível atualizar a assinatura",
-      "classifyQueued": "Classificação de IA solicitada",
+      "updated": "Padrão de falha atualizado",
+      "updateFailed": "Não foi possível atualizar o padrão de falha",
+      "classifyQueued": "Solicitação de sugestão de causa raiz de IA feita",
       "noAiModel": "Nenhum modelo de IA está configurado para este recurso",
       "issueLinked": "Issue vinculada"
     },
     "empty": {
-      "title": "Nenhuma assinatura de falha ainda",
-      "description": "Assinaturas aparecem aqui conforme resultados automatizados com falhas chegam. Para agrupar falhas já registradas neste projeto, use Analisar resultados existentes nas configurações de Triagem de Falhas."
+      "title": "Nenhum padrão de falha ainda",
+      "description": "Padrões de falha aparecem aqui conforme resultados automatizados com falhas chegam. Para agrupar falhas já registradas neste projeto, use Analisar resultados existentes nas configurações de Padrões de Falha."
     },
     "settings": {
-      "description": "Agrupe falhas automatizadas em assinaturas e deixe a IA classificá-las.",
-      "enableLabel": "Ativar Triagem de Falhas",
+      "description": "Agrupe falhas automatizadas em padrões e deixe a IA sugerir sua causa raiz.",
+      "enableLabel": "Ativar Padrões de Falha",
       "enableDescription": "Agrupe todas as falhas automatizadas neste projeto por exceção, mensagem e frames de pilha conforme os resultados chegam.",
-      "autoClassifyLabel": "Classificar novas assinaturas com IA",
-      "autoClassifyDescription": "Peça ao modelo de IA do projeto para classificar cada nova assinatura como um bug de produto, bug de teste, problema de ambiente ou instabilidade. Requer um modelo de IA atribuído ao recurso Classificação de Triagem de Falhas.",
+      "autoClassifyLabel": "Sugerir causas raiz com IA",
+      "autoClassifyDescription": "Peça ao modelo de IA do projeto para escolher uma causa raiz para cada novo padrão de falha do catálogo de Causas Raiz. Precisa de um modelo de IA atribuído ao recurso Padrões de Falha: Causa Raiz.",
       "backfillLabel": "Analisar resultados existentes",
       "backfillDescription": "Agrupe todas as falhas automatizadas já registradas neste projeto. Executa em segundo plano.",
       "backfillStarted": "Análise iniciada",
@@ -10868,11 +10901,47 @@
       "backfillDone": "Análise concluída",
       "backfillFailed": "Análise falhou",
       "backfillQueueUnavailable": "A fila de tarefas em segundo plano não está disponível",
-      "enabledToast": "Triagem de Falhas ativada",
-      "disabledToast": "Triagem de Falhas desativada",
-      "autoClassifyOnToast": "Classificação de IA ativada",
-      "autoClassifyOffToast": "Classificação de IA desativada",
-      "openTriage": "Abrir Triagem de Falhas"
+      "enabledToast": "Padrões de Falha ativados",
+      "disabledToast": "Padrões de Falha desativados",
+      "autoClassifyOnToast": "Sugestões de causa raiz de IA ativadas",
+      "autoClassifyOffToast": "Sugestões de causa raiz de IA desativadas",
+      "autoReleaseLabel": "Liberar quarentena automaticamente após",
+      "autoReleasePassesLabel": "passes consecutivos",
+      "autoReleaseDescription": "Um caso de teste em quarentena é liberado uma vez que tenha passado este número de vezes consecutivas desde que foi colocado em quarentena. Resultados ignorados são desconsiderados. Uma quarentena marcada \"manter até liberado manualmente\" fica.",
+      "autoReleaseOnToast": "Liberação automática ativada",
+      "autoReleaseOffToast": "Liberação automática desativada",
+      "autoReleasePassesSaved": "{count, plural, one {A quarentena é liberada após # pass consecutivo} other {A quarentena é liberada após # passes consecutivos}}",
+      "autoReleasePassesInvalid": "Digite um número de passes entre 1 e 100",
+      "openTriage": "Abrir Padrões de Falha"
+    },
+    "quarantine": {
+      "label": "Em quarentena",
+      "title": "Casos de teste em quarentena",
+      "hint": "Falhas de um caso de teste em quarentena são deixadas de fora do pass/fail da execução e contadas separadamente. O caso de teste continua executando e registrando resultados.",
+      "metricHint": "Falhas de casos de teste em quarentena nesta execução. Elas não contam contra a taxa de sucesso.",
+      "action": "Colocar em quarentena",
+      "actionAll": "Colocar em quarentena casos de teste afetados",
+      "release": "Liberar",
+      "reasonLabel": "Motivo",
+      "reasonPlaceholder": "Por que este caso de teste está em quarentena? (opcional)",
+      "keepLabel": "Manter em quarentena até ser liberado manualmente",
+      "keepHint": "Ignora a liberação automática do projeto após passes consecutivos.",
+      "dialogTitle": "{count, plural, one {Colocar em quarentena # caso de teste} other {Colocar em quarentena # casos de teste}}",
+      "releaseConfirmTitle": "Liberar da quarentena?",
+      "releaseConfirmDescription": "As falhas do caso de teste contam contra o pass/fail da execução novamente.",
+      "quarantinedToast": "{count, plural, one {# caso de teste em quarentena} other {# casos de teste em quarentena}}",
+      "releasedToast": "Caso de teste liberado da quarentena",
+      "failedToast": "Não foi possível atualizar a quarentena",
+      "listButton": "{count, plural, =0 {Casos de teste em quarentena} one {# caso de teste em quarentena} other {# casos de teste em quarentena}}",
+      "columns": {
+        "signature": "Padrão de falha",
+        "by": "Colocado em quarentena por",
+        "since": "Desde",
+        "releasePolicy": "Liberar"
+      },
+      "releaseAuto": "{count, plural, one {Automático após # pass consecutivo} other {Automático após # passes consecutivos}}",
+      "releaseManual": "Manualmente",
+      "empty": "Nenhum caso de teste está em quarentena neste projeto."
     }
   }
 }

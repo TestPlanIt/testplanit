@@ -741,7 +741,7 @@
       "sharedContent": "Contenu partagé",
       "impact": "Analyse d'impact",
       "alerts": "Notifications et alertes",
-      "triage": "Triage des défaillances"
+      "triage": "Modèles d'échec"
     },
     "aria": {
       "userMenu": "Menu utilisateur",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Principal",
       "fields": "Champs",
+      "rootCauses": "Causes premières",
       "appConfig": "Configuration de l'application",
       "recordKeys": "Clés d'enregistrement",
       "imports": "Importation de données",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer le type d'étape {name} ?"
       }
     },
+    "rootCauses": {
+      "description": "Les causes premières que les modèles d'échec attribuent aux défaillances groupées. L'IA en choisit une dans cette liste en utilisant chaque description.",
+      "filterPlaceholder": "Filtrer les causes premières...",
+      "reordered": "Causes premières réorganisées",
+      "descriptionPlaceholder": "Quand cette cause première s'applique-t-elle ? L'IA utilise ce texte pour décider.",
+      "columns": {
+        "signatures": "Modèles"
+      },
+      "add": {
+        "button": "Ajouter une cause première",
+        "title": "Ajouter une cause première"
+      },
+      "edit": {
+        "title": "Modifier la cause première"
+      },
+      "errors": {
+        "nameExists": "Une cause première portant ce nom existe déjà"
+      },
+      "delete": {
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer la cause première {name} ?",
+        "inUse": "{count, plural, one {# modèle d'échec l'utilise.} other {# modèles d'échec l'utilisent.}}",
+        "moveLabel": "{count, plural, one {Déplacer le modèle vers} other {Déplacer les # modèles vers}}"
+      }
+    },
     "issue_config": {
       "link_title": "Suivi des problèmes de liens",
       "link_description": "Configurez l'URL de base pour les tickets liés manuellement. Lors de la liaison d'un ticket à l'aide uniquement de son identifiant externe, cette URL de base sera ajoutée au début du lien pour le compléter.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Rapport des candidats à l'automatisation",
         "derive_case_steps": "Dérivation des étapes par IA",
         "impact_analysis": "Impact : sélection de tests affectés",
-        "failure_triage": "Classification du triage des défaillances"
+        "failure_triage": "Modèles d'échec : Cause première"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Journaux d'audit",
         "budget-alerts": "Alertes budgétaires",
         "auto-tag": "Étiquetage automatique par IA",
-        "failure-triage": "Triage des défaillances",
+        "failure-triage": "Modèles d'échec",
         "repo-cache": "Cache du dépôt",
         "copy-move": "Copier et déplacer",
         "duplicate-scan": "Analyse en double",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "L'exécution automatisée sur {target} s'est terminée avec {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% des cas de l'exécution n'ont pas de résultat avec {daysRemaining, plural, one {# jour} other {# jours}} avant l'échéance de son jalon (seuil {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# problème est} other {# problèmes sont}} lié aux résultats de l'exécution (seuil {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# modèle d'échec est apparu} other {# modèles d'échec sont apparus}} pour la première fois dans l'exécution (seuil {threshold}).",
           "SESSION_OVERRUN": "La séance a pris {elapsed} par rapport à une estimation de {estimate}, dépassement de {overrun}% (plus de {threshold}% autorisé).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} sur {total} exigences ({coverage}%) {basis, select, PASSING {ont un dernier résultat réussi} other {sont liées à un cas de test}} (seuil {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# cas n'a} other {# cas n'ont}} eu aucun résultat en {days, plural, one {# jour} other {# jours}} (seuil {threshold}).",
@@ -7719,6 +7745,7 @@
       "TestRunResults": "Résultats des essais",
       "TestRunResultRestrictedFields": "Champs restreints du résultat de l'exécution de test",
       "AutomatedExecution": "Exécution automatisée",
+      "FailurePatterns": "Modèles d'échec",
       "Sessions": "Séances",
       "SessionsRestrictedFields": "Champs restreints des sessions",
       "ClosedSessions": "Séances à huis clos",
@@ -7971,7 +7998,7 @@
       "name": "## Nom du rôle\nUn nom ou des mots-clés clairs, concis et descriptifs, utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés.",
       "isDefault": "## Rôle par défaut\nIndique si ce rôle est le rôle par défaut pour votre projet.\n\n- Le rôle par défaut est présélectionné pour les nouveaux utilisateurs.\n- Peut être modifié à tout moment.",
       "permissions": {
-        "canAddEdit": "## Ajouter/Modifier\nIndique si ce rôle peut ajouter et modifier la zone d'application associée.\n\n- **Exécution automatisée** accorde le droit de démarrer, réessayer et annuler les exécutions automatisées sur un fournisseur CI. L'enregistrement des résultats nécessite toujours **Résultats des exécutions de test** Ajouter/Modifier, et le démarrage à partir du dépôt nécessite également **Exécutions de test** Ajouter/Modifier car il crée ou étend une exécution.\n- **Alertes** accorde le droit de créer des alertes dans le projet et de modifier, suspendre et supprimer celles que vous avez créées. Les administrateurs de projet gèrent chaque alerte et les abonnements des autres utilisateurs; n'importe qui peut suivre ou quitter une alerte.",
+        "canAddEdit": "## Ajouter/Modifier\nIndique si ce rôle peut ajouter et modifier la zone d'application associée.\n\n- **Exécution automatisée** donne le droit de démarrer, réessayer et annuler les exécutions automatisées sur un fournisseur d'intégration continue. L'enregistrement des résultats nécessite toujours **Résultats d'exécution de test** Ajouter/Modifier, et le démarrage à partir du référentiel nécessite également **Exécutions de test** Ajouter/Modifier car il crée ou prolonge une exécution.\n- **Modèles d'échec** donne le droit de définir ou d'effacer la cause première d'un modèle d'échec ou de demander à l'IA d'en fournir une, le résoudre, l'ignorer ou le rouvrir, modifier ses notes, lier et délier des problèmes, et mettre en quarantaine ou libérer ses cas de test. Quiconque ayant accès au projet peut voir ses modèles d'échec ; les administrateurs de projet gèrent les paramètres des modèles d'échec.\n- **Alertes** donne le droit de créer des alertes dans le projet et de modifier, mettre en pause et supprimer celles que vous avez créées. Les administrateurs de projet gèrent toutes les alertes et les abonnements des autres utilisateurs ; quiconque peut suivre ou quitter une alerte.",
         "canDelete": "## Supprimer\nIndique si ce rôle peut supprimer la zone d'application associée.",
         "canClose": "## Fermer\nIndique si ce rôle peut fermer la zone d'application associée.",
         "canApprove": "## Approuver\nIndique si ce rôle peut approuver les demandes de révision pour le domaine d'application concerné. S'applique uniquement au référentiel de cas de test, aux exécutions de tests et aux sessions.",
@@ -8533,8 +8560,11 @@
     "pathPatterns": "## Motifs de chemin\nChaque ligne combine un **chemin** de base avec un **motif** glob. Les lignes s'ajoutent : un fichier est inclus si une ligne le correspond.\n\n- `src` + `**/*` — tout sous `src`\n- vide ou `.` + `**/*` — chaque fichier du référentiel\n- `src` + `**/!(*.test|*.spec).ts` — fichiers `.ts` sauf les tests\n\n### Exclure\nCochez **Exclure** sur une ligne pour supprimer ses fichiers même si une autre ligne les inclut. Les exclusions s'appliquent au sélecteur de fichiers et au cache, et pour Impact aux fichiers modifiés d'une analyse, de sorte qu'un fichier qui change à presque chaque pull request cesse de tirer dans les cas de test non liés. Au moins une ligne doit rester décochée.\n\n- vide + `**/CHANGELOG*` — chaque changelog, à n'importe quel niveau\n- `app` + `build.gradle.kts` — un fichier de compilation qui ne fait que bumper la version",
     "projectAutomation": "## Exécution automatisée\nLes cibles d'exécution indiquent à TestPlanIt où exécuter les cas automatisés de ce projet : un workflow GitHub Actions, un pipeline GitLab CI ou un webhook signé pour tout autre système. Lorsqu'une exécution est exécutée, TestPlanIt démarre le travail avec l'ID d'exécution et une URL de plan ; le travail lit le plan, exécute les tests correspondants et rapporte les résultats avec un rapporteur ou le CLI épinglé à cette exécution. Les cibles peuvent être désactivées sans être supprimées.",
     "userAlerts": "## Notifications et alertes\n**Préférences de notification** Décidez comment vous êtes contacté (in-app, e-mail, résumé) et les types de notifications que vous recevez du tout.\n\n**Alertes** Surveillez une métrique de test et notifiez leurs abonnés lorsqu'elle dépasse une ligne, par exemple un résultat qui prend 50% plus de temps que la durée habituelle du cas, un cas qui échoue trois fois d'affilée, une exécution dont le taux de réussite tombe en dessous de 90%, ou un jalon qui est en retard avec des jours à faire. La liste montre chaque alerte dans vos projets; l'interrupteur **M'avertir** suit ou quitte un. **Ajouter une alerte** crée la vôtre dans n'importe quel projet où votre rôle a **Alertes** Ajouter/Modifier; les administrateurs de projet gèrent chaque alerte dans leur projet et les abonnements des autres personnes. Une alerte se déclenche au maximum une fois par sujet dans son délai d'attente et reste silencieuse jusqu'à ce qu'elle ait suffisamment de résultats.",
-    "projectTriage": "## Triage des défaillances\nLes défaillances automatisées qui partagent la même exception, le même message et les mêmes cadres de pile supérieurs sont regroupées dans une **signature**. Chaque signature indique la fréquence d'occurrence, les cas de test et les séries qu'elle a touchés, et l'avis de l'IA sur le fait qu'il s'agisse d'un bogue de produit, d'un bogue de test, d'un problème d'environnement ou d'un problème instable. Résolvez ou ignorez une signature une fois qu'elle est traitée ; elle se réouvre d'elle-même si la défaillance revient.",
-    "projectTriageSettings": "## Paramètres du triage des défaillances\nLe regroupement des séries sur chaque résultat automatisé qui arrive ne coûte rien. La classification par l'IA utilise le modèle d'IA assigné à la fonctionnalité **Classification du triage des défaillances** sur la page Modèles d'IA ; désactivez-la ici pour continuer le regroupement sans aucun appel à l'IA. **Analyser les résultats existants** regroupe chaque défaillance automatisée déjà enregistrée dans ce projet."
+    "projectTriage": "## Modèles d'échec\nLes défaillances automatisées qui partagent la même exception, le même message et les mêmes cadres de pile supérieurs sont regroupées en un **modèle d'échec**. Chaque modèle montre à quelle fréquence il s'est produit, quels cas de test et exécutions il a touchés, et l'évaluation de l'IA sur sa cause première (bogue produit, bogue test, environnement ou instable par défaut). Résolvez ou ignorez un modèle une fois qu'il est traité ; il se rouvre automatiquement si la défaillance revient.",
+    "projectTriageSettings": "## Paramètres des modèles d'échec\nLe regroupement des exécutions sur chaque résultat automatisé qui arrive ne coûte rien. La suggestion de cause première par IA utilise le modèle d'IA assigné à la fonctionnalité **Modèles d'échec : Cause première** sur la page des modèles d'IA ; désactivez-la ici pour conserver le regroupement sans appels d'IA. **Analyser les résultats existants** regroupe chaque défaillance automatisée déjà enregistrée dans ce projet.",
+    "projectQuarantine": "## Cas de test en quarantaine\nUn cas de test en quarantaine continue de s'exécuter et d'enregistrer les résultats, mais ses défaillances sont exclues de l'échec/succès de l'exécution et affichées comme un décompte séparé. Mettez en quarantaine un cas à partir d'un modèle d'échec pendant que la cause est en cours de correction. La quarantaine se lève automatiquement une fois que le cas a réussi le nombre de fois d'affilée défini dans les paramètres des modèles d'échec, sauf s'il a été marqué pour être libéré à la main ; libérez-le ici ou à partir du modèle à tout moment.",
+    "rootCauses": "## Causes premières\nLes causes premières que les modèles d'échec attribuent aux défaillances groupées, par IA ou à la main. Chacune a une description que l'IA lit pour décider quand elle s'applique. Renommez, recoloriez ou réorganisez-les, ajoutez les vôtres, ou supprimez celles que vous n'utilisez pas ; supprimer une cause laisse ses modèles sans cause première.",
+    "rootCauseDescription": "## Description\nL'IA lit cette description pour décider quand la cause première s'applique à un modèle d'échec, décrivez donc les preuves qui la soutiennent."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10514,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Seuil",
         "RUN_UNTESTED_SHARE": "Cas non testés au-dessus de (%)",
         "RUN_ISSUES_OPENED": "Problèmes liés, plus que",
+        "NEW_FAILURE_SIGNATURES": "Nouveaux modèles d'échec, plus de",
         "SESSION_OVERRUN": "Dépassement de l'estimation de plus de (%)",
         "MILESTONE_BEHIND": "Achèvement inférieur à (%)",
         "MILESTONE_OVERDUE": "Seuil",
@@ -10654,6 +10685,11 @@
         "description": "Plus qu'un nombre donné de problèmes sont liés aux résultats d'une exécution.",
         "summary": "Plus de {threshold, plural, one {# problème est} other {# problèmes sont}} lié aux résultats d'une exécution, {evaluateOn, select, AS_RESULTS_ARRIVE {évalué au fur et à mesure que les résultats arrivent} other {évalué quand l'exécution se termine}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Nouveaux modèles d'échec dans une exécution",
+        "description": "Une exécution introduit des modèles d'échec que le projet n'avait pas vus auparavant. Nécessite que les modèles d'échec soient activés pour le projet.",
+        "summary": "Plus de {threshold, plural, one {# modèle d'échec apparaît} other {# modèles d'échec apparaissent}} pour la première fois dans une exécution, {evaluateOn, select, AS_RESULTS_ARRIVE {évalué à mesure que les résultats arrivent} other {évalué à la fin de l'exécution}}"
+      },
       "SESSION_OVERRUN": {
         "label": "La séance a dépassé son estimation",
         "description": "Le temps écoulé d'une séance terminée dépasse son estimation d'un pourcentage.",
@@ -10782,35 +10818,32 @@
       "RESOLVED": "Résolu",
       "IGNORED": "Ignoré"
     },
-    "classification": {
-      "UNCLASSIFIED": "Non classifié",
-      "PRODUCT_BUG": "Bogue de produit",
-      "TEST_BUG": "Bogue de test",
-      "ENVIRONMENT": "Environnement",
-      "FLAKY": "Instable"
-    },
+    "unclassified": "Aucune cause première",
     "source": {
-      "AI": "Classifié par l'IA",
+      "AI": "Cause première suggérée par l'IA",
       "labelAI": "IA",
       "labelMANUAL": "Manuel"
     },
     "columns": {
-      "classification": "Classification",
+      "classification": "Cause première",
       "occurrences": "Occurrences",
       "firstSeen": "Première occurrence",
       "lastSeen": "Dernière occurrence",
-      "classifiedBy": "Classifié par"
+      "classifiedBy": "Défini par"
     },
     "filters": {
-      "searchPlaceholder": "Rechercher des signatures...",
+      "searchPlaceholder": "Rechercher des modèles d'échec...",
       "flakyOnly": "Candidats instables",
-      "sourceAll": "IA ou manuel"
+      "sourceAll": "Défini par n'importe qui",
+      "sourceAi": "Défini par l'IA",
+      "sourceManual": "Défini manuellement",
+      "sourceNone": "Non défini"
     },
     "actions": {
       "resolve": "Résoudre",
       "ignore": "Ignorer",
-      "classify": "Classifier avec l'IA",
-      "setClassification": "Définir la classification"
+      "classify": "Suggérer une cause première avec l'IA",
+      "setClassification": "Définir la cause première"
     },
     "detail": {
       "exceptionType": "Type d'exception",
@@ -10822,13 +10855,13 @@
       "rationale": "Justification",
       "suggestedIssueTitle": "Titre de problème suggéré",
       "nextStep": "Étape suivante suggérée",
-      "noAi": "Pas encore classifié par l'IA.",
+      "noAi": "Pas encore de suggestion de l'IA.",
       "noDetails": "Cette défaillance ne contenait aucun message ni trace de pile, elle est donc regroupée par cas de test.",
       "notesPlaceholder": "Notes pour l'équipe...",
       "lastRun": "Dernière série",
       "aiSuggestion": "Suggestion de l'IA",
-      "unlinkConfirmDescription": "Cela supprime le problème de cette signature. Le problème lui-même est conservé et peut être lié à nouveau ultérieurement.",
-      "signatureLabel": "Signature de défaillance",
+      "unlinkConfirmDescription": "Cela supprime le problème de ce modèle d'échec. Le problème lui-même est conservé et peut être lié à nouveau ultérieurement.",
+      "signatureLabel": "Modèle d'échec",
       "affectedCasesLabel": "Cas de test affectés"
     },
     "flakyCandidate": "Candidat instable",
@@ -10836,31 +10869,31 @@
     "knownIssue": "Problème connu",
     "notGrouped": "{count, plural, one {# défaillance pas encore regroupée} other {# défaillances pas encore regroupées}}",
     "runPanel": {
-      "title": "Grappes de défaillances",
+      "title": "Modèles d'échec",
       "inRun": "{count, plural, one {# dans cette série} other {# dans cette série}}",
-      "hint": "Cliquez sur une grappe pour filtrer les résultats ci-dessous.",
-      "open": "Afficher la signature",
+      "hint": "Cliquez sur un modèle pour filtrer les résultats ci-dessous.",
+      "open": "Afficher le modèle",
       "inRunColumn": "Dans cette série",
-      "selectedClusters": "{count, plural, one {# grappe sélectionnée} other {# grappes sélectionnées}}",
-      "clearSelected": "Effacer les grappes sélectionnées"
+      "selectedClusters": "{count, plural, one {# modèle sélectionné} other {# modèles sélectionnés}}",
+      "clearSelected": "Effacer les modèles sélectionnés"
     },
     "toasts": {
-      "updated": "Signature mise à jour",
-      "updateFailed": "Impossible de mettre à jour la signature",
-      "classifyQueued": "Classification par l'IA demandée",
+      "updated": "Modèle d'échec mis à jour",
+      "updateFailed": "Impossible de mettre à jour le modèle d'échec",
+      "classifyQueued": "Suggestion de cause première par l'IA demandée",
       "noAiModel": "Aucun modèle d'IA n'est configuré pour cette fonctionnalité",
       "issueLinked": "Problème lié"
     },
     "empty": {
-      "title": "Aucune signature de défaillance pour l'instant",
-      "description": "Les signatures apparaissent ici à mesure que les résultats automatisés avec des défaillances arrivent. Pour regrouper les défaillances déjà enregistrées dans ce projet, utilisez Analyser les résultats existants dans les paramètres du triage des défaillances."
+      "title": "Pas encore de modèles d'échec",
+      "description": "Les modèles d'échec apparaissent ici à mesure que les résultats automatisés avec défaillances arrivent. Pour regrouper les défaillances déjà enregistrées dans ce projet, utilisez Analyser les résultats existants dans les paramètres des modèles d'échec."
     },
     "settings": {
-      "description": "Regroupez les défaillances automatisées en signatures et laissez l'IA les classer.",
-      "enableLabel": "Activer le triage des défaillances",
+      "description": "Regroupez les défaillances automatisées en modèles et laissez l'IA suggérer leur cause première.",
+      "enableLabel": "Activer les modèles d'échec",
       "enableDescription": "Regroupez chaque défaillance automatisée dans ce projet par exception, message et cadres de pile à mesure que les résultats arrivent.",
-      "autoClassifyLabel": "Classifier les nouvelles signatures avec l'IA",
-      "autoClassifyDescription": "Demandez au modèle d'IA du projet de classer chaque nouvelle signature comme un bogue de produit, un bogue de test, un problème d'environnement ou instable. Nécessite un modèle d'IA assigné à la fonctionnalité Classification du triage des défaillances.",
+      "autoClassifyLabel": "Suggérer les causes premières avec l'IA",
+      "autoClassifyDescription": "Demandez au modèle d'IA du projet de choisir une cause première pour chaque nouveau modèle d'échec dans le catalogue des causes premières. Nécessite un modèle d'IA assigné à la fonctionnalité Modèles d'échec : Cause première.",
       "backfillLabel": "Analyser les résultats existants",
       "backfillDescription": "Regroupez chaque défaillance automatisée déjà enregistrée dans ce projet. S'exécute en arrière-plan.",
       "backfillStarted": "Analyse démarrée",
@@ -10868,11 +10901,47 @@
       "backfillDone": "Analyse complète",
       "backfillFailed": "L'analyse a échoué",
       "backfillQueueUnavailable": "La file d'attente des tâches en arrière-plan n'est pas disponible",
-      "enabledToast": "Triage des défaillances activé",
-      "disabledToast": "Triage des défaillances désactivé",
-      "autoClassifyOnToast": "Classification par l'IA activée",
-      "autoClassifyOffToast": "Classification par l'IA désactivée",
-      "openTriage": "Ouvrir le triage des défaillances"
+      "enabledToast": "Modèles d'échec activés",
+      "disabledToast": "Modèles d'échec désactivés",
+      "autoClassifyOnToast": "Suggestions de cause première par l'IA activées",
+      "autoClassifyOffToast": "Suggestions de cause première par l'IA désactivées",
+      "autoReleaseLabel": "Libérer la quarantaine automatiquement après",
+      "autoReleasePassesLabel": "succès consécutifs",
+      "autoReleaseDescription": "Un cas de test en quarantaine est libéré une fois qu'il a réussi ce nombre de fois d'affilée depuis qu'il a été mis en quarantaine. Les résultats ignorés sont ignorés. Une quarantaine marquée « garder jusqu'à libération manuelle » reste.",
+      "autoReleaseOnToast": "Libération automatique activée",
+      "autoReleaseOffToast": "Libération automatique désactivée",
+      "autoReleasePassesSaved": "{count, plural, one {La quarantaine est levée après # succès consécutif} other {La quarantaine est levée après # succès consécutifs}}",
+      "autoReleasePassesInvalid": "Entrez un nombre de réussites entre 1 et 100",
+      "openTriage": "Ouvrir les modèles d'échec"
+    },
+    "quarantine": {
+      "label": "En quarantaine",
+      "title": "Cas de test en quarantaine",
+      "hint": "Les défaillances d'un cas de test en quarantaine sont exclues de l'échec/succès de l'exécution et comptées séparément. Le cas de test continue de s'exécuter et d'enregistrer les résultats.",
+      "metricHint": "Défaillances des cas de test en quarantaine dans cette exécution. Elles ne comptent pas contre le taux de réussite.",
+      "action": "Mettre en quarantaine",
+      "actionAll": "Mettre en quarantaine les cas de test affectés",
+      "release": "Libérer",
+      "reasonLabel": "Raison",
+      "reasonPlaceholder": "Pourquoi ce cas de test est-il en quarantaine ? (facultatif)",
+      "keepLabel": "Garder en quarantaine jusqu'à libération manuelle",
+      "keepHint": "Ignore la libération automatique du projet après succès consécutifs.",
+      "dialogTitle": "{count, plural, one {Mettre en quarantaine # cas de test} other {Mettre en quarantaine # cas de test}}",
+      "releaseConfirmTitle": "Libérer de la quarantaine ?",
+      "releaseConfirmDescription": "Les défaillances du cas de test comptent à nouveau contre l'échec/succès de l'exécution.",
+      "quarantinedToast": "{count, plural, one {# cas de test mis en quarantaine} other {# cas de test mis en quarantaine}}",
+      "releasedToast": "Cas de test libéré de la quarantaine",
+      "failedToast": "Impossible de mettre à jour la quarantaine",
+      "listButton": "{count, plural, =0 {Cas de test en quarantaine} one {# cas de test en quarantaine} other {# cas de test en quarantaine}}",
+      "columns": {
+        "signature": "Modèle d'échec",
+        "by": "Mis en quarantaine par",
+        "since": "Depuis",
+        "releasePolicy": "Libérer"
+      },
+      "releaseAuto": "{count, plural, one {Automatique après # succès consécutif} other {Automatique après # succès consécutifs}}",
+      "releaseManual": "Manuellement",
+      "empty": "Aucun cas de test n'est en quarantaine dans ce projet."
     }
   }
 }

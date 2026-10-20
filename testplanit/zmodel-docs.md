@@ -43,6 +43,7 @@ Defines distinct functional areas within the application for granular permission
 - TestRunResults
 - TestRunResultRestrictedFields
 - AutomatedExecution
+- FailurePatterns
 - Sessions
 - SessionsRestrictedFields
 - ClosedSessions
@@ -52,6 +53,7 @@ Defines distinct functional areas within the application for granular permission
 - Issues
 - Reporting
 - Settings
+- Alerts
 
 ### AuditAction
 
