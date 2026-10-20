@@ -55,7 +55,7 @@ The Docker Compose setup starts these containerized services:
   ```bash
   # e.g. a 32GB host running large Testmo imports:
   WORKERS_MEMORY_LIMIT=20G POSTGRES_CPU_LIMIT=4 \
-    docker compose -f testplanit/docker-compose.prod.yml up -d --build
+    docker compose -f testplanit/docker-compose.prod.yml up -d
   ```
 
 - 25GB+ disk space for data and images
@@ -152,7 +152,7 @@ The Docker Compose setup starts these containerized services:
     docker compose --env-file .env.development -f docker-compose.dev.yml up -d --build
 
     # Production
-    docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+    docker compose --env-file .env.production -f docker-compose.prod.yml up -d
     ```
 
     Alternatively, place the `DOCKER_*_PORT` values in a local `.env` file (auto-loaded by Compose).
@@ -178,7 +178,7 @@ The Docker Compose setup starts these containerized services:
     docker compose --profile dev up --build
 
     # Production
-    docker compose --profile prod up --build
+    docker compose --profile prod up
     ```
 
     **Selective Services:**
@@ -188,7 +188,7 @@ The Docker Compose setup starts these containerized services:
     docker compose up dev workers-dev postgres valkey minio --build
 
     # Production with only essential services
-    docker compose up prod workers postgres valkey --build
+    docker compose up prod workers postgres valkey
     ```
 
 5. **Start the Application:**
@@ -202,7 +202,7 @@ The Docker Compose setup starts these containerized services:
     **Production Mode** (optimized builds, all services):
 
     ```bash
-    docker compose --profile prod up --build
+    docker compose --profile prod up
     ```
 
     **Production with External Services:**
@@ -212,10 +212,17 @@ The Docker Compose setup starts these containerized services:
     docker compose -f docker-compose.prod.yml \
       --profile with-valkey \
       --profile with-elasticsearch \
-      up --build
+      up
     ```
 
-    The `--build` flag ensures images are built from the latest code.
+    Production runs the prebuilt `ghcr.io/testplanit/testplanit-selfhost` images,
+    which Compose pulls on the first start. Development builds its image from your
+    checkout, which is what `--build` does. To build the production images from
+    source instead, add `--build`; see [Build from Source](./building-from-source.md).
+
+    To pin a release, set `TESTPLANIT_VERSION` (for example `1.1.12`) in the
+    shell, the default `.env`, or `--env-file`, not `.env.production`. The default,
+    `latest`, follows the newest release.
 
     **What Happens During Startup:**
     1. Selected services start based on profiles
@@ -226,7 +233,7 @@ The Docker Compose setup starts these containerized services:
     6. Main application and workers start
     7. Nginx proxy becomes available (if using the bundled storage)
 
-    **First startup takes 2-5 minutes** as images are built and services initialize.
+    **First startup takes 2-5 minutes** as images are pulled (or built) and services initialize.
 
 6. **Access TestPlanIt:**
     - **Development** (`dev`): [http://localhost:3000](http://localhost:3000)
@@ -267,20 +274,20 @@ docker compose down --remove-orphans
 docker compose down
 sudo rm -rf docker-data/
 docker volume rm testplanit-postgres-data
-docker compose up prod workers --build
+docker compose up prod workers
 ```
 
 ### Updates & Maintenance
 
 ```bash
-# Update to latest version
+# Update to the latest release (or the one TESTPLANIT_VERSION pins)
 git pull
-docker compose build
-docker compose up prod workers -d
+docker compose --profile prod pull
+docker compose --profile prod up -d
 
-# Rebuild specific service
-docker compose build prod
-docker compose up prod -d
+# Build the production images from source instead
+docker compose --profile prod build
+docker compose --profile prod up -d
 
 # View resource usage
 docker compose top
@@ -324,7 +331,7 @@ docker compose -f docker-compose.prod.yml \
   --profile with-postgres \
   --profile with-valkey \
   --profile with-elasticsearch \
-  up --build
+  up -d
 ```
 
 ## Data Management
@@ -453,13 +460,13 @@ docker compose exec postgres psql -U user -d testplanit_prod < backup.sql
 docker compose up dev workers-dev --build
 
 # Full production stack
-docker compose up prod workers --build
+docker compose up prod workers
 
 # Minimal development (no search/files)
 docker compose up dev workers-dev postgres valkey --build
 
 # Start in background (detached)
-docker compose up prod workers --build -d
+docker compose up prod workers -d
 ```
 
 **Service Profiles:**
@@ -613,5 +620,5 @@ docker exec testplanit-workers pm2 list
 docker compose down
 sudo rm -rf docker-data/
 docker volume rm testplanit-postgres-data
-docker compose up prod workers --build
+docker compose up prod workers
 ```

@@ -64,6 +64,9 @@ services:
 
   prod:
     container_name: testplanit-prod
+    # Prebuilt self-host image (`docker compose pull`); `up --build` builds it
+    # from source instead. TESTPLANIT_VERSION pins a release (e.g. 1.1.12).
+    image: ghcr.io/testplanit/testplanit-selfhost:${TESTPLANIT_VERSION:-latest}
     build:
       context: .. # repo root: single root pnpm-lock.yaml + pnpm-workspace.yaml
       target: production # Use the 'production' stage from Dockerfile (default)
@@ -100,6 +103,7 @@ services:
 
   workers:
     container_name: testplanit-workers
+    image: ghcr.io/testplanit/testplanit-selfhost:${TESTPLANIT_VERSION:-latest}-workers
     build:
       context: ..
       target: workers
@@ -151,22 +155,14 @@ services:
       - dev
 
   db-init-prod:
-    # Use the same build context and target as the dev service for dependencies
-    build:
-      context: .. # repo root: single root pnpm-lock.yaml + pnpm-workspace.yaml
-      target: development # Uses the same base image with deps installed
-      dockerfile: testplanit/Dockerfile
+    # Runs on the server image. Its entrypoint applies migrations, audit
+    # triggers, and Postgres extensions, then this command seeds the database
+    # (idempotent). Existing pre-migration databases need a one-time baseline —
+    # see testplanit/migrations/README.md.
+    image: ghcr.io/testplanit/testplanit-selfhost:${TESTPLANIT_VERSION:-latest}
     env_file:
       - .env.production # Use PRODUCTION env vars
-    working_dir: /app/testplanit # Set working directory for commands within the container
-    # Apply migrations and seed database (existing DBs need a one-time baseline —
-    # see testplanit/migrations/README.md)
-    command:
-      [
-        "sh",
-        "-c",
-        "echo 'Waiting for PROD DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'PROD DB ready, applying migrations...' && npx zenstack migrate deploy --schema schema.zmodel --no-version-check && echo 'Migrations applied, seeding...' && pnpm tsx db/seed.ts && echo 'PROD DB initialized and seeded.'",
-      ]
+    command: ["tsx", "db/seed.ts"]
     networks:
       - testplanit-net
     depends_on:

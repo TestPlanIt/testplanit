@@ -55,8 +55,8 @@ End-to-end tests run against a production build. See [E2E Testing](https://docs.
 ## Deployment
 
 - **[Installation](https://docs.testplanit.com/docs/installation)**: choose a deployment method and upgrade an existing install.
-- **[Docker Setup](https://docs.testplanit.com/docs/docker-setup)**: run the full stack with Docker Compose (`docker-compose.prod.yml`), which builds the image on your machine.
-- **[Kubernetes (Helm)](https://docs.testplanit.com/docs/kubernetes-deployment)**: deploy with the official Helm chart and the prebuilt `ghcr.io/testplanit/testplanit-selfhost` images.
+- **[Docker Setup](https://docs.testplanit.com/docs/docker-setup)**: run the full stack with Docker Compose (`docker-compose.prod.yml`), using the prebuilt `ghcr.io/testplanit/testplanit-selfhost` images.
+- **[Kubernetes (Helm)](https://docs.testplanit.com/docs/kubernetes-deployment)**: deploy with the official Helm chart, which uses the same images.
 - **[External Database Deployment](https://docs.testplanit.com/docs/external-database-deployment)**: use an existing PostgreSQL server.
 
 ## Technology Stack

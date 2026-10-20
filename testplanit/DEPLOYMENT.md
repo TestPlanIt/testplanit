@@ -129,13 +129,13 @@ NEXT_PUBLIC_APP_URL="https://example.testplanit.com"
 
 ---
 
-## 5. Build and Start the Stack
+## 5. Pull and Start the Stack
 
 From `testplanit/testplanit`:
 
 ```bash
-# Build the production and worker images locally
-docker compose -f docker-compose.prod.yml build
+# Pull the prebuilt production and worker images
+docker compose -f docker-compose.prod.yml pull
 
 # Start with all included services (recommended for getting started)
 docker compose -f docker-compose.prod.yml --profile with-postgres --profile with-valkey --profile with-elasticsearch --profile with-minio up -d
@@ -147,7 +147,7 @@ docker compose -f docker-compose.prod.yml --profile with-postgres --profile with
 docker compose -f docker-compose.prod.yml ps
 ```
 
-Docker Compose builds the `production` and `workers` images from the local Dockerfile using your environment variables. The first build can take several minutes; subsequent builds reuse cached layers.
+The `prod`, `workers`, and `db-init-prod` services run the prebuilt `ghcr.io/testplanit/testplanit-selfhost` images. To pin a release, set `TESTPLANIT_VERSION` (for example `1.1.12`) in your shell, the default `.env`, or `--env-file`; the default, `latest`, follows the newest release. To build the images from the local Dockerfile instead, add `--build` to `up`. A source build needs about 8 GB of memory and takes several minutes.
 
 **Note**: If using the `with-postgres` profile, the `db-init-prod` service will automatically initialize the database schema and seed data on first run.
 
@@ -158,10 +158,10 @@ Docker Compose builds the `production` and `workers` images from the local Docke
 ```bash
 cd ~/testplanit/testplanit
 
-git pull  # pull latest application code
+git pull  # pull the latest compose files
 
-# Rebuild images with the updated source
-docker compose -f docker-compose.prod.yml build
+# Pull the new images (the latest release, or the one TESTPLANIT_VERSION pins)
+docker compose -f docker-compose.prod.yml pull
 
 # Apply the update (use the same profiles as your initial deployment)
 docker compose -f docker-compose.prod.yml --profile with-postgres --profile with-valkey --profile with-elasticsearch --profile with-minio up -d
@@ -188,9 +188,9 @@ Run separate copies of the source tree per environment (e.g., `~/testplanit-prod
 1. Create a dedicated `.env.production` file.
 2. Adjust exposed ports in `docker-compose.prod.yml` to avoid conflicts.
 3. Choose appropriate profiles based on which services each environment needs.
-4. Build and run using the steps above.
+4. Pull and run using the steps above.
 
-Because each environment rebuilds the images locally, secrets remain isolated.
+Each environment reads its own `.env.production` at runtime, so secrets remain isolated.
 
 ---
 

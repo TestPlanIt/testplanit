@@ -140,30 +140,31 @@ NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 
 See [.env.example](https://github.com/testplanit/testplanit/blob/main/testplanit/.env.example) for all options.
 
-### 4. Build and Deploy
+### 4. Pull and Deploy
 
 ```bash
 # Set your chosen profiles (example uses all services)
 PROFILES="--profile with-postgres --profile with-valkey --profile with-elasticsearch --profile with-minio"
 
-# Build the images
-docker compose -f docker-compose.prod.yml build
+# Pull the images
+docker compose -f docker-compose.prod.yml $PROFILES pull
 
 # Start services
 docker compose -f docker-compose.prod.yml $PROFILES up -d
 ```
 
+The application and workers run the prebuilt `ghcr.io/testplanit/testplanit-selfhost` images. To pin a release, set `TESTPLANIT_VERSION` (for example `1.1.12`) in your shell, the default `.env`, or `--env-file`; the default, `latest`, follows the newest release. To build the images from source instead, add `--build` to `up` (see [Build from Source](./building-from-source.md)).
+
 What happens during startup:
 
-- Application and worker images are built
-- **Database migrations run automatically** - The `migrate` service runs `zenstack migrate deploy` to apply pending migrations to the database schema before starting
 - Selected services start (based on profiles)
+- **Database migrations run automatically** - the application container runs `zenstack migrate deploy` to apply pending migrations before the app starts
 - Database is seeded with initial data (if using `with-postgres` profile for first-time setup)
 - The storage bucket is created (if using `with-minio`)
 - Application and workers become available
 
 :::info Automatic Database Migrations
-Every time you start the application, the `migrate` service automatically runs to ensure your database schema is in sync with the application version. This happens before the `prod` and `workers` services start, so you don't need to manually run migrations after updates.
+Every time the application container starts, it applies any pending migrations before the app starts, so you don't need to run migrations manually after an update.
 :::
 
 ### 5. Access Your Application
@@ -231,11 +232,11 @@ docker compose -f docker-compose.prod.yml logs -f workers
 # Stop all services
 docker compose -f docker-compose.prod.yml $PROFILES down
 
-# Update to latest version
+# Update to the latest release (or the one TESTPLANIT_VERSION pins)
 git pull
-docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml $PROFILES pull
 docker compose -f docker-compose.prod.yml $PROFILES up -d
-# Note: Database migrations run automatically via the migrate service
+# Note: the application container applies pending migrations on startup
 
 # Backup data (if using Docker services)
 docker compose -f docker-compose.prod.yml $PROFILES down
