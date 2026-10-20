@@ -44,6 +44,7 @@ const userPermissions: {
   [ApplicationArea.TestRunResults]: { canAddEdit: true, canDelete: true }, // Add/edit/delete results
   [ApplicationArea.TestRunResultRestrictedFields]: { canAddEdit: true }, // Add restricted results
   [ApplicationArea.AutomatedExecution]: { canAddEdit: true }, // Trigger automated executions
+  [ApplicationArea.FailurePatterns]: { canAddEdit: true }, // Triage failure patterns
   [ApplicationArea.Sessions]: {
     canAddEdit: true,
     canDelete: true,

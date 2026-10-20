@@ -18,6 +18,7 @@ enum ApplicationArea {
   TestRunResults = "TestRunResults",
   TestRunResultRestrictedFields = "TestRunResultRestrictedFields",
   AutomatedExecution = "AutomatedExecution",
+  FailurePatterns = "FailurePatterns",
   Sessions = "Sessions",
   SessionsRestrictedFields = "SessionsRestrictedFields",
   ClosedSessions = "ClosedSessions",
@@ -141,6 +142,11 @@ const mockAllAreaPermissions: AllAreaPermissions = {
     canClose: false,
   },
   [ApplicationArea.AutomatedExecution]: {
+    canAddEdit: true,
+    canDelete: false,
+    canClose: false,
+  },
+  [ApplicationArea.FailurePatterns]: {
     canAddEdit: true,
     canDelete: false,
     canClose: false,

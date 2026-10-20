@@ -161,7 +161,7 @@ export default function SignatureDetailPage() {
   const signatureId = Number(signatureIdParam);
   const { permissions } = useProjectPermissions(
     projectId,
-    ApplicationArea.TestRuns
+    ApplicationArea.FailurePatterns
   );
   const canEdit = permissions?.canAddEdit ?? false;
   const { ref: headerRef, compact } = useContainerCompact();

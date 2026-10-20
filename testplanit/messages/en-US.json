@@ -7745,6 +7745,7 @@
       "TestRunResults": "Test Run Results",
       "TestRunResultRestrictedFields": "Test Run Result Restricted Fields",
       "AutomatedExecution": "Automated Execution",
+      "FailurePatterns": "Failure Patterns",
       "Sessions": "Sessions",
       "SessionsRestrictedFields": "Sessions Restricted Fields",
       "ClosedSessions": "Closed Sessions",

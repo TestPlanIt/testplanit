@@ -49,6 +49,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       },
+      [ApplicationArea.FailurePatterns]: {
+        canAddEdit: true,
+        canDelete: false,
+        canClose: false,
+      },
       [ApplicationArea.TestRunResultRestrictedFields]: {
         canAddEdit: true,
         canDelete: true,
@@ -144,6 +149,11 @@ export const getComprehensiveRolePermissions = () => {
         canClose: true,
       },
       [ApplicationArea.AutomatedExecution]: {
+        canAddEdit: true,
+        canDelete: false,
+        canClose: false,
+      },
+      [ApplicationArea.FailurePatterns]: {
         canAddEdit: true,
         canDelete: false,
         canClose: false,
@@ -247,6 +257,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       },
+      [ApplicationArea.FailurePatterns]: {
+        canAddEdit: true,
+        canDelete: false,
+        canClose: false,
+      },
       [ApplicationArea.TestRunResultRestrictedFields]: {
         canAddEdit: false,
         canDelete: false,
@@ -346,6 +361,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       },
+      [ApplicationArea.FailurePatterns]: {
+        canAddEdit: false,
+        canDelete: false,
+        canClose: false,
+      },
       [ApplicationArea.TestRunResultRestrictedFields]: {
         canAddEdit: false,
         canDelete: false,
@@ -442,6 +462,11 @@ export const getComprehensiveRolePermissions = () => {
         canClose: false,
       },
       [ApplicationArea.AutomatedExecution]: {
+        canAddEdit: false,
+        canDelete: false,
+        canClose: false,
+      },
+      [ApplicationArea.FailurePatterns]: {
         canAddEdit: false,
         canDelete: false,
         canClose: false,

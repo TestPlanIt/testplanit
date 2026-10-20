@@ -68,4 +68,4 @@ The **New failure patterns in a run** [alert](alerts.md) fires when a run introd
 
 ## Permissions
 
-Everyone who can see the project can see its failure patterns. Changing status, root cause, notes, issue links and quarantine needs the same permission as recording results: project admin or **Test Runs** add/edit. Settings and **Analyze existing results** are for project admins; the root cause catalogue is for system administrators.
+Everyone who can see the project can see its failure patterns. Changing status, root cause, notes, issue links and quarantine needs the **Failure Patterns** add/edit permission on the user's role (project admins always have it). When the permission was introduced, every role received the Failure Patterns right it effectively had before, from its Test Runs add/edit. Settings and **Analyze existing results** are for project admins; the root cause catalogue is for system administrators.

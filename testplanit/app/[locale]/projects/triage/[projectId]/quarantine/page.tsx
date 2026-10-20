@@ -64,7 +64,7 @@ export default function QuarantinePage() {
   const projectId = Number(projectIdParam);
   const { permissions } = useProjectPermissions(
     projectId,
-    ApplicationArea.TestRuns
+    ApplicationArea.FailurePatterns
   );
   const canEdit = permissions?.canAddEdit ?? false;
   const queries = useClientQueries(schema);

@@ -16,7 +16,7 @@ import { authOptions } from "~/server/auth";
 /**
  * POST /api/projects/[projectId]/triage/signatures/[signatureId]/classify
  * Asks the project's AI model to (re)classify one signature. Same gate as
- * editing the signature: project admin or TestRuns add/edit.
+ * editing the signature: project admin or Failure Patterns add/edit.
  */
 export async function POST(
   _req: NextRequest,
@@ -49,7 +49,7 @@ export async function POST(
       (await userHasAreaPermission(
         session.user.id,
         projectId,
-        "TestRuns",
+        "FailurePatterns",
         "canAddEdit"
       ));
     if (!allowed) {

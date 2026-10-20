@@ -4474,6 +4474,7 @@ enum ApplicationArea {
     TestRunResults
     TestRunResultRestrictedFields
     AutomatedExecution
+    FailurePatterns
     Sessions
     SessionsRestrictedFields
     ClosedSessions
@@ -7457,23 +7458,23 @@ model FailureSignature {
         projectId in auth().adminProjectIds ||
         project.creator.id == auth().id ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                 role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
-                                auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'SPECIFIC_ROLE' &&
-                                  role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                  role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'GLOBAL_ROLE' &&
-                                  auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                  auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
-         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+         auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
         (project.assignedUsers?[user.id == auth().id] &&
          project.defaultAccessType == 'SPECIFIC_ROLE' &&
-         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+         project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
         (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
-         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
+         project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -7499,23 +7500,23 @@ model FailureSignatureIssue {
         signature.projectId in auth().adminProjectIds ||
         signature.project.creator.id == auth().id ||
         signature.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                 role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         signature.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
-                                auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         signature.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         signature.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'SPECIFIC_ROLE' &&
-                                  role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                  role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         signature.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'GLOBAL_ROLE' &&
-                                  auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                  auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         (signature.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
-         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+         auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
         (signature.project.assignedUsers?[user.id == auth().id] &&
          signature.project.defaultAccessType == 'SPECIFIC_ROLE' &&
-         signature.project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+         signature.project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
         (signature.project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
-         signature.project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
+         signature.project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -7551,23 +7552,23 @@ model CaseQuarantine {
         projectId in auth().adminProjectIds ||
         project.creator.id == auth().id ||
         project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
-                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                 role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
-                                auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'SPECIFIC_ROLE' &&
-                                  role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                  role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
                                   accessType == 'GLOBAL_ROLE' &&
-                                  auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+                                  auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
         (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
-         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+         auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
         (project.assignedUsers?[user.id == auth().id] &&
          project.defaultAccessType == 'SPECIFIC_ROLE' &&
-         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+         project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
         (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
-         project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
+         project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
