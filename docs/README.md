@@ -1,41 +1,38 @@
-# Website
+# TestPlanIt Documentation
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+This directory is the source of the TestPlanIt documentation site, [docs.testplanit.com](https://docs.testplanit.com). It's built with [Docusaurus](https://docusaurus.io/) and is a member of the repository's pnpm workspace.
 
-## Installation
+## Install
+
+From the repository root:
 
 ```sh
-yarn
+pnpm install
 ```
 
 ## Local Development
 
 ```sh
-yarn start
+pnpm --filter docs start
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+This starts a local development server and opens a browser window. Most changes appear without restarting the server.
 
 ## Build
 
 ```sh
-yarn build
+pnpm --filter docs build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+This generates the static site into `docs/build`. The app's `pnpm precommit` runs this build too, so broken links and MDX errors fail the local gate.
+
+## Lint
+
+```sh
+pnpm --filter docs lint:md   # Markdown lint
+pnpm --filter docs lint      # ESLint
+```
 
 ## Deployment
 
-Using SSH:
-
-```sh
-USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```sh
-GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+Pushing changes under `docs/` to `main` runs the **Docs Release** workflow (`.github/workflows/docs-release.yml`), which builds the site into a Docker image and publishes it. There's no manual deploy step.

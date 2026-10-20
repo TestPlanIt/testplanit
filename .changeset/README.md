@@ -9,7 +9,11 @@ Changesets are a way to manage versioning and changelogs for packages in this mo
 ## Packages Managed by Changesets
 
 - `@testplanit/api` - API client for TestPlanIt
+- `@testplanit/mcp-server` - Model Context Protocol server for TestPlanIt
+- `@testplanit/playwright-reporter` - Playwright reporter for TestPlanIt
 - `@testplanit/wdio-reporter` - WebdriverIO reporter for TestPlanIt
+
+The app (`testplanit`), the docs site, the Forge app, and `@testplanit/cli` are not managed by Changesets. The app and the CLI release with semantic-release (see [CONTRIBUTING.md](../CONTRIBUTING.md#how-releases-work)).
 
 ## How to Create a Changeset
 
@@ -20,6 +24,7 @@ pnpm changeset
 ```
 
 This will prompt you to:
+
 1. Select which packages have changed
 2. Choose the type of version bump (major, minor, patch)
 3. Write a summary of your changes
@@ -38,7 +43,9 @@ This will prompt you to:
 4. Merging the "Version Packages" PR will:
    - Update package versions
    - Update CHANGELOGs
-   - Publish packages to npm
+   - Publish packages to npm under the `latest` tag
+
+Package changes merged to the current `release/vX.Y` branch are published as prereleases under the `beta` npm tag instead, so `npm i @testplanit/<package>` keeps resolving to the stable release and testers opt in with `@beta`.
 
 ## Manual Commands
 

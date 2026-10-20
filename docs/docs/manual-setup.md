@@ -61,19 +61,26 @@ The application will run without these services, but certain features will be di
     cp .env.example .env
     ```
 
-    - Edit the newly created `.env` file. The most crucial setting is `DATABASE_URL`. Update this value to point to your **locally running** PostgreSQL instance.
-    - **Add the Valkey URL:** Add `VALKEY_URL="valkey://localhost:6379"` (or the appropriate URL if your Valkey instance is running elsewhere or requires authentication) to the file. This is needed for background job processing.
-    - Review other settings like `NEXTAUTH_SECRET` (generate a new secret if needed), email server details (required for Magic Link authentication and notifications), etc., and configure them according to your needs.
-    - **Admin User Seeding:** The `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` variables are used by the `pnpm tsx db/seed.ts` command to create the initial administrator user. You can customize these values in your `.env` file if you prefer different default credentials.
-    - **Demo Project:** The seed script also creates a pre-populated Demo Project with sample test cases, test runs, sessions, milestones, tags, and issues. This helps new users explore TestPlanIt's features immediately. You can delete the Demo Project at any time from Administration > Projects.
+    Edit the newly created `.env` file:
 
-4. **Sync the database schema:**
-    Navigate back into the application directory (`testplanit/testplanit`) and push the schema to create the necessary database tables (this project uses ZenStack`s push workflow from schema.zmodel, not migrations):
+    - **`DATABASE_URL`**: point it at your **locally running** PostgreSQL instance, for example `postgresql://user:password@localhost:5432/testplanit?schema=public`. The example file uses the Docker service hostname `postgres`, which only resolves inside Docker.
+    - **`VALKEY_URL`**: the default, `valkey://localhost:6379`, works for a local Valkey or Redis. Change it if your instance runs elsewhere or requires authentication.
+    - **`NEXTAUTH_SECRET`** and **`ENCRYPTION_KEY`**: generate them with `openssl rand -base64 32` and `openssl rand -hex 32` and paste the output in. The example file shows these as `$(openssl …)`, but `.env` files don't run shell commands.
+    - **Email server settings**: required for Magic Link authentication and notification emails.
+    - **Admin user**: the seed step below creates the initial administrator from `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD`. Change them if you want different credentials.
+
+4. **Set up the database:**
+    From the `testplanit/testplanit` directory, apply the migrations, install the audit-log triggers, and seed the database:
 
     ```bash
-    cd testplanit # Ensure you are in the testplanit/testplanit directory
-    pnpm generate
+    pnpm exec dotenv -- pnpm db:deploy
+    pnpm exec dotenv -- pnpm triggers:apply
+    pnpm exec dotenv -- tsx db/seed.ts
     ```
+
+    These scripts don't read `.env` on their own, so `dotenv --` passes it to them.
+
+    Besides the administrator, the seed creates a **Demo Project** with sample test cases, test runs, sessions, milestones, tags, and issues, so you can explore TestPlanIt right away. You can delete the Demo Project at any time from Administration > Projects.
 
 5. **Run the development server:**
     Still within the `testplanit/testplanit` directory, start the Next.js development server:
@@ -82,7 +89,17 @@ The application will run without these services, but certain features will be di
     pnpm dev
     ```
 
-6. **Access TestPlanIt:**
-    Open your web browser and navigate to [http://localhost:3000](http://localhost:3000). You should see the TestPlanIt application.
+6. **Start the background workers:**
+    Notifications, email, imports, search indexing, integration sync, and AI features run in background workers. In a second terminal, from the same directory:
+
+    ```bash
+    pnpm scheduler   # registers recurring jobs, then exits
+    pnpm workers     # runs all workers
+    ```
+
+    See [Background Processes](./background-processes.md) for what each worker does.
+
+7. **Access TestPlanIt:**
+    Open your web browser and navigate to [http://localhost:3000](http://localhost:3000), then sign in with your `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 
 You are now ready to start using TestPlanIt locally!

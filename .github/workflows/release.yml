@@ -27,11 +27,10 @@ on:
   push:
     tags:
       - 'v*'
-      # Prereleases (e.g. v1.0.0-beta.1) are SOURCE-ONLY: no image is built for
-      # them, because official images bake BASE_DOMAIN=testplanit.com and can't
-      # be reused by other installs. Beta tags are handled by
-      # beta-prerelease.yml (GitHub pre-release + source archive). Exclude any
-      # hyphenated (prerelease) tag from the image build here.
+      # Prereleases (vX.Y.Z-beta.N) never get the SaaS image: it bakes
+      # BASE_DOMAIN=testplanit.com, and the hosted service doesn't run betas.
+      # Beta images are the self-host ones from release-selfhost.yml, which
+      # semantic-release.yml dispatches for every release.
       - '!v*-*'
   workflow_dispatch:
     inputs:

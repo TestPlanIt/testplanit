@@ -2,7 +2,7 @@
 name: Bug Report
 about: Create a report to help us improve TestPlanIt
 title: '[BUG] '
-labels: 'bug, needs-triage'
+labels: 'bug'
 assignees: ''
 ---
 
@@ -10,7 +10,9 @@ assignees: ''
 <!-- A clear and concise description of what the bug is -->
 
 ## To Reproduce
+
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '...'
 3. Scroll down to '...'
@@ -28,19 +30,22 @@ Steps to reproduce the behavior:
 ## Environment
 <!-- Please complete the following information -->
 
-### Desktop:
+### Desktop
+
 - OS: [e.g., Windows 11, macOS 13.0, Ubuntu 22.04]
 - Browser: [e.g., Chrome 119, Firefox 120, Safari 17]
-- TestPlanIt Version: [e.g., 2.1.0]
+- TestPlanIt Version: [e.g., 1.1.12 or 1.2.0-beta.7]
+- Deployment: [e.g., Docker Compose, Helm, from source, testplanit.com]
 
-### Mobile (if applicable):
+### Mobile (if applicable)
+
 - Device: [e.g., iPhone 14, Samsung Galaxy S23]
 - OS: [e.g., iOS 17.0, Android 14]
 - Browser: [e.g., Chrome Mobile, Safari Mobile]
 
-## Test Case/Plan Details
-<!-- If the bug is related to a specific test case or plan -->
-- Test Plan ID:
+## Test Case/Run Details
+<!-- If the bug is related to a specific test case or test run -->
+- Test Run ID:
 - Test Case ID:
 - Project:
 
