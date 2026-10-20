@@ -1,6 +1,12 @@
 services:
   prod:
     container_name: testplanit-prod
+    # Prebuilt, domain-agnostic self-host image: `docker compose pull` fetches
+    # it. `up --build` builds the same image from source instead, which is only
+    # needed for local code changes or SELF_HOSTED=false. TESTPLANIT_VERSION
+    # pins a release (e.g. 1.1.12); set it in the shell, default .env, or
+    # --env-file, not the .env.production env_file.
+    image: ghcr.io/testplanit/testplanit-selfhost:${TESTPLANIT_VERSION:-latest}
     build:
       context: ..
       dockerfile: testplanit/Dockerfile
@@ -66,6 +72,7 @@ services:
 
   workers:
     container_name: testplanit-workers
+    image: ghcr.io/testplanit/testplanit-selfhost:${TESTPLANIT_VERSION:-latest}-workers
     build:
       context: ..
       dockerfile: testplanit/Dockerfile
@@ -99,25 +106,21 @@ services:
 
   db-init-prod:
     container_name: testplanit-db-init
-    build:
-      context: ..
-      dockerfile: testplanit/Dockerfile
-      target: development
+    # Runs on the server image. Its entrypoint applies migrations, audit
+    # triggers, and Postgres extensions, then this command seeds the database
+    # (idempotent). If Postgres is fronted by a transaction-mode pooler
+    # (pgbouncer), set DIRECT_DATABASE_URL — `zenstack migrate deploy` needs a
+    # real (non-pooled) session. Existing pre-migration databases must be
+    # baselined once (testplanit/migrations/README.md).
+    image: ghcr.io/testplanit/testplanit-selfhost:${TESTPLANIT_VERSION:-latest}
     env_file:
       - .env.production
-    working_dir: /app/testplanit
-    # Apply migrations and seed database.
-    # If Postgres is fronted by a transaction-mode pooler (pgbouncer), point this
-    # service at the direct DB — `zenstack migrate deploy` needs a real (non-pooled) session.
-    # Existing pre-migration databases must be baselined once (testplanit/migrations/README.md).
-    command:
-      [
-        "sh",
-        "-c",
-        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh ${POSTGRES_HOST:-postgres} ${POSTGRES_PORT:-5432} -- echo 'DB ready, applying migrations...' && npx zenstack migrate deploy --schema schema.zmodel --no-version-check && echo 'Applying audit triggers...' && pnpm tsx scripts/apply-triggers.ts && echo 'Migrations applied, seeding...' && pnpm tsx db/seed.ts && echo 'DB initialized and seeded.'",
-      ]
+    command: ["tsx", "db/seed.ts"]
     networks:
       - testplanit-net
+    depends_on:
+      postgres:
+        condition: service_healthy
     profiles:
       - with-postgres
 
