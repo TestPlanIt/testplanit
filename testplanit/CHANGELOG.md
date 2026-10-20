@@ -1,3 +1,20 @@
+## [1.2.0-beta.8](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.7...v1.2.0-beta.8) (2026-10-20)
+
+### Features
+
+* **correlation:** export PROJECT_SCOPED_ROOT_TABLES for external access ([f5e0caa](https://github.com/TestPlanIt/testplanit/commit/f5e0caa926b4aa4e119defc73b960c85f4deac7e))
+* **release:** add release notes for TestPlanIt 1.2.0 highlighting new features and improvements ([33c023b](https://github.com/TestPlanIt/testplanit/commit/33c023bb9e5b5b7267aa2c3eca134195b37f2c08))
+* **triage:** Failure Patterns permission area ([1db20d7](https://github.com/TestPlanIt/testplanit/commit/1db20d7947fe279c2cb6436a1a615e5716484880))
+* **triage:** group automated failures into AI-classified signatures ([3fa1356](https://github.com/TestPlanIt/testplanit/commit/3fa135674cdd48dbb8d7098acddab0011cb0aa30))
+* **triage:** root causes catalogue, quarantine with automatic release, new-pattern alert ([ad360be](https://github.com/TestPlanIt/testplanit/commit/ad360beb3025511776186fd11a2a4e6fd0bb2d5c))
+* **webhooks:** filter the test cases a Create Test Run action takes ([9c7eadb](https://github.com/TestPlanIt/testplanit/commit/9c7eadb274fdb988b3416f1f24f02a7f67e2430e))
+
+### Bug Fixes
+
+* **docker:** run the prebuilt self-host images in Docker Compose ([8a3ab39](https://github.com/TestPlanIt/testplanit/commit/8a3ab390423b7ea67b30d51893febaff79afe58e))
+* **reports:** make header sorting reorder the rows on every report ([140e944](https://github.com/TestPlanIt/testplanit/commit/140e9442440d4142409fa7b947cd21dc7f1f9c94))
+* **triage:** enforce Failure Patterns permissions on every write path ([ad1f630](https://github.com/TestPlanIt/testplanit/commit/ad1f6305a7a8866d0d11fc3164ec8ce8fb29a4c9))
+
 ## [1.2.0-beta.7](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.6...v1.2.0-beta.7) (2026-10-18)
 
 ### Enhancements
