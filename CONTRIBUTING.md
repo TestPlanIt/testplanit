@@ -390,3 +390,5 @@ You don't need to do anything to get your change released. For reference, here's
 Squash merges keep you as the author of the commit. The release notes link to your PR. If a maintainer continues your work in another PR, your commits go with it, and you're credited there too.
 
 Thank you for helping make TestPlanIt better.
+
+<!-- Temporary change to read the CLA Assistant status check name; this PR is closed without merging. -->
