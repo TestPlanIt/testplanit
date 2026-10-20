@@ -62,7 +62,9 @@ The documentation site at [docs.testplanit.com](https://docs.testplanit.com) is 
 
 ### Translate
 
-UI strings come from `testplanit/messages/en-US.json`. All other locale files are produced by a Crowdin sync, so don't edit them in a PR: the next sync overwrites any changes. If you'd like to help with a language, ask in [Discord](https://discord.gg/kpfha4W2JH).
+TestPlanIt is translated in the [TestPlanIt Crowdin project](https://crowdin.com/project/testplanit). To fix a translation or help with a language, join the project and suggest changes in the Crowdin editor. You don't need a pull request.
+
+The English source strings live in `testplanit/messages/en-US.json`, and a Crowdin sync produces all the other locale files. Don't edit the non-English files in a PR: the next sync overwrites them.
 
 ## Repository layout
 
@@ -186,12 +188,12 @@ Access control lives in the schema as ZenStack `@@allow` / `@@deny` rules, not i
 
 ## Which branch to target
 
-| Change                                             | Base branch                                                                           |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Bug fixes and small, self-contained improvements   | `main`                                                                                |
-| New features and larger changes                    | The current release line: the newest `release/vX.Y` branch (currently `release/v1.2`) |
-| Docs for behavior that's already on `main`         | `main`                                                                                |
-| Docs for a feature that's only on the release line | The same `release/vX.Y` branch                                                        |
+| Change                                             | Base branch                                                |
+| -------------------------------------------------- | ---------------------------------------------------------- |
+| Bug fixes and small, self-contained improvements   | `main`                                                     |
+| New features and larger changes                    | The current release line: the newest `release/vX.Y` branch |
+| Docs for behavior that's already on `main`         | `main`                                                     |
+| Docs for a feature that's only on the release line | The same `release/vX.Y` branch                             |
 
 Maintainers port fixes from `main` to the release line, so you don't need to open two PRs. When a release line ships, it's merged into `main` wholesale. A feature PR opened against `main` while a release line is active usually has to be redone against the release line. If you're not sure where your change belongs, ask on the issue.
 
