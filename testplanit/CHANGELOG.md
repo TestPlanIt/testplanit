@@ -1,3 +1,9 @@
+## [1.1.13](https://github.com/TestPlanIt/testplanit/compare/v1.1.12...v1.1.13) (2026-10-20)
+
+### Bug Fixes
+
+* **docker:** run the prebuilt self-host images in Docker Compose ([#705](https://github.com/TestPlanIt/testplanit/issues/705)) ([9f3415d](https://github.com/TestPlanIt/testplanit/commit/9f3415d20839fa841c9e4c7659ed99383aec6868))
+
 ## [1.1.12](https://github.com/TestPlanIt/testplanit/compare/v1.1.11...v1.1.12) (2026-10-16)
 
 ### Enhancements
