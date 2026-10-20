@@ -6,13 +6,12 @@ sidebar_position: 5
 # Build from Source
 
 TestPlanIt publishes prebuilt `ghcr.io/testplanit/testplanit-selfhost` images
-for `linux/amd64` and `linux/arm64`. They work on any domain, and the
-[Helm chart](./kubernetes-deployment.md) uses them. The Docker Compose setup
-(`docker-compose.prod.yml`) builds the image from the `Dockerfile` on your
-machine instead, so building is a single command. Build from source when you
-want to:
+for `linux/amd64` and `linux/arm64`. They work on any domain, and both the
+Docker Compose files and the [Helm chart](./kubernetes-deployment.md) use them,
+so most installs never build anything (see [Docker Setup](./docker-setup.md)).
+The compose files can also build the same images from the `Dockerfile`, so
+building is a single command. Build from source when you want to:
 
-- run TestPlanIt with Docker Compose
 - run a commit that hasn't been released yet
 - run your own changes to TestPlanIt
 - publish images to your own registry
@@ -23,28 +22,30 @@ want to:
 
 Betas of the next release come from the current release branch
 (`release/vX.Y`). Each one is published as a GitHub **pre-release**, such as
-`v1.2.0-beta.7`, **and** as self-host images. With Helm or `docker run`, you
-can pull a beta image instead of building it. A floating `X.Y-beta` tag always
-points to the newest beta of that line:
+`v1.2.0-beta.7`, **and** as self-host images, so you don't need to build a beta
+to try it. The [Releases page](https://github.com/TestPlanIt/testplanit/releases)
+lists every version; pre-releases are marked **Pre-release**.
 
-```bash
-docker pull ghcr.io/testplanit/testplanit-selfhost:1.2-beta           # server
-docker pull ghcr.io/testplanit/testplanit-selfhost:1.2-beta-workers   # workers
-```
-
-To pin a specific beta, use its version as the tag instead, for example
-`:1.2.0-beta.7` and `:1.2.0-beta.7-workers`. The
-[Releases page](https://github.com/TestPlanIt/testplanit/releases) lists every
-version; pre-releases are marked **Pre-release**.
-
-With Docker Compose, or to build a beta yourself, check out its tag, then
-follow [Build and run](#build-and-run):
+With Docker Compose, check out the beta's tag so the compose files match it,
+then set `TESTPLANIT_VERSION` to the same version:
 
 ```bash
 git clone https://github.com/TestPlanIt/testplanit.git
 cd testplanit
 git checkout v1.2.0-beta.7
+TESTPLANIT_VERSION=1.2.0-beta.7 docker compose -f testplanit/docker-compose.prod.yml \
+  --profile with-postgres --profile with-valkey \
+  --profile with-elasticsearch --profile with-minio \
+  up -d
 ```
+
+With Helm or `docker run`, use the image tags directly. A floating `X.Y-beta`
+tag always points to the newest beta of that line (`:1.2-beta` and
+`:1.2-beta-workers`); a version tag pins one beta (`:1.2.0-beta.7` and
+`:1.2.0-beta.7-workers`).
+
+To build a beta yourself, check out its tag and follow
+[Build and run](#build-and-run).
 
 > ⚠️ Pre-releases are not production-ready. **Always back up your database
 > before trying one.**
@@ -70,9 +71,10 @@ reference.
 
 ## Build and run
 
-The production compose file builds the image from the `Dockerfile` and starts
-the stack. Each backing service is enabled with a profile; this command runs all
-of them (Postgres, Valkey, Elasticsearch, and RustFS file storage):
+Adding `--build` makes the production compose file build the images from the
+`Dockerfile` in your checkout instead of pulling them, then start the stack.
+Each backing service is enabled with a profile; this command runs all of them
+(Postgres, Valkey, Elasticsearch, and RustFS file storage):
 
 ```bash
 docker compose -f testplanit/docker-compose.prod.yml \
@@ -83,6 +85,11 @@ docker compose -f testplanit/docker-compose.prod.yml \
 
 Leave out a profile to use your own instance of that service instead. See
 [`DOCKER-PROFILES.md`](https://github.com/TestPlanIt/testplanit/blob/main/testplanit/DOCKER-PROFILES.md).
+
+The build tags its result with the published image's name
+(`ghcr.io/testplanit/testplanit-selfhost:latest`, or the `TESTPLANIT_VERSION`
+you set), so a later `docker compose pull` replaces your build with the
+published image.
 
 ### Images and custom domains
 

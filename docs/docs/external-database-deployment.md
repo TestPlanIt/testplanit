@@ -230,7 +230,7 @@ TestPlanIt uses Docker Compose profiles to enable/disable services. The included
 # Omit with-postgres profile to use external database
 PROFILES="--profile with-valkey --profile with-elasticsearch --profile with-minio"
 
-docker compose -f docker-compose.prod.yml $PROFILES build
+docker compose -f docker-compose.prod.yml $PROFILES pull
 docker compose -f docker-compose.prod.yml $PROFILES up -d
 ```
 
@@ -240,7 +240,7 @@ docker compose -f docker-compose.prod.yml $PROFILES up -d
 # Use Docker Valkey and Elasticsearch, external DB and S3
 PROFILES="--profile with-valkey --profile with-elasticsearch"
 
-docker compose -f docker-compose.prod.yml $PROFILES build
+docker compose -f docker-compose.prod.yml $PROFILES pull
 docker compose -f docker-compose.prod.yml $PROFILES up -d
 ```
 
@@ -248,19 +248,21 @@ docker compose -f docker-compose.prod.yml $PROFILES up -d
 
 ```bash
 # Run only the application, no Docker services
-docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
+
+These commands run the prebuilt `ghcr.io/testplanit/testplanit-selfhost` images. To pin a release, set `TESTPLANIT_VERSION` (for example `1.1.12`) in your shell, the default `.env`, or `--env-file`; the default, `latest`, follows the newest release. To build the images from source instead, add `--build` to `up` (see [Build from Source](./building-from-source.md)).
 
 ### Step 3: Initialize External Database (If Needed)
 
 If you're using an external PostgreSQL database for the first time, initialize the schema manually:
 
 ```bash
-# Apply migrations and seed using a temporary container
-docker compose -f docker-compose.prod.yml run --rm \
+# Apply migrations, audit triggers, and extensions, then seed, in a temporary container
+docker compose -f docker-compose.prod.yml run --rm --no-deps \
   -e DATABASE_URL="your-external-database-url" \
-  db-init-prod sh -c "npx zenstack migrate deploy --schema schema.zmodel --no-version-check && pnpm tsx db/seed.ts"
+  db-init-prod
 ```
 
 If your database sits behind a transaction-mode pooler (e.g. pgbouncer), point this

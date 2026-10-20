@@ -19,20 +19,27 @@ After completing a setup guide, proceed to the **[Getting Started](getting-start
 
 TestPlanIt applies database schema changes with versioned migrations (`zenstack migrate deploy`), which never drop data. Docker deployments apply pending migrations automatically when the container starts; source installs apply them with `pnpm db:deploy`.
 
-A routine upgrade with Docker:
+A routine upgrade with Docker Compose, from the `testplanit/` directory. Use the
+same `--profile` flags you started the stack with:
 
 ```bash
-docker pull ghcr.io/testplanit/testplanit-selfhost:latest
-docker compose up -d   # pending migrations apply on startup
+PROFILES="--profile with-postgres --profile with-valkey --profile with-elasticsearch --profile with-minio"
+docker compose -f docker-compose.prod.yml $PROFILES pull
+docker compose -f docker-compose.prod.yml $PROFILES up -d   # pending migrations apply on startup
 ```
 
-:::note Which image to pull
+The compose files use the `latest` release by default. To pin a version, set
+`TESTPLANIT_VERSION` (for example `1.1.12`) in your shell, the default `.env`, or
+`--env-file`, and change it when you want to upgrade.
 
-Self-hosted deployments use **`testplanit-selfhost`**. It is domain-agnostic, so
-one image serves any hostname, and it is published for both `linux/amd64` and
-`linux/arm64`. The `testplanit` image is built for the hosted service, bakes its
-domain in at build time, and is `arm64` only — pulling it on an x86 host fails
-with `no matching manifest for linux/amd64`.
+:::note Which image to use
+
+Self-hosted deployments use **`testplanit-selfhost`**, which the compose files
+and the Helm chart reference. It is domain-agnostic, so one image serves any
+hostname, and it is published for both `linux/amd64` and `linux/arm64`. The
+`testplanit` image is built for the hosted service, bakes its domain in at build
+time, and is `arm64` only — pulling it on an x86 host fails with
+`no matching manifest for linux/amd64`.
 
 :::
 

@@ -40,10 +40,10 @@ sudo tar -czf minio-backup.tar.gz docker-data/minio
 ### 2. Update TestPlanIt
 
 Update your checkout to the new release as you normally do (for example
-`git pull`), then rebuild:
+`git pull`), then pull the new images:
 
 ```bash
-docker compose -f docker-compose.prod.yml --profile with-minio build
+docker compose -f docker-compose.prod.yml --profile with-minio pull
 ```
 
 ### 3. Run the migration
