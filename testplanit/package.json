@@ -90,7 +90,7 @@
     "elasticsearch:reindex:cases": "tsx scripts/reindexElasticsearch.ts",
     "scim:check-group-dupes": "tsx scripts/check-group-external-id-dupes.ts",
     "scim:smoke": "tsx scripts/scim-smoke.ts",
-    "release:info": "echo 'Releases are now managed by release-please. Push to main and a Release PR will be created automatically.'"
+    "release:info": "echo 'Releases are automated by semantic-release: merging to main cuts a stable release, and merging to the current release/vX.Y branch cuts a beta. See CONTRIBUTING.md.'"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",

@@ -21,7 +21,8 @@ on:
   push:
     tags:
       - 'v*'
-      # Skip prereleases (e.g. v1.0.0-beta.1) — betas ship as source only.
+      # Prerelease tag pushes are ignored here; semantic-release.yml dispatches
+      # this workflow for every release, betas included.
       - '!v*-*'
   workflow_dispatch:
     inputs:
