@@ -535,7 +535,7 @@ async function resolveExistingProjectIds(
  * would work for both but defeats the primary-key index on tables large enough
  * for this to matter.
  */
-const PROJECT_SCOPED_ROOT_TABLES: Record<string, "int" | "text"> = {
+export const PROJECT_SCOPED_ROOT_TABLES: Record<string, "int" | "text"> = {
   RepositoryCases: "int",
   RepositoryCaseVersions: "int",
   TestRuns: "int",
