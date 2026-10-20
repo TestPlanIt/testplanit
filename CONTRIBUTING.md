@@ -374,7 +374,7 @@ You don't need to do anything to get your change released. For reference, here's
 - **npm packages** (`packages/*`): versioned with [Changesets](https://github.com/changesets/changesets). Merged changesets collect in a "Version Packages" PR, and merging that PR publishes to npm. Changes on the release line are published under the `beta` dist-tag.
 - **CLI** (`cli/`): released separately by its own semantic-release, with `cli-vX.Y.Z` tags and binaries for Linux, macOS, and Windows.
 - **Docs**: [docs.testplanit.com](https://docs.testplanit.com) redeploys whenever `docs/` changes on `main`.
-- **Translations**: when `messages/en-US.json` changes on `main`, a workflow syncs it with Crowdin and commits the updated locale files.
+- **Translations**: when `messages/en-US.json` changes on `main` or a release branch, a workflow syncs it with Crowdin and commits the updated locale files. Each release line has its own Crowdin version branch, so `main` and `release/vX.Y` never overwrite each other's strings.
 
 ## Getting help
 
