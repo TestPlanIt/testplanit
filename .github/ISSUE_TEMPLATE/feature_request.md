@@ -2,7 +2,7 @@
 name: Feature Request
 about: Suggest an idea for TestPlanIt
 title: '[FEATURE] '
-labels: 'enhancement, needs-triage'
+labels: 'enhancement'
 assignees: ''
 ---
 
@@ -113,7 +113,7 @@ As a **[role]**, I want **[feature]** so that **[benefit]**.
 ## Community Interest
 <!-- Optional: If this feature has been discussed in the community -->
 - Discord discussion: [link]
-- Forum thread: [link]
+- GitHub Discussions thread: [link]
 - Number of users requesting:
 
 ---

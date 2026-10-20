@@ -4,6 +4,8 @@ TestPlanIt is an open-source tool for creating, managing, and executing test pla
 
 Exploratory testing, session management & note-taking are first-class features in TestPlanIt's test management platform. Manage your test sessions and ad-hoc tests for fast release cycles and continuous delivery. All your test cases are managed in a central place and organized with folders, tags, and custom fields. Writing test cases has never been easier with fully customizable templates for all your projects.
 
+This directory contains the TestPlanIt application: the Next.js app and API, the background workers and scheduler, the data model (`schema.zmodel`), database migrations, and the unit and end-to-end tests.
+
 ## Key Features
 
 - Create, manage, and execute test plans.
@@ -13,116 +15,70 @@ Exploratory testing, session management & note-taking are first-class features i
 - Exploratory testing session management and note-taking.
 - Customizable test case templates.
 
-## Getting Started
-
-Follow these steps to get TestPlanIt running locally for development.
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (LTS version recommended)
-- [pnpm](https://pnpm.io/) (version 10+ recommended)
-- A running [PostgreSQL](https://www.postgresql.org/) database instance
-- Git
+## Local Development
 
 ### IMPORTANT: Package Manager Notice for AI Assistants
 
 ⚠️ **This project uses pnpm as its package manager. DO NOT use npm or yarn. Always use pnpm commands for installing dependencies and running scripts.**
 
-### Installation & Setup
+### Quick Start
 
-1.  **Clone the repository:**
+You need Node.js 24, pnpm (run `corepack enable` to get the pinned version), and Docker. From the repository root:
 
-    ```bash
-    git clone https://github.com/testplanit/testplanit.git
-    cd testplanit
-    ```
+```bash
+pnpm install
+cd testplanit
+cp .env.example .env            # then set DATABASE_URL, NEXTAUTH_SECRET, ENCRYPTION_KEY
+ln -s .env .env.development
+docker compose -f docker-compose.dev.yml up -d postgres valkey
+pnpm exec dotenv -- pnpm db:deploy
+pnpm exec dotenv -- pnpm triggers:apply
+pnpm exec dotenv -- tsx db/seed.ts
+pnpm dev
+```
 
-2.  **Install dependencies:**
-    Run install from the **monorepo root** directory (`testplanit/`).
+The app runs at [http://localhost:3000](http://localhost:3000). For an explanation of each step and the values to use, see [Development setup in CONTRIBUTING.md](../CONTRIBUTING.md#development-setup).
 
-    ```bash
-    pnpm install
-    ```
+### Common Commands
 
-    _(Note: This installs dependencies for both `testplanit` and `docs` packages._
+```bash
+pnpm dev              # Development server
+pnpm workers          # All background workers (run `pnpm scheduler` first to register recurring jobs)
+pnpm generate         # Regenerate the ZenStack client after editing schema.zmodel
+pnpm db:migrate:dev   # Create and apply a migration against your dev database
+pnpm test             # Unit tests (Vitest)
+pnpm precommit        # Lint, type-check, format check, unit tests, and docs build
+```
 
-3.  **Set up environment variables:**
-    Navigate to the application directory and copy the example environment file:
-
-    ```bash
-    cd testplanit
-    cp .env.example .env
-    ```
-
-    - Edit the `.env` file:
-      - Update `DATABASE_URL` to point to your **locally running** PostgreSQL instance.
-      - Review other settings like `NEXTAUTH_SECRET` (generate a new secret for production), email server details, etc.
-
-4.  **Run database migrations:**
-    Navigate back to the application directory (`testplanit/testplanit`) and sync the database schema (ZenStack pushes from schema.zmodel; this project does not use migrations):
-
-    ```bash
-    cd testplanit
-    pnpm generate
-    ```
-
-5.  **Run the development server:**
-    Still within the `testplanit/testplanit` directory:
-
-    ```bash
-    pnpm dev
-    ```
-
-6.  **Access the application:**
-    Open [http://localhost:3000](http://localhost:3000) in your browser.
+End-to-end tests run against a production build. See [E2E Testing](https://docs.testplanit.com/docs/e2e-testing).
 
 ## Deployment
 
-### Docker Deployment
-
-TestPlanIt can be deployed using Docker and Docker Compose. Two deployment configurations are available:
-
-1. **Standard Deployment** - Uses containerized PostgreSQL database
-   - See `docker-compose.prod.yml` for configuration
-   - Suitable for single-instance deployments
-
-2. **External Database Deployment** - Uses an existing PostgreSQL database
-   - **[📖 External Database Deployment Guide](https://testplanit.com/docs/external-database-deployment)**
-   - Recommended for production environments
-   - Supports multiple instances
-   - Better scalability and backup options
-
-### Quick Start with Docker
-
-```bash
-# Build and start all services
-docker compose -f docker-compose.prod.yml build --no-cache
-docker compose -f docker-compose.prod.yml up -d
-
-# View logs
-docker compose -f docker-compose.prod.yml logs -f
-```
-
-For detailed deployment instructions, database setup, and troubleshooting, see the [External Database Deployment Guide](https://testplanit.com/docs/external-database-deployment).
+- **[Installation](https://docs.testplanit.com/docs/installation)**: choose a deployment method and upgrade an existing install.
+- **[Docker Setup](https://docs.testplanit.com/docs/docker-setup)**: run the full stack with Docker Compose (`docker-compose.prod.yml`), which builds the image on your machine.
+- **[Kubernetes (Helm)](https://docs.testplanit.com/docs/kubernetes-deployment)**: deploy with the official Helm chart and the prebuilt `ghcr.io/testplanit/testplanit-selfhost` images.
+- **[External Database Deployment](https://docs.testplanit.com/docs/external-database-deployment)**: use an existing PostgreSQL server.
 
 ## Technology Stack
 
-- **Framework:** [Next.js](https://nextjs.org/) (App Router)
+- **Framework:** [Next.js](https://nextjs.org/) 16 (App Router), [React](https://react.dev/) 19
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-- **UI Components:** [Shadcn UI](https://ui.shadcn.com/)
-- **Database ORM:** [Prisma](https://www.prisma.io/)
-- **Data Modeling/Access Control:** [ZenStack](https://zenstack.dev/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/) 4
+- **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
+- **Data Model, ORM, and Access Control:** [ZenStack](https://zenstack.dev/) v3
 - **Database:** [PostgreSQL](https://www.postgresql.org/)
-- **End-to-End Testing:** [Playwright](https://playwright.dev/)
-- **Unit/Integration Testing:** [Vitest](https://vitest.dev/)
+- **Job Queue:** [BullMQ](https://bullmq.io/) on [Valkey](https://valkey.io/)
+- **Search:** [Elasticsearch](https://www.elastic.co/elasticsearch/)
 - **Rich Text Editing:** [Tiptap](https://tiptap.dev/)
 - **Authentication:** [NextAuth.js](https://next-auth.js.org/)
+- **Internationalization:** [next-intl](https://next-intl.dev/), with translations managed in Crowdin
+- **Unit/Integration Testing:** [Vitest](https://vitest.dev/)
+- **End-to-End Testing:** [Playwright](https://playwright.dev/)
 
 ## Contributing
 
-Contributions are welcome! Please refer to the contributing guidelines (TODO: Create CONTRIBUTING.md).
+Contributions are welcome. See the [Contributing Guide](../CONTRIBUTING.md).
 
 ## License
 
-TestPlanIt is licensed under the [ISC License](LICENSE). (TODO: Add LICENSE file if not present).
+TestPlanIt is dual-licensed under AGPL-3.0 and a commercial license. See [LICENSE.md](../LICENSE.md).
