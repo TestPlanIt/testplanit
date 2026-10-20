@@ -100,6 +100,10 @@ const CATALOG_BY_COLUMN: Record<
   ImpactAnalysisCase: {
     caseId: { table: "RepositoryCases", field: "name" },
   },
+  FailureSignature: {
+    classificationId: { table: "FailureClassification", field: "name" },
+    aiClassificationId: { table: "FailureClassification", field: "name" },
+  },
   FailureSignatureIssue: {
     issueId: { table: "Issue", field: "title" },
   },
@@ -479,6 +483,7 @@ export function createDbLookup(db: DbClient): LookupFn {
     Projects: { delegate: "projects", field: "name" },
     Configurations: { delegate: "configurations", field: "name" },
     MilestoneTypes: { delegate: "milestoneTypes", field: "name" },
+    FailureClassification: { delegate: "failureClassification", field: "name" },
     // Implicit-m2m link targets — the tag/issue named in a `_*To*` join row.
     Tags: { delegate: "tags", field: "name" },
     Issue: { delegate: "issue", field: "name" },

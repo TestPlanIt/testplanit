@@ -87,6 +87,7 @@ const sidebars: SidebarsConfig = {
                 },
                 'user-guide/statuses', // Corresponds to statuses.md
                 'user-guide/milestone-types', // Corresponds to milestone-types.md
+                'user-guide/root-causes', // Failure Patterns root cause catalogue
                 'user-guide/configurations', // Corresponds to configurations.md
                 'user-guide/tags', // Corresponds to tags.md
                 'user-guide/admin-issues', // Global cross-project issues administration
@@ -183,7 +184,7 @@ const sidebars: SidebarsConfig = {
                     'user-guide/llm-test-generation', // AI test case generation
                     'user-guide/llm-magic-select', // AI-powered test case selection
                     'user-guide/impact', // Test impact analysis: Analyze impact, Affected Tests, Code Pins
-                    'user-guide/failure-triage', // Automated failures grouped into signatures, AI-classified, linked to issues
+                    'user-guide/failure-patterns', // Automated failures grouped into patterns with AI-suggested root causes, issues and quarantine
                     'user-guide/llm-quickscript', // AI-powered QuickScript generation
                     'user-guide/llm-writing-assistant', // In-editor AI writing assistant
                     'user-guide/llm-markdown-import', // AI-assisted markdown import
@@ -375,7 +376,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/projects/settings/ai-models', // Project AI model default + per-feature overrides
                 'user-guide/projects/settings/quickscript', // Project QuickScript context + export templates
                 'user-guide/projects/settings/impact', // Project Impact Analysis: application repository, cache, repository markers
-                'user-guide/projects/settings/triage', // Project Failure Triage: grouping, AI classification, analyze existing results
+                'user-guide/projects/settings/triage', // Project Failure Patterns: grouping, AI root causes, quarantine release, analyze existing results
                 'user-guide/projects/settings/automation', // Project execution targets: GitHub Actions, GitLab CI, generic webhook
                 'user-guide/projects/settings/parameters', // Test Case Parameters settings (CI mapping + shared datasets)
                 'user-guide/projects/settings/advanced', // Per-project feature toggles

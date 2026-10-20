@@ -248,6 +248,7 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   },
   { table: "Roles", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "MilestoneTypes", denylist: [], nameCol: "name" }, // no timestamp columns
+  { table: "FailureClassification", nameCol: "name" }, // failure triage catalogue
   { table: "ConfigCategories", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "ConfigVariants", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "Configurations", denylist: [], nameCol: "name" }, // no timestamp columns
@@ -491,6 +492,7 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "Projects" },
   { table: "Milestones" },
   { table: "MilestoneTypes" },
+  { table: "FailureClassification" },
   { table: "CaseFields" },
   { table: "ResultFields" },
   { table: "FieldOptions" },

@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   PageCardHeader,
@@ -16,7 +17,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { PageTitle } from "@/components/ui/typography";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { Microscope, Loader2, RefreshCw } from "lucide-react";
+import { Fingerprint, Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -57,6 +58,8 @@ export default function TriageSettingsPage() {
         iconUrl: true,
         failureTriageEnabled: true,
         failureTriageAutoClassify: true,
+        quarantineAutoRelease: true,
+        quarantineAutoReleasePasses: true,
       },
     },
     { enabled: isAuthenticated }
@@ -110,7 +113,10 @@ export default function TriageSettingsPage() {
   }, [backfillRunning, pollBackfill]);
 
   const toggle = async (
-    field: "failureTriageEnabled" | "failureTriageAutoClassify",
+    field:
+      | "failureTriageEnabled"
+      | "failureTriageAutoClassify"
+      | "quarantineAutoRelease",
     value: boolean
   ) => {
     try {
@@ -120,11 +126,40 @@ export default function TriageSettingsPage() {
       });
       if (field === "failureTriageEnabled") {
         toast.success(value ? t("enabledToast") : t("disabledToast"));
-      } else {
+      } else if (field === "failureTriageAutoClassify") {
         toast.success(
           value ? t("autoClassifyOnToast") : t("autoClassifyOffToast")
         );
+      } else {
+        toast.success(
+          value ? t("autoReleaseOnToast") : t("autoReleaseOffToast")
+        );
       }
+    } catch (error) {
+      console.error("Failed to update triage settings:", error);
+      toast.error(tCommon("errors.error"));
+    }
+  };
+
+  const [passesDraft, setPassesDraft] = useState<string | null>(null);
+  const savePasses = async () => {
+    if (passesDraft === null) return;
+    const parsed = Number(passesDraft);
+    if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100) {
+      toast.error(t("autoReleasePassesInvalid"));
+      return;
+    }
+    if (parsed === project?.quarantineAutoReleasePasses) {
+      setPassesDraft(null);
+      return;
+    }
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { quarantineAutoReleasePasses: parsed },
+      });
+      toast.success(t("autoReleasePassesSaved", { count: parsed }));
+      setPassesDraft(null);
     } catch (error) {
       console.error("Failed to update triage settings:", error);
       toast.error(tCommon("errors.error"));
@@ -190,7 +225,7 @@ export default function TriageSettingsPage() {
               onClick={() => router.push(`/projects/triage/${projectId}`)}
               data-testid="triage-open-button"
             >
-              <ActionButtonContent icon={Microscope} label={t("openTriage")} />
+              <ActionButtonContent icon={Fingerprint} label={t("openTriage")} />
             </Button>
           }
         />
@@ -240,6 +275,62 @@ export default function TriageSettingsPage() {
               </div>
               <p className="text-sm text-muted-foreground">
                 {t("autoClassifyDescription")}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="space-y-3 pt-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <Switch
+                  id="triage-auto-release-toggle"
+                  checked={project.quarantineAutoRelease}
+                  onCheckedChange={(value) =>
+                    void toggle("quarantineAutoRelease", value)
+                  }
+                  disabled={
+                    updateProject.isPending || !project.failureTriageEnabled
+                  }
+                  data-testid="triage-auto-release-toggle"
+                />
+                <Label htmlFor="triage-auto-release-toggle">
+                  {t("autoReleaseLabel")}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="triage-auto-release-passes"
+                    type="number"
+                    min={1}
+                    max={100}
+                    className="h-8 w-20"
+                    value={
+                      passesDraft ?? String(project.quarantineAutoReleasePasses)
+                    }
+                    onChange={(event) => setPassesDraft(event.target.value)}
+                    onBlur={() => void savePasses()}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.currentTarget.blur();
+                      }
+                    }}
+                    disabled={
+                      updateProject.isPending ||
+                      !project.failureTriageEnabled ||
+                      !project.quarantineAutoRelease
+                    }
+                    aria-label={t("autoReleasePassesLabel")}
+                    data-testid="triage-auto-release-passes"
+                  />
+                  <Label
+                    htmlFor="triage-auto-release-passes"
+                    className="font-normal"
+                  >
+                    {t("autoReleasePassesLabel")}
+                  </Label>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t("autoReleaseDescription")}
               </p>
             </CardContent>
           </Card>

@@ -9,16 +9,16 @@ import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import {
   ClassificationBadge,
   SignatureStatusBadge,
+  type ClassificationRef,
 } from "@/components/triage/badges";
 import { Badge } from "@/components/ui/badge";
-import { Microscope } from "lucide-react";
+import { Fingerprint } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { CollapsibleSection } from "~/components/CollapsibleSection";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import type {
-  FailureClassification,
   FailureClassificationSource,
   FailureSignatureStatus,
 } from "~/zenstack/models";
@@ -43,7 +43,7 @@ export interface RunResultSignatureIssue {
 export interface RunResultSignature {
   id: number;
   title: string;
-  classification: FailureClassification;
+  classification: ClassificationRef | null;
   classificationSource: FailureClassificationSource | null;
   aiConfidence: number | null;
   status: FailureSignatureStatus;
@@ -67,7 +67,7 @@ type ClusterRow = {
   id: number;
   title: string;
   count: number;
-  classification: FailureClassification;
+  classification: ClassificationRef | null;
   classificationSource: FailureClassificationSource | null;
   aiConfidence: number | null;
   status: FailureSignatureStatus;
@@ -82,7 +82,7 @@ function pickSortValue(row: ClusterRow, column: string): string | number {
     case "title":
       return row.title;
     case "classification":
-      return row.classification;
+      return row.classification?.name ?? "";
     case "status":
       return row.status;
     case "issues":
@@ -236,7 +236,6 @@ export function RunFailureClusters({
                 ...issue,
                 projectIds: [projectId],
               }))}
-              size="small"
             />
           ) : (
             <span className="text-muted-foreground">-</span>
@@ -280,7 +279,7 @@ export function RunFailureClusters({
   return (
     <CollapsibleSection
       storageKey="tpi.run.failureClusters.collapsed"
-      icon={<Microscope className="h-4 w-4" aria-hidden />}
+      icon={<Fingerprint className="h-4 w-4" aria-hidden />}
       title={
         <span className="flex items-center gap-2">
           <span>{t("runPanel.title")}</span>

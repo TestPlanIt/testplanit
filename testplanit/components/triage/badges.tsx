@@ -6,47 +6,49 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Sparkles, Zap } from "lucide-react";
+import { ShieldAlert, Sparkles, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type {
-  FailureClassification,
   FailureClassificationSource,
   FailureSignatureStatus,
 } from "~/zenstack/models";
 import { cn } from "~/utils";
 
-const CLASSIFICATION_CLASS: Record<FailureClassification, string> = {
-  UNCLASSIFIED: "text-muted-foreground",
-  PRODUCT_BUG: "border-destructive/40 text-destructive",
-  TEST_BUG: "border-warning/60 text-warning",
-  ENVIRONMENT: "border-sky-500/40 text-sky-600 dark:text-sky-400",
-  FLAKY: "border-amber-500/40 text-amber-600 dark:text-amber-400",
-};
+/** A catalogue entry as the badges need it (the `classification` relation). */
+export interface ClassificationRef {
+  id: number;
+  name: string;
+  color?: { value: string } | null;
+  isDeleted?: boolean;
+}
 
 export function ClassificationBadge({
   classification,
   source,
   className,
 }: {
-  classification: FailureClassification;
+  classification: ClassificationRef | null | undefined;
   source?: FailureClassificationSource | null;
   className?: string;
 }) {
   const t = useTranslations("triage");
-  const isAi = source === "AI";
-  const label = t(`classification.${classification}`);
+  const live =
+    classification && !classification.isDeleted ? classification : null;
+  const isAi = !!live && source === "AI";
+  const color = live?.color?.value;
   const badge = (
     <Badge
       variant="outline"
       className={cn(
         "gap-1 whitespace-nowrap font-normal",
-        CLASSIFICATION_CLASS[classification],
+        !live && "text-muted-foreground",
         className
       )}
+      style={color ? { borderColor: color, color } : undefined}
       data-testid="triage-classification-badge"
     >
       {isAi && <Sparkles className="h-3 w-3" aria-hidden />}
-      {label}
+      {live ? live.name : t("unclassified")}
     </Badge>
   );
   if (!isAi) return badge;
@@ -55,6 +57,31 @@ export function ClassificationBadge({
       <TooltipTrigger asChild>{badge}</TooltipTrigger>
       <TooltipContent>{t("source.AI")}</TooltipContent>
     </Tooltip>
+  );
+}
+
+/** Swatch + name, for pickers and the admin catalogue. */
+export function ClassificationOption({
+  classification,
+  className,
+}: {
+  classification: ClassificationRef;
+  className?: string;
+}) {
+  const color = classification.color?.value;
+  return (
+    <span className={cn("flex min-w-0 items-center gap-2", className)}>
+      <span
+        className="h-3 w-3 shrink-0 rounded-full border"
+        style={
+          color ? { backgroundColor: color, borderColor: color } : undefined
+        }
+        aria-hidden
+      />
+      <span className="min-w-0 truncate" title={classification.name}>
+        {classification.name}
+      </span>
+    </span>
   );
 }
 
@@ -125,5 +152,33 @@ export function KnownIssueBadge({
       {t("knownIssue")}
       {count > 1 ? ` ×${count}` : ""}
     </Badge>
+  );
+}
+
+export function QuarantinedBadge({ className }: { className?: string }) {
+  const t = useTranslations("triage");
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <ShieldAlert
+          className={cn(
+            "inline h-4 w-4 shrink-0 text-purple-600 dark:text-purple-400",
+            className
+          )}
+          aria-label={t("quarantine.label")}
+          data-testid="triage-quarantined-badge"
+        />
+      </TooltipTrigger>
+      <TooltipContent>
+        <div className="font-medium">{t("quarantine.label")}</div>
+        {t("quarantine.hint")
+          .split(/(?<=\.)\s+/)
+          .map((sentence) => (
+            <div key={sentence} className="text-xs opacity-90">
+              {sentence}
+            </div>
+          ))}
+      </TooltipContent>
+    </Tooltip>
   );
 }

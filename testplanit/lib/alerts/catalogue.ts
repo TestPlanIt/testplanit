@@ -261,6 +261,16 @@ export const ALERT_METRIC_CATALOGUE: readonly AlertMetricDefinition[] = [
     defaults: { thresholdValue: 3 },
   },
   {
+    metric: AlertMetric.NEW_FAILURE_SIGNATURES,
+    subjectType: AlertSubjectType.RUN,
+    path: "event",
+    trigger: "run",
+    scopes: RUN_SCOPES,
+    fields: ["thresholdValue", "evaluateOn"],
+    valueKind: "count",
+    defaults: { thresholdValue: 0 },
+  },
+  {
     metric: AlertMetric.SESSION_OVERRUN,
     subjectType: AlertSubjectType.SESSION,
     path: "event",

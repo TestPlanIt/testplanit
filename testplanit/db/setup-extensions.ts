@@ -44,7 +44,7 @@ async function setupExtensions() {
     readFileSync(
       join(
         process.cwd(),
-        "migrations/20260821180000_add_effective_case_status_view/migration.sql"
+        "migrations/20261019194100_effective_case_status_quarantine/migration.sql"
       ),
       "utf8"
     )

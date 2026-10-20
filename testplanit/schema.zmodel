@@ -726,6 +726,10 @@ model Projects {
     failureTriageEnabled             Boolean                               @default(true)
     /// Ask the project's LLM to classify new signatures as they appear.
     failureTriageAutoClassify        Boolean                               @default(true)
+    /// Quarantine lifts itself once a case passes this many times in a row
+    /// after being quarantined (0 or the switch off = only released by hand).
+    quarantineAutoRelease            Boolean                               @default(true)
+    quarantineAutoReleasePasses      Int                                   @default(5)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
     junitIterationPropertyNames      String[]                              @default([])
     reviewWorkflowEnabled            Boolean                               @default(false)
@@ -1098,14 +1102,15 @@ model ColorFamily {
 }
 
 model Color {
-    id            Int            @id @default(autoincrement())
-    colorFamilyId Int
-    colorFamily   ColorFamily    @relation(fields: [colorFamilyId], references: [id])
-    value         String         @length(1)
-    order         Int            @default(0)
-    fieldOptions  FieldOptions[]
-    statuses      Status[]
-    workflows     Workflows[]
+    id                     Int                     @id @default(autoincrement())
+    colorFamilyId          Int
+    colorFamily            ColorFamily             @relation(fields: [colorFamilyId], references: [id])
+    value                  String                  @length(1)
+    order                  Int                     @default(0)
+    fieldOptions           FieldOptions[]
+    statuses               Status[]
+    workflows              Workflows[]
+    failureClassifications FailureClassification[]
 
     @@unique([colorFamilyId, order], name: "colorFamilyId_order")
     @@deny('all', auth() == null)
@@ -7070,6 +7075,7 @@ enum AlertMetric {
     AUDIT_BACKLOG
     ACCOUNT_LOCKOUTS
     NO_AUTOMATED_RESULTS
+    NEW_FAILURE_SIGNATURES
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
@@ -7348,15 +7354,26 @@ enum FailureFingerprintKind {
     @@allow('read', auth().access != null)
 }
 
-enum FailureClassification {
-    UNCLASSIFIED
-    PRODUCT_BUG
-    TEST_BUG
-    ENVIRONMENT
-    FLAKY
+/// Catalogue of failure classifications the AI picks from and people set by
+/// hand. Seeded with Product bug, Test bug, Environment and Flaky; `key` keeps
+/// a seeded entry recognisable after an admin renames it.
+model FailureClassification {
+    id           Int                @id @default(autoincrement())
+    name         String             @unique @length(1)
+    key          String?            @unique
+    description  String?
+    colorId      Int?
+    color        Color?             @relation(fields: [colorId], references: [id], onDelete: SetNull)
+    order        Int                @default(0)
+    isDeleted    Boolean            @default(false)
+    deletedAt    DateTime?          @db.Timestamptz(6)
+    createdAt    DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime           @updatedAt
+    signatures   FailureSignature[] @relation("FailureSignatureClassification")
+    aiSignatures FailureSignature[] @relation("FailureSignatureAiClassification")
 
     @@deny('all', auth() == null)
-    @@allow('update', auth().access == 'ADMIN')
+    @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
 
@@ -7404,12 +7421,14 @@ model FailureSignature {
     resolvedById          String?
     resolvedBy            User?                        @relation("FailureSignatureResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
     /// Effective classification: a person's choice when classifiedById is set, else the AI's.
-    classification        FailureClassification        @default(UNCLASSIFIED)
+    classificationId      Int?
+    classification        FailureClassification?       @relation("FailureSignatureClassification", fields: [classificationId], references: [id], onDelete: SetNull)
     classificationSource  FailureClassificationSource?
     classifiedAt          DateTime?                    @db.Timestamptz(6)
     classifiedById        String?
     classifiedBy          User?                        @relation("FailureSignatureClassifiedBy", fields: [classifiedById], references: [id], onDelete: SetNull)
-    aiClassification      FailureClassification?       @deny('update', true)
+    aiClassificationId    Int?                         @deny('update', true)
+    aiClassification      FailureClassification?       @relation("FailureSignatureAiClassification", fields: [aiClassificationId], references: [id], onDelete: SetNull)
     aiConfidence          Float?                       @deny('update', true)
     aiRationale           String?                      @deny('update', true)
     aiSuggestedIssueTitle String?                      @deny('update', true)
@@ -7425,7 +7444,8 @@ model FailureSignature {
 
     @@unique([projectId, fingerprint])
     @@index([projectId, status, lastSeenAt(sort: Desc)])
-    @@index([projectId, classification])
+    @@index([projectId, classificationId])
+    @@index([aiClassificationId])
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
@@ -7505,17 +7525,19 @@ model FailureSignatureIssue {
 /// failures are excluded from run pass/fail and shown as a separate count.
 /// Releasing a quarantine deletes the row; the audit log keeps the history.
 model CaseQuarantine {
-    id          Int               @id @default(autoincrement())
-    caseId      Int               @unique @deny('update', true)
-    case        RepositoryCases   @relation(fields: [caseId], references: [id], onDelete: Cascade)
-    projectId   Int               @deny('update', true)
-    project     Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    signatureId Int?
-    signature   FailureSignature? @relation(fields: [signatureId], references: [id], onDelete: SetNull)
-    reason      String?
-    createdById String            @deny('update', true)
-    createdBy   User              @relation("CaseQuarantineCreatedBy", fields: [createdById], references: [id])
-    createdAt   DateTime          @default(now()) @db.Timestamptz(6)
+    id                Int               @id @default(autoincrement())
+    caseId            Int               @unique @deny('update', true)
+    case              RepositoryCases   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    projectId         Int               @deny('update', true)
+    project           Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    signatureId       Int?
+    signature         FailureSignature? @relation(fields: [signatureId], references: [id], onDelete: SetNull)
+    reason            String?
+    /// Opt this case out of the project's automatic release.
+    keepUntilReleased Boolean           @default(false)
+    createdById       String            @deny('update', true)
+    createdBy         User              @relation("CaseQuarantineCreatedBy", fields: [createdById], references: [id])
+    createdAt         DateTime          @default(now()) @db.Timestamptz(6)
 
     @@index([projectId])
     @@index([signatureId])

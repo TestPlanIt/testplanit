@@ -22,14 +22,14 @@ import {
  * while nobody has classified the signature by hand.
  */
 
-export const FAILURE_CLASSIFICATIONS = [
-  "PRODUCT_BUG",
-  "TEST_BUG",
-  "ENVIRONMENT",
-  "FLAKY",
-] as const;
-export type FailureClassificationValue =
-  (typeof FAILURE_CLASSIFICATIONS)[number];
+/** One catalogue entry as the parser and the prompt see it. */
+export interface ClassificationCatalogueEntry {
+  id: number;
+  name: string;
+  /** Stable identifier of a seeded entry (PRODUCT_BUG, TEST_BUG, ENVIRONMENT, FLAKY). */
+  key: string | null;
+  description: string | null;
+}
 
 export const STACK_TRACE_MAX_CHARS = 4000;
 export const SYSTEM_ERR_MAX_CHARS = 1500;
@@ -45,45 +45,61 @@ const classificationOutputSchema = z.object({
 });
 
 export interface ParsedClassification {
-  classification: FailureClassificationValue;
+  classificationId: number;
   confidence: number;
   rationale: string;
   suggestedIssueTitle: string | null;
   suggestedNextStep: string | null;
 }
 
-const CLASSIFICATION_ALIASES: Record<string, FailureClassificationValue> = {
-  PRODUCT_BUG: "PRODUCT_BUG",
+/** Synonyms the model tends to use for the seeded entries, by key. */
+const CLASSIFICATION_ALIASES: Record<string, string> = {
   PRODUCT: "PRODUCT_BUG",
   BUG: "PRODUCT_BUG",
   APPLICATION_BUG: "PRODUCT_BUG",
+  APP_BUG: "PRODUCT_BUG",
   REGRESSION: "PRODUCT_BUG",
-  TEST_BUG: "TEST_BUG",
   TEST: "TEST_BUG",
   TEST_ISSUE: "TEST_BUG",
   AUTOMATION_BUG: "TEST_BUG",
-  ENVIRONMENT: "ENVIRONMENT",
   ENV: "ENVIRONMENT",
   INFRASTRUCTURE: "ENVIRONMENT",
   INFRA: "ENVIRONMENT",
-  FLAKY: "FLAKY",
   FLAKE: "FLAKY",
   INTERMITTENT: "FLAKY",
 };
 
-export function normalizeClassification(
-  value: string
-): FailureClassificationValue | null {
-  const key = value
+function normalizeToken(value: string): string {
+  return value
     .trim()
     .toUpperCase()
-    .replace(/[\s-]+/g, "_");
-  return CLASSIFICATION_ALIASES[key] ?? null;
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+/**
+ * Maps the model's answer onto a catalogue entry: by name first (case,
+ * punctuation and spacing ignored), then by seeded key, then by alias.
+ */
+export function normalizeClassification(
+  value: string,
+  catalogue: ClassificationCatalogueEntry[]
+): ClassificationCatalogueEntry | null {
+  const token = normalizeToken(value);
+  if (!token) return null;
+  const byName = catalogue.find((c) => normalizeToken(c.name) === token);
+  if (byName) return byName;
+  const byKey = catalogue.find((c) => c.key === token);
+  if (byKey) return byKey;
+  const alias = CLASSIFICATION_ALIASES[token];
+  if (alias) return catalogue.find((c) => c.key === alias) ?? null;
+  return null;
 }
 
 /** Parses the model's JSON answer; null when it cannot be read. */
 export function parseClassification(
-  content: string
+  content: string,
+  catalogue: ClassificationCatalogueEntry[]
 ): ParsedClassification | null {
   const json = extractJsonObject(content);
   if (!json) return null;
@@ -95,10 +111,13 @@ export function parseClassification(
   }
   const parsed = classificationOutputSchema.safeParse(raw);
   if (!parsed.success) return null;
-  const classification = normalizeClassification(parsed.data.classification);
+  const classification = normalizeClassification(
+    parsed.data.classification,
+    catalogue
+  );
   if (!classification) return null;
   return {
-    classification,
+    classificationId: classification.id,
     confidence: Math.min(1, Math.max(0, parsed.data.confidence)),
     rationale: parsed.data.rationale.trim(),
     suggestedIssueTitle: parsed.data.suggestedIssueTitle?.trim() || null,
@@ -106,7 +125,28 @@ export function parseClassification(
   };
 }
 
+/** The catalogue as the prompt lists it: one `- name: description` per line. */
+export function formatCatalogue(
+  catalogue: ClassificationCatalogueEntry[]
+): string {
+  return catalogue
+    .map((c) => `- ${c.name}: ${c.description?.trim() || "(no description)"}`)
+    .join("\n");
+}
+
+/** Live catalogue entries, in display order. */
+export async function loadClassificationCatalogue(
+  db: TriageDb
+): Promise<ClassificationCatalogueEntry[]> {
+  return db.failureClassification.findMany({
+    where: { isDeleted: false },
+    orderBy: [{ order: "asc" }, { id: "asc" }],
+    select: { id: true, name: true, key: true, description: true },
+  });
+}
+
 export type ClassificationVariables = {
+  CLASSIFICATIONS: string;
   EXCEPTION_TYPE: string;
   FAILURE_MESSAGE: string;
   STACK_TRACE: string;
@@ -137,6 +177,7 @@ export function buildClassificationVariables(input: {
   lastSeenAt: Date;
   flakyCandidate: boolean;
   cases: AffectedCaseContext[];
+  catalogue: ClassificationCatalogueEntry[];
 }): ClassificationVariables {
   const clip = (text: string | null, max: number) => {
     const value = (text ?? "").trim();
@@ -154,6 +195,7 @@ export function buildClassificationVariables(input: {
     cases.push(`- …and ${input.cases.length - AFFECTED_CASES_MAX} more`);
   }
   return {
+    CLASSIFICATIONS: formatCatalogue(input.catalogue),
     EXCEPTION_TYPE: input.exceptionType ?? "(none)",
     FAILURE_MESSAGE: clip(input.message, MESSAGE_MAX_CHARS),
     STACK_TRACE: clip(input.stackTrace, STACK_TRACE_MAX_CHARS),
@@ -214,11 +256,23 @@ export async function classifySignatures(
   );
   if (!resolved) return { classified: 0, failed: 0, skipped: true };
 
+  const catalogue = await loadClassificationCatalogue(db);
+  if (catalogue.length === 0) {
+    console.warn(
+      "[failure-triage] no failure classifications configured; nothing to classify against"
+    );
+    return { classified: 0, failed: 0, skipped: true };
+  }
+
   let classified = 0;
   let failed = 0;
   for (const signatureId of signatureIds) {
     try {
-      const vars = await loadClassificationVariables(db, signatureId);
+      const vars = await loadClassificationVariables(
+        db,
+        signatureId,
+        catalogue
+      );
       if (!vars) continue;
       const request: LlmRequest = {
         messages: [
@@ -236,7 +290,7 @@ export async function classifySignatures(
         maxRetries: 2,
         baseDelayMs: 1000,
       });
-      const parsed = parseClassification(response.content);
+      const parsed = parseClassification(response.content, catalogue);
       if (!parsed) {
         failed++;
         console.warn(
@@ -264,7 +318,8 @@ export async function classifySignatures(
 
 async function loadClassificationVariables(
   db: TriageDb,
-  signatureId: number
+  signatureId: number,
+  catalogue: ClassificationCatalogueEntry[]
 ): Promise<ClassificationVariables | null> {
   const signature = await db.failureSignature.findUnique({
     where: { id: signatureId },
@@ -319,6 +374,7 @@ async function loadClassificationVariables(
       name: r.name,
       history: history.get(r.id) ?? [],
     })),
+    catalogue,
   });
 }
 
@@ -338,7 +394,7 @@ export async function storeClassification(
   await db.failureSignature.update({
     where: { id: signatureId },
     data: {
-      aiClassification: parsed.classification,
+      aiClassificationId: parsed.classificationId,
       aiConfidence: parsed.confidence,
       aiRationale: parsed.rationale || null,
       aiSuggestedIssueTitle: parsed.suggestedIssueTitle,
@@ -348,7 +404,7 @@ export async function storeClassification(
       ...(manual
         ? {}
         : {
-            classification: parsed.classification,
+            classificationId: parsed.classificationId,
             classificationSource: "AI",
             classifiedAt: now,
           }),

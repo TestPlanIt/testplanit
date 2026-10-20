@@ -315,6 +315,7 @@ export class AlertEvaluationService {
 
     let counts: RunCounts | null = null;
     let issues: number | null = null;
+    let newSignatures: number | null = null;
     const fired: FiredAlert[] = [];
     for (const rule of matching) {
       let outcome: {
@@ -353,6 +354,11 @@ export class AlertEvaluationService {
         });
         if (verdict.fired) {
           outcome = { observed: verdict.issues, details: { issues } };
+        }
+      } else if (rule.metric === AlertMetric.NEW_FAILURE_SIGNATURES) {
+        newSignatures ??= await this.loadRunNewSignatureCount(subject);
+        if (newSignatures > Math.max(0, rule.thresholdValue)) {
+          outcome = { observed: newSignatures, details: { newSignatures } };
         }
       } else {
         counts ??= await this.loadRunCounts(subject);
@@ -958,13 +964,14 @@ export class AlertEvaluationService {
   /**
    * Passed/failed counts for the run, one per live run case, read through
    * the EffectiveCaseStatus view so manual, hybrid and reporter-SDK runs
-   * all resolve to the right source (issue #591).
+   * all resolve to the right source (issue #591). Failures of quarantined
+   * cases do not count as failures.
    */
   private async loadRunCounts(run: RunSubject): Promise<RunCounts> {
     const rows: any[] = await this.db.$queryRaw`
       SELECT
         COUNT(*) FILTER (WHERE s."isSuccess")::int AS passed,
-        COUNT(*) FILTER (WHERE s."isFailure")::int AS failed
+        COUNT(*) FILTER (WHERE s."isFailure" AND NOT e."isQuarantined")::int AS failed
       FROM "EffectiveCaseStatus" e
       LEFT JOIN "Status" s ON s.id = e."statusId"
       WHERE e."testRunId" = ${run.runId}
@@ -1007,6 +1014,35 @@ export class AlertEvaluationService {
       isSuccess: false,
       isFailure: false,
     }));
+  }
+
+  /**
+   * Failure signatures whose first occurrence is in this run: the run
+   * introduced a failure the project had not seen before (failure triage).
+   */
+  private async loadRunNewSignatureCount(run: RunSubject): Promise<number> {
+    const rows: any[] = await this.db.$queryRaw`
+      WITH in_run AS (
+        SELECT r."failureSignatureId" AS id,
+               MIN(COALESCE(r."executedAt", r."createdAt")) AS first_here
+        FROM "JUnitTestResult" r
+        JOIN "JUnitTestSuite" s ON s.id = r."testSuiteId"
+        WHERE s."testRunId" = ${run.runId}
+          AND r."failureSignatureId" IS NOT NULL
+        GROUP BY r."failureSignatureId"
+      )
+      SELECT COUNT(*)::int AS count
+      FROM in_run
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM "JUnitTestResult" o
+        JOIN "JUnitTestSuite" os ON os.id = o."testSuiteId"
+        WHERE o."failureSignatureId" = in_run.id
+          AND os."testRunId" <> ${run.runId}
+          AND COALESCE(o."executedAt", o."createdAt") < in_run.first_here
+      )
+    `;
+    return Number(rows?.[0]?.count ?? 0);
   }
 
   /** Distinct live defects linked to any result in the run. */

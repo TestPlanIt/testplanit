@@ -5,7 +5,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
-import { Microscope, RotateCcw, X, Zap } from "lucide-react";
+import { Fingerprint, RotateCcw, ShieldAlert, X, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import type { AsyncOptionsFetcher } from "~/hooks/useAsyncComboboxOptions";
@@ -17,6 +17,8 @@ export interface JunitFacetFilters {
   suites: string[];
   flakyOnly: boolean;
   retriedOnly: boolean;
+  /** Only results of quarantined cases (failure triage). */
+  quarantinedOnly: boolean;
   /** Failure-triage signatures picked in the run's cluster panel. */
   signatureIds: number[];
 }
@@ -26,6 +28,7 @@ export const EMPTY_JUNIT_FACETS: JunitFacetFilters = {
   suites: [],
   flakyOnly: false,
   retriedOnly: false,
+  quarantinedOnly: false,
   signatureIds: [],
 };
 
@@ -35,6 +38,7 @@ export function junitFacetsActive(facets: JunitFacetFilters): boolean {
     facets.suites.length > 0 ||
     facets.flakyOnly ||
     facets.retriedOnly ||
+    facets.quarantinedOnly ||
     facets.signatureIds.length > 0
   );
 }
@@ -116,6 +120,7 @@ interface JunitFilterBarProps {
   /** Distinct flaky cases in the run — the toggle only shows when > 0. */
   flakyCaseCount: number;
   retriedCaseCount: number;
+  quarantinedCaseCount: number;
 }
 
 /**
@@ -131,6 +136,7 @@ export default function JunitFilterBar({
   suiteOptions,
   flakyCaseCount,
   retriedCaseCount,
+  quarantinedCaseCount,
 }: JunitFilterBarProps) {
   const t = useTranslations();
   return (
@@ -184,6 +190,25 @@ export default function JunitFilterBar({
           {t("runs.junitFilters.retried")}
         </Button>
       )}
+      {quarantinedCaseCount > 0 && (
+        <Button
+          type="button"
+          variant={facets.quarantinedOnly ? "secondary" : "outline"}
+          size="sm"
+          className="h-8"
+          aria-pressed={facets.quarantinedOnly}
+          onClick={() =>
+            onFacetsChange({
+              ...facets,
+              quarantinedOnly: !facets.quarantinedOnly,
+            })
+          }
+          data-testid="junit-filter-quarantined"
+        >
+          <ShieldAlert className="h-3.5 w-3.5" />
+          {t("triage.quarantine.label")}
+        </Button>
+      )}
       {facets.signatureIds.length > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -196,7 +221,7 @@ export default function JunitFilterBar({
               onClick={() => onFacetsChange({ ...facets, signatureIds: [] })}
               data-testid="junit-filter-clusters"
             >
-              <Microscope className="h-3.5 w-3.5" />
+              <Fingerprint className="h-3.5 w-3.5" />
               {t("triage.runPanel.selectedClusters", {
                 count: facets.signatureIds.length,
               })}

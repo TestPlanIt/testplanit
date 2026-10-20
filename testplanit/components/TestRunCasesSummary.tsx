@@ -25,6 +25,10 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
+import {
+  QUARANTINED_COLOR,
+  QUARANTINED_RESULT_TYPE,
+} from "~/lib/services/testRunSummary-shared";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
@@ -335,7 +339,15 @@ export function TestRunCasesSummary({
 
   // Handle JUnit test run display
   if (isJUnitRun && summaryData.junitSummary) {
-    const { resultSegments } = summaryData.junitSummary;
+    // Failures of quarantined cases arrive as their own segment with a
+    // fixed English name; show it in the viewer's language.
+    const quarantinedLabel = tGlobal("triage.quarantine.label");
+    const resultSegments = summaryData.junitSummary.resultSegments.map(
+      (segment) =>
+        segment.resultType === QUARANTINED_RESULT_TYPE
+          ? { ...segment, statusName: quarantinedLabel }
+          : segment
+    );
     const totalItems = summaryData.totalCases;
     const totalTestCount = resultSegments.reduce(
       (sum, result) => sum + result.count,
@@ -344,7 +356,14 @@ export function TestRunCasesSummary({
 
     // Generate summary text from status counts
     const summaryText = summaryData.statusCounts
-      .map((status) => `${status.count} ${status.statusName}`)
+      .map(
+        (status) =>
+          `${status.count} ${
+            status.resultType === QUARANTINED_RESULT_TYPE
+              ? quarantinedLabel
+              : status.statusName
+          }`
+      )
       .join(", ");
 
     const totalElapsedDisplay =
@@ -569,9 +588,17 @@ export function TestRunCasesSummary({
     summaryData.totalElapsed > 0
   );
 
-  // Generate summary text from status counts
+  // Generate summary text from status counts (the Quarantined bucket from
+  // failure triage carries a fixed English name; show it translated).
   const summaryText = summaryData.statusCounts
-    .map((status) => `${status.count} ${status.statusName}`)
+    .map(
+      (status) =>
+        `${status.count} ${
+          status.resultType === QUARANTINED_RESULT_TYPE
+            ? tGlobal("triage.quarantine.label")
+            : status.statusName
+        }`
+    )
     .join(", ");
 
   // Calculate total elapsed time text
@@ -601,10 +628,16 @@ export function TestRunCasesSummary({
         data-testid="test-run-cases-status-bar"
       >
         {sortedCaseDetails.map((item, index) => {
-          const color =
-            item.statusId !== null
+          // A quarantined case's failure (failure triage) is drawn as its
+          // own bucket, matching the counts above.
+          const color = item.quarantined
+            ? QUARANTINED_COLOR
+            : item.statusId !== null
               ? item.colorValue
               : (firstStatus?.color?.value ?? item.colorValue);
+          const segmentStatusName = item.quarantined
+            ? tGlobal("triage.quarantine.label")
+            : item.statusName;
 
           const segmentWidth = segmentWidths[index];
 
@@ -635,7 +668,7 @@ export function TestRunCasesSummary({
               >
                 <div className="flex items-center gap-1 font-semibold text-sm">
                   <div className="rounded-full bg-muted w-2 h-2" />
-                  {item.statusName || tCommon("labels.untested")}
+                  {segmentStatusName || tCommon("labels.untested")}
                 </div>
                 <div className="text-xs opacity-90 mt-1">
                   <div className="flex items-center gap-1">

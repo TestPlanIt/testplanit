@@ -146,6 +146,8 @@ const testProject: ExtendedProjects = {
   impactEnabled: false,
   failureTriageEnabled: true,
   failureTriageAutoClassify: true,
+  quarantineAutoRelease: true,
+  quarantineAutoReleasePasses: 5,
   junitIterationPropertyNames: [],
   reviewWorkflowEnabled: true,
   requireResultFlipJustification: false,

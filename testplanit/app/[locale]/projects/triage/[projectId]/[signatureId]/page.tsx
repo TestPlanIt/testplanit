@@ -14,9 +14,12 @@ import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   ClassificationBadge,
+  ClassificationOption,
   FlakyCandidateBadge,
+  QuarantinedBadge,
   SignatureStatusBadge,
 } from "@/components/triage/badges";
+import { QuarantineDialog } from "@/components/triage/QuarantineDialog";
 import {
   SignatureIssueLinker,
   type SignatureIssueDraft,
@@ -61,6 +64,8 @@ import {
   Loader2,
   RotateCcw,
   Save,
+  ShieldAlert,
+  ShieldOff,
   Sparkles,
   X,
 } from "lucide-react";
@@ -74,7 +79,6 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { Link } from "~/lib/navigation";
 import {
   ApplicationArea,
-  FailureClassification,
   type FailureSignatureStatus,
 } from "~/zenstack/models";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
@@ -126,7 +130,10 @@ type AffectedCaseRow = {
   occurrences: number;
   runCount: number;
   lastSeenAt: Date | null;
+  quarantine: { id: number; reason: string | null } | null;
 };
+
+const CLASSIFICATION_NONE = "none";
 
 type OccurrenceRow = {
   id: number;
@@ -168,6 +175,22 @@ export default function SignatureDetailPage() {
     {
       where: { id: signatureId },
       include: {
+        classification: {
+          select: {
+            id: true,
+            name: true,
+            isDeleted: true,
+            color: { select: { value: true } },
+          },
+        },
+        aiClassification: {
+          select: {
+            id: true,
+            name: true,
+            isDeleted: true,
+            color: { select: { value: true } },
+          },
+        },
         issues: {
           include: {
             issue: {
@@ -289,6 +312,31 @@ export default function SignatureDetailPage() {
     () => new Map((affectedCases ?? []).map((c) => [c.id, c])),
     [affectedCases]
   );
+  const { data: classifications } = queries.failureClassification.useFindMany(
+    {
+      where: { isDeleted: false },
+      orderBy: [{ order: "asc" }, { id: "asc" }],
+      select: { id: true, name: true, color: { select: { value: true } } },
+    },
+    { enabled: !!signature }
+  );
+  const { data: quarantines, refetch: refetchQuarantines } =
+    queries.caseQuarantine.useFindMany(
+      {
+        where: { caseId: { in: affectedCaseIds } },
+        select: { id: true, caseId: true, reason: true },
+      },
+      { enabled: affectedCaseIds.length > 0 }
+    );
+  const quarantineByCase = useMemo(
+    () => new Map((quarantines ?? []).map((q) => [q.caseId, q])),
+    [quarantines]
+  );
+  const { mutateAsync: releaseQuarantine } = queries.caseQuarantine.useDelete();
+  const [quarantineCaseIds, setQuarantineCaseIds] = useState<number[] | null>(
+    null
+  );
+  const [releaseCase, setReleaseCase] = useState<AffectedCaseRow | null>(null);
 
   const [affectedVisibility, setAffectedVisibility] = useState<VisibilityState>(
     {}
@@ -309,6 +357,9 @@ export default function SignatureDetailPage() {
   const tTestRuns = t("common.fields.testRuns");
   const tTestCases = t("common.fields.testCases");
   const tExecutedAt = t("common.fields.executedAt");
+  const tQuarantine = t("triage.quarantine.label");
+  const tQuarantineAction = t("triage.quarantine.action");
+  const tRelease = t("triage.quarantine.release");
 
   const affectedCaseRows = useMemo<AffectedCaseRow[]>(
     () =>
@@ -323,9 +374,17 @@ export default function SignatureDetailPage() {
           occurrences: group.occurrences,
           runCount: group.runCount,
           lastSeenAt: group.lastSeenAt ? new Date(group.lastSeenAt) : null,
+          quarantine: quarantineByCase.get(group.caseId) ?? null,
         };
       }),
-    [caseGroups, caseById]
+    [caseGroups, caseById, quarantineByCase]
+  );
+  const unquarantinedCaseIds = useMemo(
+    () =>
+      affectedCaseRows
+        .filter((row) => !row.quarantine && !row.isDeleted)
+        .map((row) => row.id),
+    [affectedCaseRows]
   );
   const sortedAffectedCaseRows = useMemo(
     () =>
@@ -336,7 +395,11 @@ export default function SignatureDetailPage() {
             ? row.occurrences
             : column === "runCount"
               ? row.runCount
-              : row.lastSeenAt
+              : column === "quarantine"
+                ? row.quarantine
+                  ? 1
+                  : 0
+                : row.lastSeenAt
       ),
     [affectedCaseRows, affectedSort]
   );
@@ -424,8 +487,60 @@ export default function SignatureDetailPage() {
             <span className="text-muted-foreground">-</span>
           ),
       },
+      {
+        id: "quarantine",
+        accessorFn: (row) => (row.quarantine ? 1 : 0),
+        header: tQuarantine,
+        enableSorting: true,
+        enableResizing: true,
+        size: 170,
+        minSize: 60,
+        cell: ({ row }) =>
+          row.original.quarantine ? (
+            <div className="flex items-center gap-1">
+              <QuarantinedBadge />
+              {canEdit && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  aria-label={tRelease}
+                  title={tRelease}
+                  onClick={() => setReleaseCase(row.original)}
+                  data-testid="triage-release-quarantine-button"
+                >
+                  <ShieldOff className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ) : canEdit && !row.original.isDeleted ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7"
+              onClick={() => setQuarantineCaseIds([row.original.id])}
+              data-testid="triage-quarantine-case-button"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
+              {tQuarantineAction}
+            </Button>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          ),
+      },
     ],
-    [projectId, signatureId, tName, tOccurrences, tTestRuns, tLastSeen]
+    [
+      projectId,
+      signatureId,
+      canEdit,
+      tName,
+      tOccurrences,
+      tTestRuns,
+      tLastSeen,
+      tQuarantine,
+      tQuarantineAction,
+      tRelease,
+    ]
   );
 
   const occurrenceRows = useMemo<OccurrenceRow[]>(
@@ -538,9 +653,9 @@ export default function SignatureDetailPage() {
         title: signature.title,
         signatureUrl: `${origin}/projects/triage/${projectId}/${signature.id}`,
         classificationLabel:
-          signature.classification === "UNCLASSIFIED"
-            ? null
-            : t(`triage.classification.${signature.classification}`),
+          signature.classification && !signature.classification.isDeleted
+            ? signature.classification.name
+            : null,
         aiRationale: signature.aiRationale,
         aiSuggestedIssueTitle: signature.aiSuggestedIssueTitle,
         aiSuggestedNextStep: signature.aiSuggestedNextStep,
@@ -620,13 +735,35 @@ export default function SignatureDetailPage() {
       resolvedById: status === "RESOLVED" ? session.user.id : null,
     });
 
-  const setClassification = (classification: FailureClassification) =>
-    save({
-      classification,
-      classificationSource: "MANUAL",
-      classifiedAt: new Date(),
-      classifiedById: session.user.id,
-    });
+  const setClassification = (classificationId: number | null) =>
+    save(
+      classificationId === null
+        ? {
+            classificationId: null,
+            classificationSource: null,
+            classifiedAt: null,
+            classifiedById: null,
+          }
+        : {
+            classificationId,
+            classificationSource: "MANUAL",
+            classifiedAt: new Date(),
+            classifiedById: session.user.id,
+          }
+    );
+
+  const handleRelease = async (row: AffectedCaseRow) => {
+    if (!row.quarantine) return;
+    try {
+      await releaseQuarantine({ where: { id: row.quarantine.id } });
+      toast.success(t("triage.quarantine.releasedToast"));
+      setReleaseCase(null);
+      void refetchQuarantines();
+    } catch (error) {
+      console.error("Failed to release quarantine:", error);
+      toast.error(t("triage.quarantine.failedToast"));
+    }
+  };
 
   const saveNotes = async () => {
     await save({ notes: isTiptapEmpty(notesDoc) ? null : notesDoc });
@@ -722,6 +859,14 @@ export default function SignatureDetailPage() {
                       onClick: () => void classifyNow(),
                       disabled: classifying,
                       testId: "triage-classify-button",
+                    },
+                    {
+                      key: "quarantine",
+                      icon: ShieldAlert,
+                      label: t("triage.quarantine.actionAll"),
+                      onClick: () => setQuarantineCaseIds(unquarantinedCaseIds),
+                      hidden: unquarantinedCaseIds.length === 0,
+                      testId: "triage-quarantine-all-button",
                     },
                     {
                       key: "resolve",
@@ -862,10 +1007,17 @@ export default function SignatureDetailPage() {
                           {t("triage.actions.setClassification")}
                         </Label>
                         <Select
-                          value={signature.classification}
+                          value={
+                            signature.classification &&
+                            !signature.classification.isDeleted
+                              ? String(signature.classification.id)
+                              : CLASSIFICATION_NONE
+                          }
                           onValueChange={(value) =>
                             void setClassification(
-                              value as FailureClassification
+                              value === CLASSIFICATION_NONE
+                                ? null
+                                : Number(value)
                             )
                           }
                           disabled={isUpdating}
@@ -878,13 +1030,19 @@ export default function SignatureDetailPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.values(FailureClassification).map(
-                              (value) => (
-                                <SelectItem key={value} value={value}>
-                                  {t(`triage.classification.${value}`)}
-                                </SelectItem>
-                              )
-                            )}
+                            <SelectItem value={CLASSIFICATION_NONE}>
+                              {t("triage.unclassified")}
+                            </SelectItem>
+                            {(classifications ?? []).map((classification) => (
+                              <SelectItem
+                                key={classification.id}
+                                value={String(classification.id)}
+                              >
+                                <ClassificationOption
+                                  classification={classification}
+                                />
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -920,9 +1078,7 @@ export default function SignatureDetailPage() {
                         </Label>
                         <div className="flex flex-wrap items-center gap-2">
                           <ClassificationBadge
-                            classification={
-                              signature.aiClassification ?? "UNCLASSIFIED"
-                            }
+                            classification={signature.aiClassification}
                             source="AI"
                           />
                           <span className="text-xs text-muted-foreground">
@@ -1234,6 +1390,44 @@ export default function SignatureDetailPage() {
               data-testid="triage-unlink-confirm"
             >
               {t("common.configurationGroup.unlink")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <QuarantineDialog
+        open={quarantineCaseIds !== null}
+        onClose={() => setQuarantineCaseIds(null)}
+        projectId={projectId}
+        signatureId={signature.id}
+        caseIds={quarantineCaseIds ?? []}
+        onDone={() => void refetchQuarantines()}
+      />
+      <AlertDialog
+        open={releaseCase !== null}
+        onOpenChange={(open) => {
+          if (!open) setReleaseCase(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("triage.quarantine.releaseConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("triage.quarantine.releaseConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="triage-release-cancel">
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (releaseCase) void handleRelease(releaseCase);
+              }}
+              data-testid="triage-release-confirm"
+            >
+              {t("triage.quarantine.release")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

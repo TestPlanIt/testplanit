@@ -10,7 +10,6 @@ import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   ClassificationBadge,
   FlakyCandidateBadge,
-  KnownIssueBadge,
   SignatureStatusBadge,
 } from "@/components/triage/badges";
 import { Sparkles } from "lucide-react";
@@ -18,8 +17,10 @@ import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { Link } from "~/lib/navigation";
 import type { FailureSignature } from "~/zenstack/models";
+import type { ClassificationRef } from "@/components/triage/badges";
 
 export type SignatureRow = FailureSignature & {
+  classification: ClassificationRef | null;
   issues: { issue: RunResultSignatureIssue }[];
 };
 
@@ -68,10 +69,6 @@ export function useSignatureColumns(
             {row.original.flakyCandidate && (
               <FlakyCandidateBadge className="shrink-0" />
             )}
-            <KnownIssueBadge
-              count={row.original.issues.length}
-              className="shrink-0"
-            />
           </div>
         ),
       },
@@ -82,12 +79,14 @@ export function useSignatureColumns(
         enableSorting: true,
         enableResizing: true,
         size: 190,
-        cell: ({ row }) => (
-          <ClassificationBadge
-            classification={row.original.classification}
-            source={row.original.classificationSource}
-          />
-        ),
+        cell: ({ row }) =>
+          row.original.classification &&
+          !row.original.classification.isDeleted ? (
+            <ClassificationBadge
+              classification={row.original.classification}
+              source={row.original.classificationSource}
+            />
+          ) : null,
       },
       {
         id: "classificationSource",
@@ -113,7 +112,7 @@ export function useSignatureColumns(
               <UserNameCell userId={row.original.classifiedById} shrinkLink />
             );
           }
-          return <span className="text-muted-foreground">-</span>;
+          return null;
         },
       },
       {
@@ -190,10 +189,9 @@ export function useSignatureColumns(
         id: "issues",
         accessorFn: (row) => row.issues.length,
         header: tIssues,
-        enableSorting: false,
+        enableSorting: true,
         enableResizing: true,
-        size: 90,
-        meta: { isVisible: false },
+        size: 110,
         cell: ({ row }) =>
           row.original.issues.length > 0 ? (
             <IssuesListDisplay
@@ -201,11 +199,8 @@ export function useSignatureColumns(
                 ...link.issue,
                 projectIds: [projectId],
               }))}
-              size="small"
             />
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          ),
+          ) : null,
       },
       {
         id: "lastSeenAt",

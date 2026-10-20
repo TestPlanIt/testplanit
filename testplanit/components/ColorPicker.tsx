@@ -13,11 +13,14 @@ import React, { useState } from "react";
 interface ColorPickerProps {
   onColorSelect: (colorId: number) => void;
   initialColorId?: number | null;
+  /** Input-height trigger (swatch + chevron) instead of filling the parent. */
+  compact?: boolean;
 }
 
 export const ColorPicker: React.FC<ColorPickerProps> = ({
   onColorSelect,
   initialColorId,
+  compact = false,
 }) => {
   const { data: colors, isLoading: isColorsLoading } = useClientQueries(
     schema
@@ -65,11 +68,19 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
       }}
     >
       <SelectTrigger
-        className="p-0 m-0 aspect-square h-full w-full"
+        className={
+          compact
+            ? "h-9 w-14 shrink-0 gap-1 px-2"
+            : "p-0 m-0 aspect-square h-full w-full"
+        }
         aria-label="color-picker"
       >
         <div
-          className="aspect-square min-w-5 min-h-5 w-full rounded-full ms-2"
+          className={
+            compact
+              ? "h-5 w-5 shrink-0 rounded-full"
+              : "aspect-square min-w-5 min-h-5 w-full rounded-full ms-2"
+          }
           style={{
             backgroundColor:
               colors.find((c) => c.id === selectedColorId)?.value || "#000000",

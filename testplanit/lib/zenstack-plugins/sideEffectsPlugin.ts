@@ -200,6 +200,7 @@ export const GUC_MODELS = new Set<string>([
   "CaseExportTemplate",
   "Roles",
   "MilestoneTypes",
+  "FailureClassification",
   "ConfigCategories",
   "ConfigVariants",
   "Configurations",
@@ -1332,19 +1333,40 @@ async function enqueueFailureTriageForJUnitResults(
   tx: TxClient,
   rows: any[]
 ): Promise<void> {
-  const failed = rows.filter(
-    (row) =>
-      row?.id &&
-      row.testSuiteId != null &&
-      (row.type === "FAILURE" || row.type === "ERROR")
+  if (typeof tx.jUnitTestSuite?.findMany !== "function") return;
+  const valid = rows.filter((row) => row?.id && row.testSuiteId != null);
+  const failed = valid.filter(
+    (row) => row.type === "FAILURE" || row.type === "ERROR"
   );
-  if (
-    failed.length === 0 ||
-    typeof tx.jUnitTestSuite?.findMany !== "function"
-  ) {
-    return;
+  let relevant = failed;
+  if (failed.length === 0) {
+    // A passing burst matters only to quarantined cases, whose quarantine
+    // lifts after enough consecutive passes.
+    const caseIds = [
+      ...new Set(
+        valid
+          .map((row) => Number(row.repositoryCaseId))
+          .filter((id) => Number.isInteger(id))
+      ),
+    ];
+    if (
+      caseIds.length === 0 ||
+      typeof tx.caseQuarantine?.findMany !== "function"
+    ) {
+      return;
+    }
+    const quarantined = await tx.caseQuarantine.findMany({
+      where: { caseId: { in: caseIds } },
+      select: { caseId: true },
+    });
+    if (quarantined.length === 0) return;
+    const quarantinedIds = new Set(quarantined.map((q) => q.caseId));
+    relevant = valid.filter((row) =>
+      quarantinedIds.has(Number(row.repositoryCaseId))
+    );
+    if (relevant.length === 0) return;
   }
-  const suiteIds = [...new Set(failed.map((row) => Number(row.testSuiteId)))];
+  const suiteIds = [...new Set(relevant.map((row) => Number(row.testSuiteId)))];
   const suites = await tx.jUnitTestSuite.findMany({
     where: { id: { in: suiteIds } },
     select: {

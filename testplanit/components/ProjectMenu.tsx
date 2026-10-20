@@ -42,7 +42,7 @@ import {
   SquareStack,
   Tags as TagsIcon,
   Webhook,
-  Microscope,
+  Fingerprint,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -276,7 +276,7 @@ export default function ProjectsMenu({
     ...(failureTriageEnabled
       ? [
           {
-            icon: Microscope,
+            icon: Fingerprint,
             label: tCommon("pageTitles.triage"),
             path: "triage",
             id: "project-triage-link",
@@ -380,7 +380,7 @@ export default function ProjectsMenu({
             section: "settings" as MenuSection,
           },
           {
-            icon: Microscope,
+            icon: Fingerprint,
             label: tCommon("pageTitles.triage"),
             path: "settings/triage",
             id: "settings-triage-link",

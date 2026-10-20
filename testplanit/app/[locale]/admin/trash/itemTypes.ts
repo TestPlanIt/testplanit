@@ -59,6 +59,11 @@ export const softDeletedItemTypes: TrashItemTypeDisplay[] = [
     iconName: "milestone",
   },
   {
+    name: "FailureClassification",
+    translationKey: "admin.menu.rootCauses",
+    iconName: "microscope",
+  },
+  {
     name: "Configurations",
     translationKey: "common.fields.configurations",
     iconName: "combine",

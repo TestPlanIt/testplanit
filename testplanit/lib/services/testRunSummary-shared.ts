@@ -33,6 +33,9 @@ export type TestRunSummaryData = {
     isCompleted?: boolean;
     isSuccess?: boolean;
     isFailure?: boolean;
+    /** Automated runs: the JUnit result type behind the row, or
+     *  QUARANTINED for failures of quarantined cases. */
+    resultType?: string;
   }>;
   completionRate: number;
   totalElapsed: number;
@@ -64,6 +67,8 @@ export type TestRunSummaryData = {
     totalFailures: number;
     totalErrors: number;
     totalSkipped: number;
+    /** Failures and errors of quarantined cases; not in totalFailures/totalErrors. */
+    totalQuarantined: number;
     totalTime: number;
     resultSegments: Array<{
       id: string;
@@ -90,6 +95,8 @@ export type TestRunSummaryData = {
     isPending: boolean;
     resultCount?: number;
     statusOrder?: number | null;
+    /** The case is quarantined and its status is a failure (failure triage). */
+    quarantined?: boolean;
   }>;
   /**
    * Per-case iteration counts (INT-03 / D-04). Only set on the
@@ -189,4 +196,33 @@ export function latestIso(
   if (!a) return b ?? null;
   if (!b) return a;
   return a > b ? a : b;
+}
+
+/**
+ * Failures of quarantined cases surface as their own segment on automated
+ * run summaries (failure triage). The client translates the name by
+ * resultType; the stored name is the English fallback like "PASSED".
+ */
+export const QUARANTINED_RESULT_TYPE = "QUARANTINED";
+export const QUARANTINED_STATUS_NAME = "Quarantined";
+export const QUARANTINED_COLOR = "rgb(168, 85, 247)";
+
+export const JUNIT_SEGMENT_ORDER: Record<string, number> = {
+  ERROR: 0,
+  FAILURE: 1,
+  [QUARANTINED_RESULT_TYPE]: 2,
+  SKIPPED: 3,
+  PASSED: 4,
+};
+
+export function junitFallbackColor(type: string | null): string {
+  switch (type) {
+    case "FAILURE":
+    case "ERROR":
+      return "rgb(239, 68, 68)";
+    case "SKIPPED":
+      return "rgb(161, 161, 170)";
+    default:
+      return "rgb(34, 197, 94)";
+  }
 }

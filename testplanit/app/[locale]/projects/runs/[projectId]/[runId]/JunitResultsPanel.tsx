@@ -72,39 +72,44 @@ export default function JunitResultsPanel({
   } = usePagination();
 
   // Facet options with attempt-row counts; flaky/retried count distinct cases.
-  const { statusOptions, suiteOptions, flakyCaseCount, retriedCaseCount } =
-    useMemo(() => {
-      const statusCounts = new Map<string, number>();
-      const suiteCounts = new Map<string, number>();
-      const flakyCases = new Set<number | string>();
-      const retriedCases = new Set<number | string>();
-      for (const tc of sortedJunitTestCases) {
-        if (tc.resultStatus) {
-          statusCounts.set(
-            tc.resultStatus,
-            (statusCounts.get(tc.resultStatus) ?? 0) + 1
-          );
-        }
-        if (tc.suiteName) {
-          suiteCounts.set(
-            tc.suiteName,
-            (suiteCounts.get(tc.suiteName) ?? 0) + 1
-          );
-        }
-        if (tc.isFlaky) flakyCases.add(tc.id);
-        if (tc.isRetried) retriedCases.add(tc.id);
-      }
-      const toOptions = (counts: Map<string, number>): JunitFacetOption[] =>
-        Array.from(counts, ([value, count]) => ({ value, count })).sort(
-          (a, b) => a.value.localeCompare(b.value)
+  const {
+    statusOptions,
+    suiteOptions,
+    flakyCaseCount,
+    retriedCaseCount,
+    quarantinedCaseCount,
+  } = useMemo(() => {
+    const statusCounts = new Map<string, number>();
+    const suiteCounts = new Map<string, number>();
+    const flakyCases = new Set<number | string>();
+    const retriedCases = new Set<number | string>();
+    const quarantinedCases = new Set<number | string>();
+    for (const tc of sortedJunitTestCases) {
+      if (tc.resultStatus) {
+        statusCounts.set(
+          tc.resultStatus,
+          (statusCounts.get(tc.resultStatus) ?? 0) + 1
         );
-      return {
-        statusOptions: toOptions(statusCounts),
-        suiteOptions: toOptions(suiteCounts),
-        flakyCaseCount: flakyCases.size,
-        retriedCaseCount: retriedCases.size,
-      };
-    }, [sortedJunitTestCases]);
+      }
+      if (tc.suiteName) {
+        suiteCounts.set(tc.suiteName, (suiteCounts.get(tc.suiteName) ?? 0) + 1);
+      }
+      if (tc.isFlaky) flakyCases.add(tc.id);
+      if (tc.isRetried) retriedCases.add(tc.id);
+      if (tc.quarantined) quarantinedCases.add(tc.id);
+    }
+    const toOptions = (counts: Map<string, number>): JunitFacetOption[] =>
+      Array.from(counts, ([value, count]) => ({ value, count })).sort((a, b) =>
+        a.value.localeCompare(b.value)
+      );
+    return {
+      statusOptions: toOptions(statusCounts),
+      suiteOptions: toOptions(suiteCounts),
+      flakyCaseCount: flakyCases.size,
+      retriedCaseCount: retriedCases.size,
+      quarantinedCaseCount: quarantinedCases.size,
+    };
+  }, [sortedJunitTestCases]);
 
   const facetFilteredJunitTestCases = useMemo(() => {
     if (!junitFacetsActive(facets)) return sortedJunitTestCases;
@@ -120,6 +125,7 @@ export default function JunitResultsPanel({
       }
       if (facets.flakyOnly && !tc.isFlaky) return false;
       if (facets.retriedOnly && !tc.isRetried) return false;
+      if (facets.quarantinedOnly && !tc.quarantined) return false;
       if (
         facets.signatureIds.length > 0 &&
         !facets.signatureIds.includes(tc.failureSignatureId)
@@ -224,6 +230,7 @@ export default function JunitResultsPanel({
         suiteOptions={suiteOptions}
         flakyCaseCount={flakyCaseCount}
         retriedCaseCount={retriedCaseCount}
+        quarantinedCaseCount={quarantinedCaseCount}
       />
       <div className="flex flex-row items-start w-full gap-4 mb-2">
         <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">

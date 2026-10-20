@@ -195,6 +195,14 @@ export function alertMetricMessage(
           threshold: int(threshold),
         },
       };
+    case "NEW_FAILURE_SIGNATURES":
+      return {
+        key: "alertMetric.NEW_FAILURE_SIGNATURES",
+        params: {
+          signatures: int(details.newSignatures ?? data.observedValue),
+          threshold: int(threshold),
+        },
+      };
     case "SESSION_OVERRUN":
       return {
         key: "alertMetric.SESSION_OVERRUN",

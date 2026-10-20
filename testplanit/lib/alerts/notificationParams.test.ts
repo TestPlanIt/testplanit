@@ -45,6 +45,7 @@ describe("alertMetricMessage", () => {
       "AUTOMATED_EXECUTION_FAILED",
       "RUN_UNTESTED_SHARE",
       "RUN_ISSUES_OPENED",
+      "NEW_FAILURE_SIGNATURES",
       "SESSION_OVERRUN",
       "REQUIREMENT_COVERAGE_BELOW",
       "STALE_CASES",

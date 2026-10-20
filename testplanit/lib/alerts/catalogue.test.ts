@@ -105,6 +105,7 @@ describe("threshold metric catalogue", () => {
       AlertMetric.RUN_FAILURE_COUNT,
       AlertMetric.RUN_DURATION_DEVIATION,
       AlertMetric.RUN_ISSUES_OPENED,
+      AlertMetric.NEW_FAILURE_SIGNATURES,
     ]);
     expect(executionEventAlertMetrics()).toEqual([
       AlertMetric.AUTOMATED_EXECUTION_FAILED,

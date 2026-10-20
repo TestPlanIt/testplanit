@@ -25,6 +25,7 @@ import {
   LayoutList,
   Lock,
   MessageSquareCode,
+  Microscope,
   Milestone,
   Plug,
   ScrollText,
@@ -110,6 +111,12 @@ const menuOptions: MenuOption[] = [
     icon: Milestone,
     translationKey: "milestoneTypes",
     path: "milestones",
+    section: "testManagement",
+  },
+  {
+    icon: Microscope,
+    translationKey: "rootCauses",
+    path: "root-causes",
     section: "testManagement",
   },
   {

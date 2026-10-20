@@ -741,7 +741,7 @@
       "sharedContent": "Shared Content",
       "impact": "Impact Analysis",
       "alerts": "Notifications & Alerts",
-      "triage": "Failure Triage"
+      "triage": "Failure Patterns"
     },
     "aria": {
       "userMenu": "User menu",
@@ -4677,6 +4677,7 @@
     "menu": {
       "header": "Main",
       "fields": "Fields",
+      "rootCauses": "Root Causes",
       "appConfig": "Application Configuration",
       "recordKeys": "Record Keys",
       "imports": "Data Imports",
@@ -6179,6 +6180,30 @@
         "confirmMessage": "Are you sure you want to delete the {name} Milestone Type?"
       }
     },
+    "rootCauses": {
+      "description": "The root causes Failure Patterns assigns to grouped failures. The AI picks from this list using each description.",
+      "filterPlaceholder": "Filter root causes...",
+      "reordered": "Root causes reordered",
+      "descriptionPlaceholder": "When does this root cause apply? The AI uses this text to decide.",
+      "columns": {
+        "signatures": "Patterns"
+      },
+      "add": {
+        "button": "Add Root Cause",
+        "title": "Add Root Cause"
+      },
+      "edit": {
+        "title": "Edit Root Cause"
+      },
+      "errors": {
+        "nameExists": "A root cause with this name already exists"
+      },
+      "delete": {
+        "confirmMessage": "Are you sure you want to delete the {name} root cause?",
+        "inUse": "{count, plural, one {# failure pattern uses it.} other {# failure patterns use it.}}",
+        "moveLabel": "{count, plural, one {Move the pattern to} other {Move the # patterns to}}"
+      }
+    },
     "issue_config": {
       "link_title": "Link Issue Tracker",
       "link_description": "Configure the base URL for manually linked issues. When linking an issue using only an External ID, this Base URL will be prepended to create the full link.",
@@ -6766,7 +6791,7 @@
         "automation_candidates": "Automation Candidates Report",
         "derive_case_steps": "AI Step Derivation",
         "impact_analysis": "Impact: Affected Test Selection",
-        "failure_triage": "Failure Triage Classification"
+        "failure_triage": "Failure Patterns: Root Cause"
       }
     },
     "elasticsearch": {
@@ -6843,7 +6868,7 @@
         "audit-logs": "Audit Logs",
         "budget-alerts": "Budget Alerts",
         "auto-tag": "AI Auto-Tag",
-        "failure-triage": "Failure Triage",
+        "failure-triage": "Failure Patterns",
         "repo-cache": "Repository Cache",
         "copy-move": "Copy & Move",
         "duplicate-scan": "Duplicate Scan",
@@ -7127,6 +7152,7 @@
           "AUTOMATED_EXECUTION_FAILED": "The automated execution on {target} ended with {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% of the run's cases have no result with {daysRemaining, plural, one {# day} other {# days}} before its milestone is due (threshold {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# issue is} other {# issues are}} linked to the run's results (threshold {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# failure pattern appeared} other {# failure patterns appeared}} for the first time in the run (threshold {threshold}).",
           "SESSION_OVERRUN": "The session took {elapsed} against an estimate of {estimate}, {overrun}% over (more than {threshold}% allowed).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} of {total} requirements ({coverage}%) {basis, select, PASSING {have a passing latest result} other {are linked to a test case}} (threshold {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# case has} other {# cases have}} had no result in {days, plural, one {# day} other {# days}} (threshold {threshold}).",
@@ -8533,8 +8559,11 @@
     "pathPatterns": "## Path Patterns\nEach row combines a base **path** with a glob **pattern**. Rows add up: a file is included when any row matches it.\n\n- `src` + `**/*` — everything under `src`\n- blank or `.` + `**/*` — every file in the repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` files except tests\n\n### Exclude\nTick **Exclude** on a row to remove its files even when another row includes them. Exclusions apply to the file picker and cache, and for Impact to the changed files of an analysis, so a file that changes on almost every pull request stops pulling in unrelated test cases. At least one row must stay unticked.\n\n- blank + `**/CHANGELOG*` — every changelog, at any depth\n- `app` + `build.gradle.kts` — a build file that only bumps the version",
     "projectAutomation": "## Automated Execution\nExecution targets tell TestPlanIt where to execute this project's automated cases: a GitHub Actions workflow, a GitLab CI pipeline, or a signed webhook for any other system. When a run is executed, TestPlanIt starts the job with the run id and a plan URL; the job reads the plan, runs the matching tests, and reports results back with a reporter or the CLI pinned to that run. Targets can be disabled without being deleted.",
     "userAlerts": "## Notifications & Alerts\n**Notification Preferences** decide how you are reached (in-app, email, digest) and which notification types you receive at all.\n\n**Alerts** watch a testing metric and notify their subscribers when it crosses a line, for example a result that takes 50% longer than the case's usual duration, a case that fails three times in a row, a run whose pass rate drops under 90%, or a milestone that is behind with days to go. The list shows every alert in your projects; the **Notify me** switch follows or leaves one. **Add Alert** creates your own in any project where your role has **Alerts** Add/Edit; project administrators manage every alert in their project and other people's subscriptions. An alert fires at most once per subject within its cooldown and stays silent until it has enough results.",
-    "projectTriage": "## Failure Triage\nAutomated failures that share the same exception, message and top stack frames are grouped into one **signature**. Each signature shows how often it happened, which test cases and runs it touched, and the AI's read on whether it is a product bug, a test bug, an environment problem or flaky. Resolve or ignore a signature once it is handled; it reopens by itself if the failure comes back.",
-    "projectTriageSettings": "## Failure Triage settings\nGrouping runs on every automated result that arrives and costs nothing. AI classification uses the AI model assigned to the **Failure Triage Classification** feature on the AI Models page; turn it off here to keep grouping without any AI calls. **Analyze existing results** groups every automated failure already recorded in this project."
+    "projectTriage": "## Failure Patterns\nAutomated failures that share the same exception, message and top stack frames are grouped into one **failure pattern**. Each pattern shows how often it happened, which test cases and runs it touched, and the AI's read on its root cause (product bug, test bug, environment or flaky by default). Resolve or ignore a pattern once it is handled; it reopens by itself if the failure comes back.",
+    "projectTriageSettings": "## Failure Patterns settings\nGrouping runs on every automated result that arrives and costs nothing. AI root cause suggestion uses the AI model assigned to the **Failure Patterns: Root Cause** feature on the AI Models page; turn it off here to keep grouping without any AI calls. **Analyze existing results** groups every automated failure already recorded in this project.",
+    "projectQuarantine": "## Quarantined test cases\nA quarantined test case keeps running and recording results, but its failures are left out of run pass/fail and shown as a separate count. Quarantine a case from a failure pattern while the cause is being fixed. The quarantine lifts by itself once the case has passed the number of times in a row set in the Failure Patterns settings, unless it was marked to be released by hand; release it here or from the pattern at any time.",
+    "rootCauses": "## Root Causes\nThe root causes Failure Patterns assigns to grouped failures, by AI or by hand. Each has a description the AI reads to decide when it applies. Rename, recolour or reorder them, add your own, or delete the ones you do not use; deleting one leaves its patterns without a root cause.",
+    "rootCauseDescription": "## Description\nThe AI reads this description to decide when the root cause applies to a failure pattern, so describe the evidence that points to it."
   },
   "reports": {
     "ui": {
@@ -10484,6 +10513,7 @@
         "AUTOMATED_EXECUTION_FAILED": "Threshold",
         "RUN_UNTESTED_SHARE": "Untested cases over (%)",
         "RUN_ISSUES_OPENED": "Linked issues, more than",
+        "NEW_FAILURE_SIGNATURES": "New failure patterns, more than",
         "SESSION_OVERRUN": "Over the estimate by more than (%)",
         "MILESTONE_BEHIND": "Completion under (%)",
         "MILESTONE_OVERDUE": "Threshold",
@@ -10654,6 +10684,11 @@
         "description": "More than a given number of issues are linked to a run's results.",
         "summary": "More than {threshold, plural, one {# issue is} other {# issues are}} linked to a run's results, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
       },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "New failure patterns in a run",
+        "description": "A run introduces failure patterns the project had not seen before. Needs Failure Patterns enabled for the project.",
+        "summary": "More than {threshold, plural, one {# failure pattern appears} other {# failure patterns appear}} for the first time in a run, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
+      },
       "SESSION_OVERRUN": {
         "label": "Session overran its estimate",
         "description": "A completed session's elapsed time exceeds its estimate by a percentage.",
@@ -10782,35 +10817,32 @@
       "RESOLVED": "Resolved",
       "IGNORED": "Ignored"
     },
-    "classification": {
-      "UNCLASSIFIED": "Unclassified",
-      "PRODUCT_BUG": "Product bug",
-      "TEST_BUG": "Test bug",
-      "ENVIRONMENT": "Environment",
-      "FLAKY": "Flaky"
-    },
+    "unclassified": "No root cause",
     "source": {
-      "AI": "Classified by AI",
+      "AI": "Root cause suggested by AI",
       "labelAI": "AI",
       "labelMANUAL": "Manual"
     },
     "columns": {
-      "classification": "Classification",
+      "classification": "Root cause",
       "occurrences": "Occurrences",
       "firstSeen": "First seen",
       "lastSeen": "Last seen",
-      "classifiedBy": "Classified by"
+      "classifiedBy": "Set by"
     },
     "filters": {
-      "searchPlaceholder": "Search signatures...",
+      "searchPlaceholder": "Search failure patterns...",
       "flakyOnly": "Flaky candidates",
-      "sourceAll": "AI or manual"
+      "sourceAll": "Set by anyone",
+      "sourceAi": "Set by AI",
+      "sourceManual": "Set by hand",
+      "sourceNone": "Not set"
     },
     "actions": {
       "resolve": "Resolve",
       "ignore": "Ignore",
-      "classify": "Classify with AI",
-      "setClassification": "Set classification"
+      "classify": "Suggest root cause with AI",
+      "setClassification": "Set root cause"
     },
     "detail": {
       "exceptionType": "Exception type",
@@ -10822,13 +10854,13 @@
       "rationale": "Rationale",
       "suggestedIssueTitle": "Suggested issue title",
       "nextStep": "Suggested next step",
-      "noAi": "Not classified by AI yet.",
+      "noAi": "No AI suggestion yet.",
       "noDetails": "This failure carried no message or stack trace, so it is grouped by test case.",
       "notesPlaceholder": "Notes for the team...",
       "lastRun": "Last run",
       "aiSuggestion": "AI suggestion",
-      "unlinkConfirmDescription": "This removes the issue from this signature. The issue itself is kept and can be linked again later.",
-      "signatureLabel": "Failure signature",
+      "unlinkConfirmDescription": "This removes the issue from this failure pattern. The issue itself is kept and can be linked again later.",
+      "signatureLabel": "Failure pattern",
       "affectedCasesLabel": "Affected test cases"
     },
     "flakyCandidate": "Flaky candidate",
@@ -10836,31 +10868,31 @@
     "knownIssue": "Known issue",
     "notGrouped": "{count, plural, one {# failure not grouped yet} other {# failures not grouped yet}}",
     "runPanel": {
-      "title": "Failure clusters",
+      "title": "Failure patterns",
       "inRun": "{count, plural, one {# in this run} other {# in this run}}",
-      "hint": "Click a cluster to filter the results below.",
-      "open": "View signature",
+      "hint": "Click a pattern to filter the results below.",
+      "open": "View pattern",
       "inRunColumn": "In this run",
-      "selectedClusters": "{count, plural, one {# cluster selected} other {# clusters selected}}",
-      "clearSelected": "Clear the selected clusters"
+      "selectedClusters": "{count, plural, one {# pattern selected} other {# patterns selected}}",
+      "clearSelected": "Clear the selected patterns"
     },
     "toasts": {
-      "updated": "Signature updated",
-      "updateFailed": "Could not update the signature",
-      "classifyQueued": "AI classification requested",
+      "updated": "Failure pattern updated",
+      "updateFailed": "Could not update the failure pattern",
+      "classifyQueued": "AI root cause suggestion requested",
       "noAiModel": "No AI model is configured for this feature",
       "issueLinked": "Issue linked"
     },
     "empty": {
-      "title": "No failure signatures yet",
-      "description": "Signatures appear here as automated results with failures arrive. To group failures already recorded in this project, use Analyze existing results in the Failure Triage settings."
+      "title": "No failure patterns yet",
+      "description": "Failure patterns appear here as automated results with failures arrive. To group failures already recorded in this project, use Analyze existing results in the Failure Patterns settings."
     },
     "settings": {
-      "description": "Group automated failures into signatures and let AI classify them.",
-      "enableLabel": "Enable Failure Triage",
+      "description": "Group automated failures into patterns and let AI suggest their root cause.",
+      "enableLabel": "Enable Failure Patterns",
       "enableDescription": "Group every automated failure in this project by exception, message and stack frames as results arrive.",
-      "autoClassifyLabel": "Classify new signatures with AI",
-      "autoClassifyDescription": "Ask the project's AI model to classify each new signature as a product bug, test bug, environment problem or flaky. Needs an AI model assigned to the Failure Triage Classification feature.",
+      "autoClassifyLabel": "Suggest root causes with AI",
+      "autoClassifyDescription": "Ask the project's AI model to pick a root cause for each new failure pattern from the Root Causes catalogue. Needs an AI model assigned to the Failure Patterns: Root Cause feature.",
       "backfillLabel": "Analyze existing results",
       "backfillDescription": "Group every automated failure already recorded in this project. Runs in the background.",
       "backfillStarted": "Analysis started",
@@ -10868,11 +10900,47 @@
       "backfillDone": "Analysis complete",
       "backfillFailed": "Analysis failed",
       "backfillQueueUnavailable": "Background job queue is not available",
-      "enabledToast": "Failure Triage enabled",
-      "disabledToast": "Failure Triage disabled",
-      "autoClassifyOnToast": "AI classification enabled",
-      "autoClassifyOffToast": "AI classification disabled",
-      "openTriage": "Open Failure Triage"
+      "enabledToast": "Failure Patterns enabled",
+      "disabledToast": "Failure Patterns disabled",
+      "autoClassifyOnToast": "AI root cause suggestions enabled",
+      "autoClassifyOffToast": "AI root cause suggestions disabled",
+      "autoReleaseLabel": "Release quarantine automatically after",
+      "autoReleasePassesLabel": "consecutive passes",
+      "autoReleaseDescription": "A quarantined test case is released once it has passed this many times in a row since it was quarantined. Skipped results are ignored. A quarantine marked \"keep until released by hand\" stays.",
+      "autoReleaseOnToast": "Automatic release enabled",
+      "autoReleaseOffToast": "Automatic release disabled",
+      "autoReleasePassesSaved": "{count, plural, one {Quarantine is released after # consecutive pass} other {Quarantine is released after # consecutive passes}}",
+      "autoReleasePassesInvalid": "Enter a number of passes between 1 and 100",
+      "openTriage": "Open Failure Patterns"
+    },
+    "quarantine": {
+      "label": "Quarantined",
+      "title": "Quarantined test cases",
+      "hint": "Failures of a quarantined test case are left out of run pass/fail and counted separately. The test case keeps running and recording results.",
+      "metricHint": "Failures of quarantined test cases in this run. They do not count against the pass rate.",
+      "action": "Quarantine",
+      "actionAll": "Quarantine affected test cases",
+      "release": "Release",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Why is this test case quarantined? (optional)",
+      "keepLabel": "Keep quarantined until released by hand",
+      "keepHint": "Skips the project's automatic release after consecutive passes.",
+      "dialogTitle": "{count, plural, one {Quarantine # test case} other {Quarantine # test cases}}",
+      "releaseConfirmTitle": "Release from quarantine?",
+      "releaseConfirmDescription": "The test case's failures count against run pass/fail again.",
+      "quarantinedToast": "{count, plural, one {# test case quarantined} other {# test cases quarantined}}",
+      "releasedToast": "Test case released from quarantine",
+      "failedToast": "Could not update the quarantine",
+      "listButton": "{count, plural, =0 {Quarantined test cases} one {# quarantined test case} other {# quarantined test cases}}",
+      "columns": {
+        "signature": "Failure pattern",
+        "by": "Quarantined by",
+        "since": "Since",
+        "releasePolicy": "Release"
+      },
+      "releaseAuto": "{count, plural, one {Automatic after # consecutive pass} other {Automatic after # consecutive passes}}",
+      "releaseManual": "By hand",
+      "empty": "No test cases are quarantined in this project."
     }
   }
 }

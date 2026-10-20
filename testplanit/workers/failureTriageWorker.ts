@@ -12,8 +12,13 @@ import {
   JOB_TRIAGE_BACKFILL,
   JOB_TRIAGE_RUN,
 } from "../lib/queueNames";
+import {
+  enqueueAlertRunEvaluation,
+  projectHasActiveAlertRules,
+} from "../lib/services/alertEnqueue";
 import { classifySignatures } from "../lib/services/triage/classify";
 import { enqueueSignatureClassification } from "../lib/services/triage/enqueue";
+import { releaseRecoveredQuarantines } from "../lib/services/triage/quarantine";
 import {
   triageProjectFailures,
   triageRunFailures,
@@ -66,6 +71,29 @@ async function processRun(job: Job<TriageRunJobData>): Promise<void> {
   console.log(
     `[failure-triage] run ${testRunId}: ${result.processed} failure(s) → ${result.signatureIds.length} signature(s), ${result.newSignatureIds.length} new, ${result.reopenedSignatureIds.length} reopened`
   );
+  const recovered = await releaseRecoveredQuarantines(db, {
+    projectId,
+    testRunId,
+  });
+  if (recovered.released.length > 0) {
+    console.log(
+      `[failure-triage] run ${testRunId}: released ${recovered.released.length} quarantine(s): cases ${recovered.released.map((r) => r.caseId).join(", ")}`
+    );
+  }
+  // The result hooks evaluated run alerts before these signatures existed;
+  // a run that introduced new ones gets a fresh pass for the
+  // new-signatures metric.
+  if (
+    result.newSignatureIds.length > 0 &&
+    (await projectHasActiveAlertRules(db, projectId))
+  ) {
+    await enqueueAlertRunEvaluation({
+      runId: testRunId,
+      projectId,
+      trigger: "result",
+      tenantId,
+    });
+  }
   if (!flags.failureTriageAutoClassify || result.signatureIds.length === 0)
     return;
 

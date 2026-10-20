@@ -55,6 +55,7 @@ These evaluate when a run completes, or, if the rule says **As results arrive**,
 | **Automated execution failed**          | An automated execution of a run fails, cannot be dispatched, or times out.                                                                                                                                     |
 | **Run untested share**                  | More than X% of a run's cases still have no result with Y or fewer days left before the run's milestone is due. Checked daily.                                                                                 |
 | **Issues opened from a run**            | More than N issues are linked to the run's results.                                                                                                                                                            |
+| **New failure patterns in a run**       | More than N failure patterns appear for the first time in the run ([Failure Patterns](failure-patterns.md)).   Evaluated as results arrive or when the run completes.                                              |
 
 Scope a run metric to all runs, to runs carrying a tag, or to runs whose name contains a fragment such as `Nightly`.
 

@@ -25,7 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { PageTitle } from "@/components/ui/typography";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { Settings } from "lucide-react";
+import { Settings, ShieldAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -35,17 +35,19 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
 import {
   ApplicationArea,
-  FailureClassification,
   FailureClassificationSource,
   FailureSignatureStatus,
 } from "~/zenstack/models";
+import { ClassificationOption } from "@/components/triage/badges";
 import { schema } from "~/zenstack/schema";
 import { useSignatureColumns, type SignatureRow } from "./columns";
 
 const PAGE_SIZE = 50;
 const STATUS_FILTER_ALL = "all";
 const CLASSIFICATION_FILTER_ALL = "all";
+const CLASSIFICATION_FILTER_NONE = "none";
 const SOURCE_FILTER_ALL = "all";
+const SOURCE_FILTER_NONE = "none";
 
 type SortConfig = { column: string; direction: "asc" | "desc" };
 const DEFAULT_SORT: SortConfig = { column: "lastSeenAt", direction: "desc" };
@@ -89,7 +91,6 @@ export default function TriagePage() {
   const [flakyOnly, setFlakyOnly] = useState(false);
   const [sortConfig, setSortConfig] = useState<SortConfig>(DEFAULT_SORT);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    issues: false,
     firstSeenAt: false,
   });
 
@@ -99,12 +100,18 @@ export default function TriagePage() {
       ...(statusFilter !== STATUS_FILTER_ALL
         ? { status: statusFilter as FailureSignatureStatus }
         : {}),
-      ...(classificationFilter !== CLASSIFICATION_FILTER_ALL
-        ? { classification: classificationFilter as FailureClassification }
-        : {}),
-      ...(sourceFilter !== SOURCE_FILTER_ALL
-        ? { classificationSource: sourceFilter as FailureClassificationSource }
-        : {}),
+      ...(classificationFilter === CLASSIFICATION_FILTER_NONE
+        ? { classificationId: null }
+        : classificationFilter !== CLASSIFICATION_FILTER_ALL
+          ? { classificationId: Number(classificationFilter) }
+          : {}),
+      ...(sourceFilter === SOURCE_FILTER_NONE
+        ? { classificationSource: null }
+        : sourceFilter !== SOURCE_FILTER_ALL
+          ? {
+              classificationSource: sourceFilter as FailureClassificationSource,
+            }
+          : {}),
       ...(flakyOnly ? { flakyCandidate: true } : {}),
       ...(debouncedSearch
         ? {
@@ -135,11 +142,35 @@ export default function TriagePage() {
     ]
   );
 
+  const { data: classifications } = useClientQueries(
+    schema
+  ).failureClassification.useFindMany(
+    {
+      where: { isDeleted: false },
+      orderBy: [{ order: "asc" }, { id: "asc" }],
+      select: { id: true, name: true, color: { select: { value: true } } },
+    },
+    { enabled: !isAuthLoading }
+  );
+
   const queryArgs = useMemo(
     () => ({
       where,
-      orderBy: { [sortConfig.column]: sortConfig.direction },
+      orderBy:
+        sortConfig.column === "classification"
+          ? { classification: { name: sortConfig.direction } }
+          : sortConfig.column === "issues"
+            ? { issues: { _count: sortConfig.direction } }
+            : { [sortConfig.column]: sortConfig.direction },
       include: {
+        classification: {
+          select: {
+            id: true,
+            name: true,
+            isDeleted: true,
+            color: { select: { value: true } },
+          },
+        },
         issues: {
           select: {
             issue: {
@@ -192,6 +223,9 @@ export default function TriagePage() {
     { where },
     { enabled: !!project }
   );
+  const { data: quarantinedCount } = useClientQueries(
+    schema
+  ).caseQuarantine.useCount({ where: { projectId } }, { enabled: !!project });
 
   const columns = useSignatureColumns(projectId);
 
@@ -237,21 +271,38 @@ export default function TriagePage() {
           helpKey="projectTriage"
           description={<ProjectHeaderInfo project={project} />}
           actions={
-            isProjectAdmin ? (
+            <>
               <Button
                 variant="outline"
                 className={collapsibleActionClass()}
                 onClick={() =>
-                  router.push(`/projects/settings/${projectId}/triage`)
+                  router.push(`/projects/triage/${projectId}/quarantine`)
                 }
-                data-testid="triage-settings-button"
+                data-testid="triage-quarantine-button"
               >
                 <ActionButtonContent
-                  icon={Settings}
-                  label={t("common.tabs.settings")}
+                  icon={ShieldAlert}
+                  label={t("triage.quarantine.listButton", {
+                    count: quarantinedCount ?? 0,
+                  })}
                 />
               </Button>
-            ) : undefined
+              {isProjectAdmin && (
+                <Button
+                  variant="outline"
+                  className={collapsibleActionClass()}
+                  onClick={() =>
+                    router.push(`/projects/settings/${projectId}/triage`)
+                  }
+                  data-testid="triage-settings-button"
+                >
+                  <ActionButtonContent
+                    icon={Settings}
+                    label={t("common.tabs.settings")}
+                  />
+                </Button>
+              )}
+            </>
           }
           data-testid="triage-page-header"
         />
@@ -298,13 +349,17 @@ export default function TriagePage() {
                     <SelectItem value={CLASSIFICATION_FILTER_ALL}>
                       {t("common.filters.all")}
                     </SelectItem>
-                    {Object.values(FailureClassification).map(
-                      (classification) => (
-                        <SelectItem key={classification} value={classification}>
-                          {t(`triage.classification.${classification}`)}
-                        </SelectItem>
-                      )
-                    )}
+                    <SelectItem value={CLASSIFICATION_FILTER_NONE}>
+                      {t("triage.unclassified")}
+                    </SelectItem>
+                    {(classifications ?? []).map((classification) => (
+                      <SelectItem
+                        key={classification.id}
+                        value={String(classification.id)}
+                      >
+                        <ClassificationOption classification={classification} />
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select value={sourceFilter} onValueChange={setSourceFilter}>
@@ -318,13 +373,15 @@ export default function TriagePage() {
                     <SelectItem value={SOURCE_FILTER_ALL}>
                       {t("triage.filters.sourceAll")}
                     </SelectItem>
-                    {Object.values(FailureClassificationSource).map(
-                      (source) => (
-                        <SelectItem key={source} value={source}>
-                          {t(`triage.source.label${source}`)}
-                        </SelectItem>
-                      )
-                    )}
+                    <SelectItem value={FailureClassificationSource.AI}>
+                      {t("triage.filters.sourceAi")}
+                    </SelectItem>
+                    <SelectItem value={FailureClassificationSource.MANUAL}>
+                      {t("triage.filters.sourceManual")}
+                    </SelectItem>
+                    <SelectItem value={SOURCE_FILTER_NONE}>
+                      {t("triage.filters.sourceNone")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <Label className="flex items-center gap-2 text-sm font-normal">

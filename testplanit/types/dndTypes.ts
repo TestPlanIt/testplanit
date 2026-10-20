@@ -3,4 +3,5 @@ export const ItemTypes = {
   WORKFLOW: "workflow",
   TEST_RUN: "testRun",
   REQUIREMENT: "requirement",
+  ROOT_CAUSE: "rootCause",
 };

@@ -2,7 +2,16 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { baseDb } from "~/lib/db";
-import { earliestIso, latestIso } from "~/lib/services/testRunSummary-shared";
+import { foldQuarantinedStatusCounts } from "~/lib/services/testRunSummary";
+import {
+  earliestIso,
+  JUNIT_SEGMENT_ORDER,
+  junitFallbackColor,
+  latestIso,
+  QUARANTINED_COLOR,
+  QUARANTINED_RESULT_TYPE,
+  QUARANTINED_STATUS_NAME,
+} from "~/lib/services/testRunSummary-shared";
 import { authOptions } from "~/server/auth";
 import {
   isAutomatedTestRunType,
@@ -242,12 +251,15 @@ async function getBatchRegularRunSummaries(
   }
 
   // Get aggregated status counts for all test runs in one query
+  // A failing status on a quarantined case (failure triage) is reported as
+  // its own Quarantined bucket instead of as a failure.
   const statusCounts = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
       statusId: number | null;
       statusName: string;
       colorValue: string;
+      quarantined: boolean;
       count: bigint;
       isCompleted: boolean | null;
     }>
@@ -257,14 +269,16 @@ async function getBatchRegularRunSummaries(
       trc."statusId",
       COALESCE(s.name, 'Pending') as "statusName",
       COALESCE(c.value, '#9ca3af') as "colorValue",
+      (q.id IS NOT NULL AND s."isFailure" = true) as quarantined,
       COUNT(*) as count,
       s."isCompleted"
     FROM "TestRunCases" trc
     LEFT JOIN "Status" s ON trc."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
+    LEFT JOIN "CaseQuarantine" q ON q."caseId" = trc."repositoryCaseId"
     WHERE trc."testRunId" = ANY(${testRunIds})
       AND trc."isDeleted" = false
-    GROUP BY trc."testRunId", trc."statusId", s.name, c.value, s."isCompleted"
+    GROUP BY trc."testRunId", trc."statusId", s.name, c.value, quarantined, s."isCompleted"
     ORDER BY trc."testRunId", trc."statusId" ASC NULLS LAST
   `;
 
@@ -320,6 +334,7 @@ async function getBatchRegularRunSummaries(
     estimate: number | null;
     isPending: boolean;
     statusOrder: number | null;
+    quarantined: boolean;
   };
   const caseDetails = await baseDb.$queryRaw<Array<CaseDetail>>`
     SELECT
@@ -333,13 +348,15 @@ async function getBatchRegularRunSummaries(
       COALESCE(c.value, '#9ca3af') as "colorValue",
       rc.estimate,
       (trc."statusId" IS NULL OR s."isCompleted" = false) as "isPending",
-      s.order as "statusOrder"
+      s.order as "statusOrder",
+      (q.id IS NOT NULL AND s."isFailure" = true) as quarantined
     FROM "TestRunCases" trc
     JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
     JOIN "TestRuns" tr ON trc."testRunId" = tr.id
     LEFT JOIN "Configurations" conf ON tr."configId" = conf.id
     LEFT JOIN "Status" s ON trc."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
+    LEFT JOIN "CaseQuarantine" q ON q."caseId" = trc."repositoryCaseId"
     WHERE trc."testRunId" = ANY(${testRunIds})
       AND trc."isDeleted" = false
     ORDER BY trc."testRunId", trc."order" ASC
@@ -388,6 +405,13 @@ async function getBatchRegularRunSummaries(
   );
 
   // Group status counts by test run
+  const rawStatusCountsByRun = new Map<number, typeof statusCounts>();
+  statusCounts.forEach((sc) => {
+    if (!rawStatusCountsByRun.has(sc.testRunId)) {
+      rawStatusCountsByRun.set(sc.testRunId, []);
+    }
+    rawStatusCountsByRun.get(sc.testRunId)!.push(sc);
+  });
   const statusCountsByRun = new Map<
     number,
     Array<{
@@ -396,21 +420,22 @@ async function getBatchRegularRunSummaries(
       colorValue: string;
       count: number;
       isCompleted?: boolean;
+      resultType?: string;
     }>
   >();
-
-  statusCounts.forEach((sc) => {
-    if (!statusCountsByRun.has(sc.testRunId)) {
-      statusCountsByRun.set(sc.testRunId, []);
-    }
-    statusCountsByRun.get(sc.testRunId)!.push({
-      statusId: sc.statusId,
-      statusName: sc.statusName,
-      colorValue: sc.colorValue,
-      count: Number(sc.count),
-      isCompleted: sc.isCompleted ?? undefined,
-    });
-  });
+  for (const [runId, rows] of rawStatusCountsByRun) {
+    statusCountsByRun.set(
+      runId,
+      foldQuarantinedStatusCounts(rows).map((row) => ({
+        statusId: row.statusId,
+        statusName: row.statusName,
+        colorValue: row.colorValue,
+        count: row.count,
+        isCompleted: row.isCompleted ?? undefined,
+        ...(row.resultType ? { resultType: row.resultType } : {}),
+      }))
+    );
+  }
 
   // Group case details by test run
   const caseDetailsByRun = new Map<number, Array<(typeof caseDetails)[0]>>();
@@ -484,7 +509,9 @@ async function getBatchJUnitRunSummaries(
     return new Map();
   }
 
-  // Get aggregated result counts by status and type for all test runs
+  // Get aggregated result counts by status and type for all test runs.
+  // Failures of quarantined cases (failure triage) are grouped apart so they
+  // count as their own segment instead of as failures.
   const resultAggregates = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
@@ -492,6 +519,7 @@ async function getBatchJUnitRunSummaries(
       statusName: string | null;
       colorValue: string | null;
       type: string | null;
+      quarantined: boolean;
       count: bigint;
     }>
   >`
@@ -501,13 +529,15 @@ async function getBatchJUnitRunSummaries(
       s.name as "statusName",
       c.value as "colorValue",
       jtr.type,
+      (q.id IS NOT NULL AND jtr.type IN ('FAILURE', 'ERROR')) as quarantined,
       COUNT(*) as count
     FROM "JUnitTestResult" jtr
     JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
     LEFT JOIN "Status" s ON jtr."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
+    LEFT JOIN "CaseQuarantine" q ON q."caseId" = jtr."repositoryCaseId"
     WHERE jts."testRunId" = ANY(${testRunIds})
-    GROUP BY jts."testRunId", jtr."statusId", s.name, c.value, jtr.type
+    GROUP BY jts."testRunId", jtr."statusId", s.name, c.value, jtr.type, quarantined
   `;
 
   // Get total time from actual results for all test runs
@@ -556,6 +586,7 @@ async function getBatchJUnitRunSummaries(
       statusName: string | null;
       colorValue: string | null;
       type: string | null;
+      quarantined: boolean;
       count: number;
     }>
   >();
@@ -569,6 +600,7 @@ async function getBatchJUnitRunSummaries(
       statusName: agg.statusName,
       colorValue: agg.colorValue,
       type: agg.type,
+      quarantined: agg.quarantined,
       count: Number(agg.count),
     });
   });
@@ -579,58 +611,51 @@ async function getBatchJUnitRunSummaries(
     Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
   >();
 
-  const order: Record<string, number> = {
-    ERROR: 0,
-    FAILURE: 1,
-    SKIPPED: 2,
-    PASSED: 3,
-  };
-
   testRunIds.forEach((testRunId) => {
     const aggregates = aggregatesByRun.get(testRunId) || [];
 
     const totalTests = aggregates.reduce((sum, agg) => sum + agg.count, 0);
     const totalFailures = aggregates
-      .filter((agg) => agg.type === "FAILURE")
+      .filter((agg) => agg.type === "FAILURE" && !agg.quarantined)
       .reduce((sum, agg) => sum + agg.count, 0);
     const totalErrors = aggregates
-      .filter((agg) => agg.type === "ERROR")
+      .filter((agg) => agg.type === "ERROR" && !agg.quarantined)
       .reduce((sum, agg) => sum + agg.count, 0);
     const totalSkipped = aggregates
       .filter((agg) => agg.type === "SKIPPED")
       .reduce((sum, agg) => sum + agg.count, 0);
+    const totalQuarantined = aggregates
+      .filter((agg) => agg.quarantined)
+      .reduce((sum, agg) => sum + agg.count, 0);
     const totalTime = timeMap.get(testRunId) || 0;
 
     // Build result segments
-    const resultSegments = aggregates.map((agg, index) => {
-      const getFallbackColor = (type: string | null) => {
-        switch (type) {
-          case "FAILURE":
-          case "ERROR":
-            return "rgb(239, 68, 68)";
-          case "SKIPPED":
-            return "rgb(161, 161, 170)";
-          default:
-            return "rgb(34, 197, 94)";
-        }
-      };
-
-      return {
-        id: `aggregate-${agg.statusId ?? "null"}-${agg.type ?? "UNKNOWN"}-${index}`,
-        statusName: agg.statusName || agg.type || "PASSED",
-        statusColor: agg.colorValue || getFallbackColor(agg.type),
-        resultType: agg.type || "PASSED",
-        count: agg.count,
-        isAggregate: true,
-      };
-    });
+    const resultSegments = aggregates.map((agg, index) =>
+      agg.quarantined
+        ? {
+            id: `aggregate-quarantined-${agg.statusId ?? "null"}-${agg.type ?? "UNKNOWN"}-${index}`,
+            statusName: QUARANTINED_STATUS_NAME,
+            statusColor: QUARANTINED_COLOR,
+            resultType: QUARANTINED_RESULT_TYPE,
+            count: agg.count,
+            isAggregate: true,
+          }
+        : {
+            id: `aggregate-${agg.statusId ?? "null"}-${agg.type ?? "UNKNOWN"}-${index}`,
+            statusName: agg.statusName || agg.type || "PASSED",
+            statusColor: agg.colorValue || junitFallbackColor(agg.type),
+            resultType: agg.type || "PASSED",
+            count: agg.count,
+            isAggregate: true,
+          }
+    );
 
     // Sort by priority
-    resultSegments.sort((a, b) => {
-      const orderA = order[a.resultType] ?? 99;
-      const orderB = order[b.resultType] ?? 99;
-      return orderA - orderB;
-    });
+    resultSegments.sort(
+      (a, b) =>
+        (JUNIT_SEGMENT_ORDER[a.resultType] ?? 99) -
+        (JUNIT_SEGMENT_ORDER[b.resultType] ?? 99)
+    );
 
     // Build status counts
     const statusCounts: TestRunSummaryData["statusCounts"] = [];
@@ -640,27 +665,44 @@ async function getBatchJUnitRunSummaries(
     >();
 
     aggregates.forEach((agg) => {
-      const key = `${agg.statusId ?? "null"}-${agg.statusName ?? agg.type}`;
+      const key = agg.quarantined
+        ? QUARANTINED_RESULT_TYPE
+        : `${agg.statusId ?? "null"}-${agg.statusName ?? agg.type}`;
       const existing = statusMap.get(key);
       if (existing) {
         existing.count += agg.count;
+        const row = statusCounts.find((c) =>
+          agg.quarantined
+            ? c.resultType === QUARANTINED_RESULT_TYPE
+            : c.statusId === agg.statusId &&
+              c.statusName === (agg.statusName || agg.type || "PASSED")
+        );
+        if (row) row.count += agg.count;
       } else {
         statusMap.set(key, {
-          statusId: agg.statusId,
+          statusId: agg.quarantined ? null : agg.statusId,
           count: agg.count,
         });
-        statusCounts.push({
-          statusId: agg.statusId,
-          statusName: agg.statusName || agg.type || "PASSED",
-          colorValue:
-            agg.colorValue ||
-            (agg.type === "FAILURE" || agg.type === "ERROR"
-              ? "rgb(239, 68, 68)"
-              : agg.type === "SKIPPED"
-                ? "rgb(161, 161, 170)"
-                : "rgb(34, 197, 94)"),
-          count: agg.count,
-        });
+        statusCounts.push(
+          agg.quarantined
+            ? {
+                statusId: null,
+                statusName: QUARANTINED_STATUS_NAME,
+                colorValue: QUARANTINED_COLOR,
+                count: agg.count,
+                isCompleted: true,
+                isSuccess: false,
+                isFailure: false,
+                resultType: QUARANTINED_RESULT_TYPE,
+              }
+            : {
+                statusId: agg.statusId,
+                statusName: agg.statusName || agg.type || "PASSED",
+                colorValue: agg.colorValue || junitFallbackColor(agg.type),
+                count: agg.count,
+                resultType: agg.type || "PASSED",
+              }
+        );
       }
     });
 
@@ -691,6 +733,7 @@ async function getBatchJUnitRunSummaries(
         totalFailures,
         totalErrors,
         totalSkipped,
+        totalQuarantined,
         totalTime,
         resultSegments,
       },

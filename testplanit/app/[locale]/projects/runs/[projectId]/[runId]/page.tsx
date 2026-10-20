@@ -758,7 +758,14 @@ export default function TestRunPage() {
                   select: {
                     id: true,
                     title: true,
-                    classification: true,
+                    classification: {
+                      select: {
+                        id: true,
+                        name: true,
+                        isDeleted: true,
+                        color: { select: { value: true } },
+                      },
+                    },
                     classificationSource: true,
                     aiConfidence: true,
                     status: true,
@@ -796,6 +803,7 @@ export default function TestRunPage() {
                     automated: true,
                     isDeleted: true,
                     hasParameters: true,
+                    quarantine: { select: { id: true } },
                     linksFrom: {
                       select: {
                         caseBId: true,
@@ -1586,6 +1594,10 @@ export default function TestRunPage() {
     () => setJunitFacets((prev) => ({ ...prev, retriedOnly: true })),
     []
   );
+  const handleQuarantinedTileClick = useCallback(
+    () => setJunitFacets((prev) => ({ ...prev, quarantinedOnly: true })),
+    []
+  );
   const junitTestCases = useMemo(() => {
     if (!jUnitSuites) return [];
     const mapped = jUnitSuites.flatMap((suite) =>
@@ -1627,6 +1639,7 @@ export default function TestRunPage() {
         attachments: result.attachments || [],
         failureSignatureId: result.failureSignatureId ?? null,
         failureSignature: result.failureSignature ?? null,
+        quarantined: !!result.repositoryCase?.quarantine,
       }))
     );
     // Mark every attempt row of a fail-then-pass case so the table can badge
@@ -2567,6 +2580,7 @@ export default function TestRunPage() {
                       forecastSeconds={testRunData?.forecastManual}
                       onFlakyTileClick={handleFlakyTileClick}
                       onRetriesTileClick={handleRetriesTileClick}
+                      onQuarantinedTileClick={handleQuarantinedTileClick}
                     />
                   ) : (
                     <>
@@ -2645,6 +2659,7 @@ export default function TestRunPage() {
                           forecastSeconds={undefined}
                           onFlakyTileClick={handleFlakyTileClick}
                           onRetriesTileClick={handleRetriesTileClick}
+                          onQuarantinedTileClick={handleQuarantinedTileClick}
                         />
                       )}
                     </>

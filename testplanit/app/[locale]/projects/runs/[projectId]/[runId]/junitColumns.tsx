@@ -1,6 +1,7 @@
 import {
   ClassificationBadge,
   KnownIssueBadge,
+  QuarantinedBadge,
 } from "@/components/triage/badges";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -71,15 +72,16 @@ export function getJunitColumns({
                 </TooltipContent>
               </Tooltip>
             )}
-            {row.original.failureSignature &&
-              row.original.failureSignature.classification !==
-                "UNCLASSIFIED" && (
-                <ClassificationBadge
-                  classification={row.original.failureSignature.classification}
-                  source={row.original.failureSignature.classificationSource}
-                  className="ms-1 shrink-0"
-                />
-              )}
+            {row.original.quarantined && (
+              <QuarantinedBadge className="ms-1 shrink-0" />
+            )}
+            {row.original.failureSignature?.classification && (
+              <ClassificationBadge
+                classification={row.original.failureSignature.classification}
+                source={row.original.failureSignature.classificationSource}
+                className="ms-1 shrink-0"
+              />
+            )}
             {row.original.failureSignature &&
               row.original.failureSignature.issues?.length > 0 && (
                 <KnownIssueBadge
