@@ -27,7 +27,9 @@ Everyone taking part in this project is expected to follow the [Code of Conduct]
 
 TestPlanIt is dual-licensed: AGPL-3.0 for open-source use, and a commercial license for proprietary use (see [LICENSE.md](LICENSE.md)). The [Contributor License Agreement](https://testplanit.com/cla) grants the project the rights it needs to ship your contribution under both licenses.
 
-When you open your first pull request, the CLA bot posts a comment with a link to the agreement and instructions for signing. A PR can't be merged until the CLA check passes. You only sign once, and the signature covers all your later PRs.
+When you open your first pull request, the CLA Assistant bot posts a comment with a link to the agreement. Follow the link, sign in with your GitHub account, and agree. A PR can't be merged until the CLA check passes.
+
+Your signature covers your later PRs. If the agreement changes, the bot asks you to sign the new version on your next PR. Every commit in a PR must be authored by a GitHub account that has signed, so make sure the email on your commits is linked to your GitHub account.
 
 If you're contributing on behalf of your employer, email [cla@testplanit.com](mailto:cla@testplanit.com) before you open the PR.
 
