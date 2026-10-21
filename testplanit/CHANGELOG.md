@@ -1,3 +1,9 @@
+## [1.2.0-beta.10](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.9...v1.2.0-beta.10) (2026-10-21)
+
+### Features
+
+* **notifications:** update notification timing and conditions for test run completion ([ed93f6b](https://github.com/TestPlanIt/testplanit/commit/ed93f6b8e7d47fab3c0c679da103c13f70e1d8c6))
+
 ## [1.2.0-beta.9](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.8...v1.2.0-beta.9) (2026-10-21)
 
 ### Features
