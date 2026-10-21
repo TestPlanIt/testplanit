@@ -3307,6 +3307,11 @@
       "bannerAction": "استئناف التحرير",
       "bannerDiscard": "تجاهلها"
     },
+    "templateSwitch": {
+      "title": "تبديل القالب؟",
+      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "confirm": "تبديل القالب"
+    },
     "columns": {
       "selectCase": "حدد الحالة",
       "runOrder": "ترتيب التشغيل",
