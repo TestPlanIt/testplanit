@@ -2198,6 +2198,11 @@
           "savedToast": "Project code saved.",
           "saveError": "Could not save the project code. It may already be used by another project."
         },
+        "defaultTemplate": {
+          "description": "New test cases and sessions in this project start with this template.",
+          "unavailableTitle": "Default template unavailable",
+          "unavailableDescription": "{name} is disabled, deleted, or no longer assigned to this project, so new test cases and sessions use the system default template instead. Choose another default template or restore this one."
+        },
         "reviewWorkflow": {
           "label": "Enable review workflow",
           "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications, and approving a request applies the transition.",
@@ -5422,6 +5427,7 @@
       "confirmSetAsDefault": "Set as default template",
       "confirmSetAsDefaultDescription": "Are you sure you want to set this template as the default?",
       "confirmSetAsDefaultProjects": "This template will be added to all projects.",
+      "projectDefaultWarning": "{count, plural, one {This project uses this template as its default. Its new test cases and sessions will use the system default template instead.} other {These projects use this template as their default. Their new test cases and sessions will use the system default template instead.}}",
       "add": {
         "button": "Add Template",
         "title": "Add New Template",
@@ -7851,7 +7857,7 @@
     "projectAiModels": "## AI Models\nChoose the AI model and prompt configuration this project uses for its AI-assisted features, such as test-case generation and auto-tagging.",
     "projectQuickScript": "## QuickScript\nConnect a code repository so this project can generate test cases from your automated test files, choosing which branch and paths to include.",
     "projectParameters": "## Test Case Parameters\nConfigure this project's data-driven testing — JUnit iteration property names for imported results and reusable data sets for parameterized cases.",
-    "projectAdvanced": "## Advanced\nAdvanced settings for this project — the record ID prefix, result review workflow, automatic issue creation on failure, and the result edit window.",
+    "projectAdvanced": "## Advanced\nAdvanced settings for this project — the record ID prefix, the default template for new test cases and sessions, result review workflow, automatic issue creation on failure, and the result edit window.",
     "projectShares": "## Manage Shares\nShareable links to this project's reports, each with its own access level — public, sign-in required, or password protected. Revoking a link cuts off its access.",
     "projectAccess": "## Access\nEvery user who can open this project and the role that decides what they may do here. A user's role comes from their own project access setting, a group they belong to, or the project's default access, in that order. System administrators and project administrators have full access regardless of role. Access is changed by an administrator under Administration › Projects › Edit Project.",
     "groups": "## Groups\nGroups let you assign project access and roles to many users at once. Add members directly, or map a group from your identity provider.",

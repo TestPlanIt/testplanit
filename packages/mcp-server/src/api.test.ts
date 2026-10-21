@@ -423,6 +423,7 @@ describe("resolveActiveRepository()", () => {
 describe("resolveDefaultTemplate()", () => {
   it("TC-18: empty array → throws TestPlanItHttpError 422 with message containing 'template'", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [] }));
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [] }));
     await expect(resolveDefaultTemplate(7, ENV)).rejects.toSatisfy((err: unknown) => {
       const e = err as TestPlanItHttpError;
       expect(e).toBeInstanceOf(TestPlanItHttpError);
@@ -434,15 +435,43 @@ describe("resolveDefaultTemplate()", () => {
   });
 
   it("TC-18b: returns id on success", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [] }));
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 5 }] }));
+    const result = await resolveDefaultTemplate(7, ENV);
+    expect(result).toBe(5);
+  });
+
+  it("prefers the project's default template when it is usable", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 9 }] }));
+    const result = await resolveDefaultTemplate(7, ENV);
+    expect(result).toBe(9);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const url = fetchMock.mock.calls[0][0] as string;
+    const body = JSON.parse(
+      decodeURIComponent(new URL(url).searchParams.get("q")!),
+    );
+    expect(body.where).toEqual({
+      isDeleted: false,
+      isEnabled: true,
+      projects: { some: { projectId: 7 } },
+      defaultForProjects: { some: { id: 7 } },
+    });
+  });
+
+  it("falls back to the system default when the server rejects the project default filter", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(400, { error: "invalid", code: "INVALID" }),
+    );
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 5 }] }));
     const result = await resolveDefaultTemplate(7, ENV);
     expect(result).toBe(5);
   });
 
   it("prefers the Default template, then id asc (take 1), so concurrent calls pick the same template", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [] }));
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 5 }] }));
     await resolveDefaultTemplate(7, ENV);
-    const call = fetchMock.mock.calls[0];
+    const call = fetchMock.mock.calls[1];
     const url = call[0] as string;
     const qParam = new URL(url).searchParams.get("q");
     const body = JSON.parse(decodeURIComponent(qParam!));
@@ -654,6 +683,7 @@ describe("TC-21: no raw token in any error message", () => {
   });
 
   it("resolveDefaultTemplate empty → error does not contain tpi_test", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [] }));
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [] }));
     const err = await resolveDefaultTemplate(7, ENV).catch((e) => e);
     expect((err as TestPlanItHttpError).message).not.toContain("tpi_test");

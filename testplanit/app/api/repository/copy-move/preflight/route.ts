@@ -3,6 +3,7 @@ import { RepositoryCaseSource } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
+import { findProjectDefaultTemplateId } from "~/lib/defaultTemplate";
 import { authOptions } from "~/server/auth";
 import {
   createCaseStateMapper,
@@ -278,10 +279,13 @@ export async function POST(request: Request) {
     );
     const targetRepositoryId = targetRepository?.id;
 
-    // First target template assignment, or the first source template as a
-    // fallback (valid when the templates all match).
+    // The target project's default template, else its first template
+    // assignment, or the first source template as a fallback (valid when the
+    // templates all match).
     const targetTemplateId =
-      targetTemplateAssignments[0]?.templateId ?? uniqueSourceTemplateIds[0];
+      (await findProjectDefaultTemplateId(reader, body.targetProjectId)) ??
+      targetTemplateAssignments[0]?.templateId ??
+      uniqueSourceTemplateIds[0];
 
     const targetDefaultWorkflowStateId = mapper.defaultStateId;
 

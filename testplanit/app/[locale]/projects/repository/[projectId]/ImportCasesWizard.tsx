@@ -50,7 +50,6 @@ import {
   Asterisk,
   ChevronLeft,
   ChevronRight,
-  Star,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "~/utils";
@@ -73,6 +72,8 @@ import {
   type AppliedImportMapping,
 } from "~/lib/schemas/savedImportMapping";
 import { parseStepsCell } from "~/lib/utils/parseExportedSteps";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
+import { DefaultTemplateBadge } from "@/components/DefaultTemplateBadge";
 import {
   convertMarkdownCasesToImportData,
   parseMarkdownTestCases,
@@ -276,7 +277,21 @@ export function ImportCasesWizard({
     },
   });
 
-  const defaultTemplate = templates?.find((template) => template.isDefault);
+  const { data: project } = useClientQueries(schema).projects.useFindUnique({
+    where: { id: projectId },
+    select: { defaultTemplateId: true },
+  });
+
+  // Only a configured default is preselected; the user picks otherwise. Held
+  // back until the project loads so its default isn't beaten by the system's.
+  const resolvedDefault = resolveDefaultTemplate(
+    templates,
+    project?.defaultTemplateId
+  );
+  const defaultTemplateSource = project ? resolvedDefault.source : null;
+  const defaultTemplate = defaultTemplateSource
+    ? resolvedDefault.template
+    : undefined;
 
   const { data: folders } = useClientQueries(
     schema
@@ -1283,16 +1298,10 @@ export function ImportCasesWizard({
             {templates?.map((template) => (
               <SelectItem key={template.id} value={template.id.toString()}>
                 {template.templateName}
-                {template.isDefault && (
-                  <Tooltip>
-                    <TooltipTrigger className="ms-1" asChild>
-                      <Badge variant="secondary">
-                        <Star className="h-3 w-3 fill-current" />
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>{tCommon("defaultOption")}</TooltipContent>
-                  </Tooltip>
-                )}
+                {defaultTemplateSource &&
+                  template.id === defaultTemplate?.id && (
+                    <DefaultTemplateBadge source={defaultTemplateSource} />
+                  )}
               </SelectItem>
             ))}
           </SelectContent>

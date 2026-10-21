@@ -4,6 +4,7 @@ import { ApplicationArea } from "~/zenstack/models";
 import { authorizeProjectApiRequest } from "~/lib/api/authorizeProjectApiRequest";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { findProjectDefaultTemplateId } from "~/lib/defaultTemplate";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { userCanAddEditArea } from "~/lib/services/projectPermissions";
@@ -149,16 +150,11 @@ export const POST = withAuditContext(
           );
         }
       } else {
-        const def = await baseDb.templates.findFirst({
-          where: {
-            isDeleted: false,
-            isEnabled: true,
-            projects: { some: { projectId } },
-          },
-          orderBy: [{ isDefault: "desc" }, { id: "asc" }],
-          select: { id: true },
-        });
-        if (!def) {
+        const defaultTemplateId = await findProjectDefaultTemplateId(
+          baseDb,
+          projectId
+        );
+        if (defaultTemplateId == null) {
           return NextResponse.json(
             {
               error: `No enabled template assigned to project ${projectId}. Assign a template to the project first.`,
@@ -166,7 +162,7 @@ export const POST = withAuditContext(
             { status: 422 }
           );
         }
-        templateId = def.id;
+        templateId = defaultTemplateId;
       }
 
       const loaded = await loadTemplateData(templateId);

@@ -66,6 +66,9 @@ const templates = [
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     templates: { useFindMany: () => ({ data: templates }) },
+    projects: {
+      useFindUnique: () => ({ data: { defaultTemplateId: null } }),
+    },
     repositoryFolders: { useFindMany: () => ({ data: [] }) },
     projectLlmIntegration: { useFindMany: () => ({ data: [] }) },
   }),

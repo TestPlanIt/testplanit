@@ -8,6 +8,7 @@
  */
 
 import { baseDb } from "@/lib/db";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
 
 /**
  * The client every helper reads through. Defaults to the web instance's own
@@ -83,25 +84,38 @@ export interface TemplateOption {
   isDefault: boolean;
 }
 
-/** Templates assigned to the project (the wizard's template picker source). */
+/**
+ * Templates assigned to the project (the wizard's template picker source).
+ * `isDefault` marks the one the in-app wizard preselects for the project.
+ */
 export async function listProjectTemplates(
   projectId: number,
   client: GenerationDb = baseDb
 ): Promise<TemplateOption[]> {
   const db = client;
-  const templates = await db.templates.findMany({
-    where: {
-      isDeleted: false,
-      isEnabled: true,
-      projects: { some: { projectId } },
-    },
-    select: { id: true, templateName: true, isDefault: true },
-    orderBy: { templateName: "asc" },
-  });
+  const [project, templates] = await Promise.all([
+    db.projects.findUnique({
+      where: { id: projectId },
+      select: { defaultTemplateId: true },
+    }),
+    db.templates.findMany({
+      where: {
+        isDeleted: false,
+        isEnabled: true,
+        projects: { some: { projectId } },
+      },
+      select: { id: true, templateName: true, isDefault: true },
+      orderBy: { templateName: "asc" },
+    }),
+  ]);
+  const defaultId = resolveDefaultTemplate(
+    templates,
+    project?.defaultTemplateId
+  ).template?.id;
   return templates.map((t) => ({
     id: t.id,
     name: t.templateName,
-    isDefault: t.isDefault,
+    isDefault: t.id === defaultId,
   }));
 }
 

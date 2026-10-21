@@ -23,7 +23,7 @@ The Add Case dialog uses a resizable two-panel layout:
 ## Header Controls
 
 - **Title**: "Add Test Case".
-- **Template Selector**: A dropdown menu to select the [Template](../templates-fields.md) for this test case. Changing the template dynamically updates the fields available in the left panel.
+- **Template Selector**: A dropdown menu to select the [Template](../templates-fields.md) for this test case. The project's [default template](settings/advanced.md#default-template) is preselected and marked with a star. Changing the template dynamically updates the fields available in the left panel.
 - **Parent Folder**: Displays the name of the folder the case will be added to.
 
 ## Left Panel Fields

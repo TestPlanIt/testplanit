@@ -578,8 +578,8 @@ export interface CreateTestCasesOptions {
    */
   folderId: number;
   /**
-   * Template for the batch. Defaults to the template marked Default, else the
-   * project's first enabled template.
+   * Template for the batch. Defaults to the project's default template, then
+   * the template marked Default, else the project's first enabled template.
    */
   templateId?: number;
   /**

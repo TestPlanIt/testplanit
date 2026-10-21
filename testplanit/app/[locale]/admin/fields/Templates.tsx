@@ -26,6 +26,11 @@ import { useRouter } from "~/lib/navigation";
 import { AddTemplate } from "./AddTemplate";
 import { DeleteTemplate } from "./DeleteTemplate";
 import { EditTemplate } from "./EditTemplate";
+import {
+  ProjectDefaultTemplateWarning,
+  projectsUsingAsDefault,
+  type ProjectDefaultRef,
+} from "./ProjectDefaultTemplateWarning";
 import { ExtendedTemplates, useColumns } from "./templateColumns";
 
 export default function TemplateComponent() {
@@ -54,6 +59,11 @@ export default function TemplateComponent() {
     useState<ExtendedTemplates | null>(null);
   const [deletingTemplate, setDeletingTemplate] =
     useState<ExtendedTemplates | null>(null);
+  const [disablingTemplate, setDisablingTemplate] = useState<{
+    id: number;
+    templateName: string;
+    projectDefaults: ProjectDefaultRef[];
+  } | null>(null);
 
   const { mutateAsync: updateTemplate } =
     useClientQueries(schema).templates.useUpdate();
@@ -83,6 +93,11 @@ export default function TemplateComponent() {
         caseFields: true,
         resultFields: true,
         projects: { where: { project: { isDeleted: false } } },
+        defaultForProjects: {
+          where: { isDeleted: false },
+          select: { id: true, name: true, iconUrl: true },
+          orderBy: { name: "asc" },
+        },
       },
     },
     {
@@ -91,9 +106,32 @@ export default function TemplateComponent() {
     }
   );
   const templates = data as Templates[];
+  const templatesRef = useRef(data);
+  useEffect(() => {
+    templatesRef.current = data;
+  });
 
   const handleToggleEnabled = useCallback(
     async (id: number, isEnabled: boolean) => {
+      // Disabling a project's default template asks first, naming the
+      // projects that fall back to the system default.
+      if (!isEnabled) {
+        const template = templatesRef.current?.find((row) => row.id === id);
+        const projectDefaults = template
+          ? projectsUsingAsDefault(
+              template.defaultForProjects,
+              template.projects.map((assignment) => assignment.projectId)
+            )
+          : [];
+        if (template && projectDefaults.length > 0) {
+          setDisablingTemplate({
+            id,
+            templateName: template.templateName,
+            projectDefaults,
+          });
+          return;
+        }
+      }
       try {
         await updateTemplateRef.current({
           where: { id },
@@ -105,6 +143,17 @@ export default function TemplateComponent() {
     },
     []
   );
+
+  const handleConfirmDisable = async () => {
+    if (!disablingTemplate) return;
+    const { id } = disablingTemplate;
+    setDisablingTemplate(null);
+    try {
+      await updateTemplate({ where: { id }, data: { isEnabled: false } });
+    } catch (error) {
+      console.error("Failed to update template:", error);
+    }
+  };
 
   const handleToggleDefault = useCallback((id: number, _isDefault: boolean) => {
     setSelectedTemplateId(id);
@@ -262,6 +311,39 @@ export default function TemplateComponent() {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {tCommon("actions.confirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog
+          open={disablingTemplate !== null}
+          onOpenChange={(open) => {
+            if (!open) setDisablingTemplate(null);
+          }}
+        >
+          <AlertDialogContent
+            className="sm:max-w-[425px] lg:max-w-[480px]"
+            data-testid="disable-template-dialog"
+          >
+            <AlertDialogHeader>
+              <AlertDialogTitle className="break-all">
+                {disablingTemplate?.templateName}
+              </AlertDialogTitle>
+            </AlertDialogHeader>
+            <AlertDialogDescription asChild>
+              <div>
+                <ProjectDefaultTemplateWarning
+                  projects={disablingTemplate?.projectDefaults ?? []}
+                />
+              </div>
+            </AlertDialogDescription>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDisable}
+                data-testid="disable-template-confirm"
+              >
+                {tGlobal("users.profile.twoFactor.disable")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

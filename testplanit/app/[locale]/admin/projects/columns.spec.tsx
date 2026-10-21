@@ -142,6 +142,7 @@ const testProject: ExtendedProjects = {
   docs: null,
   promptConfigId: null,
   defaultCaseExportTemplateId: null,
+  defaultTemplateId: null,
   quickScriptEnabled: false,
   impactEnabled: false,
   failureTriageEnabled: true,

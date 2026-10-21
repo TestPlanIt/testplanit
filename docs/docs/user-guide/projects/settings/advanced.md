@@ -1,7 +1,7 @@
 ---
 sidebar_label: 'Advanced'
 title: 'Advanced (Project Settings)'
-description: Per-project toggles for review gating, requirements, result governance, draft-case handling, composition locking, dependency enforcement, and the result edit window
+description: Per-project default template and toggles for review gating, requirements, result governance, draft-case handling, composition locking, dependency enforcement, and the result edit window
 ---
 
 # Advanced
@@ -19,7 +19,7 @@ Only system administrators and project administrators can open this page. There 
 
 ## Settings
 
-Each toggle saves immediately. The project code (when shown) and the result edit window each have their own **Save** button.
+Each toggle and the default template save immediately. The project code (when shown) and the result edit window each have their own **Save** button.
 
 ### Project code
 
@@ -30,6 +30,17 @@ Appears only when the **Record Keys** feature is enabled system-wide. It sets th
 - Leave it **blank** to keep showing plain numeric IDs for this project.
 
 See [Record Keys](../../record-keys.md) for how keys are formatted and where they appear.
+
+### Default template
+
+Sets the [template](../../templates-fields.md) that new test cases and sessions in this project start with. The list shows the enabled templates assigned to the project; the system default template is marked with a star.
+
+- **Use System Default** (the default) — new cases and sessions start with the system default template when it's assigned to the project, otherwise with the project's first template.
+- **A specific template** — new cases and sessions start with that template instead of the system default.
+
+The default applies wherever a template is preselected: **Add Test Case**, the quick-add row, case import, AI test case generation, test result import, **Add Session**, the Jira panel, webhook actions that [generate test cases with AI](../../webhooks.md), and the API and MCP server when no template is given. In each template picker a star marks the preselected template; hover it to see whether it's the **Project Default** or the **System Default**. Users can still choose any other template assigned to the project.
+
+If the selected template is later disabled, deleted, or unassigned from the project, a warning appears on this page and new cases and sessions fall back to the system default until you choose another template or restore it.
 
 ### Enable review workflow
 

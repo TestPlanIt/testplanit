@@ -691,6 +691,61 @@ describe("Test Results Import API Route", () => {
       ]);
     });
 
+    it("creates cases with the project's default template when none is given", async () => {
+      (baseDb.projects.findUnique as any).mockResolvedValue({
+        junitIterationPropertyNames: [],
+        defaultTemplateId: 7,
+      });
+      (baseDb.templates.findFirst as any).mockImplementation(
+        async ({ where }: any) =>
+          where.id === 7 ? { id: 7, isDefault: false } : mockTemplate
+      );
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+
+      await readSseResponse(await POST(createFormDataRequest(formData)));
+
+      expect(baseDb.templates.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 7,
+          isDeleted: false,
+          isEnabled: true,
+          projects: { some: { projectId: 1 } },
+        },
+      });
+      expect(baseDb.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ templateId: 7 }),
+        })
+      );
+    });
+
+    it("falls back to the system default when the project default is unusable", async () => {
+      (baseDb.projects.findUnique as any).mockResolvedValue({
+        junitIterationPropertyNames: [],
+        defaultTemplateId: 7,
+      });
+      (baseDb.templates.findFirst as any).mockImplementation(
+        async ({ where }: any) => (where.id === 7 ? null : mockTemplate)
+      );
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+
+      await readSseResponse(await POST(createFormDataRequest(formData)));
+
+      expect(baseDb.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ templateId: mockTemplate.id }),
+        })
+      );
+    });
+
     it("emits error when no template is available", async () => {
       (baseDb.templates.findFirst as any).mockResolvedValue(null);
 

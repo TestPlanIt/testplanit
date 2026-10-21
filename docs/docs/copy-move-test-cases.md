@@ -82,6 +82,8 @@ If the source project uses templates that are not assigned to the target project
 - **Admin and Project Admin users** can check the **Auto-assign missing templates** option. This assigns the required templates to the target project automatically when the operation runs.
 - **Other users** see an informational warning. The templates will not be auto-assigned; a project admin must assign them separately before custom field values display correctly in the target project.
 
+Cases whose template is not assigned to the target project when the operation runs are created with the target project's [default template](user-guide/projects/settings/advanced.md#default-template).
+
 ### Workflow State Mapping
 
 Workflow states are matched between projects by name. States that exist in the source project but have no name match in the target project are shown in a warning list. Those unmatched states fall back to the target project's default workflow state when cases are transferred.

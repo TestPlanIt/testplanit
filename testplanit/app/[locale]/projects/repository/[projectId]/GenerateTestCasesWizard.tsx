@@ -53,11 +53,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { DefaultTemplateBadge } from "@/components/DefaultTemplateBadge";
 import { ApplicationArea } from "~/zenstack/models";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -81,7 +77,6 @@ import {
   Settings,
   Sparkles,
   SquarePen,
-  Star,
   Tag,
   X,
 } from "lucide-react";
@@ -101,6 +96,7 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFolderStats } from "~/lib/useFolderStats";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import {
   convertHtmlToTipTapJSON,
@@ -1973,13 +1969,14 @@ export function GenerateTestCasesWizard({
     }
   }, [project]);
 
+  const { template: defaultTemplate, source: defaultTemplateSource } =
+    resolveDefaultTemplate(templates, project?.defaultTemplateId);
+
   useEffect(() => {
-    if (templates && templates.length > 0) {
-      const defaultTemplate =
-        templates.find((t) => t.isDefault) || templates[0];
+    if (defaultTemplate) {
       setSelectedTemplateId(defaultTemplate.id);
     }
-  }, [templates]);
+  }, [defaultTemplate]);
 
   // Auto-select the template's default fields when the user changes template
   // in the wizard flow: fields the admin marked generateDefaultEnabled, plus
@@ -2583,9 +2580,7 @@ export function GenerateTestCasesWizard({
     setUrlJobId(null);
     setUrlJobProgress(null);
     setUrlRobotsSkipped(0);
-    setSelectedTemplateId(
-      templates?.find((t) => t.isDefault)?.id || templates?.[0]?.id || null
-    );
+    setSelectedTemplateId(defaultTemplate?.id ?? null);
     // Released, not set to the default id — that id is usually unchanged, and
     // the auto-select-all effect must repopulate the cleared selection.
     seededFieldsTemplateIdRef.current = null;
@@ -5099,18 +5094,12 @@ export function GenerateTestCasesWizard({
                               >
                                 <div className="flex items-center justify-between w-full gap-2">
                                   <span>{template.templateName}</span>
-                                  {template.isDefault && (
-                                    <Tooltip>
-                                      <TooltipTrigger className="ms-1" asChild>
-                                        <Badge variant="secondary">
-                                          <Star className="h-3 w-3 fill-current" />
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        {tCommon("defaultOption")}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
+                                  {defaultTemplateSource &&
+                                    template.id === defaultTemplate?.id && (
+                                      <DefaultTemplateBadge
+                                        source={defaultTemplateSource}
+                                      />
+                                    )}
                                 </div>
                               </SelectItem>
                             ))}

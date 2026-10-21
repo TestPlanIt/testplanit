@@ -24,6 +24,7 @@ import {
   type DraftCasesOptions,
   type DraftQuantity,
 } from "~/lib/webhooks/actions/schemas";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
 import { schema } from "~/zenstack/schema";
 import { QUANTITY_LABEL_KEYS } from "./webhook-action-labels";
 
@@ -135,7 +136,15 @@ export function WebhookActionDraftFields({
     orderBy: { name: "asc" },
   });
 
-  const defaultTemplate = templates?.find((template) => template.isDefault);
+  const { data: project } = queries.projects.useFindUnique({
+    where: { id: projectId },
+    select: { defaultTemplateId: true },
+  });
+
+  const { template: defaultTemplate } = resolveDefaultTemplate(
+    templates,
+    project?.defaultTemplateId
+  );
   const defaultState = states?.find((state) => state.isDefault);
 
   const fetchMembers = useCallback(

@@ -529,12 +529,29 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
         sendProgress(20, progressMessages.fetchingTemplate);
 
-        // Use provided templateId or fall back to the default template
+        // Use provided templateId or fall back to the project's default
+        // template, then the system default
         let template;
         if (templateId) {
           template = await baseDb.templates.findUnique({
             where: { id: templateId },
           });
+        }
+        if (!template) {
+          const project = await baseDb.projects.findUnique({
+            where: { id: projectId },
+            select: { defaultTemplateId: true },
+          });
+          if (project?.defaultTemplateId != null) {
+            template = await baseDb.templates.findFirst({
+              where: {
+                id: project.defaultTemplateId,
+                isDeleted: false,
+                isEnabled: true,
+                projects: { some: { projectId } },
+              },
+            });
+          }
         }
         if (!template) {
           template = await baseDb.templates.findFirst({

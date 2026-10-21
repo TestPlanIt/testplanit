@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockTemplates,
+  mockProject,
   mockStates,
   mockGroups,
   mockUsers,
@@ -11,6 +12,7 @@ const {
   comboboxes,
 } = vi.hoisted(() => ({
   mockTemplates: vi.fn(),
+  mockProject: vi.fn(),
   mockStates: vi.fn(),
   mockGroups: vi.fn(),
   mockUsers: vi.fn(),
@@ -25,6 +27,7 @@ vi.mock("~/zenstack/schema", () => ({ schema: {} }));
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     templates: { useFindMany: (...a: unknown[]) => mockTemplates(...a) },
+    projects: { useFindUnique: (...a: unknown[]) => mockProject(...a) },
     workflows: { useFindMany: (...a: unknown[]) => mockStates(...a) },
     groups: { useFindMany: (...a: unknown[]) => mockGroups(...a) },
     user: { useFindMany: (...a: unknown[]) => mockUsers(...a) },
@@ -168,6 +171,7 @@ describe("WebhookActionDraftFields", () => {
     mockTemplates.mockReturnValue({
       data: [{ id: 4, templateName: "Functional", isDefault: true }],
     });
+    mockProject.mockReturnValue({ data: { defaultTemplateId: null } });
     mockStates.mockReturnValue({
       data: [
         {
@@ -197,6 +201,23 @@ describe("WebhookActionDraftFields", () => {
       results: [{ id: "u2", name: "Bob", email: null, image: null }],
       total: 1,
     });
+  });
+
+  it("names the project's default template on the Default choice", () => {
+    mockTemplates.mockReturnValue({
+      data: [
+        { id: 4, templateName: "Functional", isDefault: true },
+        { id: 5, templateName: "Smoke", isDefault: false },
+      ],
+    });
+    mockProject.mockReturnValue({ data: { defaultTemplateId: 5 } });
+    render(<Harness initial={emptyDraft} />);
+    const template = screen.getByTestId(
+      "webhook-action-draft-template"
+    ) as HTMLSelectElement;
+    expect(template.options[0].textContent).toBe(
+      "common.fields.default · Smoke"
+    );
   });
 
   it("offers the project's templates, states and the wizard's counts, with Default first", () => {

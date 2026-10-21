@@ -37,6 +37,10 @@ vi.mock("~/lib/services/jira-panel-generation", () => ({
   loadTemplateData: vi.fn(),
 }));
 
+vi.mock("~/lib/defaultTemplate", () => ({
+  findProjectDefaultTemplateId: vi.fn(),
+}));
+
 vi.mock("~/lib/services/tagResolution", () => ({
   resolveTagByName: vi.fn(),
 }));
@@ -71,6 +75,7 @@ import {
 } from "~/lib/api-token-auth";
 import { enrichFromApiAuth } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { findProjectDefaultTemplateId } from "~/lib/defaultTemplate";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
 import {
   IssueKeyResolutionError,
@@ -126,8 +131,9 @@ beforeEach(() => {
     id: 1,
     name: "Test Project",
   });
-  // Default template resolution (no explicit templateId → default lookup).
   (baseDb.templates.findFirst as any).mockResolvedValue({ id: 22 });
+  // Default template resolution (no explicit templateId → default lookup).
+  (findProjectDefaultTemplateId as any).mockResolvedValue(22);
   (userCanAddEditArea as any).mockResolvedValue(true);
   (loadTemplateData as any).mockResolvedValue({
     template: { id: 22, name: "Default", fields: [] },
@@ -288,7 +294,7 @@ describe("Bulk Create API Route", () => {
     });
 
     it("returns 422 when no default template is assigned", async () => {
-      (baseDb.templates.findFirst as any).mockResolvedValue(null);
+      (findProjectDefaultTemplateId as any).mockResolvedValue(null);
 
       const [req, ctx] = createRequest({
         folderId: 12,
@@ -314,18 +320,17 @@ describe("Bulk Create API Route", () => {
       );
     });
 
-    it("prefers the template marked Default when templateId is omitted", async () => {
+    it("uses the project's default template when templateId is omitted", async () => {
+      (findProjectDefaultTemplateId as any).mockResolvedValue(31);
       const [req, ctx] = createRequest({
         folderId: 12,
         cases: [{ name: "A" }],
       });
       await POST(req, ctx);
 
-      expect(baseDb.templates.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: [{ isDefault: "desc" }, { id: "asc" }],
-        })
-      );
+      expect(findProjectDefaultTemplateId).toHaveBeenCalledWith(baseDb, 1);
+      expect(baseDb.templates.findFirst).not.toHaveBeenCalled();
+      expect(loadTemplateData).toHaveBeenCalledWith(31);
     });
   });
 

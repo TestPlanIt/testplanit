@@ -55,6 +55,7 @@ let mockProjectData:
       editResultsDurationSeconds?: number | null;
       abandonedRunIdleMinutes?: number | null;
       abandonedRunStateId?: number | null;
+      defaultTemplateId?: number | null;
     }
   | undefined = {
   id: 42,
@@ -129,6 +130,16 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   }),
 }));
 
+vi.mock("./DefaultTemplateCard", () => ({
+  DefaultTemplateCard: ({
+    defaultTemplateId,
+  }: {
+    defaultTemplateId: number | null | undefined;
+  }) => (
+    <div data-testid="default-template-card">{String(defaultTemplateId)}</div>
+  ),
+}));
+
 import AdvancedPage from "./page";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -157,6 +168,16 @@ describe("AdvancedPage (per-project advanced settings)", () => {
     render(<AdvancedPage />);
     expect(screen.getByTestId("advanced-settings-page")).toBeInTheDocument();
     expect(mockNotFound).not.toHaveBeenCalled();
+  });
+
+  it("(dt) passes the project's default template to the default template card", () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: true,
+      defaultTemplateId: 7,
+    };
+    render(<AdvancedPage />);
+    expect(screen.getByTestId("default-template-card")).toHaveTextContent("7");
   });
 
   it("(b) PROJECTADMIN sees the Advanced page", () => {

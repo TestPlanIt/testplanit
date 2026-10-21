@@ -72,6 +72,8 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
+import { DefaultTemplateBadge } from "@/components/DefaultTemplateBadge";
 import { CaseDraftStatus } from "@/components/caseDrafts/CaseDraftStatus";
 import { RestoreCaseDraftDialog } from "@/components/caseDrafts/RestoreCaseDraftDialog";
 import { SaveDraftDialog } from "@/components/caseDrafts/SaveDraftDialog";
@@ -488,9 +490,9 @@ export function AddCase({
     (workflow) => workflow.isDefault
   )?.id;
 
-  const defaultTemplateId = templates?.find(
-    (template) => template.isDefault
-  )?.id;
+  const { template: defaultTemplate, source: defaultTemplateSource } =
+    resolveDefaultTemplate(templates, folder?.project?.defaultTemplateId);
+  const defaultTemplateId = defaultTemplate?.id;
 
   const templateOptions =
     templates?.map((template) => ({
@@ -1462,6 +1464,13 @@ export function AddCase({
                                         value={template.value}
                                       >
                                         {template.label}
+                                        {defaultTemplateSource &&
+                                          template.value ===
+                                            String(defaultTemplateId) && (
+                                            <DefaultTemplateBadge
+                                              source={defaultTemplateSource}
+                                            />
+                                          )}
                                       </SelectItem>
                                     ))}
                                   </SelectGroup>

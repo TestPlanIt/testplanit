@@ -9,12 +9,14 @@ const {
   mockDbUserFindUnique,
   mockGetCopyMoveQueue,
   mockGetCurrentTenantId,
+  mockFindProjectDefaultTemplateId,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockEnhance: vi.fn(),
   mockDbUserFindUnique: vi.fn(),
   mockGetCopyMoveQueue: vi.fn(),
   mockGetCurrentTenantId: vi.fn(),
+  mockFindProjectDefaultTemplateId: vi.fn(),
 }));
 
 // ─── Mock next-auth ───────────────────────────────────────────────────────────
@@ -67,6 +69,11 @@ vi.mock("~/lib/queues", () => ({
 
 vi.mock("@/lib/multiTenantDb", () => ({
   getCurrentTenantId: (...args: any[]) => mockGetCurrentTenantId(...args),
+}));
+
+vi.mock("~/lib/defaultTemplate", () => ({
+  findProjectDefaultTemplateId: (...args: any[]) =>
+    mockFindProjectDefaultTemplateId(...args),
 }));
 
 // ─── Mock queue add ───────────────────────────────────────────────────────────
@@ -170,6 +177,7 @@ function setupDefaultMocks(opts?: { userAccess?: string }) {
 describe("POST /api/repository/copy-move", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFindProjectDefaultTemplateId.mockResolvedValue(null);
   });
 
   // Test 1
@@ -410,6 +418,23 @@ describe("POST /api/repository/copy-move", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(
       "copy-move",
       expect.objectContaining({ targetTemplateId: 10 }),
+      undefined
+    );
+  });
+
+  it("resolves targetTemplateId to the target project's default template when not provided", async () => {
+    setupDefaultMocks();
+    mockFindProjectDefaultTemplateId.mockResolvedValue(30);
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(validBody));
+    expect(res.status).toBe(200);
+    expect(mockFindProjectDefaultTemplateId).toHaveBeenCalledWith(
+      mockEnhancedDb,
+      validBody.targetProjectId
+    );
+    expect(mockQueueAdd).toHaveBeenCalledWith(
+      "copy-move",
+      expect.objectContaining({ targetTemplateId: 30 }),
       undefined
     );
   });

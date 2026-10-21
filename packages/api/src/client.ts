@@ -1379,8 +1379,9 @@ export class TestPlanItClient {
    * failures are visible: each entry is `status: "success"` with a `caseId`, or
    * `status: "error"` with a message (e.g. a custom field not on the template).
    *
-   * `templateId` defaults to the template marked Default, else the project's
-   * first enabled template; resolve a specific one with
+   * `templateId` defaults to the project's default template, then the template
+   * marked Default, else the project's first enabled template; resolve a
+   * specific one with
    * {@link findTemplateByName}. `stateName` defaults to the CASES state marked
    * Default, else the first by order. Resolve `folderId` with
    * {@link findFolderByName} / {@link findOrCreateFolderPath}.

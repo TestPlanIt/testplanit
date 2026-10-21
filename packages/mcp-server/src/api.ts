@@ -565,22 +565,39 @@ export async function resolveActiveRepository(
 /**
  * Resolve a default template assigned to the project (cases require
  * `templateId` per RepositoryCases.templateId being non-nullable —
- * VERIFIED in schema.zmodel). Prefers the template marked Default, as the
- * web UI does, then the lowest id.
+ * VERIFIED in schema.zmodel). Prefers the project's default template, then
+ * the template marked Default, as the web UI does, then the lowest id.
  */
 export async function resolveDefaultTemplate(
   projectId: number,
   env: EnvConfig,
 ): Promise<number> {
+  const usable = {
+    isDeleted: false,
+    isEnabled: true,
+    projects: { some: { projectId } },
+  };
+  // Servers older than the project default setting reject this filter; they
+  // fall through to the system default.
+  const projectDefault = await zenstack<{ id: number }[]>(
+    "templates",
+    "findMany",
+    {
+      where: { ...usable, defaultForProjects: { some: { id: projectId } } },
+      select: { id: true },
+      take: 1,
+    },
+    env,
+  ).catch(() => []);
+  if (projectDefault && projectDefault.length > 0) {
+    return projectDefault[0].id;
+  }
+
   const templates = await zenstack<{ id: number }[]>(
     "templates",
     "findMany",
     {
-      where: {
-        isDeleted: false,
-        isEnabled: true,
-        projects: { some: { projectId } },
-      },
+      where: usable,
       select: { id: true },
       orderBy: [{ isDefault: "desc" }, { id: "asc" }],
       take: 1,

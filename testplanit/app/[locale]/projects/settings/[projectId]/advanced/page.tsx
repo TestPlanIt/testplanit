@@ -47,6 +47,7 @@ import {
   suggestProjectKey,
 } from "~/lib/recordKey";
 import { useDebounce } from "@/components/Debounce";
+import { DefaultTemplateCard } from "./DefaultTemplateCard";
 
 export default function AdvancedPage() {
   const params = useParams();
@@ -78,6 +79,7 @@ export default function AdvancedPage() {
         enforceCaseDependencies: true,
         abandonedRunIdleMinutes: true,
         abandonedRunStateId: true,
+        defaultTemplateId: true,
         projectIntegrations: {
           where: { isActive: true, integration: { status: "ACTIVE" } },
           select: { id: true },
@@ -647,6 +649,12 @@ export default function AdvancedPage() {
               </CardContent>
             </Card>
           )}
+
+          <DefaultTemplateCard
+            projectId={projectId}
+            defaultTemplateId={project?.defaultTemplateId}
+            disabled={projectLoading}
+          />
 
           {/* Review workflow toggle (Phase 2's single Advanced toggle).
               Future Advanced toggles can append additional <Card> sections

@@ -677,6 +677,8 @@ model Projects {
     assignedStatuses                 ProjectStatusAssignment[]
     milestoneTypes                   MilestoneTypesAssignment[]
     assignedTemplates                TemplateProjectAssignment[]
+    defaultTemplateId                Int?
+    defaultTemplate                  Templates?                            @relation("ProjectDefaultTemplate", fields: [defaultTemplateId], references: [id], onDelete: SetNull)
     assignedWorkflows                ProjectWorkflowAssignment[]
     assignedConfigurations           ProjectConfigurationAssignment[]
     milestones                       Milestones[]
@@ -1204,18 +1206,19 @@ model CaseFieldTypes {
 }
 
 model Templates {
-    id              Int                         @id @default(autoincrement())
-    templateName    String                      @unique @length(1)
-    isEnabled       Boolean
-    isDeleted       Boolean                     @default(false)
-    deletedAt       DateTime?                   @db.Timestamptz(6)
-    isDefault       Boolean
-    caseFields      TemplateCaseAssignment[]
-    resultFields    TemplateResultAssignment[]
-    projects        TemplateProjectAssignment[]
-    repositoryCases RepositoryCases[]
-    sessions        Sessions[]
-    importMappings  ImportMapping[]
+    id                 Int                         @id @default(autoincrement())
+    templateName       String                      @unique @length(1)
+    isEnabled          Boolean
+    isDeleted          Boolean                     @default(false)
+    deletedAt          DateTime?                   @db.Timestamptz(6)
+    isDefault          Boolean
+    caseFields         TemplateCaseAssignment[]
+    resultFields       TemplateResultAssignment[]
+    projects           TemplateProjectAssignment[]
+    defaultForProjects Projects[]                  @relation("ProjectDefaultTemplate")
+    repositoryCases    RepositoryCases[]
+    sessions           Sessions[]
+    importMappings     ImportMapping[]
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')

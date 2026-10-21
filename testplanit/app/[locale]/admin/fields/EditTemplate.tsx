@@ -42,6 +42,10 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 
 import { useTranslations } from "next-intl";
+import {
+  ProjectDefaultTemplateWarning,
+  projectsUsingAsDefault,
+} from "./ProjectDefaultTemplateWarning";
 
 function buildFormSchema(t: (key: any) => string) {
   return z.object({
@@ -190,6 +194,20 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
   } = form;
 
   const isDefault = watch("isDefault");
+  const isEnabled = watch("isEnabled");
+  const selectedProjectIds = watch("projects");
+
+  // Projects using this template as their default that would lose it on save
+  // (disabled, or unassigned from them) and fall back to the system default.
+  // Saving as the system default assigns it everywhere, so none lose it.
+  const projectDefaultsLosingTemplate = useMemo(() => {
+    if (isDefault) return [];
+    const assignedIds = template.projects.map((p) => p.projectId);
+    return projectsUsingAsDefault(
+      (projects ?? []).filter((p) => p.defaultTemplateId === template.id),
+      assignedIds
+    ).filter((p) => !isEnabled || !selectedProjectIds?.includes(p.id));
+  }, [isDefault, isEnabled, selectedProjectIds, projects, template]);
 
   useEffect(() => {
     if (isDefault) {
@@ -587,6 +605,9 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
                   <FormMessage />
                 </FormItem>
               )}
+            />
+            <ProjectDefaultTemplateWarning
+              projects={projectDefaultsLosingTemplate}
             />
             <DialogFooter>
               <Button

@@ -24,6 +24,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
 import { IconName } from "~/types/globals";
 
 function buildFormSchema(t: (key: any) => string) {
@@ -97,9 +98,9 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   );
 
   // Fetch every template assigned to the project, then pick the default
-  // client-side with a fallback to the first one. Filtering by
-  // `isDefault: true` server-side is racy: when an admin (or a parallel
-  // E2E test) creates another default template, the server cascade flips
+  // client-side (project default, system default, then the first one).
+  // Filtering by `isDefault: true` server-side is racy: when an admin (or a
+  // parallel E2E test) creates another default template, the server cascade flips
   // every other template's `isDefault` to `false`. A server-side filter
   // would briefly return nothing for projects whose only assigned template
   // is the seeded "Default Template", which leaves `template.id` as 0 and
@@ -120,7 +121,10 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
       enabled: !!folderId,
     }
   );
-  const template = templates?.find((t) => t.isDefault) ?? templates?.[0];
+  const { template } = resolveDefaultTemplate(
+    templates,
+    folder?.project?.defaultTemplateId
+  );
 
   const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
