@@ -632,6 +632,10 @@ function StepsForm<T extends FieldValues = FieldValues>({
   }
 
   useEffect(() => {
+    // Without a `steps` prop the form owns the rows (Add Case seeds them from
+    // its defaults or a restored draft), so there is nothing to seed from and
+    // replacing would wipe what the form already holds.
+    if (steps === undefined) return;
     const currentStepsString = JSON.stringify(steps); // Serialize current steps prop for comparison
 
     if (currentStepsString !== processedStepsRef.current) {

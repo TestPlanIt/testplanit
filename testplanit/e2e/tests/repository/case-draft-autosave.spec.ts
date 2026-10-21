@@ -4,7 +4,7 @@ import { RepositoryPage } from "../../page-objects/repository/repository.page";
 /**
  * Draft auto-save for the test case editors (issue #601).
  *
- * Deliberately only two tests. The debounce, retry, digest, restore-selection
+ * Deliberately few tests. The debounce, retry, digest, restore-selection
  * and cache-eviction logic all have direct unit coverage in
  * `hooks/useCaseDraft.test.tsx`, and re-asserting them through a browser would
  * buy nothing but runtime and flake surface. What lives here is the pair of
@@ -16,7 +16,8 @@ import { RepositoryPage } from "../../page-objects/repository/repository.page";
  *      correct while the editor rendered the old document, so the screen lied
  *      about what had been recovered. Catching it in jsdom would mean rendering
  *      the real host, the real field renderer and ProseMirror, whose
- *      contenteditable barely works there.
+ *      contenteditable barely works there. It broke again for Add Case steps:
+ *      the restore remounts StepsForm, which emptied its rows on mount.
  *
  *   2. The dialog unmounts on create and remounts on reopen. The eviction of
  *      the cached restore query is unit-tested, but that unmount/remount
@@ -126,6 +127,49 @@ test.describe("Case draft auto-save", () => {
       await expect(
         page.locator('.ProseMirror[contenteditable="true"]').first()
       ).toContainText(richText);
+    });
+  });
+
+  test("restoring an Add Case draft on the same template brings back its steps", async ({
+    api,
+    page,
+  }) => {
+    const repositoryPage = new RepositoryPage(page);
+    const { projectId, folderId } = await setupProjectAndFolder(api);
+    const dialog = page.getByTestId("add-case-dialog");
+    const stepText = `Recovered step ${Date.now()}`;
+
+    await test.step("Write a step and let it auto-save", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
+      await repositoryPage.openAddCaseModal();
+      await page.getByTestId(NAME_INPUT).fill(`Step draft ${Date.now()}`);
+      await dialog.getByTestId("add-step-button").click();
+      const stepEditor = dialog
+        .getByTestId("step-editor-0")
+        .locator('.ProseMirror[contenteditable="true"]')
+        .first();
+      await stepEditor.click();
+      await stepEditor.pressSequentially(stepText);
+      await expect(page.getByTestId(DRAFT_STATUS)).toHaveAttribute(
+        "data-status",
+        "saved",
+        { timeout: 15000 }
+      );
+    });
+
+    await test.step("Dismiss without cancelling, so the draft stays", async () => {
+      await page.keyboard.press("Escape");
+      await expect(dialog).toHaveCount(0);
+    });
+
+    await test.step("Reopen and restore — the step comes back", async () => {
+      await repositoryPage.openAddCaseModal();
+      await expect(page.getByTestId(RESTORE_DIALOG)).toBeVisible({
+        timeout: 15000,
+      });
+      await page.getByTestId(RESTORE_BUTTON).click();
+      await expect(dialog.getByTestId("step-editor-0")).toContainText(stepText);
     });
   });
 });
