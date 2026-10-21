@@ -11,10 +11,22 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/queues", () => ({ getNotificationQueue: () => null }));
+const { queueAdd } = vi.hoisted(() => ({
+  queueAdd: vi.fn((..._args: any[]) => Promise.resolve({ id: "j" })),
+}));
 
-const { claimRunReadyTransition, evaluateRunReadiness, runReadyDedupId } =
-  await import("./runReadyCheck");
+vi.mock("~/lib/queues", () => ({
+  getNotificationQueue: () => ({ add: queueAdd }),
+}));
+
+const {
+  JOB_CHECK_RUN_READY,
+  READY_CHECK_DELAY_MS,
+  claimRunReadyTransition,
+  enqueueRunReadyCheck,
+  evaluateRunReadiness,
+  runReadyDedupId,
+} = await import("./runReadyCheck");
 
 interface Counts {
   liveCases: number;
@@ -63,6 +75,45 @@ describe("runReadyDedupId", () => {
     expect(runReadyDedupId(42, "acme")).toBe("runready:acme:42");
     expect(runReadyDedupId(42, undefined)).toBe("runready:default:42");
     expect(runReadyDedupId(42, "acme")).not.toBe(runReadyDedupId(43, "acme"));
+  });
+});
+
+describe("enqueueRunReadyCheck", () => {
+  // Debounced, not throttled: each write restarts the window, so the check
+  // runs a full delay after the LAST result. A throttle would fire a fixed
+  // time after the first write and could land seconds after the last one —
+  // before the person who recorded it has had a chance to complete the run.
+  it("restarts the delay on every write to the run", async () => {
+    await enqueueRunReadyCheck(42, "acme");
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      JOB_CHECK_RUN_READY,
+      { runId: 42, tenantId: "acme" },
+      expect.objectContaining({
+        delay: READY_CHECK_DELAY_MS,
+        deduplication: {
+          id: "runready:acme:42",
+          ttl: READY_CHECK_DELAY_MS,
+          extend: true,
+          replace: true,
+        },
+      })
+    );
+  });
+
+  // Long enough to complete the run from the prompt before anyone else hears.
+  it("waits at least a minute", () => {
+    expect(READY_CHECK_DELAY_MS).toBeGreaterThanOrEqual(60_000);
+  });
+
+  it("never throws into the writer", async () => {
+    queueAdd.mockRejectedValueOnce(new Error("valkey down"));
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    await expect(enqueueRunReadyCheck(42)).resolves.toBeUndefined();
+    consoleError.mockRestore();
   });
 });
 

@@ -131,6 +131,7 @@ You do not have to watch a run to know when it is finished. When the last outsta
 - **Who is notified**: anyone whose role grants **canClose** on Test Runs in that project, plus the administrators who can reach it.
 - **What counts as finished**: every live case — and, for [parameterized cases](./parameterized-test-cases.md), every iteration — carries a status that counts as completed in the workflow. Cases left **Untested**, or sitting in a status such as **Retest** or **Blocked**, keep the run open.
 - **The run stays open.** Completing is irreversible, so TestPlanIt prompts rather than acts. Use the **Complete** action when you are ready — see [Run Details](./run-details.md).
+- **When it is sent**: five minutes after the last result is recorded, and only if the run is still open. Complete the run within that window — for example from the dialog that opens when you record the final result — and no notification is sent.
 - **It re-arms.** If the run stops being fully executed — a result is deleted, or a case is added — the notification is sent again the next time it fills up.
 
 Automated runs are not covered: they report through their CI job rather than case-by-case execution. To close automated runs that a lost CI agent left in progress, see [Abandoned automation cleanup](../statuses.md#abandoned-automation-cleanup).

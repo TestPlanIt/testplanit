@@ -246,6 +246,7 @@ When the last outstanding piece of work in a test run receives a final result, e
 **Features**:
 
 - **The run is not completed for you.** Completing a run is irreversible, so the notification is a prompt, not an action — it carries a **Review and complete** link to the run, and the decision stays with a person.
+- **Sent five minutes after the last result, and only if the run is still open.** Completing the run within that window — for example from the dialog that opens when you record the final result — means no notification is sent.
 - Only **manual** runs are covered. Automated runs report through their CI job rather than case-by-case execution, so these counts don't describe them; see [Abandoned automation cleanup](./statuses.md#abandoned-automation-cleanup) for closing those.
 - **One notification per fill-up.** A run notifies once when it becomes fully executed. If it stops being fully executed — a result is deleted, or a new case is added — it re-arms, and notifies again the next time it fills up.
 - Evaluation runs a few seconds behind the result that triggered it, which also collapses a bulk submission of many results into a single notification rather than one per case.
