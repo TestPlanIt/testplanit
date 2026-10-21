@@ -3481,6 +3481,11 @@
       "bannerAction": "Reprendre la modification",
       "bannerDiscard": "Les rejeter"
     },
+    "templateSwitch": {
+      "title": "Changer de modèle ?",
+      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "confirm": "Changer de modèle"
+    },
     "columns": {
       "selectCase": "Sélectionner le cas",
       "runOrder": "Ordre de passage",

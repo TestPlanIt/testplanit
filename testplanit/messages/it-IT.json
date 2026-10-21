@@ -3481,6 +3481,11 @@
       "bannerAction": "Riprendi la modifica",
       "bannerDiscard": "Scartali"
     },
+    "templateSwitch": {
+      "title": "Cambiare modello?",
+      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "confirm": "Cambia modello"
+    },
     "columns": {
       "selectCase": "Seleziona caso",
       "runOrder": "Ordine di esecuzione",

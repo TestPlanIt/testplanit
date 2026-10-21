@@ -3481,6 +3481,11 @@
       "bannerAction": "Pokračovat v úpravách",
       "bannerDiscard": "Zrušit je"
     },
+    "templateSwitch": {
+      "title": "Přepnout šablonu?",
+      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "confirm": "Přepnout šablonu"
+    },
     "columns": {
       "selectCase": "Vybrat případ",
       "runOrder": "Pořadí spuštění",

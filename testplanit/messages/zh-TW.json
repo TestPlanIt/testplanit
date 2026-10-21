@@ -3481,6 +3481,11 @@
       "bannerAction": "繼續編輯",
       "bannerDiscard": "放棄它們"
     },
+    "templateSwitch": {
+      "title": "切換模板？",
+      "description": "\"{templateName}\" 不包括 {count, plural, =1 {此欄位} other {這些欄位}}，所以您對 {count, plural, =1 {它} other {它們}} 的變更將被捨棄:",
+      "confirm": "切換模板"
+    },
     "columns": {
       "selectCase": "選擇個案",
       "runOrder": "運行順序",

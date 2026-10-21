@@ -76,6 +76,10 @@ import { CaseDraftStatus } from "@/components/caseDrafts/CaseDraftStatus";
 import { RestoreCaseDraftDialog } from "@/components/caseDrafts/RestoreCaseDraftDialog";
 import { SaveDraftDialog } from "@/components/caseDrafts/SaveDraftDialog";
 import {
+  ConfirmTemplateSwitchDialog,
+  type PendingTemplateSwitch,
+} from "@/components/cases/ConfirmTemplateSwitchDialog";
+import {
   useSavedCaseDrafts,
   type SavedCaseDraft,
 } from "~/hooks/useSavedCaseDrafts";
@@ -87,6 +91,12 @@ import {
   reviveCaseDraftValues,
   type CaseDraftExtras,
 } from "~/lib/services/caseDraft";
+import {
+  carriedFieldSources,
+  caseFieldValueChanged,
+  fieldsDroppedBySwitch,
+  templateFieldDefaults,
+} from "~/lib/services/caseTemplateSwitch";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import { IconName } from "~/types/globals";
@@ -352,6 +362,11 @@ export function AddCase({
   // template effect resets the form to that template's defaults, so the
   // restore has to be applied on the far side of that reset.
   const pendingRestoreValuesRef = useRef<FormValues | null>(null);
+  // What a template switch carries over, applied by the template effect over
+  // the new template's defaults for the same reason as the restore above.
+  const carriedValuesRef = useRef<Partial<FormValues> | null>(null);
+  const [pendingTemplateSwitch, setPendingTemplateSwitch] =
+    useState<PendingTemplateSwitch | null>(null);
   /** Bumped on a draft restore to remount the field renderers — see its use
    * on the case-field key below. */
   const [draftRestoreNonce, setDraftRestoreNonce] = useState(0);
@@ -531,6 +546,7 @@ export function AddCase({
     reset,
     control,
     formState: { errors },
+    getValues,
     setValue,
   } = form;
 
@@ -683,51 +699,13 @@ export function AddCase({
         workflowId: defaultWorkflowId ?? 0,
         estimate: "",
         automated: false,
+        ...templateFieldDefaults(selectedTemplate.caseFields),
       };
-      selectedTemplate.caseFields.forEach((caseField: any) => {
-        const fieldIdStr = caseField.caseField.id.toString();
-        const fieldType = caseField.caseField.type.type;
-
-        // Initialize all field types with appropriate defaults
-        switch (fieldType) {
-          case "Dropdown":
-            if (caseField.caseField.fieldOptions) {
-              const defaultOption = caseField.caseField.fieldOptions.find(
-                (option: any) => option.fieldOption.isDefault
-              );
-              if (defaultOption) {
-                defaultValues[fieldIdStr] = defaultOption.fieldOption.id;
-              }
-            }
-            break;
-          case "Multi-Select":
-            defaultValues[fieldIdStr] = [];
-            break;
-          case "Steps":
-            defaultValues[fieldIdStr] = [];
-            break;
-          case "Integer":
-          case "Number":
-            defaultValues[fieldIdStr] = "";
-            break;
-          case "Date":
-            defaultValues[fieldIdStr] = undefined;
-            break;
-          case "Checkbox":
-            defaultValues[fieldIdStr] = caseField.caseField.isChecked ?? false;
-            break;
-          case "Link":
-          case "Text String":
-            defaultValues[fieldIdStr] = caseField.caseField.defaultValue || "";
-            break;
-          case "Text Long":
-            defaultValues[fieldIdStr] =
-              caseField.caseField.defaultValue ||
-              JSON.stringify(emptyEditorContent);
-            break;
-        }
-      });
-      reset(defaultValues as FormValues);
+      // The baseline stays the defaults, so carried values read as unsaved
+      // work and keep auto-saving.
+      const carried = carriedValuesRef.current;
+      carriedValuesRef.current = null;
+      reset({ ...defaultValues, ...carried } as FormValues);
       setDraftBaseline(
         caseDraftDigest(defaultValues as Record<string, unknown>, {
           ...draftExtrasRef.current,
@@ -785,25 +763,10 @@ export function AddCase({
       );
 
       if (selectedTemplate) {
-        selectedTemplate.caseFields.forEach((caseField: any) => {
-          const fieldIdStr = caseField.caseField.id.toString();
-          const fieldType = caseField.caseField.type.type;
-
-          if (fieldType === "Dropdown" && caseField.caseField.fieldOptions) {
-            const defaultOption = caseField.caseField.fieldOptions.find(
-              (option: any) => option.fieldOption.isDefault
-            );
-            if (defaultOption) {
-              defaultValues[fieldIdStr] = defaultOption.fieldOption.id;
-            }
-          } else if (fieldType === "Steps") {
-            defaultValues[fieldIdStr] = [];
-          } else if (fieldType === "Integer" || fieldType === "Number") {
-            defaultValues[fieldIdStr] = "";
-          } else if (fieldType === "Date") {
-            defaultValues[fieldIdStr] = undefined;
-          }
-        });
+        Object.assign(
+          defaultValues,
+          templateFieldDefaults(selectedTemplate.caseFields)
+        );
         // Enable the name field since we have a template selected and loaded
         // Use setTimeout to ensure this happens after the form is rendered
         setTimeout(() => {
@@ -836,6 +799,8 @@ export function AddCase({
       setInlineDatasetRows(
         (draftPayload?.extras.inlineDatasetRows ?? []) as InlineDatasetRow[]
       );
+      setPendingTemplateSwitch(null);
+      carriedValuesRef.current = null;
       // The baseline is the template defaults with empty extras, so a
       // reopened draft reads as unsaved work and keeps auto-saving.
       setDraftBaseline(
@@ -857,71 +822,69 @@ export function AddCase({
     savedDraft,
   ]);
 
-  const handleTemplateChange = (val: number) => {
+  /**
+   * Carries everything the next template has a place for — the base fields,
+   * shared fields and the steps — and lets the template effect apply it.
+   */
+  const applyTemplateSwitch = (val: number) => {
+    const currentTemplate = templates?.find(
+      (template) => template.id === selectedTemplateId
+    );
+    const nextTemplate = templates?.find((template) => template.id === val);
+    if (!nextTemplate) return;
+    const values = getValues();
+    const carried: Partial<FormValues> = {
+      name: values.name,
+      workflowId: values.workflowId,
+      estimate: values.estimate,
+      automated: values.automated,
+    };
+    for (const [toId, fromId] of carriedFieldSources(
+      currentTemplate?.caseFields ?? [],
+      nextTemplate.caseFields
+    )) {
+      carried[toId.toString()] = values[fromId.toString()];
+    }
+    carriedValuesRef.current = carried;
     // Temporarily disable the name field while switching templates
     setIsTemplateReady(false);
     setSelectedTemplateId(val);
-    setValue("templateId", val);
+  };
 
-    const selectedTemplate = templates?.find((template) => template.id === val);
-    if (selectedTemplate) {
-      const defaultValues: Partial<FormValues> = {
-        name: "",
-        templateId: val,
-        workflowId: defaultWorkflowId ?? 0,
-        estimate: "",
-        automated: false,
-      };
-      selectedTemplate.caseFields.forEach((caseField: any) => {
-        const fieldIdStr = caseField.caseField.id.toString();
-        const fieldType = caseField.caseField.type.type;
+  const handleTemplateChange = (val: number) => {
+    if (val === selectedTemplateId) return;
+    const currentTemplate = templates?.find(
+      (template) => template.id === selectedTemplateId
+    );
+    const nextTemplate = templates?.find((template) => template.id === val);
+    if (!nextTemplate) return;
 
-        // Initialize all field types with appropriate defaults
-        switch (fieldType) {
-          case "Dropdown":
-            if (caseField.caseField.fieldOptions) {
-              const defaultOption = caseField.caseField.fieldOptions.find(
-                (option: any) => option.fieldOption.isDefault
-              );
-              if (defaultOption) {
-                defaultValues[fieldIdStr] = defaultOption.fieldOption.id;
-              }
-            }
-            break;
-          case "Multi-Select":
-            defaultValues[fieldIdStr] = [];
-            break;
-          case "Steps":
-            defaultValues[fieldIdStr] = [];
-            break;
-          case "Integer":
-          case "Number":
-            defaultValues[fieldIdStr] = "";
-            break;
-          case "Date":
-            defaultValues[fieldIdStr] = undefined;
-            break;
-          case "Checkbox":
-            defaultValues[fieldIdStr] = caseField.caseField.isChecked ?? false;
-            break;
-          case "Link":
-          case "Text String":
-            defaultValues[fieldIdStr] = caseField.caseField.defaultValue || "";
-            break;
-          case "Text Long":
-            defaultValues[fieldIdStr] =
-              caseField.caseField.defaultValue ||
-              JSON.stringify(emptyEditorContent);
-            break;
-        }
-      });
-      reset(defaultValues as FormValues);
-      setDraftBaseline(
-        caseDraftDigest(defaultValues as Record<string, unknown>, {
-          ...draftExtrasRef.current,
-        })
-      );
+    const values = getValues();
+    const defaults = templateFieldDefaults(currentTemplate?.caseFields ?? []);
+    const lostFields = fieldsDroppedBySwitch(
+      currentTemplate?.caseFields ?? [],
+      nextTemplate.caseFields
+    )
+      .filter((field) => {
+        const fieldIdStr = field.caseField.id.toString();
+        return caseFieldValueChanged(values[fieldIdStr], defaults[fieldIdStr]);
+      })
+      .map((field) => field.caseField.displayName);
+    // Parameters are only offered on a template with Steps; the effect above
+    // clears them when the next template has none.
+    if (inlineParameters.length > 0 && !templateHasStepsField(nextTemplate)) {
+      lostFields.push(t("parameters.tabParameters"));
     }
+
+    if (lostFields.length > 0) {
+      setPendingTemplateSwitch({
+        templateId: val,
+        templateName: nextTemplate.templateName,
+        lostFields,
+      });
+      return;
+    }
+    applyTemplateSwitch(val);
   };
 
   /**
@@ -1474,12 +1437,14 @@ export function AddCase({
                           <Controller
                             control={control}
                             name="templateId"
-                            render={({ field: { onChange, value } }) => (
+                            // The template effect writes `templateId` once the
+                            // switch applies, so a declined switch leaves the
+                            // picker on the template still in use.
+                            render={({ field: { value } }) => (
                               <Select
-                                onValueChange={(val) => {
-                                  onChange(Number(val));
-                                  handleTemplateChange(Number(val));
-                                }}
+                                onValueChange={(val) =>
+                                  handleTemplateChange(Number(val))
+                                }
                                 value={value ? value.toString() : ""}
                               >
                                 <SelectTrigger>
@@ -1881,6 +1846,16 @@ export function AddCase({
           defaultName=""
           mode="save"
           onSubmit={handleSaveDraft}
+        />
+        <ConfirmTemplateSwitchDialog
+          pending={pendingTemplateSwitch}
+          onConfirm={() => {
+            if (pendingTemplateSwitch) {
+              applyTemplateSwitch(pendingTemplateSwitch.templateId);
+            }
+            setPendingTemplateSwitch(null);
+          }}
+          onCancel={() => setPendingTemplateSwitch(null)}
         />
       </DialogContent>
     </Dialog>

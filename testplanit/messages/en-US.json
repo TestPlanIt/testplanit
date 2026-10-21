@@ -3481,6 +3481,11 @@
       "bannerAction": "Resume editing",
       "bannerDiscard": "Discard them"
     },
+    "templateSwitch": {
+      "title": "Switch template?",
+      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "confirm": "Switch template"
+    },
     "columns": {
       "selectCase": "Select Case",
       "runOrder": "Run Order",

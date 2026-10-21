@@ -113,6 +113,16 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CaseDraftRecoveryBanner } from "@/components/caseDrafts/CaseDraftRecoveryBanner";
 import { CaseDraftStatus } from "@/components/caseDrafts/CaseDraftStatus";
 import { RestoreCaseDraftDialog } from "@/components/caseDrafts/RestoreCaseDraftDialog";
+import {
+  ConfirmTemplateSwitchDialog,
+  type PendingTemplateSwitch,
+} from "@/components/cases/ConfirmTemplateSwitchDialog";
+import {
+  caseFieldValueChanged,
+  fieldsDroppedBySwitch,
+  isEmptyFieldValue,
+  templateFieldDefaults,
+} from "~/lib/services/caseTemplateSwitch";
 import { useCaseDraft } from "~/hooks/useCaseDraft";
 import {
   caseDraftDigest,
@@ -266,6 +276,22 @@ const mapFieldToZodType = (field: any, t: (key: any) => string) => {
  * hands it, so one it never rendered is left alone.
  */
 const isEnabledField = (field: any) => field?.caseField?.isEnabled !== false;
+
+/** A field's saved value on the case, in the shape the edit form holds it. */
+const savedCaseFieldValue = (
+  caseFieldValues: ExtendedCases["caseFieldValues"] | undefined,
+  fieldMeta: any
+) => {
+  const saved = caseFieldValues?.find(
+    (cfv) => cfv.fieldId === fieldMeta.caseField.id
+  );
+  if (!saved) return undefined;
+  if (fieldMeta.caseField.type.type === "Date") {
+    // For date fields, use undefined instead of null for empty values
+    return saved.value ? new Date(saved.value as string) : undefined;
+  }
+  return saved.value === null ? undefined : saved.value;
+};
 
 const createFormSchema = (fields: any[], t: (key: any) => string) => {
   const baseSchema = {
@@ -934,6 +960,13 @@ export function TestCaseDetailsView({
     testcase?.template.id
   );
 
+  // In edit mode the fields follow the template picker, so a switch shows the
+  // new template's fields straight away rather than after a save.
+  const displayedTemplate =
+    (isEditMode &&
+      templates?.find((template) => template.id === selectedTemplateId)) ||
+    testcase?.template;
+
   const methods = useForm<any>({
     mode: "onSubmit",
   });
@@ -1004,13 +1037,71 @@ export function TestCaseDetailsView({
   const watchedWorkflowId = watch("workflowId") as number | undefined;
   const transitionCheck = transitionGate.canTransitionTo(watchedWorkflowId);
 
-  // Restore handleTemplateChange
-  const handleTemplateChange = useCallback(
-    (val: number | null) => {
+  // What a template switch carries over, applied by Effect 2 over the new
+  // template's saved values.
+  const carriedValuesRef = useRef<Record<string, any> | null>(null);
+  const [pendingTemplateSwitch, setPendingTemplateSwitch] =
+    useState<PendingTemplateSwitch | null>(null);
+
+  const applyTemplateSwitch = useCallback(
+    (val: number) => {
+      carriedValuesRef.current = getValues();
       setSelectedTemplateId(val);
     },
-    [setSelectedTemplateId]
+    [getValues]
   );
+
+  /**
+   * Asks first when the next template drops a field the user has edited. The
+   * saved value of a dropped field stays on the case either way — it shows
+   * with the orphaned values below — so only the unsaved edit is lost. Steps
+   * are never dropped: the form keeps them whichever template is selected.
+   */
+  const handleTemplateChange = (val: number) => {
+    if (val === selectedTemplateId) return;
+    const enabledFieldsOf = (templateId: number | null) =>
+      (
+        templates?.find((template) => template.id === templateId)?.caseFields ||
+        []
+      ).filter(isEnabledField);
+    const nextTemplate = templates?.find((template) => template.id === val);
+    if (!nextTemplate) return;
+
+    const values = getValues();
+    const currentFields = enabledFieldsOf(selectedTemplateId);
+    // A value still at the template default was not entered by the user, so
+    // dropping it loses nothing either.
+    const templateDefaults = templateFieldDefaults(currentFields);
+    const lostFields = fieldsDroppedBySwitch(
+      currentFields,
+      enabledFieldsOf(val)
+    )
+      .filter((field) => {
+        const fieldIdStr = field.caseField.id.toString();
+        return (
+          field.caseField.type.type !== "Steps" &&
+          caseFieldValueChanged(
+            values[fieldIdStr],
+            savedCaseFieldValue(testcase.caseFieldValues, field)
+          ) &&
+          caseFieldValueChanged(
+            values[fieldIdStr],
+            templateDefaults[fieldIdStr]
+          )
+        );
+      })
+      .map((field) => field.caseField.displayName);
+
+    if (lostFields.length > 0) {
+      setPendingTemplateSwitch({
+        templateId: val,
+        templateName: nextTemplate.templateName,
+        lostFields,
+      });
+      return;
+    }
+    applyTemplateSwitch(val);
+  };
 
   // Effect 1: Initialize selectedTemplateId and form initialization state
   useEffect(() => {
@@ -1073,31 +1164,46 @@ export function TestCaseDetailsView({
     };
 
     caseFieldsForSchema.forEach((fieldMeta) => {
-      const fieldIdStr = fieldMeta.caseField.id.toString();
-      const originalValueForField = testcase.caseFieldValues?.find(
-        (cfv) => cfv.fieldId === fieldMeta.caseField.id
+      defaultValues[fieldMeta.caseField.id.toString()] = savedCaseFieldValue(
+        testcase.caseFieldValues,
+        fieldMeta
       );
-      if (originalValueForField) {
-        if (fieldMeta.caseField.type.type === "Date") {
-          // For date fields, use undefined instead of null for empty values
-          defaultValues[fieldIdStr] = originalValueForField.value
-            ? new Date(originalValueForField.value as string)
-            : undefined;
-        } else {
-          defaultValues[fieldIdStr] =
-            originalValueForField.value === null
-              ? undefined
-              : originalValueForField.value;
-        }
-      } else {
-        defaultValues[fieldIdStr] = undefined;
-      }
     });
-    reset(defaultValues);
     setDraftBaseline(
       caseDraftDigest(defaultValues, { templateId: selectedTemplateId })
     );
 
+    // A switch from the template picker keeps what is being edited: the base
+    // fields, the steps, and every field the two templates share. A field the
+    // switch brings in starts from its template default when the case holds
+    // no value for it, as it would on a new case. The baseline above stays
+    // the case's own values, so all of this reads as unsaved work.
+    const carried = carriedValuesRef.current;
+    carriedValuesRef.current = null;
+    if (carried) {
+      const templateDefaults = templateFieldDefaults(caseFieldsForSchema);
+      const nextValues = { ...defaultValues };
+      for (const key of Object.keys(defaultValues)) {
+        if (key === "templateId") continue;
+        if (key in carried) {
+          nextValues[key] = carried[key];
+        } else if (
+          defaultValues[key] === undefined &&
+          !isEmptyFieldValue(templateDefaults[key])
+        ) {
+          nextValues[key] = templateDefaults[key];
+        }
+      }
+      reset(nextValues);
+      // The carried values already hold the restored draft, so they are what
+      // a later run has to bring back.
+      if (restoredDraftValuesRef.current) {
+        restoredDraftValuesRef.current = nextValues;
+      }
+      return;
+    }
+
+    reset(defaultValues);
     // Re-apply a restored draft on the far side of the reset above, every time
     // this effect runs. The baseline stays the case's own values, so the
     // restored content reads as unsaved work and keeps auto-saving.
@@ -2699,11 +2805,13 @@ export function TestCaseDetailsView({
                           <Controller
                             control={control}
                             name="templateId"
-                            render={({ field: { onChange, value } }) => (
+                            // Effect 2 writes `templateId` once the switch
+                            // applies, so a declined switch leaves the picker
+                            // on the template still in use.
+                            render={({ field: { value } }) => (
                               <Select
                                 onValueChange={(val) => {
                                   if (!val) return;
-                                  onChange(Number(val));
                                   handleTemplateChange(Number(val));
                                 }}
                                 value={value ? value.toString() : ""}
@@ -2786,7 +2894,7 @@ export function TestCaseDetailsView({
               >
                 <div className="mb-4">
                   <ul>
-                    {(testcase?.template?.caseFields || []).map(
+                    {(displayedTemplate?.caseFields || []).map(
                       (field, fieldIndex) => {
                         let fieldValue = testcase.caseFieldValues.find(
                           (value) => value.fieldId === field.caseField.id
@@ -2890,8 +2998,7 @@ export function TestCaseDetailsView({
                                   : undefined
                               }
                               template={{
-                                caseFields:
-                                  testcase?.template?.caseFields || [],
+                                caseFields: displayedTemplate?.caseFields || [],
                               }}
                               fieldId={field.caseField.id}
                               fieldIsRestricted={field.caseField.isRestricted}
@@ -2926,7 +3033,7 @@ export function TestCaseDetailsView({
                   {/* Orphaned Steps - steps exist but field not in current template */}
                   {testcase?.steps &&
                     testcase.steps.length > 0 &&
-                    !testcase.template?.caseFields?.some(
+                    !displayedTemplate?.caseFields?.some(
                       (f) => f.caseField.type.type === "Steps"
                     ) && (
                       <div className="mb-4 me-6">
@@ -2935,7 +3042,7 @@ export function TestCaseDetailsView({
                           <AlertDescription className="text-sm text-warning-foreground">
                             {t("repository.orphanedStepsWarning", {
                               templateName:
-                                testcase.template?.templateName || "",
+                                displayedTemplate?.templateName || "",
                             })}
                           </AlertDescription>
                         </Alert>
@@ -2955,14 +3062,15 @@ export function TestCaseDetailsView({
                   {/* Orphaned Custom Field Values - field values exist but not in current template */}
                   {(() => {
                     const templateFieldIds = new Set(
-                      testcase?.template?.caseFields?.map(
+                      displayedTemplate?.caseFields?.map(
                         (f) => f.caseField.id
                       ) || []
                     );
                     const orphanedFieldValues =
                       testcase?.caseFieldValues?.filter(
                         (cfv: any) =>
-                          !templateFieldIds.has(cfv.fieldId) && cfv.value
+                          !templateFieldIds.has(cfv.fieldId) &&
+                          !isEmptyFieldValue(cfv.value)
                       ) || [];
 
                     if (orphanedFieldValues.length === 0) return null;
@@ -2975,7 +3083,7 @@ export function TestCaseDetailsView({
                             {t("repository.orphanedFieldsWarning", {
                               count: orphanedFieldValues.length,
                               templateName:
-                                testcase.template?.templateName || "",
+                                displayedTemplate?.templateName || "",
                             })}
                           </AlertDescription>
                         </Alert>
@@ -2998,7 +3106,7 @@ export function TestCaseDetailsView({
                                   projectId={Number(projectIdParam)}
                                   template={{
                                     caseFields:
-                                      testcase?.template?.caseFields || [],
+                                      displayedTemplate?.caseFields || [],
                                   }}
                                   fieldId={cfv.fieldId}
                                   fieldIsRestricted={false}
@@ -3243,6 +3351,16 @@ export function TestCaseDetailsView({
         isStale={draft.isRestoreStale}
         onRestore={handleRestoreDraft}
         onDiscard={handleDiscardDraft}
+      />
+      <ConfirmTemplateSwitchDialog
+        pending={pendingTemplateSwitch}
+        onConfirm={() => {
+          if (pendingTemplateSwitch) {
+            applyTemplateSwitch(pendingTemplateSwitch.templateId);
+          }
+          setPendingTemplateSwitch(null);
+        }}
+        onCancel={() => setPendingTemplateSwitch(null)}
       />
     </FormProvider>
   );

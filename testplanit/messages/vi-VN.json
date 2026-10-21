@@ -3481,6 +3481,11 @@
       "bannerAction": "Tiếp tục chỉnh sửa",
       "bannerDiscard": "Loại bỏ chúng"
     },
+    "templateSwitch": {
+      "title": "Chuyển đổi mẫu?",
+      "description": "\"{templateName}\" không bao gồm {count, plural, =1 {trường này} other {các trường này}}, do đó những thay đổi của bạn đối với {count, plural, =1 {nó} other {chúng}} sẽ bị loại bỏ:",
+      "confirm": "Chuyển đổi mẫu"
+    },
     "columns": {
       "selectCase": "Chọn trường hợp",
       "runOrder": "Thứ tự chạy",

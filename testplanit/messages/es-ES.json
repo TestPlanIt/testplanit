@@ -3481,6 +3481,11 @@
       "bannerAction": "Reanudar edición",
       "bannerDiscard": "Descartalos"
     },
+    "templateSwitch": {
+      "title": "¿Cambiar plantilla?",
+      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "confirm": "Cambiar plantilla"
+    },
     "columns": {
       "selectCase": "Seleccionar Caso",
       "runOrder": "Ejecutar pedido",
