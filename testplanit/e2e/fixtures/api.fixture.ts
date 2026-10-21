@@ -471,12 +471,14 @@ export class ApiHelper {
    * Create a test case via API
    * Uses ZenStack's relation connect syntax
    * Also creates the initial version 1 record (matching UI behavior)
+   * @param creator - Author of the case; defaults to the signed-in user
    */
   async createTestCase(
     projectId: number,
     folderId: number,
     name: string,
-    templateIdOverride?: number
+    templateIdOverride?: number,
+    creator?: { id: string; name: string }
   ): Promise<number> {
     const [repositoryId, templateId, stateId] = await Promise.all([
       this.getRepositoryId(projectId),
@@ -493,7 +495,7 @@ export class ApiHelper {
         this.getTemplateInfo(templateId),
         this.getWorkflowInfo(stateId),
         this.getProjectInfo(projectId),
-        this.getCurrentUserInfo(),
+        creator ? Promise.resolve(creator) : this.getCurrentUserInfo(),
       ]);
 
     const response = await this.request.post(
