@@ -10,6 +10,13 @@ const recordVideo = process.env.E2E_VIDEO === "on";
 // Set E2E_PROD=on to run against production build (faster, more stable)
 const useProdBuild = process.env.E2E_PROD === "on";
 
+// Next loads .env.production.local at boot, and a DIRECT_DATABASE_URL from
+// there would aim the startup audit-trigger bootstrap at that database rather
+// than the E2E one. The server and the workers inherit this process's env.
+if (process.env.DATABASE_URL) {
+  process.env.DIRECT_DATABASE_URL = process.env.DATABASE_URL;
+}
+
 /** Specs that toggle Force SSO, domain restriction or the password policy. */
 const INSTANCE_SETTINGS_SPECS =
   /admin\/(sso\/sso-provider-management|security\/security-settings)\.spec\.ts$/;
