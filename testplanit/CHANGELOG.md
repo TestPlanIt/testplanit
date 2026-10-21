@@ -1,3 +1,9 @@
+## [1.1.14](https://github.com/TestPlanIt/testplanit/compare/v1.1.13...v1.1.14) (2026-10-21)
+
+### Bug Fixes
+
+* **repository:** keep case data across template switches and draft restores; credit copied cases to the copier ([#709](https://github.com/TestPlanIt/testplanit/issues/709)) ([d316772](https://github.com/TestPlanIt/testplanit/commit/d31677292aa0f25663d20b06b39c3c646ebfbbae)), closes [#708](https://github.com/TestPlanIt/testplanit/issues/708)
+
 ## [1.1.13](https://github.com/TestPlanIt/testplanit/compare/v1.1.12...v1.1.13) (2026-10-20)
 
 ### Bug Fixes
