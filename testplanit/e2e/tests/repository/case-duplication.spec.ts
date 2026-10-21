@@ -22,6 +22,7 @@ let projectId: number;
 let rootFolderId: number;
 let sourceCaseId: number;
 let sourceCaseName: string;
+let sourceAuthorId: string;
 let duplicateJobId: string | undefined;
 let duplicatedCaseId: number | undefined;
 
@@ -89,11 +90,22 @@ test.describe("Case duplication", () => {
     await test.step("Create project, root folder, and source test case", async () => {
       projectId = await api.createProject(`E2E Duplication ${ts}`);
       rootFolderId = await api.getRootFolderId(projectId);
+      // Authored by someone other than the admin who duplicates it, so the
+      // duplicate's creator shows who made the copy rather than who wrote
+      // the original.
+      const author = await api.createUser({
+        name: `Duplication Author ${ts}`,
+        email: `duplication-author-${ts}@example.com`,
+        password: "Duplication!Pass123",
+      });
+      sourceAuthorId = author.data.id;
       sourceCaseName = `Duplication Test Case ${ts}`;
       sourceCaseId = await api.createTestCase(
         projectId,
         rootFolderId,
-        sourceCaseName
+        sourceCaseName,
+        undefined,
+        author.data
       );
     });
 
@@ -200,6 +212,53 @@ test.describe("Case duplication", () => {
       const linkData = await linkResponse.json();
       expect(linkData.data).toBeDefined();
       expect(linkData.data.type).toBe("DUPLICATED_FROM");
+    });
+  });
+
+  test("duplicate is created by the duplicating user, now", async ({
+    api,
+    request,
+    baseURL,
+  }) => {
+    test.skip(
+      !duplicatedCaseId,
+      "Skip — duplicated case not created (queue unavailable upstream)"
+    );
+
+    const readCase = async (id: number) => {
+      const res = await request.get(
+        `${baseURL}/api/model/repositoryCases/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id },
+              select: { creatorId: true, createdAt: true },
+            }),
+          },
+        }
+      );
+      expect(res.status()).toBe(200);
+      return (await res.json()).data as {
+        creatorId: string;
+        createdAt: string;
+      };
+    };
+
+    const [source, duplicate, adminId] = await Promise.all([
+      readCase(sourceCaseId),
+      readCase(duplicatedCaseId!),
+      api.getCurrentUserId(),
+    ]);
+
+    await test.step("Verify the duplicate credits the admin who made it", async () => {
+      expect(source.creatorId).toBe(sourceAuthorId);
+      expect(duplicate.creatorId).toBe(adminId);
+    });
+
+    await test.step("Verify the duplicate's creation date is its own", async () => {
+      expect(new Date(duplicate.createdAt).getTime()).toBeGreaterThan(
+        new Date(source.createdAt).getTime()
+      );
     });
   });
 

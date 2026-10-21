@@ -3307,6 +3307,11 @@
       "bannerAction": "Düzenlemeye devam edin",
       "bannerDiscard": "Bunları atla"
     },
+    "templateSwitch": {
+      "title": "Şablonu değiştir?",
+      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "confirm": "Şablonu değiştir"
+    },
     "columns": {
       "selectCase": "Büyük/küçük harf seçimi",
       "runOrder": "Çalıştırma Sırası",

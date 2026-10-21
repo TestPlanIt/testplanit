@@ -49,6 +49,9 @@ test.describe("Copy-Move API Endpoints", () => {
   let copyJobId: string | undefined;
   let copiedCaseId: number | undefined;
   let moveCaseId: number | undefined;
+  let moveCaseName: string;
+  let moveCaseAuthorId: string;
+  let moveCaseCreatedAt: string;
   let moveJobId: string | undefined;
 
   // Clean up shared resources at the very end of the outer describe — the
@@ -688,14 +691,43 @@ test.describe("Copy-Move API Endpoints", () => {
    * creates a copy in the target project.
    */
   test.describe("Move operation", () => {
-    test("setup: create a new case for move test", async ({ api }) => {
+    test("setup: create a new case for move test", async ({
+      api,
+      request,
+      baseURL,
+    }) => {
       const ts = Date.now();
+      // Authored by someone other than the admin who moves it, so the moved
+      // case's creator shows whether the original authorship survived.
+      const author = await api.createUser({
+        name: `CopyMove Author ${ts}`,
+        email: `copymove-author-${ts}@example.com`,
+        password: "CopyMove!Pass123",
+      });
+      moveCaseAuthorId = author.data.id;
+      moveCaseName = `CopyMove Move Test Case ${ts}`;
       moveCaseId = await api.createTestCase(
         sourceProjectId,
         sourceFolderId,
-        `CopyMove Move Test Case ${ts}`
+        moveCaseName,
+        undefined,
+        author.data
       );
       expect(moveCaseId).toBeGreaterThan(0);
+
+      const res = await request.get(
+        `${baseURL}/api/model/repositoryCases/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: moveCaseId },
+              select: { createdAt: true },
+            }),
+          },
+        }
+      );
+      expect(res.status()).toBe(200);
+      moveCaseCreatedAt = (await res.json()).data.createdAt;
     });
 
     test("returns 503 or jobId for valid move request", async ({
@@ -763,6 +795,40 @@ test.describe("Copy-Move API Endpoints", () => {
         const caseData = await readResponse!.json();
         // Source case should be null (soft-deleted and filtered out by isDeleted: false)
         expect(caseData.data).toBeNull();
+      });
+    });
+
+    test("moved case keeps its original creator and creation date", async ({
+      request,
+      baseURL,
+    }) => {
+      test.skip(!moveJobId, "Queue unavailable — skipping move verification");
+
+      let moved: { creatorId: string; createdAt: string } | null = null;
+      await test.step("Read the moved case in the target project", async () => {
+        const res = await request.get(
+          `${baseURL}/api/model/repositoryCases/findFirst`,
+          {
+            params: {
+              q: JSON.stringify({
+                where: {
+                  projectId: targetProjectId,
+                  name: moveCaseName,
+                  isDeleted: false,
+                },
+                select: { creatorId: true, createdAt: true },
+              }),
+            },
+          }
+        );
+        expect(res.status()).toBe(200);
+        moved = (await res.json()).data;
+        expect(moved).not.toBeNull();
+      });
+
+      await test.step("Verify authorship carried over unchanged", async () => {
+        expect(moved!.creatorId).toBe(moveCaseAuthorId);
+        expect(moved!.createdAt).toBe(moveCaseCreatedAt);
       });
     });
   });

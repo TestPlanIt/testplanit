@@ -3307,6 +3307,11 @@
       "bannerAction": "Bearbeitung fortsetzen",
       "bannerDiscard": "Verwerfen Sie diese"
     },
+    "templateSwitch": {
+      "title": "Vorlage wechseln?",
+      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "confirm": "Vorlage wechseln"
+    },
     "columns": {
       "selectCase": "Fall auswählen",
       "runOrder": "Ablaufreihenfolge",

@@ -408,6 +408,11 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
         .getByRole("option", { name: noStepsTemplateName! })
         .first()
         .click();
+      // The authored parameter would be discarded, so the switch asks first.
+      const confirmSwitch = page.getByTestId("confirm-template-switch-dialog");
+      await expect(confirmSwitch).toBeVisible({ timeout: 5000 });
+      await expect(confirmSwitch).toContainText("Parameters");
+      await page.getByTestId("confirm-template-switch-confirm").click();
       await expect(templateTrigger).toHaveText(noStepsTemplateName!, {
         timeout: 5000,
       });

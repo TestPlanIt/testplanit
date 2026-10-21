@@ -3307,6 +3307,11 @@
       "bannerAction": "Editing hervatten",
       "bannerDiscard": "Gooien ze weg"
     },
+    "templateSwitch": {
+      "title": "Template wisselen?",
+      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "confirm": "Template wisselen"
+    },
     "columns": {
       "selectCase": "Selecteer zaak",
       "runOrder": "Volgorde van de uitvoering",

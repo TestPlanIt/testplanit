@@ -3307,6 +3307,11 @@
       "bannerAction": "編集を再開",
       "bannerDiscard": "破棄します"
     },
+    "templateSwitch": {
+      "title": "テンプレートを切り替えますか？",
+      "description": "\"{templateName}\"には{count, plural, =1 {このフィールド} other {これらのフィールド}}が含まれていないため、{count, plural, =1 {それ} other {それら}}への変更は破棄されます:",
+      "confirm": "テンプレートを切り替える"
+    },
     "columns": {
       "selectCase": "ケースを選択",
       "runOrder": "実行順序",
