@@ -179,6 +179,94 @@ test.describe("Project Creation Wizard", () => {
     });
   });
 
+  test("saves the default template chosen on the Templates step", async ({
+    api,
+    page,
+    request,
+    baseURL,
+  }) => {
+    // Unique per run: --repeat-each starts copies in the same millisecond.
+    const ts = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const projectName = `E2E Wizard Default Template ${ts}`;
+    const templateName = `E2E Wizard Template ${ts}`;
+    const templateId = await api.createTemplate({ name: templateName });
+
+    const dialog = page.getByRole("dialog");
+    const nextButton = dialog.getByRole("button", { name: /next/i });
+
+    await test.step("Open the wizard and enter the project name", async () => {
+      await page.goto("/en-US/admin/projects");
+      await page.waitForLoadState("networkidle");
+      await page.getByRole("button", { name: /add/i }).first().click();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+
+      // Async data loads can reset the form; re-fill until the name sticks.
+      const nameInput = dialog.getByRole("textbox").first();
+      await expect(async () => {
+        if ((await nameInput.inputValue()) !== projectName) {
+          await nameInput.fill(projectName);
+        }
+        await expect(nameInput).toHaveValue(projectName);
+        await expect(nextButton).toBeEnabled();
+      }).toPass({ timeout: 30000 });
+      await nextButton.click();
+    });
+
+    await test.step("Pick the template as the default without ticking it first", async () => {
+      const defaultSelect = dialog.getByTestId(
+        "wizard-default-template-select"
+      );
+      await expect(defaultSelect).toBeVisible({ timeout: 15000 });
+      await expect(defaultSelect).toHaveText(/use system default/i);
+
+      await defaultSelect.click();
+      await page.getByRole("option", { name: templateName }).click();
+      await expect(defaultSelect).toHaveText(templateName);
+    });
+
+    await test.step("Finish the wizard", async () => {
+      await nextButton.click();
+      await expect(dialog.getByText(/workflows/i).first()).toBeVisible({
+        timeout: 15000,
+      });
+      await nextButton.click();
+      await expect(dialog.getByText(/integrations/i).first()).toBeVisible({
+        timeout: 15000,
+      });
+      await nextButton.click();
+      const createButton = dialog.getByRole("button", {
+        name: /create project/i,
+      });
+      await expect(createButton).toBeEnabled({ timeout: 15000 });
+      await createButton.click();
+      await expect(dialog).not.toBeVisible({ timeout: 30000 });
+    });
+
+    await test.step("The new project has the template assigned and as its default", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { name: projectName },
+          select: {
+            id: true,
+            defaultTemplateId: true,
+            assignedTemplates: { select: { templateId: true } },
+          },
+        })
+      );
+      const response = await request.get(
+        `${baseURL}/api/model/projects/findFirst?q=${q}`
+      );
+      expect(response.ok()).toBeTruthy();
+      const project = (await response.json()).data;
+      expect(project.defaultTemplateId).toBe(templateId);
+      expect(
+        project.assignedTemplates.map(
+          (assignment: { templateId: number }) => assignment.templateId
+        )
+      ).toContain(templateId);
+    });
+  });
+
   test("can navigate back through wizard steps using Previous button", async ({
     page,
   }) => {

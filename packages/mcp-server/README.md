@@ -103,7 +103,7 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_templates_list` | List a project's enabled templates, each with the case fields it defines (display name, system name, type, required) — use it to pick a `templateId` for case creation and to learn which custom fields a template accepts. |
+| `testplanit_templates_list` | List a project's enabled templates, each with the case fields it defines (display name, system name, type, required), plus `isDefault` for the system default and `isProjectDefault` for the project's own default — use it to pick a `templateId` for case creation and to learn which custom fields a template accepts. |
 
 ### Folders
 

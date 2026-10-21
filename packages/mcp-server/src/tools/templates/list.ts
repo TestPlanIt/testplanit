@@ -67,7 +67,7 @@ export function registerTemplatesList(
     "testplanit_templates_list",
     {
       description:
-        "List a project's enabled templates, each with the case fields it defines (displayName, systemName, type, required). Use this to pick a templateId for testplanit_cases_create / testplanit_cases_create_many and to learn which customFields a template accepts. Read-only.",
+        "List a project's enabled templates, each with the case fields it defines (displayName, systemName, type, required). isDefault marks the system default template and isProjectDefault the project's own default; cases created without a templateId use the project default, else the system default. Use this to pick a templateId for testplanit_cases_create / testplanit_cases_create_many and to learn which customFields a template accepts. Read-only.",
       inputSchema: {
         projectId: z
           .number()
@@ -92,11 +92,23 @@ export function registerTemplatesList(
           },
           deps.env,
         );
+        // Servers older than the project default setting reject this field;
+        // their projects have no project default.
+        const project = await zenstack<{ defaultTemplateId: number | null } | null>(
+          "projects",
+          "findUnique",
+          {
+            where: { id: input.projectId },
+            select: { defaultTemplateId: true },
+          },
+          deps.env,
+        ).catch(() => null);
 
         const templates = (rows ?? []).map((t) => ({
           id: t.id,
           templateName: t.templateName,
           isDefault: t.isDefault,
+          isProjectDefault: t.id === project?.defaultTemplateId,
           fields: (t.caseFields ?? [])
             .filter((a) => a.caseField != null)
             .map((a) => ({

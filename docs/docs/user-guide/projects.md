@@ -74,7 +74,7 @@ Unless you change **Default Project Access**, a new project uses **Use Global Ro
 
 Select the templates and workflows to use with this project:
 
-- **Test Case Template:** Choose the template that defines the structure of test cases.
+- **Test Case Template:** Choose the templates that define the structure of test cases. The system default template is always included. Use **Default Template** to pick the template new test cases and sessions in the project start with (choosing one also adds it to the project), or keep **Use System Default**; you can change it later under **Settings → Advanced → [Default template](./projects/settings/advanced.md#default-template)**.
 - **Workflows:** Select which workflows will be available for test execution.
 - **Milestone Types:** Choose the types of milestones that can be created in this project.
 - **Statuses:** Select which test statuses will be available.

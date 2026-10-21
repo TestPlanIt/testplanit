@@ -19,9 +19,11 @@ import { z } from "zod/v4";
 import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
+import { DefaultTemplateBadge } from "@/components/DefaultTemplateBadge";
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import StatusDisplay from "@/components/StatusDisplay";
+import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -107,6 +109,8 @@ import {
   ProjectUserPermissions,
   UserPermissionFormState,
 } from "./ProjectUserPermissions";
+
+const SYSTEM_DEFAULT_TEMPLATE = "system";
 
 enum WizardStep {
   PROJECT_DETAILS = 0,
@@ -231,6 +235,10 @@ export function CreateProjectWizard({
   const [localSelectedTemplates, setLocalSelectedTemplates] = useState<
     number[]
   >([]);
+  // Null = use the system default template.
+  const [localDefaultTemplateId, setLocalDefaultTemplateId] = useState<
+    number | null
+  >(null);
   const [, setIsValidatingName] = useState(false);
   const [nameValidationMessage, setNameValidationMessage] = useState<
     string | null
@@ -526,6 +534,7 @@ export function CreateProjectWizard({
       // Initialize local state with default templates
       const defaultTemplate = templates?.find((t) => t.isDefault);
       setLocalSelectedTemplates(defaultTemplate ? [defaultTemplate.id] : []);
+      setLocalDefaultTemplateId(null);
       // Clear validation messages
       setNameValidationMessage(null);
     }
@@ -666,6 +675,12 @@ export function CreateProjectWizard({
           return [...current, templateId];
         }
       });
+      // A project default must stay among the project's templates.
+      if (!isDefault) {
+        setLocalDefaultTemplateId((current) =>
+          current === templateId ? null : current
+        );
+      }
     },
     [templates]
   );
@@ -786,6 +801,10 @@ export function CreateProjectWizard({
         ...(data.iconUrl && { iconUrl: data.iconUrl }),
         defaultAccessType: data.defaultAccessType,
         quickScriptEnabled: data.quickScriptEnabled,
+        ...(localDefaultTemplateId !== null &&
+          data.selectedTemplates.includes(localDefaultTemplateId) && {
+            defaultTemplate: { connect: { id: localDefaultTemplateId } },
+          }),
         ...(defaultRoleIdToSend !== null && {
           defaultRole: {
             connect: { id: defaultRoleIdToSend },
@@ -1314,6 +1333,65 @@ export function CreateProjectWizard({
                 </AlertDescription>
               </Alert>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="wizard-default-template-select">
+                {t(
+                  "projects.settings.quickScript.exportTemplates.defaultLabel"
+                )}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t("projects.settings.advanced.defaultTemplate.description")}
+              </p>
+              <Select
+                value={
+                  localDefaultTemplateId !== null
+                    ? String(localDefaultTemplateId)
+                    : SYSTEM_DEFAULT_TEMPLATE
+                }
+                onValueChange={(value) => {
+                  if (value === SYSTEM_DEFAULT_TEMPLATE) {
+                    setLocalDefaultTemplateId(null);
+                    return;
+                  }
+                  // The default must be one of the project's templates, so
+                  // choosing it also ticks it.
+                  const templateId = Number(value);
+                  setLocalDefaultTemplateId(templateId);
+                  setLocalSelectedTemplates((current) =>
+                    current.includes(templateId)
+                      ? current
+                      : [...current, templateId]
+                  );
+                }}
+              >
+                <SelectTrigger
+                  id="wizard-default-template-select"
+                  className="max-w-xs"
+                  data-testid="wizard-default-template-select"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SYSTEM_DEFAULT_TEMPLATE}>
+                    {t("projects.settings.aiModels.useSystemDefault")}
+                  </SelectItem>
+                  {(templates ?? []).map((template) => (
+                    <SelectItem key={template.id} value={String(template.id)}>
+                      <span className="flex items-center gap-1">
+                        <TemplateNameDisplay
+                          name={template.templateName}
+                          size="sm"
+                        />
+                        {template.isDefault && (
+                          <DefaultTemplateBadge source="system" />
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <ScrollArea className="flex-1 border rounded-lg">
               <div className="p-4 space-y-4">
