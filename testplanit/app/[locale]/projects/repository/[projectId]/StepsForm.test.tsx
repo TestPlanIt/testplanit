@@ -329,6 +329,23 @@ describe("StepsForm", () => {
     expect(screen.getByTestId("add-step-button")).toBeInTheDocument();
   });
 
+  it("leaves the form's rows alone when no steps prop is passed", () => {
+    mockFields = [
+      { id: "step-1", step: null, expectedResult: null, isShared: false },
+    ];
+
+    render(<StepsForm {...defaultProps} />);
+
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(screen.getByTestId("step-editor-0")).toBeInTheDocument();
+  });
+
+  it("seeds the rows from a steps prop", () => {
+    render(<StepsForm {...defaultProps} steps={[]} />);
+
+    expect(mockReplace).toHaveBeenCalledWith([]);
+  });
+
   it("renders list of steps with step editors", () => {
     mockFields = [
       { id: "step-1", step: null, expectedResult: null, isShared: false },
