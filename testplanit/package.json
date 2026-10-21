@@ -244,7 +244,7 @@
     "lowlight": "^3.3.0",
     "marked": "^18.1.1",
     "micromatch": "^4.0.8",
-    "motion": "^13.5.1",
+    "motion": "^14.3.0",
     "multer": "^2.4.0",
     "multer-s3": "^3.0.1",
     "mustache": "^4.2.0",
