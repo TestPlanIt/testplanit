@@ -1,3 +1,16 @@
+## [1.2.0-beta.9](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.8...v1.2.0-beta.9) (2026-10-21)
+
+### Features
+
+* **templates:** choose a project's default template when creating it ([1bc3090](https://github.com/TestPlanIt/testplanit/commit/1bc3090699630fe26abb5c8d60fa833cbb8305fb)), closes [#707](https://github.com/TestPlanIt/testplanit/issues/707)
+* **templates:** let each project choose its default template ([7cc11b3](https://github.com/TestPlanIt/testplanit/commit/7cc11b3c0993ab353fb15f1363be4de022ae811a)), closes [#707](https://github.com/TestPlanIt/testplanit/issues/707)
+
+### Bug Fixes
+
+* **cases:** keep entered data when switching a test case's template ([03d3f47](https://github.com/TestPlanIt/testplanit/commit/03d3f474345a04777736f401d705d7043a2db525)), closes [#708](https://github.com/TestPlanIt/testplanit/issues/708)
+* **cases:** keep steps when restoring an Add Case draft ([c5bb0be](https://github.com/TestPlanIt/testplanit/commit/c5bb0be0b03921a654cf12413381f0a8a27f97b4))
+* **repository:** credit copied cases to the user who copies them ([aefcb7c](https://github.com/TestPlanIt/testplanit/commit/aefcb7c54e996d4545115e6c6371e0f7c2712430))
+
 ## [1.2.0-beta.8](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.7...v1.2.0-beta.8) (2026-10-20)
 
 ### Features
