@@ -2198,6 +2198,11 @@
           "savedToast": "Projectcode opgeslagen.",
           "saveError": "De projectcode kon niet worden opgeslagen. Deze wordt mogelijk al gebruikt door een ander project."
         },
+        "defaultTemplate": {
+          "description": "Nieuwe testgevallen en sessies in dit project beginnen met deze sjabloon.",
+          "unavailableTitle": "Standaardsjabloon niet beschikbaar",
+          "unavailableDescription": "{name} is uitgeschakeld, verwijderd of niet meer toegewezen aan dit project, dus nieuwe testgevallen en sessies gebruiken in plaats daarvan de standaardsjabloon van het systeem. Kies een ander standaardsjabloon of herstel dit sjabloon."
+        },
         "reviewWorkflow": {
           "label": "Schakel de beoordelingsworkflow in",
           "description": "Wanneer deze functie is ingeschakeld, worden overgangen naar statussen die beoordeling vereisen, geblokkeerd door een goedgekeurd beoordelingsverzoek. Testers zien de knop 'Beoordeling aanvragen'; beoordelaars ontvangen meldingen, en het goedkeuren van een verzoek past de overgang toe.",
@@ -5422,6 +5427,7 @@
       "confirmSetAsDefault": "Instellen als standaardsjabloon",
       "confirmSetAsDefaultDescription": "Weet u zeker dat u deze sjabloon als standaard wilt instellen?",
       "confirmSetAsDefaultProjects": "Deze sjabloon wordt aan alle projecten toegevoegd.",
+      "projectDefaultWarning": "{count, plural, one {Dit project gebruikt dit sjabloon als standaard. De nieuwe testgevallen en sessies ervan gebruiken in plaats daarvan de standaardsjabloon van het systeem.} other {Deze projecten gebruiken dit sjabloon als standaard. De nieuwe testgevallen en sessies ervan gebruiken in plaats daarvan de standaardsjabloon van het systeem.}}",
       "add": {
         "button": "Sjabloon toevoegen",
         "title": "Nieuwe sjabloon toevoegen",
@@ -7851,7 +7857,7 @@
     "projectAiModels": "## AI-modellen\nKies het AI-model en de promptconfiguratie die dit project gebruikt voor zijn AI-ondersteunde functies, zoals het genereren van testgevallen en automatisch taggen.",
     "projectQuickScript": "## QuickScript\nVerbind een coderepository, zodat dit project testgevallen kan genereren op basis van uw geautomatiseerde testbestanden, waarbij u kiest welke branch en paden moeten worden opgenomen.",
     "projectParameters": "## Testgevalparameters\nConfigureer de datagestuurde tests van dit project — JUnit-iteratie-eigenschapsnamen voor geïmporteerde resultaten en herbruikbare datasets voor geparametriseerde gevallen.",
-    "projectAdvanced": "## Geavanceerd\nGeavanceerde instellingen voor dit project — het record-ID-voorvoegsel, de beoordelingsworkflow voor resultaten, automatisch aanmaken van issues bij een fout, en het bewerkingsvenster voor resultaten.",
+    "projectAdvanced": "## Geavanceerd\nGeavanceerde instellingen voor dit project — het record-ID-voorvoegsel, de standaardsjabloon voor nieuwe testgevallen en sessies, de beoordelingsworkflow voor resultaten, automatisch aanmaken van issues bij een fout, en het bewerkingsvenster voor resultaten.",
     "projectShares": "## Deelinstellingen beheren\nDeelbare links naar de rapporten van dit project, elk met een eigen toegangsniveau — openbaar, aanmelding vereist of met wachtwoord beveiligd. Het intrekken van een link stopt de toegang.",
     "projectAccess": "## Toegang\nElke gebruiker die dit project kan openen en de rol die bepaalt wat ze hier mogen doen. De rol van een gebruiker komt uit hun eigen projecttoeganginstelling, een groep waartoe zij behoren, of de standaardtoegang van het project, in die volgorde. Systeembeheerders en projectbeheerders hebben volledige toegang ongeacht de rol. Toegang wordt gewijzigd door een beheerder onder Beheer › Projecten › Project bewerken.",
     "groups": "## Groepen\nMet groepen kunt u projecttoegang en rollen aan meerdere gebruikers tegelijk toewijzen. Voeg leden direct toe, of koppel een groep vanuit uw identiteitsprovider.",

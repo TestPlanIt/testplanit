@@ -2198,6 +2198,11 @@
           "savedToast": "Kód projektu uložen.",
           "saveError": "Nepodařilo se uložit kód projektu. Možná jej již používá jiný projekt."
         },
+        "defaultTemplate": {
+          "description": "Nové testovací případy a relace v tomto projektu začínají touto šablonou.",
+          "unavailableTitle": "Výchozí šablona není dostupná",
+          "unavailableDescription": "{name} je zakázán, odstraněn nebo již není přiřazen k tomuto projektu, takže nové testovací případy a relace používají systémovou výchozí šablonu. Vyberte jinou výchozí šablonu nebo obnovte tuto."
+        },
         "reviewWorkflow": {
           "label": "Povolit workflow revize",
           "description": "Když je povoleno, přechody do stavů vyžadujících kontrolu jsou podmíněny schváleným požadavkem na kontrolu. Testeři vidí tlačítko Vyžádat kontrolu; recenzenti dostávají oznámení a schválení požadavku provede přechod.",
@@ -5422,6 +5427,7 @@
       "confirmSetAsDefault": "Nastavit jako výchozí šablonu",
       "confirmSetAsDefaultDescription": "Opravdu chcete nastavit tuto šablonu jako výchozí?",
       "confirmSetAsDefaultProjects": "Tato šablona bude přidána do všech projektů.",
+      "projectDefaultWarning": "{count, plural, one {Tento projekt používá tuto šablonu jako svou výchozí. Jeho nové testovací případy a relace budou místo toho používat systémovou výchozí šablonu.} few {Tyto projekty používají tuto šablonu jako svou výchozí. Jejich nové testovací případy a relace budou místo toho používat systémovou výchozí šablonu.} many {Tyto projekty používají tuto šablonu jako svou výchozí. Jejich nové testovací případy a relace budou místo toho používat systémovou výchozí šablonu.} other {Tyto projekty používají tuto šablonu jako svou výchozí. Jejich nové testovací případy a relace budou místo toho používat systémovou výchozí šablonu.}}",
       "add": {
         "button": "Přidat šablonu",
         "title": "Přidat novou šablonu",
@@ -7851,7 +7857,7 @@
     "projectAiModels": "## AI modely\nZvolte AI model a konfiguraci promptu, které tento projekt používá pro své funkce podporované AI, jako je generování testovacích případů a automatické štítkování.",
     "projectQuickScript": "## QuickScript\nPropojte úložiště kódu, aby tento projekt mohl generovat testovací případy z vašich automatizovaných testovacích souborů, s výběrem, kterou větev a cesty zahrnout.",
     "projectParameters": "## Parametry testovacích případů\nNakonfigurujte datově řízené testování tohoto projektu — názvy vlastností iterace JUnit pro importované výsledky a znovupoužitelné datové sady pro parametrizované případy.",
-    "projectAdvanced": "## Pokročilé\nPokročilá nastavení pro tento projekt — prefix ID záznamu, pracovní postup revize výsledků, automatické vytváření úkolů při selhání a okno pro úpravu výsledků.",
+    "projectAdvanced": "## Rozšířené\nRozšířená nastavení pro tento projekt — předpona ID záznamu, výchozí šablona pro nové testovací případy a relace, pracovní postup kontroly výsledků, automatické vytváření problémů při selhání a okno pro úpravu výsledků.",
     "projectShares": "## Spravovat sdílení\nSdílitelné odkazy na reporty tohoto projektu, každý s vlastní úrovní přístupu — veřejný, vyžadující přihlášení nebo chráněný heslem. Odvolání odkazu ukončí jeho přístup.",
     "projectAccess": "## Přístup\nKaždý uživatel, který může otevřít tento projekt, a role, která určuje, co zde mohou dělat. Role uživatele pochází z jejich vlastního nastavení přístupu k projektu, skupiny, do které patří, nebo výchozího přístupu projektu, v tomto pořadí. Správci systému a správci projektů mají plný přístup bez ohledu na roli. Přístup se změňuje správcem v sekci Administrace › Projekty › Upravit projekt.",
     "groups": "## Skupiny\nSkupiny vám umožňují přiřadit přístup k projektu a role mnoha uživatelům najednou. Přidejte členy přímo, nebo namapujte skupinu od vašeho poskytovatele identity.",

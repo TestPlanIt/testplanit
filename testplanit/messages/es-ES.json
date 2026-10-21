@@ -2198,6 +2198,11 @@
           "savedToast": "Código del proyecto guardado.",
           "saveError": "No se pudo guardar el código del proyecto. Puede que ya esté siendo usado por otro proyecto."
         },
+        "defaultTemplate": {
+          "description": "Los nuevos casos de prueba y sesiones en este proyecto comienzan con esta plantilla.",
+          "unavailableTitle": "Plantilla predeterminada no disponible",
+          "unavailableDescription": "{name} está deshabilitado, eliminado o ya no está asignado a este proyecto, por lo que los nuevos casos de prueba y sesiones utilizan la plantilla predeterminada del sistema en su lugar. Elija otra plantilla predeterminada o restaure esta."
+        },
         "reviewWorkflow": {
           "label": "Habilitar el flujo de trabajo de revisión",
           "description": "Cuando está habilitada, la transición a estados que requieren revisión está sujeta a una solicitud de revisión aprobada. Los evaluadores ven el botón \"Solicitar revisión\"; los revisores reciben notificaciones, y aprobar una solicitud aplica la transición.",
@@ -5422,6 +5427,7 @@
       "confirmSetAsDefault": "Establecer como plantilla predeterminada",
       "confirmSetAsDefaultDescription": "¿Está seguro de que desea establecer esta plantilla como predeterminado?",
       "confirmSetAsDefaultProjects": "Esta plantilla se añadirá a todos los proyectos.",
+      "projectDefaultWarning": "{count, plural, one {Este proyecto utiliza esta plantilla como su predeterminada. Sus nuevos casos de prueba y sesiones utilizarán la plantilla predeterminada del sistema en su lugar.} other {Estos proyectos utilizan esta plantilla como su predeterminada. Sus nuevos casos de prueba y sesiones utilizarán la plantilla predeterminada del sistema en su lugar.}}",
       "add": {
         "button": "Añadir Plantilla",
         "title": "Añadir nueva plantilla",
@@ -7851,7 +7857,7 @@
     "projectAiModels": "## Modelos de IA\nElija el modelo de IA y la configuración de prompt que utiliza este proyecto para sus funciones asistidas por IA, como la generación de casos de prueba y el etiquetado automático.",
     "projectQuickScript": "## QuickScript\nConecte un repositorio de código para que este proyecto pueda generar casos de prueba a partir de sus archivos de prueba automatizados, eligiendo qué rama y rutas incluir.",
     "projectParameters": "## Parámetros de casos de prueba\nConfigure las pruebas basadas en datos de este proyecto: nombres de propiedades de iteración de JUnit para los resultados importados y conjuntos de datos reutilizables para casos parametrizados.",
-    "projectAdvanced": "## Avanzado\nConfiguración avanzada de este proyecto: el prefijo del ID de registro, el flujo de trabajo de revisión de resultados, la creación automática de problemas en caso de error y la ventana de edición de resultados.",
+    "projectAdvanced": "## Avanzado\nConfiguraciones avanzadas para este proyecto — el prefijo del ID de registro, la plantilla predeterminada para nuevos casos de prueba y sesiones, flujo de trabajo de revisión de resultados, creación automática de problemas en caso de error y la ventana de edición de resultados.",
     "projectShares": "## Administrar recursos compartidos\nEnlaces compartibles a los informes de este proyecto, cada uno con su propio nivel de acceso: público, con inicio de sesión requerido o protegido con contraseña. Revocar un enlace corta su acceso.",
     "projectAccess": "## Acceso\nCada usuario que puede abrir este proyecto y el rol que decide qué puede hacer aquí. El rol de un usuario proviene de su configuración de acceso de proyecto, un grupo al que pertenece o el acceso predeterminado del proyecto, en ese orden. Los administradores del sistema y los administradores del proyecto tienen acceso completo independientemente del rol. El acceso se cambia por un administrador en Administración › Proyectos › Editar proyecto.",
     "groups": "## Grupos\nLos grupos le permiten asignar acceso a proyectos y roles a muchos usuarios a la vez. Agregue miembros directamente o asigne un grupo desde su proveedor de identidad.",

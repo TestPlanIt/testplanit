@@ -2198,6 +2198,11 @@
           "savedToast": "Codice progetto salvato.",
           "saveError": "Impossibile salvare il codice del progetto. Potrebbe essere già utilizzato da un altro progetto."
         },
+        "defaultTemplate": {
+          "description": "I nuovi casi di test e le sessioni in questo progetto iniziano con questo modello.",
+          "unavailableTitle": "Modello predefinito non disponibile",
+          "unavailableDescription": "{name} è disabilitato, eliminato o non più assegnato a questo progetto, quindi i nuovi casi di test e le sessioni utilizzano il modello predefinito del sistema. Scegli un altro modello predefinito o ripristina questo."
+        },
         "reviewWorkflow": {
           "label": "Abilita il flusso di lavoro di revisione",
           "description": "Quando abilitata, le transizioni verso stati che richiedono una revisione sono vincolate a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche e l'approvazione di una richiesta applica la transizione.",
@@ -5422,6 +5427,7 @@
       "confirmSetAsDefault": "Imposta come modello predefinito",
       "confirmSetAsDefaultDescription": "Sei sicuro di voler impostare questo modello come predefinito?",
       "confirmSetAsDefaultProjects": "Questo modello verrà aggiunto a tutti i progetti.",
+      "projectDefaultWarning": "{count, plural, one {Questo progetto utilizza questo modello come predefinito. I suoi nuovi casi di test e le sessioni utilizzeranno il modello predefinito del sistema.} other {Questi progetti utilizzano questo modello come predefinito. I loro nuovi casi di test e le sessioni utilizzeranno il modello predefinito del sistema.}}",
       "add": {
         "button": "Aggiungi modello",
         "title": "Aggiungi nuovo modello",
@@ -7851,7 +7857,7 @@
     "projectAiModels": "## Modelli IA\nScegli il modello di IA e la configurazione dei prompt che questo progetto utilizza per le sue funzionalità basate sull'IA, come la generazione di casi di test e l'assegnazione automatica dei tag.",
     "projectQuickScript": "## QuickScript\nCollega un repository di codice in modo che questo progetto possa generare casi di test dai tuoi file di test automatizzati, scegliendo quale branch e percorsi includere.",
     "projectParameters": "## Parametri dei casi di test\nConfigura i test basati sui dati di questo progetto: nomi delle proprietà di iterazione JUnit per i risultati importati e set di dati riutilizzabili per i casi parametrizzati.",
-    "projectAdvanced": "## Avanzate\nImpostazioni avanzate per questo progetto: il prefisso dell'ID record, il flusso di lavoro di revisione dei risultati, la creazione automatica di problemi in caso di errore e la finestra di modifica dei risultati.",
+    "projectAdvanced": "## Impostazioni avanzate\nImpostazioni avanzate per questo progetto: il prefisso dell'ID record, il modello predefinito per i nuovi casi di test e le sessioni, il flusso di lavoro di revisione dei risultati, la creazione automatica di problemi in caso di errore e la finestra di modifica dei risultati.",
     "projectShares": "## Gestisci condivisioni\nLink condivisibili ai report di questo progetto, ciascuno con il proprio livello di accesso: pubblico, con accesso richiesto o protetto da password. Revocare un link ne interrompe l'accesso.",
     "projectAccess": "## Accesso\nOgni utente che può aprire questo progetto e il ruolo che decide cosa può fare qui. Il ruolo di un utente proviene dalla sua impostazione di accesso al progetto, da un gruppo a cui appartiene o dall'accesso predefinito del progetto, in questo ordine. Gli amministratori di sistema e gli amministratori di progetto hanno accesso completo indipendentemente dal ruolo. L'accesso viene modificato da un amministratore in Amministrazione › Progetti › Modifica progetto.",
     "groups": "## Gruppi\nI gruppi permettono di assegnare l'accesso ai progetti e i ruoli a più utenti contemporaneamente. Aggiungi membri direttamente, oppure associa un gruppo dal tuo provider di identità.",

@@ -2198,6 +2198,11 @@
           "savedToast": "Projektcode gespeichert.",
           "saveError": "Der Projektcode konnte nicht gespeichert werden. Möglicherweise wird er bereits von einem anderen Projekt verwendet."
         },
+        "defaultTemplate": {
+          "description": "Neue Testfälle und Sitzungen in diesem Projekt beginnen mit dieser Vorlage.",
+          "unavailableTitle": "Standardvorlage nicht verfügbar",
+          "unavailableDescription": "{name} ist deaktiviert, gelöscht oder diesem Projekt nicht mehr zugewiesen, daher verwenden neue Testfälle und Sitzungen stattdessen die Systemstandardvorlage. Wählen Sie eine andere Standardvorlage oder stellen Sie diese wieder her."
+        },
         "reviewWorkflow": {
           "label": "Prüfworkflow aktivieren",
           "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen, und die Genehmigung einer Anfrage führt den Übergang aus.",
@@ -5422,6 +5427,7 @@
       "confirmSetAsDefault": "Als Standardvorlage festlegen",
       "confirmSetAsDefaultDescription": "Möchten Sie diese Vorlage wirklich als Standard festlegen?",
       "confirmSetAsDefaultProjects": "Diese Vorlage wird allen Projekten hinzugefügt.",
+      "projectDefaultWarning": "{count, plural, one {Dieses Projekt verwendet diese Vorlage als Standard. Seine neuen Testfälle und Sitzungen verwenden stattdessen die Systemstandardvorlage.} other {Diese Projekte verwenden diese Vorlage als Standard. Ihre neuen Testfälle und Sitzungen verwenden stattdessen die Systemstandardvorlage.}}",
       "add": {
         "button": "Vorlage hinzufügen",
         "title": "Neue Vorlage hinzufügen",
@@ -7851,7 +7857,7 @@
     "projectAiModels": "## KI-Modelle\nWählen Sie das KI-Modell und die Prompt-Konfiguration, die dieses Projekt für seine KI-gestützten Funktionen verwendet, wie z. B. die Testfallgenerierung und das automatische Taggen.",
     "projectQuickScript": "## QuickScript\nVerbinden Sie ein Code-Repository, damit dieses Projekt Testfälle aus Ihren automatisierten Testdateien generieren kann, wobei Sie auswählen können, welche Branches und Pfade einbezogen werden sollen.",
     "projectParameters": "## Testfallparameter\nKonfigurieren Sie die datengesteuerten Tests dieses Projekts – JUnit-Iterationseigenschaftsnamen für importierte Ergebnisse und wiederverwendbare Datensätze für parametrisierte Fälle.",
-    "projectAdvanced": "## Erweitert\nErweiterte Einstellungen für dieses Projekt – das Präfix der Datensatz-ID, der Ergebnisüberprüfungs-Workflow, die automatische Issue-Erstellung bei Fehlern und das Bearbeitungsfenster für Ergebnisse.",
+    "projectAdvanced": "## Erweitert\nErweiterte Einstellungen für dieses Projekt – das Präfix der Datensatz-ID, die Standardvorlage für neue Testfälle und Sitzungen, der Ergebnisüberprüfungs-Workflow, die automatische Issue-Erstellung bei Fehlern und das Bearbeitungsfenster für Ergebnisse.",
     "projectShares": "## Freigaben verwalten\nFreigebbare Links zu den Berichten dieses Projekts, jeweils mit eigener Zugriffsebene – öffentlich, Anmeldung erforderlich oder passwortgeschützt. Das Widerrufen eines Links beendet dessen Zugriff.",
     "projectAccess": "## Zugriff\nJeder Benutzer, der dieses Projekt öffnen kann, und die Rolle, die bestimmt, was er hier tun darf. Die Rolle eines Benutzers stammt von seiner eigenen Projektzugriffseinstel­lung, einer Gruppe, der er angehört, oder dem Standard­zugriff des Projekts, in dieser Reihen­folge. System­administratoren und Projekt­administratoren haben unabhängig von der Rolle vollständigen Zugriff. Der Zugriff wird von einem Administrator unter Verwaltung › Projekte › Projekt bearbeiten geändert.",
     "groups": "## Gruppen\nMit Gruppen können Sie Projektzugriff und Rollen für viele Benutzer gleichzeitig zuweisen. Fügen Sie Mitglieder direkt hinzu oder ordnen Sie eine Gruppe Ihres Identitätsanbieters zu.",

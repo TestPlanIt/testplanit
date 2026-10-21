@@ -2198,6 +2198,11 @@
           "savedToast": "Código do projeto salvo.",
           "saveError": "Não foi possível salvar o código do projeto. Ele pode já estar sendo usado por outro projeto."
         },
+        "defaultTemplate": {
+          "description": "Novos casos de teste e sessões neste projeto começam com este modelo.",
+          "unavailableTitle": "Modelo padrão indisponível",
+          "unavailableDescription": "{name} está desabilitado, deletado ou não está mais atribuído a este projeto, portanto novos casos de teste e sessões usam o modelo padrão do sistema. Escolha outro modelo padrão ou restaure este."
+        },
         "reviewWorkflow": {
           "label": "Ativar fluxo de trabalho de revisão",
           "description": "Quando ativado, as transições para estados que exigem revisão são condicionadas a uma solicitação de revisão aprovada. Os testadores veem o botão Solicitar Revisão; os revisores recebem notificações, e aprovar uma solicitação aplica a transição.",
@@ -5422,6 +5427,7 @@
       "confirmSetAsDefault": "Definir como modelo padrão",
       "confirmSetAsDefaultDescription": "Tem certeza de que deseja definir este modelo como padrão?",
       "confirmSetAsDefaultProjects": "Este modelo será adicionado a todos os projetos.",
+      "projectDefaultWarning": "{count, plural, one {Este projeto usa este modelo como seu padrão. Seus novos casos de teste e sessões usarão o modelo padrão do sistema.} other {Estes projetos usam este modelo como seu padrão. Seus novos casos de teste e sessões usarão o modelo padrão do sistema.}}",
       "add": {
         "button": "Adicionar modelo",
         "title": "Adicionar novo modelo",
@@ -7851,7 +7857,7 @@
     "projectAiModels": "## Modelos de IA\nEscolha o modelo de IA e a configuração de prompt que este projeto usa para seus recursos assistidos por IA, como geração de casos de teste e marcação automática.",
     "projectQuickScript": "## QuickScript\nConecte um repositório de código para que este projeto possa gerar casos de teste a partir de seus arquivos de teste automatizados, escolhendo quais branch e caminhos incluir.",
     "projectParameters": "## Parâmetros de Casos de Teste\nConfigure os testes baseados em dados deste projeto — nomes de propriedades de iteração do JUnit para resultados importados e conjuntos de dados reutilizáveis para casos parametrizados.",
-    "projectAdvanced": "## Avançado\nConfigurações avançadas para este projeto — o prefixo do ID de registro, o fluxo de trabalho de revisão de resultados, a criação automática de problemas em caso de falha e a janela de edição de resultados.",
+    "projectAdvanced": "## Avançado\nConfigurações avançadas para este projeto — o prefixo do ID de registro, o modelo padrão para novos casos de teste e sessões, fluxo de trabalho de revisão de resultados, criação automática de problemas em caso de falha e a janela de edição de resultados.",
     "projectShares": "## Gerenciar Compartilhamentos\nLinks compartilháveis para os relatórios deste projeto, cada um com seu próprio nível de acesso — público, login necessário ou protegido por senha. Revogar um link corta seu acesso.",
     "projectAccess": "## Acesso\nTodo usuário que pode abrir este projeto e a função que decide o que ele pode fazer aqui. A função de um usuário vem de sua própria configuração de acesso ao projeto, de um grupo ao qual pertence ou do acesso padrão do projeto, nessa ordem. Administradores do sistema e administradores do projeto têm acesso total independentemente da função. O acesso é alterado por um administrador em Administração › Projetos › Editar Projeto.",
     "groups": "## Grupos\nOs grupos permitem atribuir acesso a projetos e funções a muitos usuários de uma só vez. Adicione membros diretamente ou mapeie um grupo do seu provedor de identidade.",

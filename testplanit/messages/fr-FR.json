@@ -2198,6 +2198,11 @@
           "savedToast": "Code du projet enregistré.",
           "saveError": "Impossible d'enregistrer le code du projet. Il est peut-être déjà utilisé par un autre projet."
         },
+        "defaultTemplate": {
+          "description": "Les nouveaux cas de test et sessions de ce projet commencent avec ce modèle.",
+          "unavailableTitle": "Modèle par défaut indisponible",
+          "unavailableDescription": "{name} est désactivé, supprimé, ou n'est plus assigné à ce projet, donc les nouveaux cas de test et sessions utilisent le modèle par défaut du système à la place. Choisissez un autre modèle par défaut ou restaurez celui-ci."
+        },
         "reviewWorkflow": {
           "label": "Activer le flux de travail de révision",
           "description": "Lorsque cette option est activée, le passage à un état nécessitant une révision est conditionné par l'approbation de la demande de révision. Les testeurs voient le bouton « Demander une révision » ; les réviseurs reçoivent une notification, et l'approbation d'une demande applique la transition.",
@@ -5422,6 +5427,7 @@
       "confirmSetAsDefault": "Définir comme modèle par défaut",
       "confirmSetAsDefaultDescription": "Êtes-vous sûr de vouloir définir ce modèle comme modèle par défaut ?",
       "confirmSetAsDefaultProjects": "Ce modèle sera ajouté à tous les projets.",
+      "projectDefaultWarning": "{count, plural, one {Ce projet utilise ce modèle comme valeur par défaut. Ses nouveaux cas de test et sessions utiliseront le modèle par défaut du système à la place.} other {Ces projets utilisent ce modèle comme valeur par défaut. Leurs nouveaux cas de test et sessions utiliseront le modèle par défaut du système à la place.}}",
       "add": {
         "button": "Ajouter un modèle",
         "title": "Ajouter un nouveau modèle",
@@ -7851,7 +7857,7 @@
     "projectAiModels": "## Modèles d'IA\nChoisissez le modèle d'IA et la configuration d'invite utilisés par ce projet pour ses fonctionnalités assistées par IA, telles que la génération de cas de test et l'étiquetage automatique.",
     "projectQuickScript": "## QuickScript\nConnectez un référentiel de code afin que ce projet puisse générer des cas de test à partir de vos fichiers de tests automatisés, en choisissant quelle branche et quels chemins inclure.",
     "projectParameters": "## Paramètres de cas de test\nConfigurez les tests pilotés par les données de ce projet — les noms de propriétés d'itération JUnit pour les résultats importés et les ensembles de données réutilisables pour les cas paramétrés.",
-    "projectAdvanced": "## Avancé\nParamètres avancés pour ce projet — le préfixe d'identifiant d'enregistrement, le flux de travail de révision des résultats, la création automatique de problèmes en cas d'échec, et la fenêtre de modification des résultats.",
+    "projectAdvanced": "## Avancé\nParamètres avancés pour ce projet — le préfixe d'identifiant d'enregistrement, le modèle par défaut pour les nouveaux cas de test et sessions, flux de travail de révision des résultats, création automatique de problèmes en cas d'échec, et la fenêtre de modification des résultats.",
     "projectShares": "## Gérer les partages\nLiens partageables vers les rapports de ce projet, chacun avec son propre niveau d'accès — public, connexion requise, ou protégé par mot de passe. La révocation d'un lien coupe son accès.",
     "projectAccess": "## Accès\nChaque utilisateur pouvant ouvrir ce projet et le rôle qui détermine ce qu'il peut faire ici. Le rôle d'un utilisateur provient de son propre paramètre d'accès au projet, d'un groupe auquel il appartient, ou de l'accès par défaut du projet, dans cet ordre. Les administrateurs système et les administrateurs de projet ont un accès complet indépendamment du rôle. L'accès est modifié par un administrateur sous Administration › Projets › Modifier le projet.",
     "groups": "## Groupes\nLes groupes vous permettent d'attribuer un accès aux projets et des rôles à plusieurs utilisateurs à la fois. Ajoutez des membres directement, ou associez un groupe de votre fournisseur d'identité.",

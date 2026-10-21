@@ -2198,6 +2198,11 @@
           "savedToast": "Đã lưu mã dự án.",
           "saveError": "Không thể lưu mã dự án. Mã này có thể đã được sử dụng bởi một dự án khác."
         },
+        "defaultTemplate": {
+          "description": "Các test case và session mới trong dự án này bắt đầu với mẫu này.",
+          "unavailableTitle": "Mẫu mặc định không khả dụng",
+          "unavailableDescription": "{name} bị vô hiệu hóa, xóa hoặc không còn được gán cho dự án này, vì vậy các test case và session mới sử dụng mẫu mặc định của hệ thống thay thế. Chọn một mẫu mặc định khác hoặc khôi phục mẫu này."
+        },
         "reviewWorkflow": {
           "label": "Kích hoạt quy trình xem xét",
           "description": "Khi được kích hoạt, quá trình chuyển đổi sang các trạng thái yêu cầu xem xét sẽ được kiểm soát bằng yêu cầu xem xét đã được phê duyệt. Người kiểm thử sẽ thấy nút Yêu cầu xem xét; người xem xét sẽ nhận được thông báo, và việc phê duyệt yêu cầu sẽ áp dụng quá trình chuyển đổi.",
@@ -5422,6 +5427,7 @@
       "confirmSetAsDefault": "Đặt làm mẫu mặc định",
       "confirmSetAsDefaultDescription": "Bạn có chắc chắn muốn đặt mẫu này làm mẫu mặc định không?",
       "confirmSetAsDefaultProjects": "Mẫu này sẽ được thêm vào tất cả các dự án.",
+      "projectDefaultWarning": "{count, plural, other {Những dự án này sử dụng mẫu này làm mặc định của chúng. Các test case và session mới của chúng sẽ sử dụng mẫu mặc định của hệ thống thay thế.}}",
       "add": {
         "button": "Thêm mẫu",
         "title": "Thêm mẫu mới",
@@ -7851,7 +7857,7 @@
     "projectAiModels": "## Mô hình AI\nChọn mô hình AI và cấu hình prompt mà dự án này sử dụng cho các tính năng hỗ trợ AI, chẳng hạn như tạo trường hợp kiểm thử và tự động gắn thẻ.",
     "projectQuickScript": "## QuickScript\nKết nối một kho mã nguồn để dự án này có thể tạo trường hợp kiểm thử từ các tệp kiểm thử tự động của bạn, chọn nhánh và đường dẫn cần bao gồm.",
     "projectParameters": "## Tham số trường hợp kiểm thử\nCấu hình kiểm thử hướng dữ liệu của dự án này — tên thuộc tính lặp JUnit cho kết quả đã nhập và bộ dữ liệu có thể tái sử dụng cho các trường hợp tham số hóa.",
-    "projectAdvanced": "## Nâng cao\nCài đặt nâng cao cho dự án này — tiền tố ID bản ghi, quy trình xem xét kết quả, tự động tạo vấn đề khi thất bại và khoảng thời gian chỉnh sửa kết quả.",
+    "projectAdvanced": "## Nâng cao\nCác cài đặt nâng cao cho dự án này — tiền tố ID bản ghi, mẫu mặc định cho các test case và session mới, quy trình xem xét kết quả, tự động tạo vấn đề khi thất bại và khoảng thời gian chỉnh sửa kết quả.",
     "projectShares": "## Quản lý chia sẻ\nLiên kết chia sẻ đến các báo cáo của dự án này, mỗi liên kết có mức truy cập riêng — công khai, yêu cầu đăng nhập hoặc bảo vệ bằng mật khẩu. Thu hồi liên kết sẽ cắt quyền truy cập của liên kết đó.",
     "projectAccess": "## Truy cập\nMọi người dùng có thể mở dự án này và vai trò quyết định những gì họ có thể làm ở đây. Vai trò của người dùng đến từ cài đặt truy cập dự án của họ, một nhóm họ thuộc về, hoặc truy cập mặc định của dự án, theo thứ tự đó. Quản trị viên hệ thống và quản trị viên dự án có quyền truy cập đầy đủ bất kể vai trò. Truy cập được thay đổi bởi người quản trị dưới Administration › Projects › Edit Project.",
     "groups": "## Nhóm\nNhóm cho phép bạn gán quyền truy cập dự án và vai trò cho nhiều người dùng cùng lúc. Thêm thành viên trực tiếp hoặc ánh xạ một nhóm từ nhà cung cấp danh tính của bạn.",
