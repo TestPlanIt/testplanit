@@ -190,6 +190,7 @@ const mockSourceCase = {
   automated: false,
   estimate: null,
   creatorId: "user-1",
+  createdAt: new Date("2023-06-01T00:00:00Z"),
   steps: [
     {
       id: 10,
@@ -585,6 +586,19 @@ describe("CopyMoveWorker", () => {
           data: expect.objectContaining({ currentVersion: 1 }),
         })
       );
+    });
+
+    it("credits the copy to the copying user and lets createdAt default to now", async () => {
+      mockDb.repositoryCases.findMany.mockResolvedValue([
+        { ...mockSourceCase, creatorId: "author-1" },
+      ]);
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob() as Job);
+
+      const createData = mockTx.repositoryCases.create.mock.calls[0][0].data;
+      expect(createData.creatorId).toBe("user-1");
+      expect(createData).not.toHaveProperty("createdAt");
     });
 
     it("REPEAT-COPY-01: same case copied twice with rename creates distinct cases, no version collision", async () => {
@@ -1104,6 +1118,26 @@ describe("CopyMoveWorker", () => {
         where: { id: { in: [1] } },
         data: { isDeleted: true },
       });
+    });
+
+    it("keeps the source case's creator and createdAt on a cross-project move", async () => {
+      mockDb.repositoryCases.findMany.mockResolvedValue([
+        { ...mockSourceCase, creatorId: "author-1" },
+      ]);
+
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({ id: "job-move-authorship", data: baseMoveJobData }) as Job
+      );
+
+      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            creatorId: "author-1",
+            createdAt: new Date("2023-06-01T00:00:00Z"),
+          }),
+        })
+      );
     });
 
     it("should set movedCount equal to copiedCount on successful move", async () => {

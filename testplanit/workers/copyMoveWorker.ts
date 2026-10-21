@@ -976,7 +976,9 @@ const processor = async (
           db,
           jobGucPayload(job),
           async (tx: TxClient) => {
-            // a. Create-or-restore the target RepositoryCases row.
+            // a. Create-or-restore the target RepositoryCases row. A copy is
+            // a new case authored by the user making it (createdAt defaults
+            // to now); a move keeps the original author and creation time.
             const caseFields = {
               repositoryId: targetRepositoryId,
               folderId: caseFolderId,
@@ -984,7 +986,12 @@ const processor = async (
               stateId: effectiveStateId,
               automated: sourceCase.automated,
               estimate: sourceCase.estimate,
-              creatorId: sourceCase.creatorId,
+              ...(job.data.operation === "move"
+                ? {
+                    creatorId: sourceCase.creatorId,
+                    createdAt: sourceCase.createdAt,
+                  }
+                : { creatorId: job.data.userId }),
               order: caseOrder,
             };
 
