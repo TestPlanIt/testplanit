@@ -1,3 +1,11 @@
+## [1.2.0-beta.11](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.10...v1.2.0-beta.11) (2026-10-22)
+
+### Bug Fixes
+
+* **docs:** remove unnecessary blank lines in alerts and failure patterns documentation ([de96245](https://github.com/TestPlanIt/testplanit/commit/de96245ab7f50892888b40fe3111b5f7e1d35755))
+* **duplicates:** update button variant and class for improved styling ([54c5433](https://github.com/TestPlanIt/testplanit/commit/54c5433fd7d3895d66cc9a3f2dd6010c9423781e))
+* **runs:** stop live wake-up refetch storm on automated run pages ([20a4190](https://github.com/TestPlanIt/testplanit/commit/20a41904125ddf63c72a4688268b21eff4cc9550))
+
 ## [1.2.0-beta.10](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.9...v1.2.0-beta.10) (2026-10-21)
 
 ### Features
