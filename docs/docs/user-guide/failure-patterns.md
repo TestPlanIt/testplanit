@@ -57,7 +57,6 @@ Quarantine from the pattern page: the affected test cases table has a **Quaranti
 
 Quarantine also lifts by itself: once the case has passed the number of times in a row set in the [Failure Patterns settings](projects/settings/triage.md) (five by default), counting only results recorded after it was quarantined, the worker releases it and the audit log records the release. Skipped results neither count nor break the streak; a failure starts the count over. Tick **Keep quarantined until released by hand** when quarantining a case that should stay out of the counts regardless, for example while a known fix is scheduled.
 
-
 ## Patterns without details
 
 Some results arrive with no message or stack trace, for example automation imported from another tool. They cannot be grouped by failure, so each test case gets its own pattern named after the case. Reporters, the CLI and results imports all send the failure text, so this only affects historical data.

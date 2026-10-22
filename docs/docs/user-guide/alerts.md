@@ -50,12 +50,12 @@ These evaluate when a run completes, or, if the rule says **As results arrive**,
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Run pass rate below threshold**       | Passed results divided by results with a pass or fail verdict is under X%, once at least N verdicts exist.                                                                                                     |
 | **Run failure count**                   | More than N results in the run have failed.                                                                                                                                                                    |
-| **Run duration deviates from baseline** | A completed run's total duration is more than X% above, below, or either side of the mean or median of the last Y completed runs its scope groups together (the same tag or name fragment, or every run). |
+| **Run duration deviates from baseline** | A completed run's total duration is more than X% above, below, or either side of the mean or median of the last Y completed runs its scope groups together (the same tag or name fragment, or every run).      |
 | **Run not progressing**                 | An open run with at least one result has had no new result for more than X hours. Checked hourly.                                                                                                              |
 | **Automated execution failed**          | An automated execution of a run fails, cannot be dispatched, or times out.                                                                                                                                     |
 | **Run untested share**                  | More than X% of a run's cases still have no result with Y or fewer days left before the run's milestone is due. Checked daily.                                                                                 |
 | **Issues opened from a run**            | More than N issues are linked to the run's results.                                                                                                                                                            |
-| **New failure patterns in a run**       | More than N failure patterns appear for the first time in the run ([Failure Patterns](failure-patterns.md)).   Evaluated as results arrive or when the run completes.                                              |
+| **New failure patterns in a run**       | More than N failure patterns appear for the first time in the run ([Failure Patterns](failure-patterns.md)).   Evaluated as results arrive or when the run completes.                                          |
 
 Scope a run metric to all runs, to runs carrying a tag, or to runs whose name contains a fragment such as `Nightly`.
 
@@ -82,11 +82,11 @@ Scope a milestone metric to all milestones in the project or to one milestone.
 
 These are checked once a day and fire for the project itself.
 
-| Metric                                    | Fires when                                                                                                                                     |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Metric                                    | Fires when                                                                                                                                                        |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Requirement coverage below threshold**  | Fewer than X% of the project's requirements count as covered. **Count as covered** picks the basis: linked to at least one test case, or a passing latest result. |
-| **Stale cases**                           | More than N cases, older than Y days, have had no result (manual or automated) in the last Y days.                                             |
-| **Automation share below threshold**      | Fewer than X% of the cases in scope are automated.                                                                                             |
+| **Stale cases**                           | More than N cases, older than Y days, have had no result (manual or automated) in the last Y days.                                                                |
+| **Automation share below threshold**      | Fewer than X% of the cases in scope are automated.                                                                                                                |
 
 Stale cases and automation share can be scoped to the whole project, a folder (subfolders included), or a tag.
 
@@ -94,7 +94,7 @@ Stale cases and automation share can be scoped to the whole project, a folder (s
 
 | Metric                   | Fires when                                                                                                                           |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Webhook failure rate** | More than X% of an outbound webhook's last N deliveries failed, once at least M deliveries exist. Checked hourly. |
+| **Webhook failure rate** | More than X% of an outbound webhook's last N deliveries failed, once at least M deliveries exist. Checked hourly.                    |
 
 Scope it to every active outbound webhook in the project or to one webhook.
 
@@ -110,18 +110,18 @@ These evaluate each time an [AI model integration](./llm-integrations.md) record
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **AI budget used**            | The integration's spend for its billing period reaches X% of its **Monthly Budget**. Fires once per billing period for each integration; saving the integration or using **Reset Spend** lets it fire again in the same period. Integrations without a budget never fire.                   |
 | **AI request error rate**     | More than X% of the integration's last N requests failed, once at least M requests exist.                                                                                                                                                                                                   |
-| **AI provider rate limiting** | The provider throttled at least N of the integration's requests within the last X hours (failures the provider reported as a rate limit, quota, or "too many requests").                                                                                                                   |
+| **AI provider rate limiting** | The provider throttled at least N of the integration's requests within the last X hours (failures the provider reported as a rate limit, quota, or "too many requests").                                                                                                                    |
 
 Installations that already had a budget when they upgraded start with three **AI budget used** alerts, at 80%, 90% and 100%, subscribed by every administrator; edit or delete them like any other alert.
 
 #### Code repositories, integrations and queues
 
-| Metric                                 | Fires when                                                                                                                                                                                                                     |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Repository cache failing**           | A code repository connection (QuickScript or Impact Analysis) has had its cache refresh failing for at least X hours, counted from its last successful fetch. Checked hourly. Links to the project settings page that owns it. |
+| Metric                                  | Fires when                                                                                                                                                                                                                     |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Repository cache failing**            | A code repository connection (QuickScript or Impact Analysis) has had its cache refresh failing for at least X hours, counted from its last successful fetch. Checked hourly. Links to the project settings page that owns it. |
 | **Integration re-authorization needed** | At least N users of an issue-tracker integration have lost their connection and need to re-authorize. Checked daily.                                                                                                           |
-| **Queue failed jobs**                  | A background [queue](./queues.md) holds more than N failed jobs. Checked hourly.                                                                                                                                               |
-| **Queue backlog**                      | A queue's oldest waiting job has waited more than X minutes, the sign of a stopped worker. Delayed jobs do not count. Checked hourly.                                                                                           |
+| **Queue failed jobs**                   | A background [queue](./queues.md) holds more than N failed jobs. Checked hourly.                                                                                                                                               |
+| **Queue backlog**                       | A queue's oldest waiting job has waited more than X minutes, the sign of a stopped worker. Delayed jobs do not count. Checked hourly.                                                                                          |
 
 Scope each to every connection, integration or queue, or to one of them.
 
@@ -129,8 +129,8 @@ Scope each to every connection, integration or queue, or to one of them.
 
 These watch the installation as a whole and offer no narrower scope.
 
-| Metric                   | Fires when                                                                                                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Metric                   | Fires when                                                                                                                                                  |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Audit log backlog**    | The oldest captured change not yet written to the [audit log](./audit-logs.md) is older than X minutes, the sign of a stopped audit worker. Checked hourly. |
 | **Account lockouts**     | At least N accounts are currently locked after failed sign-ins, a sign of credential stuffing. Checked hourly.                                              |
 | **No automated results** | No automated test result has arrived from any pipeline for X hours. Never fires on an installation that has not received automated results. Checked daily.  |
