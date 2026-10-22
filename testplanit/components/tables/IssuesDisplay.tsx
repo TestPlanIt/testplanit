@@ -13,12 +13,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIssueColors } from "@/hooks/useIssueColors";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import DOMPurify from "dompurify";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useIssueUpdateStream } from "~/hooks/useIssueUpdateStream";
 import { Link } from "~/lib/navigation";
+import { schema } from "~/zenstack/schema";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import { safeExternalUrl } from "~/utils/externalUrl";
@@ -152,6 +154,25 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     },
     [id]
   );
+
+  // Callers on hot paths (the run page's suite query reloads on every live
+  // wake-up) leave `description` unselected to keep their payload small.
+  // `undefined` means "not loaded" — fetch it once the popover opens. A
+  // loaded-but-empty description arrives as null and skips the fetch, and the
+  // Jira branch skips it too: its popover fetches full details on open.
+  const { data: lazyIssueDetails } = useClientQueries(
+    schema
+  ).issue.useFindUnique(
+    { where: { id }, select: { description: true } },
+    {
+      enabled:
+        isOpen &&
+        description === undefined &&
+        !!id &&
+        !(integrationProvider?.toUpperCase() === "JIRA" && integrationId),
+    }
+  );
+  const effectiveDescription = description ?? lazyIssueDetails?.description;
 
   // Trigger a background sync for this issue. The freshness gate lives
   // server-side now (?trigger=hover → 5-min skip window in SyncService);
@@ -582,11 +603,11 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               )}
 
               {/* Description */}
-              {description && (
+              {effectiveDescription && (
                 <div
                   className="text-sm text-muted-foreground line-clamp-3 [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(description, {
+                    __html: DOMPurify.sanitize(effectiveDescription, {
                       ALLOWED_TAGS: [
                         "p",
                         "br",
