@@ -219,7 +219,7 @@ export function FindDuplicatesButton({
         data-testid="retry-scan-button"
         variant="outline"
         onClick={handleScan}
-        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
+        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
       >
         <CopyCheck className="h-4 w-4 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
@@ -233,9 +233,9 @@ export function FindDuplicatesButton({
   if (badgeCount > 0) {
     return (
       <Button
-        variant="destructive"
+        variant="link"
         asChild
-        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+        className="bg-destructive/50 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 border-1"
       >
         <Link href={`/projects/repository/${projectId}/duplicates`}>
           <CopyCheck className="h-4 w-4 shrink-0" />
