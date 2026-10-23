@@ -9,7 +9,7 @@ Cross-project reports aggregate data across every project in the system into a s
 
 ## Project Scope
 
-By default, a cross-project report runs across every project the admin has access to. You can narrow the scope by selecting specific projects in the **Projects** filter in the builder's Filters menu, or group results by project by including the **Project** dimension.
+By default, a cross-project report runs across every project the admin has access to. You can narrow the scope by selecting specific projects in the **Projects** filter in the builder's Filters menu, or group results by project by including the **Project** dimension. The Project dimension's value filter also offers an [**Exclude** mode](./projects/reports/report-builder.md#workflow) — "every project except these" — which keeps a saved report covering projects created after it was saved.
 
 ## Available Reports
 

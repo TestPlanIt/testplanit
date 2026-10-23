@@ -9,15 +9,15 @@ The Report Builder lets you compose a custom report by picking a data source, th
 
 ## Data Sources
 
-| Source                  | What it covers                                                                                                                                                                                                                                                                                   |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Test Execution**      | Test results across runs (status counts, pass rates, elapsed times), plus Impact Analysis counts, selected cases, and selection precision, grouped by trigger or code repository when the project uses [Impact Analysis](../../impact.md)                                                        |
-| **Repository Stats**    | Cases in the project's test repository (counts, automation status, custom fields)                                                                                                                                                                                                                |
-| **User Engagement**     | Per-user activity across the project (executions, sessions, results)                                                                                                                                                                                                                             |
-| **Project Health**      | Project-level health metrics (pass rates, churn, recent activity)                                                                                                                                                                                                                                |
-| **Milestone Readiness** | Release readiness per milestone — % of in-scope issues fully passing, plus per-state counts (passed, failed, in progress, not run, uncovered, total). Supports a date-range filter on each milestone's effective date, and a Date dimension that plots readiness chronologically as a line chart |
-| **Session Analysis**    | Exploratory testing sessions (durations, findings, executions)                                                                                                                                                                                                                                   |
-| **Issue Tracking**      | Linked external issues and their associated test cases                                                                                                                                                                                                                                           |
+| Source                  | What it covers                                                                                                                                                                                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Test Execution**      | Test results across runs — both results entered in the app and imported automated results — with status counts, pass rates and elapsed times, plus Impact Analysis counts, selected cases, and selection precision, grouped by trigger or code repository when the project uses [Impact Analysis](../../impact.md) |
+| **Repository Stats**    | Cases in the project's test repository (counts, automation status, custom fields)                                                                                                                                                                                                                                  |
+| **User Engagement**     | Per-user activity across the project (executions, sessions, results)                                                                                                                                                                                                                                               |
+| **Project Health**      | Project-level health metrics (pass rates, churn, recent activity)                                                                                                                                                                                                                                                  |
+| **Milestone Readiness** | Release readiness per milestone — % of in-scope issues fully passing, plus per-state counts (passed, failed, in progress, not run, uncovered, total). Supports a date-range filter on each milestone's effective date, and a Date dimension that plots readiness chronologically as a line chart                   |
+| **Session Analysis**    | Exploratory testing sessions (durations, findings, executions)                                                                                                                                                                                                                                                     |
+| **Issue Tracking**      | Linked external issues and their associated test cases                                                                                                                                                                                                                                                             |
 
 ## Workflow
 
@@ -28,6 +28,10 @@ The Report Builder lets you compose a custom report by picking a data source, th
 5. Choose **Metrics** to measure (e.g., Test Results count, Pass Rate, Average Elapsed Time).
 6. Apply any **Filters** (date range, tags, custom fields).
 7. Click **Run Report**.
+
+Every selected dimension except **Date** gets a value filter in the **Filters** section, with an **Include** / **Exclude** mode switch. Include keeps only the picked values; Exclude keeps everything but them, so a report like "every project except the sandboxes" stays correct as new values appear — projects created later are covered automatically. The mode is kept with saved reports, share links and the report URL. The Date dimension is filtered by the date range picker instead.
+
+The date range picker's **Last N days, weeks or months…** choice also offers **calendar weeks** and **calendar months** units, which align the window's start to the period boundary: _last 3 calendar months_ runs from the first of the month two months back through today, so a monthly trend's first bucket is a complete month rather than a partial one.
 
 Results render as a single, continuously-scrolling list (no page controls) and the columns are sortable. Use **Export CSV** above the table to download the full result set — see [Exporting Results](./index.md#exporting-results).
 
@@ -73,6 +77,7 @@ The Report Builder supports interactive drill-down on every metric cell. Click a
 - Automated / Manual Counts — see breakdown by automation status
 - Average Steps — view test cases with step counts
 - Automation Rate — see which cases are automated vs. manual
+- Case Creation Span — view the group's cases whose creation dates bound the span
 
 **Test Run Metrics:**
 
@@ -90,10 +95,23 @@ The Report Builder supports interactive drill-down on every metric cell. Click a
 - User activity metrics
 - Milestone progress details
 - Issue counts and details
+- Linked Cases — view the test cases linked to the group's issues
 
 ### Impact Dimensions
 
 With [Impact Analysis](../../impact.md) enabled, the Test Execution source offers two more dimensions. **Trigger** groups by how the analysis that composed a test run was started: **Manual**, or **Pull request** / **Push** when a [repository webhook](../../webhooks.md#repository-webhooks) started it. **Code Repository** groups by the connected repository whose analysis composed the run. In both dimensions, runs no analysis composed fall into **None**. Three Impact metrics accompany them: **Impact Analysis Count**, **Affected Cases Selected** (pinned plus affected cases, summed), and **Selection Precision (%)** — of the selected cases that were executed, the share that failed. Precision stays empty until something selected has run.
+
+### Result Source Dimension
+
+Test Execution counts both results entered in the app and imported automated results (JUnit and the other formats [automated execution](../../automated-execution.md) collects). The **Result Source** dimension splits them: each execution groups under **Manual** or **Automated**, and the dimension's filter restricts a report to one source — for example, a manual-executions-per-month trend that leaves imported automated results out. Rows that are not executions, such as runs counted without results, fall into **None**.
+
+### Issue Dimension and Linked Cases
+
+On Test Execution and Repository Stats, the **Issue** dimension groups rows by the [issues linked to the test case](../issues.md), labeled by issue key and title — cases written per ticket, or executions per ticket, read straight off the report. A case linked to several issues counts in each; cases with no linked issues fall into **None**. The dimension's filter picker searches issues by key or title. On Issue Tracking, the **Linked Cases** metric counts the distinct test cases linked to each group's issues — a case linked to two issues in the same group counts once.
+
+### Case Creation Metrics
+
+Repository Stats offers three metrics over each group's creation dates: **First Case Created** and **Last Case Created** (the earliest and latest creation in the group) and **Case Creation Span (days)** — the days between them, so with the Issue dimension a row shows how long a ticket's cases took to write.
 
 ### Folder Drill-Down
 
