@@ -264,23 +264,32 @@ export function getJunitColumns({
       cell: ({ row }: { row: { original: any } }) => row.original.worker,
       size: 80,
     },
+    // The rows carry presence flags, not the log text itself (unbounded, and
+    // the run page refetches every row on live wake-ups) — the popovers fetch
+    // the text per result when opened.
     {
       id: "systemOutput",
       header: t("common.fields.systemOutput"),
-      accessorKey: "systemOutput",
+      accessorKey: "hasSystemOut",
       enableSorting: false,
       cell: ({ row }: { row: { original: any } }) => (
-        <SystemOutputPopover text={row.original.systemOutput} />
+        <SystemOutputPopover
+          resultId={row.original.resultId}
+          hasText={row.original.hasSystemOut}
+        />
       ),
       size: 200,
     },
     {
       id: "systemError",
       header: t("common.fields.systemError"),
-      accessorKey: "systemError",
+      accessorKey: "hasSystemErr",
       enableSorting: false,
       cell: ({ row }: { row: { original: any } }) => (
-        <SystemErrorPopover text={row.original.systemError} />
+        <SystemErrorPopover
+          resultId={row.original.resultId}
+          hasText={row.original.hasSystemErr}
+        />
       ),
       size: 200,
     },

@@ -126,6 +126,8 @@
       "exportingPdf": "Экспорт...",
       "change": "Изменять",
       "viewAll": "Посмотреть все",
+      "viewSystemOutput": "Просмотр журналов",
+      "viewSystemError": "Просмотр ошибки",
       "undo": "Отменить",
       "undoDelete": "Отменить удаление",
       "automated": {

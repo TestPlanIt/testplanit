@@ -126,6 +126,8 @@
       "exportingPdf": "Đang xuất khẩu...",
       "change": "Thay đổi",
       "viewAll": "Xem tất cả",
+      "viewSystemOutput": "Xem nhật ký",
+      "viewSystemError": "Xem lỗi",
       "undo": "Hoàn tác",
       "undoDelete": "Hoàn tác xóa",
       "automated": {

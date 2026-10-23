@@ -126,6 +126,8 @@
       "exportingPdf": "Exportation...",
       "change": "Changement",
       "viewAll": "Afficher tout",
+      "viewSystemOutput": "Afficher les journaux",
+      "viewSystemError": "Afficher l'erreur",
       "undo": "Défaire",
       "undoDelete": "Annuler la suppression",
       "automated": {

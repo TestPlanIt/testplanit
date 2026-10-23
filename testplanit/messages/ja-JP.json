@@ -126,6 +126,8 @@
       "exportingPdf": "エクスポート中...",
       "change": "変化",
       "viewAll": "すべて表示",
+      "viewSystemOutput": "ログを表示",
+      "viewSystemError": "エラーを表示",
       "undo": "元に戻す",
       "undoDelete": "削除を元に戻す",
       "automated": {

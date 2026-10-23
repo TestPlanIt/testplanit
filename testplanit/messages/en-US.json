@@ -126,6 +126,8 @@
       "exportingPdf": "Exporting...",
       "change": "Change",
       "viewAll": "View All",
+      "viewSystemOutput": "View logs",
+      "viewSystemError": "View error",
       "undo": "Undo",
       "undoDelete": "Undo delete",
       "automated": {

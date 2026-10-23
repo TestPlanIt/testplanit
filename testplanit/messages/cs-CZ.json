@@ -126,6 +126,8 @@
       "exportingPdf": "Exportování...",
       "change": "Změnit",
       "viewAll": "Zobrazit vše",
+      "viewSystemOutput": "Zobrazit protokoly",
+      "viewSystemError": "Zobrazit chybu",
       "undo": "Zpět",
       "undoDelete": "Vrátit zpět smazání",
       "automated": {

@@ -126,6 +126,8 @@
       "exportingPdf": "جارٍ التصدير...",
       "change": "تغيير",
       "viewAll": "عرض الكل",
+      "viewSystemOutput": "عرض السجلات",
+      "viewSystemError": "عرض الخطأ",
       "undo": "تراجع",
       "undoDelete": "التراجع عن الحذف",
       "automated": {

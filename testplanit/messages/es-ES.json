@@ -126,6 +126,8 @@
       "exportingPdf": "Exportador...",
       "change": "Cambiar",
       "viewAll": "Ver todo",
+      "viewSystemOutput": "Ver registros",
+      "viewSystemError": "Ver error",
       "undo": "Deshacer",
       "undoDelete": "Deshacer eliminación",
       "automated": {

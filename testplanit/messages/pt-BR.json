@@ -126,6 +126,8 @@
       "exportingPdf": "Exportador...",
       "change": "Mudar",
       "viewAll": "Ver tudo",
+      "viewSystemOutput": "Visualizar logs",
+      "viewSystemError": "Visualizar erro",
       "undo": "Desfazer",
       "undoDelete": "Desfazer exclusão",
       "automated": {

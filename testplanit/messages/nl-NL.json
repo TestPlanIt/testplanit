@@ -126,6 +126,8 @@
       "exportingPdf": "Exporteren...",
       "change": "Wijziging",
       "viewAll": "Bekijk alles",
+      "viewSystemOutput": "Logboeken weergeven",
+      "viewSystemError": "Fout weergeven",
       "undo": "Ongedaan maken",
       "undoDelete": "Verwijderen ongedaan maken",
       "automated": {

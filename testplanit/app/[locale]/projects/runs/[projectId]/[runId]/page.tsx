@@ -763,16 +763,37 @@ export default function TestRunPage() {
       window.removeEventListener(TEST_RUN_ALL_CASES_COMPLETED_EVENT, handler);
   }, [canCloseRun, isRunCompleted, runId]);
   const [retryOf, setRetryOf] = useState<TestRunExecutionRow | null>(null);
+  // Explicit selects everywhere below: this tree reloads on every live
+  // wake-up and is O(results), so no unbounded text column may ride along.
+  // `systemOut`/`systemErr`/`content`/`message` (stdout dumps, stack traces)
+  // dominated the payload under `include` — the table only ever shows them
+  // inside popovers, which now fetch the text per result on open. The
+  // id-only queries after this one tell the table which rows get a trigger.
   const { data: jUnitSuites, isLoading: isJUnitLoading } = useClientQueries(
     schema
   ).jUnitTestSuite.useFindMany(
     showAutomatedResults
       ? {
           where: { testRunId: Number(runId) },
-          include: {
+          select: {
+            id: true,
+            name: true,
+            tests: true,
+            failures: true,
+            errors: true,
+            skipped: true,
             properties: true,
             results: {
-              include: {
+              select: {
+                id: true,
+                repositoryCaseId: true,
+                type: true,
+                executedAt: true,
+                time: true,
+                assertions: true,
+                worker: true,
+                createdAt: true,
+                failureSignatureId: true,
                 status: {
                   select: { name: true, color: { select: { value: true } } },
                 },
@@ -855,6 +876,43 @@ export default function TestRunPage() {
         }
       : undefined,
     { enabled: showAutomatedResults }
+  );
+
+  // Which results actually have stdout/stderr, as id-only lookups: the table
+  // renders a popover trigger for exactly these rows without ever shipping
+  // the text itself. Both are JUnitTestResult queries, so the wake-up flush's
+  // existing invalidation refreshes them alongside the suite tree.
+  const { data: resultIdsWithSystemOut } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindMany(
+    {
+      where: {
+        testSuite: { testRunId: Number(runId) },
+        AND: [{ systemOut: { not: null } }, { systemOut: { not: "" } }],
+      },
+      select: { id: true },
+    },
+    { enabled: showAutomatedResults }
+  );
+  const { data: resultIdsWithSystemErr } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindMany(
+    {
+      where: {
+        testSuite: { testRunId: Number(runId) },
+        AND: [{ systemErr: { not: null } }, { systemErr: { not: "" } }],
+      },
+      select: { id: true },
+    },
+    { enabled: showAutomatedResults }
+  );
+  const systemOutResultIds = useMemo(
+    () => new Set((resultIdsWithSystemOut ?? []).map((r) => r.id)),
+    [resultIdsWithSystemOut]
+  );
+  const systemErrResultIds = useMemo(
+    () => new Set((resultIdsWithSystemErr ?? []).map((r) => r.id)),
+    [resultIdsWithSystemErr]
   );
 
   const _canEdit =
@@ -1653,12 +1711,12 @@ export default function TestRunPage() {
             : result.type === "SKIPPED"
               ? "rgb(161, 161, 170)"
               : "rgb(34, 197, 94)"),
-        message: result.message,
         time: result.time,
         assertions: result.assertions,
         worker: result.worker,
-        systemOutput: result.systemOut,
-        systemError: result.systemErr,
+        // Presence flags only — the popover cells fetch the text on open.
+        hasSystemOut: systemOutResultIds.has(result.id),
+        hasSystemErr: systemErrResultIds.has(result.id),
         createdAt: result.createdAt || testRunData?.createdAt,
         createdById: testRunData?.createdBy?.id,
         linksFrom: result.repositoryCase?.linksFrom || [],
@@ -1684,7 +1742,13 @@ export default function TestRunPage() {
           }
         : testCase
     );
-  }, [jUnitSuites, testRunData?.createdBy?.id, testRunData?.createdAt]);
+  }, [
+    jUnitSuites,
+    systemOutResultIds,
+    systemErrResultIds,
+    testRunData?.createdBy?.id,
+    testRunData?.createdAt,
+  ]);
   const [junitTestCasesState, setJunitTestCasesState] = useState<any[]>([]);
   useEffect(() => {
     setJunitTestCasesState(junitTestCases);

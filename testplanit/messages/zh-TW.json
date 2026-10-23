@@ -126,6 +126,8 @@
       "exportingPdf": "出口...",
       "change": "改變",
       "viewAll": "看全部",
+      "viewSystemOutput": "查看日志",
+      "viewSystemError": "查看错误",
       "undo": "撤銷",
       "undoDelete": "撤銷刪除",
       "automated": {

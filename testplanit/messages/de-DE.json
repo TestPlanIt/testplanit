@@ -126,6 +126,8 @@
       "exportingPdf": "Exportieren...",
       "change": "Ändern",
       "viewAll": "Alle anzeigen",
+      "viewSystemOutput": "Protokolle anzeigen",
+      "viewSystemError": "Fehler anzeigen",
       "undo": "Rückgängig machen",
       "undoDelete": "Löschen rückgängig machen",
       "automated": {

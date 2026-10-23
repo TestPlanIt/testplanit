@@ -126,6 +126,8 @@
       "exportingPdf": "수출 중...",
       "change": "변화",
       "viewAll": "모두 보기",
+      "viewSystemOutput": "로그 보기",
+      "viewSystemError": "오류 보기",
       "undo": "끄르다",
       "undoDelete": "삭제 취소",
       "automated": {
