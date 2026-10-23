@@ -152,6 +152,7 @@ export const ENTITY_MAPPINGS = {
       estimate: { type: "integer" as const },
       forecastManual: { type: "integer" as const },
       forecastAutomated: { type: "float" as const },
+      riskScore: { type: "float" as const },
       automated: { type: "boolean" as const },
       isArchived: { type: "boolean" as const },
       isDeleted: { type: "boolean" as const },

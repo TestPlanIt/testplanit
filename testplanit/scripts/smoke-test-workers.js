@@ -65,6 +65,7 @@ const WORKERS = [
   "datasetLeaseSweepWorker",
   "executionDispatchWorker",
   "failureTriageWorker",
+  "riskScoreWorker",
 ];
 
 const entryPoints = [

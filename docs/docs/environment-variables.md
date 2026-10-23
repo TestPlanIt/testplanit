@@ -167,6 +167,7 @@ See [Background Processes](background-processes.md). Each variable sets how many
 | `EXECUTION_DISPATCH_CONCURRENCY`    | `3`     | Automated execution dispatch |
 | `IMPACT_ANALYSIS_CONCURRENCY`       | `1`     | Impact Analysis              |
 | `FAILURE_TRIAGE_CONCURRENCY`        | `2`     | Failure triage               |
+| `RISK_SCORE_CONCURRENCY`            | `2`     | Risk scoring                 |
 
 The repo cache, copy/move, duplicate scan, Magic Select, and step scan workers always process one job at a time. The matching `*_CONCURRENCY` variables for them only change the value shown on the Job Queues page.
 

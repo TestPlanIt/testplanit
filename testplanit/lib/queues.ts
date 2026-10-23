@@ -24,6 +24,7 @@ import {
   ALERT_QUEUE_NAME,
   WEBHOOK_ACTIONS_QUEUE_NAME,
   FAILURE_TRIAGE_QUEUE_NAME,
+  RISK_SCORE_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
 import { BULLMQ_PREFIX } from "./bullPrefix";
@@ -54,6 +55,7 @@ export {
   ALERT_QUEUE_NAME,
   WEBHOOK_ACTIONS_QUEUE_NAME,
   FAILURE_TRIAGE_QUEUE_NAME,
+  RISK_SCORE_QUEUE_NAME,
 };
 
 const STANDARD_RETRY: JobsOptions = {
@@ -87,6 +89,7 @@ let _budgetAlertQueue: Queue | null = null;
 let _autoTagQueue: Queue | null = null;
 let _deriveCaseStepsQueue: Queue | null = null;
 let _failureTriageQueue: Queue | null = null;
+let _riskScoreQueue: Queue | null = null;
 let _repoCacheQueue: Queue | null = null;
 let _copyMoveQueue: Queue | null = null;
 let _duplicateScanQueue: Queue | null = null;
@@ -810,6 +813,32 @@ export function getFailureTriageQueue(): Queue | null {
   return _failureTriageQueue;
 }
 
+export function getRiskScoreQueue(): Queue | null {
+  if (_riskScoreQueue) return _riskScoreQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${RISK_SCORE_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  // attempts: 1 — a lost recompute is healed by the next result burst or the
+  // nightly sweep, so retrying only doubles the scoring work.
+  _riskScoreQueue = new Queue(RISK_SCORE_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
+  });
+
+  console.log(`Queue "${RISK_SCORE_QUEUE_NAME}" initialized.`);
+
+  _riskScoreQueue.on("error", (error) => {
+    console.error(`Queue ${RISK_SCORE_QUEUE_NAME} error:`, error);
+  });
+
+  return _riskScoreQueue;
+}
+
 export function getAllQueues() {
   return {
     forecastQueue: getForecastQueue(),
@@ -836,5 +865,6 @@ export function getAllQueues() {
     alertQueue: getAlertQueue(),
     webhookActionsQueue: getWebhookActionsQueue(),
     failureTriageQueue: getFailureTriageQueue(),
+    riskScoreQueue: getRiskScoreQueue(),
   };
 }

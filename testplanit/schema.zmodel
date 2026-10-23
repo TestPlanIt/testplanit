@@ -732,6 +732,10 @@ model Projects {
     /// after being quarantined (0 or the switch off = only released by hand).
     quarantineAutoRelease            Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
     quarantineAutoReleasePasses      Int                                   @default(5) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Maintain a per-case risk score in the background (deterministic, no LLM cost).
+    riskScoringEnabled               Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Per-component risk scorer weight overrides; null = system defaults.
+    riskWeights                      Json?                                 @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
     junitIterationPropertyNames      String[]                              @default([])
     reviewWorkflowEnabled            Boolean                               @default(false)
@@ -2135,6 +2139,11 @@ model RepositoryCases {
     estimate                Int?
     forecastManual          Int?
     forecastAutomated       Float?
+    // Maintained risk score (0-100) with its per-component breakdown; written
+    // only by the risk service through the raw client, like the forecasts.
+    riskScore               Float?
+    riskReasons             Json?
+    riskComputedAt          DateTime?                    @db.Timestamptz(6)
     order                   Int                          @default(0)
     createdAt               DateTime                     @default(now()) @db.Timestamptz(6)
     creatorId               String                       @deny('update', true)
@@ -2186,6 +2195,7 @@ model RepositoryCases {
     @@index([createdAt])
     @@index([hasParameters])
     @@index([liveStepCount])
+    @@index([riskScore])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 

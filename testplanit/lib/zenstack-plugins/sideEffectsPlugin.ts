@@ -1042,6 +1042,9 @@ export const sideEffectsPlugin = definePlugin(schema, {
           await enqueueFailureTriageForJUnitResults(tx, after).catch((error) =>
             console.error("[failure-triage] enqueue failed:", error)
           );
+          await enqueueRiskScoreForJUnitResults(tx, after).catch((error) =>
+            console.error("[risk-score] enqueue failed:", error)
+          );
           break;
         }
 
@@ -1073,6 +1076,9 @@ export const sideEffectsPlugin = definePlugin(schema, {
           }
           await enqueueAlertEvaluationsForResults(tx, after).catch((error) =>
             console.error("[alerts] result enqueue failed:", error)
+          );
+          await enqueueRiskScoreForTestRunResults(tx, after).catch((error) =>
+            console.error("[risk-score] enqueue failed:", error)
           );
           break;
         }
@@ -1394,6 +1400,89 @@ async function enqueueFailureTriageForJUnitResults(
     if (!run?.project?.failureTriageEnabled || seenRuns.has(run.id)) continue;
     seenRuns.add(run.id);
     void enqueueFailureTriageForRun({
+      testRunId: run.id,
+      projectId: run.projectId,
+      tenantId,
+    });
+  }
+}
+
+/**
+ * Every automated verdict moves a case's failure, flakiness and staleness
+ * signals, so each affected run gets one debounced risk recompute. Gated on
+ * the per-project flag so a project with risk scoring off costs one select.
+ */
+async function enqueueRiskScoreForJUnitResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  if (typeof tx.jUnitTestSuite?.findMany !== "function") return;
+  const valid = rows.filter((row) => row?.id && row.testSuiteId != null);
+  if (valid.length === 0) return;
+  const suiteIds = [...new Set(valid.map((row) => Number(row.testSuiteId)))];
+  const suites = await tx.jUnitTestSuite.findMany({
+    where: { id: { in: suiteIds } },
+    select: {
+      id: true,
+      testRun: {
+        select: {
+          id: true,
+          projectId: true,
+          project: { select: { riskScoringEnabled: true } },
+        },
+      },
+    },
+  });
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const { enqueueRiskScoreForRun } =
+    await import("~/lib/services/risk/enqueue");
+  const tenantId = getCurrentTenantId();
+  const seenRuns = new Set<number>();
+  for (const suite of suites) {
+    const run = suite.testRun as {
+      id: number;
+      projectId: number;
+      project: { riskScoringEnabled: boolean } | null;
+    };
+    if (!run?.project?.riskScoringEnabled || seenRuns.has(run.id)) continue;
+    seenRuns.add(run.id);
+    void enqueueRiskScoreForRun({
+      testRunId: run.id,
+      projectId: run.projectId,
+      tenantId,
+    });
+  }
+}
+
+/** Manual results carry their run directly; same per-run debounce as above. */
+async function enqueueRiskScoreForTestRunResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  if (typeof tx.testRuns?.findMany !== "function") return;
+  const runIds = [
+    ...new Set(
+      rows
+        .filter((row) => row?.id && row.testRunId != null)
+        .map((row) => Number(row.testRunId))
+    ),
+  ];
+  if (runIds.length === 0) return;
+  const runs = await tx.testRuns.findMany({
+    where: { id: { in: runIds } },
+    select: {
+      id: true,
+      projectId: true,
+      project: { select: { riskScoringEnabled: true } },
+    },
+  });
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const { enqueueRiskScoreForRun } =
+    await import("~/lib/services/risk/enqueue");
+  const tenantId = getCurrentTenantId();
+  for (const run of runs) {
+    if (!run.project?.riskScoringEnabled) continue;
+    void enqueueRiskScoreForRun({
       testRunId: run.id,
       projectId: run.projectId,
       tenantId,
