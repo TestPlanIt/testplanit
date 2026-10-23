@@ -41,8 +41,10 @@ export const DRILL_DOWN_DIMENSIONS_BY_REPORT: Record<
     "configuration",
     "date",
     "folder",
+    "issue",
     "milestone",
     "project",
+    "resultSource",
     "status",
     "tag",
     "testCase",
@@ -55,6 +57,7 @@ export const DRILL_DOWN_DIMENSIONS_BY_REPORT: Record<
     "creator",
     "date",
     "folder",
+    "issue",
     "project",
     "source",
     "state",
@@ -375,6 +378,15 @@ export function buildTestExecutionQuery(
         ? { none: {} }
         : { some: { tag: { id: Number(tag.id) } } };
   }
+  if (context.dimensions.issue) {
+    const issue = context.dimensions.issue;
+    // "None" means no LIVE linked issues, matching the aggregation's
+    // deleted-issue filter.
+    repositoryCaseFilter.caseIssues =
+      issue.id === null || issue.id === ""
+        ? { none: { issue: { isDeleted: false } } }
+        : { some: { issueId: Number(issue.id) } };
+  }
   if (Object.keys(repositoryCaseFilter).length > 0) {
     runCaseFilter.repositoryCase = repositoryCaseFilter;
   }
@@ -569,6 +581,13 @@ export function buildJunitResultQuery(
         ? { none: {} }
         : { some: { tag: { id: Number(tag.id) } } };
   }
+  if (context.dimensions.issue) {
+    const issue = context.dimensions.issue;
+    repositoryCaseFilter.caseIssues =
+      issue.id === null || issue.id === ""
+        ? { none: { issue: { isDeleted: false } } }
+        : { some: { issueId: Number(issue.id) } };
+  }
   if (Object.keys(repositoryCaseFilter).length > 0) {
     where.repositoryCase = repositoryCaseFilter;
   }
@@ -659,16 +678,89 @@ export function buildTestRunsQuery(
     where.createdById = String(context.dimensions.user.id);
   }
 
+  // Groupings that only exist through execution data (status, issue, result
+  // source) derive run membership from the union of manual and automated
+  // results, matching the aggregation. Each becomes one condition; several
+  // at once compose under AND.
+  const membershipConditions: any[] = [];
   if (context.dimensions.status) {
     const statusId = Number(context.dimensions.status.id);
-    where.OR = [
-      { results: { some: { isDeleted: false, statusId } } },
-      {
-        junitTestSuites: {
-          some: { results: { some: { statusId } } },
+    membershipConditions.push({
+      OR: [
+        { results: { some: { isDeleted: false, statusId } } },
+        {
+          junitTestSuites: {
+            some: { results: { some: { statusId } } },
+          },
         },
-      },
-    ];
+      ],
+    });
+  }
+  if (context.dimensions.issue) {
+    const issue = context.dimensions.issue;
+    const caseIssuesFilter =
+      issue.id === null || issue.id === ""
+        ? { none: { issue: { isDeleted: false } } }
+        : { some: { issueId: Number(issue.id) } };
+    membershipConditions.push({
+      OR: [
+        {
+          results: {
+            some: {
+              isDeleted: false,
+              status: { systemName: { not: "untested" } },
+              testRunCase: {
+                repositoryCase: { caseIssues: caseIssuesFilter },
+              },
+            },
+          },
+        },
+        {
+          junitTestSuites: {
+            some: {
+              results: {
+                some: {
+                  statusId: { not: null },
+                  status: { systemName: { not: "untested" } },
+                  repositoryCase: { caseIssues: caseIssuesFilter },
+                },
+              },
+            },
+          },
+        },
+      ],
+    });
+  }
+  if (context.dimensions.resultSource) {
+    const sourceId = context.dimensions.resultSource.id;
+    if (sourceId === "MANUAL") {
+      membershipConditions.push({
+        results: {
+          some: {
+            isDeleted: false,
+            status: { systemName: { not: "untested" } },
+          },
+        },
+      });
+    } else if (sourceId === "AUTOMATED") {
+      membershipConditions.push({
+        junitTestSuites: {
+          some: {
+            results: {
+              some: {
+                statusId: { not: null },
+                status: { systemName: { not: "untested" } },
+              },
+            },
+          },
+        },
+      });
+    }
+  }
+  if (membershipConditions.length === 1) {
+    Object.assign(where, membershipConditions[0]);
+  } else if (membershipConditions.length > 1) {
+    (where as any).AND = membershipConditions;
   }
 
   Object.assign(where, impactRunFilter(context));
@@ -819,6 +911,16 @@ export function buildRepositoryStatsQuery(
       tag.id === null || tag.id === ""
         ? { none: {} }
         : { some: { tag: { id: Number(tag.id) } } };
+  }
+
+  // Apply issue filter ("None" = no live linked issues, matching the
+  // aggregation's deleted-issue filter)
+  if (context.dimensions.issue) {
+    const issue = context.dimensions.issue;
+    where.caseIssues =
+      issue.id === null || issue.id === ""
+        ? { none: { issue: { isDeleted: false } } }
+        : ({ some: { issueId: Number(issue.id) } } as any);
   }
 
   // Apply state filter
@@ -1053,13 +1155,29 @@ export function buildTestCasesQuery(
     junitFilter.executedAt = executedAtFilter;
   }
 
-  where.OR = [
+  // The issue dimension filters the case itself (its linked issues).
+  if (context.dimensions.issue) {
+    const issue = context.dimensions.issue;
+    where.caseIssues =
+      issue.id === null || issue.id === ""
+        ? { none: { issue: { isDeleted: false } } }
+        : ({ some: { issueId: Number(issue.id) } } as any);
+  }
+
+  // The result-source dimension keeps only the matching membership branch:
+  // a "Manual" cell counts cases with manual results, so its drill-down
+  // must not re-admit cases through their automated results.
+  const sourceId = context.dimensions.resultSource?.id;
+  const membershipBranches = [
     // The relationship is: RepositoryCases → TestRunCases ← TestRunResults.
     // Filter at the TestRunResults level, not TestRunCases level, because
     // TestRunResults.testRunId ≠ TestRunCases.testRunId in some cases.
-    { testRuns: { some: { results: { some: resultsFilter } } } },
-    { junitResults: { some: junitFilter } },
+    ...(sourceId !== "AUTOMATED"
+      ? [{ testRuns: { some: { results: { some: resultsFilter } } } }]
+      : []),
+    ...(sourceId !== "MANUAL" ? [{ junitResults: { some: junitFilter } }] : []),
   ];
+  where.OR = membershipBranches;
 
   return {
     where,
@@ -1283,11 +1401,15 @@ export function buildSessionResultsQuery(
 /**
  * Build query for issues drill-down
  */
-export function buildIssuesQuery(
-  context: DrillDownContext,
-  offset: number,
-  limit: number
-): IssueFindManyArgs {
+/**
+ * The issue `where` the issue-tracking report's dimension filters resolve
+ * to. Shared by the issues drill-down (lists the issues themselves) and the
+ * linked-cases drill-down (lists cases linked to those issues) so both
+ * match the cell they came from.
+ */
+export function buildIssueDimensionWhere(
+  context: DrillDownContext
+): IssueWhereInput {
   // A report cell's count and the list you get by clicking that cell run
   // through two different code paths — the aggregate side in
   // utils/reportUtils.ts and this drill-down builder — and they must filter
@@ -1369,8 +1491,16 @@ export function buildIssuesQuery(
     );
   }
 
+  return where;
+}
+
+export function buildIssuesQuery(
+  context: DrillDownContext,
+  offset: number,
+  limit: number
+): IssueFindManyArgs {
   return {
-    where,
+    where: buildIssueDimensionWhere(context),
     include: {
       project: {
         select: {
@@ -1385,6 +1515,50 @@ export function buildIssuesQuery(
     orderBy: {
       createdAt: "desc",
     } as NonNullable<IssueFindManyArgs["orderBy"]>,
+  };
+}
+
+/**
+ * Linked-cases drill-down (issue-tracking's Linked Cases metric): the live
+ * cases linked to the cell's issue population. For project-scoped reports
+ * the route swaps the nested issue projectId for the project-relevant issue
+ * population, matching the aggregation.
+ */
+export function buildLinkedCasesQuery(
+  context: DrillDownContext,
+  offset: number,
+  limit: number
+): RepositoryCasesFindManyArgs {
+  const issueWhere = buildIssueDimensionWhere(context);
+  return {
+    where: {
+      isDeleted: false,
+      caseIssues: { some: { issue: issueWhere } },
+    } as RepositoryCasesWhereInput,
+    include: {
+      project: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      folder: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      state: {
+        include: {
+          color: true,
+        },
+      },
+    },
+    skip: offset,
+    take: limit,
+    orderBy: {
+      createdAt: "desc",
+    } as NonNullable<RepositoryCasesFindManyArgs["orderBy"]>,
   };
 }
 
@@ -1669,9 +1843,17 @@ export function getQueryBuilderForMetric(
     metricId === "totalSteps" ||
     metricId === "averageSteps" ||
     metricId === "avgStepsPerCase" ||
-    metricId === "automationRate"
+    metricId === "automationRate" ||
+    metricId === "firstCaseCreated" ||
+    metricId === "lastCaseCreated" ||
+    metricId === "caseCreationSpan"
   ) {
     return buildRepositoryStatsQuery;
+  }
+
+  // Issue-tracking linked-cases metric drills into the linked cases
+  if (metricId === "linkedCaseCount") {
+    return buildLinkedCasesQuery;
   }
 
   // Test case metrics - need to check report type to determine which query builder
@@ -1769,7 +1951,11 @@ export function getModelForMetric(metricId: string): string {
     metricId === "totalSteps" ||
     metricId === "averageSteps" ||
     metricId === "avgStepsPerCase" ||
-    metricId === "automationRate"
+    metricId === "automationRate" ||
+    metricId === "firstCaseCreated" ||
+    metricId === "lastCaseCreated" ||
+    metricId === "caseCreationSpan" ||
+    metricId === "linkedCaseCount"
   ) {
     return "repositoryCases";
   }

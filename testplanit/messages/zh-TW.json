@@ -8228,6 +8228,10 @@
       "lastActiveDate": "## 最後活躍日期\n最近一次活動日期。",
       "averageAge": "## 平均年齡\n物品的平均年齡（天）。",
       "issueCount": "## 問題計數\n追蹤的總問題數。",
+      "linkedCaseCount": "## 關聯用例\n與群組問題關聯的不同測試用例數量。與同一群組中多個問題關聯的用例僅計算一次。",
+      "firstCaseCreated": "## 首個用例建立時間\n此群組中最早建立的測試用例的建立時間。",
+      "lastCaseCreated": "## 最後用例建立時間\n此群組中最新建立的測試用例的建立時間。",
+      "caseCreationSpan": "## 用例建立時間跨度\n群組中最早和最新測試用例建立時間之間的天數 — 群組用例花費的編寫時間。",
       "milestoneCount": "## 里程碑數\n里程碑總數。",
       "milestoneCompletionRate": "## 里程碑完成率\n已完成里程碑的百分比。",
       "averageMilestoneDuration": "## 平均里程碑持續時間\n里程碑的平均持續時間（以天為單位）。",
@@ -8244,6 +8248,8 @@
       "selectionPrecision": "## 選擇精度 (%)\n在影響分析選擇且隨後執行的案例中，失敗的比例。當沒有選擇的案例執行時為空。"
     },
     "reportDimensions": {
+      "issue": "## 問題維度\n按與測試用例關聯的問題分組。與多個問題關聯的用例會在每個問題中計算；沒有關聯問題的用例歸入無。",
+      "resultSource": "## 結果來源維度\n按執行來源分組：在應用程式中輸入的結果（手動）或匯入的自動化結果，例如 JUnit（自動化）。",
       "user": "## 使用者維度\n依執行測試或指派給專案的使用者將結果分組。",
       "status": "## 狀態維度\n依測試執行狀態（例如，透過、失敗、阻斷）將結果分組。",
       "project": "## 項目維度\n依項目將結果分組，以便進行跨項目分析。",
@@ -8276,7 +8282,7 @@
       "dimensions": "## 維度\n選擇要在報告中分析的維度。維度是用於對資料進行分類的屬性，例如日期、使用者、狀態等。您可以拖曳來重新排序。",
       "metrics": "## 指標\n選擇您希望在報告中衡量的指標。指標是從您的數據中提取的定量測量值，例如測試結果計數、通過率、平均耗時等。您可以拖曳它們來重新排序。",
       "dateRange": "## 日期範圍\n按特定時期過濾您的報表資料。選擇預設值（如「過去 7 天」、「上月」或「過去 N 天」），或在日曆上選擇自訂起始和結束日期。\n\n預設值保持相對：已儲存的報表或即時分享連結每次開啟時都會根據您的時區重新計算日期。自訂日期保持固定。此篩選器適用於每種報表類型的相關日期欄位（例如測試結果的執行日期、測試案例的建立日期）。",
-      "dimensionFilters": "## 篩選器\n將報告縮小到每個所選維度的特定值。將篩選器留空以包含該維度的所有值。日期維度則改用日期範圍選擇器進行篩選。"
+      "dimensionFilters": "## 篩選條件\n將報告縮小到每個所選維度的特定值。將篩選條件保留為空以包含該維度的所有值。將篩選條件切換為排除以排除選定的值 — 對於應該自動涵蓋新值的已儲存報告很有用。日期維度使用日期範圍選擇器進行篩選。"
     },
     "codeRepository": {
       "name": "## 儲存庫名稱\n此儲存庫連接的友善顯示名稱。\n\n- 用於在項目代碼上下文設定中標識它。\n- 不需要與提供者上的儲存庫名稱相符。",
@@ -8643,12 +8649,16 @@
           "unit": "期間",
           "days": "過去 {count, plural, other {# 天}}",
           "weeks": "過去 {count, plural, other {# 週}}",
-          "months": "過去 {count, plural, other {# 個月}}"
+          "months": "過去 {count, plural, other {# 個月}}",
+          "calendarWeeks": "最後 {count, plural, other {# 個日曆周}}",
+          "calendarMonths": "最後 {count, plural, other {# 個日曆月}}"
         },
         "rollingUnits": {
           "days": "天",
           "weeks": "週",
-          "months": "月"
+          "months": "月",
+          "calendarWeeks": "日曆周（從周開始）",
+          "calendarMonths": "日曆月（從 1 日開始）"
         }
       },
       "dateGrouping": {
@@ -9129,7 +9139,11 @@
       },
       "groupedTotal": "此群組中 {count, plural, other {# 行}} 的總計",
       "dimensionFilters": {
-        "allValues": "所有值"
+        "allValues": "所有值",
+        "noValues": "未排除任何項目",
+        "modeLabel": "篩選模式",
+        "include": "包括",
+        "exclude": "排除"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "此天數內開始的分析。「所有時間」讀取專案保留的每個分析。",
@@ -9283,6 +9297,8 @@
       "issueType": "問題類型",
       "issueTracker": "問題追蹤器",
       "issueStatus": "問題狀態",
+      "issue": "問題",
+      "resultSource": "結果來源",
       "tag": "標籤",
       "feature": "功能",
       "model": "模型",
@@ -9320,6 +9336,10 @@
       "averageElapsed": "每次執行的平均時間",
       "lastActiveDate": "最後活躍日期",
       "issueCount": "問題數量",
+      "linkedCaseCount": "關聯用例",
+      "firstCaseCreated": "首個用例建立時間",
+      "lastCaseCreated": "最後用例建立時間",
+      "caseCreationSpan": "用例建立時間跨度（天）",
       "averageAge": "平均年齡（天）",
       "sessionCount": "會話數",
       "activeSessions": "活躍會話",

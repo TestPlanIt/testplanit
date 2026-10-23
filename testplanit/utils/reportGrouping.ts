@@ -123,6 +123,19 @@ function fieldValues(
       if (caseTags.length === 0) return [{ key: "null", value: null }];
       return caseTags.map((ct) => ({ key: String(ct.tagId), value: ct.tagId }));
     }
+    case "issueId": {
+      // Like tag: a case can link to many issues, so a row fans out into one
+      // group per linked issue (or a single "None" group when it has none).
+      const caseIssues: Array<{ issueId: number }> =
+        result.testRunCase?.repositoryCase?.caseIssues ??
+        result.caseIssues ??
+        [];
+      if (caseIssues.length === 0) return [{ key: "null", value: null }];
+      return caseIssues.map((ci) => ({
+        key: String(ci.issueId),
+        value: ci.issueId,
+      }));
+    }
     default:
       // Scalar fields that live directly on the row (repository-stats:
       // templateId, creatorId, stateId, source, id).

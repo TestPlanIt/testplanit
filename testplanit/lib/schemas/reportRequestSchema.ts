@@ -45,6 +45,15 @@ export const dimensionFiltersSchema = z.record(
   z.array(z.union([z.string(), z.number()]))
 );
 
+// How each dimension's value filter applies: keep only the selected values
+// (include, the default) or everything BUT them (exclude). Exclude keeps a
+// saved report correct as new values appear — "every project except the two
+// sandboxes" doesn't silently drop projects created later.
+export const dimensionFilterModesSchema = z.record(
+  z.string(),
+  z.enum(["include", "exclude"])
+);
+
 export const reportRequestSchema = z
   .object({
     reportType: z.string(),
@@ -80,6 +89,9 @@ export const reportRequestSchema = z
     // Rows whose group key for a filtered dimension is not in the list are
     // dropped. Unknown dimension ids are ignored server-side.
     dimensionFilters: dimensionFiltersSchema.optional(),
+    // Flips a dimension's filter to "everything but the selected values".
+    // Dimensions without an entry (or without a filter) keep include.
+    dimensionFilterModes: dimensionFilterModesSchema.optional(),
     // Chart option carried in the run body so saved reports and shares keep
     // it: plot the sum of every series at each date. Aggregation ignores it.
     includeTotals: z.boolean().nullish(),

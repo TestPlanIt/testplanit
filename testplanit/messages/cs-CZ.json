@@ -8228,6 +8228,10 @@
       "lastActiveDate": "## Datum poslední aktivity\nNejnovější datum aktivity.",
       "averageAge": "## Průměrné stáří\nPrůměrné stáří položek ve dnech.",
       "issueCount": "## Počet problémů\nCelkový počet sledovaných problémů.",
+      "linkedCaseCount": "## Propojené případy\nPočet odlišných testovacích případů propojených s problémy skupiny. Případ propojený s několika problémy ve stejné skupině se počítá jednou.",
+      "firstCaseCreated": "## První případ vytvořen\nKdy byl nejstarší testovací případ v této skupině vytvořen.",
+      "lastCaseCreated": "## Poslední případ vytvořen\nKdy byl nejnovější testovací případ v této skupině vytvořen.",
+      "caseCreationSpan": "## Časový rozsah vytváření případů\nDní mezi nejstarším a nejnovějším vytvořením testovacího případu skupiny — jak dlouho trvalo napsání případů skupiny.",
       "milestoneCount": "## Počet milníků\nCelkový počet milníků.",
       "milestoneCompletionRate": "## Míra dokončení milníků\nProcento dokončených milníků.",
       "averageMilestoneDuration": "## Průměrná doba trvání milníku\nPrůměrná doba trvání milníků ve dnech.",
@@ -8244,6 +8248,8 @@
       "selectionPrecision": "## Přesnost výběru (%)\nZ případů, které analýzy dopadu vybraly a které byly následně provedeny, podíl, který selhal. Prázdné, pokud nic vybraného neběželo."
     },
     "reportDimensions": {
+      "issue": "## Dimenze problému\nSeskupuje podle problémů propojených s testovacím případem. Případ propojený s několika problémy se počítá v každém; případy bez propojených problémů spadají do Žádného.",
+      "resultSource": "## Dimenze zdroje výsledku\nSeskupuje spuštění podle jejich původu: výsledky zadané v aplikaci (Manuální) nebo importované automatizované výsledky, jako je JUnit (Automatizované).",
       "user": "## Dimenze uživatele\nSeskupuje výsledky podle uživatele, který provedl testy nebo je přiřazen k položkám.",
       "status": "## Dimenze stavu\nSeskupuje výsledky podle stavu provedení testu (např. Úspěšný, Neúspěšný, Blokován).",
       "project": "## Dimenze projektu\nSeskupuje výsledky podle projektu pro analýzu napříč projekty.",
@@ -8276,7 +8282,7 @@
       "dimensions": "## Dimenze\nVyberte dimenze, které chcete analyzovat ve své sestavě. Dimenze jsou atributy kategorizující vaše data, jako je datum, uživatel, stav atd. Pořadí můžete změnit přetažením.",
       "metrics": "## Metriky\nVyberte metriky, které chcete měřit ve své sestavě. Metriky jsou kvantitativní měření odvozená z vašich dat, jako je počet výsledků testů, míra úspěšnosti, průměrný uplynulý čas atd. Pořadí můžete změnit přetažením.",
       "dateRange": "## Rozsah dat\nFiltrujte data vaší zprávy podle specifického časového období. Zvolte předvolbu, jako je \"Posledních 7 dní\", \"Poslední měsíc\" nebo \"Posledních N dní\", nebo vyberte vlastní počáteční a koncové datum v kalendáři.\n\nPředvolba zůstává relativní: uložená zpráva nebo odkaz živého sdílení pracuje s daty znovu pokaždé, když se otevře, v časové zóně. Vlastní data zůstávají pevná. Tento filtr se vztahuje na příslušné pole data pro každý typ zprávy (např. datum provedení pro výsledky testů, datum vytvoření pro testovací případy).",
-      "dimensionFilters": "## Filtry\nZúžte report na konkrétní hodnoty každé vybrané dimenze. Ponechte filtr prázdný, chcete-li zahrnout všechny hodnoty dané dimenze. Datumové dimenze se místo toho filtrují pomocí výběru rozsahu dat."
+      "dimensionFilters": "## Filtry\nOmezit zprávu na specifické hodnoty každé vybrané dimenze. Nechte filtr prázdný, abyste zahrnuli všechny hodnoty pro tuto dimenzi. Přepněte filtr na Vyloučit, abyste zachovali vše kromě vybraných hodnot — užitečné pro uložené zprávy, které by měly automaticky pokrývat nové hodnoty. Dimenze data se filtrují pomocí výběru rozsahu dat."
     },
     "codeRepository": {
       "name": "## Název úložiště\nPřívětivý zobrazovaný název pro toto připojení úložiště.\n\n- Používá se k identifikaci v nastavení kódového kontextu projektu.\n- Nemusí odpovídat názvu úložiště u poskytovatele.",
@@ -8643,12 +8649,16 @@
           "unit": "Období",
           "days": "Posledních {count, plural, one {# den} few {# dny} many {# dne} other {# dní}}",
           "weeks": "Posledních {count, plural, one {# týden} few {# týdny} many {# týdne} other {# týdnů}}",
-          "months": "Posledních {count, plural, one {# měsíc} few {# měsíce} many {# měsíce} other {# měsíců}}"
+          "months": "Posledních {count, plural, one {# měsíc} few {# měsíce} many {# měsíce} other {# měsíců}}",
+          "calendarWeeks": "Poslední {count, plural, one {# týden kalendáře} few {# týdny kalendáře} many {# týdnů kalendáře} other {# týdnů kalendáře}}",
+          "calendarMonths": "Poslední {count, plural, one {# měsíc kalendáře} few {# měsíce kalendáře} many {# měsíců kalendáře} other {# měsíců kalendáře}}"
         },
         "rollingUnits": {
           "days": "dny",
           "weeks": "týdny",
-          "months": "měsíce"
+          "months": "měsíce",
+          "calendarWeeks": "týdny kalendáře (od začátku týdne)",
+          "calendarMonths": "měsíce kalendáře (od 1.)"
         }
       },
       "dateGrouping": {
@@ -9129,7 +9139,11 @@
       },
       "groupedTotal": "Součet {count, plural, one {# řádku} few {# řádků} many {# řádku} other {# řádků}} v této skupině",
       "dimensionFilters": {
-        "allValues": "Všechny hodnoty"
+        "allValues": "Všechny hodnoty",
+        "noValues": "Nic vyloučeno",
+        "modeLabel": "Režim filtru",
+        "include": "Zahrnout",
+        "exclude": "Vyloučit"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "Analýzy zahájené v rámci tohoto počtu dní. Všechny časy čtou každou analýzu, kterou projekt uchovává.",
@@ -9283,6 +9297,8 @@
       "issueType": "Typ problému",
       "issueTracker": "Nástroj pro sledování problémů",
       "issueStatus": "Stav problému",
+      "issue": "Požadavek",
+      "resultSource": "Zdroj výsledku",
       "tag": "Štítek",
       "feature": "Funkce",
       "model": "Model",
@@ -9320,6 +9336,10 @@
       "averageElapsed": "Průměrný čas na spuštění",
       "lastActiveDate": "Datum poslední aktivity",
       "issueCount": "Počet problémů",
+      "linkedCaseCount": "Propojené případy",
+      "firstCaseCreated": "První případ vytvořen",
+      "lastCaseCreated": "Poslední případ vytvořen",
+      "caseCreationSpan": "Časový rozsah vytváření případů (dny)",
       "averageAge": "Průměrné stáří (dny)",
       "sessionCount": "Počet relací",
       "activeSessions": "Aktivní relace",

@@ -269,10 +269,12 @@ export function cartesianProduct<T>(arrays: T[][]): T[][] {
 
 /**
  * Drops aggregated rows whose group key for a filtered dimension is not in
- * that dimension's selected-value list. Because report rows are grouped BY
- * the selected dimensions, filtering on group keys after aggregation is
- * equivalent to filtering the underlying records first — each group either
- * matches wholly or not at all, so averages and sums are unaffected.
+ * that dimension's selected-value list — or, for a dimension whose filter
+ * mode is "exclude", rows whose key IS in the list. Because report rows are
+ * grouped BY the selected dimensions, filtering on group keys after
+ * aggregation is equivalent to filtering the underlying records first — each
+ * group either matches wholly or not at all, so averages and sums are
+ * unaffected.
  *
  * `dimensionFilters` maps dimension id -> selected group-key ids. Dimension
  * ids not present in `dimensionConfigs` are ignored; a present-but-empty
@@ -283,7 +285,8 @@ export function cartesianProduct<T>(arrays: T[][]): T[][] {
 export function filterRowsByDimensionValues(
   rows: Record<string, unknown>[],
   dimensionConfigs: DimensionConfig[],
-  dimensionFilters?: Record<string, Array<string | number>>
+  dimensionFilters?: Record<string, Array<string | number>>,
+  dimensionFilterModes?: Record<string, string>
 ): Record<string, unknown>[] {
   if (!dimensionFilters) return rows;
 
@@ -293,10 +296,14 @@ export function filterRowsByDimensionValues(
       if (!selected) return null;
       return {
         groupBy: config.groupBy,
+        exclude: dimensionFilterModes?.[config.id] === "exclude",
         values: new Set(selected.map((v) => String(v))),
       };
     })
-    .filter((f): f is { groupBy: string; values: Set<string> } => f !== null);
+    .filter(
+      (f): f is { groupBy: string; exclude: boolean; values: Set<string> } =>
+        f !== null
+    );
 
   if (activeFilters.length === 0) return rows;
 
@@ -311,9 +318,12 @@ export function filterRowsByDimensionValues(
   };
 
   return rows.filter((row) =>
-    activeFilters.every((filter) =>
-      filter.values.has(normalizeKey(filter.groupBy, row[filter.groupBy]))
-    )
+    activeFilters.every((filter) => {
+      const matches = filter.values.has(
+        normalizeKey(filter.groupBy, row[filter.groupBy])
+      );
+      return filter.exclude ? !matches : matches;
+    })
   );
 }
 
@@ -460,6 +470,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       metrics,
       folderIncludeDescendants,
       dimensionFilters,
+      dimensionFilterModes,
       page = 1,
       pageSize,
       sortColumn,
@@ -549,6 +560,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
         folderIncludeDescendants,
         dateGrouping,
         dimensionFilters,
+        dimensionFilterModes,
         page,
         pageSize,
         sortColumn,
@@ -568,6 +580,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       folderIncludeDescendants,
       dateGrouping,
       dimensionFilters,
+      dimensionFilterModes,
       page,
       pageSize,
       sortColumn,
@@ -632,6 +645,7 @@ async function handleCrossProjectAggregation({
   folderIncludeDescendants,
   dateGrouping = "daily",
   dimensionFilters,
+  dimensionFilterModes,
   page = 1,
   pageSize,
   sortColumn,
@@ -646,6 +660,7 @@ async function handleCrossProjectAggregation({
   folderIncludeDescendants?: boolean;
   dateGrouping?: DateGrouping;
   dimensionFilters?: Record<string, Array<string | number>>;
+  dimensionFilterModes?: Record<string, string>;
   page?: number;
   pageSize?: number | "All";
   sortColumn?: string;
@@ -695,7 +710,8 @@ async function handleCrossProjectAggregation({
     filterRowsByDimensionValues(
       rows as Record<string, unknown>[],
       dimensionConfigs,
-      resolvedDimensionFilters
+      resolvedDimensionFilters,
+      dimensionFilterModes
     )
   );
 
@@ -911,6 +927,7 @@ async function handleProjectSpecificAggregation({
   folderIncludeDescendants,
   dateGrouping = "daily",
   dimensionFilters,
+  dimensionFilterModes,
   page = 1,
   pageSize,
   sortColumn,
@@ -926,6 +943,7 @@ async function handleProjectSpecificAggregation({
   folderIncludeDescendants?: boolean;
   dateGrouping?: DateGrouping;
   dimensionFilters?: Record<string, Array<string | number>>;
+  dimensionFilterModes?: Record<string, string>;
   page?: number;
   pageSize?: number | "All";
   sortColumn?: string;
@@ -975,7 +993,8 @@ async function handleProjectSpecificAggregation({
     filterRowsByDimensionValues(
       rows as Record<string, unknown>[],
       dimensionConfigs,
-      resolvedDimensionFilters
+      resolvedDimensionFilters,
+      dimensionFilterModes
     )
   );
 

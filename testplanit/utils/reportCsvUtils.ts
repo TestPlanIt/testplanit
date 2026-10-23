@@ -580,7 +580,11 @@ function buildCustom(p: BuildReportCsvParams): CsvRow[] {
       const raw = r[metricAccessor(metric)];
       const num = typeof raw === "number" ? raw : Number(raw);
       let value: string | number;
-      if (raw == null || isNaN(num)) {
+      if (metricUnit(metric.value) === "date") {
+        // Date metrics (First/Last Case Created, Last Active Date) carry an
+        // ISO timestamp, which the numeric branches would blank out.
+        value = typeof raw === "string" ? raw : "";
+      } else if (raw == null || isNaN(num)) {
         value = "";
       } else if (isRateMetric(metric)) {
         value = `${num.toFixed(1)}%`;

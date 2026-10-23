@@ -96,6 +96,14 @@ function formatDimensionSummary(
     parts.push(context.dimensions.configuration.name);
   }
 
+  if (context.dimensions.issue?.name) {
+    parts.push(context.dimensions.issue.name);
+  }
+
+  if (context.dimensions.resultSource?.name) {
+    parts.push(context.dimensions.resultSource.name);
+  }
+
   if (context.dimensions.project?.name) {
     parts.push(context.dimensions.project.name);
   }

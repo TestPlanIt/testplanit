@@ -5,6 +5,8 @@ import {
   buildDateFilter,
   createIssueTrackingDimensionRegistry,
   createIssueTrackingMetricRegistry,
+  createRepositoryStatsDimensionRegistry,
+  createRepositoryStatsMetricRegistry,
   createTestExecutionDimensionRegistry,
   createTestExecutionMetricRegistry,
   createUserEngagementDimensionRegistry,
@@ -1503,6 +1505,347 @@ describe("reportUtils", () => {
         db.impactAnalysis.findMany.mock.calls.at(-1)![0].select.testRun.select
           .testCases
       ).toBeDefined();
+    });
+  });
+
+  // The Result Source dimension splits the manual ∪ automated union by the
+  // table each execution came from.
+  describe("result source dimension", () => {
+    const DAY1 = new Date("2026-07-01T10:00:00.000Z");
+
+    function makeDb({
+      manualRows = [] as any[],
+      junitRows = [] as any[],
+    } = {}) {
+      const mock = {
+        testRunResults: {
+          findMany: vi.fn().mockResolvedValue(manualRows),
+        },
+        jUnitTestResult: {
+          findMany: vi.fn().mockResolvedValue(junitRows),
+        },
+      };
+      return mock as unknown as DbClient & typeof mock;
+    }
+
+    const manualRow = {
+      executedAt: DAY1,
+      executedById: "u1",
+      statusId: 2,
+      testRunId: 100,
+      testRunCaseId: 11,
+      testRun: { projectId: 370, configId: null, milestoneId: null },
+    };
+    const junitRow = {
+      executedAt: DAY1,
+      createdById: "ci",
+      statusId: 2,
+      time: 3,
+      repositoryCaseId: 42,
+      testSuite: {
+        testRunId: 200,
+        testRun: { projectId: 370, configId: null, milestoneId: null },
+      },
+    };
+
+    it("offers Manual and Automated as its values", async () => {
+      const dim = createTestExecutionDimensionRegistry(true)
+        .resultSource as any;
+      const values = await dim.getValues();
+      expect(values.map((v: any) => v.id)).toEqual(["MANUAL", "AUTOMATED"]);
+      // The lookup map keys non-Id dimensions by their groupBy property.
+      expect(values.map((v: any) => v.resultSource)).toEqual([
+        "MANUAL",
+        "AUTOMATED",
+      ]);
+    });
+
+    it("testResults splits the union by source", async () => {
+      const db = makeDb({
+        manualRows: [manualRow, { ...manualRow, testRunCaseId: 12 }],
+        junitRows: [junitRow],
+      });
+
+      const rows: any[] = await createTestExecutionMetricRegistry(
+        true
+      ).testResults.aggregate(db, 370, ["resultSource"], {});
+
+      expect(
+        Object.fromEntries(rows.map((r) => [r.resultSource, r.testResults]))
+      ).toEqual({ MANUAL: 2, AUTOMATED: 1 });
+    });
+
+    it("composes with the date dimension", async () => {
+      const db = makeDb({ manualRows: [manualRow], junitRows: [junitRow] });
+
+      const rows: any[] = await createTestExecutionMetricRegistry(
+        true
+      ).testResults.aggregate(db, 370, ["executedAt", "resultSource"], {});
+
+      expect(rows).toHaveLength(2);
+      rows.forEach((r) => expect(r.testResults).toBe(1));
+    });
+  });
+
+  // The Issue dimension fans a row out per linked issue, like tag.
+  describe("issue dimension", () => {
+    it("groups execution rows by the executed case's linked issues", async () => {
+      const manualRow = {
+        executedAt: new Date("2026-07-01T10:00:00.000Z"),
+        executedById: "u1",
+        statusId: 2,
+        testRunId: 100,
+        testRunCaseId: 11,
+        testRun: { projectId: 370, configId: null, milestoneId: null },
+        testRunCase: {
+          repositoryCaseId: 7,
+          repositoryCase: { caseIssues: [{ issueId: 31 }, { issueId: 32 }] },
+        },
+      };
+      const unlinkedRow = {
+        ...manualRow,
+        testRunCaseId: 12,
+        testRunCase: {
+          repositoryCaseId: 8,
+          repositoryCase: { caseIssues: [] },
+        },
+      };
+      const db = {
+        testRunResults: {
+          findMany: vi.fn().mockResolvedValue([manualRow, unlinkedRow]),
+        },
+        jUnitTestResult: { findMany: vi.fn().mockResolvedValue([]) },
+      } as unknown as DbClient;
+
+      const rows: any[] = await createTestExecutionMetricRegistry(
+        true
+      ).testResults.aggregate(db, 370, ["issueId"], {});
+
+      expect(
+        Object.fromEntries(rows.map((r) => [String(r.issueId), r.testResults]))
+      ).toEqual({ "31": 1, "32": 1, null: 1 });
+    });
+
+    it("groups repository cases by their linked issues", async () => {
+      const db = {
+        repositoryCases: {
+          findMany: vi.fn().mockResolvedValue([
+            {
+              id: 1,
+              projectId: 370,
+              createdAt: new Date("2026-07-01T10:00:00.000Z"),
+              caseIssues: [{ issueId: 31 }],
+            },
+            {
+              id: 2,
+              projectId: 370,
+              createdAt: new Date("2026-07-02T10:00:00.000Z"),
+              caseIssues: [{ issueId: 31 }, { issueId: 32 }],
+            },
+          ]),
+        },
+      } as unknown as DbClient;
+
+      const rows: any[] = await createRepositoryStatsMetricRegistry(
+        true
+      ).testCaseCount.aggregate(db, 370, ["issueId"], {});
+
+      expect(
+        Object.fromEntries(
+          rows.map((r) => [String(r.issueId), r.testCaseCount])
+        )
+      ).toEqual({ "31": 2, "32": 1 });
+    });
+
+    it("labels issues as key: title and scopes values to linked cases", async () => {
+      const findMany = vi.fn().mockResolvedValue([
+        {
+          id: 31,
+          name: "internal-31",
+          title: "Checkout breaks",
+          externalKey: "ABT-9",
+          status: "Open",
+          issueTypeName: "Story",
+          issueTypeIconUrl: null,
+        },
+      ]);
+      const db = { issue: { findMany } } as unknown as DbClient;
+
+      const dim = createRepositoryStatsDimensionRegistry(true).issue as any;
+      const values = await dim.getValues(db, 370);
+
+      expect(values[0].name).toBe("ABT-9: Checkout breaks");
+      expect(dim.display(values[0])).toMatchObject({
+        id: 31,
+        name: "ABT-9: Checkout breaks",
+        status: "Open",
+        issueTypeName: "Story",
+      });
+      const where = findMany.mock.calls[0][0].where;
+      expect(where.caseIssues.some.case.projectId).toBe(370);
+      expect(where.isDeleted).toBe(false);
+    });
+  });
+
+  // First/Last Case Created and Case Creation Span reduce each group's cases
+  // to a creation window.
+  describe("repository-stats creation window metrics", () => {
+    const registry = createRepositoryStatsMetricRegistry(true);
+    const cases = [
+      {
+        id: 1,
+        projectId: 370,
+        createdAt: new Date("2026-07-01T00:00:00.000Z"),
+      },
+      {
+        id: 2,
+        projectId: 370,
+        createdAt: new Date("2026-07-13T12:00:00.000Z"),
+      },
+      {
+        id: 3,
+        projectId: 371,
+        createdAt: new Date("2026-07-05T00:00:00.000Z"),
+      },
+    ];
+
+    function makeDb() {
+      return {
+        repositoryCases: {
+          findMany: vi.fn().mockResolvedValue(cases),
+          aggregate: vi.fn().mockResolvedValue({
+            _min: { createdAt: new Date("2026-07-01T00:00:00.000Z") },
+            _max: { createdAt: new Date("2026-07-13T12:00:00.000Z") },
+          }),
+        },
+      } as unknown as DbClient;
+    }
+
+    it("reports each group's first and last creation", async () => {
+      const db = makeDb();
+      const first: any[] = await registry.firstCaseCreated.aggregate(
+        db,
+        370,
+        ["projectId"],
+        {}
+      );
+      const last: any[] = await registry.lastCaseCreated.aggregate(
+        db,
+        370,
+        ["projectId"],
+        {}
+      );
+
+      const firstByProject = Object.fromEntries(
+        first.map((r) => [r.projectId, r.firstCaseCreated])
+      );
+      const lastByProject = Object.fromEntries(
+        last.map((r) => [r.projectId, r.lastCaseCreated])
+      );
+      expect(firstByProject[370]).toBe("2026-07-01T00:00:00.000Z");
+      expect(lastByProject[370]).toBe("2026-07-13T12:00:00.000Z");
+      expect(firstByProject[371]).toBe(lastByProject[371]);
+    });
+
+    it("reports the span in days, to one decimal", async () => {
+      const db = makeDb();
+      const rows: any[] = await registry.caseCreationSpan.aggregate(
+        db,
+        370,
+        ["projectId"],
+        {}
+      );
+      const byProject = Object.fromEntries(
+        rows.map((r) => [r.projectId, r.caseCreationSpan])
+      );
+      expect(byProject[370]).toBe(12.5);
+      expect(byProject[371]).toBe(0);
+    });
+
+    it("uses a single aggregate in the no-dimension path", async () => {
+      const db = makeDb();
+      const rows: any[] = await registry.caseCreationSpan.aggregate(
+        db,
+        370,
+        [],
+        {}
+      );
+      expect(rows).toEqual([{ caseCreationSpan: 12.5 }]);
+      expect((db as any).repositoryCases.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  // Linked Cases counts distinct live cases behind the group's issues.
+  describe("issue-tracking linkedCaseCount", () => {
+    const issues = [
+      {
+        id: 11,
+        createdAt: new Date("2026-07-01T00:00:00.000Z"),
+        createdById: "u1",
+        integrationId: 5,
+        issueTypeName: "Story",
+        status: "Open",
+        priority: "high",
+        caseIssues: [{ caseId: 100 }, { caseId: 101 }],
+      },
+      {
+        id: 12,
+        createdAt: new Date("2026-07-02T00:00:00.000Z"),
+        createdById: "u1",
+        integrationId: 5,
+        issueTypeName: "Story",
+        status: "Open",
+        priority: "High",
+        // caseId 101 is also linked to issue 11 — counted once per group.
+        caseIssues: [{ caseId: 101 }],
+      },
+      {
+        id: 13,
+        createdAt: new Date("2026-07-03T00:00:00.000Z"),
+        createdById: "u2",
+        integrationId: 5,
+        issueTypeName: "Bug",
+        status: "Open",
+        priority: "low",
+        caseIssues: [],
+      },
+    ];
+
+    function makeDb() {
+      return {
+        issue: { findMany: vi.fn().mockResolvedValue(issues) },
+      } as unknown as DbClient;
+    }
+
+    it("counts distinct cases per group (project-specific)", async () => {
+      const db = makeDb();
+      const rows: any[] = await createIssueTrackingMetricRegistry(
+        true
+      ).linkedCaseCount.aggregate(db, 370, ["issueTypeName"], {});
+
+      expect(
+        Object.fromEntries(
+          rows.map((r) => [r.issueTypeName, r.linkedCaseCount])
+        )
+      ).toEqual({ Story: 2, Bug: 0 });
+    });
+
+    it("counts distinct cases overall when there is no grouping", async () => {
+      const db = makeDb();
+      const rows: any[] = await createIssueTrackingMetricRegistry(
+        false
+      ).linkedCaseCount.aggregate(db, undefined, [], {});
+      expect(rows).toEqual([{ linkedCaseCount: 2 }]);
+    });
+
+    it("normalizes priority group keys like issueCount does", async () => {
+      const db = makeDb();
+      const rows: any[] = await createIssueTrackingMetricRegistry(
+        false
+      ).linkedCaseCount.aggregate(db, undefined, ["priority"], {});
+      expect(
+        Object.fromEntries(rows.map((r) => [r.priority, r.linkedCaseCount]))
+      ).toEqual({ High: 2, Low: 0 });
     });
   });
 });

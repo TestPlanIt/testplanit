@@ -8228,6 +8228,10 @@
       "lastActiveDate": "## Data ostatniej aktywności\nNajnowsza data aktywności.",
       "averageAge": "## Średni wiek\nŚredni wiek przedmiotów w dniach.",
       "issueCount": "## Liczba problemów\nCałkowita liczba śledzonych problemów.",
+      "linkedCaseCount": "## Powiązane przypadki\nLiczba odrębnych przypadków testowych powiązanych z problemami grupy. Przypadek powiązany z kilkoma problemami w tej samej grupie liczy się raz.",
+      "firstCaseCreated": "## Pierwsze utworzone sprawy\nKiedy został utworzony najwcześniejszy przypadek testowy w tej grupie.",
+      "lastCaseCreated": "## Ostatnie utworzone sprawy\nKiedy został utworzony najnowszy przypadek testowy w tej grupie.",
+      "caseCreationSpan": "## Rozpiętość tworzenia sprawy\nDni między najwcześniejszym i najnowszym utworzeniem przypadku testowego grupy — jak długo tworzono przypadki grupy.",
       "milestoneCount": "## Liczba kamieni milowych\nŁączna liczba kamieni milowych.",
       "milestoneCompletionRate": "## Współczynnik ukończenia kamieni milowych\nProcent ukończonych kamieni milowych.",
       "averageMilestoneDuration": "## Średni czas trwania kamieni milowych\nŚredni czas trwania kamieni milowych w dniach.",
@@ -8244,6 +8248,8 @@
       "selectionPrecision": "## Precyzja wyboru (%)\nZ przypadków, które analizy wpływu wybrały i które następnie wykonano, udział tych, które nie powiodły się. Puste, gdy nic wybranego nie zostało uruchomione."
     },
     "reportDimensions": {
+      "issue": "## Wymiar problemu\nGrupuje problemy powiązane ze sprawą testową. Przypadek powiązany z kilkoma problemami liczą się w każdym; przypadki bez powiązanych problemów przypadają do Brak.",
+      "resultSource": "## Wymiar źródła wyniku\nGrupuje wykonania według ich pochodzenia: wyniki wprowadzone w aplikacji (Ręczne) lub zaimportowane wyniki automatyczne, takie jak JUnit (Zautomatyzowane).",
       "user": "## Wymiar użytkownika\nGrupuje wyniki według użytkownika, który wykonał testy lub jest przypisany do elementów.",
       "status": "## Wymiar statusu\nGrupuje wyniki według statusu wykonania testu (np. Zaliczony, Niezaliczony, Zablokowany).",
       "project": "## Wymiar projektu\nGrupuje wyniki według projektu w celu przeprowadzenia analizy międzyprojektowej.",
@@ -8276,7 +8282,7 @@
       "dimensions": "## Wymiary\nWybierz wymiary, które chcesz analizować w raporcie. Wymiary to atrybuty, które kategoryzują dane, takie jak Data, Użytkownik, Status itp. Możesz je przeciągać, aby zmienić ich kolejność.",
       "metrics": "## Metryki\nWybierz metryki, które chcesz mierzyć w raporcie. Metryki to ilościowe pomiary pochodzące z danych, takie jak liczba wyników testów, wskaźnik zdawalności, średni czas trwania testu itp. Możesz je przeciągać, aby zmienić ich kolejność.",
       "dateRange": "## Zakres dat\nFiltruj dane raportu po określonym okresie czasu. Wybierz ustawienie preset, takie jak „Ostatnie 7 dni",
-      "dimensionFilters": "## Filtry\nOgranicz raport do konkretnych wartości dla każdego wybranego wymiaru. Pozostaw filtr pusty, aby uwzględnić wszystkie wartości danego wymiaru. Wymiary dat są filtrowane za pomocą selektora zakresu dat."
+      "dimensionFilters": "## Filtry\nZwęź raport do określonych wartości każdego wybranego wymiaru. Pozostaw filtr pusty, aby uwzględnić wszystkie wartości dla tego wymiaru. Przełącz filtr na Wyklucz, aby zachować wszystko z wyjątkiem wybranych wartości — przydatne w przypadku zapisanych raportów, które powinny automatycznie obejmować nowe wartości. Wymiary daty są filtrowane za pomocą selektora zakresu dat."
     },
     "codeRepository": {
       "name": "## Nazwa repozytorium\nPrzyjazna nazwa wyświetlana dla tego połączenia z repozytorium.\n\n— używana do identyfikacji w ustawieniach kontekstu kodu projektu.\n— nie musi być zgodna z nazwą repozytorium u dostawcy.",
@@ -8643,12 +8649,16 @@
           "unit": "Okres",
           "days": "Ostatnie {count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}",
           "weeks": "Ostatnie {count, plural, one {# tydzień} few {# tygodnie} many {# tygodni} other {# tygodnia}}",
-          "months": "Ostatnie {count, plural, one {# miesiąc} few {# miesiące} many {# miesięcy} other {# miesiąca}}"
+          "months": "Ostatnie {count, plural, one {# miesiąc} few {# miesiące} many {# miesięcy} other {# miesiąca}}",
+          "calendarWeeks": "Ostatnie {count, plural, one {# tydzień kalendarzowy} few {# tygodnie kalendarzowe} many {# tygodni kalendarzowych} other {# tygodni kalendarzowych}}",
+          "calendarMonths": "Ostatni {count, plural, one {# miesiąc kalendarzowy} few {# miesiące kalendarzowe} many {# miesięcy kalendarzowych} other {# miesięcy kalendarzowych}}"
         },
         "rollingUnits": {
           "days": "dni",
           "weeks": "tygodnie",
-          "months": "miesiące"
+          "months": "miesiące",
+          "calendarWeeks": "tygodnie kalendarzowe (od początku tygodnia)",
+          "calendarMonths": "miesiące kalendarzowe (od 1. dnia)"
         }
       },
       "dateGrouping": {
@@ -9129,7 +9139,11 @@
       },
       "groupedTotal": "Suma {count, plural, one {# wiersza} few {# wierszy} many {# wierszy} other {# wiersza}} w tej grupie",
       "dimensionFilters": {
-        "allValues": "Wszystkie wartości"
+        "allValues": "Wszystkie wartości",
+        "noValues": "Nic nie wykluczone",
+        "modeLabel": "Tryb filtru",
+        "include": "Uwzględnij",
+        "exclude": "Wyklucz"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "Analizy rozpoczęte w ciągu tylu dni. Cały czas odczytuje każdą analizę, którą projekt przechowuje.",
@@ -9283,6 +9297,8 @@
       "issueType": "Typ problemu",
       "issueTracker": "Śledzenie problemów",
       "issueStatus": "Status wydania",
+      "issue": "Zgłoszenie",
+      "resultSource": "Źródło wyniku",
       "tag": "Etykietka",
       "feature": "Funkcja",
       "model": "Model",
@@ -9320,6 +9336,10 @@
       "averageElapsed": "Średni czas wykonania",
       "lastActiveDate": "Data ostatniej aktywności",
       "issueCount": "Liczba wydań",
+      "linkedCaseCount": "Powiązane przypadki",
+      "firstCaseCreated": "Pierwsze utworzone sprawy",
+      "lastCaseCreated": "Ostatnie utworzone sprawy",
+      "caseCreationSpan": "Rozpiętość tworzenia sprawy (dni)",
       "averageAge": "Średni wiek (dni)",
       "sessionCount": "Liczba sesji",
       "activeSessions": "Aktywne sesje",

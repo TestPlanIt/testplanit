@@ -8228,6 +8228,10 @@
       "lastActiveDate": "## Son Etkinlik Tarihi\nEn son etkinlik tarihi.",
       "averageAge": "## Ortalama Yaş\nÖğelerin ortalama yaşı (gün cinsinden).",
       "issueCount": "## Sorun Sayısı\nTakip edilen toplam sorun sayısı.",
+      "linkedCaseCount": "## Bağlantılı Durumlar\nGrubun sorunlarına bağlantılı olan farklı test durumlarının sayısı. Aynı gruptaki birden fazla soruna bağlantılı bir durum bir kez sayılır.",
+      "firstCaseCreated": "## İlk Durum Oluşturuldu\nBu gruptaki en erken test durumunun oluşturulduğu zaman.",
+      "lastCaseCreated": "## Son Durum Oluşturuldu\nBu gruptaki en son test durumunun oluşturulduğu zaman.",
+      "caseCreationSpan": "## Durum Oluşturma Süresi\nGrubun en erken ve en son test durumu oluşturma tarihleri arasındaki gün sayısı — grubun durumlarını yazmanın ne kadar sürdüğü.",
       "milestoneCount": "## Dönüm Noktası Sayısı\nToplam dönüm noktası sayısı.",
       "milestoneCompletionRate": "## Dönüm Noktası Tamamlama Oranı\nTamamlanan dönüm noktalarının yüzdesi.",
       "averageMilestoneDuration": "## Ortalama Dönüm Noktası Süresi\nDönüm noktalarının ortalama süresi (gün cinsinden).",
@@ -8244,6 +8248,8 @@
       "selectionPrecision": "## Seçim Hassasiyeti (%)\nEtki analizlerinin seçtiği ve daha sonra yürütülen senaryoların başarısız olanlarının payı. Hiçbir şey seçilmediğinde boş."
     },
     "reportDimensions": {
+      "issue": "## Sorun Boyutu\nTest durumuna bağlantılı sorunlara göre gruplandırır. Birden fazla soruna bağlantılı bir durum her birine sayılır; bağlantılı sorunu olmayan durumlar Hiçbiri kategorisine girer.",
+      "resultSource": "## Sonuç Kaynağı Boyutu\nExecutionları nereden geldiklerine göre gruplandırır: uygulamaya girilen sonuçlar (Manuel) veya JUnit gibi içe aktarılan otomasyonlu sonuçlar (Otomasyonlu).",
       "user": "## Kullanıcı Boyutu\nSonuçları, testleri yürüten veya öğelere atanmış kullanıcıya göre gruplandırır.",
       "status": "## Durum Boyutu\nSonuçları test yürütme durumuna göre gruplandırır (örneğin, Başarılı, Başarısız, Engellendi).",
       "project": "## Proje Boyutu\nProjeler arası analiz için sonuçları projeye göre gruplandırır.",
@@ -8276,7 +8282,7 @@
       "dimensions": "## Boyutlar\nRaporunuzda analiz etmek istediğiniz boyutları seçin. Boyutlar, verilerinizi kategorize eden özelliklerdir; örneğin Tarih, Kullanıcı, Durum vb. Bunları sürükleyerek yeniden sıralayabilirsiniz.",
       "metrics": "## Ölçümler\nRaporunuzda ölçmek istediğiniz ölçümleri seçin. Ölçümler, Test Sonuç Sayısı, Başarı Oranı, Ortalama Geçen Süre vb. gibi verilerinizden türetilen nicel ölçümlerdir. Bunları sürükleyerek yeniden sıralayabilirsiniz.",
       "dateRange": "## Tarih Aralığı\nRapor verilerinizi belirli bir zaman dönemiyle filtreleyin. 'Son 7 gün', 'Son ay' veya 'Son N gün' gibi bir ön ayar seçin veya takvimde özel bir başlangıç ve bitiş tarihi seçin.\n\nBir ön ayar görecelidir: kaydedilmiş bir rapor veya canlı paylaşım bağlantısı, her açıldığında tarihleri sizin saat diliminizde yeniden hesaplar. Özel tarihler sabit kalır. Bu filtre her rapor türü için ilgili tarih alanına uygulanır (örn. test sonuçları için yürütme tarihi, test senaryoları için oluşturma tarihi).",
-      "dimensionFilters": "## Filtreler\nRaporu, seçilen her boyutun belirli değerlerine göre daraltın. Bir boyuta ait tüm değerleri dahil etmek için filtreyi boş bırakın. Tarih boyutları ise bunun yerine tarih aralığı seçici ile filtrelenir."
+      "dimensionFilters": "## Filtreler\nRaporu seçilen her boyutun belirli değerlerine daraltın. Bir boyut için bir filtreyi boş bırakarak o boyutun tüm değerlerini ekleyin. Filtresi Hariç Tut olacak şekilde değiştirerek seçilen değerler hariç her şeyi tutun — yeni değerleri otomatik olarak kapsayan kaydedilmiş raporlar için kullanışlıdır. Tarih boyutları bunun yerine tarih aralığı seçiciyle filtrelenir."
     },
     "codeRepository": {
       "name": "## Depo Adı\nBu depo bağlantısı için kullanıcı dostu bir görünen ad.\n\n- Proje kod bağlamı ayarlarında tanımlamak için kullanılır.\n- Sağlayıcıdaki depo adıyla eşleşmesi gerekmez.",
@@ -8643,12 +8649,16 @@
           "unit": "Dönem",
           "days": "Son {count, plural, one {# gün} other {# gün}}",
           "weeks": "Son {count, plural, one {# hafta} other {# hafta}}",
-          "months": "Son {count, plural, one {# ay} other {# ay}}"
+          "months": "Son {count, plural, one {# ay} other {# ay}}",
+          "calendarWeeks": "Son {count, plural, one {# takvim haftası} other {# takvim haftası}}",
+          "calendarMonths": "Son {count, plural, one {# takvim ayı} other {# takvim ayı}}"
         },
         "rollingUnits": {
           "days": "günler",
           "weeks": "haftalar",
-          "months": "aylar"
+          "months": "aylar",
+          "calendarWeeks": "takvim haftaları (hafta başından)",
+          "calendarMonths": "takvim ayları (1. günden)"
         }
       },
       "dateGrouping": {
@@ -9129,7 +9139,11 @@
       },
       "groupedTotal": "Bu gruptaki {count, plural, one {# satırın} other {# satırın}} toplamı",
       "dimensionFilters": {
-        "allValues": "Tüm değerler"
+        "allValues": "Tüm değerler",
+        "noValues": "Hiçbir şey hariç tutulmadı",
+        "modeLabel": "Filtre modu",
+        "include": "Ekle",
+        "exclude": "Hariç Tut"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "Bu kaç gün içinde başlatılan analizler. Tüm zaman projenin tuttuğu her analizi okur.",
@@ -9283,6 +9297,8 @@
       "issueType": "Sorun Türü",
       "issueTracker": "Sorun Takip Sistemi",
       "issueStatus": "Sorun Durumu",
+      "issue": "Sorun",
+      "resultSource": "Sonuç Kaynağı",
       "tag": "Etiket",
       "feature": "Özellik",
       "model": "Model",
@@ -9320,6 +9336,10 @@
       "averageElapsed": "Ortalama Çalıştırma Süresi",
       "lastActiveDate": "Son Aktif Tarih",
       "issueCount": "Sayı",
+      "linkedCaseCount": "Bağlantılı Durumlar",
+      "firstCaseCreated": "İlk Durum Oluşturuldu",
+      "lastCaseCreated": "Son Durum Oluşturuldu",
+      "caseCreationSpan": "Durum Oluşturma Süresi (gün)",
       "averageAge": "Ortalama Yaş (gün)",
       "sessionCount": "Oturum Sayısı",
       "activeSessions": "Aktif Oturumlar",

@@ -30,6 +30,26 @@ import { bucketDateIso, type DateGrouping } from "~/lib/reports/dateGrouping";
 import type { DbClient } from "~/lib/zenstack";
 
 /**
+ * Group keys for the Result Source dimension. Manual rows come from
+ * TestRunResults, automated rows from JUnitTestResult; rows that are not
+ * executions (runs, impact analyses) carry no source and group under "None".
+ */
+export const RESULT_SOURCE_MANUAL = "MANUAL";
+export const RESULT_SOURCE_AUTOMATED = "AUTOMATED";
+
+/**
+ * Tags manual result rows with their source so the Result Source dimension
+ * can group the union. Applied at fetch time — the source is a property of
+ * the table a row came from, not a column — and junit rows get theirs in
+ * fetchJunitResultRows.
+ */
+export function tagManualResultRows<T extends Record<string, any>>(
+  rows: T[]
+): Array<T & { resultSource: string }> {
+  return rows.map((row) => ({ ...row, resultSource: RESULT_SOURCE_MANUAL }));
+}
+
+/**
  * Where-clause for automated durations. Automated results live in
  * JUnitTestResult (duration in `time`, seconds) rather than TestRunResults,
  * so every result-level metric reads both tables.
@@ -120,6 +140,7 @@ export async function fetchJunitResultRows(
 ) {
   const needsFolder = groupBy.includes("folderId");
   const needsTag = groupBy.includes("tagId");
+  const needsIssue = groupBy.includes("issueId");
   const junitResults = await db.jUnitTestResult.findMany({
     where: junitResultWhere(projectId, isProjectSpecific, filters, {
       ...opts,
@@ -135,7 +156,7 @@ export async function fetchJunitResultRows(
       ...(opts.includeStatusFlags
         ? { status: { select: { isSuccess: true } } }
         : {}),
-      ...(needsFolder || needsTag
+      ...(needsFolder || needsTag || needsIssue
         ? {
             repositoryCase: {
               select: {
@@ -145,6 +166,14 @@ export async function fetchJunitResultRows(
                       caseTags: {
                         where: { tag: { isDeleted: false } },
                         select: { tagId: true },
+                      },
+                    }
+                  : {}),
+                ...(needsIssue
+                  ? {
+                      caseIssues: {
+                        where: { issue: { isDeleted: false } },
+                        select: { issueId: true },
                       },
                     }
                   : {}),
@@ -173,6 +202,7 @@ export async function fetchJunitResultRows(
     executedById: r.createdById,
     statusId: r.statusId,
     elapsed: r.time,
+    resultSource: RESULT_SOURCE_AUTOMATED,
     ...(opts.includeStatusFlags ? { status: r.status } : {}),
     testRunId: r.testSuite.testRunId,
     testRun: r.testSuite.testRun,

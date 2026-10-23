@@ -196,6 +196,37 @@ describe("reportApiUtils", () => {
       });
       expect(result).toEqual([]);
     });
+
+    it("inverts a dimension whose filter mode is exclude", () => {
+      const result = filterRowsByDimensionValues(
+        rows,
+        dimensionConfigs,
+        { testCase: [11] },
+        { testCase: "exclude" }
+      );
+      expect(result).toEqual([rows[1], rows[2]]);
+    });
+
+    it("mixes include and exclude dimensions in one request", () => {
+      const result = filterRowsByDimensionValues(
+        rows,
+        dimensionConfigs,
+        { status: [1], testCase: [11] },
+        { testCase: "exclude" }
+      );
+      // status include keeps rows[0] and rows[2]; testCase exclude drops rows[0].
+      expect(result).toEqual([rows[2]]);
+    });
+
+    it("keeps include semantics for dimensions without a mode entry", () => {
+      const result = filterRowsByDimensionValues(
+        rows,
+        dimensionConfigs,
+        { testCase: [11] },
+        { status: "exclude" }
+      );
+      expect(result).toEqual([rows[0]]);
+    });
   });
 
   describe("authorizeReportRequest", () => {
