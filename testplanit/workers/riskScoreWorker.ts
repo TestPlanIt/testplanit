@@ -49,8 +49,12 @@ async function processRun(job: Job<RiskRunJobData>): Promise<void> {
 async function processProject(job: Job<RiskProjectJobData>): Promise<void> {
   const { projectId, tenantId } = job.data;
   const db = getDbClientForJob(job.data);
+  // "Recalculate all scores" is also how config changes (weights, priority
+  // mapping, criticality field) propagate, and those are invisible to the
+  // change detection — so a project recompute always rewrites.
   const result = await updateProjectRiskScores(db, projectId, {
     tenantId,
+    force: true,
     onBatch: async (progress) => {
       await job.updateProgress(progress);
     },

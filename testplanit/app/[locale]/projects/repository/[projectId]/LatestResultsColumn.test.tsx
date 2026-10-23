@@ -176,6 +176,7 @@ describe("latestResults column via getColumns", () => {
     name: "Name",
     estimate: "Estimate",
     forecast: "Forecast",
+    riskScore: "Risk Score",
     state: "State",
     automated: "Automated",
     template: "Template",

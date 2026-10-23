@@ -1,6 +1,7 @@
 import { sql } from "kysely";
 import { getCaseLatestExecutedAt } from "~/lib/services/latestCaseResults";
 import { isLinkageSuspect } from "~/lib/services/suspectLinkage";
+import { optionPositionWeight } from "~/lib/schemas/riskPriorityWeights";
 import {
   FLAKY_HISTORY_WINDOW,
   getCaseVerdictHistory,
@@ -22,9 +23,9 @@ interface CaseIssueRow {
   suspect_dismissed_at: Date | string | null;
 }
 
-interface CasePriorityRow {
+interface CaseOptionRow {
   case_id: number;
-  priority_name: string;
+  option_id: number;
 }
 
 /**
@@ -44,14 +45,21 @@ function effectivePriority(row: CaseIssueRow): string | null {
 /**
  * Batched signal collection for live cases of one project: four reads for
  * any number of cases (base rows + quarantine, automated verdict history,
- * latest manual-or-automated execution, issue links) plus the seeded
- * "priority" dropdown value. Soft-deleted and archived cases drop out here,
+ * latest manual-or-automated execution, issue links) plus the project's
+ * chosen criticality field's values. Soft-deleted and archived cases drop
+ * out here,
  * so callers can pass ids without pre-filtering.
  */
+export interface RiskSignalOptions {
+  /** The project's chosen criticality dropdown field, when configured. */
+  criticalityFieldId?: number | null;
+}
+
 export async function getCaseRiskSignals(
   db: RiskDb,
   projectId: number,
-  caseIds: number[]
+  caseIds: number[],
+  options: RiskSignalOptions = {}
 ): Promise<Map<number, CaseRiskSignals>> {
   const out = new Map<number, CaseRiskSignals>();
   if (caseIds.length === 0) return out;
@@ -72,7 +80,35 @@ export async function getCaseRiskSignals(
   if (cases.length === 0) return out;
   const liveIds = cases.map((repoCase) => repoCase.id);
 
-  const [verdicts, lastExecuted, issueRows, priorityRows] = await Promise.all([
+  // The criticality field is an explicit per-project choice; its options
+  // weight by their admin-set order (top first), never by name.
+  const criticalityFieldId = options.criticalityFieldId ?? null;
+  const optionWeights = new Map<number, { name: string; weight: number }>();
+  if (criticalityFieldId != null) {
+    const assignments = await db.caseFieldAssignment.findMany({
+      where: {
+        caseFieldId: criticalityFieldId,
+        // A field the admin has since deleted or disabled stops counting;
+        // the FK only clears on hard delete.
+        caseField: { isDeleted: false, isEnabled: true },
+        fieldOption: { isDeleted: false },
+      },
+      select: {
+        fieldOption: { select: { id: true, name: true, order: true } },
+      },
+    });
+    const ordered = assignments
+      .map((assignment) => assignment.fieldOption)
+      .sort((a, b) => a.order - b.order || a.id - b.id);
+    ordered.forEach((option, position) => {
+      optionWeights.set(option.id, {
+        name: option.name,
+        weight: optionPositionWeight(position, ordered.length),
+      });
+    });
+  }
+
+  const [verdicts, lastExecuted, issueRows, optionRows] = await Promise.all([
     getCaseVerdictHistory(db, liveIds, RISK_HISTORY_WINDOW),
     getCaseLatestExecutedAt(liveIds, db),
     sql<CaseIssueRow>`
@@ -89,18 +125,16 @@ export async function getCaseRiskSignals(
       WHERE rci."caseId" = ANY(${liveIds}::int[])
       ORDER BY rci."caseId" ASC, i.id ASC
     `.execute(db.$qb),
-    sql<CasePriorityRow>`
-      SELECT cfv."testCaseId" AS case_id, fo.name AS priority_name
-      FROM "CaseFieldValues" cfv
-      JOIN "CaseFields" cf ON cf.id = cfv."fieldId"
-        AND cf."systemName" = 'priority'
-        AND cf."isDeleted" = false
-        AND cf."isEnabled" = true
-      JOIN "FieldOptions" fo ON fo."isDeleted" = false
-        AND (cfv.value #>> '{}') ~ '^[0-9]{1,9}$'
-        AND fo.id::text = (cfv.value #>> '{}')
-      WHERE cfv."testCaseId" = ANY(${liveIds}::int[])
-    `.execute(db.$qb),
+    criticalityFieldId != null && optionWeights.size > 0
+      ? sql<CaseOptionRow>`
+          SELECT cfv."testCaseId" AS case_id,
+                 ((cfv.value #>> '{}'))::int AS option_id
+          FROM "CaseFieldValues" cfv
+          WHERE cfv."fieldId" = ${criticalityFieldId}
+            AND (cfv.value #>> '{}') ~ '^[0-9]{1,9}$'
+            AND cfv."testCaseId" = ANY(${liveIds}::int[])
+        `.execute(db.$qb)
+      : Promise.resolve({ rows: [] as CaseOptionRow[] }),
   ]);
 
   const issuesByCase = new Map<number, CaseIssueRow[]>();
@@ -109,9 +143,10 @@ export async function getCaseRiskSignals(
     if (list) list.push(row);
     else issuesByCase.set(row.case_id, [row]);
   }
-  const priorityByCase = new Map<number, string>();
-  for (const row of priorityRows.rows) {
-    priorityByCase.set(row.case_id, row.priority_name);
+  const criticalityByCase = new Map<number, { name: string; weight: number }>();
+  for (const row of optionRows.rows) {
+    const option = optionWeights.get(Number(row.option_id));
+    if (option) criticalityByCase.set(row.case_id, option);
   }
 
   for (const repoCase of cases) {
@@ -143,7 +178,8 @@ export async function getCaseRiskSignals(
       requirementPriorities,
       suspectLinkCount,
       defectPriorities,
-      casePriority: priorityByCase.get(repoCase.id) ?? null,
+      caseCriticality: criticalityByCase.get(repoCase.id)?.name ?? null,
+      caseCriticalityWeight: criticalityByCase.get(repoCase.id)?.weight ?? null,
       quarantined: repoCase.quarantine != null,
     });
   }

@@ -1,3 +1,4 @@
+import { resolvePriorityWeights } from "~/lib/schemas/riskPriorityWeights";
 import { syncRepositoryCasesToElasticsearch } from "~/services/repositoryCaseSync";
 import { computeRiskScore } from "./score";
 import { getCaseRiskSignals, RISK_BATCH_SIZE } from "./signals";
@@ -8,6 +9,12 @@ import { resolveRiskWeights } from "./weights";
 export interface RiskUpdateOptions {
   now?: Date;
   tenantId?: string;
+  /**
+   * Rewrite every case even when nothing material changed. Config changes
+   * (weights, priority mapping, criticality field) are invisible to the
+   * change detection, so the settings-driven recompute forces.
+   */
+  force?: boolean;
 }
 
 export interface RiskUpdateResult {
@@ -50,15 +57,29 @@ function weightsMatch(storedReasons: unknown, weights: RiskWeights): boolean {
 async function loadScoringProject(
   db: RiskDb,
   projectId: number
-): Promise<{ weights: RiskWeights } | null> {
+): Promise<{
+  weights: RiskWeights;
+  priorityWeights: Map<string, number>;
+  criticalityFieldId: number | null;
+} | null> {
   const project = await db.projects.findUnique({
     where: { id: projectId },
-    select: { riskScoringEnabled: true, riskWeights: true, isDeleted: true },
+    select: {
+      riskScoringEnabled: true,
+      riskWeights: true,
+      riskPriorityWeights: true,
+      riskCriticalityFieldId: true,
+      isDeleted: true,
+    },
   });
   if (!project || project.isDeleted || !project.riskScoringEnabled) {
     return null;
   }
-  return { weights: resolveRiskWeights(project.riskWeights) };
+  return {
+    weights: resolveRiskWeights(project.riskWeights),
+    priorityWeights: resolvePriorityWeights(project.riskPriorityWeights),
+    criticalityFieldId: project.riskCriticalityFieldId,
+  };
 }
 
 /**
@@ -83,7 +104,9 @@ export async function updateRiskScoresForCases(
 
   for (let i = 0; i < caseIds.length; i += RISK_BATCH_SIZE) {
     const batch = caseIds.slice(i, i + RISK_BATCH_SIZE);
-    const signals = await getCaseRiskSignals(db, projectId, batch);
+    const signals = await getCaseRiskSignals(db, projectId, batch, {
+      criticalityFieldId: scoring.criticalityFieldId,
+    });
     if (signals.size === 0) continue;
     const currentRows = await db.repositoryCases.findMany({
       where: { id: { in: [...signals.keys()] } },
@@ -97,11 +120,13 @@ export async function updateRiskScoresForCases(
       const { score, reasons } = computeRiskScore(
         caseSignals,
         scoring.weights,
+        scoring.priorityWeights,
         now
       );
       const storedFacts = (row.riskReasons as { facts?: unknown } | null)
         ?.facts;
       if (
+        !options.force &&
         row.riskScore === score &&
         factsEqual(storedFacts, reasons.facts) &&
         weightsMatch(row.riskReasons, scoring.weights)

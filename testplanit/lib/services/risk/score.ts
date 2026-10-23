@@ -6,8 +6,8 @@ import type {
   RiskScoreResult,
   RiskWeights,
 } from "./types";
+import { priorityWeightFor } from "~/lib/schemas/riskPriorityWeights";
 import { RISK_COMPONENT_KEYS } from "./types";
-import { priorityWeight } from "./weights";
 
 /** Each older verdict counts this much of the next-newer one. */
 const FAILURE_DECAY = 0.75;
@@ -53,28 +53,32 @@ function stalenessScore(signals: CaseRiskSignals, now: Date): number {
   return Math.min(1, days / STALENESS_HORIZON_DAYS);
 }
 
-function criticalityScore(signals: CaseRiskSignals): {
+function criticalityScore(
+  signals: CaseRiskSignals,
+  priorityWeights: Map<string, number>
+): {
   raw: number;
   topRequirementPriority: string | null;
 } {
   let top: string | null = null;
   let topWeight = 0;
   for (const priority of signals.requirementPriorities) {
-    const weight = priorityWeight(priority);
+    const weight = priorityWeightFor(priority, priorityWeights);
     if (weight > topWeight) {
       topWeight = weight;
       top = priority;
     }
   }
-  const caseWeight = signals.casePriority
-    ? priorityWeight(signals.casePriority)
-    : 0;
+  const caseWeight = signals.caseCriticalityWeight ?? 0;
   let raw = Math.max(topWeight, caseWeight) / 100;
   if (signals.suspectLinkCount > 0) raw = Math.min(1, raw + SUSPECT_BOOST);
   return { raw, topRequirementPriority: top };
 }
 
-function defectScore(signals: CaseRiskSignals): {
+function defectScore(
+  signals: CaseRiskSignals,
+  priorityWeights: Map<string, number>
+): {
   raw: number;
   topDefectPriority: string | null;
 } {
@@ -82,7 +86,7 @@ function defectScore(signals: CaseRiskSignals): {
   let top: string | null = null;
   let topWeight = 0;
   for (const priority of signals.defectPriorities) {
-    const weight = priorityWeight(priority);
+    const weight = priorityWeightFor(priority, priorityWeights);
     sum += weight;
     if (weight > topWeight) {
       topWeight = weight;
@@ -107,11 +111,12 @@ function round1(value: number): number {
 export function computeRiskScore(
   signals: CaseRiskSignals,
   weights: RiskWeights,
+  priorityWeights: Map<string, number>,
   now: Date
 ): RiskScoreResult {
   const flakiness = flakinessScore(signals.verdicts);
-  const criticality = criticalityScore(signals);
-  const defects = defectScore(signals);
+  const criticality = criticalityScore(signals, priorityWeights);
+  const defects = defectScore(signals, priorityWeights);
   const raws: Record<RiskComponentKey, number> = {
     failureHistory: failureHistoryScore(signals.verdicts),
     flakiness: flakiness.raw,
@@ -151,7 +156,7 @@ export function computeRiskScore(
     suspectLinkCount: signals.suspectLinkCount,
     defectCount: signals.defectPriorities.length,
     topDefectPriority: defects.topDefectPriority,
-    casePriority: signals.casePriority,
+    caseCriticality: signals.caseCriticality,
     quarantined: signals.quarantined,
   };
   return { score, reasons: { version: 1, components, facts } };

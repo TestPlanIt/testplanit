@@ -84,6 +84,28 @@ describe("buildFilterDimensions", () => {
     });
   });
 
+  it("omits riskScore unless risk scoring is enabled, then adds it as a number dimension", () => {
+    expect(buildFilterDimensions().has("riskScore")).toBe(false);
+    expect(
+      buildFilterDimensions({ includeRiskScore: true }).get("riskScore")
+    ).toMatchObject({
+      key: "riskScore",
+      scope: "repo",
+      valueType: "number",
+      operators: [
+        "eq",
+        "ne",
+        "lt",
+        "lte",
+        "gt",
+        "gte",
+        "between",
+        "any",
+        "none",
+      ],
+    });
+  });
+
   it("adds inReview as a repo-scoped boolean dimension when requested", () => {
     const registry = buildFilterDimensions({ includeInReview: true });
     expect(registry.get("inReview")).toMatchObject({

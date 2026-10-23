@@ -377,6 +377,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/projects/settings/quickscript', // Project QuickScript context + export templates
                 'user-guide/projects/settings/impact', // Project Impact Analysis: application repository, cache, repository markers
                 'user-guide/projects/settings/triage', // Project Failure Patterns: grouping, AI root causes, quarantine release, analyze existing results
+                'user-guide/projects/settings/risk', // Project Risk Scoring: enable, component weights, recalculate all scores
                 'user-guide/projects/settings/automation', // Project execution targets: GitHub Actions, GitLab CI, generic webhook
                 'user-guide/projects/settings/parameters', // Test Case Parameters settings (CI mapping + shared datasets)
                 'user-guide/projects/settings/advanced', // Per-project feature toggles
@@ -386,6 +387,7 @@ const sidebars: SidebarsConfig = {
           ],
         },
         'user-guide/advanced-search', // Advanced search documentation
+        'user-guide/risk-scores', // Per-case risk scores: signals, weights, repository column and filter
         'user-guide/forecasting', // Add forecasting.md as last item
       ],
       // Remove the generated-index link for the main User Guide category

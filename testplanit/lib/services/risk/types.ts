@@ -2,19 +2,9 @@ import type { DbClient, TxClient } from "~/lib/zenstack";
 
 export type RiskDb = DbClient | TxClient;
 
-/** Weighted components of the deterministic risk score, in display order. */
-export const RISK_COMPONENT_KEYS = [
-  "failureHistory",
-  "flakiness",
-  "staleness",
-  "criticality",
-  "defects",
-] as const;
-
-export type RiskComponentKey = (typeof RISK_COMPONENT_KEYS)[number];
-
-/** Relative component weights; resolved against DEFAULT_RISK_WEIGHTS. */
-export type RiskWeights = Record<RiskComponentKey, number>;
+export { RISK_COMPONENT_KEYS } from "~/lib/schemas/riskWeights";
+export type { RiskComponentKey, RiskWeights } from "~/lib/schemas/riskWeights";
+import type { RiskComponentKey } from "~/lib/schemas/riskWeights";
 
 /** Raw per-case inputs the scorer turns into a score. */
 export interface CaseRiskSignals {
@@ -30,8 +20,10 @@ export interface CaseRiskSignals {
   suspectLinkCount: number;
   /** Effective priority string of each linked live defect. */
   defectPriorities: (string | null)[];
-  /** The seeded "priority" dropdown option name, when the field is in use. */
-  casePriority: string | null;
+  /** Option name of the project's chosen criticality field, for display. */
+  caseCriticality: string | null;
+  /** Order-derived 0-100 weight of that option; null = no value or no field. */
+  caseCriticalityWeight: number | null;
   quarantined: boolean;
 }
 
@@ -60,7 +52,7 @@ export type RiskFacts = {
   suspectLinkCount: number;
   defectCount: number;
   topDefectPriority: string | null;
-  casePriority: string | null;
+  caseCriticality: string | null;
   quarantined: boolean;
 };
 

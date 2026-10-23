@@ -12,6 +12,7 @@ export const DIMENSION_LABEL_KEYS: Readonly<Record<string, string>> = {
   parameterized: "repository.views.byParameterized",
   attachments: "common.fields.attachments",
   codePins: "repository.codePins.title",
+  riskScore: "risk.score",
   inReview: "repository.views.byReview",
   tags: "repository.views.byTag",
   issues: "repository.views.byIssue",

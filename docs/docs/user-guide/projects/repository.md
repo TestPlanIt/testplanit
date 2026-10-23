@@ -108,7 +108,7 @@ Opening the repository as part of a **test run** (Run Mode) adds two more axes a
 
 ### Filtering
 
-**Add Filter** on the bar opens a searchable, alphabetical list of everything you can filter on: templates, states, creators, automation, parameterization, attachments, code pins (when Impact Analysis is enabled), tags, issues, every filterable custom field, and — in Run Mode — status and assignee. Pick one and its chip opens ready to edit.
+**Add Filter** on the bar opens a searchable, alphabetical list of everything you can filter on: templates, states, creators, automation, parameterization, attachments, code pins (when Impact Analysis is enabled), risk score (when Risk Scoring is enabled), tags, issues, every filterable custom field, and — in Run Mode — status and assignee. Pick one and its chip opens ready to edit.
 
 Each chip reads *Field: operator values*. Click the chip body to reopen its editor and change the operator or tick more values, or click the **x** to remove it. **Clear All** appears once two or more filters are active. When a filter set leaves no matching cases, the table says so and offers the same **Clear All**.
 
@@ -208,6 +208,7 @@ The main table displays the following information for each test case:
 * **Priority**: The assigned priority level.
 * **Estimate**: The manually set estimated time (often shown in a human-readable format like "5m") required to execute the test case.
 * **Forecast**: An automatically calculated prediction of execution time based on historical results. See [Test Case Details](./repository-case-details.mdx#forecast-calculation) for more info.
+* **Risk Score**: The case's maintained 0-100 [risk score](../risk-scores.md), colored by band; click it for the per-component breakdown. Off by default — add it from the column picker. Sorting puts unscored cases last.
 * **Tags**: Associated tags.
 * **Latest Results**: The case's last five results across all test runs, newest first, drawn as small colored squares (the most recent at full strength, older ones progressively faded). Each square links to the run that produced it, and the history covers both manual run results and automated JUnit results. Hovering over a square shows the status and when it was executed. The column is sortable: clicking the header groups cases by the status of their most recent result, and cases that have never been executed always sort last, in either direction.
 * **Last Updated**: Timestamp of the last modification.

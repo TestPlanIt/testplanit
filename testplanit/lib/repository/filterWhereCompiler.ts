@@ -34,6 +34,7 @@ import {
   type FilterDimension,
   type FilterDimensionRegistry,
   CODE_PINS_DIMENSION,
+  RISK_SCORE_DIMENSION,
 } from "./filterDimensions";
 
 /** Raw fragment shape for the legacy-ported JSON-value conditions. */
@@ -360,6 +361,41 @@ function compileOptionsFragment(
   }
 }
 
+/**
+ * riskScore is a direct RepositoryCases scalar (custom-field numbers go
+ * through compileNumberFragment's value-table joins instead). `any`/`none`
+ * read as scored / not yet scored; `ne` keeps SQL semantics and excludes
+ * unscored cases.
+ */
+function compileRiskScoreFragment(
+  predicate: FilterPredicate
+): RepositoryCasesWhereInput | null {
+  const { operator, values } = predicate;
+  if (operator === "any") return { riskScore: { not: null } };
+  if (operator === "none") return { riskScore: null };
+
+  const value1 = Number(values[0]);
+  if (!Number.isFinite(value1)) return null;
+  switch (operator) {
+    case "eq":
+      return { riskScore: value1 };
+    case "ne":
+      return { riskScore: { not: value1 } };
+    case "lt":
+    case "lte":
+    case "gt":
+    case "gte":
+      return { riskScore: { [operator]: value1 } };
+    case "between": {
+      const value2 = Number(values[1]);
+      if (!Number.isFinite(value2)) return null;
+      return { riskScore: { gte: value1, lte: value2 } };
+    }
+    default:
+      return null;
+  }
+}
+
 function compileNumberFragment(
   fieldId: number,
   predicate: FilterPredicate
@@ -660,6 +696,9 @@ export function compileRepoPredicates(
         fragment = value === null ? null : codePinsWhereClause(value);
         break;
       }
+      case RISK_SCORE_DIMENSION:
+        fragment = compileRiskScoreFragment(predicate);
+        break;
       case IN_REVIEW_DIMENSION: {
         const value = booleanFromIsValue(predicate.values);
         const ids = [...inReviewCaseIds];

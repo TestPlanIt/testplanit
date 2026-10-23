@@ -40,7 +40,11 @@ export async function loadProjectFilterRegistry(
   const [project, systemReview, templates] = await Promise.all([
     db.projects.findUnique({
       where: { id: projectId },
-      select: { reviewWorkflowEnabled: true, impactEnabled: true },
+      select: {
+        reviewWorkflowEnabled: true,
+        impactEnabled: true,
+        riskScoringEnabled: true,
+      },
     }),
     isReviewFeatureSystemEnabled(db),
     db.templates.findMany({
@@ -94,6 +98,7 @@ export async function loadProjectFilterRegistry(
     dynamicFields: [...fields.values()],
     includeInReview: systemReview && project?.reviewWorkflowEnabled === true,
     includeCodePins: project?.impactEnabled === true,
+    includeRiskScore: project?.riskScoringEnabled === true,
   });
   const fieldLabels: Record<string, string> = {};
   for (const field of fields.values()) {

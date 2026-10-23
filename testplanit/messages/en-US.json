@@ -741,7 +741,8 @@
       "sharedContent": "Shared Content",
       "impact": "Impact Analysis",
       "alerts": "Notifications & Alerts",
-      "triage": "Failure Patterns"
+      "triage": "Failure Patterns",
+      "riskScoring": "Risk Scoring"
     },
     "aria": {
       "userMenu": "User menu",
@@ -8575,7 +8576,8 @@
     "projectTriageSettings": "## Failure Patterns settings\nGrouping runs on every automated result that arrives and costs nothing. AI root cause suggestion uses the AI model assigned to the **Failure Patterns: Root Cause** feature on the AI Models page; turn it off here to keep grouping without any AI calls. **Analyze existing results** groups every automated failure already recorded in this project.",
     "projectQuarantine": "## Quarantined test cases\nA quarantined test case keeps running and recording results, but its failures are left out of run pass/fail and shown as a separate count. Quarantine a case from a failure pattern while the cause is being fixed. The quarantine lifts by itself once the case has passed the number of times in a row set in the Failure Patterns settings, unless it was marked to be released by hand; release it here or from the pattern at any time.",
     "rootCauses": "## Root Causes\nThe root causes Failure Patterns assigns to grouped failures, by AI or by hand. Each has a description the AI reads to decide when it applies. Rename, recolour or reorder them, add your own, or delete the ones you do not use; deleting one leaves its patterns without a root cause.",
-    "rootCauseDescription": "## Description\nThe AI reads this description to decide when the root cause applies to a failure pattern, so describe the evidence that points to it."
+    "rootCauseDescription": "## Description\nThe AI reads this description to decide when the root cause applies to a failure pattern, so describe the evidence that points to it.",
+    "projectRiskSettings": "## Risk Scoring settings\nEvery test case gets a 0-100 risk score from its failure history, flakiness, staleness, linked requirement criticality and linked defects — deterministic, no AI calls. Scores refresh after results arrive and in a nightly sweep. **Component weights** set how much each signal counts, relative to the others; zero removes a component. **Recalculate all scores** rescores the whole project now instead of waiting for the nightly sweep."
   },
   "reports": {
     "ui": {
@@ -10953,6 +10955,73 @@
       "releaseAuto": "{count, plural, one {Automatic after # consecutive pass} other {Automatic after # consecutive passes}}",
       "releaseManual": "By hand",
       "empty": "No test cases are quarantined in this project."
+    }
+  },
+  "risk": {
+    "score": "Risk Score",
+    "notScored": "Not scored yet",
+    "breakdown": {
+      "title": "Why this score",
+      "pointsOfWeight": "{points} pts · weight {weight}",
+      "components": {
+        "failureHistory": "Failure history",
+        "flakiness": "Flakiness",
+        "staleness": "Staleness",
+        "criticality": "Criticality",
+        "defects": "Linked defects"
+      },
+      "lastExecuted": "Last executed",
+      "neverExecuted": "Never executed",
+      "verdicts": "{failed} of {sampled, plural, one {# recent automated result} other {# recent automated results}} failed · {flips, plural, one {# pass/fail flip} other {# pass/fail flips}}",
+      "requirements": "{count, plural, one {# linked requirement} other {# linked requirements}} · top priority {priority}",
+      "suspect": "{count, plural, one {# requirement changed} other {# requirements changed}} since the last run",
+      "defects": "{count, plural, one {# linked defect} other {# linked defects}} · top priority {priority}",
+      "caseCriticality": "Criticality field: {value}",
+      "noPriority": "unspecified",
+      "quarantined": "Quarantined"
+    },
+    "settings": {
+      "description": "Every test case gets a 0-100 risk score from its failure history, flakiness, staleness, linked requirement criticality and linked defects. Scores refresh after results arrive and in a nightly sweep, and power the repository's Risk Score column and filter.",
+      "enableLabel": "Maintain risk scores",
+      "enableDescription": "When off, existing scores stay but stop updating and the Risk Score filter disappears.",
+      "enabledToast": "Risk scoring enabled",
+      "disabledToast": "Risk scoring disabled",
+      "weightsTitle": "Component weights",
+      "weightsDescription": "How much each signal counts, relative to the others. The score normalizes by the total, so weights do not need to add up to 100. Zero removes a component.",
+      "components": {
+        "failureHistory": "Failure history",
+        "flakiness": "Flakiness",
+        "staleness": "Staleness",
+        "criticality": "Criticality",
+        "defects": "Linked defects"
+      },
+      "weightsSaved": "Weights saved",
+      "weightsInvalid": "Weights must be numbers between 0 and {max}",
+      "weightsReset": "Weights reset to defaults",
+      "resetDefaults": "Reset to defaults",
+      "usingDefaults": "Using system defaults",
+      "criticalityFieldTitle": "Criticality field",
+      "criticalityFieldDescription": "An optional dropdown case field that feeds each case's own criticality. Options count by their order: the top option 100, the bottom 10, evenly spaced — names never matter.",
+      "criticalityFieldNone": "None",
+      "criticalityFieldSaved": "Criticality field saved",
+      "criticalityFieldCleared": "Criticality field cleared",
+      "criticalityFieldOptions": "Option weights by order:",
+      "priorityWeightsTitle": "Priority weights",
+      "priorityWeightsDescription": "Map the priority names your linked requirements and defects actually use to a 0-100 weight. Unmapped names count as neutral (50). Nothing is built in — this is your vocabulary, not ours.",
+      "priorityWeightsEmpty": "No linked issues with priorities yet.",
+      "priorityWeightsCount": "{count, plural, one {# linked issue} other {# linked issues}}",
+      "priorityWeightsUnused": "not in use",
+      "priorityWeightsSaved": "Priority weights saved",
+      "priorityWeightsInvalid": "Weights must be numbers between 0 and 100",
+      "backfillLabel": "Recalculate all scores",
+      "backfillDescription": "Rescore every test case in the project now instead of waiting for the nightly sweep.",
+      "backfillStarted": "Recalculation started",
+      "backfillRunning": "Recalculating… {processed, plural, one {# case scored} other {# cases scored}}",
+      "backfillDone": "Recalculation finished",
+      "backfillFailed": "Recalculation failed",
+      "backfillAlreadyRunning": "A recalculation was already running — run Recalculate all scores again once it finishes so every case reflects the new weights",
+      "backfillQueueUnavailable": "The background job queue is not available",
+      "openRepository": "Open Repository"
     }
   }
 }

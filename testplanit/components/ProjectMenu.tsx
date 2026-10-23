@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "~/zenstack/models";
 import {
+  Gauge,
   BookText as DocumentationIcon,
   Bug as IssuesIcon,
   ChartNoAxesCombined,
@@ -384,6 +385,13 @@ export default function ProjectsMenu({
             label: tCommon("pageTitles.triage"),
             path: "settings/triage",
             id: "settings-triage-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: Gauge,
+            label: tCommon("pageTitles.riskScoring"),
+            path: "settings/risk",
+            id: "settings-risk-link",
             section: "settings" as MenuSection,
           },
           {

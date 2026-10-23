@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  DEFAULT_RISK_WEIGHTS,
-  priorityWeight,
-  resolveRiskWeights,
-  UNKNOWN_PRIORITY_WEIGHT,
-} from "./weights";
+import { DEFAULT_RISK_WEIGHTS, resolveRiskWeights } from "./weights";
 
 describe("resolveRiskWeights", () => {
   it("returns defaults for null, undefined and non-objects", () => {
@@ -50,37 +45,5 @@ describe("resolveRiskWeights", () => {
     const first = resolveRiskWeights(null);
     first.failureHistory = 0;
     expect(resolveRiskWeights(null)).toEqual(DEFAULT_RISK_WEIGHTS);
-  });
-});
-
-describe("priorityWeight", () => {
-  it("maps the approved core vocabulary case-insensitively", () => {
-    expect(priorityWeight("blocker")).toBe(100);
-    expect(priorityWeight("Critical")).toBe(100);
-    expect(priorityWeight("HIGH")).toBe(75);
-    expect(priorityWeight("medium")).toBe(50);
-    expect(priorityWeight("Low")).toBe(25);
-  });
-
-  it("maps common tracker synonyms", () => {
-    expect(priorityWeight("Highest")).toBe(100);
-    expect(priorityWeight("urgent")).toBe(100);
-    expect(priorityWeight("Major")).toBe(75);
-    expect(priorityWeight("minor")).toBe(25);
-    expect(priorityWeight("Lowest")).toBe(10);
-    expect(priorityWeight("trivial")).toBe(10);
-    expect(priorityWeight("1")).toBe(100);
-    expect(priorityWeight("4")).toBe(25);
-  });
-
-  it("treats unknown, null and blank as medium", () => {
-    expect(priorityWeight("weird-custom")).toBe(UNKNOWN_PRIORITY_WEIGHT);
-    expect(priorityWeight(null)).toBe(UNKNOWN_PRIORITY_WEIGHT);
-    expect(priorityWeight(undefined)).toBe(UNKNOWN_PRIORITY_WEIGHT);
-    expect(priorityWeight("  ")).toBe(UNKNOWN_PRIORITY_WEIGHT);
-  });
-
-  it("trims surrounding whitespace", () => {
-    expect(priorityWeight(" critical ")).toBe(100);
   });
 });

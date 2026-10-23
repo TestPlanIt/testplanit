@@ -1,7 +1,8 @@
 // Live-DB proof of the risk scoring pipeline (lib/services/risk): the batched
 // signal collection reads real verdict history, manual+automated latest
-// execution, requirement/defect links with the suspect predicate, the seeded
-// "priority" dropdown and quarantine state; the service persists scores only
+// execution, requirement/defect links with the suspect predicate, the
+// project's chosen criticality field (order-weighted options), the priority
+// mapping and quarantine state; the service persists scores only
 // for live cases of projects with risk scoring on, resolves per-project
 // weights, and skips the write when nothing material changed.
 //
@@ -12,6 +13,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createRawDbClient } from "~/lib/rawDbClient";
+import { getProjectPriorityUsage } from "~/lib/services/risk/priorities";
 import { getRecentlyExecutedRunCaseIds } from "~/lib/services/risk/signals";
 import {
   updateProjectRiskScores,
@@ -112,6 +114,8 @@ async function setupFixture(): Promise<Fixture> {
         defaultAccessType: "NO_ACCESS",
         defaultRoleId: null,
         riskScoringEnabled,
+        // The tests' own vocabulary; nothing is built into the product.
+        riskPriorityWeights: { critical: 100, high: 75, low: 25 },
       },
       select: { id: true },
     });
@@ -322,23 +326,45 @@ async function setupFixture(): Promise<Fixture> {
     ],
   });
 
-  // The seeded "priority" dropdown, written the way the app writes it
-  // (option id as a string).
-  const priorityField = await db.caseFields.findUnique({
-    where: { systemName: "priority" },
+  // An explicitly chosen criticality dropdown of the project's own: options
+  // weight by their order, never their names.
+  const dropdownType = await db.caseFieldTypes.findFirst({
+    where: { type: "Dropdown" },
     select: { id: true },
   });
-  if (!priorityField) throw new Error("Test prerequisite: priority field");
-  const criticalOption = await db.fieldOptions.findFirst({
-    where: { name: "Critical", isDeleted: false },
+  if (!dropdownType) throw new Error("Test prerequisite: Dropdown field type");
+  const criticalityField = await db.caseFields.create({
+    data: {
+      displayName: `${TAG}-criticality`,
+      systemName: `${TAG}-criticality`,
+      typeId: dropdownType.id,
+    },
     select: { id: true },
   });
-  if (!criticalOption) throw new Error("Test prerequisite: Critical option");
+  const mkOption = (name: string, order: number) =>
+    db.fieldOptions
+      .create({ data: { name, order }, select: { id: true } })
+      .then(async (option) => {
+        await db.caseFieldAssignment.create({
+          data: {
+            fieldOptionId: option.id,
+            caseFieldId: criticalityField.id,
+          },
+        });
+        return option;
+      });
+  const topOption = await mkOption(`${TAG}-sev1`, 1);
+  await mkOption(`${TAG}-sev2`, 2);
+  await mkOption(`${TAG}-sev3`, 3);
+  await db.projects.update({
+    where: { id: project.id },
+    data: { riskCriticalityFieldId: criticalityField.id },
+  });
   await db.caseFieldValues.create({
     data: {
       testCaseId: casePriorityField,
-      fieldId: priorityField.id,
-      value: String(criticalOption.id),
+      fieldId: criticalityField.id,
+      value: String(topOption.id),
     },
     select: { id: true },
   });
@@ -418,6 +444,12 @@ async function cleanupFixture(f: Fixture | null): Promise<void> {
   );
   await safe(() =>
     db.user.deleteMany({ where: { email: { startsWith: TAG } } })
+  );
+  await safe(() =>
+    db.caseFields.deleteMany({ where: { systemName: { startsWith: TAG } } })
+  );
+  await safe(() =>
+    db.fieldOptions.deleteMany({ where: { name: { startsWith: TAG } } })
   );
   await safe(() =>
     db.roles.deleteMany({ where: { name: { startsWith: TAG } } })
@@ -533,10 +565,53 @@ describeIntegration("risk scoring (live DB)", () => {
     expect(row.reasons?.facts.requirementCount).toBe(0);
   });
 
-  it("reads the seeded priority dropdown option", async () => {
+  it("reads the chosen criticality field's option, weighted by order", async () => {
     const f = fixture!;
     const row = await readCase(f.casePriorityField);
-    expect(row.reasons?.facts.casePriority).toBe("Critical");
+    expect(row.reasons?.facts.caseCriticality).toBe(`${TAG}-sev1`);
+    // Top option of three: full weight drives the criticality component.
+    const criticality = row.reasons?.components.find(
+      (c) => c.key === "criticality"
+    );
+    expect(criticality?.raw).toBe(1);
+  });
+
+  it("stops reading a criticality field the admin deleted", async () => {
+    const f = fixture!;
+    const field = await db.projects.findUniqueOrThrow({
+      where: { id: f.projectId },
+      select: { riskCriticalityFieldId: true },
+    });
+    await db.caseFields.update({
+      where: { id: field.riskCriticalityFieldId! },
+      data: { isDeleted: true },
+    });
+    try {
+      await updateRiskScoresForCases(db, f.projectId, [f.casePriorityField], {
+        now: new Date(NOW.getTime() + 30_000),
+        force: true,
+      });
+      const row = await readCase(f.casePriorityField);
+      expect(row.reasons?.facts.caseCriticality).toBeNull();
+    } finally {
+      await db.caseFields.update({
+        where: { id: field.riskCriticalityFieldId! },
+        data: { isDeleted: false },
+      });
+      await updateRiskScoresForCases(db, f.projectId, [f.casePriorityField], {
+        now: new Date(NOW.getTime() + 45_000),
+        force: true,
+      });
+    }
+  });
+
+  it("lists the project's priority vocabulary with usage counts", async () => {
+    const f = fixture!;
+    const usage = await getProjectPriorityUsage(db, f.projectId);
+    const byValue = new Map(usage.map((row) => [row.value, row.count]));
+    expect(byValue.get("critical")).toBe(1);
+    expect(byValue.get("high")).toBe(2);
+    expect(byValue.get("low")).toBe(1);
   });
 
   it("flags quarantined cases in the facts", async () => {

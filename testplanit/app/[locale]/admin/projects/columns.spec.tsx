@@ -130,6 +130,8 @@ const testProject: ExtendedProjects = {
   name: "Test Project",
   riskScoringEnabled: true,
   riskWeights: null,
+  riskPriorityWeights: null,
+  riskCriticalityFieldId: null,
   key: null,
   note: null,
   iconUrl: null,

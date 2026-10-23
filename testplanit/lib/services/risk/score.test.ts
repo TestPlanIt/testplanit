@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
+import { resolvePriorityWeights } from "~/lib/schemas/riskPriorityWeights";
 import { computeRiskScore, STALENESS_HORIZON_DAYS } from "./score";
 import type { CaseRiskSignals, RiskWeights } from "./types";
 import { DEFAULT_RISK_WEIGHTS } from "./weights";
+
+/** The tests' own vocabulary; the product ships no mapping. */
+const PRIORITIES = resolvePriorityWeights({
+  critical: 100,
+  high: 75,
+  medium: 50,
+  low: 25,
+});
 
 const NOW = new Date("2026-10-23T12:00:00.000Z");
 
@@ -18,7 +27,8 @@ function signals(overrides: Partial<CaseRiskSignals> = {}): CaseRiskSignals {
     requirementPriorities: [],
     suspectLinkCount: 0,
     defectPriorities: [],
-    casePriority: null,
+    caseCriticality: null,
+    caseCriticalityWeight: null,
     quarantined: false,
     ...overrides,
   };
@@ -41,6 +51,7 @@ describe("computeRiskScore", () => {
     const { score, reasons } = computeRiskScore(
       signals(),
       DEFAULT_RISK_WEIGHTS,
+      PRIORITIES,
       NOW
     );
     expect(score).toBe(0);
@@ -61,8 +72,18 @@ describe("computeRiskScore", () => {
       requirementPriorities: ["high"],
       defectPriorities: ["low"],
     });
-    const first = computeRiskScore(input, DEFAULT_RISK_WEIGHTS, NOW);
-    const second = computeRiskScore(input, DEFAULT_RISK_WEIGHTS, NOW);
+    const first = computeRiskScore(
+      input,
+      DEFAULT_RISK_WEIGHTS,
+      PRIORITIES,
+      NOW
+    );
+    const second = computeRiskScore(
+      input,
+      DEFAULT_RISK_WEIGHTS,
+      PRIORITIES,
+      NOW
+    );
     expect(second).toEqual(first);
   });
 
@@ -71,6 +92,7 @@ describe("computeRiskScore", () => {
       const { score } = computeRiskScore(
         signals({ verdicts: [false, false, false] }),
         only("failureHistory"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(100);
@@ -80,11 +102,13 @@ describe("computeRiskScore", () => {
       const recentFail = computeRiskScore(
         signals({ verdicts: [false, true, true] }),
         only("failureHistory"),
+        PRIORITIES,
         NOW
       );
       const oldFail = computeRiskScore(
         signals({ verdicts: [true, true, false] }),
         only("failureHistory"),
+        PRIORITIES,
         NOW
       );
       expect(recentFail.score).toBeGreaterThan(oldFail.score);
@@ -95,6 +119,7 @@ describe("computeRiskScore", () => {
       const { score } = computeRiskScore(
         signals({ verdicts: [false, true] }),
         only("failureHistory"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(57);
@@ -104,6 +129,7 @@ describe("computeRiskScore", () => {
       const { score, reasons } = computeRiskScore(
         signals({ verdicts: [] }),
         only("failureHistory"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(0);
@@ -116,6 +142,7 @@ describe("computeRiskScore", () => {
       const { score, reasons } = computeRiskScore(
         signals({ verdicts: [false, true] }),
         only("flakiness"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(0);
@@ -126,6 +153,7 @@ describe("computeRiskScore", () => {
       const { score, reasons } = computeRiskScore(
         signals({ verdicts: [true, false, true, false] }),
         only("flakiness"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(100);
@@ -136,6 +164,7 @@ describe("computeRiskScore", () => {
       const { score } = computeRiskScore(
         signals({ verdicts: [true, true, true, true] }),
         only("flakiness"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(0);
@@ -147,6 +176,7 @@ describe("computeRiskScore", () => {
       const { score } = computeRiskScore(
         signals({ lastExecutedAt: NOW }),
         only("staleness"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(0);
@@ -156,6 +186,7 @@ describe("computeRiskScore", () => {
       const { score } = computeRiskScore(
         signals({ lastExecutedAt: daysBefore(STALENESS_HORIZON_DAYS + 10) }),
         only("staleness"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(100);
@@ -168,6 +199,7 @@ describe("computeRiskScore", () => {
           createdAt: daysBefore(STALENESS_HORIZON_DAYS / 2),
         }),
         only("staleness"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(50);
@@ -177,6 +209,7 @@ describe("computeRiskScore", () => {
       const { score } = computeRiskScore(
         signals({ lastExecutedAt: daysBefore(-5) }),
         only("staleness"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(0);
@@ -188,6 +221,7 @@ describe("computeRiskScore", () => {
       const { score, reasons } = computeRiskScore(
         signals({ requirementPriorities: ["low", "critical", "medium"] }),
         only("criticality"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(100);
@@ -199,23 +233,34 @@ describe("computeRiskScore", () => {
       const { score } = computeRiskScore(
         signals({ requirementPriorities: [null] }),
         only("criticality"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(50);
     });
 
-    it("uses the case's own priority field when it outranks the links", () => {
+    it("uses the criticality-field weight when it outranks the links", () => {
       const { score, reasons } = computeRiskScore(
-        signals({ requirementPriorities: ["low"], casePriority: "High" }),
+        signals({
+          requirementPriorities: ["low"],
+          caseCriticality: "Sev-2",
+          caseCriticalityWeight: 75,
+        }),
         only("criticality"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(75);
-      expect(reasons.facts.casePriority).toBe("High");
+      expect(reasons.facts.caseCriticality).toBe("Sev-2");
     });
 
     it("carries no signal without links or a case priority", () => {
-      const { score } = computeRiskScore(signals(), only("criticality"), NOW);
+      const { score } = computeRiskScore(
+        signals(),
+        only("criticality"),
+        PRIORITIES,
+        NOW
+      );
       expect(score).toBe(0);
     });
 
@@ -223,12 +268,14 @@ describe("computeRiskScore", () => {
       const boosted = computeRiskScore(
         signals({ requirementPriorities: ["medium"], suspectLinkCount: 1 }),
         only("criticality"),
+        PRIORITIES,
         NOW
       );
       expect(boosted.score).toBe(75);
       const capped = computeRiskScore(
         signals({ requirementPriorities: ["critical"], suspectLinkCount: 2 }),
         only("criticality"),
+        PRIORITIES,
         NOW
       );
       expect(capped.score).toBe(100);
@@ -241,6 +288,7 @@ describe("computeRiskScore", () => {
       const { score, reasons } = computeRiskScore(
         signals({ defectPriorities: ["critical", "critical"] }),
         only("defects"),
+        PRIORITIES,
         NOW
       );
       expect(score).toBe(100);
@@ -252,6 +300,7 @@ describe("computeRiskScore", () => {
       const { score } = computeRiskScore(
         signals({ defectPriorities: ["low"] }),
         only("defects"),
+        PRIORITIES,
         NOW
       );
       // 25 / 200
@@ -259,7 +308,12 @@ describe("computeRiskScore", () => {
     });
 
     it("carries no signal without defects", () => {
-      const { score } = computeRiskScore(signals(), only("defects"), NOW);
+      const { score } = computeRiskScore(
+        signals(),
+        only("defects"),
+        PRIORITIES,
+        NOW
+      );
       expect(score).toBe(0);
     });
   });
@@ -274,6 +328,7 @@ describe("computeRiskScore", () => {
         criticality: 0,
         defects: 0,
       },
+      PRIORITIES,
       NOW
     );
     expect(score).toBe(0);
@@ -291,6 +346,7 @@ describe("computeRiskScore", () => {
         criticality: 50,
         defects: 0,
       },
+      PRIORITIES,
       NOW
     );
     expect(score).toBe(50);
@@ -301,6 +357,7 @@ describe("computeRiskScore", () => {
     const { reasons } = computeRiskScore(
       signals({ quarantined: true, lastExecutedAt: executedAt }),
       DEFAULT_RISK_WEIGHTS,
+      PRIORITIES,
       NOW
     );
     expect(reasons.facts.quarantined).toBe(true);
