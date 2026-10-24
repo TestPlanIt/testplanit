@@ -11,7 +11,7 @@ Every test case carries a **risk score** from 0 to 100 that answers one question
 - **Failure history** — how often the case failed in its recent automated results, with the newest results counting most.
 - **Flakiness** — how often those results flipped between pass and fail.
 - **Staleness** — how long since the case was last executed, manually or automatically. A case that has never run ages from its creation date, and the signal maxes out at 90 days.
-- **Criticality** — the priority of the requirements the case covers, read through the project's own [priority mapping](projects/settings/risk.md#priority-weights), and the case's value in the project's chosen [criticality field](projects/settings/risk.md#criticality-field), whichever is higher. A requirement whose content changed after the case last ran adds a further boost until the case is re-executed.
+- **Criticality** — the priority of the requirements the case covers, read through the project's own [priority mapping](projects/settings/risk.md#issue-priorities), and the case's value in the project's chosen [criticality field](projects/settings/risk.md#case-criticality-field), whichever is higher. A requirement whose content changed after the case last ran adds a further boost until the case is re-executed.
 - **Linked defects** — open issues linked to the case, weighted by their priority.
 
 Scores refresh in the background: a few seconds after results arrive for a run, and in a nightly sweep that picks up slower-moving signals such as requirement edits. Scoring is deterministic and never calls an AI model.
@@ -27,6 +27,6 @@ How much each component counts is configurable per project in [Risk Scoring sett
 
 ## Good to know
 
-- **No priority vocabulary is built in.** Issue priorities are free text, so what `Sev-1` or `P2` means is yours to define in [Risk Scoring settings](projects/settings/risk.md#priority-weights). Until a name is mapped it counts neutrally — linked requirements and defects still raise the score by their presence, just without priority nuance.
+- **No priority vocabulary is built in.** Issue priorities are free text, so what `Sev-1` or `P2` means is yours to define in [Risk Scoring settings](projects/settings/risk.md#issue-priorities). Until a name is mapped it counts neutrally — linked requirements and defects still raise the score by their presence, just without priority nuance.
 - Tracker-synced requirements score the tracker's priority; detached or native ones score the local priority. The mapping is case-insensitive.
 - Only changes are written: an unchanged case costs nothing nightly, and recomputes never appear in the audit log.

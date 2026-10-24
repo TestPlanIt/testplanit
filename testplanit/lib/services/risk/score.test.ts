@@ -66,6 +66,22 @@ describe("computeRiskScore", () => {
     ]);
   });
 
+  it("carries the configuration fingerprint it was given", () => {
+    const { reasons } = computeRiskScore(
+      signals(),
+      DEFAULT_RISK_WEIGHTS,
+      PRIORITIES,
+      NOW,
+      "abc123"
+    );
+    expect(reasons.configHash).toBe("abc123");
+    // Omitted by callers that do not persist (unit tests, previews).
+    expect(
+      computeRiskScore(signals(), DEFAULT_RISK_WEIGHTS, PRIORITIES, NOW).reasons
+        .configHash
+    ).toBe("");
+  });
+
   it("is deterministic", () => {
     const input = signals({
       verdicts: [false, true, false],

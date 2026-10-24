@@ -589,7 +589,6 @@ describeIntegration("risk scoring (live DB)", () => {
     try {
       await updateRiskScoresForCases(db, f.projectId, [f.casePriorityField], {
         now: new Date(NOW.getTime() + 30_000),
-        force: true,
       });
       const row = await readCase(f.casePriorityField);
       expect(row.reasons?.facts.caseCriticality).toBeNull();
@@ -600,7 +599,6 @@ describeIntegration("risk scoring (live DB)", () => {
       });
       await updateRiskScoresForCases(db, f.projectId, [f.casePriorityField], {
         now: new Date(NOW.getTime() + 45_000),
-        force: true,
       });
     }
   });
@@ -677,7 +675,14 @@ describeIntegration("risk scoring (live DB)", () => {
       pass.reasons?.components.find((c) => c.key === "failureHistory")?.weight
     ).toBe(100);
 
-    // Same weights, nothing changed: the write (and timestamp) is skipped.
+    // Every score now carries the configuration fingerprint it was
+    // computed under.
+    const hash = fail.reasons?.configHash;
+    expect(hash).toBeTruthy();
+    expect((await readCase(f.casePass)).reasons?.configHash).toBe(hash);
+
+    // Same weights, nothing changed: the write (and timestamp) is skipped
+    // without anyone having to ask for it.
     const thirdNow = new Date(NOW.getTime() + 120_000);
     const result = await updateProjectRiskScores(db, f.projectId, {
       now: thirdNow,

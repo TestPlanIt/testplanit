@@ -50,9 +50,54 @@ function effectivePriority(row: CaseIssueRow): string | null {
  * out here,
  * so callers can pass ids without pre-filtering.
  */
+/** An option of the criticality field: its name and order-derived weight. */
+export interface CriticalityOption {
+  name: string;
+  weight: number;
+}
+
+export type CriticalityOptions = Map<number, CriticalityOption>;
+
+/**
+ * The criticality field's option roster, keyed by option id. Options weight
+ * by their admin-set order (top first), never by name. Resolved once per
+ * scoring run: it is the same for every case in the project.
+ */
+export async function resolveCriticalityOptions(
+  db: RiskDb,
+  criticalityFieldId: number | null | undefined
+): Promise<CriticalityOptions> {
+  const optionWeights: CriticalityOptions = new Map();
+  if (criticalityFieldId == null) return optionWeights;
+  const assignments = await db.caseFieldAssignment.findMany({
+    where: {
+      caseFieldId: criticalityFieldId,
+      // A field the admin has since deleted or disabled stops counting;
+      // the FK only clears on hard delete.
+      caseField: { isDeleted: false, isEnabled: true },
+      fieldOption: { isDeleted: false },
+    },
+    select: {
+      fieldOption: { select: { id: true, name: true, order: true } },
+    },
+  });
+  const ordered = assignments
+    .map((assignment) => assignment.fieldOption)
+    .sort((a, b) => a.order - b.order || a.id - b.id);
+  ordered.forEach((option, position) => {
+    optionWeights.set(option.id, {
+      name: option.name,
+      weight: optionPositionWeight(position, ordered.length),
+    });
+  });
+  return optionWeights;
+}
+
 export interface RiskSignalOptions {
   /** The project's chosen criticality dropdown field, when configured. */
   criticalityFieldId?: number | null;
+  /** Its option roster, resolved once per run; fetched here when absent. */
+  criticalityOptions?: CriticalityOptions;
 }
 
 export async function getCaseRiskSignals(
@@ -80,33 +125,10 @@ export async function getCaseRiskSignals(
   if (cases.length === 0) return out;
   const liveIds = cases.map((repoCase) => repoCase.id);
 
-  // The criticality field is an explicit per-project choice; its options
-  // weight by their admin-set order (top first), never by name.
   const criticalityFieldId = options.criticalityFieldId ?? null;
-  const optionWeights = new Map<number, { name: string; weight: number }>();
-  if (criticalityFieldId != null) {
-    const assignments = await db.caseFieldAssignment.findMany({
-      where: {
-        caseFieldId: criticalityFieldId,
-        // A field the admin has since deleted or disabled stops counting;
-        // the FK only clears on hard delete.
-        caseField: { isDeleted: false, isEnabled: true },
-        fieldOption: { isDeleted: false },
-      },
-      select: {
-        fieldOption: { select: { id: true, name: true, order: true } },
-      },
-    });
-    const ordered = assignments
-      .map((assignment) => assignment.fieldOption)
-      .sort((a, b) => a.order - b.order || a.id - b.id);
-    ordered.forEach((option, position) => {
-      optionWeights.set(option.id, {
-        name: option.name,
-        weight: optionPositionWeight(position, ordered.length),
-      });
-    });
-  }
+  const optionWeights =
+    options.criticalityOptions ??
+    (await resolveCriticalityOptions(db, criticalityFieldId));
 
   const [verdicts, lastExecuted, issueRows, optionRows] = await Promise.all([
     getCaseVerdictHistory(db, liveIds, RISK_HISTORY_WINDOW),

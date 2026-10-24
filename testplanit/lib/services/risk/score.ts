@@ -112,7 +112,8 @@ export function computeRiskScore(
   signals: CaseRiskSignals,
   weights: RiskWeights,
   priorityWeights: Map<string, number>,
-  now: Date
+  now: Date,
+  configHash = ""
 ): RiskScoreResult {
   const flakiness = flakinessScore(signals.verdicts);
   const criticality = criticalityScore(signals, priorityWeights);
@@ -159,5 +160,5 @@ export function computeRiskScore(
     caseCriticality: signals.caseCriticality,
     quarantined: signals.quarantined,
   };
-  return { score, reasons: { version: 1, components, facts } };
+  return { score, reasons: { version: 1, configHash, components, facts } };
 }

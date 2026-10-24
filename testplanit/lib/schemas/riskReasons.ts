@@ -31,6 +31,7 @@ const factsSchema = z.object({
 });
 
 const riskReasonsSchema = z.object({
+  configHash: z.string().catch(""),
   components: z.array(componentSchema).catch([]),
   facts: factsSchema.catch(factsSchema.parse({})),
 });

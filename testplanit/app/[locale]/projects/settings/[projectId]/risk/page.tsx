@@ -1,5 +1,6 @@
 "use client";
 
+import DynamicIcon from "@/components/DynamicIcon";
 import { Loading } from "@/components/Loading";
 import {
   ActionButtonContent,
@@ -44,6 +45,7 @@ import {
   resolveRiskWeights,
   type RiskWeights,
 } from "~/lib/schemas/riskWeights";
+import { IconName } from "~/types/globals";
 import { ApplicationArea } from "~/zenstack/models";
 import { schema } from "~/zenstack/schema";
 
@@ -297,10 +299,21 @@ export default function RiskSettingsPage() {
     {
       where: {
         caseFieldId: criticalityFieldId ?? -1,
+        // Same guard the scorer applies, so the preview shows exactly the
+        // roster the scores are computed from.
+        caseField: { isDeleted: false, isEnabled: true },
         fieldOption: { isDeleted: false },
       },
       select: {
-        fieldOption: { select: { id: true, name: true, order: true } },
+        fieldOption: {
+          select: {
+            id: true,
+            name: true,
+            order: true,
+            icon: { select: { name: true } },
+            iconColor: { select: { value: true } },
+          },
+        },
       },
     },
     { enabled: isAuthenticated && criticalityFieldId != null }
@@ -310,7 +323,10 @@ export default function RiskSettingsPage() {
       .map((assignment) => assignment.fieldOption)
       .sort((a, b) => a.order - b.order || a.id - b.id);
     return options.map((option, position) => ({
+      id: option.id,
       name: option.name,
+      icon: option.icon,
+      iconColor: option.iconColor,
       weight: optionPositionWeight(position, options.length),
     }));
   }, [criticalityOptions]);
@@ -376,7 +392,7 @@ export default function RiskSettingsPage() {
       if (text === "") continue;
       const parsed = Number(text);
       if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
-        toast.error(t("priorityWeightsInvalid"));
+        toast.error(t("issuePrioritiesInvalid"));
         return;
       }
       if (row.value.length > MAX_PRIORITY_NAME_LENGTH) continue;
@@ -397,7 +413,7 @@ export default function RiskSettingsPage() {
           weight: mapping[row.value] ?? null,
         }))
       );
-      toast.success(t("priorityWeightsSaved"));
+      toast.success(t("issuePrioritiesSaved"));
       void startBackfill({ silent: true });
     } catch (error) {
       console.error("Failed to update risk settings:", error);
@@ -581,12 +597,32 @@ export default function RiskSettingsPage() {
                 </SelectContent>
               </Select>
               {criticalityFieldId != null && orderedOptions.length > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {t("criticalityFieldOptions")}{" "}
-                  {orderedOptions
-                    .map((option) => `${option.name} ${option.weight}`)
-                    .join(" · ")}
-                </p>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {t("criticalityFieldOptions")}
+                  </p>
+                  <ul className="space-y-1">
+                    {orderedOptions.map((option) => (
+                      <li
+                        key={option.id}
+                        className="flex items-center gap-2 text-sm"
+                        data-testid={`risk-criticality-option-${option.id}`}
+                      >
+                        {option.icon && (
+                          <DynamicIcon
+                            name={option.icon.name as IconName}
+                            className="h-4 w-4 shrink-0"
+                            color={option.iconColor?.value}
+                          />
+                        )}
+                        <span className="truncate">{option.name}</span>
+                        <span className="text-muted-foreground tabular-nums">
+                          {option.weight}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -595,15 +631,15 @@ export default function RiskSettingsPage() {
             <CardContent className="space-y-4 pt-6">
               <div className="space-y-1">
                 <p className="text-sm font-medium">
-                  {t("priorityWeightsTitle")}
+                  {t("issuePrioritiesTitle")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {t("priorityWeightsDescription")}
+                  {t("issuePrioritiesDescription")}
                 </p>
               </div>
               {priorityRows !== null && priorityRows.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  {t("priorityWeightsEmpty")}
+                  {t("issuePrioritiesEmpty")}
                 </p>
               )}
               {(priorityRows ?? []).length > 0 && (
@@ -633,8 +669,8 @@ export default function RiskSettingsPage() {
                         {row.value}{" "}
                         <span className="text-muted-foreground">
                           {row.count > 0
-                            ? t("priorityWeightsCount", { count: row.count })
-                            : t("priorityWeightsUnused")}
+                            ? t("issuePrioritiesCount", { count: row.count })
+                            : t("issuePrioritiesUnused")}
                         </span>
                       </Label>
                     </div>

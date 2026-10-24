@@ -1,7 +1,13 @@
+import { createHash } from "crypto";
 import { resolvePriorityWeights } from "~/lib/schemas/riskPriorityWeights";
 import { syncRepositoryCasesToElasticsearch } from "~/services/repositoryCaseSync";
 import { computeRiskScore } from "./score";
-import { getCaseRiskSignals, RISK_BATCH_SIZE } from "./signals";
+import {
+  getCaseRiskSignals,
+  resolveCriticalityOptions,
+  RISK_BATCH_SIZE,
+  type CriticalityOptions,
+} from "./signals";
 import type { RiskDb, RiskFacts, RiskWeights } from "./types";
 import { RISK_COMPONENT_KEYS } from "./types";
 import { resolveRiskWeights } from "./weights";
@@ -9,12 +15,6 @@ import { resolveRiskWeights } from "./weights";
 export interface RiskUpdateOptions {
   now?: Date;
   tenantId?: string;
-  /**
-   * Rewrite every case even when nothing material changed. Config changes
-   * (weights, priority mapping, criticality field) are invisible to the
-   * change detection, so the settings-driven recompute forces.
-   */
-  force?: boolean;
 }
 
 export interface RiskUpdateResult {
@@ -32,36 +32,40 @@ function factsEqual(stored: unknown, next: RiskFacts): boolean {
 }
 
 /**
- * True when the stored breakdown was computed with the same weights: a
- * weight change must rewrite even score-identical rows, or the persisted
- * per-component breakdown keeps describing the old configuration.
+ * Fingerprint of everything configurable that feeds a score: the component
+ * weights, the priority mapping and the criticality field's roster. Stored
+ * with each score so a recompute can tell "nothing changed" from "the
+ * project is configured differently now" — without rewriting every case to
+ * find out, and without a config change going unnoticed on cases whose
+ * number happens to land the same.
  */
-function weightsMatch(storedReasons: unknown, weights: RiskWeights): boolean {
-  const components = (storedReasons as { components?: unknown } | null)
-    ?.components;
-  if (
-    !Array.isArray(components) ||
-    components.length !== RISK_COMPONENT_KEYS.length
-  ) {
-    return false;
-  }
-  const byKey = new Map(
-    components.map((component) => [
-      (component as { key?: unknown }).key,
-      (component as { weight?: unknown }).weight,
-    ])
-  );
-  return RISK_COMPONENT_KEYS.every((key) => byKey.get(key) === weights[key]);
+function computeConfigHash(
+  weights: RiskWeights,
+  priorityWeights: Map<string, number>,
+  criticalityOptions: CriticalityOptions
+): string {
+  const canonical = JSON.stringify([
+    RISK_COMPONENT_KEYS.map((key) => [key, weights[key]]),
+    [...priorityWeights.entries()].sort((a, b) => a[0].localeCompare(b[0])),
+    [...criticalityOptions.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([id, option]) => [id, option.name, option.weight]),
+  ]);
+  return createHash("sha256").update(canonical).digest("hex").slice(0, 16);
+}
+
+interface ScoringConfig {
+  weights: RiskWeights;
+  priorityWeights: Map<string, number>;
+  criticalityFieldId: number | null;
+  criticalityOptions: CriticalityOptions;
+  configHash: string;
 }
 
 async function loadScoringProject(
   db: RiskDb,
   projectId: number
-): Promise<{
-  weights: RiskWeights;
-  priorityWeights: Map<string, number>;
-  criticalityFieldId: number | null;
-} | null> {
+): Promise<ScoringConfig | null> {
   const project = await db.projects.findUnique({
     where: { id: projectId },
     select: {
@@ -75,10 +79,18 @@ async function loadScoringProject(
   if (!project || project.isDeleted || !project.riskScoringEnabled) {
     return null;
   }
+  const weights = resolveRiskWeights(project.riskWeights);
+  const priorityWeights = resolvePriorityWeights(project.riskPriorityWeights);
+  const criticalityOptions = await resolveCriticalityOptions(
+    db,
+    project.riskCriticalityFieldId
+  );
   return {
-    weights: resolveRiskWeights(project.riskWeights),
-    priorityWeights: resolvePriorityWeights(project.riskPriorityWeights),
+    weights,
+    priorityWeights,
     criticalityFieldId: project.riskCriticalityFieldId,
+    criticalityOptions,
+    configHash: computeConfigHash(weights, priorityWeights, criticalityOptions),
   };
 }
 
@@ -106,6 +118,7 @@ export async function updateRiskScoresForCases(
     const batch = caseIds.slice(i, i + RISK_BATCH_SIZE);
     const signals = await getCaseRiskSignals(db, projectId, batch, {
       criticalityFieldId: scoring.criticalityFieldId,
+      criticalityOptions: scoring.criticalityOptions,
     });
     if (signals.size === 0) continue;
     const currentRows = await db.repositoryCases.findMany({
@@ -121,15 +134,17 @@ export async function updateRiskScoresForCases(
         caseSignals,
         scoring.weights,
         scoring.priorityWeights,
-        now
+        now,
+        scoring.configHash
       );
       const storedFacts = (row.riskReasons as { facts?: unknown } | null)
         ?.facts;
+      const storedHash = (row.riskReasons as { configHash?: unknown } | null)
+        ?.configHash;
       if (
-        !options.force &&
         row.riskScore === score &&
-        factsEqual(storedFacts, reasons.facts) &&
-        weightsMatch(row.riskReasons, scoring.weights)
+        storedHash === scoring.configHash &&
+        factsEqual(storedFacts, reasons.facts)
       ) {
         continue;
       }

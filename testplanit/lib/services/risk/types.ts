@@ -59,6 +59,13 @@ export type RiskFacts = {
 /** What `RepositoryCases.riskReasons` persists; versioned for UI evolution. */
 export type RiskReasons = {
   version: 1;
+  /**
+   * Fingerprint of the configuration this score was computed under (weights,
+   * priority mapping, criticality field roster). Lets a recompute tell
+   * "nothing changed" from "the project is configured differently now"
+   * without rewriting every case to find out.
+   */
+  configHash: string;
   components: RiskComponentScore[];
   facts: RiskFacts;
 };

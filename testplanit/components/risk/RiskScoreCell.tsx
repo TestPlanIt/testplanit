@@ -8,6 +8,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { parseRiskReasons } from "~/lib/schemas/riskReasons";
 import { RISK_COMPONENT_KEYS } from "~/lib/schemas/riskWeights";
@@ -31,6 +37,7 @@ export function RiskScoreCell({
   reasons: unknown;
 }) {
   const t = useTranslations("risk");
+  const { data: session } = useSession();
 
   if (score == null) {
     return (
@@ -78,23 +85,34 @@ export function RiskScoreCell({
               {Math.round(score)}
             </span>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {RISK_COMPONENT_KEYS.map((key) => {
               const component = components.get(key);
               const raw = component?.raw ?? 0;
+              const label = t(`breakdown.components.${key}`);
+              // The bar carries the comparison; the exact points and the
+              // weight behind them are reference, one hover away.
+              const detail = t("breakdown.pointsOfWeight", {
+                points: component?.points ?? 0,
+                weight: component?.weight ?? 0,
+              });
               return (
-                <div key={key} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span>{t(`breakdown.components.${key}`)}</span>
-                    <span className="text-muted-foreground tabular-nums">
-                      {t("breakdown.pointsOfWeight", {
-                        points: component?.points ?? 0,
-                        weight: component?.weight ?? 0,
-                      })}
-                    </span>
-                  </div>
-                  <Progress value={Math.round(raw * 100)} className="h-1.5" />
-                </div>
+                <Tooltip key={key}>
+                  <TooltipTrigger asChild>
+                    <div className="space-y-1">
+                      <span className="text-xs">{label}</span>
+                      <Progress
+                        value={Math.round(raw * 100)}
+                        className="h-2"
+                        aria-label={`${label}: ${detail}`}
+                        aria-valuenow={Math.round(raw * 100)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>{detail}</TooltipContent>
+                </Tooltip>
               );
             })}
           </div>
@@ -106,6 +124,8 @@ export function RiskScoreCell({
                     {t("breakdown.lastExecuted")}{" "}
                     <DateFormatter
                       date={facts.lastExecutedAt}
+                      formatString={session?.user?.preferences?.dateFormat}
+                      timezone={session?.user?.preferences?.timezone}
                       tooltip={false}
                     />
                   </>
@@ -114,13 +134,15 @@ export function RiskScoreCell({
                 )}
               </p>
               {facts.verdictsSampled > 0 && (
-                <p>
-                  {t("breakdown.verdicts", {
-                    failed: facts.failCount,
-                    sampled: facts.verdictsSampled,
-                    flips: facts.flips,
-                  })}
-                </p>
+                <>
+                  <p>
+                    {t("breakdown.verdicts", {
+                      failed: facts.failCount,
+                      sampled: facts.verdictsSampled,
+                    })}
+                  </p>
+                  <p>{t("breakdown.flips", { flips: facts.flips })}</p>
+                </>
               )}
               {facts.requirementCount > 0 && (
                 <p>
