@@ -32,6 +32,12 @@ import { AnalysisProgressStep } from "./steps/AnalysisProgressStep";
 import { CommitPickerStep } from "./steps/CommitPickerStep";
 import { DiffReviewStep } from "./steps/DiffReviewStep";
 
+/** What a caller learns when an analysis's cases are taken into a run. */
+export interface ImpactAcceptedInfo {
+  analysisId: number;
+  acceptedCaseIds: number[];
+}
+
 export interface ImpactRepoConfig {
   id: number;
   repositoryId: number;

@@ -12,11 +12,8 @@ import {
 } from "@/components/forms/MilestoneSelect";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
-import { MagicSelectButton } from "@/components/runs/MagicSelectButton";
-import {
-  ImpactButton,
-  type ImpactAcceptedInfo,
-} from "@/components/impact/ImpactButton";
+import type { ImpactAcceptedInfo } from "@/components/impact/ImpactDialog";
+import { CaseSelectionActions } from "@/components/runs/CaseSelectionActions";
 import { recordImpactAcceptance } from "@/components/impact/recordImpactAcceptance";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -737,7 +734,7 @@ const TestCasesDialog = React.memo(
           <DialogDescription asChild>
             <div className="flex justify-between items-start text-muted-foreground">
               <div className="flex items-center gap-4">
-                <MagicSelectButton
+                <CaseSelectionActions
                   projectId={Number(projectId)}
                   testRunMetadata={{
                     name: form.getValues("name"),
@@ -745,11 +742,6 @@ const TestCasesDialog = React.memo(
                     docs: form.getValues("docs"),
                     linkedIssueIds: linkedIssueIds || [],
                   }}
-                  selectedTestCases={selectedTestCases}
-                  onSuggestionsAccepted={setSelectedTestCases}
-                />
-                <ImpactButton
-                  projectId={Number(projectId)}
                   selectedTestCases={selectedTestCases}
                   onSuggestionsAccepted={setSelectedTestCases}
                   onAnalysisAccepted={onImpactAccepted}

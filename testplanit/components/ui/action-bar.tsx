@@ -160,6 +160,7 @@ export function ActionOverflow({
   menuLabel,
   menuTestId,
   menuExtras,
+  preserveMenuOrder = false,
 }: {
   compact: boolean;
   actions: OverflowAction[];
@@ -167,6 +168,13 @@ export function ActionOverflow({
   menuTestId?: string;
   /** Extra content appended inside the kebab menu (e.g. a version submenu). */
   menuExtras?: React.ReactNode;
+  /**
+   * Keep the menu in the order the actions were given instead of reversing
+   * it. For a bar that collapses, reversing puts the nearest button at the
+   * top of the menu; for a set that is only ever a menu, the given order is
+   * the one the reader expects.
+   */
+  preserveMenuOrder?: boolean;
 }) {
   const visible = actions.filter((a) => !a.hidden);
   if (visible.length === 0 && !menuExtras) return null;
@@ -214,8 +222,8 @@ export function ActionOverflow({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {/* Menu items run in reverse of the wide button order (matches the
-            repository case details bar). */}
-        {[...visible].reverse().map((a) => (
+            repository case details bar) unless the caller opted out. */}
+        {(preserveMenuOrder ? visible : [...visible].reverse()).map((a) => (
           <DropdownMenuItem
             key={a.key}
             onClick={a.onClick}
