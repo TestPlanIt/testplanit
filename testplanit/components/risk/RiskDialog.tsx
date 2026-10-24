@@ -20,7 +20,7 @@ import type {
   RowSelectionState,
 } from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { schema } from "~/zenstack/schema";
 import { RiskScoreCell } from "./RiskScoreCell";
 
@@ -63,6 +63,14 @@ export function RiskDialog({
   const tCommon = useTranslations("common");
   const [minScore, setMinScore] = useState(0);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  // The threshold defines the candidate set, so changing it starts the
+  // choice over: keeping ids from the old set would mean adding cases the
+  // list no longer shows, and the counts would disagree about how many are
+  // selected.
+  useEffect(() => {
+    setRowSelection({});
+  }, [minScore]);
 
   const where = useMemo(
     () => ({
@@ -115,6 +123,22 @@ export function RiskDialog({
     { enabled: open }
   );
 
+  // Selecting every match means ids the list has not paged in yet, so they
+  // are fetched on demand — ids only, and only when asked for.
+  const allMatchingIds = queries.repositoryCases.useFindMany(
+    { where, select: { id: true } },
+    { enabled: false }
+  );
+  const selectAllMatches = async () => {
+    const { data } = await allMatchingIds.refetch();
+    if (!data) return;
+    setRowSelection(
+      Object.fromEntries(
+        (data as { id: number }[]).map((row) => [String(row.id), true])
+      )
+    );
+  };
+
   const rows = useMemo<RiskCandidate[]>(
     () => (pages?.pages.flat() ?? []) as RiskCandidate[],
     [pages]
@@ -128,12 +152,6 @@ export function RiskDialog({
         .filter((id) => Number.isInteger(id)),
     [rowSelection]
   );
-
-  const selectShown = useCallback(() => {
-    setRowSelection(
-      Object.fromEntries(rows.map((row) => [String(row.id), true]))
-    );
-  }, [rows]);
 
   const columns = useMemo<ColumnDef<RiskCandidate>[]>(
     () => [
@@ -217,6 +235,18 @@ export function RiskDialog({
     [columns]
   );
 
+  const allLoadedSelected =
+    rows.length > 0 && rows.every((row) => rowSelection[String(row.id)]);
+  const unloadedMatches = Math.max(
+    0,
+    (matchingTotal ?? rows.length) - rows.length
+  );
+  const allMatchesSelected =
+    allLoadedSelected &&
+    matchingTotal != null &&
+    matchingTotal > 0 &&
+    selectedIds.length >= matchingTotal;
+
   const handleAccept = () => {
     onAccept(selectedIds);
     setRowSelection({});
@@ -231,7 +261,7 @@ export function RiskDialog({
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-64 items-center gap-3">
             <Label htmlFor="risk-min-score" className="whitespace-nowrap">
               {t("minimumScore")}
@@ -248,37 +278,46 @@ export function RiskDialog({
             />
             <span className="w-8 text-sm tabular-nums">{minScore}</span>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={selectShown}
-            disabled={rows.length === 0}
-            data-testid="risk-select-shown"
-          >
-            {t("selectShown")}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setRowSelection({})}
-            disabled={selectedIds.length === 0}
-            data-testid="risk-clear-selection"
-          >
-            {t("clearSelection")}
-          </Button>
+
+          {rows.length > 0 && (
+            <p
+              className="text-sm text-muted-foreground"
+              data-testid="risk-showing"
+            >
+              {t("showing", {
+                shown: rows.length,
+                total: matchingTotal ?? rows.length,
+              })}
+            </p>
+          )}
         </div>
 
-        {rows.length > 0 && (
-          <p
-            className="text-sm text-muted-foreground"
-            data-testid="risk-showing"
+        {allLoadedSelected && unloadedMatches > 0 && !allMatchesSelected && (
+          <div
+            className="flex flex-wrap items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm"
+            data-testid="risk-select-all-matches-prompt"
           >
-            {t("showing", {
-              shown: rows.length,
-              total: matchingTotal ?? rows.length,
-            })}
+            <span>{t("loadedSelected", { shown: rows.length })}</span>
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="h-auto p-0"
+              onClick={() => void selectAllMatches()}
+              disabled={allMatchingIds.isFetching}
+              data-testid="risk-select-all-matches"
+            >
+              {t("selectAllMatches", { total: matchingTotal ?? 0 })}
+            </Button>
+          </div>
+        )}
+
+        {allMatchesSelected && (
+          <p
+            className="rounded-md bg-muted px-3 py-2 text-sm"
+            data-testid="risk-all-matches-selected"
+          >
+            {t("allMatchesSelected", { total: matchingTotal ?? 0 })}
           </p>
         )}
 
