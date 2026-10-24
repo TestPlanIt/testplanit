@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
@@ -193,23 +194,11 @@ export function FindDuplicatesButton({
   }
 
   if (scanState === "complete") {
-    const resultsCount = refreshedCount ?? statusData?.result?.pairsFound ?? 0;
     return (
-      <div className="relative">
-        <Button
-          data-testid="view-duplicates-button"
-          variant={resultsCount > 0 ? "destructive" : "outline"}
-          asChild
-          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-        >
-          <Link href={`/projects/repository/${projectId}/duplicates`}>
-            <CopyCheck className="h-4 w-4 shrink-0" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-              {t("viewResults", { count: resultsCount })}
-            </span>
-          </Link>
-        </Button>
-      </div>
+      <ViewDuplicatesButton
+        projectId={projectId}
+        count={refreshedCount ?? statusData?.result?.pairsFound ?? 0}
+      />
     );
   }
 
@@ -231,20 +220,7 @@ export function FindDuplicatesButton({
 
   // idle — link to results if pending duplicates exist, otherwise scan button
   if (badgeCount > 0) {
-    return (
-      <Button
-        variant="link"
-        asChild
-        className="bg-destructive/50 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 border-1"
-      >
-        <Link href={`/projects/repository/${projectId}/duplicates`}>
-          <CopyCheck className="h-4 w-4 shrink-0" />
-          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-            {t("viewResults", { count: badgeCount })}
-          </span>
-        </Link>
-      </Button>
-    );
+    return <ViewDuplicatesButton projectId={projectId} count={badgeCount} />;
   }
 
   return (
@@ -259,6 +235,38 @@ export function FindDuplicatesButton({
       <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
         {t("findDuplicates")}
       </span>
+    </Button>
+  );
+}
+
+interface ViewDuplicatesButtonProps {
+  projectId: string;
+  count: number;
+}
+
+function ViewDuplicatesButton({ projectId, count }: ViewDuplicatesButtonProps) {
+  const t = useTranslations("repository.duplicates");
+
+  return (
+    <Button
+      data-testid="view-duplicates-button"
+      variant="outline"
+      asChild
+      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+    >
+      <Link href={`/projects/repository/${projectId}/duplicates`}>
+        <span className="flex items-center gap-2">
+          <CopyCheck className="h-4 w-4 shrink-0" />
+          {count > 0 && (
+            <Badge variant="secondary" className="tabular-nums">
+              {count}
+            </Badge>
+          )}
+        </span>
+        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+          {t("viewDuplicates")}
+        </span>
+      </Link>
     </Button>
   );
 }

@@ -3672,7 +3672,7 @@
     },
     "duplicates": {
       "findDuplicates": "Find Duplicates",
-      "viewResults": "View {count, plural, one {# Result} other {# Results}}",
+      "viewDuplicates": "View Duplicates",
       "retryScan": "Retry Scan",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Enhancing results with AI...",
