@@ -265,9 +265,7 @@ test.describe("Impact dialog", () => {
       await expect(affectedRow).toContainText(affectedName);
 
       // Expanding a row reveals the reason detail for its layer.
-      await pinnedRow
-        .getByTestId(`impact-recommendation-toggle-${pinnedCaseId}`)
-        .click();
+      await pinnedRow.getByTestId("row-expander").click();
       await expect(
         impactDialog.getByTestId(`impact-reason-${pinnedCaseId}-PIN`)
       ).toBeVisible();

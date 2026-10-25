@@ -45,6 +45,7 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, {
   CSSProperties,
+  Fragment,
   type ReactNode,
   useCallback,
   useEffect,
@@ -82,6 +83,9 @@ import {
   reconcileColumnOrder,
   resolveGroupableCellContent,
   shallowEqualRecord,
+  CONTROL_COLUMN_IDS,
+  EXPANDER_SLOT_PX,
+  NESTING_INDENT_PX,
   RowExpanderPrefix,
   useInitialColumnPinning,
   useSortingAdapter,
@@ -100,6 +104,9 @@ interface DraggedCaseInfoForSortableItem {
   id: number | string;
   name: string;
 }
+
+/** Every body cell's inline padding (`px-2`), in px. */
+const CELL_PADDING_INLINE_PX = 8;
 
 /**
  * Props shared by both render modes of `DataTable`.
@@ -191,6 +198,15 @@ export interface PagedDataTableProps<
   /** Enable the per-column header menu (sort + hide column). Defaults to
    * `!!storageKey`; requires `onSortColumn`/`onColumnVisibilityChange` to act. */
   enableColumnMenu?: boolean;
+  /**
+   * Content for the full-width row that opens UNDER an expanded row, for a
+   * table whose rows carry per-row detail rather than a tree of sub-rows.
+   * Supplying it turns on the same expander chevron the nesting tables use, so
+   * detail tables stop hand-rolling a chevron column of their own. Detail
+   * belongs in its own row because cells are middle-aligned: grown inside the
+   * row, it drags every other column to the vertical centre.
+   */
+  renderExpandedRow?: (row: TData) => ReactNode;
 }
 
 /**
@@ -515,6 +531,7 @@ function PagedTable<TData extends DataRow, TValue>({
   getSubRows,
   getRowId,
   subRowsLabel,
+  renderExpandedRow,
   emptyMessage,
   rowTestIdPrefix = "case-row",
   selectedRowId,
@@ -783,7 +800,7 @@ function PagedTable<TData extends DataRow, TValue>({
   // No expander COLUMN: the chevron renders inline at the head of the first
   // content cell (`RowExpanderPrefix`) -- see that component's doc for why.
   const expansionActive = Boolean(
-    (grouping && grouping.length > 0) || getSubRows
+    (grouping && grouping.length > 0) || getSubRows || renderExpandedRow
   );
   const finalColumns = columns;
 
@@ -820,6 +837,9 @@ function PagedTable<TData extends DataRow, TValue>({
     data: localData,
     columns: finalColumns as ColumnDef<TData, any>[],
     getSubRows: getSubRows,
+    // Detail rows have no sub-rows to infer expandability from, so every row
+    // is declared expandable when a detail renderer is wired.
+    ...(renderExpandedRow ? { getRowCanExpand: () => true } : {}),
     // v9 resets expansion from the core row model on every data change (v8
     // only did so from the grouped model), which collapses open rows after a
     // refetch. Rows are keyed by getRowId, so expansion survives new data.
@@ -1095,12 +1115,53 @@ function PagedTable<TData extends DataRow, TValue>({
                 const depth = row.depth;
                 const isGrouped = row.getIsGrouped();
                 const isSubRow = depth > 0;
+                const rowCells = row.getVisibleCells();
+                // The chevron leads the first CONTENT cell: a table that also
+                // selects rows must not put it in the checkbox well.
+                const expanderCellIndex = expansionActive
+                  ? Math.max(
+                      0,
+                      rowCells.findIndex(
+                        (cell) => !CONTROL_COLUMN_IDS.has(cell.column.id)
+                      )
+                    )
+                  : -1;
+                const detailRow =
+                  renderExpandedRow && !isGrouped && row.getIsExpanded() ? (
+                    <TableRow
+                      className={`${tableStyles.rowDivider} ${tableStyles.rowSurfaceNested}`}
+                      data-testid={`${rowTestIdPrefix}-${row.original.id}-detail`}
+                    >
+                      <TableCell
+                        colSpan={rowCells.length}
+                        className="p-0 align-top"
+                        // A detail row IS a child row, so it starts where a
+                        // sub-row's text would: past the control columns it
+                        // spans, past the cell padding and the chevron slot
+                        // its parent leads with, then one nesting level in.
+                        style={{
+                          paddingInlineStart:
+                            rowCells
+                              .slice(0, Math.max(expanderCellIndex, 0))
+                              .reduce(
+                                (width, cell) => width + cell.column.getSize(),
+                                0
+                              ) +
+                            CELL_PADDING_INLINE_PX +
+                            EXPANDER_SLOT_PX +
+                            NESTING_INDENT_PX * (depth + 1),
+                        }}
+                      >
+                        {renderExpandedRow(row.original)}
+                      </TableCell>
+                    </TableRow>
+                  ) : null;
 
                 // Draggable rows render through SortableItem; reordering among
                 // them is gated separately so a sorted list still lets a case
                 // be dragged out to a folder.
                 if ((enableReorder || enableDrag) && !isGrouped && onReorder) {
-                  return (
+                  const sortableRow = (
                     <SortableItem
                       key={row.id}
                       id={row.id}
@@ -1120,9 +1181,21 @@ function PagedTable<TData extends DataRow, TValue>({
                       scrollToSelectedRow={scrollToSelectedRow}
                     />
                   );
+                  // Wrapping is decided by the PROP, not by whether this
+                  // row is open: a row whose element type changes on toggle is
+                  // deleted and rebuilt by React, which drops focus from the
+                  // chevron the user just pressed and remounts its rotation
+                  // already-rotated instead of animating.
+                  if (!renderExpandedRow) return sortableRow;
+                  return (
+                    <Fragment key={row.id}>
+                      {sortableRow}
+                      {detailRow}
+                    </Fragment>
+                  );
                 }
 
-                return (
+                const contentRow = (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() ? "selected" : undefined}
@@ -1143,7 +1216,7 @@ function PagedTable<TData extends DataRow, TValue>({
                       }
                     }}
                   >
-                    {row.getVisibleCells().map((cell, cellIndex) => {
+                    {rowCells.map((cell, cellIndex) => {
                       const { column } = cell;
                       const cellContent = resolveGroupableCellContent(
                         cell,
@@ -1189,7 +1262,7 @@ function PagedTable<TData extends DataRow, TValue>({
                               wrapper carries no width of its own — content may
                               use all the space a stretched column actually
                               has, not just the configured `size`. */}
-                          {expansionActive && cellIndex === 0 ? (
+                          {cellIndex === expanderCellIndex ? (
                             <span className="flex min-w-0 items-center">
                               <RowExpanderPrefix
                                 row={row}
@@ -1214,6 +1287,13 @@ function PagedTable<TData extends DataRow, TValue>({
                       );
                     })}
                   </TableRow>
+                );
+                if (!renderExpandedRow) return contentRow;
+                return (
+                  <Fragment key={row.id}>
+                    {contentRow}
+                    {detailRow}
+                  </Fragment>
                 );
               })}
           {!showSkeleton &&

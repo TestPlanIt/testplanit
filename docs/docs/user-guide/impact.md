@@ -24,7 +24,7 @@ Every affected test shows why it was selected. The signals, in the order they ar
 
 ## Running an analysis
 
-**Analyze impact** appears next to **Magic Select** in step 2 of [Add Test Run](projects/add-test-run-modal.md). The button is hidden while Impact Analysis is disabled for the project, and disabled — with a tooltip pointing to project settings — while it is enabled but no application repository is connected.
+**Analyze impact** is one of the **Ways to pick test cases** in step 2 of [Add Test Run](projects/add-test-run-modal.md). It is left out of the menu while Impact Analysis is disabled for the project, and listed but disabled — with a tooltip pointing to project settings — while it is enabled but no application repository is connected.
 
 Clicking it opens the **Impact** dialog, which walks through four steps.
 
@@ -83,15 +83,16 @@ If the same two commits were analyzed within the last 24 hours, the completed an
 
 ### 4. Affected Tests
 
-The header counts the selection ("Selected 12 of 40 affected test cases"), and a line under it names the score at which tests start selected. The list is sorted by score, highest first; click the **Test case**, **Score**, or **Affected** header to sort by it, and drag a column edge to resize it. Each row shows:
+The header counts the selection ("Selected 12 of 40 affected test cases"), and a line under it names the score at which tests start selected. The list is sorted by impact score, highest first; click the **Test case**, **Impact Score**, **Risk Score**, or **Affected** header to sort by it, and drag a column edge to resize it. Each row shows:
 
 - a checkbox — pinned and affected rows are checked to start with, related rows are not; the header checkbox checks or clears every row the filters currently show;
 - the test case name with its manual or automated icon, linked to the case, as in every other case list;
-- the **Score** (0–100) with a tier badge:
+- the **Impact Score** (0–100) — how much this change affects the case — with a tier badge:
   - **Pinned** — a Code Pin on the case intersects the change. Pins always rank first.
   - **Affected** — the other signals put the case at or above the affected threshold.
   - **Related** — a case linked to a strongly affected case, or one whose signals are weaker.
-- **Why** — one reason badge per signal that selected the case: **Pin**, **Issue**, **Keyword**, **History**, **AI**, or **Related**. Hover a badge for its detail; **Show reasons** expands the row with the full list, including the AI's rationale.
+- the **Risk Score** (0–100) the case carries from its own history, independent of this change, so a case the change barely touches but that fails often is still easy to spot. A dash means it has no score yet; sorting by the column puts those last. See [Risk Scores](risk-scores.md).
+- **Why** — one reason badge per signal that selected the case: **Pin**, **Issue**, **Keyword**, **History**, **AI**, or **Related**. Hover a badge for its detail; the arrow at the start of a row opens the full list beneath it, including the AI's rationale.
 
 Hover a tier badge, in a row or in the filter bar, for what it means.
 

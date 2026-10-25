@@ -4611,8 +4611,6 @@
         "tierPinnedTooltip": "A Code Pin on this case intersects the change. Pinned cases always rank first.",
         "tierAffectedTooltip": "The other signals put this case at or above the affected threshold of {threshold, number}.",
         "tierRelatedTooltip": "Linked to a strongly affected case, or its signals scored below {threshold, number}.",
-        "showDetails": "Show reasons",
-        "hideDetails": "Hide reasons",
         "excluded": "{count, plural, one {# case already in the run was skipped} other {# cases already in the run were skipped}}"
       },
       "noAffected": {

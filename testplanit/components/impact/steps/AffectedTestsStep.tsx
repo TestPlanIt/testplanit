@@ -20,16 +20,10 @@ import {
 } from "@/components/ui/tooltip";
 import type {
   ColumnDef,
+  ExpandedState,
   RowSelectionState,
 } from "@/components/tables/tableFeatures";
-import {
-  AlertCircle,
-  AlertTriangle,
-  ChevronDown,
-  ChevronRight,
-  Info,
-  Sparkles,
-} from "lucide-react";
+import { AlertCircle, AlertTriangle, Info, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import type {
@@ -295,7 +289,9 @@ export function AffectedTestsStep({
   const tCommon = useTranslations("common");
   const tCodePins = useTranslations("repository.codePins");
   const locale = useLocale();
-  const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
+  // DataTable owns the expander chevron and the detail row; this is just the
+  // open/closed state it drives, keyed by `getRowId`.
+  const [expanded, setExpanded] = useState<ExpandedState>({});
   const threshold = affectedThresholdOf(result, cases);
   // The list opens showing what starts selected: the cases at or above the
   // affected threshold. Lowering the score reveals the rest.
@@ -416,15 +412,6 @@ export function AffectedTestsStep({
     onSetSelection(on ? [...kept, ...shownIds] : kept);
   };
 
-  const toggleExpanded = useCallback((caseId: number) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(caseId)) next.delete(caseId);
-      else next.add(caseId);
-      return next;
-    });
-  }, []);
-
   const handleSortChange = useCallback((column: string) => {
     setSort((prev) =>
       prev.column === column
@@ -449,7 +436,7 @@ export function AffectedTestsStep({
       const groups = groupReasonsByKind(row.reasons ?? []);
       return (
         <div
-          className="mt-2 space-y-2 rounded-md bg-muted/30 p-2 text-sm"
+          className="space-y-2 p-3 text-sm"
           data-testid={`impact-rationale-${row.caseId}`}
         >
           {[...groups.entries()].map(([kind, reasons]) => {
@@ -561,7 +548,6 @@ export function AffectedTestsStep({
                 {row.original.case.folder.name}
               </p>
             )}
-            {expanded.has(row.original.caseId) && renderRationale(row.original)}
           </div>
         ),
       },
@@ -625,54 +611,8 @@ export function AffectedTestsStep({
           <ReasonBadges reasons={row.original.reasons ?? []} />
         ),
       },
-      {
-        id: "details",
-        header: "",
-        size: 48,
-        minSize: 48,
-        enableSorting: false,
-        enableResizing: false,
-        enableHiding: false,
-        cell: ({ row }) => {
-          const isExpanded = expanded.has(row.original.caseId);
-          return (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => toggleExpanded(row.original.caseId)}
-              aria-expanded={isExpanded}
-              aria-label={
-                isExpanded
-                  ? t("affected.hideDetails")
-                  : t("affected.showDetails")
-              }
-              data-testid={`impact-recommendation-toggle-${row.original.caseId}`}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </Button>
-          );
-        },
-      },
     ],
-    [
-      t,
-      tRisk,
-      tCommon,
-      tCodePins,
-      locale,
-      projectId,
-      threshold,
-      expanded,
-      riskByCase,
-      renderRationale,
-      toggleExpanded,
-    ]
+    [t, tRisk, tCommon, tCodePins, locale, projectId, threshold, riskByCase]
   );
   const columnVisibility = useMemo(
     () => Object.fromEntries(columns.map((column) => [column.id, true])),
@@ -956,6 +896,9 @@ export function AffectedTestsStep({
             onColumnVisibilityChange={noopVisibilityChange}
             sortConfig={sort}
             onSortChange={handleSortChange}
+            expanded={expanded}
+            onExpandedChange={setExpanded}
+            renderExpandedRow={renderRationale}
             storageKey="impact-affected-tests"
             enableColumnReorder={false}
             enableColumnMenu={false}
