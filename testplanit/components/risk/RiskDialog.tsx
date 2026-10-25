@@ -72,6 +72,8 @@ export function RiskDialog({
     setRowSelection({});
   }, [minScore]);
 
+  const queries = useClientQueries(schema);
+
   const where = useMemo(
     () => ({
       projectId,
@@ -85,8 +87,6 @@ export function RiskDialog({
     }),
     [projectId, minScore, currentSelection]
   );
-
-  const queries = useClientQueries(schema);
   const queryArgs = useMemo(
     () => ({
       where,
@@ -278,18 +278,6 @@ export function RiskDialog({
             />
             <span className="w-8 text-sm tabular-nums">{minScore}</span>
           </div>
-
-          {rows.length > 0 && (
-            <p
-              className="text-sm text-muted-foreground"
-              data-testid="risk-showing"
-            >
-              {t("showing", {
-                shown: rows.length,
-                total: matchingTotal ?? rows.length,
-              })}
-            </p>
-          )}
         </div>
 
         {allLoadedSelected && unloadedMatches > 0 && !allMatchesSelected && (
