@@ -11,6 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "~/utils";
 
 // Below this container width, an action bar collapses its buttons to icon-only
@@ -182,27 +187,44 @@ export function ActionOverflow({
   if (!compact) {
     return (
       <>
-        {visible.map((a) => (
-          <Button
-            key={a.key}
-            type="button"
-            variant={a.variant ?? "outline"}
-            onClick={a.onClick}
-            disabled={a.disabled}
-            data-testid={a.testId}
-            aria-label={a.label}
-            className={cn(
-              "group gap-0 transition-all duration-200 hover:gap-2",
-              a.destructive && "text-destructive",
-              a.className
-            )}
-          >
-            <a.icon className="h-4 w-4 shrink-0" />
-            <span className="max-w-0 overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-              {a.label}
-            </span>
-          </Button>
-        ))}
+        {visible.map((a) => {
+          const button = (
+            <Button
+              key={a.key}
+              type="button"
+              variant={a.variant ?? "outline"}
+              onClick={a.onClick}
+              disabled={a.disabled}
+              data-testid={a.testId}
+              aria-label={a.label}
+              className={cn(
+                "group gap-0 transition-all duration-200 hover:gap-2",
+                a.destructive && "text-destructive",
+                a.className
+              )}
+            >
+              <a.icon className="h-4 w-4 shrink-0" />
+              <span className="max-w-0 overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                {a.label}
+              </span>
+            </Button>
+          );
+          // An enabled action tells you what it is by expanding its label on
+          // hover. A DISABLED one cannot: `disabled:pointer-events-none`
+          // means it never sees the pointer, so it would sit there as a mute
+          // icon with its reason -- "what this needs before it works" --
+          // unreachable. The tooltip trigger is a wrapping span for the same
+          // reason: the button itself takes no pointer events.
+          if (!a.disabled) return button;
+          return (
+            <Tooltip key={a.key}>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">{button}</span>
+              </TooltipTrigger>
+              <TooltipContent>{a.label}</TooltipContent>
+            </Tooltip>
+          );
+        })}
       </>
     );
   }
