@@ -24,6 +24,11 @@ import { useEffect, useMemo, useState } from "react";
 import { schema } from "~/zenstack/schema";
 import { RiskScoreCell } from "./RiskScoreCell";
 
+/** The other of the two case kinds. */
+function otherKind(kind: "manual" | "automated") {
+  return kind === "manual" ? "automated" : "manual";
+}
+
 /** Rows fetched per page; the list loads more as it is scrolled. */
 export const RISK_PAGE_SIZE = 50;
 const SCORE_STEP = 5;
@@ -62,6 +67,9 @@ export function RiskDialog({
   const t = useTranslations("runs.risk");
   const tCommon = useTranslations("common");
   const [minScore, setMinScore] = useState(0);
+  // Both kinds to start; the last one checked cannot be unchecked, so the
+  // list always has something it could show.
+  const [kinds, setKinds] = useState({ manual: true, automated: true });
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   // The threshold defines the candidate set, so changing it starts the
@@ -70,7 +78,7 @@ export function RiskDialog({
   // selected.
   useEffect(() => {
     setRowSelection({});
-  }, [minScore]);
+  }, [minScore, kinds]);
 
   const queries = useClientQueries(schema);
 
@@ -81,11 +89,15 @@ export function RiskDialog({
       isArchived: false,
       // `gte` also drops never-scored cases, which have nothing to rank by.
       riskScore: { gte: minScore },
+      // Only a narrowing: with both kinds wanted there is nothing to say.
+      ...(kinds.manual === kinds.automated
+        ? {}
+        : { automated: kinds.automated }),
       ...(currentSelection.length > 0
         ? { id: { notIn: currentSelection } }
         : {}),
     }),
-    [projectId, minScore, currentSelection]
+    [projectId, minScore, kinds, currentSelection]
   );
   const queryArgs = useMemo(
     () => ({
@@ -278,6 +290,38 @@ export function RiskDialog({
             />
             <span className="w-8 text-sm tabular-nums">{minScore}</span>
           </div>
+
+          <div className="flex items-center gap-4">
+            {(
+              [
+                ["manual", "fields.manual"],
+                ["automated", "fields.automated"],
+              ] as const
+            ).map(([kind, labelKey]) => {
+              // Unchecking the only one left would leave a list that can
+              // never have a row in it, so that box holds.
+              const isLast = kinds[kind] && !kinds[otherKind(kind)];
+              return (
+                <div key={kind} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`risk-kind-${kind}`}
+                    checked={kinds[kind]}
+                    disabled={isLast}
+                    onCheckedChange={(value) =>
+                      setKinds((prev) => ({ ...prev, [kind]: value === true }))
+                    }
+                    data-testid={`risk-kind-${kind}`}
+                  />
+                  <Label
+                    htmlFor={`risk-kind-${kind}`}
+                    className="whitespace-nowrap"
+                  >
+                    {tCommon(labelKey)}
+                  </Label>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {allLoadedSelected && unloadedMatches > 0 && !allMatchesSelected && (
@@ -325,7 +369,7 @@ export function RiskDialog({
             onLoadMore={fetchNextPage}
             estimateSize={ROW_HEIGHT}
             flexColumnId="case"
-            resetKey={minScore}
+            resetKey={`${minScore}:${kinds.manual}:${kinds.automated}`}
             emptyMessage={t("noneMatch")}
             testIdPrefix="risk-candidates"
           />

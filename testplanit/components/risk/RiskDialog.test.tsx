@@ -126,3 +126,66 @@ describe("RiskDialog", () => {
     expect(table().rowSelection).toEqual({});
   });
 });
+
+describe("RiskDialog manual/automated", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDataTable.mockImplementation(() => <div data-testid="table" />);
+    mockInfiniteFindMany.mockReturnValue({
+      data: { pages: [[candidate(1), candidate(2)]] },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      isLoading: false,
+    });
+    mockCount.mockReturnValue({ data: 2 });
+    mockFindMany.mockReturnValue({ data: [], refetch: vi.fn() });
+  });
+
+  const box = (kind: string) =>
+    document.querySelector(`[data-testid="risk-kind-${kind}"]`) as HTMLElement;
+
+  it("asks for both kinds to start, which is no filter at all", () => {
+    renderDialog();
+
+    expect(box("manual").getAttribute("data-state")).toBe("checked");
+    expect(box("automated").getAttribute("data-state")).toBe("checked");
+    expect(lastQueryWhere()).not.toHaveProperty("automated");
+  });
+
+  it("asks for manual cases alone when automated is unchecked", () => {
+    renderDialog();
+
+    act(() => box("automated").click());
+
+    expect(lastQueryWhere().automated).toBe(false);
+  });
+
+  it("asks for automated cases alone when manual is unchecked", () => {
+    renderDialog();
+
+    act(() => box("manual").click());
+
+    expect(lastQueryWhere().automated).toBe(true);
+  });
+
+  it("holds the last kind checked, so the list can never be impossible", () => {
+    renderDialog();
+
+    act(() => box("automated").click());
+    expect(box("manual")).toBeDisabled();
+    act(() => box("manual").click());
+    expect(lastQueryWhere().automated).toBe(false);
+  });
+
+  it("starts the choice over when the kinds change the candidate set", () => {
+    renderDialog();
+    const table = () => mockDataTable.mock.calls.at(-1)![0];
+
+    act(() => table().onRowSelectionChange({ "1": true }));
+    expect(table().rowSelection).toEqual({ "1": true });
+
+    act(() => box("automated").click());
+    expect(table().rowSelection).toEqual({});
+  });
+});
