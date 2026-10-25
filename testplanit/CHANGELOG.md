@@ -1,3 +1,10 @@
+## [1.1.15](https://github.com/TestPlanIt/testplanit/compare/v1.1.14...v1.1.15) (2026-10-25)
+
+### Bug Fixes
+
+* **auth:** refresh the session display name from the user record ([#716](https://github.com/TestPlanIt/testplanit/issues/716)) ([e727729](https://github.com/TestPlanIt/testplanit/commit/e727729098e19a61accccea9f72e724b346fe97f))
+* **deps:** resolve 8 open Dependabot alerts ([#710](https://github.com/TestPlanIt/testplanit/issues/710)) ([ef6c406](https://github.com/TestPlanIt/testplanit/commit/ef6c4068651e2e95a9e02ced094d01102f4dfa4b))
+
 ## [1.1.14](https://github.com/TestPlanIt/testplanit/compare/v1.1.13...v1.1.14) (2026-10-21)
 
 ### Bug Fixes
