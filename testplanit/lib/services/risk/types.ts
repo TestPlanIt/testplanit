@@ -76,6 +76,20 @@ export interface RiskScoreResult {
 }
 
 // Job payloads; tenantId routes shared workers (lib/multiTenantDb.ts).
+/** One on-demand re-rank of the candidates a user is looking at. */
+export interface RiskRerankJobData {
+  projectId: number;
+  caseIds: number[];
+  runContext: {
+    name: string;
+    description?: string | null;
+    issueKeys?: string[];
+    tags?: string[];
+  };
+  userId: string;
+  tenantId?: string;
+}
+
 export interface RiskRunJobData {
   testRunId: number;
   projectId: number;
@@ -94,4 +108,7 @@ export interface RiskUpdateAllJobData {
 }
 
 export type RiskScoreJobData =
-  RiskRunJobData | RiskProjectJobData | RiskUpdateAllJobData;
+  | RiskRunJobData
+  | RiskProjectJobData
+  | RiskUpdateAllJobData
+  | RiskRerankJobData;

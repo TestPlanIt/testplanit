@@ -5,6 +5,7 @@ import {
   type BatchableItem,
 } from "../lib/llm/services/batch-processor";
 import { LlmManager } from "../lib/llm/services/llm-manager.service";
+import { extractTextFromTipTap } from "../lib/llm/services/tiptap-text";
 import { PromptResolver } from "../lib/llm/services/prompt-resolver.service";
 import { LLM_FEATURES } from "../lib/llm/constants";
 import type { LlmRequest } from "../lib/llm/types/index";
@@ -133,33 +134,6 @@ interface IssueData {
 }
 
 // Extract text content from TipTap JSON
-function extractTextFromTipTap(content: unknown): string {
-  if (!content) return "";
-
-  if (typeof content === "string") {
-    try {
-      const parsed = JSON.parse(content);
-      return extractTextFromTipTap(parsed);
-    } catch {
-      return content;
-    }
-  }
-
-  if (typeof content !== "object") return "";
-
-  const obj = content as Record<string, unknown>;
-
-  if (obj.type === "text" && typeof obj.text === "string") {
-    return obj.text;
-  }
-
-  if (Array.isArray(obj.content)) {
-    return obj.content.map((child) => extractTextFromTipTap(child)).join(" ");
-  }
-
-  return "";
-}
-
 // Truncate string to specified length with ellipsis
 function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;

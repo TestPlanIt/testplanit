@@ -274,7 +274,7 @@ After creating an LLM integration:
 
 ## Per-Feature LLM Overrides
 
-Project admins can override which LLM integration is used for specific AI features, independently of the project-wide default. This is configured per project on the **AI Models** settings page and applies to the following features: Test Case Generation, Markdown Parsing, Smart Test Case Selection, Editor Writing Assistant, LLM Connection Test, QuickScript, Auto-tagging, and Automation Candidates.
+Project admins can override which LLM integration is used for specific AI features, independently of the project-wide default. This is configured per project on the **AI Models** settings page, whose table lists every AI feature TestPlanIt has.
 
 ### How to Configure
 

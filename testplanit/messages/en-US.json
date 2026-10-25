@@ -4696,7 +4696,18 @@
       "noneMatch": "No scored cases at or above this score.",
       "caseColumn": "Test case",
       "scoreColumn": "Risk score",
-      "addCases": "{count, plural, =0 {Add cases} one {Add # case} other {Add # cases}}"
+      "addCases": "{count, plural, =0 {Add cases} one {Add # case} other {Add # cases}}",
+      "rerank": {
+        "action": "Re-rank for this run",
+        "cancel": "Cancel re-rank",
+        "applied": "{count, plural, one {# case re-ranked for this run} other {# cases re-ranked for this run}}",
+        "restore": "Show risk order",
+        "noModel": "No AI model is configured for risk re-ranking.",
+        "unreadable": "The model's answer could not be read. The risk order is unchanged.",
+        "failed": "The re-rank did not finish.",
+        "timedOut": "Stopped waiting for the re-rank. The risk order is unchanged — try again if you still want it.",
+        "capped": "Only the top {count, number} candidates were re-ranked; the rest keep their risk order."
+      }
     },
     "caseSelection": {
       "menuLabel": "Ways to pick test cases"
@@ -6821,7 +6832,8 @@
         "automation_candidates": "Automation Candidates Report",
         "derive_case_steps": "AI Step Derivation",
         "impact_analysis": "Impact: Affected Test Selection",
-        "failure_triage": "Failure Patterns: Root Cause"
+        "failure_triage": "Failure Patterns: Root Cause",
+        "risk_rerank": "Risk: Re-rank for a Run"
       }
     },
     "elasticsearch": {
