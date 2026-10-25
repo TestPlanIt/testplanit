@@ -319,6 +319,16 @@ describe("session callback - source-shape sanity", () => {
     expect(merged!.length).toBe(2);
   });
 
+  it("D4: BOTH session callbacks refresh the display name from the user record", () => {
+    // Only the getAuthOptions() copy did. The authOptions copy fed token.name
+    // straight to ~221 getServerSession call sites and into every audit row.
+    const refreshed = source.match(
+      /session\.user\.name\s*=\s*user\.name\s*\|\|\s*undefined;/g
+    );
+    expect(refreshed).not.toBeNull();
+    expect(refreshed!.length).toBe(2);
+  });
+
   it("D2: file does NOT call invalidateSessionUserCache (Path A — no cache coordination)", () => {
     expect(source).not.toMatch(/invalidateSessionUserCache/);
   });
@@ -329,6 +339,38 @@ describe("session callback - source-shape sanity", () => {
       .filter((line) => !/^\s*\*|^\s*\/\//.test(line))
       .join("\n");
     expect(codeOnly).not.toMatch(/D-[0-9]+|Phase 7|Plan 0[0-9]/);
+  });
+});
+
+describe("session callback - actor display name freshness", () => {
+  const renamedUser = {
+    name: "Deepa Alappatt",
+    access: "USER",
+    image: null,
+    emailVerified: null,
+    authMethod: "BOTH",
+    preferences: null,
+  };
+
+  it("F1: name comes from the user record, not the JWT claim", async () => {
+    // token.name is only written at sign-in, so a user renamed mid-session
+    // keeps the old value in their JWT until they sign out and back in.
+    const result = (await invoke({ cachedUser: renamedUser })) as {
+      user: { name?: string };
+    };
+
+    expect(result.user.name).toBe("Deepa Alappatt");
+  });
+
+  it("F2: the refreshed name is what reaches the audit context", async () => {
+    // AuditLog.userName is a write-time snapshot of this value. When it was the
+    // frozen JWT claim, rows written through a session disagreed with rows the
+    // worker backfilled from User.name — the same actor under two names.
+    await invoke({ cachedUser: renamedUser });
+
+    expect(updateAuditContextMock).toHaveBeenCalledWith(
+      expect.objectContaining({ userName: "Deepa Alappatt" })
+    );
   });
 });
 

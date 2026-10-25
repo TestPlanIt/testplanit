@@ -748,6 +748,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await getCachedSessionUser(session.user.id);
         if (user) {
+          session.user.name = user.name || undefined;
           session.user.access = user.access || undefined;
           session.user.image = user.image || undefined;
           session.user.emailVerified = user.emailVerified
