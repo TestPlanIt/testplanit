@@ -17,7 +17,6 @@ Each prompt configuration contains prompts for the following AI features:
 - **Editor Writing Assistant** — Controls how AI assists with writing and improving content in rich text editors
 - **LLM Connection Test** — A simple prompt used to verify the AI provider connection is working
 - **Automation Candidates** — Controls how AI ranks manual test cases for automation in the [Automation Candidates report](../projects/reports/automation-candidates)
-- **Risk: Re-rank for a Run** — Controls how AI re-orders [risk](risk-scores.md) candidates for the run being composed
 
 ## Prompt Resolution
 
@@ -114,7 +113,6 @@ User prompts can include `{{variable}}` placeholders that are replaced at runtim
 | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Test Case Generation                                                                                                                         | `{{EXAMPLE_STRUCTURE}}`, `{{REQUIRED_FIELDS_LIST}}`, `{{OPTIONAL_FIELDS_LIST}}`, `{{EXCLUDED_FIELDS_LIST}}`, `{{QUANTITY_GUIDANCE}}`, `{{STEPS_INSTRUCTION}}`, `{{PRIORITY_INSTRUCTION}}`, `{{TAG_INSTRUCTIONS}}`, `{{ISSUE_KEY}}`, `{{ISSUE_TITLE}}`, `{{ISSUE_DESCRIPTION}}`, `{{ISSUE_STATUS}}`, `{{ISSUE_PRIORITY}}`, `{{COMMENTS_SECTION}}`, `{{USER_NOTES_SECTION}}`, `{{EXISTING_CASES_SECTION}}` |
 | Automation Candidates                                                                                                                        | `{{PROJECT_NAME}}`, `{{CASE_COUNT}}`, `{{CASES_JSON}}`                                                                                                                                                                                                                                                                                                                                                   |
-| Risk: Re-rank for a Run | `{{RUN_CONTEXT}}`, `{{CANDIDATES}}`, `{{CANDIDATE_COUNT}}` |
 | Markdown Parsing, Smart Test Case Selection, Editor Writing Assistant, Auto Tag, Duplicate Detection, Generate from URL, LLM Connection Test | None — the content being worked on is sent as the user message                                                                                                                                                                                                                                                                                                                                           |
 
 The editor's **Insert variable** picker lists every variable available for the

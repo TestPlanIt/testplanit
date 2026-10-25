@@ -1,6 +1,5 @@
 import { Job, Worker } from "bullmq";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
-import { LlmManager } from "../lib/llm/services/llm-manager.service";
 import {
   disconnectAllTenantClients,
   getDbClientForJob,
@@ -8,16 +7,11 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
 import {
-  JOB_RISK_RERANK,
   JOB_RISK_UPDATE_ALL,
   JOB_RISK_UPDATE_PROJECT,
   JOB_RISK_UPDATE_RUN,
   RISK_SCORE_QUEUE_NAME,
 } from "../lib/queueNames";
-import {
-  rerankRiskCandidates,
-  type RerankOutcome,
-} from "../lib/services/risk/rerank";
 import {
   updateProjectRiskScores,
   updateRiskScoresForCases,
@@ -25,7 +19,6 @@ import {
 import { getRecentlyExecutedRunCaseIds } from "../lib/services/risk/signals";
 import type {
   RiskProjectJobData,
-  RiskRerankJobData,
   RiskRunJobData,
   RiskScoreJobData,
   RiskUpdateAllJobData,
@@ -103,57 +96,23 @@ async function processUpdateAll(job: Job<RiskUpdateAllJobData>): Promise<void> {
   );
 }
 
-/**
- * The one job on this queue a user is waiting for, and the only one with a
- * return value: the dialog polls for it. Nothing is persisted — the ranking
- * lives in the job result and dies with it.
- */
-async function processRerank(
-  job: Job<RiskRerankJobData>
-): Promise<RerankOutcome> {
-  const { projectId, caseIds, runContext, userId, tenantId } = job.data;
-  const db = getDbClientForJob(job.data);
-  const outcome = await rerankRiskCandidates(db, {
-    llmManager: LlmManager.createForWorker(db, tenantId),
-    projectId,
-    caseIds,
-    runContext,
-    userId,
-  });
-  console.log(
-    `[risk-rerank] project ${projectId}: ${outcome.ranked.length} of ${outcome.candidateCount} candidate(s) ranked${outcome.skipped ? ` (${outcome.skipped})` : ""}`
-  );
-  return outcome;
-}
-
-/** Only the re-rank answers; the recomputes report through their logs. */
-type RiskJobResult = RerankOutcome | null;
-
-const processor = async (
-  job: Job<RiskScoreJobData>
-): Promise<RiskJobResult> => {
+const processor = async (job: Job<RiskScoreJobData>): Promise<void> => {
   validateMultiTenantJobData(job.data);
   switch (job.name) {
     case JOB_RISK_UPDATE_RUN:
-      await processRun(job as Job<RiskRunJobData>);
-      return null;
+      return processRun(job as Job<RiskRunJobData>);
     case JOB_RISK_UPDATE_PROJECT:
-      await processProject(job as Job<RiskProjectJobData>);
-      return null;
+      return processProject(job as Job<RiskProjectJobData>);
     case JOB_RISK_UPDATE_ALL:
-      await processUpdateAll(job as Job<RiskUpdateAllJobData>);
-      return null;
-    case JOB_RISK_RERANK:
-      return processRerank(job as Job<RiskRerankJobData>);
+      return processUpdateAll(job as Job<RiskUpdateAllJobData>);
     default:
       console.warn(`[risk-score] unknown job name ${job.name}; ignoring`);
-      return null;
   }
 };
 
 // ─── Worker setup ────────────────────────────────────────────────────────────
 
-let worker: Worker<RiskScoreJobData, RiskJobResult> | null = null;
+let worker: Worker<RiskScoreJobData, void> | null = null;
 
 const startWorker = async () => {
   console.log(
@@ -161,7 +120,7 @@ const startWorker = async () => {
   );
 
   if (valkeyConnection) {
-    worker = new Worker<RiskScoreJobData, RiskJobResult>(
+    worker = new Worker<RiskScoreJobData, void>(
       RISK_SCORE_QUEUE_NAME,
       withTenantContext(processor),
       {

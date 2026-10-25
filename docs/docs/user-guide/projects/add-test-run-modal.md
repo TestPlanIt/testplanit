@@ -62,7 +62,6 @@ This step involves selecting the test cases to be included in the run.
   - [Magic Select](../llm-magic-select.md) suggests cases from the run's name, description, documentation, and linked issues. Requires an active LLM integration.
   - **Analyze impact** compares two commits of the application under test and lists the Affected Tests. Requires Impact Analysis enabled and an application repository connected — see [Test Impact Analysis](../impact.md).
   - **Prioritize by risk** lists the cases that most deserve a run, highest [risk score](../risk-scores.md) first, with a minimum-score control and a count of how many match. Cases already in the run are left out. Requires risk scoring enabled for the project.
-    With an AI model configured for risk re-ranking, this dialog can also re-order its candidates for the run you are composing — see [Re-ranking for one run](../risk-scores.md#re-ranking-for-one-run).
 
 :::note Draft cases may be hidden
 If the project has [Exclude Draft Cases from Test Runs](../projects.md#exclude-draft-cases-from-test-runs) turned on, test cases whose current workflow state is a Not Started type are hidden from this picker. If any selected cases drift into a Not Started state before Save, they are dropped on submit and a toast names how many were skipped.

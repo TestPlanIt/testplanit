@@ -146,7 +146,6 @@ The application uses the following background processes:
 - Consumes the `risk-score` BullMQ queue: a debounced job per test run whenever manual or automated results arrive (rescoring just the cases whose results landed recently), a per-project recompute, and a nightly sweep over every project with risk scoring enabled
 - Scores each test case 0-100 from its failure history, flakiness, staleness, linked requirement criticality (including suspect links), and linked defects, using the project's configured component weights
 - Persists the score with a per-component breakdown; the debounced and nightly passes only write (and re-index) cases whose score or inputs actually changed, while the on-demand per-project recompute rewrites everything so configuration changes propagate
-- Also runs the on-demand **re-rank** job this queue carries: when someone asks the AI to re-order risk candidates for a run they are composing, that job jumps ahead of the recompute work, calls the project's model once and returns the ranking to the dialog. Nothing is persisted and no score changes
 - Default concurrency: 2 (overridable via `RISK_SCORE_CONCURRENCY`)
 - Location: `workers/riskScoreWorker.ts`
 

@@ -17,7 +17,6 @@ export const LLM_FEATURES = {
   DERIVE_CASE_STEPS: "derive_case_steps",
   IMPACT_ANALYSIS: "impact_analysis",
   FAILURE_TRIAGE: "failure_triage",
-  RISK_RERANK: "risk_rerank",
 } as const;
 
 export type LlmFeature = (typeof LLM_FEATURES)[keyof typeof LLM_FEATURES];
@@ -214,22 +213,6 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
         "Newline-delimited positional JSON rows: [id, name, folder?, tags[]?, fields?]",
     },
   ],
-  [LLM_FEATURES.RISK_RERANK]: [
-    {
-      name: "RUN_CONTEXT",
-      description:
-        "What the run being composed is for: its name, description and tags",
-    },
-    {
-      name: "CANDIDATES",
-      description:
-        "The candidate test cases, one per line, each with its id, name, folder and deterministic risk score with the signals behind it",
-    },
-    {
-      name: "CANDIDATE_COUNT",
-      description: "How many candidates are listed",
-    },
-  ],
   [LLM_FEATURES.FAILURE_TRIAGE]: [
     {
       name: "CLASSIFICATIONS",
@@ -307,5 +290,4 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
   [LLM_FEATURES.DERIVE_CASE_STEPS]: "AI Step Derivation",
   [LLM_FEATURES.IMPACT_ANALYSIS]: "Impact: Affected Test Selection",
   [LLM_FEATURES.FAILURE_TRIAGE]: "Failure Triage: Root Cause",
-  [LLM_FEATURES.RISK_RERANK]: "Risk: Re-rank for a Run",
 };

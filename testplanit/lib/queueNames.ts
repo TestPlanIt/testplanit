@@ -42,8 +42,6 @@ export const RISK_SCORE_QUEUE_NAME = "risk-score";
 export const JOB_RISK_UPDATE_RUN = "risk-update-run";
 export const JOB_RISK_UPDATE_PROJECT = "risk-update-project";
 export const JOB_RISK_UPDATE_ALL = "risk-update-all";
-/** On-demand LLM re-rank of a run's risk candidates; rides the risk queue. */
-export const JOB_RISK_RERANK = "risk-rerank";
 // Failure triage: group automated failures into signatures and classify them.
 export const FAILURE_TRIAGE_QUEUE_NAME = "failure-triage";
 export const JOB_TRIAGE_RUN = "triage-run";

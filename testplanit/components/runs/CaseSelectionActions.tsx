@@ -195,11 +195,6 @@ export function CaseSelectionActions({
           projectId={projectId}
           currentSelection={selectedTestCases}
           onAccept={merge}
-          // Offered whenever risk scoring is on: a model can resolve from
-          // the global default with no project integration of its own, so
-          // `hasLlm` would hide it from projects that do have one. Where
-          // nothing resolves, the dialog says what is missing.
-          runContext={testRunMetadata}
         />
       )}
     </>
