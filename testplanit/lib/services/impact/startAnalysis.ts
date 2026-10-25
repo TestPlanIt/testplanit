@@ -21,6 +21,14 @@ export interface StartAnalysisQueue {
     data: unknown,
     opts: { jobId: string }
   ) => Promise<unknown>;
+  getJob: (jobId: string) => Promise<
+    | {
+        getState: () => Promise<string>;
+        remove: () => Promise<unknown>;
+      }
+    | null
+    | undefined
+  >;
 }
 
 export interface StartAnalysisInput {
@@ -191,6 +199,18 @@ export async function startImpactAnalysis(
     autoRun: input.autoRun,
   };
   try {
+    // A job id is derived from the analysis id, and BullMQ ignores an `add`
+    // whose id already exists — including one that finished long ago. Restore
+    // a database and the id sequence starts over, so the next analysis can
+    // collide with a retained job: the add would be dropped with no error and
+    // the row would sit PENDING for ever. Clear a finished namesake first.
+    const existing = await queue.getJob(jobId);
+    if (existing) {
+      const state = await existing.getState();
+      if (state === "completed" || state === "failed") {
+        await existing.remove();
+      }
+    }
     await queue.add("analyze", jobData, { jobId });
   } catch (error) {
     await db.impactAnalysis.update({
