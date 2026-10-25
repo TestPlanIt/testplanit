@@ -15,12 +15,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import type { SortConfig } from "@/components/tables/dataTableShared";
 import type {
   ColumnDef,
   RowSelectionState,
 } from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { schema } from "~/zenstack/schema";
 import { RiskScoreCell } from "./RiskScoreCell";
 
@@ -32,6 +33,8 @@ function otherKind(kind: "manual" | "automated") {
 /** Rows fetched per page; the list loads more as it is scrolled. */
 export const RISK_PAGE_SIZE = 50;
 const SCORE_STEP = 5;
+/** Riskiest first by default; the header toggles to lowest first. */
+const DEFAULT_SORT: SortConfig = { column: "riskScore", direction: "desc" };
 const ROW_HEIGHT = 52;
 
 // Nothing here is hideable; the table still wants the visibility pair, and
@@ -70,6 +73,7 @@ export function RiskDialog({
   // Both kinds to start; the last one checked cannot be unchecked, so the
   // list always has something it could show.
   const [kinds, setKinds] = useState({ manual: true, automated: true });
+  const [sort, setSort] = useState<SortConfig>(DEFAULT_SORT);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   // The threshold defines the candidate set, so changing it starts the
@@ -79,6 +83,17 @@ export function RiskDialog({
   useEffect(() => {
     setRowSelection({});
   }, [minScore, kinds]);
+
+  // Sorting runs in the query, not over the loaded rows: the list pages in
+  // as it is scrolled, so sorting in place would only order what is in hand.
+  // The candidate set does not change, so the selection stands.
+  const handleSortChange = useCallback((column: string) => {
+    if (column !== "riskScore") return;
+    setSort((prev) => ({
+      column: "riskScore",
+      direction: prev.direction === "desc" ? "asc" : "desc",
+    }));
+  }, []);
 
   const queries = useClientQueries(schema);
 
@@ -102,7 +117,7 @@ export function RiskDialog({
   const queryArgs = useMemo(
     () => ({
       where,
-      orderBy: [{ riskScore: "desc" as const }, { id: "asc" as const }],
+      orderBy: [{ riskScore: sort.direction }, { id: "asc" as const }],
       select: {
         id: true,
         name: true,
@@ -114,7 +129,7 @@ export function RiskDialog({
       },
       take: RISK_PAGE_SIZE,
     }),
-    [where]
+    [where, sort.direction]
   );
 
   const {
@@ -228,9 +243,11 @@ export function RiskDialog({
       {
         id: "riskScore",
         header: t("scoreColumn"),
-        size: 90,
-        minSize: 90,
-        enableSorting: false,
+        // Wide enough for the label AND the sort control beside it; at 90 the
+        // header truncated to "Risk ...".
+        size: 116,
+        minSize: 116,
+        enableSorting: true,
         cell: ({ row }) => (
           <RiskScoreCell
             score={row.original.riskScore}
@@ -324,34 +341,53 @@ export function RiskDialog({
           </div>
         </div>
 
-        {allLoadedSelected && unloadedMatches > 0 && !allMatchesSelected && (
-          <div
-            className="flex flex-wrap items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm"
-            data-testid="risk-select-all-matches-prompt"
-          >
-            <span>{t("loadedSelected", { shown: rows.length })}</span>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="h-auto p-0"
-              onClick={() => void selectAllMatches()}
-              disabled={allMatchingIds.isFetching}
-              data-testid="risk-select-all-matches"
+        {/* What is selected on the left, how much is loaded on the right:
+            both answer "how far does this list go", so they read together.
+            `min-h-9` is the padded prompt's own height, held whether or not
+            it is showing, so the table below does not jump as it appears. */}
+        <div className="flex min-h-9 flex-wrap items-center gap-4">
+          {allLoadedSelected && unloadedMatches > 0 && !allMatchesSelected && (
+            <div
+              className="flex flex-wrap items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm"
+              data-testid="risk-select-all-matches-prompt"
             >
-              {t("selectAllMatches", { total: matchingTotal ?? 0 })}
-            </Button>
-          </div>
-        )}
+              <span>{t("loadedSelected", { shown: rows.length })}</span>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto p-0"
+                onClick={() => void selectAllMatches()}
+                disabled={allMatchingIds.isFetching}
+                data-testid="risk-select-all-matches"
+              >
+                {t("selectAllMatches", { total: matchingTotal ?? 0 })}
+              </Button>
+            </div>
+          )}
 
-        {allMatchesSelected && (
-          <p
-            className="rounded-md bg-muted px-3 py-2 text-sm"
-            data-testid="risk-all-matches-selected"
-          >
-            {t("allMatchesSelected", { total: matchingTotal ?? 0 })}
-          </p>
-        )}
+          {allMatchesSelected && (
+            <p
+              className="rounded-md bg-muted px-3 py-2 text-sm"
+              data-testid="risk-all-matches-selected"
+            >
+              {t("allMatchesSelected", { total: matchingTotal ?? 0 })}
+            </p>
+          )}
+
+          {rows.length > 0 && (
+            <p
+              // Pushed to the end whatever sits beside it, including nothing.
+              className="ms-auto text-sm text-muted-foreground"
+              data-testid="risk-showing"
+            >
+              {t("showing", {
+                shown: rows.length,
+                total: matchingTotal ?? rows.length,
+              })}
+            </p>
+          )}
+        </div>
 
         <div className="min-h-0 w-full flex-1">
           <DataTable<RiskCandidate>
@@ -364,12 +400,14 @@ export function RiskDialog({
             onRowSelectionChange={setRowSelection}
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={noopVisibilityChange}
+            sortConfig={sort}
+            onSortChange={handleSortChange}
             isLoading={isLoading || isFetchingNextPage}
             hasMore={!!hasNextPage}
             onLoadMore={fetchNextPage}
             estimateSize={ROW_HEIGHT}
             flexColumnId="case"
-            resetKey={`${minScore}:${kinds.manual}:${kinds.automated}`}
+            resetKey={`${minScore}:${kinds.manual}:${kinds.automated}:${sort.direction}`}
             emptyMessage={t("noneMatch")}
             testIdPrefix="risk-candidates"
           />

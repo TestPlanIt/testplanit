@@ -58,9 +58,13 @@ const candidate = (id: number) => ({
 });
 
 /** The args the candidate query was last called with. */
-function lastQueryWhere() {
+function lastQueryArgs() {
   const calls = mockInfiniteFindMany.mock.calls;
-  return calls[calls.length - 1][0].where;
+  return calls[calls.length - 1][0];
+}
+
+function lastQueryWhere() {
+  return lastQueryArgs().where;
 }
 
 function renderDialog(
@@ -144,6 +148,45 @@ describe("RiskDialog manual/automated", () => {
 
   const box = (kind: string) =>
     document.querySelector(`[data-testid="risk-kind-${kind}"]`) as HTMLElement;
+
+  it("sorts by risk in the query, so lowest-first reaches the server", () => {
+    // Some runs want the low-risk cases; the list pages in as it scrolls, so
+    // sorting in place would only order what happens to be loaded.
+    renderDialog();
+    const table = () => mockDataTable.mock.calls.at(-1)![0];
+
+    expect(table().sortConfig).toEqual({
+      column: "riskScore",
+      direction: "desc",
+    });
+    expect(lastQueryArgs().orderBy[0].riskScore).toBe("desc");
+
+    act(() => table().onSortChange("riskScore"));
+
+    expect(table().sortConfig.direction).toBe("asc");
+    expect(lastQueryArgs().orderBy[0].riskScore).toBe("asc");
+  });
+
+  it("keeps the selection when only the order changes", () => {
+    renderDialog();
+    const table = () => mockDataTable.mock.calls.at(-1)![0];
+
+    act(() => table().onRowSelectionChange({ "1": true }));
+    act(() => table().onSortChange("riskScore"));
+
+    expect(table().rowSelection).toEqual({ "1": true });
+  });
+
+  it("says how much of the match set is loaded", () => {
+    // Lost when the dialog's change filter was removed (398e112c4) and the
+    // string sat unused until this test pinned it.
+    mockCount.mockReturnValue({ data: 1407 });
+    const { getByTestId } = renderDialog();
+
+    expect(getByTestId("risk-showing").textContent).toBe(
+      'showing:{"shown":2,"total":1407}'
+    );
+  });
 
   it("asks for both kinds to start, which is no filter at all", () => {
     renderDialog();

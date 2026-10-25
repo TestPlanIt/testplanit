@@ -895,7 +895,13 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                     ref={shell.setNodeRef}
                     role="columnheader"
                     className={cn(
-                      "relative flex select-none items-center gap-1 border-e px-3 last:border-e-0",
+                      // `h-9` is load-bearing: header content sits in a
+                      // truncating block, so an inline-block child whose
+                      // baseline moves -- a checkbox gaining its tick -- grows
+                      // that line box and the whole header with it. The paged
+                      // engine never had the problem because `TableHead`
+                      // carries a fixed height of its own.
+                      "relative flex h-9 select-none items-center gap-1 border-e px-3 last:border-e-0",
                       tableStyles.headerCell,
                       isFlex ? "min-w-0" : "shrink-0",
                       // Opaque fill so scrolled header cells don't bleed under a

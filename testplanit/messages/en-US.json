@@ -4687,7 +4687,7 @@
     "risk": {
       "prioritizeByRisk": "Prioritize by risk",
       "title": "Prioritize by risk",
-      "description": "The cases that most deserve a run, highest risk first. Cases already in this run are left out.",
+      "description": "The cases that most deserve a run, highest risk first by default. Cases already in this run are left out.",
       "minimumScore": "Minimum risk score",
       "showing": "{shown, plural, one {# case loaded} other {# cases loaded}} of {total, plural, one {# match} other {# matches}}",
       "loadedSelected": "{shown, plural, =2 {Both loaded cases are selected} one {The loaded case is selected} other {All # loaded cases are selected}}.",
