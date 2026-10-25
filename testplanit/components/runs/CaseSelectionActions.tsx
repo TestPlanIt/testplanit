@@ -31,6 +31,12 @@ interface CaseSelectionActionsProps {
   selectedTestCases: number[];
   onSuggestionsAccepted: (ids: number[]) => void;
   onAnalysisAccepted?: (info: ImpactAcceptedInfo) => void;
+  /**
+   * Collapse the sources into one menu. The caller measures the header it
+   * sits in, so there is room for three icon buttons on a wide dialog and a
+   * single menu when there is not. Defaults to the menu.
+   */
+  compact?: boolean;
 }
 
 /**
@@ -47,6 +53,7 @@ export function CaseSelectionActions({
   selectedTestCases,
   onSuggestionsAccepted,
   onAnalysisAccepted,
+  compact = true,
 }: CaseSelectionActionsProps) {
   const t = useTranslations("runs");
   const [activeSource, setActiveSource] = useState<SelectionSource | null>(
@@ -161,7 +168,7 @@ export function CaseSelectionActions({
   return (
     <>
       <ActionOverflow
-        compact
+        compact={compact}
         preserveMenuOrder
         actions={actions}
         menuLabel={t("caseSelection.menuLabel")}

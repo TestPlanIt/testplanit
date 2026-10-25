@@ -58,6 +58,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import * as React from "react";
+import { useContainerCompact } from "@/components/ui/action-bar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -695,6 +696,11 @@ const TestCasesDialog = React.memo(
       }
     }, [selectedTestCases, open]);
 
+    // The selection sources show as icon buttons while the header has room
+    // for them and collapse to one menu when it does not. Measured on the
+    // header row, never on the buttons themselves — that would feed back.
+    const { ref: headerRef, compact: headerCompact } = useContainerCompact();
+
     // Map fetchedTestCases to the structure expected by SelectedTestCasesDrawer
     const _mappedTestCasesForDrawer = useMemo(() => {
       if (!fetchedTestCases) return [];
@@ -732,9 +738,13 @@ const TestCasesDialog = React.memo(
         <DialogHeader className="p-6 pb-0 pe-4">
           <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
           <DialogDescription asChild>
-            <div className="flex justify-between items-start text-muted-foreground">
+            <div
+              ref={headerRef}
+              className="flex justify-between items-start text-muted-foreground"
+            >
               <div className="flex items-center gap-4">
                 <CaseSelectionActions
+                  compact={headerCompact}
                   projectId={Number(projectId)}
                   testRunMetadata={{
                     name: form.getValues("name"),

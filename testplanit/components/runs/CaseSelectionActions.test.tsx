@@ -119,6 +119,18 @@ describe("CaseSelectionActions", () => {
     }
   });
 
+  it("lets the caller's measured width decide menu or icons", () => {
+    mockUseFindFirstProjects.mockReturnValue(fullyEnabled);
+
+    // Default: one menu, which is what a caller that measures nothing gets.
+    renderActions();
+    expect(mockActionOverflow.mock.calls.at(-1)![0].compact).toBe(true);
+
+    // A header with room asks for the sources as icon buttons instead.
+    renderActions({ compact: false });
+    expect(mockActionOverflow.mock.calls.at(-1)![0].compact).toBe(false);
+  });
+
   it("hides a feature the project has switched off", () => {
     mockUseFindFirstProjects.mockReturnValue({
       ...fullyEnabled,
