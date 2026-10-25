@@ -72,6 +72,7 @@ For each test case in your repository, the AI considers:
 - **Tags**: Category and classification information
 - **Custom Fields**: Additional metadata from your templates
 - **Linked Cases**: Relationships between test cases
+- **Risk Score**: The case's standing [risk score](risk-scores.md), when the project keeps them — used only to break a tie between cases that are equally relevant to the run. A high score is never a reason to select a case the run has nothing to do with, and a low one is never a reason to leave a relevant case out.
 
 ### Search Pre-Filtering
 

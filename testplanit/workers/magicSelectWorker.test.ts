@@ -1,5 +1,10 @@
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  buildUserPrompt,
+  compressCaseForPrompt,
+  type CompressedTestCase,
+} from "./magicSelectWorker";
 
 // ─── Stable mock refs via vi.hoisted() ───────────────────────────────────────
 
@@ -372,5 +377,91 @@ describe("MagicSelectWorker", () => {
         expect.objectContaining({ phase: "ai" })
       );
     });
+  });
+});
+
+describe("buildUserPrompt — risk as context", () => {
+  const run = {
+    name: "Checkout regression",
+    description: null,
+    docs: null,
+    linkedIssueIds: [],
+  };
+  const testCase = (id: number, risk?: number): CompressedTestCase => ({
+    id,
+    name: `case ${id}`,
+    folderPath: "/",
+    tags: [],
+    fields: {},
+    linksTo: [],
+    linksFrom: [],
+    ...(risk == null ? {} : { risk }),
+  });
+
+  it("sends each score and says how to weigh it", () => {
+    const prompt = buildUserPrompt(run, [], [testCase(1, 73), testCase(2, 8)]);
+
+    expect(prompt).toContain("linkedFrom[]?, risk?]");
+    expect(prompt).toContain('[[1,"case 1",null,null,null,null,null,73]');
+    expect(prompt).toContain("prefer the higher risk");
+    // The score must not become a reason to select, or Magic Select starts
+    // picking fragile cases that have nothing to do with the run.
+    expect(prompt).toContain("Never select a case for its risk alone");
+  });
+
+  it("says nothing about risk when the project keeps no scores", () => {
+    const prompt = buildUserPrompt(run, [], [testCase(1), testCase(2)]);
+
+    expect(prompt).toContain("linkedFrom[]?]");
+    expect(prompt).not.toContain("risk");
+    // Trailing nulls are trimmed, so the position costs nothing.
+    expect(prompt).toContain('[[1,"case 1"],[2,"case 2"]]');
+  });
+
+  it("can be asked for the guidance with no cases, to size a batch", () => {
+    // The budget is measured from an empty message; if the guidance were
+    // left out there, every batch would be sized ~86 tokens too generously.
+    const overhead = buildUserPrompt(run, [], [], undefined, true);
+
+    expect(overhead).toContain("prefer the higher risk");
+    expect(buildUserPrompt(run, [], [], undefined, false)).not.toContain(
+      "prefer the higher risk"
+    );
+  });
+
+  it("keeps the positions aligned when only some cases are scored", () => {
+    const prompt = buildUserPrompt(run, [], [testCase(1, 50), testCase(2)]);
+
+    expect(prompt).toContain('[1,"case 1",null,null,null,null,null,50]');
+    expect(prompt).toContain('[2,"case 2"]');
+  });
+});
+
+describe("compressCaseForPrompt", () => {
+  const base: CompressedTestCase = {
+    id: 4,
+    name: "case",
+    folderPath: "/",
+    tags: [],
+    fields: {},
+    linksTo: [],
+    linksFrom: [],
+  };
+
+  it("drops every empty position, so a bare case costs two values", () => {
+    expect(compressCaseForPrompt(base)).toEqual([4, "case"]);
+  });
+
+  it("holds the earlier positions open when a later one is filled", () => {
+    expect(compressCaseForPrompt({ ...base, risk: 61 })).toEqual([
+      4,
+      "case",
+      null,
+      null,
+      null,
+      null,
+      null,
+      61,
+    ]);
   });
 });

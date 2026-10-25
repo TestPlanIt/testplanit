@@ -22,6 +22,7 @@ Scores refresh in the background: a few seconds after results arrive for a run, 
 - The repository **filter bar** gets a **Risk Score** filter when risk scoring is on: above, below, between, equal, or scored / not scored yet. Like any other filter it works in saved views and in webhook-created test run case filters.
 - **Prioritize by risk**, one of the **Ways to pick test cases** in step 2 of [Add Test Run](projects/add-test-run-modal.md), lists candidates highest risk first. Set a minimum score, select what you want — or every match at once — and the cases merge with the current selection. Cases already in the run are left out.
 - [Impact Analysis](impact.md) shows a **Risk Score** column beside its own Impact Score in step 4, so a change's blast radius and a case's standing risk can be weighed together.
+- [Magic Select](llm-magic-select.md) sees each candidate's score and uses it to break ties between cases that are equally relevant to the run it is building. It never selects a case for its risk alone.
 
 ## Weights
 
