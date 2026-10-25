@@ -1,14 +1,26 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/*
+ * Bind `dark:` to the theme the app is actually in.
+ *
+ * next-themes writes `class="dark"` on <html> (attribute="class" in
+ * app/providers.tsx), and the design tokens in globals.css are already keyed
+ * off that class. Tailwind v4 is not: without this variant, `dark:` compiles
+ * to `@media (prefers-color-scheme: dark)` and follows the OPERATING SYSTEM,
+ * so a user who picks Dark on a light-mode machine gets every `dark:` colour
+ * from the light palette painted on dark surfaces. `--dark-mode: class` in
+ * `@theme` is the v3 spelling and v4 ignores it.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Import Tailwind plugins */
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
 
 /* Theme configuration using CSS variables */
 @theme {
-  /* Dark mode configuration */
-  --dark-mode: class;
+  /* Dark mode is the @custom-variant above, not a theme key. */
   --font-sans: var(--font-noto-sans), system-ui, sans-serif;
 
   /* Container */
