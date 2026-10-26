@@ -486,24 +486,27 @@ export function EditResultModal({
     });
   }, [resultRow, isSuperAdmin]);
 
-  // Find the repository case to get its template ID
-  const { data: repositoryCase, isLoading: isLoadingCase } = useClientQueries(
+  // Find the repository case to get its template ID. ZenStack does NOT
+  // support reverse-relation "some" queries on RepositoryCases, so we look
+  // up the owning TestRunCase (direct FK) and include its repositoryCase.
+  const { data: testRunCase, isLoading: isLoadingCase } = useClientQueries(
     schema
-  ).repositoryCases.useFindFirst({
+  ).testRunCases.useFindUnique({
     where: {
-      testRuns: {
-        some: {
-          id: testRunCaseId,
+      id: testRunCaseId!,
+    },
+    include: {
+      repositoryCase: {
+        select: {
+          id: true,
+          name: true,
+          templateId: true,
+          currentVersion: true,
         },
       },
     },
-    select: {
-      id: true,
-      name: true,
-      templateId: true,
-      currentVersion: true,
-    },
   });
+  const repositoryCase = testRunCase?.repositoryCase;
 
   // Fetch template result fields if we have a case with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =

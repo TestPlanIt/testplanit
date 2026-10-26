@@ -427,27 +427,30 @@ export function AddResultModal({
       { enabled: bulkRunCaseIds.length > 0 }
     );
 
-  // Find the repository case to get its template ID
-  const { data: repositoryCase, isLoading: isLoadingCase } = useClientQueries(
+  // Find the repository case to get its template ID. ZenStack does NOT
+  // support reverse-relation "some" queries on RepositoryCases, so we look
+  // up the owning TestRunCase (direct FK) and include its repositoryCase.
+  const { data: testRunCase, isLoading: isLoadingCase } = useClientQueries(
     schema
-  ).repositoryCases.useFindFirst(
+  ).testRunCases.useFindUnique(
     {
       where: {
-        testRuns: {
-          some: {
-            id: testRunCaseId,
+        id: testRunCaseId!,
+      },
+      include: {
+        repositoryCase: {
+          select: {
+            id: true,
+            name: true,
+            templateId: true,
+            currentVersion: true,
           },
         },
-      },
-      select: {
-        id: true,
-        name: true,
-        templateId: true,
-        currentVersion: true,
       },
     },
     { enabled: isSingleCase }
   );
+  const repositoryCase = testRunCase?.repositoryCase;
 
   // Fetch the result fields of the case's template, or of every selected
   // case's template for a bulk result
