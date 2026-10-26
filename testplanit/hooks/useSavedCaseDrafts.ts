@@ -10,6 +10,7 @@ import {
   type CaseDraftPayload,
   type StagedCaseProjectCount,
 } from "~/lib/services/caseDraft";
+import { randomUuid } from "~/utils/randomUuid";
 import { schema } from "~/zenstack/schema";
 
 /** A draft the author saved on purpose, as the My Drafts list shows it. */
@@ -83,7 +84,7 @@ export function useSavedCaseDrafts(projectId: number, userId?: string) {
   const save = useCallback(
     async (input: SaveCaseDraftInput): Promise<string> => {
       if (!userId) throw new Error("Not signed in");
-      const id = crypto.randomUUID();
+      const id = randomUuid();
       await createDraft({
         data: {
           id,

@@ -944,11 +944,12 @@ export function EditResultModal({
     }
 
     setIsSubmitting(true);
-    // One operationId for the whole edit so the edit-result write and the
-    // step-result writes group together (run name/project inherited by the steps).
-    beginOperation();
 
     try {
+      // One operationId for the whole edit so the edit-result write and the
+      // step-result writes group together (run name/project inherited by the
+      // steps).
+      beginOperation();
       // Parse elapsed time back to seconds
       let elapsedInSeconds: number | null = null;
       if (values.elapsed) {
