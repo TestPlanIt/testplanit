@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import { IconName } from "~/types/globals";
+import { randomUuid } from "~/utils/randomUuid";
 
 function buildFormSchema(t: (key: any) => string) {
   return z.object({
@@ -314,7 +315,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
           source: "MANUAL",
           testCases: [
             {
-              id: crypto.randomUUID(),
+              id: randomUuid(),
               name: data.name,
               fieldValues: {},
               tags: [],

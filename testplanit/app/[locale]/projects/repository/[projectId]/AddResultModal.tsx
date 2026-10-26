@@ -910,14 +910,14 @@ export function AddResultModal({
 
     const values = form.getValues();
     setIsSubmitting(true);
-    // One operationId for the whole "record result" action: the submit-result
-    // write and the per-step result writes the loop below issues all share it,
-    // so the correlation worker groups them and the step rows inherit the run's
-    // name/project from the result row.
-    beginOperation();
     let bulkFailedCaseNames: string[] = [];
 
     try {
+      // One operationId for the whole "record result" action: the submit-result
+      // write and the per-step result writes the loop below issues all share it,
+      // so the correlation worker groups them and the step rows inherit the
+      // run's name/project from the result row.
+      beginOperation();
       let elapsedInSeconds: number | null = null;
       if (values.elapsed) {
         const durationInMilliseconds = parseDuration(values.elapsed as string);
@@ -1483,6 +1483,12 @@ export function AddResultModal({
         // --- Trigger forecast update for this case ---
         if (repositoryCase?.id && hasSubmittedElapsedTime)
           void fetch(`/api/forecast/update?caseId=${repositoryCase.id}`);
+      } else {
+        // Falling through would reach the success toast below having written
+        // nothing.
+        throw new Error(
+          `Cannot record a result: no case to record it against (testRunCaseId=${testRunCaseId}, isBulkResult=${isBulkResult})`
+        );
       }
 
       // Reset form with current status and default values
