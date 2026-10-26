@@ -1,3 +1,4 @@
+import { RiskScoreCell } from "@/components/risk/RiskScoreCell";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1492,6 +1493,7 @@ export const getColumns = (
     name: string;
     estimate: string;
     forecast: string;
+    riskScore: string;
     state: string;
     automated: string;
     template: string;
@@ -2219,6 +2221,25 @@ export const getColumns = (
             type="automated"
           />
         </div>
+      ),
+    },
+    {
+      id: "riskScore",
+      accessorKey: "riskScore",
+      header: columnTranslations.riskScore,
+      enableSorting: !isCompleted,
+      enableResizing: true,
+      enableHiding: true,
+      meta: {
+        isVisible: false,
+      },
+      size: 90,
+      minSize: 70,
+      cell: ({ row }) => (
+        <RiskScoreCell
+          score={row.original.riskScore ?? null}
+          reasons={row.original.riskReasons ?? null}
+        />
       ),
     },
     {

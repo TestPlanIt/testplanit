@@ -743,7 +743,8 @@
       "sharedContent": "Gedeelde inhoud",
       "impact": "Impactanalyse",
       "alerts": "Meldingen en waarschuwingen",
-      "triage": "Foutpatronen"
+      "triage": "Foutpatronen",
+      "riskScoring": "Risicoscoring"
     },
     "aria": {
       "userMenu": "Gebruikersmenu",
@@ -4598,9 +4599,12 @@
         "selectedOf": "Geselecteerde {selected, number} van {total, number} beïnvloede testcases",
         "thresholdHint": "Tests die {threshold, number} of hoger scoorden, worden geselecteerd en weergegeven; verlaag de minimumscore om de rest te zien. Elke test geeft aan waarom deze werd geselecteerd.",
         "shownCount": "Weergeven van {shown, number} van {total, number}",
-        "minScore": "Minimumscore",
+        "scoreColumn": "Impactscore",
+        "minScore": "Minimale impactscore",
         "selectShown": "Selecteer weergegeven ({count, number})",
         "deselectShown": "Deselecteer weergegeven ({count, number})",
+        "hiddenSelected": "{count, plural, one {# geselecteerde testgeval is verborgen door uw filters} other {# geselecteerde testgevallen zijn verborgen door uw filters}}.",
+        "deselectHidden": "Verborgen deselecteren",
         "noneShown": "Geen tests komen overeen met de filters.",
         "reasons": "Waarom",
         "tierPinned": "Vastgezet",
@@ -4609,8 +4613,6 @@
         "tierPinnedTooltip": "Een Code Pin op deze case snijdt de wijziging. Vastgezette zaken worden altijd eerst gerangschikt.",
         "tierAffectedTooltip": "De andere signalen zetten deze case op of boven de beïnvloede drempel van {threshold, number}.",
         "tierRelatedTooltip": "Gekoppeld aan een sterk beïnvloede case, of zijn signalen scoorden onder {threshold, number}.",
-        "showDetails": "Redenen tonen",
-        "hideDetails": "Redenen verbergen",
         "excluded": "{count, plural, one {# geval al in de run werd overgeslagen} other {# gevallen al in de run werden overgeslagen}}"
       },
       "noAffected": {
@@ -4683,6 +4685,23 @@
       },
       "repositoryPlaceholder": "Selecteer een codeopslagplaats...",
       "chooseRepository": "Kies welke van de verbonden opslagplaatsen van het project de wijzigingen bevat die moeten worden geanalyseerd."
+    },
+    "risk": {
+      "prioritizeByRisk": "Prioriteit op risico",
+      "title": "Prioriteit op risico",
+      "description": "De gevallen die het meest verdienen om te worden uitgevoerd, hoogste risico eerst standaard. Gevallen die al in deze run zitten, worden niet meegenomen.",
+      "minimumScore": "Minimale risicoscore",
+      "showing": "{shown, plural, one {# geval geladen} other {# gevallen geladen}} van {total, plural, one {# overeenkomst} other {# overeenkomsten}}",
+      "loadedSelected": "{shown, plural, =2 {Beide geladen gevallen zijn geselecteerd} one {Het geladen geval is geselecteerd} other {Alle # geladen gevallen zijn geselecteerd}}.",
+      "selectAllMatches": "{total, plural, =2 {Selecteer beide overeenkomsten} one {Selecteer de enige overeenkomst} other {Selecteer alle # overeenkomsten}}",
+      "allMatchesSelected": "{total, plural, =2 {Beide overeenkomsten zijn geselecteerd} one {De enige overeenkomst is geselecteerd} other {Alle # overeenkomsten zijn geselecteerd}}.",
+      "noneMatch": "Geen gescoorde gevallen op of boven deze score.",
+      "caseColumn": "Testgeval",
+      "scoreColumn": "Risicoscore",
+      "addCases": "{count, plural, =0 {Gevallen toevoegen} one {# geval toevoegen} other {# gevallen toevoegen}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Manieren om testgevallen te kiezen"
     }
   },
   "admin": {
@@ -8577,7 +8596,8 @@
     "projectTriageSettings": "## Instellingen voor Foutpatronen\nRuns groeperen op elk geautomatiseerd resultaat dat aankomt en kost niets. AI-voorstelling van hoofdoorzaak gebruikt het AI-model dat is toegewezen aan de **Foutpatronen: Hoofdoorzaak**-functie op de pagina AI-modellen; zet het hier uit om groepering zonder AI-oproepen te houden. **Bestaande resultaten analyseren** groepeert alle geautomatiseerde fouten die al in dit project zijn opgenomen.",
     "projectQuarantine": "## In quarantaine geplaatste testcases\nEen in quarantaine geplaatste testcase blijft draaien en resultaten opnemen, maar de fouten ervan worden buiten de pass/fail van de run gelaten en weergegeven als een aparte telling. Plaats een case in quarantaine vanuit een foutpatroon terwijl de oorzaak wordt opgelost. De quarantaine wordt automatisch opgeheven zodra de case het aantal keren na elkaar heeft doorstaan dat is ingesteld in de instellingen voor Foutpatronen, tenzij deze was gemarkeerd om handmatig te worden vrijgegeven; geef het hier of vanuit het patroon op elk moment vrij.",
     "rootCauses": "## Hoofdoorzaken\nDe hoofdoorzaken die Foutpatronen toewijst aan gegroepeerde fouten, door AI of handmatig. Elk heeft een beschrijving die de AI leest om te bepalen wanneer het van toepassing is. Hernoem, verander de kleur of herorden ze, voeg je eigen toe, of verwijder de oorzaken die je niet gebruikt; het verwijderen van één laat de patronen ervan zonder hoofdoorzaak.",
-    "rootCauseDescription": "## Beschrijving\nDe AI leest deze beschrijving om te bepalen wanneer de hoofdoorzaak van toepassing is op een foutpatroon, dus beschrijf het bewijs dat ernaar wijst."
+    "rootCauseDescription": "## Beschrijving\nDe AI leest deze beschrijving om te bepalen wanneer de hoofdoorzaak van toepassing is op een foutpatroon, dus beschrijf het bewijs dat ernaar wijst.",
+    "projectRiskSettings": "## Risicoscoringsinstellingen\nElk testgeval krijgt een risicoscore van 0-100 op basis van zijn faalgeschiedenis, onbetrouwbaarheid, veroudering, criticiteit van gekoppelde vereisten en gekoppelde defecten — deterministisch, geen AI-aanroepen. Scores vernieuwen zich nadat resultaten binnenkomen en in een nachtelijke sweep. **Componentgewichten** stellen in hoeveel elk signaal telt, relatief tot de anderen; nul verwijdert een component. **Alle scores opnieuw berekenen** scoren het hele project nu opnieuw in plaats van te wachten op de nachtelijke sweep."
   },
   "reports": {
     "ui": {
@@ -10955,6 +10975,74 @@
       "releaseAuto": "{count, plural, one {Automatisch na # opeenvolgende geslaagde poging} other {Automatisch na # opeenvolgende geslaagde pogingen}}",
       "releaseManual": "Handmatig",
       "empty": "Er zijn geen testcases in quarantaine geplaatst in dit project."
+    }
+  },
+  "risk": {
+    "score": "Risicoscore",
+    "notScored": "Nog niet gescoord",
+    "breakdown": {
+      "title": "Waarom deze score",
+      "pointsOfWeight": "{points} pts · gewicht {weight}",
+      "components": {
+        "failureHistory": "Faalgeschiedenis",
+        "flakiness": "Onbetrouwbaarheid",
+        "staleness": "Veroudering",
+        "criticality": "Criticiteit",
+        "defects": "Gekoppelde defecten"
+      },
+      "lastExecuted": "Laatst uitgevoerd",
+      "neverExecuted": "Nooit uitgevoerd",
+      "verdicts": "{failed} van {sampled, plural, one {# recent geautomatiseerd resultaat} other {# recent geautomatiseerde resultaten}} mislukt",
+      "flips": "{flips, plural, one {# slaag-/faalomslag} other {# slaag-/faalomslag}}",
+      "requirements": "{count, plural, one {# gekoppelde vereiste} other {# gekoppelde vereisten}} · topprioriteit {priority}",
+      "suspect": "{count, plural, one {# vereiste gewijzigd} other {# vereisten gewijzigd}} sinds de laatste run",
+      "defects": "{count, plural, one {# gekoppeld defect} other {# gekoppelde defecten}} · topprioriteit {priority}",
+      "caseCriticality": "Testgeval criticiteit: {value}",
+      "noPriority": "niet opgegeven",
+      "quarantined": "In quarantaine"
+    },
+    "settings": {
+      "description": "Elk testgeval krijgt een risicoscore van 0-100 op basis van zijn faalgeschiedenis, onbetrouwbaarheid, veroudering, criticiteit van gekoppelde vereisten en gekoppelde defecten. Scores vernieuwen zich nadat resultaten binnenkomen en in een nachtelijke sweep, en voeden de kolom Risicoscore en filter van de repository.",
+      "enableLabel": "Risicoscores onderhouden",
+      "enableDescription": "Wanneer uit, blijven bestaande scores behouden maar stoppen ze met bijwerken en verdwijnt het Risicoscore-filter.",
+      "enabledToast": "Risicoscoring ingeschakeld",
+      "disabledToast": "Risicoscoring uitgeschakeld",
+      "weightsTitle": "Componentgewichten",
+      "weightsDescription": "Hoeveel elk signaal telt, relatief tot de anderen. De score normaliseert op basis van het totaal, dus gewichten hoeven niet op te tellen tot 100. Nul verwijdert een component.",
+      "components": {
+        "failureHistory": "Faalgeschiedenis",
+        "flakiness": "Onbetrouwbaarheid",
+        "staleness": "Veroudering",
+        "criticality": "Criticiteit",
+        "defects": "Gekoppelde defecten"
+      },
+      "weightsSaved": "Gewichten opgeslagen",
+      "weightsInvalid": "Gewichten moeten getallen zijn tussen 0 en {max}",
+      "weightsReset": "Gewichten ingesteld op standaardinstellingen",
+      "resetDefaults": "Standaardinstellingen herstellen",
+      "usingDefaults": "Systeemstandaarden gebruiken",
+      "criticalityFieldTitle": "Testgeval criticiteitveld",
+      "criticalityFieldDescription": "Een optioneel vervolgkeuze testgevelveld dat de eigen criticiteit van elk geval aanvoert. Opties tellen naar hun volgorde: de bovenste optie 100, de onderste 10, gelijkmatig verdeeld — namen zijn nooit belangrijk.",
+      "criticalityFieldNone": "Geen",
+      "criticalityFieldSaved": "Criticiteitveld opgeslagen",
+      "criticalityFieldCleared": "Criticiteitveld gewist",
+      "criticalityFieldOptions": "Optiegewichten, op volgorde:",
+      "issuePrioritiesTitle": "Problemen prioriteiten",
+      "issuePrioritiesDescription": "Vereisten en defecten hebben een prioriteit van uw tracker, als vrije tekst. Wijs de namen die uw project daadwerkelijk gebruikt toe aan een gewicht van 0-100. Ongekaarte namen tellen als neutraal (50). Niets is ingebakken — dit is uw woordenschat, niet de onze.",
+      "issuePrioritiesEmpty": "Nog geen gekoppelde vereisten of defecten met prioriteiten.",
+      "issuePrioritiesCount": "{count, plural, one {# gekoppeld probleem} other {# gekoppelde problemen}}",
+      "issuePrioritiesUnused": "niet in gebruik",
+      "issuePrioritiesSaved": "Prioriteiten van problemen opgeslagen",
+      "issuePrioritiesInvalid": "Gewichten moeten getallen zijn tussen 0 en 100",
+      "backfillLabel": "Alle scores opnieuw berekenen",
+      "backfillDescription": "Scoor elk testgeval in het project opnieuw nu in plaats van te wachten op de nachtelijke sweep.",
+      "backfillStarted": "Herberekening gestart",
+      "backfillRunning": "Herberekenen… {processed, plural, one {# geval gescoord} other {# gevallen gescoord}}",
+      "backfillDone": "Herberekening voltooid",
+      "backfillFailed": "Herberekening mislukt",
+      "backfillAlreadyRunning": "Een herberekening liep al — voer Alle scores opnieuw berekenen opnieuw uit zodra deze klaar is zodat elk geval de nieuwe gewichten weerspiegelt",
+      "backfillQueueUnavailable": "De wachtrij voor achtergrondtaken is niet beschikbaar",
+      "openRepository": "Repository openen"
     }
   }
 }

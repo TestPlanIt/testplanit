@@ -743,7 +743,8 @@
       "sharedContent": "Sdílený obsah",
       "impact": "Analýza dopadu",
       "alerts": "Oznámení a upozornění",
-      "triage": "Selhání vzorů"
+      "triage": "Selhání vzorů",
+      "riskScoring": "Hodnocení rizika"
     },
     "aria": {
       "userMenu": "Uživatelské menu",
@@ -4598,9 +4599,12 @@
         "selectedOf": "Vybrány {selected, number} z {total, number} postižených testovacích případů",
         "thresholdHint": "Testy, které skórují {threshold, number} nebo více, se na začátku vyberou a zobrazí; pokud chcete vidět zbytek, snižte minimální skóre. Každý test ukazuje, proč byl vybrán.",
         "shownCount": "Zobrazeno {shown, number} z {total, number}",
-        "minScore": "Minimální skóre",
+        "scoreColumn": "Skóre dopadu",
+        "minScore": "Minimální skóre dopadu",
         "selectShown": "Vybrat zobrazené ({count, number})",
         "deselectShown": "Zrušit výběr zobrazených ({count, number})",
+        "hiddenSelected": "{count, plural, one {# vybraný testovací případ je skryt vašimi filtry} few {# vybrané testovací případy jsou skryty vašimi filtry} many {# vybraných testovacích případů je skryto vašimi filtry} other {# vybraných testovacích případů je skryto vašimi filtry}}.",
+        "deselectHidden": "Zrušit výběr skrytých",
         "noneShown": "Žádné testy se neshodují s filtry.",
         "reasons": "Proč",
         "tierPinned": "Fixováno",
@@ -4609,8 +4613,6 @@
         "tierPinnedTooltip": "Kódový pin na tento případ protíná změnu. Fixované případy se vždy umístí na prvním místě.",
         "tierAffectedTooltip": "Ostatní signály umisťují tento případ na nebo nad prahovou hodnotu dopadu {threshold, number}.",
         "tierRelatedTooltip": "Propojeno s výrazně ovlivněným případem, nebo jeho signály skórují pod {threshold, number}.",
-        "showDetails": "Zobrazit důvody",
-        "hideDetails": "Skrýt důvody",
         "excluded": "{count, plural, one {# případ již v běhu byl přeskočen} other {# případy již v běhu byly přeskočeny}}"
       },
       "noAffected": {
@@ -4683,6 +4685,23 @@
       },
       "repositoryPlaceholder": "Vyberte úložiště…",
       "chooseRepository": "Vyberte, které z připojených úložišť projektu obsahuje změny k analýze."
+    },
+    "risk": {
+      "prioritizeByRisk": "Prioritizovat podle rizika",
+      "title": "Prioritizovat podle rizika",
+      "description": "Případy, které si nejvíce zaslouží spuštění, nejprve s nejvyšším rizikem. Případy, které se již v tomto běhu nacházejí, jsou vynechány.",
+      "minimumScore": "Minimální skóre rizika",
+      "showing": "{shown, plural, one {# případ načten} few {# případy načteny} many {# případů načteno} other {# případů načteno}} z {total, plural, one {# shoda} few {# shody} many {# shod} other {# shod}}",
+      "loadedSelected": "{shown, plural, =2 {Oba načtené případy jsou vybrány} one {Načtený případ je vybrán} other {Všech # načtených případů je vybráno}}.",
+      "selectAllMatches": "{total, plural, =2 {Vybrat obě shody} one {Vybrat jedinou shodu} other {Vybrat všech # shod}}",
+      "allMatchesSelected": "{total, plural, =2 {Obě shody jsou vybrány} one {Jediná shoda je vybrána} other {Všech # shod je vybráno}}.",
+      "noneMatch": "V tomto skóre nebo vyšší nejsou žádné hodnocené případy.",
+      "caseColumn": "Testovací případ",
+      "scoreColumn": "Skóre rizika",
+      "addCases": "{count, plural, =0 {Přidat případy} one {Přidat # případ} few {Přidat # případy} many {Přidat # případů} other {Přidat # případů}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Způsoby výběru testovacích případů"
     }
   },
   "admin": {
@@ -8577,7 +8596,8 @@
     "projectTriageSettings": "## Nastavení Failure Patterns\nSeskupování běhů na každém automatizovaném výsledku, který přijde, a nic nestojí. Návrh AI hlavní příčiny používá model AI přiřazený funkci **Failure Patterns: Root Cause** na stránce Modely AI; vypněte jej zde, abyste zachovali seskupování bez jakýchkoli volání AI. **Analyzovat existující výsledky** seskupuje každé automatizované selhání již zaznamenané v tomto projektu.",
     "projectQuarantine": "## Karanténa testovacích případů\nKaranténa testovacího případu pokračuje v běhu a zaznamenávání výsledků, ale její selhání jsou vynechána z průchodu/selhání běhu a zobrazena jako samostatný počet. Karanténu případu z vzoru selhání, zatímco se příčina řeší. Karanténa se sama zvedne, jakmile případ projde několikrát po sobě nastavené v nastavení Failure Patterns, pokud nebyl označen k ručnímu uvolnění; uvolněte jej zde nebo ze vzoru kdykoli.",
     "rootCauses": "## Hlavní příčiny\nHlavní příčiny, které Failure Patterns přiřazuje k seskupeným selháním, automaticky nebo ručně. Každá má popis, který AI čte, aby se rozhodla, kdy se vztahuje. Přejmenujte, překolorujte nebo přeuspořádejte, přidejte své vlastní nebo odstraňte ty, které nepoužíváte; odstranění ponechá její vzory bez hlavní příčiny.",
-    "rootCauseDescription": "## Popis\nAI čte tento popis, aby se rozhodla, kdy se hlavní příčina vztahuje na vzor selhání, takže popište důkazy, které na ni ukazují."
+    "rootCauseDescription": "## Popis\nAI čte tento popis, aby se rozhodla, kdy se hlavní příčina vztahuje na vzor selhání, takže popište důkazy, které na ni ukazují.",
+    "projectRiskSettings": "## Nastavení hodnocení rizika\nKaždý testovací případ dostane skóre rizika 0-100 na základě své historie selhání, nestability, zastarání, kritičnosti propojených požadavků a propojených defektů — deterministické, bez volání umělé inteligence. Skóre se obnovují po příchodu výsledků a během noční prověrky. **Váhy komponent** určují, jak moc se každý signál počítá v poměru k ostatním; nula odstraní komponentu. **Přepočítat všechna skóre** přehodnotí celý projekt nyní místo čekání na noční prověrku."
   },
   "reports": {
     "ui": {
@@ -10955,6 +10975,74 @@
       "releaseAuto": "{count, plural, one {Automaticky po # po sobě jdoucího průchodu} few {Automaticky po # po sobě jdoucích průchodech} many {Automaticky po # po sobě jdoucích průchodech} other {Automaticky po # po sobě jdoucích průchodech}}",
       "releaseManual": "Ručně",
       "empty": "V tomto projektu nejsou v karanténě žádné testovací případy."
+    }
+  },
+  "risk": {
+    "score": "Skóre rizika",
+    "notScored": "Dosud není hodnoceno",
+    "breakdown": {
+      "title": "Proč toto skóre",
+      "pointsOfWeight": "{points} bodů · váha {weight}",
+      "components": {
+        "failureHistory": "Historie selhání",
+        "flakiness": "Nestabilita",
+        "staleness": "Zastarání",
+        "criticality": "Kritičnost",
+        "defects": "Propojené defekty"
+      },
+      "lastExecuted": "Poslední spuštění",
+      "neverExecuted": "Nikdy neprovedeno",
+      "verdicts": "{failed} z {sampled, plural, one {# nedávného automatizovaného výsledku} few {# nedávných automatizovaných výsledků} many {# nedávných automatizovaných výsledků} other {# nedávných automatizovaných výsledků}} selhalo",
+      "flips": "{flips, plural, one {# přechod úspěch/selhání} few {# přechody úspěch/selhání} many {# přechodů úspěch/selhání} other {# přechodů úspěch/selhání}}",
+      "requirements": "{count, plural, one {# propojený požadavek} few {# propojené požadavky} many {# propojených požadavků} other {# propojených požadavků}} · nejvyšší priorita {priority}",
+      "suspect": "{count, plural, one {# požadavek se změnil} few {# požadavky se změnily} many {# požadavků se změnilo} other {# požadavků se změnilo}} od posledního běhu",
+      "defects": "{count, plural, one {# propojený defekt} few {# propojené defekty} many {# propojených defektů} other {# propojených defektů}} · nejvyšší priorita {priority}",
+      "caseCriticality": "Kritičnost případu: {value}",
+      "noPriority": "nespecifikováno",
+      "quarantined": "Karanténa"
+    },
+    "settings": {
+      "description": "Každý testovací případ dostane skóre rizika 0-100 na základě své historie selhání, nestability, zastarání, kritičnosti propojených požadavků a propojených defektů. Skóre se obnovují po příchodu výsledků a během noční prověrky a jsou podkladem pro sloupec Skóre rizika v repozitáři a filtr.",
+      "enableLabel": "Spravovat skóre rizika",
+      "enableDescription": "Když je vypnuté, existující skóre zůstanou, ale přestane se aktualizovat a filtr Skóre rizika zmizí.",
+      "enabledToast": "Hodnocení rizika povoleno",
+      "disabledToast": "Hodnocení rizika zakázáno",
+      "weightsTitle": "Váhy komponent",
+      "weightsDescription": "Jak moc se každý signál počítá v poměru k ostatním. Skóre se normalizuje podle součtu, takže váhy se nemusí sčítat až na 100. Nula odstraní komponentu.",
+      "components": {
+        "failureHistory": "Historie selhání",
+        "flakiness": "Nestabilita",
+        "staleness": "Zastarání",
+        "criticality": "Kritičnost",
+        "defects": "Propojené defekty"
+      },
+      "weightsSaved": "Váhy uloženy",
+      "weightsInvalid": "Váhy musí být čísla mezi 0 a {max}",
+      "weightsReset": "Váhy obnoveny na výchozí nastavení",
+      "resetDefaults": "Obnovit výchozí nastavení",
+      "usingDefaults": "Používá se výchozí nastavení systému",
+      "criticalityFieldTitle": "Pole kritičnosti případu",
+      "criticalityFieldDescription": "Volitelné rozevíracího pole případu, které ovlivňuje kritičnost každého případu. Možnosti se počítají podle jejich pořadí: horní možnost 100, spodní 10, rovnoměrně rozestupované — názvy nikdy nezáleží.",
+      "criticalityFieldNone": "Žádné",
+      "criticalityFieldSaved": "Pole kritičnosti uloženo",
+      "criticalityFieldCleared": "Pole kritičnosti vymazáno",
+      "criticalityFieldOptions": "Váhy možností podle pořadí:",
+      "issuePrioritiesTitle": "Priority problémů",
+      "issuePrioritiesDescription": "Požadavky a defekty mají prioritu z vašeho sledovacího systému jako bezplatný text. Mapujte názvy, které váš projekt skutečně používá, na váhu 0-100. Nemapované názvy se počítají jako neutrální (50). Nic není vestavěno — toto je vaše slovní zásoba, ne naše.",
+      "issuePrioritiesEmpty": "Dosud neexistují propojené požadavky nebo defekty s prioritami.",
+      "issuePrioritiesCount": "{count, plural, one {# propojený problém} few {# propojené problémy} many {# propojených problémů} other {# propojených problémů}}",
+      "issuePrioritiesUnused": "není v použití",
+      "issuePrioritiesSaved": "Priority problémů uloženy",
+      "issuePrioritiesInvalid": "Váhy musí být čísla mezi 0 a 100",
+      "backfillLabel": "Přepočítat všechna skóre",
+      "backfillDescription": "Přehodnoťte každý testovací případ v projektu nyní místo čekání na noční prověrku.",
+      "backfillStarted": "Přepočet zahájen",
+      "backfillRunning": "Přepočítávání… {processed, plural, one {# případ hodnocen} few {# případy hodnoceny} many {# případů hodnoceno} other {# případů hodnoceno}}",
+      "backfillDone": "Přepočet dokončen",
+      "backfillFailed": "Přepočet selhal",
+      "backfillAlreadyRunning": "Přepočet již probíhal — po jeho dokončení znovu spusťte Přepočítat všechna skóre, aby každý případ odrážel nové váhy",
+      "backfillQueueUnavailable": "Fronta úloh na pozadí není k dispozici",
+      "openRepository": "Otevřít úložiště"
     }
   }
 }

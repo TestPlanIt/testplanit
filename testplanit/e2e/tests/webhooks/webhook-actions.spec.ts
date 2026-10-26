@@ -219,7 +219,7 @@ test.describe("Inbound webhook actions", () => {
       await expect(rows).toHaveCount(2);
       const added = rows.filter({ hasText: "Pushes to other branches" });
       await expect(added).toContainText("Create Test Run");
-      await expect(added).toContainText("Minimum score: 70");
+      await expect(added).toContainText("Minimum impact score: 70");
     });
 
     await test.step("The rule is stored after the existing one", async () => {
@@ -255,7 +255,7 @@ test.describe("Inbound webhook actions", () => {
 
     await test.step("The row shows the saved score", async () => {
       await openWebhooksPage(page, projectId);
-      await expect(row).toContainText("Minimum score: 70");
+      await expect(row).toContainText("Minimum impact score: 70");
     });
 
     await test.step("Change the score to 40 and save", async () => {
@@ -266,8 +266,8 @@ test.describe("Inbound webhook actions", () => {
       await score.fill("40");
       await dialog.getByTestId("webhook-action-save").click();
       await expect(dialog).toBeHidden();
-      await expect(row).toContainText("Minimum score: 40");
-      await expect(row).not.toContainText("Minimum score: 70");
+      await expect(row).toContainText("Minimum impact score: 40");
+      await expect(row).not.toContainText("Minimum impact score: 70");
     });
 
     await test.step("Reopening shows the saved values", async () => {

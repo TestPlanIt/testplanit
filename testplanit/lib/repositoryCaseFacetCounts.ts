@@ -483,7 +483,11 @@ export async function computeRepositoryCaseFacetCounts(
   // query below; awaited at step 1b.
   const projectFlagsPromise = db.projects.findUnique({
     where: { id: projectId },
-    select: { reviewWorkflowEnabled: true, impactEnabled: true },
+    select: {
+      reviewWorkflowEnabled: true,
+      impactEnabled: true,
+      riskScoringEnabled: true,
+    },
   });
   const reviewEnabledPromise = Promise.all([
     isReviewFeatureSystemEnabled(db),
@@ -495,6 +499,9 @@ export async function computeRepositoryCaseFacetCounts(
   // The codePins dimension exists only where Impact Analysis is on.
   const codePinsEnabledPromise = projectFlagsPromise.then(
     (project) => project?.impactEnabled === true
+  );
+  const riskScoreEnabledPromise = projectFlagsPromise.then(
+    (project) => project?.riskScoringEnabled === true
   );
 
   // 1. Dynamic-field metadata first — the registry needs the field types
@@ -577,6 +584,7 @@ export async function computeRepositoryCaseFacetCounts(
   //     one project's review queue rather than a scan of the repository.
   const reviewEnabled = await reviewEnabledPromise;
   const codePinsEnabled = await codePinsEnabledPromise;
+  const riskScoreEnabled = await riskScoreEnabledPromise;
   let inReviewCaseIds: number[] = [];
   if (reviewEnabled) {
     const pendingRows = await db.reviewRequest.findMany({
@@ -601,6 +609,7 @@ export async function computeRepositoryCaseFacetCounts(
     includeRunDimensions: isRunMode,
     includeInReview: reviewEnabled,
     includeCodePins: codePinsEnabled,
+    includeRiskScore: riskScoreEnabled,
   });
   const predicates = parseFilterPredicates(options.predicates ?? [], registry);
 

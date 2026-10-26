@@ -115,6 +115,7 @@ export async function buildRepositoryCaseDocument(
     estimate: repoCase.estimate,
     forecastManual: repoCase.forecastManual,
     forecastAutomated: repoCase.forecastAutomated,
+    riskScore: repoCase.riskScore,
     automated: repoCase.automated,
     isArchived: repoCase.isArchived,
     isDeleted: repoCase.isDeleted,
@@ -248,6 +249,34 @@ export async function syncRepositoryCaseToElasticsearch(
  * @param dbClient - Optional Prisma client for tenant-specific queries
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
+/**
+ * Bulk variant of `syncRepositoryCaseToElasticsearch` for recompute paths
+ * that change many cases at once (risk scoring): builds each document, then
+ * ships them in one bulk request instead of one request per case.
+ */
+export async function syncRepositoryCasesToElasticsearch(
+  caseIds: number[],
+  tenantId?: string,
+  dbClient?: DbClientType
+): Promise<boolean> {
+  if (caseIds.length === 0) return true;
+  const documents: RepositoryCaseDocument[] = [];
+  let ok = true;
+  for (const caseId of caseIds) {
+    const doc = await buildRepositoryCaseDocument(caseId, dbClient);
+    if (doc) {
+      documents.push(doc);
+    } else {
+      // Case hard-deleted since the recompute read it.
+      await deleteRepositoryCase(caseId, tenantId);
+    }
+  }
+  if (documents.length > 0) {
+    ok = await bulkIndexRepositoryCases(documents, tenantId);
+  }
+  return ok;
+}
+
 export async function syncProjectCasesToElasticsearch(
   projectId: number,
   batchSize: number = 100,

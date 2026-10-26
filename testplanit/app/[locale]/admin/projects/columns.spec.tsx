@@ -128,6 +128,10 @@ function renderCell(
 const testProject: ExtendedProjects = {
   id: 1,
   name: "Test Project",
+  riskScoringEnabled: true,
+  riskWeights: null,
+  riskPriorityWeights: null,
+  riskCriticalityFieldId: null,
   key: null,
   note: null,
   iconUrl: null,

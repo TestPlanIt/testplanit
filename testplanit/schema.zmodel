@@ -732,6 +732,17 @@ model Projects {
     /// after being quarantined (0 or the switch off = only released by hand).
     quarantineAutoRelease            Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
     quarantineAutoReleasePasses      Int                                   @default(5) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Maintain a per-case risk score in the background (deterministic, no LLM cost).
+    riskScoringEnabled               Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Per-component risk scorer weight overrides; null = system defaults.
+    riskWeights                      Json?                                 @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Priority string (issue/tracker vocabulary) -> 0-100 weight; unmapped
+    /// strings count neutral. No vocabulary is built in.
+    riskPriorityWeights              Json?                                 @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Admin-chosen dropdown field feeding per-case criticality; its options
+    /// weight by their order (top = highest), never by name.
+    riskCriticalityFieldId           Int?                                  @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    riskCriticalityField             CaseFields?                           @relation("ProjectRiskCriticalityField", fields: [riskCriticalityFieldId], references: [id], onDelete: SetNull)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
     junitIterationPropertyNames      String[]                              @default([])
     reviewWorkflowEnabled            Boolean                               @default(false)
@@ -1121,26 +1132,27 @@ model Color {
 }
 
 model CaseFields {
-    id                 Int                      @id @default(autoincrement())
-    displayName        String                   @length(1)
-    systemName         String                   @unique @length(1)
-    hint               String?
-    typeId             Int
-    type               CaseFieldTypes           @relation(name: "TypeToCaseFields", fields: [typeId], references: [id])
-    isEnabled          Boolean                  @default(true)
-    isDeleted          Boolean                  @default(false)
-    deletedAt          DateTime?                @db.Timestamptz(6)
-    isRequired         Boolean                  @default(false)
-    isRestricted       Boolean                  @default(false)
-    defaultValue       String?
-    isChecked          Boolean?
-    minValue           Float?
-    maxValue           Float?
-    initialHeight      Int?
-    templates          TemplateCaseAssignment[]
-    fieldOptions       CaseFieldAssignment[]
-    caseFieldValues    CaseFieldValues[]
-    sessionFieldValues SessionFieldValues[]
+    id                      Int                      @id @default(autoincrement())
+    displayName             String                   @length(1)
+    systemName              String                   @unique @length(1)
+    hint                    String?
+    typeId                  Int
+    type                    CaseFieldTypes           @relation(name: "TypeToCaseFields", fields: [typeId], references: [id])
+    isEnabled               Boolean                  @default(true)
+    isDeleted               Boolean                  @default(false)
+    deletedAt               DateTime?                @db.Timestamptz(6)
+    isRequired              Boolean                  @default(false)
+    isRestricted            Boolean                  @default(false)
+    defaultValue            String?
+    isChecked               Boolean?
+    minValue                Float?
+    maxValue                Float?
+    initialHeight           Int?
+    templates               TemplateCaseAssignment[]
+    fieldOptions            CaseFieldAssignment[]
+    caseFieldValues         CaseFieldValues[]
+    sessionFieldValues      SessionFieldValues[]
+    riskCriticalityProjects Projects[]               @relation("ProjectRiskCriticalityField")
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
@@ -2135,6 +2147,13 @@ model RepositoryCases {
     estimate                Int?
     forecastManual          Int?
     forecastAutomated       Float?
+    // Maintained risk score (0-100) with its per-component breakdown; written
+    // only by the risk service through the raw client. Unlike the forecasts,
+    // the breakdown is rendered as structured data for every reader, so the
+    // columns are locked against policy-client writes.
+    riskScore               Float?                       @deny('update', true)
+    riskReasons             Json?                        @deny('update', true)
+    riskComputedAt          DateTime?                    @db.Timestamptz(6) @deny('update', true)
     order                   Int                          @default(0)
     createdAt               DateTime                     @default(now()) @db.Timestamptz(6)
     creatorId               String                       @deny('update', true)
@@ -2186,6 +2205,7 @@ model RepositoryCases {
     @@index([createdAt])
     @@index([hasParameters])
     @@index([liveStepCount])
+    @@index([riskScore])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 

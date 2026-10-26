@@ -145,7 +145,10 @@ describe("useProjectCaseFilterOptions", () => {
       enabled: true,
     });
     expect(mockProject).toHaveBeenCalledWith(
-      { where: { id: 42 }, select: { impactEnabled: true } },
+      {
+        where: { id: 42 },
+        select: { impactEnabled: true, riskScoringEnabled: true },
+      },
       { enabled: true }
     );
   });

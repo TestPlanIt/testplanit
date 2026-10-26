@@ -102,7 +102,12 @@ function makeDb() {
 }
 
 function makeQueue() {
-  return { add: vi.fn().mockResolvedValue({ id: "impact-77" }) };
+  return {
+    add: vi.fn().mockResolvedValue({ id: "impact-77" }),
+    // A finished job may still hold the id the next analysis needs; the
+    // service clears it before adding (see startAnalysis).
+    getJob: vi.fn().mockResolvedValue(null),
+  };
 }
 
 function postRequest(body: unknown) {

@@ -743,7 +743,8 @@
       "sharedContent": "Udostępniana treść",
       "impact": "Analiza wpływu",
       "alerts": "Powiadomienia i alerty",
-      "triage": "Wzorce awarii"
+      "triage": "Wzorce awarii",
+      "riskScoring": "Ocena ryzyka"
     },
     "aria": {
       "userMenu": "Menu użytkownika",
@@ -4598,9 +4599,12 @@
         "selectedOf": "Wybrano {selected, number} z {total, number} dotknięty przypadkami testowymi",
         "thresholdHint": "Testy, które uzyskały punktację {threshold, number} lub wyższą, zaczynają się zaznaczone i pokazane; obniż minimalny wynik, aby zobaczyć resztę. Każdy test pokazuje, dlaczego został wybrany.",
         "shownCount": "Wyświetlanie {shown, number} z {total, number}",
-        "minScore": "Minimalny wynik",
+        "scoreColumn": "Wynik wpływu",
+        "minScore": "Minimalny wynik wpływu",
         "selectShown": "Wybierz wyświetlone ({count, number})",
         "deselectShown": "Anuluj zaznaczenie wyświetlonych ({count, number})",
+        "hiddenSelected": "{count, plural, one {# wybrany przypadek testowy jest ukryta przez filtry} few {# wybrane przypadki testowe są ukryte przez filtry} many {# wybranych przypadków testowych jest ukrytych przez filtry} other {# wybranych przypadków testowych jest ukrytych przez filtry}}.",
+        "deselectHidden": "Odznacz ukryte",
         "noneShown": "Żadne testy nie spełniają filtrów.",
         "reasons": "Dlaczego",
         "tierPinned": "Zapiętowany",
@@ -4609,8 +4613,6 @@
         "tierPinnedTooltip": "Kod Pin na tym przypadku przecina zmianę. Zapiętowane przypadki zawsze zajmują pierwsze miejsce.",
         "tierAffectedTooltip": "Inne sygnały umieszczają ten przypadek na lub powyżej progu wpływu {threshold, number}.",
         "tierRelatedTooltip": "Powiązany z silnie dotknętym przypadkiem, lub jego sygnały uzyskały wynik poniżej {threshold, number}.",
-        "showDetails": "Pokaż przyczyny",
-        "hideDetails": "Ukryj powody",
         "excluded": "{count, plural, one {# przypadek już w przebiegu został pominięty} other {# przypadki już w przebiegu zostały pominięte}}"
       },
       "noAffected": {
@@ -4683,6 +4685,23 @@
       },
       "repositoryPlaceholder": "Wybierz repozytorium...",
       "chooseRepository": "Wybierz, które z podłączonych repozytoriów projektu zawiera zmiany do analizy."
+    },
+    "risk": {
+      "prioritizeByRisk": "Ustalanie priorytetów na podstawie ryzyka",
+      "title": "Ustalanie priorytetów na podstawie ryzyka",
+      "description": "Przypadki, które najbardziej zasługują na przebieg, najpierw od największego ryzyka. Przypadki już znajdujące się w tym przebiegu są pomijane.",
+      "minimumScore": "Minimalny wynik ryzyka",
+      "showing": "{shown, plural, one {# przypadek załadowany} few {# przypadki załadowane} many {# przypadków załadowanych} other {# przypadków załadowanych}} z {total, plural, one {# dopasowanie} few {# dopasowania} many {# dopasowań} other {# dopasowań}}",
+      "loadedSelected": "{shown, plural, =2 {Oba załadowane przypadki są wybrane} one {Załadowany przypadek jest wybrany} other {Wszystkie # załadowane przypadki są wybrane}}.",
+      "selectAllMatches": "{total, plural, =2 {Wybierz oba dopasowania} one {Wybierz jedyne dopasowanie} other {Wybierz wszystkie # dopasowania}}",
+      "allMatchesSelected": "{total, plural, =2 {Oba dopasowania są wybrane} one {Jedyne dopasowanie jest wybrane} other {Wszystkie # dopasowania są wybrane}}.",
+      "noneMatch": "Brak ocenionych przypadków na tym poziomie lub wyższym.",
+      "caseColumn": "Przypadek testowy",
+      "scoreColumn": "Wynik ryzyka",
+      "addCases": "{count, plural, =0 {Dodaj przypadki} one {Dodaj # przypadek} few {Dodaj # przypadki} many {Dodaj # przypadków} other {Dodaj # przypadków}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Sposoby wyboru przypadków testowych"
     }
   },
   "admin": {
@@ -8577,7 +8596,8 @@
     "projectTriageSettings": "## Ustawienia Wzorców awarii\nGrupowanie uruchomień na każdym automatycznym wyniku, który nadchodzi i nic nie kosztuje. Sugestia przyczyny głównej sztucznej inteligencji używa modelu sztucznej inteligencji przypisanego do funkcji **Wzorce awarii: Przyczyna główna** na stronie Modele sztucznej inteligencji; wyłącz to tutaj, aby kontynuować grupowanie bez żadnych wywołań sztucznej inteligencji. **Analizuj istniejące wyniki** grupuje każdą automatyczną awarię już zarejestrowaną w tym projekcie.",
     "projectQuarantine": "## Kwarantanna przypadków testowych\nPrzypadek testowy w kwarantannie nadal działa i rejestruje wyniki, ale jego awarie są pozostawiane poza przebiegiem pass/fail i pokazywane jako oddzielna liczba. Umieść przypadek w kwarantannie ze wzorca awarii, podczas gdy przyczyna jest naprawiana. Kwarantanna zostaje podniesiona automatycznie po tym, jak przypadek przejdzie tyle razy z rzędu, ile ustawiono w ustawieniach Wzorców awarii, chyba że był oznaczony do ręcznego zwolnienia; zwolnij go tutaj lub ze wzorca w dowolnym momencie.",
     "rootCauses": "## Przyczyny główne\nPrzyczyny główne, które Wzorce awarii przypisuje do zgrupowanych awarii, przez sztuczną inteligencję lub ręcznie. Każda ma opis, który sztuczna inteligencja czyta, aby zdecydować, kiedy ma zastosowanie. Zmień nazwę, ponownie pokoloruj lub zmień kolejność, dodaj własne lub usuń te, których nie używasz; usunięcie jednej pozostawia jej wzorce bez przyczyny głównej.",
-    "rootCauseDescription": "## Opis\nSztuczna inteligencja czyta ten opis, aby zdecydować, kiedy przyczyna główna ma zastosowanie do wzorca awarii, więc opisz dowody wskazujące na nią."
+    "rootCauseDescription": "## Opis\nSztuczna inteligencja czyta ten opis, aby zdecydować, kiedy przyczyna główna ma zastosowanie do wzorca awarii, więc opisz dowody wskazujące na nią.",
+    "projectRiskSettings": "## Ustawienia oceny ryzyka\nKażdy przypadek testowy otrzymuje wynik ryzyka 0-100 z historii awarii, niestabilności, zaniedbania, powiązanej krytyczności wymagań i powiązanych defektów — deterministycznie, bez wywołań AI. Wyniki odświeżają się po przybyciu wyników i w codziennym przeglądzie. **Wagi komponentów** określają, ile każdy sygnał się liczy względem innych; zero usuwa komponent. **Przelicz wszystkie wyniki** ponownie ocenia cały projekt teraz zamiast czekać na codzienny przegląd."
   },
   "reports": {
     "ui": {
@@ -10955,6 +10975,74 @@
       "releaseAuto": "{count, plural, one {Automatyczne po # kolejnym przejściu} few {Automatyczne po # kolejnych przejściach} many {Automatyczne po # kolejnych przejściach} other {Automatyczne po # kolejnych przejściach}}",
       "releaseManual": "Ręcznie",
       "empty": "W tym projekcie żaden przypadek testowy nie jest w kwarantannie."
+    }
+  },
+  "risk": {
+    "score": "Wynik ryzyka",
+    "notScored": "Jeszcze nie oceniony",
+    "breakdown": {
+      "title": "Dlaczego ten wynik",
+      "pointsOfWeight": "{points} pkt · waga {weight}",
+      "components": {
+        "failureHistory": "Historia awarii",
+        "flakiness": "Niestabilność",
+        "staleness": "Zaniedbanie",
+        "criticality": "Krytyczność",
+        "defects": "Powiązane defekty"
+      },
+      "lastExecuted": "Ostatnio wykonano",
+      "neverExecuted": "Nigdy nie wykonano",
+      "verdicts": "{failed} z {sampled, plural, one {# ostatniego zautomatyzowanego wyniku} few {# ostatnich zautomatyzowanych wyników} many {# ostatnich zautomatyzowanych wyników} other {# ostatniego zautomatyzowanego wyniku}} nie powiodło się",
+      "flips": "{flips, plural, one {# przewrót pass/fail} few {# przewroty pass/fail} many {# przewrotów pass/fail} other {# przewrotów pass/fail}}",
+      "requirements": "{count, plural, one {# powiązane wymaganie} few {# powiązane wymagania} many {# powiązanych wymagań} other {# powiązanych wymagań}} · najwyższy priorytet {priority}",
+      "suspect": "{count, plural, one {# wymaganie zmienione} few {# wymagania zmienione} many {# wymagań zmienionych} other {# wymagań zmienionych}} od ostatniego uruchomienia",
+      "defects": "{count, plural, one {# powiązany defekt} few {# powiązane defekty} many {# powiązanych defektów} other {# powiązanych defektów}} · najwyższy priorytet {priority}",
+      "caseCriticality": "Krytyczność przypadku: {value}",
+      "noPriority": "nieokreślone",
+      "quarantined": "Poddany kwarantannie"
+    },
+    "settings": {
+      "description": "Każdy przypadek testowy otrzymuje wynik ryzyka 0-100 z historii awarii, niestabilności, zaniedbania, powiązanej krytyczności wymagań i powiązanych defektów. Wyniki odświeżają się po przybyciu wyników i w codziennym przeglądzie, zasilając kolumnę Wynik ryzyka repozytorium i filtr.",
+      "enableLabel": "Obsługuj wyniki ryzyka",
+      "enableDescription": "Po wyłączeniu istniejące wyniki pozostają, ale przestają się aktualizować i filtr Wynik ryzyka znika.",
+      "enabledToast": "Ocena ryzyka włączona",
+      "disabledToast": "Ocena ryzyka wyłączona",
+      "weightsTitle": "Wagi komponentów",
+      "weightsDescription": "Jak bardzo każdy sygnał się liczy względem innych. Wynik normalizuje się ze względu na sumę, więc wagi nie muszą sumować się do 100. Zero usuwa komponent.",
+      "components": {
+        "failureHistory": "Historia awarii",
+        "flakiness": "Niestabilność",
+        "staleness": "Zaniedbanie",
+        "criticality": "Krytyczność",
+        "defects": "Powiązane defekty"
+      },
+      "weightsSaved": "Wagi zapisane",
+      "weightsInvalid": "Wagi muszą być liczbami między 0 a {max}",
+      "weightsReset": "Wagi przywrócone do ustawień domyślnych",
+      "resetDefaults": "Przywróć do ustawień domyślnych",
+      "usingDefaults": "Korzystam z ustawień domyślnych systemu",
+      "criticalityFieldTitle": "Pole krytyczności przypadku",
+      "criticalityFieldDescription": "Opcjonalne pole przypadku rozwijanego, które zasilą krytyczność każdego przypadku. Opcje liczą się według ich kolejności: najwyższa opcja 100, dolna 10, równomiernie rozłożone — nazwy nigdy się nie liczą.",
+      "criticalityFieldNone": "Brak",
+      "criticalityFieldSaved": "Pole krytyczności zapisane",
+      "criticalityFieldCleared": "Pole krytyczności wyczyszczone",
+      "criticalityFieldOptions": "Wagi opcji, według kolejności:",
+      "issuePrioritiesTitle": "Priorytety problemów",
+      "issuePrioritiesDescription": "Wymagania i defekty noszą priorytet z Twojego śledzenia jako tekst wolny. Zmapuj nazwy, które Twój projekt faktycznie używa, na wagę 0-100. Nazwy bez mapowania liczą się jako neutralne (50). Nic nie jest wbudowane — to Twój słownik, nie nasz.",
+      "issuePrioritiesEmpty": "Brak powiązanych wymagań lub defektów z priorytetami.",
+      "issuePrioritiesCount": "{count, plural, one {# powiązany problem} few {# powiązane problemy} many {# powiązanych problemów} other {# powiązanych problemów}}",
+      "issuePrioritiesUnused": "nie w użyciu",
+      "issuePrioritiesSaved": "Priorytety problemów zapisane",
+      "issuePrioritiesInvalid": "Wagi muszą być liczbami między 0 a 100",
+      "backfillLabel": "Przelicz wszystkie wyniki",
+      "backfillDescription": "Ponownie oceń każdy przypadek testowy w projekcie teraz zamiast czekać na codzienny przegląd.",
+      "backfillStarted": "Rozpoczęto przeliczanie",
+      "backfillRunning": "Przeliczanie… {processed, plural, one {# przypadek oceniony} few {# przypadki ocenione} many {# przypadków ocenionych} other {# przypadków ocenionych}}",
+      "backfillDone": "Przeliczanie zakończone",
+      "backfillFailed": "Przeliczanie nie powiodło się",
+      "backfillAlreadyRunning": "Przeliczanie było już uruchomione — uruchom Przelicz wszystkie wyniki ponownie, gdy się skończy, aby każdy przypadek odzwierciedlał nowe wagi",
+      "backfillQueueUnavailable": "Kolejka zadań w tle jest niedostępna",
+      "openRepository": "Otwórz repozytorium"
     }
   }
 }

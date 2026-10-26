@@ -246,6 +246,14 @@ export function useSortingAdapter<TData extends RowData>(
 }
 
 /**
+ * Columns that hold a row CONTROL rather than row content. `RowExpanderPrefix`
+ * leads the first cell outside this set, so a table that selects rows keeps
+ * the chevron out of the checkbox well -- that column is sized for the box
+ * alone (40-48px), and a chevron beside it is clipped.
+ */
+export const CONTROL_COLUMN_IDS = new Set(["select", "drag", "reorder"]);
+
+/**
  * The expand/collapse chevron for a row with sub-rows, rendered INLINE at the
  * head of the first content cell.
  *
@@ -298,6 +306,7 @@ export function RowExpanderPrefix<TData extends RowData>({
                 style={{ cursor: "pointer" }}
                 className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
                 aria-label={tooltipText}
+                aria-expanded={isExpanded}
                 data-testid="row-expander"
               >
                 {/* The rotation lives on this span as an inline transform,

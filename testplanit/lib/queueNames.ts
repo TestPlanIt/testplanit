@@ -37,6 +37,11 @@ export const ALERT_QUEUE_NAME = "alerts";
 // receiver has answered.
 export const WEBHOOK_ACTIONS_QUEUE_NAME = "webhook-actions";
 export const JOB_RUN_TRACKER_ACTIONS = "run-tracker-actions";
+// Risk scoring: maintained per-case risk score, recomputed in the background.
+export const RISK_SCORE_QUEUE_NAME = "risk-score";
+export const JOB_RISK_UPDATE_RUN = "risk-update-run";
+export const JOB_RISK_UPDATE_PROJECT = "risk-update-project";
+export const JOB_RISK_UPDATE_ALL = "risk-update-all";
 // Failure triage: group automated failures into signatures and classify them.
 export const FAILURE_TRIAGE_QUEUE_NAME = "failure-triage";
 export const JOB_TRIAGE_RUN = "triage-run";
@@ -98,4 +103,5 @@ export const ALL_QUEUE_NAMES = [
   ALERT_QUEUE_NAME,
   WEBHOOK_ACTIONS_QUEUE_NAME,
   FAILURE_TRIAGE_QUEUE_NAME,
+  RISK_SCORE_QUEUE_NAME,
 ] as const;

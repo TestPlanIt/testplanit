@@ -45,6 +45,7 @@ import {
   type SortConfig,
   getFlexPinningStyles,
   resolveGroupableCellContent,
+  CONTROL_COLUMN_IDS,
   RowExpanderPrefix,
   NESTING_INDENT_PX,
   TruncatedHeaderLabel,
@@ -894,7 +895,13 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                     ref={shell.setNodeRef}
                     role="columnheader"
                     className={cn(
-                      "relative flex select-none items-center gap-1 border-e px-3 last:border-e-0",
+                      // `h-9` is load-bearing: header content sits in a
+                      // truncating block, so an inline-block child whose
+                      // baseline moves -- a checkbox gaining its tick -- grows
+                      // that line box and the whole header with it. The paged
+                      // engine never had the problem because `TableHead`
+                      // carries a fixed height of its own.
+                      "relative flex h-9 select-none items-center gap-1 border-e px-3 last:border-e-0",
                       tableStyles.headerCell,
                       isFlex ? "min-w-0" : "shrink-0",
                       // Opaque fill so scrolled header cells don't bleed under a
@@ -1181,6 +1188,17 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                   highlightRowId != null &&
                   String(row.original?.id) === String(highlightRowId);
                 const rowExtra = getRowProps?.(row);
+                const rowCells = row.getVisibleCells();
+                // The chevron leads the first CONTENT cell, never a row
+                // control's own (see CONTROL_COLUMN_IDS).
+                const expanderCellIndex = expansionActive
+                  ? Math.max(
+                      0,
+                      rowCells.findIndex(
+                        (cell) => !CONTROL_COLUMN_IDS.has(cell.column.id)
+                      )
+                    )
+                  : -1;
                 return (
                   <div
                     // Key by the virtual item (index), not the data id, so React
@@ -1236,7 +1254,7 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                       transform: `translateY(${vItem.start}px)`,
                     }}
                   >
-                    {row.getVisibleCells().map((cell, cellIndex) => {
+                    {rowCells.map((cell, cellIndex) => {
                       const { column } = cell;
                       const content = resolveGroupableCellContent(
                         cell,
@@ -1284,7 +1302,7 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                               : {}),
                           }}
                         >
-                          {expansionActive && cellIndex === 0 && (
+                          {cellIndex === expanderCellIndex && (
                             <RowExpanderPrefix
                               row={row}
                               subRowsLabel={subRowsLabel}

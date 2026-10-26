@@ -100,6 +100,7 @@ export const repositoryCaseMapping = {
     estimate: { type: "integer" as const },
     forecastManual: { type: "integer" as const },
     forecastAutomated: { type: "float" as const },
+    riskScore: { type: "float" as const },
     automated: { type: "boolean" as const },
     isArchived: { type: "boolean" as const },
     isDeleted: { type: "boolean" as const },
@@ -249,6 +250,7 @@ export interface RepositoryCaseDocument {
   estimate?: number | null;
   forecastManual?: number | null;
   forecastAutomated?: number | null;
+  riskScore?: number | null;
   automated: boolean;
   isArchived: boolean;
   isDeleted: boolean;

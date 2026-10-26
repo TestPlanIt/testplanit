@@ -1,4 +1,5 @@
 import {
+  Gauge,
   Bot,
   Bug,
   Calendar,
@@ -51,6 +52,7 @@ const DIMENSION_ICONS: Readonly<Record<string, LucideIcon>> = {
   parameterized: SquareStack,
   attachments: Paperclip,
   codePins: Pin,
+  riskScore: Gauge,
   inReview: MessageSquareWarning,
   tags: Tags,
   issues: Bug,

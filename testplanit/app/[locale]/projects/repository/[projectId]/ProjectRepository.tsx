@@ -837,6 +837,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // away before the flag is known.
   const impactEnabled = project?.impactEnabled;
   const codePinsActive = impactEnabled === true;
+  const riskScoreActive = project?.riskScoringEnabled === true;
   const filterRegistry = useMemo(
     () =>
       buildFilterDimensions({
@@ -844,12 +845,14 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         includeRunDimensions,
         includeInReview: reviewWorkflowActive,
         includeCodePins: codePinsActive,
+        includeRiskScore: riskScoreActive,
       }),
     [
       mirroredDynamicFields.fields,
       includeRunDimensions,
       reviewWorkflowActive,
       codePinsActive,
+      riskScoreActive,
     ]
   );
 

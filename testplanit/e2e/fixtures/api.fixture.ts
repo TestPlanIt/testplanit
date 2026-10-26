@@ -3733,6 +3733,61 @@ export class ApiHelper {
     }
   }
 
+  /** Mark a case automated (or back to manual) — the kind the risk picker filters on. */
+  async setCaseAutomated(caseId: number, automated: boolean): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/repositoryCases/update`,
+      {
+        data: { where: { id: caseId }, data: { automated } },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to set case ${caseId} automated: ${error}`);
+    }
+  }
+
+  /**
+   * Queue a full rescore of the project and wait for the worker to finish it.
+   *
+   * Risk scores are written only by the scorer, never by a client — the
+   * columns are update-locked in the schema — so a spec that needs scored
+   * cases has to go through the real path and wait for it.
+   */
+  async backfillRiskScores(projectId: number): Promise<void> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/projects/${projectId}/risk/backfill`
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to queue the risk backfill: ${error}`);
+    }
+  }
+
+  /** A case's stored risk score; null until the scorer has reached it. */
+  async getRiskScore(caseId: number): Promise<number | null> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/repositoryCases/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: caseId },
+            select: { riskScore: true },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to read the risk score: ${error}`);
+    }
+    const body = await response.json();
+    return body?.data?.riskScore ?? null;
+  }
+
   /**
    * Create an admin-level code repository with placeholder credentials.
    * Specs mock the provider-backed routes (branches, commits, compare,

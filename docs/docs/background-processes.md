@@ -30,7 +30,8 @@ The application uses the following background processes:
 18. **Alert Worker** - Evaluates alert rules when results land, when runs complete, when automated executions fail and sessions complete, and on hourly and daily scheduled passes
 19. **Webhook Actions Worker** - Runs an issue-tracker webhook's [actions](./user-guide/webhooks.md#issue-tracker-actions) (importing the issue, creating test runs, drafting test cases with AI) after the webhook has been answered
 20. **Failure Triage Worker** - Groups automated failures into failure patterns, asks the project's LLM for a root cause and releases recovered quarantines
-21. **Scheduler** - Sets up recurring jobs (cron jobs)
+21. **Risk Score Worker** - Keeps every test case's risk score current after results land and in a nightly sweep
+22. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -140,6 +141,14 @@ The application uses the following background processes:
 - Default concurrency: 2 (overridable via `FAILURE_TRIAGE_CONCURRENCY`)
 - Location: `workers/failureTriageWorker.ts`
 
+### Risk Score Worker
+
+- Consumes the `risk-score` BullMQ queue: a debounced job per test run whenever manual or automated results arrive (rescoring just the cases whose results landed recently), a per-project recompute, and a nightly sweep over every project with risk scoring enabled
+- Scores each test case 0-100 from its failure history, flakiness, staleness, linked requirement criticality (including suspect links), and linked defects, using the project's configured component weights
+- Persists the score with a per-component breakdown; the debounced and nightly passes only write (and re-index) cases whose score or inputs actually changed, while the on-demand per-project recompute rewrites everything so configuration changes propagate
+- Default concurrency: 2 (overridable via `RISK_SCORE_CONCURRENCY`)
+- Location: `workers/riskScoreWorker.ts`
+
 ### Webhook Dispatch Worker
 
 - Consumes the `webhook-dispatch` BullMQ queue and POSTs each event to its subscribed endpoints
@@ -217,6 +226,7 @@ The application uses the following background processes:
 - Sets up recurring jobs using cron patterns
 - Configures daily digest emails (8 AM)
 - Configures forecast updates (3 AM)
+- Configures the nightly risk-score sweep (3:30 AM)
 - Configures code repository cache refresh (4 AM)
 - Configures the abandoned automated-run sweep (every 15 minutes)
 - Location: `scheduler.ts`

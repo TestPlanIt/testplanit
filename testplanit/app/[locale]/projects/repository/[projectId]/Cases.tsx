@@ -291,6 +291,8 @@ const REPOSITORY_CASE_LIST_SELECT = {
   estimate: true,
   forecastManual: true,
   forecastAutomated: true,
+  riskScore: true,
+  riskReasons: true,
   order: true,
   createdAt: true,
   creatorId: true,
@@ -411,6 +413,8 @@ const TEST_RUN_CASE_LIST_SELECT = {
       estimate: true,
       forecastManual: true,
       forecastAutomated: true,
+      riskScore: true,
+      riskReasons: true,
       order: true,
       createdAt: true,
       creatorId: true,
@@ -1333,6 +1337,17 @@ export default function Cases({
       } else if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { repositoryCase: { [column]: direction } };
       }
+      // Risk score: sparse until the first recompute; blanks pinned last.
+      if (column === "riskScore") {
+        return [
+          {
+            repositoryCase: {
+              riskScore: { sort: direction, nulls: "last" as const },
+            },
+          },
+          { order: "asc" as const },
+        ];
+      }
       // Estimate/Forecast: sparse columns, blanks pinned last in both
       // directions; the run order breaks ties so pages stay stable.
       const durationTerms = durationSortTerms(column, direction);
@@ -1424,6 +1439,14 @@ export default function Cases({
 
       if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { [column]: direction };
+      }
+      // Risk score: sparse until the first recompute; blanks pinned last in
+      // both directions, repository order breaks ties.
+      if (column === "riskScore") {
+        return [
+          { riskScore: { sort: direction, nulls: "last" as const } },
+          { order: "asc" as const },
+        ];
       }
       // Estimate/Forecast: sparse columns, blanks pinned last in both
       // directions; the repository order breaks ties so pages stay stable.
@@ -2619,6 +2642,7 @@ export default function Cases({
         runOrder: t("repository.columns.runOrder"),
         issues: t("common.fields.issues"),
         forecast: t("common.fields.forecast"),
+        riskScore: t("risk.score"),
         id: t("common.fields.id"),
         linkedCases: t("repository.fields.linkedCases"),
         versions: t("common.fields.version"),

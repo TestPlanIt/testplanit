@@ -5,6 +5,7 @@ import { extractJsonObject } from "~/lib/llm/services/json-extract";
 import type { LlmManager } from "~/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "~/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "~/lib/llm/types";
+import { fillPrompt } from "~/lib/llm/services/prompt-fill";
 import type { TriageDb, VerdictHistory } from "./signatures";
 import {
   countFlips,
@@ -210,16 +211,7 @@ export function buildClassificationVariables(input: {
   };
 }
 
-/** Substitutes `{{NAME}}` placeholders; unknown placeholders are left as-is. */
-export function fillPrompt(
-  template: string,
-  vars: Record<string, string>
-): string {
-  return template.replace(
-    /\{\{\s*([A-Z0-9_]+)\s*\}\}/g,
-    (match, name: string) => (name in vars ? vars[name] : match)
-  );
-}
+export { fillPrompt };
 
 export interface ClassifyOutcome {
   classified: number;

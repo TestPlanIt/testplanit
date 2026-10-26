@@ -57,7 +57,10 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── Cases family ──────────────────────────────────────────────────────────
   {
     table: "RepositoryCases",
-    denylist: ["createdAt"],
+    // Risk columns are machine-recomputed nightly for every project; auditing
+    // them would turn each sweep into a DataChangeLog flood (riskReasons is
+    // ~1-2KB JSON per row). Same treatment as Steps.step/expectedResult.
+    denylist: ["createdAt", "riskScore", "riskReasons", "riskComputedAt"],
     nameCol: "name",
     projectCol: "projectId",
   }, // NOTE: no updatedAt column on this table (Finding C)

@@ -25,7 +25,15 @@ function makeDb(reusable: unknown = null) {
   };
 }
 function makeQueue() {
-  return { add: vi.fn().mockResolvedValue({}) };
+  return { add: vi.fn().mockResolvedValue({}), getJob: vi.fn() };
+}
+
+/** A job already holding the id a new analysis would claim. */
+function makeExistingJob(state: string) {
+  return {
+    getState: vi.fn().mockResolvedValue(state),
+    remove: vi.fn().mockResolvedValue(undefined),
+  };
 }
 const input = {
   projectId: 3,
@@ -84,6 +92,26 @@ describe("startImpactAnalysis", () => {
       where: { id: 77 },
       data: { jobId: "impact-77" },
     });
+  });
+
+  it("clears a finished job holding the id it needs, but never a live one", async () => {
+    const db = makeDb();
+    const queue = makeQueue();
+    const finished = makeExistingJob("completed");
+    queue.getJob.mockResolvedValue(finished);
+
+    expect(await startImpactAnalysis(db, loaded, queue, input)).toMatchObject({
+      ok: true,
+      jobId: "impact-77",
+    });
+    expect(queue.getJob).toHaveBeenCalledWith("impact-77");
+    expect(finished.remove).toHaveBeenCalled();
+    expect(queue.add).toHaveBeenCalled();
+
+    const live = makeExistingJob("active");
+    queue.getJob.mockResolvedValue(live);
+    await startImpactAnalysis(makeDb(), loaded, queue, input);
+    expect(live.remove).not.toHaveBeenCalled();
   });
 
   it("reuses a recent completed analysis of the same pair unless forced", async () => {

@@ -58,7 +58,10 @@ This step involves selecting the test cases to be included in the run.
   - A drawer icon in the header shows the count of currently selected cases and allows viewing/managing the selection.
 - **Selection**: Check the box next to any test case you want to include in this run.
 - **Selected Cases Drawer**: Clicking the drawer icon opens a panel showing the list of selected test cases, allowing you to review and remove items if needed.
-- **Magic Select** and **Analyze impact**: Two buttons in the header help build the selection. [Magic Select](../llm-magic-select.md) suggests cases from the run's name, description, documentation, and linked issues (requires an active LLM integration). **Analyze impact**, next to it, compares two commits of the application under test and lists the Affected Tests; the cases you accept merge with the current selection. It appears only when the project has Impact Analysis enabled — see [Test Impact Analysis](../impact.md).
+- **Ways to pick test cases**: a menu in the header offers up to three ways to build the selection, each adding to what is already checked rather than replacing it. Only the ones the project has turned on appear.
+  - [Magic Select](../llm-magic-select.md) suggests cases from the run's name, description, documentation, and linked issues. Requires an active LLM integration.
+  - **Analyze impact** compares two commits of the application under test and lists the Affected Tests. Requires Impact Analysis enabled and an application repository connected — see [Test Impact Analysis](../impact.md).
+  - **Prioritize by risk** lists the cases that most deserve a run, highest [risk score](../risk-scores.md) first, with a minimum-score control and a count of how many match. Cases already in the run are left out. Requires risk scoring enabled for the project.
 
 :::note Draft cases may be hidden
 If the project has [Exclude Draft Cases from Test Runs](../projects.md#exclude-draft-cases-from-test-runs) turned on, test cases whose current workflow state is a Not Started type are hidden from this picker. If any selected cases drift into a Not Started state before Save, they are dropped on submit and a toast names how many were skipped.

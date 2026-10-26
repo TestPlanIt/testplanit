@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
       alerts: 2,
       "webhook-actions": 2,
       "failure-triage": 2,
+      "risk-score": 2,
     };
 
     // Get configured concurrency from environment (or use defaults)
@@ -172,6 +173,11 @@ export async function GET(request: NextRequest) {
       "failure-triage": parseInt(
         process.env.FAILURE_TRIAGE_CONCURRENCY ||
           String(defaultConcurrency["failure-triage"]),
+        10
+      ),
+      "risk-score": parseInt(
+        process.env.RISK_SCORE_CONCURRENCY ||
+          String(defaultConcurrency["risk-score"]),
         10
       ),
     };

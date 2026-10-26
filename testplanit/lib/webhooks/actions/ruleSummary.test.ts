@@ -28,7 +28,7 @@ describe("describeCreateRunRule", () => {
         autoExecute: { targetId: 4 },
       })
     ).toBe(
-      "Pull requests → Create Test Run · Minimum score: 90 · Target: Nightly CI"
+      "Pull requests → Create Test Run · Minimum impact score: 90 · Target: Nightly CI"
     );
   });
 
@@ -94,7 +94,7 @@ describe("describeCreateRunRule", () => {
         autoExecute: { targetId: 4 },
       })
     ).toBe(
-      "Pull requests → Create Test Run · Minimum score: 90 · Test case filters: Automation: Is Automated; Tag: Any of smoke · Target: Nightly CI"
+      "Pull requests → Create Test Run · Minimum impact score: 90 · Test case filters: Automation: Is Automated; Tag: Any of smoke · Target: Nightly CI"
     );
     expect(mockDescribeCaseFilter).toHaveBeenCalledWith(db, 3, caseFilter);
   });

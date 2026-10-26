@@ -5,6 +5,7 @@ import {
   type BatchableItem,
 } from "../lib/llm/services/batch-processor";
 import { LlmManager } from "../lib/llm/services/llm-manager.service";
+import { extractTextFromTipTap } from "../lib/llm/services/tiptap-text";
 import { PromptResolver } from "../lib/llm/services/prompt-resolver.service";
 import { LLM_FEATURES } from "../lib/llm/constants";
 import type { LlmRequest } from "../lib/llm/types/index";
@@ -110,7 +111,7 @@ const SEARCH_CONFIG = {
 };
 
 // Compressed test case structure for LLM context
-interface CompressedTestCase {
+export interface CompressedTestCase {
   id: number;
   name: string;
   folderPath: string;
@@ -118,6 +119,8 @@ interface CompressedTestCase {
   fields: Record<string, string>;
   linksTo: number[];
   linksFrom: number[];
+  /** Standing risk score 0-100; absent when the project does not keep them. */
+  risk?: number;
 }
 
 // Issue data structure
@@ -133,33 +136,6 @@ interface IssueData {
 }
 
 // Extract text content from TipTap JSON
-function extractTextFromTipTap(content: unknown): string {
-  if (!content) return "";
-
-  if (typeof content === "string") {
-    try {
-      const parsed = JSON.parse(content);
-      return extractTextFromTipTap(parsed);
-    } catch {
-      return content;
-    }
-  }
-
-  if (typeof content !== "object") return "";
-
-  const obj = content as Record<string, unknown>;
-
-  if (obj.type === "text" && typeof obj.text === "string") {
-    return obj.text;
-  }
-
-  if (Array.isArray(obj.content)) {
-    return obj.content.map((child) => extractTextFromTipTap(child)).join(" ");
-  }
-
-  return "";
-}
-
 // Truncate string to specified length with ellipsis
 function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
@@ -421,7 +397,33 @@ Return ONLY the JSON.`;
 }
 
 // Build user prompt with test run context and repository cases
-function buildUserPrompt(
+/**
+ * One case as the model sees it: a positional array, trailing nulls trimmed.
+ * The token estimate that sizes a batch encodes the case with this same
+ * function, so the two cannot drift as positions are added.
+ */
+export function compressCaseForPrompt(
+  tc: CompressedTestCase
+): (number | string | string[] | number[] | Record<string, string> | null)[] {
+  const result: (
+    number | string | string[] | number[] | Record<string, string> | null
+  )[] = [tc.id, tc.name];
+  result.push(tc.folderPath !== "/" ? tc.folderPath : null);
+  result.push(tc.tags.length > 0 ? tc.tags : null);
+  result.push(Object.keys(tc.fields).length > 0 ? tc.fields : null);
+  result.push(tc.linksTo.length > 0 ? tc.linksTo : null);
+  result.push(tc.linksFrom.length > 0 ? tc.linksFrom : null);
+  // Last, so a project without risk scores pays nothing for the position.
+  result.push(tc.risk ?? null);
+
+  while (result.length > 2 && result[result.length - 1] === null) {
+    result.pop();
+  }
+  return result;
+}
+
+/** Exported for tests: the whole user message the model is given. */
+export function buildUserPrompt(
   testRunMetadata: {
     name: string;
     description: unknown;
@@ -431,7 +433,13 @@ function buildUserPrompt(
   },
   issues: IssueData[],
   testCases: CompressedTestCase[],
-  clarification?: string
+  clarification?: string,
+  /**
+   * Whether to spell out how to weigh risk. Derived from the cases, except
+   * when measuring the message's fixed overhead with no cases in hand — the
+   * guidance is part of that overhead and the batch budget has to know.
+   */
+  withRiskGuidance?: boolean
 ): string {
   let prompt = `TEST RUN TO CREATE:
 Name: ${testRunMetadata.name}`;
@@ -474,37 +482,19 @@ Name: ${testRunMetadata.name}`;
   }
 
   // Compress test case data to reduce token usage
-  const compressedCaseData = testCases.map((tc) => {
-    const result: (
-      number | string | string[] | number[] | Record<string, string> | null
-    )[] = [tc.id, tc.name];
-    if (tc.folderPath !== "/") result.push(tc.folderPath);
-    else result.push(null);
+  const compressedCaseData = testCases.map(compressCaseForPrompt);
 
-    if (tc.tags.length > 0) result.push(tc.tags);
-    else result.push(null);
-
-    if (Object.keys(tc.fields).length > 0) result.push(tc.fields);
-    else result.push(null);
-
-    if (tc.linksTo.length > 0) result.push(tc.linksTo);
-    else result.push(null);
-
-    if (tc.linksFrom.length > 0) result.push(tc.linksFrom);
-    else result.push(null);
-
-    // Trim trailing nulls
-    while (result.length > 2 && result[result.length - 1] === null) {
-      result.pop();
-    }
-    return result;
-  });
-
+  const anyRisk = withRiskGuidance ?? testCases.some((tc) => tc.risk != null);
   prompt += `\n\nAVAILABLE TEST CASES (${testCases.length} cases):
-Format: [id, name, folder?, tags[]?, fields?, linkedTo[]?, linkedFrom[]?]
+Format: [id, name, folder?, tags[]?, fields?, linkedTo[]?, linkedFrom[]?${anyRisk ? ", risk?" : ""}]
 ${JSON.stringify(compressedCaseData)}
 
 Select all relevant test cases by their IDs. Consider names, folders, tags, custom fields, and linked cases.`;
+  if (anyRisk) {
+    // A tiebreaker, never a reason on its own: risk says a case is fragile or
+    // overdue, not that it has anything to do with this run.
+    prompt += ` \`risk\` is a 0-100 standing score from the case's own history — recent failures, flakiness, how long since it last ran, and the requirements and defects linked to it. Where two cases are equally relevant to this run, prefer the higher risk. Never select a case for its risk alone, and never leave out a relevant case because its risk is low.`;
+  }
 
   return prompt;
 }
@@ -575,7 +565,7 @@ export const processor = async (
 
   const projectFlag = await (db as any).projects.findUnique({
     where: { id: projectId },
-    select: { excludeNotStartedFromRuns: true },
+    select: { excludeNotStartedFromRuns: true, riskScoringEnabled: true },
   });
   const draftFilter: Record<string, unknown> =
     projectFlag?.excludeNotStartedFromRuns
@@ -884,6 +874,9 @@ export const processor = async (
         fields,
         linksTo: tc.linksFrom.map((l: any) => l.caseBId),
         linksFrom: tc.linksTo.map((l: any) => l.caseAId),
+        ...(projectFlag?.riskScoringEnabled && tc.riskScore != null
+          ? { risk: Math.round(tc.riskScore) }
+          : {}),
       };
     }
   );
@@ -897,7 +890,8 @@ export const processor = async (
     testRunMetadata,
     issues,
     [],
-    clarification
+    clarification,
+    compressedCases.some((tc) => tc.risk != null)
   );
   const systemPromptTokens =
     Math.ceil(systemPrompt.length / 4) + Math.ceil(testRunContext.length / 4);
@@ -905,15 +899,7 @@ export const processor = async (
   // 12. Convert compressed cases to batchable items with token estimates
   const batchableItems: (CompressedTestCase & BatchableItem)[] =
     compressedCases.map((tc) => {
-      const serialized = JSON.stringify([
-        tc.id,
-        tc.name,
-        tc.folderPath !== "/" ? tc.folderPath : null,
-        tc.tags.length > 0 ? tc.tags : null,
-        Object.keys(tc.fields).length > 0 ? tc.fields : null,
-        tc.linksTo.length > 0 ? tc.linksTo : null,
-        tc.linksFrom.length > 0 ? tc.linksFrom : null,
-      ]);
+      const serialized = JSON.stringify(compressCaseForPrompt(tc));
       return {
         ...tc,
         estimatedTokens: Math.ceil(serialized.length / 4),

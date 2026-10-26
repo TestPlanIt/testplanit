@@ -17,6 +17,14 @@ if (process.env.DATABASE_URL) {
   process.env.DIRECT_DATABASE_URL = process.env.DATABASE_URL;
 }
 
+// Queues live in Valkey, which a developer's own stack usually shares with
+// this suite. Without a namespace of its own, both worker pools listen to the
+// same queue names: a job this suite enqueues can be picked up by the dev
+// workers and run against the DEVELOPMENT database, and a job meant for them
+// can disappear into the suite. Namespacing keeps a dev environment running
+// while E2E runs beside it, and keeps the two sets of data apart.
+process.env.BULLMQ_PREFIX = process.env.BULLMQ_PREFIX || "bull-e2e";
+
 /** Specs that toggle Force SSO, domain restriction or the password policy. */
 const INSTANCE_SETTINGS_SPECS =
   /admin\/(sso\/sso-provider-management|security\/security-settings)\.spec\.ts$/;

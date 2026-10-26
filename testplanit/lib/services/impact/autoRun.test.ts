@@ -299,7 +299,7 @@ describe("createRunFromAnalysis", () => {
     expect(mockCompose.mock.calls[0][1].links).toEqual([
       { label: autoRun.label, url: autoRun.url },
       {
-        label: "Pull requests → Create Test Run · Minimum score: 90",
+        label: "Pull requests → Create Test Run · Minimum impact score: 90",
         url: null,
       },
     ]);

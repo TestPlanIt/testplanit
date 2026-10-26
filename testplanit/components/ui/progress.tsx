@@ -13,6 +13,10 @@ const Progress = React.forwardRef<
   return (
     <ProgressPrimitive.Root
       ref={ref}
+      // `value` drives the transform below, but Radix also needs it to report
+      // aria-valuenow and a determinate data-state; without it every bar
+      // announces itself as an empty, indeterminate progress bar.
+      value={value}
       className={cn(
         "relative h-2 w-full overflow-hidden rounded-full bg-primary/20",
         className

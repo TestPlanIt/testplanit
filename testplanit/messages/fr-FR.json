@@ -743,7 +743,8 @@
       "sharedContent": "Contenu partagé",
       "impact": "Analyse d'impact",
       "alerts": "Notifications et alertes",
-      "triage": "Modèles d'échec"
+      "triage": "Modèles d'échec",
+      "riskScoring": "Évaluation des risques"
     },
     "aria": {
       "userMenu": "Menu utilisateur",
@@ -4598,9 +4599,12 @@
         "selectedOf": "Sélectionné {selected, number} sur {total, number} cas de test affectés",
         "thresholdHint": "Les tests qui ont obtenu un score de {threshold, number} ou supérieur commencent sélectionnés et affichés ; abaissez le score minimum pour voir le reste. Chaque test montre pourquoi il a été sélectionné.",
         "shownCount": "Affichage de {shown, number} sur {total, number}",
-        "minScore": "Score minimum",
+        "scoreColumn": "Score d'impact",
+        "minScore": "Score d'impact minimum",
         "selectShown": "Sélectionnez affiché ({count, number})",
         "deselectShown": "Désélectionner affiché ({count, number})",
+        "hiddenSelected": "{count, plural, one {# cas de test sélectionné est masqué par vos filtres} other {# cas de test sélectionnés sont masqués par vos filtres}}.",
+        "deselectHidden": "Désélectionner les masqués",
         "noneShown": "Aucun test ne correspond aux filtres.",
         "reasons": "Pourquoi",
         "tierPinned": "Épinglé",
@@ -4609,8 +4613,6 @@
         "tierPinnedTooltip": "Une épingle de code sur ce cas coupe le changement. Les cas épinglés se classent toujours en premier.",
         "tierAffectedTooltip": "Les autres signaux placent ce cas au ou au-dessus du seuil affecté de {threshold, number}.",
         "tierRelatedTooltip": "Lié à un cas fortement affecté, ou ses signaux ont été notés en dessous de {threshold, number}.",
-        "showDetails": "Afficher les raisons",
-        "hideDetails": "Masquer les raisons",
         "excluded": "{count, plural, one {# cas déjà dans l'exécution a été ignoré} other {# cas déjà dans l'exécution ont été ignorés}}"
       },
       "noAffected": {
@@ -4683,6 +4685,23 @@
       },
       "repositoryPlaceholder": "Sélectionnez un dépôt...",
       "chooseRepository": "Choisissez lequel des dépôts connectés du projet contient les modifications à analyser."
+    },
+    "risk": {
+      "prioritizeByRisk": "Prioriser par risque",
+      "title": "Prioriser par risque",
+      "description": "Les cas qui méritent le plus d'être exécutés, risque le plus élevé en premier par défaut. Les cas déjà dans cette exécution sont exclus.",
+      "minimumScore": "Score de risque minimum",
+      "showing": "{shown, plural, one {# cas chargé} other {# cas chargés}} sur {total, plural, one {# correspondance} other {# correspondances}}",
+      "loadedSelected": "{shown, plural, =2 {Les deux cas chargés sont sélectionnés} one {Le cas chargé est sélectionné} other {Tous les # cas chargés sont sélectionnés}}.",
+      "selectAllMatches": "{total, plural, =2 {Sélectionner les deux correspondances} one {Sélectionner la seule correspondance} other {Sélectionner toutes les # correspondances}}",
+      "allMatchesSelected": "{total, plural, =2 {Les deux correspondances sont sélectionnées} one {La seule correspondance est sélectionnée} other {Toutes les # correspondances sont sélectionnées}}.",
+      "noneMatch": "Aucun cas coté à ou au-dessus de ce score.",
+      "caseColumn": "Cas de test",
+      "scoreColumn": "Score de risque",
+      "addCases": "{count, plural, =0 {Ajouter des cas} one {Ajouter # cas} other {Ajouter # cas}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Façons de sélectionner des cas de test"
     }
   },
   "admin": {
@@ -8577,7 +8596,8 @@
     "projectTriageSettings": "## Paramètres des modèles d'échec\nLe regroupement des exécutions sur chaque résultat automatisé qui arrive ne coûte rien. La suggestion de cause première par IA utilise le modèle d'IA assigné à la fonctionnalité **Modèles d'échec : Cause première** sur la page des modèles d'IA ; désactivez-la ici pour conserver le regroupement sans appels d'IA. **Analyser les résultats existants** regroupe chaque défaillance automatisée déjà enregistrée dans ce projet.",
     "projectQuarantine": "## Cas de test en quarantaine\nUn cas de test en quarantaine continue de s'exécuter et d'enregistrer les résultats, mais ses défaillances sont exclues de l'échec/succès de l'exécution et affichées comme un décompte séparé. Mettez en quarantaine un cas à partir d'un modèle d'échec pendant que la cause est en cours de correction. La quarantaine se lève automatiquement une fois que le cas a réussi le nombre de fois d'affilée défini dans les paramètres des modèles d'échec, sauf s'il a été marqué pour être libéré à la main ; libérez-le ici ou à partir du modèle à tout moment.",
     "rootCauses": "## Causes premières\nLes causes premières que les modèles d'échec attribuent aux défaillances groupées, par IA ou à la main. Chacune a une description que l'IA lit pour décider quand elle s'applique. Renommez, recoloriez ou réorganisez-les, ajoutez les vôtres, ou supprimez celles que vous n'utilisez pas ; supprimer une cause laisse ses modèles sans cause première.",
-    "rootCauseDescription": "## Description\nL'IA lit cette description pour décider quand la cause première s'applique à un modèle d'échec, décrivez donc les preuves qui la soutiennent."
+    "rootCauseDescription": "## Description\nL'IA lit cette description pour décider quand la cause première s'applique à un modèle d'échec, décrivez donc les preuves qui la soutiennent.",
+    "projectRiskSettings": "## Paramètres d'évaluation des risques\nChaque cas de test reçoit un score de risque de 0 à 100 basé sur son historique d'échecs, sa flakiness, son ancienneté, la criticité des exigences liées et les défauts liés — déterministe, aucun appel à l'IA. Les scores se mettent à jour après l'arrivée des résultats et lors d'un balayage nocturne. **Poids des composants** définissent le poids de chaque signal par rapport aux autres ; zéro supprime un composant. **Recalculer tous les scores** réévalue le projet entier maintenant au lieu d'attendre le balayage nocturne."
   },
   "reports": {
     "ui": {
@@ -10955,6 +10975,74 @@
       "releaseAuto": "{count, plural, one {Automatique après # succès consécutif} other {Automatique après # succès consécutifs}}",
       "releaseManual": "Manuellement",
       "empty": "Aucun cas de test n'est en quarantaine dans ce projet."
+    }
+  },
+  "risk": {
+    "score": "Score de risque",
+    "notScored": "Pas encore évalué",
+    "breakdown": {
+      "title": "Pourquoi ce score",
+      "pointsOfWeight": "{points} pts · poids {weight}",
+      "components": {
+        "failureHistory": "Historique d'échecs",
+        "flakiness": "Instabilité",
+        "staleness": "Manque de fraîcheur",
+        "criticality": "Criticité",
+        "defects": "Défauts liés"
+      },
+      "lastExecuted": "Dernière exécution",
+      "neverExecuted": "Jamais exécuté",
+      "verdicts": "{failed} sur {sampled, plural, one {# résultat automatisé récent} other {# résultats automatisés récents}} a échoué",
+      "flips": "{flips, plural, one {# basculement réussite/échec} other {# basculements réussite/échec}}",
+      "requirements": "{count, plural, one {# exigence liée} other {# exigences liées}} · priorité majeure {priority}",
+      "suspect": "{count, plural, one {# exigence modifiée} other {# exigences modifiées}} depuis la dernière exécution",
+      "defects": "{count, plural, one {# défaut lié} other {# défauts liés}} · priorité majeure {priority}",
+      "caseCriticality": "Criticité du cas : {value}",
+      "noPriority": "non spécifié",
+      "quarantined": "En quarantaine"
+    },
+    "settings": {
+      "description": "Chaque cas de test reçoit un score de risque de 0 à 100 basé sur son historique d'échecs, sa flakiness, son ancienneté, la criticité des exigences liées et les défauts liés. Les scores se mettent à jour après l'arrivée des résultats et lors d'un balayage nocturne, et alimentent la colonne Score de risque du dépôt et le filtre.",
+      "enableLabel": "Maintenir les scores de risque",
+      "enableDescription": "Lorsqu'il est désactivé, les scores existants restent mais cessent de se mettre à jour et le filtre Score de risque disparaît.",
+      "enabledToast": "Évaluation des risques activée",
+      "disabledToast": "Évaluation des risques désactivée",
+      "weightsTitle": "Poids des composants",
+      "weightsDescription": "Le poids de chaque signal par rapport aux autres. Le score se normalise par le total, de sorte que les poids n'ont pas besoin de s'ajouter à 100. Zéro supprime un composant.",
+      "components": {
+        "failureHistory": "Historique d'échecs",
+        "flakiness": "Instabilité",
+        "staleness": "Manque de fraîcheur",
+        "criticality": "Criticité",
+        "defects": "Défauts liés"
+      },
+      "weightsSaved": "Poids enregistrés",
+      "weightsInvalid": "Les poids doivent être des nombres entre 0 et {max}",
+      "weightsReset": "Poids réinitialisés par défaut",
+      "resetDefaults": "Réinitialiser par défaut",
+      "usingDefaults": "Utilisation des paramètres par défaut du système",
+      "criticalityFieldTitle": "Champ de criticité du cas",
+      "criticalityFieldDescription": "Un champ de cas déroulant optionnel qui alimente la criticité propre à chaque cas. Les options comptent par ordre : l'option supérieure 100, l'option inférieure 10, espacées uniformément — les noms ne comptent jamais.",
+      "criticalityFieldNone": "Aucun",
+      "criticalityFieldSaved": "Champ de criticité enregistré",
+      "criticalityFieldCleared": "Champ de criticité effacé",
+      "criticalityFieldOptions": "Poids des options, par ordre :",
+      "issuePrioritiesTitle": "Priorités des problèmes",
+      "issuePrioritiesDescription": "Les exigences et défauts portent une priorité de votre suivi, en tant que texte libre. Mappez les noms que votre projet utilise réellement sur un poids de 0 à 100. Les noms non mappés comptent comme neutres (50). Rien n'est intégré — c'est votre vocabulaire, pas le nôtre.",
+      "issuePrioritiesEmpty": "Aucune exigence liée ou défaut avec priorités pour l'instant.",
+      "issuePrioritiesCount": "{count, plural, one {# problème lié} other {# problèmes liés}}",
+      "issuePrioritiesUnused": "non utilisé",
+      "issuePrioritiesSaved": "Priorités des problèmes enregistrées",
+      "issuePrioritiesInvalid": "Les poids doivent être des nombres entre 0 et 100",
+      "backfillLabel": "Recalculer tous les scores",
+      "backfillDescription": "Réévaluer chaque cas de test du projet maintenant au lieu d'attendre le balayage nocturne.",
+      "backfillStarted": "Recalcul lancé",
+      "backfillRunning": "Recalcul en cours… {processed, plural, one {# cas évalué} other {# cas évalués}}",
+      "backfillDone": "Recalcul terminé",
+      "backfillFailed": "Recalcul échoué",
+      "backfillAlreadyRunning": "Un recalcul était déjà en cours — exécutez Recalculer tous les scores à nouveau une fois qu'il se termine afin que chaque cas reflète les nouveaux poids",
+      "backfillQueueUnavailable": "La file d'attente des tâches de fond n'est pas disponible",
+      "openRepository": "Ouvrir le dépôt"
     }
   }
 }

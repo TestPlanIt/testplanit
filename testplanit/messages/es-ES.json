@@ -743,7 +743,8 @@
       "sharedContent": "Contenido compartido",
       "impact": "Análisis de impacto",
       "alerts": "Notificaciones y Alertas",
-      "triage": "Patrones de Fallos"
+      "triage": "Patrones de Fallos",
+      "riskScoring": "Puntuación de riesgos"
     },
     "aria": {
       "userMenu": "Menú de usuario",
@@ -4598,9 +4599,12 @@
         "selectedOf": "Se seleccionaron {selected, number} de {total, number} casos de prueba afectados",
         "thresholdHint": "Las pruebas que puntuaron {threshold, number} o superior comienzan seleccionadas y mostradas; baje la puntuación mínima para ver el resto. Cada prueba muestra por qué fue seleccionada.",
         "shownCount": "Mostrando {shown, number} de {total, number}",
-        "minScore": "Puntuación mínima",
+        "scoreColumn": "Puntuación de impacto",
+        "minScore": "Puntuación de impacto mínima",
         "selectShown": "Seleccionar mostrados ({count, number})",
         "deselectShown": "Deseleccionar mostrados ({count, number})",
+        "hiddenSelected": "{count, plural, one {# caso de prueba seleccionado está oculto por sus filtros} other {# casos de prueba seleccionados están ocultos por sus filtros}}.",
+        "deselectHidden": "Deseleccionar ocultos",
         "noneShown": "No hay pruebas que coincidan con los filtros.",
         "reasons": "Por qué",
         "tierPinned": "Anclado",
@@ -4609,8 +4613,6 @@
         "tierPinnedTooltip": "Una entrada de código en este caso interseca el cambio. Los casos anclados siempre se clasifican primero.",
         "tierAffectedTooltip": "Las otras señales ponen este caso en o por encima del umbral afectado de {threshold, number}.",
         "tierRelatedTooltip": "Vinculado a un caso fuertemente afectado, o sus señales puntuaron por debajo de {threshold, number}.",
-        "showDetails": "Mostrar razones",
-        "hideDetails": "Ocultar razones",
         "excluded": "{count, plural, one {# caso ya en la ejecución fue omitido} other {# casos ya en la ejecución fueron omitidos}}"
       },
       "noAffected": {
@@ -4683,6 +4685,23 @@
       },
       "repositoryPlaceholder": "Seleccione un repositorio de código...",
       "chooseRepository": "Elija cuál de los repositorios conectados del proyecto contiene los cambios a analizar."
+    },
+    "risk": {
+      "prioritizeByRisk": "Priorizar por riesgo",
+      "title": "Priorizar por riesgo",
+      "description": "Los casos que más merecen una ejecución, riesgo más alto primero por defecto. Los casos ya en esta ejecución se dejan fuera.",
+      "minimumScore": "Puntuación de riesgo mínima",
+      "showing": "{shown, plural, one {# caso cargado} other {# casos cargados}} de {total, plural, one {# coincidencia} other {# coincidencias}}",
+      "loadedSelected": "{shown, plural, =2 {Ambos casos cargados están seleccionados} one {El caso cargado está seleccionado} other {Todos los # casos cargados están seleccionados}}.",
+      "selectAllMatches": "{total, plural, =2 {Seleccionar ambas coincidencias} one {Seleccionar la única coincidencia} other {Seleccionar todas las # coincidencias}}",
+      "allMatchesSelected": "{total, plural, =2 {Ambas coincidencias están seleccionadas} one {La única coincidencia está seleccionada} other {Todas las # coincidencias están seleccionadas}}.",
+      "noneMatch": "No hay casos puntuados en o por encima de esta puntuación.",
+      "caseColumn": "Caso de prueba",
+      "scoreColumn": "Puntuación de riesgo",
+      "addCases": "{count, plural, =0 {Agregar casos} one {Agregar # caso} other {Agregar # casos}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Formas de seleccionar casos de prueba"
     }
   },
   "admin": {
@@ -8577,7 +8596,8 @@
     "projectTriageSettings": "## Configuración de Patrones de Fallos\nAgrupar ejecuciones en cada resultado automatizado que llega y no cuesta nada. La sugerencia de causa raíz de IA utiliza el modelo de IA asignado a la característica **Patrones de Fallos: Causa Raíz** en la página Modelos de IA; desactívalo aquí para mantener la agrupación sin llamadas de IA. **Analizar resultados existentes** agrupa cada fallo automatizado ya registrado en este proyecto.",
     "projectQuarantine": "## Casos de prueba en cuarentena\nUn caso de prueba en cuarentena sigue ejecutándose y grabando resultados, pero sus fallos se dejan fuera de la aprobación/reprobación de ejecución y se muestran como un recuento separado. Poner en cuarentena un caso mientras se soluciona la causa. La cuarentena se levanta automáticamente una vez que el caso ha pasado el número de veces seguidas establecido en la configuración de Patrones de Fallos, a menos que se haya marcado para ser liberado manualmente; libéralo aquí o desde el patrón en cualquier momento.",
     "rootCauses": "## Causas Raíz\nLas causas raíz que Patrones de Fallos asigna a los fallos agrupados, por IA o manualmente. Cada una tiene una descripción que la IA lee para decidir cuándo se aplica. Renombra, recambia de color o reordena, añade las tuyas propias, o elimina las que no uses; eliminar una deja sus patrones sin causa raíz.",
-    "rootCauseDescription": "## Descripción\nLa IA lee esta descripción para decidir cuándo se aplica la causa raíz a un patrón de fallo, así que describe la evidencia que apunta hacia ella."
+    "rootCauseDescription": "## Descripción\nLa IA lee esta descripción para decidir cuándo se aplica la causa raíz a un patrón de fallo, así que describe la evidencia que apunta hacia ella.",
+    "projectRiskSettings": "## Configuración de puntuación de riesgos\nCada caso de prueba obtiene una puntuación de riesgo de 0-100 a partir de su historial de fallos, inestabilidad, antigüedad, criticidad de requisitos vinculados y defectos vinculados — determinista, sin llamadas de IA. Las puntuaciones se actualizan después de que llegan los resultados y en un barrido nocturno. **Pesos de componentes** establecen cuánto cuenta cada señal, en relación con los demás; cero elimina un componente. **Recalcular todas las puntuaciones** vuelve a puntuar todo el proyecto ahora en lugar de esperar al barrido nocturno."
   },
   "reports": {
     "ui": {
@@ -10955,6 +10975,74 @@
       "releaseAuto": "{count, plural, one {Automático después de # aprobación consecutiva} other {Automático después de # aprobaciones consecutivas}}",
       "releaseManual": "Manualmente",
       "empty": "No hay casos de prueba en cuarentena en este proyecto."
+    }
+  },
+  "risk": {
+    "score": "Puntuación de riesgo",
+    "notScored": "No puntuado aún",
+    "breakdown": {
+      "title": "Por qué esta puntuación",
+      "pointsOfWeight": "{points} pts · peso {weight}",
+      "components": {
+        "failureHistory": "Historial de fallos",
+        "flakiness": "Inestabilidad",
+        "staleness": "Antigüedad",
+        "criticality": "Criticidad",
+        "defects": "Defectos vinculados"
+      },
+      "lastExecuted": "Último ejecutado",
+      "neverExecuted": "Nunca ejecutado",
+      "verdicts": "{failed} de {sampled, plural, one {# resultado automatizado reciente} other {# resultados automatizados recientes}} falló",
+      "flips": "{flips, plural, one {# cambio paso/fallo} other {# cambios paso/fallo}}",
+      "requirements": "{count, plural, one {# requisito vinculado} other {# requisitos vinculados}} · prioridad principal {priority}",
+      "suspect": "{count, plural, one {# requisito cambió} other {# requisitos cambiaron}} desde la última ejecución",
+      "defects": "{count, plural, one {# defecto vinculado} other {# defectos vinculados}} · prioridad principal {priority}",
+      "caseCriticality": "Criticidad del caso: {value}",
+      "noPriority": "sin especificar",
+      "quarantined": "En cuarentena"
+    },
+    "settings": {
+      "description": "Cada caso de prueba obtiene una puntuación de riesgo de 0-100 a partir de su historial de fallos, inestabilidad, antigüedad, criticidad de requisitos vinculados y defectos vinculados. Las puntuaciones se actualizan después de que llegan los resultados y en un barrido nocturno, y alimentan la columna Puntuación de riesgo del repositorio y el filtro.",
+      "enableLabel": "Mantener puntuaciones de riesgo",
+      "enableDescription": "Cuando está desactivado, las puntuaciones existentes permanecen pero dejan de actualizarse y el filtro Puntuación de riesgo desaparece.",
+      "enabledToast": "Puntuación de riesgo habilitada",
+      "disabledToast": "Puntuación de riesgo deshabilitada",
+      "weightsTitle": "Pesos de componentes",
+      "weightsDescription": "Cuánto cuenta cada señal, en relación con los demás. La puntuación se normaliza por el total, por lo que los pesos no necesitan sumar 100. Cero elimina un componente.",
+      "components": {
+        "failureHistory": "Historial de fallos",
+        "flakiness": "Inestabilidad",
+        "staleness": "Antigüedad",
+        "criticality": "Criticidad",
+        "defects": "Defectos vinculados"
+      },
+      "weightsSaved": "Pesos guardados",
+      "weightsInvalid": "Los pesos deben ser números entre 0 y {max}",
+      "weightsReset": "Pesos restablecidos a los valores predeterminados",
+      "resetDefaults": "Restablecer a los valores predeterminados",
+      "usingDefaults": "Usando valores predeterminados del sistema",
+      "criticalityFieldTitle": "Campo criticidad del caso",
+      "criticalityFieldDescription": "Un campo de caso desplegable opcional que alimenta la propia criticidad de cada caso. Las opciones cuentan por su orden: la opción superior 100, la inferior 10, espaciadas uniformemente — los nombres nunca importan.",
+      "criticalityFieldNone": "Ninguna",
+      "criticalityFieldSaved": "Campo de criticidad guardado",
+      "criticalityFieldCleared": "Campo de criticidad borrado",
+      "criticalityFieldOptions": "Pesos de opciones, por orden:",
+      "issuePrioritiesTitle": "Prioridades de problemas",
+      "issuePrioritiesDescription": "Los requisitos y defectos llevan una prioridad de su rastreador, como texto libre. Asigne los nombres que su proyecto realmente usa a un peso de 0-100. Los nombres sin asignar cuentan como neutrales (50). Nada está integrado — este es su vocabulario, no el nuestro.",
+      "issuePrioritiesEmpty": "Sin requisitos o defectos vinculados con prioridades aún.",
+      "issuePrioritiesCount": "{count, plural, one {# problema vinculado} other {# problemas vinculados}}",
+      "issuePrioritiesUnused": "no en uso",
+      "issuePrioritiesSaved": "Prioridades de problemas guardadas",
+      "issuePrioritiesInvalid": "Los pesos deben ser números entre 0 y 100",
+      "backfillLabel": "Recalcular todas las puntuaciones",
+      "backfillDescription": "Vuelva a puntuar cada caso de prueba en el proyecto ahora en lugar de esperar al barrido nocturno.",
+      "backfillStarted": "Recalculation iniciado",
+      "backfillRunning": "Recalculando… {processed, plural, one {# caso puntuado} other {# casos puntuados}}",
+      "backfillDone": "Recalculation finalizado",
+      "backfillFailed": "Recalculation falló",
+      "backfillAlreadyRunning": "Una recalculación ya estaba en ejecución — ejecute Recalcular todas las puntuaciones nuevamente una vez que finalice para que cada caso refleje los nuevos pesos",
+      "backfillQueueUnavailable": "La cola de trabajos en segundo plano no está disponible",
+      "openRepository": "Abrir repositorio"
     }
   }
 }

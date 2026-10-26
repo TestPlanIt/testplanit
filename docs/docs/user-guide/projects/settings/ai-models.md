@@ -40,7 +40,7 @@ The overrides table lets you route individual AI features to a specific model â€
 
 The **Effective LLM** and **Source** columns show what each feature will actually use and why.
 
-Features you can override include Markdown test-case parsing, test-case generation, smart test-case selection, the editor writing assistant, the connection test, export code generation, AI tag suggestions, duplicate detection, generate-from-URL (requirements and application testing), and the automation-candidates report.
+The table lists every AI feature TestPlanIt has, so a feature added in a later release appears here without anything to configure first.
 
 ### How the model is resolved
 

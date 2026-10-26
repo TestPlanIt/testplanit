@@ -65,7 +65,10 @@ export function useProjectCaseFilterOptions(
   const { enabled: reviewEnabled } = useReviewFeatureEnabled(projectId);
   const queries = useClientQueries(schema);
   const { data: project } = queries.projects.useFindUnique(
-    { where: { id: projectId }, select: { impactEnabled: true } },
+    {
+      where: { id: projectId },
+      select: { impactEnabled: true, riskScoringEnabled: true },
+    },
     { enabled }
   );
 
@@ -91,8 +94,9 @@ export function useProjectCaseFilterOptions(
         dynamicFields: fields.map(([fieldId, type]) => ({ fieldId, type })),
         includeInReview: reviewEnabled === true,
         includeCodePins: project?.impactEnabled === true,
+        includeRiskScore: project?.riskScoringEnabled === true,
       }),
-    [fields, reviewEnabled, project?.impactEnabled]
+    [fields, reviewEnabled, project?.impactEnabled, project?.riskScoringEnabled]
   );
   // Only fields the registry turned into dimensions: a field of an
   // unfilterable type has no chip to label.
