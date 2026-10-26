@@ -1,3 +1,9 @@
+## [1.1.16](https://github.com/TestPlanIt/testplanit/compare/v1.1.15...v1.1.16) (2026-10-26)
+
+### Bug Fixes
+
+* **ui:** keep saves working on a plain-HTTP self-host ([#720](https://github.com/TestPlanIt/testplanit/issues/720)) ([c70ab53](https://github.com/TestPlanIt/testplanit/commit/c70ab53e21c4d6f62d444e75d065e7a3dc85cc9f)), closes [#719](https://github.com/TestPlanIt/testplanit/issues/719)
+
 ## [1.1.15](https://github.com/TestPlanIt/testplanit/compare/v1.1.14...v1.1.15) (2026-10-25)
 
 ### Bug Fixes
