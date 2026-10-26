@@ -741,7 +741,8 @@
       "sharedContent": "分享內容",
       "impact": "影響分析",
       "alerts": "通知和警報",
-      "triage": "故障模式"
+      "triage": "故障模式",
+      "riskScoring": "風險評分"
     },
     "aria": {
       "userMenu": "使用者選單",
@@ -4596,9 +4597,12 @@
         "selectedOf": "已選擇 {selected, number} 個受影響的測試案例，共 {total, number} 個",
         "thresholdHint": "得分為 {threshold, number} 或更高的測試開始選擇並顯示；降低最小分數以查看其餘測試。每個測試都顯示為什麼被選擇。",
         "shownCount": "顯示 {shown, number} 個，共 {total, number} 個",
-        "minScore": "最小分數",
+        "scoreColumn": "影響分數",
+        "minScore": "最低影響分數",
         "selectShown": "選擇顯示（{count, number}）",
         "deselectShown": "取消選擇顯示（{count, number}）",
+        "hiddenSelected": "{count, plural, one {# 個選定的測試用例被您的篩選器隱藏} other {# 個選定的測試用例被您的篩選器隱藏}}。",
+        "deselectHidden": "取消選擇隱藏項目",
         "noneShown": "沒有測試符合篩選器。",
         "reasons": "為什麼",
         "tierPinned": "已引腳",
@@ -4607,8 +4611,6 @@
         "tierPinnedTooltip": "此案例上的代碼引腳與變更相交。引腳案例始終排名第一。",
         "tierAffectedTooltip": "其他信號將此案例置於或高於受影響閾值 {threshold, number}。",
         "tierRelatedTooltip": "連結到強烈受影響的案例，或其信號得分低於 {threshold, number}。",
-        "showDetails": "顯示原因",
-        "hideDetails": "隱藏原因",
         "excluded": "{count, plural, one {# 個已在執行中的案例已跳過} other {# 個已在執行中的案例已跳過}}"
       },
       "noAffected": {
@@ -4681,6 +4683,23 @@
       },
       "repositoryPlaceholder": "選擇儲存庫……",
       "chooseRepository": "選擇專案連接的哪個儲存庫包含要分析的變更。"
+    },
+    "risk": {
+      "prioritizeByRisk": "按風險優先排列",
+      "title": "按風險優先排列",
+      "description": "最值得運行的案例，預設情況下風險最高優先。此次運行中已包含的案例除外。",
+      "minimumScore": "最低風險分數",
+      "showing": "{shown, plural, one {已載入 # 個案例} other {已載入 # 個案例}}，共 {total, plural, one {# 個符合} other {# 個符合}}",
+      "loadedSelected": "{shown, plural, =2 {兩個已載入的案例已選中} one {已載入的案例已選中} other {所有 # 個已載入的案例已選中}}。",
+      "selectAllMatches": "{total, plural, =2 {選擇兩個符合項} one {選擇唯一的符合項} other {選擇全部 # 個符合項}}",
+      "allMatchesSelected": "{total, plural, =2 {兩個符合項已選中} one {唯一的符合項已選中} other {全部 # 個符合項已選中}}。",
+      "noneMatch": "在此分數或以上沒有評分的案例。",
+      "caseColumn": "測試用例",
+      "scoreColumn": "風險分數",
+      "addCases": "{count, plural, =0 {新增案例} one {新增 # 個案例} other {新增 # 個案例}}"
+    },
+    "caseSelection": {
+      "menuLabel": "選擇測試用例的方式"
     }
   },
   "admin": {
@@ -8575,7 +8594,8 @@
     "projectTriageSettings": "## 故障模式設定\n在每個到達的自動化結果上分組執行，成本為零。AI 根本原因建議使用指派給 AI 模型頁面上**故障模式：根本原因**功能的 AI 模型；在此關閉它以保持分組而無需任何 AI 呼叫。**分析現有結果**會將此專案中已記錄的每個自動化故障進行分組。",
     "projectQuarantine": "## 隔離的測試案例\n隔離的測試案例會繼續執行和記錄結果，但其故障被排除在執行通過/失敗之外，並顯示為單獨的計數。當原因被修復時，從故障模式隔離一個案例。隔離會自動解除，一旦該案例按照故障模式設定中設定的次數連續通過，除非它被標記為手動發佈；在此處或從模式發佈，無論何時。",
     "rootCauses": "## 根本原因\n故障模式分配給分組故障的根本原因，由 AI 或手動分配。每個都有 AI 讀取以決定何時適用的描述。重新命名、重新著色或重新排序它們、新增您自己的，或刪除您不使用的；刪除一個會留下其模式沒有根本原因。",
-    "rootCauseDescription": "## 描述\nAI 讀取此描述以決定根本原因何時適用於故障模式，因此請描述指向它的證據。"
+    "rootCauseDescription": "## 描述\nAI 讀取此描述以決定根本原因何時適用於故障模式，因此請描述指向它的證據。",
+    "projectRiskSettings": "## 風險評分設定\n每個測試用例根據其失敗歷史、不穩定性、陳舊度、關聯需求優先級和關聯缺陷獲得 0-100 風險分數 — 確定性，無 AI 呼叫。分數在結果到達後和每晚掃描時重新整理。**元件權重**設定每個訊號相對於其他訊號的計數方式；零表示移除元件。**重新計算所有分數**立即重新評分整個專案，而不是等待每晚掃描。"
   },
   "reports": {
     "ui": {
@@ -10953,6 +10973,74 @@
       "releaseAuto": "{count, plural, one {在 # 個連續通過後自動} other {在 # 個連續通過後自動}}",
       "releaseManual": "手動",
       "empty": "此專案中沒有隔離的測試案例。"
+    }
+  },
+  "risk": {
+    "score": "風險分數",
+    "notScored": "尚未評分",
+    "breakdown": {
+      "title": "為什麼是這個分數",
+      "pointsOfWeight": "{points} 分 · 權重 {weight}",
+      "components": {
+        "failureHistory": "失敗歷史",
+        "flakiness": "不穩定性",
+        "staleness": "陳舊度",
+        "criticality": "優先級",
+        "defects": "關聯缺陷"
+      },
+      "lastExecuted": "最後執行",
+      "neverExecuted": "從未執行",
+      "verdicts": "{failed} 個失敗，共 {sampled, plural, one {# 個最近自動化結果} other {# 個最近自動化結果}}",
+      "flips": "{flips, plural, one {# 個通過/失敗翻轉} other {# 個通過/失敗翻轉}}",
+      "requirements": "{count, plural, one {# 個關聯需求} other {# 個關聯需求}} · 最高優先級 {priority}",
+      "suspect": "{count, plural, one {# 項需求已變更} other {# 項需求已變更}}，自上次運行後",
+      "defects": "{count, plural, one {# 個關聯缺陷} other {# 個關聯缺陷}} · 最高優先級 {priority}",
+      "caseCriticality": "案例優先級：{value}",
+      "noPriority": "未指定",
+      "quarantined": "已隔離"
+    },
+    "settings": {
+      "description": "每個測試用例根據其失敗歷史、不穩定性、陳舊度、關聯需求優先級和關聯缺陷獲得 0-100 風險分數。分數在結果到達後和每晚掃描時重新整理，並驅動存儲庫的風險分數欄和篩選器。",
+      "enableLabel": "維護風險分數",
+      "enableDescription": "關閉時，現有分數保留但停止更新，風險分數篩選器消失。",
+      "enabledToast": "風險評分已啟用",
+      "disabledToast": "風險評分已停用",
+      "weightsTitle": "元件權重",
+      "weightsDescription": "每個訊號相對於其他訊號的計數方式。分數按總數標準化，所以權重不需要加起來等於 100。零表示移除元件。",
+      "components": {
+        "failureHistory": "失敗歷史",
+        "flakiness": "不穩定性",
+        "staleness": "陳舊度",
+        "criticality": "優先級",
+        "defects": "關聯缺陷"
+      },
+      "weightsSaved": "權重已儲存",
+      "weightsInvalid": "權重必須是 0 到 {max} 之間的數字",
+      "weightsReset": "權重已重設為預設值",
+      "resetDefaults": "重設為預設值",
+      "usingDefaults": "使用系統預設值",
+      "criticalityFieldTitle": "案例優先級欄位",
+      "criticalityFieldDescription": "一個可選的下拉式案例欄位，供應每個案例自己的優先級。選項按其順序計數：最上面的選項 100，最下面的 10，均勻分佈 — 名稱不重要。",
+      "criticalityFieldNone": "無",
+      "criticalityFieldSaved": "優先級欄位已儲存",
+      "criticalityFieldCleared": "優先級欄位已清除",
+      "criticalityFieldOptions": "選項權重，按順序：",
+      "issuePrioritiesTitle": "問題優先級",
+      "issuePrioritiesDescription": "需求和缺陷從您的追蹤器中帶有優先級，以自由文本形式。將您的專案實際使用的名稱對應到 0-100 權重。未對應的名稱計為中性 (50)。沒有內建任何內容 — 這是您的詞彙表，不是我們的。",
+      "issuePrioritiesEmpty": "尚未有帶有優先級的關聯需求或缺陷。",
+      "issuePrioritiesCount": "{count, plural, one {# 個關聯問題} other {# 個關聯問題}}",
+      "issuePrioritiesUnused": "未使用",
+      "issuePrioritiesSaved": "問題優先級已儲存",
+      "issuePrioritiesInvalid": "權重必須是 0 到 100 之間的數字",
+      "backfillLabel": "重新計算所有分數",
+      "backfillDescription": "立即重新評分專案中的每個測試用例，而不是等待每晚掃描。",
+      "backfillStarted": "重新計算已開始",
+      "backfillRunning": "重新計算中… {processed, plural, one {已評分 # 個案例} other {已評分 # 個案例}}",
+      "backfillDone": "重新計算已完成",
+      "backfillFailed": "重新計算失敗",
+      "backfillAlreadyRunning": "重新計算已在運行 — 完成後再次運行「重新計算所有分數」，以便每個案例都反映新權重",
+      "backfillQueueUnavailable": "背景作業佇列不可用",
+      "openRepository": "開啟儲存庫"
     }
   }
 }

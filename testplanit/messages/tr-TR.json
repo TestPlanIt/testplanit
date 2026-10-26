@@ -741,7 +741,8 @@
       "sharedContent": "Paylaşılan İçerik",
       "impact": "Etki Analizi",
       "alerts": "Bildirimler & Uyarılar",
-      "triage": "Başarısızlık Desenleri"
+      "triage": "Başarısızlık Desenleri",
+      "riskScoring": "Risk Puanlaması"
     },
     "aria": {
       "userMenu": "Kullanıcı menüsü",
@@ -4596,9 +4597,12 @@
         "selectedOf": "{selected, number} / {total, number} etkilenen test senaryosu seçildi",
         "thresholdHint": "{threshold, number} veya daha yüksek puan alan testler seçilmiş olarak başlar ve gösterilir; minimum puanı düşürün geri kalanını görmek için. Her test neden seçildiğini gösterir.",
         "shownCount": "{shown, number} / {total, number} gösteriliyor",
-        "minScore": "Minimum puan",
+        "scoreColumn": "Impact Skoru",
+        "minScore": "Minimum impact skoru",
         "selectShown": "Gösterilen olanları seçin ({count, number})",
         "deselectShown": "Gösterilen olanların seçimini kaldırın ({count, number})",
+        "hiddenSelected": "{count, plural, one {# seçilen test durumu filtreleriniz tarafından gizlenmiştir} other {# seçilen test durumları filtreleriniz tarafından gizlenmiştir}}.",
+        "deselectHidden": "Gizli olanları seçimden kaldır",
         "noneShown": "Hiçbir test filtreleri eşleştirmiyor.",
         "reasons": "Neden",
         "tierPinned": "Sabitlendi",
@@ -4607,8 +4611,6 @@
         "tierPinnedTooltip": "Bu senaryodaki bir Kod Pimi değişiklikle kesişir. Sabitlenmiş senaryolar her zaman ilk sırada yer alır.",
         "tierAffectedTooltip": "Diğer sinyaller bu senaryoyu {threshold, number} etki eşiğinde veya üzerinde koyar.",
         "tierRelatedTooltip": "Güçlü etkilenen senaryoya bağlı veya sinyalleri {threshold, number} altında puanladı.",
-        "showDetails": "Nedenleri göster",
-        "hideDetails": "Nedenleri gizle",
         "excluded": "{count, plural, one {# senaryo zaten çalıştırmada atlandı} other {# senaryo zaten çalıştırmada atlandı}}"
       },
       "noAffected": {
@@ -4681,6 +4683,23 @@
       },
       "repositoryPlaceholder": "Bir kod deposu seçin...",
       "chooseRepository": "Projenin bağlı depolarından hangisinin analiz edilecek değişiklikleri tuttuğunu seçin."
+    },
+    "risk": {
+      "prioritizeByRisk": "Risk ile önceliklendirme",
+      "title": "Risk ile önceliklendirme",
+      "description": "En yüksek riskin ilk olduğu şekilde, çalıştırılması en çok hak eden durumlar. Bu çalıştırmada zaten olan durumlar hariç tutulur.",
+      "minimumScore": "Minimum risk puanı",
+      "showing": "{shown, plural, one {# durum yüklendi} other {# durum yüklendi}} / {total, plural, one {# eşleşme} other {# eşleşme}}",
+      "loadedSelected": "{shown, plural, =2 {Her iki yüklenen durum seçilmiştir} one {Yüklenen durum seçilmiştir} other {Yüklenen tüm # durum seçilmiştir}}.",
+      "selectAllMatches": "{total, plural, =2 {Her iki eşleşmeyi seç} one {Tek eşleşmeyi seç} other {Tüm # eşleşmeyi seç}}",
+      "allMatchesSelected": "{total, plural, =2 {Her iki eşleşme seçilmiştir} one {Tek eşleşme seçilmiştir} other {Tüm # eşleşme seçilmiştir}}.",
+      "noneMatch": "Bu puan veya üzeri puanlandırılmış durumlar yok.",
+      "caseColumn": "Test durumu",
+      "scoreColumn": "Risk puanı",
+      "addCases": "{count, plural, =0 {Durumlar ekle} one {# durum ekle} other {# durum ekle}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Test durumlarını seçme yolları"
     }
   },
   "admin": {
@@ -8575,7 +8594,8 @@
     "projectTriageSettings": "## Başarısızlık Desenleri ayarları\nHer otomatik sonuç geldiğinde çalıştırmaları gruplandırma ve hiçbir maliyeti yoktur. AI temel nedeni önerisi, AI Modelleri sayfasında **Başarısızlık Desenleri: Temel Neden** özelliğine atanan AI modelini kullanır; herhangi bir AI çağrısı yapmadan gruplandırmayı devam ettirmek için burada kapatın. **Mevcut sonuçları analiz et** bu projede zaten kaydedilmiş her otomatik başarısızlığı gruplandırır.",
     "projectQuarantine": "## Karantinaya alınan test durumları\nKarantinaya alınmış bir test durumu çalışmaya ve sonuçları kaydetmeye devam eder, ancak başarısızlıkları çalıştırma geçme/başarısızlıktan çıkarılır ve ayrı bir sayı olarak gösterilir. Neden düzeltilirken test durumunu bir başarısızlık deseninden karantinaya alın. Karantina, Başarısızlık Desenleri ayarlarında belirlenen sayıda arka arkaya test durumu geçtikten sonra kendiliğinden kaldırılır; el ile işaretlenmişse, burada veya desenden herhangi bir zamanda serbest bırakın.",
     "rootCauses": "## Temel Nedenler\nBaşarısızlık Desenleri'nin yapay zeka veya elle atadığı temel nedenler. Her birinin, AI'nin ne zaman uygulandığına karar vermesi için okuduğu bir açıklaması vardır. Adlarını değiştirin, yeniden renklendirin veya yeniden sıralayın, kendinizinkini ekleyin veya kullanmadığınızları silin; birini silmek desenleri temel nedensiz bırakır.",
-    "rootCauseDescription": "## Açıklama\nAI, temel nedenin bir başarısızlık desenine ne zaman uygulandığına karar vermek için bu açıklamayı okur, bu nedenle ona işaret eden kanıtları açıklayın."
+    "rootCauseDescription": "## Açıklama\nAI, temel nedenin bir başarısızlık desenine ne zaman uygulandığına karar vermek için bu açıklamayı okur, bu nedenle ona işaret eden kanıtları açıklayın.",
+    "projectRiskSettings": "## Risk Puanlaması ayarları\nHer test durumu, hata geçmişi, kararsızlığı, güncellik durumu, bağlantılı gereksinimin kritikliği ve bağlantılı kusurlar tarafından 0-100 arası risk puanı alır — belirlenimci, yapay zeka çağrısı yok. Puanlar sonuçlar geldikten sonra ve gece taraması sırasında yenilenir. **Bileşen ağırlıkları**, diğerlerine göre her sinyalin ne kadar sayıldığını belirler; sıfır bir bileşeni kaldırır. **Tüm puanları yeniden hesapla** gece taramasını beklemek yerine tüm projeyi şimdi yeniden puanlandırır."
   },
   "reports": {
     "ui": {
@@ -10953,6 +10973,74 @@
       "releaseAuto": "{count, plural, one {# ardışık geçişten sonra otomatik} other {# ardışık geçişten sonra otomatik}}",
       "releaseManual": "Elle",
       "empty": "Bu projede karantinaya alınan test durumları yok."
+    }
+  },
+  "risk": {
+    "score": "Risk Puanı",
+    "notScored": "Henüz puanlandırılmadı",
+    "breakdown": {
+      "title": "Bu puan neden",
+      "pointsOfWeight": "{points} puan · ağırlık {weight}",
+      "components": {
+        "failureHistory": "Hata geçmişi",
+        "flakiness": "Kararsızlık",
+        "staleness": "Güncellik Durumu",
+        "criticality": "Kritiklik",
+        "defects": "Bağlantılı kusurlar"
+      },
+      "lastExecuted": "Son yürütülme",
+      "neverExecuted": "Hiçbir zaman yürütülmedi",
+      "verdicts": "{sampled, plural, one {# son otomasyon sonucunun} other {# son otomasyon sonucunun}} {failed} başarısız oldu",
+      "flips": "{flips, plural, one {# geçme/başarısızlık değişimi} other {# geçme/başarısızlık değişimi}}",
+      "requirements": "{count, plural, one {# bağlantılı gereksinim} other {# bağlantılı gereksinim}} · en yüksek öncelik {priority}",
+      "suspect": "{count, plural, one {# gereksinim değiştirildi} other {# gereksinim değiştirildi}} son çalıştırmadan bu yana",
+      "defects": "{count, plural, one {# bağlantılı kusur} other {# bağlantılı kusur}} · en yüksek öncelik {priority}",
+      "caseCriticality": "Durum kritikliği: {value}",
+      "noPriority": "belirtilmemiş",
+      "quarantined": "Karantinaya alındı"
+    },
+    "settings": {
+      "description": "Her test durumu, hata geçmişi, kararsızlığı, güncellik durumu, bağlantılı gereksinimin kritikliği ve bağlantılı kusurlar tarafından 0-100 arası risk puanı alır. Puanlar sonuçlar geldikten sonra ve gece taraması sırasında yenilenir ve deponun Risk Puanı sütununu ve filtresini yönlendirir.",
+      "enableLabel": "Risk puanlarını koru",
+      "enableDescription": "Kapatıldığında, mevcut puanlar kalır ancak güncellemeyi durdurur ve Risk Puanı filtresi kaybolur.",
+      "enabledToast": "Risk puanlaması etkinleştirildi",
+      "disabledToast": "Risk puanlaması devre dışı bırakıldı",
+      "weightsTitle": "Bileşen ağırlıkları",
+      "weightsDescription": "Her sinyalin diğerlerine göre ne kadar sayıldığı. Puan toplama göre normalleştiriyor, bu nedenle ağırlıkların 100'e kadar toplanması gerekmez. Sıfır bir bileşeni kaldırır.",
+      "components": {
+        "failureHistory": "Hata geçmişi",
+        "flakiness": "Kararsızlık",
+        "staleness": "Güncellik Durumu",
+        "criticality": "Kritiklik",
+        "defects": "Bağlantılı kusurlar"
+      },
+      "weightsSaved": "Ağırlıklar kaydedildi",
+      "weightsInvalid": "Ağırlıklar 0 ile {max} arasında sayılar olmalıdır",
+      "weightsReset": "Ağırlıklar varsayılanlara sıfırlandı",
+      "resetDefaults": "Varsayılanlara sıfırla",
+      "usingDefaults": "Sistem varsayılanları kullanılıyor",
+      "criticalityFieldTitle": "Durum kritikliği alanı",
+      "criticalityFieldDescription": "Her durumun kendi kritikliğini besleyen isteğe bağlı açılır durum alanı. Seçenekler sırasına göre sayılır: en üstteki seçenek 100, en alttaki 10, eşit aralıklarla — isimler hiçbir zaman önemli değildir.",
+      "criticalityFieldNone": "Hiçbiri",
+      "criticalityFieldSaved": "Kritiklik alanı kaydedildi",
+      "criticalityFieldCleared": "Kritiklik alanı temizlendi",
+      "criticalityFieldOptions": "Seçenek ağırlıkları, sırasına göre:",
+      "issuePrioritiesTitle": "Sorun Öncelikleri",
+      "issuePrioritiesDescription": "Gereksinimler ve kusurlar, izleyicinizden serbest metin olarak bir öncelik taşır. Projenizin gerçekte kullandığı adları 0-100 ağırlığa eşleyin. Eşlenmeyen adlar nötr (50) olarak sayılır. Hiçbir şey yerleşik değildir — bu sizin sözlüğünüz, bizim değil.",
+      "issuePrioritiesEmpty": "Henüz öncelikleri olan bağlantılı gereksinim veya kusur yok.",
+      "issuePrioritiesCount": "{count, plural, one {# bağlantılı sorun} other {# bağlantılı sorun}}",
+      "issuePrioritiesUnused": "kullanımda değil",
+      "issuePrioritiesSaved": "Sorun öncelikleri kaydedildi",
+      "issuePrioritiesInvalid": "Ağırlıklar 0 ile 100 arasında sayılar olmalıdır",
+      "backfillLabel": "Tüm puanları yeniden hesapla",
+      "backfillDescription": "Gece taramasını beklemek yerine projedeki her test durumunu şimdi yeniden puanlandırın.",
+      "backfillStarted": "Yeniden hesaplama başlatıldı",
+      "backfillRunning": "Yeniden hesaplanıyor… {processed, plural, one {# durum puanlandı} other {# durum puanlandı}}",
+      "backfillDone": "Yeniden hesaplama bitti",
+      "backfillFailed": "Yeniden hesaplama başarısız oldu",
+      "backfillAlreadyRunning": "Zaten bir yeniden hesaplama çalışıyordu — bittikten sonra tüm durumların yeni ağırlıkları yansıtması için Tüm puanları yeniden hesapla komutunu çalıştırın",
+      "backfillQueueUnavailable": "Arka plan iş sırası kullanılamıyor",
+      "openRepository": "Depoyu Aç"
     }
   }
 }

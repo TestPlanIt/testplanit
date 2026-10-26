@@ -741,7 +741,8 @@
       "sharedContent": "Nội dung được chia sẻ",
       "impact": "Phân tích ảnh hưởng",
       "alerts": "Thông báo & Cảnh báo",
-      "triage": "Các mẫu lỗi"
+      "triage": "Các mẫu lỗi",
+      "riskScoring": "Xếp hạng Rủi ro"
     },
     "aria": {
       "userMenu": "Menu người dùng",
@@ -4596,9 +4597,12 @@
         "selectedOf": "Đã chọn {selected, number} trong {total, number} bài kiểm tra bị ảnh hưởng",
         "thresholdHint": "Bài kiểm tra đạt điểm {threshold, number} hoặc cao hơn bắt đầu được chọn và hiển thị; hạ điểm tối thiểu để xem phần còn lại. Mỗi bài kiểm tra đều cho thấy lý do tại sao nó được chọn.",
         "shownCount": "Hiển thị {shown, number} của {total, number}",
-        "minScore": "Điểm tối thiểu",
+        "scoreColumn": "Điểm Tác động",
+        "minScore": "Điểm tác động tối thiểu",
         "selectShown": "Chọn hiển thị ({count, number})",
         "deselectShown": "Bỏ chọn hiển thị ({count, number})",
+        "hiddenSelected": "{count, plural, one {# trường hợp kiểm tra được chọn bị ẩn bởi bộ lọc của bạn} other {# trường hợp kiểm tra được chọn bị ẩn bởi bộ lọc của bạn}}.",
+        "deselectHidden": "Bỏ chọn các mục ẩn",
         "noneShown": "Không có bài kiểm tra nào khớp với các bộ lọc.",
         "reasons": "Tại sao",
         "tierPinned": "Ghim",
@@ -4607,8 +4611,6 @@
         "tierPinnedTooltip": "Mã pin trên trường hợp này giao nhau với thay đổi. Các trường hợp được ghim luôn xếp hạng đầu tiên.",
         "tierAffectedTooltip": "Các tín hiệu khác đặt trường hợp này ở hoặc trên ngưỡng bị ảnh hưởng của {threshold, number}.",
         "tierRelatedTooltip": "Được liên kết với một trường hợp bị ảnh hưởng mạnh, hoặc các tín hiệu của nó được ghi dưới {threshold, number}.",
-        "showDetails": "Hiển thị lý do",
-        "hideDetails": "Ẩn lý do",
         "excluded": "{count, plural, one {# trường hợp đã có trong lần chạy bị bỏ qua} other {# trường hợp đã có trong lần chạy bị bỏ qua}}"
       },
       "noAffected": {
@@ -4681,6 +4683,23 @@
       },
       "repositoryPlaceholder": "Chọn một kho lưu trữ mã nguồn...",
       "chooseRepository": "Chọn từ các kho lưu trữ được kết nối của dự án để giữ những thay đổi cần phân tích."
+    },
+    "risk": {
+      "prioritizeByRisk": "Ưu tiên theo rủi ro",
+      "title": "Ưu tiên theo rủi ro",
+      "description": "Các trường hợp xứng đáng nhất để chạy, rủi ro cao nhất trước theo mặc định. Các trường hợp đã có trong lần chạy này bị loại trừ.",
+      "minimumScore": "Điểm rủi ro tối thiểu",
+      "showing": "{shown, plural, one {# trường hợp đã tải} other {# trường hợp đã tải}} của {total, plural, one {# kết quả trùng khớp} other {# kết quả trùng khớp}}",
+      "loadedSelected": "{shown, plural, =2 {Cả hai trường hợp đã tải đều được chọn} one {Trường hợp đã tải được chọn} other {Tất cả # trường hợp đã tải được chọn}}.",
+      "selectAllMatches": "{total, plural, =2 {Chọn cả hai kết quả trùng khớp} one {Chọn kết quả trùng khớp duy nhất} other {Chọn tất cả # kết quả trùng khớp}}",
+      "allMatchesSelected": "{total, plural, =2 {Cả hai kết quả trùng khớp đều được chọn} one {Kết quả trùng khớp duy nhất được chọn} other {Tất cả # kết quả trùng khớp được chọn}}.",
+      "noneMatch": "Không có trường hợp được chấm điểm ở hoặc trên điểm này.",
+      "caseColumn": "Trường hợp kiểm tra",
+      "scoreColumn": "Điểm rủi ro",
+      "addCases": "{count, plural, =0 {Thêm trường hợp} one {Thêm # trường hợp} other {Thêm # trường hợp}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Cách để chọn trường hợp kiểm tra"
     }
   },
   "admin": {
@@ -8575,7 +8594,8 @@
     "projectTriageSettings": "## Cài đặt các mẫu lỗi\nNhóm các lần chạy trên mọi kết quả tự động đến và không tốn gì. Gợi ý nguyên nhân gốc AI sử dụng mô hình AI được gán cho tính năng **Các mẫu lỗi: Nguyên nhân gốc** trên trang Mô hình AI; tắt nó ở đây để tiếp tục nhóm mà không cần bất kỳ cuộc gọi AI nào. **Phân tích các kết quả hiện tại** nhóm mọi lỗi tự động đã được ghi lại trong dự án này.",
     "projectQuarantine": "## Các trường hợp kiểm thử bị cách ly\nMột trường hợp kiểm thử bị cách ly tiếp tục chạy và ghi lại kết quả, nhưng các lỗi của nó bị loại khỏi quá trình chạy thành công/thất bại và hiển thị là số đếm riêng. Cách ly một trường hợp khỏi mẫu lỗi trong khi nguyên nhân đang được khắc phục. Việc cách ly tự động nâng lên khi trường hợp đã vượt qua số lần liên tiếp được đặt trong cài đặt Các mẫu lỗi, trừ khi nó được đánh dấu để được phát hành bằng tay; phát hành nó ở đây hoặc từ mẫu bất kỳ lúc nào.",
     "rootCauses": "## Nguyên nhân gốc\nCác nguyên nhân gốc mà Các mẫu lỗi gán cho các lỗi được nhóm lại, theo AI hoặc bằng tay. Mỗi cái có mô tả mà AI đọc để quyết định khi nó áp dụng. Đổi tên, tô màu lại hoặc sắp xếp lại chúng, thêm của riêng bạn, hoặc xóa những cái bạn không sử dụng; việc xóa một cái sẽ để lại các mẫu của nó mà không có nguyên nhân gốc.",
-    "rootCauseDescription": "## Mô tả\nAI đọc mô tả này để quyết định khi nào nguyên nhân gốc áp dụng cho mẫu lỗi, vì vậy hãy mô tả bằng chứng chỉ vào nó."
+    "rootCauseDescription": "## Mô tả\nAI đọc mô tả này để quyết định khi nào nguyên nhân gốc áp dụng cho mẫu lỗi, vì vậy hãy mô tả bằng chứng chỉ vào nó.",
+    "projectRiskSettings": "## Cài đặt Xếp hạng Rủi ro\nMỗi trường hợp kiểm tra nhận được điểm rủi ro từ 0-100 từ lịch sử lỗi, độ không ổn định, tính lỗi thời, tính chất quan trọng của yêu cầu liên kết và lỗi liên kết — xác định, không có lệnh gọi AI. Điểm được làm mới sau khi kết quả đến và trong quét ban đêm. **Trọng lượng thành phần** đặt bao nhiêu mỗi tín hiệu tính, so với các phần khác; không có nghĩa là loại bỏ một thành phần. **Tính toán lại tất cả điểm** sẽ tính lại toàn bộ dự án ngay bây giờ thay vì đợi quét ban đêm."
   },
   "reports": {
     "ui": {
@@ -10953,6 +10973,74 @@
       "releaseAuto": "{count, plural, one {Tự động sau # lần chạy liên tiếp thành công} other {Tự động sau # lần chạy liên tiếp thành công}}",
       "releaseManual": "Bằng tay",
       "empty": "Không có trường hợp kiểm thử nào bị cách ly trong dự án này."
+    }
+  },
+  "risk": {
+    "score": "Điểm Rủi ro",
+    "notScored": "Chưa được chấm điểm",
+    "breakdown": {
+      "title": "Tại sao điểm này",
+      "pointsOfWeight": "{points} điểm · trọng lượng {weight}",
+      "components": {
+        "failureHistory": "Lịch sử lỗi",
+        "flakiness": "Độ không ổn định",
+        "staleness": "Tính lỗi thời",
+        "criticality": "Tính chất quan trọng",
+        "defects": "Lỗi liên kết"
+      },
+      "lastExecuted": "Lần thực thi cuối cùng",
+      "neverExecuted": "Chưa từng được thực thi",
+      "verdicts": "{failed} của {sampled, plural, one {# kết quả tự động hóa gần đây} other {# kết quả tự động hóa gần đây}} thất bại",
+      "flips": "{flips, plural, one {# lần lật qua/thất bại} other {# lần lật qua/thất bại}}",
+      "requirements": "{count, plural, one {# yêu cầu liên kết} other {# yêu cầu liên kết}} · ưu tiên hàng đầu {priority}",
+      "suspect": "{count, plural, one {# yêu cầu đã thay đổi} other {# yêu cầu đã thay đổi}} kể từ lần chạy cuối cùng",
+      "defects": "{count, plural, one {# lỗi liên kết} other {# lỗi liên kết}} · ưu tiên hàng đầu {priority}",
+      "caseCriticality": "Tính chất quan trọng của trường hợp: {value}",
+      "noPriority": "không xác định",
+      "quarantined": "Được cách ly"
+    },
+    "settings": {
+      "description": "Mỗi trường hợp kiểm tra nhận được điểm rủi ro từ 0-100 từ lịch sử lỗi, độ không ổn định, tính lỗi thời, tính chất quan trọng của yêu cầu liên kết và lỗi liên kết. Điểm được làm mới sau khi kết quả đến và trong quét ban đêm, và cấp nguồn cho cột Điểm Rủi ro và bộ lọc của kho lưu trữ.",
+      "enableLabel": "Duy trì điểm rủi ro",
+      "enableDescription": "Khi tắt, điểm hiện tại sẽ vẫn tồn tại nhưng ngừng cập nhật và bộ lọc Điểm Rủi ro sẽ biến mất.",
+      "enabledToast": "Xếp hạng rủi ro được bật",
+      "disabledToast": "Xếp hạng rủi ro bị tắt",
+      "weightsTitle": "Trọng lượng thành phần",
+      "weightsDescription": "Bao nhiêu mỗi tín hiệu tính, so với các phần khác. Điểm bình thường hóa theo tổng, vì vậy trọng lượng không cần cộng lại thành 100. Không có nghĩa là loại bỏ một thành phần.",
+      "components": {
+        "failureHistory": "Lịch sử lỗi",
+        "flakiness": "Độ không ổn định",
+        "staleness": "Tính lỗi thời",
+        "criticality": "Tính chất quan trọng",
+        "defects": "Lỗi liên kết"
+      },
+      "weightsSaved": "Trọng lượng đã lưu",
+      "weightsInvalid": "Trọng lượng phải là số từ 0 đến {max}",
+      "weightsReset": "Trọng lượng đặt lại về mặc định",
+      "resetDefaults": "Đặt lại về mặc định",
+      "usingDefaults": "Sử dụng mặc định hệ thống",
+      "criticalityFieldTitle": "Trường tính chất quan trọng của trường hợp",
+      "criticalityFieldDescription": "Một trường hợp thả xuống tùy chọn tùy chọn cung cấp tính chất quan trọng của chính nó. Tùy chọn tính theo thứ tự của chúng: tùy chọn trên cùng 100, tùy chọn dưới cùng 10, cách đều nhau — tên không bao giờ quan trọng.",
+      "criticalityFieldNone": "Không có",
+      "criticalityFieldSaved": "Trường tính chất quan trọng đã lưu",
+      "criticalityFieldCleared": "Trường tính chất quan trọng đã xóa",
+      "criticalityFieldOptions": "Trọng lượng tùy chọn, theo thứ tự:",
+      "issuePrioritiesTitle": "Ưu tiên vấn đề",
+      "issuePrioritiesDescription": "Yêu cầu và lỗi mang theo ưu tiên từ trình theo dõi của bạn, dưới dạng văn bản tự do. Ánh xạ tên mà dự án của bạn thực sự sử dụng với trọng lượng từ 0-100. Tên chưa được ánh xạ tính là trung lập (50). Không có gì được tích hợp sẵn — đây là từ vựng của bạn, không phải của chúng tôi.",
+      "issuePrioritiesEmpty": "Không có yêu cầu hoặc lỗi liên kết nào có ưu tiên cho đến nay.",
+      "issuePrioritiesCount": "{count, plural, one {# vấn đề liên kết} other {# vấn đề liên kết}}",
+      "issuePrioritiesUnused": "không được sử dụng",
+      "issuePrioritiesSaved": "Ưu tiên vấn đề đã lưu",
+      "issuePrioritiesInvalid": "Trọng lượng phải là số từ 0 đến 100",
+      "backfillLabel": "Tính toán lại tất cả điểm",
+      "backfillDescription": "Tính toán lại mỗi trường hợp kiểm tra trong dự án ngay bây giờ thay vì đợi quét ban đêm.",
+      "backfillStarted": "Tính toán lại đã bắt đầu",
+      "backfillRunning": "Đang tính toán lại… {processed, plural, one {# trường hợp được chấm điểm} other {# trường hợp được chấm điểm}}",
+      "backfillDone": "Tính toán lại đã hoàn thành",
+      "backfillFailed": "Tính toán lại thất bại",
+      "backfillAlreadyRunning": "Tính toán lại đã đang chạy — chạy Tính toán lại tất cả điểm lần nữa sau khi hoàn thành để mỗi trường hợp phản ánh trọng lượng mới",
+      "backfillQueueUnavailable": "Hàng đợi công việc nền không có sẵn",
+      "openRepository": "Mở Kho lưu trữ"
     }
   }
 }

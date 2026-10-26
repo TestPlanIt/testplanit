@@ -741,7 +741,8 @@
       "sharedContent": "Gemeinsame Inhalte",
       "impact": "Auswirkungsanalyse",
       "alerts": "Benachrichtigungen & Warnmeldungen",
-      "triage": "Fehlermuster"
+      "triage": "Fehlermuster",
+      "riskScoring": "Risikobewertung"
     },
     "aria": {
       "userMenu": "Benutzermenü",
@@ -4596,9 +4597,12 @@
         "selectedOf": "Ausgewählt {selected, number} von {total, number} betroffenen Testfällen",
         "thresholdHint": "Tests, die {threshold, number} oder höher bewertet wurden, werden ausgewählt und angezeigt; senken Sie die Mindestpunktzahl, um die restlichen anzusehen. Jeder Test zeigt, warum er ausgewählt wurde.",
         "shownCount": "Anzeige von {shown, number} von {total, number}",
-        "minScore": "Mindestpunktzahl",
+        "scoreColumn": "Auswirkungswert",
+        "minScore": "Minimaler Auswirkungswert",
         "selectShown": "Angezeigt auswählen ({count, number})",
         "deselectShown": "Angezeigt abwählen ({count, number})",
+        "hiddenSelected": "{count, plural, one {# ausgewählter Testfall ist durch Ihre Filter ausgeblendet} other {# ausgewählte Testfälle sind durch Ihre Filter ausgeblendet}}.",
+        "deselectHidden": "Ausgeblendete abwählen",
         "noneShown": "Keine Tests stimmen mit den Filtern überein.",
         "reasons": "Warum",
         "tierPinned": "Gepinnt",
@@ -4607,8 +4611,6 @@
         "tierPinnedTooltip": "Ein Code-Pin auf diesem Testfall schneidet die Änderung. Gepinnte Testfälle werden immer zuerst bewertet.",
         "tierAffectedTooltip": "Die anderen Signale platzieren diesen Testfall bei oder über dem betroffenen Schwellenwert von {threshold, number}.",
         "tierRelatedTooltip": "Mit einem stark betroffenen Testfall verknüpft oder seine Signale erzielten unter {threshold, number} Punkte.",
-        "showDetails": "Gründe anzeigen",
-        "hideDetails": "Gründe ausblenden",
         "excluded": "{count, plural, one {# Testfall bereits im Testlauf wurde übersprungen} other {# Testfälle bereits im Testlauf wurden übersprungen}}"
       },
       "noAffected": {
@@ -4681,6 +4683,23 @@
       },
       "repositoryPlaceholder": "Code-Repository auswählen...",
       "chooseRepository": "Wählen Sie aus, welches der verbundenen Repositorys des Projekts die zu analysierenden Änderungen enthält."
+    },
+    "risk": {
+      "prioritizeByRisk": "Nach Risiko priorisieren",
+      "title": "Nach Risiko priorisieren",
+      "description": "Die Fälle, die am meisten einen Lauf verdienen, höchstes Risiko zuerst als Standard. Fälle, die bereits in diesem Lauf enthalten sind, werden ausgelassen.",
+      "minimumScore": "Minimaler Risikoscore",
+      "showing": "{shown, plural, one {# Fall geladen} other {# Fälle geladen}} von {total, plural, one {# Treffer} other {# Treffer}}",
+      "loadedSelected": "{shown, plural, =2 {Beide geladenen Fälle sind ausgewählt} one {Der geladene Fall ist ausgewählt} other {Alle # geladenen Fälle sind ausgewählt}}.",
+      "selectAllMatches": "{total, plural, =2 {Beide Treffer auswählen} one {Den einzigen Treffer auswählen} other {Alle # Treffer auswählen}}",
+      "allMatchesSelected": "{total, plural, =2 {Beide Treffer sind ausgewählt} one {Der einzige Treffer ist ausgewählt} other {Alle # Treffer sind ausgewählt}}.",
+      "noneMatch": "Keine bewerteten Fälle auf oder über dieser Bewertung.",
+      "caseColumn": "Testfall",
+      "scoreColumn": "Risikoscore",
+      "addCases": "{count, plural, =0 {Fälle hinzufügen} one {# Fall hinzufügen} other {# Fälle hinzufügen}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Möglichkeiten zum Auswählen von Testfällen"
     }
   },
   "admin": {
@@ -8575,7 +8594,8 @@
     "projectTriageSettings": "## Einstellungen für Fehlermuster\nAlle automatisierten Ergebnisse werden gruppiert, wenn sie ankommen, und kosten nichts. Die KI-Empfehlung zur Grundursache verwendet das KI-Modell, das der Funktion **Fehlermuster: Grundursache** auf der Seite \"KI-Modelle\" zugewiesen ist; deaktivieren Sie diese Option hier, um die Gruppierung ohne KI-Aufrufe beizubehalten. **Vorhandene Ergebnisse analysieren** gruppiert alle bereits in diesem Projekt aufgezeichneten automatisierten Fehler.",
     "projectQuarantine": "## Unter Quarantäne stehende Testfälle\nEin unter Quarantäne stehender Testfall führt weiter aus und zeichnet Ergebnisse auf, aber dessen Fehler werden von der Ausführung Pass/Fail ausgeschlossen und als separate Anzahl angezeigt. Stellen Sie einen Testfall unter Quarantäne, während die Grundursache behoben wird. Die Quarantäne wird automatisch aufgehoben, wenn der Testfall so oft erfolgreich ist, wie in den Einstellungen für Fehlermuster angegeben, sofern nicht markiert, dass er von Hand freigegeben werden soll; geben Sie ihn hier oder vom Muster jederzeit frei.",
     "rootCauses": "## Grundursachen\nDie Grundursachen, die Fehlermuster KI oder von Hand zuweisen. Jede hat eine Beschreibung, die die KI liest, um zu entscheiden, wann sie angewendet wird. Benennen Sie sie um, färben Sie sie neu, ordnen Sie sie neu an, fügen Sie eigene hinzu, oder löschen Sie die, die Sie nicht verwenden; das Löschen hinterlässt die Muster ohne Grundursache.",
-    "rootCauseDescription": "## Beschreibung\nDie KI liest diese Beschreibung, um zu entscheiden, wann die Grundursache auf ein Fehlermuster angewendet wird. Beschreiben Sie also die Beweise, die darauf hinweisen."
+    "rootCauseDescription": "## Beschreibung\nDie KI liest diese Beschreibung, um zu entscheiden, wann die Grundursache auf ein Fehlermuster angewendet wird. Beschreiben Sie also die Beweise, die darauf hinweisen.",
+    "projectRiskSettings": "## Einstellungen für Risikobewertung\nJeder Testfall erhält einen Risikoscore von 0-100 aus seiner Fehlerhistorie, Instabilität, Überalterung, verknüpfter Anforderungskritikalität und verknüpften Mängeln — deterministisch, keine KI-Aufrufe. Scores werden nach Eintreffen von Ergebnissen und bei einer nächtlichen Bereinigung aktualisiert. **Kompontengewichte** bestimmen, wie viel jedes Signal relativ zu den anderen zählt; Null entfernt eine Komponente. **Alle Scores neu berechnen** bewertet das gesamte Projekt sofort neu, anstatt auf die nächtliche Bereinigung zu warten."
   },
   "reports": {
     "ui": {
@@ -10953,6 +10973,74 @@
       "releaseAuto": "{count, plural, one {Automatisch nach # aufeinanderfolgenden erfolgreichen Durchlauf} other {Automatisch nach # aufeinanderfolgenden erfolgreichen Durchläufen}}",
       "releaseManual": "Von Hand",
       "empty": "In diesem Projekt sind keine Testfälle unter Quarantäne gestellt."
+    }
+  },
+  "risk": {
+    "score": "Risikoscore",
+    "notScored": "Noch nicht bewertet",
+    "breakdown": {
+      "title": "Warum dieser Score",
+      "pointsOfWeight": "{points} Pkt · Gewicht {weight}",
+      "components": {
+        "failureHistory": "Fehlerhistorie",
+        "flakiness": "Instabilität",
+        "staleness": "Überalterung",
+        "criticality": "Kritikalität",
+        "defects": "Verknüpfte Mängel"
+      },
+      "lastExecuted": "Zuletzt ausgeführt",
+      "neverExecuted": "Nie ausgeführt",
+      "verdicts": "{failed} von {sampled, plural, one {# aktuellem automatisiertem Ergebnis} other {# aktuellen automatisierten Ergebnissen}} fehlgeschlagen",
+      "flips": "{flips, plural, one {# Bestanden/Nicht bestanden-Flip} other {# Bestanden/Nicht bestanden-Flips}}",
+      "requirements": "{count, plural, one {# verknüpfte Anforderung} other {# verknüpfte Anforderungen}} · oberste Priorität {priority}",
+      "suspect": "{count, plural, one {# Anforderung geändert} other {# Anforderungen geändert}} seit dem letzten Lauf",
+      "defects": "{count, plural, one {# verknüpfter Mangel} other {# verknüpfte Mängel}} · oberste Priorität {priority}",
+      "caseCriticality": "Fallkritikalität: {value}",
+      "noPriority": "nicht angegeben",
+      "quarantined": "Unter Quarantäne gestellt"
+    },
+    "settings": {
+      "description": "Jeder Testfall erhält einen Risikoscore von 0-100 basierend auf seiner Fehlerhistorie, Instabilität, Überalterung, verknüpfter Anforderungskritikalität und verknüpften Mängeln. Scores werden nach Eintreffen von Ergebnissen und bei einer nächtlichen Bereinigung aktualisiert und unterstützen die Spalte Risikoscore und den Filter des Repositorys.",
+      "enableLabel": "Risikoscores pflegen",
+      "enableDescription": "Wenn deaktiviert, bleiben vorhandene Scores erhalten, werden aber nicht mehr aktualisiert und der Risikoscore-Filter verschwindet.",
+      "enabledToast": "Risikobewertung aktiviert",
+      "disabledToast": "Risikobewertung deaktiviert",
+      "weightsTitle": "Kompontengewichte",
+      "weightsDescription": "Wie viel jedes Signal relativ zu den anderen zählt. Der Score wird anhand der Summe normalisiert, daher müssen die Gewichte nicht zusammen 100 ergeben. Null entfernt eine Komponente.",
+      "components": {
+        "failureHistory": "Fehlerhistorie",
+        "flakiness": "Instabilität",
+        "staleness": "Überalterung",
+        "criticality": "Kritikalität",
+        "defects": "Verknüpfte Mängel"
+      },
+      "weightsSaved": "Gewichte gespeichert",
+      "weightsInvalid": "Gewichte müssen Zahlen zwischen 0 und {max} sein",
+      "weightsReset": "Gewichte auf Standard zurückgesetzt",
+      "resetDefaults": "Auf Standard zurücksetzen",
+      "usingDefaults": "Verwendet Systemstandards",
+      "criticalityFieldTitle": "Fallkritikalitätsfeld",
+      "criticalityFieldDescription": "Ein optionales Dropdown-Fallfeld, das die Kritikalität jedes Falls bereitstellt. Optionen werden nach ihrer Reihenfolge gezählt: die obere Option 100, die untere 10, gleichmäßig verteilt — Namen sind irrelevant.",
+      "criticalityFieldNone": "Keine",
+      "criticalityFieldSaved": "Kritikalitätsfeld gespeichert",
+      "criticalityFieldCleared": "Kritikalitätsfeld gelöscht",
+      "criticalityFieldOptions": "Optionsgewichte nach Reihenfolge:",
+      "issuePrioritiesTitle": "Ticket-Prioritäten",
+      "issuePrioritiesDescription": "Anforderungen und Mängel haben eine Priorität aus Ihrem Tracker als Freitext. Ordnen Sie die Namen, die Ihr Projekt tatsächlich verwendet, einer Gewichtung von 0-100 zu. Nicht zugeordnete Namen zählen als neutral (50). Nichts ist integriert — dies ist Ihr Vokabular, nicht unseres.",
+      "issuePrioritiesEmpty": "Noch keine verknüpften Anforderungen oder Mängel mit Prioritäten vorhanden.",
+      "issuePrioritiesCount": "{count, plural, one {# verknüpftes Ticket} other {# verknüpfte Tickets}}",
+      "issuePrioritiesUnused": "nicht verwendet",
+      "issuePrioritiesSaved": "Ticket-Prioritäten gespeichert",
+      "issuePrioritiesInvalid": "Gewichte müssen Zahlen zwischen 0 und 100 sein",
+      "backfillLabel": "Alle Scores neu berechnen",
+      "backfillDescription": "Bewerten Sie jeden Testfall im Projekt jetzt neu, anstatt auf die nächtliche Bereinigung zu warten.",
+      "backfillStarted": "Neuberechnung gestartet",
+      "backfillRunning": "Wird neu berechnet… {processed, plural, one {# Fall bewertet} other {# Fälle bewertet}}",
+      "backfillDone": "Neuberechnung abgeschlossen",
+      "backfillFailed": "Neuberechnung fehlgeschlagen",
+      "backfillAlreadyRunning": "Eine Neuberechnung war bereits in Ausführung — führen Sie „Alle Scores neu berechnen",
+      "backfillQueueUnavailable": "Die Hintergrund-Jobwarteschlange ist nicht verfügbar",
+      "openRepository": "Repository öffnen"
     }
   }
 }

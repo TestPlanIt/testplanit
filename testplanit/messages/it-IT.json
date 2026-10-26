@@ -741,7 +741,8 @@
       "sharedContent": "Contenuti condivisi",
       "impact": "Analisi di impatto",
       "alerts": "Notifiche e avvisi",
-      "triage": "Schemi di errori"
+      "triage": "Schemi di errori",
+      "riskScoring": "Valutazione del rischio"
     },
     "aria": {
       "userMenu": "Menu utente",
@@ -4596,9 +4597,12 @@
         "selectedOf": "Selezionati {selected, number} di {total, number} casi di test interessati",
         "thresholdHint": "I test che hanno segnato {threshold, number} o più iniziano selezionati e mostrati; abbassare il punteggio minimo per vedere il resto. Ogni test mostra il motivo per cui è stato selezionato.",
         "shownCount": "Visualizzazione di {shown, number} di {total, number}",
-        "minScore": "Punteggio minimo",
+        "scoreColumn": "Punteggio di impatto",
+        "minScore": "Punteggio di impatto minimo",
         "selectShown": "Seleziona visualizzato ({count, number})",
         "deselectShown": "Deseleziona visualizzato ({count, number})",
+        "hiddenSelected": "{count, plural, one {# caso di test selezionato è nascosto dai tuoi filtri} other {# casi di test selezionati sono nascosti dai tuoi filtri}}.",
+        "deselectHidden": "Deseleziona nascosti",
         "noneShown": "Nessun test corrisponde ai filtri.",
         "reasons": "Perché",
         "tierPinned": "Fissato",
@@ -4607,8 +4611,6 @@
         "tierPinnedTooltip": "Un Code Pin su questo caso interseca il cambiamento. I casi fissati si classificano sempre per primi.",
         "tierAffectedTooltip": "Gli altri segnali pongono questo caso al o sopra la soglia interessata di {threshold, number}.",
         "tierRelatedTooltip": "Collegato a un caso fortemente interessato, o i suoi segnali hanno segnato al di sotto di {threshold, number}.",
-        "showDetails": "Mostra motivi",
-        "hideDetails": "Nascondi motivi",
         "excluded": "{count, plural, one {# caso già nel run è stato saltato} other {# casi già nel run sono stati saltati}}"
       },
       "noAffected": {
@@ -4681,6 +4683,23 @@
       },
       "repositoryPlaceholder": "Seleziona un repository di codice...",
       "chooseRepository": "Scegli quale dei repository connessi del progetto contiene le modifiche da analizzare."
+    },
+    "risk": {
+      "prioritizeByRisk": "Prioritizza per rischio",
+      "title": "Prioritizza per rischio",
+      "description": "I casi che meritano maggiormente un'esecuzione, rischio più elevato per primo per impostazione predefinita. I casi già in questa esecuzione sono esclusi.",
+      "minimumScore": "Punteggio di rischio minimo",
+      "showing": "{shown, plural, one {# caso caricato} other {# casi caricati}} di {total, plural, one {# corrispondenza} other {# corrispondenze}}",
+      "loadedSelected": "{shown, plural, =2 {Entrambi i casi caricati sono selezionati} one {Il caso caricato è selezionato} other {Tutti i # casi caricati sono selezionati}}.",
+      "selectAllMatches": "{total, plural, =2 {Seleziona entrambe le corrispondenze} one {Seleziona l'unica corrispondenza} other {Seleziona tutte le # corrispondenze}}",
+      "allMatchesSelected": "{total, plural, =2 {Entrambe le corrispondenze sono selezionate} one {L'unica corrispondenza è selezionata} other {Tutte le # corrispondenze sono selezionate}}.",
+      "noneMatch": "Nessun caso valutato a o al di sopra di questo punteggio.",
+      "caseColumn": "Caso di test",
+      "scoreColumn": "Punteggio di rischio",
+      "addCases": "{count, plural, =0 {Aggiungi casi} one {Aggiungi # caso} other {Aggiungi # casi}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Modi per selezionare i casi di test"
     }
   },
   "admin": {
@@ -8575,7 +8594,8 @@
     "projectTriageSettings": "## Impostazioni Schemi di errori\nIl raggruppamento delle esecuzioni su ogni risultato automatizzato che arriva non costa nulla. Il suggerimento della causa principale dell'IA utilizza il modello di IA assegnato alla funzione **Schemi di errori: Causa principale** nella pagina Modelli di IA; disattivalo qui per mantenere il raggruppamento senza alcuna chiamata all'IA. **Analizza i risultati esistenti** raggruppa ogni errore automatizzato già registrato in questo progetto.",
     "projectQuarantine": "## Casi di test in quarantena\nUn caso di test in quarantena continua a essere eseguito e registra i risultati, ma i suoi errori vengono esclusi dal passaggio/fallimento dell'esecuzione e mostrati come conteggio separato. Metti in quarantena un caso da uno schema di errori mentre la causa è in fase di correzione. La quarantena si solleva automaticamente una volta che il caso ha superato il numero di volte consecutive impostato nelle impostazioni di Schemi di errori, a meno che non sia stato contrassegnato per essere rilasciato manualmente; rilascialo qui o dallo schema in qualsiasi momento.",
     "rootCauses": "## Cause principali\nLe cause principali che Schemi di errori assegna agli errori raggruppati, dall'IA o manualmente. Ognuna ha una descrizione che l'IA legge per decidere quando si applica. Rinomina, riccolora o riordina, aggiungi le tue, o elimina quelle che non usi; l'eliminazione di una lascia i suoi schemi senza una causa principale.",
-    "rootCauseDescription": "## Descrizione\nL'IA legge questa descrizione per decidere quando la causa principale si applica a uno schema di errori, quindi descrivi le prove che la indicano."
+    "rootCauseDescription": "## Descrizione\nL'IA legge questa descrizione per decidere quando la causa principale si applica a uno schema di errori, quindi descrivi le prove che la indicano.",
+    "projectRiskSettings": "## Impostazioni di valutazione del rischio\nOgni caso di test ottiene un punteggio di rischio da 0 a 100 dalla sua cronologia di errori, instabilità, obsolescenza, criticità dei requisiti collegati e difetti collegati — deterministico, nessuna chiamata AI. I punteggi si aggiornano dopo l'arrivo dei risultati e in uno sweep notturno. I **pesi dei componenti** impostano quanto ogni segnale conta, rispetto agli altri; zero rimuove un componente. **Ricalcola tutti i punteggi** assegna un nuovo punteggio all'intero progetto ora invece di attendere lo sweep notturno."
   },
   "reports": {
     "ui": {
@@ -10953,6 +10973,74 @@
       "releaseAuto": "{count, plural, one {Automatico dopo # passaggio consecutivo} other {Automatico dopo # passaggi consecutivi}}",
       "releaseManual": "Manualmente",
       "empty": "Nessun caso di test è messo in quarantena in questo progetto."
+    }
+  },
+  "risk": {
+    "score": "Punteggio di rischio",
+    "notScored": "Non ancora valutato",
+    "breakdown": {
+      "title": "Perché questo punteggio",
+      "pointsOfWeight": "{points} pts · peso {weight}",
+      "components": {
+        "failureHistory": "Cronologia degli errori",
+        "flakiness": "Instabilità",
+        "staleness": "Obsolescenza",
+        "criticality": "Criticità",
+        "defects": "Difetti collegati"
+      },
+      "lastExecuted": "Ultima esecuzione",
+      "neverExecuted": "Mai eseguito",
+      "verdicts": "{failed} di {sampled, plural, one {# risultato automatico recente} other {# risultati automatici recenti}} non riuscito",
+      "flips": "{flips, plural, one {# inversione pass/fail} other {# inversioni pass/fail}}",
+      "requirements": "{count, plural, one {# requisito collegato} other {# requisiti collegati}} · priorità massima {priority}",
+      "suspect": "{count, plural, one {# requisito modificato} other {# requisiti modificati}} dall'ultima esecuzione",
+      "defects": "{count, plural, one {# difetto collegato} other {# difetti collegati}} · priorità massima {priority}",
+      "caseCriticality": "Criticità del caso: {value}",
+      "noPriority": "non specificato",
+      "quarantined": "In quarantena"
+    },
+    "settings": {
+      "description": "Ogni caso di test ottiene un punteggio di rischio da 0 a 100 dalla sua cronologia di errori, instabilità, obsolescenza, criticità dei requisiti collegati e difetti collegati. I punteggi si aggiornano dopo l'arrivo dei risultati e in uno sweep notturno e alimentano la colonna Punteggio di rischio e il filtro del repository.",
+      "enableLabel": "Mantieni punteggi di rischio",
+      "enableDescription": "Quando disattivato, i punteggi esistenti rimangono ma smettono di aggiornarsi e il filtro Punteggio di rischio scompare.",
+      "enabledToast": "Valutazione del rischio abilitata",
+      "disabledToast": "Valutazione del rischio disabilitata",
+      "weightsTitle": "Pesi dei componenti",
+      "weightsDescription": "Quanto conta ogni segnale, rispetto agli altri. Il punteggio si normalizza per il totale, quindi i pesi non devono sommarsi a 100. Zero rimuove un componente.",
+      "components": {
+        "failureHistory": "Cronologia degli errori",
+        "flakiness": "Instabilità",
+        "staleness": "Obsolescenza",
+        "criticality": "Criticità",
+        "defects": "Difetti collegati"
+      },
+      "weightsSaved": "Pesi salvati",
+      "weightsInvalid": "I pesi devono essere numeri compresi tra 0 e {max}",
+      "weightsReset": "Pesi ripristinati ai valori predefiniti",
+      "resetDefaults": "Ripristina i valori predefiniti",
+      "usingDefaults": "Utilizzo dei valori predefiniti del sistema",
+      "criticalityFieldTitle": "Campo criticità del caso",
+      "criticalityFieldDescription": "Un campo caso a discesa facoltativo che alimenta la criticità di ogni caso. Le opzioni contano per il loro ordine: l'opzione superiore 100, la parte inferiore 10, equamente distanziate — i nomi non importano mai.",
+      "criticalityFieldNone": "Nessuno",
+      "criticalityFieldSaved": "Campo criticità salvato",
+      "criticalityFieldCleared": "Campo criticità cancellato",
+      "criticalityFieldOptions": "Pesi delle opzioni, per ordine:",
+      "issuePrioritiesTitle": "Priorità dei problemi",
+      "issuePrioritiesDescription": "I requisiti e i difetti portano una priorità dal tuo tracker, come testo libero. Mappa i nomi che il tuo progetto utilizza effettivamente su un peso da 0 a 100. I nomi non mappati contano come neutri (50). Niente è integrato — questo è il tuo vocabolario, non il nostro.",
+      "issuePrioritiesEmpty": "Nessun requisito o difetto collegato con priorità ancora.",
+      "issuePrioritiesCount": "{count, plural, one {# problema collegato} other {# problemi collegati}}",
+      "issuePrioritiesUnused": "non in uso",
+      "issuePrioritiesSaved": "Priorità dei problemi salvate",
+      "issuePrioritiesInvalid": "I pesi devono essere numeri compresi tra 0 e 100",
+      "backfillLabel": "Ricalcola tutti i punteggi",
+      "backfillDescription": "Assegna un nuovo punteggio a ogni caso di test nel progetto ora invece di attendere lo sweep notturno.",
+      "backfillStarted": "Ricalcolo avviato",
+      "backfillRunning": "Ricalcolo in corso… {processed, plural, one {# caso valutato} other {# casi valutati}}",
+      "backfillDone": "Ricalcolo terminato",
+      "backfillFailed": "Ricalcolo non riuscito",
+      "backfillAlreadyRunning": "Un ricalcolo era già in esecuzione — esegui di nuovo Ricalcola tutti i punteggi una volta terminato in modo che ogni caso rifletta i nuovi pesi",
+      "backfillQueueUnavailable": "La coda dei processi in background non è disponibile",
+      "openRepository": "Apri repository"
     }
   }
 }

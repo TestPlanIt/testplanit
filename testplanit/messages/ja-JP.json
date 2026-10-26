@@ -741,7 +741,8 @@
       "sharedContent": "共有コンテンツ",
       "impact": "影響分析",
       "alerts": "通知とアラート",
-      "triage": "障害パターン"
+      "triage": "障害パターン",
+      "riskScoring": "リスク スコアリング"
     },
     "aria": {
       "userMenu": "ユーザーメニュー",
@@ -4596,9 +4597,12 @@
         "selectedOf": "{total, number}個の影響を受けたテストケース中{selected, number}個を選択",
         "thresholdHint": "{threshold, number}以上の得点を持つテストは選択済みで表示されます。最小スコアを下げると、残りを表示できます。すべてのテストは選択理由を表示します。",
         "shownCount": "{total, number}個中{shown, number}個を表示",
-        "minScore": "最小スコア",
+        "scoreColumn": "影響スコア",
+        "minScore": "最小影響スコア",
         "selectShown": "表示済みを選択({count, number})",
         "deselectShown": "表示済みを選択解除({count, number})",
+        "hiddenSelected": "{count, plural, one {# 件の選択されたテストケースがフィルタで非表示になっています} other {# 件の選択されたテストケースがフィルタで非表示になっています}}。",
+        "deselectHidden": "非表示を選択解除",
         "noneShown": "フィルターに一致するテストはありません。",
         "reasons": "理由",
         "tierPinned": "ピン止めされた",
@@ -4607,8 +4611,6 @@
         "tierPinnedTooltip": "このケースのコードピンが変更と交差しています。ピン止めされたケースは常に最初にランク付けされます。",
         "tierAffectedTooltip": "他の信号はこのケースを{threshold, number}の影響を受けたしきい値以上に置きます。",
         "tierRelatedTooltip": "強く影響を受けたケースにリンクされているか、そのシグナルが{threshold, number}以下のスコアされました。",
-        "showDetails": "理由を表示",
-        "hideDetails": "理由を非表示",
         "excluded": "{count, plural, one {# 実行済みの場合はスキップされた} other {# 実行済みの場合はスキップされた}}"
       },
       "noAffected": {
@@ -4681,6 +4683,23 @@
       },
       "repositoryPlaceholder": "リポジトリを選択…",
       "chooseRepository": "プロジェクトの接続されたリポジトリのうち、分析する変更を保持するリポジトリを選択してください。"
+    },
+    "risk": {
+      "prioritizeByRisk": "リスク別に優先順位を付ける",
+      "title": "リスク別に優先順位を付ける",
+      "description": "実行の価値が最も高いケース。デフォルトではリスクが最も高い順です。このラン内に既にあるケースは除外されます。",
+      "minimumScore": "最小リスク スコア",
+      "showing": "{shown, plural, one {# ケースが読み込まれました} other {# ケースが読み込まれました}} / {total, plural, one {# 件の一致} other {# 件の一致}}",
+      "loadedSelected": "{shown, plural, =2 {読み込まれた両方のケースが選択されています} one {読み込まれたケースが選択されています} other {読み込まれたすべての # ケースが選択されています}}。",
+      "selectAllMatches": "{total, plural, =2 {両方の一致を選択} one {唯一の一致を選択} other {すべての # 件の一致を選択}}",
+      "allMatchesSelected": "{total, plural, =2 {両方の一致が選択されています} one {唯一の一致が選択されています} other {すべての # 件の一致が選択されています}}。",
+      "noneMatch": "このスコア以上のスコア付きケースがありません。",
+      "caseColumn": "テストケース",
+      "scoreColumn": "リスク スコア",
+      "addCases": "{count, plural, =0 {ケースを追加} one {# ケースを追加} other {# ケースを追加}}"
+    },
+    "caseSelection": {
+      "menuLabel": "テスト ケースを選択する方法"
     }
   },
   "admin": {
@@ -8575,7 +8594,8 @@
     "projectTriageSettings": "## 障害パターン設定\nすべての自動化された結果が到着するたびにグループ化を実行し、コストはかかりません。AI根本原因提案は、AIモデルページの**障害パターン：根本原因** 機能に割り当てられたAIモデルを使用します。ここでそれをオフにして、AIコールなしでグループ化を続けます。**既存の結果を分析** は、このプロジェクトに既に記録されているすべての自動化された障害をグループ化します。",
     "projectQuarantine": "## 隔離されたテストケース\n隔離されたテストケースは実行を続けて結果を記録しますが、その障害は実行パス/失敗から除外され、別個のカウントとして表示されます。原因が修正されている間に、障害パターンからケースを隔離します。隔離は、ケースが障害パターン設定で設定された回数を連続してパスすると自動的に解除されます。手動でリリースするようにマークされていない場合。ここまたはパターンからいつでもそれをリリースします。",
     "rootCauses": "## 根本原因\n障害パターンがAIまたは手動でグループ化された障害に割り当てる根本原因。各々は、AIがいつそれが適用されるかを決定するために読む説明を持っています。名前を変更、色を変更、または並べ替え、独自のを追加、または使用しないものを削除します。1つを削除すると、そのパターンは根本原因なしになります。",
-    "rootCauseDescription": "## 説明\nAIはこの説明を読んで、根本原因が障害パターンに適用される時期を判断するため、それを指す証拠を説明します。"
+    "rootCauseDescription": "## 説明\nAIはこの説明を読んで、根本原因が障害パターンに適用される時期を判断するため、それを指す証拠を説明します。",
+    "projectRiskSettings": "## リスク スコアリング設定\n各テスト ケースは、障害履歴、不安定性、古さ、リンクされた要件の重大度、リンクされた欠陥から 0～100 のリスク スコアを取得します。決定論的で、AI呼び出しはありません。スコアは結果が到着した後と夜間スイープで更新されます。**コンポーネント ウェイト**は、各シグナルがどの程度カウントされるかを設定します。ゼロはコンポーネントを削除します。**すべてのスコアを再計算**は、夜間スイープを待つのではなく、プロジェクト全体を今すぐ再スコアします。"
   },
   "reports": {
     "ui": {
@@ -10953,6 +10973,74 @@
       "releaseAuto": "{count, plural, other {自動的に # 件の連続パスの後}}",
       "releaseManual": "手動",
       "empty": "このプロジェクトでは、隔離されたテストケースはありません。"
+    }
+  },
+  "risk": {
+    "score": "リスク スコア",
+    "notScored": "まだスコアが付いていません",
+    "breakdown": {
+      "title": "このスコアの理由",
+      "pointsOfWeight": "{points} ポイント · ウェイト {weight}",
+      "components": {
+        "failureHistory": "障害履歴",
+        "flakiness": "不安定性",
+        "staleness": "古さ",
+        "criticality": "重大度",
+        "defects": "リンクされた欠陥"
+      },
+      "lastExecuted": "最後に実行された",
+      "neverExecuted": "実行されたことがない",
+      "verdicts": "{failed} / {sampled, plural, one {# 件の最近の自動化結果} other {# 件の最近の自動化結果}}が失敗しました",
+      "flips": "{flips, plural, one {# 件のパス/フェイル フリップ} other {# 件のパス/フェイル フリップ}}",
+      "requirements": "{count, plural, one {# 件のリンクされた要件} other {# 件のリンクされた要件}} · 最優先事項 {priority}",
+      "suspect": "{count, plural, one {# 件の要件が変更されました} other {# 件の要件が変更されました}} 前回のラン以降",
+      "defects": "{count, plural, one {# 件のリンクされた欠陥} other {# 件のリンクされた欠陥}} · 最優先事項 {priority}",
+      "caseCriticality": "ケースの重大度: {value}",
+      "noPriority": "未指定",
+      "quarantined": "隔離されている"
+    },
+    "settings": {
+      "description": "各テスト ケースは、障害履歴、不安定性、古さ、リンクされた要件の重大度、リンクされた欠陥から 0～100 のリスク スコアを取得します。スコアは結果が到着した後と夜間スイープで更新され、リポジトリのリスク スコア列とフィルタを強化します。",
+      "enableLabel": "リスク スコアを維持する",
+      "enableDescription": "オフにすると、既存のスコアは保持されますが、更新が停止し、リスク スコア フィルタが消えます。",
+      "enabledToast": "リスク スコアリングが有効になっています",
+      "disabledToast": "リスク スコアリングが無効になっています",
+      "weightsTitle": "コンポーネント ウェイト",
+      "weightsDescription": "各シグナルが他のシグナルに比べてどの程度カウントされるか。スコアは合計で正規化されるため、ウェイトを 100 に加算する必要はありません。ゼロはコンポーネントを削除します。",
+      "components": {
+        "failureHistory": "障害履歴",
+        "flakiness": "不安定性",
+        "staleness": "古さ",
+        "criticality": "重大度",
+        "defects": "リンクされた欠陥"
+      },
+      "weightsSaved": "ウェイトが保存されました",
+      "weightsInvalid": "ウェイトは 0 ～ {max} の数値である必要があります",
+      "weightsReset": "ウェイトがデフォルトにリセットされました",
+      "resetDefaults": "デフォルトにリセット",
+      "usingDefaults": "システム デフォルトを使用中",
+      "criticalityFieldTitle": "ケースの重大度フィールド",
+      "criticalityFieldDescription": "各ケースの重大度を定義する、オプションのドロップダウン ケース フィールド。オプションはその順序でカウントされます。最上位のオプションは 100、最下位は 10、均等間隔です。名前は関係ありません。",
+      "criticalityFieldNone": "なし",
+      "criticalityFieldSaved": "重大度フィールドが保存されました",
+      "criticalityFieldCleared": "重大度フィールドがクリアされました",
+      "criticalityFieldOptions": "オプション ウェイト(順序別):",
+      "issuePrioritiesTitle": "課題の優先度",
+      "issuePrioritiesDescription": "要件と欠陥には、トラッカーから自由形式でテキストとして優先度が付いています。プロジェクトが実際に使用する名前を 0～100 のウェイトにマップします。マップされていない名前は中立 (50) としてカウントされます。組み込みは何もありません。これはあなたの語彙であり、私たちのものではありません。",
+      "issuePrioritiesEmpty": "優先度を持つリンクされた要件または欠陥はまだありません。",
+      "issuePrioritiesCount": "{count, plural, one {# 件のリンクされた課題} other {# 件のリンクされた課題}}",
+      "issuePrioritiesUnused": "使用中ではない",
+      "issuePrioritiesSaved": "課題の優先度が保存されました",
+      "issuePrioritiesInvalid": "ウェイトは 0～100 の数値である必要があります",
+      "backfillLabel": "すべてのスコアを再計算",
+      "backfillDescription": "プロジェクト内のすべてのテスト ケースを夜間スイープを待つのではなく、今すぐ再スコアします。",
+      "backfillStarted": "再計算が開始されました",
+      "backfillRunning": "再計算中…{processed, plural, one {# ケースがスコア付けされました} other {# ケースがスコア付けされました}}",
+      "backfillDone": "再計算が完了しました",
+      "backfillFailed": "再計算に失敗しました",
+      "backfillAlreadyRunning": "再計算が既に実行中です。完了したら、すべてのスコアを再計算をもう一度実行して、すべてのケースに新しいウェイトが反映されるようにしてください",
+      "backfillQueueUnavailable": "バックグラウンド ジョブ キューが利用できません",
+      "openRepository": "リポジトリを開く"
     }
   }
 }

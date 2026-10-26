@@ -741,7 +741,8 @@
       "sharedContent": "共享内容",
       "impact": "影响分析",
       "alerts": "通知和警报",
-      "triage": "失败模式"
+      "triage": "失败模式",
+      "riskScoring": "风险评分"
     },
     "aria": {
       "userMenu": "用户菜单",
@@ -4596,9 +4597,12 @@
         "selectedOf": "选择了 {total, number} 个受影响的测试用例中的 {selected, number} 个",
         "thresholdHint": "评分为 {threshold, number} 或更高的测试开始时会被选中并显示；降低最低分数以查看其余部分。每个测试都会显示为什么选择它。",
         "shownCount": "显示 {shown, number} of {total, number}",
-        "minScore": "最低分数",
+        "scoreColumn": "影响分数",
+        "minScore": "最低影响分数",
         "selectShown": "选择显示（{count, number}）",
         "deselectShown": "取消选择显示（{count, number}）",
+        "hiddenSelected": "{count, plural, one {# 个选定的测试用例被您的筛选条件隐藏} other {# 个选定的测试用例被您的筛选条件隐藏}}。",
+        "deselectHidden": "取消选择隐藏项",
         "noneShown": "没有测试匹配过滤器。",
         "reasons": "为什么",
         "tierPinned": "已固定",
@@ -4607,8 +4611,6 @@
         "tierPinnedTooltip": "此用例上的代码引脚与变更相交。已固定的用例始终排在前面。",
         "tierAffectedTooltip": "其他信号将此用例放在或高于 {threshold, number} 的受影响阈值处。",
         "tierRelatedTooltip": "关联到受强烈影响的用例，或其信号评分低于 {threshold, number}。",
-        "showDetails": "显示原因",
-        "hideDetails": "隐藏原因",
         "excluded": "{count, plural, other {# 个已在运行中的用例被跳过}}"
       },
       "noAffected": {
@@ -4681,6 +4683,23 @@
       },
       "repositoryPlaceholder": "选择仓库……",
       "chooseRepository": "选择项目连接的仓库中哪一个保存要分析的更改。"
+    },
+    "risk": {
+      "prioritizeByRisk": "按风险优先级排序",
+      "title": "按风险优先级排序",
+      "description": "最值得运行的用例，默认按最高风险优先。已在此运行中的用例不包括在内。",
+      "minimumScore": "最低风险分数",
+      "showing": "{shown, plural, one {已加载 # 个用例} other {已加载 # 个用例}}，共 {total, plural, one {# 个匹配项} other {# 个匹配项}}",
+      "loadedSelected": "{shown, plural, =2 {两个已加载的用例已被选中} one {已加载的用例已被选中} other {所有 # 个已加载的用例已被选中}}。",
+      "selectAllMatches": "{total, plural, =2 {选择两个匹配项} one {选择唯一的匹配项} other {选择全部 # 个匹配项}}",
+      "allMatchesSelected": "{total, plural, =2 {两个匹配项已被选中} one {唯一的匹配项已被选中} other {所有 # 个匹配项已被选中}}。",
+      "noneMatch": "没有评分的用例达到或超过此分数。",
+      "caseColumn": "测试用例",
+      "scoreColumn": "风险分数",
+      "addCases": "{count, plural, =0 {添加用例} one {添加 # 个用例} other {添加 # 个用例}}"
+    },
+    "caseSelection": {
+      "menuLabel": "选择测试用例的方式"
     }
   },
   "admin": {
@@ -8575,7 +8594,8 @@
     "projectTriageSettings": "## 失败模式设置\n每当自动结果到达时，对运行进行分组，无需任何费用。AI 根本原因建议使用分配给 AI 模型页面上的 **失败模式：根本原因** 功能的 AI 模型；在此处关闭它以保持分组而无需任何 AI 调用。**分析现有结果** 对此项目中已记录的每个自动故障进行分组。",
     "projectQuarantine": "## 隔离的测试用例\n隔离的测试用例继续运行和记录结果，但其失败被排除在运行通过/失败之外，并显示为单独的计数。在修复原因时从失败模式中隔离用例。一旦该用例连续通过失败模式设置中设置的次数后，隔离会自动解除，除非它被标记为手动发布；在此处或从模式随时发布它。",
     "rootCauses": "## 根本原因\n失败模式通过 AI 或手动分配给分组失败的根本原因。每个都有 AI 读取的描述，以决定何时适用。重命名、重新着色或重新排序它们，添加您自己的，或删除您不使用的；删除一个会使其模式没有根本原因。",
-    "rootCauseDescription": "## 描述\nAI 读取此描述以决定根本原因何时适用于失败模式，因此请描述指向它的证据。"
+    "rootCauseDescription": "## 描述\nAI 读取此描述以决定根本原因何时适用于失败模式，因此请描述指向它的证据。",
+    "projectRiskSettings": "## 风险评分设置\n每个测试用例根据其失败历史、不稳定性、陈旧程度、关联需求优先级和关联缺陷获得 0-100 的风险分数——确定性的，无 AI 调用。分数在结果到达后和每日扫描中刷新。**组件权重**设置每个信号相对于其他信号的重要程度；设为零可移除一个组件。**重新计算所有分数**立即对整个项目重新评分，而不是等待每日扫描。"
   },
   "reports": {
     "ui": {
@@ -10953,6 +10973,74 @@
       "releaseAuto": "{count, plural, one {# 次连续通过后自动} other {# 次连续通过后自动}}",
       "releaseManual": "手动",
       "empty": "此项目中没有隔离的测试用例。"
+    }
+  },
+  "risk": {
+    "score": "风险分数",
+    "notScored": "尚未评分",
+    "breakdown": {
+      "title": "为什么是这个分数",
+      "pointsOfWeight": "{points} 分 · 权重 {weight}",
+      "components": {
+        "failureHistory": "失败历史",
+        "flakiness": "不稳定性",
+        "staleness": "陈旧程度",
+        "criticality": "关键性",
+        "defects": "关联缺陷"
+      },
+      "lastExecuted": "最后执行",
+      "neverExecuted": "从未执行",
+      "verdicts": "{failed} 个在 {sampled, plural, one {# 个最近自动化结果} other {# 个最近自动化结果}} 中失败",
+      "flips": "{flips, plural, one {# 次通过/失败翻转} other {# 次通过/失败翻转}}",
+      "requirements": "{count, plural, one {# 个关联需求} other {# 个关联需求}} · 最高优先级 {priority}",
+      "suspect": "{count, plural, one {# 个需求已更改} other {# 个需求已更改}}自上次运行以来",
+      "defects": "{count, plural, one {# 个关联缺陷} other {# 个关联缺陷}} · 最高优先级 {priority}",
+      "caseCriticality": "用例关键性：{value}",
+      "noPriority": "未指定",
+      "quarantined": "隔离中"
+    },
+    "settings": {
+      "description": "每个测试用例根据其失败历史、不稳定性、陈旧程度、关联需求关键性和关联缺陷获得 0-100 的风险分数。分数在结果到达后和每日扫描中刷新，并驱动存储库的风险分数列和筛选器。",
+      "enableLabel": "维护风险分数",
+      "enableDescription": "关闭时，现有分数保留但停止更新，风险分数筛选器消失。",
+      "enabledToast": "风险评分已启用",
+      "disabledToast": "风险评分已禁用",
+      "weightsTitle": "组件权重",
+      "weightsDescription": "每个信号相对于其他信号的重要程度。分数会根据总值进行归一化，因此权重不需要加起来等于 100。零会移除一个组件。",
+      "components": {
+        "failureHistory": "失败历史",
+        "flakiness": "不稳定性",
+        "staleness": "陈旧程度",
+        "criticality": "关键性",
+        "defects": "关联缺陷"
+      },
+      "weightsSaved": "权重已保存",
+      "weightsInvalid": "权重必须是 0 到 {max} 之间的数字",
+      "weightsReset": "权重已重置为默认值",
+      "resetDefaults": "重置为默认值",
+      "usingDefaults": "使用系统默认值",
+      "criticalityFieldTitle": "用例关键性字段",
+      "criticalityFieldDescription": "一个可选的下拉用例字段，用于输入每个用例的自身关键性。选项按其顺序计数：最上面的选项 100，最下面的选项 10，均匀分布——名称无关紧要。",
+      "criticalityFieldNone": "无",
+      "criticalityFieldSaved": "关键性字段已保存",
+      "criticalityFieldCleared": "关键性字段已清除",
+      "criticalityFieldOptions": "选项权重，按顺序：",
+      "issuePrioritiesTitle": "问题优先级",
+      "issuePrioritiesDescription": "需求和缺陷从您的跟踪器中携带优先级，为自由文本。将项目实际使用的名称映射到 0-100 的权重。未映射的名称计为中性（50）。没有内置的——这是您的词汇表，不是我们的。",
+      "issuePrioritiesEmpty": "还没有具有优先级的关联需求或缺陷。",
+      "issuePrioritiesCount": "{count, plural, one {# 个关联问题} other {# 个关联问题}}",
+      "issuePrioritiesUnused": "未使用",
+      "issuePrioritiesSaved": "问题优先级已保存",
+      "issuePrioritiesInvalid": "权重必须是 0 到 100 之间的数字",
+      "backfillLabel": "重新计算所有分数",
+      "backfillDescription": "立即对项目中的每个测试用例重新评分，而不是等待每日扫描。",
+      "backfillStarted": "重新计算已启动",
+      "backfillRunning": "重新计算中… {processed, plural, one {已评分 # 个用例} other {已评分 # 个用例}}",
+      "backfillDone": "重新计算已完成",
+      "backfillFailed": "重新计算失败",
+      "backfillAlreadyRunning": "后台重新计算已在运行——完成后再次运行重新计算所有分数，以便每个用例都反映新权重",
+      "backfillQueueUnavailable": "后台作业队列不可用",
+      "openRepository": "打开存储库"
     }
   }
 }
