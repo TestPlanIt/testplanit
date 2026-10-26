@@ -1606,11 +1606,11 @@ export function TestCaseDetailsView({
       return;
     }
 
-    // Phase 14 CTX-03: open the logical save group. Every ZenStack write below
-    // shares this operationId via the global fetcher's X-Operation-Id header.
-    beginOperation();
-
     try {
+      // Phase 14 CTX-03: open the logical save group. Every ZenStack write
+      // below shares this operationId via the global fetcher's X-Operation-Id
+      // header.
+      beginOperation();
       const estimateDuration = data.estimate
         ? parseDuration(data.estimate as string)
         : null;

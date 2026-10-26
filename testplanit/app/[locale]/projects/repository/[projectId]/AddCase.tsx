@@ -94,6 +94,7 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { randomUuid } from "~/utils/randomUuid";
 import RenderField from "./RenderField";
 
 const mapFieldToZodType = (field: any, t: (key: any) => string) => {
@@ -1178,7 +1179,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
           source: "MANUAL",
           testCases: [
             {
-              id: crypto.randomUUID(),
+              id: randomUuid(),
               name: convertedData.name,
               fieldValues: {},
               fieldValuesById,

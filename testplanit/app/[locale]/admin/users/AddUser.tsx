@@ -52,6 +52,7 @@ import {
   type PasswordPolicy,
 } from "@/components/PasswordStrengthIndicator";
 import { Switch } from "@/components/ui/switch";
+import { randomUuid } from "~/utils/randomUuid";
 import type { Roles } from "~/zenstack/models";
 
 interface AddUserProps {
@@ -392,7 +393,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
       // SAML auto-provisioning in app/api/auth/callback/saml/route.ts. User
       // signs in via magic link / SSO.
       const passwordForApi =
-        data.password.length > 0 ? data.password : crypto.randomUUID();
+        data.password.length > 0 ? data.password : randomUuid();
 
       // Construct payload for the new admin create endpoint. The server
       // does atomic soft-delete detection and returns RESTORE_REQUIRED /
