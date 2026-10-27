@@ -1,3 +1,15 @@
+## [1.2.0-beta.15](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.14...v1.2.0-beta.15) (2026-10-27)
+
+### Features
+
+* **reports:** group automated results by failure-pattern root cause ([0b8cf4c](https://github.com/TestPlanIt/testplanit/commit/0b8cf4c0e23f75d2f046627308efc5757407b274))
+* **reports:** result source and issue dimensions, creation metrics, exclude filters, calendar ranges ([58a0404](https://github.com/TestPlanIt/testplanit/commit/58a0404176b906bc4c4d3077dbdd90ebb9b73109))
+
+### Bug Fixes
+
+* **docker:** size Postgres /dev/shm above Docker's 64MB default ([0309d80](https://github.com/TestPlanIt/testplanit/commit/0309d8064375f498650f112c18a53d88362303e1))
+* **reports:** exclude deleted runs from automated drill-downs ([a3518ba](https://github.com/TestPlanIt/testplanit/commit/a3518ba45b6d6206b2ad3fe839ac293f29a0a5ec))
+
 ## [1.2.0-beta.14](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.13...v1.2.0-beta.14) (2026-10-27)
 
 ### Bug Fixes
