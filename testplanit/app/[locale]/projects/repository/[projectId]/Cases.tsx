@@ -115,7 +115,7 @@ import {
 } from "~/lib/execution/selection";
 import { BulkEditModal } from "./BulkEditModal";
 import { CopyMoveDialog } from "@/components/copy-move/CopyMoveDialog";
-import { ExtendedCases, getColumns } from "./columns";
+import { ExtendedCases, getColumns, SelectedCaseCountContext } from "./columns";
 import { DeleteCaseModal } from "./DeleteCase";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
@@ -2391,7 +2391,7 @@ export default function Cases({
   );
 
   // Handle checkbox click with shift-click support
-  const handleCheckboxClick = useCallback(
+  const handleCheckboxClickImpl = useCallback(
     (rowIndex: number, event: React.MouseEvent) => {
       const MappedCases = cases ?? [];
 
@@ -2473,7 +2473,7 @@ export default function Cases({
   );
 
   // Handle select all checkbox click with shift support
-  const handleSelectAllClick = useCallback(
+  const handleSelectAllClickImpl = useCallback(
     (event: React.MouseEvent) => {
       const MappedCases = cases ?? [];
 
@@ -2584,6 +2584,36 @@ export default function Cases({
     ]
   );
 
+  // The columns get the selection handlers through a ref (and the selected
+  // count through SelectedCaseCountContext). Both change on every click, and a
+  // rebuilt `columns` remounts every cell of every row (TanStack renders
+  // `columnDef.cell` as the component type) — on a large run that is seconds of
+  // main-thread work per click, and it closes any status dropdown or row menu
+  // open at the time.
+  const checkboxHandlersRef = useRef({
+    handleCheckboxClickImpl,
+    handleSelectAllClickImpl,
+  });
+  useEffect(() => {
+    checkboxHandlersRef.current = {
+      handleCheckboxClickImpl,
+      handleSelectAllClickImpl,
+    };
+  }, [handleCheckboxClickImpl, handleSelectAllClickImpl]);
+  const handleCheckboxClick = useCallback(
+    (rowIndex: number, event: React.MouseEvent) =>
+      checkboxHandlersRef.current.handleCheckboxClickImpl(rowIndex, event),
+    []
+  );
+  const handleSelectAllClick = useCallback(
+    (event: React.MouseEvent) =>
+      checkboxHandlersRef.current.handleSelectAllClickImpl(event),
+    []
+  );
+  const selectedCaseCount = isSelectionMode
+    ? selectedTestCases.length
+    : selectedCaseIdsForBulkEdit.length;
+
   // Extract stable primitives from session to avoid column remounts when session object changes
   const dateFormat = session?.user?.preferences?.dateFormat;
   const timezone = session?.user?.preferences?.timezone;
@@ -2617,6 +2647,9 @@ export default function Cases({
     }
   }, [copyMoveFolderId, copyMoveFolderName]);
 
+  // The checkbox handlers read a ref, but only when a checkbox is clicked —
+  // never while rendering.
+  // eslint-disable-next-line react-hooks/refs
   const columns: CustomColumnDef<ExtendedCases>[] = useMemo(() => {
     const built = getColumns(
       userPreferencesForColumns,
@@ -2679,10 +2712,6 @@ export default function Cases({
       selectedRunIds && selectedRunIds.length > 1,
       // Pass totalItems for shift+click tooltip
       totalItems,
-      // Pass selectedCount for determining if all are selected
-      isSelectionMode
-        ? selectedTestCases.length
-        : selectedCaseIdsForBulkEdit.length,
       // Grip handle: shown whenever rows can be dragged, to reorder or to a folder
       showDragHandles,
       // QuickScript per-row action
@@ -2784,8 +2813,6 @@ export default function Cases({
     testRunData?.configuration,
     selectedRunIds,
     totalItems,
-    selectedTestCases.length,
-    selectedCaseIdsForBulkEdit.length,
     quickScriptEnabled,
     handleCopyMove,
     showCopyMove,
@@ -3498,7 +3525,7 @@ export default function Cases({
 
           // Default content: DataTable with data
           return (
-            <>
+            <SelectedCaseCountContext.Provider value={selectedCaseCount}>
               <DataTable
                 key={`${folderId}-${viewType}-${predicatesKey}-datatable`}
                 columns={columns}
@@ -3523,7 +3550,7 @@ export default function Cases({
                 onRowSelectionChange={handleTableRowSelectionChange}
                 selectedItemsForDrag={selectedItemsForDrag}
               />
-            </>
+            </SelectedCaseCountContext.Provider>
           );
         })()}
         {/* Render the inline add-case row once, outside the loading/empty/
