@@ -11,6 +11,11 @@ name: testplanit-e2e
 services:
   postgres:
     image: postgres:15-alpine
+    # Matches the dev and prod compose files: Docker's 64MB /dev/shm is too
+    # small for Postgres parallel query workers once a suite has built up
+    # result data, and the failure looks like a flaky test rather than a
+    # resource limit.
+    shm_size: 256mb
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password

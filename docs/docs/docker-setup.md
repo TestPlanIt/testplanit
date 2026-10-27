@@ -39,219 +39,223 @@ The Docker Compose setup starts these containerized services:
   **Per-service breakdown (running):**
 
   | Service                | Minimum  | Recommended |
-  | ------------------------ | ---------- | ------------- |
+  | ---------------------- | -------- | ----------- |
   | TestPlanIt Application | 3GB      | 4GB         |
   | Background Workers     | 2GB      | 4GB         |
-  | PostgreSQL             | 1GB      | 2GB         |
+  | PostgreSQL             | 1.5GB    | 2GB         |
   | Elasticsearch          | 2GB      | 3GB         |
   | RustFS (file storage)  | 512MB    | 1GB         |
   | Valkey (Redis)         | 32MB     | 64MB        |
   | **Total**              | **~8GB** | **~14GB**   |
 
-  The Background Workers figure is steady-state for a typical single-tenant install. One always-on worker (SCIM access recompute) idles near 1.4GB on its own regardless of whether SCIM is configured, which is why the fleet no longer fits in the old 512MB floor. Individual workers also restart at higher ceilings under load (forecast and SCIM access recompute at 2GB, the webhook workers at 3GB each — whose steady-state RSS can approach 1.9GB each in busy multi-tenant clusters). Multi-tenant operators should size the worker fleet well above the recommended figure; see the [worker memory tiers](./background-processes.md) for the per-worker breakdown.
+  The Background Workers figure is steady-state for a typical single-tenant install. One always-on worker (SCIM access recompute) idles near 1.4GB on its own regardless of whether SCIM is configured, which is why the fleet no longer fits in the old 512MB floor. Individual workers also restart at higher ceilings under load — eight of them sit at a 3GB ceiling, and the busiest (the webhook dispatch and outbox workers) can approach 1.9GB steady-state RSS each in multi-tenant clusters. Multi-tenant operators should size the worker fleet well above the recommended figure; see the [worker memory tiers](./background-processes.md) for the per-worker breakdown.
 
-  **Tuning the caps.** The compose file caps the worker fleet at `4G` of memory and Postgres at `2` CPUs. Raise either without editing the file by setting environment variables in your shell, the default `.env`, or `--env-file` — **not** `.env.production`, which is a runtime `env_file` and is not read during compose variable substitution:
+  The PostgreSQL figures do not add headroom for `/dev/shm`, where Postgres puts the shared memory segments its parallel query workers use. The compose files cap that at 256MB (see **Tuning the caps** below), but it is a cap rather than a reservation — pages are consumed only as queries use them, so a small install never pays for it. Installs that report heavily over large result sets should budget the Postgres service toward the recommended figure or above, since that is when the segments are actually allocated.
+
+  **Tuning the caps.** The compose file caps the worker fleet at `4G` of memory, Postgres at `2` CPUs, and Postgres's `/dev/shm` at `256mb`. Raise any of them without editing the file by setting environment variables in your shell, the default `.env`, or `--env-file` — **not** `.env.production`, which is a runtime `env_file` and is not read during compose variable substitution:
 
   ```bash
-  # e.g. a 32GB host running large Testmo imports:
-  WORKERS_MEMORY_LIMIT=20G POSTGRES_CPU_LIMIT=4 \
+  # e.g. a 32GB host running large Testmo imports and heavy reporting:
+  WORKERS_MEMORY_LIMIT=20G POSTGRES_CPU_LIMIT=4 POSTGRES_SHM_SIZE=1gb \
     docker compose -f testplanit/docker-compose.prod.yml up -d
   ```
+
+  Raise `POSTGRES_SHM_SIZE` if a report or drill-down fails with **`could not resize shared memory segment ... No space left on device`**. That is Postgres running out of `/dev/shm`, not a TestPlanIt fault: report queries over large result tables pick parallel plans, and Docker's own default for that filesystem is only 64MB. It surfaces as a 500 from the reports API.
 
 - 25GB+ disk space for data and images
 
 ## Installation & Setup Steps
 
 1. **Clone the repository:**
-    Open your terminal and clone the TestPlanIt monorepo:
+   Open your terminal and clone the TestPlanIt monorepo:
 
-    ```bash
-    git clone https://github.com/testplanit/testplanit.git
-    cd testplanit
-    ```
+   ```bash
+   git clone https://github.com/testplanit/testplanit.git
+   cd testplanit
+   ```
 
 2. **Navigate to the application directory:**
 
-    ```bash
-    cd testplanit
-    ```
+   ```bash
+   cd testplanit
+   ```
 
 3. **Set up Environment Variables:**
 
-    For **Development**:
+   For **Development**:
 
-    ```bash
-    cp .env.example .env.development
-    ```
+   ```bash
+   cp .env.example .env.development
+   ```
 
-    For **Production**:
+   For **Production**:
 
-    ```bash
-    cp .env.example .env.production
-    ```
+   ```bash
+   cp .env.example .env.production
+   ```
 
-    Then open `.env.production` and update these values for your deployment:
+   Then open `.env.production` and update these values for your deployment:
 
-    ```bash
-    # REQUIRED CHANGES for production:
+   ```bash
+   # REQUIRED CHANGES for production:
 
-    # Database — the bundled Postgres container creates the testplanit_prod database
-    DATABASE_URL="postgresql://user:password@postgres:5432/testplanit_prod?schema=public"
+   # Database — the bundled Postgres container creates the testplanit_prod database
+   DATABASE_URL="postgresql://user:password@postgres:5432/testplanit_prod?schema=public"
 
-    # Job queue — the shipped default points at localhost, which inside a
-    # container is the container itself; use the valkey service hostname
-    VALKEY_URL="valkey://valkey:6379"
+   # Job queue — the shipped default points at localhost, which inside a
+   # container is the container itself; use the valkey service hostname
+   VALKEY_URL="valkey://valkey:6379"
 
-    # Search — same localhost issue; use the elasticsearch service hostname
-    # (leave empty to disable search if you don't run the with-elasticsearch profile)
-    ELASTICSEARCH_NODE="http://elasticsearch:9200"
+   # Search — same localhost issue; use the elasticsearch service hostname
+   # (leave empty to disable search if you don't run the with-elasticsearch profile)
+   ELASTICSEARCH_NODE="http://elasticsearch:9200"
 
-    # Application URL (change to your domain)
-    NEXTAUTH_URL="https://yourdomain.com"
+   # Application URL (change to your domain)
+   NEXTAUTH_URL="https://yourdomain.com"
 
-    # Generate a secure secret (run this command and paste the result)
-    # openssl rand -base64 32
-    NEXTAUTH_SECRET="your-generated-secret-here"
+   # Generate a secure secret (run this command and paste the result)
+   # openssl rand -base64 32
+   NEXTAUTH_SECRET="your-generated-secret-here"
 
-    # External file access domain (must match your public URL)
-    AWS_PUBLIC_ENDPOINT_URL="https://yourdomain.com"
+   # External file access domain (must match your public URL)
+   AWS_PUBLIC_ENDPOINT_URL="https://yourdomain.com"
 
-    # Change the default admin email and password!
-    ADMIN_EMAIL=admin@example.com
-    ADMIN_NAME="Administrator Account"
-    ADMIN_PASSWORD=your-secure-password
+   # Change the default admin email and password!
+   ADMIN_EMAIL=admin@example.com
+   ADMIN_NAME="Administrator Account"
+   ADMIN_PASSWORD=your-secure-password
 
-    # OPTIONAL: Email settings (required for Magic Link authentication and notifications)
-    EMAIL_SERVER_HOST=smtp.your-provider.com
-    EMAIL_SERVER_PORT=587
-    EMAIL_SERVER_USER=your-email@domain.com
-    EMAIL_SERVER_PASSWORD=your-password
-    EMAIL_FROM=noreply@yourdomain.com
-    ```
+   # OPTIONAL: Email settings (required for Magic Link authentication and notifications)
+   EMAIL_SERVER_HOST=smtp.your-provider.com
+   EMAIL_SERVER_PORT=587
+   EMAIL_SERVER_USER=your-email@domain.com
+   EMAIL_SERVER_PASSWORD=your-password
+   EMAIL_FROM=noreply@yourdomain.com
+   ```
 
-    **Important:** `.env.example` ships with local-development values, so the connection URLs above must be changed to the Docker service hostnames as shown. The remaining variables (file storage connection, ports, feature flags) work as shipped — only modify them if you're using external services.
+   **Important:** `.env.example` ships with local-development values, so the connection URLs above must be changed to the Docker service hostnames as shown. The remaining variables (file storage connection, ports, feature flags) work as shipped — only modify them if you're using external services.
 
-    ### Optional: Change External Docker Ports
+   ### Optional: Change External Docker Ports
 
-    You can override host-exposed ports with `DOCKER_*_PORT` variables (for example `DOCKER_POSTGRES_PORT=5732`).
+   You can override host-exposed ports with `DOCKER_*_PORT` variables (for example `DOCKER_POSTGRES_PORT=5732`).
 
-    Compose files use fallback syntax such as `${DOCKER_POSTGRES_PORT:-5432}:5432`, which means:
+   Compose files use fallback syntax such as `${DOCKER_POSTGRES_PORT:-5432}:5432`, which means:
 
-    - use `DOCKER_POSTGRES_PORT` when set
-    - otherwise fall back to `5432`
+   - use `DOCKER_POSTGRES_PORT` when set
+   - otherwise fall back to `5432`
 
-    Important behavior:
+   Important behavior:
 
-    - `env_file:` in `docker-compose*.yml` sets runtime variables inside containers
-    - it does **not** control Compose interpolation for published ports
+   - `env_file:` in `docker-compose*.yml` sets runtime variables inside containers
+   - it does **not** control Compose interpolation for published ports
 
-    If you changed port values in `.env.development` or `.env.production`, run Compose with `--env-file`:
+   If you changed port values in `.env.development` or `.env.production`, run Compose with `--env-file`:
 
-    ```bash
-    # Development
-    docker compose --env-file .env.development -f docker-compose.dev.yml up -d --build
+   ```bash
+   # Development
+   docker compose --env-file .env.development -f docker-compose.dev.yml up -d --build
 
-    # Production
-    docker compose --env-file .env.production -f docker-compose.prod.yml up -d
-    ```
+   # Production
+   docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+   ```
 
-    Alternatively, place the `DOCKER_*_PORT` values in a local `.env` file (auto-loaded by Compose).
+   Alternatively, place the `DOCKER_*_PORT` values in a local `.env` file (auto-loaded by Compose).
 
-    Note: this only changes external host bindings. Internal service ports stay the same (for example PostgreSQL remains `postgres:5432` inside the Docker network).
+   Note: this only changes external host bindings. Internal service ports stay the same (for example PostgreSQL remains `postgres:5432` inside the Docker network).
 
 4. **Choose Your Services:**
 
-    TestPlanIt uses Docker Compose profiles to make services optional:
+   TestPlanIt uses Docker Compose profiles to make services optional:
 
-    - `dev` / `prod` - Development/Production app+workers profiles (includes all dependencies)
-    - `with-postgres` - PostgreSQL database
-    - `with-valkey` - Valkey/Redis cache and queue
-    - `with-elasticsearch` - Elasticsearch search (optional)
-    - `with-minio` - RustFS file storage + Nginx
+   - `dev` / `prod` - Development/Production app+workers profiles (includes all dependencies)
+   - `with-postgres` - PostgreSQL database
+   - `with-valkey` - Valkey/Redis cache and queue
+   - `with-elasticsearch` - Elasticsearch search (optional)
+   - `with-minio` - RustFS file storage + Nginx
 
-    **Quick Start Options:**
+   **Quick Start Options:**
 
-    **All Services (Full Stack):**
+   **All Services (Full Stack):**
 
-    ```bash
-    # Development
-    docker compose --profile dev up --build
+   ```bash
+   # Development
+   docker compose --profile dev up --build
 
-    # Production
-    docker compose --profile prod up
-    ```
+   # Production
+   docker compose --profile prod up
+   ```
 
-    **Selective Services:**
+   **Selective Services:**
 
-    ```bash
-    # Development without search
-    docker compose up dev workers-dev postgres valkey minio --build
+   ```bash
+   # Development without search
+   docker compose up dev workers-dev postgres valkey minio --build
 
-    # Production with only essential services
-    docker compose up prod workers postgres valkey
-    ```
+   # Production with only essential services
+   docker compose up prod workers postgres valkey
+   ```
 
 5. **Start the Application:**
 
-    **Development Mode** (with hot-reload, all services):
+   **Development Mode** (with hot-reload, all services):
 
-    ```bash
-    docker compose --profile dev up --build
-    ```
+   ```bash
+   docker compose --profile dev up --build
+   ```
 
-    **Production Mode** (optimized builds, all services):
+   **Production Mode** (optimized builds, all services):
 
-    ```bash
-    docker compose --profile prod up
-    ```
+   ```bash
+   docker compose --profile prod up
+   ```
 
-    **Production with External Services:**
+   **Production with External Services:**
 
-    ```bash
-    # Example: Using external database and S3, Docker for cache/search
-    docker compose -f docker-compose.prod.yml \
-      --profile with-valkey \
-      --profile with-elasticsearch \
-      up
-    ```
+   ```bash
+   # Example: Using external database and S3, Docker for cache/search
+   docker compose -f docker-compose.prod.yml \
+     --profile with-valkey \
+     --profile with-elasticsearch \
+     up
+   ```
 
-    Production runs the prebuilt `ghcr.io/testplanit/testplanit-selfhost` images,
-    which Compose pulls on the first start. Development builds its image from your
-    checkout, which is what `--build` does. To build the production images from
-    source instead, add `--build`; see [Build from Source](./building-from-source.md).
+   Production runs the prebuilt `ghcr.io/testplanit/testplanit-selfhost` images,
+   which Compose pulls on the first start. Development builds its image from your
+   checkout, which is what `--build` does. To build the production images from
+   source instead, add `--build`; see [Build from Source](./building-from-source.md).
 
-    To pin a release, set `TESTPLANIT_VERSION` (for example `1.1.12`) in the
-    shell, the default `.env`, or `--env-file`, not `.env.production`. The default,
-    `latest`, follows the newest release.
+   To pin a release, set `TESTPLANIT_VERSION` (for example `1.1.12`) in the
+   shell, the default `.env`, or `--env-file`, not `.env.production`. The default,
+   `latest`, follows the newest release.
 
-    **What Happens During Startup:**
-    1. Selected services start based on profiles
-    2. PostgreSQL (if included) starts and becomes healthy
-    3. Other services (Valkey, Elasticsearch, RustFS file storage) start
-    4. Database initialization runs (if using PostgreSQL container)
-    5. Storage initialization creates the bucket (if using the bundled storage)
-    6. Main application and workers start
-    7. Nginx proxy becomes available (if using the bundled storage)
+   **What Happens During Startup:**
+   1. Selected services start based on profiles
+   2. PostgreSQL (if included) starts and becomes healthy
+   3. Other services (Valkey, Elasticsearch, RustFS file storage) start
+   4. Database initialization runs (if using PostgreSQL container)
+   5. Storage initialization creates the bucket (if using the bundled storage)
+   6. Main application and workers start
+   7. Nginx proxy becomes available (if using the bundled storage)
 
-    **First startup takes 2-5 minutes** as images are pulled (or built) and services initialize.
+   **First startup takes 2-5 minutes** as images are pulled (or built) and services initialize.
 
 6. **Access TestPlanIt:**
-    - **Development** (`dev`): [http://localhost:3000](http://localhost:3000)
-      - Override with `DOCKER_DEV_APP_PORT`
-    - **Production** (`prod`): [http://localhost:30000](http://localhost:30000)
-      - Override with `DOCKER_PROD_APP_PORT`
-    - **Default login**: `admin@example.com` / `admin` (change in production!)
-    - **Demo Project**: A pre-populated Demo Project is created during initial setup with sample test cases, test runs, sessions, milestones, and issues. Use the **Help menu > Start Demo Project Tour** for a guided walkthrough.
+   - **Development** (`dev`): [http://localhost:3000](http://localhost:3000)
+     - Override with `DOCKER_DEV_APP_PORT`
+   - **Production** (`prod`): [http://localhost:30000](http://localhost:30000)
+     - Override with `DOCKER_PROD_APP_PORT`
+   - **Default login**: `admin@example.com` / `admin` (change in production!)
+   - **Demo Project**: A pre-populated Demo Project is created during initial setup with sample test cases, test runs, sessions, milestones, and issues. Use the **Help menu > Start Demo Project Tour** for a guided walkthrough.
 
 7. **Access Additional Services (if enabled):**
-    - **RustFS Console** (`with-minio`): [http://localhost:9001](http://localhost:9001)
-      - Override with `DOCKER_MINIO_CONSOLE_PORT`
-    - **Elasticsearch** (`with-elasticsearch`): [http://localhost:9200](http://localhost:9200)
-      - Override with `DOCKER_ELASTICSEARCH_HTTP_PORT`
-    - **PostgreSQL** (`with-postgres`): `localhost:5432` (user: `user` / password: `password`)
-      - Override with `DOCKER_POSTGRES_PORT`
-    - **Valkey** (`with-valkey`): `localhost:6379`
-      - Override with `DOCKER_VALKEY_PORT`
+   - **RustFS Console** (`with-minio`): [http://localhost:9001](http://localhost:9001)
+     - Override with `DOCKER_MINIO_CONSOLE_PORT`
+   - **Elasticsearch** (`with-elasticsearch`): [http://localhost:9200](http://localhost:9200)
+     - Override with `DOCKER_ELASTICSEARCH_HTTP_PORT`
+   - **PostgreSQL** (`with-postgres`): `localhost:5432` (user: `user` / password: `password`)
+     - Override with `DOCKER_POSTGRES_PORT`
+   - **Valkey** (`with-valkey`): `localhost:6379`
+     - Override with `DOCKER_VALKEY_PORT`
 
 ## Environment Management
 
@@ -543,7 +547,7 @@ curl http://localhost:9200/_cluster/health
 
 **File upload/display issues:**
 
-*Mixed content errors / uploads fail with "Failed to fetch":*
+_Mixed content errors / uploads fail with "Failed to fetch":_
 
 - **Cause**: The app generates presigned URLs using the internal storage hostname (e.g., `http://minio:9000`), which the browser cannot reach. When the page is served over HTTPS, the browser blocks the HTTP request to the internal URL.
 - **Symptoms**: Browser console shows `Mixed Content: ... requested an insecure resource 'http://minio:9000/...'` and file uploads fail.
@@ -553,7 +557,7 @@ curl http://localhost:9200/_cluster/health
   IS_HOSTED=true
   ```
 
-*Uploads appear to work, but the file then fails with `AccessDenied` (private S3 bucket):*
+_Uploads appear to work, but the file then fails with `AccessDenied` (private S3 bucket):_
 
 - **Cause**: In direct mode the app stores the presigned URL with its signature
   stripped, so every later read is an unauthenticated request to the bucket. A
@@ -574,15 +578,16 @@ curl http://localhost:9200/_cluster/health
   every attachment to the internet.
 
   Then recreate the container: `docker compose up -d --force-recreate prod`
+
 - **Alternative**: Set `AWS_PUBLIC_ENDPOINT_URL=https://yourdomain.com` if the storage is accessible through your reverse proxy. See [File Storage docs](/docs/file-storage#storage-modes) for details.
 
-*403 Forbidden on file uploads:*
+_403 Forbidden on file uploads:_
 
 - **Cause**: AWS signature mismatch between app and storage
 - **Fix**: Ensure `AWS_PUBLIC_ENDPOINT_URL` matches your external domain exactly
 - **Check**: RustFS console at `http://localhost:9001` → bucket `testplanit` exists
 
-*Files not displaying:*
+_Files not displaying:_
 
 ```bash
 # Test storage direct access
@@ -595,7 +600,7 @@ curl -I http://localhost:80/testplanit/
 curl http://localhost:9000/health
 ```
 
-*Image optimization errors:*
+_Image optimization errors:_
 
 - Add your domain to `next.config.mjs` `images.remotePatterns`
 - Verify files accessible at: `https://yourdomain.com/testplanit/...`

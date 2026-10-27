@@ -168,6 +168,15 @@ services:
     # the deploy environment (shell / default .env / --env-file), not the
     # .env.production env_file.
     cpus: "${POSTGRES_CPU_LIMIT:-2}"
+    # Parallel query workers allocate their shared memory segments in
+    # /dev/shm, which Docker sizes at 64MB by default. The parallelism caps
+    # below keep that demand modest, but a report over a large result table
+    # can still exhaust 64MB and fail with "could not resize shared memory
+    # segment ... No space left on device" — seen by the user as a 500 from
+    # the reports API. This is a cap, not a reservation: pages are consumed
+    # only as queries use them. Raise POSTGRES_SHM_SIZE (e.g. 1gb) on large
+    # installs that report heavily.
+    shm_size: "${POSTGRES_SHM_SIZE:-256mb}"
     command: >
       postgres
       -c max_parallel_workers=2
