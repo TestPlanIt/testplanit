@@ -1,3 +1,9 @@
+## [1.2.0-beta.12](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.11...v1.2.0-beta.12) (2026-10-27)
+
+### Bug Fixes
+
+* **runs:** stop the case table remounting every cell on run-page re-renders ([a83d708](https://github.com/TestPlanIt/testplanit/commit/a83d70887d851bc6e4170199b8d617d1e5a47714))
+
 ## [1.2.0-beta.11](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.10...v1.2.0-beta.11) (2026-10-22)
 
 ### Bug Fixes
