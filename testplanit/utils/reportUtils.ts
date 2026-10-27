@@ -886,6 +886,38 @@ export function createTestExecutionDimensionRegistry(
       join: {},
       display: (val: any) => ({ name: val.name, id: val.id }),
     },
+    rootCause: {
+      id: "rootCause",
+      label: "Root Cause",
+      // Failure Patterns root causes: automated results group by their
+      // failure signature's effective classification (a person's choice
+      // when one was made, else the AI's). Manual results, passing results
+      // and unclassified failures all land in "None".
+      getValues: async (db: DbClient, projectId?: number) => {
+        const classifications = await db.failureClassification.findMany({
+          where: {
+            isDeleted: false,
+            signatures: {
+              some: {
+                ...(isProjectSpecific && projectId
+                  ? { projectId: Number(projectId) }
+                  : {}),
+              },
+            },
+          },
+          select: { id: true, name: true, color: { select: { value: true } } },
+          orderBy: [{ order: "asc" }, { name: "asc" }],
+        });
+        return classifications;
+      },
+      groupBy: "rootCauseId",
+      join: {},
+      display: (val: any) => ({
+        name: val.name,
+        id: val.id,
+        color: val.color?.value ?? null,
+      }),
+    },
     resultSource: {
       id: "resultSource",
       label: "Result Source",
@@ -1415,6 +1447,7 @@ export function createTestExecutionMetricRegistry(
             "tagId",
             "issueId",
             "resultSource",
+            "rootCauseId",
             "testRunCaseId",
             "repositoryCaseId",
           ].includes(field)

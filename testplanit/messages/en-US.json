@@ -8250,6 +8250,7 @@
     "reportDimensions": {
       "issue": "## Issue Dimension\nGroups by the issues linked to the test case. A case linked to several issues counts in each; cases with no linked issues fall into None.",
       "resultSource": "## Result Source Dimension\nGroups executions by where they came from: results entered in the app (Manual) or imported automated results such as JUnit (Automated).",
+      "rootCause": "## Root Cause Dimension\nGroups automated results by the root cause of their failure pattern — a person's classification when one was made, otherwise the AI's. Manual results, passing results and unclassified failures fall into None.",
       "user": "## User Dimension\nGroups results by the user who executed the tests or is assigned to the items.",
       "status": "## Status Dimension\nGroups results by test execution status (e.g., Passed, Failed, Blocked).",
       "project": "## Project Dimension\nGroups results by project for cross-project analysis.",
@@ -9299,6 +9300,7 @@
       "issueStatus": "Issue Status",
       "issue": "Issue",
       "resultSource": "Result Source",
+      "rootCause": "Root Cause",
       "tag": "Tag",
       "feature": "Feature",
       "model": "Model",

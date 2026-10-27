@@ -326,6 +326,27 @@ describe("drillDownQueryBuilders", () => {
       });
     });
 
+    it("filters the root-cause dimension on the failure signature", () => {
+      const classified = buildJunitResultQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: 5, name: "Env flake" } },
+        })
+      );
+      expect(classified?.where.failureSignature).toEqual({
+        classificationId: 5,
+      });
+
+      const none = buildJunitResultQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: null as any, name: "None" } },
+        })
+      );
+      expect(none?.where.OR).toEqual([
+        { failureSignatureId: null },
+        { failureSignature: { classificationId: null } },
+      ]);
+    });
+
     it("should apply folder and tag filters on the linked repository case", () => {
       const context = createBaseContext({
         dimensions: {
@@ -430,6 +451,34 @@ describe("drillDownQueryBuilders", () => {
       );
       expect((result.where as any).AND).toHaveLength(2);
       expect((result.where as any).OR).toBeUndefined();
+    });
+
+    it("derives root-cause membership from classified automated results", () => {
+      const classified = buildTestRunsQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: 5, name: "Env flake" } },
+        }),
+        0,
+        10
+      );
+      expect(
+        (classified.where as any).junitTestSuites.some.results.some
+          .failureSignature
+      ).toEqual({ classificationId: 5 });
+
+      const none = buildTestRunsQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: null as any, name: "None" } },
+        }),
+        0,
+        10
+      );
+      const or = (none.where as any).OR;
+      expect(or[0].results.some.isDeleted).toBe(false);
+      expect(or[1].junitTestSuites.some.results.some.OR).toEqual([
+        { failureSignatureId: null },
+        { failureSignature: { classificationId: null } },
+      ]);
     });
 
     it("applies the date dimension and range to the run's createdAt", () => {
@@ -742,6 +791,33 @@ describe("drillDownQueryBuilders", () => {
       expect((none.where as any).caseIssues).toEqual({
         none: { issue: { isDeleted: false } },
       });
+    });
+
+    it("matches a classified root-cause cell only through automated results", () => {
+      const classified = buildTestCasesQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: 5, name: "Env flake" } },
+        }),
+        0,
+        10
+      );
+      expect(classified.where?.OR).toHaveLength(1);
+      expect(
+        (classified.where?.OR as any[])[0].junitResults.some.failureSignature
+      ).toEqual({ classificationId: 5 });
+
+      const none = buildTestCasesQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: null as any, name: "None" } },
+        }),
+        0,
+        10
+      );
+      expect(none.where?.OR).toHaveLength(2);
+      expect((none.where?.OR as any[])[1].junitResults.some.OR).toEqual([
+        { failureSignatureId: null },
+        { failureSignature: { classificationId: null } },
+      ]);
     });
   });
 

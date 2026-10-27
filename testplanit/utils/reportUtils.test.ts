@@ -1587,6 +1587,77 @@ describe("reportUtils", () => {
     });
   });
 
+  // The Root Cause dimension groups automated results by their failure
+  // signature's effective classification.
+  describe("root cause dimension", () => {
+    it("lists live classifications with signatures in scope", async () => {
+      const findMany = vi.fn().mockResolvedValue([
+        { id: 5, name: "Env flake", color: { value: "#f00" } },
+        { id: 7, name: "Product bug", color: null },
+      ]);
+      const db = { failureClassification: { findMany } } as unknown as DbClient;
+
+      const dim = createTestExecutionDimensionRegistry(true).rootCause as any;
+      const values = await dim.getValues(db, 370);
+
+      const where = findMany.mock.calls[0][0].where;
+      expect(where.isDeleted).toBe(false);
+      expect(where.signatures.some.projectId).toBe(370);
+      expect(dim.display(values[0])).toEqual({
+        name: "Env flake",
+        id: 5,
+        color: "#f00",
+      });
+      expect(dim.display(values[1]).color).toBeNull();
+    });
+
+    it("groups the union by effective classification, with None for the rest", async () => {
+      const manualRow = {
+        executedAt: new Date("2026-07-01T10:00:00.000Z"),
+        executedById: "u1",
+        statusId: 2,
+        testRunId: 100,
+        testRunCaseId: 11,
+        testRun: { projectId: 370, configId: null, milestoneId: null },
+      };
+      const junitRow = (classificationId: number | null, signature = true) => ({
+        executedAt: new Date("2026-07-01T10:00:00.000Z"),
+        createdById: "ci",
+        statusId: 3,
+        time: 3,
+        repositoryCaseId: 42,
+        failureSignature: signature ? { classificationId } : null,
+        testSuite: {
+          testRunId: 200,
+          testRun: { projectId: 370, configId: null, milestoneId: null },
+        },
+      });
+      const db = {
+        testRunResults: { findMany: vi.fn().mockResolvedValue([manualRow]) },
+        jUnitTestResult: {
+          findMany: vi
+            .fn()
+            .mockResolvedValue([
+              junitRow(5),
+              junitRow(5),
+              junitRow(null),
+              junitRow(null, false),
+            ]),
+        },
+      } as unknown as DbClient;
+
+      const rows: any[] = await createTestExecutionMetricRegistry(
+        true
+      ).testResults.aggregate(db, 370, ["rootCauseId"], {});
+
+      expect(
+        Object.fromEntries(
+          rows.map((r) => [String(r.rootCauseId), r.testResults])
+        )
+      ).toEqual({ "5": 2, null: 3 });
+    });
+  });
+
   // The Issue dimension fans a row out per linked issue, like tag.
   describe("issue dimension", () => {
     it("groups execution rows by the executed case's linked issues", async () => {

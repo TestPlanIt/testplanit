@@ -104,6 +104,10 @@ function formatDimensionSummary(
     parts.push(context.dimensions.resultSource.name);
   }
 
+  if (context.dimensions.rootCause?.name) {
+    parts.push(context.dimensions.rootCause.name);
+  }
+
   if (context.dimensions.project?.name) {
     parts.push(context.dimensions.project.name);
   }

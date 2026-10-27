@@ -162,6 +162,7 @@ const getChartType = (
     "configuration",
     "trigger",
     "resultSource",
+    "rootCause",
     "codeRepository",
   ];
 

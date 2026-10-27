@@ -141,6 +141,7 @@ export async function fetchJunitResultRows(
   const needsFolder = groupBy.includes("folderId");
   const needsTag = groupBy.includes("tagId");
   const needsIssue = groupBy.includes("issueId");
+  const needsRootCause = groupBy.includes("rootCauseId");
   const junitResults = await db.jUnitTestResult.findMany({
     where: junitResultWhere(projectId, isProjectSpecific, filters, {
       ...opts,
@@ -155,6 +156,9 @@ export async function fetchJunitResultRows(
       repositoryCaseId: true,
       ...(opts.includeStatusFlags
         ? { status: { select: { isSuccess: true } } }
+        : {}),
+      ...(needsRootCause
+        ? { failureSignature: { select: { classificationId: true } } }
         : {}),
       ...(needsFolder || needsTag || needsIssue
         ? {
@@ -203,6 +207,12 @@ export async function fetchJunitResultRows(
     statusId: r.statusId,
     elapsed: r.time,
     resultSource: RESULT_SOURCE_AUTOMATED,
+    // Effective root cause of the result's failure pattern. Manual rows
+    // never carry one, and junit rows without a classified signature stay
+    // null — both land in the root-cause dimension's "None" group.
+    ...(needsRootCause
+      ? { rootCauseId: r.failureSignature?.classificationId ?? null }
+      : {}),
     ...(opts.includeStatusFlags ? { status: r.status } : {}),
     testRunId: r.testSuite.testRunId,
     testRun: r.testSuite.testRun,

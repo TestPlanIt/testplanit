@@ -45,6 +45,7 @@ export const DRILL_DOWN_DIMENSIONS_BY_REPORT: Record<
     "milestone",
     "project",
     "resultSource",
+    "rootCause",
     "status",
     "tag",
     "testCase",
@@ -592,6 +593,21 @@ export function buildJunitResultQuery(
     where.repositoryCase = repositoryCaseFilter;
   }
 
+  // Root cause: the failure signature's effective classification. The
+  // "None" group covers rows with no signature and rows whose signature is
+  // unclassified (manual rows are gated out at the source level instead).
+  if (context.dimensions.rootCause) {
+    const rootCause = context.dimensions.rootCause;
+    if (rootCause.id === null || rootCause.id === "") {
+      where.OR = [
+        { failureSignatureId: null },
+        { failureSignature: { classificationId: null } },
+      ];
+    } else {
+      where.failureSignature = { classificationId: Number(rootCause.id) };
+    }
+  }
+
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
     where.executedAt = dateDimensionBounds(context, date);
@@ -750,6 +766,55 @@ export function buildTestRunsQuery(
               some: {
                 statusId: { not: null },
                 status: { systemName: { not: "untested" } },
+              },
+            },
+          },
+        },
+      });
+    }
+  }
+  if (context.dimensions.rootCause) {
+    const rootCauseId = context.dimensions.rootCause.id;
+    if (rootCauseId === null || rootCauseId === "") {
+      // "None" = a manual result (never classified) or an automated result
+      // without a classified failure signature.
+      membershipConditions.push({
+        OR: [
+          {
+            results: {
+              some: {
+                isDeleted: false,
+                status: { systemName: { not: "untested" } },
+              },
+            },
+          },
+          {
+            junitTestSuites: {
+              some: {
+                results: {
+                  some: {
+                    statusId: { not: null },
+                    status: { systemName: { not: "untested" } },
+                    OR: [
+                      { failureSignatureId: null },
+                      { failureSignature: { classificationId: null } },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        ],
+      });
+    } else {
+      membershipConditions.push({
+        junitTestSuites: {
+          some: {
+            results: {
+              some: {
+                statusId: { not: null },
+                status: { systemName: { not: "untested" } },
+                failureSignature: { classificationId: Number(rootCauseId) },
               },
             },
           },
@@ -1164,15 +1229,35 @@ export function buildTestCasesQuery(
         : ({ some: { issueId: Number(issue.id) } } as any);
   }
 
+  // Root cause: a classified cell only matches through automated results
+  // carrying that classification; the "None" cell admits manual results and
+  // automated results without a classified signature.
+  const rootCause = context.dimensions.rootCause;
+  if (rootCause) {
+    if (rootCause.id === null || rootCause.id === "") {
+      junitFilter.OR = [
+        { failureSignatureId: null },
+        { failureSignature: { classificationId: null } },
+      ];
+    } else {
+      junitFilter.failureSignature = {
+        classificationId: Number(rootCause.id),
+      };
+    }
+  }
+  const rootCauseClassified =
+    rootCause != null && rootCause.id !== null && rootCause.id !== "";
+
   // The result-source dimension keeps only the matching membership branch:
   // a "Manual" cell counts cases with manual results, so its drill-down
-  // must not re-admit cases through their automated results.
+  // must not re-admit cases through their automated results. A classified
+  // root-cause cell likewise never matches through manual results.
   const sourceId = context.dimensions.resultSource?.id;
   const membershipBranches = [
     // The relationship is: RepositoryCases → TestRunCases ← TestRunResults.
     // Filter at the TestRunResults level, not TestRunCases level, because
     // TestRunResults.testRunId ≠ TestRunCases.testRunId in some cases.
-    ...(sourceId !== "AUTOMATED"
+    ...(sourceId !== "AUTOMATED" && !rootCauseClassified
       ? [{ testRuns: { some: { results: { some: resultsFilter } } } }]
       : []),
     ...(sourceId !== "MANUAL" ? [{ junitResults: { some: junitFilter } }] : []),

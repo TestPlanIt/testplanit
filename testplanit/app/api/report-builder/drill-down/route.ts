@@ -80,9 +80,14 @@ async function handleDualSourceDrillDown(
   }
 
   // The result-source dimension names the table a cell's rows came from, so
-  // its drill-down reads only that source.
+  // its drill-down reads only that source. A classified root-cause cell can
+  // only match automated results — manual results never carry a failure
+  // signature (the "None" root-cause cell still reads both sources).
   const resultSourceId = context.dimensions?.resultSource?.id;
-  const includeManual = resultSourceId !== "AUTOMATED";
+  const rootCauseId = context.dimensions?.rootCause?.id;
+  const rootCauseClassified =
+    rootCauseId !== undefined && rootCauseId !== null && rootCauseId !== "";
+  const includeManual = resultSourceId !== "AUTOMATED" && !rootCauseClassified;
   const includeAutomated = resultSourceId !== "MANUAL";
 
   const junitQuery = includeAutomated

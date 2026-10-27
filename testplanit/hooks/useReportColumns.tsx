@@ -30,6 +30,7 @@ import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
 import { RoleNameDisplay } from "~/components/RoleNameDisplay";
 import StatusDisplay from "~/components/StatusDisplay";
+import { ClassificationBadge } from "~/components/triage/badges";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { TagsDisplay } from "~/components/tables/TagDisplay";
 import { GroupNameCell } from "~/components/tables/GroupNameCell";
@@ -159,6 +160,23 @@ export function useReportColumns(
         <span className="line-clamp-2 break-words" title={value.name}>
           {value.name}
         </span>
+      );
+    };
+    const renderRootCauseValue = (value: any) => {
+      // The "None" group mixes manual results, passing results and
+      // unclassified failures — the badge's own "unclassified" fallback
+      // would misname it, so render a plain localized None instead.
+      if (!value?.id) {
+        return <span>{tCommon("access.none")}</span>;
+      }
+      return (
+        <ClassificationBadge
+          classification={{
+            id: value.id,
+            name: value.name,
+            color: value.color ? { value: value.color } : null,
+          }}
+        />
       );
     };
 
@@ -531,6 +549,9 @@ export function useReportColumns(
               case "resultSource":
                 // Group keys are the source strings; show localized labels.
                 return renderResultSourceValue(info.row.original[dimensionId]);
+              case "rootCause":
+                // Failure-pattern root cause, as the triage pages badge it.
+                return renderRootCauseValue(info.row.original[dimensionId]);
               case "trigger":
                 // Group keys are the trigger ids; show the localized label.
                 return renderTriggerValue(info.row.original[dimensionId]);
@@ -711,6 +732,14 @@ export function useReportColumns(
                 info.row.subRows,
                 (subRow) => subRow.original[dimensionId],
                 renderIssueValue,
+                multipleValuesLabel
+              );
+            }
+            if (dimensionId === "rootCause") {
+              return getAggregatedDimensionDisplay(
+                info.row.subRows,
+                (subRow) => subRow.original[dimensionId],
+                renderRootCauseValue,
                 multipleValuesLabel
               );
             }
