@@ -83,6 +83,10 @@ services:
   postgres:
     container_name: testplanit-postgres
     image: postgres:18-alpine # Use a specific Postgres version
+    # See docker-compose.prod.yml for why this is raised above Docker's 64MB
+    # default: Postgres parallel query workers allocate their shared memory
+    # segments in /dev/shm, and report queries exhaust the default.
+    shm_size: 256mb
     environment:
       POSTGRES_USER: user # Must match the user in DATABASE_URL
       POSTGRES_PASSWORD: password # Must match the password in DATABASE_URL
