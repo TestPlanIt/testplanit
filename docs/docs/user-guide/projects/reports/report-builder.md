@@ -105,6 +105,10 @@ With [Impact Analysis](../../impact.md) enabled, the Test Execution source offer
 
 Test Execution counts both results entered in the app and imported automated results (JUnit and the other formats [automated execution](../../automated-execution.md) collects). The **Result Source** dimension splits them: each execution groups under **Manual** or **Automated**, and the dimension's filter restricts a report to one source — for example, a manual-executions-per-month trend that leaves imported automated results out. Rows that are not executions, such as runs counted without results, fall into **None**.
 
+### Root Cause Dimension
+
+The **Root Cause** dimension groups automated results by the root cause of their [failure pattern](../../failure-patterns.md) — a person's classification when one was made, otherwise the AI's, drawn from the [root causes catalogue](../../root-causes.md). Combined with the Date dimension it trends failures by cause over time; its filter narrows a report to specific causes. Manual results, passing results and unclassified failures fall into **None**, and drilling into a classified cell lists the automated results carrying that cause.
+
 ### Issue Dimension and Linked Cases
 
 On Test Execution and Repository Stats, the **Issue** dimension groups rows by the [issues linked to the test case](../issues.md), labeled by issue key and title — cases written per ticket, or executions per ticket, read straight off the report. A case linked to several issues counts in each; cases with no linked issues fall into **None**. The dimension's filter picker searches issues by key or title. On Issue Tracking, the **Linked Cases** metric counts the distinct test cases linked to each group's issues — a case linked to two issues in the same group counts once.
