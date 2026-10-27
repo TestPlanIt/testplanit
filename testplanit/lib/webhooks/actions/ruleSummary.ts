@@ -42,7 +42,7 @@ async function triggerLabel(rule: {
 
 /**
  * One line for a run's description naming the rule that composed it and its
- * settings, e.g. "Pull requests → Create Test Run · Minimum score: 90 ·
+ * settings, e.g. "Pull requests → Create Test Run · Minimum impact score: 90 ·
  * Test case filters: Automation: Is Automated · Target: Nightly CI", built
  * from the same labels the Actions list shows.
  */

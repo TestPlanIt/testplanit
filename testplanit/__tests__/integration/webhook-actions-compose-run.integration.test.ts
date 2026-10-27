@@ -756,7 +756,7 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
       const texts = noteTexts(strictRun.note);
       expect(texts[0]).toBe(`PR #7: Rules ${STAMP}`);
       expect(texts[texts.length - 1]).toBe(
-        "Pull requests → Create Test Run · Minimum score: 90"
+        "Pull requests → Create Test Run · Minimum impact score: 90"
       );
 
       const analysis = await db.impactAnalysis.findUnique({
@@ -870,7 +870,7 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
       });
       const texts = noteTexts(run.note);
       expect(texts[texts.length - 1]).toBe(
-        `Pull requests → Create Test Run · Minimum score: 40 · Test case filters: Priority ${STAMP}: Is any of High ${STAMP}; Automation: Is Automated`
+        `Pull requests → Create Test Run · Minimum impact score: 40 · Test case filters: Priority ${STAMP}: Is any of High ${STAMP}; Automation: Is Automated`
       );
 
       const analysis = await db.impactAnalysis.findUnique({
@@ -1007,7 +1007,7 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
       });
       const texts = noteTexts(run.note);
       expect(texts[texts.length - 1]).toBe(
-        `Pushes to main → Create Test Run · Minimum score: 90 · Target: ${missingTargetId}`
+        `Pushes to main → Create Test Run · Minimum impact score: 90 · Target: ${missingTargetId}`
       );
       const delivery = await db.webhookDelivery.findUnique({
         where: { id: deliveryId },
