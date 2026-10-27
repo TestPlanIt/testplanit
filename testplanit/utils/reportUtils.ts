@@ -16,7 +16,10 @@ import {
   groupEngagementRows,
   junitResultWhere,
   manualResultWhere,
+  RESULT_SOURCE_AUTOMATED,
+  RESULT_SOURCE_MANUAL,
   runImpactSelectFor,
+  tagManualResultRows,
 } from "~/utils/resultUnion";
 
 // Re-export: the date-filter helper predates the union module and many
@@ -55,20 +58,21 @@ async function findProjectIssues(
 
 /**
  * Conditional `select` fragment for the executed case, included only when a
- * dimension needs case-level data (folder, tag, or the case id). Tag is the
- * implicit many-to-many to Tags; folder is a scalar FK on the case.
+ * dimension needs case-level data (folder, tag, issue, or the case id). Tag
+ * and issue are many-to-many joins; folder is a scalar FK on the case.
  */
 function caseSelectFor(groupBy: string[]) {
   const needsFolder = groupBy.includes("folderId");
   const needsTag = groupBy.includes("tagId");
+  const needsIssue = groupBy.includes("issueId");
   const needsCaseId =
     groupBy.includes("testRunCaseId") || groupBy.includes("repositoryCaseId");
-  if (!needsFolder && !needsTag && !needsCaseId) return {};
+  if (!needsFolder && !needsTag && !needsIssue && !needsCaseId) return {};
   return {
     testRunCase: {
       select: {
         repositoryCaseId: true,
-        ...(needsFolder || needsTag
+        ...(needsFolder || needsTag || needsIssue
           ? {
               repositoryCase: {
                 select: {
@@ -78,6 +82,14 @@ function caseSelectFor(groupBy: string[]) {
                         caseTags: {
                           where: { tag: { isDeleted: false } },
                           select: { tagId: true },
+                        },
+                      }
+                    : {}),
+                  ...(needsIssue
+                    ? {
+                        caseIssues: {
+                          where: { issue: { isDeleted: false } },
+                          select: { issueId: true },
                         },
                       }
                     : {}),
@@ -192,7 +204,139 @@ function repositoryCaseSelect(
           },
         }
       : {}),
+    ...(groupBy.includes("issueId")
+      ? {
+          caseIssues: {
+            where: { issue: { isDeleted: false } },
+            select: { issueId: true },
+          },
+        }
+      : {}),
     ...extra,
+  };
+}
+
+/**
+ * Display label for an issue in report rows and pickers: key + title, the
+ * way the issue managers render them (`${externalKey || name}: ${title}`).
+ */
+function issueDisplayLabel(issue: {
+  name?: string | null;
+  title?: string | null;
+  externalKey?: string | null;
+}): string {
+  const key = issue.externalKey || issue.name || "";
+  if (!issue.title || issue.title === key) return key;
+  return key ? `${key}: ${issue.title}` : issue.title;
+}
+
+/**
+ * The Issue dimension shared by the test-execution and repository-stats
+ * registries: groups rows by the issues linked to the (executed) case, so
+ * "cases per ticket" and "executions per ticket" read straight off the
+ * report. Fans out like tag — a case linked to two issues counts in both
+ * groups — and unlinked cases land in a null "None" group. Deliberately NOT
+ * defect-scoped: coverage questions are usually asked of requirement-typed
+ * issues (stories), so every linked issue participates regardless of role.
+ */
+function createCaseIssueDimension(isProjectSpecific: boolean) {
+  const issueSelect = {
+    id: true,
+    name: true,
+    title: true,
+    externalKey: true,
+    status: true,
+    issueTypeName: true,
+    issueTypeIconUrl: true,
+  };
+  // Only issues linked to at least one live case in scope can produce a
+  // group, so the value list stays bounded by the link table.
+  const linkedIssueWhere = (projectId?: number) => ({
+    isDeleted: false,
+    caseIssues: {
+      some: {
+        case: {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+        },
+      },
+    },
+  });
+  const toOption = (issue: any) => ({
+    ...issue,
+    name: issueDisplayLabel(issue),
+  });
+  return {
+    id: "issue",
+    label: "Issue",
+    getValues: async (db: DbClient, projectId?: number) => {
+      const issues = await db.issue.findMany({
+        where: linkedIssueWhere(projectId),
+        select: issueSelect,
+        orderBy: { name: "asc" },
+      });
+      return issues.map(toOption);
+    },
+    groupBy: "issueId",
+    // Dedicated picker lookup with DB-side search and pagination (linked
+    // issues can run to thousands).
+    filterValues: async (
+      db: DbClient,
+      projectId: number | undefined,
+      opts: { search?: string; ids?: string[]; skip: number; take: number }
+    ) => {
+      const where = {
+        ...(opts.ids ? { id: { in: opts.ids.map(Number) } } : {}),
+        ...(opts.search
+          ? {
+              OR: [
+                {
+                  name: {
+                    contains: opts.search,
+                    mode: "insensitive" as const,
+                  },
+                },
+                {
+                  title: {
+                    contains: opts.search,
+                    mode: "insensitive" as const,
+                  },
+                },
+                {
+                  externalKey: {
+                    contains: opts.search,
+                    mode: "insensitive" as const,
+                  },
+                },
+              ],
+            }
+          : {}),
+        ...linkedIssueWhere(projectId),
+      };
+      const [issues, total] = await Promise.all([
+        db.issue.findMany({
+          where,
+          select: issueSelect,
+          orderBy: { name: "asc" },
+          skip: opts.skip,
+          take: opts.take,
+        }),
+        db.issue.count({ where }),
+      ]);
+      return { results: issues.map(toOption), total };
+    },
+    join: {},
+    display: (val: any) => ({
+      name: val.name,
+      id: val.id,
+      externalKey: val.externalKey,
+      title: val.title,
+      status: val.status,
+      issueTypeName: val.issueTypeName,
+      issueTypeIconUrl: val.issueTypeIconUrl,
+    }),
   };
 }
 
@@ -742,6 +886,64 @@ export function createTestExecutionDimensionRegistry(
       join: {},
       display: (val: any) => ({ name: val.name, id: val.id }),
     },
+    rootCause: {
+      id: "rootCause",
+      label: "Root Cause",
+      // Failure Patterns root causes: automated results group by their
+      // failure signature's effective classification (a person's choice
+      // when one was made, else the AI's). Manual results, passing results
+      // and unclassified failures all land in "None".
+      getValues: async (db: DbClient, projectId?: number) => {
+        const classifications = await db.failureClassification.findMany({
+          where: {
+            isDeleted: false,
+            signatures: {
+              some: {
+                ...(isProjectSpecific && projectId
+                  ? { projectId: Number(projectId) }
+                  : {}),
+              },
+            },
+          },
+          select: { id: true, name: true, color: { select: { value: true } } },
+          orderBy: [{ order: "asc" }, { name: "asc" }],
+        });
+        return classifications;
+      },
+      groupBy: "rootCauseId",
+      join: {},
+      display: (val: any) => ({
+        name: val.name,
+        id: val.id,
+        color: val.color?.value ?? null,
+      }),
+    },
+    resultSource: {
+      id: "resultSource",
+      label: "Result Source",
+      // Which table the execution came from: results entered in the app
+      // (TestRunResults, "Manual") or imported automated results
+      // (JUnitTestResult, "Automated"). Group keys are the source strings,
+      // tagged onto the union rows at fetch time; rows that are not
+      // executions (runs counted without results, impact analyses) carry no
+      // source and land in "None".
+      getValues: async () => [
+        {
+          id: RESULT_SOURCE_MANUAL,
+          name: "Manual",
+          resultSource: RESULT_SOURCE_MANUAL,
+        },
+        {
+          id: RESULT_SOURCE_AUTOMATED,
+          name: "Automated",
+          resultSource: RESULT_SOURCE_AUTOMATED,
+        },
+      ],
+      groupBy: "resultSource",
+      join: {},
+      display: (val: any) => ({ name: val.name, id: val.id }),
+    },
+    issue: createCaseIssueDimension(isProjectSpecific),
     codeRepository: {
       id: "codeRepository",
       label: "Code Repository",
@@ -875,7 +1077,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          [...results, ...junitRows],
+          [...tagManualResultRows(results), ...junitRows],
           groupBy,
           {
             create: () => ({ count: 0 }),
@@ -980,7 +1182,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          [...results, ...junitRows],
+          [...tagManualResultRows(results), ...junitRows],
           groupBy,
           {
             create: () => ({ total: 0, passed: 0 }),
@@ -1079,7 +1281,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          [...results, ...junitRows],
+          [...tagManualResultRows(results), ...junitRows],
           groupBy,
           {
             create: () => ({ total: 0, count: 0 }),
@@ -1176,7 +1378,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          [...results, ...junitRows],
+          [...tagManualResultRows(results), ...junitRows],
           groupBy,
           {
             create: () => ({ total: 0 }),
@@ -1235,13 +1437,17 @@ export function createTestExecutionMetricRegistry(
         // A "run" counts whether or not it has results (product ruling):
         // date ranges and the date dimension use the run's createdAt, and
         // "by user" means the run's creator. Only groupings that exist
-        // through execution data (status, case, folder, tag) derive run
-        // membership from the union of manual and automated results.
+        // through execution data (status, case, folder, tag, issue, result
+        // source) derive run membership from the union of manual and
+        // automated results.
         const needsResultLevel = groupBy.some((field) =>
           [
             "statusId",
             "folderId",
             "tagId",
+            "issueId",
+            "resultSource",
+            "rootCauseId",
             "testRunCaseId",
             "repositoryCaseId",
           ].includes(field)
@@ -1297,7 +1503,7 @@ export function createTestExecutionMetricRegistry(
           );
 
           return groupResults(
-            [...results, ...junitRows],
+            [...tagManualResultRows(results), ...junitRows],
             groupBy,
             {
               create: () => ({ runs: new Set<number>() }),
@@ -1552,7 +1758,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          [...results, ...junitRows],
+          [...tagManualResultRows(results), ...junitRows],
           groupBy,
           {
             create: () => ({ cases: new Set<number>() }),
@@ -1772,6 +1978,7 @@ export function createRepositoryStatsDimensionRegistry(
       join: {},
       display: (val: any) => ({ name: val.name, id: val.id }),
     },
+    issue: createCaseIssueDimension(isProjectSpecific),
     date: {
       id: "date",
       label: "Creation Date",
@@ -2206,6 +2413,117 @@ export function createRepositoryStatsMetricRegistry(
         );
       },
     },
+    firstCaseCreated: {
+      id: "firstCaseCreated",
+      label: "First Case Created",
+      aggregate: createCaseCreationWindowAggregate(
+        isProjectSpecific,
+        (window) => ({ firstCaseCreated: window.min?.toISOString() ?? null })
+      ),
+    },
+    lastCaseCreated: {
+      id: "lastCaseCreated",
+      label: "Last Case Created",
+      aggregate: createCaseCreationWindowAggregate(
+        isProjectSpecific,
+        (window) => ({ lastCaseCreated: window.max?.toISOString() ?? null })
+      ),
+    },
+    caseCreationSpan: {
+      id: "caseCreationSpan",
+      label: "Case Creation Span (days)",
+      aggregate: createCaseCreationWindowAggregate(
+        isProjectSpecific,
+        (window) => ({ caseCreationSpan: creationSpanDays(window) })
+      ),
+    },
+  };
+}
+
+/** Days between a group's earliest and latest case, to one decimal. */
+function creationSpanDays(window: {
+  min: Date | null;
+  max: Date | null;
+}): number | null {
+  if (!window.min || !window.max) return null;
+  const days = (window.max.getTime() - window.min.getTime()) / 86_400_000;
+  return Math.round(days * 10) / 10;
+}
+
+/**
+ * Shared aggregate for the case-creation-window metrics (first created, last
+ * created, span): one scan of the cases in scope, reduced to each group's
+ * earliest and latest creation timestamp. `finalize` picks the metric's view
+ * of that window.
+ */
+function createCaseCreationWindowAggregate(
+  isProjectSpecific: boolean,
+  finalize: (window: {
+    min: Date | null;
+    max: Date | null;
+  }) => Record<string, unknown>
+) {
+  return async (
+    db: DbClient,
+    projectId: number | undefined,
+    groupBy: string[],
+    filters?: any,
+    _dims?: string[]
+  ) => {
+    if (!groupBy || !Array.isArray(groupBy)) {
+      return [];
+    }
+
+    const where = {
+      ...(isProjectSpecific && projectId
+        ? { projectId: Number(projectId) }
+        : {}),
+      isDeleted: false,
+      ...buildDateFilter(filters, "createdAt"),
+    };
+
+    if (groupBy.length === 0) {
+      const bounds = await db.repositoryCases.aggregate({
+        where,
+        _min: { createdAt: true },
+        _max: { createdAt: true },
+      });
+      return [
+        finalize({
+          min: bounds._min.createdAt ? new Date(bounds._min.createdAt) : null,
+          max: bounds._max.createdAt ? new Date(bounds._max.createdAt) : null,
+        }),
+      ];
+    }
+
+    const cases = await db.repositoryCases.findMany({
+      where,
+      select: repositoryCaseSelect(groupBy),
+    });
+
+    const options = await folderGroupingOptions(
+      db,
+      projectId,
+      isProjectSpecific,
+      groupBy,
+      filters
+    );
+
+    return groupResults(
+      cases,
+      groupBy,
+      {
+        create: () => ({ min: null as Date | null, max: null as Date | null }),
+        add: (acc: { min: Date | null; max: Date | null }, result: any) => {
+          if (!result.createdAt) return;
+          const created = new Date(result.createdAt);
+          if (!acc.min || created < acc.min) acc.min = created;
+          if (!acc.max || created > acc.max) acc.max = created;
+        },
+        finalize,
+      },
+      options
+    );
   };
 }
 
@@ -3695,9 +4013,10 @@ export function createIssueTrackingMetricRegistry(
           }
         } else {
           // Cross-project implementation
+          const dateWhere = buildDateFilter(filters, "createdAt");
           if (groupBy.includes("createdAt")) {
             const results = await db.issue.findMany({
-              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
+              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE, ...dateWhere },
               select: {
                 createdAt: true,
                 createdById: true,
@@ -3780,7 +4099,7 @@ export function createIssueTrackingMetricRegistry(
 
           if (groupBy.length === 0) {
             const count = await db.issue.count({
-              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
+              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE, ...dateWhere },
             });
             return [{ issueCount: count }];
           }
@@ -3789,7 +4108,7 @@ export function createIssueTrackingMetricRegistry(
           if (!groupBy.includes("projectId")) {
             const rawResults = await db.issue.groupBy({
               by: groupBy as Parameters<typeof db.issue.groupBy>[0]["by"],
-              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
+              where: { isDeleted: false, ...DEFECT_SCOPE_WHERE, ...dateWhere },
               _count: { _all: true },
             });
 
@@ -3827,7 +4146,7 @@ export function createIssueTrackingMetricRegistry(
 
           // For groupBy with project, we need a more complex query
           const results = await db.issue.findMany({
-            where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
+            where: { isDeleted: false, ...DEFECT_SCOPE_WHERE, ...dateWhere },
             select: {
               createdById: true,
               integrationId: true,
@@ -3894,6 +4213,130 @@ export function createIssueTrackingMetricRegistry(
 
           return Object.values(groupedResults);
         }
+      },
+    },
+    linkedCaseCount: {
+      id: "linkedCaseCount",
+      label: "Linked Cases",
+      // Distinct live cases linked to the group's issues. A case linked to
+      // two issues in the same group counts once; the same report row can
+      // therefore show 3 issues and 2 linked cases.
+      aggregate: async (
+        db: DbClient,
+        projectId: number | undefined,
+        groupBy: string[],
+        filters?: any,
+        _dims?: string[]
+      ) => {
+        const caseIssuesSelect = {
+          caseIssues: {
+            where: { case: { isDeleted: false } },
+            select: {
+              caseId: true,
+              ...(groupBy.includes("projectId")
+                ? { case: { select: { projectId: true } } }
+                : {}),
+            },
+          },
+        };
+
+        let issues: any[];
+        if (isProjectSpecific && projectId) {
+          issues = await findProjectIssues(db, Number(projectId), {
+            where: buildDateFilter(filters, "createdAt"),
+            select: {
+              id: true,
+              createdAt: true,
+              createdById: true,
+              integrationId: true,
+              issueTypeName: true,
+              status: true,
+              priority: true,
+              ...caseIssuesSelect,
+            },
+          });
+        } else {
+          issues = await db.issue.findMany({
+            where: {
+              isDeleted: false,
+              ...DEFECT_SCOPE_WHERE,
+              ...buildDateFilter(filters, "createdAt"),
+            },
+            select: {
+              id: true,
+              createdAt: true,
+              createdById: true,
+              integrationId: true,
+              issueTypeName: true,
+              status: true,
+              priority: true,
+              projectId: true,
+              ...caseIssuesSelect,
+              ...(groupBy.includes("projectId")
+                ? {
+                    sessions: { select: { projectId: true }, take: 1 },
+                    testRuns: { select: { projectId: true }, take: 1 },
+                  }
+                : {}),
+            },
+          });
+        }
+
+        if (groupBy.length === 0) {
+          const uniqueCases = new Set<number>();
+          issues.forEach((issue: any) =>
+            issue.caseIssues.forEach((ci: any) => uniqueCases.add(ci.caseId))
+          );
+          return [{ linkedCaseCount: uniqueCases.size }];
+        }
+
+        // Same group keys as issueCount: bucketed creation date, normalized
+        // priority, and the project resolved through linked entities when
+        // the issue has no home project.
+        const keyValue = (issue: any, field: string) => {
+          if (field === "createdAt") {
+            return bucketDateIso(issue.createdAt, filters?.dateGrouping);
+          }
+          if (field === "priority") {
+            return normalizePriority(issue.priority);
+          }
+          if (field === "projectId") {
+            return (
+              issue.projectId ??
+              issue.caseIssues[0]?.case?.projectId ??
+              issue.sessions?.[0]?.projectId ??
+              issue.testRuns?.[0]?.projectId ??
+              null
+            );
+          }
+          return issue[field];
+        };
+
+        const grouped = new Map<
+          string,
+          Record<string, unknown> & { cases: Set<number> }
+        >();
+        issues.forEach((issue: any) => {
+          const key = groupBy
+            .map((field) => keyValue(issue, field) ?? "unknown")
+            .join("|");
+          let group = grouped.get(key);
+          if (!group) {
+            group = { cases: new Set<number>() } as Record<string, unknown> & {
+              cases: Set<number>;
+            };
+            groupBy.forEach((field) => {
+              (group as any)[field] = keyValue(issue, field);
+            });
+            grouped.set(key, group);
+          }
+          issue.caseIssues.forEach((ci: any) => group!.cases.add(ci.caseId));
+        });
+
+        return Array.from(grouped.values()).map(({ cases, ...dims }) => ({
+          ...dims,
+          linkedCaseCount: cases.size,
+        }));
       },
     },
   };

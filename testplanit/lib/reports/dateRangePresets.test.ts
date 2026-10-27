@@ -98,6 +98,36 @@ describe("resolveRelativeDateRange", () => {
     same({ amount: 12, unit: "months" }, "last12Months");
   });
 
+  it("calendar rolling units align the start to the period boundary", () => {
+    const day = (range: Parameters<typeof resolveRelativeDateRange>[0]) =>
+      bounds(range).map((d) => d);
+    // NOW is Wednesday 23 Sep 2026 in LA. "Last 2 calendar months" is this
+    // month plus August, from Aug 1 through today — the first month whole.
+    expect(day({ preset: "lastN", amount: 2, unit: "calendarMonths" })).toEqual(
+      ["2026-08-01T07:00:00.000Z", "2026-09-24T06:59:59.999Z"]
+    );
+    // "Last 1 calendar month" is month-to-date.
+    expect(day({ preset: "lastN", amount: 1, unit: "calendarMonths" })).toEqual(
+      ["2026-09-01T07:00:00.000Z", "2026-09-24T06:59:59.999Z"]
+    );
+    // "Last 2 calendar weeks": this week (from Monday 21 Sep) plus the one
+    // before it (from Monday 14 Sep), through today.
+    expect(day({ preset: "lastN", amount: 2, unit: "calendarWeeks" })).toEqual([
+      "2026-09-14T07:00:00.000Z",
+      "2026-09-24T06:59:59.999Z",
+    ]);
+  });
+
+  it("parses the calendar rolling units from a body", () => {
+    expect(
+      parseRelativeDateRange({
+        dateRangePreset: "lastN",
+        dateRangeAmount: 8,
+        dateRangeUnit: "calendarMonths",
+      })
+    ).toEqual({ preset: "lastN", amount: 8, unit: "calendarMonths" });
+  });
+
   it("crosses month, quarter and year boundaries", () => {
     const newYear = new Date("2026-01-01T12:00:00.000Z");
     const at = (preset: (typeof DATE_RANGE_PRESETS)[number]) => {

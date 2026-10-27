@@ -30,6 +30,7 @@ import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
 import { RoleNameDisplay } from "~/components/RoleNameDisplay";
 import StatusDisplay from "~/components/StatusDisplay";
+import { ClassificationBadge } from "~/components/triage/badges";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { TagsDisplay } from "~/components/tables/TagDisplay";
 import { GroupNameCell } from "~/components/tables/GroupNameCell";
@@ -121,6 +122,64 @@ export function useReportColumns(
   const columnHelper = createColumnHelper<any>();
 
   return useMemo(() => {
+    // Shared by the leaf cell and the grouped row's single-value aggregate,
+    // so a collapsed group shows the same localized label as its children
+    // (the display objects carry the API's English names).
+    const renderResultSourceValue = (value: any) => {
+      if (value?.id === "MANUAL") {
+        return <span>{t("common.fields.manual")}</span>;
+      }
+      if (value?.id === "AUTOMATED") {
+        return <span>{t("common.fields.automated")}</span>;
+      }
+      return <span>{tCommon("access.none")}</span>;
+    };
+    const renderTriggerValue = (value: any) => {
+      const triggerId = value?.id;
+      const triggerKey =
+        triggerId === "pull_request"
+          ? "runs.impact.pull.label"
+          : triggerId === "push"
+            ? "reports.ui.impactAnalysis.triggerPush"
+            : triggerId === "manual"
+              ? "common.fields.manual"
+              : null;
+      return (
+        <span>
+          {triggerKey
+            ? t(triggerKey as any)
+            : value?.name || tCommon("labels.unknown")}
+        </span>
+      );
+    };
+    const renderIssueValue = (value: any) => {
+      if (!value?.id) {
+        return <span>{tCommon("access.none")}</span>;
+      }
+      return (
+        <span className="line-clamp-2 break-words" title={value.name}>
+          {value.name}
+        </span>
+      );
+    };
+    const renderRootCauseValue = (value: any) => {
+      // The "None" group mixes manual results, passing results and
+      // unclassified failures — the badge's own "unclassified" fallback
+      // would misname it, so render a plain localized None instead.
+      if (!value?.id) {
+        return <span>{tCommon("access.none")}</span>;
+      }
+      return (
+        <ClassificationBadge
+          classification={{
+            id: value.id,
+            name: value.name,
+            color: value.color ? { value: value.color } : null,
+          }}
+        />
+      );
+    };
+
     const columns: any[] = [];
 
     // Add dimension columns
@@ -183,6 +242,14 @@ export function useReportColumns(
           ),
           enableSorting: true,
           enableGrouping: true,
+          // Explicit so grouped rows always render this column's
+          // aggregatedCell: TanStack v9 treats a cell as aggregated only when
+          // the column HAS an aggregation fn, and the auto fn is inferred
+          // from the first row's accessor value — present for numeric ids
+          // but absent for string group keys (trigger, source, priority,
+          // result source), which otherwise fall back to the plain cell and
+          // show the first child's value instead of "Multiple Values".
+          aggregationFn: "unique",
           cell: (info) => {
             const value = info.getValue();
 
@@ -475,26 +542,19 @@ export function useReportColumns(
                   issueStatusData?.name || issueStatusData;
                 return <IssueStatusDisplay status={issueStatusName} />;
               }
-              case "trigger": {
+              case "issue":
+                // Linked-issue dimension: "KEY: title" (built server-side);
+                // cases with no linked issue group under a null "None".
+                return renderIssueValue(info.row.original[dimensionId]);
+              case "resultSource":
+                // Group keys are the source strings; show localized labels.
+                return renderResultSourceValue(info.row.original[dimensionId]);
+              case "rootCause":
+                // Failure-pattern root cause, as the triage pages badge it.
+                return renderRootCauseValue(info.row.original[dimensionId]);
+              case "trigger":
                 // Group keys are the trigger ids; show the localized label.
-                const triggerId = info.row.original[dimensionId]?.id;
-                const triggerKey =
-                  triggerId === "pull_request"
-                    ? "runs.impact.pull.label"
-                    : triggerId === "push"
-                      ? "reports.ui.impactAnalysis.triggerPush"
-                      : triggerId === "manual"
-                        ? "common.fields.manual"
-                        : null;
-                return (
-                  <span>
-                    {triggerKey
-                      ? t(triggerKey as any)
-                      : info.row.original[dimensionId]?.name ||
-                        tCommon("labels.unknown")}
-                  </span>
-                );
-              }
+                return renderTriggerValue(info.row.original[dimensionId]);
               case "codeRepository": {
                 const repoData = info.row.original[dimensionId];
                 return (
@@ -644,6 +704,42 @@ export function useReportColumns(
                     <span>{sourceValue || tCommon("labels.unknown")}</span>
                   );
                 },
+                multipleValuesLabel
+              );
+            }
+
+            // Result source, trigger and issue reuse their leaf renderers so
+            // a single-value group shows the localized label, not the API's
+            // English name.
+            if (dimensionId === "resultSource") {
+              return getAggregatedDimensionDisplay(
+                info.row.subRows,
+                (subRow) => subRow.original[dimensionId],
+                renderResultSourceValue,
+                multipleValuesLabel
+              );
+            }
+            if (dimensionId === "trigger") {
+              return getAggregatedDimensionDisplay(
+                info.row.subRows,
+                (subRow) => subRow.original[dimensionId],
+                renderTriggerValue,
+                multipleValuesLabel
+              );
+            }
+            if (dimensionId === "issue") {
+              return getAggregatedDimensionDisplay(
+                info.row.subRows,
+                (subRow) => subRow.original[dimensionId],
+                renderIssueValue,
+                multipleValuesLabel
+              );
+            }
+            if (dimensionId === "rootCause") {
+              return getAggregatedDimensionDisplay(
+                info.row.subRows,
+                (subRow) => subRow.original[dimensionId],
+                renderRootCauseValue,
                 multipleValuesLabel
               );
             }
@@ -802,7 +898,9 @@ export function useReportColumns(
           // Set column size based on dimension type
           ...(dimensionId === "testCase"
             ? { size: 500, minSize: 150, maxSize: 1500 }
-            : dimensionId === "folder" || dimensionId === "tag"
+            : dimensionId === "folder" ||
+                dimensionId === "tag" ||
+                dimensionId === "issue"
               ? { size: 400, minSize: 150, maxSize: 1500 }
               : {}),
         })

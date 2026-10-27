@@ -1061,13 +1061,19 @@ export function useDrillDownColumns({
       ];
     }
 
-    // Repository stats test case metrics (testCaseCount, automatedCount, manualCount, automationRate)
+    // Repository stats test case metrics (testCaseCount, automatedCount,
+    // manualCount, automationRate, the creation-window metrics, and the
+    // issue-tracking Linked Cases metric — all of which drill into cases)
     if (
       metricId === "testCaseCount" ||
       metricId === "createdCaseCount" ||
       metricId === "automatedCount" ||
       metricId === "manualCount" ||
-      metricId === "automationRate"
+      metricId === "automationRate" ||
+      metricId === "firstCaseCreated" ||
+      metricId === "lastCaseCreated" ||
+      metricId === "caseCreationSpan" ||
+      metricId === "linkedCaseCount"
     ) {
       const columns = [
         columnHelper.accessor((row: any) => row.name, {

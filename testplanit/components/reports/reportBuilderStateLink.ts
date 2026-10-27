@@ -22,6 +22,7 @@ export const REPORT_STATE_CONFIG_KEYS = [
   "startDate",
   "endDate",
   "dimensionFilters",
+  "dimensionFilterModes",
 ] as const;
 
 function isStringArray(value: unknown): value is string[] {
@@ -72,6 +73,19 @@ export function reportBuilderStateConfigFromReportConfig(
     }
     if (Object.keys(dimensionFilters).length > 0) {
       stateConfig.dimensionFilters = dimensionFilters;
+    }
+  }
+
+  const rawModes = source.dimensionFilterModes;
+  if (rawModes && typeof rawModes === "object" && !Array.isArray(rawModes)) {
+    const dimensionFilterModes: Record<string, "include" | "exclude"> = {};
+    for (const [dimId, mode] of Object.entries(rawModes)) {
+      if (mode === "include" || mode === "exclude") {
+        dimensionFilterModes[dimId] = mode;
+      }
+    }
+    if (Object.keys(dimensionFilterModes).length > 0) {
+      stateConfig.dimensionFilterModes = dimensionFilterModes;
     }
   }
 

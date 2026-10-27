@@ -47,9 +47,14 @@ export const METRIC_UNITS: Record<string, MetricUnit> = {
   averageSteps: "count",
   avgStepsPerCase: "count",
   automationRate: "percent",
+  firstCaseCreated: "date",
+  lastCaseCreated: "date",
+  // Days between a group's earliest and latest case, as a plain number.
+  caseCreationSpan: "count",
   // issue-tracking
   issues: "count",
   issueCount: "count",
+  linkedCaseCount: "count",
   // session-analysis
   sessionCount: "count",
   activeSessions: "count",

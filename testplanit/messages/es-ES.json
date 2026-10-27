@@ -8249,6 +8249,10 @@
       "lastActiveDate": "## Última fecha\nFecha de actividad más reciente.",
       "averageAge": "## Edad media\nEdad media de artículos en días.",
       "issueCount": "## Número de incidencias\nNúmero total de incidencias seguidas.",
+      "linkedCaseCount": "## Casos vinculados\nNúmero de casos de prueba distintos vinculados a los problemas del grupo. Un caso vinculado a varios problemas del mismo grupo se cuenta una vez.",
+      "firstCaseCreated": "## Primer caso creado\nCuándo se creó el caso de prueba más antiguo de este grupo.",
+      "lastCaseCreated": "## Último caso creado\nCuándo se creó el caso de prueba más reciente de este grupo.",
+      "caseCreationSpan": "## Intervalo de creación de casos\nDías entre la creación del caso de prueba más antiguo y más reciente del grupo — cuánto tiempo tomó escribir los casos del grupo.",
       "milestoneCount": "## Número de hitos\nNúmero total de hitos.",
       "milestoneCompletionRate": "## Tasa de finalización de hitos\nPorcentaje de hitos completado.",
       "averageMilestoneDuration": "## Duración media del hito\nDuración media de los hitos en días.",
@@ -8265,6 +8269,8 @@
       "selectionPrecision": "## Precisión de selección (%)\nDe los casos que los análisis de impacto seleccionaron y que luego se ejecutaron, la parte que falló. Vacío cuando nada seleccionado ha ejecutado."
     },
     "reportDimensions": {
+      "issue": "## Dimensión de incidencia\nAgrupa por los problemas vinculados al caso de prueba. Un caso vinculado a varios problemas se cuenta en cada uno; los casos sin problemas vinculados se incluyen en Ninguno.",
+      "resultSource": "## Dimensión de fuente de resultado\nAgrupa las ejecuciones por su origen: resultados ingresados en la aplicación (Manual) o resultados de automatización importados como JUnit (Automatizado).",
       "user": "## Dimensión del usuario\nResultados de los grupos por el usuario que ejecutó las pruebas o que está asignado a los elementos.",
       "status": "## Dimensión de estado\nGrupos resultados por estado de ejecución de prueba (por ejemplo, aprobado, fallido, bloqueado).",
       "project": "## Dimensión del proyecto\nResultados de los grupos por proyecto para análisis entre proyectos.",
@@ -8297,7 +8303,7 @@
       "dimensions": "## Dimensiones\nSeleccione las dimensiones que desea analizar en su informe. Las dimensiones son atributos que categorizan sus datos, como fecha, usuario, estado, etc. Puede arrastrarlos para reordenarlos.",
       "metrics": "## métricas\nSeleccione las métricas que desea medir en su informe. Las métricas son mediciones cuantitativas derivadas de sus datos, como el recuento de resultados de pruebas, la tasa de paso, el tiempo promedio transcurrido, etc. Puede arrastrar para reordenarlos.",
       "dateRange": "## Rango de fechas\nFiltre sus datos de informe por un período de tiempo específico. Elija un valor predeterminado como \"Últimos 7 días\", \"Último mes\" o \"Últimos N días\", o seleccione una fecha de inicio y fin personalizada en el calendario.\n\nUn valor predeterminado se mantiene relativo: un informe guardado o un enlace de compartición en vivo calcula las fechas nuevamente cada vez que se abre, en su zona horaria. Las fechas personalizadas permanecen fijas. Este filtro se aplica al campo de fecha relevante para cada tipo de informe (por ejemplo, fecha de ejecución para resultados de prueba, fecha de creación para casos de prueba).",
-      "dimensionFilters": "## Filtros\nRestrinja el informe a valores específicos de cada dimensión seleccionada. Deje un filtro vacío para incluir todos los valores de esa dimensión. Las dimensiones de fecha se filtran con el selector de rango de fechas en su lugar."
+      "dimensionFilters": "## Filtros\nLimite el informe a valores específicos de cada dimensión seleccionada. Deje un filtro vacío para incluir todos los valores de esa dimensión. Cambie un filtro a Excluir para mantener todo excepto los valores seleccionados — útil para informes guardados que deben seguir cubriendo nuevos valores automáticamente. Las dimensiones de fecha se filtran con el selector de rango de fechas en su lugar."
     },
     "codeRepository": {
       "name": "## Nombre del repositorio\nUn nombre para mostrar descriptivo para esta conexión de repositorio.\n\n- Se utiliza para identificarlo en la configuración del contexto del código del proyecto.\n- No necesita coincidir con el nombre del repositorio en el proveedor.",
@@ -8665,12 +8671,16 @@
           "unit": "Período",
           "days": "Últimos {count, plural, one {# día} other {# días}}",
           "weeks": "Últimas {count, plural, one {# semana} other {# semanas}}",
-          "months": "Últimos {count, plural, one {# mes} other {# meses}}"
+          "months": "Últimos {count, plural, one {# mes} other {# meses}}",
+          "calendarWeeks": "Últimas {count, plural, one {# semana calendario} other {# semanas calendario}}",
+          "calendarMonths": "Últimos {count, plural, one {# mes calendario} other {# meses calendario}}"
         },
         "rollingUnits": {
           "days": "días",
           "weeks": "semanas",
-          "months": "meses"
+          "months": "meses",
+          "calendarWeeks": "semanas calendario (desde el inicio de la semana)",
+          "calendarMonths": "meses calendario (desde el 1.º)"
         }
       },
       "dateGrouping": {
@@ -9151,7 +9161,11 @@
       },
       "groupedTotal": "Total de {count, plural, one {# fila} other {# filas}} en este grupo",
       "dimensionFilters": {
-        "allValues": "Todos los valores"
+        "allValues": "Todos los valores",
+        "noValues": "Nada excluido",
+        "modeLabel": "Modo de filtro",
+        "include": "Incluir",
+        "exclude": "Excluir"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "Análisis iniciados dentro de estos muchos días. Toda la hora lee cada análisis que el proyecto mantiene.",
@@ -9305,6 +9319,8 @@
       "issueType": "Tipo de problema",
       "issueTracker": "Rastreador de problemas",
       "issueStatus": "Estado del problema",
+      "issue": "Incidencia",
+      "resultSource": "Fuente de resultado",
       "tag": "Etiqueta",
       "feature": "Característica",
       "model": "Modelo",
@@ -9342,6 +9358,10 @@
       "averageElapsed": "Tiempo promedio por ejecución",
       "lastActiveDate": "Última fecha activa",
       "issueCount": "Número de incidencias",
+      "linkedCaseCount": "Casos vinculados",
+      "firstCaseCreated": "Primer caso creado",
+      "lastCaseCreated": "Último caso creado",
+      "caseCreationSpan": "Intervalo de creación de casos (días)",
       "averageAge": "Edad media (días)",
       "sessionCount": "Número de sesiones",
       "activeSessions": "Sesiones activas",

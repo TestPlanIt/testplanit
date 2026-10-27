@@ -4,6 +4,7 @@ import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 import {
   buildIssuesQuery,
   buildJunitResultQuery,
+  buildLinkedCasesQuery,
   buildMilestoneCompletionQuery,
   buildMilestonesQuery,
   buildRepositoryStatsQuery,
@@ -82,6 +83,30 @@ describe("drillDownQueryBuilders", () => {
       expect(result.where?.testRunCase).toMatchObject({
         repositoryCaseId: 108205,
       });
+    });
+
+    it("filters the issue dimension through the executed case's links", () => {
+      const linked = buildTestExecutionQuery(
+        createBaseContext({
+          dimensions: { issue: { id: 31, name: "ABT-9: Checkout breaks" } },
+        }),
+        0,
+        10
+      );
+      expect(
+        (linked.where?.testRunCase as any).repositoryCase.caseIssues
+      ).toEqual({ some: { issueId: 31 } });
+
+      const none = buildTestExecutionQuery(
+        createBaseContext({
+          dimensions: { issue: { id: null as any, name: "None" } },
+        }),
+        0,
+        10
+      );
+      expect(
+        (none.where?.testRunCase as any).repositoryCase.caseIssues
+      ).toEqual({ none: { issue: { isDeleted: false } } });
     });
 
     it("should apply configuration dimension filter", () => {
@@ -290,6 +315,55 @@ describe("drillDownQueryBuilders", () => {
       expect(buildJunitResultQuery(context)).toBeNull();
     });
 
+    it("filters the issue dimension on the linked repository case", () => {
+      const context = createBaseContext({
+        dimensions: { issue: { id: 31, name: "ABT-9" } },
+      });
+      const result = buildJunitResultQuery(context);
+
+      expect(result?.where.repositoryCase).toEqual({
+        caseIssues: { some: { issueId: 31 } },
+      });
+    });
+
+    it("excludes deleted runs, matching the aggregate contract", () => {
+      const result = buildJunitResultQuery(createBaseContext({ projectId: 5 }));
+      expect(result?.where.testSuite.testRun).toMatchObject({
+        projectId: 5,
+        isDeleted: false,
+      });
+    });
+
+    it("still targets deleted runs for the testRun None group", () => {
+      const result = buildJunitResultQuery(
+        createBaseContext({
+          dimensions: { testRun: { id: null as any, name: "None" } },
+        })
+      );
+      expect(result?.where.testSuite.testRun.isDeleted).toBe(true);
+    });
+
+    it("filters the root-cause dimension on the failure signature", () => {
+      const classified = buildJunitResultQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: 5, name: "Env flake" } },
+        })
+      );
+      expect(classified?.where.failureSignature).toEqual({
+        classificationId: 5,
+      });
+
+      const none = buildJunitResultQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: null as any, name: "None" } },
+        })
+      );
+      expect(none?.where.OR).toEqual([
+        { failureSignatureId: null },
+        { failureSignature: { classificationId: null } },
+      ]);
+    });
+
     it("should apply folder and tag filters on the linked repository case", () => {
       const context = createBaseContext({
         dimensions: {
@@ -339,6 +413,88 @@ describe("drillDownQueryBuilders", () => {
             some: { results: { some: { statusId: 3 } } },
           },
         },
+      ]);
+    });
+
+    it("derives result-source membership from the matching table", () => {
+      const manual = buildTestRunsQuery(
+        createBaseContext({
+          dimensions: { resultSource: { id: "MANUAL", name: "Manual" } },
+        }),
+        0,
+        10
+      );
+      expect((manual.where as any).results.some.isDeleted).toBe(false);
+      expect((manual.where as any).junitTestSuites).toBeUndefined();
+
+      const automated = buildTestRunsQuery(
+        createBaseContext({
+          dimensions: { resultSource: { id: "AUTOMATED", name: "Automated" } },
+        }),
+        0,
+        10
+      );
+      expect((automated.where as any).junitTestSuites).toBeDefined();
+      expect((automated.where as any).results).toBeUndefined();
+    });
+
+    it("derives issue membership through the executed cases of both sources", () => {
+      const result = buildTestRunsQuery(
+        createBaseContext({
+          dimensions: { issue: { id: 31, name: "ABT-9: Checkout breaks" } },
+        }),
+        0,
+        10
+      );
+      const or = (result.where as any).OR;
+      expect(or[0].results.some.testRunCase.repositoryCase.caseIssues).toEqual({
+        some: { issueId: 31 },
+      });
+      expect(or[1].junitTestSuites.some.results.some.repositoryCase).toEqual({
+        caseIssues: { some: { issueId: 31 } },
+      });
+    });
+
+    it("composes several membership conditions under AND", () => {
+      const result = buildTestRunsQuery(
+        createBaseContext({
+          dimensions: {
+            status: { id: 3, name: "Failed" },
+            resultSource: { id: "MANUAL", name: "Manual" },
+          },
+        }),
+        0,
+        10
+      );
+      expect((result.where as any).AND).toHaveLength(2);
+      expect((result.where as any).OR).toBeUndefined();
+    });
+
+    it("derives root-cause membership from classified automated results", () => {
+      const classified = buildTestRunsQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: 5, name: "Env flake" } },
+        }),
+        0,
+        10
+      );
+      expect(
+        (classified.where as any).junitTestSuites.some.results.some
+          .failureSignature
+      ).toEqual({ classificationId: 5 });
+
+      const none = buildTestRunsQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: null as any, name: "None" } },
+        }),
+        0,
+        10
+      );
+      const or = (none.where as any).OR;
+      expect(or[0].results.some.isDeleted).toBe(false);
+      expect(or[1].junitTestSuites.some.results.some.OR).toEqual([
+        { failureSignatureId: null },
+        { failureSignature: { classificationId: null } },
       ]);
     });
 
@@ -506,6 +662,32 @@ describe("drillDownQueryBuilders", () => {
 
       expect(result.include?.steps).toBeDefined();
     });
+
+    it("filters by linked issue, with None meaning no live links", () => {
+      const linked = buildRepositoryStatsQuery(
+        createBaseContext({
+          reportType: "repository-stats",
+          dimensions: { issue: { id: 31, name: "ABT-9" } },
+        }),
+        0,
+        10
+      );
+      expect((linked.where as any).caseIssues).toEqual({
+        some: { issueId: 31 },
+      });
+
+      const none = buildRepositoryStatsQuery(
+        createBaseContext({
+          reportType: "repository-stats",
+          dimensions: { issue: { id: null as any, name: "None" } },
+        }),
+        0,
+        10
+      );
+      expect((none.where as any).caseIssues).toEqual({
+        none: { issue: { isDeleted: false } },
+      });
+    });
   });
 
   describe("buildTestCasesQuery", () => {
@@ -580,6 +762,79 @@ describe("drillDownQueryBuilders", () => {
       const [manualBranch, junitBranch] = result.where?.OR as any[];
       expect(manualBranch.testRuns.some.results.some.executedAt).toBeDefined();
       expect(junitBranch.junitResults.some.executedAt).toBeDefined();
+    });
+
+    it("keeps only the matching membership branch for a result-source cell", () => {
+      const manual = buildTestCasesQuery(
+        createBaseContext({
+          dimensions: { resultSource: { id: "MANUAL", name: "Manual" } },
+        }),
+        0,
+        10
+      );
+      expect(manual.where?.OR).toHaveLength(1);
+      expect((manual.where?.OR as any[])[0].testRuns).toBeDefined();
+
+      const automated = buildTestCasesQuery(
+        createBaseContext({
+          dimensions: { resultSource: { id: "AUTOMATED", name: "Automated" } },
+        }),
+        0,
+        10
+      );
+      expect(automated.where?.OR).toHaveLength(1);
+      expect((automated.where?.OR as any[])[0].junitResults).toBeDefined();
+    });
+
+    it("filters the case's linked issues for an issue cell", () => {
+      const linked = buildTestCasesQuery(
+        createBaseContext({
+          dimensions: { issue: { id: 31, name: "ABT-9" } },
+        }),
+        0,
+        10
+      );
+      expect((linked.where as any).caseIssues).toEqual({
+        some: { issueId: 31 },
+      });
+
+      const none = buildTestCasesQuery(
+        createBaseContext({
+          dimensions: { issue: { id: null as any, name: "None" } },
+        }),
+        0,
+        10
+      );
+      expect((none.where as any).caseIssues).toEqual({
+        none: { issue: { isDeleted: false } },
+      });
+    });
+
+    it("matches a classified root-cause cell only through automated results", () => {
+      const classified = buildTestCasesQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: 5, name: "Env flake" } },
+        }),
+        0,
+        10
+      );
+      expect(classified.where?.OR).toHaveLength(1);
+      expect(
+        (classified.where?.OR as any[])[0].junitResults.some.failureSignature
+      ).toEqual({ classificationId: 5 });
+
+      const none = buildTestCasesQuery(
+        createBaseContext({
+          dimensions: { rootCause: { id: null as any, name: "None" } },
+        }),
+        0,
+        10
+      );
+      expect(none.where?.OR).toHaveLength(2);
+      expect((none.where?.OR as any[])[1].junitResults.some.OR).toEqual([
+        { failureSignatureId: null },
+        { failureSignature: { classificationId: null } },
+      ]);
     });
   });
 
@@ -681,6 +936,27 @@ describe("drillDownQueryBuilders", () => {
 
       expect(result.include?.project).toBeDefined();
       expect(result.include?.createdBy).toBe(true);
+    });
+  });
+
+  describe("buildLinkedCasesQuery", () => {
+    it("nests the cell's issue filters under the case's issue links", () => {
+      const context = createBaseContext({
+        reportType: "issue-tracking",
+        metricId: "linkedCaseCount",
+        projectId: 25,
+        dimensions: { issueType: { id: "Story", name: "Story" } },
+      });
+      const result = buildLinkedCasesQuery(context, 5, 10);
+
+      expect(result.where?.isDeleted).toBe(false);
+      const issueWhere = (result.where as any).caseIssues.some.issue;
+      expect(issueWhere.isDeleted).toBe(false);
+      expect(issueWhere).toMatchObject(DEFECT_SCOPE_WHERE);
+      expect(issueWhere.issueTypeName).toBe("Story");
+      expect(issueWhere.projectId).toBe(25);
+      expect(result.skip).toBe(5);
+      expect(result.take).toBe(10);
     });
   });
 
@@ -865,6 +1141,9 @@ describe("drillDownQueryBuilders", () => {
         "averageSteps",
         "avgStepsPerCase",
         "automationRate",
+        "firstCaseCreated",
+        "lastCaseCreated",
+        "caseCreationSpan",
       ])("should return buildRepositoryStatsQuery for %s", (metricId) => {
         const builder = getQueryBuilderForMetric(metricId);
         expect(builder).toBe(buildRepositoryStatsQuery);
@@ -920,6 +1199,11 @@ describe("drillDownQueryBuilders", () => {
           expect(builder).toBe(buildIssuesQuery);
         }
       );
+
+      it("should return buildLinkedCasesQuery for linkedCaseCount", () => {
+        const builder = getQueryBuilderForMetric("linkedCaseCount");
+        expect(builder).toBe(buildLinkedCasesQuery);
+      });
     });
 
     it("should default to buildTestExecutionQuery for unknown metrics", () => {
@@ -979,6 +1263,10 @@ describe("drillDownQueryBuilders", () => {
         "averageSteps",
         "avgStepsPerCase",
         "automationRate",
+        "firstCaseCreated",
+        "lastCaseCreated",
+        "caseCreationSpan",
+        "linkedCaseCount",
       ])("should return repositoryCases for %s", (metricId) => {
         expect(getModelForMetric(metricId)).toBe("repositoryCases");
       });

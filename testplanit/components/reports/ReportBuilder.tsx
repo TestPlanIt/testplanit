@@ -718,6 +718,13 @@ function ReportBuilderContent({
   const [dimensionValueFilters, setDimensionValueFilters] = useState<
     Record<string, any[]>
   >({});
+  // How each dimension's value filter applies: keep only the picked values
+  // (include, the default) or everything BUT them (exclude). Exclude keeps a
+  // saved report correct as new values appear — "every project except the
+  // sandboxes" doesn't silently drop projects created later.
+  const [dimensionFilterModes, setDimensionFilterModes] = useState<
+    Record<string, "include" | "exclude">
+  >({});
   const [lastUsedDateRange, setLastUsedDateRange] = useState<
     DateRange | undefined
   >(initialDateRange.range);
@@ -979,6 +986,12 @@ function ReportBuilderContent({
   const isInitialMount = useRef(true);
   // Track the last report type that was run
   const lastRunReportType = useRef<string | null>(null);
+  // The report type the lastUsed selections were made FOR. The clearing
+  // effect's state resets land one render after a type switch, so the
+  // auto-run guard checks this ref instead of trusting the still-stale
+  // selections — otherwise one doomed run fires at the new type's endpoint
+  // and flashes "Unsupported dimension".
+  const lastUsedSelectionsType = useRef<string | null>(null);
   // Track the last tab change to prevent duplicate calls
   const lastTabChangeRef = useRef<{ tab: string; timestamp: number } | null>(
     null
@@ -2282,6 +2295,7 @@ function ReportBuilderContent({
     setAllResults(null);
     // Dimension value filters are report-specific
     setDimensionValueFilters({});
+    setDimensionFilterModes({});
 
     // Determine which tab this report belongs to
     const isPreBuilt = preBuiltReports.some((r) => r.id === safeReportType);
@@ -2370,6 +2384,7 @@ function ReportBuilderContent({
     setCompatWarning(null);
     setLastUsedDimensions([]);
     setLastUsedMetrics([]);
+    lastUsedSelectionsType.current = null;
     setLastUsedDateRange(undefined);
     setLastUsedConsecutiveRuns(10);
     setReportGeneratedAt(null);
@@ -2533,6 +2548,12 @@ function ReportBuilderContent({
                 ? prev
                 : restored
             );
+            const restoredModes = urlConfig.dimensionFilterModes ?? {};
+            setDimensionFilterModes((prev) =>
+              JSON.stringify(prev) === JSON.stringify(restoredModes)
+                ? prev
+                : restoredModes
+            );
           }
         }
 
@@ -2610,7 +2631,9 @@ function ReportBuilderContent({
             .filter(Boolean);
 
           if (selectedDims.length > 0 && selectedMets.length > 0) {
-            // Set flag to auto-run after state updates
+            // Set flag to auto-run after state updates. The ids were mapped
+            // through THIS report's options, so the selections belong to it.
+            lastUsedSelectionsType.current = reportType;
             setDimensions(selectedDims);
             setMetrics(selectedMets);
             setLastUsedDimensions(selectedDims);
@@ -2691,6 +2714,10 @@ function ReportBuilderContent({
           return;
         }
 
+        // Whatever lastUsed selections this run stores below belong to the
+        // report type it ran against — the auto-run guard reads this.
+        lastUsedSelectionsType.current = reportType;
+
         // Iteration matrix is self-fetching (MatrixReportPreset uses
         // useMatrixAggregation directly to inherit cell-cap typing). Skip
         // the proxy POST so "Run Report" doesn't throw on the matrix's
@@ -2732,13 +2759,20 @@ function ReportBuilderContent({
           string,
           Array<string | number>
         > = {};
+        const activeDimensionFilterModes: Record<string, "exclude"> = {};
         Object.entries(dimensionValueFilters).forEach(([dimId, values]) => {
           if (!values || values.length === 0) return;
           if (!selectedDimensions.some((d) => d.value === dimId)) return;
           activeDimensionFilters[dimId] = values.map((v: any) => v.id);
+          if (dimensionFilterModes[dimId] === "exclude") {
+            activeDimensionFilterModes[dimId] = "exclude";
+          }
         });
         if (Object.keys(activeDimensionFilters).length > 0) {
           body.dimensionFilters = activeDimensionFilters;
+          if (Object.keys(activeDimensionFilterModes).length > 0) {
+            body.dimensionFilterModes = activeDimensionFilterModes;
+          }
         }
 
         // The chart's total line, when the selection can plot one.
@@ -3107,6 +3141,7 @@ function ReportBuilderContent({
               metrics: selectedMetrics,
               dateRange: dateRange?.from ? (dateRange as DateRange) : undefined,
               dimensionValueFilters,
+              dimensionFilterModes,
             })
           : null;
         const stateIdPromise: Promise<string | null> = stateConfig
@@ -3361,6 +3396,7 @@ function ReportBuilderContent({
       hasFolderFilter,
       filterFolderIncludeSubfolders,
       dimensionValueFilters,
+      dimensionFilterModes,
       consecutiveRuns,
       flipThreshold,
       staleDaysThreshold,
@@ -3538,6 +3574,11 @@ function ReportBuilderContent({
           ? !hasRunForCurrentType && !loading && !error
           : lastUsedDimensions.length > 0 &&
             lastUsedMetrics.length > 0 &&
+            // The selections must have been made FOR this report type. On a
+            // type switch the clearing effect's state resets land a render
+            // late, so without this the previous report's selections fire
+            // one doomed run at the new endpoint ("Unsupported dimension").
+            lastUsedSelectionsType.current === reportType &&
             !hasRunForCurrentType &&
             !loading &&
             !error;
@@ -3728,6 +3769,15 @@ function ReportBuilderContent({
   // both the multi-select and the draggable list's remove button).
   useEffect(() => {
     setDimensionValueFilters((prev) => {
+      const staleKeys = Object.keys(prev).filter(
+        (dimId) => !dimensions.some((d: any) => d.value === dimId)
+      );
+      if (staleKeys.length === 0) return prev;
+      const next = { ...prev };
+      staleKeys.forEach((key) => delete next[key]);
+      return next;
+    });
+    setDimensionFilterModes((prev) => {
       const staleKeys = Object.keys(prev).filter(
         (dimId) => !dimensions.some((d: any) => d.value === dimId)
       );
@@ -4987,35 +5037,83 @@ function ReportBuilderContent({
                                   <label className="text-xs text-muted-foreground">
                                     {dimension.label}
                                   </label>
-                                  <MultiAsyncCombobox
-                                    value={
-                                      dimensionValueFilters[dimension.value] ??
-                                      []
-                                    }
-                                    onValueChange={(values) =>
-                                      setDimensionValueFilters((prev) => ({
-                                        ...prev,
-                                        [dimension.value]: values,
-                                      }))
-                                    }
-                                    fetchOptions={
-                                      dimensionFilterFetchers[dimension.value]
-                                    }
-                                    renderOption={(option: any) => (
-                                      <span className="truncate">
-                                        {option.name}
-                                      </span>
-                                    )}
-                                    getOptionValue={(option: any) => option.id}
-                                    getOptionLabel={(option: any) =>
-                                      String(option.name ?? option.id)
-                                    }
-                                    placeholder={tReports(
-                                      "dimensionFilters.allValues"
-                                    )}
-                                    pageSize={25}
-                                    className="min-h-9"
-                                  />
+                                  <div className="flex items-start gap-2">
+                                    {/* Include keeps only the picked values;
+                                        exclude keeps everything BUT them, so
+                                        the report stays correct as new
+                                        values appear. */}
+                                    <Select
+                                      value={
+                                        dimensionFilterModes[dimension.value] ??
+                                        "include"
+                                      }
+                                      onValueChange={(mode) =>
+                                        setDimensionFilterModes((prev) => ({
+                                          ...prev,
+                                          [dimension.value]: mode as
+                                            "include" | "exclude",
+                                        }))
+                                      }
+                                    >
+                                      <SelectTrigger
+                                        className="h-9 w-28 shrink-0"
+                                        data-testid={`dimension-filter-mode-${dimension.value}`}
+                                        aria-label={tReports(
+                                          "dimensionFilters.modeLabel"
+                                        )}
+                                      >
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="include">
+                                          {tReports("dimensionFilters.include")}
+                                        </SelectItem>
+                                        <SelectItem value="exclude">
+                                          {tReports("dimensionFilters.exclude")}
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <div className="min-w-0 flex-1">
+                                      <MultiAsyncCombobox
+                                        value={
+                                          dimensionValueFilters[
+                                            dimension.value
+                                          ] ?? []
+                                        }
+                                        onValueChange={(values) =>
+                                          setDimensionValueFilters((prev) => ({
+                                            ...prev,
+                                            [dimension.value]: values,
+                                          }))
+                                        }
+                                        fetchOptions={
+                                          dimensionFilterFetchers[
+                                            dimension.value
+                                          ]
+                                        }
+                                        renderOption={(option: any) => (
+                                          <span className="truncate">
+                                            {option.name}
+                                          </span>
+                                        )}
+                                        getOptionValue={(option: any) =>
+                                          option.id
+                                        }
+                                        getOptionLabel={(option: any) =>
+                                          String(option.name ?? option.id)
+                                        }
+                                        placeholder={tReports(
+                                          dimensionFilterModes[
+                                            dimension.value
+                                          ] === "exclude"
+                                            ? "dimensionFilters.noValues"
+                                            : "dimensionFilters.allValues"
+                                        )}
+                                        pageSize={25}
+                                        className="min-h-9"
+                                      />
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                           </div>

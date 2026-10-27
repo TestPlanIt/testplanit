@@ -8249,6 +8249,10 @@
       "lastActiveDate": "## Last Active Date\nMost recent date of activity.",
       "averageAge": "## Average Age\nAverage age of items in days.",
       "issueCount": "## Issue Count\nTotal number of issues tracked.",
+      "linkedCaseCount": "## Linked Cases\nNumber of distinct test cases linked to the group's issues. A case linked to several issues in the same group counts once.",
+      "firstCaseCreated": "## First Case Created\nWhen the earliest test case in this group was created.",
+      "lastCaseCreated": "## Last Case Created\nWhen the latest test case in this group was created.",
+      "caseCreationSpan": "## Case Creation Span\nDays between the group's earliest and latest test case creation — how long the group's cases took to write.",
       "milestoneCount": "## Milestone Count\nTotal number of milestones.",
       "milestoneCompletionRate": "## Milestone Completion Rate\nPercentage of milestones completed.",
       "averageMilestoneDuration": "## Average Milestone Duration\nAverage duration of milestones in days.",
@@ -8265,6 +8269,9 @@
       "selectionPrecision": "## Selection Precision (%)\nOf the cases that Impact analyses selected and that were then executed, the share that failed. Empty when nothing selected has run."
     },
     "reportDimensions": {
+      "issue": "## Issue Dimension\nGroups by the issues linked to the test case. A case linked to several issues counts in each; cases with no linked issues fall into None.",
+      "resultSource": "## Result Source Dimension\nGroups executions by where they came from: results entered in the app (Manual) or imported automated results such as JUnit (Automated).",
+      "rootCause": "## Root Cause Dimension\nGroups automated results by the root cause of their failure pattern — a person's classification when one was made, otherwise the AI's. Manual results, passing results and unclassified failures fall into None.",
       "user": "## User Dimension\nGroups results by the user who executed the tests or is assigned to the items.",
       "status": "## Status Dimension\nGroups results by test execution status (e.g., Passed, Failed, Blocked).",
       "project": "## Project Dimension\nGroups results by project for cross-project analysis.",
@@ -8297,7 +8304,7 @@
       "dimensions": "## Dimensions\nSelect the dimensions you want to analyze in your report. Dimensions are attributes that categorize your data, such as Date, User, Status, etc. You can drag to reorder them.",
       "metrics": "## Metrics\nSelect the metrics you want to measure in your report. Metrics are quantitative measurements derived from your data, such as Test Results Count, Pass Rate, Average Elapsed Time, etc. You can drag to reorder them.",
       "dateRange": "## Date Range\nFilter your report data by a specific time period. Choose a preset such as 'Last 7 days', 'Last month' or 'Last N days', or pick a custom start and end date on the calendar.\n\nA preset stays relative: a saved report or live share link works the dates out again each time it opens, in your timezone. Custom dates stay fixed. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases).",
-      "dimensionFilters": "## Filters\nNarrow the report to specific values of each selected dimension. Leave a filter empty to include all values for that dimension. Date dimensions are filtered with the date range picker instead."
+      "dimensionFilters": "## Filters\nNarrow the report to specific values of each selected dimension. Leave a filter empty to include all values for that dimension. Switch a filter to Exclude to keep everything except the picked values — useful for saved reports that should keep covering new values automatically. Date dimensions are filtered with the date range picker instead."
     },
     "codeRepository": {
       "name": "## Repository Name\nA friendly display name for this repository connection.\n\n- Used to identify it in project code context settings.\n- Does not need to match the repository name on the provider.",
@@ -8665,12 +8672,16 @@
           "unit": "Period",
           "days": "Last {count, plural, one {# day} other {# days}}",
           "weeks": "Last {count, plural, one {# week} other {# weeks}}",
-          "months": "Last {count, plural, one {# month} other {# months}}"
+          "months": "Last {count, plural, one {# month} other {# months}}",
+          "calendarWeeks": "Last {count, plural, one {# calendar week} other {# calendar weeks}}",
+          "calendarMonths": "Last {count, plural, one {# calendar month} other {# calendar months}}"
         },
         "rollingUnits": {
           "days": "days",
           "weeks": "weeks",
-          "months": "months"
+          "months": "months",
+          "calendarWeeks": "calendar weeks (from week start)",
+          "calendarMonths": "calendar months (from the 1st)"
         }
       },
       "dateGrouping": {
@@ -9151,7 +9162,11 @@
       },
       "groupedTotal": "Total of the {count, plural, one {# row} other {# rows}} in this group",
       "dimensionFilters": {
-        "allValues": "All values"
+        "allValues": "All values",
+        "noValues": "Nothing excluded",
+        "modeLabel": "Filter mode",
+        "include": "Include",
+        "exclude": "Exclude"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "Analyses started within this many days. All time reads every analysis the project keeps.",
@@ -9305,6 +9320,9 @@
       "issueType": "Issue Type",
       "issueTracker": "Issue Tracker",
       "issueStatus": "Issue Status",
+      "issue": "Issue",
+      "resultSource": "Result Source",
+      "rootCause": "Root Cause",
       "tag": "Tag",
       "feature": "Feature",
       "model": "Model",
@@ -9342,6 +9360,10 @@
       "averageElapsed": "Average Time per Execution",
       "lastActiveDate": "Last Active Date",
       "issueCount": "Issue Count",
+      "linkedCaseCount": "Linked Cases",
+      "firstCaseCreated": "First Case Created",
+      "lastCaseCreated": "Last Case Created",
+      "caseCreationSpan": "Case Creation Span (days)",
       "averageAge": "Average Age (days)",
       "sessionCount": "Session Count",
       "activeSessions": "Active Sessions",

@@ -8249,6 +8249,10 @@
       "lastActiveDate": "## 最后活跃日期\n最近一次活动日期。",
       "averageAge": "## 平均年龄\n物品的平均年龄（天）。",
       "issueCount": "## 问题计数\n跟踪的问题总数。",
+      "linkedCaseCount": "## 关联用例\n链接到该组问题的不同测试用例的数量。链接到同一组中多个问题的用例计为一个。",
+      "firstCaseCreated": "## 首个用例创建时间\n此组中最早的测试用例创建时间。",
+      "lastCaseCreated": "## 最后用例创建时间\n此组中最新的测试用例创建时间。",
+      "caseCreationSpan": "## 用例创建跨度\n该组最早和最新测试用例创建之间相隔的天数 — 该组用例编写耗时。",
       "milestoneCount": "## 里程碑数量\n里程碑总数。",
       "milestoneCompletionRate": "## 里程碑完成率\n已完成里程碑的百分比。",
       "averageMilestoneDuration": "## 平均里程碑持续时间\n里程碑的平均持续时间（以天为单位）。",
@@ -8265,6 +8269,8 @@
       "selectionPrecision": "## 选择精度（%）\n影响分析选择并随后执行的用例中失败的比例。当未选择任何内容运行时为空。"
     },
     "reportDimensions": {
+      "issue": "## 问题维度\n按链接到测试用例的问题进行分组。链接到多个问题的用例会在每个问题中计数；没有链接问题的用例归为无。",
+      "resultSource": "## 结果来源维度\n按执行来源对执行进行分组：在应用中输入的结果（手动）或导入的自动化结果，例如 JUnit（自动化）。",
       "user": "## 用户维度\n按执行测试或分配给项目的用户对结果进行分组。",
       "status": "## 状态维度\n按测试执行状态（例如，通过、失败、阻塞）对结果进行分组。",
       "project": "## 项目维度\n按项目对结果进行分组，以便进行跨项目分析。",
@@ -8297,7 +8303,7 @@
       "dimensions": "## 维度\n选择要在报告中分析的维度。维度是用于对数据进行分类的属性，例如日期、用户、状态等。您可以拖动来重新排序。",
       "metrics": "## 指标\n选择您希望在报告中衡量的指标。指标是从您的数据中提取的定量测量值，例如测试结果计数、通过率、平均耗时等。您可以拖动它们来重新排序。",
       "dateRange": "## 日期范围\n按特定时间段筛选报告数据。选择预设（例如",
-      "dimensionFilters": "## 筛选器\n将报告缩小到每个所选维度的特定值。将筛选器留空以包含该维度的所有值。日期维度则使用日期范围选择器进行筛选。"
+      "dimensionFilters": "## 筛选器\n将报告范围限制在每个所选维度的特定值。将筛选器留空以包含该维度的所有值。将筛选器切换到排除以保留除所选值外的所有内容——这对应自动覆盖新值的已保存报告很有用。日期维度改用日期范围选择器进行筛选。"
     },
     "codeRepository": {
       "name": "## 存储库名称\n此存储库连接的友好显示名称。\n\n- 用于在项目代码上下文设置中标识它。\n- 不需要与提供程序上的存储库名称匹配。",
@@ -8665,12 +8671,16 @@
           "unit": "时期",
           "days": "最近 {count, plural, other {# 天}}",
           "weeks": "最近 {count, plural, other {# 周}}",
-          "months": "最近 {count, plural, other {# 个月}}"
+          "months": "最近 {count, plural, other {# 个月}}",
+          "calendarWeeks": "过去 {count, plural, one {# 个日历周} other {# 个日历周}}",
+          "calendarMonths": "过去 {count, plural, one {# 个日历月} other {# 个日历月}}"
         },
         "rollingUnits": {
           "days": "天",
           "weeks": "周",
-          "months": "月"
+          "months": "月",
+          "calendarWeeks": "日历周（从周开始）",
+          "calendarMonths": "日历月（从 1 号开始）"
         }
       },
       "dateGrouping": {
@@ -9151,7 +9161,11 @@
       },
       "groupedTotal": "此组中总共 {count, plural, other {# 行}}",
       "dimensionFilters": {
-        "allValues": "所有值"
+        "allValues": "所有值",
+        "noValues": "未排除任何内容",
+        "modeLabel": "筛选模式",
+        "include": "包括",
+        "exclude": "排除"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "在这些天数内开始的分析。所有时间读取项目保持的每个分析。",
@@ -9305,6 +9319,8 @@
       "issueType": "问题类型",
       "issueTracker": "问题跟踪器",
       "issueStatus": "问题状态",
+      "issue": "问题",
+      "resultSource": "结果来源",
       "tag": "标签",
       "feature": "功能",
       "model": "模型",
@@ -9342,6 +9358,10 @@
       "averageElapsed": "每次执行的平均时间",
       "lastActiveDate": "最后活跃日期",
       "issueCount": "问题数量",
+      "linkedCaseCount": "关联用例",
+      "firstCaseCreated": "首个用例创建时间",
+      "lastCaseCreated": "最后用例创建时间",
+      "caseCreationSpan": "用例创建跨度（天数）",
       "averageAge": "平均年龄（天）",
       "sessionCount": "会话数",
       "activeSessions": "活跃会话",

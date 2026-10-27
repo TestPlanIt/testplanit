@@ -161,6 +161,8 @@ const getChartType = (
     "priority",
     "configuration",
     "trigger",
+    "resultSource",
+    "rootCause",
     "codeRepository",
   ];
 
@@ -170,6 +172,7 @@ const getChartType = (
 
   // Check if any metric is a date metric - these shouldn't be visualized in charts
   const hasDateMetric = metrics.some((metric) => {
+    if (metricUnit(metric.value) === "date") return true;
     const label = metric.label.toLowerCase();
     return (
       label.includes("date") ||
@@ -405,6 +408,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
   // Filter out date metrics for chart rendering (they can still appear in the table)
   const chartMetrics = metrics.filter((metric) => {
+    if (metricUnit(metric.value) === "date") return false;
     const label = metric.label.toLowerCase();
     return !(
       label.includes("date") ||

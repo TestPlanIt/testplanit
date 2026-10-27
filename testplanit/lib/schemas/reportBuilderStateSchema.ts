@@ -1,5 +1,8 @@
 import { z } from "zod/v4";
-import { dimensionFiltersSchema } from "./reportRequestSchema";
+import {
+  dimensionFilterModesSchema,
+  dimensionFiltersSchema,
+} from "./reportRequestSchema";
 
 /**
  * The Report Builder selection that used to be spread across the page URL
@@ -15,6 +18,7 @@ export const reportBuilderStateConfigSchema = z
     startDate: z.iso.datetime().optional(),
     endDate: z.iso.datetime().optional(),
     dimensionFilters: dimensionFiltersSchema.optional(),
+    dimensionFilterModes: dimensionFilterModesSchema.optional(),
     // Report-specific extras. Not written by the builder today; accepted so
     // a report that starts persisting them needs no schema change.
     dateGrouping: z
