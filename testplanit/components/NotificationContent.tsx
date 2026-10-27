@@ -472,7 +472,8 @@ export function NotificationContent({
     notification.type === "REVIEW_CHANGES_REQUESTED" ||
     notification.type === "REVIEW_REJECTED" ||
     notification.type === "REVIEW_CANCELLED" ||
-    notification.type === "REVIEW_REMINDER"
+    notification.type === "REVIEW_REMINDER" ||
+    notification.type === "REVIEW_DECISION_REVERTED"
   ) {
     if (data.projectId && data.entityType && data.entityId) {
       const entityLink =
@@ -523,6 +524,17 @@ export function NotificationContent({
         title = t("reviewCancelledTitle");
         action = t("reviewCancelledAction");
         actorUserId = data.cancelerUserId;
+      } else if (notification.type === "REVIEW_DECISION_REVERTED") {
+        title = t("reviewDecisionRevertedTitle");
+        // An admin can revert somebody else's decision; name them rather than
+        // implying the reverter decided it.
+        action =
+          data.deciderUserId && data.deciderUserId !== data.reverterUserId
+            ? t("reviewDecisionRevertedActionOther", {
+                deciderName: data.deciderName ?? "",
+              })
+            : t("reviewDecisionRevertedAction");
+        actorUserId = data.reverterUserId;
       } else {
         // REVIEW_REMINDER
         title = t("reviewReminderTitle");
@@ -534,7 +546,8 @@ export function NotificationContent({
         notification.type === "REVIEW_REQUESTED"
           ? data.commentText
           : notification.type === "REVIEW_CANCELLED" ||
-              notification.type === "REVIEW_REMINDER"
+              notification.type === "REVIEW_REMINDER" ||
+              notification.type === "REVIEW_DECISION_REVERTED"
             ? undefined
             : data.decisionComment;
 

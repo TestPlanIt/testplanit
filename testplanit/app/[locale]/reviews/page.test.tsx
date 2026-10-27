@@ -393,6 +393,11 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     sessions: {
       useFindMany: (...args: unknown[]) => mockUseFindManySessions(...args),
     },
+    // Decided tab reads the system revert-window ceiling to decide whether to
+    // offer the Revert action. No policy row = the built-in default applies.
+    appConfig: {
+      useFindUnique: () => ({ data: undefined }),
+    },
   }),
 }));
 

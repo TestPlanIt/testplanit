@@ -112,6 +112,12 @@ export const NOTIFICATION_CATALOGUE: readonly NotificationCatalogueEntry[] = [
     audience: "everyone",
     optional: true,
   },
+  {
+    type: NotificationType.REVIEW_DECISION_REVERTED,
+    group: "reviews",
+    audience: "everyone",
+    optional: true,
+  },
   // Runs and milestones
   {
     type: NotificationType.RUN_READY_TO_COMPLETE,

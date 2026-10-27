@@ -22,6 +22,10 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
         data: mockThresholdConfig,
         isLoading: mockThresholdLoading,
       }),
+      useDelete: () => ({
+        mutateAsync: mockMutateAsync,
+        isPending: mockMutationPending,
+      }),
     },
   }),
 }));

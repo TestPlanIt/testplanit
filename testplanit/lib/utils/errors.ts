@@ -133,6 +133,108 @@ export function isIneligibleAssigneeError(
 }
 
 /**
+ * Thrown by `revertReviewDecision` when the caller is neither the user who
+ * recorded the decision nor a system admin. Distinct from
+ * IneligibleReviewerError (decide-time) so a 403 on the revert path is
+ * never mistaken for a failed decide.
+ */
+export class IneligibleReverterError extends Error {
+  readonly code = "INELIGIBLE_REVERTER" as const;
+
+  constructor(
+    public readonly userId: string,
+    public readonly reviewRequestId: string
+  ) {
+    super(
+      `User ${userId} is not eligible to revert the decision on review request ${reviewRequestId}`
+    );
+    this.name = "IneligibleReverterError";
+  }
+}
+
+export function isIneligibleReverterError(
+  err: unknown
+): err is IneligibleReverterError {
+  return err instanceof IneligibleReverterError;
+}
+
+/**
+ * Thrown when the revert window has elapsed since `decidedAt`, or when
+ * reverting is disabled outright by a zero-second policy. Mirrors
+ * EditWindowExpiredError on the result-edit path.
+ */
+export class RevertWindowExpiredError extends Error {
+  readonly code = "REVERT_WINDOW_EXPIRED" as const;
+
+  constructor(message = "The revert window for this decision has closed") {
+    super(message);
+    this.name = "RevertWindowExpiredError";
+  }
+}
+
+export function isRevertWindowExpiredError(
+  err: unknown
+): err is RevertWindowExpiredError {
+  return (
+    err instanceof RevertWindowExpiredError ||
+    (typeof err === "object" &&
+      err !== null &&
+      (err as { code?: unknown }).code === "REVERT_WINDOW_EXPIRED")
+  );
+}
+
+/**
+ * Thrown when a newer PENDING request already exists for the same entity, so
+ * the decision being reverted is no longer the live one. Reopening it would
+ * leave two PENDING requests racing for one entity.
+ */
+export class ReviewSupersededError extends Error {
+  readonly code = "REVIEW_SUPERSEDED" as const;
+
+  constructor(
+    public readonly reviewRequestId: string,
+    public readonly supersedingRequestId: string
+  ) {
+    super(
+      `Review request ${reviewRequestId} was superseded by ${supersedingRequestId}`
+    );
+    this.name = "ReviewSupersededError";
+  }
+}
+
+export function isReviewSupersededError(
+  err: unknown
+): err is ReviewSupersededError {
+  return err instanceof ReviewSupersededError;
+}
+
+/**
+ * Thrown when reverting an APPROVED decision would have to roll the entity
+ * back, but the entity no longer sits at the state the approval moved it to.
+ * Something else moved it since, and forcing it back would regress that work.
+ */
+export class ReviewEntityMovedError extends Error {
+  readonly code = "REVIEW_ENTITY_MOVED" as const;
+
+  constructor(
+    public readonly reviewRequestId: string,
+    public readonly expectedStateId: number,
+    public readonly actualStateId: number | null
+  ) {
+    super(
+      `Entity for review request ${reviewRequestId} is no longer at state ${expectedStateId} (now ${actualStateId ?? "none"})`
+    );
+    this.name = "ReviewEntityMovedError";
+  }
+}
+
+export function isReviewEntityMovedError(
+  err: unknown
+): err is ReviewEntityMovedError {
+  return err instanceof ReviewEntityMovedError;
+}
+
+/**
  * Thrown by review-decision / review-cancel server paths when the system-level
  * or project-level review feature flag is OFF. Surfaces as a 403 with the
  * typed `FEATURE_DISABLED` envelope; callers translate to UI copy.

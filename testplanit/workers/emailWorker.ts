@@ -144,7 +144,8 @@ const processor = async (job: Job) => {
           notification.type === "REVIEW_CHANGES_REQUESTED" ||
           notification.type === "REVIEW_REJECTED" ||
           notification.type === "REVIEW_CANCELLED" ||
-          notification.type === "REVIEW_REMINDER"
+          notification.type === "REVIEW_REMINDER" ||
+          notification.type === "REVIEW_DECISION_REVERTED"
         ) {
           if (
             typeof data.bulkCount === "number" &&
@@ -291,7 +292,8 @@ const processor = async (job: Job) => {
           notification.type === "REVIEW_CHANGES_REQUESTED" ||
           notification.type === "REVIEW_REJECTED" ||
           notification.type === "REVIEW_CANCELLED" ||
-          notification.type === "REVIEW_REMINDER"
+          notification.type === "REVIEW_REMINDER" ||
+          notification.type === "REVIEW_DECISION_REVERTED"
         ) {
           const titleKeyByType = {
             REVIEW_REQUESTED: "reviewRequestedTitle",
@@ -300,6 +302,7 @@ const processor = async (job: Job) => {
             REVIEW_REJECTED: "reviewRejectedTitle",
             REVIEW_CANCELLED: "reviewCancelledTitle",
             REVIEW_REMINDER: "reviewReminderTitle",
+            REVIEW_DECISION_REVERTED: "reviewDecisionRevertedTitle",
           } as const;
           const emailMessageKeyByType = {
             REVIEW_REQUESTED: "reviewRequestedEmailMessage",
@@ -308,7 +311,15 @@ const processor = async (job: Job) => {
             REVIEW_REJECTED: "reviewRejectedEmailMessage",
             REVIEW_CANCELLED: "reviewCancelledEmailMessage",
             REVIEW_REMINDER: "reviewReminderEmailMessage",
+            REVIEW_DECISION_REVERTED: "reviewDecisionRevertedEmailMessage",
           } as const;
+          // An admin can revert a decision somebody else recorded; the default
+          // copy says "their decision", which is only right when the reverter
+          // decided it.
+          const revertedAnotherDecision =
+            notification.type === "REVIEW_DECISION_REVERTED" &&
+            typeof data.deciderUserId === "string" &&
+            data.deciderUserId !== data.reverterUserId;
           // A bulk review request covers many entities and potentially
           // several different gates, so the single-entity copy ("your review
           // of test case X") and the transition line are both wrong for it.
@@ -344,7 +355,9 @@ const processor = async (job: Job) => {
             userLocale,
             reviewBulkCount !== null
               ? "components.notifications.content.reviewBulkRequestedEmailMessage"
-              : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+              : revertedAnotherDecision
+                ? "components.notifications.content.reviewDecisionRevertedEmailMessageOther"
+                : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
             {
               actorName:
                 (notification.type === "REVIEW_REQUESTED"
@@ -353,7 +366,10 @@ const processor = async (job: Job) => {
                     ? data.requesterName
                     : notification.type === "REVIEW_CANCELLED"
                       ? data.cancelerName
-                      : data.deciderName) ?? "",
+                      : notification.type === "REVIEW_DECISION_REVERTED"
+                        ? data.reverterName
+                        : data.deciderName) ?? "",
+              deciderName: data.deciderName ?? "",
               entityLabel,
               entityName: data.entityName ?? "",
               projectName: data.projectName ?? "",
@@ -712,7 +728,8 @@ const processor = async (job: Job) => {
               notification.type === "REVIEW_CHANGES_REQUESTED" ||
               notification.type === "REVIEW_REJECTED" ||
               notification.type === "REVIEW_CANCELLED" ||
-              notification.type === "REVIEW_REMINDER"
+              notification.type === "REVIEW_REMINDER" ||
+              notification.type === "REVIEW_DECISION_REVERTED"
             ) {
               const titleKeyByType = {
                 REVIEW_REQUESTED: "reviewRequestedTitle",
@@ -721,6 +738,7 @@ const processor = async (job: Job) => {
                 REVIEW_REJECTED: "reviewRejectedTitle",
                 REVIEW_CANCELLED: "reviewCancelledTitle",
                 REVIEW_REMINDER: "reviewReminderTitle",
+                REVIEW_DECISION_REVERTED: "reviewDecisionRevertedTitle",
               } as const;
               const emailMessageKeyByType = {
                 REVIEW_REQUESTED: "reviewRequestedEmailMessage",
@@ -729,7 +747,14 @@ const processor = async (job: Job) => {
                 REVIEW_REJECTED: "reviewRejectedEmailMessage",
                 REVIEW_CANCELLED: "reviewCancelledEmailMessage",
                 REVIEW_REMINDER: "reviewReminderEmailMessage",
+                REVIEW_DECISION_REVERTED: "reviewDecisionRevertedEmailMessage",
               } as const;
+              // See the immediate-send branch: "their decision" only holds
+              // when the reverter is the original decider.
+              const revertedAnotherDecision =
+                notification.type === "REVIEW_DECISION_REVERTED" &&
+                typeof data.deciderUserId === "string" &&
+                data.deciderUserId !== data.reverterUserId;
               // Bulk-request copy — see the immediate-send branch above.
               const reviewBulkCount =
                 notification.type === "REVIEW_REQUESTED" &&
@@ -761,7 +786,9 @@ const processor = async (job: Job) => {
                 userLocale,
                 reviewBulkCount !== null
                   ? "components.notifications.content.reviewBulkRequestedEmailMessage"
-                  : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+                  : revertedAnotherDecision
+                    ? "components.notifications.content.reviewDecisionRevertedEmailMessageOther"
+                    : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
                 {
                   actorName:
                     (notification.type === "REVIEW_REQUESTED"
@@ -770,7 +797,10 @@ const processor = async (job: Job) => {
                         ? data.requesterName
                         : notification.type === "REVIEW_CANCELLED"
                           ? data.cancelerName
-                          : data.deciderName) ?? "",
+                          : notification.type === "REVIEW_DECISION_REVERTED"
+                            ? data.reverterName
+                            : data.deciderName) ?? "",
+                  deciderName: data.deciderName ?? "",
                   entityLabel,
                   entityName: data.entityName ?? "",
                   projectName: data.projectName ?? "",

@@ -234,6 +234,7 @@ model User {
     reviewsRequested                         ReviewRequest[]                   @relation("ReviewRequestedBy")
     reviewsAssigned                          ReviewRequest[]                   @relation("ReviewAssignedToUser")
     reviewsDecided                           ReviewRequest[]                   @relation("ReviewDecidedBy")
+    reviewsReverted                          ReviewRequest[]                   @relation("ReviewRevertedBy")
 
     // Two-factor authentication
     twoFactorEnabled                         Boolean                           @default(false)
@@ -552,6 +553,7 @@ enum NotificationType {
     REVIEW_REJECTED
     REVIEW_CANCELLED
     REVIEW_REMINDER
+    REVIEW_DECISION_REVERTED
     AI_STEPS_DERIVED
     INTEGRATION_AUTH_EXPIRED
     RUN_READY_TO_COMPLETE
@@ -748,6 +750,7 @@ model Projects {
     reviewWorkflowEnabled            Boolean                               @default(false)
     requireResultFlipJustification   Boolean                               @default(false)
     editResultsDurationSeconds       Int?
+    revertDecisionDurationSeconds    Int?
     requireIssueOnFailure            Boolean                               @default(false)
     excludeNotStartedFromRuns        Boolean                               @default(false)
     requirementsEnabled              Boolean                               @default(false)
@@ -5329,6 +5332,12 @@ model ReviewRequest {
     // Field-level @allow override flag (third arg true) carves out the model-level append-only @@deny.
     consumedAt        DateTime?        @allow('update', status == 'APPROVED')
 
+    // Set when a decider reverts their own decision; the row returns to PENDING.
+    revertedAt        DateTime?        @db.Timestamptz(6) @deny('update', auth().access != 'ADMIN')
+    revertedByUserId  String?          @deny('update', auth().access != 'ADMIN')
+    revertedBy        User?            @relation("ReviewRevertedBy", fields: [revertedByUserId], references: [id])
+    revertCount       Int              @default(0) @deny('update', auth().access != 'ADMIN')
+
     // Hybrid design (Phase 2 follow-up): the requester's typed prose at submit
     // time AND the reviewer's optional notes at decide time both live in the
     // standard Comments thread on the entity, linked back here via
@@ -6974,6 +6983,7 @@ enum AuditAction {
     REVIEW_REJECTED
     REVIEW_CANCELLED
     REVIEW_REMINDED
+    REVIEW_DECISION_REVERTED
     // Automated execution dispatch
     EXECUTION_REQUESTED
     EXECUTION_DISPATCHED

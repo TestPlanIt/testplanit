@@ -157,6 +157,7 @@ const testProject: ExtendedProjects = {
   reviewWorkflowEnabled: true,
   requireResultFlipJustification: false,
   editResultsDurationSeconds: null,
+  revertDecisionDurationSeconds: null,
   requireIssueOnFailure: false,
   excludeNotStartedFromRuns: false,
   requirementsEnabled: false,

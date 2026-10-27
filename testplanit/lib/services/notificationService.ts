@@ -826,6 +826,80 @@ export class NotificationService {
   }
 
   /**
+   * Dispatch a REVIEW_DECISION_REVERTED notification to the original
+   * requester after the decider undoes their own decision. The requester was
+   * already told the outcome, so they need telling that it is open again and
+   * who reopened it.
+   *
+   * Only the requester is notified: the decision returns to the same
+   * assignee it was already parked with, so the reviewer side learns nothing
+   * new from a notification about their own action.
+   *
+   * Persisted `title` / `message` are English fallback only; bell + email
+   * worker re-render localized copy at display time per the
+   * `feedback_localize_new_notifications` contract.
+   */
+  static async createReviewDecisionRevertedNotification(params: {
+    requesterUserId: string;
+    reverterUserId: string;
+    reverterName: string;
+    deciderUserId: string | null;
+    deciderName: string;
+    revertedDecision: "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    entityId: number;
+    entityName: string;
+    fromStateName: string;
+    toStateName: string;
+    reviewRequestId: string;
+  }) {
+    // The reverter is the decider; when they are also the requester (admin
+    // self-decide edge case) there is nobody left to tell.
+    if (params.requesterUserId === params.reverterUserId) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? "test case"
+        : params.entityType === "RUN"
+          ? "test run"
+          : "session";
+
+    // An admin may revert a decision somebody else recorded, so "their"
+    // only holds when the reverter is the original decider.
+    const revertedOwn = params.deciderUserId === params.reverterUserId;
+    const whose = revertedOwn ? "their" : `${params.deciderName}'s`;
+
+    const title = "Review decision reverted";
+    const message = `${params.reverterName} reverted ${whose} decision on ${entityLabel} "${params.entityName}" in project "${params.projectName}" — it is awaiting review again`;
+
+    await this.createNotification({
+      userId: params.requesterUserId,
+      type: NotificationType.REVIEW_DECISION_REVERTED,
+      title,
+      message,
+      relatedEntityId: params.reviewRequestId,
+      relatedEntityType: "ReviewRequest",
+      data: {
+        reviewRequestId: params.reviewRequestId,
+        reverterUserId: params.reverterUserId,
+        reverterName: params.reverterName,
+        deciderUserId: params.deciderUserId,
+        deciderName: params.deciderName,
+        revertedDecision: params.revertedDecision,
+        projectId: params.projectId,
+        projectName: params.projectName,
+        entityType: params.entityType,
+        entityId: params.entityId,
+        entityName: params.entityName,
+        fromStateName: params.fromStateName,
+        toStateName: params.toStateName,
+      },
+    });
+  }
+
+  /**
    * Dispatch a REVIEW_REMINDER notification to each target reviewer after a
    * pending review request has been waiting longer than the configured
    * threshold. Recipients are pre-resolved by the caller (the review-reminder

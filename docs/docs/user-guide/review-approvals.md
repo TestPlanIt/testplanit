@@ -200,6 +200,56 @@ If a rejected case is sent back to a Not Started workflow state, you can keep it
 When a request is assigned to a **role**, any project member who holds that role can decide. The first decision wins — there is no need for every role-holder to act. Other role-holders see the request flip to DECIDED in their inbox the next time they refresh.
 :::
 
+## Reverting a decision
+
+A reviewer who decides a request and then changes their mind can undo the decision and decide again. Reverting returns the request to `PENDING` and puts it back in the reviewer's queue; the requester does not have to submit a new request.
+
+Use **Revert decision** on the **Decided** tab of the review inbox.
+
+### Who can revert
+
+- The reviewer who recorded the decision.
+- System administrators.
+
+The requester cannot revert a decision on their own request — that would let them undo a rejection of their own work, which is what the gate exists to prevent.
+
+### The time limit
+
+A decision can be reverted for a limited period after it was made, measured from the moment of the decision. Undoing a decision made long ago is usually more confusing than useful.
+
+Configure it in two places:
+
+- **Administration → Workflows**, in the **Review Workflow** card: **Reverting review decisions** sets the system limit. The options are *Projects decide* (projects choose their own limit, defaulting to 24 hours), *Reverting disabled everywhere*, or *Allow reverting for up to* a number of minutes.
+- **Project Settings → Advanced**, in the **Reverting review decisions** card: a project can inherit the system limit, disable reverting for that project, or set a shorter one. A project can only tighten the system limit, never extend it.
+
+When nothing is configured anywhere, the limit is **24 hours**.
+
+System administrators are not bound by the time limit and can revert a decision of any age. They remain subject to every other condition below, because those protect consistency rather than freshness.
+
+### What happens
+
+- The request returns to `PENDING`, and the reviewer, decision time, and decision comment are cleared from it.
+- **If the decision was an approval that had already moved the entity**, the entity returns to the state it was in before the approval, and the approval is un-consumed. Where one transition spent several approvals, all of them are returned together.
+- An approval that never moved anything — because an earlier gate in the path was still unapproved — is simply returned to `PENDING`.
+- A comment is added to the entity's thread recording who reverted what, so the history shows the decision and its reversal.
+- The requester is notified.
+- An audit entry records the reversal along with the decision that was undone and its comment.
+
+The number of times a request has been reverted is shown beside the revert action on the Decided tab.
+
+### When reverting is refused
+
+Reverting is declined, and nothing is changed, when:
+
+- A **newer review request already exists** for the same entity. The decision has been superseded, and reopening it would conflict with the newer request.
+- The entity has **moved on since the approval** — it is no longer in the state the approval moved it to. Returning it would undo work the approval did not authorize.
+- The **time limit has passed** (reviewers only).
+- Reverting is **disabled** system-wide or for the project.
+
+### Test run composition locks
+
+If a project uses **Lock Test Run composition when execution starts**, a run that entered an In Progress state has its composition frozen. Reverting an approval returns the run to its previous state but does not release that lock, the same as any other move out of an In Progress state. The run's creator or a Project Admin can unlock it.
+
 ## Review reminders
 
 If a review request sits in `PENDING` for too long, TestPlanIt nudges the reviewer so the request doesn't get lost. A scheduled job runs hourly and scans for `PENDING` requests older than a configurable threshold; for each one it sends the reviewer a **Review still pending** notification — in-app, and via email if their preferences allow it.
@@ -284,17 +334,18 @@ Reviewers receive an in-app notification (and an email, if email notifications a
 - A request is **cancelled** by the requester.
 - A request they're assigned to has **been pending past the reminder threshold** (see [Review reminders](#review-reminders) above), or the requester **sent a reminder** manually (see [Nudging a reviewer](#nudging-a-reviewer)).
 
-Requesters receive a notification when a reviewer decides on a request they submitted.
+Requesters receive a notification when a reviewer decides on a request they submitted, and when a decision on their request is **reverted** (see [Reverting a decision](#reverting-a-decision)).
 
 ## Outbound webhooks
 
-Review events can be delivered to external systems (Slack, generic HMAC endpoints) via the project's outbound webhook configuration. Two event verbs are emitted, in three entity-scoped variants:
+Review events can be delivered to external systems (Slack, generic HMAC endpoints) via the project's outbound webhook configuration. Each event verb is emitted in three entity-scoped variants:
 
 | Event name | Fires when |
 | --- | --- |
 | `case.review_requested` / `test_run.review_requested` / `session.review_requested` | A reviewer is requested on a Test Case / Test Run / Session |
 | `case.review_completed` / `test_run.review_completed` / `session.review_completed` | The request is approved, sent back for changes, rejected, or cancelled |
 | `case.review_reminder` / `test_run.review_reminder` / `session.review_reminder` | The scheduled reminder fires on a request that's been pending past the configured threshold, or a requester sends one manually (see [Review reminders](#review-reminders)) |
+| `case.review_reverted` / `test_run.review_reverted` / `session.review_reverted` | A decision is reverted and the request returns to pending (see [Reverting a decision](#reverting-a-decision)) |
 
 To subscribe:
 

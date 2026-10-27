@@ -46,6 +46,28 @@ interface EmitReviewCompletedInput {
   requesterName: string;
 }
 
+interface EmitReviewRevertedInput {
+  reviewRequestId: string;
+  projectId: number;
+  entityType: ReviewableEntityType;
+  entityId: number;
+  entityName: string;
+  fromStateId: number;
+  toStateId: number;
+  toStateName: string;
+  toStateColor: string | null;
+  /** The decision that was undone — the row is PENDING again by now. */
+  revertedDecision: ReviewDecisionOutcome;
+  /** Comment the reverted decision carried, kept so subscribers can show what was undone. */
+  revertedDecisionComment: string | null;
+  revertedByUserId: string;
+  reverterName: string | null;
+  /** How many times this request has now been reverted, including this one. */
+  revertCount: number;
+  requestedByUserId: string;
+  requesterName: string;
+}
+
 interface EmitReviewReminderInput {
   reviewRequestId: string;
   projectId: number;
@@ -82,7 +104,11 @@ function capTextBytes(value: string | null): string | null {
 
 function eventNameFor(
   entityType: ReviewableEntityType,
-  verb: "review_requested" | "review_completed" | "review_reminder"
+  verb:
+    | "review_requested"
+    | "review_completed"
+    | "review_reminder"
+    | "review_reverted"
 ): string {
   if (entityType === "CASE") return `case.${verb}`;
   if (entityType === "RUN") return `test_run.${verb}`;
@@ -185,6 +211,54 @@ export async function emitReviewCompletedEvent(
     decidedByUserId: input.decidedByUserId,
     deciderName: input.deciderName,
     decisionComment: capTextBytes(input.decisionComment),
+    requestedByUserId: input.requestedByUserId,
+    requesterName: input.requesterName,
+  };
+  await emitWithOptionalTx(eventName, payload, input.projectId, opts);
+}
+
+/**
+ * Emit an outbound webhook event for a reverted review decision.
+ *
+ * Deliberately its own event rather than a second `review_completed` with a
+ * synthetic decision: subscribers that count decisions or drive downstream
+ * automation need to tell "decided" from "un-decided", and overloading the
+ * completed event would silently double-count.
+ *
+ * Routes via `eventNameFor(entityType, "review_reverted")` to:
+ *   - `case.review_reverted`
+ *   - `test_run.review_reverted`
+ *   - `session.review_reverted`
+ *
+ * The request is PENDING again when this fires, so `revertedDecision` is the
+ * prior state, not the current one.
+ */
+export async function emitReviewRevertedEvent(
+  input: EmitReviewRevertedInput,
+  opts: EmitOptions = {}
+): Promise<void> {
+  const eventName = eventNameFor(input.entityType, "review_reverted");
+  const entityUrl = entityUrlFor(
+    input.entityType,
+    input.projectId,
+    input.entityId
+  );
+  const payload: Record<string, unknown> = {
+    reviewRequestId: input.reviewRequestId,
+    projectId: input.projectId,
+    entityType: input.entityType,
+    entityId: input.entityId,
+    entityName: input.entityName,
+    entityUrl,
+    fromStateId: input.fromStateId,
+    toStateId: input.toStateId,
+    toStateName: input.toStateName,
+    toStateColor: input.toStateColor,
+    revertedDecision: input.revertedDecision,
+    revertedDecisionComment: capTextBytes(input.revertedDecisionComment),
+    revertedByUserId: input.revertedByUserId,
+    reverterName: input.reverterName,
+    revertCount: input.revertCount,
     requestedByUserId: input.requestedByUserId,
     requesterName: input.requesterName,
   };

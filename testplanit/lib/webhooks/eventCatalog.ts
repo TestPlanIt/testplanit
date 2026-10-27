@@ -86,6 +86,19 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     description: "A pending case review crossed its reminder threshold.",
     payloadKeys: ["reviewId", "caseId", "projectId", "reminderCount"],
   },
+  {
+    name: "case.review_reverted",
+    category: "review",
+    description:
+      "A decided test-case review was reverted and is pending again.",
+    payloadKeys: [
+      "reviewId",
+      "caseId",
+      "projectId",
+      "revertedDecision",
+      "reverterId",
+    ],
+  },
 
   // --- Test runs ---
   {
@@ -190,6 +203,18 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     description: "A pending run review crossed its reminder threshold.",
     payloadKeys: ["reviewId", "testRunId", "projectId", "reminderCount"],
   },
+  {
+    name: "test_run.review_reverted",
+    category: "review",
+    description: "A decided test-run review was reverted and is pending again.",
+    payloadKeys: [
+      "reviewId",
+      "testRunId",
+      "projectId",
+      "revertedDecision",
+      "reverterId",
+    ],
+  },
 
   // --- Iterations ---
   {
@@ -255,6 +280,18 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     category: "review",
     description: "A pending session review crossed its reminder threshold.",
     payloadKeys: ["reviewId", "sessionId", "projectId", "reminderCount"],
+  },
+  {
+    name: "session.review_reverted",
+    category: "review",
+    description: "A decided session review was reverted and is pending again.",
+    payloadKeys: [
+      "reviewId",
+      "sessionId",
+      "projectId",
+      "revertedDecision",
+      "reverterId",
+    ],
   },
 
   // --- Issues ---

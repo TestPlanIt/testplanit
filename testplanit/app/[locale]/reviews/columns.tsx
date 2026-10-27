@@ -17,10 +17,12 @@ import {
   Ban,
   CheckCircle2,
   MessageCircleWarning,
+  Undo2,
   XCircle,
 } from "lucide-react";
 import { useMemo } from "react";
 
+import { REVERT_DECISION_WINDOW_SECONDS_DEFAULT as REVERT_WINDOW_SECONDS_DEFAULT } from "~/lib/services/reviewRevertWindow";
 import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
 import { NudgeReviewButton } from "~/components/reviews/NudgeReviewButton";
 import { RoleAssigneeChip } from "~/components/reviews/RoleAssigneeChip";
@@ -85,7 +87,12 @@ export interface InboxSessionRow {
  * generated Prisma type exposes.
  */
 export interface ExtendedReviewRequest extends ReviewRequest {
-  project: { id: number; name: string; iconUrl: string | null } | null;
+  project: {
+    id: number;
+    name: string;
+    iconUrl: string | null;
+    revertDecisionDurationSeconds?: number | null;
+  } | null;
   requestedBy: {
     id: string;
     name: string | null;
@@ -129,6 +136,8 @@ export interface InboxActionHandlers {
   onRequestChanges: (row: ExtendedReviewRequest) => void;
   onReject: (row: ExtendedReviewRequest) => void;
   onCancel: (row: ExtendedReviewRequest) => void;
+  /** Decided tab — the decider undoing their own decision. */
+  onRevert: (row: ExtendedReviewRequest) => void;
   /** Refresh the queue after a reminder lands so the cooldown re-reads. */
   onNudged: () => void;
 }
@@ -152,6 +161,14 @@ interface UseColumnsArgs {
    * for — so each row's action set is decided per row, not per tab.
    */
   viewerUserId: string;
+  /** System admins may revert a decision of any age, so the window is skipped for them. */
+  viewerIsAdmin: boolean;
+  /**
+   * System revert-window ceiling in seconds (AppConfig `revert_decision_duration`):
+   * `null` = unconfigured, `0` = reverting disabled. Combined per row with the
+   * project override to decide whether to offer the Revert action at all.
+   */
+  systemRevertWindowSeconds: number | null;
   /** Roles the viewer can be reached through as an assignee (global + SPECIFIC_ROLE). */
   isAssignee: (row: ReviewAssigneeRow) => boolean;
   caseById: Map<number, InboxCaseRow>;
@@ -185,6 +202,61 @@ function DecisionStatusBadge({ status }: { status: ReviewStatus | null }) {
     return <span className="text-muted-foreground">-</span>;
   }
   return <ReviewDecisionBadge status={status} />;
+}
+
+/**
+ * Client-side mirror of `resolveRevertWindowSeconds` — decides whether the
+ * Revert action is offered on a row. The server re-checks authoritatively in
+ * `revertReviewDecision`; this only keeps the UI from showing a button that
+ * is certain to fail.
+ */
+function isRevertOffered(args: {
+  status: ReviewStatus;
+  decidedAt: Date | string | null;
+  decidedByUserId: string | null;
+  viewerUserId: string;
+  viewerIsAdmin: boolean;
+  systemSeconds: number | null;
+  projectSeconds: number | null;
+}): boolean {
+  const { status, decidedAt, decidedByUserId, viewerUserId, viewerIsAdmin } =
+    args;
+
+  // Every recorded outcome is revertable. Undoing an APPROVED decision also
+  // rolls the entity back, which the server refuses if the entity has moved
+  // on since — the button is still offered, because only the server can tell.
+  if (
+    status !== "APPROVED" &&
+    status !== "CHANGES_REQUESTED" &&
+    status !== "REJECTED"
+  ) {
+    return false;
+  }
+
+  const isDecider =
+    decidedByUserId !== null && decidedByUserId === viewerUserId;
+  if (!isDecider && !viewerIsAdmin) return false;
+
+  // Admins bypass the window entirely (mirrors the result-edit precedent).
+  if (viewerIsAdmin) return true;
+
+  if (!decidedAt) return false;
+
+  const { systemSeconds, projectSeconds } = args;
+  let effective: number;
+  if (systemSeconds === 0) {
+    effective = 0;
+  } else if (systemSeconds === null) {
+    effective = projectSeconds ?? REVERT_WINDOW_SECONDS_DEFAULT;
+  } else if (projectSeconds === null) {
+    effective = systemSeconds;
+  } else {
+    effective = Math.min(projectSeconds, systemSeconds);
+  }
+  if (effective <= 0) return false;
+
+  const ageSeconds = (Date.now() - new Date(decidedAt).getTime()) / 1000;
+  return ageSeconds <= effective;
 }
 
 /**
@@ -234,6 +306,8 @@ export const useColumns = ({
   view,
   actions,
   viewerUserId,
+  viewerIsAdmin,
+  systemRevertWindowSeconds,
   isAssignee: isViewerAssignee,
   caseById,
   testRunById,
@@ -594,14 +668,85 @@ export const useColumns = ({
             ),
           };
 
+    // Decided tab only. The tab had no actions at all before: a reviewer who
+    // misjudged a call had to ask the requester to raise a fresh request.
+    // Rendered as its own column rather than inside the Status cell so the
+    // Status badge stays a pure read of the outcome.
+    const revertColumn: ColumnDef<InboxTableRow> = {
+      id: "revert",
+      header: t("common.actions.actionsLabel"),
+      enableSorting: false,
+      enableHiding: false,
+      size: 96,
+      meta: { isPinned: "right" } satisfies CustomColumnMeta,
+      cell: ({ row }) => {
+        const { id, status, decidedAt, decidedByUserId, revertCount } =
+          row.original;
+
+        if (
+          !isRevertOffered({
+            status,
+            decidedAt,
+            decidedByUserId,
+            viewerUserId,
+            viewerIsAdmin,
+            systemSeconds: systemRevertWindowSeconds,
+            projectSeconds:
+              row.original.project?.revertDecisionDurationSeconds ?? null,
+          })
+        ) {
+          return null;
+        }
+
+        return (
+          <div
+            className="flex items-center gap-1"
+            data-testid="reviews-inbox-row-revert-actions"
+          >
+            <ActionIconButton
+              label={t("reviews.inbox.actionRevert")}
+              testId={`reviews-inbox-revert-${id}`}
+              icon={Undo2}
+              onClick={() => actions?.onRevert(row.original)}
+            />
+            {typeof revertCount === "number" && revertCount > 0 ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="text-muted-foreground text-xs tabular-nums"
+                    data-testid={`reviews-inbox-revert-count-${id}`}
+                  >
+                    {`×${revertCount}`}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t("reviews.inbox.revertedBadgeTooltip", {
+                    count: revertCount,
+                  })}
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
+          </div>
+        );
+      },
+    };
+
     return view === "decided"
-      ? [...baseColumns, decidedByColumn, timestampColumn, tailColumn]
+      ? [
+          ...baseColumns,
+          decidedByColumn,
+          timestampColumn,
+          tailColumn,
+          revertColumn,
+        ]
       : [...baseColumns, assigneeColumn, timestampColumn, tailColumn];
   }, [
     t,
     view,
     actions,
     viewerUserId,
+    viewerIsAdmin,
+    systemRevertWindowSeconds,
     isViewerAssignee,
     caseById,
     testRunById,

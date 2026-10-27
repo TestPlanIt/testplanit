@@ -37,6 +37,10 @@ import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
+import {
+  REVERT_DECISION_DURATION_KEY,
+  REVERT_DECISION_WINDOW_SECONDS_DEFAULT,
+} from "~/lib/services/reviewRevertWindow";
 import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
 import { ABANDONED_RUN_MIN_IDLE_MINUTES } from "~/lib/services/abandonedRuns";
 import {
@@ -72,6 +76,7 @@ export default function AdvancedPage() {
         reviewWorkflowEnabled: true,
         requireResultFlipJustification: true,
         editResultsDurationSeconds: true,
+        revertDecisionDurationSeconds: true,
         requireIssueOnFailure: true,
         excludeNotStartedFromRuns: true,
         requirementsEnabled: true,
@@ -113,6 +118,28 @@ export default function AdvancedPage() {
     systemEditWindowSeconds && systemEditWindowSeconds > 0
       ? Math.floor(systemEditWindowSeconds / 60)
       : null;
+
+  // System revert-window policy (ceiling). Same three-state shape as the
+  // edit window: 0 = reverting off everywhere, N = max seconds, absent = no
+  // policy (the built-in default applies).
+  const { data: revertWindowConfig } = useClientQueries(
+    schema
+  ).appConfig.useFindUnique(
+    { where: { key: REVERT_DECISION_DURATION_KEY } },
+    { enabled: status === "authenticated" }
+  );
+  const systemRevertWindowSeconds =
+    typeof revertWindowConfig?.value === "number"
+      ? (revertWindowConfig.value as number)
+      : null;
+  const systemRevertLocked = systemRevertWindowSeconds === 0;
+  const systemRevertMaxMinutes =
+    systemRevertWindowSeconds && systemRevertWindowSeconds > 0
+      ? Math.floor(systemRevertWindowSeconds / 60)
+      : null;
+  const defaultRevertMinutes = Math.round(
+    REVERT_DECISION_WINDOW_SECONDS_DEFAULT / 60
+  );
 
   // System abandoned automated-run policy (the default projects inherit).
   // value: N > 0 = idle minutes before the sweeper closes a run, absent/0 =
@@ -345,6 +372,61 @@ export default function AdvancedPage() {
       setCustomMinutes(String(Math.max(1, Math.round(seconds / 60))));
     }
   }, [project?.editResultsDurationSeconds]);
+
+  // Revert-window override. Persisted value is seconds (null = inherit the
+  // system policy, 0 = disable for this project, N = custom window).
+  const [revertWindowMode, setRevertWindowMode] = useState<
+    "inherit" | "disable" | "custom"
+  >("inherit");
+  const [revertCustomMinutes, setRevertCustomMinutes] = useState("");
+  const [savingRevertWindow, setSavingRevertWindow] = useState(false);
+
+  useEffect(() => {
+    const seconds = project?.revertDecisionDurationSeconds;
+    if (seconds === undefined) return;
+    if (seconds === null) {
+      setRevertWindowMode("inherit");
+      setRevertCustomMinutes("");
+    } else if (seconds === 0) {
+      setRevertWindowMode("disable");
+      setRevertCustomMinutes("");
+    } else {
+      setRevertWindowMode("custom");
+      setRevertCustomMinutes(String(Math.max(1, Math.round(seconds / 60))));
+    }
+  }, [project?.revertDecisionDurationSeconds]);
+
+  const handleSaveRevertWindow = async () => {
+    let nextSeconds: number | null;
+    if (revertWindowMode === "inherit") {
+      nextSeconds = null;
+    } else if (revertWindowMode === "disable") {
+      nextSeconds = 0;
+    } else {
+      const minutes = Number(revertCustomMinutes);
+      if (!Number.isFinite(minutes) || minutes <= 0) {
+        toast.error(t("revertWindow.invalidMinutes"));
+        return;
+      }
+      const capped =
+        systemRevertMaxMinutes !== null
+          ? Math.min(minutes, systemRevertMaxMinutes)
+          : minutes;
+      nextSeconds = Math.round(capped * 60);
+    }
+    setSavingRevertWindow(true);
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { revertDecisionDurationSeconds: nextSeconds },
+      });
+      toast.success(t("revertWindow.savedToast"));
+    } catch {
+      toast.error(t("revertWindow.saveError"));
+    } finally {
+      setSavingRevertWindow(false);
+    }
+  };
 
   const handleSaveEditWindow = async () => {
     let nextSeconds: number | null;
@@ -944,6 +1026,117 @@ export default function AdvancedPage() {
                       )}
                       <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
                         {t("editWindow.save")}
+                      </span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <span className="text-base font-medium">
+                  {t("revertWindow.label")}
+                </span>
+                <p className="text-sm text-muted-foreground">
+                  {t("revertWindow.description")}
+                </p>
+                {systemRevertLocked ? (
+                  <WarningAlert data-testid="revert-window-system-locked-warning">
+                    <TriangleAlert className="h-4 w-4" />
+                    <AlertTitle>
+                      {t("revertWindow.systemLockedTitle")}
+                    </AlertTitle>
+                    <AlertDescription>
+                      {t("revertWindow.systemLockedDescription")}
+                    </AlertDescription>
+                  </WarningAlert>
+                ) : (
+                  <div className="space-y-3">
+                    <Select
+                      value={revertWindowMode}
+                      onValueChange={(value) =>
+                        setRevertWindowMode(
+                          value as "inherit" | "disable" | "custom"
+                        )
+                      }
+                      disabled={projectLoading || updateProject.isPending}
+                    >
+                      <SelectTrigger
+                        className="max-w-xs"
+                        data-testid="revert-window-mode-select"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inherit">
+                          {t("revertWindow.modeInheritMinutes", {
+                            minutes:
+                              systemRevertMaxMinutes ?? defaultRevertMinutes,
+                          })}
+                        </SelectItem>
+                        <SelectItem value="disable">
+                          {t("revertWindow.modeDisable")}
+                        </SelectItem>
+                        <SelectItem value="custom">
+                          {t("revertWindow.modeCustom")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {revertWindowMode === "custom" && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Label
+                            htmlFor="revert-window-minutes"
+                            className="font-normal"
+                          >
+                            {t("revertWindow.minutesBefore")}
+                          </Label>
+                          <Input
+                            id="revert-window-minutes"
+                            data-testid="revert-window-minutes-input"
+                            type="number"
+                            min={1}
+                            max={systemRevertMaxMinutes ?? undefined}
+                            value={revertCustomMinutes}
+                            onChange={(event) =>
+                              setRevertCustomMinutes(event.target.value)
+                            }
+                            className="w-24"
+                            aria-label={t("revertWindow.minutesAriaLabel")}
+                          />
+                          <span>
+                            {t("revertWindow.minutesUnit", {
+                              minutes: Number(revertCustomMinutes) || 0,
+                            })}
+                          </span>
+                        </div>
+                        {systemRevertMaxMinutes !== null && (
+                          <p className="text-xs text-muted-foreground">
+                            {t("revertWindow.systemMaxHint", {
+                              minutes: String(systemRevertMaxMinutes),
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      onClick={handleSaveRevertWindow}
+                      disabled={projectLoading || updateProject.isPending}
+                      data-testid="revert-window-save"
+                      aria-label={t("revertWindow.save")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
+                    >
+                      {savingRevertWindow ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                        {t("revertWindow.save")}
                       </span>
                     </Button>
                   </div>

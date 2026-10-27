@@ -64,7 +64,11 @@ import {
   RequestChangesDialog,
   type ReviewableEntityType,
 } from "~/components/reviews/ReviewDecisionDialogs";
-import { cancelReviewRequest } from "~/app/actions/reviews";
+import {
+  cancelReviewRequest,
+  revertReviewDecisionAction,
+} from "~/app/actions/reviews";
+import { REVERT_DECISION_DURATION_KEY } from "~/lib/services/reviewRevertWindow";
 import { useDetailsDisplayMode } from "~/hooks/useDetailsDisplayMode";
 import { useReviewAssigneeScope } from "~/hooks/useReviewAssigneeScope";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
@@ -201,7 +205,12 @@ function ReviewsInboxGuard() {
   if (status === "loading") return null;
   if (!session) return null;
 
-  return <ReviewsInboxContent userId={session.user.id} />;
+  return (
+    <ReviewsInboxContent
+      userId={session.user.id}
+      isAdmin={session.user.access === "ADMIN"}
+    />
+  );
 }
 
 /**
@@ -226,7 +235,13 @@ function ReviewsInboxGuard() {
  * Per RESEARCH Pitfall 4 the listing fires `refetchOnWindowFocus: true` so
  * a reviewer returning from another tab sees fresh data.
  */
-function ReviewsInboxContent({ userId }: { userId: string }) {
+function ReviewsInboxContent({
+  userId,
+  isAdmin,
+}: {
+  userId: string;
+  isAdmin: boolean;
+}) {
   // Cast `useTranslations()` to a plain key-to-string function so the
   // accumulated phase-2 message-keys union doesn't trip TS2590 / TS2554.
   const t = useTranslations() as (
@@ -564,7 +579,15 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
       where: whereClause,
       orderBy,
       include: {
-        project: { select: { id: true, name: true, iconUrl: true } },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            iconUrl: true,
+            // Feeds the client-side revert-window predicate in ./columns.
+            revertDecisionDurationSeconds: true,
+          },
+        },
         requestedBy: { select: { id: true, name: true, image: true } },
         fromState: {
           select: {
@@ -701,6 +724,36 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   const [cancelTarget, setCancelTarget] =
     useState<ExtendedReviewRequest | null>(null);
   const [isCancelling, startCancel] = useTransition();
+  const [revertTarget, setRevertTarget] =
+    useState<ExtendedReviewRequest | null>(null);
+  const [isReverting, startRevert] = useTransition();
+  // Admins may revert a decision somebody else recorded, so the confirmation
+  // can't speak in the second person unless the viewer is the decider.
+  const isOwnDecision = revertTarget?.decidedByUserId === userId;
+
+  // System revert-window ceiling. Only the Decided tab needs it, and only to
+  // decide whether to render the Revert button — the server re-checks it
+  // authoritatively on every call.
+  const { data: revertWindowConfig } = useClientQueries(
+    schema
+  ).appConfig.useFindUnique({ where: { key: REVERT_DECISION_DURATION_KEY } }, {
+    enabled: featureEnabled === true && view === "decided",
+  } as any);
+  const systemRevertWindowSeconds = useMemo(() => {
+    const value = (revertWindowConfig as { value?: unknown } | undefined)
+      ?.value;
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (
+      typeof value === "string" &&
+      value.trim() !== "" &&
+      Number.isFinite(Number(value))
+    ) {
+      return Number(value);
+    }
+    return null;
+  }, [revertWindowConfig]);
+
+  const viewerIsAdmin = isAdmin;
 
   const invalidateReviewRows = useCallback(() => {
     void queryClient.invalidateQueries({
@@ -715,6 +768,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
         setActiveDialog({ decision: "CHANGES_REQUESTED", row }),
       onReject: (row) => setActiveDialog({ decision: "REJECTED", row }),
       onCancel: (row) => setCancelTarget(row),
+      onRevert: (row) => setRevertTarget(row),
       // A reminder doesn't move the row out of the queue, but it does bump
       // `lastRemindedAt` — refetch so the button settles into its cooldown.
       onNudged: invalidateReviewRows,
@@ -737,6 +791,43 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
         setCancelTarget(null);
       } catch {
         toast.error(t("reviews.cancel.error"));
+      }
+    });
+  };
+
+  const handleRevertConfirm = () => {
+    const target = revertTarget;
+    if (!target) return;
+    startRevert(async () => {
+      try {
+        const result = await revertReviewDecisionAction(target.id);
+        if (!result.success) {
+          // Each refusal has its own cause and its own remedy, so they get
+          // their own copy rather than a generic failure toast.
+          const message =
+            result.error === "FORBIDDEN"
+              ? t("reviews.revert.errorForbidden")
+              : result.error === "WINDOW_EXPIRED"
+                ? t("reviews.revert.errorWindowExpired")
+                : result.error === "SUPERSEDED"
+                  ? t("reviews.revert.errorSuperseded")
+                  : result.error === "ENTITY_MOVED"
+                    ? t("reviews.revert.errorEntityMoved")
+                    : result.error === "NOT_REVERTABLE"
+                      ? t("reviews.revert.errorNotRevertable")
+                      : t("reviews.revert.error");
+          toast.error(message);
+          return;
+        }
+        invalidateReviewRows();
+        toast.success(
+          target.decidedByUserId === userId
+            ? t("reviews.revert.success")
+            : t("reviews.revert.successOther")
+        );
+        setRevertTarget(null);
+      } catch {
+        toast.error(t("reviews.revert.error"));
       }
     });
   };
@@ -798,6 +889,8 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     view,
     actions,
     viewerUserId: userId,
+    viewerIsAdmin,
+    systemRevertWindowSeconds,
     isAssignee,
     caseById,
     testRunById,
@@ -1305,6 +1398,47 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               data-testid="reviews-inbox-cancel-confirm"
             >
               {t("reviews.cancel.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={revertTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRevertTarget(null);
+        }}
+      >
+        <AlertDialogContent data-testid="reviews-inbox-revert-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isOwnDecision
+                ? t("reviews.revert.title")
+                : t("reviews.revert.titleOther")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {revertTarget?.status === "APPROVED"
+                ? isOwnDecision
+                  ? t("reviews.revert.descriptionApproved")
+                  : t("reviews.revert.descriptionOtherApproved")
+                : isOwnDecision
+                  ? t("reviews.revert.description")
+                  : t("reviews.revert.descriptionOther")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                // Same reason as the cancel dialog: keep it mounted through
+                // the transition so the pending state survives to the toast.
+                e.preventDefault();
+                handleRevertConfirm();
+              }}
+              disabled={isReverting}
+              data-testid="reviews-inbox-revert-confirm"
+            >
+              {t("reviews.revert.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -2294,6 +2294,23 @@
           "save": "Save cleanup settings",
           "savedToast": "Abandoned automation cleanup updated for this project",
           "saveError": "Failed to update abandoned automation cleanup"
+        },
+        "revertWindow": {
+          "label": "Reverting review decisions",
+          "description": "How long a reviewer has to undo their own decision on this project. System admins are not bound by this limit.",
+          "systemLockedTitle": "Reverting is disabled system-wide",
+          "systemLockedDescription": "An administrator has turned off reverting review decisions for every project. This setting cannot be changed here.",
+          "modeInheritMinutes": "Inherit system default ({minutes, plural, one {# minute} other {# minutes}})",
+          "modeDisable": "Disable reverting for this project",
+          "modeCustom": "Custom window",
+          "minutesBefore": "Limit",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Minutes a decision stays revertable",
+          "systemMaxHint": "System maximum: {minutes} minutes",
+          "invalidMinutes": "Enter a number of minutes greater than zero",
+          "save": "Save revert limit",
+          "savedToast": "Revert limit saved.",
+          "saveError": "Could not save the revert limit. Try again in a moment."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Alerts",
             "description": "An alert you are subscribed to fires because a testing metric crossed the line it watches."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Review decision reverted",
+            "description": "A reviewer undoes a decision on a request you made, putting it back in their queue."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "All entity types",
       "filterEntityTypeCase": "Test cases",
       "filterEntityTypeRun": "Test runs",
-      "filterAllProjects": "All projects"
+      "filterAllProjects": "All projects",
+      "actionRevert": "Revert decision",
+      "revertedBadge": "Reverted",
+      "revertedBadgeTooltip": "{count, plural, one {Reverted once before} other {Reverted # times before}}"
     },
     "requester": {
       "openButton": "Request review",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "This review has already been decided.",
       "decideError": "Could not record your decision. Try again in a moment.",
       "panelSummary": "Review request from {requesterName}: transition to {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Revert decision",
+      "description": "This review goes back to awaiting your decision, and the requester is notified. The comment you left stays in the thread.",
+      "descriptionApproved": "This review goes back to awaiting your decision and the item returns to its previous state. The requester is notified.",
+      "error": "Could not revert the decision. Try again in a moment.",
+      "errorEntityMoved": "This item has moved on since the approval, so the approval can no longer be undone.",
+      "errorForbidden": "Only the reviewer who made this decision can revert it.",
+      "errorNotRevertable": "This decision can no longer be reverted.",
+      "errorSuperseded": "A newer review request already exists for this item, so this decision can no longer be reverted.",
+      "errorWindowExpired": "The time limit for reverting this decision has passed.",
+      "success": "Decision reverted. The review is awaiting your decision again.",
+      "title": "Revert your decision?",
+      "titleOther": "Revert this decision?",
+      "descriptionOther": "This review goes back to awaiting a decision, and the requester is notified. The reviewer's comment stays in the thread.",
+      "descriptionOtherApproved": "This review goes back to awaiting a decision and the item returns to its previous state. The requester is notified.",
+      "successOther": "Decision reverted. The review is awaiting a decision again."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, one {day} other {days}}",
         "thresholdHelp": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
         "thresholdUpdateSuccess": "Review reminder settings updated.",
-        "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment."
+        "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment.",
+        "revertPolicy": {
+          "label": "Reverting review decisions",
+          "modeAria": "Revert policy mode",
+          "modeNone": "Projects decide ({hours}h by default)",
+          "modeDisabled": "Reverting disabled everywhere",
+          "modeMax": "Allow reverting for up to",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Maximum minutes a decision stays revertable",
+          "invalidMinutes": "Enter a number of minutes greater than zero",
+          "savedToast": "Revert policy saved.",
+          "saveError": "Could not save the revert policy. Try again in a moment."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Toggle review workflow for {name}",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "The review workflow feature is disabled at the system level. Toggle a project's Advanced settings or set TESTPLANIT_REVIEW_FEATURE_ENABLED to re-enable.",
-        "requiresReviewDefaultDisabled": "The default workflow state cannot require review — new entities land here and have no prior state to gate."
+        "requiresReviewDefaultDisabled": "The default workflow state cannot require review — new entities land here and have no prior state to gate.",
+        "requiresReviewLabel": "Requires review"
       },
       "add": {
         "button": "Add Workflow",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "The oldest unprocessed audit change is {minutes, plural, one {# minute} other {# minutes}} old (threshold {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# account is} other {# accounts are}} locked after failed sign-ins (threshold {threshold}).",
           "NO_AUTOMATED_RESULTS": "No automated result has arrived for {hours, plural, one {# hour} other {# hours}} (threshold {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "reverted their decision on",
+        "reviewDecisionRevertedEmailMessage": "{actorName} reverted their decision on {entityLabel} \"{entityName}\" in project \"{projectName}\" — it is awaiting review again.",
+        "reviewDecisionRevertedTitle": "Review decision reverted",
+        "reviewDecisionRevertedActionOther": "reverted {deciderName}'s decision on",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} reverted {deciderName}'s decision on {entityLabel} \"{entityName}\" in project \"{projectName}\" — it is awaiting review again."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## Quarantined test cases\nA quarantined test case keeps running and recording results, but its failures are left out of run pass/fail and shown as a separate count. Quarantine a case from a failure pattern while the cause is being fixed. The quarantine lifts by itself once the case has passed the number of times in a row set in the Failure Patterns settings, unless it was marked to be released by hand; release it here or from the pattern at any time.",
     "rootCauses": "## Root Causes\nThe root causes Failure Patterns assigns to grouped failures, by AI or by hand. Each has a description the AI reads to decide when it applies. Rename, recolour or reorder them, add your own, or delete the ones you do not use; deleting one leaves its patterns without a root cause.",
     "rootCauseDescription": "## Description\nThe AI reads this description to decide when the root cause applies to a failure pattern, so describe the evidence that points to it.",
-    "projectRiskSettings": "## Risk Scoring settings\nEvery test case gets a 0-100 risk score from its failure history, flakiness, staleness, linked requirement criticality and linked defects — deterministic, no AI calls. Scores refresh after results arrive and in a nightly sweep. **Component weights** set how much each signal counts, relative to the others; zero removes a component. **Recalculate all scores** rescores the whole project now instead of waiting for the nightly sweep."
+    "projectRiskSettings": "## Risk Scoring settings\nEvery test case gets a 0-100 risk score from its failure history, flakiness, staleness, linked requirement criticality and linked defects — deterministic, no AI calls. Scores refresh after results arrive and in a nightly sweep. **Component weights** set how much each signal counts, relative to the others; zero removes a component. **Recalculate all scores** rescores the whole project now instead of waiting for the nightly sweep.",
+    "reviewRevert": "## Reverting Review Decisions\nHow long a reviewer has to undo a decision they recorded, measured from when they decided. Reverting returns the request to the reviewer's queue; if an approval had already moved the item forward, the item goes back to where it was. System administrators are not bound by this limit and can revert a decision of any age. Projects may shorten the limit in their Advanced settings, but never extend it."
   },
   "reports": {
     "ui": {
