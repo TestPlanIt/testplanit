@@ -4,7 +4,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { getMaxOrderInTestRun } from "~/app/actions/test-run";
 import { usePathname, useRouter } from "~/lib/navigation";
@@ -1373,21 +1379,30 @@ const AssigneeCell = React.memo(function AssigneeCell({
 
 // Component for displaying last test result in repository mode
 // Component for select all checkbox with shift-key detection and tooltip
+/**
+ * How many cases are selected across all pages. Provided around the table
+ * rather than passed to getColumns: the count changes on every click, and a
+ * rebuilt column set remounts every cell of every row.
+ */
+export const SelectedCaseCountContext = createContext(0);
+
 const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
   table,
   handleSelectAllClick,
   selectCaseLabel,
   totalItems,
-  isAllSelected,
 }: {
   table: any;
   handleSelectAllClick?: (event: React.MouseEvent) => void;
   selectCaseLabel: string;
   totalItems: number;
-  isAllSelected: boolean;
 }) {
   const [isShiftPressed, setIsShiftPressed] = useState(false);
   const t = useTranslations();
+  const selectedCount = useContext(SelectedCaseCountContext);
+
+  // Determine if all items are selected (for tooltip message)
+  const isAllSelected = selectedCount >= totalItems && totalItems > 0;
 
   // Track shift key state
   useEffect(() => {
@@ -1542,7 +1557,6 @@ export const getColumns = (
   }) => void,
   isMultiConfigRun?: boolean,
   totalItems?: number,
-  selectedCount?: number,
   /** Render the grip in the selection column. True whenever rows can be
    * dragged at all (to reorder or to a folder), not only when reorder is on. */
   showDragHandle?: boolean,
@@ -1612,10 +1626,6 @@ export const getColumns = (
     header: ({ table }) => {
       const showHandle = showDragHandle;
 
-      // Determine if all items are selected (for tooltip message)
-      const isAllSelected =
-        (selectedCount ?? 0) >= (totalItems ?? 0) && (totalItems ?? 0) > 0;
-
       return (
         <div
           // Use the calculated showHandle to set padding
@@ -1627,7 +1637,6 @@ export const getColumns = (
             handleSelectAllClick={handleSelectAllClick}
             selectCaseLabel={columnTranslations.selectCase}
             totalItems={totalItems ?? 0}
-            isAllSelected={isAllSelected}
           />
         </div>
       );

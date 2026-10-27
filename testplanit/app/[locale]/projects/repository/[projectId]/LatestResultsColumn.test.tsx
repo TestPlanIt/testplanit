@@ -295,7 +295,6 @@ describe("latestResults column via getColumns", () => {
         undefined,
         undefined,
         undefined,
-        undefined,
         renderLatestResults
       );
       const column = columns.find((col) => col.id === "latestResults");

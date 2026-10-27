@@ -355,7 +355,8 @@ vi.mock("@/components/Debounce", () => ({
 }));
 
 // Mock columns with at least one column so columnVisibility initializes properly
-vi.mock("./columns", () => ({
+vi.mock("./columns", async () => ({
+  SelectedCaseCountContext: (await import("react")).createContext(0),
   getColumns: vi.fn(() => [
     {
       id: "name",
