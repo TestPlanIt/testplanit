@@ -1,3 +1,13 @@
+## [1.2.0-beta.16](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.15...v1.2.0-beta.16) (2026-10-27)
+
+### Bug Fixes
+
+* **tables:** correct the offset of right-pinned columns ([26a2b69](https://github.com/TestPlanIt/testplanit/commit/26a2b6969403512da5458fdbf958fe881a2cf452))
+
+### Enhancements
+
+* **reviews:** let reviewers revert a review decision ([a4ff8ff](https://github.com/TestPlanIt/testplanit/commit/a4ff8ff600ff116b8b193c3023f65463a28a877a))
+
 ## [1.2.0-beta.15](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.14...v1.2.0-beta.15) (2026-10-27)
 
 ### Features
