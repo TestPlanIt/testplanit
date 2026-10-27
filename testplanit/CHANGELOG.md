@@ -1,3 +1,30 @@
+## [1.2.0-beta.13](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.12...v1.2.0-beta.13) (2026-10-27)
+
+### Features
+
+* **magic-select:** let the model see each case's risk score ([1d4e1f4](https://github.com/TestPlanIt/testplanit/commit/1d4e1f4ee2c412422be3b6320e6ff8f44d2193d8))
+* **risk:** filter the risk picker to manual or automated cases ([587f36c](https://github.com/TestPlanIt/testplanit/commit/587f36cdcb60ca497115682eca00ae4ccbc9dc57))
+* **risk:** maintained per-case risk score with background recompute (phase 1) ([846bcf2](https://github.com/TestPlanIt/testplanit/commit/846bcf2beb40ad5b0deb8414a08f4b23b0d959d3))
+* **risk:** pick cases by risk when composing a run ([93dce73](https://github.com/TestPlanIt/testplanit/commit/93dce73b3ebb662f7e24dfe100d0e750890209ba))
+* **risk:** re-rank a run's risk candidates with the project's model ([7535312](https://github.com/TestPlanIt/testplanit/commit/75353126fb7827d7dfd3c4c0c71a0c19d31a0343))
+* **risk:** repository risk score column, filter and project risk settings (phase 2) ([e21a944](https://github.com/TestPlanIt/testplanit/commit/e21a944a461eec6763b27c4d32a22ddad884b71c))
+* **risk:** show the risk score alongside impact in Affected Tests ([398e112](https://github.com/TestPlanIt/testplanit/commit/398e112c4bd6663b54015a1a652789d22edaf7f2))
+* **risk:** sort the picker by risk, and hold the header's height ([f1d505e](https://github.com/TestPlanIt/testplanit/commit/f1d505e056addd3dd788f4aedb9dd6165dada9a0))
+* **runs:** let the header's width decide menu or icons ([d68cecc](https://github.com/TestPlanIt/testplanit/commit/d68cecc461407e54de9c410ce159aa1683a4544d))
+* **tables:** open per-row detail in a row of its own ([a298409](https://github.com/TestPlanIt/testplanit/commit/a2984094d8d697fa3fcdcc69e8414aac56090c74))
+
+### Bug Fixes
+
+* **auth:** refresh the session display name from the user record ([1b308b3](https://github.com/TestPlanIt/testplanit/commit/1b308b34e7974a3647369d072a12c6c24473b299))
+* **duplicates:** show unreviewed pair count instead of a red fill ([cc9f0b5](https://github.com/TestPlanIt/testplanit/commit/cc9f0b513e4ad3481b8e24f9c6fe7a865b68781f))
+* **impact:** clear a finished job that holds the next analysis's id ([96523c9](https://github.com/TestPlanIt/testplanit/commit/96523c9b606d1715b443bb7f9c94016c2213f4f8))
+* **risk:** keep the run picker's selection honest about what it will add ([9e78ea9](https://github.com/TestPlanIt/testplanit/commit/9e78ea9136f8c35b64e24735e462968710c1785d))
+* **runs:** fetch JUnit log text on demand instead of shipping it with the suite tree ([4ba62b0](https://github.com/TestPlanIt/testplanit/commit/4ba62b092f05ea718cc77ab143e485ba8d0b157d))
+* **ui:** keep saves working on a plain-HTTP self-host ([867fcd4](https://github.com/TestPlanIt/testplanit/commit/867fcd48319145dde656374504caa0f1740973c1)), closes [#719](https://github.com/TestPlanIt/testplanit/issues/719)
+* **ui:** make dark: follow the app's theme, not the operating system ([cb37e6c](https://github.com/TestPlanIt/testplanit/commit/cb37e6c40e85892f544374b6265cc3854e8f6e7a))
+* **ui:** make text readable on every theme and admin-chosen colour ([7136fd4](https://github.com/TestPlanIt/testplanit/commit/7136fd4d1b041482f7d49838451fb69bfc778d42)), closes [#C8C9CA](https://github.com/TestPlanIt/testplanit/issues/C8C9CA) [#838485](https://github.com/TestPlanIt/testplanit/issues/838485) [#258AC4](https://github.com/TestPlanIt/testplanit/issues/258AC4) [#128BA1](https://github.com/TestPlanIt/testplanit/issues/128BA1) [#ED360C](https://github.com/TestPlanIt/testplanit/issues/ED360C) [#786AC8](https://github.com/TestPlanIt/testplanit/issues/786AC8)
+* **ui:** say why a disabled action is disabled, and keep E2E off the dev queues ([aa187c5](https://github.com/TestPlanIt/testplanit/commit/aa187c597f4a0ab79e65cd933efeb24bac70faf2))
+
 ## [1.2.0-beta.12](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.11...v1.2.0-beta.12) (2026-10-27)
 
 ### Bug Fixes
