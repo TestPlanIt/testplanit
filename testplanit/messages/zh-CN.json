@@ -2294,6 +2294,23 @@
           "save": "保存清理设置",
           "savedToast": "此项目的废弃自动化清理已更新",
           "saveError": "更新废弃自动化清理失败"
+        },
+        "revertWindow": {
+          "label": "恢复审核决定",
+          "description": "审核人有多长时间可以在此项目中撤销自己的决定。系统管理员不受此限制的约束。",
+          "systemLockedTitle": "系统范围内已禁用恢复功能",
+          "systemLockedDescription": "管理员已为每个项目关闭恢复审核决定的功能。此设置无法在此处更改。",
+          "modeInheritMinutes": "继承系统默认值（{minutes, plural, other {# 分钟}}）",
+          "modeDisable": "禁用此项目的恢复功能",
+          "modeCustom": "自定义窗口",
+          "minutesBefore": "限制",
+          "minutesUnit": "{minutes, plural, other {分钟}}",
+          "minutesAriaLabel": "决定保持可恢复的分钟数",
+          "systemMaxHint": "系统最大值：{minutes} 分钟",
+          "invalidMinutes": "请输入大于零的分钟数",
+          "save": "保存恢复限制",
+          "savedToast": "恢复限制已保存。",
+          "saveError": "无法保存恢复限制。请稍后重试。"
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "警报",
             "description": "您订阅的警报会因测试指标超过其监视的界限而触发。"
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "审核决定已恢复",
+            "description": "审核人撤销了对您提出的请求的决定，将其放回其队列中。"
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "所有实体类型",
       "filterEntityTypeCase": "测试用例",
       "filterEntityTypeRun": "测试运行",
-      "filterAllProjects": "所有项目"
+      "filterAllProjects": "所有项目",
+      "actionRevert": "恢复决定",
+      "revertedBadge": "已恢复",
+      "revertedBadgeTooltip": "{count, plural, one {之前恢复过一次} other {之前恢复过 # 次}}"
     },
     "requester": {
       "openButton": "请求审核",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "本次审查结果已确定。",
       "decideError": "无法记录您的决定。请稍后再试。",
       "panelSummary": "来自 {requesterName}的审核请求：过渡到 {targetStateName}"
+    },
+    "revert": {
+      "confirm": "恢复决定",
+      "description": "此审核回到等待您的决定状态，并通知请求人。您留下的评论保留在线程中。",
+      "descriptionApproved": "此审核回到等待您的决定状态，且该项目恢复到之前的状态。将通知请求人。",
+      "error": "无法恢复决定。请稍后重试。",
+      "errorEntityMoved": "由于批准后该项目已发生变更，因此无法再撤销该批准。",
+      "errorForbidden": "只有做出此决定的审核人才能恢复它。",
+      "errorNotRevertable": "此决定无法再被恢复。",
+      "errorSuperseded": "此项目已存在较新的审核请求，因此无法再恢复此决定。",
+      "errorWindowExpired": "恢复此决定的时限已过。",
+      "success": "决定已恢复。审核再次等待您的决定。",
+      "title": "恢复您的决定？",
+      "titleOther": "恢复此决定？",
+      "descriptionOther": "此审核回到等待决定状态，并通知请求人。审核人的评论保留在线程中。",
+      "descriptionOtherApproved": "此审核回到等待决定状态，且该项目恢复到之前的状态。将通知请求人。",
+      "successOther": "决定已恢复。审核再次等待决定。"
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, other {天}}",
         "thresholdHelp": "审核请求最多可以保留多少天才会向审核员发送提醒通知？新请求从提交之日起开始计时。",
         "thresholdUpdateSuccess": "查看提醒设置是否已更新。",
-        "thresholdUpdateError": "更新提醒设置失败，请稍后再试。"
+        "thresholdUpdateError": "更新提醒设置失败，请稍后再试。",
+        "revertPolicy": {
+          "label": "恢复审核决定",
+          "modeAria": "恢复策略模式",
+          "modeNone": "由项目决定（默认为 {hours}h）",
+          "modeDisabled": "在任何地方禁用恢复",
+          "modeMax": "允许恢复最长",
+          "minutesUnit": "{minutes, plural, other {分钟}}",
+          "minutesAriaLabel": "决定保持可恢复的最大分钟数",
+          "invalidMinutes": "请输入大于零的分钟数",
+          "savedToast": "恢复策略已保存。",
+          "saveError": "无法保存恢复策略。请稍后重试。"
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "切换 {name} 的审核工作流程",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "系统级已禁用审阅工作流程功能。请切换项目的“高级设置”或设置 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新启用该功能。",
-        "requiresReviewDefaultDisabled": "默认工作流状态不需要审核——新实体进入此状态，并且没有先前的状态需要控制。"
+        "requiresReviewDefaultDisabled": "默认工作流状态不需要审核——新实体进入此状态，并且没有先前的状态需要控制。",
+        "requiresReviewLabel": "需要审核"
       },
       "add": {
         "button": "添加工作流",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "最早未处理的审计更改已有 {minutes, plural, one {# 分钟} other {# 分钟}}（阈值 {threshold}）。",
           "ACCOUNT_LOCKOUTS": "登录失败后 {locked, plural, one {# 个帐户} other {# 个帐户}} 被锁定（阈值 {threshold}）。",
           "NO_AUTOMATED_RESULTS": "{hours, plural, one {# 小时} other {# 小时}} 内无自动化结果到达（阈值 {threshold}）。"
-        }
+        },
+        "reviewDecisionRevertedAction": "恢复了他们对以下内容的决定",
+        "reviewDecisionRevertedEmailMessage": "{actorName} 恢复了他们对项目 \"{projectName}\" 中的 {entityLabel} \"{entityName}\" 的决定 — 它现在等待审核。",
+        "reviewDecisionRevertedTitle": "审核决定已恢复",
+        "reviewDecisionRevertedActionOther": "恢复了 {deciderName} 对以下内容的决定",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} 恢复了 {deciderName} 对项目 \"{projectName}\" 中的 {entityLabel} \"{entityName}\" 的决定 — 它现在等待审核。"
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## 隔离的测试用例\n隔离的测试用例继续运行和记录结果，但其失败被排除在运行通过/失败之外，并显示为单独的计数。在修复原因时从失败模式中隔离用例。一旦该用例连续通过失败模式设置中设置的次数后，隔离会自动解除，除非它被标记为手动发布；在此处或从模式随时发布它。",
     "rootCauses": "## 根本原因\n失败模式通过 AI 或手动分配给分组失败的根本原因。每个都有 AI 读取的描述，以决定何时适用。重命名、重新着色或重新排序它们，添加您自己的，或删除您不使用的；删除一个会使其模式没有根本原因。",
     "rootCauseDescription": "## 描述\nAI 读取此描述以决定根本原因何时适用于失败模式，因此请描述指向它的证据。",
-    "projectRiskSettings": "## 风险评分设置\n每个测试用例根据其失败历史、不稳定性、陈旧程度、关联需求优先级和关联缺陷获得 0-100 的风险分数——确定性的，无 AI 调用。分数在结果到达后和每日扫描中刷新。**组件权重**设置每个信号相对于其他信号的重要程度；设为零可移除一个组件。**重新计算所有分数**立即对整个项目重新评分，而不是等待每日扫描。"
+    "projectRiskSettings": "## 风险评分设置\n每个测试用例根据其失败历史、不稳定性、陈旧程度、关联需求优先级和关联缺陷获得 0-100 的风险分数——确定性的，无 AI 调用。分数在结果到达后和每日扫描中刷新。**组件权重**设置每个信号相对于其他信号的重要程度；设为零可移除一个组件。**重新计算所有分数**立即对整个项目重新评分，而不是等待每日扫描。",
+    "reviewRevert": "## 恢复审核决定\n审核人从做出决定起有多长时间可以撤销他们记录的决定。恢复将请求返回到审核人的队列中；如果批准已将该项目向前推进，该项目会回到之前的位置。系统管理员不受此限制的约束，可以恢复任何时间的决定。项目可以在其高级设置中缩短此限制，但永远无法延长。"
   },
   "reports": {
     "ui": {

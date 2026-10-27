@@ -2294,6 +2294,23 @@
           "save": "Enregistrer les paramètres de nettoyage",
           "savedToast": "Nettoyage de l'automatisation abandonnée mis à jour pour ce projet",
           "saveError": "Échec de la mise à jour du nettoyage de l'automatisation abandonnée"
+        },
+        "revertWindow": {
+          "label": "Annulation des décisions de révision",
+          "description": "Durée pendant laquelle un relecteur peut annuler sa propre décision sur ce projet. Les administrateurs système ne sont pas liés par cette limite.",
+          "systemLockedTitle": "L'annulation est désactivée dans l'ensemble du système",
+          "systemLockedDescription": "Un administrateur a désactivé l'annulation des décisions de révision pour tous les projets. Ce paramètre ne peut pas être modifié ici.",
+          "modeInheritMinutes": "Hériter du paramètre par défaut du système ({minutes, plural, one {# minute} other {# minutes}})",
+          "modeDisable": "Désactiver l'annulation pour ce projet",
+          "modeCustom": "Fenêtre personnalisée",
+          "minutesBefore": "Limite",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Minutes pendant lesquelles une décision peut être annulée",
+          "systemMaxHint": "Durée maximale du système : {minutes} minutes",
+          "invalidMinutes": "Saisissez un nombre de minutes supérieur à zéro",
+          "save": "Enregistrer la limite d'annulation",
+          "savedToast": "Limite d'annulation enregistrée.",
+          "saveError": "Impossible d'enregistrer la limite d'annulation. Veuillez réessayer dans quelques instants."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Alertes",
             "description": "Une alerte à laquelle vous êtes abonné se déclenche parce qu'une métrique de test a dépassé la ligne qu'elle surveille."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Décision de révision annulée",
+            "description": "Un relecteur annule une décision sur une demande que vous avez faite, la remettant dans sa file d'attente."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "Tous les types d'entités",
       "filterEntityTypeCase": "cas de test",
       "filterEntityTypeRun": "essais",
-      "filterAllProjects": "Tous les projets"
+      "filterAllProjects": "Tous les projets",
+      "actionRevert": "Annuler la décision",
+      "revertedBadge": "Annulée",
+      "revertedBadgeTooltip": "{count, plural, one {Annulée une fois auparavant} other {Annulée # fois auparavant}}"
     },
     "requester": {
       "openButton": "Demande d'avis",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "Cette évaluation est déjà décidée.",
       "decideError": "Impossible d'enregistrer votre décision. Veuillez réessayer dans un instant.",
       "panelSummary": "Demande de révision de {requesterName}: transition vers {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Annuler la décision",
+      "description": "Cette révision revient à l'attente de votre décision, et le demandeur est notifié. Le commentaire que vous avez laissé reste dans le fil de discussion.",
+      "descriptionApproved": "Cette révision revient à l'attente de votre décision et l'élément revient à son état précédent. Le demandeur est notifié.",
+      "error": "Impossible d'annuler la décision. Veuillez réessayer dans un instant.",
+      "errorEntityMoved": "Cet élément a évolué depuis l'approbation, donc l'approbation ne peut plus être annulée.",
+      "errorForbidden": "Seul le relecteur qui a pris cette décision peut l'annuler.",
+      "errorNotRevertable": "Cette décision ne peut plus être annulée.",
+      "errorSuperseded": "Une nouvelle demande de révision existe déjà pour cet élément, donc cette décision ne peut plus être annulée.",
+      "errorWindowExpired": "Le délai d'annulation de cette décision a expiré.",
+      "success": "Décision annulée. La révision attend à nouveau votre décision.",
+      "title": "Annuler votre décision ?",
+      "titleOther": "Annuler cette décision ?",
+      "descriptionOther": "Cette révision revient à l'attente d'une décision, et le demandeur est notifié. Le commentaire du relecteur reste dans le fil de discussion.",
+      "descriptionOtherApproved": "Cette révision revient à l'attente d'une décision et l'élément revient à son état précédent. Le demandeur est notifié.",
+      "successOther": "Décision annulée. La révision attend à nouveau une décision."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, one {jour} other {jours}}",
         "thresholdHelp": "Combien de jours une demande d'évaluation peut-elle rester en attente avant que les évaluateurs ne reçoivent une notification de rappel ? Le délai commence à courir dès la soumission des nouvelles demandes.",
         "thresholdUpdateSuccess": "Paramètres de rappel de révision mis à jour.",
-        "thresholdUpdateError": "Impossible de mettre à jour les paramètres de rappel. Veuillez réessayer dans quelques instants."
+        "thresholdUpdateError": "Impossible de mettre à jour les paramètres de rappel. Veuillez réessayer dans quelques instants.",
+        "revertPolicy": {
+          "label": "Annulation des décisions de révision",
+          "modeAria": "Mode de politique d'annulation",
+          "modeNone": "Les projets décident ({hours}h par défaut)",
+          "modeDisabled": "Annulation désactivée partout",
+          "modeMax": "Autoriser l'annulation jusqu'à",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Nombre maximal de minutes pendant lesquelles une décision peut être annulée",
+          "invalidMinutes": "Saisissez un nombre de minutes supérieur à zéro",
+          "savedToast": "Politique d'annulation enregistrée.",
+          "saveError": "Impossible d'enregistrer la politique d'annulation. Veuillez réessayer dans quelques instants."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Activer/désactiver le flux de travail de révision pour {name}",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "La fonctionnalité de flux de travail de révision est désactivée au niveau du système. Modifiez les paramètres avancés d'un projet ou définissez la variable d'environnement TESTPLANIT_REVIEW_FEATURE_ENABLED pour la réactiver.",
-        "requiresReviewDefaultDisabled": "L'état par défaut du flux de travail ne peut pas nécessiter de révision ; les nouvelles entités arrivent ici sans avoir d'état préalable à contrôler."
+        "requiresReviewDefaultDisabled": "L'état par défaut du flux de travail ne peut pas nécessiter de révision ; les nouvelles entités arrivent ici sans avoir d'état préalable à contrôler.",
+        "requiresReviewLabel": "Nécessite une révision"
       },
       "add": {
         "button": "Ajouter un flux de travail",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "Le changement d'audit non traité le plus ancien a {minutes, plural, one {# minute} other {# minutes}} (seuil {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# compte est} other {# comptes sont}} verrouillé après des tentatives de connexion échouées (seuil {threshold}).",
           "NO_AUTOMATED_RESULTS": "Aucun résultat automatisé n'est arrivé depuis {hours, plural, one {# heure} other {# heures}} (seuil {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "ont annulé leur décision sur",
+        "reviewDecisionRevertedEmailMessage": "{actorName} a annulé sa décision sur {entityLabel} \"{entityName}\" dans le projet \"{projectName}\" — elle est en attente de révision à nouveau.",
+        "reviewDecisionRevertedTitle": "Décision de révision annulée",
+        "reviewDecisionRevertedActionOther": "a annulé la décision de {deciderName} sur",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} a annulé la décision de {deciderName} sur {entityLabel} \"{entityName}\" dans le projet \"{projectName}\" — elle est en attente de révision à nouveau."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## Cas de test en quarantaine\nUn cas de test en quarantaine continue de s'exécuter et d'enregistrer les résultats, mais ses défaillances sont exclues de l'échec/succès de l'exécution et affichées comme un décompte séparé. Mettez en quarantaine un cas à partir d'un modèle d'échec pendant que la cause est en cours de correction. La quarantaine se lève automatiquement une fois que le cas a réussi le nombre de fois d'affilée défini dans les paramètres des modèles d'échec, sauf s'il a été marqué pour être libéré à la main ; libérez-le ici ou à partir du modèle à tout moment.",
     "rootCauses": "## Causes premières\nLes causes premières que les modèles d'échec attribuent aux défaillances groupées, par IA ou à la main. Chacune a une description que l'IA lit pour décider quand elle s'applique. Renommez, recoloriez ou réorganisez-les, ajoutez les vôtres, ou supprimez celles que vous n'utilisez pas ; supprimer une cause laisse ses modèles sans cause première.",
     "rootCauseDescription": "## Description\nL'IA lit cette description pour décider quand la cause première s'applique à un modèle d'échec, décrivez donc les preuves qui la soutiennent.",
-    "projectRiskSettings": "## Paramètres d'évaluation des risques\nChaque cas de test reçoit un score de risque de 0 à 100 basé sur son historique d'échecs, sa flakiness, son ancienneté, la criticité des exigences liées et les défauts liés — déterministe, aucun appel à l'IA. Les scores se mettent à jour après l'arrivée des résultats et lors d'un balayage nocturne. **Poids des composants** définissent le poids de chaque signal par rapport aux autres ; zéro supprime un composant. **Recalculer tous les scores** réévalue le projet entier maintenant au lieu d'attendre le balayage nocturne."
+    "projectRiskSettings": "## Paramètres d'évaluation des risques\nChaque cas de test reçoit un score de risque de 0 à 100 basé sur son historique d'échecs, sa flakiness, son ancienneté, la criticité des exigences liées et les défauts liés — déterministe, aucun appel à l'IA. Les scores se mettent à jour après l'arrivée des résultats et lors d'un balayage nocturne. **Poids des composants** définissent le poids de chaque signal par rapport aux autres ; zéro supprime un composant. **Recalculer tous les scores** réévalue le projet entier maintenant au lieu d'attendre le balayage nocturne.",
+    "reviewRevert": "## Annulation des décisions de révision\nDurée pendant laquelle un relecteur peut annuler une décision qu'il a enregistrée, mesurée à partir du moment où il a décidé. L'annulation remet la demande dans la file d'attente du relecteur ; si une approbation avait déjà fait avancer l'élément, celui-ci revient à son état antérieur. Les administrateurs système ne sont pas liés par cette limite et peuvent annuler une décision de tout âge. Les projets peuvent réduire la limite dans leurs paramètres Avancés, mais jamais l'augmenter."
   },
   "reports": {
     "ui": {

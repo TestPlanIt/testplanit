@@ -2294,6 +2294,23 @@
           "save": "Bereinigungseinstellungen speichern",
           "savedToast": "Bereinigung verwaister Automatisierungen für dieses Projekt aktualisiert",
           "saveError": "Bereinigung verwaister Automatisierungen konnte nicht aktualisiert werden"
+        },
+        "revertWindow": {
+          "label": "Überprüfungsentscheidungen rückgängig machen",
+          "description": "Wie lange ein Reviewer seine eigene Entscheidung für dieses Projekt rückgängig machen kann. Systemadministratoren sind nicht an diese Beschränkung gebunden.",
+          "systemLockedTitle": "Rückgängigmachen ist systemweit deaktiviert",
+          "systemLockedDescription": "Ein Administrator hat das Rückgängigmachen von Überprüfungsentscheidungen für alle Projekte deaktiviert. Diese Einstellung kann hier nicht geändert werden.",
+          "modeInheritMinutes": "Systemstandard übernehmen ({minutes, plural, one {# Minute} other {# Minuten}})",
+          "modeDisable": "Rückgängigmachen für dieses Projekt deaktivieren",
+          "modeCustom": "Benutzerdefiniertes Fenster",
+          "minutesBefore": "Begrenzung",
+          "minutesUnit": "{minutes, plural, one {Minute} other {Minuten}}",
+          "minutesAriaLabel": "Minuten, in denen eine Entscheidung rückgängig gemacht werden kann",
+          "systemMaxHint": "Systemmaximum: {minutes} Minuten",
+          "invalidMinutes": "Geben Sie eine Anzahl von Minuten größer als null ein",
+          "save": "Rückgängigmachen-Limit speichern",
+          "savedToast": "Rückgängigmachen-Limit gespeichert.",
+          "saveError": "Das Rückgängigmachen-Limit konnte nicht gespeichert werden. Bitte versuchen Sie es in Kürze erneut."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Warnmeldungen",
             "description": "Eine Warnmeldung, die Sie abonniert haben, wird ausgelöst, weil eine Testkennzahl die Grenze überschreitet, die sie überwacht."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Überprüfungsentscheidung rückgängig gemacht",
+            "description": "Ein Reviewer macht eine Entscheidung bei einer von Ihnen eingereichten Anfrage rückgängig und setzt sie zurück in seine Warteschlange."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "Alle Entitätstypen",
       "filterEntityTypeCase": "Testfälle",
       "filterEntityTypeRun": "Testläufe",
-      "filterAllProjects": "Alle Projekte"
+      "filterAllProjects": "Alle Projekte",
+      "actionRevert": "Entscheidung rückgängig machen",
+      "revertedBadge": "Rückgängig gemacht",
+      "revertedBadgeTooltip": "{count, plural, one {Einmal zuvor rückgängig gemacht} other {# Mal zuvor rückgängig gemacht}}"
     },
     "requester": {
       "openButton": "Überprüfung anfordern",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "Diese Rezension ist bereits entschieden.",
       "decideError": "Ihre Entscheidung konnte nicht gespeichert werden. Bitte versuchen Sie es in Kürze erneut.",
       "panelSummary": "Überprüfungsanfrage von {requesterName}: Übergang zu {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Entscheidung rückgängig machen",
+      "description": "Diese Überprüfung wartet wieder auf Ihre Entscheidung, und der Anfragsteller wird benachrichtigt. Der Kommentar, den Sie hinterlassen haben, bleibt im Thread.",
+      "descriptionApproved": "Diese Überprüfung wartet wieder auf Ihre Entscheidung und der Artikel kehrt in seinen vorherigen Zustand zurück. Der Anfragsteller wird benachrichtigt.",
+      "error": "Die Entscheidung konnte nicht rückgängig gemacht werden. Bitte versuchen Sie es in Kürze erneut.",
+      "errorEntityMoved": "Dieses Element hat sich seit der Genehmigung weiterentwickelt, daher kann die Genehmigung nicht mehr rückgängig gemacht werden.",
+      "errorForbidden": "Nur der Reviewer, der diese Entscheidung getroffen hat, kann sie rückgängig machen.",
+      "errorNotRevertable": "Diese Entscheidung kann nicht mehr rückgängig gemacht werden.",
+      "errorSuperseded": "Eine neuere Überprüfungsanfrage für dieses Element existiert bereits, daher kann diese Entscheidung nicht mehr rückgängig gemacht werden.",
+      "errorWindowExpired": "Die Frist für das Rückgängigmachen dieser Entscheidung ist abgelaufen.",
+      "success": "Entscheidung rückgängig gemacht. Die Überprüfung wartet wieder auf Ihre Entscheidung.",
+      "title": "Ihre Entscheidung rückgängig machen?",
+      "titleOther": "Diese Entscheidung rückgängig machen?",
+      "descriptionOther": "Diese Überprüfung wartet wieder auf eine Entscheidung, und der Anfragsteller wird benachrichtigt. Der Kommentar des Reviewers bleibt im Thread.",
+      "descriptionOtherApproved": "Diese Überprüfung wartet wieder auf eine Entscheidung und der Artikel kehrt in seinen vorherigen Zustand zurück. Der Anfragsteller wird benachrichtigt.",
+      "successOther": "Entscheidung rückgängig gemacht. Die Überprüfung wartet wieder auf eine Entscheidung."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, one {Tag} other {Tage}}",
         "thresholdHelp": "Wie viele Tage kann eine Überprüfungsanfrage ausstehen, bevor die Prüfer eine Erinnerungsbenachrichtigung erhalten? Die Frist für neue Anfragen beginnt mit der Einreichung.",
         "thresholdUpdateSuccess": "Überprüfungserinnerungseinstellungen aktualisiert.",
-        "thresholdUpdateError": "Die Aktualisierung der Erinnerungseinstellungen ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut."
+        "thresholdUpdateError": "Die Aktualisierung der Erinnerungseinstellungen ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut.",
+        "revertPolicy": {
+          "label": "Überprüfungsentscheidungen rückgängig machen",
+          "modeAria": "Rückgängigmachen-Richtlinienmodus",
+          "modeNone": "Projekte entscheiden ({hours}h standardmäßig)",
+          "modeDisabled": "Rückgängigmachen überall deaktiviert",
+          "modeMax": "Rückgängigmachen erlauben für bis zu",
+          "minutesUnit": "{minutes, plural, one {Minute} other {Minuten}}",
+          "minutesAriaLabel": "Maximale Minuten, in denen eine Entscheidung rückgängig gemacht werden kann",
+          "invalidMinutes": "Geben Sie eine Anzahl von Minuten größer als null ein",
+          "savedToast": "Rückgängigmachen-Richtlinie gespeichert.",
+          "saveError": "Die Rückgängigmachen-Richtlinie konnte nicht gespeichert werden. Bitte versuchen Sie es in Kürze erneut."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Prüfworkflow für {name} umschalten",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "Die Funktion für den Überprüfungsworkflow ist systemweit deaktiviert. Um sie wieder zu aktivieren, ändern Sie die erweiterten Projekteinstellungen oder setzen Sie TESTPLANIT_REVIEW_FEATURE_ENABLED.",
-        "requiresReviewDefaultDisabled": "Der Standard-Workflow-Status darf keine Überprüfung erfordern – neue Entitäten landen hier und haben keinen vorherigen Status, der geprüft werden muss."
+        "requiresReviewDefaultDisabled": "Der Standard-Workflow-Status darf keine Überprüfung erfordern – neue Entitäten landen hier und haben keinen vorherigen Status, der geprüft werden muss.",
+        "requiresReviewLabel": "Überprüfung erforderlich"
       },
       "add": {
         "button": "Workflow hinzufügen",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "Die älteste unverarbeitete Audit-Änderung ist {minutes, plural, one {# Minute} other {# Minuten}} alt (Schwelle {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# Konto ist} other {# Konten sind}} nach fehlgeschlagenen Anmeldeversuchen gesperrt (Schwelle {threshold}).",
           "NO_AUTOMATED_RESULTS": "Kein automatisiertes Ergebnis ist seit {hours, plural, one {# Stunde} other {# Stunden}} angekommen (Schwelle {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "ihre Entscheidung zu rückgängig gemacht",
+        "reviewDecisionRevertedEmailMessage": "{actorName} machte ihre Entscheidung zu {entityLabel} \"{entityName}\" im Projekt \"{projectName}\" rückgängig — es wartet wieder auf Überprüfung.",
+        "reviewDecisionRevertedTitle": "Überprüfungsentscheidung rückgängig gemacht",
+        "reviewDecisionRevertedActionOther": "machte {deciderName}s Entscheidung rückgängig zu",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} machte {deciderName}s Entscheidung zu {entityLabel} \"{entityName}\" im Projekt \"{projectName}\" rückgängig — es wartet wieder auf Überprüfung"
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## Unter Quarantäne stehende Testfälle\nEin unter Quarantäne stehender Testfall führt weiter aus und zeichnet Ergebnisse auf, aber dessen Fehler werden von der Ausführung Pass/Fail ausgeschlossen und als separate Anzahl angezeigt. Stellen Sie einen Testfall unter Quarantäne, während die Grundursache behoben wird. Die Quarantäne wird automatisch aufgehoben, wenn der Testfall so oft erfolgreich ist, wie in den Einstellungen für Fehlermuster angegeben, sofern nicht markiert, dass er von Hand freigegeben werden soll; geben Sie ihn hier oder vom Muster jederzeit frei.",
     "rootCauses": "## Grundursachen\nDie Grundursachen, die Fehlermuster KI oder von Hand zuweisen. Jede hat eine Beschreibung, die die KI liest, um zu entscheiden, wann sie angewendet wird. Benennen Sie sie um, färben Sie sie neu, ordnen Sie sie neu an, fügen Sie eigene hinzu, oder löschen Sie die, die Sie nicht verwenden; das Löschen hinterlässt die Muster ohne Grundursache.",
     "rootCauseDescription": "## Beschreibung\nDie KI liest diese Beschreibung, um zu entscheiden, wann die Grundursache auf ein Fehlermuster angewendet wird. Beschreiben Sie also die Beweise, die darauf hinweisen.",
-    "projectRiskSettings": "## Einstellungen für Risikobewertung\nJeder Testfall erhält einen Risikoscore von 0-100 aus seiner Fehlerhistorie, Instabilität, Überalterung, verknüpfter Anforderungskritikalität und verknüpften Mängeln — deterministisch, keine KI-Aufrufe. Scores werden nach Eintreffen von Ergebnissen und bei einer nächtlichen Bereinigung aktualisiert. **Kompontengewichte** bestimmen, wie viel jedes Signal relativ zu den anderen zählt; Null entfernt eine Komponente. **Alle Scores neu berechnen** bewertet das gesamte Projekt sofort neu, anstatt auf die nächtliche Bereinigung zu warten."
+    "projectRiskSettings": "## Einstellungen für Risikobewertung\nJeder Testfall erhält einen Risikoscore von 0-100 aus seiner Fehlerhistorie, Instabilität, Überalterung, verknüpfter Anforderungskritikalität und verknüpften Mängeln — deterministisch, keine KI-Aufrufe. Scores werden nach Eintreffen von Ergebnissen und bei einer nächtlichen Bereinigung aktualisiert. **Kompontengewichte** bestimmen, wie viel jedes Signal relativ zu den anderen zählt; Null entfernt eine Komponente. **Alle Scores neu berechnen** bewertet das gesamte Projekt sofort neu, anstatt auf die nächtliche Bereinigung zu warten.",
+    "reviewRevert": "## Überprüfungsentscheidungen rückgängig machen\nWie lange ein Reviewer eine von ihm aufgezeichnete Entscheidung rückgängig machen kann, gemessen ab dem Zeitpunkt seiner Entscheidung. Das Rückgängigmachen sendet die Anfrage zurück in die Warteschlange des Reviewers; wenn eine Genehmigung das Element bereits weitergeleitet hatte, geht das Element an seinen vorherigen Ort zurück. Systemadministratoren sind nicht an diese Beschränkung gebunden und können eine Entscheidung jeden Alters rückgängig machen. Projekte können die Frist in ihren erweiterten Einstellungen verkürzen, sie aber nie verlängern."
   },
   "reports": {
     "ui": {

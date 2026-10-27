@@ -2294,6 +2294,23 @@
           "save": "儲存清理設定",
           "savedToast": "此專案的廢棄自動化清理已更新",
           "saveError": "更新廢棄自動化清理失敗"
+        },
+        "revertWindow": {
+          "label": "復審決定的撤銷",
+          "description": "審查者在此項目上撤銷自己決定的時間長度。系統管理員不受此限制的約束。",
+          "systemLockedTitle": "系統範圍內已停用撤銷功能",
+          "systemLockedDescription": "管理員已為每個項目關閉復審決定的撤銷功能。無法在此處變更此設定。",
+          "modeInheritMinutes": "繼承系統預設值（{minutes, plural, other {# 分鐘}}）",
+          "modeDisable": "停用此項目的決定撤銷功能",
+          "modeCustom": "自訂視窗",
+          "minutesBefore": "限制",
+          "minutesUnit": "{minutes, plural, other {分鐘}}",
+          "minutesAriaLabel": "決定可撤銷的分鐘數",
+          "systemMaxHint": "系統最大值：{minutes} 分鐘",
+          "invalidMinutes": "請輸入大於零的分鐘數",
+          "save": "儲存撤銷限制",
+          "savedToast": "撤銷限制已儲存。",
+          "saveError": "無法儲存撤銷限制。請稍後再試。"
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "警報",
             "description": "您訂閱的警報因為測試指標超過其監視的線條而觸發。"
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "復審決定已撤銷",
+            "description": "審查者撤銷您提出之請求上的決定，將其放回其佇列。"
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "所有實體類型",
       "filterEntityTypeCase": "測試用例",
       "filterEntityTypeRun": "測試運行",
-      "filterAllProjects": "所有項目"
+      "filterAllProjects": "所有項目",
+      "actionRevert": "撤銷決定",
+      "revertedBadge": "已撤銷",
+      "revertedBadgeTooltip": "{count, plural, other {之前撤銷了 # 次}}"
     },
     "requester": {
       "openButton": "請求審核",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "本次審查結果已確定。",
       "decideError": "無法記錄您的決定。請稍後再試。",
       "panelSummary": "來自 {requesterName}的審核請求：過渡到 {targetStateName}"
+    },
+    "revert": {
+      "confirm": "撤銷決定",
+      "description": "此審核回到等待您的決定，並通知提出者。您留下的評論保留在討論中。",
+      "descriptionApproved": "此審核回到等待您的決定，項目返回到先前狀態。並通知提出者。",
+      "error": "無法撤銷決定。請稍後再試。",
+      "errorEntityMoved": "自核准以來，此項目已有所變動，因此核准無法再被撤銷。",
+      "errorForbidden": "只有做出此決定的審查者才能撤銷它。",
+      "errorNotRevertable": "此決定無法再被撤銷。",
+      "errorSuperseded": "此項目已存在較新的審核請求，因此此決定無法再被撤銷。",
+      "errorWindowExpired": "撤銷此決定的時間限制已過期。",
+      "success": "決定已撤銷。審核再次等待您的決定。",
+      "title": "撤銷您的決定？",
+      "titleOther": "撤銷此決定？",
+      "descriptionOther": "此審核回到等待決定，並通知提出者。審查者的評論保留在討論中。",
+      "descriptionOtherApproved": "此審核回到等待決定，項目返回到先前狀態。並通知提出者。",
+      "successOther": "決定已撤銷。審核再次等待決定。"
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, other {天}}",
         "thresholdHelp": "審核請求最多可以保留多少天才會向審核員發送提醒通知？新請求從提交之日起開始計時。",
         "thresholdUpdateSuccess": "查看提醒設定是否已更新。",
-        "thresholdUpdateError": "更新提醒設定失敗，請稍後再試。"
+        "thresholdUpdateError": "更新提醒設定失敗，請稍後再試。",
+        "revertPolicy": {
+          "label": "復審決定的撤銷",
+          "modeAria": "撤銷策略模式",
+          "modeNone": "由項目決定（預設 {hours}h）",
+          "modeDisabled": "在所有地方都停用撤銷",
+          "modeMax": "允許撤銷長達",
+          "minutesUnit": "{minutes, plural, other {分鐘}}",
+          "minutesAriaLabel": "決定可撤銷的最大分鐘數",
+          "invalidMinutes": "請輸入大於零的分鐘數",
+          "savedToast": "撤銷策略已儲存。",
+          "saveError": "無法儲存撤銷策略。請稍後再試。"
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "切換 {name} 的審核工作流程",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "系統級已停用審閱工作流程功能。請切換專案的「進階設定」或設定 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新啟用此功能。",
-        "requiresReviewDefaultDisabled": "預設工作流程狀態不需要審核－新實體進入此狀態，且沒有先前的狀態需要控制。"
+        "requiresReviewDefaultDisabled": "預設工作流程狀態不需要審核－新實體進入此狀態，且沒有先前的狀態需要控制。",
+        "requiresReviewLabel": "需要審核"
       },
       "add": {
         "button": "新增工作流程",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "最舊的未處理稽核變更已 {minutes, plural, other {# 分鐘}}（閾值 {threshold}）。",
           "ACCOUNT_LOCKOUTS": "{locked, plural, other {# 個帳戶}} 在登入失敗後被鎖定（閾值 {threshold}）。",
           "NO_AUTOMATED_RESULTS": "過去 {hours, plural, other {# 小時}} 內未收到自動結果（閾值 {threshold}）。"
-        }
+        },
+        "reviewDecisionRevertedAction": "撤銷他們對的決定",
+        "reviewDecisionRevertedEmailMessage": "{actorName} 撤銷了他們在項目「{projectName}」中對 {entityLabel}「{entityName}」的決定——它正在等待審核。",
+        "reviewDecisionRevertedTitle": "復審決定已撤銷",
+        "reviewDecisionRevertedActionOther": "撤銷了 {deciderName} 對的決定",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} 撤銷了 {deciderName} 在項目「{projectName}」中對 {entityLabel}「{entityName}」的決定——它正在等待審核。"
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## 隔離的測試案例\n隔離的測試案例會繼續執行和記錄結果，但其故障被排除在執行通過/失敗之外，並顯示為單獨的計數。當原因被修復時，從故障模式隔離一個案例。隔離會自動解除，一旦該案例按照故障模式設定中設定的次數連續通過，除非它被標記為手動發佈；在此處或從模式發佈，無論何時。",
     "rootCauses": "## 根本原因\n故障模式分配給分組故障的根本原因，由 AI 或手動分配。每個都有 AI 讀取以決定何時適用的描述。重新命名、重新著色或重新排序它們、新增您自己的，或刪除您不使用的；刪除一個會留下其模式沒有根本原因。",
     "rootCauseDescription": "## 描述\nAI 讀取此描述以決定根本原因何時適用於故障模式，因此請描述指向它的證據。",
-    "projectRiskSettings": "## 風險評分設定\n每個測試用例根據其失敗歷史、不穩定性、陳舊度、關聯需求優先級和關聯缺陷獲得 0-100 風險分數 — 確定性，無 AI 呼叫。分數在結果到達後和每晚掃描時重新整理。**元件權重**設定每個訊號相對於其他訊號的計數方式；零表示移除元件。**重新計算所有分數**立即重新評分整個專案，而不是等待每晚掃描。"
+    "projectRiskSettings": "## 風險評分設定\n每個測試用例根據其失敗歷史、不穩定性、陳舊度、關聯需求優先級和關聯缺陷獲得 0-100 風險分數 — 確定性，無 AI 呼叫。分數在結果到達後和每晚掃描時重新整理。**元件權重**設定每個訊號相對於其他訊號的計數方式；零表示移除元件。**重新計算所有分數**立即重新評分整個專案，而不是等待每晚掃描。",
+    "reviewRevert": "## 復審決定的撤銷\n審查者撤銷他們所記錄決定的時間長度，從他們做出決定時起算。撤銷會將請求返回給審查者的佇列；如果核准已將項目向前移動，該項目會回到原處。系統管理員不受此限制的約束，可以撤銷任何時期的決定。項目可以在其進階設定中縮短限制，但不能延長。"
   },
   "reports": {
     "ui": {

@@ -2294,6 +2294,23 @@
           "save": "Lưu cài đặt dọn dẹp",
           "savedToast": "Đã cập nhật dọn dẹp tự động hóa bị bỏ dở cho dự án này",
           "saveError": "Không thể cập nhật dọn dẹp tự động hóa bị bỏ dở"
+        },
+        "revertWindow": {
+          "label": "Hoàn tác quyết định xem xét",
+          "description": "Khoảng thời gian một người xem xét phải hoàn tác quyết định của riêng họ trên dự án này. Quản trị viên hệ thống không bị ràng buộc bởi giới hạn này.",
+          "systemLockedTitle": "Hoàn tác đã bị vô hiệu hóa trên toàn hệ thống",
+          "systemLockedDescription": "Một quản trị viên đã tắt tính năng hoàn tác quyết định xem xét cho mọi dự án. Không thể thay đổi cài đặt này tại đây.",
+          "modeInheritMinutes": "Kế thừa mặc định hệ thống ({minutes, plural, other {# phút}})",
+          "modeDisable": "Vô hiệu hóa hoàn tác cho dự án này",
+          "modeCustom": "Cửa sổ tùy chỉnh",
+          "minutesBefore": "Giới hạn",
+          "minutesUnit": "{minutes, plural, other {phút}}",
+          "minutesAriaLabel": "Số phút một quyết định có thể hoàn tác",
+          "systemMaxHint": "Thời gian tối đa của hệ thống: {minutes} phút",
+          "invalidMinutes": "Nhập số phút lớn hơn không",
+          "save": "Lưu giới hạn hoàn tác",
+          "savedToast": "Giới hạn hoàn tác đã được lưu.",
+          "saveError": "Không thể lưu giới hạn hoàn tác. Vui lòng thử lại sau."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Cảnh báo",
             "description": "Một cảnh báo bạn được đăng ký kích hoạt vì số liệu kiểm tra vượt qua dòng nó theo dõi."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Quyết định xem xét đã được hoàn tác",
+            "description": "Một người xem xét hoàn tác quyết định trên yêu cầu bạn đã tạo, đưa nó trở lại hàng đợi của họ."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "Tất cả các loại thực thể",
       "filterEntityTypeCase": "Các trường hợp thử nghiệm",
       "filterEntityTypeRun": "Chạy thử nghiệm",
-      "filterAllProjects": "Tất cả các dự án"
+      "filterAllProjects": "Tất cả các dự án",
+      "actionRevert": "Hoàn tác quyết định",
+      "revertedBadge": "Đã hoàn tác",
+      "revertedBadgeTooltip": "{count, plural, other {Đã hoàn tác # lần trước}}"
     },
     "requester": {
       "openButton": "Yêu cầu xem xét",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "Quyết định về việc xem xét này đã được đưa ra.",
       "decideError": "Không thể ghi nhận quyết định của bạn. Vui lòng thử lại sau.",
       "panelSummary": "Yêu cầu xem xét từ {requesterName}: chuyển sang {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Hoàn tác quyết định",
+      "description": "Xem xét này quay trở lại trạng thái chờ quyết định của bạn, và người yêu cầu được thông báo. Bình luận bạn để lại vẫn còn trong luồng.",
+      "descriptionApproved": "Xem xét này quay trở lại trạng thái chờ quyết định và mục trở về trạng thái trước đó của nó. Người yêu cầu được thông báo.",
+      "error": "Không thể hoàn tác quyết định. Vui lòng thử lại sau.",
+      "errorEntityMoved": "Mục này đã thay đổi kể từ khi phê duyệt, vì vậy phê duyệt không thể còn được hoàn tác.",
+      "errorForbidden": "Chỉ người xem xét đã đưa ra quyết định này mới có thể hoàn tác nó.",
+      "errorNotRevertable": "Quyết định này không còn có thể hoàn tác được.",
+      "errorSuperseded": "Một yêu cầu xem xét mới hơn đã tồn tại cho mục này, vì vậy quyết định này không thể còn được hoàn tác.",
+      "errorWindowExpired": "Thời gian giới hạn để hoàn tác quyết định này đã hết.",
+      "success": "Quyết định đã được hoàn tác. Xem xét đang chờ quyết định của bạn lại.",
+      "title": "Hoàn tác quyết định của bạn?",
+      "titleOther": "Hoàn tác quyết định này?",
+      "descriptionOther": "Xem xét này quay trở lại trạng thái chờ quyết định, và người yêu cầu được thông báo. Bình luận của người xem xét vẫn còn trong luồng.",
+      "descriptionOtherApproved": "Xem xét này quay trở lại trạng thái chờ quyết định và mục trở về trạng thái trước đó của nó. Người yêu cầu được thông báo.",
+      "successOther": "Quyết định đã được hoàn tác. Xem xét đang chờ quyết định lại."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, other {ngày}}",
         "thresholdHelp": "Yêu cầu xem xét có thể chờ xử lý bao nhiêu ngày trước khi người đánh giá nhận được thông báo nhắc nhở? Yêu cầu mới bắt đầu tính thời gian từ khi gửi.",
         "thresholdUpdateSuccess": "Cài đặt nhắc nhở xem lại đã được cập nhật.",
-        "thresholdUpdateError": "Không thể cập nhật cài đặt nhắc nhở. Vui lòng thử lại sau."
+        "thresholdUpdateError": "Không thể cập nhật cài đặt nhắc nhở. Vui lòng thử lại sau.",
+        "revertPolicy": {
+          "label": "Hoàn tác quyết định xem xét",
+          "modeAria": "Chế độ chính sách hoàn tác",
+          "modeNone": "Các dự án quyết định ({hours}h theo mặc định)",
+          "modeDisabled": "Hoàn tác bị vô hiệu hóa ở mọi nơi",
+          "modeMax": "Cho phép hoàn tác trong",
+          "minutesUnit": "{minutes, plural, other {phút}}",
+          "minutesAriaLabel": "Số phút tối đa một quyết định có thể hoàn tác",
+          "invalidMinutes": "Nhập số phút lớn hơn không",
+          "savedToast": "Chính sách hoàn tác đã được lưu.",
+          "saveError": "Không thể lưu chính sách hoàn tác. Vui lòng thử lại sau."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Bật/tắt quy trình xem xét cho {name}",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "Tính năng quy trình xem xét đã bị vô hiệu hóa ở cấp độ hệ thống. Hãy bật/tắt cài đặt Nâng cao của dự án hoặc đặt TESTPLANIT_REVIEW_FEATURE_ENABLED để kích hoạt lại.",
-        "requiresReviewDefaultDisabled": "Trạng thái quy trình làm việc mặc định không thể yêu cầu xem xét — các thực thể mới được đưa vào đây và không có trạng thái trước đó để được kiểm soát."
+        "requiresReviewDefaultDisabled": "Trạng thái quy trình làm việc mặc định không thể yêu cầu xem xét — các thực thể mới được đưa vào đây và không có trạng thái trước đó để được kiểm soát.",
+        "requiresReviewLabel": "Cần xem xét"
       },
       "add": {
         "button": "Thêm quy trình làm việc",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "Thay đổi kiểm toán chưa xử lý cũ nhất là {minutes, plural, one {# phút} other {# phút}} tuổi (ngưỡng {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# tài khoản là} other {# tài khoản là}} bị khóa sau các lần đăng nhập thất bại (ngưỡng {threshold}).",
           "NO_AUTOMATED_RESULTS": "Không có kết quả tự động nào trong {hours, plural, one {# giờ} other {# giờ}} (ngưỡng {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "đã hoàn tác quyết định của họ trên",
+        "reviewDecisionRevertedEmailMessage": "{actorName} đã hoàn tác quyết định của họ trên {entityLabel} \"{entityName}\" trong dự án \"{projectName}\" — nó đang chờ xem xét lại.",
+        "reviewDecisionRevertedTitle": "Quyết định xem xét đã được hoàn tác",
+        "reviewDecisionRevertedActionOther": "đã hoàn tác quyết định của {deciderName} trên",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} đã hoàn tác quyết định của {deciderName} trên {entityLabel} \"{entityName}\" trong dự án \"{projectName}\" — nó đang chờ xem xét lại."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## Các trường hợp kiểm thử bị cách ly\nMột trường hợp kiểm thử bị cách ly tiếp tục chạy và ghi lại kết quả, nhưng các lỗi của nó bị loại khỏi quá trình chạy thành công/thất bại và hiển thị là số đếm riêng. Cách ly một trường hợp khỏi mẫu lỗi trong khi nguyên nhân đang được khắc phục. Việc cách ly tự động nâng lên khi trường hợp đã vượt qua số lần liên tiếp được đặt trong cài đặt Các mẫu lỗi, trừ khi nó được đánh dấu để được phát hành bằng tay; phát hành nó ở đây hoặc từ mẫu bất kỳ lúc nào.",
     "rootCauses": "## Nguyên nhân gốc\nCác nguyên nhân gốc mà Các mẫu lỗi gán cho các lỗi được nhóm lại, theo AI hoặc bằng tay. Mỗi cái có mô tả mà AI đọc để quyết định khi nó áp dụng. Đổi tên, tô màu lại hoặc sắp xếp lại chúng, thêm của riêng bạn, hoặc xóa những cái bạn không sử dụng; việc xóa một cái sẽ để lại các mẫu của nó mà không có nguyên nhân gốc.",
     "rootCauseDescription": "## Mô tả\nAI đọc mô tả này để quyết định khi nào nguyên nhân gốc áp dụng cho mẫu lỗi, vì vậy hãy mô tả bằng chứng chỉ vào nó.",
-    "projectRiskSettings": "## Cài đặt Xếp hạng Rủi ro\nMỗi trường hợp kiểm tra nhận được điểm rủi ro từ 0-100 từ lịch sử lỗi, độ không ổn định, tính lỗi thời, tính chất quan trọng của yêu cầu liên kết và lỗi liên kết — xác định, không có lệnh gọi AI. Điểm được làm mới sau khi kết quả đến và trong quét ban đêm. **Trọng lượng thành phần** đặt bao nhiêu mỗi tín hiệu tính, so với các phần khác; không có nghĩa là loại bỏ một thành phần. **Tính toán lại tất cả điểm** sẽ tính lại toàn bộ dự án ngay bây giờ thay vì đợi quét ban đêm."
+    "projectRiskSettings": "## Cài đặt Xếp hạng Rủi ro\nMỗi trường hợp kiểm tra nhận được điểm rủi ro từ 0-100 từ lịch sử lỗi, độ không ổn định, tính lỗi thời, tính chất quan trọng của yêu cầu liên kết và lỗi liên kết — xác định, không có lệnh gọi AI. Điểm được làm mới sau khi kết quả đến và trong quét ban đêm. **Trọng lượng thành phần** đặt bao nhiêu mỗi tín hiệu tính, so với các phần khác; không có nghĩa là loại bỏ một thành phần. **Tính toán lại tất cả điểm** sẽ tính lại toàn bộ dự án ngay bây giờ thay vì đợi quét ban đêm.",
+    "reviewRevert": "## Hoàn tác Quyết định Xem xét\nKhoảng thời gian một người xem xét phải hoàn tác quyết định họ đã ghi lại, tính từ khi họ quyết định. Hoàn tác sẽ trả lại yêu cầu vào hàng đợi của người xem xét; nếu một phê duyệt đã đưa mục tiến lên, mục sẽ quay trở lại nơi nó đã ở. Quản trị viên hệ thống không bị ràng buộc bởi giới hạn này và có thể hoàn tác quyết định ở bất kỳ độ tuổi nào. Các dự án có thể rút ngắn giới hạn trong cài đặt Nâng cao của họ, nhưng không bao giờ kéo dài nó."
   },
   "reports": {
     "ui": {

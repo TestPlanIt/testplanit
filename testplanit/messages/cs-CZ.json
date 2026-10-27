@@ -2294,6 +2294,23 @@
           "save": "Uložit nastavení úklidu",
           "savedToast": "Úklid opuštěné automatizace byl pro tento projekt aktualizován",
           "saveError": "Nepodařilo se aktualizovat úklid opuštěné automatizace"
+        },
+        "revertWindow": {
+          "label": "Vrácení rozhodnutí při kontrole",
+          "description": "Jak dlouho má recenzent čas vrátit své vlastní rozhodnutí v tomto projektu. Správci systému nejsou tímto limitem vázáni.",
+          "systemLockedTitle": "Vrácení je zakázáno v celém systému",
+          "systemLockedDescription": "Správce vypnul vracení rozhodnutí při kontrole pro všechny projekty. Toto nastavení zde nelze změnit.",
+          "modeInheritMinutes": "Zdědit systémový výchozí ({minutes, plural, one {# minuta} few {# minuty} many {# minut} other {# minut}})",
+          "modeDisable": "Zakázat vracení pro tento projekt",
+          "modeCustom": "Vlastní období",
+          "minutesBefore": "Omezení",
+          "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minut}}",
+          "minutesAriaLabel": "Počet minut, kdy zůstane rozhodnutí vrátitelné",
+          "systemMaxHint": "Systémové maximum: {minutes} minut",
+          "invalidMinutes": "Zadejte počet minut větší než nula",
+          "save": "Uložit limit vracení",
+          "savedToast": "Limit vracení uložen.",
+          "saveError": "Nepodařilo se uložit limit vracení. Zkuste to později."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Upozornění",
             "description": "Upozornění, na které jste se přihlásili, se spustí, protože testovací metrika překročila linii, kterou sleduje."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Rozhodnutí při kontrole vráceno",
+            "description": "Recenzent vrátí rozhodnutí týkající se požadavku, který jste vytvořili, a vrátí jej do jejich fronty."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "Všechny typy entit",
       "filterEntityTypeCase": "Testovací případy",
       "filterEntityTypeRun": "Testovací běhy",
-      "filterAllProjects": "Všechny projekty"
+      "filterAllProjects": "Všechny projekty",
+      "actionRevert": "Vrátit rozhodnutí",
+      "revertedBadge": "Vráceno",
+      "revertedBadgeTooltip": "{count, plural, one {Vráceno jednou} few {Vráceno # krát} many {Vráceno # krát} other {Vráceno # krát}}"
     },
     "requester": {
       "openButton": "Vyžádat kontrolu",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "O této kontrole už bylo rozhodnuto.",
       "decideError": "Vaše rozhodnutí se nepodařilo zaznamenat. Zkuste to za chvíli znovu.",
       "panelSummary": "Požadavek na kontrolu od {requesterName}: přechod do stavu {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Vrátit rozhodnutí",
+      "description": "Tato kontrola se vrátí do stavu čekání na vaše rozhodnutí a žadatel je upozorněn. Komentář, který jste zanechal, zůstane ve vlákně.",
+      "descriptionApproved": "Tato kontrola se vrátí do stavu čekání na vaše rozhodnutí a položka se vrátí do svého předchozího stavu. Žadatel je upozorněn.",
+      "error": "Nepodařilo se vrátit rozhodnutí. Zkuste to později.",
+      "errorEntityMoved": "Tato položka se od schválení posunula dál, takže schválení nelze vrátit.",
+      "errorForbidden": "Pouze recenzent, který učinil toto rozhodnutí, jej může vrátit.",
+      "errorNotRevertable": "Toto rozhodnutí nelze již vrátit.",
+      "errorSuperseded": "Pro tuto položku již existuje novější požadavek na kontrolu, takže toto rozhodnutí nelze vrátit.",
+      "errorWindowExpired": "Časový limit pro vrácení tohoto rozhodnutí vypršel.",
+      "success": "Rozhodnutí vráceno. Kontrola opět čeká na vaše rozhodnutí.",
+      "title": "Vrátit vaše rozhodnutí?",
+      "titleOther": "Vrátit toto rozhodnutí?",
+      "descriptionOther": "Tato kontrola se vrátí do stavu čekání na rozhodnutí a žadatel je upozorněn. Komentář recenzenta zůstane ve vlákně.",
+      "descriptionOtherApproved": "Tato kontrola se vrátí do stavu čekání na rozhodnutí a položka se vrátí do svého předchozího stavu. Žadatel je upozorněn.",
+      "successOther": "Rozhodnutí vráceno. Kontrola opět čeká na rozhodnutí."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, one {den} few {dny} many {dne} other {dní}}",
         "thresholdHelp": "Kolik dní může žádost o revizi čekat na vyřízení, než revidenti obdrží připomínkové oznámení. U nových žádostí začíná počítání času okamžikem odeslání.",
         "thresholdUpdateSuccess": "Nastavení připomenutí revize aktualizováno.",
-        "thresholdUpdateError": "Aktualizace nastavení připomenutí se nezdařila. Zkuste to prosím za chvíli znovu."
+        "thresholdUpdateError": "Aktualizace nastavení připomenutí se nezdařila. Zkuste to prosím za chvíli znovu.",
+        "revertPolicy": {
+          "label": "Vrácení rozhodnutí při kontrole",
+          "modeAria": "Režim zásad vracení",
+          "modeNone": "Projekty se rozhodují ({hours}h ve výchozím nastavení)",
+          "modeDisabled": "Vracení je všude zakázáno",
+          "modeMax": "Povolte vracení po dobu až",
+          "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minut}}",
+          "minutesAriaLabel": "Maximální počet minut, kdy zůstane rozhodnutí vrátitelné",
+          "invalidMinutes": "Zadejte počet minut větší než nula",
+          "savedToast": "Zásada vracení uložena.",
+          "saveError": "Nepodařilo se uložit zásadu vracení. Zkuste to později."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Přepnout pracovní postup revize pro {name}",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "Funkce pracovního postupu revize je zakázána na systémové úrovni. Pro opětovné povolení přepněte pokročilé nastavení projektu nebo nastavte proměnnou TESTPLANIT_REVIEW_FEATURE_ENABLED.",
-        "requiresReviewDefaultDisabled": "Výchozí stav pracovního postupu nemůže vyžadovat revizi — nové entity sem přicházejí a nemají žádný předchozí stav, který by bylo možné blokovat."
+        "requiresReviewDefaultDisabled": "Výchozí stav pracovního postupu nemůže vyžadovat revizi — nové entity sem přicházejí a nemají žádný předchozí stav, který by bylo možné blokovat.",
+        "requiresReviewLabel": "Vyžaduje kontrolu"
       },
       "add": {
         "button": "Přidat pracovní postup",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "Nejstarší nezpracovaná změna auditu je stará {minutes, plural, one {# minutu} few {# minuty} many {# minut} other {# minut}} (prahová hodnota {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# účet je} few {# účty jsou} many {# účtů je} other {# účtů je}} uzamčen po neúspěšných přihlášeních (prahová hodnota {threshold}).",
           "NO_AUTOMATED_RESULTS": "Žádný automatizovaný výsledek nebyl přijat za {hours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "vrátili své rozhodnutí na",
+        "reviewDecisionRevertedEmailMessage": "{actorName} vrátili své rozhodnutí na {entityLabel} \"{entityName}\" v projektu \"{projectName}\" — čeká se na kontrolu.",
+        "reviewDecisionRevertedTitle": "Rozhodnutí při kontrole vráceno",
+        "reviewDecisionRevertedActionOther": "vrátili rozhodnutí uživatele {deciderName} na",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} vrátili rozhodnutí uživatele {deciderName} na {entityLabel} \"{entityName}\" v projektu \"{projectName}\" — čeká se na kontrolu."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## Karanténa testovacích případů\nKaranténa testovacího případu pokračuje v běhu a zaznamenávání výsledků, ale její selhání jsou vynechána z průchodu/selhání běhu a zobrazena jako samostatný počet. Karanténu případu z vzoru selhání, zatímco se příčina řeší. Karanténa se sama zvedne, jakmile případ projde několikrát po sobě nastavené v nastavení Failure Patterns, pokud nebyl označen k ručnímu uvolnění; uvolněte jej zde nebo ze vzoru kdykoli.",
     "rootCauses": "## Hlavní příčiny\nHlavní příčiny, které Failure Patterns přiřazuje k seskupeným selháním, automaticky nebo ručně. Každá má popis, který AI čte, aby se rozhodla, kdy se vztahuje. Přejmenujte, překolorujte nebo přeuspořádejte, přidejte své vlastní nebo odstraňte ty, které nepoužíváte; odstranění ponechá její vzory bez hlavní příčiny.",
     "rootCauseDescription": "## Popis\nAI čte tento popis, aby se rozhodla, kdy se hlavní příčina vztahuje na vzor selhání, takže popište důkazy, které na ni ukazují.",
-    "projectRiskSettings": "## Nastavení hodnocení rizika\nKaždý testovací případ dostane skóre rizika 0-100 na základě své historie selhání, nestability, zastarání, kritičnosti propojených požadavků a propojených defektů — deterministické, bez volání umělé inteligence. Skóre se obnovují po příchodu výsledků a během noční prověrky. **Váhy komponent** určují, jak moc se každý signál počítá v poměru k ostatním; nula odstraní komponentu. **Přepočítat všechna skóre** přehodnotí celý projekt nyní místo čekání na noční prověrku."
+    "projectRiskSettings": "## Nastavení hodnocení rizika\nKaždý testovací případ dostane skóre rizika 0-100 na základě své historie selhání, nestability, zastarání, kritičnosti propojených požadavků a propojených defektů — deterministické, bez volání umělé inteligence. Skóre se obnovují po příchodu výsledků a během noční prověrky. **Váhy komponent** určují, jak moc se každý signál počítá v poměru k ostatním; nula odstraní komponentu. **Přepočítat všechna skóre** přehodnotí celý projekt nyní místo čekání na noční prověrku.",
+    "reviewRevert": "## Vrácení rozhodnutí při kontrole\nJak dlouho má recenzent čas vrátit zaznamenané rozhodnutí, měřeno od času, kdy se rozhodl. Vrácení vrátí požadavek do fronty recenzenta; pokud už schválení posunulo položku dál, položka se vrátí na místo, kde byla. Správci systému nejsou tímto limitem vázáni a mohou vrátit rozhodnutí jakéhokoli věku. Projekty mohou limit zkrátit v nastavení Pokročilé, ale nikdy jej nerozšiřují."
   },
   "reports": {
     "ui": {

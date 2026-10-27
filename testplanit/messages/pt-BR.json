@@ -2294,6 +2294,23 @@
           "save": "Salvar configurações de limpeza",
           "savedToast": "Limpeza de automações abandonadas atualizada para este projeto",
           "saveError": "Falha ao atualizar a limpeza de automações abandonadas"
+        },
+        "revertWindow": {
+          "label": "Revertendo decisões de revisão",
+          "description": "Quanto tempo um revisor tem para desfazer sua própria decisão neste projeto. Administradores do sistema não estão vinculados a este limite.",
+          "systemLockedTitle": "A reversão está desativada em todo o sistema",
+          "systemLockedDescription": "Um administrador desativou a reversão de decisões de revisão para todos os projetos. Esta configuração não pode ser alterada aqui.",
+          "modeInheritMinutes": "Herdar padrão do sistema ({minutes, plural, one {# minuto} other {# minutos}})",
+          "modeDisable": "Desative a reversão para este projeto",
+          "modeCustom": "Janela personalizada",
+          "minutesBefore": "Limite",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minutos}}",
+          "minutesAriaLabel": "Minutos em que uma decisão permanece reversível",
+          "systemMaxHint": "Tempo máximo do sistema: {minutes} minutos",
+          "invalidMinutes": "Digite um número de minutos maior que zero",
+          "save": "Salvar limite de reversão",
+          "savedToast": "Limite de reversão salvo.",
+          "saveError": "Não foi possível salvar o limite de reversão. Tente novamente em instantes."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Alertas",
             "description": "Um alerta ao qual você está inscrito dispara porque uma métrica de teste cruzou a linha que ele monitora."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Decisão de revisão revertida",
+            "description": "Um revisor desfaz uma decisão em uma solicitação que você fez, colocando-a novamente em sua fila."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "Todos os tipos de entidade",
       "filterEntityTypeCase": "Casos de teste",
       "filterEntityTypeRun": "Testes de execução",
-      "filterAllProjects": "Todos os projetos"
+      "filterAllProjects": "Todos os projetos",
+      "actionRevert": "Reverter decisão",
+      "revertedBadge": "Revertido",
+      "revertedBadgeTooltip": "{count, plural, one {Revertido uma vez antes} other {Revertido # vezes antes}}"
     },
     "requester": {
       "openButton": "Solicitar revisão",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "Essa avaliação já foi decidida.",
       "decideError": "Não foi possível registrar sua decisão. Tente novamente em instantes.",
       "panelSummary": "Solicitação de revisão de {requesterName}: transição para {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Reverter decisão",
+      "description": "Esta revisão volta a aguardar sua decisão, e o solicitante é notificado. O comentário que você deixou permanece no thread.",
+      "descriptionApproved": "Esta revisão volta a aguardar sua decisão e o item retorna ao seu estado anterior. O solicitante é notificado.",
+      "error": "Não foi possível reverter a decisão. Tente novamente em instantes.",
+      "errorEntityMoved": "Este item evoluiu desde a aprovação, portanto a aprovação não pode mais ser desfeita.",
+      "errorForbidden": "Apenas o revisor que tomou essa decisão pode revertê-la.",
+      "errorNotRevertable": "Esta decisão não pode mais ser revertida.",
+      "errorSuperseded": "Uma nova solicitação de revisão já existe para este item, portanto esta decisão não pode mais ser revertida.",
+      "errorWindowExpired": "O prazo para reverter esta decisão expirou.",
+      "success": "Decisão revertida. A revisão está aguardando sua decisão novamente.",
+      "title": "Reverter sua decisão?",
+      "titleOther": "Reverter esta decisão?",
+      "descriptionOther": "Esta revisão volta a aguardar uma decisão, e o solicitante é notificado. O comentário do revisor permanece no thread.",
+      "descriptionOtherApproved": "Esta revisão volta a aguardar uma decisão e o item retorna ao seu estado anterior. O solicitante é notificado.",
+      "successOther": "Decisão revertida. A revisão está aguardando uma decisão novamente."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, one {dia} other {dias}}",
         "thresholdHelp": "Quantos dias uma solicitação de revisão pode ficar pendente antes que os revisores recebam uma notificação de lembrete? A contagem regressiva para novas solicitações começa no momento do envio.",
         "thresholdUpdateSuccess": "Revisar configurações de lembrete atualizadas.",
-        "thresholdUpdateError": "Falha ao atualizar as configurações de lembrete. Tente novamente em instantes."
+        "thresholdUpdateError": "Falha ao atualizar as configurações de lembrete. Tente novamente em instantes.",
+        "revertPolicy": {
+          "label": "Revertendo decisões de revisão",
+          "modeAria": "Modo de política de reversão",
+          "modeNone": "Os projetos decidem ({hours}h por padrão)",
+          "modeDisabled": "Reversão desativada em todos os lugares",
+          "modeMax": "Permitir reversão por até",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minutos}}",
+          "minutesAriaLabel": "Número máximo de minutos que uma decisão permanece reversível",
+          "invalidMinutes": "Digite um número de minutos maior que zero",
+          "savedToast": "Política de reversão salva.",
+          "saveError": "Não foi possível salvar a política de reversão. Tente novamente em instantes."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Alternar fluxo de trabalho de revisão para {name}",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "O recurso de fluxo de trabalho de revisão está desativado no nível do sistema. Alterne as configurações avançadas de um projeto ou defina TESTPLANIT_REVIEW_FEATURE_ENABLED para reativá-lo.",
-        "requiresReviewDefaultDisabled": "O estado padrão do fluxo de trabalho não pode exigir revisão — novas entidades chegam aqui e não têm um estado anterior para serem verificadas."
+        "requiresReviewDefaultDisabled": "O estado padrão do fluxo de trabalho não pode exigir revisão — novas entidades chegam aqui e não têm um estado anterior para serem verificadas.",
+        "requiresReviewLabel": "Requer revisão"
       },
       "add": {
         "button": "Adicionar fluxo de trabalho",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "A mudança de auditoria não processada mais antiga tem {minutes, plural, one {# minuto} other {# minutos}} (limite {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# conta está} other {# contas estão}} bloqueadas após falhas de entrada (limite {threshold}).",
           "NO_AUTOMATED_RESULTS": "Nenhum resultado automatizado chegou por {hours, plural, one {# hora} other {# horas}} (limite {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "reverteram sua decisão em",
+        "reviewDecisionRevertedEmailMessage": "{actorName} reverteu sua decisão em {entityLabel} \"{entityName}\" no projeto \"{projectName}\" — está aguardando revisão novamente.",
+        "reviewDecisionRevertedTitle": "Decisão de revisão revertida",
+        "reviewDecisionRevertedActionOther": "reverteram a decisão de {deciderName} em",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} reverteu a decisão de {deciderName} em {entityLabel} \"{entityName}\" no projeto \"{projectName}\" — está aguardando revisão novamente."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## Casos de teste em quarentena\nUm caso de teste em quarentena continua executando e registrando resultados, mas suas falhas são deixadas de fora do pass/fail da execução e mostradas como uma contagem separada. Coloque em quarentena um caso enquanto a causa está sendo corrigida. A quarentena é suspensa automaticamente uma vez que o caso tenha passado o número de vezes consecutivas definido nas configurações de Padrões de Falha, a menos que tenha sido marcado para ser liberado manualmente; libere-o aqui ou do padrão a qualquer momento.",
     "rootCauses": "## Causas Raiz\nAs causas raiz que os Padrões de Falha atribuem a falhas agrupadas, por IA ou manualmente. Cada uma tem uma descrição que a IA lê para decidir quando se aplica. Renomeie, recolora ou reordene-as, adicione as suas próprias, ou delete as que não usa; deletar uma deixa seus padrões sem uma causa raiz.",
     "rootCauseDescription": "## Descrição\nA IA lê esta descrição para decidir quando a causa raiz se aplica a um padrão de falha, então descreva a evidência que aponta para ela.",
-    "projectRiskSettings": "## Configurações de Pontuação de Risco\nCada caso de teste recebe uma pontuação de risco de 0-100 baseada em seu histórico de falhas, instabilidade, estagnação, criticidade de requisitos vinculados e defeitos vinculados — determinístico, sem chamadas de IA. As pontuações são atualizadas após a chegada de resultados e em uma varredura noturna. **Pesos de componentes** definem quanto cada sinal conta, em relação aos outros; zero remove um componente. **Recalcular todas as pontuações** repontua todo o projeto agora em vez de esperar pela varredura noturna."
+    "projectRiskSettings": "## Configurações de Pontuação de Risco\nCada caso de teste recebe uma pontuação de risco de 0-100 baseada em seu histórico de falhas, instabilidade, estagnação, criticidade de requisitos vinculados e defeitos vinculados — determinístico, sem chamadas de IA. As pontuações são atualizadas após a chegada de resultados e em uma varredura noturna. **Pesos de componentes** definem quanto cada sinal conta, em relação aos outros; zero remove um componente. **Recalcular todas as pontuações** repontua todo o projeto agora em vez de esperar pela varredura noturna.",
+    "reviewRevert": "## Revertendo Decisões de Revisão\nTempo que um revisor tem para desfazer uma decisão que registrou, medido a partir de quando decidiu. Reverter retorna a solicitação para a fila do revisor; se uma aprovação já tivesse movimentado o item para frente, o item volta para onde estava. Administradores do sistema não estão vinculados a este limite e podem reverter uma decisão de qualquer idade. Os projetos podem encurtar o limite em suas configurações Avançadas, mas nunca estendê-lo."
   },
   "reports": {
     "ui": {

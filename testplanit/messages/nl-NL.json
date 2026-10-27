@@ -2294,6 +2294,23 @@
           "save": "Opschooninstellingen opslaan",
           "savedToast": "Opschonen van verlaten automatisering bijgewerkt voor dit project",
           "saveError": "Bijwerken van opschonen van verlaten automatisering mislukt"
+        },
+        "revertWindow": {
+          "label": "Beoordelingen terugdraaien",
+          "description": "Hoe lang een beoordelaar de tijd heeft om zijn eigen beslissing op dit project ongedaan te maken. Systeembeheerders zijn niet gebonden aan deze limiet.",
+          "systemLockedTitle": "Terugdraaien is systeembreed uitgeschakeld",
+          "systemLockedDescription": "Een beheerder heeft het terugdraaien van beoordelingsbeslissingen voor elk project uitgeschakeld. Deze instelling kan hier niet worden gewijzigd.",
+          "modeInheritMinutes": "Systeemstandaard overnemen ({minutes, plural, one {# minuut} other {# minuten}})",
+          "modeDisable": "Terugdraaien voor dit project uitschakelen",
+          "modeCustom": "Aangepast venster",
+          "minutesBefore": "Limiet",
+          "minutesUnit": "{minutes, plural, one {minuut} other {minuten}}",
+          "minutesAriaLabel": "Minuten dat een beslissing kan worden teruggedraaid",
+          "systemMaxHint": "Systeemmaximum: {minutes} minuten",
+          "invalidMinutes": "Voer een aantal minuten in dat groter is dan nul",
+          "save": "Terugdraailimiet opslaan",
+          "savedToast": "Terugdraailimiet opgeslagen.",
+          "saveError": "De terugdraailimiet kon niet worden opgeslagen. Probeer het over een moment opnieuw."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Waarschuwingen",
             "description": "Een waarschuwing waarop je bent geabonneerd, wordt geactiveerd omdat een testmetriek de lijn die wordt bewaakt, heeft overschreden."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Beoordelingsbeslissing teruggedraaid",
+            "description": "Een beoordelaar maakt een beslissing ongedaan op een verzoek dat u heeft ingediend, waardoor het terug in hun wachtrij komt."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "Alle entiteitstypen",
       "filterEntityTypeCase": "Testgevallen",
       "filterEntityTypeRun": "Testruns",
-      "filterAllProjects": "Alle projecten"
+      "filterAllProjects": "Alle projecten",
+      "actionRevert": "Beslissing terugdraaien",
+      "revertedBadge": "Teruggedraaid",
+      "revertedBadgeTooltip": "{count, plural, one {Eenmaal eerder teruggedraaid} other {# keer eerder teruggedraaid}}"
     },
     "requester": {
       "openButton": "Verzoek om beoordeling",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "Over deze beoordeling is al besloten.",
       "decideError": "Uw beslissing kon niet worden opgeslagen. Probeer het over een moment opnieuw.",
       "panelSummary": "Reviewverzoek van {requesterName}: overgang naar {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Beslissing terugdraaien",
+      "description": "Deze beoordeling gaat terug naar wachten op uw beslissing, en de aanvrager wordt hiervan op de hoogte gesteld. Het commentaar dat u hebt achtergelaten, blijft in het gespreksthema.",
+      "descriptionApproved": "Deze beoordeling gaat terug naar wachten op uw beslissing en het item keert terug naar de vorige status. De aanvrager wordt hiervan op de hoogte gesteld.",
+      "error": "De beslissing kon niet worden teruggedraaid. Probeer het over een moment opnieuw.",
+      "errorEntityMoved": "Dit item is verder gegaan sinds de goedkeuring, dus de goedkeuring kan niet langer ongedaan worden gemaakt.",
+      "errorForbidden": "Alleen de beoordelaar die deze beslissing heeft genomen, kan deze terugdraaien.",
+      "errorNotRevertable": "Deze beslissing kan niet langer worden teruggedraaid.",
+      "errorSuperseded": "Er bestaat al een nieuwer beoordelingsverzoek voor dit item, dus deze beslissing kan niet langer worden teruggedraaid.",
+      "errorWindowExpired": "De tijdslimiet voor het terugdraaien van deze beslissing is verstreken.",
+      "success": "Beslissing teruggedraaid. De beoordeling wacht nu opnieuw op uw beslissing.",
+      "title": "Uw beslissing terugdraaien?",
+      "titleOther": "Deze beslissing terugdraaien?",
+      "descriptionOther": "Deze beoordeling gaat terug naar wachten op een beslissing, en de aanvrager wordt hiervan op de hoogte gesteld. Het commentaar van de beoordelaar blijft in het gespreksthema.",
+      "descriptionOtherApproved": "Deze beoordeling gaat terug naar wachten op een beslissing en het item keert terug naar de vorige status. De aanvrager wordt hiervan op de hoogte gesteld.",
+      "successOther": "Beslissing teruggedraaid. De beoordeling wacht nu opnieuw op een beslissing."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, one {dag} other {dagen}}",
         "thresholdHelp": "Hoeveel dagen een beoordelingsverzoek in behandeling mag blijven voordat beoordelaars een herinneringsmelding ontvangen. Voor nieuwe verzoeken begint de teller te lopen vanaf het moment van indiening.",
         "thresholdUpdateSuccess": "Controleer of de herinneringsinstellingen zijn bijgewerkt.",
-        "thresholdUpdateError": "Het bijwerken van de herinneringsinstellingen is mislukt. Probeer het over een moment opnieuw."
+        "thresholdUpdateError": "Het bijwerken van de herinneringsinstellingen is mislukt. Probeer het over een moment opnieuw.",
+        "revertPolicy": {
+          "label": "Beoordelingen terugdraaien",
+          "modeAria": "Modus terugdraaibeleid",
+          "modeNone": "Projecten bepalen ({hours}u standaard)",
+          "modeDisabled": "Terugdraaien overal uitgeschakeld",
+          "modeMax": "Terugdraaien toestaan tot",
+          "minutesUnit": "{minutes, plural, one {minuut} other {minuten}}",
+          "minutesAriaLabel": "Maximum aantal minuten dat een beslissing kan worden teruggedraaid",
+          "invalidMinutes": "Voer een aantal minuten in dat groter is dan nul",
+          "savedToast": "Terugdraaibeleid opgeslagen.",
+          "saveError": "Het terugdraaibeleid kon niet worden opgeslagen. Probeer het over een moment opnieuw."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Schakel de beoordelingsworkflow voor {name} in/uit",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "De functie voor het beoordelen van de workflow is op systeemniveau uitgeschakeld. Schakel de geavanceerde instellingen van een project in of uit, of stel TESTPLANIT_REVIEW_FEATURE_ENABLED in om deze opnieuw in te schakelen.",
-        "requiresReviewDefaultDisabled": "De standaard workflowstatus vereist geen beoordeling; nieuwe entiteiten komen hier terecht en hebben geen voorafgaande status die gecontroleerd moet worden."
+        "requiresReviewDefaultDisabled": "De standaard workflowstatus vereist geen beoordeling; nieuwe entiteiten komen hier terecht en hebben geen voorafgaande status die gecontroleerd moet worden.",
+        "requiresReviewLabel": "Vereist beoordeling"
       },
       "add": {
         "button": "Workflow toevoegen",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "De oudste onverwerkte auditwijziging is {minutes, plural, one {# minuut} other {# minuten}} oud (drempel {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# account is} other {# accounts zijn}} vergrendeld na mislukte aanmeldingen (drempel {threshold}).",
           "NO_AUTOMATED_RESULTS": "Geen geautomatiseerd resultaat is ontvangen voor {hours, plural, one {# uur} other {# uren}} (drempel {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "hun beslissing op teruggedraaid",
+        "reviewDecisionRevertedEmailMessage": "{actorName} heeft hun beslissing op {entityLabel} \"{entityName}\" in project \"{projectName}\" teruggedraaid — het wacht nu opnieuw op beoordeling.",
+        "reviewDecisionRevertedTitle": "Beoordelingsbeslissing teruggedraaid",
+        "reviewDecisionRevertedActionOther": "de beslissing van {deciderName} op teruggedraaid",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} heeft de beslissing van {deciderName} op {entityLabel} \"{entityName}\" in project \"{projectName}\" teruggedraaid — het wacht nu opnieuw op beoordeling."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## In quarantaine geplaatste testcases\nEen in quarantaine geplaatste testcase blijft draaien en resultaten opnemen, maar de fouten ervan worden buiten de pass/fail van de run gelaten en weergegeven als een aparte telling. Plaats een case in quarantaine vanuit een foutpatroon terwijl de oorzaak wordt opgelost. De quarantaine wordt automatisch opgeheven zodra de case het aantal keren na elkaar heeft doorstaan dat is ingesteld in de instellingen voor Foutpatronen, tenzij deze was gemarkeerd om handmatig te worden vrijgegeven; geef het hier of vanuit het patroon op elk moment vrij.",
     "rootCauses": "## Hoofdoorzaken\nDe hoofdoorzaken die Foutpatronen toewijst aan gegroepeerde fouten, door AI of handmatig. Elk heeft een beschrijving die de AI leest om te bepalen wanneer het van toepassing is. Hernoem, verander de kleur of herorden ze, voeg je eigen toe, of verwijder de oorzaken die je niet gebruikt; het verwijderen van één laat de patronen ervan zonder hoofdoorzaak.",
     "rootCauseDescription": "## Beschrijving\nDe AI leest deze beschrijving om te bepalen wanneer de hoofdoorzaak van toepassing is op een foutpatroon, dus beschrijf het bewijs dat ernaar wijst.",
-    "projectRiskSettings": "## Risicoscoringsinstellingen\nElk testgeval krijgt een risicoscore van 0-100 op basis van zijn faalgeschiedenis, onbetrouwbaarheid, veroudering, criticiteit van gekoppelde vereisten en gekoppelde defecten — deterministisch, geen AI-aanroepen. Scores vernieuwen zich nadat resultaten binnenkomen en in een nachtelijke sweep. **Componentgewichten** stellen in hoeveel elk signaal telt, relatief tot de anderen; nul verwijdert een component. **Alle scores opnieuw berekenen** scoren het hele project nu opnieuw in plaats van te wachten op de nachtelijke sweep."
+    "projectRiskSettings": "## Risicoscoringsinstellingen\nElk testgeval krijgt een risicoscore van 0-100 op basis van zijn faalgeschiedenis, onbetrouwbaarheid, veroudering, criticiteit van gekoppelde vereisten en gekoppelde defecten — deterministisch, geen AI-aanroepen. Scores vernieuwen zich nadat resultaten binnenkomen en in een nachtelijke sweep. **Componentgewichten** stellen in hoeveel elk signaal telt, relatief tot de anderen; nul verwijdert een component. **Alle scores opnieuw berekenen** scoren het hele project nu opnieuw in plaats van te wachten op de nachtelijke sweep.",
+    "reviewRevert": "## Beoordelingsbeslissingen terugdraaien\nHoe lang een beoordelaar de tijd heeft om een beslissing die zij hebben genomen ongedaan te maken, gemeten vanaf het moment dat zij besloten. Het terugdraaien brengt het verzoek terug naar de wachtrij van de beoordelaar; als een goedkeuring het item al naar voren had gebracht, gaat het item terug naar waar het was. Systeembeheerders zijn niet gebonden aan deze limiet en kunnen een beslissing van elke leeftijd terugdraaien. Projecten kunnen de limiet in hun geavanceerde instellingen verkorten, maar nooit verlengen."
   },
   "reports": {
     "ui": {

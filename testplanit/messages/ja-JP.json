@@ -2294,6 +2294,23 @@
           "save": "クリーンアップ設定を保存",
           "savedToast": "このプロジェクトの放置された自動化のクリーンアップを更新しました",
           "saveError": "放置された自動化のクリーンアップの更新に失敗しました"
+        },
+        "revertWindow": {
+          "label": "レビュー決定の取り消し",
+          "description": "レビュアーがこのプロジェクトで自分の決定を取り消すことができる期間。システム管理者はこの制限の対象外です。",
+          "systemLockedTitle": "取り消しがシステム全体で無効になっています",
+          "systemLockedDescription": "管理者がすべてのプロジェクトのレビュー決定の取り消しをオフにしています。この設定はここで変更できません。",
+          "modeInheritMinutes": "システムデフォルトを継承する（{minutes, plural, other {# 分}}）",
+          "modeDisable": "このプロジェクトの取り消しを無効にする",
+          "modeCustom": "カスタムウィンドウ",
+          "minutesBefore": "制限",
+          "minutesUnit": "{minutes, plural, other {分}}",
+          "minutesAriaLabel": "決定が取り消し可能な状態で残る分数",
+          "systemMaxHint": "システム最大: {minutes} 分",
+          "invalidMinutes": "0より大きい分数を入力してください",
+          "save": "取り消し制限を保存",
+          "savedToast": "取り消し制限が保存されました。",
+          "saveError": "取り消し制限を保存できませんでした。しばらくしてからもう一度お試しください。"
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "アラート",
             "description": "購読しているアラートは、監視しているテストメトリクスが一定ラインを超えたために発火します。"
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "レビュー決定が取り消されました",
+            "description": "レビュアーが依頼した決定を取り消し、リクエストをレビュアーのキューに戻します。"
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "すべてのエンティティタイプ",
       "filterEntityTypeCase": "テストケース",
       "filterEntityTypeRun": "テスト実行",
-      "filterAllProjects": "すべてのプロジェクト"
+      "filterAllProjects": "すべてのプロジェクト",
+      "actionRevert": "決定を取り消す",
+      "revertedBadge": "取り消し済み",
+      "revertedBadgeTooltip": "{count, plural, other {# 回前に取り消し済み}}"
     },
     "requester": {
       "openButton": "レビューを依頼する",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "この審査は既に決定済みです。",
       "decideError": "お客様のご決定を記録できませんでした。しばらくしてからもう一度お試しください。",
       "panelSummary": "{requesterName}からのレビュー依頼： {targetStateName} への移行"
+    },
+    "revert": {
+      "confirm": "決定を取り消す",
+      "description": "このレビューは決定待ちに戻り、リクエスターに通知されます。スレッドに残したコメントは保持されます。",
+      "descriptionApproved": "このレビューは決定待ちに戻り、アイテムは以前の状態に戻ります。リクエスターに通知されます。",
+      "error": "決定を取り消すことができませんでした。しばらくしてからもう一度お試しください。",
+      "errorEntityMoved": "承認以降にこのアイテムが変更されたため、承認の取り消しはできなくなりました。",
+      "errorForbidden": "この決定を取り消すことができるのは、その決定を下したレビュアーのみです。",
+      "errorNotRevertable": "この決定は取り消せなくなりました。",
+      "errorSuperseded": "このアイテムの新しいレビューリクエストが既に存在するため、この決定は取り消せません。",
+      "errorWindowExpired": "この決定の取り消し期間が終了しました。",
+      "success": "決定が取り消されました。レビューは再度決定待ちになっています。",
+      "title": "決定を取り消しますか？",
+      "titleOther": "この決定を取り消しますか？",
+      "descriptionOther": "このレビューは決定待ちに戻り、リクエスターに通知されます。レビュアーのコメントはスレッドに残ります。",
+      "descriptionOtherApproved": "このレビューは決定待ちに戻り、アイテムは以前の状態に戻ります。リクエスターに通知されます。",
+      "successOther": "決定が取り消されました。レビューは再度決定待ちになっています。"
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, other {日}}",
         "thresholdHelp": "レビュー依頼が保留状態になってから、レビュー担当者にリマインダー通知が届くまで何日間待つことができますか？新規依頼は提出された時点からカウントが開始されます。",
         "thresholdUpdateSuccess": "レビューリマインダーの設定が更新されました。",
-        "thresholdUpdateError": "リマインダー設定の更新に失敗しました。しばらくしてからもう一度お試しください。"
+        "thresholdUpdateError": "リマインダー設定の更新に失敗しました。しばらくしてからもう一度お試しください。",
+        "revertPolicy": {
+          "label": "レビュー決定の取り消し",
+          "modeAria": "ポリシーモードを取り消す",
+          "modeNone": "プロジェクトが決定します（デフォルトでは {hours}h）",
+          "modeDisabled": "取り消しがすべての場所で無効です",
+          "modeMax": "最大で次の期間は取り消しを許可する",
+          "minutesUnit": "{minutes, plural, other {分}}",
+          "minutesAriaLabel": "決定が取り消し可能な状態で残る最大分数",
+          "invalidMinutes": "0より大きい分数を入力してください",
+          "savedToast": "取り消しポリシーが保存されました。",
+          "saveError": "取り消しポリシーを保存できませんでした。しばらくしてからもう一度お試しください。"
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "{name} のレビューワークフローを切り替える",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "レビューワークフロー機能はシステムレベルで無効になっています。プロジェクトの詳細設定を切り替えるか、TESTPLANIT_REVIEW_FEATURE_ENABLED を設定して再度有効にしてください。",
-        "requiresReviewDefaultDisabled": "デフォルトのワークフロー状態ではレビューを要求できません。新しいエンティティはここに到着し、ゲートするための以前の状態がありません。"
+        "requiresReviewDefaultDisabled": "デフォルトのワークフロー状態ではレビューを要求できません。新しいエンティティはここに到着し、ゲートするための以前の状態がありません。",
+        "requiresReviewLabel": "レビューが必須"
       },
       "add": {
         "button": "ワークフローを追加",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "最も古い未処理の監査変更は {minutes, plural, one {# 分} other {# 分}} です（閾値 {threshold}）。",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# アカウントが} other {# アカウントが}} ログイン試行失敗後ロックされています（閾値 {threshold}）。",
           "NO_AUTOMATED_RESULTS": "{hours, plural, one {# 時間} other {# 時間}} の間に自動結果が到着しています（閾値 {threshold}）。"
-        }
+        },
+        "reviewDecisionRevertedAction": "その決定を取り消しました",
+        "reviewDecisionRevertedEmailMessage": "{actorName} は、プロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" の決定を取り消しました — 再度レビュー待ちになっています。",
+        "reviewDecisionRevertedTitle": "レビュー決定が取り消されました",
+        "reviewDecisionRevertedActionOther": "{deciderName} の決定を取り消しました",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} は、プロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" に対する {deciderName} の決定を取り消しました — 再度レビュー待ちになっています。"
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## 隔離されたテストケース\n隔離されたテストケースは実行を続けて結果を記録しますが、その障害は実行パス/失敗から除外され、別個のカウントとして表示されます。原因が修正されている間に、障害パターンからケースを隔離します。隔離は、ケースが障害パターン設定で設定された回数を連続してパスすると自動的に解除されます。手動でリリースするようにマークされていない場合。ここまたはパターンからいつでもそれをリリースします。",
     "rootCauses": "## 根本原因\n障害パターンがAIまたは手動でグループ化された障害に割り当てる根本原因。各々は、AIがいつそれが適用されるかを決定するために読む説明を持っています。名前を変更、色を変更、または並べ替え、独自のを追加、または使用しないものを削除します。1つを削除すると、そのパターンは根本原因なしになります。",
     "rootCauseDescription": "## 説明\nAIはこの説明を読んで、根本原因が障害パターンに適用される時期を判断するため、それを指す証拠を説明します。",
-    "projectRiskSettings": "## リスク スコアリング設定\n各テスト ケースは、障害履歴、不安定性、古さ、リンクされた要件の重大度、リンクされた欠陥から 0～100 のリスク スコアを取得します。決定論的で、AI呼び出しはありません。スコアは結果が到着した後と夜間スイープで更新されます。**コンポーネント ウェイト**は、各シグナルがどの程度カウントされるかを設定します。ゼロはコンポーネントを削除します。**すべてのスコアを再計算**は、夜間スイープを待つのではなく、プロジェクト全体を今すぐ再スコアします。"
+    "projectRiskSettings": "## リスク スコアリング設定\n各テスト ケースは、障害履歴、不安定性、古さ、リンクされた要件の重大度、リンクされた欠陥から 0～100 のリスク スコアを取得します。決定論的で、AI呼び出しはありません。スコアは結果が到着した後と夜間スイープで更新されます。**コンポーネント ウェイト**は、各シグナルがどの程度カウントされるかを設定します。ゼロはコンポーネントを削除します。**すべてのスコアを再計算**は、夜間スイープを待つのではなく、プロジェクト全体を今すぐ再スコアします。",
+    "reviewRevert": "## レビュー決定の取り消し\nレビュアーが記録した決定を取り消すことができる期間。決定時から計測されます。取り消すとリクエストはレビュアーのキューに戻ります。承認によってアイテムが既に先に進んでいた場合、アイテムは以前の状態に戻ります。システム管理者はこの制限の対象外であり、任意の年代の決定を取り消すことができます。プロジェクトは詳細設定で制限を短縮できますが、延長することはできません。"
   },
   "reports": {
     "ui": {

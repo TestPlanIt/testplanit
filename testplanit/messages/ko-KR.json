@@ -2294,6 +2294,23 @@
           "save": "정리 설정 저장",
           "savedToast": "이 프로젝트의 자동화 방치 정리가 업데이트되었습니다",
           "saveError": "자동화 방치 정리 업데이트에 실패했습니다"
+        },
+        "revertWindow": {
+          "label": "검토 결정 되돌리기",
+          "description": "검토자가 이 프로젝트에서 자신의 결정을 실행 취소해야 하는 시간입니다. 시스템 관리자는 이 제한을 받지 않습니다.",
+          "systemLockedTitle": "시스템 전체적으로 되돌리기가 비활성화됨",
+          "systemLockedDescription": "관리자가 모든 프로젝트에 대해 검토 결정 되돌리기를 비활성화했습니다. 이 설정은 여기에서 변경할 수 없습니다.",
+          "modeInheritMinutes": "시스템 기본값 상속 ({minutes, plural, other {#분}})",
+          "modeDisable": "이 프로젝트의 되돌리기를 비활성화합니다",
+          "modeCustom": "사용자 정의 창",
+          "minutesBefore": "제한",
+          "minutesUnit": "{minutes, plural, other {분}}",
+          "minutesAriaLabel": "결정이 되돌릴 수 있는 분 단위",
+          "systemMaxHint": "시스템 최대값: {minutes}분",
+          "invalidMinutes": "0보다 큰 분 단위 숫자를 입력하세요",
+          "save": "되돌리기 제한 저장",
+          "savedToast": "되돌리기 제한이 저장되었습니다.",
+          "saveError": "되돌리기 제한을 저장할 수 없습니다. 잠시 후 다시 시도해 주세요."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "경고",
             "description": "구독한 경고가 모니터링하는 테스트 메트릭이 임계값을 초과했기 때문에 발동됩니다."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "검토 결정 되돌려짐",
+            "description": "검토자가 귀하가 요청한 결정을 실행 취소하여 검토 큐로 돌려보냅니다."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "모든 엔티티 유형",
       "filterEntityTypeCase": "테스트 케이스",
       "filterEntityTypeRun": "테스트 실행",
-      "filterAllProjects": "모든 프로젝트"
+      "filterAllProjects": "모든 프로젝트",
+      "actionRevert": "결정 되돌리기",
+      "revertedBadge": "되돌려짐",
+      "revertedBadgeTooltip": "{count, plural, one {이전에 한 번 되돌려짐} other {이전에 #번 되돌려짐}}"
     },
     "requester": {
       "openButton": "검토 요청",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "이번 검토는 이미 결정되었습니다.",
       "decideError": "결정을 기록할 수 없습니다. 잠시 후 다시 시도해 주세요.",
       "panelSummary": "{requesterName}님의 검토 요청: {targetStateName} 로 전환"
+    },
+    "revert": {
+      "confirm": "결정 되돌리기",
+      "description": "이 검토는 귀하의 결정 대기 상태로 돌아가며, 요청자에게 알립니다. 남긴 댓글은 스레드에 유지됩니다.",
+      "descriptionApproved": "이 검토는 귀하의 결정 대기 상태로 돌아가고 항목은 이전 상태로 돌아갑니다. 요청자에게 알립니다.",
+      "error": "결정을 되돌릴 수 없습니다. 잠시 후 다시 시도해 주세요.",
+      "errorEntityMoved": "승인 이후 항목이 변경되었으므로 더 이상 승인을 실행 취소할 수 없습니다.",
+      "errorForbidden": "이 결정을 내린 검토자만 되돌릴 수 있습니다.",
+      "errorNotRevertable": "이 결정은 더 이상 되돌릴 수 없습니다.",
+      "errorSuperseded": "이 항목에 대해 새로운 검토 요청이 이미 존재하므로 이 결정은 더 이상 되돌릴 수 없습니다.",
+      "errorWindowExpired": "이 결정을 되돌리는 시간 제한이 경과했습니다.",
+      "success": "결정이 되돌려졌습니다. 검토는 다시 귀하의 결정을 기다리고 있습니다.",
+      "title": "결정을 되돌리시겠습니까?",
+      "titleOther": "이 결정을 되돌리시겠습니까?",
+      "descriptionOther": "이 검토는 결정 대기 상태로 돌아가며, 요청자에게 알립니다. 검토자의 댓글은 스레드에 유지됩니다.",
+      "descriptionOtherApproved": "이 검토는 결정 대기 상태로 돌아가고 항목은 이전 상태로 돌아갑니다. 요청자에게 알립니다.",
+      "successOther": "결정이 되돌려졌습니다. 검토는 다시 결정을 기다리고 있습니다."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, other {일}}",
         "thresholdHelp": "검토 요청이 접수된 후 검토자에게 알림 메시지가 전송되기까지 며칠이 걸릴 수 있나요? 새 요청은 제출 시점부터 기한이 계산됩니다.",
         "thresholdUpdateSuccess": "리뷰 알림 설정이 업데이트되었습니다.",
-        "thresholdUpdateError": "알림 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요."
+        "thresholdUpdateError": "알림 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+        "revertPolicy": {
+          "label": "검토 결정 되돌리기",
+          "modeAria": "정책 모드 되돌리기",
+          "modeNone": "프로젝트에서 결정 (기본값 {hours}시간)",
+          "modeDisabled": "모든 곳에서 되돌리기 비활성화됨",
+          "modeMax": "최대 다음 기간 동안 되돌리기 허용",
+          "minutesUnit": "{minutes, plural, other {분}}",
+          "minutesAriaLabel": "결정이 되돌릴 수 있는 최대 분 단위",
+          "invalidMinutes": "0보다 큰 분 단위 숫자를 입력하세요",
+          "savedToast": "되돌리기 정책이 저장되었습니다.",
+          "saveError": "되돌리기 정책을 저장할 수 없습니다. 잠시 후 다시 시도해 주세요."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "{name}에 대한 검토 워크플로를 토글합니다.",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "시스템 수준에서 검토 워크플로 기능이 비활성화되어 있습니다. 프로젝트의 고급 설정을 변경하거나 TESTPLANIT_REVIEW_FEATURE_ENABLED를 설정하여 다시 활성화하십시오.",
-        "requiresReviewDefaultDisabled": "기본 워크플로 상태에서는 검토가 필요하지 않습니다. 새로운 엔티티는 이 상태에 도달하며, 검토를 거쳐야 할 이전 상태가 없습니다."
+        "requiresReviewDefaultDisabled": "기본 워크플로 상태에서는 검토가 필요하지 않습니다. 새로운 엔티티는 이 상태에 도달하며, 검토를 거쳐야 할 이전 상태가 없습니다.",
+        "requiresReviewLabel": "검토 필요"
       },
       "add": {
         "button": "워크플로 추가",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "처리되지 않은 가장 오래된 감사 변경 사항이 {minutes, plural, one {# 분} other {# 분}} 오래되었습니다(임계값 {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# 계정이} other {# 계정이}} 로그인 실패로 인해 잠겼습니다(임계값 {threshold}).",
           "NO_AUTOMATED_RESULTS": "{hours, plural, one {# 시간} other {# 시간}} 동안 자동화된 결과가 도착하지 않았습니다(임계값 {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "다음에 대한 결정을 되돌렸습니다",
+        "reviewDecisionRevertedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName}\"에서 {entityLabel} \"{entityName}\"에 대한 결정을 되돌렸습니다 — 다시 검토 대기 중입니다.",
+        "reviewDecisionRevertedTitle": "검토 결정 되돌려짐",
+        "reviewDecisionRevertedActionOther": "{deciderName}의 결정을 다음에 대해 되돌렸습니다",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} 님이 프로젝트 \"{projectName}\"에서 {entityLabel} \"{entityName}\"에 대한 {deciderName}의 결정을 되돌렸습니다 — 다시 검토 대기 중입니다."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## 격리된 테스트 케이스\n격리된 테스트 케이스는 실행을 계속하고 결과를 기록하지만, 실패는 실행 통과/실패에서 제외되고 별도 개수로 표시됩니다. 원인이 해결되는 동안 실패 패턴에서 케이스를 격리하세요. 격리는 실패 패턴 설정에 설정된 횟수만큼 케이스가 통과되면 자동으로 해제됩니다(수동으로 해제하도록 표시되지 않은 경우). 패턴에서 또는 여기에서 언제든지 해제하세요.",
     "rootCauses": "## 근본 원인\n실패 패턴이 그룹화된 실패에 할당하는 근본 원인은 AI 또는 수동으로 할당합니다. 각각은 AI가 적용 시기를 결정하기 위해 읽는 설명을 가지고 있습니다. 이름을 바꾸거나, 색을 다시 지정하거나, 순서를 재정렬하거나, 자신의 이름을 추가하거나, 사용하지 않는 이름을 삭제하세요. 하나를 삭제하면 해당 패턴이 근본 원인 없이 유지됩니다.",
     "rootCauseDescription": "## 설명\nAI는 이 설명을 읽어 근본 원인이 실패 패턴에 적용될 시기를 결정하므로 그것을 가리키는 증거를 설명하세요.",
-    "projectRiskSettings": "## 위험 점수 매기기 설정\n모든 테스트 케이스는 실패 기력, 변동성, 오래됨, 연결된 요구사항 중요도 및 연결된 결함에서 0-100 위험 점수를 받습니다 — 결정적이며 AI 호출 없음. 점수는 결과가 도착한 후 및 야간 검사에서 새로 고쳐집니다. **구성 요소 가중치**는 각 신호가 다른 신호와 상대적으로 얼마나 중요한지를 설정합니다. 영(0)은 구성 요소를 제거합니다. **모든 점수 재계산**은 야간 검사를 기다리지 않고 지금 바로 전체 프로젝트를 다시 점수 매깁니다."
+    "projectRiskSettings": "## 위험 점수 매기기 설정\n모든 테스트 케이스는 실패 기력, 변동성, 오래됨, 연결된 요구사항 중요도 및 연결된 결함에서 0-100 위험 점수를 받습니다 — 결정적이며 AI 호출 없음. 점수는 결과가 도착한 후 및 야간 검사에서 새로 고쳐집니다. **구성 요소 가중치**는 각 신호가 다른 신호와 상대적으로 얼마나 중요한지를 설정합니다. 영(0)은 구성 요소를 제거합니다. **모든 점수 재계산**은 야간 검사를 기다리지 않고 지금 바로 전체 프로젝트를 다시 점수 매깁니다.",
+    "reviewRevert": "## 검토 결정 되돌리기\n검토자가 기록한 결정을 실행 취소해야 하는 시간을 결정한 시점부터 측정합니다. 되돌리기는 요청을 검토자의 큐로 반환합니다. 승인이 이미 항목을 앞으로 이동시킨 경우 항목은 원래 위치로 돌아갑니다. 시스템 관리자는 이 제한을 받지 않으며 모든 연령의 결정을 되돌릴 수 있습니다. 프로젝트는 고급 설정에서 제한을 단축할 수 있지만 연장할 수는 없습니다."
   },
   "reports": {
     "ui": {

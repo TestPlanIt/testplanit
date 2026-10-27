@@ -2294,6 +2294,23 @@
           "save": "Temizlik ayarlarını kaydet",
           "savedToast": "Bu proje için terk edilmiş otomasyon temizliği güncellendi",
           "saveError": "Terk edilmiş otomasyon temizliği güncellenemedi"
+        },
+        "revertWindow": {
+          "label": "İnceleme kararlarının geri alınması",
+          "description": "Bir inceleyicinin bu projede kendi kararını geri almak için ne kadar süresi olduğu. Sistem yöneticileri bu sınırla bağlı değildir.",
+          "systemLockedTitle": "Geri alma sistem genelinde devre dışı bırakıldı",
+          "systemLockedDescription": "Bir yönetici her proje için inceleme kararlarının geri alınmasını kapattı. Bu ayar burada değiştirilemez.",
+          "modeInheritMinutes": "Sistem varsayılanını devral ({minutes, plural, one {# dakika} other {# dakika}})",
+          "modeDisable": "Bu proje için geri almayı devre dışı bırak",
+          "modeCustom": "Özel pencere",
+          "minutesBefore": "Sınır",
+          "minutesUnit": "{minutes, plural, one {dakika} other {dakika}}",
+          "minutesAriaLabel": "Karar geri alınabilir durumda kalacak dakika sayısı",
+          "systemMaxHint": "Sistem maksimumu: {minutes} dakika",
+          "invalidMinutes": "Sıfırdan büyük bir dakika sayısı girin",
+          "save": "Geri alma sınırını kaydet",
+          "savedToast": "Geri alma sınırı kaydedildi.",
+          "saveError": "Geri alma sınırı kaydedilemedi. Lütfen birazdan tekrar deneyin."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Uyarılar",
             "description": "Abone olduğunuz bir uyarı, izlediği test metriği sınırı aştığı için tetiklendi."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "İnceleme kararı geri alındı",
+            "description": "Bir inceleyici yaptığınız bir istek üzerinde kararını geri alarak onu yeniden kuyruğa koyar."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "Tüm varlık türleri",
       "filterEntityTypeCase": "Test senaryoları",
       "filterEntityTypeRun": "Test çalışmaları",
-      "filterAllProjects": "Tüm projeler"
+      "filterAllProjects": "Tüm projeler",
+      "actionRevert": "Kararı geri al",
+      "revertedBadge": "Geri alındı",
+      "revertedBadgeTooltip": "{count, plural, one {Daha önce bir kez geri alındı} other {Daha önce # kez geri alındı}}"
     },
     "requester": {
       "openButton": "İnceleme talebi",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "Bu değerlendirmeye ilişkin karar zaten verildi.",
       "decideError": "Kararınız kaydedilemedi. Lütfen birazdan tekrar deneyin.",
       "panelSummary": "{requesterName}'dan gelen inceleme isteği: {targetStateName}'e geçiş"
+    },
+    "revert": {
+      "confirm": "Kararı geri al",
+      "description": "Bu inceleme yeniden sizin kararınız bekleniyor durumuna geri döner ve istekçi bilgilendirilir. Bıraktığınız yorum iş parçacığında kalır.",
+      "descriptionApproved": "Bu inceleme yeniden sizin kararınız bekleniyor durumuna geri döner ve öğe önceki durumuna döner. İstekçi bilgilendirilir.",
+      "error": "Karar geri alınamadı. Lütfen birazdan tekrar deneyin.",
+      "errorEntityMoved": "Bu öğe onaydan sonra ilerlemiştir, bu nedenle onay artık geri alınamaz.",
+      "errorForbidden": "Yalnızca bu kararı veren inceleyici onu geri alabilir.",
+      "errorNotRevertable": "Bu karar artık geri alınamaz.",
+      "errorSuperseded": "Bu öğe için zaten daha yeni bir inceleme isteği var, bu nedenle bu karar artık geri alınamaz.",
+      "errorWindowExpired": "Bu kararı geri almak için zaman sınırı geçti.",
+      "success": "Karar geri alındı. İnceleme yeniden sizin kararınız bekleniyor durumundadır.",
+      "title": "Kararınızı geri almak istiyor musunuz?",
+      "titleOther": "Bu kararı geri almak istiyor musunuz?",
+      "descriptionOther": "Bu inceleme yeniden karar bekleniyor durumuna geri döner ve istekçi bilgilendirilir. İnceleyicinin yorumu iş parçacığında kalır.",
+      "descriptionOtherApproved": "Bu inceleme yeniden karar bekleniyor durumuna geri döner ve öğe önceki durumuna döner. İstekçi bilgilendirilir.",
+      "successOther": "Karar geri alındı. İnceleme yeniden karar bekleniyor durumundadır."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, one {gün} other {gün}}",
         "thresholdHelp": "İnceleme taleplerinin inceleyicilere hatırlatma bildirimi gönderilmeden önce kaç gün beklemede kalabileceği. Yeni talepler, gönderim anından itibaren süreyi başlatır.",
         "thresholdUpdateSuccess": "Hatırlatma ayarlarının güncellendiğini gözden geçirin.",
-        "thresholdUpdateError": "Hatırlatma ayarları güncellenemedi. Lütfen birazdan tekrar deneyin."
+        "thresholdUpdateError": "Hatırlatma ayarları güncellenemedi. Lütfen birazdan tekrar deneyin.",
+        "revertPolicy": {
+          "label": "İnceleme kararlarının geri alınması",
+          "modeAria": "Geri alma politikası modu",
+          "modeNone": "Projeler karar verir (varsayılan olarak {hours}s)",
+          "modeDisabled": "Her yerde geri alma devre dışı bırakıldı",
+          "modeMax": "Şu kadar süre için geri almaya izin ver",
+          "minutesUnit": "{minutes, plural, one {dakika} other {dakika}}",
+          "minutesAriaLabel": "Karar geri alınabilir durumda kalacak maksimum dakika sayısı",
+          "invalidMinutes": "Sıfırdan büyük bir dakika sayısı girin",
+          "savedToast": "Geri alma politikası kaydedildi.",
+          "saveError": "Geri alma politikası kaydedilemedi. Lütfen birazdan tekrar deneyin."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "{name} için inceleme iş akışını aç/kapat",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "İnceleme iş akışı özelliği sistem düzeyinde devre dışı bırakılmıştır. Yeniden etkinleştirmek için bir projenin Gelişmiş ayarlarını açıp kapatın veya TESTPLANIT_REVIEW_FEATURE_ENABLED özelliğini ayarlayın.",
-        "requiresReviewDefaultDisabled": "Varsayılan iş akışı durumu inceleme gerektiremez; yeni varlıklar buraya gelir ve kontrol edilmesi gereken önceden belirlenmiş bir durumları yoktur."
+        "requiresReviewDefaultDisabled": "Varsayılan iş akışı durumu inceleme gerektiremez; yeni varlıklar buraya gelir ve kontrol edilmesi gereken önceden belirlenmiş bir durumları yoktur.",
+        "requiresReviewLabel": "İnceleme gerektiriyor"
       },
       "add": {
         "button": "İş Akışı Ekle",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "İşlenmeyen en eski denetim değişikliği {minutes, plural, one {# dakika} other {# dakika}} eski (eşik {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# hesap} other {# hesap}} başarısız oturum açma işlemlerinden sonra kilitli (eşik {threshold}).",
           "NO_AUTOMATED_RESULTS": "{hours, plural, one {# saat} other {# saat}} boyunca otomatik sonuç gelmedi (eşik {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "kararlarını geri aldı",
+        "reviewDecisionRevertedEmailMessage": "{actorName} \"{projectName}\" projesindeki {entityLabel} \"{entityName}\" üzerindeki kararını geri aldı — yeniden inceleme bekleniyor.",
+        "reviewDecisionRevertedTitle": "İnceleme kararı geri alındı",
+        "reviewDecisionRevertedActionOther": "{deciderName}'ın kararını geri aldı",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} \"{projectName}\" projesindeki {entityLabel} \"{entityName}\" üzerindeki {deciderName}'ın kararını geri aldı — yeniden inceleme bekleniyor."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## Karantinaya alınan test durumları\nKarantinaya alınmış bir test durumu çalışmaya ve sonuçları kaydetmeye devam eder, ancak başarısızlıkları çalıştırma geçme/başarısızlıktan çıkarılır ve ayrı bir sayı olarak gösterilir. Neden düzeltilirken test durumunu bir başarısızlık deseninden karantinaya alın. Karantina, Başarısızlık Desenleri ayarlarında belirlenen sayıda arka arkaya test durumu geçtikten sonra kendiliğinden kaldırılır; el ile işaretlenmişse, burada veya desenden herhangi bir zamanda serbest bırakın.",
     "rootCauses": "## Temel Nedenler\nBaşarısızlık Desenleri'nin yapay zeka veya elle atadığı temel nedenler. Her birinin, AI'nin ne zaman uygulandığına karar vermesi için okuduğu bir açıklaması vardır. Adlarını değiştirin, yeniden renklendirin veya yeniden sıralayın, kendinizinkini ekleyin veya kullanmadığınızları silin; birini silmek desenleri temel nedensiz bırakır.",
     "rootCauseDescription": "## Açıklama\nAI, temel nedenin bir başarısızlık desenine ne zaman uygulandığına karar vermek için bu açıklamayı okur, bu nedenle ona işaret eden kanıtları açıklayın.",
-    "projectRiskSettings": "## Risk Puanlaması ayarları\nHer test durumu, hata geçmişi, kararsızlığı, güncellik durumu, bağlantılı gereksinimin kritikliği ve bağlantılı kusurlar tarafından 0-100 arası risk puanı alır — belirlenimci, yapay zeka çağrısı yok. Puanlar sonuçlar geldikten sonra ve gece taraması sırasında yenilenir. **Bileşen ağırlıkları**, diğerlerine göre her sinyalin ne kadar sayıldığını belirler; sıfır bir bileşeni kaldırır. **Tüm puanları yeniden hesapla** gece taramasını beklemek yerine tüm projeyi şimdi yeniden puanlandırır."
+    "projectRiskSettings": "## Risk Puanlaması ayarları\nHer test durumu, hata geçmişi, kararsızlığı, güncellik durumu, bağlantılı gereksinimin kritikliği ve bağlantılı kusurlar tarafından 0-100 arası risk puanı alır — belirlenimci, yapay zeka çağrısı yok. Puanlar sonuçlar geldikten sonra ve gece taraması sırasında yenilenir. **Bileşen ağırlıkları**, diğerlerine göre her sinyalin ne kadar sayıldığını belirler; sıfır bir bileşeni kaldırır. **Tüm puanları yeniden hesapla** gece taramasını beklemek yerine tüm projeyi şimdi yeniden puanlandırır.",
+    "reviewRevert": "## İnceleme Kararlarının Geri Alınması\nBir inceleyicinin kaydettikleri bir kararı geri almak için ne kadar süresi olduğu, kararlarını verdikleri zamandan itibaren ölçülür. Kararın geri alınması isteği inceleyicinin kuyruğuna döndürür; eğer bir onay öğeyi zaten ileri taşımışsa, öğe önceki durumuna geri döner. Sistem yöneticileri bu sınırla bağlı değildir ve herhangi bir yaştaki bir kararı geri alabilir. Projeler Gelişmiş ayarlarında sınırı kısaltabilir, ancak asla uzatamazlar."
   },
   "reports": {
     "ui": {

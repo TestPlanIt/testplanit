@@ -2294,6 +2294,23 @@
           "save": "Zapisz ustawienia czyszczenia",
           "savedToast": "Zaktualizowano czyszczenie porzuconej automatyzacji dla tego projektu",
           "saveError": "Nie udało się zaktualizować czyszczenia porzuconej automatyzacji"
+        },
+        "revertWindow": {
+          "label": "Cofanie decyzji przeglądu",
+          "description": "Jak długo recenzent ma na cofnięcie własnej decyzji w tym projekcie. Administratorzy systemu nie są związani tym ograniczeniem.",
+          "systemLockedTitle": "Cofanie jest wyłączone w całym systemie",
+          "systemLockedDescription": "Administrator wyłączył cofanie decyzji przeglądu dla każdego projektu. Tego ustawienia nie można tutaj zmienić.",
+          "modeInheritMinutes": "Dziedzicz domyślne ustawienia systemu ({minutes, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}})",
+          "modeDisable": "Wyłącz cofanie dla tego projektu",
+          "modeCustom": "Okno niestandardowe",
+          "minutesBefore": "Limit",
+          "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minuty}}",
+          "minutesAriaLabel": "Minuty, przez które decyzja może być cofana",
+          "systemMaxHint": "Maksymalnie w systemie: {minutes} minut",
+          "invalidMinutes": "Wprowadź liczbę minut większą od zera",
+          "save": "Zapisz limit cofania",
+          "savedToast": "Limit cofania zapisany.",
+          "saveError": "Nie udało się zapisać limitu cofania. Spróbuj ponownie za chwilę."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Alerty",
             "description": "Alert, na który jesteś zasubskrybowany, uruchamia się, ponieważ metryka testowania przekroczyła obserwowaną linię."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Decyzja przeglądu cofnięta",
+            "description": "Recenzent cofa decyzję dotyczącą Twojej prośby, zwracając ją do swojej kolejki."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "Wszystkie typy jednostek",
       "filterEntityTypeCase": "Przypadki testowe",
       "filterEntityTypeRun": "Przebiegi testowe",
-      "filterAllProjects": "Wszystkie projekty"
+      "filterAllProjects": "Wszystkie projekty",
+      "actionRevert": "Cofnij decyzję",
+      "revertedBadge": "Cofnięte",
+      "revertedBadgeTooltip": "{count, plural, one {Cofnięte raz wcześniej} few {Cofnięte # razy wcześniej} many {Cofnięte # razy wcześniej} other {Cofnięte # razy wcześniej}}"
     },
     "requester": {
       "openButton": "Poproś o recenzję",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "Decyzja w tej sprawie już zapadła.",
       "decideError": "Nie udało się zapisać Twojej decyzji. Spróbuj ponownie za chwilę.",
       "panelSummary": "Prośba o sprawdzenie od {requesterName}: przejście do {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Cofnij decyzję",
+      "description": "Ten przegląd wraca do oczekiwania na Twoją decyzję, a zleceniodawca zostaje powiadomiony. Pozostawiony przez Ciebie komentarz pozostaje w wątku.",
+      "descriptionApproved": "Ten przegląd wraca do oczekiwania na decyzję, a element powraca do poprzedniego stanu. Zleceniodawca zostaje powiadomiony.",
+      "error": "Nie udało się cofnąć decyzji. Spróbuj ponownie za chwilę.",
+      "errorEntityMoved": "Element zmienił się od zatwierddzenia, więc zatwierdzenie nie może już być cofnięte.",
+      "errorForbidden": "Tylko recenzent, który podjął tę decyzję, może ją cofnąć.",
+      "errorNotRevertable": "Ta decyzja nie może już być cofnięta.",
+      "errorSuperseded": "Dla tego elementu już istnieje nowsza prośba przeglądu, więc ta decyzja nie może być cofnięta.",
+      "errorWindowExpired": "Upłynął limit czasu na cofnięcie tej decyzji.",
+      "success": "Decyzja cofnięta. Przegląd ponownie czeka na Twoją decyzję.",
+      "title": "Cofnąć Twoją decyzję?",
+      "titleOther": "Cofnąć tę decyzję?",
+      "descriptionOther": "Ten przegląd wraca do oczekiwania na decyzję, a zleceniodawca zostaje powiadomiony. Komentarz recenzenta pozostaje w wątku.",
+      "descriptionOtherApproved": "Ten przegląd wraca do oczekiwania na decyzję, a element powraca do poprzedniego stanu. Zleceniodawca zostaje powiadomiony.",
+      "successOther": "Decyzja cofnięta. Przegląd ponownie czeka na decyzję."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, one {dzień} few {dni} many {dni} other {dnia}}",
         "thresholdHelp": "Ile dni prośba o recenzję może czekać, zanim recenzenci otrzymają przypomnienie? Czas na rozpatrzenie nowych próśb rozpoczyna się od momentu ich przesłania.",
         "thresholdUpdateSuccess": "Zaktualizowano ustawienia przypomnień.",
-        "thresholdUpdateError": "Nie udało się zaktualizować ustawień przypomnień. Spróbuj ponownie za chwilę."
+        "thresholdUpdateError": "Nie udało się zaktualizować ustawień przypomnień. Spróbuj ponownie za chwilę.",
+        "revertPolicy": {
+          "label": "Cofanie decyzji przeglądu",
+          "modeAria": "Tryb polityki cofania",
+          "modeNone": "Projekty decydują (domyślnie {hours}h)",
+          "modeDisabled": "Cofanie wyłączone wszędzie",
+          "modeMax": "Zezwól na cofanie przez maksymalnie",
+          "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minuty}}",
+          "minutesAriaLabel": "Maksymalna liczba minut, przez którą decyzja może być cofana",
+          "invalidMinutes": "Wprowadź liczbę minut większą od zera",
+          "savedToast": "Polityka cofania zapisana.",
+          "saveError": "Nie udało się zapisać polityki cofania. Spróbuj ponownie za chwilę."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Przełącz przepływ pracy recenzji dla {name}",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "Funkcja przeglądu przepływu pracy jest wyłączona na poziomie systemu. Przełącz ustawienia zaawansowane projektu lub ustaw opcję TESTPLANIT_REVIEW_FEATURE_ENABLED, aby ją ponownie włączyć.",
-        "requiresReviewDefaultDisabled": "Domyślny stan przepływu pracy nie może wymagać przeglądu — nowe jednostki trafiają tutaj i nie mają żadnego poprzedniego stanu do przejęcia."
+        "requiresReviewDefaultDisabled": "Domyślny stan przepływu pracy nie może wymagać przeglądu — nowe jednostki trafiają tutaj i nie mają żadnego poprzedniego stanu do przejęcia.",
+        "requiresReviewLabel": "Wymaga przeglądu"
       },
       "add": {
         "button": "Dodaj przepływ pracy",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "Najstarsza nieprzetworzona zmiana audytu ma {minutes, plural, one {# minutę} few {# minut} many {# minut} other {# minutę}} (próg {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# konto jest} few {# konta są} many {# kont} other {# konto jest}} zablokowane po nieudanych próbach zalogowania się (próg {threshold}).",
           "NO_AUTOMATED_RESULTS": "Żaden zautomatyzowany wynik nie dotarł przez {hours, plural, one {# godzinę} few {# godziny} many {# godzin} other {# godzinę}} (próg {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "cofnęli swoją decyzję dotyczącą",
+        "reviewDecisionRevertedEmailMessage": "{actorName} cofnął swoją decyzję dotyczącą {entityLabel} \"{entityName}\" w projekcie \"{projectName}\" — czeka ponownie na przegląd.",
+        "reviewDecisionRevertedTitle": "Decyzja przeglądu cofnięta",
+        "reviewDecisionRevertedActionOther": "cofnęli decyzję {deciderName} dotyczącą",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} cofnął decyzję {deciderName} dotyczącą {entityLabel} \"{entityName}\" w projekcie \"{projectName}\" — czeka ponownie na przegląd."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## Kwarantanna przypadków testowych\nPrzypadek testowy w kwarantannie nadal działa i rejestruje wyniki, ale jego awarie są pozostawiane poza przebiegiem pass/fail i pokazywane jako oddzielna liczba. Umieść przypadek w kwarantannie ze wzorca awarii, podczas gdy przyczyna jest naprawiana. Kwarantanna zostaje podniesiona automatycznie po tym, jak przypadek przejdzie tyle razy z rzędu, ile ustawiono w ustawieniach Wzorców awarii, chyba że był oznaczony do ręcznego zwolnienia; zwolnij go tutaj lub ze wzorca w dowolnym momencie.",
     "rootCauses": "## Przyczyny główne\nPrzyczyny główne, które Wzorce awarii przypisuje do zgrupowanych awarii, przez sztuczną inteligencję lub ręcznie. Każda ma opis, który sztuczna inteligencja czyta, aby zdecydować, kiedy ma zastosowanie. Zmień nazwę, ponownie pokoloruj lub zmień kolejność, dodaj własne lub usuń te, których nie używasz; usunięcie jednej pozostawia jej wzorce bez przyczyny głównej.",
     "rootCauseDescription": "## Opis\nSztuczna inteligencja czyta ten opis, aby zdecydować, kiedy przyczyna główna ma zastosowanie do wzorca awarii, więc opisz dowody wskazujące na nią.",
-    "projectRiskSettings": "## Ustawienia oceny ryzyka\nKażdy przypadek testowy otrzymuje wynik ryzyka 0-100 z historii awarii, niestabilności, zaniedbania, powiązanej krytyczności wymagań i powiązanych defektów — deterministycznie, bez wywołań AI. Wyniki odświeżają się po przybyciu wyników i w codziennym przeglądzie. **Wagi komponentów** określają, ile każdy sygnał się liczy względem innych; zero usuwa komponent. **Przelicz wszystkie wyniki** ponownie ocenia cały projekt teraz zamiast czekać na codzienny przegląd."
+    "projectRiskSettings": "## Ustawienia oceny ryzyka\nKażdy przypadek testowy otrzymuje wynik ryzyka 0-100 z historii awarii, niestabilności, zaniedbania, powiązanej krytyczności wymagań i powiązanych defektów — deterministycznie, bez wywołań AI. Wyniki odświeżają się po przybyciu wyników i w codziennym przeglądzie. **Wagi komponentów** określają, ile każdy sygnał się liczy względem innych; zero usuwa komponent. **Przelicz wszystkie wyniki** ponownie ocenia cały projekt teraz zamiast czekać na codzienny przegląd.",
+    "reviewRevert": "## Cofanie Decyzji Przeglądu\nCzas, jaki recenzent ma na cofnięcie podjętej decyzji, liczony od momentu jej podjęcia. Cofanie zwraca prośbę do kolejki recenzenta; jeśli zatwierdzenie przesunęło element do przodu, element wraca do poprzedniego miejsca. Administratorzy systemu nie są związani tym ograniczeniem i mogą cofnąć decyzję w dowolnym momencie. Projekty mogą skrócić limit w ustawieniach zaawansowanych, ale nigdy go nie przedłużyć."
   },
   "reports": {
     "ui": {

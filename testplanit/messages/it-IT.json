@@ -2294,6 +2294,23 @@
           "save": "Salva impostazioni di pulizia",
           "savedToast": "Pulizia automazione abbandonata aggiornata per questo progetto",
           "saveError": "Impossibile aggiornare la pulizia automazione abbandonata"
+        },
+        "revertWindow": {
+          "label": "Annullamento delle decisioni di revisione",
+          "description": "Per quanto tempo un revisore ha la possibilità di annullare la propria decisione su questo progetto. Gli amministratori di sistema non sono vincolati da questo limite.",
+          "systemLockedTitle": "L'annullamento è disabilitato a livello di sistema",
+          "systemLockedDescription": "Un amministratore ha disattivato l'annullamento delle decisioni di revisione per ogni progetto. Questa impostazione non può essere modificata qui.",
+          "modeInheritMinutes": "Eredita l'impostazione predefinita del sistema ({minutes, plural, one {# minuto} other {# minuti}})",
+          "modeDisable": "Disabilita l'annullamento per questo progetto",
+          "modeCustom": "Finestra personalizzata",
+          "minutesBefore": "Limite",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minuti}}",
+          "minutesAriaLabel": "Minuti durante i quali una decisione rimane annullabile",
+          "systemMaxHint": "Massimo del sistema: {minutes} minuti",
+          "invalidMinutes": "Inserisci un numero di minuti maggiore di zero",
+          "save": "Salva limite di annullamento",
+          "savedToast": "Limite di annullamento salvato.",
+          "saveError": "Impossibile salvare il limite di annullamento. Riprova tra un attimo."
         }
       },
       "impact": {
@@ -3058,6 +3075,10 @@
           "ALERT_TRIGGERED": {
             "label": "Avvisi",
             "description": "Un avviso a cui sei abbonato si attiva perché una metrica di test ha superato la linea che monitora."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Decisione di revisione annullata",
+            "description": "Un revisore annulla una decisione su una richiesta che hai presentato, rimettendola nella sua coda."
           }
         },
         "success": {
@@ -4232,7 +4253,10 @@
       "filterAllEntityTypes": "Tutti i tipi di entità",
       "filterEntityTypeCase": "Casi di prova",
       "filterEntityTypeRun": "Prove di corsa",
-      "filterAllProjects": "Tutti i progetti"
+      "filterAllProjects": "Tutti i progetti",
+      "actionRevert": "Annulla decisione",
+      "revertedBadge": "Annullato",
+      "revertedBadgeTooltip": "{count, plural, one {Annullato una volta in precedenza} other {Annullato # volte in precedenza}}"
     },
     "requester": {
       "openButton": "Richiedi recensione",
@@ -4293,6 +4317,23 @@
       "alreadyDecidedError": "La decisione su questa revisione è già stata presa.",
       "decideError": "Impossibile registrare la tua decisione. Riprova tra un attimo.",
       "panelSummary": "Richiesta di revisione da {requesterName}: transizione a {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Annulla decisione",
+      "description": "Questa revisione torna a richiedere la tua decisione e il richiedente viene notificato. Il commento che hai lasciato rimane nel thread.",
+      "descriptionApproved": "Questa revisione torna a richiedere la tua decisione e l'elemento torna al suo stato precedente. Il richiedente viene notificato.",
+      "error": "Impossibile annullare la decisione. Riprova tra un attimo.",
+      "errorEntityMoved": "Questo elemento si è mosso da quando è stata approvata, quindi l'approvazione non può più essere annullata.",
+      "errorForbidden": "Solo il revisore che ha preso questa decisione può annullarla.",
+      "errorNotRevertable": "Questa decisione non può più essere annullata.",
+      "errorSuperseded": "Una nuova richiesta di revisione già esiste per questo elemento, quindi questa decisione non può più essere annullata.",
+      "errorWindowExpired": "Il limite di tempo per annullare questa decisione è scaduto.",
+      "success": "Decisione annullata. La revisione è di nuovo in attesa della tua decisione.",
+      "title": "Annullare la tua decisione?",
+      "titleOther": "Annullare questa decisione?",
+      "descriptionOther": "Questa revisione torna a richiedere una decisione e il richiedente viene notificato. Il commento del revisore rimane nel thread.",
+      "descriptionOtherApproved": "Questa revisione torna a richiedere una decisione e l'elemento torna al suo stato precedente. Il richiedente viene notificato.",
+      "successOther": "Decisione annullata. La revisione è di nuovo in attesa di una decisione."
     }
   },
   "runs": {
@@ -5885,7 +5926,19 @@
         "thresholdUnit": "{count, plural, one {giorno} other {giorni}}",
         "thresholdHelp": "Per quanti giorni una richiesta di revisione può rimanere in sospeso prima che i revisori ricevano una notifica di promemoria? Per le nuove richieste, il conteggio inizia al momento dell'invio.",
         "thresholdUpdateSuccess": "Le impostazioni del promemoria per la revisione sono state aggiornate.",
-        "thresholdUpdateError": "Impossibile aggiornare le impostazioni del promemoria. Riprova tra un attimo."
+        "thresholdUpdateError": "Impossibile aggiornare le impostazioni del promemoria. Riprova tra un attimo.",
+        "revertPolicy": {
+          "label": "Annullamento delle decisioni di revisione",
+          "modeAria": "Modalità criteri di annullamento",
+          "modeNone": "I progetti decidono ({hours}h per impostazione predefinita)",
+          "modeDisabled": "Annullamento disabilitato ovunque",
+          "modeMax": "Consenti l'annullamento per un massimo di",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minuti}}",
+          "minutesAriaLabel": "Numero massimo di minuti durante i quali una decisione rimane annullabile",
+          "invalidMinutes": "Inserisci un numero di minuti maggiore di zero",
+          "savedToast": "Criteri di annullamento salvati.",
+          "saveError": "Impossibile salvare i criteri di annullamento. Riprova tra un attimo."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Attiva/disattiva il flusso di lavoro di revisione per {name}",
@@ -5898,7 +5951,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "La funzionalità di revisione del flusso di lavoro è disabilitata a livello di sistema. Per riattivarla, modifica le impostazioni avanzate del progetto oppure imposta TESTPLANIT_REVIEW_FEATURE_ENABLED.",
-        "requiresReviewDefaultDisabled": "Lo stato predefinito del flusso di lavoro non richiede revisione: le nuove entità vengono inserite qui e non hanno uno stato precedente da controllare."
+        "requiresReviewDefaultDisabled": "Lo stato predefinito del flusso di lavoro non richiede revisione: le nuove entità vengono inserite qui e non hanno uno stato precedente da controllare.",
+        "requiresReviewLabel": "Richiede revisione"
       },
       "add": {
         "button": "Aggiungi flusso di lavoro",
@@ -7206,7 +7260,12 @@
           "AUDIT_BACKLOG": "La modifica di controllo non elaborata più recente ha {minutes, plural, one {# minuto} other {# minuti}} (soglia {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# account è} other {# account sono}} bloccati dopo i tentativi di accesso non riusciti (soglia {threshold}).",
           "NO_AUTOMATED_RESULTS": "Nessun risultato automatizzato è arrivato per {hours, plural, one {# ora} other {# ore}} (soglia {threshold})."
-        }
+        },
+        "reviewDecisionRevertedAction": "ha annullato la sua decisione su",
+        "reviewDecisionRevertedEmailMessage": "{actorName} ha annullato la sua decisione su {entityLabel} \"{entityName}\" nel progetto \"{projectName}\" — è di nuovo in attesa di revisione.",
+        "reviewDecisionRevertedTitle": "Decisione di revisione annullata",
+        "reviewDecisionRevertedActionOther": "ha annullato la decisione di {deciderName} su",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} ha annullato la decisione di {deciderName} su {entityLabel} \"{entityName}\" nel progetto \"{projectName}\" — è di nuovo in attesa di revisione."
       }
     },
     "issues": {
@@ -8604,7 +8663,8 @@
     "projectQuarantine": "## Casi di test in quarantena\nUn caso di test in quarantena continua a essere eseguito e registra i risultati, ma i suoi errori vengono esclusi dal passaggio/fallimento dell'esecuzione e mostrati come conteggio separato. Metti in quarantena un caso da uno schema di errori mentre la causa è in fase di correzione. La quarantena si solleva automaticamente una volta che il caso ha superato il numero di volte consecutive impostato nelle impostazioni di Schemi di errori, a meno che non sia stato contrassegnato per essere rilasciato manualmente; rilascialo qui o dallo schema in qualsiasi momento.",
     "rootCauses": "## Cause principali\nLe cause principali che Schemi di errori assegna agli errori raggruppati, dall'IA o manualmente. Ognuna ha una descrizione che l'IA legge per decidere quando si applica. Rinomina, riccolora o riordina, aggiungi le tue, o elimina quelle che non usi; l'eliminazione di una lascia i suoi schemi senza una causa principale.",
     "rootCauseDescription": "## Descrizione\nL'IA legge questa descrizione per decidere quando la causa principale si applica a uno schema di errori, quindi descrivi le prove che la indicano.",
-    "projectRiskSettings": "## Impostazioni di valutazione del rischio\nOgni caso di test ottiene un punteggio di rischio da 0 a 100 dalla sua cronologia di errori, instabilità, obsolescenza, criticità dei requisiti collegati e difetti collegati — deterministico, nessuna chiamata AI. I punteggi si aggiornano dopo l'arrivo dei risultati e in uno sweep notturno. I **pesi dei componenti** impostano quanto ogni segnale conta, rispetto agli altri; zero rimuove un componente. **Ricalcola tutti i punteggi** assegna un nuovo punteggio all'intero progetto ora invece di attendere lo sweep notturno."
+    "projectRiskSettings": "## Impostazioni di valutazione del rischio\nOgni caso di test ottiene un punteggio di rischio da 0 a 100 dalla sua cronologia di errori, instabilità, obsolescenza, criticità dei requisiti collegati e difetti collegati — deterministico, nessuna chiamata AI. I punteggi si aggiornano dopo l'arrivo dei risultati e in uno sweep notturno. I **pesi dei componenti** impostano quanto ogni segnale conta, rispetto agli altri; zero rimuove un componente. **Ricalcola tutti i punteggi** assegna un nuovo punteggio all'intero progetto ora invece di attendere lo sweep notturno.",
+    "reviewRevert": "## Annullamento delle decisioni di revisione\nPer quanto tempo un revisore ha la possibilità di annullare una decisione che ha registrato, calcolato da quando ha deciso. L'annullamento riporta la richiesta alla coda del revisore; se un'approvazione aveva già fatto avanzare l'elemento, l'elemento torna a dove era. Gli amministratori di sistema non sono vincolati da questo limite e possono annullare una decisione di qualsiasi età. I progetti possono ridurre il limite nelle loro impostazioni Avanzate, ma non estenderlo mai."
   },
   "reports": {
     "ui": {
