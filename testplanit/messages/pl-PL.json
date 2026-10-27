@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Znajdź duplikaty",
-      "viewResults": "Widok {count, plural, one {# Wynik} other {# Wyniki}}",
+      "viewDuplicates": "Wyświetl duplikaty",
       "retryScan": "Ponów skanowanie",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Poprawa wyników dzięki sztucznej inteligencji...",

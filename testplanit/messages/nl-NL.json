@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Dubbele items zoeken",
-      "viewResults": "Weergave {count, plural, one {# Resultaat} other {# Resultaten}}",
+      "viewDuplicates": "Duplicaten weergeven",
       "retryScan": "Scan opnieuw uitvoeren",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Resultaten verbeteren met AI...",

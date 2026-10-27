@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Duplikate finden",
-      "viewResults": "Ansicht {count, plural, one {# Ergebnis} other {# Ergebnisse}}",
+      "viewDuplicates": "Duplikate anzeigen",
       "retryScan": "Scan wiederholen",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Ergebnisse durch KI verbessern...",

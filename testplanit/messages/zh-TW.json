@@ -126,8 +126,8 @@
       "exportingPdf": "出口...",
       "change": "改變",
       "viewAll": "看全部",
-      "viewSystemOutput": "查看日志",
-      "viewSystemError": "查看错误",
+      "viewSystemOutput": "查看日誌",
+      "viewSystemError": "查看錯誤",
       "undo": "撤銷",
       "undoDelete": "撤銷刪除",
       "automated": {
@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "尋找重複項",
-      "viewResults": "看 {count, plural, one {# 結果} other {# 結果集}}",
+      "viewDuplicates": "查看重複項",
       "retryScan": "重試掃描",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "利用人工智慧提升成果…",

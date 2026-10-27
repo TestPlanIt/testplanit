@@ -126,8 +126,8 @@
       "exportingPdf": "Exportador...",
       "change": "Mudar",
       "viewAll": "Ver tudo",
-      "viewSystemOutput": "Visualizar logs",
-      "viewSystemError": "Visualizar erro",
+      "viewSystemOutput": "Exibir logs",
+      "viewSystemError": "Exibir erro",
       "undo": "Desfazer",
       "undoDelete": "Desfazer exclusão",
       "automated": {
@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Encontrar duplicados",
-      "viewResults": "Visualizar {count, plural, one {# Resultado} other {# Resultados}}",
+      "viewDuplicates": "Exibir Duplicatas",
       "retryScan": "Repetir verificação",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Aprimorando resultados com IA...",

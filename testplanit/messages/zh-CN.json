@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "查找重复项",
-      "viewResults": "查看 {count, plural, one {# 结果} other {# 结果集}}",
+      "viewDuplicates": "查看重复项",
       "retryScan": "重试扫描",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "利用人工智能提升成果……",

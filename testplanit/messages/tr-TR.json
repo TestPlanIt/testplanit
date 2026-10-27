@@ -126,8 +126,8 @@
       "exportingPdf": "İhracat...",
       "change": "Değiştirmek",
       "viewAll": "Tümünü Görüntüle",
-      "viewSystemOutput": "Günlükleri görüntüle",
-      "viewSystemError": "Hatayı görüntüle",
+      "viewSystemOutput": "Günlükleri Görüntüle",
+      "viewSystemError": "Hatayı Görüntüle",
       "undo": "Geri al",
       "undoDelete": "Silme işlemini geri al",
       "automated": {
@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Yinelenenleri bul",
-      "viewResults": "Görüntüle {count, plural, one {# Sonuç} other {# Sonuçlar}}",
+      "viewDuplicates": "Yinelenenleri Görüntüle",
       "retryScan": "Tarama işlemini tekrar dene",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Yapay zekâ ile sonuçları iyileştirme...",

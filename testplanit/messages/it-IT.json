@@ -126,7 +126,7 @@
       "exportingPdf": "Esportazione...",
       "change": "Modifica",
       "viewAll": "Visualizza tutto",
-      "viewSystemOutput": "Visualizza i log",
+      "viewSystemOutput": "Visualizza registri",
       "viewSystemError": "Visualizza errore",
       "undo": "Disfare",
       "undoDelete": "Annulla eliminazione",
@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Trova duplicati",
-      "viewResults": "Visualizza {count, plural, one {# Risultato} other {# Risultati}}",
+      "viewDuplicates": "Visualizza duplicati",
       "retryScan": "Riprova la scansione",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Migliorare i risultati con l'intelligenza artificiale...",
