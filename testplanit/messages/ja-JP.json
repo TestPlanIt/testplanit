@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "重複データの検索",
-      "viewResults": "表示 {count, plural, one {# 結果} other {# 結果}}",
+      "viewDuplicates": "重複を表示",
       "retryScan": "スキャンを再試行",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "AIを活用して成果を向上させる…",

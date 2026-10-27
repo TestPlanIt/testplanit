@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Najít duplicity",
-      "viewResults": "Zobrazit {count, plural, one {# výsledek} few {# výsledky} other {# výsledků}}",
+      "viewDuplicates": "Zobrazit duplikáty",
       "retryScan": "Zopakovat kontrolu",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Vylepšování výsledků pomocí AI...",

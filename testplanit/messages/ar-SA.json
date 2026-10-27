@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "البحث عن التكرارات",
-      "viewResults": "عرض {count, plural, zero {# نتيجة} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
+      "viewDuplicates": "عرض التكرارات",
       "retryScan": "إعادة المحاولة للفحص",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "جارٍ تحسين النتائج باستخدام الذكاء الاصطناعي...",
@@ -4693,7 +4693,7 @@
       "minimumScore": "الحد الأدنى لدرجة المخاطر",
       "showing": "{shown, plural, one {تم تحميل # حالة} other {تم تحميل # حالات}} من {total, plural, one {# مطابقة} other {# مطابقات}}",
       "loadedSelected": "{shown, plural, =2 {كلا الحالات المحملة مختارة} one {الحالة المحملة مختارة} other {جميع # الحالات المحملة مختارة}}.",
-      "selectAllMatches": "{total, plural, =2 {Select both matches} one {Select the only match} other {Select all # matches}}",
+      "selectAllMatches": "{total, plural, =0 {تحديد المطابقات} =2 {تحديد كلا المطابقتين} one {تحديد المطابقة الوحيدة} few {تحديد # مطابقات} many {تحديد # مطابقة} other {تحديد جميع # مطابقات}}",
       "allMatchesSelected": "{total, plural, =2 {كلا المطابقات مختارة} one {المطابقة الوحيدة مختارة} other {جميع # المطابقات مختارة}}.",
       "noneMatch": "لا توجد حالات مسجلة عند هذه الدرجة أو أعلى منها.",
       "caseColumn": "حالة الاختبار",

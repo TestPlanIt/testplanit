@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Tìm các mục trùng lặp",
-      "viewResults": "Xem {count, plural, one {# Kết quả} other {# Kết quả}}",
+      "viewDuplicates": "Xem Các Mục Trùng Lặp",
       "retryScan": "Thử quét lại",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Nâng cao hiệu quả với trí tuệ nhân tạo...",

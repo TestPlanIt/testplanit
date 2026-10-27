@@ -126,8 +126,8 @@
       "exportingPdf": "Экспорт...",
       "change": "Изменять",
       "viewAll": "Посмотреть все",
-      "viewSystemOutput": "Просмотр журналов",
-      "viewSystemError": "Просмотр ошибки",
+      "viewSystemOutput": "Просмотр логов",
+      "viewSystemError": "Просмотреть ошибку",
       "undo": "Отменить",
       "undoDelete": "Отменить удаление",
       "automated": {
@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Найти дубликаты",
-      "viewResults": "Просмотр {count, plural, one {# Результат} other {# Результаты}}",
+      "viewDuplicates": "Просмотр дубликатов",
       "retryScan": "Повторить сканирование",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Повышение эффективности с помощью ИИ...",

@@ -3673,7 +3673,7 @@
     },
     "duplicates": {
       "findDuplicates": "Trouver les doublons",
-      "viewResults": "Afficher {count, plural, one {# Résultat} other {# Résultats}}",
+      "viewDuplicates": "Afficher les doublons",
       "retryScan": "Réessayer l'analyse",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Améliorer les résultats grâce à l'IA...",

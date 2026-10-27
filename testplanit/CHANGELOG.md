@@ -1,3 +1,9 @@
+## [1.2.0-beta.14](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.13...v1.2.0-beta.14) (2026-10-27)
+
+### Bug Fixes
+
+* **tests:** update test run descriptions to include 'minimum impact score' ([efa0401](https://github.com/TestPlanIt/testplanit/commit/efa04014fb28098c377464983d3f49c7d12ee0f5))
+
 ## [1.2.0-beta.13](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.12...v1.2.0-beta.13) (2026-10-27)
 
 ### Features
