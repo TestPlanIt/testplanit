@@ -36,7 +36,10 @@ import { Link } from "~/lib/navigation";
 import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
 import { cn } from "~/utils";
 import { wallClockSecondsBetween } from "~/utils/automatedRunMetrics";
-import { statusSurfaceVars } from "~/utils/contrastingTextColor";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { sortSummaryItems } from "~/utils/summarySort";
@@ -280,7 +283,7 @@ export function TestRunCasesSummary({
   if (!summaryData) {
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
-        <div className="flex items-center gap-1 text-muted-foreground text-xs">
+        <div className="flex items-center gap-1 text-foreground text-xs">
           <HelpCircle className="w-4 h-4" />
           <span>{tCommon("labels.noResults")}</span>
         </div>
@@ -317,6 +320,9 @@ export function TestRunCasesSummary({
               style={{
                 ...statusSurfaceVars(firstStatus?.color?.value || "#B1B2B3"),
                 backgroundColor: firstStatus?.color?.value || "#B1B2B3",
+                color: contrastingTextColor(
+                  firstStatus?.color?.value || "#B1B2B3"
+                ),
               }}
             >
               <div className="font-semibold text-sm">
@@ -329,7 +335,7 @@ export function TestRunCasesSummary({
           </Tooltip>
         </div>
 
-        <div className="flex items-center gap-1 text-muted-foreground text-xs">
+        <div className="flex items-center gap-1 text-foreground text-xs">
           <HelpCircle className="w-4 h-4" />
           <span>{tCommon("labels.noResults")}</span>
         </div>
@@ -438,11 +444,12 @@ export function TestRunCasesSummary({
                   />
                 </TooltipTrigger>
                 <TooltipContent
-                  className="border-0 text-muted px-3 py-2"
+                  className="border-0 px-3 py-2"
                   data-status-surface
                   style={{
                     ...statusSurfaceVars(result.statusColor),
                     backgroundColor: result.statusColor,
+                    color: contrastingTextColor(result.statusColor),
                   }}
                 >
                   <div className="flex items-center gap-1 font-semibold text-sm">
@@ -659,11 +666,12 @@ export function TestRunCasesSummary({
                 />
               </TooltipTrigger>
               <TooltipContent
-                className="border-0 text-muted px-3 py-2"
+                className="border-0 px-3 py-2"
                 data-status-surface
                 style={{
                   ...statusSurfaceVars(color),
                   backgroundColor: color,
+                  color: contrastingTextColor(color),
                 }}
               >
                 <div className="flex items-center gap-1 font-semibold text-sm">

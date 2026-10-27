@@ -123,12 +123,14 @@ type AxeViolation = {
   nodes: AxeNode[];
 };
 
-// Selectors excluded from every scan. Avatar initials render on a per-name
-// generated background color (not a theme token) and identically in all themes;
-// their full name is always available via the tooltip / img alt, so the initials
-// are supplementary. Excluding them keeps the strict color-contrast gate honest
-// about real (theme-driven) failures rather than data-color noise.
-const AXE_EXCLUDE_SELECTORS = ["[data-avatar-initials]"];
+// Selectors excluded from every scan. Avatar initials used to sit here on the
+// grounds that their generated background was data colour rather than theme
+// noise — but the generator picked the foreground from a luminance sum with red
+// and blue transposed, so 14.2% of the colours it could produce rendered below
+// 4.5:1 and the exclusion hid exactly that. The pick now goes through
+// `contrastingTextColor`, which never drops below 4.58:1 on any background, so
+// there is nothing left to exclude.
+const AXE_EXCLUDE_SELECTORS: string[] = [];
 
 async function runAxe(
   page: Page
@@ -153,8 +155,58 @@ async function settle(page: Page, route: A11yRoute): Promise<void> {
       .catch(() => {});
   }
   await dismissOnboardingOverlay(page);
+  await freezeTransitions(page);
   if (FORCE_THEME) await applyTheme(page, FORCE_THEME);
   if (route.settleMs) await page.waitForTimeout(route.settleMs);
+}
+
+/**
+ * Cancel CSS transitions for the rest of this page's life, before the theme
+ * class is swapped.
+ *
+ * Swapping the class on <html> repoints every colour token at once, so every
+ * `transition-colors` element animates from the old theme's colour to the new
+ * one and axe reads whichever frame it lands on. It measured blends of two
+ * themes: the project menu's section labels came back as #6c6f76, #70747b and
+ * #71747b on different routes, all three on the straight line from the light
+ * theme's --card-foreground (#020817) to accessibledark's (#f8fafc), and none
+ * of them a colour any theme defines. Settled, that text is 17.1:1. An audit
+ * wants the settled colour, which is what `transition: none` leaves behind.
+ * Same bug class as settleAnimation below, for transitions rather than
+ * animations.
+ */
+async function freezeTransitions(page: Page): Promise<void> {
+  await page
+    .evaluate(() => {
+      const style = document.createElement("style");
+      style.setAttribute("data-a11y-freeze", "");
+      style.textContent =
+        "*, *::before, *::after { transition: none !important }";
+      document.head.appendChild(style);
+    })
+    .catch(() => {});
+}
+
+/**
+ * Seed next-themes' stored theme before the page's first paint, so the first
+ * frame is already the forced theme rather than the default.
+ *
+ * This is not what makes the theme stick. Header.tsx calls
+ * setTheme(session.user.preferences.theme) on every session change, so the
+ * saved preference wins a moment after hydration no matter what is in
+ * localStorage — fixtures.setup.ts sets that preference, and this only covers
+ * the window before the effect runs.
+ */
+async function seedTheme(page: Page, theme: string): Promise<void> {
+  await page
+    .addInitScript((t) => {
+      try {
+        localStorage.setItem("theme", t);
+      } catch {
+        /* private mode / blocked storage — the class swap still applies */
+      }
+    }, theme)
+    .catch(() => {});
 }
 
 async function applyTheme(page: Page, theme: string): Promise<void> {
@@ -184,6 +236,29 @@ async function dismissOnboardingOverlay(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Wait for a Radix overlay's enter animation to finish before axe reads it.
+ *
+ * `isVisible()` is true from the animation's first frame, where the panel's own
+ * opacity is still 0. axe composites text through that ancestor opacity, so it
+ * measured near-black menu items as near-white and reported 10 phantom
+ * color-contrast failures per menu state — identically in every theme, which is
+ * the tell that no theme colour was involved.
+ */
+async function settleAnimation(page: Page, selector: string): Promise<void> {
+  await page
+    .locator(selector)
+    .first()
+    .evaluate((el: Element) =>
+      Promise.all(
+        el
+          .getAnimations({ subtree: true })
+          .map((a) => a.finished.catch(() => {}))
+      ).then(() => undefined)
+    )
+    .catch(() => {});
+}
+
 /** Best-effort: open the page's primary dialog. Returns whether one opened. */
 async function openDialog(page: Page): Promise<boolean> {
   const trigger = page
@@ -195,7 +270,10 @@ async function openDialog(page: Page): Promise<boolean> {
     return false;
   await trigger.click({ timeout: 2000 }).catch(() => {});
   const dialog = page.locator('[role="dialog"]').first();
-  return await dialog.isVisible({ timeout: 3000 }).catch(() => false);
+  if (!(await dialog.isVisible({ timeout: 3000 }).catch(() => false)))
+    return false;
+  await settleAnimation(page, '[role="dialog"]');
+  return true;
 }
 
 /** Best-effort: open a row/action menu. Returns whether one opened. */
@@ -209,7 +287,10 @@ async function openMenu(page: Page): Promise<boolean> {
     return false;
   await trigger.click({ timeout: 2000 }).catch(() => {});
   const menu = page.locator('[role="menu"]').first();
-  return await menu.isVisible({ timeout: 2500 }).catch(() => false);
+  if (!(await menu.isVisible({ timeout: 2500 }).catch(() => false)))
+    return false;
+  await settleAnimation(page, '[role="menu"]');
+  return true;
 }
 
 async function scanInteraction(
@@ -295,6 +376,7 @@ for (const route of routes) {
       scanPage = await ctx.newPage();
     }
     await stubBellSSE(scanPage);
+    if (FORCE_THEME) await seedTheme(scanPage, FORCE_THEME);
 
     try {
       const resp = await scanPage.goto(url, {

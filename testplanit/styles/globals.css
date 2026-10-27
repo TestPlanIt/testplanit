@@ -13,15 +13,18 @@
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 215.4 16.3% 44%; /* 5.3:1 on bg, 4.8:1 on muted */
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 72% 41%;
     --destructive-foreground: 210 40% 98%;
+    --destructive-text: 0 72% 41%; /* already ink-safe at 6.7:1 on white — same as the fill */
     --warning: 38 92% 50%;
-    --warning-foreground: 38 92% 20%;
+    --warning-foreground: 38 92% 16%; /* ON the warning fill: white is 2.1:1, the old 20% only 4.4:1 */
+    --warning-text: 38 92% 26%; /* ink, not fill: >=5.0:1 on every surface, hovered nested rows included */
     --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
+    --success-foreground: 142 71% 16%; /* ON the success fill: white is only 2.3:1 */
+    --success-text: 142 71% 26%; /* ink, not fill: >=4.6:1 on every surface, hovered nested rows included */
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
@@ -61,15 +64,33 @@
     --secondary: 210 40% 78%; /* Reduced brightness for dark mode */
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 222.2 84% 4.9%; /* Adjusted for dark mode */
-    --muted-foreground: 210 40% 75%; /* Reduced brightness for dark mode */
+    /* Secondary ink, not a dimmed --foreground: 19 L* below it, the same gap
+       .accessibledark uses, so the two read as different levels rather than as
+       one colour. At 75% the separation was 1.2:1 and the hierarchy was
+       invisible. Saturation 40% -> 25% costs no luminance here and adds a
+       second, hue-based recede cue. Bound by --accent at 4.9:1: a focused
+       Select/Dropdown/Command item fills with accent while `text-muted-foreground`
+       on a CHILD span keeps its own colour. */
+    --muted-foreground: 215 25% 63%;
     --accent: 217.2 32.6% 20%;
     --accent-foreground: 210 40% 82%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 82%;
-    --warning: 38 80% 40%;
-    --warning-foreground: 38 90% 80%;
-    --success: 142 71% 35%;
-    --success-foreground: 0 0% 98%;
+    --destructive-text: 0 94% 82%; /* the fill is 2.0:1 as ink, 1.4:1 on a focused menu item; this is 7.2:1 */
+    /* Dark-theme fills, dark enough for a near-white foreground, like
+       --destructive above. A translucent fill blends toward the page, so the
+       /90 hover is DARKER than the solid fill and the solid fill is the
+       binding surface — the light themes never hit this, because there a tint
+       blends toward white. At 40% the warning fill left its own foreground at
+       2.6:1 and white at 3.5:1; at these values a near-white ink is 5.0:1 on
+       the solid fill and 5.8:1 on /90, and the fill still clears 3:1 against
+       the page so the chip edge stays visible. */
+    --warning: 38 80% 32%;
+    --warning-foreground: 0 0% 98%; /* the light amber it replaced was 2.6:1 on its own fill */
+    --warning-text: 38 80% 40%; /* 5.7:1 as ink, and no longer the fill value */
+    --success: 142 71% 29%;
+    --success-foreground: 0 0% 98%; /* 4.9:1 on the fill above, 5.8:1 on /90 */
+    --success-text: 142 71% 35%; /* 5.4:1 as ink, and no longer the fill value */
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 70%;
@@ -254,15 +275,18 @@ svg[class*="plot-"] .gantt-task-label text {
   --secondary: 60 4.8% 95.9%;
   --secondary-foreground: 24 9.8% 10%;
   --muted: 60 4.8% 95.9%;
-  --muted-foreground: 25 5.3% 44.7%;
+  --muted-foreground: 25 5.3% 41%; /* 5.5:1 on bg, 4.9:1 on this theme's own tinted card, which is darker than --muted */
   --accent: 60 4.8% 95.9%;
   --accent-foreground: 24 9.8% 10%;
   --destructive: 0 72% 41%;
   --destructive-foreground: 60 9.1% 97.8%;
+  --destructive-text: 0 72% 41%;
   --warning: 38 92% 50%;
-  --warning-foreground: 38 92% 20%;
+  --warning-foreground: 38 92% 16%;
+  --warning-text: 38 92% 26%;
   --success: 142 71% 45%;
-  --success-foreground: 0 0% 100%;
+  --success-foreground: 142 71% 16%;
+  --success-text: 142 71% 26%;
   --border: 20 5.9% 90%;
   --input: 20 5.9% 90%;
   --ring: 24.6 95% 53.1%;
@@ -286,15 +310,18 @@ svg[class*="plot-"] .gantt-task-label text {
   --secondary: 240 4.8% 95.9%;
   --secondary-foreground: 240 5.9% 10%;
   --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
+  --muted-foreground: 240 3.8% 44%; /* 5.3:1 on bg, 4.8:1 on muted */
   --accent: 240 4.8% 95.9%;
   --accent-foreground: 240 5.9% 10%;
   --destructive: 0 72% 41%;
   --destructive-foreground: 0 0% 98%;
+  --destructive-text: 0 72% 41%;
   --warning: 38 92% 50%;
-  --warning-foreground: 38 92% 20%;
+  --warning-foreground: 38 92% 16%;
+  --warning-text: 38 92% 26%;
   --success: 142 71% 45%;
-  --success-foreground: 0 0% 100%;
+  --success-foreground: 142 71% 16%;
+  --success-text: 142 71% 26%;
   --border: 240 5.9% 90%;
   --input: 240 5.9% 90%;
   --ring: 142.1 76.2% 36.3%;
@@ -313,23 +340,26 @@ svg[class*="plot-"] .gantt-task-label text {
   --card-foreground: 224 71.4% 4.1%;
   --popover: 0 0% 100%;
   --popover-foreground: 224 71.4% 4.1%;
-  --primary: 262.1 83.3% 57.8%;
+  --primary: 262.1 83.3% 55%; /* 4.9:1 as ink on a hovered nested row, where 57.8% read 4.4:1 */
   --primary-foreground: 220 90% 98%;
   --secondary: 220 14.3% 95.9%;
   --secondary-foreground: 220.9 39.3% 11%;
   --muted: 220 14.3% 95.9%;
-  --muted-foreground: 220 8.9% 46.1%;
+  --muted-foreground: 220 8.9% 44%; /* 5.3:1 on bg, 4.8:1 on muted */
   --accent: 220 14.3% 95.9%;
   --accent-foreground: 220.9 39.3% 11%;
   --destructive: 0 72% 41%;
   --destructive-foreground: 210 20% 98%;
+  --destructive-text: 0 72% 41%;
   --warning: 38 92% 50%;
-  --warning-foreground: 38 92% 20%;
+  --warning-foreground: 38 92% 16%;
+  --warning-text: 38 92% 26%;
   --success: 142 71% 45%;
-  --success-foreground: 0 0% 100%;
+  --success-foreground: 142 71% 16%;
+  --success-text: 142 71% 26%;
   --border: 220 13% 91%;
   --input: 220 13% 91%;
-  --ring: 262.1 83.3% 57.8%;
+  --ring: 262.1 83.3% 55%; /* tracks --primary */
   /* Data-table surfaces and grid line. */
   --tp-table-row: 220 14.3% 96.7%;
   --tp-table-row-hover: 220 14.3% 92.2%;
@@ -361,10 +391,13 @@ svg[class*="plot-"] .gantt-task-label text {
   --accent-foreground: 222.2 47.4% 11.2%;
   --destructive: 0 72% 38%;
   --destructive-foreground: 0 0% 100%;
+  --destructive-text: 0 72% 38%; /* already ink-safe at 7.5:1 on white — same as the fill */
   --warning: 38 92% 28%;
   --warning-foreground: 0 0% 100%;
+  --warning-text: 38 92% 28%; /* already ink-safe at 6.0:1 */
   --success: 142 60% 28%;
   --success-foreground: 0 0% 100%;
+  --success-text: 142 60% 28%; /* already ink-safe at 6.0:1 */
   --border: 215 16% 47%; /* dark enough for 3:1 non-text contrast (1.4.11) */
   --input: 215 16% 40%;
   --ring: 217 91% 40%; /* strong, clearly visible focus indicator */
@@ -406,10 +439,13 @@ svg[class*="plot-"] .gantt-task-label text {
   --accent-foreground: 210 40% 98%;
   --destructive: 0 65% 45%; /* white text 6.0:1, 3.1:1 vs bg */
   --destructive-foreground: 0 0% 100%;
+  --destructive-text: 0 94% 82%; /* the fill is only 3.1:1 as ink; this is 9.9:1 */
   --warning: 38 92% 60%;
   --warning-foreground: 38 92% 12%;
+  --warning-text: 38 92% 60%; /* 10.1:1 as ink — same as the fill */
   --success: 142 60% 30%; /* white text 5.4:1, 3.5:1 vs bg */
   --success-foreground: 0 0% 100%;
+  --success-text: 142 60% 60%; /* the fill is only 3.5:1 as ink; this is 10.1:1 */
   --border: 215 20% 48%; /* 4.0:1 non-text contrast (1.4.11) */
   --input: 215 20% 52%;
   --ring: 210 90% 72%; /* bright, clearly visible focus indicator on dark */
@@ -436,14 +472,35 @@ svg[class*="plot-"] .gantt-task-label text {
   /* 1.4.3 Contrast: same problem on de-emphasized primary text (e.g. breadcrumb links) */
   color: hsl(var(--primary)) !important;
 }
-.accessibledark .text-destructive {
-  /* 1.4.3 Contrast: --destructive is tuned for white text on a red fill and is
-     only 3.1:1 as text on the page; >=4.6:1 on every surface, hovered rows included */
-  color: hsl(0 94% 82%) !important;
-}
-.accessibledark .text-success {
-  /* 1.4.3 Contrast: same for --success (3.5:1 as text); >=4.7:1 on every surface */
-  color: hsl(142 60% 60%) !important;
+
+/* `--success` and `--warning` are fill colours: tuned so white reads on top of
+   them. Used as ink on a light page they are 2.3:1 and 2.1:1. Every theme
+   therefore publishes a `*-text` token, and the bare utilities read that
+   instead, which fixes all ~86 call sites without touching a single one — and
+   without touching the fills, so the solid badges and tinted surfaces are
+   unchanged.
+   
+   These MUST stay inside `@layer utilities`. Tailwind emits the stylesheet's
+   own utilities layer after its generated one, so at equal specificity these
+   still win over `.text-success` — but a variant form like
+   `hover:text-foreground` adds a pseudo-class and so outranks them, which is
+   the behaviour the call sites expect. Unlayered, these beat EVERY variant
+   (unlayered styles outrank any layer regardless of specificity) and a badge
+   carrying `text-warning hover:text-foreground` would never change on hover.
+   
+   Variant forms of these two utilities compile to their own selectors and are
+   NOT covered here — `[&>svg]:text-warning` and the like use
+   `text-warning-text` at the call site instead. */
+@layer utilities {
+  .text-success {
+    color: hsl(var(--success-text));
+  }
+  .text-warning {
+    color: hsl(var(--warning-text));
+  }
+  .text-destructive {
+    color: hsl(var(--destructive-text));
+  }
 }
 :is(.accessible, .accessibledark)
   :is(

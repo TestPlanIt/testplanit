@@ -66,7 +66,9 @@ export const getColumns = (
           ></div>
           <div
             className={
-              row.original.systemName === "untested" ? "opacity-50" : ""
+              row.original.systemName === "untested"
+                ? "text-muted-foreground"
+                : ""
             }
           >
             {row.original.name}
@@ -84,7 +86,11 @@ export const getColumns = (
       size: 150,
       cell: ({ row }) => (
         <div
-          className={row.original.systemName === "untested" ? "opacity-50" : ""}
+          className={
+            row.original.systemName === "untested"
+              ? "text-muted-foreground"
+              : ""
+          }
         >
           {row.original.systemName}
         </div>
@@ -100,7 +106,11 @@ export const getColumns = (
       size: 150,
       cell: ({ row }) => (
         <div
-          className={row.original.systemName === "untested" ? "opacity-50" : ""}
+          className={
+            row.original.systemName === "untested"
+              ? "text-muted-foreground"
+              : ""
+          }
         >
           {row.original.aliases}
         </div>

@@ -228,7 +228,7 @@ export function SelectedTestCasesDrawer({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive-text"
               aria-label={t("common.actions.remove")}
               onClick={() => {
                 onSelectionChange(

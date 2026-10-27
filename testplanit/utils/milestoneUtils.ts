@@ -7,6 +7,7 @@ import type {
   MilestoneTypes,
 } from "~/zenstack/models";
 import { isCalendarDayAfter, isCalendarDayBefore } from "~/utils/calendarDate";
+import { isDarkTheme } from "~/utils/theme";
 
 type MilestoneTypesWithIcon = MilestoneTypes & {
   icon: FieldIcon | null;
@@ -93,7 +94,9 @@ export const getStatusStyle = (
   colors: ColorMap
 ) => {
   const color = colors[status];
-  if (theme === "dark") {
+  // Every dark theme takes the dark colours, not just the one called "dark" —
+  // `accessibledark` is a dark surface too and was getting the light set.
+  if (isDarkTheme(theme)) {
     return {
       bg: hexToRgba(color.dark, 0.5),
       border: color.dark,

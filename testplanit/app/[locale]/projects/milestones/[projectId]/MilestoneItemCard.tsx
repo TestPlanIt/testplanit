@@ -35,6 +35,10 @@ import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import React from "react";
 import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
+import {
   ColorMap,
   getStatus,
   hasCalendarDates,
@@ -190,8 +194,13 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
         ]}
         state={
           <Badge
-            style={{ backgroundColor: badge }}
-            className="text-foreground border-2 border-secondary-foreground text-sm whitespace-nowrap"
+            data-status-surface
+            style={{
+              ...statusSurfaceVars(badge),
+              backgroundColor: badge,
+              color: contrastingTextColor(badge),
+            }}
+            className="border-2 border-secondary-foreground text-sm whitespace-nowrap"
           >
             {t(`statusLabels.${status}` as any)}
           </Badge>
@@ -263,7 +272,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                   />
                   <DropdownMenuItem
                     onSelect={() => onOpenDeleteModal(milestone)}
-                    className="text-destructive hover:text-destructive-foreground"
+                    className="text-destructive focus:text-destructive-text"
                   >
                     <div className="flex items-center">
                       <Trash className="w-5 h-5 me-2" />

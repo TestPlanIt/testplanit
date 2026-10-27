@@ -45,6 +45,10 @@ import {
   getStatusStyle,
 } from "~/utils/milestoneUtils";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 
 interface MilestoneFormControlsProps {
   isEditMode: boolean;
@@ -330,14 +334,20 @@ export default function MilestoneFormControls({
         colorMap && (
           <div className="space-y-2">
             <Badge
-              style={{
-                backgroundColor: getStatusStyle(
+              data-status-surface
+              style={(() => {
+                const badge = getStatusStyle(
                   getStatus(milestone),
                   resolvedTheme || "light",
                   colorMap
-                ).badge,
-              }}
-              className="text-secondary-background border-2 border-secondary-foreground text-sm"
+                ).badge;
+                return {
+                  ...statusSurfaceVars(badge),
+                  backgroundColor: badge,
+                  color: contrastingTextColor(badge),
+                };
+              })()}
+              className="border-2 border-secondary-foreground text-sm"
             >
               {t(`statusLabels.${getStatus(milestone)}` as any)}
             </Badge>

@@ -150,7 +150,7 @@ export const useColumns = (
             return (
               <Badge
                 variant="outline"
-                className="border-warning text-warning-foreground"
+                className="border-warning text-warning-text"
               >
                 {t("status.awaitingAuthorization")}
               </Badge>

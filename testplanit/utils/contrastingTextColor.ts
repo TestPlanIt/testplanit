@@ -14,7 +14,11 @@
  * inline, so this never changes their appearance.
  *
  * Note this is the WCAG relative-luminance formula (sRGB channels linearised
- * first), not the raw-channel approximation in utils/stringToColorCode.ts.
+ * first), not a raw-channel approximation: summing raw 0-255 channels mis-ranks
+ * saturated colours badly enough to pick an unreadable foreground. The
+ * generated avatar and mention-chip colours in utils/stringToColorCode.ts used
+ * to do exactly that, which left 14.2% of the colours they can produce below
+ * 4.5:1; they now delegate here.
  */
 
 import type { CSSProperties } from "react";
@@ -62,6 +66,22 @@ function relativeLuminance([r, g, b]: [number, number, number]): number {
 }
 
 /**
+ * WCAG 2.x contrast ratio, or null when either colour is unparseable.
+ *
+ * For callers that paint one admin-owned shade on another and want to keep
+ * that pair when it is readable: the black/white pick above is their fallback,
+ * not their first choice (hooks/useIssueColors.ts).
+ */
+export function contrastRatio(a: string, b: string): number | null {
+  const [first, second] = [parseColor(a), parseColor(b)];
+  if (!first || !second) return null;
+  const [hi, lo] = [relativeLuminance(first), relativeLuminance(second)].sort(
+    (x, y) => y - x
+  );
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/**
  * Black or white, whichever contrasts better with `backgroundColor`.
  * Unparseable input falls back to black, the safer default on the light
  * surfaces these badges sit on.
@@ -77,29 +97,27 @@ export function contrastingTextColor(backgroundColor: string): string {
 }
 
 /**
- * The pick for text set INLINE on a status surface — what the brand themes
- * show. The strict WCAG comparison above flips to black right at the ratio
- * tie, where mid-saturation backgrounds (the seeded violet Skipped,
- * #786AC8, is luminance 0.185 — black "wins" 4.70:1 vs 4.47:1) read far
- * better with white to human eyes. Prefer white unless black's ratio beats
- * it by 1.5×, which moves the flip to luminance ~0.23 — light backgrounds
- * (greens, ambers) still get black. Accessible themes ignore this: they
- * consume the strict pick via --status-surface-fg (statusSurfaceVars).
+ * There was a `perceptualTextColor` here, which preferred white unless
+ * black's ratio beat it by 1.5x. It read better to the eye on mid-saturation
+ * fills, but on five of the fifty-four seeded shades it chose the ink that
+ * fails AA — Black[2] #838485 3.75:1, Indigo[3] #258AC4 3.81, Blue[2] #128BA1
+ * 4.01, Red[2] #ED360C 4.09, Violet[3] #786AC8 4.47 — and only the accessible
+ * themes re-derived the strict pick, so light and the brand themes shipped
+ * them as they were. The surfaces that compute their ink now take the strict
+ * pick above, which clears 4.5:1 on all fifty-four (worst 4.69, Violet[3]).
+ * Retired 2026-10-27; don't reintroduce the preference without re-checking
+ * the seed.
  */
-export function perceptualTextColor(backgroundColor: string): string {
-  const rgb = parseColor(backgroundColor);
-  if (!rgb) return BLACK;
-
-  const luminance = relativeLuminance(rgb);
-  const contrastWithWhite = 1.05 / (luminance + 0.05);
-  const contrastWithBlack = (luminance + 0.05) / 0.05;
-  return contrastWithBlack >= contrastWithWhite * 1.5 ? BLACK : WHITE;
-}
 
 /**
  * Spread into the `style` of an element painted with an admin-chosen colour,
  * alongside `data-status-surface`. Publishes the readable foreground without
  * applying it — see the accessible-theme rule in styles/globals.css.
+ *
+ * That rule is load-bearing, not a belt: not every caller inks itself from
+ * the fill. `hooks/useIssueColors.ts` deliberately keeps its family ink when
+ * the measured pair already clears 4.5:1, and `data-review-status` elements
+ * swap in a per-theme token instead. Don't delete it as redundant.
  */
 export function statusSurfaceVars(backgroundColor: string): CSSProperties {
   return {

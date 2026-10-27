@@ -279,7 +279,7 @@ export const ImpactAnalysisChart: React.FC<ImpactAnalysisChartProps> = ({
           t("stats.medianAffectedTooltip")
         )}
         {tile(
-          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />,
+          <CheckCircle2 className="h-4 w-4 text-green-700 dark:text-green-400" />,
           `${summary.acceptedPct}%`,
           t("stats.acceptedShare"),
           t("stats.acceptedShareTooltip"),

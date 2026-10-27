@@ -27,6 +27,7 @@ import {
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
+import { evaluateRunReadiness } from "~/lib/services/runReadyCheck";
 import {
   assertDependencyGateOpen,
   findUnblockedDependants,
@@ -911,23 +912,26 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       });
     }
 
-    // Did this result move the run from <100% to 100% completed cases? Only
-    // a case whose prior status was not completed can raise the completed
-    // count, so re-recording an already-completed case never prompts. Read
-    // after commit so a concurrent bulk submission sees its siblings' writes
-    // (the client dedupes a double fire). Best-effort: the result is already
+    // Did this result move the run from <100% to 100% of its outstanding
+    // work? `evaluateRunReadiness` is the shared predicate: a case-level
+    // count alone calls a parameterized case finished after its FIRST
+    // iteration, because `computeWorstOfStatus` ignores iterations that have
+    // no status and rolls the run-case up to Passed. An iteration submission
+    // therefore always has to ask, because its run-case is already
+    // "completed" from that rollup and the prior-status guard — which keeps
+    // re-recording a finished case from prompting again — would otherwise
+    // suppress the prompt for every iteration after the first. Read after
+    // commit so a concurrent bulk submission sees its siblings' writes (the
+    // client dedupes a double fire). Best-effort: the result is already
     // written, so a failure here must not fail the response.
     let allCasesJustCompleted = false;
-    if (runCase.status?.isCompleted !== true) {
+    if (input.iterationId != null || runCase.status?.isCompleted !== true) {
       try {
-        const remaining = await baseDb.testRunCases.count({
-          where: {
-            testRunId: input.testRunId,
-            isDeleted: false,
-            OR: [{ statusId: null }, { status: { isCompleted: false } }],
-          },
-        });
-        allCasesJustCompleted = remaining === 0;
+        const readiness = await evaluateRunReadiness(
+          baseDb as never,
+          input.testRunId
+        );
+        allCasesJustCompleted = readiness.isReady;
       } catch (err) {
         console.error(
           `Run progress check failed after result for run ${input.testRunId}:`,

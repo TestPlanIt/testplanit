@@ -319,6 +319,17 @@ export const Header = () => {
                   />
                   <div className="flex flex-col">
                     <span className="">{tCommon("pageTitles.appName")}</span>
+                    {/* Deliberately faint: the version is background noise, not
+                        information anyone needs to read. The accessible themes
+                        neutralise `text-muted-foreground/*` opacity modifiers in
+                        globals.css, so it comes back to full strength there.
+                        Not aria-hidden: that was tried and reverted. It removes
+                        the node from the accessibility tree but changes nothing
+                        for 1.4.3 (the exemption is for decoration, and a version
+                        number carries information), and axe declares
+                        color-contrast with `excludeHidden: false`, so the scan
+                        still reports it. It cost screen-reader users the string
+                        and bought nothing. */}
                     <div className="-mt-1 text-xs text-muted-foreground/60">
                       {versionString}
                     </div>

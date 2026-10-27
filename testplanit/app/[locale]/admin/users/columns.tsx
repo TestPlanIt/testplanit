@@ -388,7 +388,7 @@ export const useColumns = (
                   <DropdownMenuSeparator />
                   {row.original.id !== currentUserId && !isScimManaged ? (
                     <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
+                      className="text-destructive focus:text-destructive-text"
                       onClick={() => onDeleteUser?.(row.original)}
                     >
                       <Trash className="me-2 h-4 w-4" />

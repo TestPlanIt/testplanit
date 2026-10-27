@@ -71,7 +71,10 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { getBackgroundStyle } from "~/utils/colorUtils";
-import { statusSurfaceVars } from "~/utils/contrastingTextColor";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { editorMinHeightStyle } from "~/utils/editorHeight";
@@ -1425,12 +1428,14 @@ export function SessionResultsList({
           >
             <CardHeader className="p-0">
               <div
-                className="flex justify-between items-center p-2 rounded-t-md text-background"
+                className="flex justify-between items-center p-2 rounded-t-md"
                 data-status-surface
                 style={{
                   ...statusSurfaceVars(getColorValue(result.status.color)),
                   backgroundColor: getColorValue(result.status.color),
-                  color: "#fff",
+                  color: contrastingTextColor(
+                    getColorValue(result.status.color)
+                  ),
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -1438,7 +1443,7 @@ export function SessionResultsList({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 p-1 text-background hover:text-primary hover:bg-background/10"
+                    className="h-7 w-7 p-1 hover:bg-background/10"
                     onClick={() => handleCopyLink(result.id)}
                     title={tCommon("actions.copyLink")}
                   >
@@ -1456,7 +1461,7 @@ export function SessionResultsList({
                     <UserNameCell userId={result.createdBy.id} />
                   </span>
                   {result.elapsed && (
-                    <div className="text-sm text-muted flex items-center gap-1">
+                    <div className="text-sm flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       {toHumanReadable(result.elapsed, {
                         isSeconds: true,
@@ -1465,7 +1470,7 @@ export function SessionResultsList({
                     </div>
                   )}
                   {result.attachments && result.attachments.length > 0 && (
-                    <div className="text-sm text-muted flex items-center gap-1">
+                    <div className="text-sm flex items-center gap-1">
                       <FileText className="w-4 h-4" />
                       {result.attachments.length}
                     </div>
@@ -1489,7 +1494,7 @@ export function SessionResultsList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-background hover:text-primary hover:bg-background/10"
+                        className="h-8 w-8 hover:bg-background/10"
                         onClick={() => handleEditClick(result)}
                         title={tCommon("actions.edit")}
                         disabled={
@@ -1507,7 +1512,7 @@ export function SessionResultsList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-background hover:text-destructive hover:bg-background/10"
+                        className="h-8 w-8 hover:bg-background/10"
                         onClick={() => handleDeleteClick(result.id)}
                         title={tCommon("actions.delete")}
                       >

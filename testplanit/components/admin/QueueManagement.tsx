@@ -258,7 +258,7 @@ export function QueueManagement() {
       cell: ({ row }) => (
         <div className="text-end">
           {row.original.counts?.waiting ? (
-            <Badge className="border-warning bg-warning text-white hover:bg-warning/90">
+            <Badge className="border-warning bg-warning text-warning-foreground hover:bg-warning/90 hover:text-warning-foreground">
               {row.original.counts.waiting}
             </Badge>
           ) : (
@@ -318,7 +318,7 @@ export function QueueManagement() {
       cell: ({ row }) => (
         <div className="text-end">
           {row.original.counts?.delayed ? (
-            <Badge className="border-warning bg-warning text-white hover:bg-warning/90">
+            <Badge className="border-warning bg-warning text-warning-foreground hover:bg-warning/90 hover:text-warning-foreground">
               {row.original.counts.delayed}
             </Badge>
           ) : (

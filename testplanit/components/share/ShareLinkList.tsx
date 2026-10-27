@@ -510,8 +510,14 @@ export function ShareLinkList({
           if (isExpired) {
             return <Badge variant="secondary">{t("status.expired")}</Badge>;
           }
+          // The fill is overridden, so the foreground has to be too: twMerge
+          // drops `bg-primary` but keeps `text-primary-foreground`, which left
+          // the primary ink on a success fill at 2.2:1.
           return (
-            <Badge variant="default" className="bg-success">
+            <Badge
+              variant="default"
+              className="bg-success text-success-foreground hover:bg-success/90 hover:text-success-foreground"
+            >
               {tCommon("fields.isActive")}
             </Badge>
           );

@@ -447,6 +447,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                         {t("common.fields.priority")}:
                       </span>
                       <Badge
+                        data-status-surface
                         variant="outline"
                         className="text-xs gap-1"
                         style={getPriorityStyle(jiraDetails.priority.name)}
@@ -633,6 +634,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                       {t("common.fields.priority")}:
                     </span>
                     <Badge
+                      data-status-surface
                       variant="outline"
                       className="text-xs"
                       style={getPriorityStyle(priority)}

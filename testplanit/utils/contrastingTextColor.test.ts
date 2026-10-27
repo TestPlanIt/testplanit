@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  contrastingTextColor,
-  perceptualTextColor,
-} from "./contrastingTextColor";
+import { contrastingTextColor } from "./contrastingTextColor";
 
 /** WCAG 2.x contrast ratio, computed independently of the implementation. */
 function contrastRatio(a: string, b: string): number {
@@ -68,25 +65,47 @@ describe("contrastingTextColor", () => {
   });
 });
 
-describe("perceptualTextColor", () => {
-  it("picks white on the seeded violet where the strict WCAG pick is black", () => {
-    // Skipped's seeded colour: black wins the ratio 4.70:1 vs 4.47:1, but
-    // black on mid-violet is what the bug report called hard to read.
-    expect(contrastingTextColor("#786AC8")).toBe("#000000");
-    expect(perceptualTextColor("#786AC8")).toBe("#ffffff");
+describe("status-surface ink across the seeded palette", () => {
+  // db/seed.ts, nine families of six shades, darkest first. Any colour an
+  // admin can choose for a status, tag, result or milestone comes from here.
+  const SEEDED = [
+    ["#333435", "#6C6D6E", "#838485", "#9A9B9C", "#B1B2B3", "#C8C9CA"],
+    ["#8D2007", "#BD2B0A", "#ED360C", "#F44B25", "#F66F51", "#F88F77"],
+    ["#783702", "#A54C03", "#D76304", "#FA7C14", "#FB9846", "#FCB478"],
+    ["#664400", "#996600", "#CC8800", "#FFAA00", "#FFBB33", "#FFCC66"],
+    ["#164621", "#206530", "#2A843F", "#36AB51", "#51C86C", "#7BD590"],
+    ["#0A4C57", "#0E6B7C", "#128BA1", "#16ABC5", "#27CAE7", "#55D5EC"],
+    ["#134664", "#195D84", "#1F74A4", "#258AC4", "#58A5D1", "#8CC1DF"],
+    ["#372C77", "#493A9C", "#5D4CBD", "#786AC8", "#8C80D0", "#A79EDB"],
+    ["#632243", "#7A2A53", "#983468", "#BE4182", "#CB679B", "#D88DB4"],
+  ].flat();
+
+  it("clears 4.5:1 on every seeded shade", () => {
+    for (const shade of SEEDED) {
+      const ink = contrastingTextColor(shade);
+      expect(
+        contrastRatio(ink, shade),
+        `${ink} on ${shade}`
+      ).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
-  it("still picks black on genuinely light backgrounds", () => {
-    expect(perceptualTextColor("#ffffff")).toBe("#000000");
-    expect(perceptualTextColor("#fef08a")).toBe("#000000");
-    // The seeded green that motivated the strict picker keeps black too.
-    expect(perceptualTextColor("#36ab51")).toBe("#000000");
+  it("takes black on the five shades the retired perceptual pick got wrong", () => {
+    // These chose white and shipped below AA in light and the brand themes.
+    for (const shade of [
+      "#838485",
+      "#258AC4",
+      "#128BA1",
+      "#ED360C",
+      "#786AC8",
+    ]) {
+      expect(contrastingTextColor(shade), shade).toBe("#000000");
+    }
   });
 
-  it("picks white on dark and mid-saturation backgrounds", () => {
-    expect(perceptualTextColor("#000000")).toBe("#ffffff");
-    expect(perceptualTextColor("#258AC4")).toBe("#ffffff");
-    // Light gray stays black — white there would be 2.6:1.
-    expect(perceptualTextColor("rgb(161, 161, 170)")).toBe("#000000");
+  it("still takes white on genuinely dark fills", () => {
+    expect(contrastingTextColor("#000000")).toBe("#ffffff");
+    expect(contrastingTextColor("#164621")).toBe("#ffffff");
+    expect(contrastingTextColor("#372C77")).toBe("#ffffff");
   });
 });

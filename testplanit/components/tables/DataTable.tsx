@@ -485,7 +485,7 @@ function SortableHeadCell({ header, ...contentProps }: HeadCellContentProps) {
         e.stopPropagation();
       }}
       aria-label={t("reorderColumn")}
-      className="me-1 shrink-0 cursor-grab touch-none text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
+      className="me-1 shrink-0 cursor-grab touch-none text-muted-foreground/85 hover:text-foreground active:cursor-grabbing"
     >
       <GripVertical className="h-4 w-4" />
     </button>

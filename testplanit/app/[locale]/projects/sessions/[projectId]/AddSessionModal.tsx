@@ -1092,7 +1092,7 @@ export function AddSessionModal({
                       </FormControl>
                       {sourceTemplateUnassigned && defaultTemplate && (
                         <p
-                          className="text-xs text-amber-600 dark:text-amber-400"
+                          className="text-xs text-amber-700 dark:text-amber-400"
                           data-testid="duplicate-template-unassigned-warning"
                         >
                           {t.rich(
@@ -1173,7 +1173,7 @@ export function AddSessionModal({
                       )}
                       {sourceStateUnassigned && defaultWorkflow && (
                         <p
-                          className="text-xs text-amber-600 dark:text-amber-400"
+                          className="text-xs text-amber-700 dark:text-amber-400"
                           data-testid="duplicate-state-unassigned-warning"
                         >
                           {t.rich(

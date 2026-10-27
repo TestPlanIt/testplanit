@@ -238,7 +238,7 @@ export function RunFailureClusters({
               }))}
             />
           ) : (
-            <span className="text-muted-foreground">-</span>
+            <span className="text-foreground">-</span>
           ),
       },
       {

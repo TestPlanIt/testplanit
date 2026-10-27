@@ -261,7 +261,7 @@ export const CodePinCoverageChart: React.FC<CodePinCoverageChartProps> = ({
           t("stats.casesWithPinsTooltip")
         )}
         {tile(
-          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />,
+          <AlertTriangle className="h-4 w-4 text-yellow-700 dark:text-yellow-400" />,
           summary.stalePinCount,
           t("stalePins"),
           t("stalePinsHelp"),

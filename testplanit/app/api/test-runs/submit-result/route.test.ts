@@ -40,6 +40,15 @@ vi.mock("~/services/repositoryCaseSync", () => ({
   syncRepositoryCaseToElasticsearch: vi.fn().mockResolvedValue(true),
 }));
 
+// The run-progress prompt asks the shared readiness predicate, which counts
+// open cases AND open iterations. Mocked so these tests stay about the route's
+// branching; the predicate's own SQL is covered by runReadyCheck's unit and
+// live-DB suites.
+const { evaluateRunReadiness } = vi.hoisted(() => ({
+  evaluateRunReadiness: vi.fn(),
+}));
+vi.mock("~/lib/services/runReadyCheck", () => ({ evaluateRunReadiness }));
+
 // The automated flip snapshots the case so Automation Trends can see the
 // manual→automated transition on the version timeline. The real service reads
 // the case back with its full relation graph, which the tx mock does not model.
@@ -83,6 +92,15 @@ import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersi
 import { DependencyGateError } from "~/lib/utils/errors";
 
 describe("Submit Result API Route", () => {
+  /** The submitted status, as the iteration rollup reads it. */
+  const rollupPassed = {
+    id: 2,
+    systemName: "passed",
+    isSuccess: true,
+    isFailure: false,
+    isCompleted: true,
+  };
+
   const validBody = {
     testRunId: 1,
     testRunCaseId: 10,
@@ -153,6 +171,18 @@ describe("Submit Result API Route", () => {
     repositoryCases: {
       update: ReturnType<typeof vi.fn>;
     };
+    testRunCaseIteration: {
+      findFirst: ReturnType<typeof vi.fn>;
+      findMany: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+    };
+    testRunCaseDataSetSnapshot: {
+      findUnique: ReturnType<typeof vi.fn>;
+    };
+    status: {
+      findMany: ReturnType<typeof vi.fn>;
+      findUnique: ReturnType<typeof vi.fn>;
+    };
     testRuns: {
       update: ReturnType<typeof vi.fn>;
       findUnique: ReturnType<typeof vi.fn>;
@@ -179,9 +209,15 @@ describe("Submit Result API Route", () => {
     });
     (baseDb.user.findUnique as any).mockResolvedValue(baseUser);
     (baseDb.testRunCases.findFirst as any).mockResolvedValue(baseRunCase);
-    // Run-progress default: other cases still lack a result, so the
+    // Run-progress default: work is still outstanding, so the
     // all-cases-completed prompt stays off for every pre-existing test path.
-    (baseDb.testRunCases.count as any).mockResolvedValue(1);
+    evaluateRunReadiness.mockReset();
+    evaluateRunReadiness.mockResolvedValue({
+      liveCases: 1,
+      openCases: 1,
+      openIterations: 0,
+      isReady: false,
+    });
     // Justification-on-override defaults: no prior attempt → check is a no-op,
     // so every pre-existing test path is unaffected.
     (baseDb.testRunResults.findFirst as any).mockResolvedValue(null);
@@ -210,6 +246,29 @@ describe("Submit Result API Route", () => {
       },
       repositoryCases: {
         update: vi.fn().mockResolvedValue({ id: 55 }),
+      },
+      // Parameterized-case branch. Defaults describe one passed iteration of
+      // three, which is the shape that made the run-progress prompt fire
+      // early: the rollup ignores the two statusId=null rows and marks the
+      // run-case Passed.
+      testRunCaseIteration: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValue({ id: 7, rowIndex: 0, valuesJson: {} }),
+        findMany: vi.fn().mockResolvedValue([
+          { statusId: 2, status: rollupPassed },
+          { statusId: null, status: null },
+          { statusId: null, status: null },
+        ]),
+        update: vi.fn().mockResolvedValue({ id: 7 }),
+      },
+      testRunCaseDataSetSnapshot: {
+        findUnique: vi.fn().mockResolvedValue(null),
+      },
+      status: {
+        findMany: vi.fn().mockResolvedValue([{ ...rollupPassed, order: 2 }]),
+        // Read by the iteration-result webhook emitter.
+        findUnique: vi.fn().mockResolvedValue({ ...rollupPassed, order: 2 }),
       },
       testRuns: {
         update: vi.fn().mockResolvedValue({ id: 1 }),
@@ -361,29 +420,75 @@ describe("Submit Result API Route", () => {
   });
 
   describe("run progress (all-cases-completed prompt)", () => {
-    it("reports allCasesJustCompleted when no case in the run is left without a completed status", async () => {
-      (baseDb.testRunCases.count as any).mockResolvedValue(0);
+    const ready = {
+      liveCases: 1,
+      openCases: 0,
+      openIterations: 0,
+      isReady: true,
+    };
+
+    it("reports allCasesJustCompleted when nothing in the run is left outstanding", async () => {
+      evaluateRunReadiness.mockResolvedValue(ready);
 
       const response = await POST(createRequest(validBody));
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.runProgress).toEqual({ allCasesJustCompleted: true });
-      expect(baseDb.testRunCases.count).toHaveBeenCalledWith({
-        where: {
-          testRunId: 1,
-          isDeleted: false,
-          OR: [{ statusId: null }, { status: { isCompleted: false } }],
-        },
-      });
+      expect(evaluateRunReadiness).toHaveBeenCalledWith(expect.anything(), 1);
     });
 
     it("does not report completion while other cases still lack a completed status", async () => {
-      (baseDb.testRunCases.count as any).mockResolvedValue(2);
+      evaluateRunReadiness.mockResolvedValue({
+        liveCases: 3,
+        openCases: 2,
+        openIterations: 0,
+        isReady: false,
+      });
 
       const data = await (await POST(createRequest(validBody))).json();
 
       expect(data.runProgress).toEqual({ allCasesJustCompleted: false });
+    });
+
+    it("holds the prompt while a parameterized case still has untested iterations", async () => {
+      // The rollup marks the run-case Passed once any iteration passes, so a
+      // case-level-only count called the run finished after iteration 1 of N
+      // and popped the Complete Test Run dialog over the execution sheet.
+      evaluateRunReadiness.mockResolvedValue({
+        liveCases: 1,
+        openCases: 0,
+        openIterations: 2,
+        isReady: false,
+      });
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue({
+        ...baseRunCase,
+        status: { isSuccess: true, isCompleted: true },
+      });
+
+      const data = await (
+        await POST(createRequest({ ...validBody, iterationId: 7 }))
+      ).json();
+
+      expect(data.runProgress).toEqual({ allCasesJustCompleted: false });
+      expect(evaluateRunReadiness).toHaveBeenCalled();
+    });
+
+    it("prompts on the iteration that closes out a parameterized case", async () => {
+      // The run-case is already "completed" from the rollup, so the
+      // prior-status guard must not short-circuit an iteration submission —
+      // otherwise the prompt could never fire at the right moment.
+      evaluateRunReadiness.mockResolvedValue(ready);
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue({
+        ...baseRunCase,
+        status: { isSuccess: true, isCompleted: true },
+      });
+
+      const data = await (
+        await POST(createRequest({ ...validBody, iterationId: 7 }))
+      ).json();
+
+      expect(data.runProgress).toEqual({ allCasesJustCompleted: true });
     });
 
     it("skips the check when the case already had a completed status, so re-recording never prompts", async () => {
@@ -391,18 +496,16 @@ describe("Submit Result API Route", () => {
         ...baseRunCase,
         status: { isSuccess: true, isCompleted: true },
       });
-      (baseDb.testRunCases.count as any).mockResolvedValue(0);
+      evaluateRunReadiness.mockResolvedValue(ready);
 
       const data = await (await POST(createRequest(validBody))).json();
 
       expect(data.runProgress).toEqual({ allCasesJustCompleted: false });
-      expect(baseDb.testRunCases.count).not.toHaveBeenCalled();
+      expect(evaluateRunReadiness).not.toHaveBeenCalled();
     });
 
     it("still returns the written result when the progress check fails", async () => {
-      (baseDb.testRunCases.count as any).mockRejectedValue(
-        new Error("db hiccup")
-      );
+      evaluateRunReadiness.mockRejectedValue(new Error("db hiccup"));
       const consoleError = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});

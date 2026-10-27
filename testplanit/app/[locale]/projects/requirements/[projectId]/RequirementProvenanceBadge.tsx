@@ -418,7 +418,7 @@ export function RequirementProvenanceBadge({
             {t("exclude")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="gap-1 text-destructive focus:text-destructive"
+            className="gap-1 text-destructive focus:text-destructive-text"
             onClick={() => setConfirmOpen(true)}
             data-testid="requirement-provenance-menu-detach"
           >

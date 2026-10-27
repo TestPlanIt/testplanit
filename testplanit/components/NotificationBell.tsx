@@ -100,7 +100,14 @@ function NotificationItem({
       className={cn(
         "p-3 border-b last:border-0 hover:bg-muted/50 transition-colors",
         !notification.isRead && "bg-primary/20",
-        isUnreadAnnouncement && "bg-accent dark:bg-primary/30"
+        // An announcement has to read as louder than a plain unread row. cn is
+        // twMerge, so this fill REPLACES the one above rather than stacking on
+        // it — `bg-accent` therefore made the loudest row the palest one in
+        // light mode, since --accent and --muted are the same value there. The
+        // start bar does the real work: a tint this pale can only shift
+        // luminance by ~1.6:1, where the bar is 17:1 against the row.
+        isUnreadAnnouncement &&
+          "border-s-4 border-s-primary bg-primary/35 dark:bg-primary/30"
       )}
       data-notification-item
       data-state={notification.isRead ? "read" : "unread"}

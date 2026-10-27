@@ -19,7 +19,10 @@ import { useMemo, useState } from "react";
 import type { SessionSummaryData } from "~/app/api/sessions/[sessionId]/summary/route";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
-import { statusSurfaceVars } from "~/utils/contrastingTextColor";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { ElapsedTime } from "./ElapsedTime";
 import { sortSummaryItems } from "~/utils/summarySort";
@@ -160,11 +163,14 @@ export function SessionResultsSummary({
             </TooltipTrigger>
             <TooltipContent
               side="top"
-              className="border-0 text-white px-3 py-2"
+              className="border-0 px-3 py-2"
               data-status-surface
               style={{
                 ...statusSurfaceVars(firstStatus?.color?.value || "#B1B2B3"),
                 backgroundColor: firstStatus?.color?.value || "#B1B2B3",
+                color: contrastingTextColor(
+                  firstStatus?.color?.value || "#B1B2B3"
+                ),
               }}
             >
               <div className="font-semibold text-sm">
@@ -236,11 +242,12 @@ export function SessionResultsSummary({
                 />
               </TooltipTrigger>
               <TooltipContent
-                className="border-0 text-muted px-3 py-2"
+                className="border-0 px-3 py-2"
                 data-status-surface
                 style={{
                   ...statusSurfaceVars(color),
                   backgroundColor: color,
+                  color: contrastingTextColor(color),
                 }}
               >
                 <div className="flex items-center gap-1 font-semibold text-sm">

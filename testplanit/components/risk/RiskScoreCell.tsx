@@ -21,7 +21,9 @@ import { cn } from "~/utils";
 
 function scoreClasses(score: number): string {
   if (score >= 70) return "bg-red-500/15 text-red-700 dark:text-red-400";
-  if (score >= 40) return "bg-amber-500/15 text-amber-700 dark:text-amber-400";
+  // amber-700 on the /15 fill lands a hair under 4.5:1 for this 12px text,
+  // where the red and emerald bands clear it; -800 brings the middle band up.
+  if (score >= 40) return "bg-amber-500/15 text-amber-800 dark:text-amber-400";
   return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400";
 }
 

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { contrastRatio } from "~/utils/contrastingTextColor";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -76,24 +77,17 @@ vi.mock("@/components/TextFromJson", () => ({
 }));
 
 // Mock shadcn/ui badge
+// `variant` is the only prop the real Badge consumes rather than forwards;
+// everything else is spread, so data-* attributes reach the DOM the way they
+// do in the app. An enumerating mock dropped `data-status-surface` silently.
 vi.mock("@/components/ui/badge", () => ({
   Badge: ({
     children,
-    style,
-    className,
-    role,
-    title,
-    onClick,
+    variant: _variant,
     "data-testid": dataTestId,
+    ...rest
   }: any) => (
-    <span
-      data-testid={dataTestId ?? "status-badge"}
-      style={style}
-      className={className}
-      role={role}
-      title={title}
-      onClick={onClick}
-    >
+    <span data-testid={dataTestId ?? "status-badge"} {...rest}>
       {children}
     </span>
   ),
@@ -968,6 +962,39 @@ describe("MilestoneItemCard", () => {
       );
       const summary = screen.getByTestId("milestone-summary");
       expect(summary.getAttribute("data-milestone")).toBe("5");
+    });
+  });
+  describe("status badge contrast", () => {
+    // The badge is painted with an admin-chosen colour, so no fixed ink is
+    // safe on it. This card was the one status surface still setting
+    // `text-foreground`: in the dark themes that put the theme's own ink
+    // (#bfd1e3) on the mid shade of every status colour, 2.4-3.0:1.
+    it.each([
+      ["light" as const],
+      ["dark" as const],
+      ["accessibledark" as const],
+    ])("pairs ink with the fill in the %s theme", (theme) => {
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={createMilestone()}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme={theme}
+          {...cbs}
+        />
+      );
+      const badge = screen.getByTestId("status-badge");
+
+      // Ink is set alongside the fill, not inherited from the surface.
+      expect(badge.style.color).not.toBe("");
+      expect(badge.className).not.toContain("text-foreground");
+      // ...and published for the accessible themes to re-derive strictly.
+      expect(badge.getAttribute("data-status-surface")).not.toBeNull();
+
+      expect(
+        contrastRatio(badge.style.color, badge.style.backgroundColor)
+      ).toBeGreaterThanOrEqual(4.5);
     });
   });
 });

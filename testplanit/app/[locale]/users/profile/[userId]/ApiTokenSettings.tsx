@@ -286,7 +286,7 @@ export function ApiTokenSettings({
                       variant="ghost"
                       size="icon"
                       onClick={() => openDeleteDialog(token.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      className="h-8 w-8 text-destructive hover:text-destructive-text"
                     >
                       <Trash className="h-4 w-4" />
                     </Button>

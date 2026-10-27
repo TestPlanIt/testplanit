@@ -69,7 +69,12 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
                     <TooltipTrigger asChild>
                       <Link
                         href={`/projects/repository/${projectId}/?node=${folder.id}`}
-                        className="text-primary/50 cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button hover:underline"
+                        // Full opacity, not /50: primary at half strength is
+                        // 3.4:1 on white and 2.3:1 in the purple theme, and the
+                        // accessible themes already force `text-primary/*` back
+                        // to full opacity in globals.css for this reason. The
+                        // underline carries the "ancestor link" cue instead.
+                        className="text-primary cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button hover:underline"
                         onClick={() => onClick && onClick(folder.id)}
                         aria-label={
                           folder.text?.trim()

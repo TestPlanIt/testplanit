@@ -77,7 +77,7 @@ export const TableRowMenu = React.memo(
             close={false}
             label={t("deleteRow")}
             onClick={onDeleteRow}
-            className="text-destructive! hover:bg-destructive! hover:text-destructive-foreground!"
+            className="text-destructive-text! hover:bg-destructive! hover:text-destructive-foreground!"
           />
         </Toolbar.Wrapper>
       </BubbleMenu>

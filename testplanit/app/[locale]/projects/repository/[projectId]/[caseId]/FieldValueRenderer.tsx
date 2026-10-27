@@ -150,7 +150,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
           </div>
           <div className="relative p-1 rounded">
             <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
-            <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
+            <span className="relative text-green-700 dark:text-green-400 flex space-x-1 items-center">
               <div>
                 <Plus className="w-4 h-4" />
               </div>

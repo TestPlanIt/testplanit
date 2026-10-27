@@ -1127,7 +1127,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
         className="border rounded-lg p-4 border-primary/30 bg-primary/5 animate-pulse"
       >
         <div className="flex items-start gap-3">
-          <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-sm font-medium text-primary/60">
+          <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-sm font-medium text-primary">
             <Loader2 className="w-4 h-4 animate-spin" />
           </div>
           <div className="flex-1 space-y-2">
@@ -1184,7 +1184,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                       {stepPreviewText(step.step)}
                     </div>
                     {step.expectedResult && (
-                      <div className="text-muted-foreground/70">
+                      <div className="text-muted-foreground/80">
                         {"Expected: "}
                         {stepPreviewText(step.expectedResult)}
                       </div>

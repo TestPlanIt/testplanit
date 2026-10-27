@@ -361,8 +361,13 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       },
       editorProps: {
         attributes: {
+          // dark:prose-invert is load-bearing: @tailwindcss/typography keeps its
+          // LIGHT palette otherwise, so in the dark themes a link rendered by the
+          // Link extension kept prose's near-black --tw-prose-links and came out
+          // at 1.1:1 on the dark page. The `dark` variant covers .accessibledark
+          // too (styles/tailwind.config.css).
           class:
-            "prose prose-xs sm:prose-sm lg:prose max-w-none w-full focus:outline-none p-1",
+            "prose dark:prose-invert prose-xs sm:prose-sm lg:prose max-w-none w-full focus:outline-none p-1",
           style: "width: 100%; max-width: none;",
           // Tiptap gives the editing area role="textbox", which needs a name.
           "aria-label":
@@ -1341,7 +1346,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           }
           .parameter-ref-chip[data-undeclared="true"] {
             background-color: hsl(var(--warning) / 0.10);
-            color: hsl(var(--warning-foreground));
+            color: hsl(var(--warning-text));
             text-decoration: underline wavy hsl(var(--warning));
             text-underline-offset: 2px;
           }
@@ -1454,7 +1459,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               <div className="p-3 bg-muted rounded text-sm h-64 overflow-y-auto">
                 {originalTextContent && originalTextContent.includes("<") ? (
                   <div
-                    className="prose prose-sm max-w-none"
+                    className="prose prose-sm dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: originalTextContent }}
                   />
                 ) : (
@@ -1475,7 +1480,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                   </div>
                 ) : (
                   <div
-                    className="prose prose-sm max-w-none text-sm"
+                    className="prose prose-sm dark:prose-invert max-w-none text-sm"
                     dangerouslySetInnerHTML={{
                       __html: aiResponse || tAi("noSuggestion"),
                     }}

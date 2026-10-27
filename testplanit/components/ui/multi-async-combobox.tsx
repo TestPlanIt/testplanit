@@ -274,7 +274,7 @@ export function MultiAsyncCombobox<T>({
                     }}
                     onClick={(e) => removeOption(v, e)}
                   >
-                    <X className="h-3 w-3 hover:text-destructive" />
+                    <X className="h-3 w-3 rounded-sm hover:bg-destructive hover:text-destructive-foreground" />
                   </span>
                 </Badge>
               ))

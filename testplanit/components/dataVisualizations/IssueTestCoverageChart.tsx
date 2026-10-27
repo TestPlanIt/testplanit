@@ -471,10 +471,10 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
         {/* Issues with Untested */}
         <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
           <div className="p-2 rounded-md bg-yellow-500/10">
-            <FileQuestion className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <FileQuestion className="h-4 w-4 text-yellow-700 dark:text-yellow-400" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+            <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
               {summaryStats.issuesWithUntested}
             </p>
             <div className="flex items-center gap-1">

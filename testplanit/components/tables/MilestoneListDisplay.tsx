@@ -25,6 +25,10 @@ import {
 } from "~/utils/milestoneUtils";
 import DynamicIcon from "../DynamicIcon";
 import LoadingSpinner from "../LoadingSpinner";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 
 type MilestoneTypesWithIcon = MilestoneTypes & {
   icon: FieldIcon | null;
@@ -101,8 +105,13 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
           return (
             <div key={milestone.id}>
               <Badge
-                style={{ backgroundColor: badge }}
-                className="text-secondary-background border-2 border-secondary-foreground text-sm"
+                data-status-surface
+                style={{
+                  ...statusSurfaceVars(badge),
+                  backgroundColor: badge,
+                  color: contrastingTextColor(badge),
+                }}
+                className="border-2 border-secondary-foreground text-sm"
               >
                 <div className="flex items-center space-x-1 whitespace-nowrap">
                   <div>

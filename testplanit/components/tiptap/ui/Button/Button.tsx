@@ -49,7 +49,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
       variant === "tertiary" &&
         cn(
-          "bg-neutral-50 text-neutral-900 dark:bg-neutral-900 dark:text-white dark:border-neutral-900",
+          "bg-neutral-100 text-neutral-900 border-neutral-200 dark:bg-neutral-900 dark:text-white dark:border-neutral-900",
           !disabled &&
             !active &&
             "hover:bg-neutral-100 active:bg-neutral-200 dark:hover:bg-neutral-800 dark:active:bg-neutral-700",

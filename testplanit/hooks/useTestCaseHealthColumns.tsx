@@ -210,7 +210,7 @@ export function useTestCaseHealthColumns(
         cell: (info) => {
           const isStale = info.getValue();
           return isStale ? (
-            <span className="text-yellow-600 dark:text-yellow-400 font-medium">
+            <span className="text-yellow-700 dark:text-yellow-400 font-medium">
               {t("common.yes")}
             </span>
           ) : (
@@ -232,7 +232,7 @@ export function useTestCaseHealthColumns(
           const score = info.getValue();
           const getScoreColor = (s: number) => {
             if (s >= 80) return "text-success";
-            if (s >= 60) return "text-yellow-600 dark:text-yellow-400";
+            if (s >= 60) return "text-yellow-700 dark:text-yellow-400";
             if (s >= 40) return "text-orange-600 dark:text-orange-400";
             return "text-red-600 dark:text-red-400";
           };
@@ -321,7 +321,7 @@ export function useTestCaseHealthColumns(
           }
           const getPassRateColor = (r: number) => {
             if (r >= 90) return "text-success";
-            if (r >= 70) return "text-yellow-600 dark:text-yellow-400";
+            if (r >= 70) return "text-yellow-700 dark:text-yellow-400";
             if (r >= 50) return "text-orange-600 dark:text-orange-400";
             return "text-red-600 dark:text-red-400";
           };

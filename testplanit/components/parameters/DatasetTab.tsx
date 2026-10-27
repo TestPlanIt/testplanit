@@ -1232,7 +1232,7 @@ export function DatasetTab({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
+                      className="text-destructive focus:text-destructive-text"
                       onSelect={() =>
                         beginDeleteColumn({ name: p.name, paramId: p.id })
                       }

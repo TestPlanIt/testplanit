@@ -213,7 +213,7 @@ export function IterationRow({
                   <DropdownMenuItem
                     onSelect={() => onMenuAction("reset")}
                     disabled={isRunCompleted}
-                    className="text-destructive focus:text-destructive"
+                    className="text-destructive focus:text-destructive-text"
                     data-testid="iteration-menu-reset"
                   >
                     <RotateCcw className="me-2 h-4 w-4" />

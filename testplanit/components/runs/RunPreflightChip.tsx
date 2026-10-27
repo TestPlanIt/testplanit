@@ -128,7 +128,7 @@ export function RunPreflightChip({
     case "softConfirm":
       variant = "outline";
       icon = AlertTriangle;
-      extraClass = "bg-warning/10 text-warning-foreground border-warning/30";
+      extraClass = "bg-warning/10 text-warning-text border-warning/30";
       label = t("runPreflightSoftConfirm", { n: total });
       break;
     case "hardRefuse":

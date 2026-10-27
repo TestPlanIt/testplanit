@@ -30,8 +30,10 @@ export function EntitySuggestions({
           <h3 className="text-sm font-medium">{entity.entityName}</h3>
           <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-3">
             <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
-            <div className="text-sm text-destructive-foreground">
-              <p className="font-medium">{t("analysisFailed")}</p>
+            <div className="text-sm text-foreground">
+              <p className="font-medium text-destructive-text">
+                {t("analysisFailed")}
+              </p>
               {entity.errorMessage && (
                 <p className="mt-1 text-xs opacity-80">{entity.errorMessage}</p>
               )}

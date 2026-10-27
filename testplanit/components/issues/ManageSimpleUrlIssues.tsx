@@ -236,7 +236,7 @@ export function ManageSimpleUrlIssues({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive"
+                className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive-text"
                 aria-label={t("common.actions.remove")}
                 onClick={() => handleRemoveIssue(issue.id)}
               >

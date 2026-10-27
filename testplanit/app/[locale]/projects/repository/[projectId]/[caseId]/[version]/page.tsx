@@ -558,7 +558,7 @@ export default function TestCaseVersions() {
           )}
           <div className="relative p-1 rounded" data-testid="diff-added">
             <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
-            <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
+            <span className="relative text-green-700 dark:text-green-400 flex space-x-1 items-center">
               <div>
                 <Plus className="w-4 h-4" />
               </div>
@@ -626,7 +626,7 @@ export default function TestCaseVersions() {
     switch (type) {
       case "added":
         prefix = <Plus className="w-4 h-4" />;
-        bgColor = "relative text-green-600 dark:text-green-400";
+        bgColor = "relative text-green-700 dark:text-green-400";
         paddingClass = "px-2 py-2";
         break;
       case "removed":
@@ -673,7 +673,7 @@ export default function TestCaseVersions() {
     switch (type) {
       case "added":
         prefix = <Plus className="w-4 h-4" />;
-        bgColor = "relative text-green-600 dark:text-green-400";
+        bgColor = "relative text-green-700 dark:text-green-400";
         paddingClass = "px-2 py-2";
         break;
       case "removed":

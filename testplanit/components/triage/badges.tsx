@@ -121,7 +121,7 @@ export function FlakyCandidateBadge({ className }: { className?: string }) {
         <Badge
           variant="outline"
           className={cn(
-            "gap-1 whitespace-nowrap font-normal text-amber-600 dark:text-amber-400",
+            "gap-1 whitespace-nowrap font-normal text-amber-700 dark:text-amber-400",
             className
           )}
         >

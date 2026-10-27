@@ -434,10 +434,10 @@ export function IntegrationConfigForm({
       {showApiKeyWarning && (
         <Alert className="border-warning/50 bg-warning/10">
           <AlertTriangle className="h-4 w-4 text-warning" />
-          <AlertTitle className="text-warning-foreground">
+          <AlertTitle className="text-warning-text">
             {t("config.apiKeyWarningTitle")}
           </AlertTitle>
-          <AlertDescription className="text-warning-foreground">
+          <AlertDescription className="text-foreground">
             <div className="mt-2 space-y-2">
               <p>{t("config.apiKeyWarningDescription")}</p>
               <ul className="list-disc list-inside space-y-1 text-sm">

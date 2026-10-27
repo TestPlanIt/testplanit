@@ -2861,7 +2861,7 @@ export function TestCaseDetailsView({
             <div className="px-6 pb-4">
               <Alert className="border-warning/50 bg-warning/10">
                 <AlertCircle className="h-4 w-4 text-warning" />
-                <AlertDescription className="text-sm text-warning-foreground">
+                <AlertDescription className="text-sm text-warning-text">
                   {t("repository.templateNotAssignedWarning", {
                     templateName: testcase.template?.templateName || "",
                     projectName: testcase.project?.name || "",
@@ -3039,7 +3039,7 @@ export function TestCaseDetailsView({
                       <div className="mb-4 me-6">
                         <Alert className="border-warning/50 bg-warning/10 mb-2">
                           <AlertCircle className="h-4 w-4 text-warning" />
-                          <AlertDescription className="text-sm text-warning-foreground">
+                          <AlertDescription className="text-sm text-warning-text">
                             {t("repository.orphanedStepsWarning", {
                               templateName:
                                 displayedTemplate?.templateName || "",
@@ -3079,7 +3079,7 @@ export function TestCaseDetailsView({
                       <div className="mb-4 me-6">
                         <Alert className="border-warning/50 bg-warning/10 mb-2">
                           <AlertCircle className="h-4 w-4 text-warning" />
-                          <AlertDescription className="text-sm text-warning-foreground">
+                          <AlertDescription className="text-sm text-warning-text">
                             {t("repository.orphanedFieldsWarning", {
                               count: orphanedFieldValues.length,
                               templateName:

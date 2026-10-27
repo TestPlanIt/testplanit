@@ -1262,7 +1262,7 @@ const ActionsCell = React.memo(function ActionsCell({
                   setShowDeleteModal(true);
                 }
               }}
-              className="text-destructive focus:text-destructive"
+              className="text-destructive focus:text-destructive-text"
             >
               <Trash className="me-2 h-4 w-4" />
               <span>{t("common.actions.delete")}</span>

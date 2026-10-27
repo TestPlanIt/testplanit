@@ -91,7 +91,7 @@ export const Item = ({
     isActive &&
       !disabled &&
       "bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200",
-    disabled && "text-neutral-400 cursor-not-allowed dark:text-neutral-600",
+    disabled && "text-neutral-400 cursor-not-allowed dark:text-neutral-500",
     itemClassName
   );
 
@@ -115,7 +115,7 @@ export type CategoryTitle = {
 
 export const CategoryTitle = ({ children }: CategoryTitle) => {
   return (
-    <div className="mt-4 first:mt-1.5 mb-1.5 text-[0.625rem] font-medium text-neutral-400 dark:text-neutral-600 uppercase select-none px-1">
+    <div className="mt-4 first:mt-1.5 mb-1.5 text-[0.625rem] font-medium text-neutral-600 dark:text-neutral-400 uppercase select-none px-1">
       {children}
     </div>
   );

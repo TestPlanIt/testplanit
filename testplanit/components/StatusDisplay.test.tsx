@@ -36,10 +36,12 @@ describe("StatusDisplay", () => {
     });
 
     it.each([
-      // Same rule on every surface: dark backgrounds keep white text,
-      // light ones (the amber Retest, the untested gray) flip to black.
+      // Same rule on every surface: the better of black or white by measured
+      // ratio. The seeded violet is the close one — black wins 4.69:1 to
+      // 4.47:1, and it used to be given white by a perceptual preference that
+      // left it below AA outside the accessible themes.
       ["#2A843F", "#ffffff"],
-      ["#786AC8", "#ffffff"],
+      ["#786AC8", "#000000"],
       ["#FFAA00", "#000000"],
       ["#B1B2B3", "#000000"],
     ])("computes the text color for %s", (background, expected) => {

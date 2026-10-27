@@ -217,7 +217,7 @@ export const ResultsTrendHeatmap: React.FC<ResultsTrendHeatmapProps> = ({
                     <span
                       className={`inline-flex items-center gap-1 ${
                         data.trend.verdict === "better"
-                          ? "text-green-600 dark:text-green-400"
+                          ? "text-green-700 dark:text-green-400"
                           : data.trend.verdict === "worse"
                             ? "text-red-600 dark:text-red-400"
                             : "text-muted-foreground"

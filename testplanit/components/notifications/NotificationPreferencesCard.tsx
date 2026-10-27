@@ -160,7 +160,7 @@ export function NotificationPreferencesCard({
                 >
                   {modeLabel(value)}
                   {value === NotificationMode.USE_GLOBAL && globalDefault && (
-                    <span className="ms-1 text-sm font-semibold text-primary/60">
+                    <span className="ms-1 text-sm font-semibold text-primary">
                       {`(${modeLabel(globalDefault)})`}
                     </span>
                   )}

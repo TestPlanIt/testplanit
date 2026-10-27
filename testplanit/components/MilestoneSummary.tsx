@@ -3,6 +3,10 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Popover,
@@ -130,6 +134,7 @@ export function MilestoneSummary({
 
   // If there are no items, show a default message
   if (summaryData.totalItems === 0 || summaryData.segments.length === 0) {
+    const emptyColor = firstStatus?.color?.value || "#B1B2B3";
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         <div className="flex h-2.5 w-full rounded-full overflow-hidden">
@@ -137,17 +142,18 @@ export function MilestoneSummary({
             <TooltipTrigger asChild>
               <div
                 className="h-full w-full transition-all hover:opacity-80 cursor-default"
-                style={{
-                  backgroundColor: firstStatus?.color?.value || "#B1B2B3",
-                }}
+                style={{ backgroundColor: emptyColor }}
                 aria-label={tCommon("labels.noResults")}
               />
             </TooltipTrigger>
             <TooltipContent
               side="top"
+              data-status-surface
               className="border-0 px-3 py-2"
               style={{
-                backgroundColor: firstStatus?.color?.value || "#B1B2B3",
+                ...statusSurfaceVars(emptyColor),
+                backgroundColor: emptyColor,
+                color: contrastingTextColor(emptyColor),
               }}
             >
               <div className="font-semibold text-sm">
@@ -238,8 +244,13 @@ export function MilestoneSummary({
                 />
               </TooltipTrigger>
               <TooltipContent
-                className="border-0 text-muted px-3 py-2"
-                style={{ backgroundColor: color }}
+                data-status-surface
+                className="border-0 px-3 py-2"
+                style={{
+                  ...statusSurfaceVars(color),
+                  backgroundColor: color,
+                  color: contrastingTextColor(color),
+                }}
               >
                 <div className="flex items-center gap-1 font-semibold text-sm">
                   <div className="rounded-full bg-muted w-2 h-2" />
@@ -301,7 +312,7 @@ export function MilestoneSummary({
       <div className="flex flex-nowrap justify-between items-center gap-2">
         {/* Summary text below the bar */}
         <div
-          className="flex items-center min-w-0 grow text-muted-foreground text-xs"
+          className="flex items-center min-w-0 grow text-foreground text-xs"
           title={`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
           <span className="truncate shrink">{`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}</span>
@@ -378,7 +389,7 @@ export function MilestoneSummary({
           {/* Display completion percentage */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1 text-xs text-foreground">
                 <CheckCircle2 className="h-3 w-3" />
                 <span className="font-medium">
                   {summaryData.completionRate.toFixed(2)}

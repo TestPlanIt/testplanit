@@ -67,7 +67,7 @@ export const ResultsTrendChart: React.FC<ResultsTrendChartProps> = ({
 
   const verdictIcon =
     trend?.verdict === "better" ? (
-      <TrendingDown className="h-6 w-6 text-green-600 dark:text-green-400" />
+      <TrendingDown className="h-6 w-6 text-green-700 dark:text-green-400" />
     ) : trend?.verdict === "worse" ? (
       <TrendingUp className="h-6 w-6 text-red-600 dark:text-red-400" />
     ) : (
@@ -104,7 +104,7 @@ export const ResultsTrendChart: React.FC<ResultsTrendChartProps> = ({
           <p
             className={`text-xs tabular-nums ${
               isGood
-                ? "text-green-600 dark:text-green-400"
+                ? "text-green-700 dark:text-green-400"
                 : isBad
                   ? "text-red-600 dark:text-red-400"
                   : "text-muted-foreground"
@@ -176,7 +176,7 @@ export const ResultsTrendChart: React.FC<ResultsTrendChartProps> = ({
             {meta.settings.showPassRate &&
               tile(
                 "passRate",
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />,
+                <CheckCircle2 className="h-4 w-4 text-green-700 dark:text-green-400" />,
                 tCommon("fields.passRate"),
                 stats.passRate,
                 "rate",

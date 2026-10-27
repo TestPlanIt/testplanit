@@ -70,13 +70,13 @@ export function ReviewDecisionBadge({
         return {
           labelKey: "comments.type.reviewDecision.approved",
           icon: CheckCircle2,
-          className: `${base} bg-success text-success-foreground border-success hover:bg-success/90`,
+          className: `${base} bg-success text-success-foreground border-success hover:bg-success/90 hover:text-success-foreground`,
         };
       case "CHANGES_REQUESTED":
         return {
           labelKey: "comments.type.reviewDecision.changesRequested",
           icon: MessageCircleWarning,
-          className: `${base} bg-warning text-white border-warning hover:bg-warning/90`,
+          className: `${base} bg-warning text-warning-foreground border-warning hover:bg-warning/90 hover:text-warning-foreground`,
         };
       case "REJECTED":
         return {

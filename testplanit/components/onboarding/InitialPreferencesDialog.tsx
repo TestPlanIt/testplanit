@@ -48,6 +48,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { languageNames } from "~/i18n/navigation";
+import { colorSchemeForTheme } from "~/utils/theme";
 
 type TimezoneOption = {
   id: string;
@@ -290,12 +291,7 @@ export function InitialPreferencesDialog() {
           // Add the new theme class
           html.classList.add(themeLower);
           // Update color scheme for browser native elements
-          html.style.colorScheme =
-            themeLower === "dark" || themeLower === "accessibledark"
-              ? "dark"
-              : themeLower === "light" || themeLower === "accessible"
-                ? "light"
-                : "";
+          html.style.colorScheme = colorSchemeForTheme(themeLower);
         });
       }
     },
@@ -422,12 +418,7 @@ export function InitialPreferencesDialog() {
           "accessibledark"
         );
         html.classList.add(originalTheme);
-        html.style.colorScheme =
-          originalTheme === "dark" || originalTheme === "accessibledark"
-            ? "dark"
-            : originalTheme === "light" || originalTheme === "accessible"
-              ? "light"
-              : "";
+        html.style.colorScheme = colorSchemeForTheme(originalTheme);
       }
     }
 

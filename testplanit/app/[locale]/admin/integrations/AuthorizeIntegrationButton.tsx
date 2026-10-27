@@ -60,7 +60,7 @@ export function AuthorizeIntegrationButton({
         <Button
           variant="ghost"
           onClick={handleAuthorize}
-          className="px-2 py-1 h-auto text-warning-foreground"
+          className="px-2 py-1 h-auto text-warning-text"
         >
           <ShieldCheck className="h-4 w-4" />
           <span className="sr-only">{t("authorize")}</span>

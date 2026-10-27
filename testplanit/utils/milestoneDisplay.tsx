@@ -7,6 +7,10 @@ import { CirclePlus } from "lucide-react";
 import React, { useState } from "react";
 import { AddSessionModal } from "~/app/[locale]/projects/sessions/[projectId]/AddSessionModal";
 import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
+import {
   getStatus,
   getStatusStyle,
   hasCalendarDates,
@@ -222,7 +226,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
               {depth > 0 && (
                 <DynamicIcon
                   name="corner-down-right"
-                  className="w-6 h-6 text-primary/50 shrink-0 bg-transparent"
+                  className="w-6 h-6 text-primary shrink-0 bg-transparent"
                 />
               )}
               <div className="truncate">
@@ -237,8 +241,13 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           {/* Status */}
           <div className="milestone-status flex gap-2 justify-center">
             <Badge
-              style={{ backgroundColor: badge }}
-              className="text-secondary-background border-2 border-secondary-foreground text-sm"
+              data-status-surface
+              style={{
+                ...statusSurfaceVars(badge),
+                backgroundColor: badge,
+                color: contrastingTextColor(badge),
+              }}
+              className="border-2 border-secondary-foreground text-sm"
             >
               {translationFunction(`milestones.statusLabels.${status}`)}
             </Badge>
@@ -334,7 +343,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
               {depth > 0 && (
                 <DynamicIcon
                   name="corner-down-right"
-                  className="w-6 h-6 text-primary/50 shrink-0 bg-transparent"
+                  className="w-6 h-6 text-primary shrink-0 bg-transparent"
                 />
               )}
               <div className="truncate">
@@ -349,8 +358,13 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           {/* Status */}
           <div className="milestone-status flex gap-2 justify-center">
             <Badge
-              style={{ backgroundColor: badge }}
-              className="text-secondary-background border-2 border-secondary-foreground text-sm"
+              data-status-surface
+              style={{
+                ...statusSurfaceVars(badge),
+                backgroundColor: badge,
+                color: contrastingTextColor(badge),
+              }}
+              className="border-2 border-secondary-foreground text-sm"
             >
               {translationFunction(`milestones.statusLabels.${status}`)}
             </Badge>

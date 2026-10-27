@@ -6,6 +6,11 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useMemo, type CSSProperties } from "react";
+import {
+  contrastRatio,
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 
 interface ColorFamily {
   id: number;
@@ -85,26 +90,55 @@ export function useIssueColors() {
   };
 
   /**
+   * Badge style for a shade pair. A family's darkest shade is the intended
+   * ink, but it does not always reach the 4.5:1 that the badge's 12px
+   * semibold text needs: the seeded Red is 3.92:1 (#8D2007 on #F88F77) on its
+   * own lightest tint and worse on every darker one, and a family that is
+   * missing or renamed collapses fill and ink onto the same #B1B2B3 fallback,
+   * which is 1:1. Shades are admin-owned, so the pair is measured rather than
+   * assumed and a failing one falls back to the black/white pick, never below
+   * 4.58:1. A value the parser cannot read is left alone rather than
+   * overridden on a guess.
+   *
+   * data-status-surface on the badge plus this --status-surface-fg is the
+   * contract StatusDisplay uses: the accessible themes take the strict pick,
+   * the brand themes keep the ink chosen here (styles/globals.css).
+   */
+  const badgeStyle = (
+    backgroundColor: string,
+    familyInk: string,
+    borderColor: string
+  ): IssueBadgeStyle => {
+    const ratio = contrastRatio(familyInk, backgroundColor);
+    return {
+      ...statusSurfaceVars(backgroundColor),
+      backgroundColor,
+      color:
+        ratio === null || ratio >= 4.5
+          ? familyInk
+          : contrastingTextColor(backgroundColor),
+      borderColor,
+    };
+  };
+
+  /**
    * Get badge styles for issue priority
    */
   const getPriorityStyle = (
     priority: string | null | undefined
   ): IssueBadgeStyle => {
     if (!colorsByFamily) {
-      // Return default while loading
-      return {
-        backgroundColor: "#C8C9CA",
-        color: "#6C6D6E",
-        borderColor: "#B1B2B3",
-      };
+      // Loading: the seeded Black 5/0/4 chip, so the placeholder matches the
+      // neutral badge that replaces it. Black[1] was 3.13:1 on Black[5].
+      return badgeStyle("#C8C9CA", "#333435", "#B1B2B3");
     }
 
     if (!priority) {
-      return {
-        backgroundColor: getColor("Black", 5), // Lightest gray
-        color: getColor("Black", 1), // Dark gray
-        borderColor: getColor("Black", 4), // Medium gray
-      };
+      return badgeStyle(
+        getColor("Black", 5), // Lightest gray
+        getColor("Black", 0), // Darkest gray — 7.52:1; Black[1] is 3.13:1
+        getColor("Black", 4) // Medium gray
+      );
     }
 
     const normalizedPriority = priority.toLowerCase().trim();
@@ -114,41 +148,44 @@ export function useIssueColors() {
       case "highest":
       case "critical":
       case "sanity":
-        return {
-          backgroundColor: getColor("Red", 6), // Lightest red
-          color: getColor("Red", 0), // Darkest red
-          borderColor: getColor("Red", 2), // Medium red
-        };
+        // Red against High's orange, the severity ramp the branch below and
+        // the dot colours already describe. 5 is the lightest shade there is:
+        // db/seed.ts seeds six per family, orders 0-5.
+        return badgeStyle(
+          getColor("Red", 5), // Lightest red
+          getColor("Red", 0), // Darkest red — 3.92:1, so badgeStyle inks black
+          getColor("Red", 2) // Medium red
+        );
 
       case "high":
-        return {
-          backgroundColor: getColor("Red", 5), // Lightest orange
-          color: getColor("Red", 0), // Darkest orange
-          borderColor: getColor("Red", 2), // Medium orange
-        };
+        return badgeStyle(
+          getColor("Orange", 5), // Lightest orange
+          getColor("Orange", 0), // Darkest orange — 5.09:1
+          getColor("Orange", 2) // Medium orange
+        );
 
       case "medium":
-        return {
-          backgroundColor: getColor("Green", 5), // Lightest green
-          color: getColor("Green", 1), // Dark green
-          borderColor: getColor("Green", 2), // Medium green
-        };
+        return badgeStyle(
+          getColor("Green", 5), // Lightest green
+          getColor("Green", 0), // Darkest green — 6.09:1; Green[1] is 3.97:1
+          getColor("Green", 2) // Medium green
+        );
 
       case "low":
       case "lowest":
-        return {
-          backgroundColor: getColor("Blue", 5), // Lightest blue
-          color: getColor("Blue", 0), // Darkest blue
-          borderColor: getColor("Blue", 2), // Medium blue
-        };
+        return badgeStyle(
+          getColor("Blue", 5), // Lightest blue
+          getColor("Blue", 0), // Darkest blue — 5.55:1
+          getColor("Blue", 2) // Medium blue
+        );
 
       default:
         // Unknown priority - use neutral gray
-        return {
-          backgroundColor: getColor("Black", 5),
-          color: getColor("Black", 1),
-          borderColor: getColor("Black", 4),
-        };
+        return badgeStyle(
+          getColor("Black", 5),
+          getColor("Black", 0),
+          getColor("Black", 4)
+        );
     }
   };
 
@@ -159,20 +196,17 @@ export function useIssueColors() {
     status: string | null | undefined
   ): IssueBadgeStyle => {
     if (!colorsByFamily) {
-      // Return default while loading
-      return {
-        backgroundColor: "#C8C9CA",
-        color: "#6C6D6E",
-        borderColor: "#B1B2B3",
-      };
+      // Loading: the seeded Black 5/0/4 chip, so the placeholder matches the
+      // neutral badge that replaces it. Black[1] was 3.13:1 on Black[5].
+      return badgeStyle("#C8C9CA", "#333435", "#B1B2B3");
     }
 
     if (!status) {
-      return {
-        backgroundColor: getColor("Black", 5),
-        color: getColor("Black", 1),
-        borderColor: getColor("Black", 4),
-      };
+      return badgeStyle(
+        getColor("Black", 5),
+        getColor("Black", 0),
+        getColor("Black", 4)
+      );
     }
 
     const normalizedStatus = status
@@ -186,60 +220,63 @@ export function useIssueColors() {
       case "todo":
       case "to do":
       case "backlog":
-        return {
-          backgroundColor: getColor("Indigo", 5), // Lightest indigo
-          color: getColor("Indigo", 0), // Darkest indigo
-          borderColor: getColor("Indigo", 2), // Medium indigo
-        };
+        return badgeStyle(
+          getColor("Indigo", 5), // Lightest indigo
+          getColor("Indigo", 0), // Darkest indigo — 5.18:1
+          getColor("Indigo", 2) // Medium indigo
+        );
 
       case "in progress":
       case "in development":
       case "doing":
       case "working":
       case "active":
-        return {
-          backgroundColor: getColor("Green", 5), // Lightest green
-          color: getColor("Green", 0), // Darkest green
-          borderColor: getColor("Green", 2), // Medium green
-        };
+        return badgeStyle(
+          getColor("Green", 5), // Lightest green
+          getColor("Green", 0), // Darkest green — 6.09:1
+          getColor("Green", 2) // Medium green
+        );
 
       case "done":
       case "closed":
       case "resolved":
       case "completed":
       case "fixed":
-        return {
-          backgroundColor: getColor("Black", 6), // Lightest gray
-          color: getColor("Black", 1), // Dark gray
-          borderColor: getColor("Black", 4), // Medium gray
-        };
+        // 5 is the lightest shade there is: db/seed.ts seeds six per family,
+        // orders 0-5. The border is a step darker than the unrecognised chip
+        // below, so a closed issue is not identical to it.
+        return badgeStyle(
+          getColor("Black", 5), // Lightest gray
+          getColor("Black", 0), // Darkest gray — 7.52:1; Black[1] is 3.13:1
+          getColor("Black", 3) // Mid gray
+        );
 
       case "blocked":
       case "on hold":
       case "paused":
-        return {
-          backgroundColor: getColor("Red", 5), // Lightest red
-          color: getColor("Red", 0), // Darkest red
-          borderColor: getColor("Red", 2), // Medium red
-        };
+        return badgeStyle(
+          getColor("Red", 5), // Lightest red
+          getColor("Red", 0), // Darkest red — 3.92:1, so badgeStyle inks black
+          getColor("Red", 2) // Medium red
+        );
 
       case "review":
       case "in review":
       case "testing":
       case "qa":
-        return {
-          backgroundColor: getColor("Yellow", 5), // Lightest yellow
-          color: getColor("Yellow", 0), // Darkest yellow
-          borderColor: getColor("Yellow", 2), // Medium yellow
-        };
+        return badgeStyle(
+          getColor("Yellow", 5), // Lightest yellow
+          getColor("Yellow", 0), // Darkest yellow — 5.89:1
+          getColor("Yellow", 2) // Medium yellow
+        );
 
       default:
         // Unknown status - use neutral gray
-        return {
-          backgroundColor: getColor("Black", 5),
-          color: getColor("Black", 1),
-          borderColor: getColor("Black", 4),
-        };
+        return badgeStyle(
+          getColor("Black", 5),
+          getColor("Black", 0),
+          getColor("Black", 4)
+        );
     }
   };
 
@@ -261,8 +298,8 @@ export function useIssueColors() {
         // Red - matches getPriorityStyle
         return getColor("Red", 2);
       case "high":
-        // Red (lighter) - matches getPriorityStyle
-        return getColor("Red", 3);
+        // Orange - matches getPriorityStyle
+        return getColor("Orange", 2);
       case "medium":
         // Green - matches getPriorityStyle
         return getColor("Green", 2);

@@ -415,10 +415,10 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
         {/* Stale */}
         <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
           <div className="p-2 rounded-md bg-yellow-500/10">
-            <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <Clock className="h-4 w-4 text-yellow-700 dark:text-yellow-400" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+            <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
               {summaryMetrics.staleCount}
               <span className="text-sm font-normal ms-1">
                 {"("}

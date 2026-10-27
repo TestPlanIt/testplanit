@@ -59,7 +59,7 @@ export function ValuesInput({
               {!disabled && (
                 <button
                   type="button"
-                  className="rounded-sm hover:text-destructive"
+                  className="rounded-sm hover:bg-destructive hover:text-destructive-foreground"
                   onClick={() => onChange(values.filter((v) => v !== value))}
                   aria-label={tCommon("actions.remove")}
                 >

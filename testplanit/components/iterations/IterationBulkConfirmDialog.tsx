@@ -8,6 +8,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
+
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -250,7 +255,8 @@ export function IterationBulkConfirmDialog({
               void handleConfirm();
             }}
             data-testid="iteration-bulk-confirm"
-            className={`text-white hover:opacity-90 ${
+            data-status-surface={statusColor ? "" : undefined}
+            className={`hover:opacity-90 ${
               animateBorder
                 ? "transition-[background-color,border-color] duration-2000"
                 : ""
@@ -258,8 +264,10 @@ export function IterationBulkConfirmDialog({
             style={
               statusColor
                 ? {
+                    ...statusSurfaceVars(statusColor),
                     backgroundColor: statusColor,
                     borderColor: statusColor,
+                    color: contrastingTextColor(statusColor),
                   }
                 : undefined
             }

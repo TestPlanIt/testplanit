@@ -199,7 +199,7 @@ export function JunitIterationPropertyForm({
               {name}
               <button
                 type="button"
-                className="ms-1 inline-flex items-center justify-center hover:text-destructive"
+                className="ms-1 inline-flex items-center justify-center hover:text-destructive-text"
                 onClick={() => handleRemove(name)}
                 aria-label={t("removeAria", { name })}
                 data-testid={`junit-iteration-property-remove-${name}`}
