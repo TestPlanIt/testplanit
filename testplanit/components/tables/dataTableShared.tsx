@@ -176,7 +176,11 @@ export const getCommonPinningStyles = <TData extends RowData>(
         ? "-4px 0 8px -4px rgba(0,0,0,0.3)"
         : undefined,
     left: isPinned === "start" ? `${column.getStart("start")}px` : undefined,
-    right: isPinned === "end" ? `${column.getStart("end")}px` : undefined,
+    // `right` is the distance to the RIGHT edge, so it must count the pinned
+    // columns AFTER this one — getStart() counts the ones before, which is
+    // only equal (0) when a single column is pinned right. With two or more it
+    // reverses their order and overlaps them.
+    right: isPinned === "end" ? `${column.getAfter("end")}px` : undefined,
     position: isPinned ? "sticky" : "relative",
     width: column.getSize(),
     maxWidth: column.columnDef.maxSize,
@@ -204,7 +208,9 @@ export function getFlexPinningStyles<TData extends RowData>(
   return {
     position: "sticky",
     left: isPinned === "start" ? column.getStart("start") : undefined,
-    right: isPinned === "end" ? column.getStart("end") : undefined,
+    // See getCommonPinningStyles — the right offset counts the pinned columns
+    // after this one, not before.
+    right: isPinned === "end" ? column.getAfter("end") : undefined,
     zIndex: 2,
     boxShadow: isLastLeftPinned
       ? "4px 0 8px -4px rgba(0,0,0,0.3)"

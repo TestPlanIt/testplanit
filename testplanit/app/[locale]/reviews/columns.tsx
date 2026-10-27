@@ -192,7 +192,13 @@ interface UseColumnsArgs {
  * visuals to the shared `ReviewDecisionBadge`; undecided rows render a
  * plain dash.
  */
-function DecisionStatusBadge({ status }: { status: ReviewStatus | null }) {
+function DecisionStatusBadge({
+  status,
+  className,
+}: {
+  status: ReviewStatus | null;
+  className?: string;
+}) {
   if (
     status !== "APPROVED" &&
     status !== "CHANGES_REQUESTED" &&
@@ -201,7 +207,7 @@ function DecisionStatusBadge({ status }: { status: ReviewStatus | null }) {
   ) {
     return <span className="text-muted-foreground">-</span>;
   }
-  return <ReviewDecisionBadge status={status} />;
+  return <ReviewDecisionBadge status={status} className={className} />;
 }
 
 /**
@@ -661,84 +667,78 @@ export const useColumns = ({
             accessorKey: "status",
             header: t("common.actions.status"),
             enableSorting: true,
-            size: 180,
+            size: 200,
+            // Floor the width so the revert control can never be squeezed out
+            // by a resize — the badge gives up space first (it truncates).
+            minSize: 150,
             meta: { isPinned: "right" } satisfies CustomColumnMeta,
-            cell: ({ row }) => (
-              <DecisionStatusBadge status={row.original.status} />
-            ),
+            // The revert action shares this cell rather than occupying its own
+            // column: the Decided tab had no actions at all before, and a
+            // second pinned column just to carry one icon costs more width
+            // than it earns. Badge sits left, action right.
+            cell: ({ row }) => {
+              const { id, status, decidedAt, decidedByUserId, revertCount } =
+                row.original;
+
+              const canRevert = isRevertOffered({
+                status,
+                decidedAt,
+                decidedByUserId,
+                viewerUserId,
+                viewerIsAdmin,
+                systemSeconds: systemRevertWindowSeconds,
+                projectSeconds:
+                  row.original.project?.revertDecisionDurationSeconds ?? null,
+              });
+
+              return (
+                <div className="flex w-full items-center justify-between gap-2">
+                  {/* min-w-0 lets the badge shrink; it ellipsises rather than
+                      pushing the action out. The action block is shrink-0 so
+                      it stays visible at any column width. */}
+                  <div className="flex min-w-0 items-center">
+                    <DecisionStatusBadge
+                      status={row.original.status}
+                      className="min-w-0 max-w-full"
+                    />
+                  </div>
+                  {canRevert ? (
+                    <div
+                      className="flex shrink-0 items-center gap-1"
+                      data-testid="reviews-inbox-row-revert-actions"
+                    >
+                      {typeof revertCount === "number" && revertCount > 0 ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className="text-muted-foreground text-xs tabular-nums"
+                              data-testid={`reviews-inbox-revert-count-${id}`}
+                            >
+                              {`×${revertCount}`}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t("reviews.inbox.revertedBadgeTooltip", {
+                              count: revertCount,
+                            })}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : null}
+                      <ActionIconButton
+                        label={t("reviews.inbox.actionRevert")}
+                        testId={`reviews-inbox-revert-${id}`}
+                        icon={Undo2}
+                        onClick={() => actions?.onRevert(row.original)}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              );
+            },
           };
 
-    // Decided tab only. The tab had no actions at all before: a reviewer who
-    // misjudged a call had to ask the requester to raise a fresh request.
-    // Rendered as its own column rather than inside the Status cell so the
-    // Status badge stays a pure read of the outcome.
-    const revertColumn: ColumnDef<InboxTableRow> = {
-      id: "revert",
-      header: t("common.actions.actionsLabel"),
-      enableSorting: false,
-      enableHiding: false,
-      size: 96,
-      meta: { isPinned: "right" } satisfies CustomColumnMeta,
-      cell: ({ row }) => {
-        const { id, status, decidedAt, decidedByUserId, revertCount } =
-          row.original;
-
-        if (
-          !isRevertOffered({
-            status,
-            decidedAt,
-            decidedByUserId,
-            viewerUserId,
-            viewerIsAdmin,
-            systemSeconds: systemRevertWindowSeconds,
-            projectSeconds:
-              row.original.project?.revertDecisionDurationSeconds ?? null,
-          })
-        ) {
-          return null;
-        }
-
-        return (
-          <div
-            className="flex items-center gap-1"
-            data-testid="reviews-inbox-row-revert-actions"
-          >
-            <ActionIconButton
-              label={t("reviews.inbox.actionRevert")}
-              testId={`reviews-inbox-revert-${id}`}
-              icon={Undo2}
-              onClick={() => actions?.onRevert(row.original)}
-            />
-            {typeof revertCount === "number" && revertCount > 0 ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="text-muted-foreground text-xs tabular-nums"
-                    data-testid={`reviews-inbox-revert-count-${id}`}
-                  >
-                    {`×${revertCount}`}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t("reviews.inbox.revertedBadgeTooltip", {
-                    count: revertCount,
-                  })}
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
-          </div>
-        );
-      },
-    };
-
     return view === "decided"
-      ? [
-          ...baseColumns,
-          decidedByColumn,
-          timestampColumn,
-          tailColumn,
-          revertColumn,
-        ]
+      ? [...baseColumns, decidedByColumn, timestampColumn, tailColumn]
       : [...baseColumns, assigneeColumn, timestampColumn, tailColumn];
   }, [
     t,
