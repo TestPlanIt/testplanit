@@ -8252,7 +8252,7 @@
       "linkedCaseCount": "## Verknüpfte Fälle\nAnzahl der unterschiedlichen Testfälle, die mit den Problemen der Gruppe verknüpft sind. Ein Fall, der mit mehreren Problemen in derselben Gruppe verknüpft ist, wird einmal gezählt.",
       "firstCaseCreated": "## Erster Fall erstellt\nWann der früheste Testfall in dieser Gruppe erstellt wurde.",
       "lastCaseCreated": "## Letzter Fall erstellt\nWann der neueste Testfall in dieser Gruppe erstellt wurde.",
-      "caseCreationSpan": "## Zeitspanne der Fallerstellung\nTage zwischen der frühesten und neuesten Fallerstellung der Gruppe – wie lange es dauerte, die Fälle der Gruppe zu schreiben.",
+      "caseCreationSpan": "## Zeitraum der Fallerstellung\nTage zwischen der frühesten und neuesten Testfallerstellung der Gruppe – wie lange die Erstellung der Fälle der Gruppe dauerte.",
       "milestoneCount": "## Meilensteinanzahl\nGesamtzahl der Meilensteine.",
       "milestoneCompletionRate": "## Meilenstein-Erfüllungsrate\nProzentsatz der abgeschlossenen Meilensteine.",
       "averageMilestoneDuration": "## Durchschnittliche Meilensteindauer\nDurchschnittliche Dauer der Meilensteine in Tagen.",
@@ -8269,8 +8269,9 @@
       "selectionPrecision": "## Auswahlgenauigkeit (%)\nVon den Fällen, die Impact-Analysen ausgewählt haben und die dann ausgeführt wurden, der Anteil, der fehlgeschlagen ist. Leer, wenn nichts Ausgewähltes ausgeführt wurde."
     },
     "reportDimensions": {
-      "issue": "## Problem-Dimension\nGruppiert nach den mit dem Testfall verknüpften Problemen. Ein Fall, der mit mehreren Problemen verknüpft ist, wird in jedem gezählt; Fälle ohne verknüpfte Probleme fallen unter Keine.",
-      "resultSource": "## Ergebnis-Quellen-Dimension\nGruppiert Ausführungen danach, woher sie stammen: Ergebnisse, die in der App eingegeben wurden (Manuell) oder importierte automatisierte Ergebnisse wie JUnit (Automatisiert).",
+      "issue": "## Problem-Dimension\nGruppiert nach den Problemen, die mit dem Testfall verknüpft sind. Ein Fall, der mit mehreren Problemen verknüpft ist, wird in jedem gezählt; Fälle ohne verknüpfte Probleme fallen in Keine.",
+      "resultSource": "## Dimensions-Ergebnisquelle\nGruppiert Ausführungen nach ihrer Herkunft: Ergebnisse, die in der App eingegeben wurden (Manuell) oder importierte automatisierte Ergebnisse wie JUnit (Automatisiert).",
+      "rootCause": "## Grundursachen-Dimension\nGruppiert automatisierte Ergebnisse nach der Grundursache ihres Fehlerverhaltens – die Klassifizierung einer Person, falls vorhanden, ansonsten die der KI. Manuelle Ergebnisse, bestandene Ergebnisse und nicht klassifizierte Fehler fallen in Keine.",
       "user": "## Benutzerdimension\nGruppiert die Ergebnisse nach dem Benutzer, der die Tests ausgeführt hat oder den Elementen zugeordnet ist.",
       "status": "## Status Dimension\nGruppiert die Ergebnisse nach dem Testausführungsstatus (z. B. Bestanden, Fehlgeschlagen, Blockiert).",
       "project": "## Projektdimension\nGruppiert Ergebnisse nach Projekt für projektübergreifende Analysen.",
@@ -8303,7 +8304,7 @@
       "dimensions": "## Dimensionen\nWählen Sie die Dimensionen aus, die Sie in Ihrem Bericht analysieren möchten. Dimensionen sind Attribute, die Ihre Daten kategorisieren, z. B. Datum, Benutzer, Status usw. Sie können sie per Drag & Drop neu anordnen.",
       "metrics": "## Kennzahlen\nWählen Sie die Kennzahlen aus, die Sie in Ihrem Bericht messen möchten. Kennzahlen sind quantitative Messwerte, die aus Ihren Daten abgeleitet werden, wie z. B. Anzahl der Testergebnisse, Erfolgsquote, durchschnittliche Bearbeitungszeit usw. Sie können die Reihenfolge per Drag & Drop ändern.",
       "dateRange": "## Datumsbereich\nFiltern Sie Ihre Berichtsdaten nach einem bestimmten Zeitraum. Wählen Sie eine Vorgabe wie \"Letzte 7 Tage\", \"Letzter Monat\" oder \"Letzte N Tage\" oder wählen Sie ein benutzerdefiniertes Start- und Enddatum im Kalender.\n\nEine Vorgabe bleibt relativ: Ein gespeicherter Bericht oder ein Live-Share-Link berechnet die Daten jedes Mal neu, wenn er geöffnet wird, in Ihrer Zeitzone. Benutzerdefinierte Daten bleiben fest. Dieser Filter wird auf das relevante Datumsfeld für jeden Berichtstyp angewendet (z. B. Ausführungsdatum für Testergebnisse, Erstellungsdatum für Testfälle).",
-      "dimensionFilters": "## Filter\nGrenzen Sie den Bericht auf bestimmte Werte jeder ausgewählten Dimension ein. Lassen Sie einen Filter leer, um alle Werte für diese Dimension einzubeziehen. Schalten Sie einen Filter auf Ausschließen um, um alles außer den ausgewählten Werten zu behalten – nützlich für gespeicherte Berichte, die neue Werte automatisch weiterhin abdecken sollen. Datumsdimensionen werden stattdessen mit der Datumsbereichs-Auswahl gefiltert."
+      "dimensionFilters": "## Filter\nSchränken Sie den Bericht auf bestimmte Werte jeder ausgewählten Dimension ein. Lassen Sie einen Filter leer, um alle Werte dieser Dimension einzuschließen. Schalten Sie einen Filter auf Ausschließen um, um alles außer den ausgewählten Werten beizubehalten – nützlich für gespeicherte Berichte, die automatisch weiterhin neue Werte abdecken sollten. Datumsdimensionen werden stattdessen mit dem Datumsbereichs-Auswähler gefiltert."
     },
     "codeRepository": {
       "name": "## Repository-Name\nEin aussagekräftiger Name für diese Repository-Verbindung.\n\n- Wird zur Identifizierung in den Projektcode-Kontexteinstellungen verwendet.\n- Muss nicht mit dem Repository-Namen des Providers übereinstimmen.",
@@ -8673,7 +8674,7 @@
           "weeks": "Letzte {count, plural, one {# Woche} other {# Wochen}}",
           "months": "Letzte {count, plural, one {# Monat} other {# Monate}}",
           "calendarWeeks": "Letzte {count, plural, one {# Kalenderwoche} other {# Kalenderwochen}}",
-          "calendarMonths": "Letzter {count, plural, one {# Kalendermonat} other {# Kalendermonate}}"
+          "calendarMonths": "Letzte {count, plural, one {# Kalendermonat} other {# Kalendermonate}}"
         },
         "rollingUnits": {
           "days": "Tage",
@@ -9320,7 +9321,8 @@
       "issueTracker": "Ticket-Verfolgung",
       "issueStatus": "Ausgabestatus",
       "issue": "Problem",
-      "resultSource": "Ergebnis-Quelle",
+      "resultSource": "Ergebnisquelle",
+      "rootCause": "Grundursache",
       "tag": "Tag",
       "feature": "Funktion",
       "model": "Modell",
@@ -9361,7 +9363,7 @@
       "linkedCaseCount": "Verknüpfte Fälle",
       "firstCaseCreated": "Erster Fall erstellt",
       "lastCaseCreated": "Letzter Fall erstellt",
-      "caseCreationSpan": "Zeitspanne der Fallerstellung (Tage)",
+      "caseCreationSpan": "Zeitraum der Fallerstellung (Tage)",
       "averageAge": "Durchschnittsalter (Tage)",
       "sessionCount": "Sitzungsanzahl",
       "activeSessions": "Aktive Sitzungen",

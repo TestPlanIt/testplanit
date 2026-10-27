@@ -8249,10 +8249,10 @@
       "lastActiveDate": "## Ngày hoạt động gần nhất\nNgày hoạt động gần đây nhất.",
       "averageAge": "## Tuổi trung bình\nTuổi trung bình của các mặt hàng tính bằng ngày.",
       "issueCount": "## Số lượng sự cố\nTổng số sự cố đã được theo dõi.",
-      "linkedCaseCount": "## Các trường hợp được liên kết\nSố lượng các trường hợp kiểm tra riêng biệt được liên kết với các vấn đề của nhóm. Một trường hợp được liên kết với nhiều vấn đề trong cùng một nhóm sẽ được tính một lần.",
+      "linkedCaseCount": "## Trường hợp liên kết\nSố lượng các trường hợp kiểm tra riêng biệt được liên kết với các vấn đề của nhóm. Một trường hợp được liên kết với nhiều vấn đề trong cùng một nhóm được tính một lần.",
       "firstCaseCreated": "## Trường hợp đầu tiên được tạo\nKhi trường hợp kiểm tra sớm nhất trong nhóm này được tạo.",
       "lastCaseCreated": "## Trường hợp cuối cùng được tạo\nKhi trường hợp kiểm tra mới nhất trong nhóm này được tạo.",
-      "caseCreationSpan": "## Khoảng thời gian tạo trường hợp\nSố ngày giữa việc tạo trường hợp kiểm tra sớm nhất và mới nhất của nhóm — thời gian nhóm mất để viết các trường hợp.",
+      "caseCreationSpan": "## Khoảng thời gian tạo trường hợp\nNgày giữa việc tạo trường hợp kiểm tra sớm nhất và mới nhất của nhóm — bao lâu để viết các trường hợp của nhóm.",
       "milestoneCount": "## Số lượng cột mốc\nTổng số cột mốc.",
       "milestoneCompletionRate": "## Tỷ lệ hoàn thành cột mốc\nPhần trăm các cột mốc đã hoàn thành.",
       "averageMilestoneDuration": "## Thời gian trung bình hoàn thành các mốc quan trọng\nThời gian trung bình hoàn thành các mốc quan trọng tính bằng ngày.",
@@ -8269,8 +8269,9 @@
       "selectionPrecision": "## Độ chính xác Lựa chọn (%)\nTrong số các trường hợp mà phân tích Tác động đã chọn và sau đó đã được thực thi, chia sẻ những trường hợp thất bại. Trống khi không có gì được chọn đã chạy."
     },
     "reportDimensions": {
-      "issue": "## Chiều Vấn đề\nNhóm theo các vấn đề được liên kết với trường hợp kiểm tra. Một trường hợp được liên kết với nhiều vấn đề sẽ được tính trong mỗi vấn đề; các trường hợp không có vấn đề được liên kết sẽ rơi vào Không có.",
-      "resultSource": "## Chiều Nguồn kết quả\nNhóm các lần thực hiện theo nơi chúng đến từ: kết quả được nhập trong ứng dụng (Thủ công) hoặc kết quả tự động được nhập như JUnit (Tự động).",
+      "issue": "## Chiều vấn đề\nNhóm theo các vấn đề được liên kết với trường hợp kiểm tra. Một trường hợp được liên kết với nhiều vấn đề được tính trong mỗi vấn đề; các trường hợp không có vấn đề liên kết nào rơi vào Không có.",
+      "resultSource": "## Chiều nguồn kết quả\nNhóm các lần thực thi theo nơi chúng đến từ: kết quả được nhập trong ứng dụng (Thủ công) hoặc kết quả kiểm tra tự động được nhập như JUnit (Tự động).",
+      "rootCause": "## Chiều nguyên nhân gốc\nNhóm các kết quả tự động theo nguyên nhân gốc của mô hình lỗi của chúng — phân loại của một người khi một cái được thực hiện, nếu không thì của AI. Kết quả thủ công, kết quả đạt và các lỗi không được phân loại rơi vào Không có.",
       "user": "## Kích thước người dùng\nNhóm kết quả theo người dùng đã thực hiện các bài kiểm tra hoặc được chỉ định cho các mục.",
       "status": "## Kích thước trạng thái\nNhóm kết quả theo trạng thái thực thi kiểm thử (ví dụ: Đã vượt qua, Thất bại, Bị chặn).",
       "project": "## Kích thước dự án\nNhóm kết quả theo dự án để phân tích liên dự án.",
@@ -8303,7 +8304,7 @@
       "dimensions": "## Kích thước\nChọn các kích thước bạn muốn phân tích trong báo cáo. Kích thước là các thuộc tính phân loại dữ liệu của bạn, chẳng hạn như Ngày, Người dùng, Trạng thái, v.v. Bạn có thể kéo để sắp xếp lại thứ tự chúng.",
       "metrics": "## Số liệu\nChọn các số liệu bạn muốn đo trong báo cáo. Số liệu là các phép đo định lượng được suy ra từ dữ liệu của bạn, chẳng hạn như Số kết quả kiểm tra, Tỷ lệ đạt, Thời gian trung bình, v.v. Bạn có thể kéo để sắp xếp lại thứ tự chúng.",
       "dateRange": "## Phạm vi Ngày\nLọc dữ liệu báo cáo của bạn theo một khoảng thời gian cụ thể. Chọn một cài đặt sẵn như 'Últimos 7 días', 'Mes pasado' hoặc 'Últimos N días', hoặc chọn ngày bắt đầu và kết thúc tùy chỉnh trên lịch.\n\nMột cài đặt sẵn luôn có tính chất tương đối: một báo cáo đã lưu hoặc liên kết chia sẻ trực tiếp sẽ tính toán lại các ngày mỗi khi mở, trong múi giờ của bạn. Các ngày tùy chỉnh vẫn cố định. Bộ lọc này áp dụng cho trường ngày liên quan cho từng loại báo cáo (ví dụ: ngày thực thi cho kết quả kiểm tra, ngày tạo cho các trường hợp kiểm tra).",
-      "dimensionFilters": "## Bộ lọc\nChu hẹp báo cáo thành các giá trị cụ thể của mỗi chiều được chọn. Để trống bộ lọc để bao gồm tất cả các giá trị cho chiều đó. Chuyển bộ lọc sang Loại trừ để giữ mọi thứ ngoại trừ các giá trị được chọn — hữu ích cho các báo cáo đã lưu sẽ tự động tiếp tục bao gồm các giá trị mới. Các chiều ngày được lọc bằng bộ chọn phạm vi ngày thay thế."
+      "dimensionFilters": "## Bộ lọc\nGiới hạn báo cáo theo các giá trị cụ thể của từng chiều đã chọn. Để trống một bộ lọc để bao gồm tất cả giá trị của chiều đó. Chuyển một bộ lọc sang Loại trừ để giữ mọi thứ ngoại trừ các giá trị được chọn — hữu ích cho các báo cáo đã lưu sẽ tự động tiếp tục bao gồm các giá trị mới. Các chiều ngày được lọc bằng bộ chọn khoảng ngày thay thế."
     },
     "codeRepository": {
       "name": "## Tên kho lưu trữ\nTên hiển thị thân thiện cho kết nối kho lưu trữ này.\n\n- Được sử dụng để xác định nó trong cài đặt ngữ cảnh mã dự án.\n- Không cần phải trùng khớp với tên kho lưu trữ trên nhà cung cấp.",
@@ -8672,14 +8673,14 @@
           "days": "{count, plural, other {# ngày trước}}",
           "weeks": "{count, plural, other {# tuần trước}}",
           "months": "{count, plural, other {# tháng trước}}",
-          "calendarWeeks": "Tuần lịch {count, plural, one {# tuần} other {# tuần}} trước",
-          "calendarMonths": "Tháng lịch {count, plural, one {# tháng} other {# tháng}} trước"
+          "calendarWeeks": "Tuần lịch {count, plural, other {# tuần}} gần đây",
+          "calendarMonths": "Tháng lịch {count, plural, other {# tháng}} gần đây"
         },
         "rollingUnits": {
           "days": "ngày",
           "weeks": "tuần",
           "months": "tháng",
-          "calendarWeeks": "tuần lịch (từ ngày bắt đầu tuần)",
+          "calendarWeeks": "tuần lịch (từ đầu tuần)",
           "calendarMonths": "tháng lịch (từ ngày 1)"
         }
       },
@@ -9162,7 +9163,7 @@
       "groupedTotal": "Tổng của {count, plural, other {# hàng}} trong nhóm này",
       "dimensionFilters": {
         "allValues": "Tất cả giá trị",
-        "noValues": "Không được loại trừ",
+        "noValues": "Không có gì bị loại trừ",
         "modeLabel": "Chế độ bộ lọc",
         "include": "Bao gồm",
         "exclude": "Loại trừ"
@@ -9321,6 +9322,7 @@
       "issueStatus": "Trạng thái vấn đề",
       "issue": "Vấn đề",
       "resultSource": "Nguồn kết quả",
+      "rootCause": "Nguyên nhân gốc",
       "tag": "Nhãn",
       "feature": "Tính năng",
       "model": "Mô hình",
@@ -9358,7 +9360,7 @@
       "averageElapsed": "Thời gian trung bình cho mỗi lần thực thi",
       "lastActiveDate": "Ngày hoạt động cuối cùng",
       "issueCount": "Số lượng phát hành",
-      "linkedCaseCount": "Các trường hợp được liên kết",
+      "linkedCaseCount": "Trường hợp liên kết",
       "firstCaseCreated": "Trường hợp đầu tiên được tạo",
       "lastCaseCreated": "Trường hợp cuối cùng được tạo",
       "caseCreationSpan": "Khoảng thời gian tạo trường hợp (ngày)",

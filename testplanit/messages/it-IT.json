@@ -8249,10 +8249,10 @@
       "lastActiveDate": "## Data ultima attività\nData di attività più recente.",
       "averageAge": "## Età media\nEtà media degli articoli in giorni.",
       "issueCount": "## Numero di problemi\nNumero totale di problemi monitorati.",
-      "linkedCaseCount": "## Casi Collegati\nNumero di casi di test distinti collegati ai problemi del gruppo. Un caso collegato a più problemi nello stesso gruppo conta una volta.",
+      "linkedCaseCount": "## Casi Collegati\nNumero di distinti casi di test collegati ai problemi del gruppo. Un caso collegato a diversi problemi nello stesso gruppo conta una volta.",
       "firstCaseCreated": "## Primo Caso Creato\nQuando è stato creato il primo caso di test in questo gruppo.",
       "lastCaseCreated": "## Ultimo Caso Creato\nQuando è stato creato l'ultimo caso di test in questo gruppo.",
-      "caseCreationSpan": "## Intervallo di Creazione dei Casi\nGiorni tra la creazione del primo e dell'ultimo caso di test del gruppo — quanto tempo ha richiesto la stesura dei casi del gruppo.",
+      "caseCreationSpan": "## Intervallo di Creazione Casi\nGiorni tra la creazione del primo e dell'ultimo caso di test del gruppo — quanto tempo ha richiesto la scrittura dei casi del gruppo.",
       "milestoneCount": "## Conteggio traguardi\nNumero totale di traguardi.",
       "milestoneCompletionRate": "## Tasso di completamento delle pietre miliari\nPercentuale di pietre miliari completate.",
       "averageMilestoneDuration": "## Durata media delle pietre miliari\nDurata media delle pietre miliari in giorni.",
@@ -8269,8 +8269,9 @@
       "selectionPrecision": "## Precisione della selezione (%)\nDei casi selezionati dalle analisi di impatto e che sono stati poi eseguiti, la parte che non è riuscita. Vuoto quando nulla di selezionato è stato eseguito."
     },
     "reportDimensions": {
-      "issue": "## Dimensione Problema\nRagruppa in base ai problemi collegati al caso di test. Un caso collegato a più problemi conta in ognuno; i casi senza problemi collegati rientrano in Nessuno.",
-      "resultSource": "## Dimensione Origine Risultato\nRagruppa le esecuzioni in base alla loro provenienza: risultati inseriti nell'app (Manuale) o risultati automatizzati importati come JUnit (Automatizzato).",
+      "issue": "## Dimensione Problema\nRaggruppamenti in base ai problemi collegati al caso di test. Un caso collegato a diversi problemi viene contato in ciascuno; i casi senza problemi collegati rientrano in Nessuno.",
+      "resultSource": "## Dimensione Origine Risultato\nRaggruppamenti delle esecuzioni in base a dove provengono: risultati inseriti nell'app (Manuale) o risultati di test automatizzati importati come JUnit (Automatizzato).",
+      "rootCause": "## Dimensione Causa Principale\nRaggruppamenti dei risultati automatizzati in base alla causa principale del loro modello di errore — una classificazione di una persona quando è stata effettuata, altrimenti dell'IA. I risultati manuali, i risultati positivi e gli errori non classificati rientrano in Nessuno.",
       "user": "## Dimensione utente\nRaggruppa i risultati in base all'utente che ha eseguito i test o a cui sono assegnati gli elementi.",
       "status": "## Dimensione Stato\nRaggruppa i risultati in base allo stato di esecuzione del test (ad esempio, Superato, Non superato, Bloccato).",
       "project": "## Dimensione del progetto\nRaggruppa i risultati per progetto per l'analisi interprogetto.",
@@ -8303,7 +8304,7 @@
       "dimensions": "## Dimensioni\nSeleziona le dimensioni che desideri analizzare nel tuo report. Le dimensioni sono attributi che categorizzano i dati, come Data, Utente, Stato, ecc. Puoi trascinarle per riordinarle.",
       "metrics": "## Metriche\nSeleziona le metriche che desideri misurare nel tuo report. Le metriche sono misurazioni quantitative derivate dai tuoi dati, come il conteggio dei risultati dei test, il tasso di superamento, il tempo medio trascorso, ecc. Puoi trascinarle per riordinarle.",
       "dateRange": "## Intervallo di date\nFiltra i dati del tuo report in base a un periodo di tempo specifico. Scegli un predefinito come \"Ultimi 7 giorni\", \"Ultimo mese\" o \"Ultimi N giorni\", oppure seleziona una data di inizio e fine personalizzata nel calendario.\n\nUn predefinito rimane relativo: un report salvato o un link di condivisione live ricalcola le date ogni volta che si apre, nel tuo fuso orario. Le date personalizzate rimangono fisse. Questo filtro si applica al campo data rilevante per ogni tipo di report (ad es., data di esecuzione per i risultati dei test, data di creazione per i casi di test).",
-      "dimensionFilters": "## Filtri\nRestringi il rapporto a valori specifici di ogni dimensione selezionata. Lascia vuoto un filtro per includere tutti i valori per quella dimensione. Cambia un filtro a Escludi per mantenere tutto tranne i valori selezionati — utile per i rapporti salvati che dovrebbero coprire automaticamente i nuovi valori. Le dimensioni di data vengono filtrate con il selettore dell'intervallo di date."
+      "dimensionFilters": "## Filtri\nRestringe il report a valori specifici di ciascuna dimensione selezionata. Lascia vuoto un filtro per includere tutti i valori di quella dimensione. Cambia un filtro su Escludi per mantenere tutto tranne i valori selezionati — utile per i report salvati che dovrebbero continuare a coprire i nuovi valori automaticamente. Le dimensioni di data vengono invece filtrate con il selettore di intervallo di date."
     },
     "codeRepository": {
       "name": "## Nome del repository\nUn nome visualizzato descrittivo per questa connessione al repository.\n\n- Utilizzato per identificarlo nelle impostazioni del contesto del codice del progetto.\n- Non deve necessariamente corrispondere al nome del repository sul provider.",
@@ -8672,15 +8673,15 @@
           "days": "Ultimi {count, plural, one {# giorno} other {# giorni}}",
           "weeks": "Ultimi {count, plural, one {# settimana} other {# settimane}}",
           "months": "Ultimi {count, plural, one {# mese} other {# mesi}}",
-          "calendarWeeks": "Ultimi {count, plural, one {# settimana di calendario} other {# settimane di calendario}}",
-          "calendarMonths": "Ultimi {count, plural, one {# mese di calendario} other {# mesi di calendario}}"
+          "calendarWeeks": "Ultimi {count, plural, one {# settimana del calendario} other {# settimane del calendario}}",
+          "calendarMonths": "Ultimi {count, plural, one {# mese del calendario} other {# mesi del calendario}}"
         },
         "rollingUnits": {
           "days": "giorni",
           "weeks": "settimane",
           "months": "mesi",
-          "calendarWeeks": "settimane di calendario (dall'inizio della settimana)",
-          "calendarMonths": "mesi di calendario (dal 1º)"
+          "calendarWeeks": "settimane del calendario (dall'inizio della settimana)",
+          "calendarMonths": "mesi del calendario (dal 1º)"
         }
       },
       "dateGrouping": {
@@ -9162,7 +9163,7 @@
       "groupedTotal": "Totale delle {count, plural, one {# riga} other {# righe}} in questo gruppo",
       "dimensionFilters": {
         "allValues": "Tutti i valori",
-        "noValues": "Nessun elemento escluso",
+        "noValues": "Niente escluso",
         "modeLabel": "Modalità filtro",
         "include": "Includi",
         "exclude": "Escludi"
@@ -9321,6 +9322,7 @@
       "issueStatus": "Stato del problema",
       "issue": "Problema",
       "resultSource": "Origine Risultato",
+      "rootCause": "Causa Principale",
       "tag": "Etichetta",
       "feature": "Funzionalità",
       "model": "Modello",
@@ -9361,7 +9363,7 @@
       "linkedCaseCount": "Casi Collegati",
       "firstCaseCreated": "Primo Caso Creato",
       "lastCaseCreated": "Ultimo Caso Creato",
-      "caseCreationSpan": "Intervallo di Creazione dei Casi (giorni)",
+      "caseCreationSpan": "Intervallo di Creazione Casi (giorni)",
       "averageAge": "Età media (giorni)",
       "sessionCount": "Conteggio delle sessioni",
       "activeSessions": "Sessioni attive",

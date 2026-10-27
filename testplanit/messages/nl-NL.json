@@ -8250,9 +8250,9 @@
       "averageAge": "## Gemiddelde leeftijd\nGemiddelde leeftijd van items in dagen.",
       "issueCount": "## Aantal problemen\nTotaal aantal gevolgde problemen.",
       "linkedCaseCount": "## Gekoppelde gevallen\nAantal afzonderlijke testgevallen gekoppeld aan de problemen van de groep. Een geval gekoppeld aan meerdere problemen in dezelfde groep telt eenmaal.",
-      "firstCaseCreated": "## Eerste geval aangemaakt\nWanneer het eerste testgeval in deze groep is aangemaakt.",
-      "lastCaseCreated": "## Laatste geval aangemaakt\nWanneer het laatste testgeval in deze groep is aangemaakt.",
-      "caseCreationSpan": "## Periode van gevallen aanmaken\nDagen tussen het eerste en laatste testgeval in de groep — hoe lang het schrijven van de gevallen van de groep heeft geduurd.",
+      "firstCaseCreated": "## Eerste geval gemaakt\nWanneer het vroegste testgeval in deze groep is gemaakt.",
+      "lastCaseCreated": "## Laatste geval gemaakt\nWanneer het meest recente testgeval in deze groep is gemaakt.",
+      "caseCreationSpan": "## Periode tussen maken van gevallen\nAantal dagen tussen het maken van het vroegste en meest recente testgeval van de groep — hoe lang het maken van de gevallen van de groep heeft geduurd.",
       "milestoneCount": "## Mijlpaalaantal\nTotaal aantal mijlpalen.",
       "milestoneCompletionRate": "## Mijlpaalvoltooiingspercentage\nPercentage voltooide mijlpalen.",
       "averageMilestoneDuration": "## Gemiddelde mijlpaalduur\nGemiddelde duur van mijlpalen in dagen.",
@@ -8269,8 +8269,9 @@
       "selectionPrecision": "## Selection Precision (%)\nVan de cases die Impact analyses hebben geselecteerd en die vervolgens zijn uitgevoerd, het aandeel dat is mislukt. Leeg wanneer niets geselecteerde is uitgevoerd."
     },
     "reportDimensions": {
-      "issue": "## Dimensie Probleem\nGroepering op basis van de problemen gekoppeld aan het testgeval. Een geval gekoppeld aan meerdere problemen telt in elk; gevallen zonder gekoppelde problemen vallen in Geen.",
-      "resultSource": "## Dimensie Resultaatbron\nGroepering van uitvoeringen op basis van waar ze vandaan kwamen: resultaten ingevoerd in de app (Handmatig) of geïmporteerde geautomatiseerde resultaten zoals JUnit (Geautomatiseerd).",
+      "issue": "## Afmetingen per probleem\nGroeperen op basis van de problemen gekoppeld aan het testgeval. Een geval gekoppeld aan meerdere problemen telt in elk ervan; gevallen zonder gekoppelde problemen vallen onder Geen.",
+      "resultSource": "## Afmetingen van resultaatbron\nGroeperen van uitvoeringen op basis van waar ze vandaan komen: resultaten ingevoerd in de app (Handmatig) of geïmporteerde geautomatiseerde resultaten zoals JUnit (Geautomatiseerd).",
+      "rootCause": "## Afmetingen van hoofdoorzaak\nGroeperen van geautomatiseerde resultaten op basis van de hoofdoorzaak van hun foutpatroon — een classificatie van een persoon wanneer deze werd gemaakt, anders de AI's. Handmatige resultaten, resultaten die doorstaan en geclassificeerde fouten vallen onder Geen.",
       "user": "## Gebruikersdimensie\nGroepeert resultaten op basis van de gebruiker die de tests heeft uitgevoerd of aan de items is toegewezen.",
       "status": "## Statusdimensie\nGroepeert resultaten op basis van de uitvoeringsstatus van de test (bijv. Geslaagd, Mislukt, Geblokkeerd).",
       "project": "## Projectdimensie\nGroepeert resultaten per project voor analyse tussen projecten.",
@@ -8303,7 +8304,7 @@
       "dimensions": "## Dimensies\nSelecteer de dimensies die u in uw rapport wilt analyseren. Dimensies zijn kenmerken die uw gegevens categoriseren, zoals Datum, Gebruiker, Status, enz. U kunt ze slepen om de volgorde te wijzigen.",
       "metrics": "## Metrics\nSelecteer de metrics die u in uw rapport wilt meten. Metrics zijn kwantitatieve metingen die zijn afgeleid van uw gegevens, zoals het aantal testresultaten, het slagingspercentage, de gemiddelde verstreken tijd, enz. U kunt ze slepen om de volgorde te wijzigen.",
       "dateRange": "## Datumbereik\nFilter uw rapportgegevens op een bepaalde periode. Kies een voorinstelling zoals 'Afgelopen 7 dagen', 'Afgelopen maand' of 'Afgelopen N dagen', of selecteer een aangepaste begin- en einddatum op de kalender.\n\nEen voorinstelling blijft relatief: een opgeslagen rapport of live deelkoppeling berekent de datums opnieuw telkens wanneer het wordt geopend, in uw tijdzone. Aangepaste datums blijven vast. Dit filter is van toepassing op het relevante datumveld voor elk rapporttype (bijv. uitvoeringsdatum voor testresultaten, aanmaakdatum voor testcases).",
-      "dimensionFilters": "## Filters\nBeperk het rapport tot specifieke waarden van elke geselecteerde dimensie. Laat een filter leeg om alle waarden voor die dimensie op te nemen. Schakel een filter om naar Uitsluiten om alles behalve de gekozen waarden te behouden — handig voor opgeslagen rapporten die automatisch nieuwe waarden moeten blijven bedekken. Datumafmetingen worden in plaats daarvan gefilterd met de datumbereikkiezer."
+      "dimensionFilters": "## Filters\nBeperk het rapport tot specifieke waarden van elke geselecteerde dimensie. Laat een filter leeg om alle waarden voor die dimensie op te nemen. Schakel een filter over naar Uitsluiten om alles behalve de gekozen waarden te behouden — handig voor opgeslagen rapporten die automatisch nieuwe waarden moeten blijven bestrijken. Datumafmetingen worden in plaats daarvan gefilterd met de datumbereikkiezer."
     },
     "codeRepository": {
       "name": "## Naam van de repository\nEen gebruiksvriendelijke weergavenaam voor deze repositoryverbinding.\n\n- Wordt gebruikt om deze te identificeren in de contextinstellingen van de projectcode.\n- Hoef niet overeen te komen met de repositorynaam op de provider.",
@@ -8672,8 +8673,8 @@
           "days": "Afgelopen {count, plural, one {# dag} other {# dagen}}",
           "weeks": "Afgelopen {count, plural, one {# week} other {# weken}}",
           "months": "Afgelopen {count, plural, one {# maand} other {# maanden}}",
-          "calendarWeeks": "Vorige {count, plural, one {# kalenderweek} other {# kalenderweken}}",
-          "calendarMonths": "Vorige {count, plural, one {# kalendermaand} other {# kalendermaanden}}"
+          "calendarWeeks": "Laatste {count, plural, one {# kalenderweek} other {# kalenderweken}}",
+          "calendarMonths": "Laatste {count, plural, one {# kalendermaand} other {# kalendermaanden}}"
         },
         "rollingUnits": {
           "days": "dagen",
@@ -9321,6 +9322,7 @@
       "issueStatus": "Probleemstatus",
       "issue": "Probleem",
       "resultSource": "Resultaatbron",
+      "rootCause": "Hoofdoorzaak",
       "tag": "Tag",
       "feature": "Functie",
       "model": "Model",
@@ -9359,9 +9361,9 @@
       "lastActiveDate": "Laatste actieve datum",
       "issueCount": "Aantal problemen",
       "linkedCaseCount": "Gekoppelde gevallen",
-      "firstCaseCreated": "Eerste geval aangemaakt",
-      "lastCaseCreated": "Laatste geval aangemaakt",
-      "caseCreationSpan": "Periode van gevallen aanmaken (dagen)",
+      "firstCaseCreated": "Eerste geval gemaakt",
+      "lastCaseCreated": "Laatste geval gemaakt",
+      "caseCreationSpan": "Periode tussen maken van gevallen (dagen)",
       "averageAge": "Gemiddelde leeftijd (dagen)",
       "sessionCount": "Sessie aantal",
       "activeSessions": "Actieve sessies",

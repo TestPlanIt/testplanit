@@ -8249,10 +8249,10 @@
       "lastActiveDate": "## Última fecha\nFecha de actividad más reciente.",
       "averageAge": "## Edad media\nEdad media de artículos en días.",
       "issueCount": "## Número de incidencias\nNúmero total de incidencias seguidas.",
-      "linkedCaseCount": "## Casos vinculados\nNúmero de casos de prueba distintos vinculados a los problemas del grupo. Un caso vinculado a varios problemas del mismo grupo se cuenta una vez.",
-      "firstCaseCreated": "## Primer caso creado\nCuándo se creó el caso de prueba más antiguo de este grupo.",
-      "lastCaseCreated": "## Último caso creado\nCuándo se creó el caso de prueba más reciente de este grupo.",
-      "caseCreationSpan": "## Intervalo de creación de casos\nDías entre la creación del caso de prueba más antiguo y más reciente del grupo — cuánto tiempo tomó escribir los casos del grupo.",
+      "linkedCaseCount": "## Casos Vinculados\nNúmero de casos de prueba distintos vinculados a los problemas del grupo. Un caso vinculado a varios problemas en el mismo grupo cuenta una vez.",
+      "firstCaseCreated": "## Primer Caso Creado\nCuándo se creó el caso de prueba más antiguo en este grupo.",
+      "lastCaseCreated": "## Último Caso Creado\nCuándo se creó el caso de prueba más reciente en este grupo.",
+      "caseCreationSpan": "## Intervalo de Creación de Casos\nDías entre la creación de casos de prueba más antigua y más reciente del grupo — cuánto tiempo tardaron en escribirse los casos del grupo.",
       "milestoneCount": "## Número de hitos\nNúmero total de hitos.",
       "milestoneCompletionRate": "## Tasa de finalización de hitos\nPorcentaje de hitos completado.",
       "averageMilestoneDuration": "## Duración media del hito\nDuración media de los hitos en días.",
@@ -8269,8 +8269,9 @@
       "selectionPrecision": "## Precisión de selección (%)\nDe los casos que los análisis de impacto seleccionaron y que luego se ejecutaron, la parte que falló. Vacío cuando nada seleccionado ha ejecutado."
     },
     "reportDimensions": {
-      "issue": "## Dimensión de incidencia\nAgrupa por los problemas vinculados al caso de prueba. Un caso vinculado a varios problemas se cuenta en cada uno; los casos sin problemas vinculados se incluyen en Ninguno.",
-      "resultSource": "## Dimensión de fuente de resultado\nAgrupa las ejecuciones por su origen: resultados ingresados en la aplicación (Manual) o resultados de automatización importados como JUnit (Automatizado).",
+      "issue": "## Dimensión de Incidencia\nAgrupa por las incidencias vinculadas al caso de prueba. Un caso vinculado a varios problemas cuenta en cada uno; los casos sin incidencias vinculadas se incluyen en Ninguno.",
+      "resultSource": "## Dimensión de Fuente de Resultados\nAgrupa ejecuciones por su origen: resultados introducidos en la aplicación (Manual) o resultados de pruebas automatizadas importadas como JUnit (Automatizado).",
+      "rootCause": "## Dimensión de Causa Raíz\nAgrupa resultados automatizados por la causa raíz de su patrón de fallo — la clasificación de una persona cuando se realizó una, de lo contrario la de la IA. Los resultados manuales, los resultados aprobados y los fallos no clasificados se incluyen en Ninguno.",
       "user": "## Dimensión del usuario\nResultados de los grupos por el usuario que ejecutó las pruebas o que está asignado a los elementos.",
       "status": "## Dimensión de estado\nGrupos resultados por estado de ejecución de prueba (por ejemplo, aprobado, fallido, bloqueado).",
       "project": "## Dimensión del proyecto\nResultados de los grupos por proyecto para análisis entre proyectos.",
@@ -8303,7 +8304,7 @@
       "dimensions": "## Dimensiones\nSeleccione las dimensiones que desea analizar en su informe. Las dimensiones son atributos que categorizan sus datos, como fecha, usuario, estado, etc. Puede arrastrarlos para reordenarlos.",
       "metrics": "## métricas\nSeleccione las métricas que desea medir en su informe. Las métricas son mediciones cuantitativas derivadas de sus datos, como el recuento de resultados de pruebas, la tasa de paso, el tiempo promedio transcurrido, etc. Puede arrastrar para reordenarlos.",
       "dateRange": "## Rango de fechas\nFiltre sus datos de informe por un período de tiempo específico. Elija un valor predeterminado como \"Últimos 7 días\", \"Último mes\" o \"Últimos N días\", o seleccione una fecha de inicio y fin personalizada en el calendario.\n\nUn valor predeterminado se mantiene relativo: un informe guardado o un enlace de compartición en vivo calcula las fechas nuevamente cada vez que se abre, en su zona horaria. Las fechas personalizadas permanecen fijas. Este filtro se aplica al campo de fecha relevante para cada tipo de informe (por ejemplo, fecha de ejecución para resultados de prueba, fecha de creación para casos de prueba).",
-      "dimensionFilters": "## Filtros\nLimite el informe a valores específicos de cada dimensión seleccionada. Deje un filtro vacío para incluir todos los valores de esa dimensión. Cambie un filtro a Excluir para mantener todo excepto los valores seleccionados — útil para informes guardados que deben seguir cubriendo nuevos valores automáticamente. Las dimensiones de fecha se filtran con el selector de rango de fechas en su lugar."
+      "dimensionFilters": "## Filtros\nRestinja el informe a valores específicos de cada dimensión seleccionada. Deje un filtro vacío para incluir todos los valores de esa dimensión. Cambie un filtro a Excluir para mantener todo excepto los valores elegidos — útil para informes guardados que deben seguir cubriendo nuevos valores automáticamente. Las dimensiones de fecha se filtran con el selector de rango de fechas en su lugar."
     },
     "codeRepository": {
       "name": "## Nombre del repositorio\nUn nombre para mostrar descriptivo para esta conexión de repositorio.\n\n- Se utiliza para identificarlo en la configuración del contexto del código del proyecto.\n- No necesita coincidir con el nombre del repositorio en el proveedor.",
@@ -8672,15 +8673,15 @@
           "days": "Últimos {count, plural, one {# día} other {# días}}",
           "weeks": "Últimas {count, plural, one {# semana} other {# semanas}}",
           "months": "Últimos {count, plural, one {# mes} other {# meses}}",
-          "calendarWeeks": "Últimas {count, plural, one {# semana calendario} other {# semanas calendario}}",
-          "calendarMonths": "Últimos {count, plural, one {# mes calendario} other {# meses calendario}}"
+          "calendarWeeks": "Últimas {count, plural, one {# semana de calendario} other {# semanas de calendario}}",
+          "calendarMonths": "Últimos {count, plural, one {# mes de calendario} other {# meses de calendario}}"
         },
         "rollingUnits": {
           "days": "días",
           "weeks": "semanas",
           "months": "meses",
-          "calendarWeeks": "semanas calendario (desde el inicio de la semana)",
-          "calendarMonths": "meses calendario (desde el 1.º)"
+          "calendarWeeks": "semanas de calendario (desde el inicio de la semana)",
+          "calendarMonths": "meses de calendario (desde el 1º)"
         }
       },
       "dateGrouping": {
@@ -9320,7 +9321,8 @@
       "issueTracker": "Rastreador de problemas",
       "issueStatus": "Estado del problema",
       "issue": "Incidencia",
-      "resultSource": "Fuente de resultado",
+      "resultSource": "Fuente de Resultados",
+      "rootCause": "Causa Raíz",
       "tag": "Etiqueta",
       "feature": "Característica",
       "model": "Modelo",
@@ -9358,10 +9360,10 @@
       "averageElapsed": "Tiempo promedio por ejecución",
       "lastActiveDate": "Última fecha activa",
       "issueCount": "Número de incidencias",
-      "linkedCaseCount": "Casos vinculados",
-      "firstCaseCreated": "Primer caso creado",
-      "lastCaseCreated": "Último caso creado",
-      "caseCreationSpan": "Intervalo de creación de casos (días)",
+      "linkedCaseCount": "Casos Vinculados",
+      "firstCaseCreated": "Primer Caso Creado",
+      "lastCaseCreated": "Último Caso Creado",
+      "caseCreationSpan": "Intervalo de Creación de Casos (días)",
       "averageAge": "Edad media (días)",
       "sessionCount": "Número de sesiones",
       "activeSessions": "Sesiones activas",

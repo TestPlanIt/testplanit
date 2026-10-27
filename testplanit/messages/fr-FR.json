@@ -8249,10 +8249,10 @@
       "lastActiveDate": "## Dernière date d'activité\nDate d'activité la plus récente.",
       "averageAge": "## Âge moyen\nÂge moyen des articles en jours.",
       "issueCount": "## Nombre de problèmes\nNombre total de problèmes suivis.",
-      "linkedCaseCount": "## Cas liés\nNombre de cas de test distincts liés aux problèmes du groupe. Un cas lié à plusieurs problèmes dans le même groupe compte une seule fois.",
+      "linkedCaseCount": "## Cas liés\nNombre de cas de test distincts liés aux problèmes du groupe. Un cas lié à plusieurs problèmes du même groupe compte une seule fois.",
       "firstCaseCreated": "## Premier cas créé\nQuand le cas de test le plus ancien de ce groupe a été créé.",
       "lastCaseCreated": "## Dernier cas créé\nQuand le cas de test le plus récent de ce groupe a été créé.",
-      "caseCreationSpan": "## Intervalle de création de cas\nJours entre la création du cas de test le plus ancien et le plus récent du groupe — combien de temps il a fallu pour rédiger les cas du groupe.",
+      "caseCreationSpan": "## Période de création de cas\nJours entre la création du cas de test le plus ancien et le plus récent du groupe — durée nécessaire pour rédiger les cas du groupe.",
       "milestoneCount": "## Nombre d'étapes\nNombre total d'étapes.",
       "milestoneCompletionRate": "## Taux d'achèvement des jalons\nPourcentage de jalons achevés.",
       "averageMilestoneDuration": "## Durée moyenne des étapes clés\nDurée moyenne des étapes clés en jours.",
@@ -8269,8 +8269,9 @@
       "selectionPrecision": "## Précision de la sélection (%)\nParmi les cas que les analyses d'impact ont sélectionnés et qui ont ensuite été exécutés, la part de ceux qui ont échoué. Vide si rien sélectionné n'a été exécuté."
     },
     "reportDimensions": {
-      "issue": "## Dimension des problèmes\nRegroupe par les problèmes liés au cas de test. Un cas lié à plusieurs problèmes compte dans chacun ; les cas sans problèmes liés tombent dans Aucun.",
-      "resultSource": "## Dimension de la source des résultats\nRegroupe les exécutions selon leur provenance : résultats saisis dans l'application (Manuel) ou résultats automatisés importés tels que JUnit (Automatisé).",
+      "issue": "## Dimension Problème\nGroupe par les problèmes liés au cas de test. Un cas lié à plusieurs problèmes compte dans chacun ; les cas sans problèmes liés tombent dans Aucun.",
+      "resultSource": "## Dimension Source de résultat\nGroupe les exécutions par leur provenance : résultats saisis dans l'application (Manuel) ou résultats de tests automatisés importés comme JUnit (Automatisé).",
+      "rootCause": "## Dimension Cause racine\nGroupe les résultats automatisés par la cause racine de leur modèle de défaillance — la classification d'une personne si elle a été faite, sinon celle de l'IA. Les résultats manuels, les résultats réussis et les défaillances non classifiées tombent dans Aucun.",
       "user": "## Dimension utilisateur\nRegroupe les résultats par l'utilisateur qui a exécuté les tests ou qui est affecté aux éléments.",
       "status": "## Dimension d'état\nRegroupe les résultats par état d'exécution du test (par exemple, Réussi, Échec, Bloqué).",
       "project": "## Dimension du projet\nRegroupe les résultats par projet pour une analyse inter-projets.",
@@ -8303,7 +8304,7 @@
       "dimensions": "## Dimensions\nSélectionnez les dimensions que vous souhaitez analyser dans votre rapport. Les dimensions sont des attributs qui catégorisent vos données, comme la date, l'utilisateur, le statut, etc. Vous pouvez les réorganiser par glisser-déposer.",
       "metrics": "## Métriques\nSélectionnez les métriques que vous souhaitez inclure dans votre rapport. Les métriques sont des mesures quantitatives issues de vos données, telles que le nombre de résultats de test, le taux de réussite, le temps moyen écoulé, etc. Vous pouvez les réorganiser par glisser-déposer.",
       "dateRange": "## Période\nFiltrez vos données de rapport par une période de temps spécifique. Choisissez un préréglage tel que « 7 derniers jours », « Dernier mois » ou « N derniers jours », ou sélectionnez une date de début et de fin personnalisée sur le calendrier.\n\nUn préréglage reste relatif : un rapport enregistré ou un lien de partage en direct recalcule les dates à chaque ouverture, dans votre fuseau horaire. Les dates personnalisées restent fixes. Ce filtre s'applique au champ de date pertinent pour chaque type de rapport (par exemple, date d'exécution pour les résultats de test, date de création pour les cas de test).",
-      "dimensionFilters": "## Filtres\nAffinez le rapport à des valeurs spécifiques de chaque dimension sélectionnée. Laissez un filtre vide pour inclure toutes les valeurs pour cette dimension. Passez un filtre à Exclure pour conserver tout sauf les valeurs choisies — utile pour les rapports enregistrés qui doivent continuer à couvrir automatiquement les nouvelles valeurs. Les dimensions de date sont filtrées avec le sélecteur de plage de dates à la place."
+      "dimensionFilters": "## Filtres\nRestreignez le rapport à des valeurs spécifiques pour chaque dimension sélectionnée. Laissez un filtre vide pour inclure toutes les valeurs de cette dimension. Basculez un filtre en Exclure pour conserver tout sauf les valeurs sélectionnées — utile pour les rapports enregistrés qui doivent continuer à couvrir automatiquement les nouvelles valeurs. Les dimensions de date sont filtrées à l'aide du sélecteur de plage de dates."
     },
     "codeRepository": {
       "name": "## Nom du dépôt\nNom convivial pour cette connexion au dépôt.\n\n- Utilisé pour l'identifier dans les paramètres contextuels du code du projet.\n- Ne doit pas nécessairement correspondre au nom du dépôt chez le fournisseur.",
@@ -8679,7 +8680,7 @@
           "days": "jours",
           "weeks": "semaines",
           "months": "mois",
-          "calendarWeeks": "semaines calendaires (depuis le début de la semaine)",
+          "calendarWeeks": "semaines calendaires (à partir du début de la semaine)",
           "calendarMonths": "mois calendaires (à partir du 1er)"
         }
       },
@@ -9320,7 +9321,8 @@
       "issueTracker": "Suivi des problèmes",
       "issueStatus": "État du problème",
       "issue": "Problème",
-      "resultSource": "Source des résultats",
+      "resultSource": "Source de résultat",
+      "rootCause": "Cause racine",
       "tag": "Étiqueter",
       "feature": "Fonctionnalité",
       "model": "Modèle",
@@ -9361,7 +9363,7 @@
       "linkedCaseCount": "Cas liés",
       "firstCaseCreated": "Premier cas créé",
       "lastCaseCreated": "Dernier cas créé",
-      "caseCreationSpan": "Intervalle de création de cas (jours)",
+      "caseCreationSpan": "Période de création de cas (jours)",
       "averageAge": "Âge moyen (jours)",
       "sessionCount": "Nombre de sessions",
       "activeSessions": "Sessions actives",
