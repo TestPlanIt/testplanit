@@ -495,8 +495,12 @@ export function buildJunitResultQuery(
     status: { systemName: { not: "untested" } },
   };
 
-  // Run-level filters travel through the suite's run.
-  const testRunFilter: any = {};
+  // Run-level filters travel through the suite's run. Deleted runs are
+  // excluded, matching the aggregate side's contract (see resultUnion.ts) and
+  // the manual builder above — without this the drawer counted results from
+  // deleted runs the metric never included. The testRun "None" group below
+  // deliberately flips this to isDeleted: true, as on the manual side.
+  const testRunFilter: any = { isDeleted: false };
 
   if (context.projectId) {
     testRunFilter.projectId = context.projectId;

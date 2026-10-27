@@ -326,6 +326,23 @@ describe("drillDownQueryBuilders", () => {
       });
     });
 
+    it("excludes deleted runs, matching the aggregate contract", () => {
+      const result = buildJunitResultQuery(createBaseContext({ projectId: 5 }));
+      expect(result?.where.testSuite.testRun).toMatchObject({
+        projectId: 5,
+        isDeleted: false,
+      });
+    });
+
+    it("still targets deleted runs for the testRun None group", () => {
+      const result = buildJunitResultQuery(
+        createBaseContext({
+          dimensions: { testRun: { id: null as any, name: "None" } },
+        })
+      );
+      expect(result?.where.testSuite.testRun.isDeleted).toBe(true);
+    });
+
     it("filters the root-cause dimension on the failure signature", () => {
       const classified = buildJunitResultQuery(
         createBaseContext({
