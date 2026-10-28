@@ -1,3 +1,9 @@
+## [1.1.17](https://github.com/TestPlanIt/testplanit/compare/v1.1.16...v1.1.17) (2026-10-28)
+
+### Bug Fixes
+
+* **sso:** stop the SAML dialog resetting what it cannot edit ([#724](https://github.com/TestPlanIt/testplanit/issues/724)) ([acf0ebf](https://github.com/TestPlanIt/testplanit/commit/acf0ebf1ae1f85703687c98c64e1e9e95c045d8b))
+
 ## [1.1.16](https://github.com/TestPlanIt/testplanit/compare/v1.1.15...v1.1.16) (2026-10-26)
 
 ### Bug Fixes
