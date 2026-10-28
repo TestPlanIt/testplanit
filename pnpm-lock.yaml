@@ -528,7 +528,7 @@ importers:
         version: 5.0.5(vitest@5.0.5)
       '@zenstackhq/orm':
         specifier: ^3.9.7
-        version: 3.9.8(pg@8.23.1)(zod@4.6.7)
+        version: 3.10.0(pg@8.23.1)(zod@4.6.7)
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(@swc/core@1.16.20(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.32)(supports-color@10.2.2)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -910,20 +910,20 @@ importers:
         specifier: ^5.0.6
         version: 5.0.6
       '@zenstackhq/orm':
-        specifier: ^3.9.8
-        version: 3.9.8(pg@8.23.1)(zod@4.6.7)
+        specifier: ^3.10.0
+        version: 3.10.0(pg@8.23.1)(zod@4.6.7)
       '@zenstackhq/plugin-policy':
-        specifier: ^3.9.8
-        version: 3.9.8(kysely@0.29.7)(pg@8.23.1)(zod@4.6.7)
+        specifier: ^3.10.0
+        version: 3.10.0(kysely@0.29.7)(pg@8.23.1)(zod@4.6.7)
       '@zenstackhq/schema':
-        specifier: ^3.9.8
-        version: 3.9.8
+        specifier: ^3.10.0
+        version: 3.10.0
       '@zenstackhq/server':
-        specifier: ^3.9.8
-        version: 3.9.8(express@5.3.0(supports-color@10.2.2))(hono@4.13.14)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
+        specifier: ^3.10.0
+        version: 3.10.0(express@5.3.0(supports-color@10.2.2))(hono@4.13.14)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
       '@zenstackhq/tanstack-query':
-        specifier: ^3.9.8
-        version: 3.9.8(@tanstack/react-query@5.105.0(@types/react@19.3.0)(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
+        specifier: ^3.10.0
+        version: 3.10.0(@tanstack/react-query@5.105.0(@types/react@19.3.0)(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
       '@zxcvbn-ts/core':
         specifier: ^4.2.0
         version: 4.2.0
@@ -1385,8 +1385,8 @@ importers:
         specifier: ^5.0.5
         version: 5.0.5(vitest@5.0.5)
       '@zenstackhq/cli':
-        specifier: ^3.9.8
-        version: 3.9.8(express@5.3.0(supports-color@10.2.2))(kysely@0.29.7)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(supports-color@10.2.2)(typescript@6.0.3)
+        specifier: ^3.10.0
+        version: 3.10.0(express@5.3.0(supports-color@10.2.2))(kysely@0.29.7)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(supports-color@10.2.2)(typescript@6.0.3)
       autoprefixer:
         specifier: ^10.6.2
         version: 10.6.2(postcss@8.5.32)
@@ -8203,8 +8203,8 @@ packages:
   '@xtuc/long@4.2.2':
     resolution: {integrity: sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==}
 
-  '@zenstackhq/cli@3.9.8':
-    resolution: {integrity: sha512-TeeAh2Cvq8N3n0u1DOrrjsH6vjCSWd/MBzd5QUVS0oSZkiIGW7y3sA6XlOvkjWRiMe8YGFHKBwQ2Spn7OJv7Xw==}
+  '@zenstackhq/cli@3.10.0':
+    resolution: {integrity: sha512-+ijLq+mysBpGIH6+QbNUxTGTXpVG6bUMoETgmgywy1IbrRNHD7GJSUoEP164udZk4xpiGtqX3Ko2kMqK50mAGA==}
     engines: {node: '>=20'}
     hasBin: true
     peerDependencies:
@@ -8219,17 +8219,17 @@ packages:
       pg:
         optional: true
 
-  '@zenstackhq/client-helpers@3.9.8':
-    resolution: {integrity: sha512-jNjG88rUXEnSSoQi/n5hBt84pK+Hhx4uajwV3dL7Y/4e51ci2/h+N4ssSsANgRS+9jBww/wStLgFWaHrFCLLgQ==}
+  '@zenstackhq/client-helpers@3.10.0':
+    resolution: {integrity: sha512-zP1Wz7NNtDOQu78g18aPl06M0pbPs5OQe9QapMfzkrDdibq7TUC8OzK6A0u6QHfP6IL/9NQcd0ve4hOuuIHFMQ==}
 
-  '@zenstackhq/common-helpers@3.9.8':
-    resolution: {integrity: sha512-XA6WxvrXZEaKpjHxvULnhyKQFdOnXB7aRKL6TrarsYTIWT9HodyKKQVnxMMpsKBrLA5X+Cur3tJlIobQfY+PcA==}
+  '@zenstackhq/common-helpers@3.10.0':
+    resolution: {integrity: sha512-gX2Ca/0eRWgw7t6cY6ih7eomrLyte5TpCtWLSgbboUlsd4/gDvVhIAr7aigVtYC3vA/VuRRmu3EhMJpova4e6A==}
 
-  '@zenstackhq/language@3.9.8':
-    resolution: {integrity: sha512-mBo2HQjqzZuFxHArTZWvxFgH3mbRlg/DAXZ3rJkdR4qjnufMHqkyTCWLCuwbk1x4vIl3YSlBu5c7MqwFfAh+dA==}
+  '@zenstackhq/language@3.10.0':
+    resolution: {integrity: sha512-l3CYH71cRAknbLNW4/yLZYCZmdmUHzVkWln31k2rQMDbBsMKomyg9KOphddejxXT2b+fLirlaxWWCfIoHV7kcw==}
 
-  '@zenstackhq/orm@3.9.8':
-    resolution: {integrity: sha512-i8ubilmrylPPxXMZo6aSuPmDYqqa9D4XEL2GBGRp+el4d2w4mywNsknOaLmJL9hsIshZPTwIOH+9LUqCBdiD7A==}
+  '@zenstackhq/orm@3.10.0':
+    resolution: {integrity: sha512-wi0zWo/R1WQjiVPsqjLD53FL8g4/B8w0qUsW/SrkfpUM6mAwC2ut/9b8Y3Gfov0dtToCH9+6agkMs20utmH8OQ==}
     peerDependencies:
       better-sqlite3: ^12.5.0
       mysql2: ^3.16.1
@@ -8246,19 +8246,19 @@ packages:
       sql.js:
         optional: true
 
-  '@zenstackhq/plugin-policy@3.9.8':
-    resolution: {integrity: sha512-difln98dEloob17AOd3ZDGGf21zACiqNgezb5WnHCcsYoGvPXOiQN9YGSfvlNOu4x0ICDT61z+3DTL0eklqFqA==}
+  '@zenstackhq/plugin-policy@3.10.0':
+    resolution: {integrity: sha512-5i8Jh84Qc7kwGK19PnLXkuY8CpZfeBAl62nJsIUnJXL469QReTOD9eWUDB3q5r4vyOMyIfuprayxSada1OV5/w==}
     peerDependencies:
       kysely: ~0.29.0
 
-  '@zenstackhq/schema@3.9.8':
-    resolution: {integrity: sha512-akNXIU0RBObeJFsdsy5ye6lfckt/qfRF0c0WB9BJk2wQsUhl9Ip0hrZXR0pK38KbuZiDTomtJz39nWEWL2iZpg==}
+  '@zenstackhq/schema@3.10.0':
+    resolution: {integrity: sha512-tZ+Egxsgy8FuAM49cp9rPU7nNjO7tDEmmBSdrR1g5eDRQs4TD21GVZKLG6UfPD1/ZKYxzUrEyaLk6oIsrRnf8w==}
 
-  '@zenstackhq/sdk@3.9.8':
-    resolution: {integrity: sha512-/cTNQJb7bl/YsXnGl8KEufk7zCKU/Em9t755XvN0LSRRazJbHA4PjnpA8e8OZZiYsFZeBHimtRrof6zrRZB3jg==}
+  '@zenstackhq/sdk@3.10.0':
+    resolution: {integrity: sha512-xRlP2ZYRl9Et5IfPwtGbE2GiFsoxXej5ZH14m586GYhvM2eJ4aaOYUeHK+ZVR3pr10wpsS06QE1O2pGRrY+VrA==}
 
-  '@zenstackhq/server@3.9.8':
-    resolution: {integrity: sha512-cGBmKuUHy1a34E0aNG7ThVVHH99EGwUxUeblm1Z2izzeo+D0qFJuAuRLkjEUMiIvG/WGWYDOopGD9ahzaPBWWQ==}
+  '@zenstackhq/server@3.10.0':
+    resolution: {integrity: sha512-BNekofJdKLiwgy1nX9lRHqob+x6RHCuRqHQNB7aLiQz0jIKAI+PbhsSTWszbVvA4I6BALIqrJdXAMKBUyAjpYw==}
     peerDependencies:
       '@sveltejs/kit': ^2.0.0
       elysia: ^1.3.0
@@ -8290,8 +8290,8 @@ packages:
       nuxt:
         optional: true
 
-  '@zenstackhq/tanstack-query@3.9.8':
-    resolution: {integrity: sha512-5B+8pJkSzoQkZnlHDRJduG41lNr7WaIsLn+WNMJYGcrYEMb3eoDnfn7OpdlCmQtRxMDVvi1XB4YMSvwmNw094Q==}
+  '@zenstackhq/tanstack-query@3.10.0':
+    resolution: {integrity: sha512-aiQAUsEhKKE3Cv/p1VFoi7fev+3uzUA+hrb3g4jJXbQXthXRdftwzppR8ztNQ+dq1yASCu4bu5NEt7pzaQuaBA==}
     peerDependencies:
       '@tanstack/react-query': ^5.0.0
       '@tanstack/svelte-query': ^6.0.0
@@ -8304,8 +8304,8 @@ packages:
       '@tanstack/vue-query':
         optional: true
 
-  '@zenstackhq/zod@3.9.8':
-    resolution: {integrity: sha512-VyDpqNvWuO4RK2rbiElZQF1kKOYvCYeHI6D7vinKhj4jOAUAKE6CWlZoZmGFXEswLzIf7xiZk331CGpIVKzNLQ==}
+  '@zenstackhq/zod@3.10.0':
+    resolution: {integrity: sha512-oQvMYMYZntO0CctnyT41yZFzeWQmOxLSf59GoH70kuJmL5OODYBxTzoY7A5yshoG8x8rscOAGyU60YZEpHkxUA==}
     peerDependencies:
       zod: ^4.0.0
 
@@ -26961,16 +26961,16 @@ snapshots:
 
   '@xtuc/long@4.2.2': {}
 
-  '@zenstackhq/cli@3.9.8(express@5.3.0(supports-color@10.2.2))(kysely@0.29.7)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(supports-color@10.2.2)(typescript@6.0.3)':
+  '@zenstackhq/cli@3.10.0(express@5.3.0(supports-color@10.2.2))(kysely@0.29.7)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(supports-color@10.2.2)(typescript@6.0.3)':
     dependencies:
       '@hono/node-server': 1.19.17(hono@4.13.14)
-      '@zenstackhq/common-helpers': 3.9.8
-      '@zenstackhq/language': 3.9.8
-      '@zenstackhq/orm': 3.9.8(pg@8.23.1)(zod@4.6.7)
-      '@zenstackhq/plugin-policy': 3.9.8(kysely@0.29.7)(pg@8.23.1)(zod@4.6.7)
-      '@zenstackhq/schema': 3.9.8
-      '@zenstackhq/sdk': 3.9.8
-      '@zenstackhq/server': 3.9.8(express@5.3.0(supports-color@10.2.2))(hono@4.13.14)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
+      '@zenstackhq/common-helpers': 3.10.0
+      '@zenstackhq/language': 3.10.0
+      '@zenstackhq/orm': 3.10.0(pg@8.23.1)(zod@4.6.7)
+      '@zenstackhq/plugin-policy': 3.10.0(kysely@0.29.7)(pg@8.23.1)(zod@4.6.7)
+      '@zenstackhq/schema': 3.10.0
+      '@zenstackhq/sdk': 3.10.0
+      '@zenstackhq/server': 3.10.0(express@5.3.0(supports-color@10.2.2))(hono@4.13.14)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
       chokidar: 5.0.0
       colors: 1.4.0
       commander: 8.3.0
@@ -27005,11 +27005,11 @@ snapshots:
       - supports-color
       - typescript
 
-  '@zenstackhq/client-helpers@3.9.8(pg@8.23.1)(zod@4.6.7)':
+  '@zenstackhq/client-helpers@3.10.0(pg@8.23.1)(zod@4.6.7)':
     dependencies:
-      '@zenstackhq/common-helpers': 3.9.8
-      '@zenstackhq/orm': 3.9.8(pg@8.23.1)(zod@4.6.7)
-      '@zenstackhq/schema': 3.9.8
+      '@zenstackhq/common-helpers': 3.10.0
+      '@zenstackhq/orm': 3.10.0(pg@8.23.1)(zod@4.6.7)
+      '@zenstackhq/schema': 3.10.0
       decimal.js: 10.6.0
       superjson: 2.2.6
     transitivePeerDependencies:
@@ -27019,22 +27019,22 @@ snapshots:
       - sql.js
       - zod
 
-  '@zenstackhq/common-helpers@3.9.8': {}
+  '@zenstackhq/common-helpers@3.10.0': {}
 
-  '@zenstackhq/language@3.9.8':
+  '@zenstackhq/language@3.10.0':
     dependencies:
-      '@zenstackhq/common-helpers': 3.9.8
+      '@zenstackhq/common-helpers': 3.10.0
       langium: 4.2.4
       pluralize: 8.0.0
       ts-pattern: 5.9.2
       vscode-languageserver: 9.0.1
 
-  '@zenstackhq/orm@3.9.8(pg@8.23.1)(zod@4.6.7)':
+  '@zenstackhq/orm@3.10.0(pg@8.23.1)(zod@4.6.7)':
     dependencies:
       '@paralleldrive/cuid2': 2.3.1
-      '@zenstackhq/common-helpers': 3.9.8
-      '@zenstackhq/schema': 3.9.8
-      '@zenstackhq/zod': 3.9.8(zod@4.6.7)
+      '@zenstackhq/common-helpers': 3.10.0
+      '@zenstackhq/schema': 3.10.0
+      '@zenstackhq/zod': 3.10.0(zod@4.6.7)
       cuid: 3.0.0
       decimal.js: 10.6.0
       json-stable-stringify: 1.3.0
@@ -27050,10 +27050,10 @@ snapshots:
     optionalDependencies:
       pg: 8.23.1
 
-  '@zenstackhq/plugin-policy@3.9.8(kysely@0.29.7)(pg@8.23.1)(zod@4.6.7)':
+  '@zenstackhq/plugin-policy@3.10.0(kysely@0.29.7)(pg@8.23.1)(zod@4.6.7)':
     dependencies:
-      '@zenstackhq/common-helpers': 3.9.8
-      '@zenstackhq/orm': 3.9.8(pg@8.23.1)(zod@4.6.7)
+      '@zenstackhq/common-helpers': 3.10.0
+      '@zenstackhq/orm': 3.10.0(pg@8.23.1)(zod@4.6.7)
       kysely: 0.29.7
       ts-pattern: 5.9.2
     transitivePeerDependencies:
@@ -27063,22 +27063,22 @@ snapshots:
       - sql.js
       - zod
 
-  '@zenstackhq/schema@3.9.8':
+  '@zenstackhq/schema@3.10.0':
     dependencies:
       decimal.js: 10.6.0
 
-  '@zenstackhq/sdk@3.9.8':
+  '@zenstackhq/sdk@3.10.0':
     dependencies:
-      '@zenstackhq/common-helpers': 3.9.8
-      '@zenstackhq/language': 3.9.8
+      '@zenstackhq/common-helpers': 3.10.0
+      '@zenstackhq/language': 3.10.0
       langium: 4.2.4
       ts-pattern: 5.9.2
       typescript: 6.0.3
 
-  '@zenstackhq/server@3.9.8(express@5.3.0(supports-color@10.2.2))(hono@4.13.14)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)':
+  '@zenstackhq/server@3.10.0(express@5.3.0(supports-color@10.2.2))(hono@4.13.14)(next@16.4.3(@babel/core@8.0.9)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)':
     dependencies:
-      '@zenstackhq/common-helpers': 3.9.8
-      '@zenstackhq/orm': 3.9.8(pg@8.23.1)(zod@4.6.7)
+      '@zenstackhq/common-helpers': 3.10.0
+      '@zenstackhq/orm': 3.10.0(pg@8.23.1)(zod@4.6.7)
       decimal.js: 10.6.0
       openapi-types: 12.1.3
       superjson: 2.2.6
@@ -27097,12 +27097,12 @@ snapshots:
       - pg
       - sql.js
 
-  '@zenstackhq/tanstack-query@3.9.8(@tanstack/react-query@5.105.0(@types/react@19.3.0)(react@19.3.1))(pg@8.23.1)(zod@4.6.7)':
+  '@zenstackhq/tanstack-query@3.10.0(@tanstack/react-query@5.105.0(@types/react@19.3.0)(react@19.3.1))(pg@8.23.1)(zod@4.6.7)':
     dependencies:
-      '@zenstackhq/client-helpers': 3.9.8(pg@8.23.1)(zod@4.6.7)
-      '@zenstackhq/common-helpers': 3.9.8
-      '@zenstackhq/orm': 3.9.8(pg@8.23.1)(zod@4.6.7)
-      '@zenstackhq/schema': 3.9.8
+      '@zenstackhq/client-helpers': 3.10.0(pg@8.23.1)(zod@4.6.7)
+      '@zenstackhq/common-helpers': 3.10.0
+      '@zenstackhq/orm': 3.10.0(pg@8.23.1)(zod@4.6.7)
+      '@zenstackhq/schema': 3.10.0
       decimal.js: 10.6.0
     optionalDependencies:
       '@tanstack/react-query': 5.105.0(@types/react@19.3.0)(react@19.3.1)
@@ -27113,9 +27113,9 @@ snapshots:
       - sql.js
       - zod
 
-  '@zenstackhq/zod@3.9.8(zod@4.6.7)':
+  '@zenstackhq/zod@3.10.0(zod@4.6.7)':
     dependencies:
-      '@zenstackhq/schema': 3.9.8
+      '@zenstackhq/schema': 3.10.0
       decimal.js: 10.6.0
       zod: 4.6.7
 

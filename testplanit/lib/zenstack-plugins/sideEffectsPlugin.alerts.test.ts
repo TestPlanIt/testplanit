@@ -57,7 +57,7 @@ import {
   JOB_EVALUATE_ALERT_SESSION,
 } from "~/lib/queueNames";
 
-const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation
+const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation.$all
   .afterEntityMutation;
 
 function jobsByName(name: string) {

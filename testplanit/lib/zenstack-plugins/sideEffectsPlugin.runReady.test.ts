@@ -47,7 +47,7 @@ import {
 } from "~/lib/services/runReadyCheck";
 import { WorkflowType } from "~/zenstack/models";
 
-const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation
+const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation.$all
   .afterEntityMutation;
 
 /** Dedup ids of every job the queue was asked to add, in call order. */

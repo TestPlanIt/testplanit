@@ -1,6 +1,6 @@
 import type { TxClient } from "~/lib/zenstack";
 
-import { baseDb } from "~/lib/db";
+import type { baseDb } from "~/lib/db";
 import {
   isAutomatedTestRunType,
   isHybridTestRunType,
@@ -36,6 +36,18 @@ import {
 type DbLike = typeof baseDb | TxClient;
 
 /**
+ * `~/lib/db` is loaded on demand rather than imported: this module is reached
+ * from sideEffectsPlugin, and constructing the db singletons installs that
+ * plugin onto the client. A static import makes the cycle load-order
+ * dependent. Every caller on the mutation path passes its own transaction
+ * client, so this default is only resolved for callers that supply none.
+ */
+async function defaultDbClient(): Promise<DbLike> {
+  const db = await import("~/lib/db");
+  return db.baseDb;
+}
+
+/**
  * Compute the test run summary data shape used by the in-app summary UI
  * (components/TestRunCasesSummary.tsx) and — per D-15 — by the
  * test_run.completed outbound webhook payload.
@@ -51,7 +63,7 @@ export async function getTestRunSummary(
   testRunId: number,
   options: { includeCaseDetails?: boolean; client?: DbLike } = {}
 ): Promise<TestRunSummaryData> {
-  const client: DbLike = options.client ?? baseDb;
+  const client: DbLike = options.client ?? (await defaultDbClient());
   const includeCaseDetails = options.includeCaseDetails ?? false;
 
   // Get test run type and workflow + linked issues
@@ -220,10 +232,11 @@ export async function getRegularRunSummary(
   testRunId: number,
   forecastManual: number | null,
   includeCaseDetails: boolean,
-  client: DbLike = baseDb
+  client?: DbLike
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
+  client ??= await defaultDbClient();
   // A failing status on a quarantined case (failure triage) is reported as
   // its own Quarantined bucket instead of as a failure.
   const rawStatusCounts = await client.$queryRaw<
@@ -428,10 +441,11 @@ export async function getRegularRunSummary(
 
 export async function getJUnitRunSummary(
   testRunId: number,
-  client: DbLike = baseDb
+  client?: DbLike
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
+  client ??= await defaultDbClient();
   // Failures of quarantined cases (failure triage) are grouped apart so
   // they count as their own segment instead of as failures.
   const resultAggregates = await client.$queryRaw<
@@ -639,8 +653,9 @@ export async function getJUnitRunSummary(
  */
 export async function getPerCaseIterationCounts(
   testRunId: number,
-  client: DbLike = baseDb
+  client?: DbLike
 ): Promise<PerCaseIterationCounts[]> {
+  client ??= await defaultDbClient();
   const rows = await client.testRunCases.findMany({
     where: { testRunId, isDeleted: false },
     select: {

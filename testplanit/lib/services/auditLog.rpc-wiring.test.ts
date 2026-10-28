@@ -159,15 +159,18 @@ describe("RPC audit wiring guard", () => {
 describe("sideEffectsPlugin model dispatch keys are real models", () => {
   // The v3 side-effects (ES sync / webhook emit / business logic) moved from the
   // lib/db.ts `$extends` block into the sideEffectsPlugin afterEntityMutation
-  // switch, which dispatches by PascalCase model name at 8-space indentation,
-  // e.g. `        case "RepositoryCases": {`. TypeScript already enforces these
-  // against GetModels<Schema>, but this stays as a cheap dead-branch guard.
+  // switch, which dispatches by PascalCase model name, e.g.
+  // `case "RepositoryCases": {`. Matched at any indentation: the hooks sit
+  // under `onEntityMutation.$all`, and anchoring on a fixed indent silently
+  // emptied this list — and the cases it generates — when that nesting
+  // changed. TypeScript already enforces these against GetModels<Schema>, but
+  // this stays as a cheap dead-branch guard.
   const pluginSource = readFileSync(
     resolve(here, "../zenstack-plugins/sideEffectsPlugin.ts"),
     "utf8"
   );
   const hookModels = [
-    ...pluginSource.matchAll(/^ {8}case "([A-Z][a-zA-Z0-9_]*)":/gm),
+    ...pluginSource.matchAll(/^ +case "([A-Z][a-zA-Z0-9_]*)":/gm),
   ].map((m) => m[1]);
 
   it("dispatches on the expected models (sanity)", () => {

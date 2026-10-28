@@ -1,5 +1,4 @@
 import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
-import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { ApplicationArea } from "~/zenstack/models";
@@ -155,6 +154,14 @@ export async function assertRestrictedFieldWrite(
     if (!project) continue;
     let allowed = permitted.get(project.projectId);
     if (allowed === undefined) {
+      // Loaded here rather than at module scope: `projectPermissions` reaches
+      // the `~/lib/db` singletons, and constructing those installs this
+      // guard's own caller (sideEffectsPlugin) onto the client. A static
+      // import makes the cycle load-order dependent, so entering the module
+      // graph through the plugin leaves the plugin binding uninitialized by
+      // the time the client dereferences it.
+      const { userCanAddEditArea } =
+        await import("~/lib/services/projectPermissions");
       allowed = await userCanAddEditArea(
         actor.id,
         project.projectId,
