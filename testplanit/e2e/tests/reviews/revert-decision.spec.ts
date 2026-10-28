@@ -48,6 +48,7 @@ async function readCaseState(
 
 test.describe("Revert a review decision", () => {
   let gatedWorkflowId: number | null = null;
+  let originWorkflowId: number | null = null;
   const pendingRequestIds: string[] = [];
   const createdUserIds: string[] = [];
 
@@ -60,6 +61,10 @@ test.describe("Revert a review decision", () => {
     if (gatedWorkflowId) {
       await softDeleteWorkflow(request, url, gatedWorkflowId);
       gatedWorkflowId = null;
+    }
+    if (originWorkflowId) {
+      await softDeleteWorkflow(request, url, originWorkflowId);
+      originWorkflowId = null;
     }
     while (createdUserIds.length) {
       const id = createdUserIds.pop();
@@ -87,24 +92,36 @@ test.describe("Revert a review decision", () => {
 
     await test.step("Create a gated project with a pending request", async () => {
       const projectId = await api.createProject(`Reviews-Revert ${Date.now()}`);
-      const ids = await getProjectWorkflowIds(
+
+      await setProjectReviewWorkflowEnabled(request, url, projectId, true);
+
+      // This is the only test here that asserts the approval MOVES the case,
+      // so its transition path has to contain exactly one gate — its own.
+      // `assertReviewGatePasses` collects gated CASES states across the whole
+      // install, and the suite is fullyParallel, so any gate another spec
+      // creates at an order inside this path blocks the move and the case
+      // silently stays put. Rather than share the `orderOffset: 1` slot that
+      // the sibling tests and reviewer-inbox-decisions.spec.ts also use, this
+      // test builds its own ungated start state directly below its own gate
+      // at a high random offset: the window is one unit wide and well clear
+      // of the offsets other specs use (1, 1000, 1500, 2000).
+      const baseOffset = 5000 + Math.floor(Math.random() * 3000);
+      const origin = await createGatedTestWorkflow(
         request,
         url,
         projectId,
         "CASES",
-        5
+        { orderOffset: baseOffset, requiresReview: false }
       );
-      originalStateId = ids[0];
+      originWorkflowId = origin.id;
+      originalStateId = origin.id;
 
-      await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-      // orderOffset 1 keeps this gate strictly below gates other specs create,
-      // so nothing else sits in the case's path and blocks the move.
       const gated = await createGatedTestWorkflow(
         request,
         url,
         projectId,
         "CASES",
-        { orderOffset: 1 }
+        { orderOffset: baseOffset + 1 }
       );
       gatedWorkflowId = gated.id;
 
