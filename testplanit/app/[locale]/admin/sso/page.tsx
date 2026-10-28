@@ -199,6 +199,8 @@ export default function SSOAdminPage() {
       setSamlCert(config.cert || "");
       setSamlCallbackUrl(config.callbackUrl || "");
       setSamlLogoutUrl(config.logoutUrl || "");
+      setSamlWantAssertionsSigned(config.wantAssertionsSigned ?? true);
+      setSamlWantAuthnResponseSigned(config.wantAuthnResponseSigned ?? false);
     } else {
       setSamlConfigured(false);
     }
@@ -335,11 +337,18 @@ export default function SSOAdminPage() {
         cert: samlCert,
         callbackUrl: samlCallbackUrl,
         logoutUrl: samlLogoutUrl || undefined,
+        wantAssertionsSigned: samlWantAssertionsSigned,
+        wantAuthnResponseSigned: samlWantAuthnResponseSigned,
+      };
+
+      // Attribute mapping, auto-provisioning and default access are edited on
+      // the per-provider page (/admin/sso/saml/[providerId]), not here. Send
+      // them only when creating the row — including them in the update would
+      // reset whatever was configured there.
+      const samlConfigOnCreate = {
         attributeMapping: {},
         autoProvisionUsers: false,
         defaultAccess: "USER" as const,
-        wantAssertionsSigned: samlWantAssertionsSigned,
-        wantAuthnResponseSigned: samlWantAuthnResponseSigned,
       };
 
       const existingProvider = ssoProviders?.find(
@@ -355,7 +364,7 @@ export default function SSOAdminPage() {
             samlConfig: {
               upsert: {
                 where: { providerId: existingProvider.id },
-                create: samlConfig,
+                create: { ...samlConfig, ...samlConfigOnCreate },
                 update: samlConfig,
               },
             },
@@ -368,7 +377,9 @@ export default function SSOAdminPage() {
             name: "SAML Provider",
             type: SsoProviderType.SAML,
             enabled: true,
-            samlConfig: { create: samlConfig },
+            samlConfig: {
+              create: { ...samlConfig, ...samlConfigOnCreate },
+            },
           },
         });
       }
