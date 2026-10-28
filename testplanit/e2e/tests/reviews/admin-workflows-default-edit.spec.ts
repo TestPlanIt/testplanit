@@ -109,9 +109,12 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
           await submit.click({ timeout: 2000 });
         }
         // Dialog closes on success — an error toast/root error would keep
-        // it open, which we'd detect via this failing expect.
-        await expect(dialog).not.toBeVisible({ timeout: 5000 });
-      }).toPass({ timeout: 30000 });
+        // it open, which we'd detect via this failing expect. 15s, not 5s:
+        // under full-suite load the save round-trip alone has exceeded 5s,
+        // which failed the whole toPass window on a save that was merely slow
+        // (it closed in well under a second on the retried run).
+        await expect(dialog).not.toBeVisible({ timeout: 15000 });
+      }).toPass({ timeout: 45000 });
 
       // No error toast surfaced. Confirm by looking for sonner's default
       // role="status" element with the destructive variant — absence is the

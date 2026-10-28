@@ -742,7 +742,13 @@ test.describe("Issue tracker webhook actions", () => {
     });
   });
 
-  test("a Generate Test Cases with AI rule needs an AI model and saves its drafting options", async ({
+  // The refusal when no AI model is active is NOT asserted here. `hasActiveLlm`
+  // counts ACTIVE LlmIntegration rows install-wide, and 22 call sites across 8
+  // spec files create one, so in a fullyParallel suite there is almost always
+  // an active model while this test runs — the assertion cannot hold. It is
+  // covered where the precondition can be controlled, in
+  // app/actions/webhook-actions.test.ts with getProjectReadiness mocked.
+  test("a Generate Test Cases with AI rule saves its drafting options", async ({
     page,
     api,
   }) => {
@@ -753,7 +759,7 @@ test.describe("Issue tracker webhook actions", () => {
     const section = actionsSection(page, configId);
     const dialog = page.getByTestId("webhook-action-dialog");
 
-    await test.step("Without an AI model the rule is refused", async () => {
+    await test.step("Choose the AI action and its drafting options", async () => {
       await openWebhooksPage(page, projectId);
       await section.getByTestId("webhook-action-add").click();
       await expect(dialog).toBeVisible();
@@ -766,16 +772,9 @@ test.describe("Issue tracker webhook actions", () => {
       await expect(
         dialog.getByTestId("webhook-action-draft-fields")
       ).toBeVisible();
-      await dialog.getByTestId("webhook-action-save").click();
-      await expect(
-        page
-          .locator("[data-sonner-toast]")
-          .filter({ hasText: "no active AI model" })
-      ).toBeVisible();
-      await expect(dialog).toBeVisible();
     });
 
-    await test.step("With one, the rule saves its count", async () => {
+    await test.step("The rule saves its count", async () => {
       await api.createLlmIntegration(`E2E Draft Model ${uid()}`);
       await dialog.getByTestId("webhook-action-draft-quantity").click();
       await page.getByRole("option", { name: "A few (2-3)" }).click();
