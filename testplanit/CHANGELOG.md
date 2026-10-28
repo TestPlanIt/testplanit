@@ -1,3 +1,13 @@
+## [1.2.0-beta.17](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.16...v1.2.0-beta.17) (2026-10-28)
+
+### Bug Fixes
+
+* **repository:** compose every URL param write through one shared overlay ([9be817e](https://github.com/TestPlanIt/testplanit/commit/9be817eeb163cf1256d0601f9e944892485e2480))
+
+### Enhancements
+
+* **schema:** rename RepositoryCases.testRuns to testRunCases ([5db9fbe](https://github.com/TestPlanIt/testplanit/commit/5db9fbe7079c35b7481f82b893ec481d22896a16)), closes [#717](https://github.com/TestPlanIt/testplanit/issues/717) [#718](https://github.com/TestPlanIt/testplanit/issues/718) [#721](https://github.com/TestPlanIt/testplanit/issues/721)
+
 ## [1.2.0-beta.16](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.15...v1.2.0-beta.16) (2026-10-27)
 
 ### Bug Fixes
