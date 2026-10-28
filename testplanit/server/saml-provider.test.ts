@@ -8,9 +8,31 @@ vi.hoisted(() => {
   process.env.NEXTAUTH_URL = "https://app.example.com";
 });
 
-// node-saml only needs a decodeable base64 PEM body to construct a client; the
-// signature-validation behavior under test does not depend on the cert content.
-const CERT_BODY = Buffer.from("a".repeat(900)).toString("base64");
+// A real self-signed certificate (public material only). The
+// signature-validation behaviour under test does not depend on the cert
+// content, but node-saml parses the certificate rather than pattern-matching
+// it, so a decodeable-base64 stand-in only survives here for as long as no
+// assertion forces the parse.
+const CERT_BODY = `
+MIIDOTCCAiGgAwIBAgIUbQlkcFAVKONA0Y4hEPBYUfw97eEwDQYJKoZIhvcNAQEL
+BQAwLDEqMCgGA1UEAwwhc2FtbC1maXh0dXJlLTEudGVzdHBsYW5pdC5pbnZhbGlk
+MB4XDTI2MTAyODA0MjI0N1oXDTQ2MTAyMzA0MjI0N1owLDEqMCgGA1UEAwwhc2Ft
+bC1maXh0dXJlLTEudGVzdHBsYW5pdC5pbnZhbGlkMIIBIjANBgkqhkiG9w0BAQEF
+AAOCAQ8AMIIBCgKCAQEA2ikkSEn2N445EsZac1jG4eYwSUhyQ6zlNdS1Jynu/zMh
+aslSA3tzlfdeGBbdi8f6Z0IhLBHZyY4dTo3jNqW5D5kAoX4szuGqq5DEjI2yh32M
+Pu7bx3j3YT84QYQFkdmnFO5wJ5M2HST+W7DvN1P79RCTQXRUZDobhGGqAunjA/2G
+pm0QDDglrYdLgcktHM8ju0/NFPfKb+Bklk7Eq7x3tTalJ/wmRhHHBc8gxSw/nmch
+IZGG0/7tSqBxyLxfjxOSjC6tdouHQ8GQ8DPPKg72PDmPPfBYYur8nXDnGLI736Z9
+6lBxr/5ecqa0jPvdwVJbrPvtghTwhfLVuehHgMvQ5QIDAQABo1MwUTAdBgNVHQ4E
+FgQUA653mLzv+ImHNEH+2GsOAg0xiWYwHwYDVR0jBBgwFoAUA653mLzv+ImHNEH+
+2GsOAg0xiWYwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAQYcF
+h58j8WXHsz1oaC0msS3YsCvY89ea5Z0bBUq+NTA8Mwemb9gQcrySTM32jFbwOsEw
+MIwr+Oxb6Snpur9mZOL5FQoTagdqggGTEwbIhdiFQ9BJWcxjHiOE9you3vWgFujz
+ED7uwwK7swBt0PfNCbZLc5SAKvzROmRpe1l9+qNvklnHEzCJVZHrfPEWCj2SEMd5
+yrBmTE9bihTMGAbmY3GkJc6e5hnkgSmue0JrPbtM7XA6gdVp6O3MKRJAZVS6NDTB
+hZ1iHvLv5s5+lxLsnEsAVofxyZTmyMxynUhkoirunwGAMQwdmMSTDPeZti73xPqI
+MlQhdCEgV16uXT3s3Q==
+`.replace(/\s/g, "");
 
 function pem(body: string): string {
   const wrapped = body.match(/.{1,64}/g)!.join("\n");
