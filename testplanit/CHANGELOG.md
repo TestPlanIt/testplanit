@@ -1,3 +1,14 @@
+## [1.2.0-beta.18](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.17...v1.2.0-beta.18) (2026-10-28)
+
+### Features
+
+* **editor:** add clear formatting and group the rich-text toolbar buttons ([d801296](https://github.com/TestPlanIt/testplanit/commit/d80129690dba6bc29149fbfbe30d5ff475f6235b))
+* **sso:** manage every SAML provider from its own page ([a0c4004](https://github.com/TestPlanIt/testplanit/commit/a0c4004a92f1d643dd28d0041fe7bab7562bc39f))
+
+### Bug Fixes
+
+* **docker:** stamp the built commit into published images ([ba44869](https://github.com/TestPlanIt/testplanit/commit/ba448695a7a0fef1da2fa7d57b3c333656145a38))
+
 ## [1.2.0-beta.17](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.16...v1.2.0-beta.17) (2026-10-28)
 
 ### Bug Fixes
