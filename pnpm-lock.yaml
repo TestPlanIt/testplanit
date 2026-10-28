@@ -838,6 +838,9 @@ importers:
       handlebars:
         specifier: ^4.7.10
         version: 4.7.10
+      happy-dom:
+        specifier: ^21.0.4
+        version: 21.0.4
       hono:
         specifier: '>=4.12.18'
         version: 4.13.13
@@ -1265,9 +1268,6 @@ importers:
       glob:
         specifier: ^13.0.6
         version: 13.0.6
-      happy-dom:
-        specifier: ^21.0.4
-        version: 21.0.4
       lucide-react:
         specifier: ^1.57.0
         version: 1.57.0(@types/react@19.3.0)(react@19.3.1)
