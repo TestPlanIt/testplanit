@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Color } from "@tiptap/extension-color";
 import { Emoji, EmojiItem, gitHubEmojis } from "@tiptap/extension-emoji";
 import { FileHandler } from "@tiptap/extension-file-handler";
@@ -10,7 +11,7 @@ import Focus from "@tiptap/extension-focus";
 import { Link } from "@tiptap/extension-link";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import React, {
   useCallback,
@@ -26,7 +27,6 @@ import {
   TableRow,
 } from "~/app/extensions/Table";
 import { TableColumnMenu, TableRowMenu } from "~/app/extensions/Table/menus";
-import { findTable } from "~/app/extensions/Table/utils";
 import styles from "~/styles/TipTapEditor.module.css";
 import { ContentItemMenu } from "./menus/ContentItemMenu";
 import { Video } from "./video";
@@ -90,6 +90,7 @@ import {
   Pilcrow,
   QuoteIcon,
   Redo2,
+  RemoveFormatting,
   Rows3,
   Smile,
   StrikethroughIcon,
@@ -102,6 +103,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { emptyEditorContent } from "~/app/constants";
+import { clearFormatting } from "~/lib/tiptap/clearFormatting";
 import {
   createParameterMentionExtension,
   type ParameterChipMeta,
@@ -113,6 +115,7 @@ import LoadingSpinnerAlert from "../LoadingSpinnerAlert";
 import { Separator } from "../ui/separator";
 import { InsertParameterToolbarButton } from "./InsertParameterToolbarButton";
 import { UndeclaredParameterWarning } from "./UndeclaredParameterWarning";
+import { readToolbarState, type ToolbarState } from "./toolbarState";
 
 interface TipTapEditorProps {
   content: object;
@@ -474,6 +477,14 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     };
   }, [editor, handleFile]);
 
+  // The `??` arm is unreachable in practice — a null editor returns below —
+  // but it keeps every call site free of optional chaining.
+  const toolbar: ToolbarState =
+    useEditorState({
+      editor,
+      selector: ({ editor: current }) => readToolbarState(current),
+    }) ?? readToolbarState(null);
+
   if (!editor) {
     return null;
   }
@@ -762,7 +773,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     >
       {loading && <LoadingSpinnerAlert />}
       {!readOnly && (
-        <div className="flex px-0.5 p-1.5 bg-muted border-t sticky bottom-0 z-10 overflow-x-auto whitespace-nowrap sm:relative sm:border-b gap-0.5 w-full">
+        <div className="flex items-center px-0.5 p-1.5 bg-muted border-t sticky bottom-0 z-10 overflow-x-auto whitespace-nowrap sm:relative sm:border-b gap-2 w-full">
           <input
             title={t("setColor")}
             className="w-4 h-8 min-w-4"
@@ -775,517 +786,532 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             }}
             data-testid="setColor"
           />
-          <Button
-            type="button"
-            variant={editor.isActive("bold") ? "default" : "outline"}
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            data-testid="tiptap-bold"
-            aria-label={t("bold")}
-          >
-            <Bold className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={editor.isActive("italic") ? "default" : "outline"}
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            data-testid="tiptap-italic"
-            aria-label={t("italic")}
-          >
-            <Italic className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={editor.isActive("strike") ? "default" : "outline"}
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-            data-testid="tiptap-strikethrough"
-            aria-label={t("strikethrough")}
-          >
-            <StrikethroughIcon className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={editor.isActive("underline") ? "default" : "outline"}
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            data-testid="tiptap-underline"
-            aria-label={t("underline")}
-          >
-            <UnderlineIcon className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={editor.isActive("code") ? "default" : "outline"}
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().toggleCode().run()}
-            data-testid="tiptap-code"
-            aria-label={t("code")}
-          >
-            <CodeIcon className="w-4 h-4" />
-          </Button>
-          <Separator orientation="vertical" className="p-0.5 mx-0.5" />
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="p-2"
-                data-testid="tiptap-heading-trigger"
-                aria-label={t("heading")}
-              >
-                {editor.isActive("heading", { level: 1 }) && <Heading1 />}
-                {editor.isActive("heading", { level: 2 }) && <Heading2 />}
-                {editor.isActive("heading", { level: 3 }) && <Heading3 />}
-                {editor.isActive("paragraph") && <Pilcrow />}
-                {editor.isActive("codeBlock") && <CodeBlockIcon />}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-full p-1"
-              data-testid="tiptap-heading-menu"
+          <ButtonGroup>
+            <Button
+              type="button"
+              variant={toolbar.isBold ? "default" : "outline"}
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              data-testid="tiptap-bold"
+              aria-label={t("bold")}
             >
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full flex justify-between"
-                onClick={() => editor.chain().focus().setParagraph().run()}
-                data-testid="tiptap-paragraph"
-              >
-                <Pilcrow size={16} />
-                {editor.isActive("paragraph") && <Check size={16} />}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full flex justify-between"
-                onClick={() =>
-                  editor.chain().focus().toggleHeading({ level: 1 }).run()
-                }
-                data-testid="tiptap-heading-1"
-              >
-                <Heading1 size={16} />
-                {editor.isActive("heading", { level: 1 }) && (
-                  <Check size={16} />
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full flex justify-between"
-                onClick={() =>
-                  editor.chain().focus().toggleHeading({ level: 2 }).run()
-                }
-                data-testid="tiptap-heading-2"
-              >
-                <Heading2 size={16} />
-                {editor.isActive("heading", { level: 2 }) && (
-                  <Check size={16} />
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full flex justify-between"
-                onClick={() =>
-                  editor.chain().focus().toggleHeading({ level: 3 }).run()
-                }
-                data-testid="tiptap-heading-3"
-              >
-                <Heading3 size={16} />
-                {editor.isActive("heading", { level: 3 }) && (
-                  <Check size={16} />
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full flex justify-between"
-                onClick={() => editor.chain().focus().setCodeBlock().run()}
-                data-testid="tiptap-code-block"
-              >
-                <CodeBlockIcon size={16} />
-                {editor.isActive("codeBlock") && <Check size={16} />}
-              </Button>
-            </PopoverContent>
-          </Popover>
-
-          <Button
-            type="button"
-            variant={editor.isActive("bulletList") ? "default" : "outline"}
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            data-testid="tiptap-bullet-list"
-            aria-label={t("bulletList")}
-          >
-            <List className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={editor.isActive("orderedList") ? "default" : "outline"}
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            data-testid="tiptap-ordered-list"
-            aria-label={t("orderedList")}
-          >
-            <ListOrdered className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={editor.isActive("blockquote") ? "default" : "outline"}
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            data-testid="tiptap-blockquote"
-            aria-label={t("blockquote")}
-          >
-            <QuoteIcon className="w-4 h-4" />
-          </Button>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant={editor.isActive("table") ? "default" : "outline"}
-                size="sm"
-                className="p-2"
-                data-testid="tiptap-table-trigger"
-                aria-label={t("table.insertTable")}
-              >
-                <Table2 className="w-4 h-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-auto p-1"
-              data-testid="tiptap-table-menu"
+              <Bold className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={toolbar.isItalic ? "default" : "outline"}
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              data-testid="tiptap-italic"
+              aria-label={t("italic")}
             >
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full flex gap-2 justify-start"
-                onClick={() =>
-                  editor
-                    .chain()
-                    .focus()
-                    .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                    .run()
-                }
-                data-testid="tiptap-insert-table"
+              <Italic className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={toolbar.isStrike ? "default" : "outline"}
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              data-testid="tiptap-strikethrough"
+              aria-label={t("strikethrough")}
+            >
+              <StrikethroughIcon className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={toolbar.isUnderline ? "default" : "outline"}
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              data-testid="tiptap-underline"
+              aria-label={t("underline")}
+            >
+              <UnderlineIcon className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={toolbar.isCode ? "default" : "outline"}
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().toggleCode().run()}
+              data-testid="tiptap-code"
+              aria-label={t("code")}
+            >
+              <CodeIcon className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="p-2"
+              onClick={() => clearFormatting(editor)}
+              data-testid="tiptap-clear-formatting"
+              aria-label={t("contentMenu.clearFormatting")}
+            >
+              <RemoveFormatting className="w-4 h-4" />
+            </Button>
+          </ButtonGroup>
+
+          <ButtonGroup>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="p-2"
+                  data-testid="tiptap-heading-trigger"
+                  aria-label={t("heading")}
+                >
+                  {toolbar.isHeading1 && <Heading1 />}
+                  {toolbar.isHeading2 && <Heading2 />}
+                  {toolbar.isHeading3 && <Heading3 />}
+                  {toolbar.isParagraph && <Pilcrow />}
+                  {toolbar.isCodeBlock && <CodeBlockIcon />}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-full p-1"
+                data-testid="tiptap-heading-menu"
               >
-                <Table2 size={16} />
-                {t("table.insertTable")}
-              </Button>
-              {editor.isActive("table") && (
-                <>
-                  <Separator className="my-1" />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full flex gap-2 justify-between"
-                    onClick={() =>
-                      editor.chain().focus().toggleHeaderRow().run()
-                    }
-                    data-testid="tiptap-toggle-header-row"
-                  >
-                    <span className="flex gap-2 items-center">
-                      <PanelTop size={16} />
-                      {t("table.headerRow")}
-                    </span>
-                    {findTable(editor.state.selection)?.node.firstChild
-                      ?.firstChild?.type.name === "tableHeader" && (
-                      <Check size={16} />
-                    )}
-                  </Button>
-                  <Separator className="my-1" />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full flex gap-2 justify-start"
-                    onClick={() =>
-                      editor.chain().focus().addColumnBefore().run()
-                    }
-                    data-testid="tiptap-add-col-before"
-                  >
-                    <BetweenVerticalEnd size={16} />
-                    {t("table.addColumnBefore")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full flex gap-2 justify-start"
-                    onClick={() =>
-                      editor.chain().focus().addColumnAfter().run()
-                    }
-                    data-testid="tiptap-add-col-after"
-                  >
-                    <BetweenVerticalStart size={16} />
-                    {t("table.addColumnAfter")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full flex gap-2 justify-start text-destructive"
-                    onClick={() => editor.chain().focus().deleteColumn().run()}
-                    data-testid="tiptap-delete-col"
-                  >
-                    <Columns3 size={16} />
-                    {t("table.deleteColumn")}
-                  </Button>
-                  <Separator className="my-1" />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full flex gap-2 justify-start"
-                    onClick={() => editor.chain().focus().addRowBefore().run()}
-                    data-testid="tiptap-add-row-before"
-                  >
-                    <BetweenHorizontalEnd size={16} />
-                    {t("table.addRowBefore")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full flex gap-2 justify-start"
-                    onClick={() => editor.chain().focus().addRowAfter().run()}
-                    data-testid="tiptap-add-row-after"
-                  >
-                    <BetweenHorizontalStart size={16} />
-                    {t("table.addRowAfter")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full flex gap-2 justify-start text-destructive"
-                    onClick={() => editor.chain().focus().deleteRow().run()}
-                    data-testid="tiptap-delete-row"
-                  >
-                    <Rows3 size={16} />
-                    {t("table.deleteRow")}
-                  </Button>
-                  <Separator className="my-1" />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full flex gap-2 justify-start text-destructive"
-                    onClick={() => editor.chain().focus().deleteTable().run()}
-                    data-testid="tiptap-delete-table"
-                  >
-                    <Trash size={16} />
-                    {t("table.deleteTable")}
-                  </Button>
-                </>
-              )}
-            </PopoverContent>
-          </Popover>
-
-          <Separator orientation="vertical" className="p-0.5 mx-0.5" />
-
-          {isValidProjectId &&
-            llmIntegrations &&
-            llmIntegrations.length > 0 && (
-              <DropdownMenu
-                onOpenChange={(open) => {
-                  if (open) {
-                    // Always capture content fresh when opening dropdown
-                    // This ensures we get current selection state
-                    const content = captureEditorContent();
-                    setCapturedContent(content);
-                  } else {
-                    // Reset captured content when dropdown closes
-                    // This ensures fresh capture on next interaction
-                    setCapturedContent(null);
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full flex justify-between"
+                  onClick={() => editor.chain().focus().setParagraph().run()}
+                  data-testid="tiptap-paragraph"
+                >
+                  <Pilcrow size={16} />
+                  {toolbar.isParagraph && <Check size={16} />}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full flex justify-between"
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 1 }).run()
                   }
-                }}
+                  data-testid="tiptap-heading-1"
+                >
+                  <Heading1 size={16} />
+                  {toolbar.isHeading1 && <Check size={16} />}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full flex justify-between"
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 2 }).run()
+                  }
+                  data-testid="tiptap-heading-2"
+                >
+                  <Heading2 size={16} />
+                  {toolbar.isHeading2 && <Check size={16} />}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full flex justify-between"
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 3 }).run()
+                  }
+                  data-testid="tiptap-heading-3"
+                >
+                  <Heading3 size={16} />
+                  {toolbar.isHeading3 && <Check size={16} />}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full flex justify-between"
+                  onClick={() => editor.chain().focus().setCodeBlock().run()}
+                  data-testid="tiptap-code-block"
+                >
+                  <CodeBlockIcon size={16} />
+                  {toolbar.isCodeBlock && <Check size={16} />}
+                </Button>
+              </PopoverContent>
+            </Popover>
+
+            <Button
+              type="button"
+              variant={toolbar.isBulletList ? "default" : "outline"}
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              data-testid="tiptap-bullet-list"
+              aria-label={t("bulletList")}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={toolbar.isOrderedList ? "default" : "outline"}
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              data-testid="tiptap-ordered-list"
+              aria-label={t("orderedList")}
+            >
+              <ListOrdered className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={toolbar.isBlockquote ? "default" : "outline"}
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              data-testid="tiptap-blockquote"
+              aria-label={t("blockquote")}
+            >
+              <QuoteIcon className="w-4 h-4" />
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant={toolbar.isTable ? "default" : "outline"}
+                  size="sm"
+                  className="p-2"
+                  data-testid="tiptap-table-trigger"
+                  aria-label={t("table.insertTable")}
+                >
+                  <Table2 className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-auto p-1"
+                data-testid="tiptap-table-menu"
               >
-                <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full flex gap-2 justify-start"
+                  onClick={() =>
+                    editor
+                      .chain()
+                      .focus()
+                      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                      .run()
+                  }
+                  data-testid="tiptap-insert-table"
+                >
+                  <Table2 size={16} />
+                  {t("table.insertTable")}
+                </Button>
+                {toolbar.isTable && (
+                  <>
+                    <Separator className="my-1" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full flex gap-2 justify-between"
+                      onClick={() =>
+                        editor.chain().focus().toggleHeaderRow().run()
+                      }
+                      data-testid="tiptap-toggle-header-row"
+                    >
+                      <span className="flex gap-2 items-center">
+                        <PanelTop size={16} />
+                        {t("table.headerRow")}
+                      </span>
+                      {toolbar.hasHeaderRow && <Check size={16} />}
+                    </Button>
+                    <Separator className="my-1" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full flex gap-2 justify-start"
+                      onClick={() =>
+                        editor.chain().focus().addColumnBefore().run()
+                      }
+                      data-testid="tiptap-add-col-before"
+                    >
+                      <BetweenVerticalEnd size={16} />
+                      {t("table.addColumnBefore")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full flex gap-2 justify-start"
+                      onClick={() =>
+                        editor.chain().focus().addColumnAfter().run()
+                      }
+                      data-testid="tiptap-add-col-after"
+                    >
+                      <BetweenVerticalStart size={16} />
+                      {t("table.addColumnAfter")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full flex gap-2 justify-start text-destructive"
+                      onClick={() =>
+                        editor.chain().focus().deleteColumn().run()
+                      }
+                      data-testid="tiptap-delete-col"
+                    >
+                      <Columns3 size={16} />
+                      {t("table.deleteColumn")}
+                    </Button>
+                    <Separator className="my-1" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full flex gap-2 justify-start"
+                      onClick={() =>
+                        editor.chain().focus().addRowBefore().run()
+                      }
+                      data-testid="tiptap-add-row-before"
+                    >
+                      <BetweenHorizontalEnd size={16} />
+                      {t("table.addRowBefore")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full flex gap-2 justify-start"
+                      onClick={() => editor.chain().focus().addRowAfter().run()}
+                      data-testid="tiptap-add-row-after"
+                    >
+                      <BetweenHorizontalStart size={16} />
+                      {t("table.addRowAfter")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full flex gap-2 justify-start text-destructive"
+                      onClick={() => editor.chain().focus().deleteRow().run()}
+                      data-testid="tiptap-delete-row"
+                    >
+                      <Rows3 size={16} />
+                      {t("table.deleteRow")}
+                    </Button>
+                    <Separator className="my-1" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full flex gap-2 justify-start text-destructive"
+                      onClick={() => editor.chain().focus().deleteTable().run()}
+                      data-testid="tiptap-delete-table"
+                    >
+                      <Trash size={16} />
+                      {t("table.deleteTable")}
+                    </Button>
+                  </>
+                )}
+              </PopoverContent>
+            </Popover>
+          </ButtonGroup>
+
+          <ButtonGroup>
+            {isValidProjectId &&
+              llmIntegrations &&
+              llmIntegrations.length > 0 && (
+                <DropdownMenu
+                  onOpenChange={(open) => {
+                    if (open) {
+                      // Always capture content fresh when opening dropdown
+                      // This ensures we get current selection state
+                      const content = captureEditorContent();
+                      setCapturedContent(content);
+                    } else {
+                      // Reset captured content when dropdown closes
+                      // This ensures fresh capture on next interaction
+                      setCapturedContent(null);
+                    }
+                  }}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="p-2"
+                      title={tAi("title")}
+                    >
+                      <Wand2 className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuItem
+                      onClick={() => handleAiPrompt("improveWriting")}
+                    >
+                      {tAi("improveWriting")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleAiPrompt("makeShorter")}
+                    >
+                      {tAi("makeShorter")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleAiPrompt("makeLonger")}
+                    >
+                      {tAi("makeLonger")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleAiPrompt("fixGrammar")}
+                    >
+                      {tAi("fixGrammar")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        {tAi("changeTone")}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem
+                          onClick={() => handleAiPrompt("professional")}
+                        >
+                          {tAi("professional")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleAiPrompt("casual")}
+                        >
+                          {tAi("casual")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleAiPrompt("formal")}
+                        >
+                          {tAi("formal")}
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        {tAi("translate")}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem
+                          onClick={() => handleAiPrompt("translate", "English")}
+                        >
+                          {tAi("english")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleAiPrompt("translate", "Spanish")}
+                        >
+                          {tAi("spanish")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleAiPrompt("translate", "French")}
+                        >
+                          {tAi("french")}
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleAiPrompt("summarize")}
+                    >
+                      {tAi("summarize")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleAiPrompt("addExamples")}
+                    >
+                      {tAi("addExamples")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+            <Popover
+              open={isLinkPopoverOpen}
+              onOpenChange={setIsLinkPopoverOpen}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant={toolbar.isLink ? "default" : "outline"}
+                  size="sm"
+                  className="p-2"
+                  onClick={handleLinkClick}
+                >
+                  <LinkIcon className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-2 w-60 flex flex-col gap-2">
+                <Input
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder={t("enterUrl")}
+                />
+                <div className="flex gap-2">
                   <Button
                     type="button"
-                    variant="outline"
                     size="sm"
-                    className="p-2"
-                    title={tAi("title")}
+                    onClick={applyLink}
+                    className="flex-1"
                   >
-                    <Wand2 className="w-4 h-4" />
+                    {tCommon("actions.apply")}
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuItem
-                    onClick={() => handleAiPrompt("improveWriting")}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={removeLink}
+                    className="flex-1"
                   >
-                    {tAi("improveWriting")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleAiPrompt("makeShorter")}
-                  >
-                    {tAi("makeShorter")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleAiPrompt("makeLonger")}
-                  >
-                    {tAi("makeLonger")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleAiPrompt("fixGrammar")}
-                  >
-                    {tAi("fixGrammar")}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      {tAi("changeTone")}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem
-                        onClick={() => handleAiPrompt("professional")}
-                      >
-                        {tAi("professional")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleAiPrompt("casual")}
-                      >
-                        {tAi("casual")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleAiPrompt("formal")}
-                      >
-                        {tAi("formal")}
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      {tAi("translate")}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem
-                        onClick={() => handleAiPrompt("translate", "English")}
-                      >
-                        {tAi("english")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleAiPrompt("translate", "Spanish")}
-                      >
-                        {tAi("spanish")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleAiPrompt("translate", "French")}
-                      >
-                        {tAi("french")}
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => handleAiPrompt("summarize")}>
-                    {tAi("summarize")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleAiPrompt("addExamples")}
-                  >
-                    {tAi("addExamples")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {parameters && parameters.length > 0 && editor && (
+              <InsertParameterToolbarButton
+                editor={editor}
+                parameters={parameters}
+                onOpenSheet={onOpenParametersSheet}
+              />
             )}
 
-          <Popover open={isLinkPopoverOpen} onOpenChange={setIsLinkPopoverOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant={editor.isActive("link") ? "default" : "outline"}
-                size="sm"
-                className="p-2"
-                onClick={handleLinkClick}
-              >
-                <LinkIcon className="w-4 h-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="p-2 w-60 flex flex-col gap-2">
-              <Input
-                value={linkUrl}
-                onChange={(e) => setLinkUrl(e.target.value)}
-                placeholder={t("enterUrl")}
-              />
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={applyLink}
-                  className="flex-1"
-                >
-                  {tCommon("actions.apply")}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={removeLink}
-                  className="flex-1"
-                >
-                  <Trash className="w-4 h-4" />
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {parameters && parameters.length > 0 && editor && (
-            <InsertParameterToolbarButton
-              editor={editor}
-              parameters={parameters}
-              onOpenSheet={onOpenParametersSheet}
-            />
-          )}
-
-          <Popover
-            open={isEmojiPopoverOpen}
-            onOpenChange={setIsEmojiPopoverOpen}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEmojiPopoverOpen(true)}
-              >
-                <Smile className="w-4 h-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="p-2 w-60 max-h-80 flex flex-col gap-2 overflow-auto"
-              onWheel={(e) => e.stopPropagation()}
+            <Popover
+              open={isEmojiPopoverOpen}
+              onOpenChange={setIsEmojiPopoverOpen}
             >
-              <div className="grid grid-cols-8 gap-2">
-                {gitHubEmojis.map((emoji) => (
-                  <button
-                    type="button"
-                    key={emoji.name}
-                    className="text-xl"
-                    onClick={() => handleEmojiClick(emoji)}
-                  >
-                    {emoji.emoji}
-                  </button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEmojiPopoverOpen(true)}
+                >
+                  <Smile className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="p-2 w-60 max-h-80 flex flex-col gap-2 overflow-auto"
+                onWheel={(e) => e.stopPropagation()}
+              >
+                <div className="grid grid-cols-8 gap-2">
+                  {gitHubEmojis.map((emoji) => (
+                    <button
+                      type="button"
+                      key={emoji.name}
+                      className="text-xl"
+                      onClick={() => handleEmojiClick(emoji)}
+                    >
+                      {emoji.emoji}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="p-2"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload className="w-4 h-4" />
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="p-2"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="w-4 h-4" />
+            </Button>
+          </ButtonGroup>
 
           <input
             title={t("uploadFile")}
@@ -1301,28 +1327,28 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             multiple
           />
 
-          <Separator orientation="vertical" className="p-0.5 mx-0.5" />
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().undo().run()}
-            disabled={!editor.can().undo()}
-          >
-            <Undo2 className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="p-2"
-            onClick={() => editor.chain().focus().redo().run()}
-            disabled={!editor.can().redo()}
-          >
-            <Redo2 className="w-4 h-4" />
-          </Button>
+          <ButtonGroup>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().undo().run()}
+              disabled={!toolbar.canUndo}
+            >
+              <Undo2 className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="p-2"
+              onClick={() => editor.chain().focus().redo().run()}
+              disabled={!toolbar.canRedo}
+            >
+              <Redo2 className="w-4 h-4" />
+            </Button>
+          </ButtonGroup>
         </div>
       )}
       {parameters !== undefined && (
