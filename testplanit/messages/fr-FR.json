@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "Fournisseurs d'authentification",
+          "addSaml": "Ajouter un fournisseur SAML",
+          "samlBadge": "SAML",
           "description": "Configurez la manière dont les utilisateurs peuvent se connecter à votre application."
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "Paramètres SAML",
           "description": "Configurez les paramètres de votre fournisseur d'identité SAML",
+          "providerNameDescription": "Affiché sur le bouton de connexion, donnez donc à chaque fournisseur SAML un nom que vos utilisateurs reconnaîtront.",
           "ssoUrl": "URL SSO (Point d'entrée)",
           "entityId": "Identifiant de l'entité (Émetteur)",
           "certificate": "Certificat X.509",
-          "callbackUrl": "URL de rappel",
-          "logoutUrl": "URL de déconnexion (facultatif)",
+          "callbackUrl": "URL ACS (rappel)",
+          "logoutUrl": "URL de déconnexion SLO (facultatif)",
           "wantAssertionsSigned": "Exiger des déclarations signées",
           "wantAssertionsSignedDescription": "Rejetez les réponses dont l'assertion SAML n'est pas signée. Cela protège l'identité authentifiée et doit rester activé.",
           "wantAuthnResponseSigned": "Exiger une réponse signée",
@@ -5211,6 +5214,7 @@
         "enabled": "fournisseur activé",
         "disabled": "Fournisseur désactivé",
         "updateFailed": "Échec de la mise à jour du fournisseur",
+        "providerNameExists": "Un fournisseur portant ce nom existe déjà",
         "configUpdated": "Configuration SAML mise à jour",
         "configCreated": "Configuration SAML créée",
         "configSaveFailed": "Échec de l'enregistrement de la configuration SAML",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Le point d'entrée, l'émetteur, le certificat et l'URL de rappel sont obligatoires."
+            "allRequired": "Le nom, le point d'entrée, l'émetteur, le certificat et l'URL de rappel sont obligatoires"
           }
         },
         "disableEmailVerification": {

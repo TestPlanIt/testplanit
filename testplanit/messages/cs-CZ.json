@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "Poskytovatelé přihlášení",
+          "addSaml": "Přidat poskytovatele SAML",
+          "samlBadge": "SAML",
           "description": "Nakonfigurujte, jak se uživatelé mohou přihlásit do vaší aplikace"
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "Nastavení SAML",
           "description": "Konfigurujte nastavení svého poskytovatele identity SAML",
+          "providerNameDescription": "Zobrazí se na tlačítku přihlášení, proto každému poskytovateli SAML dejte název, který vaši uživatelé poznají.",
           "ssoUrl": "URL adresa SSO (vstupní bod)",
           "entityId": "ID entity (vydavatel)",
           "certificate": "Certifikát X.509",
-          "callbackUrl": "Zpětná URL adresa",
-          "logoutUrl": "URL adresa pro odhlášení (volitelné)",
+          "callbackUrl": "URL ACS (Callback)",
+          "logoutUrl": "URL pro odhlášení SLO (volitelné)",
           "wantAssertionsSigned": "Vyžadovat podepsaná tvrzení",
           "wantAssertionsSignedDescription": "Odmítat odpovědi, jejichž SAML tvrzení není podepsané. Tato možnost chrání ověřenou identitu a měla by zůstat zapnutá.",
           "wantAuthnResponseSigned": "Vyžadovat podepsanou odpověď",
@@ -5211,6 +5214,7 @@
         "enabled": "Poskytovatel povolen",
         "disabled": "Poskytovatel zakázán",
         "updateFailed": "Aktualizace poskytovatele se nezdařila",
+        "providerNameExists": "Poskytovatel s tímto názvem již existuje",
         "configUpdated": "Konfigurace SAML byla aktualizována",
         "configCreated": "Konfigurace SAML byla vytvořena",
         "configSaveFailed": "Uložení konfigurace SAML se nezdařilo",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Jsou vyžadovány vstupní bod, vydavatel, certifikát a zpětná URL adresa"
+            "allRequired": "Název, vstupní bod, vydavatel, certifikát a adresa URL zpětného volání jsou povinné"
           }
         },
         "disableEmailVerification": {

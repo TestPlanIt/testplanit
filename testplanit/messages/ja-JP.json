@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "サインインプロバイダー",
+          "addSaml": "SAMLプロバイダーを追加",
+          "samlBadge": "SAML",
           "description": "ユーザーがアプリケーションにサインインする方法を設定します。"
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "SAML設定",
           "description": "SAML IDプロバイダーの設定を構成する",
+          "providerNameDescription": "サインインボタンに表示されるため、ユーザーが認識できる各SAMLプロバイダーに名前を付けてください。",
           "ssoUrl": "SSO URL (エントリ ポイント)",
           "entityId": "エンティティID（発行者）",
           "certificate": "X.509証明書",
-          "callbackUrl": "コールバックURL",
-          "logoutUrl": "ログアウトURL（オプション）",
+          "callbackUrl": "ACS（コールバック）URL",
+          "logoutUrl": "SLOログアウトURL（オプション）",
           "wantAssertionsSigned": "署名付きアサーションを要求する",
           "wantAssertionsSignedDescription": "SAMLアサーションに署名がない応答は拒否します。これは認証されたIDを保護するため、有効にしておく必要があります。",
           "wantAuthnResponseSigned": "署名入りの回答が必要です",
@@ -5211,6 +5214,7 @@
         "enabled": "プロバイダーが有効",
         "disabled": "プロバイダーが無効です",
         "updateFailed": "プロバイダーの更新に失敗しました",
+        "providerNameExists": "この名前のプロバイダーは既に存在します",
         "configUpdated": "SAML設定が更新されました",
         "configCreated": "SAML設定が作成されました",
         "configSaveFailed": "SAML設定を保存できませんでした",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/コールバック/saml",
           "validation": {
-            "allRequired": "エントリポイント、発行者、証明書、コールバックURLは必須です"
+            "allRequired": "名前、エントリポイント、発行者、証明書、およびコールバックURLは必須です"
           }
         },
         "disableEmailVerification": {

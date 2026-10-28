@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "로그인 제공업체",
+          "addSaml": "SAML 제공업체 추가",
+          "samlBadge": "SAML",
           "description": "사용자가 애플리케이션에 로그인하는 방법을 구성하세요."
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "SAML 설정",
           "description": "SAML ID 공급자 설정을 구성하세요",
+          "providerNameDescription": "로그인 버튼에 표시되므로 각 SAML 제공업체에 사용자가 인식할 수 있는 이름을 지정하세요.",
           "ssoUrl": "SSO URL(진입점)",
           "entityId": "엔티티 ID(발급자)",
           "certificate": "X.509 인증서",
-          "callbackUrl": "콜백 URL",
-          "logoutUrl": "로그아웃 URL (선택 사항)",
+          "callbackUrl": "ACS(콜백) URL",
+          "logoutUrl": "SLO 로그아웃 URL(선택 사항)",
           "wantAssertionsSigned": "서명된 어설션을 요구합니다.",
           "wantAssertionsSignedDescription": "SAML 어설션에 서명이 되어 있지 않은 응답은 거부합니다. 이는 인증된 신원을 보호하기 위한 조치이므로 이 기능을 활성화 상태로 유지해야 합니다.",
           "wantAuthnResponseSigned": "서명된 답변을 요구합니다",
@@ -5211,6 +5214,7 @@
         "enabled": "공급자 활성화됨",
         "disabled": "제공자가 비활성화됨",
         "updateFailed": "공급자 업데이트에 실패했습니다",
+        "providerNameExists": "이 이름의 제공업체가 이미 존재합니다",
         "configUpdated": "SAML 구성이 업데이트되었습니다.",
         "configCreated": "SAML 구성이 생성되었습니다.",
         "configSaveFailed": "SAML 구성 저장에 실패했습니다.",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "진입점, 발급자, 인증서 및 콜백 URL은 필수입니다."
+            "allRequired": "이름, 진입점, 발급자, 인증서 및 콜백 URL은 필수입니다"
           }
         },
         "disableEmailVerification": {

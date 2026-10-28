@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "登录提供商",
+          "addSaml": "添加 SAML 提供商",
+          "samlBadge": "SAML",
           "description": "配置用户如何登录您的应用程序"
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "SAML 设置",
           "description": "配置您的 SAML 身份提供程序设置",
+          "providerNameDescription": "显示在登录按钮上，因此请为每个 SAML 提供商赋予用户能识别的名称。",
           "ssoUrl": "单点登录 URL（入口点）",
           "entityId": "实体 ID（发行方）",
           "certificate": "X.509证书",
-          "callbackUrl": "回调 URL",
-          "logoutUrl": "注销网址（可选）",
+          "callbackUrl": "ACS（回调）URL",
+          "logoutUrl": "SLO 注销 URL（可选）",
           "wantAssertionsSigned": "需要签名断言",
           "wantAssertionsSignedDescription": "拒绝未签名的 SAML 断言的响应。这可以保护已认证的身份，因此应保持启用状态。",
           "wantAuthnResponseSigned": "需要签名回复",
@@ -5211,6 +5214,7 @@
         "enabled": "提供商已启用",
         "disabled": "提供商已禁用",
         "updateFailed": "更新提供商失败",
+        "providerNameExists": "已存在同名提供商",
         "configUpdated": "SAML 配置已更新",
         "configCreated": "SAML 配置已创建",
         "configSaveFailed": "保存 SAML 配置失败",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "入口点、颁发者、证书和回调 URL 是必需的。"
+            "allRequired": "名称、入口点、颁发者、证书和回调 URL 是必需的"
           }
         },
         "disableEmailVerification": {

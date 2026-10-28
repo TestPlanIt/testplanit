@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "Anmeldeanbieter",
+          "addSaml": "SAML-Anbieter hinzufügen",
+          "samlBadge": "SAML",
           "description": "Konfigurieren Sie, wie sich Benutzer bei Ihrer Anwendung anmelden können."
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "SAML-Einstellungen",
           "description": "Konfigurieren Sie Ihre SAML-Identitätsanbietereinstellungen",
+          "providerNameDescription": "Wird auf der Anmeldeschaltfläche angezeigt. Geben Sie daher jedem SAML-Anbieter einen Namen, den Ihre Benutzer erkennen.",
           "ssoUrl": "SSO-URL (Einstiegspunkt)",
           "entityId": "Entitäts-ID (Aussteller)",
           "certificate": "X.509-Zertifikat",
-          "callbackUrl": "Callback-URL",
-          "logoutUrl": "Abmelde-URL (optional)",
+          "callbackUrl": "ACS (Callback)-URL",
+          "logoutUrl": "SLO-Abmelde-URL (optional)",
           "wantAssertionsSigned": "Unterzeichnete Zusicherungen erforderlich",
           "wantAssertionsSignedDescription": "Antworten, deren SAML-Assertion nicht signiert ist, werden zurückgewiesen. Dies schützt die authentifizierte Identität und sollte aktiviert bleiben.",
           "wantAuthnResponseSigned": "Unterschriebene Antwort erforderlich",
@@ -5211,6 +5214,7 @@
         "enabled": "Anbieter aktiviert",
         "disabled": "Anbieter deaktiviert",
         "updateFailed": "Aktualisierung des Anbieters fehlgeschlagen",
+        "providerNameExists": "Ein Anbieter mit diesem Namen existiert bereits",
         "configUpdated": "SAML-Konfiguration aktualisiert",
         "configCreated": "SAML-Konfiguration erstellt",
         "configSaveFailed": "SAML-Konfiguration konnte nicht gespeichert werden",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Einstiegspunkt, Aussteller, Zertifikat und Rückruf-URL sind erforderlich."
+            "allRequired": "Name, Einstiegspunkt, Aussteller, Zertifikat und Rückruf-URL sind erforderlich"
           }
         },
         "disableEmailVerification": {

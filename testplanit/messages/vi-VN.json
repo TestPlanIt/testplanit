@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "Nhà cung cấp đăng nhập",
+          "addSaml": "Thêm Nhà cung cấp SAML",
+          "samlBadge": "SAML",
           "description": "Cấu hình cách người dùng có thể đăng nhập vào ứng dụng của bạn."
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "Cài đặt SAML",
           "description": "Cấu hình cài đặt nhà cung cấp danh tính SAML của bạn",
+          "providerNameDescription": "Hiển thị trên nút đăng nhập, vì vậy hãy đặt tên cho mỗi nhà cung cấp SAML mà người dùng của bạn sẽ nhận ra.",
           "ssoUrl": "URL SSO (Điểm truy cập)",
           "entityId": "Mã định danh tổ chức (Người phát hành)",
           "certificate": "Chứng chỉ X.509",
-          "callbackUrl": "URL gọi lại",
-          "logoutUrl": "URL đăng xuất (Tùy chọn)",
+          "callbackUrl": "URL ACS (Callback)",
+          "logoutUrl": "URL đăng xuất SLO (Tùy chọn)",
           "wantAssertionsSigned": "Yêu cầu xác nhận có chữ ký",
           "wantAssertionsSignedDescription": "Từ chối các phản hồi có xác thực SAML chưa được ký. Điều này bảo vệ danh tính đã được xác thực và nên được giữ ở chế độ này.",
           "wantAuthnResponseSigned": "Yêu cầu phản hồi có chữ ký",
@@ -5211,6 +5214,7 @@
         "enabled": "Nhà cung cấp đã kích hoạt",
         "disabled": "Nhà cung cấp đã bị vô hiệu hóa",
         "updateFailed": "Không thể cập nhật nhà cung cấp",
+        "providerNameExists": "Một nhà cung cấp có tên này đã tồn tại",
         "configUpdated": "Cấu hình SAML đã được cập nhật",
         "configCreated": "Cấu hình SAML đã được tạo",
         "configSaveFailed": "Không thể lưu cấu hình SAML.",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Các thông tin sau đây là bắt buộc: Điểm truy cập, Tổ chức phát hành, Chứng chỉ và URL gọi lại."
+            "allRequired": "Tên, Điểm truy cập, Tổ chức phát hành, Chứng chỉ và URL gọi lại là bắt buộc"
           }
         },
         "disableEmailVerification": {

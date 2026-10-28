@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "Sign-in Providers",
+          "addSaml": "Add SAML Provider",
+          "samlBadge": "SAML",
           "description": "Configure how users can sign in to your application"
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "SAML Settings",
           "description": "Configure your SAML identity provider settings",
+          "providerNameDescription": "Shown on the sign-in button, so give each SAML provider a name your users will recognize.",
           "ssoUrl": "SSO URL (Entry Point)",
           "entityId": "Entity ID (Issuer)",
           "certificate": "X.509 Certificate",
-          "callbackUrl": "Callback URL",
-          "logoutUrl": "Logout URL (Optional)",
+          "callbackUrl": "ACS (Callback) URL",
+          "logoutUrl": "SLO Logout URL (Optional)",
           "wantAssertionsSigned": "Require signed assertions",
           "wantAssertionsSignedDescription": "Reject responses whose SAML assertion is not signed. This protects the authenticated identity and should stay enabled.",
           "wantAuthnResponseSigned": "Require signed response",
@@ -5211,6 +5214,7 @@
         "enabled": "Provider enabled",
         "disabled": "Provider disabled",
         "updateFailed": "Failed to update provider",
+        "providerNameExists": "A provider with this name already exists",
         "configUpdated": "SAML configuration updated",
         "configCreated": "SAML configuration created",
         "configSaveFailed": "Failed to save SAML configuration",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Entry Point, Issuer, Certificate, and Callback URL are required"
+            "allRequired": "Name, Entry Point, Issuer, Certificate, and Callback URL are required"
           }
         },
         "disableEmailVerification": {

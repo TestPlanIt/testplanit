@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "Proveedores de inicio de sesión",
+          "addSaml": "Agregar Proveedor SAML",
+          "samlBadge": "SAML",
           "description": "Configurar cómo los usuarios pueden iniciar sesión en su aplicación"
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "Configuración SAML",
           "description": "Configure la configuración de su proveedor de identidad SAML",
+          "providerNameDescription": "Se muestra en el botón de inicio de sesión, así que asigne a cada proveedor SAML un nombre que sus usuarios reconozcan.",
           "ssoUrl": "URL SSO (punto de entrada)",
           "entityId": "ID de entidad (emisor)",
           "certificate": "X.509 Certificado",
-          "callbackUrl": "URL de retorno",
-          "logoutUrl": "URL de cierre de sesión (opcional)",
+          "callbackUrl": "URL de ACS (Devolución de llamada)",
+          "logoutUrl": "URL de cierre de sesión de SLO (opcional)",
           "wantAssertionsSigned": "Requerir afirmaciones firmadas",
           "wantAssertionsSignedDescription": "Rechazar las respuestas cuya aserción SAML no esté firmada. Esto protege la identidad autenticada y debe permanecer habilitado.",
           "wantAuthnResponseSigned": "Se requiere respuesta firmada",
@@ -5211,6 +5214,7 @@
         "enabled": "Proveedor habilitado",
         "disabled": "Proveedor desactivado",
         "updateFailed": "Error al actualizar el proveedor",
+        "providerNameExists": "Un proveedor con este nombre ya existe",
         "configUpdated": "Configuración SAML actualizada",
         "configCreated": "Configuración SAML creada",
         "configSaveFailed": "Error al guardar la configuración SAML",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Se requiere punto de entrada, emisor, certificado y URL de devolución de llamada"
+            "allRequired": "Nombre, punto de entrada, emisor, certificado y URL de devolución de llamada son obligatorios"
           }
         },
         "disableEmailVerification": {

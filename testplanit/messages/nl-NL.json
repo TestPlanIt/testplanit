@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "Aanmeldingsaanbieders",
+          "addSaml": "SAML-provider toevoegen",
+          "samlBadge": "SAML",
           "description": "Configureer hoe gebruikers zich kunnen aanmelden bij uw applicatie."
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "SAML-instellingen",
           "description": "Configureer uw SAML-identiteitsproviderinstellingen",
+          "providerNameDescription": "Weergegeven op de aanmeldingsknop, dus geef elke SAML-provider een naam die uw gebruikers zullen herkennen.",
           "ssoUrl": "SSO-URL (toegangspunt)",
           "entityId": "Entiteits-ID (uitgever)",
           "certificate": "X.509-certificaat",
-          "callbackUrl": "Terugbel-URL",
-          "logoutUrl": "Uitlog-URL (optioneel)",
+          "callbackUrl": "ACS (terugbel-) URL",
+          "logoutUrl": "SLO-uitlog-URL (optioneel)",
           "wantAssertionsSigned": "Ondertekende verklaringen vereisen",
           "wantAssertionsSignedDescription": "Weiger reacties waarvan de SAML-assertie niet is ondertekend. Dit beschermt de geauthenticeerde identiteit en moet ingeschakeld blijven.",
           "wantAuthnResponseSigned": "Ondertekende reactie vereist",
@@ -5211,6 +5214,7 @@
         "enabled": "Provider ingeschakeld",
         "disabled": "Provider uitgeschakeld",
         "updateFailed": "Het is niet gelukt om de provider bij te werken",
+        "providerNameExists": "Er bestaat al een provider met deze naam",
         "configUpdated": "SAML-configuratie bijgewerkt",
         "configCreated": "SAML-configuratie gemaakt",
         "configSaveFailed": "Het is niet gelukt om de SAML-configuratie op te slaan",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Toegangspunt, uitgever, certificaat en callback-URL zijn vereist"
+            "allRequired": "Naam, toegangspunt, uitgever, certificaat en callback-URL zijn vereist"
           }
         },
         "disableEmailVerification": {

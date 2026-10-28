@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "Fornitori di accesso",
+          "addSaml": "Aggiungi Fornitore SAML",
+          "samlBadge": "SAML",
           "description": "Configura le modalità di accesso degli utenti alla tua applicazione."
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "Impostazioni SAML",
           "description": "Configura le impostazioni del tuo provider di identità SAML",
+          "providerNameDescription": "Mostrato sul pulsante di accesso, quindi assegna a ogni provider SAML un nome che i tuoi utenti riconosceranno.",
           "ssoUrl": "URL SSO (punto di ingresso)",
           "entityId": "ID entità (emittente)",
           "certificate": "Certificato X.509",
-          "callbackUrl": "URL di richiamata",
-          "logoutUrl": "URL di disconnessione (facoltativo)",
+          "callbackUrl": "URL ACS (richiamata)",
+          "logoutUrl": "URL di disconnessione SLO (facoltativo)",
           "wantAssertionsSigned": "Richiedi dichiarazioni firmate",
           "wantAssertionsSignedDescription": "Rifiuta le risposte la cui asserzione SAML non è firmata. Ciò protegge l'identità autenticata e dovrebbe rimanere attivo.",
           "wantAuthnResponseSigned": "È richiesta una risposta firmata",
@@ -5211,6 +5214,7 @@
         "enabled": "Provider abilitato",
         "disabled": "Provider disabilitato",
         "updateFailed": "Impossibile aggiornare il provider",
+        "providerNameExists": "Esiste già un provider con questo nome",
         "configUpdated": "Configurazione SAML aggiornata",
         "configCreated": "Configurazione SAML creata",
         "configSaveFailed": "Impossibile salvare la configurazione SAML",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Sono richiesti il punto di ingresso, l'emittente, il certificato e l'URL di callback"
+            "allRequired": "Nome, Punto di ingresso, Emittente, Certificato e URL di callback sono obbligatori"
           }
         },
         "disableEmailVerification": {

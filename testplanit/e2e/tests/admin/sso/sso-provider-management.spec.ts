@@ -445,24 +445,56 @@ test.describe("Admin SSO Provider Management", () => {
 
   test("Admin can view Microsoft and SAML provider sections", async ({
     page,
+    request,
+    baseURL,
   }) => {
-    await test.step("Open the SSO admin page", async () => {
-      await page.goto("/en-US/admin/sso");
-      await page.waitForLoadState("networkidle");
-    });
+    // SAML rows are per provider now, so there is no static SAML row to assert
+    // against — this test seeds the provider whose row it checks.
+    const samlName = `E2E SAML Listing ${Date.now()}`;
+    const created = await request.post(
+      `${baseURL}/api/model/ssoProvider/create`,
+      {
+        data: {
+          data: {
+            name: samlName,
+            type: "SAML",
+            enabled: false,
+            forceSso: false,
+            config: {},
+          },
+        },
+      }
+    );
+    expect(created.ok()).toBeTruthy();
+    const samlProviderId: string = (await created.json()).data.id;
 
-    await test.step("Verify Microsoft, SAML, and Magic Link provider sections render", async () => {
-      // Verify Microsoft SSO section is present
-      const microsoftSection = page.getByText("Microsoft SSO");
-      await expect(microsoftSection).toBeVisible({ timeout: 10000 });
+    try {
+      await test.step("Open the SSO admin page", async () => {
+        await page.goto("/en-US/admin/sso");
+        await page.waitForLoadState("networkidle");
+      });
 
-      // Verify SAML section is present
-      const samlSection = page.getByText("SAML Provider");
-      await expect(samlSection).toBeVisible({ timeout: 10000 });
+      await test.step("Verify Microsoft, SAML, and Magic Link provider sections render", async () => {
+        // Verify Microsoft SSO section is present
+        const microsoftSection = page.getByText("Microsoft SSO");
+        await expect(microsoftSection).toBeVisible({ timeout: 10000 });
 
-      // Verify Magic Link section is present
-      const magicLinkSection = page.getByText("Magic Link Authentication");
-      await expect(magicLinkSection).toBeVisible({ timeout: 10000 });
-    });
+        // The seeded SAML provider has its own row, labelled by its name.
+        const samlRow = page.locator("tr").filter({ hasText: samlName });
+        await expect(samlRow).toHaveCount(1, { timeout: 10000 });
+
+        // Verify Magic Link section is present
+        const magicLinkSection = page.getByText("Magic Link Authentication");
+        await expect(magicLinkSection).toBeVisible({ timeout: 10000 });
+      });
+
+      await test.step("Adding a SAML provider is offered", async () => {
+        await expect(
+          page.getByTestId("add-saml-provider-button")
+        ).toBeVisible();
+      });
+    } finally {
+      await deleteSsoProvider(request, baseURL!, samlProviderId);
+    }
   });
 });

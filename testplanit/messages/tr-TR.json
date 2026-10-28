@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "Giriş Sağlayıcıları",
+          "addSaml": "SAML Sağlayıcısı Ekle",
+          "samlBadge": "SAML",
           "description": "Kullanıcıların uygulamanıza nasıl giriş yapabileceğini yapılandırın."
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "SAML Ayarları",
           "description": "SAML kimlik sağlayıcınızın ayarlarını yapılandırın.",
+          "providerNameDescription": "Oturum açma düğmesinde gösterilir, bu nedenle her SAML sağlayıcısına kullanıcılarınızın tanıyacağı bir ad verin.",
           "ssoUrl": "SSO URL'si (Giriş Noktası)",
           "entityId": "Kuruluş Kimliği (Yayınlayan)",
           "certificate": "X.509 Sertifikası",
-          "callbackUrl": "Geri Çağrı URL'si",
-          "logoutUrl": "Çıkış URL'si (İsteğe bağlı)",
+          "callbackUrl": "ACS (Geri Çağrı) URL'si",
+          "logoutUrl": "SLO Çıkış URL'si (İsteğe bağlı)",
           "wantAssertionsSigned": "İmzalı beyanlar gereklidir.",
           "wantAssertionsSignedDescription": "SAML onayı imzalanmamış yanıtları reddedin. Bu, kimliği doğrulanmış kişiyi korur ve etkin kalmalıdır.",
           "wantAuthnResponseSigned": "İmzalı yanıt gereklidir.",
@@ -5211,6 +5214,7 @@
         "enabled": "Sağlayıcı etkinleştirildi",
         "disabled": "Sağlayıcı devre dışı bırakıldı",
         "updateFailed": "Sağlayıcı güncellenemedi.",
+        "providerNameExists": "Bu isimde bir sağlayıcı zaten mevcut",
         "configUpdated": "SAML yapılandırması güncellendi",
         "configCreated": "SAML yapılandırması oluşturuldu",
         "configSaveFailed": "SAML yapılandırması kaydedilemedi.",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Giriş Noktası, Veren Kuruluş, Sertifika ve Geri Çağrı URL'si gereklidir."
+            "allRequired": "Ad, Giriş Noktası, Veren Kuruluş, Sertifika ve Geri Çağrı URL'si gereklidir"
           }
         },
         "disableEmailVerification": {

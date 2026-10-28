@@ -5130,6 +5130,8 @@
       "sections": {
         "providers": {
           "title": "مزودو تسجيل الدخول",
+          "addSaml": "إضافة مزود SAML",
+          "samlBadge": "المصادقة القائمة على SAML",
           "description": "قم بتكوين كيفية تسجيل دخول المستخدمين إلى تطبيقك"
         }
       },
@@ -5171,11 +5173,12 @@
         "samlSettings": {
           "title": "إعدادات SAML",
           "description": "كوّن إعدادات مزود هوية SAML الخاص بك",
+          "providerNameDescription": "يظهر على زر تسجيل الدخول، لذا أعط كل مزود SAML اسماً سيتعرف عليه المستخدمون.",
           "ssoUrl": "رابط SSO (نقطة الدخول)",
           "entityId": "معرّف الكيان (المُصدر)",
           "certificate": "شهادة X.509",
-          "callbackUrl": "رابط رد النداء",
-          "logoutUrl": "رابط تسجيل الخروج (اختياري)",
+          "callbackUrl": "عنوان URL لـ ACS (رد النداء)",
+          "logoutUrl": "عنوان URL لتسجيل الخروج SLO (اختياري)",
           "wantAssertionsSigned": "طلب توقيعات موقّعة",
           "wantAssertionsSignedDescription": "رفض الاستجابات التي لا يكون تأكيد SAML الخاص بها موقّعًا. هذا يحمي الهوية المُصادق عليها ويجب أن يظل مفعّلاً.",
           "wantAuthnResponseSigned": "طلب استجابة موقّعة",
@@ -5211,6 +5214,7 @@
         "enabled": "تم تمكين المزود",
         "disabled": "تم تعطيل المزود",
         "updateFailed": "فشل تحديث المزود",
+        "providerNameExists": "يوجد مزود بهذا الاسم بالفعل",
         "configUpdated": "تم تحديث تكوين SAML",
         "configCreated": "تم إنشاء تكوين SAML",
         "configSaveFailed": "فشل حفظ تكوين SAML",
@@ -5317,7 +5321,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "نقطة الدخول والمُصدر والشهادة وعنوان URL لرد النداء مطلوبة"
+            "allRequired": "الاسم ونقطة الدخول والمُصدر والشهادة وعنوان URL لرد النداء مطلوبة"
           }
         },
         "disableEmailVerification": {

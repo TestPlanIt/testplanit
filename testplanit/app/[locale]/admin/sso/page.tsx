@@ -29,14 +29,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import type { SsoConfigSummary } from "~/lib/auth/ssoConfig";
 import { Access, SsoProviderType } from "~/zenstack/models";
-import { Plus, Settings, X } from "lucide-react";
+import { CirclePlus, Plus, Settings, Trash2, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "~/lib/navigation";
 
 type SignInProviderRow = {
   id: string;
@@ -45,11 +45,14 @@ type SignInProviderRow = {
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
   onConfigure: (() => void) | null;
+  onDelete?: () => void;
+  typeLabel?: string;
 };
 
 export default function SSOAdminPage() {
   const { data: session } = useSession();
   const t = useTranslations();
+  const router = useRouter();
 
   const { data: ssoProviders, refetch } = useClientQueries(
     schema
@@ -60,6 +63,8 @@ export default function SSOAdminPage() {
     useClientQueries(schema).ssoProvider.useCreate();
   const { mutateAsync: updateProvider } =
     useClientQueries(schema).ssoProvider.useUpdate();
+  const { mutateAsync: deleteProvider } =
+    useClientQueries(schema).ssoProvider.useDelete();
 
   // Domain restriction hooks
   const { data: allowedDomains, refetch: refetchDomains } = useClientQueries(
@@ -87,22 +92,15 @@ export default function SSOAdminPage() {
   const [isSavingGoogleConfig, setIsSavingGoogleConfig] = useState(false);
   const [googleConfigured, setGoogleConfigured] = useState(false);
 
-  // SAML configuration state
-  const [isSamlConfigOpen, setIsSamlConfigOpen] = useState(false);
-  const [samlEntryPoint, setSamlEntryPoint] = useState("");
-  const [samlIssuer, setSamlIssuer] = useState("");
-  const [samlCert, setSamlCert] = useState("");
-  const [samlCallbackUrl, setSamlCallbackUrl] = useState("");
-  const [samlLogoutUrl, setSamlLogoutUrl] = useState("");
-  // Signature-validation toggles; defaults match the schema (assertions must
-  // be signed; outer response signature optional). Admins can re-tighten the
-  // outer response check here OR via the per-provider edit page later.
-  const [samlWantAssertionsSigned, setSamlWantAssertionsSigned] =
-    useState(true);
-  const [samlWantAuthnResponseSigned, setSamlWantAuthnResponseSigned] =
-    useState(false);
-  const [isSavingSamlConfig, setIsSavingSamlConfig] = useState(false);
-  const [samlConfigured, setSamlConfigured] = useState(false);
+  // SAML state. Each SAML provider is edited on its own page
+  // (/admin/sso/saml/[providerId]) and gets its own row here, so this page
+  // only routes to that page, adds providers, and removes them.
+  const [isOpeningSamlConfig, setIsOpeningSamlConfig] = useState(false);
+  const [samlProviderToDelete, setSamlProviderToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [isDeletingSamlProvider, setIsDeletingSamlProvider] = useState(false);
 
   // Domain restriction state
   const [newDomain, setNewDomain] = useState("");
@@ -185,25 +183,6 @@ export default function SSOAdminPage() {
     }
   }, [summaryFor]);
 
-  // Check if SAML is configured based on SSO providers data
-  useEffect(() => {
-    const samlProvider = ssoProviders?.find(
-      (p) => p.type === SsoProviderType.SAML
-    );
-
-    if (samlProvider?.samlConfig) {
-      const config = samlProvider.samlConfig;
-      setSamlConfigured(!!(config.entryPoint && config.issuer && config.cert));
-      setSamlEntryPoint(config.entryPoint || "");
-      setSamlIssuer(config.issuer || "");
-      setSamlCert(config.cert || "");
-      setSamlCallbackUrl(config.callbackUrl || "");
-      setSamlLogoutUrl(config.logoutUrl || "");
-    } else {
-      setSamlConfigured(false);
-    }
-  }, [ssoProviders]);
-
   // Check if Apple Sign In is configured based on SSO providers data
   useEffect(() => {
     const config = summaryFor(SsoProviderType.APPLE);
@@ -255,6 +234,11 @@ export default function SSOAdminPage() {
       const serverState: Record<string, boolean> = {};
       for (const p of ssoProviders) {
         serverState[p.type] = p.enabled;
+        // SAML rows are per provider, so they key on the provider id — several
+        // providers share the SAML type and would otherwise overwrite each other.
+        if (p.type === SsoProviderType.SAML) {
+          serverState[p.id] = p.enabled;
+        }
       }
       setToggleState((prev) => ({ ...prev, ...serverState }));
     }
@@ -320,68 +304,47 @@ export default function SSOAdminPage() {
     }
   };
 
-  // Save SAML configuration using ZenStack hooks
-  const saveSamlConfig = async () => {
-    if (!samlEntryPoint || !samlIssuer || !samlCert || !samlCallbackUrl) {
-      toast.error(t("admin.sso.dialogs.saml.validation.allRequired"));
-      return;
+  const openSamlConfig = (providerId: string) => {
+    router.push(`/admin/sso/saml/${providerId}`);
+  };
+
+  // SsoProvider.name is unique and labels the sign-in button, so a new row
+  // needs a free name; the admin renames it on the provider's own page.
+  const nextSamlProviderName = () => {
+    const taken = new Set((ssoProviders ?? []).map((p) => p.name));
+    const base = t("admin.sso.globalSettings.samlProvider.title");
+    if (!taken.has(base)) return base;
+    for (let n = 2; ; n++) {
+      const candidate = `${base} ${n}`;
+      if (!taken.has(candidate)) return candidate;
     }
+  };
 
-    setIsSavingSamlConfig(true);
+  // Created disabled, so enabling SAML stays a deliberate step after the
+  // configuration has actually been filled in.
+  const addSamlProvider = async () => {
+    setIsOpeningSamlConfig(true);
     try {
-      const samlConfig = {
-        entryPoint: samlEntryPoint,
-        issuer: samlIssuer,
-        cert: samlCert,
-        callbackUrl: samlCallbackUrl,
-        logoutUrl: samlLogoutUrl || undefined,
-        attributeMapping: {},
-        autoProvisionUsers: false,
-        defaultAccess: "USER" as const,
-        wantAssertionsSigned: samlWantAssertionsSigned,
-        wantAuthnResponseSigned: samlWantAuthnResponseSigned,
-      };
+      const created = await createProvider({
+        data: {
+          name: nextSamlProviderName(),
+          type: SsoProviderType.SAML,
+          enabled: false,
+        },
+      });
 
-      const existingProvider = ssoProviders?.find(
-        (p) => p.type === SsoProviderType.SAML
-      );
-
-      if (existingProvider) {
-        // Update existing provider and enable it
-        await updateProvider({
-          where: { id: existingProvider.id },
-          data: {
-            enabled: true,
-            samlConfig: {
-              upsert: {
-                where: { providerId: existingProvider.id },
-                create: samlConfig,
-                update: samlConfig,
-              },
-            },
-          },
-        });
-      } else {
-        // Create new provider
-        await createProvider({
-          data: {
-            name: "SAML Provider",
-            type: SsoProviderType.SAML,
-            enabled: true,
-            samlConfig: { create: samlConfig },
-          },
-        });
+      if (!created?.id) {
+        toast.error(t("admin.sso.messages.createFailed"));
+        return;
       }
 
-      toast.success(t("admin.sso.messages.samlConfigSaved"));
-      setSamlConfigured(true);
-      setIsSamlConfigOpen(false);
-      void refetch(); // Refresh SSO providers
+      toast.success(t("admin.sso.messages.samlCreated"));
+      router.push(`/admin/sso/saml/${created.id}`);
     } catch (error) {
-      console.error("Failed to save SAML config:", error);
-      toast.error(t("admin.sso.messages.googleConfigFailed"));
+      console.error("Failed to add SAML provider:", error);
+      toast.error(t("admin.sso.messages.createFailed"));
     } finally {
-      setIsSavingSamlConfig(false);
+      setIsOpeningSamlConfig(false);
     }
   };
 
@@ -673,45 +636,46 @@ export default function SSOAdminPage() {
     }
   };
 
-  const handleToggleSAML = async (enabled: boolean) => {
-    setToggleState((prev) => ({ ...prev, [SsoProviderType.SAML]: enabled }));
+  const handleToggleSamlProvider = async (
+    providerId: string,
+    configured: boolean,
+    enabled: boolean
+  ) => {
+    setToggleState((prev) => ({ ...prev, [providerId]: enabled }));
     try {
-      const existingSaml = ssoProviders?.find(
-        (p) => p.type === SsoProviderType.SAML
-      );
-
-      if (enabled && !samlConfigured) {
+      if (enabled && !configured) {
         toast.warning(t("admin.sso.messages.configureFirst"));
       }
 
-      if (existingSaml) {
-        await updateProvider({
-          where: { id: existingSaml.id },
-          data: { enabled },
-        });
-        toast.success(
-          enabled
-            ? t("admin.sso.messages.enabled")
-            : t("admin.sso.messages.disabled")
-        );
-      } else {
-        await createProvider({
-          data: {
-            name: "SAML Provider",
-            type: SsoProviderType.SAML,
-            enabled,
-          },
-        });
-        toast.success(
-          enabled
-            ? t("admin.sso.messages.samlCreated")
-            : t("admin.sso.messages.samlCreated")
-        );
-      }
+      await updateProvider({
+        where: { id: providerId },
+        data: { enabled },
+      });
+      toast.success(
+        enabled
+          ? t("admin.sso.messages.enabled")
+          : t("admin.sso.messages.disabled")
+      );
       void refetch();
     } catch {
-      setToggleState((prev) => ({ ...prev, [SsoProviderType.SAML]: !enabled }));
+      setToggleState((prev) => ({ ...prev, [providerId]: !enabled }));
       toast.error(t("admin.sso.messages.updateFailed"));
+    }
+  };
+
+  const deleteSamlProvider = async () => {
+    if (!samlProviderToDelete) return;
+    setIsDeletingSamlProvider(true);
+    try {
+      // Deleting the provider cascades to its SamlConfiguration.
+      await deleteProvider({ where: { id: samlProviderToDelete.id } });
+      toast.success(t("admin.sso.messages.deleted"));
+      setSamlProviderToDelete(null);
+      void refetch();
+    } catch {
+      toast.error(t("admin.sso.messages.deleteFailed"));
+    } finally {
+      setIsDeletingSamlProvider(false);
     }
   };
 
@@ -922,9 +886,10 @@ export default function SSOAdminPage() {
   const _googleProvider = ssoProviders?.find(
     (p) => p.type === SsoProviderType.GOOGLE
   );
-  const _samlProvider = ssoProviders?.find(
-    (p) => p.type === SsoProviderType.SAML
-  );
+  // Sorted by name to match the order the sign-in page renders them in.
+  const samlProviders = (ssoProviders ?? [])
+    .filter((p) => p.type === SsoProviderType.SAML)
+    .sort((a, b) => a.name.localeCompare(b.name));
   const _appleProvider = ssoProviders?.find(
     (p) => p.type === SsoProviderType.APPLE
   );
@@ -961,14 +926,24 @@ export default function SSOAdminPage() {
       onToggle: handleToggleMicrosoft,
       onConfigure: () => setIsMicrosoftConfigOpen(true),
     },
-    {
-      id: SsoProviderType.SAML,
-      name: t("admin.sso.globalSettings.samlProvider.title"),
-      configured: samlConfigured,
-      enabled: toggleState[SsoProviderType.SAML] || false,
-      onToggle: handleToggleSAML,
-      onConfigure: () => setIsSamlConfigOpen(true),
-    },
+    // One row per SAML provider: the sign-in page, the SP-initiated login and
+    // the IdP-initiated callback all resolve per provider, so admin does too.
+    ...samlProviders.map((provider) => {
+      const config = provider.samlConfig;
+      const configured = !!(config?.entryPoint && config.issuer && config.cert);
+      return {
+        id: provider.id,
+        name: provider.name,
+        configured,
+        enabled: toggleState[provider.id] ?? provider.enabled,
+        onToggle: (enabled: boolean) =>
+          handleToggleSamlProvider(provider.id, configured, enabled),
+        onConfigure: () => openSamlConfig(provider.id),
+        onDelete: () =>
+          setSamlProviderToDelete({ id: provider.id, name: provider.name }),
+        typeLabel: t("admin.sso.sections.providers.samlBadge"),
+      };
+    }),
     {
       id: SsoProviderType.MAGIC_LINK,
       name: t("admin.sso.globalSettings.magicLink.title"),
@@ -987,9 +962,14 @@ export default function SSOAdminPage() {
       enableSorting: false,
       enableHiding: false,
       meta: { isPinned: "left" },
-      size: 260,
+      size: 520,
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.name}</span>
+        <span className="flex items-center gap-2">
+          <span className="font-medium">{row.original.name}</span>
+          {row.original.typeLabel ? (
+            <Badge variant="outline">{row.original.typeLabel}</Badge>
+          ) : null}
+        </span>
       ),
     },
     {
@@ -997,7 +977,7 @@ export default function SSOAdminPage() {
       accessorKey: "configured",
       header: t("admin.sso.status.configured"),
       enableSorting: false,
-      size: 160,
+      size: 140,
       cell: ({ row }) => (
         <Badge variant={row.original.configured ? "default" : "secondary"}>
           {row.original.configured
@@ -1011,7 +991,7 @@ export default function SSOAdminPage() {
       accessorKey: "enabled",
       header: t("common.fields.enabled"),
       enableSorting: false,
-      size: 120,
+      size: 100,
       cell: ({ row }) => (
         <Switch
           aria-label={row.original.name}
@@ -1026,19 +1006,33 @@ export default function SSOAdminPage() {
       enableSorting: false,
       enableHiding: false,
       meta: { isPinned: "right" },
-      size: 140,
+      size: 180,
       cell: ({ row }) =>
-        row.original.onConfigure ? (
-          <div className="flex justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={row.original.onConfigure}
-              className="h-6 px-2 text-xs"
-            >
-              <Settings className="h-3 w-3" />
-              {t("admin.integrations.table.configure")}
-            </Button>
+        row.original.onConfigure || row.original.onDelete ? (
+          <div className="flex justify-between gap-1">
+            {row.original.onConfigure ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={row.original.onConfigure}
+                className="h-6 px-2 text-xs"
+              >
+                <Settings className="h-3 w-3" />
+                {t("admin.integrations.table.configure")}
+              </Button>
+            ) : null}
+            {row.original.onDelete ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={`${t("common.actions.delete")} ${row.original.name}`}
+                onClick={row.original.onDelete}
+                className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3" />
+                {t("common.actions.delete")}
+              </Button>
+            ) : null}
           </div>
         ) : null,
     },
@@ -1060,11 +1054,25 @@ export default function SSOAdminPage() {
 
       {/* Sign-in Providers Card */}
       <Card>
-        <CardHeader>
-          <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{t("admin.sso.sections.providers.title")}</CardTitle>
-            <HelpPopover helpKey="ssoProviders" />
-          </SectionHeader>
+        <CardHeader className="w-full">
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("admin.sso.sections.providers.title")}</CardTitle>
+              <HelpPopover helpKey="ssoProviders" />
+            </SectionHeader>
+            <Button
+              onClick={addSamlProvider}
+              disabled={isOpeningSamlConfig}
+              aria-label={t("admin.sso.sections.providers.addSaml")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+              data-testid="add-saml-provider-button"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("admin.sso.sections.providers.addSaml")}
+              </span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <DataTable
@@ -1356,166 +1364,6 @@ export default function SSOAdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* SAML Configuration Dialog */}
-      <Dialog open={isSamlConfigOpen} onOpenChange={setIsSamlConfigOpen}>
-        <DialogContent className="sm:max-w-[900px]">
-          <DialogHeader>
-            <DialogTitle>{t("admin.sso.samlConfiguration.title")}</DialogTitle>
-            <DialogDescription>
-              {t("admin.sso.dialogs.saml.description")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="entryPoint">
-                {t("admin.sso.dialogs.saml.entryPoint")}
-              </Label>
-              <Input
-                id="entryPoint"
-                value={samlEntryPoint}
-                onChange={(e) => setSamlEntryPoint(e.target.value)}
-                placeholder={t("admin.sso.dialogs.saml.entryPointPlaceholder")}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="issuer">
-                {t("admin.sso.dialogs.saml.issuer")}
-              </Label>
-              <Input
-                id="issuer"
-                value={samlIssuer}
-                onChange={(e) => setSamlIssuer(e.target.value)}
-                placeholder={t("admin.sso.dialogs.saml.issuerPlaceholder")}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="callbackUrl">
-                {t("admin.sso.dialogs.saml.callbackUrl")}
-              </Label>
-              <Input
-                id="callbackUrl"
-                value={samlCallbackUrl}
-                onChange={(e) => setSamlCallbackUrl(e.target.value)}
-                placeholder={
-                  typeof window !== "undefined"
-                    ? `${window.location.origin}${t("admin.sso.dialogs.saml.redirectUri")}`
-                    : t("admin.sso.dialogs.saml.redirectUri")
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="logoutUrl">
-                {t("admin.sso.dialogs.saml.logoutUrl")}
-              </Label>
-              <Input
-                id="logoutUrl"
-                value={samlLogoutUrl}
-                onChange={(e) => setSamlLogoutUrl(e.target.value)}
-                placeholder={t("admin.sso.dialogs.saml.logoutUrlPlaceholder")}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="cert">
-                {t("admin.sso.samlConfiguration.samlSettings.certificate")}
-              </Label>
-              <Textarea
-                id="cert"
-                value={samlCert}
-                onChange={(e) => setSamlCert(e.target.value)}
-                placeholder={t("admin.sso.dialogs.saml.certPlaceholder")}
-                rows={10}
-                className="font-mono text-xs"
-              />
-            </div>
-            <div className="grid gap-4 content-start">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="samlWantAssertionsSigned"
-                    checked={samlWantAssertionsSigned}
-                    onCheckedChange={setSamlWantAssertionsSigned}
-                  />
-                  <Label htmlFor="samlWantAssertionsSigned">
-                    {t(
-                      "admin.sso.samlConfiguration.samlSettings.wantAssertionsSigned"
-                    )}
-                  </Label>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {t(
-                    "admin.sso.samlConfiguration.samlSettings.wantAssertionsSignedDescription"
-                  )}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="samlWantAuthnResponseSigned"
-                    checked={samlWantAuthnResponseSigned}
-                    onCheckedChange={setSamlWantAuthnResponseSigned}
-                  />
-                  <Label htmlFor="samlWantAuthnResponseSigned">
-                    {t(
-                      "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSigned"
-                    )}
-                  </Label>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {t(
-                    "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSignedDescription"
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div className="md:col-span-2 text-sm text-muted-foreground">
-              <p>{t("admin.sso.dialogs.saml.instructions.title")}</p>
-              <ol className="list-decimal ms-4 space-y-1">
-                <li>{t("admin.sso.dialogs.saml.instructions.step1")}</li>
-                <li>{t("admin.sso.dialogs.saml.instructions.step2")}</li>
-                <li>{t("admin.sso.dialogs.saml.instructions.step3")}</li>
-                <li>
-                  {t("admin.sso.dialogs.saml.instructions.step4")}{" "}
-                  <code className="bg-muted px-1 rounded">
-                    {typeof window !== "undefined"
-                      ? window.location.origin
-                      : ""}
-                    {t("admin.sso.dialogs.saml.redirectUri")}
-                  </code>
-                </li>
-              </ol>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsSamlConfigOpen(false);
-                setSamlCert("");
-              }}
-              disabled={isSavingSamlConfig}
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button
-              onClick={saveSamlConfig}
-              disabled={
-                isSavingSamlConfig ||
-                !samlEntryPoint ||
-                !samlIssuer ||
-                !samlCert ||
-                !samlCallbackUrl
-              }
-            >
-              {isSavingSamlConfig
-                ? t("common.actions.saving")
-                : t("admin.imports.testmo.mappingSaveConfiguration")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Apple Configuration Dialog */}
       <Dialog open={isAppleConfigOpen} onOpenChange={setIsAppleConfigOpen}>
         <DialogContent className="sm:max-w-[600px]">
@@ -1732,6 +1580,53 @@ export default function SSOAdminPage() {
               {isSavingMicrosoftConfig
                 ? t("common.actions.saving")
                 : t("admin.imports.testmo.mappingSaveConfiguration")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* SAML Provider Delete Confirmation Dialog */}
+      <Dialog
+        open={!!samlProviderToDelete}
+        onOpenChange={(open) => {
+          if (!open) setSamlProviderToDelete(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {t("common.dialogs.delete.title", {
+                item: t("admin.sso.globalSettings.samlProvider.title"),
+              })}
+            </DialogTitle>
+            <DialogDescription>
+              {t("common.dialogs.delete.description", {
+                name: samlProviderToDelete?.name ?? "",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-destructive">
+              {t("common.dialogs.delete.warning", {
+                item: t("admin.sso.globalSettings.samlProvider.title"),
+              })}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSamlProviderToDelete(null)}
+              disabled={isDeletingSamlProvider}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={deleteSamlProvider}
+              disabled={isDeletingSamlProvider}
+              data-testid="confirm-delete-saml-provider"
+            >
+              {t("common.actions.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
