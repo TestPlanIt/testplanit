@@ -694376,7 +694376,7 @@
               "$ref": "#/components/schemas/Steps"
             }
           },
-          "testRuns": {
+          "testRunCases": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TestRunCases"
@@ -694719,7 +694719,7 @@
               }
             ]
           },
-          "testRuns": {
+          "testRunCases": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -695044,7 +695044,7 @@
               }
             ]
           },
-          "testRuns": {
+          "testRunCases": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -695274,7 +695274,7 @@
           "steps": {
             "type": "boolean"
           },
-          "testRuns": {
+          "testRunCases": {
             "type": "boolean"
           },
           "caseTags": {
@@ -695726,7 +695726,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsListRelationFilter"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesListRelationFilter"
           },
           "caseTags": {
@@ -696181,7 +696181,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsListRelationFilter"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesListRelationFilter"
           },
           "caseTags": {
@@ -697111,7 +697111,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsOrderByRelationAggregateInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesOrderByRelationAggregateInput"
           },
           "caseTags": {
@@ -698821,7 +698821,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -699130,7 +699130,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -699689,7 +699689,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -699906,7 +699906,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -700211,7 +700211,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -700553,7 +700553,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -701697,7 +701697,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -701914,7 +701914,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -702219,7 +702219,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -702561,7 +702561,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -703705,7 +703705,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -703922,7 +703922,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -704227,7 +704227,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -704569,7 +704569,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -705713,7 +705713,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -705930,7 +705930,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -706235,7 +706235,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -706577,7 +706577,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -707721,7 +707721,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -707938,7 +707938,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -708243,7 +708243,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -708585,7 +708585,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -709729,7 +709729,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -709946,7 +709946,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -710251,7 +710251,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -710593,7 +710593,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -711737,7 +711737,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -711955,7 +711955,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -712261,7 +712261,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -712610,7 +712610,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -712949,7 +712949,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -713167,7 +713167,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -713473,7 +713473,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -713822,7 +713822,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -714161,7 +714161,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -714379,7 +714379,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -714685,7 +714685,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -715034,7 +715034,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -715393,7 +715393,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -715611,7 +715611,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -715917,7 +715917,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -716266,7 +716266,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -716625,7 +716625,7 @@
           "attachments": {
             "$ref": "#/components/schemas/AttachmentsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -716843,7 +716843,7 @@
           "attachments": {
             "$ref": "#/components/schemas/AttachmentsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -717149,7 +717149,7 @@
           "attachments": {
             "$ref": "#/components/schemas/AttachmentsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -717498,7 +717498,7 @@
           "attachments": {
             "$ref": "#/components/schemas/AttachmentsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -717693,7 +717693,7 @@
           }
         }
       },
-      "RepositoryCasesCreateWithoutTestRunsInput": {
+      "RepositoryCasesCreateWithoutTestRunCasesInput": {
         "type": "object",
         "properties": {
           "name": {
@@ -717908,7 +717908,7 @@
           "creator"
         ]
       },
-      "RepositoryCasesUncheckedCreateWithoutTestRunsInput": {
+      "RepositoryCasesUncheckedCreateWithoutTestRunCasesInput": {
         "type": "object",
         "properties": {
           "id": {
@@ -718126,7 +718126,7 @@
           "creatorId"
         ]
       },
-      "RepositoryCasesUpdateWithoutTestRunsInput": {
+      "RepositoryCasesUpdateWithoutTestRunCasesInput": {
         "type": "object",
         "properties": {
           "name": {
@@ -718423,7 +718423,7 @@
           }
         }
       },
-      "RepositoryCasesUncheckedUpdateWithoutTestRunsInput": {
+      "RepositoryCasesUncheckedUpdateWithoutTestRunCasesInput": {
         "type": "object",
         "properties": {
           "id": {
@@ -718772,7 +718772,7 @@
           }
         }
       },
-      "RepositoryCasesCreateOrConnectWithoutTestRunsInput": {
+      "RepositoryCasesCreateOrConnectWithoutTestRunCasesInput": {
         "type": "object",
         "properties": {
           "where": {
@@ -718781,10 +718781,10 @@
           "create": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/RepositoryCasesCreateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesCreateWithoutTestRunCasesInput"
               },
               {
-                "$ref": "#/components/schemas/RepositoryCasesUncheckedCreateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUncheckedCreateWithoutTestRunCasesInput"
               }
             ]
           }
@@ -718794,47 +718794,47 @@
           "create"
         ]
       },
-      "RepositoryCasesCreateNestedOneWithoutTestRunsInput": {
+      "RepositoryCasesCreateNestedOneWithoutTestRunCasesInput": {
         "type": "object",
         "properties": {
           "create": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/RepositoryCasesCreateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesCreateWithoutTestRunCasesInput"
               },
               {
-                "$ref": "#/components/schemas/RepositoryCasesUncheckedCreateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUncheckedCreateWithoutTestRunCasesInput"
               }
             ]
           },
           "connectOrCreate": {
-            "$ref": "#/components/schemas/RepositoryCasesCreateOrConnectWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesCreateOrConnectWithoutTestRunCasesInput"
           },
           "connect": {
             "$ref": "#/components/schemas/RepositoryCasesWhereUniqueInput"
           }
         }
       },
-      "RepositoryCasesUpsertWithoutTestRunsInput": {
+      "RepositoryCasesUpsertWithoutTestRunCasesInput": {
         "type": "object",
         "properties": {
           "update": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/RepositoryCasesUpdateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUpdateWithoutTestRunCasesInput"
               },
               {
-                "$ref": "#/components/schemas/RepositoryCasesUncheckedUpdateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUncheckedUpdateWithoutTestRunCasesInput"
               }
             ]
           },
           "create": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/RepositoryCasesCreateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesCreateWithoutTestRunCasesInput"
               },
               {
-                "$ref": "#/components/schemas/RepositoryCasesUncheckedCreateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUncheckedCreateWithoutTestRunCasesInput"
               }
             ]
           },
@@ -718847,7 +718847,7 @@
           "create"
         ]
       },
-      "RepositoryCasesUpdateToOneWithWhereWithoutTestRunsInput": {
+      "RepositoryCasesUpdateToOneWithWhereWithoutTestRunCasesInput": {
         "type": "object",
         "properties": {
           "where": {
@@ -718856,10 +718856,10 @@
           "data": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/RepositoryCasesUpdateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUpdateWithoutTestRunCasesInput"
               },
               {
-                "$ref": "#/components/schemas/RepositoryCasesUncheckedUpdateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUncheckedUpdateWithoutTestRunCasesInput"
               }
             ]
           }
@@ -718868,24 +718868,24 @@
           "data"
         ]
       },
-      "RepositoryCasesUpdateOneRequiredWithoutTestRunsNestedInput": {
+      "RepositoryCasesUpdateOneRequiredWithoutTestRunCasesNestedInput": {
         "type": "object",
         "properties": {
           "create": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/RepositoryCasesCreateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesCreateWithoutTestRunCasesInput"
               },
               {
-                "$ref": "#/components/schemas/RepositoryCasesUncheckedCreateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUncheckedCreateWithoutTestRunCasesInput"
               }
             ]
           },
           "connectOrCreate": {
-            "$ref": "#/components/schemas/RepositoryCasesCreateOrConnectWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesCreateOrConnectWithoutTestRunCasesInput"
           },
           "upsert": {
-            "$ref": "#/components/schemas/RepositoryCasesUpsertWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesUpsertWithoutTestRunCasesInput"
           },
           "connect": {
             "$ref": "#/components/schemas/RepositoryCasesWhereUniqueInput"
@@ -718893,13 +718893,13 @@
           "update": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/RepositoryCasesUpdateToOneWithWhereWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUpdateToOneWithWhereWithoutTestRunCasesInput"
               },
               {
-                "$ref": "#/components/schemas/RepositoryCasesUpdateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUpdateWithoutTestRunCasesInput"
               },
               {
-                "$ref": "#/components/schemas/RepositoryCasesUncheckedUpdateWithoutTestRunsInput"
+                "$ref": "#/components/schemas/RepositoryCasesUncheckedUpdateWithoutTestRunCasesInput"
               }
             ]
           }
@@ -719052,7 +719052,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseIssues": {
@@ -719270,7 +719270,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseIssues": {
@@ -719576,7 +719576,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseIssues": {
@@ -719925,7 +719925,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseIssues": {
@@ -720264,7 +720264,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -720482,7 +720482,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -720788,7 +720788,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -721137,7 +721137,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -721476,7 +721476,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -721694,7 +721694,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -722000,7 +722000,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -722349,7 +722349,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -722688,7 +722688,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -722906,7 +722906,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -723212,7 +723212,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -723561,7 +723561,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -723920,7 +723920,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -724138,7 +724138,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -724444,7 +724444,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -724793,7 +724793,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -725132,7 +725132,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -725350,7 +725350,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -725656,7 +725656,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -726005,7 +726005,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -726344,7 +726344,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -726562,7 +726562,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -726868,7 +726868,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -727217,7 +727217,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -727556,7 +727556,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -727774,7 +727774,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -728080,7 +728080,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -728429,7 +728429,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -728768,7 +728768,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -728986,7 +728986,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -729292,7 +729292,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -729641,7 +729641,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -729980,7 +729980,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -730198,7 +730198,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -730504,7 +730504,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -730853,7 +730853,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -731192,7 +731192,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -731410,7 +731410,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -731716,7 +731716,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -732065,7 +732065,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -732404,7 +732404,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -732622,7 +732622,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -732928,7 +732928,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -733277,7 +733277,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -733616,7 +733616,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -733834,7 +733834,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -734140,7 +734140,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -734489,7 +734489,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -734828,7 +734828,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -735046,7 +735046,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -735352,7 +735352,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -735701,7 +735701,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -736040,7 +736040,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -736258,7 +736258,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -736564,7 +736564,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -736913,7 +736913,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -737272,7 +737272,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -737490,7 +737490,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -737796,7 +737796,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -738145,7 +738145,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -738484,7 +738484,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -738702,7 +738702,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -739008,7 +739008,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -739357,7 +739357,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -739716,7 +739716,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -739934,7 +739934,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -740240,7 +740240,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -740589,7 +740589,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -740928,7 +740928,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -741146,7 +741146,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedCreateNestedManyWithoutTestCaseInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedCreateNestedManyWithoutRepositoryCaseInput"
           },
           "caseTags": {
@@ -741452,7 +741452,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -741801,7 +741801,7 @@
           "steps": {
             "$ref": "#/components/schemas/StepsUncheckedUpdateManyWithoutTestCaseNestedInput"
           },
-          "testRuns": {
+          "testRunCases": {
             "$ref": "#/components/schemas/TestRunCasesUncheckedUpdateManyWithoutRepositoryCaseNestedInput"
           },
           "caseTags": {
@@ -868344,7 +868344,7 @@
             "$ref": "#/components/schemas/TestRunsCreateNestedOneWithoutTestCasesInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunCasesInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusCreateNestedOneWithoutTestRunCasesInput"
@@ -868518,7 +868518,7 @@
             "$ref": "#/components/schemas/TestRunsUpdateOneRequiredWithoutTestCasesNestedInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunsNestedInput"
+            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunCasesNestedInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusUpdateOneWithoutTestRunCasesNestedInput"
@@ -868880,7 +868880,7 @@
             ]
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunCasesInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusCreateNestedOneWithoutTestRunCasesInput"
@@ -869169,7 +869169,7 @@
             ]
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunsNestedInput"
+            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunCasesNestedInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusUpdateOneWithoutTestRunCasesNestedInput"
@@ -871735,7 +871735,7 @@
             "$ref": "#/components/schemas/TestRunsCreateNestedOneWithoutTestCasesInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunCasesInput"
           },
           "assignedTo": {
             "$ref": "#/components/schemas/UserCreateNestedOneWithoutTestRunCasesAssignedInput"
@@ -872019,7 +872019,7 @@
             "$ref": "#/components/schemas/TestRunsUpdateOneRequiredWithoutTestCasesNestedInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunsNestedInput"
+            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunCasesNestedInput"
           },
           "assignedTo": {
             "$ref": "#/components/schemas/UserUpdateOneWithoutTestRunCasesAssignedNestedInput"
@@ -873144,7 +873144,7 @@
             "$ref": "#/components/schemas/TestRunsCreateNestedOneWithoutTestCasesInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunCasesInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusCreateNestedOneWithoutTestRunCasesInput"
@@ -873428,7 +873428,7 @@
             "$ref": "#/components/schemas/TestRunsUpdateOneRequiredWithoutTestCasesNestedInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunsNestedInput"
+            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunCasesNestedInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusUpdateOneWithoutTestRunCasesNestedInput"
@@ -874553,7 +874553,7 @@
             "$ref": "#/components/schemas/TestRunsCreateNestedOneWithoutTestCasesInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunCasesInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusCreateNestedOneWithoutTestRunCasesInput"
@@ -874844,7 +874844,7 @@
             "$ref": "#/components/schemas/TestRunsUpdateOneRequiredWithoutTestCasesNestedInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunsNestedInput"
+            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunCasesNestedInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusUpdateOneWithoutTestRunCasesNestedInput"
@@ -875287,7 +875287,7 @@
             "$ref": "#/components/schemas/TestRunsCreateNestedOneWithoutTestCasesInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunCasesInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusCreateNestedOneWithoutTestRunCasesInput"
@@ -875578,7 +875578,7 @@
             "$ref": "#/components/schemas/TestRunsUpdateOneRequiredWithoutTestCasesNestedInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunsNestedInput"
+            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunCasesNestedInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusUpdateOneWithoutTestRunCasesNestedInput"
@@ -876021,7 +876021,7 @@
             "$ref": "#/components/schemas/TestRunsCreateNestedOneWithoutTestCasesInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunsInput"
+            "$ref": "#/components/schemas/RepositoryCasesCreateNestedOneWithoutTestRunCasesInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusCreateNestedOneWithoutTestRunCasesInput"
@@ -876312,7 +876312,7 @@
             "$ref": "#/components/schemas/TestRunsUpdateOneRequiredWithoutTestCasesNestedInput"
           },
           "repositoryCase": {
-            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunsNestedInput"
+            "$ref": "#/components/schemas/RepositoryCasesUpdateOneRequiredWithoutTestRunCasesNestedInput"
           },
           "status": {
             "$ref": "#/components/schemas/StatusUpdateOneWithoutTestRunCasesNestedInput"

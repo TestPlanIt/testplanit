@@ -59,8 +59,7 @@ const CASE_ROW_INCLUDE = {
       status: { select: { id: true, name: true } },
     },
   },
-  testRuns: {
-    // testRuns is the TestRunCases[] junction (RepositoryCases.testRuns).
+  testRunCases: {
     // Order by id desc and grab the latest result per junction row;
     // resolveLatestResult collapses the union at the mapper boundary.
     orderBy: [{ id: "desc" }],
@@ -180,7 +179,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
             const row = r as {
               repositoryCaseVersions?: Array<{ createdAt: Date | string }>;
               junitResults?: Array<{ executedAt: Date | string | null }>;
-              testRuns?: Array<{
+              testRunCases?: Array<{
                 results: Array<{ executedAt: Date | string | null }>;
               }>;
             };
@@ -193,7 +192,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
             }
             const lastUpdatedMs = new Date(lastUpdated).getTime();
             const j = row.junitResults?.[0]?.executedAt;
-            const t = row.testRuns?.[0]?.results?.[0]?.executedAt;
+            const t = row.testRunCases?.[0]?.results?.[0]?.executedAt;
             const latestExec =
               j && t
                 ? Math.max(new Date(j).getTime(), new Date(t).getTime())

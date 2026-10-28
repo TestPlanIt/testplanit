@@ -54,7 +54,7 @@ describe("useRunDependencyState", () => {
     expect(mockLinksQuery.mock.calls[0][0].where).toEqual({
       type: "DEPENDS_ON",
       isDeleted: false,
-      caseA: { testRuns: { some: { testRunId: 50, isDeleted: false } } },
+      caseA: { testRunCases: { some: { testRunId: 50, isDeleted: false } } },
     });
     expect(mockRunCasesQuery.mock.calls[0][1]).toEqual({ enabled: true });
   });

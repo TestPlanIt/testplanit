@@ -706,9 +706,9 @@ describe("drillDownQueryBuilders", () => {
       // the repository case's own projectId
       expect(result.where?.projectId).toBeUndefined();
       const [manualBranch, junitBranch] = result.where?.OR as any[];
-      expect(manualBranch.testRuns.some.results.some.testRun.projectId).toBe(
-        10
-      );
+      expect(
+        manualBranch.testRunCases.some.results.some.testRun.projectId
+      ).toBe(10);
       expect(junitBranch.junitResults.some.testSuite.testRun.projectId).toBe(
         10
       );
@@ -721,7 +721,7 @@ describe("drillDownQueryBuilders", () => {
       const result = buildTestCasesQuery(context, 0, 10);
 
       const [manualBranch, junitBranch] = result.where?.OR as any[];
-      expect(manualBranch.testRuns.some.results.some.executedById).toBe(
+      expect(manualBranch.testRunCases.some.results.some.executedById).toBe(
         "exec-user"
       );
       expect(junitBranch.junitResults.some.createdById).toBe("exec-user");
@@ -734,7 +734,7 @@ describe("drillDownQueryBuilders", () => {
       const result = buildTestCasesQuery(context, 0, 10);
 
       const [manualBranch, junitBranch] = result.where?.OR as any[];
-      expect(manualBranch.testRuns.some.results.some.statusId).toBe(4);
+      expect(manualBranch.testRunCases.some.results.some.statusId).toBe(4);
       expect(junitBranch.junitResults.some.statusId).toBe(4);
     });
 
@@ -743,7 +743,7 @@ describe("drillDownQueryBuilders", () => {
       const result = buildTestCasesQuery(context, 0, 10);
 
       const [manualBranch, junitBranch] = result.where?.OR as any[];
-      expect(manualBranch.testRuns.some.results.some.status).toEqual({
+      expect(manualBranch.testRunCases.some.results.some.status).toEqual({
         systemName: { not: "untested" },
       });
       expect(junitBranch.junitResults.some.status).toEqual({
@@ -760,7 +760,9 @@ describe("drillDownQueryBuilders", () => {
       const result = buildTestCasesQuery(context, 0, 10);
 
       const [manualBranch, junitBranch] = result.where?.OR as any[];
-      expect(manualBranch.testRuns.some.results.some.executedAt).toBeDefined();
+      expect(
+        manualBranch.testRunCases.some.results.some.executedAt
+      ).toBeDefined();
       expect(junitBranch.junitResults.some.executedAt).toBeDefined();
     });
 
@@ -773,7 +775,7 @@ describe("drillDownQueryBuilders", () => {
         10
       );
       expect(manual.where?.OR).toHaveLength(1);
-      expect((manual.where?.OR as any[])[0].testRuns).toBeDefined();
+      expect((manual.where?.OR as any[])[0].testRunCases).toBeDefined();
 
       const automated = buildTestCasesQuery(
         createBaseContext({

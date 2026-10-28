@@ -515,7 +515,7 @@ export function EditResultModal({
     schema
   ).repositoryCases.useFindFirst({
     where: {
-      testRuns: {
+      testRunCases: {
         some: {
           id: testRunCaseId,
         },

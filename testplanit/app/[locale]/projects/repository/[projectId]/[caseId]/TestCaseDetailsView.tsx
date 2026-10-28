@@ -725,7 +725,7 @@ export function TestCaseDetailsView({
               },
             },
           },
-          testRuns: {
+          testRunCases: {
             select: {
               id: true,
               isCompleted: true,

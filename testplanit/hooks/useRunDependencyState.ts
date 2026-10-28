@@ -45,7 +45,9 @@ export function useRunDependencyState(
         type: DEPENDENCY_LINK_TYPE,
         isDeleted: false,
         caseA: {
-          testRuns: { some: { testRunId: testRunId ?? -1, isDeleted: false } },
+          testRunCases: {
+            some: { testRunId: testRunId ?? -1, isDeleted: false },
+          },
         },
       },
       select: {

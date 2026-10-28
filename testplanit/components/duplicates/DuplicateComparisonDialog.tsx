@@ -65,7 +65,7 @@ interface CaseDetails {
     };
   }[];
   _count: { attachments: number };
-  testRuns: {
+  testRunCases: {
     id: number;
     status: { id: number; name: string } | null;
     createdAt: string;
@@ -208,7 +208,7 @@ function CasePanel({
     prefs?.dateFormat && prefs?.timeFormat
       ? `${prefs.dateFormat} ${prefs.timeFormat}`
       : prefs?.dateFormat;
-  const lastRun = caseDetails.testRuns?.[0];
+  const lastRun = caseDetails.testRunCases?.[0];
 
   return (
     <div className="flex flex-col gap-2">

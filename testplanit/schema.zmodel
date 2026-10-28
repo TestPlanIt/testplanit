@@ -2178,7 +2178,7 @@ model RepositoryCases {
     resultFieldValues       ResultFieldValues[]
     attachments             Attachments[]
     steps                   Steps[]
-    testRuns                TestRunCases[]
+    testRunCases            TestRunCases[]
     caseTags                RepositoryCaseTag[]
     caseIssues              RepositoryCaseIssue[]
     junitResults            JUnitTestResult[]            @relation("JUnitResultCase")

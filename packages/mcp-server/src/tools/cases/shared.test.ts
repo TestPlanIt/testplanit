@@ -373,7 +373,7 @@ describe("mapCaseRow", () => {
         { id: 2, name: "auth" },
       ],
       // Additive fields. The rawRow fixture
-      // doesn't seed repositoryCaseVersions / junitResults / testRuns,
+      // doesn't seed repositoryCaseVersions / junitResults / testRunCases,
       // so both new fields default to null per the optional-include
       // contract documented on RawCaseRow.
       lastUpdatedAt: null,
@@ -680,7 +680,7 @@ describe("mapCaseRow extensions", () => {
           status: { id: 5, name: "Passed" },
         },
       ],
-      testRuns: [],
+      testRunCases: [],
     });
     const mapped = mapCaseRow(row as never);
     expect(mapped.latestResult).toEqual({
@@ -691,10 +691,10 @@ describe("mapCaseRow extensions", () => {
     });
   });
 
-  it("returns latestResult populated when testRuns[0].results[0] is present", () => {
+  it("returns latestResult populated when testRunCases[0].results[0] is present", () => {
     const row = makeRow({
       junitResults: [],
-      testRuns: [
+      testRunCases: [
         {
           results: [
             {
@@ -715,8 +715,8 @@ describe("mapCaseRow extensions", () => {
     });
   });
 
-  it("returns latestResult: null when both junitResults and testRuns are empty", () => {
-    const row = makeRow({ junitResults: [], testRuns: [] });
+  it("returns latestResult: null when both junitResults and testRunCases are empty", () => {
+    const row = makeRow({ junitResults: [], testRunCases: [] });
     const mapped = mapCaseRow(row as never);
     expect(mapped.latestResult).toBeNull();
   });
@@ -725,7 +725,7 @@ describe("mapCaseRow extensions", () => {
     const row = makeRow({
       repositoryCaseVersions: [],
       junitResults: [],
-      testRuns: [],
+      testRunCases: [],
     });
     const mapped = mapCaseRow(row as never);
     expect(mapped.id).toBe(101);

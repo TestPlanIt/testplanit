@@ -206,7 +206,7 @@ export interface ExtendedCases extends RepositoryCases {
   startedAt?: Date | null;
   completedAt?: Date | null;
   elapsed?: number | null;
-  testRuns?: {
+  testRunCases?: {
     id: number;
     testRun: {
       id: number;
@@ -2073,7 +2073,7 @@ export const getColumns = (
             size: 100,
             minSize: 100,
             cell: ({ row }: { row: { original: ExtendedCases } }) => {
-              const mappedTestRuns = row.original.testRuns
+              const mappedTestRuns = row.original.testRunCases
                 ?.map((trLink) => {
                   if (
                     trLink.testRun &&

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 /**
  * The panel must not decide for itself which execution is "latest".
  *
- * It used to walk the raw `testRuns` / `junitResults` relations in JSX and
+ * It used to walk the raw `testRunCases` / `junitResults` relations in JSX and
  * pick a winner — a third definition of "latest" that already disagreed with
  * the server's on skipped automated results. Everything below pins the
  * replacement: the server answers, this panel renders that answer.
@@ -98,7 +98,7 @@ describe("LinkedCasesPanel — latest result", () => {
     const [args] = mockLinkFindMany.mock.calls[0];
     const serialized = JSON.stringify(args);
     expect(serialized).not.toContain("junitResults");
-    expect(serialized).not.toContain("testRuns");
+    expect(serialized).not.toContain("testRunCases");
   });
 
   it("renders the status the server returned", () => {

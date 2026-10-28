@@ -1240,8 +1240,7 @@ function TestResultHistoryContent({
             where: { isDeleted: false },
             orderBy: { order: "asc" },
           },
-          testRuns: {
-            // These are TestRunCases records
+          testRunCases: {
             select: {
               id: true, // TestRunCases.id
               testRun: {
@@ -1431,7 +1430,7 @@ function TestResultHistoryContent({
     const allUnifiedResults: UnifiedTestResult[] = [];
 
     // 1. Process Manual Results from TestRunCases
-    fetchedTestCase.testRuns?.forEach((trc: any) => {
+    fetchedTestCase.testRunCases?.forEach((trc: any) => {
       trc.results?.forEach((res: any) => {
         allUnifiedResults.push({
           displayId: `manual-${res.id}`,
@@ -1512,7 +1511,7 @@ function TestResultHistoryContent({
       }
       // If a JUnit result is explicitly linked to the same TestRun as a TRC, consider that TRC covered.
       if (r.sourceType === "junit" && r.associatedTestRun) {
-        const correspondingTrc = fetchedTestCase.testRuns?.find(
+        const correspondingTrc = fetchedTestCase.testRunCases?.find(
           (trcItem: any) => trcItem.testRun?.id === r.associatedTestRun?.id
         );
         if (correspondingTrc) {
@@ -1521,7 +1520,7 @@ function TestResultHistoryContent({
       }
     });
 
-    fetchedTestCase.testRuns?.forEach((trc: any) => {
+    fetchedTestCase.testRunCases?.forEach((trc: any) => {
       if (!executedOrCoveredTrcIds.has(trc.id)) {
         allUnifiedResults.push({
           displayId: `pending-${trc.id}`, // Use TestRunCases.id for pending displayId

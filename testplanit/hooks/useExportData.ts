@@ -265,7 +265,7 @@ const formatItemData = <TData extends RowData>(
       value = item.issues?.map((issue: any) => issue.name).join(", ") ?? "";
     } else if (columnId === "testRuns") {
       value =
-        item.testRuns
+        item.testRunCases
           ?.map((trc: any) => trc.testRun?.name)
           .filter(Boolean)
           .join(", ") ?? "";

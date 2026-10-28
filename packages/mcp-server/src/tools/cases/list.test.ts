@@ -421,7 +421,7 @@ describe("registerCasesList", () => {
       ...makeRawRow({}, id),
       repositoryCaseVersions: [],
       junitResults: [],
-      testRuns: [],
+      testRunCases: [],
       ...overrides,
     };
   }
@@ -474,7 +474,7 @@ describe("registerCasesList", () => {
     expect(where.repositoryId).toBe(42);
   });
 
-  it("filter: hasNeverExecuted emits both junitResults.none and testRuns.none.results.some", async () => {
+  it("filter: hasNeverExecuted emits both junitResults.none and testRunCases.none.results.some", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -484,7 +484,7 @@ describe("registerCasesList", () => {
     const body = getLastCallBody();
     const where = body?.where as Record<string, unknown>;
     expect(where.junitResults).toEqual({ none: {} });
-    expect(where.testRuns).toEqual({ none: { results: { some: {} } } });
+    expect(where.testRunCases).toEqual({ none: { results: { some: {} } } });
   });
 
   it("filter: updatedAfter routes through repositoryCaseVersions.some.createdAt.gte", async () => {
@@ -553,7 +553,7 @@ describe("registerCasesList", () => {
       include: {
         repositoryCaseVersions: { take: number; orderBy: unknown[] };
         junitResults: { take: number; orderBy: unknown[] };
-        testRuns: {
+        testRunCases: {
           select: { results: { take: number; orderBy: unknown[] } };
         };
       };
@@ -571,8 +571,8 @@ describe("registerCasesList", () => {
       { executedAt: { sort: "desc", nulls: "last" } },
       { id: "desc" },
     ]);
-    expect(body.include.testRuns.select.results.take).toBe(1);
-    expect(body.include.testRuns.select.results.orderBy).toEqual([
+    expect(body.include.testRunCases.select.results.take).toBe(1);
+    expect(body.include.testRunCases.select.results.orderBy).toEqual([
       { executedAt: "desc" },
       { id: "desc" },
     ]);
@@ -667,7 +667,7 @@ describe("registerCasesList", () => {
           { createdAt: "2026-04-15T00:00:00.000Z", version: 2 },
         ],
         junitResults: [],
-        testRuns: [],
+        testRunCases: [],
       },
       1,
     );
@@ -694,7 +694,7 @@ describe("registerCasesList", () => {
             { createdAt: "2026-04-15T00:00:00.000Z", version: 2 },
           ],
           junitResults: [],
-          testRuns: [],
+          testRunCases: [],
         },
         i + 1,
       ),

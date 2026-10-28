@@ -73,7 +73,7 @@ const buildCase = (overrides: Record<string, unknown> = {}) => ({
   forecastAutomated: null,
   template: { caseFields: [] },
   caseFieldValues: [],
-  testRuns: [],
+  testRunCases: [],
   ...overrides,
 });
 
@@ -103,7 +103,7 @@ const mockLinkedCases = (...testCases: any[]) => {
       template,
       caseFieldValues: _values,
       steps: _steps,
-      testRuns: _runs,
+      testRunCases: _runs,
       ...row
     } = testCase;
     return {
@@ -137,7 +137,7 @@ const mockLinkedCases = (...testCases: any[]) => {
   vi.mocked(baseDb.testRunCases.findMany).mockResolvedValue(
     testCases
       .filter((testCase) =>
-        (testCase.testRuns ?? []).some(
+        (testCase.testRunCases ?? []).some(
           (runCase: any) => runCase.results.length > 0
         )
       )
@@ -195,7 +195,7 @@ describe("jira test-info deleted cases", () => {
         id: 12,
         name: "Results gone",
         isDeleted: true,
-        testRuns: [buildRunCase([])],
+        testRunCases: [buildRunCase([])],
       })
     );
 
@@ -212,7 +212,7 @@ describe("jira test-info deleted cases", () => {
         id: 11,
         name: "Gone",
         isDeleted: true,
-        testRuns: [buildRunCase([buildResult()])],
+        testRunCases: [buildRunCase([buildResult()])],
       })
     );
     // The ranking service decides what the history holds; the route hydrates
@@ -282,7 +282,12 @@ describe("jira test-info deleted cases", () => {
     // `source` stays MANUAL on an imported case that later gained automation,
     // so the boolean is the only thing that can distinguish the two.
     mockLinkedCases(
-      buildCase({ id: 12, name: "Automated", automated: true, testRuns: [] })
+      buildCase({
+        id: 12,
+        name: "Automated",
+        automated: true,
+        testRunCases: [],
+      })
     );
 
     const response = await GET(buildRequest());
@@ -293,7 +298,7 @@ describe("jira test-info deleted cases", () => {
 
   it("defaults the automated flag to false when the column is null", async () => {
     mockLinkedCases(
-      buildCase({ id: 13, name: "Legacy", automated: null, testRuns: [] })
+      buildCase({ id: 13, name: "Legacy", automated: null, testRunCases: [] })
     );
 
     const response = await GET(buildRequest());
@@ -304,14 +309,14 @@ describe("jira test-info deleted cases", () => {
 
   it("reports an automated execution as the latest result", async () => {
     // The regression this guards: the panel used to read only the loaded
-    // `testRuns` relation, which holds manual TestRunResults, so an automated
+    // `testRunCases` relation, which holds manual TestRunResults, so an automated
     // case showed a stale manual result instead of its most recent CI run.
     mockLinkedCases(
       buildCase({
         id: 14,
         name: "CI case",
         automated: true,
-        testRuns: [buildRunCase([buildResult({ id: 901 })])],
+        testRunCases: [buildRunCase([buildResult({ id: 901 })])],
       })
     );
     vi.mocked(getLatestTestResultsByCase).mockResolvedValue(
@@ -366,7 +371,7 @@ describe("jira test-info deleted cases", () => {
   });
 
   it("still returns a live case that has never been run", async () => {
-    mockLinkedCases(buildCase({ id: 10, name: "Live", testRuns: [] }));
+    mockLinkedCases(buildCase({ id: 10, name: "Live", testRunCases: [] }));
 
     const response = await GET(buildRequest());
     const body = await response.json();

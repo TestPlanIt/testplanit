@@ -238,7 +238,7 @@ const mockTestCase = {
   steps: [],
   caseTags: [],
   caseIssues: [],
-  testRuns: [],
+  testRunCases: [],
   source: "manual",
   automated: false,
 };

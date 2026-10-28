@@ -262,7 +262,7 @@ const mockTestCase = {
   project: { id: 1, name: "Project" },
   steps: [],
   source: "manual",
-  testRuns: [
+  testRunCases: [
     {
       id: 101,
       testRun: {
@@ -355,7 +355,7 @@ describe("TestResultHistory", () => {
   it("renders empty state when no results exist", () => {
     const testCaseNoResults = {
       ...mockTestCase,
-      testRuns: [],
+      testRunCases: [],
       junitResults: [],
     };
     mockUseFindFirstRepositoryCases.mockReturnValue({
@@ -414,7 +414,7 @@ describe("TestResultHistory", () => {
   it("renders pending result when test run case has no results", () => {
     const testCaseWithPending = {
       ...mockTestCase,
-      testRuns: [
+      testRunCases: [
         {
           id: 201,
           testRun: {
@@ -503,7 +503,7 @@ describe("TestResultHistory", () => {
   it("renders Add to Test Run button when user has add/edit run permission", () => {
     const testCaseNoResults = {
       ...mockTestCase,
-      testRuns: [],
+      testRunCases: [],
       junitResults: [],
     };
     mockUseFindFirstRepositoryCases.mockReturnValue({
@@ -565,9 +565,9 @@ describe("TestResultHistory", () => {
     });
     const testCaseWithStepResults = {
       ...mockTestCase,
-      testRuns: [
+      testRunCases: [
         {
-          ...mockTestCase.testRuns[0],
+          ...mockTestCase.testRunCases[0],
           results: [resultWithSteps],
         },
       ],
@@ -603,9 +603,9 @@ describe("TestResultHistory", () => {
     mockUseFindFirstRepositoryCases.mockReturnValue({
       data: {
         ...mockTestCase,
-        testRuns: [
+        testRunCases: [
           {
-            ...mockTestCase.testRuns[0],
+            ...mockTestCase.testRunCases[0],
             results: [{ ...mockManualResult, id: 3 }],
           },
         ],
@@ -653,7 +653,7 @@ describe("TestResultHistory", () => {
   it("hides Add to Test Run button when user lacks permission", () => {
     const testCaseNoResults = {
       ...mockTestCase,
-      testRuns: [],
+      testRunCases: [],
       junitResults: [],
     };
     mockUseFindFirstRepositoryCases.mockReturnValue({
@@ -709,7 +709,11 @@ describe("TestResultHistory", () => {
     beforeEach(() => {
       virtualHookMock.window = null;
       mockUseFindFirstRepositoryCases.mockReturnValue({
-        data: { ...mockTestCase, testRuns: [], junitResults: manyJunitResults },
+        data: {
+          ...mockTestCase,
+          testRunCases: [],
+          junitResults: manyJunitResults,
+        },
         isLoading: false,
       });
     });

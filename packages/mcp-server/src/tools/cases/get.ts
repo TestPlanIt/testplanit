@@ -115,7 +115,7 @@ export const CASE_DETAIL_INCLUDE = {
       status: { select: { id: true, name: true } },
     },
   },
-  testRuns: {
+  testRunCases: {
     orderBy: [{ id: "desc" }],
     take: 1,
     select: {

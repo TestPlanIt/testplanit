@@ -160,8 +160,8 @@ const exportSelectClause = {
       issue: true,
     },
   },
-  // Include the testRuns relation for export
-  testRuns: {
+  // Include the testRunCases relation for export
+  testRunCases: {
     select: {
       id: true, // Include TestRunCases id
       testRun: {

@@ -317,7 +317,7 @@ interface RawCaseRow {
   // get null mappings.
   repositoryCaseVersions?: Array<{ createdAt: Date | string; version: number }>;
   junitResults?: RawLatestJunit[];
-  testRuns?: Array<{ results: RawLatestRunResult[] }>;
+  testRunCases?: Array<{ results: RawLatestRunResult[] }>;
 }
 
 export function mapCaseRow(
@@ -359,7 +359,7 @@ export function mapCaseRow(
     lastUpdatedAt: lastUpdatedAtFromRaw(raw),
     latestResult: resolveLatestResult(
       raw.junitResults?.[0],
-      raw.testRuns?.[0]?.results?.[0],
+      raw.testRunCases?.[0]?.results?.[0],
     ),
     // Automation reality (distinct from the user-set `automated` flag): a
     // JUnit result row is execution evidence. The include shapes order

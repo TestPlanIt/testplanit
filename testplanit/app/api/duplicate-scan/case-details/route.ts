@@ -70,7 +70,7 @@ async function fetchCaseDetails(caseId: number) {
         },
       },
       _count: { select: { attachments: true } },
-      testRuns: {
+      testRunCases: {
         orderBy: { createdAt: "desc" },
         take: 1,
         select: {
@@ -93,7 +93,7 @@ async function fetchCaseDetails(caseId: number) {
   // empty. Without this the panel shows a run name and date with a blank
   // status — which reads as "never executed" for the automation-heavy cases
   // that dominate duplicate scans.
-  const lastRun = result.testRuns?.[0];
+  const lastRun = result.testRunCases?.[0];
   if (lastRun && lastRun.status == null) {
     const effectiveStatuses = await getEffectiveRunCaseStatuses([lastRun.id]);
     const resolved = effectiveStatuses.get(lastRun.id);

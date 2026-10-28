@@ -309,7 +309,7 @@ const REPOSITORY_CASE_LIST_SELECT = {
   steps: CASE_STEPS_SELECT,
   caseTags: CASE_TAGS_SELECT,
   caseIssues: CASE_ISSUES_SELECT,
-  testRuns: {
+  testRunCases: {
     select: {
       id: true,
       testRun: {
@@ -431,7 +431,7 @@ const TEST_RUN_CASE_LIST_SELECT = {
       steps: CASE_STEPS_SELECT,
       caseTags: CASE_TAGS_SELECT,
       caseIssues: CASE_ISSUES_SELECT,
-      testRuns: {
+      testRunCases: {
         select: {
           id: true,
           testRun: {
@@ -1318,7 +1318,7 @@ export default function Cases({
       } else if (column === "linkedCases") {
         return { repositoryCase: { linksFrom: { _count: direction } } };
       } else if (column === "testRuns") {
-        return { repositoryCase: { testRuns: { _count: direction } } };
+        return { repositoryCase: { testRunCases: { _count: direction } } };
       } else if (column === "comments") {
         return { repositoryCase: { comments: { _count: direction } } };
       } else if (column === "attachments") {
@@ -1399,7 +1399,7 @@ export default function Cases({
         return { linksFrom: { _count: direction } };
       }
       if (column === "testRuns") {
-        return { testRuns: { _count: direction } };
+        return { testRunCases: { _count: direction } };
       }
       if (column === "comments") {
         return { comments: { _count: direction } };

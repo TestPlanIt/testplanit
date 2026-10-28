@@ -858,10 +858,10 @@ export function TestRunCaseDetails({
               <div className="min-w-[200px] max-w-[300px]">
                 <AsyncCombobox
                   value={
-                    testcase?.testRuns?.[0]?.assignedTo
+                    testcase?.testRunCases?.[0]?.assignedTo
                       ? {
-                          id: testcase.testRuns[0].assignedTo.id,
-                          name: testcase.testRuns[0].assignedTo.name,
+                          id: testcase.testRunCases[0].assignedTo.id,
+                          name: testcase.testRunCases[0].assignedTo.name,
                           email: null,
                           image: null,
                         }
@@ -967,10 +967,10 @@ export function TestRunCaseDetails({
             automated={testcase.automated}
             hasParameters={testcase.hasParameters}
           />
-          {testcase.testRuns?.[0]?.testRun?.configuration && (
+          {testcase.testRunCases?.[0]?.testRun?.configuration && (
             <Badge className="flex items-center gap-1 text-sm mt-1 w-fit">
               <Combine className="w-4 h-4 shrink-0" />
-              <span>{testcase.testRuns[0].testRun.configuration.name}</span>
+              <span>{testcase.testRunCases[0].testRun.configuration.name}</span>
             </Badge>
           )}
           {currentStatus && automatedStatus && (
@@ -1298,7 +1298,7 @@ export function TestRunCaseDetails({
           flipJustificationError={flipErrorOnOpen}
           issueOnFailureError={issueErrorOnOpen}
           steps={testcase.steps}
-          configuration={testcase.testRuns?.[0]?.testRun?.configuration}
+          configuration={testcase.testRunCases?.[0]?.testRun?.configuration}
           iterationId={activeIterationId}
           iterationLabel={activeIterationLabel}
           parameters={stepParameters}

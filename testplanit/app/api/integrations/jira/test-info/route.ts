@@ -415,7 +415,7 @@ async function loadPanelTestCases(
   );
 
   // Latest executions per case, across BOTH sources. The panel used to derive
-  // these from the loaded `testRuns` relation alone, which only ever holds
+  // these from the loaded `testRunCases` relation alone, which only ever holds
   // TestRunResults -- manual executions. Automated runs write to
   // JUnitTestResult, so an automated case reported whatever manual result it
   // last had, often years stale, and never showed a CI failure at all.

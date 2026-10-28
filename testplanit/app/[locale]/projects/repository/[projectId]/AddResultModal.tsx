@@ -442,7 +442,7 @@ export function AddResultModal({
   ).repositoryCases.useFindFirst(
     {
       where: {
-        testRuns: {
+        testRunCases: {
           some: {
             id: testRunCaseId,
           },

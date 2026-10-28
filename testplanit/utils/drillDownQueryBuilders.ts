@@ -1262,7 +1262,7 @@ export function buildTestCasesQuery(
     // Filter at the TestRunResults level, not TestRunCases level, because
     // TestRunResults.testRunId ≠ TestRunCases.testRunId in some cases.
     ...(sourceId !== "AUTOMATED" && !rootCauseClassified
-      ? [{ testRuns: { some: { results: { some: resultsFilter } } } }]
+      ? [{ testRunCases: { some: { results: { some: resultsFilter } } } }]
       : []),
     ...(sourceId !== "MANUAL" ? [{ junitResults: { some: junitFilter } }] : []),
   ];

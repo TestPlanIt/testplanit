@@ -9,7 +9,7 @@ import type {
  * TestRunCaseDetails, plus the run page's own "did the next case load yet"
  * check). Previously fetched via the ZenStack policy-enforced client hook in
  * both places independently -- ~10 nested relations (steps, caseFieldValues,
- * caseTags, caseIssues, testRuns+results, template+caseFields+fieldOptions),
+ * caseTags, caseIssues, testRunCases+results, template+caseFields+fieldOptions),
  * plus `project`/`folder`/`creator` full-object includes nobody read, made
  * ZenStack re-inline the `Projects` `@@allow('read', ...)` ladder as a
  * correlated per-row subquery at every relation-filter site: mean 10.6s / max
@@ -170,14 +170,14 @@ export const testRunCaseDetailSelect = {
 } satisfies RepositoryCasesSelect;
 
 /**
- * `testRuns` is scoped to a single run and so depends on the caller's
+ * `testRunCases` is scoped to a single run and so depends on the caller's
  * `testRunId` -- kept out of the `satisfies`-checked base shape above (which
  * has no `testRunId` in scope) and merged in per-call.
  */
 function selectFor(testRunId: number | undefined) {
   return {
     ...testRunCaseDetailSelect,
-    testRuns: {
+    testRunCases: {
       where: { testRunId: testRunId ?? undefined },
       select: {
         id: true,

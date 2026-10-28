@@ -177,7 +177,7 @@ export async function buildCasesWhere(
     // junitResults has no rows AND no TestRunCases junction has any
     // associated results.
     where.junitResults = { none: {} };
-    where.testRuns = { none: { results: { some: {} } } };
+    where.testRunCases = { none: { results: { some: {} } } };
   }
   // Automation-reality filters accumulate as AND terms so they compose with
   // each other and with hasNeverExecuted's direct `junitResults` key instead
