@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { usePathname, useRouter } from "~/lib/navigation";
+import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 import {
   getOperatorArity,
   type FilterDimensionRegistry,
@@ -36,14 +36,14 @@ import {
  * dims outside run mode — bad operator/arity/values) are dropped, never
  * thrown.
  *
- * Writes go through `router.replace(..., { scroll: false })` from
- * `~/lib/navigation` (locale preserved) — always replace, never push, so
- * filter churn does not pollute history. The query is composed from
- * `window.location.search`, NOT a useSearchParams snapshot: TreeView writes
- * `node` via raw history.replaceState and useSearchParams can lag
- * (ColumnSelection.tsx documents the same), so a snapshot would silently drop
- * a just-selected folder. Every other param (node/case/view/columns/matrix
- * filters) is preserved — only the `f` keys are deleted and re-appended.
+ * Writes go through `useUrlParamWriter`, the shared writer every URL-param
+ * writer on the page uses — always replace, never push, so filter churn does
+ * not pollute history. It composes through the process-wide overlay in
+ * `~/utils/urlParamWrite` rather than from a useSearchParams snapshot, so this
+ * write cannot drop a `view`, `columns` or `node` value another writer still
+ * has in flight (nor they this one). Every other param
+ * (node/case/view/columns/matrix filters) is preserved — only the `f` keys are
+ * deleted and re-appended.
  * A serialized-echo guard skips the write when the `f` set already matches
  * the URL; it doubles as the re-entrancy guard for URL→state sync effects.
  *
@@ -203,8 +203,7 @@ export function useRepositoryFilters({
   persistToUrl,
 }: UseRepositoryFiltersOptions): UseRepositoryFiltersResult {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
+  const replaceUrlParams = useUrlParamWriter(applyReadabilityPass);
 
   const [localPredicates, setLocalPredicates] =
     useState<FilterPredicate[]>(EMPTY_PREDICATES);
@@ -251,30 +250,31 @@ export function useRepositoryFilters({
         setLocalPredicates(encoding.predicates);
         return;
       }
-      const query = new URLSearchParams(window.location.search);
-      // Echo guard: getAll form-decodes, so the comparison holds whether the
-      // address bar shows `:`/`,` readable or form-encoded.
-      if (
-        sameTokens(query.getAll(FILTER_PARAM), encoding.fParams) &&
-        (query.get(COMPRESSED_FILTER_PARAM) ?? null) === encoding.compressed
-      ) {
-        return;
-      }
-      // Both families are cleared on every write so a compressed link that
-      // shrinks back under budget cannot leave a stale `fz` shadowing the
-      // freshly written `f` params.
-      query.delete(FILTER_PARAM);
-      query.delete(COMPRESSED_FILTER_PARAM);
-      if (encoding.compressed) {
-        query.set(COMPRESSED_FILTER_PARAM, encoding.compressed);
-      }
-      for (const token of encoding.fParams) {
-        query.append(FILTER_PARAM, token);
-      }
-      const qs = applyReadabilityPass(query.toString());
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      replaceUrlParams((query) => {
+        // Echo guard: getAll form-decodes, so the comparison holds whether the
+        // address bar shows `:`/`,` readable or form-encoded. Returning without
+        // touching `query` leaves the composed string unchanged, which the
+        // writer treats as "nothing to navigate to".
+        if (
+          sameTokens(query.getAll(FILTER_PARAM), encoding.fParams) &&
+          (query.get(COMPRESSED_FILTER_PARAM) ?? null) === encoding.compressed
+        ) {
+          return;
+        }
+        // Both families are cleared on every write so a compressed link that
+        // shrinks back under budget cannot leave a stale `fz` shadowing the
+        // freshly written `f` params.
+        query.delete(FILTER_PARAM);
+        query.delete(COMPRESSED_FILTER_PARAM);
+        if (encoding.compressed) {
+          query.set(COMPRESSED_FILTER_PARAM, encoding.compressed);
+        }
+        for (const token of encoding.fParams) {
+          query.append(FILTER_PARAM, token);
+        }
+      });
     },
-    [persistToUrl, router, pathname]
+    [persistToUrl, replaceUrlParams]
   );
 
   const addPredicate = useCallback(

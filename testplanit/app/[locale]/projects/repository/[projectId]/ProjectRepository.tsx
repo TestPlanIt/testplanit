@@ -115,12 +115,12 @@ import { ProjectIcon } from "~/components/ProjectIcon";
 import { usePageFileDrop } from "~/hooks/usePageFileDrop";
 import { usePendingReviewCaseIds } from "~/hooks/usePendingReviewCaseIds";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
-import { usePathname, useRouter } from "~/lib/navigation";
 import { useFolderStats } from "~/lib/useFolderStats";
 import { AddCase } from "./AddCase";
 import { StagedCasesSheet } from "./StagedCasesSheet";
@@ -463,8 +463,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const numericProjectId = parseInt(projectId, 10);
   const isValidProjectId = !isNaN(numericProjectId);
 
-  const router = useRouter();
-  const pathName = usePathname();
   const { data: session, status: sessionStatus } = useSession();
 
   // Use the validated numericProjectId here
@@ -608,47 +606,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   }, [effectiveFullWidth]);
 
   // --- Single owner for this component's URL writes ------------------------
-  // App Router navigations are async, so two `router.replace` calls composed
-  // from separate `window.location.search` reads each see the pre-write URL
-  // and the second silently drops the first's param. Every writer here goes
-  // through this helper, which composes from the freshest search string it
-  // knows: the value it last wrote, until the router commits it and
-  // window.location catches up. `useSearchParams` is deliberately not the
-  // source — TreeView writes `node` through raw history.replaceState and the
-  // snapshot lags (ColumnSelection documents the same). The codec's
+  // Shared with every other writer in the page through the process-wide
+  // overlay in `~/utils/urlParamWrite`; that module documents why. The codec's
   // readability pass runs on the way out so readable `f` tokens written by
   // useRepositoryFilters are not re-encoded on an unrelated write.
-  const pendingUrlWriteRef = useRef<{ from: string; to: string } | null>(null);
-  const replaceUrlParams = useCallback(
-    (mutate: (params: URLSearchParams) => void) => {
-      const currentSearch = window.location.search;
-      const pending = pendingUrlWriteRef.current;
-      const baseSearch =
-        pending && pending.from === currentSearch ? pending.to : currentSearch;
-      const query = new URLSearchParams(baseSearch);
-      const before = query.toString();
-      mutate(query);
-      const after = query.toString();
-      if (after === before) return;
-      pendingUrlWriteRef.current = {
-        from: currentSearch,
-        to: after ? `?${after}` : "",
-      };
-      const qs = applyReadabilityPass(after);
-      router.replace(qs ? `${pathName}?${qs}` : pathName, { scroll: false });
-    },
-    [pathName, router]
-  );
-
-  // Once the router commits (window.location moves off the value the overlay
-  // was composed against) the overlay is spent. Dropping it keeps a later
-  // back-navigation that happens to land on the same URL from replaying it.
-  useEffect(() => {
-    const pending = pendingUrlWriteRef.current;
-    if (pending && window.location.search !== pending.from) {
-      pendingUrlWriteRef.current = null;
-    }
-  }, [searchParams]);
+  const replaceUrlParams = useUrlParamWriter(applyReadabilityPass);
 
   const closeDetails = useCallback(() => {
     replaceUrlParams((p) => p.delete("case"));

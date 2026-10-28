@@ -42,6 +42,8 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { resetUrlWriteOverlay } from "~/utils/urlParamWrite";
+
 // ---- Hoisted spies / mutable holders (referenced from vi.mock factories) ----
 
 const {
@@ -430,6 +432,9 @@ function writtenViewUrl() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Module state shared by every URL writer; without this a previous test's
+  // pending write suppresses this one as a no-op.
+  resetUrlWriteOverlay();
   setLocation("");
   paramsHolder.current = { projectId: "42" };
   viewOptionsHolder.current = { data: makeViewOptionsData(), isError: false };

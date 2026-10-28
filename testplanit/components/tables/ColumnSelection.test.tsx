@@ -2,6 +2,8 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { resetUrlWriteOverlay } from "~/utils/urlParamWrite";
+
 // Control the `?columns=` query param per test.
 const mockSearchParams = { current: "" };
 
@@ -74,6 +76,9 @@ beforeEach(() => {
   mockSearchParams.current = "";
   navMocks.push.mockClear();
   navMocks.replace.mockClear();
+  // Module state shared by every URL writer; without this a previous test's
+  // pending write suppresses this one as a no-op.
+  resetUrlWriteOverlay();
 });
 
 describe("column visibility storage helpers", () => {

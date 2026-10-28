@@ -100,7 +100,8 @@ import {
 import type { PostFetchFilter } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { usePathname, useRouter } from "~/lib/navigation";
+import { useRouter } from "~/lib/navigation";
+import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
 import { useLatestTestResults } from "~/hooks/useLatestTestResults";
 import { useCaseIdsByLatestStatus } from "~/hooks/useCaseIdsByLatestStatus";
@@ -630,7 +631,7 @@ export default function Cases({
 
   const { data: session, status } = useSession();
   const router = useRouter();
-  const pathname = usePathname();
+  const replaceUrlParams = useUrlParamWriter();
   const searchParams = useSearchParams();
   const params = useParams();
   const projectIdParam = params.projectId;
@@ -1019,13 +1020,14 @@ export default function Cases({
       hasAutoSelectedRef.current = true;
       const firstFolder = projectFolders[0];
 
-      // Navigate to the first folder by updating the URL
-      const currentSearchParams = new URLSearchParams(searchParams.toString());
-      currentSearchParams.set("node", firstFolder.id.toString());
-      currentSearchParams.set("view", "folders");
-
-      const newUrl = `${pathname}?${currentSearchParams.toString()}`;
-      router.replace(newUrl);
+      // Navigate to the first folder by updating the URL. Through the shared
+      // writer: this runs on landing, when the page's other writers are also
+      // in flight, and composing from this effect's `searchParams` snapshot
+      // would drop whichever of them has not committed yet.
+      replaceUrlParams((query) => {
+        query.set("node", firstFolder.id.toString());
+        query.set("view", "folders");
+      });
 
       // Dispatch a custom event to notify the tree component
       // Use a small timeout to ensure the URL change propagates
@@ -1046,15 +1048,7 @@ export default function Cases({
         }
       }, 100);
     }
-  }, [
-    viewType,
-    folderId,
-    projectFolders,
-    isFoldersLoading,
-    router,
-    pathname,
-    searchParams,
-  ]);
+  }, [viewType, folderId, projectFolders, isFoldersLoading, replaceUrlParams]);
 
   // Add effect to listen for modal state changes
   useEffect(() => {

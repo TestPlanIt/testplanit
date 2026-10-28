@@ -4,7 +4,6 @@ import { schema } from "~/zenstack/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
 import React, {
   createContext,
   useCallback,
@@ -14,7 +13,7 @@ import React, {
 } from "react";
 import { toast } from "sonner";
 import { getMaxOrderInTestRun } from "~/app/actions/test-run";
-import { usePathname, useRouter } from "~/lib/navigation";
+import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 import { cn } from "~/utils";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
@@ -331,9 +330,7 @@ const NameCell = React.memo(function NameCell({
   showDescendants,
   folderPathMap,
 }: NameCellProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const replaceUrlParams = useUrlParamWriter();
   const { opensInNewWindow } = useDetailsDisplayMode();
   // Plain repository browsing with the "new window" preference: the click
   // opens the full case page in a new window instead of the docked panel.
@@ -394,9 +391,9 @@ const NameCell = React.memo(function NameCell({
   if (isRunMode && canAddEditResults) {
     const handleClick = () => {
       if (isSoftDeletedInRun) return;
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("selectedCase", id.toString());
-      router.replace(`${pathname}?${params.toString()}`);
+      // Through the shared writer so this click cannot drop a `view`, `f` or
+      // `columns` write the page still has in flight.
+      replaceUrlParams((params) => params.set("selectedCase", id.toString()));
     };
 
     return (
@@ -434,10 +431,13 @@ const NameCell = React.memo(function NameCell({
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    const params = new URLSearchParams(searchParams.toString());
-                    params.set("view", "folders");
-                    params.set("node", folder.id.toString());
-                    router.push(`${pathname}?${params.toString()}`);
+                    replaceUrlParams(
+                      (params) => {
+                        params.set("view", "folders");
+                        params.set("node", folder.id.toString());
+                      },
+                      { history: "push" }
+                    );
                   }}
                 >
                   <Folder className="w-3 h-3 me-1 shrink-0" />
@@ -488,10 +488,10 @@ const NameCell = React.memo(function NameCell({
           )
             return;
           e.preventDefault();
-          const params = new URLSearchParams(searchParams.toString());
-          params.set("case", id.toString());
           // push (not replace) so the browser Back button closes the panel.
-          router.push(`${pathname}?${params.toString()}`);
+          replaceUrlParams((params) => params.set("case", id.toString()), {
+            history: "push",
+          });
         }}
       >
         <div className="truncate whitespace-nowrap overflow-hidden">
@@ -516,10 +516,13 @@ const NameCell = React.memo(function NameCell({
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.set("view", "folders");
-                  params.set("node", folder.id.toString());
-                  router.push(`${pathname}?${params.toString()}`);
+                  replaceUrlParams(
+                    (params) => {
+                      params.set("view", "folders");
+                      params.set("node", folder.id.toString());
+                    },
+                    { history: "push" }
+                  );
                 }}
               >
                 <Folder className="w-3 h-3 me-1 shrink-0" />
@@ -597,9 +600,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   // For parameterized cases, the status is derived from the iteration
   // rollup (no per-case-level result writes). Render a click-to-open-sheet
   // button instead of the status-picker dropdown.
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const replaceUrlParams = useUrlParamWriter();
   const isParameterized = (totalIterations ?? 0) > 0;
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [isBulkAssign, setIsBulkAssign] = useState(false);
@@ -658,9 +659,9 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
 
   const handleOpenParameterizedSheet = () => {
     if (isSoftDeletedInRun) return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("selectedCase", caseId.toString());
-    router.replace(`${pathname}?${params.toString()}`);
+    // Through the shared writer so this click cannot drop a `view`, `f` or
+    // `columns` write the page still has in flight.
+    replaceUrlParams((params) => params.set("selectedCase", caseId.toString()));
   };
 
   // A case blocked by an unpassed dependency in this run cannot take a

@@ -16,7 +16,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { usePathname, useRouter } from "~/lib/navigation";
+import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 
 const COLUMN_VISIBILITY_STORAGE_PREFIX = "testplanit:columnVisibility:";
 const COLUMN_ORDER_STORAGE_PREFIX = "testplanit:columnOrder:";
@@ -294,8 +294,7 @@ export function ColumnSelection<TData extends RowData>({
   storageKey,
   hideColumnRef,
 }: ColumnSelectionProps<TData>) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const replaceUrlParams = useUrlParamWriter();
   const searchParams = useSearchParams();
   const columnVisibilityQuery = searchParams.get("columns");
   const t = useTranslations("common");
@@ -508,31 +507,23 @@ export function ColumnSelection<TData extends RowData>({
       )
       .join(",");
 
-    // Use window.location.search instead of searchParams.toString() to get
-    // the actual current URL. searchParams can lag behind pushState updates
-    // (especially in dev mode), causing stale params to overwrite correct values.
-    const query = new URLSearchParams(window.location.search);
-    const currentColumns = query.get("columns");
     const newColumns = visibleColumns === "" ? "none" : visibleColumns;
 
-    // Skip URL update if columns haven't changed
-    if (currentColumns === newColumns) {
-      return;
-    }
-
-    query.set("columns", newColumns);
-    const url = `${pathname}?${query.toString()}`;
-    // replace, not push: this effect mirrors column-visibility state into the
-    // URL (including the initial default set on load). A push adds a history
-    // entry per sync, so leaving the page takes two Back clicks.
-    router.replace(url, { scroll: false });
+    // Through the shared writer, not a self-composed router.replace: this
+    // effect fires on landing, at the same time as the host page's own writes
+    // (`view`, `f`, `node`), and composing from a separate read of the URL
+    // drops whichever of those is still in flight. It also replaces rather
+    // than pushes — this mirrors column-visibility state into the URL,
+    // including the initial default set on load, and a push would add a
+    // history entry per sync so leaving the page takes two Back clicks. A
+    // write that changes nothing is dropped by the writer.
+    replaceUrlParams((query) => query.set("columns", newColumns));
   }, [
     columnVisibility,
     onVisibilityChange,
-    router,
+    replaceUrlParams,
     columnVisibilityQuery,
     metadataSource,
-    pathname,
   ]);
 
   const handleCheckboxChange = (columnId: string, isChecked: boolean) => {
