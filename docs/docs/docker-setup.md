@@ -52,7 +52,7 @@ The Docker Compose setup starts these containerized services:
 
   The PostgreSQL figures do not add headroom for `/dev/shm`, where Postgres puts the shared memory segments its parallel query workers use. The compose files cap that at 256MB (see **Tuning the caps** below), but it is a cap rather than a reservation — pages are consumed only as queries use them, so a small install never pays for it. Installs that report heavily over large result sets should budget the Postgres service toward the recommended figure or above, since that is when the segments are actually allocated.
 
-  **Tuning the caps.** The compose file caps the worker fleet at `4G` of memory, Postgres at `2` CPUs, and Postgres's `/dev/shm` at `256mb`. Raise any of them without editing the file by setting environment variables in your shell, the default `.env`, or `--env-file` — **not** `.env.production`, which is a runtime `env_file` and is not read during compose variable substitution:
+  **Tuning the caps.** The compose file caps the worker fleet at `4G` of memory, Postgres at `2` CPUs, and Postgres's `/dev/shm` at `256mb`. Raise any of them without editing the file by setting environment variables in your shell, the default `.env`, or `--env-file` — **not** `.env.production`, which is a runtime `env_file` and is not read during compose variable substitution (see [Docker Compose variables](environment-variables.md#docker-compose) for the full list):
 
   ```bash
   # e.g. a 32GB host running large Testmo imports and heavy reporting:
@@ -161,6 +161,8 @@ The Docker Compose setup starts these containerized services:
 
    Alternatively, place the `DOCKER_*_PORT` values in a local `.env` file (auto-loaded by Compose).
 
+   Every variable the compose files interpolate, and how to change settings they do not expose, is listed under [Docker Compose variables](environment-variables.md#docker-compose).
+
    Note: this only changes external host bindings. Internal service ports stay the same (for example PostgreSQL remains `postgres:5432` inside the Docker network).
 
 4. **Choose Your Services:**
@@ -226,7 +228,8 @@ The Docker Compose setup starts these containerized services:
 
    To pin a release, set `TESTPLANIT_VERSION` (for example `1.1.12`) in the
    shell, the default `.env`, or `--env-file`, not `.env.production`. The default,
-   `latest`, follows the newest release.
+   `latest`, follows the newest release. See
+   [Docker Compose variables](environment-variables.md#docker-compose).
 
    **What Happens During Startup:**
    1. Selected services start based on profiles
