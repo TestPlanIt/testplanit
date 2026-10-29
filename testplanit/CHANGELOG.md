@@ -1,3 +1,9 @@
+## [1.2.0-beta.19](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.18...v1.2.0-beta.19) (2026-10-29)
+
+### Features
+
+* **risk:** show the risk score on test case details ([67a8b64](https://github.com/TestPlanIt/testplanit/commit/67a8b6444a217edc362bf0983679cdd5962d0356))
+
 ## [1.2.0-beta.18](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.17...v1.2.0-beta.18) (2026-10-28)
 
 ### Features
