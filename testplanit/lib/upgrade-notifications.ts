@@ -472,6 +472,7 @@ export const upgradeNotifications: Record<
           <li><strong>Failure Patterns</strong> — every failed automated result is fingerprinted and grouped, so a run with two hundred red rows comes down to a handful of patterns. Each one gets a root cause from a configurable catalogue, picked by AI or by hand, the issue that explains it, and team notes. Link an issue and the pattern becomes a <strong>known issue</strong>, badged on the run page so the next person sees it is already tracked.</li>
           <li><strong>Quarantine</strong> — a case failing for a known reason keeps running, but its failures are counted in a separate Quarantined bucket instead of against your pass rate. It releases itself once the case passes five times in a row, or stays until you release it by hand.</li>
           <li><strong>Alerts</strong> — pick a metric, set a threshold, and choose who hears about it: a case that keeps failing or starts to flake, a pass rate under your bar, a stalled run, a milestone falling behind. In the app, by email, in the digest, or through webhooks.</li>
+          <li><strong>Risk Scores</strong> — every test case carries a score from 0 to 100 for how much it deserves a run right now, blending failure history, flakiness, staleness, the criticality of the requirements it covers, and its open defects. Sort or filter the repository by it, pick a run's cases by it, weigh it beside Impact Analysis, and click any score to see which signals produced it. Deterministic — it never calls an AI model.</li>
           <li><strong>Choose what you're notified about</strong> — every kind of notification has its own switch, so you can silence milestone reminders and still hear about review requests and mentions.</li>
           <li><strong>Test case dependencies</strong> — hold a case in a run until its prerequisites have passed, then tell the next tester it is their turn.</li>
           <li><strong>Runs offer to close themselves</strong> — record the result that completes the last case and TestPlanIt asks whether to complete the run, so finished runs stop sitting open.</li>
@@ -479,8 +480,9 @@ export const upgradeNotifications: Record<
           <li><strong>Staged test cases</strong> — write cases over several sittings in the Add Case dialog, review them, and add them to the repository together.</li>
           <li><strong>ClickUp</strong> — connect ClickUp as fully as Jira: create and link tasks, fill in your List's custom fields, and keep status in sync.</li>
           <li><strong>Failure rate trend report</strong> — answers one question: is the failure rate of your results getting better or worse, by day, week, month, quarter or year.</li>
+          <li><strong>Revert a review decision</strong> — undo an approval or rejection made in error, within a time limit each project can tighten. Requesters cannot revert decisions on their own requests.</li>
         </ul>
-        <p>Failure Patterns is on for new projects and groups failures with no AI cost; assign an AI model to the <strong>Failure Patterns: Root Cause</strong> feature to get suggested root causes. See the <a href="https://docs.testplanit.com/docs/user-guide/failure-patterns" target="_blank">Failure Patterns documentation</a> and <a href="https://docs.testplanit.com/docs/user-guide/alerts" target="_blank">Alerts documentation</a> to get started.</p>
+        <p>Failure Patterns is on for new projects and groups failures with no AI cost; assign an AI model to the <strong>Failure Patterns: Root Cause</strong> feature to get suggested root causes. Risk scoring is on by default and costs nothing — turn it off per project under <strong>Project Settings &rarr; Risk Scoring</strong>, and add the Risk Score column from the repository's column picker. See the <a href="https://docs.testplanit.com/docs/user-guide/failure-patterns" target="_blank">Failure Patterns documentation</a>, <a href="https://docs.testplanit.com/docs/user-guide/alerts" target="_blank">Alerts documentation</a> and <a href="https://docs.testplanit.com/docs/user-guide/risk-scores" target="_blank">Risk Scores documentation</a> to get started.</p>
       `,
     },
     {
@@ -495,6 +497,18 @@ export const upgradeNotifications: Record<
           <li>Per-project settings, including automatic quarantine release and how many consecutive passes it takes, live under <strong>Project Settings &rarr; Failure Patterns</strong>. Results recorded before the upgrade are grouped with <strong>Analyze existing results</strong> there.</li>
         </ul>
         <p>See the <a href="https://docs.testplanit.com/docs/user-guide/root-causes" target="_blank">Root Causes documentation</a> for details.</p>
+      `,
+    },
+    {
+      title: "One API relation was renamed",
+      access: [Access.ADMIN],
+      message: `
+        <p>On the test case model, the relation to a run's cases is now <code>testRunCases</code> rather than <code>testRuns</code> — it returns <code>TestRunCases</code> records, and the old name read as though it returned test runs.</p>
+        <ul>
+          <li>Update any direct model API calls that <code>include</code> or <code>select</code> <code>testRuns</code> on <code>repositoryCases</code>.</li>
+          <li>Nothing changes in the UI, in saved column layouts, or in CSV import mappings.</li>
+          <li>The <code>testRuns</code> relation on issues, milestones, tags and projects is a different relation and keeps its name.</li>
+        </ul>
       `,
     },
   ],
