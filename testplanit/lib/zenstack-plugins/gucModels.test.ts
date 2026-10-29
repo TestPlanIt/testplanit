@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { GUC_MODELS } from "./sideEffectsPlugin";
+import {
+  GUC_MODELS,
+  SOFT_DELETE_MODELS,
+  needsAuditGuc,
+} from "./sideEffectsPlugin";
 
 describe("GUC_MODELS — audit actor-context coverage", () => {
   // Regression: milestone edits made through the model API were mis-attributed
@@ -114,5 +118,25 @@ describe("GUC_MODELS — audit actor-context coverage", () => {
     ]) {
       expect(GUC_MODELS.has(model)).toBe(false);
     }
+  });
+
+  // The tpl_stamp_deleted_at_* trigger fills `deletedById` from the GUC actor,
+  // so every soft-deletable model needs the GUC even when it is not an audited
+  // root entity — otherwise a deleted folder/dataset/attachment records no
+  // deleter and its owner cannot restore it from their Trash.
+  it("injects the GUC for every soft-deletable model", () => {
+    expect(SOFT_DELETE_MODELS.size).toBeGreaterThanOrEqual(56);
+    for (const model of [
+      "RepositoryFolders",
+      "DataSet",
+      "Attachments",
+      "ShareLink",
+      "TestRunCases",
+      "User",
+    ]) {
+      expect(SOFT_DELETE_MODELS.has(model), model).toBe(true);
+      expect(needsAuditGuc(model), model).toBe(true);
+    }
+    expect(needsAuditGuc("AppConfig")).toBe(false);
   });
 });

@@ -137,6 +137,7 @@ const testProject: ExtendedProjects = {
   iconUrl: null,
   isDeleted: false,
   deletedAt: null,
+  deletedById: null,
   isCompleted: false,
   completedAt: null,
   createdAt: new Date(),

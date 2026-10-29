@@ -354,15 +354,29 @@ $$ LANGUAGE plpgsql;
  */
 const STAMP_DELETED_AT_FN_SQL = `
 CREATE OR REPLACE FUNCTION tpl_stamp_deleted_at() RETURNS TRIGGER AS $$
+DECLARE
+  actor text;
 BEGIN
   IF NEW."isDeleted" IS TRUE THEN
     -- false -> true: stamp the deletion moment, unless the write set one explicitly.
     IF NEW."deletedAt" IS NULL THEN
       NEW."deletedAt" := now();
     END IF;
+    -- Record WHO deleted the row from the audit GUC (the same transaction-local
+    -- actor the CDC trigger reads), unless the write set it explicitly. NULL for
+    -- system/worker writes, which is correct: nobody can self-restore those.
+    IF NEW."deletedById" IS NULL THEN
+      BEGIN
+        actor := NULLIF(current_setting('app.audit_context', true), '')::jsonb->>'userId';
+      EXCEPTION WHEN others THEN
+        actor := NULL;
+      END;
+      NEW."deletedById" := actor;
+    END IF;
   ELSE
-    -- true -> false (restore): the row is live again, so drop the tombstone timestamp.
+    -- true -> false (restore): the row is live again, so drop the tombstone metadata.
     NEW."deletedAt" := NULL;
+    NEW."deletedById" := NULL;
   END IF;
   RETURN NEW;
 END;

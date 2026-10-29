@@ -324,6 +324,7 @@ export function AddCaseFieldModal({
         order: prevOptions.length,
         isDeleted: false,
         deletedAt: null,
+        deletedById: null,
       };
       return applyOptionOrder([...prevOptions, newOption]);
     });
@@ -415,6 +416,7 @@ export function AddCaseFieldModal({
           order: index,
           isDeleted: false,
           deletedAt: null,
+          deletedById: null,
         })
       );
 

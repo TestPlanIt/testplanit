@@ -230,6 +230,26 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
     projectCol: "projectId",
   },
   { table: "Attachments", denylist: ["createdAt"], nameCol: "name" }, // no updatedAt (immutable once uploaded)
+  // User-deletable content that previously had no audit row at all, so a deleted
+  // folder/dataset/share link was invisible to the audit log and to "who deleted it".
+  {
+    table: "RepositoryFolders",
+    denylist: ["createdAt"],
+    nameCol: "name",
+    projectCol: "projectId",
+  }, // no updatedAt
+  {
+    table: "DataSet",
+    denylist: ["createdAt"],
+    nameCol: "name",
+    projectCol: "projectId",
+  }, // no updatedAt
+  {
+    table: "ShareLink",
+    denylist: ["createdAt", "updatedAt"],
+    nameCol: "title",
+    projectCol: "projectId",
+  },
   {
     table: "ReviewRequest",
     denylist: ["createdAt", "updatedAt"],
@@ -463,12 +483,16 @@ export const SINGLE_DEFAULT_REGISTRY: SingleDefaultConfig[] = [
 ];
 
 /**
- * Soft-delete deletedAt stamping (a business rule, NOT audit capture). Every table
- * carrying an `isDeleted` boolean also carries a nullable `deletedAt` timestamp
- * (Option A — additive; `isDeleted` stays the queryable liveness flag). Each listed
- * table gets a `tpl_stamp_deleted_at_<table>` BEFORE UPDATE trigger that stamps
- * `deletedAt = now()` on the isDeleted false→true flip and clears it (→ NULL) on a
- * true→false restore, in the SAME write. The trigger is gated on an actual flip
+ * Soft-delete deletedAt / deletedById stamping (a business rule, NOT audit capture).
+ * Every table carrying an `isDeleted` boolean also carries a nullable `deletedAt`
+ * timestamp and a nullable `deletedById` actor column (Option A — additive;
+ * `isDeleted` stays the queryable liveness flag). Each listed table gets a
+ * `tpl_stamp_deleted_at_<table>` BEFORE UPDATE trigger that stamps
+ * `deletedAt = now()` and `deletedById = <audit GUC actor>` on the isDeleted
+ * false→true flip and clears both (→ NULL) on a true→false restore, in the SAME
+ * write. The actor comes from the `app.audit_context` GUC the CDC substrate
+ * already sets, so the user-facing Trash (restore your own deletes) shares one
+ * attribution source with the audit log. The trigger is gated on an actual flip
  * (WHEN NEW.isDeleted IS DISTINCT FROM OLD.isDeleted), so normal updates never enter
  * the function — no overhead on hot write paths. Doing it in the DB, not app code,
  * means every soft-delete write path (both Prisma clients, raw SQL, future code) is
@@ -484,7 +508,7 @@ export const SINGLE_DEFAULT_REGISTRY: SingleDefaultConfig[] = [
  * soft-deletable model that forgets its trigger fails the unit lane, not silently in prod.
  */
 export interface SoftDeleteConfig {
-  /** Postgres table name (exact case, no quotes — the apply script quotes it). Must have an `isDeleted` boolean + a nullable `deletedAt` column. */
+  /** Postgres table name (exact case, no quotes — the apply script quotes it). Must have an `isDeleted` boolean + nullable `deletedAt` and `deletedById` columns. */
   table: string;
 }
 

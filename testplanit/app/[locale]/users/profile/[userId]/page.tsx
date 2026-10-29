@@ -76,6 +76,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { UserAssignments } from "~/components/users/UserAssignments";
 import { UserAuditLog } from "~/components/users/UserAuditLog";
+import { UserTrash } from "~/components/users/UserTrash";
 import { SCIM_SCHEMAS } from "~/lib/scim/constants";
 import { languageNames } from "~/i18n/navigation";
 import { Link, useRouter } from "~/lib/navigation";
@@ -1618,6 +1619,27 @@ const UserProfile: React.FC<UserProfileProps> = ({
                             </div>
                           </AccordionContent>
                         </AccordionItem>
+
+                        {/* Trash — own profile or admin only: what this user
+                            deleted and can still restore themselves */}
+                        {canViewPrivateInfo && (
+                          <AccordionItem
+                            value="trash"
+                            data-testid="profile-section-trash"
+                          >
+                            <AccordionTrigger
+                              className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline"
+                              data-testid="profile-trash-trigger"
+                            >
+                              {tGlobal("admin.menu.trash")}
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="px-4">
+                                <UserTrash userId={userId} />
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )}
 
                         {/* Audit Log — own profile or admin only */}
                         {(isOwnProfile || isAdmin) && (

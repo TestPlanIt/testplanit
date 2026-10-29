@@ -17,6 +17,7 @@ const createTestConfig = (
     settings: { keepAlive: "10m" },
     isDeleted: false,
     deletedAt: null,
+    deletedById: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

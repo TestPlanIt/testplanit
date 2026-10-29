@@ -18,6 +18,11 @@
 //     the attaching trigger is gated `WHEN (NEW."isDeleted" IS DISTINCT FROM
 //     OLD."isDeleted")`, so a re-save must never re-stamp the deletion moment
 //     and silently extend the retention window.
+// Plus the deleter: the same trigger copies the actor out of the
+// `app.audit_context` GUC (the JSON the sideEffectsPlugin sets per
+// transaction) into `deletedById`, leaves it NULL when no actor is set, and
+// clears it on restore. The user Trash lists by this column, so a wrong source
+// here would show people the wrong deletes.
 //
 // Run via (never against the default .env DATABASE_URL — that resolves to
 // `ew`):
@@ -52,6 +57,7 @@ const SUBJECTS = [
 type SoftDeleteRow = {
   isDeleted: boolean;
   deletedAt: Date | null;
+  deletedById: string | null;
   name: string | null;
 };
 
@@ -62,7 +68,12 @@ type SoftDeleteDelegate = {
   }) => Promise<unknown>;
   findUniqueOrThrow: (args: {
     where: { id: number };
-    select: { isDeleted: true; deletedAt: true; name: true };
+    select: {
+      isDeleted: true;
+      deletedAt: true;
+      deletedById: true;
+      name: true;
+    };
   }) => Promise<SoftDeleteRow>;
   deleteMany: (args: { where: { id: number } }) => Promise<unknown>;
 };
@@ -84,7 +95,7 @@ const read = (table: string) =>
     SUBJECTS.find((s) => s.table === table)!.delegate
   ).findUniqueOrThrow({
     where: { id: subjectIds.get(table)! },
-    select: { isDeleted: true, deletedAt: true, name: true },
+    select: { isDeleted: true, deletedAt: true, deletedById: true, name: true },
   });
 
 const write = (table: string, data: Record<string, unknown>) =>
@@ -278,6 +289,41 @@ describeIntegration("tpl_stamp_deleted_at_* triggers (live DB)", () => {
       // ...and the deletion moment is untouched, so the retention window
       // never restarts on an unrelated write.
       expect(afterRename.deletedAt!.getTime()).toBe(originalDeletionMoment);
+
+      await write(table, { isDeleted: false });
+    });
+
+    it("stamps deletedById from the audit GUC actor, NULL without one, and clears it on restore", async () => {
+      const id = subjectIds.get(table)!;
+      const delegate = SUBJECTS.find((s) => s.table === table)!.delegate;
+      const flip = (isDeleted: boolean) =>
+        (db as unknown as Record<string, SoftDeleteDelegate>)[delegate].update({
+          where: { id },
+          data: { isDeleted },
+        });
+
+      // No actor on the connection: the deleter is unknown, not invented.
+      await flip(true);
+      expect((await read(table)).deletedById).toBeNull();
+      await flip(false);
+
+      // The plugin sets `app.audit_context` with SET LOCAL inside the
+      // transaction it writes in; the same shape here, by hand.
+      await db.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify({ userId: adminUserId })}, true)`;
+        await (tx as unknown as Record<string, SoftDeleteDelegate>)[
+          delegate
+        ].update({ where: { id }, data: { isDeleted: true } });
+      });
+      const deleted = await read(table);
+      expect(deleted.isDeleted).toBe(true);
+      expect(deleted.deletedById).toBe(adminUserId);
+
+      // Restoring forgets the deleter along with the timestamp.
+      await flip(false);
+      const restored = await read(table);
+      expect(restored.deletedAt).toBeNull();
+      expect(restored.deletedById).toBeNull();
     });
   });
 });

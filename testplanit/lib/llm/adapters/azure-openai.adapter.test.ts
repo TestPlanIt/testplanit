@@ -21,6 +21,7 @@ const createTestConfig = (
     },
     isDeleted: false,
     deletedAt: null,
+    deletedById: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

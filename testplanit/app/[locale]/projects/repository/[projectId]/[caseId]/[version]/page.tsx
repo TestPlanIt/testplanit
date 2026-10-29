@@ -477,6 +477,7 @@ export default function TestCaseVersions() {
           testCaseId: testcase.id,
           isDeleted: step.isDeleted !== undefined ? step.isDeleted : false,
           deletedAt: step.deletedAt ?? null,
+          deletedById: step.deletedById ?? null,
           sharedStepGroupId:
             step.sharedStepGroupId !== undefined
               ? step.sharedStepGroupId

@@ -8,6 +8,7 @@
       "editAction": "Edit ({count})",
       "completeAction": "Complete ({count})",
       "deleteAction": "Delete ({count})",
+      "restoreAction": "Restore ({count})",
       "editTitle": "Bulk Edit ({count})",
       "applyToCount": "Changes apply to {count, plural, one {# item} other {# items}}.",
       "tagsAdditiveHint": "Selected tags are added to each item; existing tags are kept.",
@@ -3116,6 +3117,27 @@
         "allTypes": "All Types",
         "noMatchingEntries": "No entries match the selected filters.",
         "showing": "{loaded} of {total} entries"
+      },
+      "trash": {
+        "description": "Deleted items that can still be restored from here.",
+        "empty": "Nothing in your trash. Items you delete can be restored here for {days, plural, one {# day} other {# days}}.",
+        "disabled": "Self-service restore is turned off. Ask an administrator to restore deleted items from Admin > Trash.",
+        "timeLeftColumn": "Time left",
+        "timeLeft": "{days, plural, =0 {Less than a day} one {# day} other {# days}}",
+        "confirmDescription": "\"{name}\" will be restored to {project}, together with anything that was deleted with it.",
+        "bulkConfirmDescription": "Each of the {count} selected items will be restored to its project, together with anything that was deleted with it.",
+        "restored": "\"{name}\" restored.",
+        "restoreFailed": "Could not restore \"{name}\": {message}",
+        "bulkResult": "{restored, plural, one {# item} other {# items}} restored, {failed} failed.",
+        "failure": {
+          "parent_deleted": "its folder or parent is still deleted — restore that first",
+          "name_conflict": "an item with the same name already exists",
+          "expired": "the restore window has passed",
+          "forbidden": "you no longer have permission in that project",
+          "disabled": "self-service restore is turned off",
+          "not_owner": "only the person who deleted it can restore it",
+          "not_found": "it is no longer in the trash"
+        }
       },
       "myComments": {
         "title": "My Comments",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "Are you sure you want to permanently delete this row from the {itemType} table? This action cannot be undone and might remove associated data."
       },
       "filterTypesPlaceholder": "Filter item types...",
-      "summary": "{count, plural, =0 {Trash is empty} one {# item in trash} other {# items in trash}}"
+      "summary": "{count, plural, =0 {Trash is empty} one {# item in trash} other {# items in trash}}",
+      "userWindow": {
+        "label": "Self-service restore window",
+        "invalid": "Enter a whole number of days (0 turns it off)."
+      }
     },
     "notifications": {
       "title": "Notification Administration",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Reindex Data\nRebuild search indices for improved search performance.",
     "queues": "## Background Job Queues\nMonitor and manage background job processing queues.",
     "trash": "## Trash\nRestore or permanently purge soft-deleted records across the system.",
+    "userTrashWindow": "## Self-service restore window\nHow many days users can restore items they deleted themselves, from the **Trash** section of their profile. Set it to **0** to turn self-service restore off. Items that fall outside the window simply stop appearing in the user's Trash — nothing is purged, and administrators can still restore or purge anything here.",
     "systemWebhooks": "## System Webhooks\nOutbound webhook destinations for system-level events that aren't tied to a single project — currently the SCIM 2.0 user and group lifecycle events. Configure inbound and project-scoped outbound webhooks from the project settings page instead.",
     "workflows": "## Workflows\nManage the workflow states for test cases, test runs, and sessions.",
     "workflowReviews": "## Review Workflow\nEnforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",

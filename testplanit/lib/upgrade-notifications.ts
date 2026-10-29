@@ -481,6 +481,7 @@ export const upgradeNotifications: Record<
           <li><strong>ClickUp</strong> — connect ClickUp as fully as Jira: create and link tasks, fill in your List's custom fields, and keep status in sync.</li>
           <li><strong>Failure rate trend report</strong> — answers one question: is the failure rate of your results getting better or worse, by day, week, month, quarter or year.</li>
           <li><strong>Revert a review decision</strong> — undo an approval or rejection made in error, within a time limit each project can tighten. Requesters cannot revert decisions on their own requests.</li>
+          <li><strong>Restore your own deletes</strong> — a <strong>Trash</strong> section on your profile lists the test cases, folders, runs, sessions, milestones, issues, datasets and attachments you recently deleted, by name, and restores them together with everything that went with them. No administrator required; your administrator sets how long deleted items stay restorable.</li>
         </ul>
         <p>Failure Patterns is on for new projects and groups failures with no AI cost; assign an AI model to the <strong>Failure Patterns: Root Cause</strong> feature to get suggested root causes. Risk scoring is on by default and costs nothing — turn it off per project under <strong>Project Settings &rarr; Risk Scoring</strong>, and add the Risk Score column from the repository's column picker. See the <a href="https://docs.testplanit.com/docs/user-guide/failure-patterns" target="_blank">Failure Patterns documentation</a>, <a href="https://docs.testplanit.com/docs/user-guide/alerts" target="_blank">Alerts documentation</a> and <a href="https://docs.testplanit.com/docs/user-guide/risk-scores" target="_blank">Risk Scores documentation</a> to get started.</p>
       `,
@@ -497,6 +498,19 @@ export const upgradeNotifications: Record<
           <li>Per-project settings, including automatic quarantine release and how many consecutive passes it takes, live under <strong>Project Settings &rarr; Failure Patterns</strong>. Results recorded before the upgrade are grouped with <strong>Analyze existing results</strong> there.</li>
         </ul>
         <p>See the <a href="https://docs.testplanit.com/docs/user-guide/root-causes" target="_blank">Root Causes documentation</a> for details.</p>
+      `,
+    },
+    {
+      title: "Users can now restore their own deletes",
+      access: [Access.ADMIN],
+      message: `
+        <p>Every user has a <strong>Trash</strong> section on their profile that restores what they deleted themselves, for <strong>30 days</strong> by default.</p>
+        <ul>
+          <li>Change the window, or set it to <strong>0</strong> to turn self-service restore off, from <strong>Administration &rarr; Trash</strong>.</li>
+          <li>Users only ever see their own deletes, and only in projects where they can still edit that kind of item. Restoring brings back everything deleted along with the item &mdash; a folder's cases and steps, a run's results.</li>
+          <li>Items deleted before this upgrade have no recorded deleter, so they stay admin-only. <strong>Administration &rarr; Trash</strong> is unchanged: it shows everything and is never bound by the window.</li>
+        </ul>
+        <p>See the <a href="https://docs.testplanit.com/docs/user-guide/trash" target="_blank">Trash documentation</a> for details.</p>
       `,
     },
     {

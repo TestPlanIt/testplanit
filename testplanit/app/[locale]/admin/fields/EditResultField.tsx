@@ -314,6 +314,7 @@ export function EditResultField({
             : undefined,
           isDeleted: false,
           deletedAt: null,
+          deletedById: null,
         }))
         .sort((a, b) => a.order - b.order);
 
@@ -370,6 +371,7 @@ export function EditResultField({
           order: prevOptions.length + 1,
           isDeleted: false,
           deletedAt: null,
+          deletedById: null,
         },
       ];
     });

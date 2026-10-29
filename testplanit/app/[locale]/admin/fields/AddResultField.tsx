@@ -320,6 +320,7 @@ export function AddResultFieldModal({
         order: prevOptions.length,
         isDeleted: false,
         deletedAt: null,
+        deletedById: null,
       };
       return applyOptionOrder([...prevOptions, newOption]);
     });
@@ -411,6 +412,7 @@ export function AddResultFieldModal({
           order: index,
           isDeleted: false,
           deletedAt: null,
+          deletedById: null,
         })
       );
 

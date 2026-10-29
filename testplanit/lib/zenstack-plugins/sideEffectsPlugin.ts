@@ -253,6 +253,27 @@ export const GUC_MODELS = new Set<string>([
   "RolePermission",
 ]);
 
+// Every soft-deletable model also gets the GUC, regardless of GUC_MODELS: the
+// tpl_stamp_deleted_at_* trigger reads the actor out of it to fill
+// `deletedById` on the isDeleted flip, which is what lets a user see and
+// restore their own deletes (user Trash). Derived from the schema so a new
+// soft-deletable model is covered without a registry edit.
+export const SOFT_DELETE_MODELS = new Set<string>(
+  Object.values(
+    schema.models as unknown as Record<
+      string,
+      { name: string; fields: Record<string, unknown> }
+    >
+  )
+    .filter((model) => model.fields.isDeleted && model.fields.deletedAt)
+    .map((model) => model.name)
+);
+
+/** Models whose standalone hooked-client writes set the audit GUC. */
+export function needsAuditGuc(model: string): boolean {
+  return GUC_MODELS.has(model) || SOFT_DELETE_MODELS.has(model);
+}
+
 // Models that need their before-image for an update/delete diff or emit.
 const BEFORE_IMAGE_MODELS = new Set<string>([
   "RepositoryCases",
@@ -738,7 +759,7 @@ export const sideEffectsPlugin = definePlugin(schema, {
         // Set the audit-context GUC inside the mutation's transaction so the CDC
         // trigger attributes the originating actor. Skip when an audited
         // transaction already set it (auditTxStore is populated).
-        if (GUC_MODELS.has(model) && !auditTxStore.getStore()) {
+        if (needsAuditGuc(model) && !auditTxStore.getStore()) {
           await injectAuditGuc(client as unknown as TxClient);
         }
         // Capture the before-image inside the mutation's transaction for

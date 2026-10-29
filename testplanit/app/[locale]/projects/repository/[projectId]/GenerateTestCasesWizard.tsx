@@ -893,6 +893,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
         isShared: step?.isShared ?? Boolean(step?.sharedStepGroupId),
         isDeleted: step?.isDeleted ?? false,
         deletedAt: step?.deletedAt ?? null,
+        deletedById: step?.deletedById ?? null,
         testCaseId: typeof step?.testCaseId === "number" ? step.testCaseId : 0,
       };
     });

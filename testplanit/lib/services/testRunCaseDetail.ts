@@ -101,6 +101,7 @@ export const testRunCaseDetailSelect = {
       testCaseId: true,
       isDeleted: true,
       deletedAt: true,
+      deletedById: true,
       createdById: true,
       sessionId: true,
       sessionResultsId: true,
@@ -122,6 +123,7 @@ export const testRunCaseDetailSelect = {
       expectedResult: true,
       isDeleted: true,
       deletedAt: true,
+      deletedById: true,
       sharedStepGroupId: true,
       sharedStepGroup: {
         select: {
@@ -130,6 +132,7 @@ export const testRunCaseDetailSelect = {
           projectId: true,
           isDeleted: true,
           deletedAt: true,
+          deletedById: true,
           createdAt: true,
           updatedAt: true,
           createdById: true,

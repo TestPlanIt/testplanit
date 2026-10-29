@@ -326,6 +326,7 @@ export function EditCaseField({
             : undefined,
           isDeleted: false,
           deletedAt: null,
+          deletedById: null,
         }))
         .sort((a, b) => a.order - b.order);
 
@@ -382,6 +383,7 @@ export function EditCaseField({
           order: prevOptions.length + 1,
           isDeleted: false,
           deletedAt: null,
+          deletedById: null,
         },
       ];
     });

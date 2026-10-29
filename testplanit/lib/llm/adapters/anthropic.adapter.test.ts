@@ -17,6 +17,7 @@ const createTestConfig = (
     settings: null,
     isDeleted: false,
     deletedAt: null,
+    deletedById: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

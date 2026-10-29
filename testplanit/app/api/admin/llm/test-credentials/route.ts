@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
         } as JsonValue,
         isDeleted: false,
         deletedAt: null,
+        deletedById: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
