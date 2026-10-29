@@ -1,6 +1,5 @@
 "use client";
 
-import { useDebounce } from "@/components/Debounce";
 import { DateFilterInput } from "@/components/DateFilterInput";
 import type { FilterInputValue } from "@/components/filterInputValue";
 import { LinkFilterInput } from "@/components/LinkFilterInput";
@@ -16,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FilterDimension } from "~/lib/repository/filterDimensions";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import { isCommittable } from "./chipHelpers";
@@ -28,22 +27,38 @@ import type { FilterValueOption } from "./valueOptions";
 // operator Select); list-backed types get the editor-level operator Select.
 const LIST_VALUE_TYPES = new Set(["idList", "userList", "options", "boolean"]);
 
-// Free-text-driven value types: value-only edits are debounced before being
-// committed; operator changes and list/date picks commit immediately.
-const DEBOUNCED_VALUE_TYPES = new Set(["text", "link", "number", "steps"]);
-
-const DEBOUNCE_MS = 300;
+// Typed value types: everything the user has to key in. These never commit
+// on edit — not on a keystroke and not on an operator switch — because each
+// commit is a URL write that re-reads `predicates` a round-trip later, which
+// both unmounts the editor mid-entry and races the next write. They are held
+// here and applied once, on confirm (Enter / the apply button) or when the
+// editor closes. List, boolean and date picks stay live: one click there is
+// already an unambiguous, complete choice.
+const TYPED_VALUE_TYPES = new Set(["text", "link", "number", "steps"]);
 
 export interface FilterChipEditorProps {
   dimension: FilterDimension;
   predicate: FilterPredicate;
   options: FilterValueOption[];
   /**
-   * Commit path. Emits complete predicates — except list editors, where
-   * deselecting the last value of a min-1 operator intentionally emits an
-   * empty values array so useRepositoryFilters can remove the chip.
+   * Live commit path, used by the list, boolean and date editors. Emits
+   * complete predicates — except list editors, where deselecting the last
+   * value of a min-1 operator intentionally emits an empty values array so
+   * useRepositoryFilters can remove the chip. Typed dimensions never commit
+   * through here; they report via `onPendingChange` instead.
    */
   onChange: (next: FilterPredicate) => void;
+  /**
+   * Reports a typed dimension's in-progress value on every edit, without
+   * committing it. The bar keeps the latest one so closing the editor can
+   * apply it. Null once the entry is no longer complete enough to apply.
+   */
+  onPendingChange?: (next: FilterPredicate | null) => void;
+  /**
+   * Asks for the editor to be closed, which is also what applies a pending
+   * typed value. Raised by Enter and the apply button.
+   */
+  onRequestClose?: () => void;
   countsMuted?: boolean;
 }
 
@@ -52,6 +67,8 @@ export function FilterChipEditor({
   predicate,
   options,
   onChange,
+  onPendingChange,
+  onRequestClose,
   countsMuted,
 }: FilterChipEditorProps) {
   const t = useTranslations();
@@ -64,23 +81,7 @@ export function FilterChipEditor({
     setDraft(predicate);
   }, [predicate]);
 
-  const [pending, setPending] = useState<FilterPredicate | null>(null);
-  const debouncedPending = useDebounce(pending, DEBOUNCE_MS);
-  // Identity guard: the effect must not re-send when a re-render (or an
-  // onChange identity change) refires it with an already-committed value.
-  const lastSentRef = useRef<FilterPredicate | null>(null);
-  useEffect(() => {
-    if (debouncedPending && debouncedPending !== lastSentRef.current) {
-      lastSentRef.current = debouncedPending;
-      onChange(debouncedPending);
-    }
-  }, [debouncedPending, onChange]);
-
-  const commitImmediate = (next: FilterPredicate) => {
-    setPending(null);
-    lastSentRef.current = next;
-    onChange(next);
-  };
+  const isTypedValue = TYPED_VALUE_TYPES.has(dimension.valueType);
 
   const handleInputChange = (value: FilterInputValue) => {
     const next: FilterPredicate = {
@@ -89,21 +90,19 @@ export function FilterChipEditor({
       values: value.values,
     };
     setDraft(next);
-    if (
-      value.operator === predicate.operator &&
-      DEBOUNCED_VALUE_TYPES.has(dimension.valueType)
-    ) {
-      setPending(next);
-    } else {
-      commitImmediate(next);
+    if (isTypedValue) {
+      // Pending only — see TYPED_VALUE_TYPES.
+      onPendingChange?.(isCommittable(next, dimension) ? next : null);
+      return;
     }
+    onChange(next);
   };
 
   const handleOperatorChange = (operator: string) => {
     const next: FilterPredicate = { ...draft, operator };
     setDraft(next);
     if (isCommittable(next, dimension)) {
-      commitImmediate(next);
+      onChange(next);
     }
   };
 
@@ -118,7 +117,7 @@ export function FilterChipEditor({
     setDraft(next);
     // Committed even when it empties a min-1 operator: the filters hook
     // removes the chip in that case. Draft chips are gated by the bar.
-    commitImmediate(next);
+    onChange(next);
   };
 
   const structuredValue = useMemo<FilterInputValue>(
@@ -132,6 +131,13 @@ export function FilterChipEditor({
     value: structuredValue,
     onValueChange: handleInputChange,
     operators: dimension.operators,
+  };
+
+  // Confirming a typed entry closes the editor, and the close is what applies
+  // it — so one editing session is one URL write, whichever way it is ended.
+  const typedInputProps = {
+    ...inputProps,
+    onConfirm: () => onRequestClose?.(),
   };
 
   return (
@@ -188,14 +194,20 @@ export function FilterChipEditor({
 
       {dimension.valueType === "number" && (
         <NumericFilterInput
-          {...inputProps}
+          {...typedInputProps}
           fieldType={dimension.fieldType ?? "Number"}
         />
       )}
-      {dimension.valueType === "steps" && <StepsFilterInput {...inputProps} />}
+      {dimension.valueType === "steps" && (
+        <StepsFilterInput {...typedInputProps} />
+      )}
       {dimension.valueType === "date" && <DateFilterInput {...inputProps} />}
-      {dimension.valueType === "text" && <TextFilterInput {...inputProps} />}
-      {dimension.valueType === "link" && <LinkFilterInput {...inputProps} />}
+      {dimension.valueType === "text" && (
+        <TextFilterInput {...typedInputProps} />
+      )}
+      {dimension.valueType === "link" && (
+        <LinkFilterInput {...typedInputProps} />
+      )}
     </div>
   );
 }

@@ -47,10 +47,18 @@ interface LinkFilterInputProps {
   /** Structured chip-editor mode: the committed {operator, values}. */
   value?: FilterInputValue | null;
   /**
-   * Structured change path — emits only complete states (the chip editor
-   * debounces free-text edits before persisting).
+   * Structured change path — reports the editor's current value on every
+   * edit, emitting an empty `values` array while the entry is incomplete.
+   * It is a pending signal, not a commit: the chip editor holds typed values
+   * off-URL and applies them only on confirm.
    */
   onValueChange?: (next: FilterInputValue) => void;
+  /**
+   * Explicit confirm (Enter or the apply button) for a valid entry. The chip
+   * editor treats this as "apply and close", so a typed filter reaches the
+   * URL exactly once per editing session.
+   */
+  onConfirm?: () => void;
   /** Operator whitelist for structured mode; defaults to the legacy set. */
   operators?: readonly string[];
 }
@@ -62,6 +70,7 @@ export function LinkFilterInput({
   currentFilter,
   value: structuredValue,
   onValueChange,
+  onConfirm,
   operators,
 }: LinkFilterInputProps) {
   const t = useTranslations();
@@ -100,18 +109,23 @@ export function LinkFilterInput({
       return;
     }
     const trimmed = raw.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      onValueChange({ operator: op, values: [] });
+      return;
+    }
     onValueChange({ operator: op, values: [trimmed] });
   };
 
   const handleApply = () => {
     if (isValueless) {
       emitStructured(operator, value);
+      onConfirm?.();
       return;
     }
     if (!value.trim()) return;
     onFilterApply?.(operator as LinkOperator, value.trim());
     emitStructured(operator, value);
+    onConfirm?.();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -212,6 +226,8 @@ export function LinkFilterInput({
             onClick={handleApply}
             disabled={!isValid()}
             className="h-8 w-8 p-0 shrink-0"
+            aria-label={t("common.actions.apply")}
+            data-testid="filter-input-apply"
           >
             <Check className="h-3 w-3" />
           </Button>

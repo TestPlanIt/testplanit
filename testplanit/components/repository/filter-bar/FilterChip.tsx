@@ -30,6 +30,11 @@ export interface FilterChipProps {
   onOpenChange: (open: boolean) => void;
   /** Editor commit path; the bar maps it onto onUpdate/onAdd. */
   onChange: (next: FilterPredicate) => void;
+  /**
+   * Forwarded to the editor: reports a typed dimension's in-progress value so
+   * the bar can apply it when the popover closes.
+   */
+  onPendingChange?: (next: FilterPredicate | null) => void;
   onRemove: () => void;
   countsMuted?: boolean;
   /** Lets the bar move focus to a neighboring chip after a removal. */
@@ -51,6 +56,7 @@ export function FilterChip({
   open,
   onOpenChange,
   onChange,
+  onPendingChange,
   onRemove,
   countsMuted,
   removeButtonRef,
@@ -101,6 +107,8 @@ export function FilterChip({
             predicate={predicate}
             options={options}
             onChange={onChange}
+            onPendingChange={onPendingChange}
+            onRequestClose={() => onOpenChange(false)}
             countsMuted={countsMuted}
           />
         </PopoverContent>
