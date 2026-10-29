@@ -585,10 +585,14 @@ export function TestCaseDetailsView({
   const { data: projectSettings } = useClientQueries(
     schema
   ).projects.useFindUnique(
-    { where: { id: Number(projectId) }, select: { quickScriptEnabled: true } },
+    {
+      where: { id: Number(projectId) },
+      select: { quickScriptEnabled: true, riskScoringEnabled: true },
+    },
     { enabled: isValidProjectId }
   );
   const quickScriptEnabled = projectSettings?.quickScriptEnabled ?? false;
+  const riskScoringEnabled = projectSettings?.riskScoringEnabled === true;
   const [isQuickScriptModalOpen, setIsQuickScriptModalOpen] = useState(false);
 
   const { data, isLoading, refetch, error } =
@@ -3288,6 +3292,7 @@ export function TestCaseDetailsView({
                     session={session}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
                     compact={headerCompact}
+                    riskScoringEnabled={riskScoringEnabled}
                   />
                 </div>
               </ResizablePanel>

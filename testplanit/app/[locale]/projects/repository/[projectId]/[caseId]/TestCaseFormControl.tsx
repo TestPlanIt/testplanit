@@ -19,6 +19,7 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import type { Attachments, Tags } from "~/zenstack/models";
+import { RiskScoreCell } from "@/components/risk/RiskScoreCell";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { CommentsSection } from "~/components/comments/CommentsSection";
@@ -48,6 +49,9 @@ interface TestCaseFormControlsProps {
   /** When true (narrow pane), the read-only Attachments section collapses to a
    * compact paperclip-count popover. Edit mode is unaffected. */
   compact?: boolean;
+  /** Project-level Risk Score switch. The read-only Risk Score item renders
+   * only when this is on and the case has actually been scored. */
+  riskScoringEnabled?: boolean;
 }
 
 const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
@@ -69,6 +73,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
   session,
   onAttachmentPendingChanges,
   compact = false,
+  riskScoringEnabled = false,
 }) => {
   const t = useTranslations();
 
@@ -267,6 +272,24 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                       />
                     </div>
                   )}
+                <Separator
+                  orientation="horizontal"
+                  className="mt-2 bg-primary/30"
+                />
+              </li>
+            )}
+
+            {riskScoringEnabled && testcase?.riskScore != null && (
+              <li className="mb-2 me-6">
+                <div id="risk-score-display" className="font-bold">
+                  {t("risk.score")}
+                </div>
+                <div aria-labelledby="risk-score-display">
+                  <RiskScoreCell
+                    score={testcase.riskScore}
+                    reasons={testcase.riskReasons ?? null}
+                  />
+                </div>
                 <Separator
                   orientation="horizontal"
                   className="mt-2 bg-primary/30"
