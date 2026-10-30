@@ -6,8 +6,6 @@ import { schema } from "~/zenstack/schema";
 import { DefaultTemplateBadge } from "@/components/DefaultTemplateBadge";
 import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WarningAlert } from "@/components/ui/warning-alert";
+import { SettingLabel } from "./SettingRow";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -24,7 +23,8 @@ const SYSTEM_DEFAULT = "system";
 
 /**
  * Picks the template new test cases and sessions in the project start with.
- * Saved as soon as it changes. A default that has since been disabled,
+ * Rendered as a row of the Advanced page's General section (no card of its
+ * own). Saved as soon as it changes. A default that has since been disabled,
  * deleted or unassigned stays selected and is flagged, so re-enabling it
  * restores it.
  */
@@ -97,75 +97,60 @@ export function DefaultTemplateCard({
   };
 
   return (
-    <Card data-testid="default-template-card">
-      <CardContent className="pt-6">
-        <div className="space-y-3">
-          <Label
-            htmlFor="default-template-select"
-            className="text-base font-medium"
-          >
-            {t("projects.settings.quickScript.exportTemplates.defaultLabel")}
-          </Label>
-          <p className="text-sm text-muted-foreground">
-            {t("projects.settings.advanced.defaultTemplate.description")}
-          </p>
-          <Select
-            value={
-              defaultTemplateId != null
-                ? String(defaultTemplateId)
-                : SYSTEM_DEFAULT
-            }
-            onValueChange={handleChange}
-            disabled={disabled || updateProject.isPending || !templates}
-          >
-            <SelectTrigger
-              id="default-template-select"
-              className="max-w-xs"
-              data-testid="default-template-select"
+    <div data-testid="default-template-card" className="space-y-2">
+      <SettingLabel
+        htmlFor="default-template-select"
+        label={t("projects.settings.quickScript.exportTemplates.defaultLabel")}
+        description={t(
+          "projects.settings.advanced.defaultTemplate.description"
+        )}
+      />
+      <Select
+        value={
+          defaultTemplateId != null ? String(defaultTemplateId) : SYSTEM_DEFAULT
+        }
+        onValueChange={handleChange}
+        disabled={disabled || updateProject.isPending || !templates}
+      >
+        <SelectTrigger
+          id="default-template-select"
+          className="w-80 max-w-full"
+          data-testid="default-template-select"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={SYSTEM_DEFAULT}>
+            {t("projects.settings.aiModels.useSystemDefault")}
+          </SelectItem>
+          {(templates ?? []).map((template) => (
+            <SelectItem
+              key={template.id}
+              value={String(template.id)}
+              disabled={!isUsable(template)}
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={SYSTEM_DEFAULT}>
-                {t("projects.settings.aiModels.useSystemDefault")}
-              </SelectItem>
-              {(templates ?? []).map((template) => (
-                <SelectItem
-                  key={template.id}
-                  value={String(template.id)}
-                  disabled={!isUsable(template)}
-                >
-                  <span className="flex items-center gap-1">
-                    <TemplateNameDisplay
-                      name={template.templateName}
-                      size="sm"
-                    />
-                    {template.isDefault && (
-                      <DefaultTemplateBadge source="system" />
-                    )}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {unavailableDefault && (
-            <WarningAlert data-testid="default-template-unavailable-warning">
-              <TriangleAlert className="h-4 w-4" />
-              <AlertTitle>
-                {t(
-                  "projects.settings.advanced.defaultTemplate.unavailableTitle"
-                )}
-              </AlertTitle>
-              <AlertDescription>
-                {t(
-                  "projects.settings.advanced.defaultTemplate.unavailableDescription",
-                  { name: unavailableDefault.templateName }
-                )}
-              </AlertDescription>
-            </WarningAlert>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+              <span className="flex items-center gap-1">
+                <TemplateNameDisplay name={template.templateName} size="sm" />
+                {template.isDefault && <DefaultTemplateBadge source="system" />}
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {unavailableDefault && (
+        <WarningAlert data-testid="default-template-unavailable-warning">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>
+            {t("projects.settings.advanced.defaultTemplate.unavailableTitle")}
+          </AlertTitle>
+          <AlertDescription>
+            {t(
+              "projects.settings.advanced.defaultTemplate.unavailableDescription",
+              { name: unavailableDefault.templateName }
+            )}
+          </AlertDescription>
+        </WarningAlert>
+      )}
+    </div>
   );
 }

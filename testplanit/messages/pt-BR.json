@@ -2191,6 +2191,12 @@
       },
       "advanced": {
         "description": "Opções específicas para cada projeto que definem suas preferências. Novas opções aparecerão aqui conforme forem introduzidas.",
+        "sections": {
+          "general": "Geral",
+          "reviews": "Avaliações",
+          "runs": "Execuções de testes",
+          "results": "Resultados"
+        },
         "recordKey": {
           "label": "Código do projeto",
           "description": "Um código curto usado em chaves de registro cosméticas como {example}. 2 a 10 letras maiúsculas, sem dígitos. Deixe em branco para exibir IDs numéricos simples.",
@@ -7967,7 +7973,11 @@
     "projectAiModels": "## Modelos de IA\nEscolha o modelo de IA e a configuração de prompt que este projeto usa para seus recursos assistidos por IA, como geração de casos de teste e marcação automática.",
     "projectQuickScript": "## QuickScript\nConecte um repositório de código para que este projeto possa gerar casos de teste a partir de seus arquivos de teste automatizados, escolhendo quais branch e caminhos incluir.",
     "projectParameters": "## Parâmetros de Casos de Teste\nConfigure os testes baseados em dados deste projeto — nomes de propriedades de iteração do JUnit para resultados importados e conjuntos de dados reutilizáveis para casos parametrizados.",
-    "projectAdvanced": "## Avançado\nConfigurações avançadas para este projeto — o prefixo do ID de registro, o modelo padrão para novos casos de teste e sessões, fluxo de trabalho de revisão de resultados, criação automática de problemas em caso de falha e a janela de edição de resultados.",
+    "projectAdvanced": "## Avançado\nConfigurações por projeto, agrupadas em Geral, Avaliações, Execuções de testes e Resultados. Abra a ? de uma configuração para saber o que ela faz. As opções são salvas assim que mudam; o código do projeto e as configurações de janela de tempo são salvos com seu próprio botão Salvar.",
+    "projectAdvancedGeneral": "## Geral\nA identidade e os padrões do projeto: o código usado em chaves de registro, o modelo com o qual novos casos de teste e sessões começam, e se o projeto tem uma área de Requisitos.",
+    "projectAdvancedReviews": "## Avaliações\nComo Revisão e Aprovação se aplica a este projeto: se as transições que exigem revisão são bloqueadas por uma solicitação aprovada e quanto tempo um revisor tem para desfazer uma decisão.",
+    "projectAdvancedRuns": "## Execuções de testes\nO que pode entrar em uma execução de testes e como as execuções são mantidas organizadas: excluindo casos em rascunho, bloqueando a composição de uma execução uma vez que a execução começa, bloqueando casos em suas dependências e fechando execuções automatizadas que pararam de relatar.",
+    "projectAdvancedResults": "## Resultados\nGovernança para resultados registrados: uma justificativa quando um resultado muda, um problema vinculado em falhas e quanto tempo um resultado permanece editável no local.",
     "projectShares": "## Gerenciar Compartilhamentos\nLinks compartilháveis para os relatórios deste projeto, cada um com seu próprio nível de acesso — público, login necessário ou protegido por senha. Revogar um link corta seu acesso.",
     "projectAccess": "## Acesso\nTodo usuário que pode abrir este projeto e a função que decide o que ele pode fazer aqui. A função de um usuário vem de sua própria configuração de acesso ao projeto, de um grupo ao qual pertence ou do acesso padrão do projeto, nessa ordem. Administradores do sistema e administradores do projeto têm acesso total independentemente da função. O acesso é alterado por um administrador em Administração › Projetos › Editar Projeto.",
     "groups": "## Grupos\nOs grupos permitem atribuir acesso a projetos e funções a muitos usuários de uma só vez. Adicione membros diretamente ou mapeie um grupo do seu provedor de identidade.",

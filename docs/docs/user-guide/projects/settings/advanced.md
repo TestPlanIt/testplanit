@@ -1,12 +1,12 @@
 ---
 sidebar_label: 'Advanced'
 title: 'Advanced (Project Settings)'
-description: Per-project default template and toggles for review gating, requirements, result governance, draft-case handling, composition locking, dependency enforcement, and the result edit window
+description: Per-project settings grouped into General, Reviews, Test runs and Results — project code, default template, requirements, review gating, draft-case handling, composition locking, dependency enforcement, abandoned-run cleanup, and result governance
 ---
 
 # Advanced
 
-The project-level **Settings → Advanced** page holds per-project toggles for opinionated workflow and result-governance features. New toggles appear here as they're introduced.
+The project-level **Settings → Advanced** page holds per-project settings for opinionated workflow and result-governance features. Settings are grouped into four collapsible sections — **General**, **Reviews**, **Test runs** and **Results** — each opening with a short note on what it governs. Click a section header to collapse or expand it; the page remembers your choice in this browser. Each setting has a **?** beside its label that explains what it does. New settings appear here as they're introduced.
 
 :::note
 Only system administrators and project administrators can open this page. There are **no destructive actions** on this page — it does not delete or archive the project.
@@ -19,7 +19,11 @@ Only system administrators and project administrators can open this page. There 
 
 ## Settings
 
-Each toggle and the default template save immediately. The project code (when shown) and the result edit window each have their own **Save** button.
+Each switch and the default template save immediately. The project code (when shown) and the three time-window settings — the result edit window, the revert limit and abandoned automation cleanup — each have their own **Save** button.
+
+## General
+
+Identity and defaults for the project.
 
 ### Project code
 
@@ -42,6 +46,16 @@ The default applies wherever a template is preselected: **Add Test Case**, the q
 
 If the selected template is later disabled, deleted, or unassigned from the project, a warning appears on this page and new cases and sessions fall back to the system default until you choose another template or restore it.
 
+### Enable requirements
+
+When enabled, a **Requirements** area is added to the project for building a tree of what the system should do and linking test cases to requirements for coverage. Off by default.
+
+This toggle alone shows an empty tree you can author in directly; tracker-synced requirements additionally need requirement types classified on the [Issue Integrations](integrations.md#requirement-sync) page. See [Requirements](../requirements.md#enabling-requirements) for the full two-step enablement.
+
+## Reviews
+
+How [Review & Approval](../../review-approvals.md) applies to this project.
+
 ### Enable review workflow
 
 When enabled, transitions into workflow states that require review are gated by an approved review request. Testers see a **Request Review** button; reviewers receive notifications and act from the [Reviews inbox](../../reviews-inbox.md).
@@ -50,21 +64,19 @@ When enabled, transitions into workflow states that require review are gated by 
 If the review feature is turned off system-wide (under **Administration → Workflows**), this project preference is saved but nothing is gated until an administrator enables the feature globally. A warning appears when that's the case.
 :::
 
-### Enable requirements
+### Reverting review decisions
 
-When enabled, a **Requirements** area is added to the project for building a tree of what the system should do and linking test cases to requirements for coverage. Off by default.
+Controls how long a reviewer has to undo their own decision on this project. Choose one of:
 
-This toggle alone shows an empty tree you can author in directly; tracker-synced requirements additionally need requirement types classified on the [Issue Integrations](integrations.md#requirement-sync) page. See [Requirements](../requirements.md#enabling-requirements) for the full two-step enablement.
+- **Inherit system default** — use the system limit set under **Administration → Workflows** (24 hours when nothing is configured).
+- **Disable reverting for this project** — decisions on this project can't be reverted.
+- **Custom window** — enter a number of minutes, then **Save**. A project can only tighten the system limit, never extend it.
 
-### Require justification on result flip
+If reverting is disabled system-wide, this control is replaced by a notice. System administrators are not bound by the limit. See [Reverting a decision](../../review-approvals.md#reverting-a-decision) for the full rules.
 
-When enabled, recording a result that flips a completed outcome (for example **Passed → Failed**) requires **Result Details** explaining the change.
+## Test runs
 
-### Require a linked issue on failure
-
-When enabled, recording a failure result requires at least one linked issue.
-
-This setting is unavailable (and shown off) when the project has no active issue integration — without one, results can't link an issue. Assign an [issue integration](integrations.md) to enable it.
+What may go into a test run and how runs are kept tidy.
 
 ### Exclude draft cases from test runs
 
@@ -81,6 +93,30 @@ This is off by default; existing projects are unaffected on upgrade. Even with t
 When enabled, a test case in a run is **blocked** until every case it depends on — a *Depends on* [test case link](../test-case-links.md#depends-on) — has **passed** in that same run. Blocked cases are marked in the run's case table and execution panel, and results for them are refused by the server (web app, API and MCP alike). When the last dependency passes, the case's assignee is notified that it is ready to execute. Dependencies that are not in the run don't block.
 
 Off by default; existing projects are unaffected on upgrade. Turning it on gates new results only and never changes results already recorded; turning it off re-opens every case immediately. Automated results imported from CI are not gated. See [Enforcing dependencies in test runs](../test-case-links.md#enforcing-dependencies-in-test-runs) for the full rules, including parameterized cases and multi-configuration runs.
+
+### Abandoned automation cleanup
+
+Controls whether automated runs in this project that stopped receiving results are closed automatically; manual runs are never affected. Choose one of:
+
+- **Inherit system default** — follow the system-wide policy. The option label shows the current system threshold, or *off*.
+- **Disable for this project** — never sweep this project's runs, even when the system policy is on.
+- **Custom idle threshold** — enter a project-specific idle time in minutes. A project can opt in this way even when the system policy is off.
+
+**Move closed runs to** picks the run state a swept run is moved into. It defaults to the project's first enabled *Done*-type run state, marked with a star. Then **Save**. See [Abandoned automation cleanup](../../statuses.md#abandoned-automation-cleanup) for how the sweep works.
+
+## Results
+
+Governance for recorded results.
+
+### Require justification on result flip
+
+When enabled, recording a result that flips a completed outcome (for example **Passed → Failed**) requires **Result Details** explaining the change.
+
+### Require a linked issue on failure
+
+When enabled, recording a failure result requires at least one linked issue.
+
+This setting is unavailable (and shown off) when the project has no active issue integration — without one, results can't link an issue. Assign an [issue integration](integrations.md) to enable it.
 
 ### Result edit window
 

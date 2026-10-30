@@ -2191,6 +2191,12 @@
       },
       "advanced": {
         "description": "Per project kunt u opties in- of uitschakelen voor specifieke functies. Nieuwe opties verschijnen hier zodra ze beschikbaar komen.",
+        "sections": {
+          "general": "Algemeen",
+          "reviews": "Beoordelingen",
+          "runs": "Testruns",
+          "results": "Resultaten"
+        },
         "recordKey": {
           "label": "Projectcode",
           "description": "Een korte code die wordt gebruikt in cosmetische recordsleutels zoals {example}. 2–10 hoofdletters, geen cijfers. Laat leeg om gewone numerieke ID's weer te geven.",
@@ -7967,7 +7973,11 @@
     "projectAiModels": "## AI-modellen\nKies het AI-model en de promptconfiguratie die dit project gebruikt voor zijn AI-ondersteunde functies, zoals het genereren van testgevallen en automatisch taggen.",
     "projectQuickScript": "## QuickScript\nVerbind een coderepository, zodat dit project testgevallen kan genereren op basis van uw geautomatiseerde testbestanden, waarbij u kiest welke branch en paden moeten worden opgenomen.",
     "projectParameters": "## Testgevalparameters\nConfigureer de datagestuurde tests van dit project — JUnit-iteratie-eigenschapsnamen voor geïmporteerde resultaten en herbruikbare datasets voor geparametriseerde gevallen.",
-    "projectAdvanced": "## Geavanceerd\nGeavanceerde instellingen voor dit project — het record-ID-voorvoegsel, de standaardsjabloon voor nieuwe testgevallen en sessies, de beoordelingsworkflow voor resultaten, automatisch aanmaken van issues bij een fout, en het bewerkingsvenster voor resultaten.",
+    "projectAdvanced": "## Geavanceerd\nInstellingen per project, onderverdeeld in Algemeen, Beoordelingen, Testruns en Resultaten. Open de ? van een instelling voor informatie over de functie ervan. Schakelaars worden direct opgeslagen; de projectcode en de instellingen voor het tijdvenster worden opgeslagen met hun eigen Opslaan-knop.",
+    "projectAdvancedGeneral": "## Algemeen\nDe identiteit van het project en standaardwaarden: de code die in recordsleutels wordt gebruikt, de sjabloon waarmee nieuwe testgevallen en sessies beginnen, en of het project een vereistengebied heeft.",
+    "projectAdvancedReviews": "## Beoordelingen\nHoe Review & Approval op dit project van toepassing is: of overgangen waarvoor beoordeling vereist is, worden geblokkeerd door een goedgekeurd verzoek, en hoe lang een beoordelaar heeft om een besluit ongedaan te maken.",
+    "projectAdvancedRuns": "## Testruns\nWat in een testrun mag gaan en hoe runs netjes worden gehouden: conceptgevallen uitsluiten, de samenstelling van een run vergrendelen zodra de uitvoering begint, gevallen op hun afhankelijkheden gatekeepen en geautomatiseerde runs sluiten die niet meer rapporteren.",
+    "projectAdvancedResults": "## Resultaten\nBestuur voor geregistreerde resultaten: een justificatie wanneer een resultaat verandert, een gekoppelde issue bij mislukkingen, en hoe lang een resultaat op zijn plaats bewerkbaar blijft.",
     "projectShares": "## Deelinstellingen beheren\nDeelbare links naar de rapporten van dit project, elk met een eigen toegangsniveau — openbaar, aanmelding vereist of met wachtwoord beveiligd. Het intrekken van een link stopt de toegang.",
     "projectAccess": "## Toegang\nElke gebruiker die dit project kan openen en de rol die bepaalt wat ze hier mogen doen. De rol van een gebruiker komt uit hun eigen projecttoeganginstelling, een groep waartoe zij behoren, of de standaardtoegang van het project, in die volgorde. Systeembeheerders en projectbeheerders hebben volledige toegang ongeacht de rol. Toegang wordt gewijzigd door een beheerder onder Beheer › Projecten › Project bewerken.",
     "groups": "## Groepen\nMet groepen kunt u projecttoegang en rollen aan meerdere gebruikers tegelijk toewijzen. Voeg leden direct toe, of koppel een groep vanuit uw identiteitsprovider.",

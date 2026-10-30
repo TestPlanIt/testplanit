@@ -2191,6 +2191,16 @@
       },
       "advanced": {
         "description": "Per-project toggles for opinionated features. New toggles will appear here as they are introduced.",
+        "sections": {
+          "general": "General",
+          "generalDescription": "The project's identity and defaults: the code used in record keys, the template new test cases and sessions start with, and whether the project has a Requirements area.",
+          "reviews": "Reviews",
+          "reviewsDescription": "How Review & Approval applies to this project: whether transitions that require review are gated by an approved request, and how long a reviewer has to undo a decision.",
+          "runs": "Test runs",
+          "runsDescription": "What may go into a test run and how runs are kept tidy: excluding draft cases, locking a run's composition once execution starts, gating cases on their dependencies, and closing automated runs that stopped reporting.",
+          "results": "Results",
+          "resultsDescription": "Governance for recorded results: a justification when a result flips, a linked issue on failures, and how long a result stays editable in place."
+        },
         "recordKey": {
           "label": "Project code",
           "description": "A short code used in cosmetic record keys like {example}. 2–10 uppercase letters, no digits. Leave blank to show plain numeric IDs.",
@@ -7967,7 +7977,7 @@
     "projectAiModels": "## AI Models\nChoose the AI model and prompt configuration this project uses for its AI-assisted features, such as test-case generation and auto-tagging.",
     "projectQuickScript": "## QuickScript\nConnect a code repository so this project can generate test cases from your automated test files, choosing which branch and paths to include.",
     "projectParameters": "## Test Case Parameters\nConfigure this project's data-driven testing — JUnit iteration property names for imported results and reusable data sets for parameterized cases.",
-    "projectAdvanced": "## Advanced\nAdvanced settings for this project — the record ID prefix, the default template for new test cases and sessions, result review workflow, automatic issue creation on failure, and the result edit window.",
+    "projectAdvanced": "## Advanced\nPer-project settings, grouped into General, Reviews, Test runs and Results. Open a setting's ? for what it does. Switches save as soon as they change; the project code and the time-window settings save with their own Save button.",
     "projectShares": "## Manage Shares\nShareable links to this project's reports, each with its own access level — public, sign-in required, or password protected. Revoking a link cuts off its access.",
     "projectAccess": "## Access\nEvery user who can open this project and the role that decides what they may do here. A user's role comes from their own project access setting, a group they belong to, or the project's default access, in that order. System administrators and project administrators have full access regardless of role. Access is changed by an administrator under Administration › Projects › Edit Project.",
     "groups": "## Groups\nGroups let you assign project access and roles to many users at once. Add members directly, or map a group from your identity provider.",

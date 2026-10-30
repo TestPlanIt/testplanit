@@ -2191,6 +2191,12 @@
       },
       "advanced": {
         "description": "Options par projet pour les fonctionnalités spécifiques. Les nouvelles options apparaîtront ici au fur et à mesure de leur introduction.",
+        "sections": {
+          "general": "Général",
+          "reviews": "Avis",
+          "runs": "Essais",
+          "results": "Résultats"
+        },
         "recordKey": {
           "label": "Code du projet",
           "description": "Un code court utilisé dans les clés d'enregistrement esthétiques comme {example}. 2 à 10 lettres majuscules, sans chiffres. Laissez vide pour afficher des ID numériques simples.",
@@ -7967,7 +7973,11 @@
     "projectAiModels": "## Modèles d'IA\nChoisissez le modèle d'IA et la configuration d'invite utilisés par ce projet pour ses fonctionnalités assistées par IA, telles que la génération de cas de test et l'étiquetage automatique.",
     "projectQuickScript": "## QuickScript\nConnectez un référentiel de code afin que ce projet puisse générer des cas de test à partir de vos fichiers de tests automatisés, en choisissant quelle branche et quels chemins inclure.",
     "projectParameters": "## Paramètres de cas de test\nConfigurez les tests pilotés par les données de ce projet — les noms de propriétés d'itération JUnit pour les résultats importés et les ensembles de données réutilisables pour les cas paramétrés.",
-    "projectAdvanced": "## Avancé\nParamètres avancés pour ce projet — le préfixe d'identifiant d'enregistrement, le modèle par défaut pour les nouveaux cas de test et sessions, flux de travail de révision des résultats, création automatique de problèmes en cas d'échec, et la fenêtre de modification des résultats.",
+    "projectAdvanced": "## Avancé\nParamètres par projet, regroupés en Général, Avis, Essais et Résultats. Ouvrez le ? d'un paramètre pour savoir ce qu'il fait. Les commutateurs s'enregistrent dès qu'ils changent ; le code du projet et les paramètres de fenêtre temporelle s'enregistrent avec leur propre bouton Enregistrer.",
+    "projectAdvancedGeneral": "## Général\nL'identité et les paramètres par défaut du projet : le code utilisé dans les clés d'enregistrement, le modèle avec lequel les nouveaux cas de test et les sessions commencent, et si le projet dispose d'une zone Exigences.",
+    "projectAdvancedReviews": "## Avis\nComment l'examen et l'approbation s'appliquent à ce projet : si les transitions qui nécessitent un examen sont contrôlées par une demande approuvée, et combien de temps un examinateur a pour annuler une décision.",
+    "projectAdvancedRuns": "## Essais\nCe qui peut être inclus dans un essai et comment les essais sont tenus à jour : exclusion des cas provisoires, verrouillage de la composition d'un essai une fois l'exécution commencée, contrôle des cas en fonction de leurs dépendances et fermeture des essais automatisés qui ont cessé de signaler.",
+    "projectAdvancedResults": "## Résultats\nGouvernance des résultats enregistrés : une justification lorsqu'un résultat change, un problème lié aux défaillances, et combien de temps un résultat reste modifiable sur place.",
     "projectShares": "## Gérer les partages\nLiens partageables vers les rapports de ce projet, chacun avec son propre niveau d'accès — public, connexion requise, ou protégé par mot de passe. La révocation d'un lien coupe son accès.",
     "projectAccess": "## Accès\nChaque utilisateur pouvant ouvrir ce projet et le rôle qui détermine ce qu'il peut faire ici. Le rôle d'un utilisateur provient de son propre paramètre d'accès au projet, d'un groupe auquel il appartient, ou de l'accès par défaut du projet, dans cet ordre. Les administrateurs système et les administrateurs de projet ont un accès complet indépendamment du rôle. L'accès est modifié par un administrateur sous Administration › Projets › Modifier le projet.",
     "groups": "## Groupes\nLes groupes vous permettent d'attribuer un accès aux projets et des rôles à plusieurs utilisateurs à la fois. Ajoutez des membres directement, ou associez un groupe de votre fournisseur d'identité.",

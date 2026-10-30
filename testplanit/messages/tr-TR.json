@@ -2191,6 +2191,12 @@
       },
       "advanced": {
         "description": "Proje bazında, kişisel tercihlere dayalı özellikler için geçiş düğmeleri. Yeni geçiş düğmeleri eklendikçe burada görünecektir.",
+        "sections": {
+          "general": "Genel",
+          "reviews": "İncelemeler",
+          "runs": "Test çalışmaları",
+          "results": "Sonuçlar"
+        },
         "recordKey": {
           "label": "Proje kodu",
           "description": "{example} gibi kozmetik kayıt anahtarlarında kullanılan kısa bir kod. 2–10 büyük harf, rakam yok. Sade sayısal kimlikleri göstermek için boş bırakın.",
@@ -7967,7 +7973,11 @@
     "projectAiModels": "## Yapay Zeka Modelleri\nBu projenin, test senaryosu oluşturma ve otomatik etiketleme gibi yapay zeka destekli özellikleri için kullandığı yapay zeka modelini ve istem yapılandırmasını seçin.",
     "projectQuickScript": "## QuickScript\nBu projenin otomatik test dosyalarınızdan test senaryoları oluşturabilmesi için bir kod deposu bağlayın; hangi dal ve yolların dahil edileceğini seçin.",
     "projectParameters": "## Test Senaryosu Parametreleri\nBu projenin veri odaklı testini yapılandırın — içe aktarılan sonuçlar için JUnit yineleme özellik adları ve parametreli senaryolar için yeniden kullanılabilir veri kümeleri.",
-    "projectAdvanced": "## Gelişmiş\nBu proje için gelişmiş ayarlar — kayıt kimliği ön eki, yeni test vakaları ve oturumlar için varsayılan şablon, sonuç inceleme iş akışı, başarısızlık durumunda otomatik sorun oluşturma ve sonuç düzenleme penceresi.",
+    "projectAdvanced": "## Gelişmiş\nProje başına ayarlar, Genel, İncelemeler, Test çalışmaları ve Sonuçlar halinde gruplandırılmıştır. Bir ayarın ne yaptığını öğrenmek için ? işaretini açın. Anahtarlar değiştikçe hemen kaydedilir; proje kodu ve zaman penceresi ayarları kendi Kaydet düğmesiyle kaydedilir.",
+    "projectAdvancedGeneral": "## Genel\nProjenin kimliği ve varsayılanları: kayıt anahtarlarında kullanılan kod, yeni test çalışmalarının ve oturumların başladığı şablon ve projenin Gereksinimler alanı olup olmadığı.",
+    "projectAdvancedReviews": "## İncelemeler\nİnceleme ve Onay'ın bu projeye nasıl uygulanacağı: inceleme gerektiren geçişlerin onaylanmış bir istekle engellenip engellenmediği ve bir gözlemcinin bir kararı geri alma süresinin ne kadar olduğu.",
+    "projectAdvancedRuns": "## Test çalışmaları\nBir test çalışmasına neler girilebilir ve çalışmalar nasıl temiz tutulur: taslak çalışmaları hariç tutmak, yürütme başladığında bir çalışmanın bileşimini kilitlemek, çalışmaları bağımlılıklarına göre kontrol etmek ve raporlamayı durduran otomatik çalışmaları kapatmak.",
+    "projectAdvancedResults": "## Sonuçlar\nKaydedilen sonuçlar için yönetişim: bir sonuç değiştiğinde bir gerekçe, hatalar üzerine bağlantılı bir sorun ve bir sonucun yerinde düzenlenebilir kalma süresi.",
     "projectShares": "## Paylaşımları Yönet\nBu projenin raporlarına, her biri kendi erişim düzeyine sahip — herkese açık, oturum açma gerektiren veya parola korumalı — paylaşılabilir bağlantılar. Bir bağlantıyı iptal etmek erişimini keser.",
     "projectAccess": "## Erişim\nBu projeyi açabilen her kullanıcı ve burada neler yapabileceklerini belirleyen rol. Bir kullanıcının rolü, kendi proje erişim ayarından, ait olduğu bir gruptan veya projenin varsayılan erişiminden gelir (bu sırayla). Sistem yöneticileri ve proje yöneticileri rolünden bağımsız olarak tam erişime sahiptir. Erişim, Yönetim › Projeler › Projeyi Düzenle altında bir yönetici tarafından değiştirilir.",
     "groups": "## Gruplar\nGruplar, birçok kullanıcıya aynı anda proje erişimi ve rolleri atamanızı sağlar. Üyeleri doğrudan ekleyin veya kimlik sağlayıcınızdan bir grup eşleyin.",

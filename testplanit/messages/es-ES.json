@@ -2191,6 +2191,12 @@
       },
       "advanced": {
         "description": "Opciones de configuración específicas para cada proyecto. Las nuevas opciones aparecerán aquí a medida que se vayan implementando.",
+        "sections": {
+          "general": "General",
+          "reviews": "Revisiones",
+          "runs": "Pruebas realizadas",
+          "results": "Resultados"
+        },
         "recordKey": {
           "label": "Código del proyecto",
           "description": "Un código corto usado en claves de registro cosméticas como {example}. 2–10 letras mayúsculas, sin dígitos. Déjelo en blanco para mostrar IDs numéricos simples.",
@@ -7967,7 +7973,11 @@
     "projectAiModels": "## Modelos de IA\nElija el modelo de IA y la configuración de prompt que utiliza este proyecto para sus funciones asistidas por IA, como la generación de casos de prueba y el etiquetado automático.",
     "projectQuickScript": "## QuickScript\nConecte un repositorio de código para que este proyecto pueda generar casos de prueba a partir de sus archivos de prueba automatizados, eligiendo qué rama y rutas incluir.",
     "projectParameters": "## Parámetros de casos de prueba\nConfigure las pruebas basadas en datos de este proyecto: nombres de propiedades de iteración de JUnit para los resultados importados y conjuntos de datos reutilizables para casos parametrizados.",
-    "projectAdvanced": "## Avanzado\nConfiguraciones avanzadas para este proyecto — el prefijo del ID de registro, la plantilla predeterminada para nuevos casos de prueba y sesiones, flujo de trabajo de revisión de resultados, creación automática de problemas en caso de error y la ventana de edición de resultados.",
+    "projectAdvanced": "## Avanzado\nConfiguraciones por proyecto, agrupadas en General, Revisiones, Pruebas realizadas y Resultados. Abre el ? de una configuración para saber qué hace. Los interruptores se guardan tan pronto como cambian; el código del proyecto y la configuración de la ventana de tiempo se guardan con su propio botón Guardar.",
+    "projectAdvancedGeneral": "## General\nLa identidad y valores predeterminados del proyecto: el código utilizado en las claves de registro, la plantilla con la que comienzan los nuevos casos de prueba y sesiones, y si el proyecto tiene un área de Requisitos.",
+    "projectAdvancedReviews": "## Revisiones\nCómo se aplica Revisión y Aprobación a este proyecto: si las transiciones que requieren revisión están bloqueadas por una solicitud aprobada, y cuánto tiempo tiene un revisor para deshacer una decisión.",
+    "projectAdvancedRuns": "## Pruebas realizadas\nQué puede incluirse en una prueba realizada y cómo se mantienen ordenadas las pruebas: excluyendo casos borrador, bloqueando la composición de una prueba una vez que comienza la ejecución, condicionando casos en sus dependencias, y cerrando pruebas automatizadas que dejaron de reportar.",
+    "projectAdvancedResults": "## Resultados\nGovernanza para resultados registrados: una justificación cuando un resultado cambia, un problema vinculado en fallas, y cuánto tiempo permanece editable un resultado en su lugar.",
     "projectShares": "## Administrar recursos compartidos\nEnlaces compartibles a los informes de este proyecto, cada uno con su propio nivel de acceso: público, con inicio de sesión requerido o protegido con contraseña. Revocar un enlace corta su acceso.",
     "projectAccess": "## Acceso\nCada usuario que puede abrir este proyecto y el rol que decide qué puede hacer aquí. El rol de un usuario proviene de su configuración de acceso de proyecto, un grupo al que pertenece o el acceso predeterminado del proyecto, en ese orden. Los administradores del sistema y los administradores del proyecto tienen acceso completo independientemente del rol. El acceso se cambia por un administrador en Administración › Proyectos › Editar proyecto.",
     "groups": "## Grupos\nLos grupos le permiten asignar acceso a proyectos y roles a muchos usuarios a la vez. Agregue miembros directamente o asigne un grupo desde su proveedor de identidad.",
