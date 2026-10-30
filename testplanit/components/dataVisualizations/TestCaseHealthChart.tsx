@@ -366,14 +366,16 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Summary Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 px-2">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-3 px-2">
         {/* Total Tests */}
         <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
           <div className="p-2 rounded-md bg-primary/10">
             <Activity className="h-4 w-4 text-primary" />
           </div>
-          <div>
-            <p className="text-2xl font-bold">{summaryMetrics.total}</p>
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold">
+              {summaryMetrics.total.toLocaleString(locale)}
+            </p>
             <p className="text-xs text-muted-foreground">
               {t("stats.totalTests")}
             </p>
@@ -385,10 +387,10 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div className="p-2 rounded-md bg-destructive/10">
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </div>
-          <div>
-            <p className="text-2xl font-bold text-destructive">
-              {summaryMetrics.needsAttention}
-              <span className="text-sm font-normal ms-1">
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold text-destructive">
+              {summaryMetrics.needsAttention.toLocaleString(locale)}
+              <span className="text-sm font-normal">
                 {"("}
                 {summaryMetrics.needsAttentionPct}
                 {"%)"}
@@ -400,7 +402,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
               </p>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                  <HelpCircle className="h-3 w-3 shrink-0 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
                   <div className="text-xs">
@@ -417,10 +419,10 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div className="p-2 rounded-md bg-yellow-500/10">
             <Clock className="h-4 w-4 text-yellow-700 dark:text-yellow-400" />
           </div>
-          <div>
-            <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
-              {summaryMetrics.staleCount}
-              <span className="text-sm font-normal ms-1">
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+              {summaryMetrics.staleCount.toLocaleString(locale)}
+              <span className="text-sm font-normal">
                 {"("}
                 {summaryMetrics.stalePct}
                 {"%)"}
@@ -437,10 +439,10 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div className="p-2 rounded-md bg-success/10">
             <CheckCircle2 className="h-4 w-4 text-success" />
           </div>
-          <div>
-            <p className="text-2xl font-bold text-success">
-              {summaryMetrics.healthy}
-              <span className="text-sm font-normal ms-1">
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold text-success">
+              {summaryMetrics.healthy.toLocaleString(locale)}
+              <span className="text-sm font-normal">
                 {"("}
                 {summaryMetrics.healthyPct}
                 {"%)"}
@@ -452,7 +454,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
               </p>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                  <HelpCircle className="h-3 w-3 shrink-0 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
                   <div className="text-xs">{t("stats.healthyTooltip")}</div>
@@ -467,8 +469,8 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div className="p-2 rounded-md bg-blue-500/10">
             <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <div>
-            <p className="text-2xl font-bold">
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold">
               {summaryMetrics.avgHealthScore}
             </p>
             <div className="flex items-center gap-1">
@@ -477,7 +479,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
               </p>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                  <HelpCircle className="h-3 w-3 shrink-0 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
                   <div className="text-xs space-y-1">

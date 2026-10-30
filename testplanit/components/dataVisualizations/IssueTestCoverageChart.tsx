@@ -427,14 +427,16 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Summary Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 px-2">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-3 px-2">
         {/* Total Issues */}
         <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
           <div className="p-2 rounded-md bg-primary/10">
             <Bug className="h-4 w-4 text-primary" />
           </div>
-          <div>
-            <p className="text-2xl font-bold">{summaryStats.totalIssues}</p>
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold">
+              {summaryStats.totalIssues}
+            </p>
             <p className="text-xs text-muted-foreground">
               {t("stats.totalIssues")}
             </p>
@@ -446,8 +448,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
           <div className="p-2 rounded-md bg-destructive/10">
             <XCircle className="h-4 w-4 text-destructive" />
           </div>
-          <div>
-            <p className="text-2xl font-bold text-destructive">
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold text-destructive">
               {summaryStats.issuesWithFailures}
             </p>
             <div className="flex items-center gap-1">
@@ -456,7 +458,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
               </p>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                  <HelpCircle className="h-3 w-3 shrink-0 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
                   <div className="text-xs">
@@ -473,8 +475,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
           <div className="p-2 rounded-md bg-yellow-500/10">
             <FileQuestion className="h-4 w-4 text-yellow-700 dark:text-yellow-400" />
           </div>
-          <div>
-            <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold text-yellow-700 dark:text-yellow-400">
               {summaryStats.issuesWithUntested}
             </p>
             <div className="flex items-center gap-1">
@@ -483,7 +485,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
               </p>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                  <HelpCircle className="h-3 w-3 shrink-0 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
                   <div className="text-xs">
@@ -500,8 +502,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
           <div className="p-2 rounded-md bg-success/10">
             <CheckCircle2 className="h-4 w-4 text-success" />
           </div>
-          <div>
-            <p className="text-2xl font-bold text-success">
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold text-success">
               {summaryStats.issuesAllPassing}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -515,8 +517,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
           <div className="p-2 rounded-md bg-blue-500/10">
             <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <div>
-            <p className="text-2xl font-bold">
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold">
               {summaryStats.overallPassRate}
               {"%"}
             </p>

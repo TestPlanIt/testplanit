@@ -217,14 +217,16 @@ export const CodePinCoverageChart: React.FC<CodePinCoverageChartProps> = ({
   ) => (
     <div className={`flex items-center gap-3 rounded-lg p-3 ${className}`}>
       <div className="rounded-md bg-primary/10 p-2">{icon}</div>
-      <div>
-        <p className="text-2xl font-bold">{value}</p>
+      <div className="min-w-0">
+        <p className="flex flex-wrap items-baseline gap-x-1 text-2xl font-bold">
+          {value}
+        </p>
         <div className="flex items-center gap-1">
           <p className="text-xs text-muted-foreground">{label}</p>
           {tooltip && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                <HelpCircle className="h-3 w-3 shrink-0 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-xs">
                 <div className="text-xs">{tooltip}</div>
@@ -241,7 +243,7 @@ export const CodePinCoverageChart: React.FC<CodePinCoverageChartProps> = ({
       className="flex h-full flex-col gap-4"
       data-testid="code-pin-coverage-chart"
     >
-      <div className="grid grid-cols-2 gap-3 px-2 md:grid-cols-5">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-3 px-2">
         {tile(
           <MapPin className="h-4 w-4 text-primary" />,
           summary.pinCount,
@@ -251,7 +253,7 @@ export const CodePinCoverageChart: React.FC<CodePinCoverageChartProps> = ({
           <ListChecks className="h-4 w-4 text-primary" />,
           <>
             {summary.casesWithPins}
-            <span className="ms-1 text-sm font-normal">
+            <span className="text-sm font-normal">
               {"("}
               {summary.casesWithPinsPct}
               {"%)"}
