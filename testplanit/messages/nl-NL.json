@@ -8,6 +8,7 @@
       "editAction": "Bewerken ({count})",
       "completeAction": "Voltooien ({count})",
       "deleteAction": "Verwijderen ({count})",
+      "restoreAction": "Herstellen ({count})",
       "editTitle": "Bulk bewerken ({count})",
       "applyToCount": "Wijzigingen zijn van toepassing op {count, plural, one {# item} other {# items}}.",
       "tagsAdditiveHint": "Geselecteerde tags worden aan elk item toegevoegd; bestaande tags blijven behouden.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Alle typen",
         "noMatchingEntries": "Geen items komen overeen met de geselecteerde filters.",
         "showing": "{loaded} van {total} items"
+      },
+      "trash": {
+        "description": "Verwijderde items die hier nog kunnen worden hersteld.",
+        "empty": "Niets in uw prullenbak. Items die u verwijdert, kunnen hier {days, plural, one {# dag} other {# dagen}} lang worden hersteld.",
+        "disabled": "Zelfservice herstellen is uitgeschakeld. Vraag een beheerder om verwijderde items te herstellen via Beheer > Prullenbak.",
+        "timeLeftColumn": "Resterende tijd",
+        "timeLeft": "{days, plural, =0 {Minder dan een dag} one {# dag} other {# dagen}}",
+        "confirmDescription": "\"{name}\" wordt hersteld naar {project}, samen met alles wat ermee is verwijderd.",
+        "bulkConfirmDescription": "Elk van de {count} geselecteerde items wordt hersteld naar het bijbehorende project, samen met alles wat ermee is verwijderd.",
+        "restored": "\"{name}\" is hersteld.",
+        "restoreFailed": "Kan \"{name}\" niet herstellen: {message}",
+        "bulkResult": "{restored, plural, one {# item} other {# items}} hersteld, {failed} mislukt.",
+        "failure": {
+          "parent_deleted": "de map of bovenliggende item is nog verwijderd — herstel die eerst",
+          "name_conflict": "er bestaat al een item met dezelfde naam",
+          "expired": "het herstelbereik is verlopen",
+          "forbidden": "u hebt geen toestemming meer in dat project",
+          "disabled": "zelfservice herstellen is uitgeschakeld",
+          "not_owner": "alleen de persoon die het heeft verwijderd, kan het herstellen",
+          "not_found": "het bevindt zich niet meer in de prullenbak"
+        }
       },
       "myComments": {
         "title": "Mijn reacties",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "Weet u zeker dat u deze rij definitief uit de tabel {itemType} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt en kan de bijbehorende gegevens verwijderen."
       },
       "filterTypesPlaceholder": "Itemtypen filteren...",
-      "summary": "{count, plural, =0 {Prullenbak is leeg} one {# item in prullenbak} other {# items in prullenbak}}"
+      "summary": "{count, plural, =0 {Prullenbak is leeg} one {# item in prullenbak} other {# items in prullenbak}}",
+      "userWindow": {
+        "label": "Zelfservice herstelbereik",
+        "invalid": "Voer een geheel getal in dagen in (0 schakelt het uit)."
+      }
     },
     "notifications": {
       "title": "Meldingsbeheer",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Gegevens opnieuw indexeren\nHerbouw zoekindexen voor verbeterde zoekprestaties.",
     "queues": "## Achtergrondtaakwachtrijen\nAchtergrondtaakverwerkingswachtrijen bewaken en beheren.",
     "trash": "## Prullenbak\nHerstel of verwijder permanent zacht-verwijderde records in het gehele systeem.",
+    "userTrashWindow": "## Zelfservice herstelbereik\nHoeveel dagen gebruikers items kunnen herstellen die zij zelf hebben verwijderd, in de sectie **Prullenbak** van hun profiel. Stel het in op **0** om zelfservice herstellen uit te schakelen. Items buiten het bereik verdwijnen simpelweg uit de prullenbak van de gebruiker — niets wordt permanent verwijderd, en beheerders kunnen hier nog steeds alles herstellen of permanent verwijderen.",
     "systemWebhooks": "## Systeemwebhooks\nUitgaande webhookbestemmingen voor systeemgebeurtenissen die niet aan een specifiek project zijn gekoppeld — momenteel de SCIM 2.0-gebruikers- en groepslevenscyclusgebeurtenissen. Configureer in plaats daarvan inkomende en projectgebonden uitgaande webhooks via de projectinstellingenpagina.",
     "workflows": "## Workflows\nBeheer de workflowstatussen voor testgevallen, testruns en sessies.",
     "workflowReviews": "## Beoordelingsworkflow\nDwing beoordelingen af door workflowovergangen te blokkeren totdat goedkeuring is verleend. Indien ingeschakeld, kunnen projecten zich individueel aan- of afmelden via hun geavanceerde instellingen. Schakel deze optie uit om goedkeuringsblokkeringen in de workflow te voorkomen.",

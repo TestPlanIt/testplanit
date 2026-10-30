@@ -8,6 +8,7 @@
       "editAction": "Editar ({count})",
       "completeAction": "Concluir ({count})",
       "deleteAction": "Excluir ({count})",
+      "restoreAction": "Restaurar ({count})",
       "editTitle": "Edição em massa ({count})",
       "applyToCount": "As alterações se aplicam a {count, plural, one {# item} other {# itens}}.",
       "tagsAdditiveHint": "As tags selecionadas são adicionadas a cada item; as tags existentes são mantidas.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Todos os Tipos",
         "noMatchingEntries": "Nenhuma entrada corresponde aos filtros selecionados.",
         "showing": "{loaded} de {total} entradas"
+      },
+      "trash": {
+        "description": "Itens deletados que ainda podem ser restaurados daqui.",
+        "empty": "Nada na sua lixeira. Itens que você deleta podem ser restaurados aqui por {days, plural, one {# dia} other {# dias}}.",
+        "disabled": "Restauração de autoatendimento está desativada. Peça a um administrador para restaurar itens deletados em Admin > Lixeira.",
+        "timeLeftColumn": "Tempo restante",
+        "timeLeft": "{days, plural, =0 {Menos de um dia} one {# dia} other {# dias}}",
+        "confirmDescription": "\"{name}\" será restaurado para {project}, junto com qualquer coisa que foi deletada com ele.",
+        "bulkConfirmDescription": "Cada um dos {count} itens selecionados será restaurado para seu projeto, junto com qualquer coisa que foi deletada com ele.",
+        "restored": "\"{name}\" restaurado.",
+        "restoreFailed": "Não foi possível restaurar \"{name}\": {message}",
+        "bulkResult": "{restored, plural, one {# item} other {# itens}} restaurados, {failed} falharam.",
+        "failure": {
+          "parent_deleted": "sua pasta ou elemento pai ainda está deletado — restaure aquele primeiro",
+          "name_conflict": "já existe um item com o mesmo nome",
+          "expired": "a janela de restauração expirou",
+          "forbidden": "você não tem mais permissão nesse projeto",
+          "disabled": "restauração de autoatendimento está desativada",
+          "not_owner": "apenas a pessoa que o deletou pode restaurá-lo",
+          "not_found": "ele não está mais na lixeira"
+        }
       },
       "myComments": {
         "title": "Meus comentários",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "Tem certeza de que deseja excluir permanentemente esta linha da tabela {itemType} ? Esta ação não pode ser desfeita e pode remover dados associados."
       },
       "filterTypesPlaceholder": "Filtrar tipos de item...",
-      "summary": "{count, plural, =0 {A lixeira está vazia} one {# item na lixeira} other {# itens na lixeira}}"
+      "summary": "{count, plural, =0 {A lixeira está vazia} one {# item na lixeira} other {# itens na lixeira}}",
+      "userWindow": {
+        "label": "Janela de restauração de autoatendimento",
+        "invalid": "Digite um número inteiro de dias (0 desativa)."
+      }
     },
     "notifications": {
       "title": "Administração de notificações",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Reindexar Dados\nReconstrua os índices de busca para melhorar o desempenho da busca.",
     "queues": "## Filas de Tarefas em Segundo Plano\nMonitore e gerencie as filas de processamento de tarefas em segundo plano.",
     "trash": "## Lixeira\nRestaure ou exclua permanentemente registros excluídos temporariamente em todo o sistema.",
+    "userTrashWindow": "## Janela de restauração de autoatendimento\nQuantos dias os usuários podem restaurar itens que deletaram a si mesmos, da seção **Lixeira** de seu perfil. Defina como **0** para desativar a restauração de autoatendimento. Itens que caem fora da janela simplesmente deixam de aparecer na Lixeira do usuário — nada é removido, e administradores ainda podem restaurar ou remover qualquer coisa aqui.",
     "systemWebhooks": "## Webhooks do Sistema\nDestinos de webhook de saída para eventos de nível de sistema que não estão vinculados a um único projeto — atualmente os eventos de ciclo de vida de usuários e grupos do SCIM 2.0. Em vez disso, configure webhooks de entrada e de saída com escopo de projeto na página de configurações do projeto.",
     "workflows": "## Fluxos de Trabalho\nGerencie os estados de fluxo de trabalho para casos de teste, execuções de teste e sessões.",
     "workflowReviews": "## Fluxo de Trabalho de Revisão\nImponha revisões bloqueando transições de fluxo de trabalho até que a aprovação seja concedida. Quando habilitado, os projetos podem optar por participar ou não individualmente através de suas configurações Avançadas. Desative para impedir bloqueios de aprovação de fluxo de trabalho.",

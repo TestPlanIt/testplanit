@@ -8,6 +8,7 @@
       "editAction": "Edytuj ({count})",
       "completeAction": "Zakończ ({count})",
       "deleteAction": "Usuń ({count})",
+      "restoreAction": "Przywróć ({count})",
       "editTitle": "Edycja zbiorcza ({count})",
       "applyToCount": "Zmiany dotyczą {count, plural, one {# elementu} few {# elementów} many {# elementów} other {# elementu}}.",
       "tagsAdditiveHint": "Wybrane tagi są dodawane do każdego elementu; istniejące tagi są zachowywane.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Wszystkie typy",
         "noMatchingEntries": "Żaden wpis nie spełnia wybranych filtrów.",
         "showing": "{loaded} z {total} wpisów"
+      },
+      "trash": {
+        "description": "Usunięte elementy, które można jeszcze przywrócić stąd.",
+        "empty": "Nic w koszu. Usunięte elementy można przywrócić tutaj przez {days, plural, one {# dzień} few {# dni} many {# dni} other {# dni}}.",
+        "disabled": "Samodzielne przywracanie jest wyłączone. Poproś administratora o przywrócenie usuniętych elementów z Admin > Kosz.",
+        "timeLeftColumn": "Pozostały czas",
+        "timeLeft": "{days, plural, =0 {Mniej niż dzień} one {# dzień} few {# dni} many {# dni} other {# dni}}",
+        "confirmDescription": "\"{name}\" zostanie przywrócone do {project} wraz z czymkolwiek, co zostało usunięte razem z nim.",
+        "bulkConfirmDescription": "Każdy z {count} wybranych elementów zostanie przywrócony do jego projektu wraz z czymkolwiek, co zostało usunięte razem z nim.",
+        "restored": "\"{name}\" przywrócone.",
+        "restoreFailed": "Nie można przywrócić \"{name}\": {message}",
+        "bulkResult": "{restored, plural, one {# element} few {# elementy} many {# elementów} other {# elementów}} przywrócone, {failed} nieudane.",
+        "failure": {
+          "parent_deleted": "jego folder lub element nadrzędny jest nadal usunięty — najpierw przywróć to",
+          "name_conflict": "element o tej samej nazwie już istnieje",
+          "expired": "okno przywracania minęło",
+          "forbidden": "nie masz już uprawnień w tym projekcie",
+          "disabled": "samodzielne przywracanie jest wyłączone",
+          "not_owner": "tylko osoba, która go usunęła, może go przywrócić",
+          "not_found": "nie znajduje się już w koszu"
+        }
       },
       "myComments": {
         "title": "Moje komentarze",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "Czy na pewno chcesz trwale usunąć ten wiersz z tabeli {itemType} ? Tej czynności nie można cofnąć i może ona spowodować usunięcie powiązanych danych."
       },
       "filterTypesPlaceholder": "Filtruj typy elementów...",
-      "summary": "{count, plural, =0 {Kosz jest pusty} one {# element w koszu} few {# elementy w koszu} many {# elementów w koszu} other {# elementu w koszu}}"
+      "summary": "{count, plural, =0 {Kosz jest pusty} one {# element w koszu} few {# elementy w koszu} many {# elementów w koszu} other {# elementu w koszu}}",
+      "userWindow": {
+        "label": "Okno samodzielnego przywracania",
+        "invalid": "Wprowadź całkowitą liczbę dni (0 wyłącza tę funkcję)."
+      }
     },
     "notifications": {
       "title": "Administracja powiadomień",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Ponowne indeksowanie danych\nPrzebudowa indeksów wyszukiwania w celu poprawy wydajności wyszukiwania.",
     "queues": "## Kolejki zadań w tle\nMonitoruj i zarządzaj kolejkami przetwarzania zadań w tle.",
     "trash": "## Kosz\nPrzywracaj lub trwale usuwaj miękko usunięte rekordy w całym systemie.",
+    "userTrashWindow": "## Okno samodzielnego przywracania\nIle dni użytkownicy mogą przywracać elementy, które sami usunęli, z sekcji **Kosz** w swoim profilu. Ustaw na **0**, aby wyłączyć samodzielne przywracanie. Elementy poza oknem po prostu przestają pojawiać się w koszu użytkownika — nic nie jest usuwane, a administratorzy mogą nadal przywracać lub czyścić cokolwiek tutaj.",
     "systemWebhooks": "## Webhooki systemowe\nMiejsca docelowe webhooków wychodzących dla zdarzeń na poziomie systemu, które nie są powiązane z pojedynczym projektem — obecnie są to zdarzenia cyklu życia użytkowników i grup SCIM 2.0. Zamiast tego skonfiguruj webhooki przychodzące i wychodzące o zasięgu projektu na stronie ustawień projektu.",
     "workflows": "## Przepływy pracy\nZarządzaj stanami przepływu pracy dla przypadków testowych, przebiegów testowych i sesji.",
     "workflowReviews": "## Przepływ pracy przeglądu\nWymuszaj przeglądy, blokując przejścia w przepływie pracy do momentu uzyskania zatwierdzenia. Po włączeniu tej opcji projekty mogą indywidualnie włączać się lub wyłączać w ustawieniach zaawansowanych. Wyłącz tę opcję, aby zapobiec blokowaniu przejść w przepływie pracy.",

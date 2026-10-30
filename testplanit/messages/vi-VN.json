@@ -8,6 +8,7 @@
       "editAction": "Sửa ({count})",
       "completeAction": "Hoàn thành ({count})",
       "deleteAction": "Xóa ({count})",
+      "restoreAction": "Khôi phục ({count})",
       "editTitle": "Sửa hàng loạt ({count})",
       "applyToCount": "Các thay đổi áp dụng cho {count, plural, other {# mục}}.",
       "tagsAdditiveHint": "Các thẻ đã chọn được thêm vào từng mục; các thẻ hiện có được giữ lại.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Tất cả các loại",
         "noMatchingEntries": "Không có mục nào khớp với các bộ lọc đã chọn.",
         "showing": "{loaded} trong số {total} mục"
+      },
+      "trash": {
+        "description": "Các mục đã xóa vẫn có thể được khôi phục từ đây.",
+        "empty": "Không có gì trong thùng rác của bạn. Các mục bạn xóa có thể được khôi phục tại đây trong {days, plural, other {# ngày}}.",
+        "disabled": "Tính năng khôi phục tự phục vụ đã bị tắt. Hãy yêu cầu quản trị viên khôi phục các mục đã xóa từ Admin > Thùng rác.",
+        "timeLeftColumn": "Thời gian còn lại",
+        "timeLeft": "{days, plural, =0 {Ít hơn một ngày} other {# ngày}}",
+        "confirmDescription": "\"{name}\" sẽ được khôi phục đến {project}, cùng với bất cứ thứ gì đã bị xóa cùng với nó.",
+        "bulkConfirmDescription": "Mỗi mục trong số {count} mục được chọn sẽ được khôi phục đến dự án của nó, cùng với bất cứ thứ gì đã bị xóa cùng với nó.",
+        "restored": "\"{name}\" đã được khôi phục.",
+        "restoreFailed": "Không thể khôi phục \"{name}\": {message}",
+        "bulkResult": "{restored, plural, other {# mục}} đã được khôi phục, {failed} thất bại.",
+        "failure": {
+          "parent_deleted": "thư mục hoặc mục cha của nó vẫn bị xóa — hãy khôi phục nó trước tiên",
+          "name_conflict": "một mục có cùng tên đã tồn tại",
+          "expired": "cửa sổ khôi phục đã hết hạn",
+          "forbidden": "bạn không còn có quyền trong dự án đó",
+          "disabled": "tính năng khôi phục tự phục vụ đã bị tắt",
+          "not_owner": "chỉ người xóa nó mới có thể khôi phục nó",
+          "not_found": "nó không còn trong thùng rác"
+        }
       },
       "myComments": {
         "title": "Bình luận của tôi",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "Bạn có chắc chắn muốn xóa vĩnh viễn hàng này khỏi bảng {itemType} không? Thao tác này không thể hoàn tác và có thể xóa dữ liệu liên quan."
       },
       "filterTypesPlaceholder": "Lọc loại mục...",
-      "summary": "{count, plural, =0 {Thùng rác trống} other {# mục trong thùng rác}}"
+      "summary": "{count, plural, =0 {Thùng rác trống} other {# mục trong thùng rác}}",
+      "userWindow": {
+        "label": "Cửa sổ khôi phục tự phục vụ",
+        "invalid": "Nhập một số nguyên ngày (0 sẽ tắt nó)."
+      }
     },
     "notifications": {
       "title": "Quản lý thông báo",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Lập chỉ mục lại dữ liệu\nXây dựng lại chỉ mục tìm kiếm để cải thiện hiệu suất tìm kiếm.",
     "queues": "## Hàng đợi tác vụ nền\nTheo dõi và quản lý hàng đợi xử lý tác vụ nền.",
     "trash": "## Thùng rác\nKhôi phục hoặc xóa vĩnh viễn các bản ghi đã bị xóa mềm trên toàn hệ thống.",
+    "userTrashWindow": "## Cửa sổ khôi phục tự phục vụ\nCó bao nhiêu ngày người dùng có thể khôi phục các mục họ tự xóa, từ phần **Thùng rác** của hồ sơ của họ. Đặt nó thành **0** để tắt khôi phục tự phục vụ. Các mục nằm ngoài cửa sổ sẽ ngừng xuất hiện trong Thùng rác của người dùng — không có gì bị xóa vĩnh viễn, và quản trị viên vẫn có thể khôi phục hoặc xóa vĩnh viễn bất cứ thứ gì tại đây.",
     "systemWebhooks": "## Webhook hệ thống\nCác đích đến webhook gửi đi dành cho các sự kiện cấp hệ thống không gắn liền với một dự án cụ thể — hiện tại là các sự kiện vòng đời người dùng và nhóm SCIM 2.0. Thay vào đó, hãy cấu hình webhook đến và webhook gửi đi có phạm vi dự án từ trang cài đặt dự án.",
     "workflows": "## Quy trình làm việc\nQuản lý các trạng thái quy trình làm việc cho trường hợp kiểm thử, lần chạy kiểm thử và phiên.",
     "workflowReviews": "## Quy trình xem xét\nThực thi quy trình xem xét bằng cách kiểm soát các bước chuyển đổi trong quy trình làm việc cho đến khi được phê duyệt. Khi được bật, các dự án có thể chọn tham gia hoặc không tham gia riêng lẻ thông qua cài đặt Nâng cao của chúng. Tắt tính năng này để ngăn chặn việc kiểm soát phê duyệt quy trình làm việc.",

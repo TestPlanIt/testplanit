@@ -8,6 +8,7 @@
       "editAction": "Bearbeiten ({count})",
       "completeAction": "Abschließen ({count})",
       "deleteAction": "Löschen ({count})",
+      "restoreAction": "Wiederherstellen ({count})",
       "editTitle": "Massenbearbeitung ({count})",
       "applyToCount": "Änderungen gelten für {count, plural, one {# Element} other {# Elemente}}.",
       "tagsAdditiveHint": "Ausgewählte Tags werden zu jedem Element hinzugefügt; vorhandene Tags bleiben erhalten.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Alle Typen",
         "noMatchingEntries": "Keine Einträge entsprechen den ausgewählten Filtern.",
         "showing": "{loaded} von {total} Einträgen"
+      },
+      "trash": {
+        "description": "Gelöschte Elemente, die noch von hier aus wiederhergestellt werden können.",
+        "empty": "Nichts in Ihrem Papierkorb. Gelöschte Elemente können hier für {days, plural, one {# Tag} other {# Tage}} wiederhergestellt werden.",
+        "disabled": "Self-Service-Wiederherstellung ist deaktiviert. Bitten Sie einen Administrator, gelöschte Elemente unter Admin > Papierkorb wiederherzustellen.",
+        "timeLeftColumn": "Verbleibende Zeit",
+        "timeLeft": "{days, plural, =0 {Weniger als ein Tag} one {# Tag} other {# Tage}}",
+        "confirmDescription": "\"{name}\" wird in {project} wiederhergestellt, zusammen mit allem, das zusammen mit ihm gelöscht wurde.",
+        "bulkConfirmDescription": "Jedes der {count} ausgewählten Elemente wird in sein Projekt wiederhergestellt, zusammen mit allem, das zusammen mit ihm gelöscht wurde.",
+        "restored": "\"{name}\" wiederhergestellt.",
+        "restoreFailed": "Konnte \"{name}\" nicht wiederherstellen: {message}",
+        "bulkResult": "{restored, plural, one {# Element} other {# Elemente}} wiederhergestellt, {failed} fehlgeschlagen.",
+        "failure": {
+          "parent_deleted": "sein Ordner oder übergeordnetes Element ist noch gelöscht — stellen Sie dieses zuerst wieder her",
+          "name_conflict": "ein Element mit demselben Namen existiert bereits",
+          "expired": "das Wiederherstellungsfenster ist abgelaufen",
+          "forbidden": "Sie haben keine Berechtigung mehr in diesem Projekt",
+          "disabled": "Self-Service-Wiederherstellung ist deaktiviert",
+          "not_owner": "nur die Person, die es gelöscht hat, kann es wiederherstellen",
+          "not_found": "es ist nicht mehr im Papierkorb"
+        }
       },
       "myComments": {
         "title": "Meine Kommentare",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "Sind Sie sicher, dass Sie diese Zeile aus der Tabelle {itemType} endgültig löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und könnte zugehörige Daten löschen."
       },
       "filterTypesPlaceholder": "Elementtypen filtern...",
-      "summary": "{count, plural, =0 {Papierkorb ist leer} one {# Element im Papierkorb} other {# Elemente im Papierkorb}}"
+      "summary": "{count, plural, =0 {Papierkorb ist leer} one {# Element im Papierkorb} other {# Elemente im Papierkorb}}",
+      "userWindow": {
+        "label": "Self-Service-Wiederherstellungsfenster",
+        "invalid": "Geben Sie eine ganze Anzahl von Tagen ein (0 deaktiviert es)."
+      }
     },
     "notifications": {
       "title": "Benachrichtigungsverwaltung",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Daten neu indizieren\nSuchindizes neu erstellen, um die Suchleistung zu verbessern.",
     "queues": "## Hintergrund-Job-Warteschlangen\nÜberwachung und Verwaltung der Warteschlangen für die Hintergrundverarbeitung.",
     "trash": "## Papierkorb\nStellen Sie soft-gelöschte Datensätze systemweit wieder her oder löschen Sie sie endgültig.",
+    "userTrashWindow": "## Self-Service-Wiederherstellungsfenster\nWie viele Tage Benutzer Elemente wiederherstellen können, die sie selbst gelöscht haben, aus dem Abschnitt **Papierkorb** ihres Profils. Setzen Sie es auf **0**, um Self-Service-Wiederherstellung zu deaktivieren. Elemente außerhalb des Fensters werden einfach nicht mehr im Papierkorb des Benutzers angezeigt – nichts wird gelöscht, und Administratoren können hier immer noch alles wiederherstellen oder endgültig löschen.",
     "systemWebhooks": "## System-Webhooks\nAusgehende Webhook-Ziele für Systemereignisse, die keinem einzelnen Projekt zugeordnet sind – aktuell die Lebenszyklusereignisse von SCIM 2.0-Benutzern und -Gruppen. Konfigurieren Sie eingehende und projektbezogene ausgehende Webhooks stattdessen auf der Projekteinstellungsseite.",
     "workflows": "## Workflows\nVerwalten Sie die Workflow-Status für Testfälle, Testläufe und Sitzungen.",
     "workflowReviews": "## Prüfungsworkflow\nErzwingen Sie Prüfungen, indem Sie Workflow-Übergänge bis zur Genehmigung blockieren. Ist diese Option aktiviert, können Projekte sie in ihren erweiterten Einstellungen einzeln aktivieren oder deaktivieren. Deaktivieren Sie diese Option, um Workflow-Genehmigungsbarrieren zu vermeiden.",

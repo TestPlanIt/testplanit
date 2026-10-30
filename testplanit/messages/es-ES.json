@@ -8,6 +8,7 @@
       "editAction": "Editar ({count})",
       "completeAction": "Completar ({count})",
       "deleteAction": "Eliminar ({count})",
+      "restoreAction": "Restaurar ({count})",
       "editTitle": "Edición masiva ({count})",
       "applyToCount": "Los cambios se aplican a {count, plural, one {# elemento} other {# elementos}}.",
       "tagsAdditiveHint": "Las etiquetas seleccionadas se añaden a cada elemento; las etiquetas existentes se conservan.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Todos los tipos",
         "noMatchingEntries": "Ninguna entrada coincide con los filtros seleccionados.",
         "showing": "{loaded} de {total} entradas"
+      },
+      "trash": {
+        "description": "Elementos eliminados que aún pueden restaurarse desde aquí.",
+        "empty": "Nada en tu papelera. Los elementos que elimines pueden restaurarse aquí durante {days, plural, one {# día} other {# días}}.",
+        "disabled": "La restauración automática está desactivada. Pide a un administrador que restaure los elementos eliminados desde Admin > Papelera.",
+        "timeLeftColumn": "Tiempo restante",
+        "timeLeft": "{days, plural, =0 {Menos de un día} one {# día} other {# días}}",
+        "confirmDescription": "\"{name}\" se restaurará en {project}, junto con todo lo que fue eliminado con él.",
+        "bulkConfirmDescription": "Cada uno de los {count} elementos seleccionados se restaurará en su proyecto, junto con todo lo que fue eliminado con él.",
+        "restored": "\"{name}\" restaurado.",
+        "restoreFailed": "No se pudo restaurar \"{name}\": {message}",
+        "bulkResult": "{restored, plural, one {# elemento} other {# elementos}} restaurado, {failed} falló.",
+        "failure": {
+          "parent_deleted": "su carpeta o elemento principal aún está eliminado — restaura ese primero",
+          "name_conflict": "ya existe un elemento con el mismo nombre",
+          "expired": "la ventana de restauración ha pasado",
+          "forbidden": "ya no tienes permiso en ese proyecto",
+          "disabled": "la restauración automática está desactivada",
+          "not_owner": "solo la persona que lo eliminó puede restaurarlo",
+          "not_found": "ya no está en la papelera"
+        }
       },
       "myComments": {
         "title": "Mis comentarios",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "¿Está seguro de que desea eliminar permanentemente esta fila de la tabla {itemType} ? Esta acción no se puede deshacer y podría eliminar los datos asociados."
       },
       "filterTypesPlaceholder": "Filtrar tipos de elementos...",
-      "summary": "{count, plural, =0 {La papelera está vacía} one {# elemento en la papelera} other {# elementos en la papelera}}"
+      "summary": "{count, plural, =0 {La papelera está vacía} one {# elemento en la papelera} other {# elementos en la papelera}}",
+      "userWindow": {
+        "label": "Ventana de restauración automática",
+        "invalid": "Introduce un número entero de días (0 la desactiva)."
+      }
     },
     "notifications": {
       "title": "Administración de notificaciones",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Reindexar datos\nReconstruir índices de búsqueda para mejorar el rendimiento de búsqueda.",
     "queues": "## Colas de trabajos en segundo plano\nSupervisar y gestionar colas de procesamiento de trabajos en segundo plano.",
     "trash": "## Papelera\nRestaurar o eliminar permanentemente los registros eliminados temporalmente en todo el sistema.",
+    "userTrashWindow": "## Ventana de restauración automática\nCuántos días los usuarios pueden restaurar elementos que eliminaron ellos mismos, desde la sección **Papelera** de su perfil. Establécela en **0** para desactivar la restauración automática. Los elementos que caen fuera de la ventana simplemente dejan de aparecer en la Papelera del usuario — nada se purga, y los administradores todavía pueden restaurar o purgar cualquier cosa aquí.",
     "systemWebhooks": "## Webhooks del sistema\nDestinos de webhook salientes para eventos a nivel de sistema que no están vinculados a un solo proyecto; actualmente, los eventos del ciclo de vida de usuarios y grupos de SCIM 2.0. Configure los webhooks entrantes y salientes con ámbito de proyecto desde la página de configuración del proyecto.",
     "workflows": "## Flujos de trabajo\nAdministrar los estados del flujo de trabajo para casos de prueba, ejecuciones de prueba y sesiones.",
     "workflowReviews": "## Flujo de trabajo de revisión\nAplique revisiones restringiendo las transiciones del flujo de trabajo hasta que se otorgue la aprobación. Cuando está habilitada, los proyectos pueden activarla o desactivarla individualmente a través de su configuración avanzada. Desactive esta opción para evitar las restricciones de aprobación del flujo de trabajo.",

@@ -8,6 +8,7 @@
       "editAction": "Modifica ({count})",
       "completeAction": "Completa ({count})",
       "deleteAction": "Elimina ({count})",
+      "restoreAction": "Ripristina ({count})",
       "editTitle": "Modifica in blocco ({count})",
       "applyToCount": "Le modifiche si applicano a {count, plural, one {# elemento} other {# elementi}}.",
       "tagsAdditiveHint": "I tag selezionati vengono aggiunti a ogni elemento; i tag esistenti vengono mantenuti.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Tutti i tipi",
         "noMatchingEntries": "Nessuna voce corrisponde ai filtri selezionati.",
         "showing": "{loaded} di {total} voci"
+      },
+      "trash": {
+        "description": "Elementi eliminati che possono ancora essere ripristinati da qui.",
+        "empty": "Niente nel cestino. Gli elementi che elimini possono essere ripristinati qui per {days, plural, one {# giorno} other {# giorni}}.",
+        "disabled": "Il ripristino self-service è disattivato. Chiedi a un amministratore di ripristinare gli elementi eliminati da Admin > Cestino.",
+        "timeLeftColumn": "Tempo rimanente",
+        "timeLeft": "{days, plural, =0 {Meno di un giorno} one {# giorno} other {# giorni}}",
+        "confirmDescription": "\"{name}\" sarà ripristinato in {project}, insieme a tutto ciò che è stato eliminato con esso.",
+        "bulkConfirmDescription": "Ognuno dei {count} elementi selezionati sarà ripristinato nel suo progetto, insieme a tutto ciò che è stato eliminato con esso.",
+        "restored": "\"{name}\" ripristinato.",
+        "restoreFailed": "Impossibile ripristinare \"{name}\": {message}",
+        "bulkResult": "{restored, plural, one {# elemento} other {# elementi}} ripristinato, {failed} non riuscito.",
+        "failure": {
+          "parent_deleted": "la sua cartella o elemento padre è ancora eliminato — ripristinalo prima",
+          "name_conflict": "esiste già un elemento con lo stesso nome",
+          "expired": "la finestra di ripristino è scaduta",
+          "forbidden": "non hai più i permessi in quel progetto",
+          "disabled": "il ripristino self-service è disattivato",
+          "not_owner": "solo la persona che lo ha eliminato può ripristinarlo",
+          "not_found": "non è più nel cestino"
+        }
       },
       "myComments": {
         "title": "I miei commenti",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "Vuoi davvero eliminare definitivamente questa riga dalla tabella {itemType} ? Questa azione non può essere annullata e potrebbe rimuovere i dati associati."
       },
       "filterTypesPlaceholder": "Filtra i tipi di elemento...",
-      "summary": "{count, plural, =0 {Il cestino è vuoto} one {# elemento nel cestino} other {# elementi nel cestino}}"
+      "summary": "{count, plural, =0 {Il cestino è vuoto} one {# elemento nel cestino} other {# elementi nel cestino}}",
+      "userWindow": {
+        "label": "Finestra di ripristino self-service",
+        "invalid": "Inserisci un numero intero di giorni (0 lo disattiva)."
+      }
     },
     "notifications": {
       "title": "Amministrazione delle notifiche",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Reindicizza i dati\nRicostruisci gli indici di ricerca per migliorare le prestazioni di ricerca.",
     "queues": "## Code dei lavori in background\nMonitorare e gestire le code di elaborazione dei lavori in background.",
     "trash": "## Cestino\nRipristina o elimina definitivamente i record eliminati temporaneamente in tutto il sistema.",
+    "userTrashWindow": "## Finestra di ripristino self-service\nQuanti giorni gli utenti possono ripristinare gli elementi che hanno eliminato da soli, dalla sezione **Cestino** del loro profilo. Impostalo su **0** per disattivare il ripristino self-service. Gli elementi che rientrano al di fuori della finestra smettono semplicemente di apparire nel Cestino dell'utente — nulla viene eliminato e gli amministratori possono comunque ripristinare o eliminare qualsiasi cosa qui.",
     "systemWebhooks": "## Webhook di sistema\nDestinazioni webhook in uscita per eventi a livello di sistema non legati a un singolo progetto, attualmente gli eventi del ciclo di vita di utenti e gruppi SCIM 2.0. Configura i webhook in entrata e in uscita a livello di progetto dalla pagina delle impostazioni del progetto.",
     "workflows": "## Flussi di lavoro\nGestisci gli stati del flusso di lavoro per i casi di test, le esecuzioni dei test e le sessioni.",
     "workflowReviews": "## Flusso di lavoro di revisione\nApplica le revisioni bloccando le transizioni del flusso di lavoro fino all'approvazione. Quando questa opzione è abilitata, i progetti possono attivarla o disattivarla singolarmente tramite le impostazioni avanzate. Disabilitala per impedire il blocco delle approvazioni del flusso di lavoro.",

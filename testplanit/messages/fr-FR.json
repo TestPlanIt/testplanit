@@ -8,6 +8,7 @@
       "editAction": "Modifier ({count})",
       "completeAction": "Terminer ({count})",
       "deleteAction": "Supprimer ({count})",
+      "restoreAction": "Restaurer ({count})",
       "editTitle": "Modification en masse ({count})",
       "applyToCount": "Les modifications s'appliquent à {count, plural, one {# élément} other {# éléments}}.",
       "tagsAdditiveHint": "Les balises sélectionnées sont ajoutées à chaque élément ; les balises existantes sont conservées.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Tous les types",
         "noMatchingEntries": "Aucune entrée ne correspond aux filtres sélectionnés.",
         "showing": "{loaded} sur {total} entrées"
+      },
+      "trash": {
+        "description": "Les éléments supprimés qui peuvent toujours être restaurés à partir d'ici.",
+        "empty": "Rien dans votre corbeille. Les éléments que vous supprimez peuvent être restaurés ici pendant {days, plural, one {# jour} other {# jours}}.",
+        "disabled": "La restauration en libre-service est désactivée. Demandez à un administrateur de restaurer les éléments supprimés à partir d'Admin > Corbeille.",
+        "timeLeftColumn": "Temps restant",
+        "timeLeft": "{days, plural, =0 {Moins d'un jour} one {# jour} other {# jours}}",
+        "confirmDescription": "\"{name}\" sera restauré dans {project}, ainsi que tout ce qui a été supprimé avec lui.",
+        "bulkConfirmDescription": "Chacun des {count} éléments sélectionnés sera restauré dans son projet, ainsi que tout ce qui a été supprimé avec lui.",
+        "restored": "\"{name}\" restauré.",
+        "restoreFailed": "Impossible de restaurer \"{name}\" : {message}",
+        "bulkResult": "{restored, plural, one {# élément} other {# éléments}} restauré(s), {failed} échoué(s).",
+        "failure": {
+          "parent_deleted": "son dossier ou son parent est toujours supprimé — restaurez-le d'abord",
+          "name_conflict": "un élément portant le même nom existe déjà",
+          "expired": "la fenêtre de restauration a expiré",
+          "forbidden": "vous n'avez plus de permission dans ce projet",
+          "disabled": "la restauration en libre-service est désactivée",
+          "not_owner": "seule la personne qui l'a supprimé peut le restaurer",
+          "not_found": "il n'est plus dans la corbeille"
+        }
       },
       "myComments": {
         "title": "Mes commentaires",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "Êtes-vous sûr de vouloir supprimer définitivement cette ligne du tableau {itemType}  ? Cette action est irréversible et pourrait supprimer les données associées."
       },
       "filterTypesPlaceholder": "Filtrer les types d'éléments...",
-      "summary": "{count, plural, =0 {La corbeille est vide} one {# élément dans la corbeille} other {# éléments dans la corbeille}}"
+      "summary": "{count, plural, =0 {La corbeille est vide} one {# élément dans la corbeille} other {# éléments dans la corbeille}}",
+      "userWindow": {
+        "label": "Fenêtre de restauration en libre-service",
+        "invalid": "Entrez un nombre entier de jours (0 pour le désactiver)."
+      }
     },
     "notifications": {
       "title": "Administration des notifications",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Réindexer les données\nReconstruire les index de recherche pour améliorer les performances de recherche.",
     "queues": "## Files d'attente de tâches en arrière-plan\nSurveiller et gérer les files d'attente de traitement des tâches en arrière-plan.",
     "trash": "## Corbeille\nRestaurez ou purgez définitivement les enregistrements marqués comme supprimés dans l'ensemble du système.",
+    "userTrashWindow": "## Fenêtre de restauration en libre-service\nNombre de jours pendant lesquels les utilisateurs peuvent restaurer les éléments qu'ils ont supprimés eux-mêmes, à partir de la section **Corbeille** de leur profil. Réglez-la sur **0** pour désactiver la restauration en libre-service. Les éléments qui sortent de cette fenêtre cesseront simplement d'apparaître dans la corbeille de l'utilisateur — rien n'est purgé, et les administrateurs peuvent toujours restaurer ou purger n'importe quoi ici.",
     "systemWebhooks": "## Webhooks système\nDestinations des webhooks sortants pour les événements système non liés à un projet spécifique — actuellement les événements de cycle de vie des utilisateurs et des groupes SCIM 2.0. Configurez plutôt les webhooks entrants et sortants liés au projet depuis la page des paramètres du projet.",
     "workflows": "## Flux de travail\nGérez les états de workflow pour les cas de test, les exécutions de tests et les sessions.",
     "workflowReviews": "## Flux de travail de révision\nImposer des révisions en bloquant les transitions du flux de travail jusqu'à approbation. Une fois activée, cette option permet aux projets de l'activer ou de la désactiver individuellement via leurs paramètres avancés. Désactivez-la pour empêcher le blocage des validations dans le flux de travail.",

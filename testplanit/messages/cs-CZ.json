@@ -8,6 +8,7 @@
       "editAction": "Upravit ({count})",
       "completeAction": "Dokončit ({count})",
       "deleteAction": "Odstranit ({count})",
+      "restoreAction": "Obnovit ({count})",
       "editTitle": "Hromadná úprava ({count})",
       "applyToCount": "Změny se použijí na {count, plural, one {# položku} few {# položky} many {# položek} other {# položky}}.",
       "tagsAdditiveHint": "Vybrané štítky se přidají ke každé položce; existující štítky zůstanou zachovány.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Všechny typy",
         "noMatchingEntries": "Žádné záznamy neodpovídají vybraným filtrům.",
         "showing": "{loaded} z {total} záznamů"
+      },
+      "trash": {
+        "description": "Odstraněné položky, které lze stále obnovit odsud.",
+        "empty": "Váš koš je prázdný. Odstraněné položky lze obnovit zde po dobu {days, plural, one {# dne} few {# dnů} many {# dnů} other {# dnů}}.",
+        "disabled": "Samoobslužné obnovení je vypnuté. Požádejte správce, aby obnovil odstraněné položky z Správce > Koš.",
+        "timeLeftColumn": "Zbývající čas",
+        "timeLeft": "{days, plural, =0 {Méně než den} one {# den} few {# dny} many {# dne} other {# dní}}",
+        "confirmDescription": "\"{name}\" bude obnovena do projektu {project} spolu se vším, co bylo odstraněno s ní.",
+        "bulkConfirmDescription": "Každá z {count} vybraných položek bude obnovena do svého projektu spolu se vším, co bylo odstraněno s ní.",
+        "restored": "\"{name}\" obnovena.",
+        "restoreFailed": "Nelze obnovit \"{name}\": {message}",
+        "bulkResult": "{restored, plural, one {# položka} few {# položky} many {# položek} other {# položek}} obnovena, {failed} selhalo.",
+        "failure": {
+          "parent_deleted": "její složka nebo nadřazená položka je stále odstraněna — obnovte ji nejdříve",
+          "name_conflict": "položka se stejným názvem již existuje",
+          "expired": "okno obnovení vypršelo",
+          "forbidden": "již nemáte oprávnění v tomto projektu",
+          "disabled": "samoobslužné obnovení je vypnuté",
+          "not_owner": "položku může obnovit pouze osoba, která ji smazala",
+          "not_found": "již se nenachází v koši"
+        }
       },
       "myComments": {
         "title": "Moje komentáře",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "Opravdu chcete trvale smazat tento řádek z tabulky {itemType}? Tuto akci nelze vrátit zpět a může odstranit přidružená data."
       },
       "filterTypesPlaceholder": "Filtrovat typy položek...",
-      "summary": "{count, plural, =0 {Koš je prázdný} one {# položka v koši} few {# položky v koši} many {# položky v koši} other {# položek v koši}}"
+      "summary": "{count, plural, =0 {Koš je prázdný} one {# položka v koši} few {# položky v koši} many {# položky v koši} other {# položek v koši}}",
+      "userWindow": {
+        "label": "Okno samoobslužného obnovení",
+        "invalid": "Zadejte celé číslo dní (0 ho vypne)."
+      }
     },
     "notifications": {
       "title": "Správa oznámení",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Znovu indexovat data\nPřestavte vyhledávací indexy pro zlepšení výkonu vyhledávání.",
     "queues": "## Fronty úloh na pozadí\nSledujte a spravujte fronty pro zpracování úloh na pozadí.",
     "trash": "## Koš\nObnovte nebo trvale odstraňte měkce smazané záznamy napříč systémem.",
+    "userTrashWindow": "## Okno samoobslužného obnovení\nPočet dní, během kterých mohou uživatelé obnovit položky, které sami smazali, ze sekce **Koš** v jejich profilu. Nastavte na **0** pro vypnutí samoobslužného obnovení. Položky mimo toto okno jednoduše zmizí z koše uživatele — nic se nevymaže a správci mohou stále obnovit nebo vymazat cokoli odsud.",
     "systemWebhooks": "## Systémové webhooky\nCíle odchozích webhooků pro systémové události, které nejsou vázány na jeden projekt — v současnosti jde o události životního cyklu uživatelů a skupin SCIM 2.0. Příchozí a projektově vázané odchozí webhooky nastavte místo toho na stránce nastavení projektu.",
     "workflows": "## Pracovní postupy\nSpravujte stavy pracovního postupu pro testovací případy, testovací běhy a relace.",
     "workflowReviews": "## Pracovní postup revize\nVynucujte revize tím, že zablokujete přechody pracovního postupu, dokud nebude uděleno schválení. Když je tato funkce povolena, projekty se mohou jednotlivě přihlásit nebo odhlásit prostřednictvím svého pokročilého nastavení. Vypnutím zabráníte bránám schválení pracovního postupu.",

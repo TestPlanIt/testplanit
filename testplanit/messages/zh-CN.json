@@ -8,6 +8,7 @@
       "editAction": "编辑（{count}）",
       "completeAction": "完成（{count}）",
       "deleteAction": "删除（{count}）",
+      "restoreAction": "恢复（{count}）",
       "editTitle": "批量编辑（{count}）",
       "applyToCount": "更改将应用于 {count, plural, other {# 个项目}}。",
       "tagsAdditiveHint": "所选标签将添加到每个项目；现有标签将保留。",
@@ -3116,6 +3117,27 @@
         "allTypes": "所有类型",
         "noMatchingEntries": "没有符合所选筛选条件的条目。",
         "showing": "{loaded} / {total} 条条目"
+      },
+      "trash": {
+        "description": "已删除的项目仍可从此处恢复。",
+        "empty": "您的垃圾箱中没有内容。删除的项目可在{days, plural, one {# 天} other {# 天}}内从此处恢复。",
+        "disabled": "自助恢复已关闭。请向管理员咨询以从",
+        "timeLeftColumn": "剩余时间",
+        "timeLeft": "{days, plural, =0 {少于一天} one {# 天} other {# 天}}",
+        "confirmDescription": "\"{name}\"将被恢复到{project}及所有与其一起删除的内容。",
+        "bulkConfirmDescription": "选定的{count}个项目中的每一个都将恢复到其项目，以及与其一起删除的任何内容。",
+        "restored": "\"{name}\"已恢复。",
+        "restoreFailed": "无法恢复\"{name}\"：{message}",
+        "bulkResult": "{restored, plural, one {# 项} other {# 项}}已恢复，{failed}失败。",
+        "failure": {
+          "parent_deleted": "其文件夹或父项仍被删除——请先恢复该项",
+          "name_conflict": "已存在同名项目",
+          "expired": "恢复期限已过",
+          "forbidden": "您不再拥有该项目的权限",
+          "disabled": "自助恢复已关闭",
+          "not_owner": "只有删除它的人才能恢复它",
+          "not_found": "它不再在垃圾箱中"
+        }
       },
       "myComments": {
         "title": "我的评论",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "您确定要从 {itemType} 表中永久删除此行吗？此操作无法撤销，并且可能会删除关联数据。"
       },
       "filterTypesPlaceholder": "筛选项目类型……",
-      "summary": "{count, plural, =0 {回收站为空} other {回收站中有 # 个项目}}"
+      "summary": "{count, plural, =0 {回收站为空} other {回收站中有 # 个项目}}",
+      "userWindow": {
+        "label": "自助恢复窗口",
+        "invalid": "输入整数天数（0表示关闭）。"
+      }
     },
     "notifications": {
       "title": "通知管理",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## 重建索引数据\n重建搜索索引以提高搜索性能。",
     "queues": "## 后台作业队列\n监控和管理后台作业处理队列。",
     "trash": "## 回收站\n恢复或永久清除系统中已软删除的记录。",
+    "userTrashWindow": "## 自助恢复窗口\n用户可以从其个人资料的**垃圾箱**部分恢复自己删除的项目的天数。设置为**0**以关闭自助恢复。超出时间范围的项目将停止出现在用户的垃圾箱中——不会清除任何内容，管理员仍可在此处恢复或清除任何内容。",
     "systemWebhooks": "## 系统 Webhook\n用于处理不与单个项目关联的系统级事件的出站 Webhook 目标——目前是 SCIM 2.0 用户和组生命周期事件。请改用项目设置页面配置入站和项目范围的出站 Webhook。",
     "workflows": "## 工作流\n管理测试用例、测试运行和会话的工作流状态。",
     "workflowReviews": "## 审核工作流\n通过限制工作流程转换直至获得批准来强制执行审核。启用此功能后，项目可以通过其高级设置单独选择启用或禁用。禁用此功能可阻止工作流程审批限制。",

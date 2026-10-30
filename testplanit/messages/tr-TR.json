@@ -8,6 +8,7 @@
       "editAction": "Düzenle ({count})",
       "completeAction": "Tamamla ({count})",
       "deleteAction": "Sil ({count})",
+      "restoreAction": "Geri Yükle ({count})",
       "editTitle": "Toplu Düzenle ({count})",
       "applyToCount": "Değişiklikler {count, plural, one {# öğeye} other {# öğeye}} uygulanır.",
       "tagsAdditiveHint": "Seçilen etiketler her öğeye eklenir; mevcut etiketler korunur.",
@@ -3116,6 +3117,27 @@
         "allTypes": "Tüm Türler",
         "noMatchingEntries": "Seçilen filtrelerle eşleşen kayıt bulunamadı.",
         "showing": "{total} kayıttan {loaded} tanesi"
+      },
+      "trash": {
+        "description": "Buradan hala geri yüklenebilecek silinen öğeler.",
+        "empty": "Çöpünüzde hiçbir şey yok. Sildiğiniz öğeler {days, plural, one {# gün} other {# gün}} boyunca buradan geri yüklenebilir.",
+        "disabled": "Self-servis geri yükleme kapalıdır. Silinen öğeleri geri yüklemesi için bir yöneticiye başvurun Admin > Çöp bölümünden.",
+        "timeLeftColumn": "Kalan süre",
+        "timeLeft": "{days, plural, =0 {Bir günden az} one {# gün} other {# gün}}",
+        "confirmDescription": "\"{name}\" ile beraber silinen her şey {project} projesine geri yüklenecektir.",
+        "bulkConfirmDescription": "Seçilen {count} öğenin her biri kendi projesine, siliniş zamanında onunla beraber silinen her şeyle beraber geri yüklenecektir.",
+        "restored": "\"{name}\" geri yüklendi.",
+        "restoreFailed": "\"{name}\" geri yüklenemedi: {message}",
+        "bulkResult": "{restored, plural, one {# öğe} other {# öğe}} geri yüklendi, {failed} başarısız.",
+        "failure": {
+          "parent_deleted": "klasörü veya üst öğesi hala silinmiş — önce onu geri yükleyin",
+          "name_conflict": "aynı adda zaten bir öğe mevcut",
+          "expired": "geri yükleme penceresi kapatıldı",
+          "forbidden": "artık o projede izniniz yok",
+          "disabled": "self-servis geri yükleme kapalı",
+          "not_owner": "yalnızca onu silen kişi geri yükleyebilir",
+          "not_found": "artık çöpte değil"
+        }
       },
       "myComments": {
         "title": "Yorumlarım",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "{itemType} tablosundan bu satırı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve ilgili verileri silebilir."
       },
       "filterTypesPlaceholder": "Öğe türlerini filtrele...",
-      "summary": "{count, plural, =0 {Çöp kutusu boş} one {Çöp kutusunda # öğe} other {Çöp kutusunda # öğe}}"
+      "summary": "{count, plural, =0 {Çöp kutusu boş} one {Çöp kutusunda # öğe} other {Çöp kutusunda # öğe}}",
+      "userWindow": {
+        "label": "Self-servis geri yükleme penceresi",
+        "invalid": "Tam sayıda gün girin (0 kapatır)."
+      }
     },
     "notifications": {
       "title": "Bildirim Yönetimi",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## Verileri Yeniden Dizinle\nArama performansını iyileştirmek için arama dizinlerini yeniden oluşturun.",
     "queues": "## Arka Plan İş Kuyrukları\nArka plan işleme kuyruklarını izleyin ve yönetin.",
     "trash": "## Çöp Kutusu\nSistem genelinde geçici olarak silinmiş kayıtları geri yükleyin veya kalıcı olarak temizleyin.",
+    "userTrashWindow": "## Self-servis geri yükleme penceresi\nKullanıcıların kendi sildikleri öğeleri profillerinin **Çöp** bölümünden kaç gün içinde geri yükleyebilecekleri. Self-servis geri yüklemeyi kapatmak için **0** olarak ayarlayın. Pencereden çıkan öğeler kullanıcının Çöp bölümünde görünmeyi bırakmıştır — hiçbir şey silinmez ve yöneticiler burada her şeyi geri yükleyebilir veya silebilir.",
     "systemWebhooks": "## Sistem Web Kancaları\nTek bir projeye bağlı olmayan sistem düzeyindeki olaylar için giden web kancası hedefleri — şu anda SCIM 2.0 kullanıcı ve grup yaşam döngüsü olayları. Bunun yerine, proje ayarları sayfasından gelen ve proje kapsamlı giden web kancalarını yapılandırın.",
     "workflows": "## İş Akışları\nTest senaryoları, test çalıştırmaları ve oturumlar için iş akışı durumlarını yönetin.",
     "workflowReviews": "## İnceleme İş Akışı\nOnay verilene kadar iş akışı geçişlerini kilitleyerek incelemeleri zorunlu hale getirin. Etkinleştirildiğinde, projeler Gelişmiş ayarları aracılığıyla ayrı ayrı bu özelliği etkinleştirebilir veya devre dışı bırakabilir. İş akışı onay kilitlerini önlemek için devre dışı bırakın.",

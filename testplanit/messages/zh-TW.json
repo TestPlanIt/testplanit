@@ -8,6 +8,7 @@
       "editAction": "編輯（{count}）",
       "completeAction": "完成（{count}）",
       "deleteAction": "刪除（{count}）",
+      "restoreAction": "還原 ({count})",
       "editTitle": "批量編輯（{count}）",
       "applyToCount": "變更套用至 {count, plural, other {# 個項目}}。",
       "tagsAdditiveHint": "所選標籤會新增至每個項目；現有標籤將被保留。",
@@ -3116,6 +3117,27 @@
         "allTypes": "所有類型",
         "noMatchingEntries": "沒有符合所選篩選條件的項目。",
         "showing": "{total} 個項目中的 {loaded} 個"
+      },
+      "trash": {
+        "description": "可以從此處還原的已刪除項目。",
+        "empty": "您的垃圾桶中沒有任何內容。您刪除的項目可以在此處還原 {days, plural, one {# 天} other {# 天}}。",
+        "disabled": "自助還原已關閉。請要求管理員從 [管理] > [垃圾桶] 還原已刪除的項目。",
+        "timeLeftColumn": "剩餘時間",
+        "timeLeft": "{days, plural, =0 {不到一天} one {# 天} other {# 天}}",
+        "confirmDescription": "「{name}」將與其一起刪除的所有內容一起還原到 {project}。",
+        "bulkConfirmDescription": "所選 {count} 個項目中的每一個都將還原到其項目中，並連同與其一起刪除的所有內容。",
+        "restored": "「{name}」已還原。",
+        "restoreFailed": "無法還原「{name}」：{message}",
+        "bulkResult": "{restored, plural, one {# 個項目} other {# 個項目}}已還原，{failed} 個失敗。",
+        "failure": {
+          "parent_deleted": "其文件夾或父項仍已刪除 — 請先還原該項",
+          "name_conflict": "已存在同名項目",
+          "expired": "還原窗口已過期",
+          "forbidden": "您在該項目中不再有權限",
+          "disabled": "自助還原已關閉",
+          "not_owner": "只有刪除它的人才能還原它",
+          "not_found": "它不再在垃圾桶中"
+        }
       },
       "myComments": {
         "title": "我的評論",
@@ -6398,7 +6420,11 @@
         "purgeConfirmationMessage": "您確定要從 {itemType} 表格中永久刪除此行嗎？此操作無法撤銷，並且可能會刪除關聯資料。"
       },
       "filterTypesPlaceholder": "篩選項目類型……",
-      "summary": "{count, plural, =0 {回收桶是空的} other {回收桶中有 # 個項目}}"
+      "summary": "{count, plural, =0 {回收桶是空的} other {回收桶中有 # 個項目}}",
+      "userWindow": {
+        "label": "自助還原窗口",
+        "invalid": "輸入整數天數（0 表示關閉）。"
+      }
     },
     "notifications": {
       "title": "通知管理",
@@ -7982,6 +8008,7 @@
     "elasticsearchReindex": "## 重新建立索引資料\n重建搜尋索引以提升搜尋效能。",
     "queues": "## 背景工作佇列\n監控並管理背景作業處理佇列。",
     "trash": "## 垃圾桶\n還原或永久清除系統中已軟刪除的記錄。",
+    "userTrashWindow": "## 自助還原窗口\n用戶可以從其個人資料的**垃圾桶**部分還原他們自己刪除的項目的天數。將其設置為 **0** 以關閉自助還原。超出窗口範圍的項目將簡單地停止出現在用戶的垃圾桶中 — 不會刪除任何內容，管理員仍然可以在此處還原或刪除任何內容。",
     "systemWebhooks": "## 系統 Webhooks\n用於處理不與單一專案關聯的系統級事件的出站 Webhook 目標－目前是 SCIM 2.0 使用者和群組生命週期事件。請改用專案設定頁面配置入站和專案範圍的出站 Webhook。",
     "workflows": "## 工作流程\n管理測試案例、測試運行及會話的工作流程狀態。",
     "workflowReviews": "## 審核工作流程\n透過限制工作流程轉換直到獲得核准來強制執行審核。啟用此功能後，專案可以透過其進階設定單獨選擇啟用或停用。停用此功能可防止工作流程核准限制。",
