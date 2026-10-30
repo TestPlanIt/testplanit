@@ -8,6 +8,7 @@ import { stringToColorCode } from "~/utils/stringToColorCode";
 import { formatReportPeriod } from "~/utils/reportPeriodFormat";
 import type { DateGrouping } from "~/lib/reports/dateGrouping";
 import type { ResultsTrendMeta } from "~/utils/resultsTrendShared";
+import type { IssueTestCoverageSummary } from "~/utils/issueTestCoverageSummary";
 import type { TestCaseHealthSummary } from "~/utils/testCaseHealthSummary";
 import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
 import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
@@ -571,7 +572,13 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   // Special handling for issue test coverage report - use stacked bar chart
   // Shows issues with their linked test cases and pass/fail/untested breakdown
   if (reportType && matchesReportType(reportType, "issue-test-coverage")) {
-    return <IssueTestCoverageChart data={results} projectId={projectId} />;
+    return (
+      <IssueTestCoverageChart
+        data={results}
+        summary={chartSummary as IssueTestCoverageSummary | null | undefined}
+        projectId={projectId}
+      />
+    );
   }
 
   const chartType = getChartType(dimensions, chartMetrics, results);

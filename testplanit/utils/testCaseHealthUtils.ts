@@ -8,6 +8,7 @@ import {
   parseEnumFilter,
 } from "~/utils/reportFilterParams";
 import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
+import { pageReportRows } from "~/utils/reportPaging";
 import {
   summarizeTestCaseHealth,
   type HealthStatus,
@@ -188,11 +189,13 @@ export async function handleTestCaseHealthPOST(
       healthStatusFilter, // "healthy" | "never_executed" | "always_passing" | "always_failing"
       staleFilter, // "stale" | "notStale"
       dimensions = [],
-      // Paging and header sort. The default serves every row, so API
-      // clients and the CSV export keep the complete set; the ReportBuilder
-      // asks for a page and reads the chart from `summary`.
-      page = 1,
+      // Paging and header sort; see pageReportRows. The default serves
+      // every row, so API clients and the CSV export keep the complete
+      // set; the ReportBuilder asks for a page and reads the chart from
+      // `summary`.
+      page,
       pageSize = "All",
+      offset,
       sortColumn,
       sortDirection,
     } = body;
@@ -536,24 +539,19 @@ export async function handleTestCaseHealthPOST(
             return a.healthScore - b.healthScore;
           });
 
-    const pageNum = Math.max(1, Math.floor(Number(page)) || 1);
-    const pageSizeNum =
-      pageSize === "All" || pageSize == null
-        ? null
-        : Math.min(
-            Math.max(1, Math.floor(Number(pageSize)) || 1),
-            TEST_CASE_HEALTH_MAX_PAGE_SIZE
-          );
-    const pageRows = pageSizeNum
-      ? sortedResults.slice((pageNum - 1) * pageSizeNum, pageNum * pageSizeNum)
-      : sortedResults;
+    const paged = pageReportRows(
+      sortedResults,
+      { page, pageSize, offset },
+      { maxPageSize: TEST_CASE_HEALTH_MAX_PAGE_SIZE }
+    );
 
     return Response.json({
-      data: pageRows,
+      data: paged.rows,
       total: sortedResults.length,
       summary,
-      page: pageNum,
-      pageSize: pageSizeNum ?? "All",
+      page: paged.page,
+      pageSize: paged.pageSize,
+      offset: paged.offset,
       staleDaysThreshold: staleThreshold,
       minExecutionsForRate: minExecutions,
       lookbackDays: lookback,

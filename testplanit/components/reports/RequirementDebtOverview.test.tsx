@@ -73,6 +73,54 @@ describe("RequirementDebtOverview", () => {
     expect(screen.getByTestId("debt-summary-on-closed")).toHaveTextContent("2");
   });
 
+  it("draws from the server summary when one is given, not from the rows on screen", () => {
+    render(
+      <RequirementDebtOverview
+        rows={[row(1)]}
+        summary={{
+          counts: { total: 13803, uncovered: 13000, notRun: 803, onClosed: 42 },
+          hierarchyGroups: [
+            {
+              label: "REQ-1: Billing",
+              counts: { UNCOVERED: 9000 },
+              total: 9000,
+              requirementId: 1,
+            },
+          ],
+          foldedCount: 3,
+          otherTotal: 4803,
+          ageBuckets: [
+            { label: "ageUnder30", counts: { UNCOVERED: 100 }, total: 100 },
+            { label: "age30to90", counts: {}, total: 0 },
+            { label: "age90to180", counts: {}, total: 0 },
+            { label: "age180to365", counts: {}, total: 0 },
+            {
+              label: "ageOver365",
+              counts: { UNCOVERED: 12900, NOT_RUN: 803 },
+              total: 13703,
+            },
+          ],
+        }}
+      />
+    );
+    expect(screen.getByTestId("debt-summary-total")).toHaveTextContent(
+      "13,803"
+    );
+    expect(screen.getByTestId("debt-summary-uncovered")).toHaveTextContent(
+      "13,000"
+    );
+    expect(screen.getByTestId("debt-summary-not_run")).toHaveTextContent("803");
+    expect(screen.getByTestId("debt-summary-on-closed")).toHaveTextContent(
+      "42"
+    );
+    expect(screen.getByTestId("debt-hierarchy-bar-0")).toHaveTextContent(
+      "REQ-1: Billing"
+    );
+    expect(
+      screen.getByTestId("requirement-debt-hierarchy-other")
+    ).toHaveTextContent("4,803");
+  });
+
   it("groups debt by root hierarchy with both tier segments", () => {
     render(
       <RequirementDebtOverview

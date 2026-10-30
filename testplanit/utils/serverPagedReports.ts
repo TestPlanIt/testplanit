@@ -6,12 +6,19 @@
  * full set in one request and is sorted in the browser.
  *
  * Page sizes stay within each route's per-request clamp so the
- * `loaded < total` arithmetic holds: execution-log clamps to 200,
- * test-case-health to 500.
+ * `loaded < total` arithmetic holds: execution-log clamps to 200, the
+ * others to 500. A route may return MORE than the page size to finish a
+ * row group (issue-test-coverage never splits an issue's cases across
+ * pages), so the client asks for the next page by `offset` = rows loaded,
+ * never by multiplying the page number.
  */
 const SERVER_PAGE_SIZES: Record<string, number> = {
   "execution-log": 100,
   "test-case-health": 250,
+  "issue-test-coverage": 250,
+  "requirement-traceability": 250,
+  "requirement-coverage-gaps": 250,
+  "requirement-coverage-changes": 250,
 };
 
 function baseReportType(reportType: string): string {

@@ -2,7 +2,15 @@ import { baseDb } from "@/lib/db";
 import { sql } from "kysely";
 import { NextRequest } from "next/server";
 import { latestCaseResultsCte } from "~/lib/services/latestCaseResults";
+import { summarizeIssueTestCoverage } from "~/utils/issueTestCoverageSummary";
+import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { pageReportRows } from "~/utils/reportPaging";
+
+/** Largest page a caller may request; a page grows past this only to
+ *  finish the issue at its end. `pageSize: "All"` (the default) serves
+ *  the complete set. */
+export const ISSUE_TEST_COVERAGE_MAX_PAGE_SIZE = 500;
 
 // Flat row structure for grouping-based approach
 export interface IssueTestCoverageRow {
@@ -120,7 +128,17 @@ export async function handleIssueTestCoveragePOST(
       projectId: body?.projectId ? Number(body.projectId) : undefined,
     });
     if (!authz.ok) return authz.response;
-    const { projectId, dimensions = [] } = body;
+    const {
+      projectId,
+      dimensions = [],
+      // Paging and header sort; see pageReportRows. The default serves
+      // every row, so API clients and the CSV export keep the complete set.
+      page,
+      pageSize = "All",
+      offset,
+      sortColumn,
+      sortDirection,
+    } = body;
 
     // Check if project dimension is requested
     const includeProject = isCrossProject && dimensions.includes("project");
@@ -311,23 +329,58 @@ export async function handleIssueTestCoveragePOST(
       });
     }
 
-    // Sort by number of failed tests (most failures first), then by pass rate
+    // The default order: most failed tests first, then the lowest pass
+    // rate, then the most linked tests. Stable, and the rows arrive issue
+    // by issue, so an issue's cases stay together.
     flatResults.sort((a, b) => {
-      // Primary: more failed tests first
       if (b.failedTestCases !== a.failedTestCases) {
         return b.failedTestCases - a.failedTestCases;
       }
-      // Secondary: lower pass rate first
       if (a.passRate !== b.passRate) {
         return a.passRate - b.passRate;
       }
-      // Tertiary: more linked tests first
       return b.linkedTestCases - a.linkedTestCases;
     });
 
+    // The chart's numbers, over the whole set in its default order (the
+    // order the chart always read the full set in), before paging and
+    // before any header sort.
+    const summary = summarizeIssueTestCoverage(flatResults);
+
+    // A header sort orders the full set the way the client's column menus
+    // did when every row was in the browser (same comparator, same column
+    // ids).
+    const sortedResults =
+      typeof sortColumn === "string" && sortColumn.length > 0
+        ? sortPreBuiltReportRows(
+            isCrossProject
+              ? "cross-project-issue-test-coverage"
+              : "issue-test-coverage",
+            flatResults,
+            {
+              column: sortColumn,
+              direction: sortDirection === "desc" ? "desc" : "asc",
+            }
+          )
+        : flatResults;
+
+    // The table groups rows by issue, so a page never ends inside one.
+    const paged = pageReportRows(
+      sortedResults,
+      { page, pageSize, offset },
+      {
+        maxPageSize: ISSUE_TEST_COVERAGE_MAX_PAGE_SIZE,
+        keepTogether: (previous, next) => previous.issueId === next.issueId,
+      }
+    );
+
     return Response.json({
-      data: flatResults,
-      total: flatResults.length,
+      data: paged.rows,
+      total: sortedResults.length,
+      summary,
+      page: paged.page,
+      pageSize: paged.pageSize,
+      offset: paged.offset,
     });
   } catch (e: unknown) {
     console.error("Issue test coverage report error:", e);

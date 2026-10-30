@@ -88,7 +88,15 @@ vi.mock("./FlakyTestsBubbleChart", () => ({
 }));
 
 vi.mock("./IssueTestCoverageChart", () => ({
-  IssueTestCoverageChart: () => <div data-testid="IssueTestCoverageChart" />,
+  IssueTestCoverageChart: ({
+    summary,
+  }: {
+    summary?: { totalIssues: number } | null;
+  }) => (
+    <div data-testid="IssueTestCoverageChart">
+      {summary ? `summary-issues:${summary.totalIssues}` : "no-summary"}
+    </div>
+  ),
 }));
 
 vi.mock("./TestCaseHealthChart", () => ({
@@ -275,6 +283,20 @@ describe("ReportChart", () => {
       />
     );
     expect(screen.getByTestId("IssueTestCoverageChart")).toBeInTheDocument();
+    expect(screen.getByText("no-summary")).toBeInTheDocument();
+  });
+
+  it("hands the server summary to the issue coverage chart", () => {
+    render(
+      <ReportChart
+        results={[{ issueId: 1, title: "Issue A" }]}
+        chartSummary={{ totalIssues: 4659, bubbles: [] }}
+        dimensions={[]}
+        metrics={[]}
+        reportType="cross-project-issue-test-coverage"
+      />
+    );
+    expect(screen.getByText("summary-issues:4659")).toBeInTheDocument();
   });
 
   it("renders nothing when results is empty array and no special reportType", () => {

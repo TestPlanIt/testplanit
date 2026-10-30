@@ -2705,10 +2705,14 @@ function ReportBuilderContent({
       {
         append = false,
         page = 1,
+        offset,
         fresh = false,
       }: {
         append?: boolean;
         page?: number;
+        /** Rows already loaded; a server-paged report serves the rows
+         *  after these (a page may run past its size to finish a group). */
+        offset?: number;
         /** A new run (explicit or auto-run), not a sort or page re-fetch. */
         fresh?: boolean;
       } = {}
@@ -2749,6 +2753,7 @@ function ReportBuilderContent({
           metrics: selectedMetrics.map((m) => m.value),
           page: pagedSize ? page : 1,
           pageSize: pagedSize ?? "All",
+          ...(pagedSize && offset != null ? { offset } : {}),
         };
 
         if (mode === "project" && projectId) {
@@ -3494,11 +3499,14 @@ function ReportBuilderContent({
     if (!pagedSize || loadingMore) return;
     const loaded = results?.length ?? 0;
     if (loaded >= totalCount) return;
+    // Page by rows loaded, not by page number: a page may have run past
+    // its size to finish a row group, so `loaded` is the only true cursor.
     const nextPage = Math.floor(loaded / pagedSize) + 1;
     setLoadingMore(true);
     void fetchReportData(lastUsedDimensions, lastUsedMetrics, false, {
       append: true,
       page: nextPage,
+      offset: loaded,
     }).finally(() => setLoadingMore(false));
   }, [
     reportType,

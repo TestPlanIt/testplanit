@@ -26,6 +26,7 @@ import {
   diffSnapshotEntries,
   groupTraceabilityRows,
   scopeSnapshotEntries,
+  summarizeCoverageChanges,
   type RequirementCoverageChangeRow,
   type SnapshotEntryRecord,
 } from "~/lib/services/requirementTraceabilitySnapshotShape";
@@ -36,6 +37,31 @@ import {
 } from "~/utils/issueDisplayText";
 import { getExecutionScopeFilterOptions } from "~/lib/services/executionScopeFilterOptions";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { pageReportRows } from "~/utils/reportPaging";
+import { sortRequirementReportRows } from "~/utils/requirementReportSort";
+import {
+  summarizeRequirementDebt,
+  summarizeRequirementTraceability,
+} from "~/utils/requirementReportSummaries";
+
+/** Largest page a caller may request from the three requirement reports.
+ *  `pageSize: "All"` (the default) serves the complete set. */
+export const REQUIREMENT_REPORT_MAX_PAGE_SIZE = 500;
+
+/**
+ * The header sort the client's column menus used to apply to the full
+ * set in the browser (same comparator, same column ids), now applied
+ * server-side so a page is a window of the sorted whole. No sort keeps
+ * the loader's path order.
+ */
+function sortRequirementRows<T>(rows: T[], body: any): T[] {
+  const column = body?.sortColumn;
+  if (typeof column !== "string" || column.length === 0) return rows;
+  return sortRequirementReportRows(rows, {
+    column,
+    direction: body?.sortDirection === "desc" ? "desc" : "asc",
+  });
+}
 
 /**
  * Server handler for two report-builder pre-built report types: the
@@ -669,7 +695,19 @@ export async function handleRequirementCoverageReportPOST(
           linkedCases: row.linkedCaseCount,
         })
       );
-      return Response.json({ data: rows, total: rows.length });
+      const sorted = sortRequirementRows(rows, body);
+      const paged = pageReportRows(sorted, body, {
+        maxPageSize: REQUIREMENT_REPORT_MAX_PAGE_SIZE,
+      });
+      return Response.json({
+        data: paged.rows,
+        total: sorted.length,
+        // The debt panel's numbers over the whole set, before paging.
+        summary: summarizeRequirementDebt(sorted),
+        page: paged.page,
+        pageSize: paged.pageSize,
+        offset: paged.offset,
+      });
     }
 
     const matrixRows = coverageStates.states
@@ -706,7 +744,19 @@ export async function handleRequirementCoverageReportPOST(
         coverageStatus: row.coverageStatus,
       })
     );
-    return Response.json({ data: rows, total: rows.length });
+    const sorted = sortRequirementRows(rows, body);
+    const paged = pageReportRows(sorted, body, {
+      maxPageSize: REQUIREMENT_REPORT_MAX_PAGE_SIZE,
+    });
+    return Response.json({
+      data: paged.rows,
+      total: sorted.length,
+      // The coverage panel's numbers over the whole set, before paging.
+      summary: summarizeRequirementTraceability(sorted),
+      page: paged.page,
+      pageSize: paged.pageSize,
+      offset: paged.offset,
+    });
   } catch (e: unknown) {
     // Deliberately stricter than the shipped issue-test-coverage analog,
     // which echoes `e.message` into the response body: this handler logs
@@ -877,7 +927,22 @@ export async function handleRequirementCoverageChangesPOST(
         : changeRows.filter((row) => row.changeKind !== "UNCHANGED")
     ).map((row, index) => ({ id: index, ...row }));
 
-    return Response.json({ data: rows, total: rows.length });
+    const sorted = sortRequirementRows(rows, body);
+    const paged = pageReportRows(sorted, body, {
+      maxPageSize: REQUIREMENT_REPORT_MAX_PAGE_SIZE,
+    });
+    return Response.json({
+      data: paged.rows,
+      total: sorted.length,
+      // The changes panel's numbers over the whole set, before paging.
+      summary: {
+        total: sorted.length,
+        ...summarizeCoverageChanges(sorted),
+      },
+      page: paged.page,
+      pageSize: paged.pageSize,
+      offset: paged.offset,
+    });
   } catch (e: unknown) {
     console.error("Requirement coverage changes report error:", e);
     return Response.json(

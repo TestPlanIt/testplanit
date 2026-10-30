@@ -269,6 +269,72 @@ describe("requirementCoverageReportUtils", () => {
       (row: { testCaseId: number | null }) => row.testCaseId === null
     );
     expect(gapRows).toHaveLength(2);
+    // The complete set by default, with the panel's numbers beside it.
+    expect(body.pageSize).toBe("All");
+    expect(body.summary.tiles).toEqual({
+      total: 3,
+      covered: 1,
+      counts: { PASSED: 1, FAILED: 0, NOT_RUN: 0, UNCOVERED: 2 },
+    });
+    expect(body.summary.stateCounts).toEqual({ UNCOVERED: 2, PASSED: 1 });
+  });
+
+  it("serves one page of a numeric pageSize or offset while total and summary describe the whole set", async () => {
+    const first = await (
+      await handleRequirementCoverageReportPOST(
+        makeRequest({ projectId: 5, pageSize: 3 }),
+        "traceability"
+      )
+    ).json();
+    expect(first.total).toBe(4);
+    expect(first.data).toHaveLength(3);
+    expect(first.pageSize).toBe(3);
+    expect(first.offset).toBe(0);
+    expect(first.summary.tiles.total).toBe(3);
+
+    const rest = await (
+      await handleRequirementCoverageReportPOST(
+        makeRequest({ projectId: 5, pageSize: 3, offset: 3 }),
+        "traceability"
+      )
+    ).json();
+    expect(rest.data).toHaveLength(1);
+    expect(rest.offset).toBe(3);
+    expect(rest.total).toBe(4);
+
+    const gaps = await (
+      await handleRequirementCoverageReportPOST(
+        makeRequest({ projectId: 5, page: 2, pageSize: 1 }),
+        "gaps"
+      )
+    ).json();
+    expect(gaps.total).toBe(2);
+    expect(gaps.data).toHaveLength(1);
+    expect(gaps.summary.counts).toEqual({
+      total: 2,
+      uncovered: 2,
+      notRun: 0,
+      onClosed: 0,
+    });
+  });
+
+  it("applies the table's header sort over the full set before paging", async () => {
+    const body = await (
+      await handleRequirementCoverageReportPOST(
+        makeRequest({
+          projectId: 5,
+          pageSize: 2,
+          sortColumn: "coverage",
+          sortDirection: "desc",
+        }),
+        "traceability"
+      )
+    ).json();
+    // Severity ladder descending: PASSED rows (requirement 3) come first.
+    expect(
+      body.data.map((row: { requirementId: number }) => row.requirementId)
+    ).toEqual([3, 3]);
+    expect(body.total).toBe(4);
   });
 
   it("derives both variants from one traceability load rather than two queries", async () => {

@@ -17,16 +17,32 @@ import { REQUIREMENT_COVERAGE_CHART_COLORS } from "./RequirementCoverageOverview
  * `summarizeCoverageChanges`, so the panel can never disagree with it.
  * Tiles pair a status-colored dot WITH a label — never color alone.
  */
+/** The server's summary over the whole set: the pure change summary plus
+ *  the row total it was computed over. */
+export type RequirementCoverageChangesSummary = ReturnType<
+  typeof summarizeCoverageChanges
+> & { total: number };
+
 export function RequirementCoverageChangesOverview({
   rows,
+  summary: serverSummary,
 }: {
   rows: RequirementCoverageChangeRow[];
+  /** When present, the panel draws from it and `rows` may be one page. */
+  summary?: RequirementCoverageChangesSummary | null;
 }) {
   const t = useTranslations("reports.ui.requirementCoverage");
   const locale = useLocale();
 
-  const summary = useMemo(() => summarizeCoverageChanges(rows), [rows]);
-  const changed = rows.length - summary.byKind.UNCHANGED;
+  const summary = useMemo(
+    () =>
+      serverSummary ?? {
+        total: rows.length,
+        ...summarizeCoverageChanges(rows),
+      },
+    [serverSummary, rows]
+  );
+  const changed = summary.total - summary.byKind.UNCHANGED;
   const formatCount = (value: number) => value.toLocaleString(locale);
 
   const kindLabel = (kind: string) => {

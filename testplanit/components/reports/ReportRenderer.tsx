@@ -45,6 +45,12 @@ import { useCodePinCoverageColumns } from "~/hooks/useCodePinCoverageColumns";
 import { useImpactAnalysisColumns } from "~/hooks/useImpactAnalysisColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import { sortRequirementReportRows } from "~/utils/requirementReportSort";
+import type {
+  RequirementDebtSummary,
+  RequirementTraceabilitySummary,
+} from "~/utils/requirementReportSummaries";
+import { isServerPagedReport } from "~/utils/serverPagedReports";
+import type { RequirementCoverageChangesSummary } from "@/components/reports/RequirementCoverageChangesOverview";
 import { RequirementCoverageChangesOverview } from "@/components/reports/RequirementCoverageChangesOverview";
 import { RequirementCoverageOverview } from "@/components/reports/RequirementCoverageOverview";
 import { RequirementDebtOverview } from "@/components/reports/RequirementDebtOverview";
@@ -400,11 +406,18 @@ export function ReportRenderer({
     ) {
       return results;
     }
+    // A server-paged run already arrives in the requested order (the
+    // handler applies the same comparator to the whole set); re-sorting a
+    // page here would only reorder the window.
+    if (isServerPagedReport(reportType)) {
+      return results;
+    }
     return sortRequirementReportRows(results ?? [], sortConfig);
   }, [
     isRequirementCoverageGaps,
     isRequirementTraceability,
     isRequirementCoverageChanges,
+    reportType,
     results,
     sortConfig,
   ]);
@@ -724,11 +737,25 @@ export function ReportRenderer({
                   breakdown, all computed from the same rows the table
                   shows so the panel can never disagree with it. */}
               {isRequirementTraceability && (results?.length ?? 0) > 0 ? (
-                <RequirementCoverageOverview rows={results} />
+                <RequirementCoverageOverview
+                  rows={results}
+                  summary={
+                    chartSummary as RequirementTraceabilitySummary | undefined
+                  }
+                />
               ) : isRequirementCoverageGaps && (results?.length ?? 0) > 0 ? (
-                <RequirementDebtOverview rows={results} />
+                <RequirementDebtOverview
+                  rows={results}
+                  summary={chartSummary as RequirementDebtSummary | undefined}
+                />
               ) : isRequirementCoverageChanges && (results?.length ?? 0) > 0 ? (
-                <RequirementCoverageChangesOverview rows={results} />
+                <RequirementCoverageChangesOverview
+                  rows={results}
+                  summary={
+                    chartSummary as
+                      RequirementCoverageChangesSummary | undefined
+                  }
+                />
               ) : (
                 memoizedChart.chart
               )}

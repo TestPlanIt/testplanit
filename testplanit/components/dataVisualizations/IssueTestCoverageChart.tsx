@@ -16,6 +16,10 @@ import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import { localeTickFormat } from "~/utils/formatNumber";
+import {
+  summarizeIssueTestCoverage,
+  type IssueTestCoverageSummary,
+} from "~/utils/issueTestCoverageSummary";
 
 interface IssueTestCoverageData {
   issueId: number;
@@ -39,6 +43,13 @@ interface IssueTestCoverageData {
 
 interface IssueTestCoverageChartProps {
   data: IssueTestCoverageData[];
+  /**
+   * The server's summary over the whole set. When present, the chart
+   * draws from it and `data` may be just the rows on screen; without it
+   * (payloads captured before the summary existed) the chart computes
+   * the same numbers from `data`.
+   */
+  summary?: IssueTestCoverageSummary | null;
   projectId?: number | string;
   onIssueClick?: (issueId: number, projectId?: number) => void;
 }
@@ -52,6 +63,7 @@ const statusColors = {
 
 export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
   data,
+  summary,
 }) => {
   const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -61,76 +73,13 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
   const t = useTranslations("reports.ui.issueTestCoverage");
   const tCommon = useTranslations("common");
 
-  // Aggregate data by issue (since data is now flat with duplicates)
-  const aggregatedData = useMemo(() => {
-    const issueMap = new Map<number, IssueTestCoverageData>();
-
-    data.forEach((row) => {
-      // Skip invalid rows
-      if (!row || typeof row.issueId !== "number") return;
-      if (!issueMap.has(row.issueId)) {
-        // First time seeing this issue - add it with all its data
-        issueMap.set(row.issueId, { ...row });
-      }
-      // Don't add duplicates - the summary metrics are already duplicated across rows
-    });
-
-    return Array.from(issueMap.values());
-  }, [data]);
-
-  // Calculate summary stats
-  const summaryStats = useMemo(() => {
-    const totalIssues = aggregatedData.length;
-    const totalLinkedTests = aggregatedData.reduce(
-      (sum, d) => sum + (d.linkedTestCases || 0),
-      0
-    );
-    const totalPassed = aggregatedData.reduce(
-      (sum, d) => sum + (d.passedTestCases || 0),
-      0
-    );
-    const totalFailed = aggregatedData.reduce(
-      (sum, d) => sum + (d.failedTestCases || 0),
-      0
-    );
-    const totalUntested = aggregatedData.reduce(
-      (sum, d) => sum + (d.untestedTestCases || 0),
-      0
-    );
-
-    // Issues with at least one failing test
-    const issuesWithFailures = aggregatedData.filter(
-      (d) => (d.failedTestCases || 0) > 0
-    ).length;
-    // Issues with all tests passing
-    const issuesAllPassing = aggregatedData.filter(
-      (d) =>
-        (d.passedTestCases || 0) > 0 &&
-        (d.failedTestCases || 0) === 0 &&
-        (d.untestedTestCases || 0) === 0
-    ).length;
-    // Issues with untested cases
-    const issuesWithUntested = aggregatedData.filter(
-      (d) => (d.untestedTestCases || 0) > 0
-    ).length;
-
-    const overallPassRate =
-      totalPassed + totalFailed > 0
-        ? Math.round((totalPassed / (totalPassed + totalFailed)) * 100)
-        : 0;
-
-    return {
-      totalIssues,
-      totalLinkedTests,
-      totalPassed,
-      totalFailed,
-      totalUntested,
-      issuesWithFailures,
-      issuesAllPassing,
-      issuesWithUntested,
-      overallPassRate,
-    };
-  }, [aggregatedData]);
+  // The tiles' numbers, the bubble buckets and the axis maxima, over the
+  // whole set: from the server when it sent them, else from the rows.
+  // The arithmetic lives in utils/issueTestCoverageSummary.
+  const summaryStats = useMemo(
+    () => summary ?? summarizeIssueTestCoverage(data),
+    [summary, data]
+  );
 
   // Setup tooltip
   useEffect(() => {
@@ -168,7 +117,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    if (aggregatedData.length === 0) {
+    if (summaryStats.totalIssues === 0) {
       svg
         .append("text")
         .attr("x", width / 2)
@@ -189,82 +138,12 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Group issues by linked test count and untested test count for aggregation
-    // This helps identify issues that need test execution
-    interface BubblePoint {
-      linkedTests: number;
-      untestedTests: number;
-      count: number;
-      status: "failed" | "untested" | "passing";
-      issues: typeof aggregatedData;
-    }
-
-    const bubbleMap = new Map<string, BubblePoint>();
-
-    // Create buckets: linked test count and untested test count
-    aggregatedData.forEach((issue) => {
-      const linkedTestCases = issue.linkedTestCases || 0;
-      const untestedTestCases = issue.untestedTestCases || 0;
-      const failedTestCases = issue.failedTestCases || 0;
-
-      // Bucket linked test counts (0-5, 6-10, 11-20, 21-50, 51-100, 101+)
-      let linkedBucket: number;
-      if (linkedTestCases <= 5) linkedBucket = 2.5;
-      else if (linkedTestCases <= 10) linkedBucket = 8;
-      else if (linkedTestCases <= 20) linkedBucket = 15;
-      else if (linkedTestCases <= 50) linkedBucket = 35;
-      else if (linkedTestCases <= 100) linkedBucket = 75;
-      else if (linkedTestCases <= 200) linkedBucket = 150;
-      else linkedBucket = Math.round(linkedTestCases / 50) * 50;
-
-      // Bucket untested counts (0-5, 6-10, 11-20, 21-50, 51-100, 101+)
-      let untestedBucket: number;
-      if (untestedTestCases <= 5) untestedBucket = 2.5;
-      else if (untestedTestCases <= 10) untestedBucket = 8;
-      else if (untestedTestCases <= 20) untestedBucket = 15;
-      else if (untestedTestCases <= 50) untestedBucket = 35;
-      else if (untestedTestCases <= 100) untestedBucket = 75;
-      else if (untestedTestCases <= 200) untestedBucket = 150;
-      else untestedBucket = Math.round(untestedTestCases / 50) * 50;
-
-      // Determine status
-      let status: "failed" | "untested" | "passing";
-      if (failedTestCases > 0) {
-        status = "failed";
-      } else if (untestedTestCases > 0) {
-        status = "untested";
-      } else {
-        status = "passing";
-      }
-
-      const key = `${linkedBucket}-${untestedBucket}-${status}`;
-
-      if (!bubbleMap.has(key)) {
-        bubbleMap.set(key, {
-          linkedTests: linkedBucket,
-          untestedTests: untestedBucket,
-          count: 0,
-          status,
-          issues: [],
-        });
-      }
-
-      const bubble = bubbleMap.get(key)!;
-      bubble.count++;
-      bubble.issues.push(issue);
-    });
-
-    const bubbleData = Array.from(bubbleMap.values());
+    // Issues bucketed by linked and untested case counts (the summary's
+    // bubbles): where test execution is owed.
+    const bubbleData = summaryStats.bubbles;
 
     // Scales
-    const maxLinkedTests = Math.max(
-      ...aggregatedData.map((d) => d.linkedTestCases || 0),
-      1
-    );
-    const maxUntestedTests = Math.max(
-      ...aggregatedData.map((d) => d.untestedTestCases || 0),
-      1
-    );
+    const { maxLinkedTests, maxUntestedTests } = summaryStats;
 
     const xScale = d3
       .scaleLinear()
@@ -414,9 +293,9 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       .style("font-size", "14px")
       .style("font-weight", "600")
       .text(t("charts.testCoverageVsExecution"));
-  }, [aggregatedData, width, height, t, locale]);
+  }, [summaryStats, width, height, t, locale]);
 
-  if (data.length === 0) {
+  if (summaryStats.totalIssues === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("noData")}

@@ -102,6 +102,55 @@ describe("RequirementCoverageOverview", () => {
     ]);
   });
 
+  it("draws from the server summary when one is given, not from the rows on screen", () => {
+    render(
+      <RequirementCoverageOverview
+        rows={[row(1, "PASSED")]}
+        summary={{
+          tiles: {
+            total: 21525,
+            covered: 20000,
+            counts: {
+              PASSED: 15000,
+              FAILED: 2000,
+              NOT_RUN: 3000,
+              UNCOVERED: 1525,
+            },
+          },
+          stateCounts: {
+            PASSED: 15000,
+            FAILED: 2000,
+            NOT_RUN: 3000,
+            UNCOVERED: 1525,
+          },
+          groups: [
+            {
+              label: "REQ-9: Platform",
+              counts: { PASSED: 15000 },
+              total: 15000,
+              requirementId: 9,
+            },
+          ],
+          foldedCount: 0,
+        }}
+      />
+    );
+    expect(capturedDonut.current.data.map((d: any) => [d.id, d.value])).toEqual(
+      [
+        ["PASSED", 15000],
+        ["NOT_RUN", 3000],
+        ["UNCOVERED", 1525],
+        ["FAILED", 2000],
+      ]
+    );
+    expect(screen.getByTestId("requirement-summary-total")).toHaveTextContent(
+      "21,525"
+    );
+    expect(screen.getByTestId("requirement-hierarchy-bar-0")).toHaveTextContent(
+      "REQ-9: Platform"
+    );
+  });
+
   it("groups requirements by their root — first parent-path segment, or themselves when top-level", () => {
     render(
       <RequirementCoverageOverview

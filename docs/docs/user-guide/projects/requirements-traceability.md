@@ -99,7 +99,7 @@ Both reports cover the whole project by default. The **Scope to requirements** p
 
 The scope travels with the report's [share link](./reports/index.md#sharing), so a stakeholder's shared copy shows the same slice of the tree.
 
-Like the other tabular reports, all three offer an **Export CSV** button above the results — see [Exporting Results](./reports/index.md#exporting-results).
+Like the other tabular reports, all three offer an **Export CSV** button above the results — see [Exporting Results](./reports/index.md#exporting-results). The tables load more rows as you scroll and sorting by a column reorders the whole result set; the visualization panels always describe every matching requirement, not just the rows loaded so far, and the export covers every row.
 
 The gaps and traceability reports also have cross-project variants for administrators, on **Administration → Reporting & Analytics** — the same reports run across every project with requirements enabled at once, with a **Requirement Project** column naming each requirement's own project. See [Cross-Project Reports](../cross-project-reports.md). Snapshots stay project-scoped, so the Coverage Changes report has no cross-project variant.
 
