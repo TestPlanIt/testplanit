@@ -141,4 +141,3 @@ The **Requirement Coverage Changes** report answers *"what changed?"* Pick a **B
 | **Results changed** | The same cases, but at least one latest result or execution time moved. |
 
 Each row shows the coverage state and linked-case count on both sides, plus how many cases were added, removed, or re-executed. Turn on **Include unchanged requirements** to list every requirement, including those that didn't change. The visualization panel summarizes the transitions — **Newly covered**, **Newly uncovered**, **Now failing**, and **No longer failing** — and the number of requirements in each change category. Sort by the **Change** column to bring the most consequential changes to the top.
-
