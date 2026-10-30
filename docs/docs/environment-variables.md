@@ -230,7 +230,7 @@ See [Live and Frozen Data](user-guide/share-links.md#live-and-frozen-data).
 
 | Variable                   | Default | Description                                                                                                   |
 | -------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| `REPORT_SNAPSHOT_MAX_ROWS` | `10000` | Most rows a frozen report keeps. A larger report can still be frozen after a warning, keeping the first rows. |
+| `REPORT_SNAPSHOT_MAX_ROWS` | `10000` | Most rows a frozen report keeps. A larger report can still be frozen after a warning, keeping the first rows. Also the most rows the Execution Log returns to a shared live link or an API request for every row. |
 
 ## Magic Select
 

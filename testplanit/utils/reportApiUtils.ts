@@ -906,7 +906,10 @@ async function handleCrossProjectAggregation({
 
   return Response.json({
     results: paginatedResults,
-    allResults: results, // Full dataset for charts
+    // The full set for the chart, only when `results` is a page of it;
+    // under "All" the two are the same rows and readers fall back to
+    // `results`, so the payload is not sent twice.
+    ...(paginatedResults !== results ? { allResults: results } : {}),
     totalCount,
     page,
     pageSize: pageSize || totalCount,
@@ -1189,7 +1192,10 @@ async function handleProjectSpecificAggregation({
 
   return Response.json({
     results: paginatedResults,
-    allResults: results, // Full dataset for charts
+    // The full set for the chart, only when `results` is a page of it;
+    // under "All" the two are the same rows and readers fall back to
+    // `results`, so the payload is not sent twice.
+    ...(paginatedResults !== results ? { allResults: results } : {}),
     totalCount,
     page,
     pageSize: pageSize || totalCount,

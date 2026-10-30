@@ -464,5 +464,26 @@ describe("reportApiUtils", () => {
         expect(json.dateGrouping).toBe("daily");
       }
     });
+
+    it("sends the full set once: no allResults under 'All', allResults beside a page", async () => {
+      const whole = await post({
+        dimensions: ["date"],
+        metrics: ["testResults"],
+        pageSize: "All",
+      });
+      expect(whole.json.results).toHaveLength(3);
+      expect(whole.json.totalCount).toBe(3);
+      expect(whole.json).not.toHaveProperty("allResults");
+
+      const paged = await post({
+        dimensions: ["date"],
+        metrics: ["testResults"],
+        page: 2,
+        pageSize: 2,
+      });
+      expect(paged.json.results).toHaveLength(1);
+      expect(paged.json.allResults).toHaveLength(3);
+      expect(paged.json.totalCount).toBe(3);
+    });
   });
 });

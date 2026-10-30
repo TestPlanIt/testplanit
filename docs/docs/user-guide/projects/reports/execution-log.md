@@ -30,3 +30,7 @@ Steps that belong to a shared step group are marked with a Shared Step icon and 
 ## Sorting
 
 Server-side sorting is supported on: test case name, test run name, status, executed by, executed at, duration, test run case version (and Project name in cross-project mode).
+
+## Row Limit
+
+The table loads more rows as you scroll, and **Export CSV** exports every row. A shared live link, or an API request that asks for every row, returns at most the first 10,000 rows in the chosen order; the total count is still reported. Administrators can change the limit with the `REPORT_SNAPSHOT_MAX_ROWS` [environment variable](../../../environment-variables.md#frozen-reports), which also governs frozen reports.
