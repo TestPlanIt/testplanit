@@ -2193,9 +2193,13 @@
         "description": "Opzioni di attivazione specifiche per ogni progetto, relative a funzionalità predefinite. Le nuove opzioni verranno visualizzate qui man mano che saranno introdotte.",
         "sections": {
           "general": "Generale",
+          "generalDescription": "L'identità e i valori predefiniti del progetto: il codice utilizzato nelle chiavi di record, il modello con cui iniziano i nuovi casi di test e le sessioni, e se il progetto ha un'area Requisiti.",
           "reviews": "Recensioni",
+          "reviewsDescription": "Come la Revisione e l'Approvazione si applicano a questo progetto: se le transizioni che richiedono revisione sono bloccate da una richiesta approvata, e quanto tempo ha un revisore per annullare una decisione.",
           "runs": "Prove di corsa",
-          "results": "Risultati"
+          "runsDescription": "Cosa può rientrare in un'esecuzione di test e come le esecuzioni vengono mantenute ordinate: escludendo i casi in bozza, bloccando la composizione di un'esecuzione una volta iniziata l'esecuzione, applicando i casi in base alle loro dipendenze, e chiudendo le esecuzioni automatizzate che hanno smesso di segnalare.",
+          "results": "Risultati",
+          "resultsDescription": "Governance per i risultati registrati: una giustificazione quando un risultato cambia, un problema collegato su errori, e quanto tempo rimane modificabile un risultato in loco."
         },
         "recordKey": {
           "label": "Codice progetto",
@@ -7974,10 +7978,6 @@
     "projectQuickScript": "## QuickScript\nCollega un repository di codice in modo che questo progetto possa generare casi di test dai tuoi file di test automatizzati, scegliendo quale branch e percorsi includere.",
     "projectParameters": "## Parametri dei casi di test\nConfigura i test basati sui dati di questo progetto: nomi delle proprietà di iterazione JUnit per i risultati importati e set di dati riutilizzabili per i casi parametrizzati.",
     "projectAdvanced": "## Avanzate\nImpostazioni per progetto, raggruppate in Generale, Recensioni, Prove di corsa e Risultati. Apri l'icona ? di un'impostazione per sapere cosa fa. Le opzioni si salvano non appena vengono modificate; il codice del progetto e le impostazioni della finestra temporale si salvano con il pulsante Salva dedicato.",
-    "projectAdvancedGeneral": "## Generale\nL'identità e le impostazioni predefinite del progetto: il codice utilizzato nelle chiavi dei record, il modello con cui iniziano i nuovi casi di test e le sessioni, e se il progetto ha un'area Requisiti.",
-    "projectAdvancedReviews": "## Recensioni\nCome la Revisione e Approvazione si applica a questo progetto: se le transizioni che richiedono revisione sono bloccate da una richiesta approvata, e quanto tempo ha il revisore per annullare una decisione.",
-    "projectAdvancedRuns": "## Prove di corsa\nCosa può entrare in una prova di corsa e come le prove vengono mantenute in ordine: escludendo i casi bozza, bloccando la composizione di una prova una volta che l'esecuzione inizia, limitando i casi in base alle loro dipendenze e chiudendo le prove automatizzate che hanno smesso di fare rapporto.",
-    "projectAdvancedResults": "## Risultati\nGovernance per i risultati registrati: una giustificazione quando un risultato cambia, un problema collegato in caso di errori, e quanto tempo un risultato rimane modificabile sul posto.",
     "projectShares": "## Gestisci condivisioni\nLink condivisibili ai report di questo progetto, ciascuno con il proprio livello di accesso: pubblico, con accesso richiesto o protetto da password. Revocare un link ne interrompe l'accesso.",
     "projectAccess": "## Accesso\nOgni utente che può aprire questo progetto e il ruolo che decide cosa può fare qui. Il ruolo di un utente proviene dalla sua impostazione di accesso al progetto, da un gruppo a cui appartiene o dall'accesso predefinito del progetto, in questo ordine. Gli amministratori di sistema e gli amministratori di progetto hanno accesso completo indipendentemente dal ruolo. L'accesso viene modificato da un amministratore in Amministrazione › Progetti › Modifica progetto.",
     "groups": "## Gruppi\nI gruppi permettono di assegnare l'accesso ai progetti e i ruoli a più utenti contemporaneamente. Aggiungi membri direttamente, oppure associa un gruppo dal tuo provider di identità.",

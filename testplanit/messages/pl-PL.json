@@ -2193,9 +2193,13 @@
         "description": "Przełączniki dla poszczególnych projektów, umożliwiające tworzenie funkcji, które są brane pod uwagę. Nowe przełączniki będą się pojawiać tutaj w miarę ich wprowadzania.",
         "sections": {
           "general": "Ogólny",
+          "generalDescription": "Tożsamość i ustawienia domyślne projektu: kod używany w kluczach rekordu, szablon, z którym rozpoczynają się nowe przypadki testowe i sesje, oraz czy projekt ma obszar Wymagania.",
           "reviews": "Recenzje",
+          "reviewsDescription": "Sposób zastosowania Przeglądu i Zatwierdzenia w tym projekcie: czy przejścia wymagające przeglądu są blokowane przez zatwierdzone żądanie i jak długo recenzent ma na cofnięcie decyzji.",
           "runs": "Przebiegi testowe",
-          "results": "Wyniki"
+          "runsDescription": "Co może wejść do przebiegu testowania i jak przebiegi są utrzymywane w porządku: wykluczanie przypadków roboczych, blokowanie kompozycji przebiegu po rozpoczęciu wykonywania, warunkowanie przypadków na ich zależnościach oraz zamykanie zautomatyzowanych przebiegów, które przestały raportować.",
+          "results": "Wyniki",
+          "resultsDescription": "Zarządzanie nagranymi wynikami: uzasadnienie, gdy wynik się zmienia, powiązane zgłoszenie w przypadku niepowodzeń i jak długo wynik pozostaje edytowalny w miejscu."
         },
         "recordKey": {
           "label": "Kod projektu",
@@ -7974,10 +7978,6 @@
     "projectQuickScript": "## QuickScript\nPołącz repozytorium kodu, aby ten projekt mógł generować przypadki testowe na podstawie plików testów automatycznych, wybierając, która gałąź i ścieżki mają zostać uwzględnione.",
     "projectParameters": "## Parametry przypadków testowych\nSkonfiguruj testowanie sterowane danymi dla tego projektu — nazwy właściwości iteracji JUnit dla importowanych wyników oraz wielokrotnego użytku zestawy danych dla przypadków parametryzowanych.",
     "projectAdvanced": "## Zaawansowane\nUstawienia dla poszczególnych projektów, pogrupowane na Ogólny, Recenzje, Przebiegi testowe i Wyniki. Otwórz ? ustawienia, aby dowiedzieć się, co robi. Przełączniki zapisują się natychmiast po zmianie; kod projektu i ustawienia okna czasowego zapisują się za pomocą własnego przycisku Zapisz.",
-    "projectAdvancedGeneral": "## Ogólny\nTożsamość projektu i wartości domyślne: kod używany w kluczach rekordu, szablon z którym rozpoczynają się nowe przypadki testowe i sesje, oraz czy projekt ma obszar Wymagań.",
-    "projectAdvancedReviews": "## Recenzje\nJak Przegląd i Zatwierdzenie ma zastosowanie do tego projektu: czy przejścia wymagające przeglądu są blokowane przez zatwierdzoną prośbę i jak długo recenzent ma na cofnięcie decyzji.",
-    "projectAdvancedRuns": "## Przebiegi testowe\nCo może być zawarte w przebiegu testowym i jak przebiegi są utrzymywane w porządku: wykluczając przypadki robocze, blokując skład przebiegu po rozpoczęciu wykonania, warunkując przypadki na ich zależnościach i zamykając zautomatyzowane przebiegi, które przestały raportować.",
-    "projectAdvancedResults": "## Wyniki\nZarządzanie nagranym wynikami: uzasadnienie, gdy wynik się zmienia, powiązana sprawa w przypadku awarii i jak długo wynik pozostaje edytowalny w miejscu.",
     "projectShares": "## Zarządzaj udostępnianiem\nUdostępnialne łącza do raportów tego projektu, z których każde ma własny poziom dostępu — publiczny, wymagający logowania lub chroniony hasłem. Cofnięcie łącza odcina do niego dostęp.",
     "projectAccess": "## Dostęp\nKażdy użytkownik, który może otworzyć ten projekt, oraz rola, która decyduje o tym, co może tutaj robić. Rola użytkownika pochodzi z jego ustawienia dostępu do projektu, grupy, do której należy, lub domyślnego dostępu projektu, w tej kolejności. Administratorzy systemu i administratorzy projektów mają pełny dostęp niezależnie od roli. Dostęp jest zmieniany przez administratora w sekcji Administracja › Projekty › Edytuj projekt.",
     "groups": "## Grupy\nGrupy umożliwiają przypisywanie dostępu do projektów i ról wielu użytkownikom jednocześnie. Dodawaj członków bezpośrednio lub mapuj grupę od dostawcy tożsamości.",

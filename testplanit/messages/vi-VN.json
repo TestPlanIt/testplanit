@@ -2193,9 +2193,13 @@
         "description": "Các tùy chọn bật/tắt riêng cho từng dự án đối với các tính năng mang tính chủ quan. Các tùy chọn mới sẽ xuất hiện ở đây khi chúng được giới thiệu.",
         "sections": {
           "general": "Tổng quan",
+          "generalDescription": "Danh tính và cài đặt mặc định của dự án: mã được sử dụng trong khóa bản ghi, mẫu mà các trường hợp kiểm thử và phiên mới bắt đầu với, và liệu dự án có khu vực Yêu cầu hay không.",
           "reviews": "Đánh giá",
+          "reviewsDescription": "Cách Đánh giá & Phê duyệt áp dụng cho dự án này: liệu các chuyển tiếp yêu cầu xem xét có bị chặn bởi yêu cầu được phê duyệt hay không, và người xem xét có bao lâu để hoàn tác quyết định.",
           "runs": "Chạy thử nghiệm",
-          "results": "Kết quả"
+          "runsDescription": "Điều gì có thể đưa vào một lần chạy kiểm thử và cách các lần chạy được giữ sạch sẽ: loại trừ các trường hợp nháp, khóa thành phần của lần chạy sau khi thực thi bắt đầu, chặn các trường hợp trên các phụ thuộc của chúng, và đóng các lần chạy tự động đã ngừng báo cáo.",
+          "results": "Kết quả",
+          "resultsDescription": "Quản lý kết quả được ghi lại: giải thích khi kết quả thay đổi, vấn đề được liên kết về các lỗi, và bao lâu kết quả vẫn có thể chỉnh sửa tại chỗ."
         },
         "recordKey": {
           "label": "Mã dự án",
@@ -7974,10 +7978,6 @@
     "projectQuickScript": "## QuickScript\nKết nối một kho mã nguồn để dự án này có thể tạo trường hợp kiểm thử từ các tệp kiểm thử tự động của bạn, chọn nhánh và đường dẫn cần bao gồm.",
     "projectParameters": "## Tham số trường hợp kiểm thử\nCấu hình kiểm thử hướng dữ liệu của dự án này — tên thuộc tính lặp JUnit cho kết quả đã nhập và bộ dữ liệu có thể tái sử dụng cho các trường hợp tham số hóa.",
     "projectAdvanced": "## Cài đặt nâng cao\nCác cài đặt theo dự án, được nhóm thành Tổng quan, Đánh giá, Chạy thử nghiệm và Kết quả. Mở ? của cài đặt để xem nó làm gì. Các công tắc được lưu ngay khi thay đổi; mã dự án và các cài đặt cửa sổ thời gian được lưu bằng nút Lưu riêng của chúng.",
-    "projectAdvancedGeneral": "## Tổng quan\nBộ sưu tập và mặc định của dự án: mã được sử dụng trong khóa bản ghi, mẫu mà các trường hợp thử nghiệm và phiên mới bắt đầu, và liệu dự án có khu vực Yêu cầu hay không.",
-    "projectAdvancedReviews": "## Đánh giá\nCách Đánh giá & Phê duyệt áp dụng cho dự án này: liệu các chuyển đổi yêu cầu xem xét có được gated bởi yêu cầu được phê duyệt hay không, và người xem xét có bao lâu để hoàn tác quyết định.",
-    "projectAdvancedRuns": "## Chạy thử nghiệm\nCó thể đưa gì vào một lần chạy thử nghiệm và cách giữ các lần chạy gọn gàng: loại trừ các trường hợp nháp, khóa thành phần của một lần chạy sau khi thực thi bắt đầu, gating các trường hợp trên sự phụ thuộc của chúng, và đóng các lần chạy tự động đã ngừng báo cáo.",
-    "projectAdvancedResults": "## Kết quả\nQuản trị cho kết quả được ghi lại: một lý do chính đáng khi kết quả lật ngược, một vấn đề được liên kết về các lỗi, và kết quả này ở lại có thể chỉnh sửa tại chỗ trong bao lâu.",
     "projectShares": "## Quản lý chia sẻ\nLiên kết chia sẻ đến các báo cáo của dự án này, mỗi liên kết có mức truy cập riêng — công khai, yêu cầu đăng nhập hoặc bảo vệ bằng mật khẩu. Thu hồi liên kết sẽ cắt quyền truy cập của liên kết đó.",
     "projectAccess": "## Truy cập\nMọi người dùng có thể mở dự án này và vai trò quyết định những gì họ có thể làm ở đây. Vai trò của người dùng đến từ cài đặt truy cập dự án của họ, một nhóm họ thuộc về, hoặc truy cập mặc định của dự án, theo thứ tự đó. Quản trị viên hệ thống và quản trị viên dự án có quyền truy cập đầy đủ bất kể vai trò. Truy cập được thay đổi bởi người quản trị dưới Administration › Projects › Edit Project.",
     "groups": "## Nhóm\nNhóm cho phép bạn gán quyền truy cập dự án và vai trò cho nhiều người dùng cùng lúc. Thêm thành viên trực tiếp hoặc ánh xạ một nhóm từ nhà cung cấp danh tính của bạn.",

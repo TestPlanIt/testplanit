@@ -2193,9 +2193,13 @@
         "description": "Přepínače pro jednotlivé projekty pro volitelné funkce. Nové přepínače se zde objeví, jakmile budou zavedeny.",
         "sections": {
           "general": "Obecné",
+          "generalDescription": "Identita projektu a výchozí nastavení: kód používaný v klíčích záznamů, šablona, kterou nové testovací případy a relace používají, a zda má projekt oblast Požadavky.",
           "reviews": "Recenze",
+          "reviewsDescription": "Jak se Přezkum a schválení uplatňují v tomto projektu: zda jsou přechody vyžadující přezkum bráněny schváleným požadavkem a jak dlouho má recenzent na vrácení rozhodnutí.",
           "runs": "Testovací běhy",
-          "results": "Výsledky"
+          "runsDescription": "Co může být součástí testovacího běhu a jak jsou běhy udržovány v pořádku: vyloučení konceptů případů, zamčení složení běhu po zahájení provádění, bránění případům jejich závislostmi a zavírání automatizovaných běhů, které přestaly hlásit.",
+          "results": "Výsledky",
+          "resultsDescription": "Zásady pro zaznamenané výsledky: zdůvodnění při změně výsledku, propojená úloha při selháních a jak dlouho zůstane výsledek upravitelný na místě."
         },
         "recordKey": {
           "label": "Kód projektu",
@@ -7974,10 +7978,6 @@
     "projectQuickScript": "## QuickScript\nPropojte úložiště kódu, aby tento projekt mohl generovat testovací případy z vašich automatizovaných testovacích souborů, s výběrem, kterou větev a cesty zahrnout.",
     "projectParameters": "## Parametry testovacích případů\nNakonfigurujte datově řízené testování tohoto projektu — názvy vlastností iterace JUnit pro importované výsledky a znovupoužitelné datové sady pro parametrizované případy.",
     "projectAdvanced": "## Pokročilé\nNastavení jednotlivých projektů seskupená do kategorií Obecné, Recenze, Testovací běhy a Výsledky. Otevřete ? u libovolného nastavení, abyste se dozvěděli více. Přepínače se ukládají okamžitě po změně; kód projektu a nastavení časového okna se ukládají pomocí vlastního tlačítka Uložit.",
-    "projectAdvancedGeneral": "## Obecné\nIdentita projektu a výchozí hodnoty: kód používaný v klíčích záznamů, šablona pro nové testovací případy a relace a zda má projekt oblast Požadavky.",
-    "projectAdvancedReviews": "## Recenze\nJak se Přezkum a Schválení vztahuje k tomuto projektu: zda jsou přechody vyžadující přezkum blokované schváleným požadavkem a jak dlouho má recenzent na vrácení rozhodnutí.",
-    "projectAdvancedRuns": "## Testovací běhy\nCo může být součástí testovacího běhu a jak se běhy udržují v pořádku: vyloučení konceptních případů, uzamknutí složení běhu po zahájení provádění, řízení případů v závislosti na jejich závislostech a zavírání automatizovaných běhů, které přestaly hlásit.",
-    "projectAdvancedResults": "## Výsledky\nSprávné řízení zaznamenávaných výsledků: zdůvodnění při změně výsledku, propojená problém při selhání a jak dlouho zůstane výsledek upravitelný na místě.",
     "projectShares": "## Spravovat sdílení\nSdílitelné odkazy na reporty tohoto projektu, každý s vlastní úrovní přístupu — veřejný, vyžadující přihlášení nebo chráněný heslem. Odvolání odkazu ukončí jeho přístup.",
     "projectAccess": "## Přístup\nKaždý uživatel, který může otevřít tento projekt, a role, která určuje, co zde mohou dělat. Role uživatele pochází z jejich vlastního nastavení přístupu k projektu, skupiny, do které patří, nebo výchozího přístupu projektu, v tomto pořadí. Správci systému a správci projektů mají plný přístup bez ohledu na roli. Přístup se změňuje správcem v sekci Administrace › Projekty › Upravit projekt.",
     "groups": "## Skupiny\nSkupiny vám umožňují přiřadit přístup k projektu a role mnoha uživatelům najednou. Přidejte členy přímo, nebo namapujte skupinu od vašeho poskytovatele identity.",

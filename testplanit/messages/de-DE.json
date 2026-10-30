@@ -2193,9 +2193,13 @@
         "description": "Projektspezifische Schalter für vordefinierte Funktionen. Neue Schalter werden hier angezeigt, sobald sie eingeführt werden.",
         "sections": {
           "general": "Allgemein",
+          "generalDescription": "Die Identität und Standardeinstellungen des Projekts: der Code, der in Datensatznummern verwendet wird, die Vorlage, mit der neue Testfälle und Sitzungen beginnen, und ob das Projekt einen Anforderungsbereich hat.",
           "reviews": "Rezensionen",
+          "reviewsDescription": "Wie Review und Genehmigung für dieses Projekt gelten: ob Übergänge, die eine Überprüfung erfordern, durch eine genehmigte Anfrage gated werden, und wie lange ein Reviewer eine Entscheidung rückgängig machen kann.",
           "runs": "Testläufe",
-          "results": "Ergebnisse"
+          "runsDescription": "Was in einen Testlauf gehen kann und wie Läufe sauber gehalten werden: Ausschließen von Entwurfsfällen, Sperren der Zusammensetzung eines Laufs nach Beginn der Ausführung, Gating von Fällen auf deren Abhängigkeiten und Schließen automatisierter Läufe, die keine Berichte mehr erstellen.",
+          "results": "Ergebnisse",
+          "resultsDescription": "Governance für aufgezeichnete Ergebnisse: eine Begründung, wenn sich ein Ergebnis ändert, ein verknüpftes Problem bei Fehlern und wie lange ein Ergebnis an Ort und Stelle bearbeitbar bleibt."
         },
         "recordKey": {
           "label": "Projektcode",
@@ -7974,10 +7978,6 @@
     "projectQuickScript": "## QuickScript\nVerbinden Sie ein Code-Repository, damit dieses Projekt Testfälle aus Ihren automatisierten Testdateien generieren kann, wobei Sie auswählen können, welche Branches und Pfade einbezogen werden sollen.",
     "projectParameters": "## Testfallparameter\nKonfigurieren Sie die datengesteuerten Tests dieses Projekts – JUnit-Iterationseigenschaftsnamen für importierte Ergebnisse und wiederverwendbare Datensätze für parametrisierte Fälle.",
     "projectAdvanced": "## Erweitert\nProjektspezifische Einstellungen, gruppiert in Allgemein, Rezensionen, Testläufe und Ergebnisse. Öffnen Sie das ? einer Einstellung, um zu erfahren, was sie bewirkt. Schalter werden sofort gespeichert, wenn sie sich ändern; der Projektcode und die Zeitfenster-Einstellungen werden mit ihrer eigenen Schaltfläche Speichern gespeichert.",
-    "projectAdvancedGeneral": "## Allgemein\nDie Identität und Standardwerte des Projekts: der Code, der in Datensatztasten verwendet wird, die Vorlage, mit der neue Testfälle und Sitzungen beginnen, und ob das Projekt einen Anforderungsbereich hat.",
-    "projectAdvancedReviews": "## Rezensionen\nWie Review & Approval für dieses Projekt gilt: ob Übergänge, die eine Überprüfung erfordern, durch eine genehmigte Anfrage gesteuert werden, und wie lange ein Reviewer hat, um eine Entscheidung rückgängig zu machen.",
-    "projectAdvancedRuns": "## Testläufe\nWas in einen Testlauf aufgenommen werden kann und wie Läufe ordentlich aufbewahrt werden: Ausschließen von Entwurfsfällen, Sperren der Zusammensetzung eines Laufs nach Beginn der Ausführung, Gating von Fällen auf deren Abhängigkeiten und Schließen automatisierter Läufe, die nicht mehr berichten.",
-    "projectAdvancedResults": "## Ergebnisse\nVerwaltung für aufgezeichnete Ergebnisse: eine Begründung, wenn sich ein Ergebnis ändert, ein verknüpftes Problem bei Fehlern und wie lange ein Ergebnis an Ort und Stelle bearbeitbar bleibt.",
     "projectShares": "## Freigaben verwalten\nFreigebbare Links zu den Berichten dieses Projekts, jeweils mit eigener Zugriffsebene – öffentlich, Anmeldung erforderlich oder passwortgeschützt. Das Widerrufen eines Links beendet dessen Zugriff.",
     "projectAccess": "## Zugriff\nJeder Benutzer, der dieses Projekt öffnen kann, und die Rolle, die bestimmt, was er hier tun darf. Die Rolle eines Benutzers stammt von seiner eigenen Projektzugriffseinstel­lung, einer Gruppe, der er angehört, oder dem Standard­zugriff des Projekts, in dieser Reihen­folge. System­administratoren und Projekt­administratoren haben unabhängig von der Rolle vollständigen Zugriff. Der Zugriff wird von einem Administrator unter Verwaltung › Projekte › Projekt bearbeiten geändert.",
     "groups": "## Gruppen\nMit Gruppen können Sie Projektzugriff und Rollen für viele Benutzer gleichzeitig zuweisen. Fügen Sie Mitglieder direkt hinzu oder ordnen Sie eine Gruppe Ihres Identitätsanbieters zu.",
