@@ -1,3 +1,16 @@
+## [1.2.0-beta.20](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.19...v1.2.0-beta.20) (2026-10-30)
+
+### Features
+
+* **docs:** update release notes to include risk scores and API relation changes ([5de9207](https://github.com/TestPlanIt/testplanit/commit/5de920761bcbdd016a6638cae0d1c5bc9913001e))
+* **trash:** let users restore their own deletes ([02d1b43](https://github.com/TestPlanIt/testplanit/commit/02d1b43e0245866c4f236ca04532185105857708))
+
+### Bug Fixes
+
+* **docs:** correct formatting of the IMPACT_BUILD_BOT_COMMIT_PATTERN variable description ([c33987d](https://github.com/TestPlanIt/testplanit/commit/c33987dd98271f02948d4260ccc6efcdb1f42d5a))
+* **repository:** apply typed filter values on confirm, not per keystroke ([8a36c0a](https://github.com/TestPlanIt/testplanit/commit/8a36c0a230f48be7dc71351a0a865223537c870b))
+* **trash:** re-derive run-case status after a cascaded restore ([c096a43](https://github.com/TestPlanIt/testplanit/commit/c096a43ea0f328622da21fa0c57da3faae8b741c))
+
 ## [1.2.0-beta.19](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.18...v1.2.0-beta.19) (2026-10-29)
 
 ### Features
