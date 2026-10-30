@@ -1,3 +1,15 @@
+## [1.2.0-beta.22](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.21...v1.2.0-beta.22) (2026-10-30)
+
+### Bug Fixes
+
+* **reports:** query the renamed case-to-run relation in the Test Case dimension ([b924483](https://github.com/TestPlanIt/testplanit/commit/b9244838f0a20fa2717b9f39a3c89aec451089df)), closes [#721](https://github.com/TestPlanIt/testplanit/issues/721)
+
+### Performance Improvements
+
+* **reports:** page Issue Test Coverage and the requirement reports, with server-side summaries ([ff35756](https://github.com/TestPlanIt/testplanit/commit/ff3575603ed6ffbb14161d347e708a675ce6ad53))
+* **reports:** page the Test Case Health report and aggregate all-time executions set-based ([a958c5a](https://github.com/TestPlanIt/testplanit/commit/a958c5a079861a03fcb8907eb1acb4becd6047f6))
+* **reports:** send the builder's full set once and cap the execution log's "All" ([3d6f3ce](https://github.com/TestPlanIt/testplanit/commit/3d6f3ce3c7138f02aac254ae07957fea34ba7f64))
+
 ## [1.2.0-beta.21](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.20...v1.2.0-beta.21) (2026-10-30)
 
 ### Bug Fixes
