@@ -280,6 +280,115 @@ test.describe("User trash", () => {
     });
   });
 
+  test("restoring a run brings its result back and the run-case status with it", async ({
+    api,
+    page,
+    request,
+    baseURL,
+  }) => {
+    const tag = uid();
+    const projectId = await api.createProject(`Trash Run Project ${tag}`);
+    const folderId = await api.createFolder(
+      projectId,
+      `Trash Run Folder ${tag}`
+    );
+    const caseId = await api.createTestCase(
+      projectId,
+      folderId,
+      `Trash Run Case ${tag}`
+    );
+    const runName = `Trash Run ${tag}`;
+    const runId = await api.createTestRun(projectId, runName);
+    const testRunCaseId = await api.addTestCaseToTestRun(runId, caseId);
+    const passedId = await api.getStatusId("passed");
+    const me = await api.getCurrentUserId();
+
+    const runCaseStatus = async () => {
+      const res = await request.get(
+        `${baseURL}/api/model/testRunCases/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: testRunCaseId },
+              select: {
+                statusId: true,
+                isDeleted: true,
+                results: { select: { id: true, isDeleted: true } },
+              },
+            }),
+          },
+        }
+      );
+      expect(res.ok()).toBeTruthy();
+      return (await res.json()).data as {
+        statusId: number | null;
+        isDeleted: boolean;
+        results: { id: number; isDeleted: boolean }[];
+      };
+    };
+
+    let resultId = 0;
+    await test.step("Record a Passed result, then delete it: the case drops back to untested", async () => {
+      const submitted = await request.post(
+        `${baseURL}/api/test-runs/submit-result`,
+        {
+          data: {
+            testRunId: runId,
+            testRunCaseId,
+            statusId: passedId,
+            testRunCaseVersion: 1,
+          },
+        }
+      );
+      expect(submitted.ok()).toBeTruthy();
+      let before = await runCaseStatus();
+      expect(before.statusId).toBe(passedId);
+      resultId = before.results[0].id;
+
+      const removed = await request.post(
+        `${baseURL}/api/test-runs/delete-result`,
+        { data: { resultId } }
+      );
+      expect(removed.ok()).toBeTruthy();
+      before = await runCaseStatus();
+      expect(before.statusId).toBeNull();
+    });
+
+    await test.step("Remove the case from the run, then delete the run", async () => {
+      for (const [model, id] of [
+        ["testRunCases", testRunCaseId],
+        ["testRuns", runId],
+      ] as const) {
+        const res = await request.patch(
+          `${baseURL}/api/model/${model}/update`,
+          { data: { where: { id }, data: { isDeleted: true } } }
+        );
+        expect(res.ok()).toBeTruthy();
+      }
+    });
+
+    await test.step("Restore the run from my Trash", async () => {
+      await page.goto(`/en-US/users/profile/${me}`);
+      await page.getByTestId("profile-trash-trigger").click();
+      const row = page.getByTestId(`user-trash-row-${runId}`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await expect(row).toContainText(runName);
+      await page.getByTestId(`user-trash-restore-TestRuns:${runId}`).click();
+      const alert = page.getByRole("alertdialog");
+      await expect(alert).toBeVisible({ timeout: 10000 });
+      await alert.getByTestId("user-trash-confirm-restore").click();
+      await expect(alert).toBeHidden({ timeout: 15000 });
+      await expect(row).toBeHidden({ timeout: 15000 });
+    });
+
+    await test.step("The result is live again and the run-case status was re-derived from it", async () => {
+      const after = await runCaseStatus();
+      expect(after.isDeleted).toBe(false);
+      expect(after.results).toEqual([{ id: resultId, isDeleted: false }]);
+      expect(after.statusId).toBe(passedId);
+    });
+  });
+
   test("other users' deletes stay out of my Trash and off limits to the API", async ({
     api,
     browser,

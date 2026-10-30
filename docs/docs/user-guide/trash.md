@@ -24,7 +24,7 @@ An item is listed only while all of the following hold:
 - it belongs to a project you can still access, and you still have add/edit permission for that kind of item there;
 - whatever contains it is live. A case inside a deleted folder is not listed on its own — restore the folder and the case comes back with it.
 
-Use the search box and the type and project filters to narrow the list. Click **Restore** on a row, or tick several rows and use **Restore selected**, then confirm. Restoring brings back everything that was deleted together with the item: a folder returns with its sub-folders and their cases, a case with its steps and attachments, a run with its run cases and results, a session with its results, a dataset with its rows.
+Use the search box and the type and project filters to narrow the list. Click **Restore** on a row, or tick several rows and use **Restore selected**, then confirm. Restoring brings back everything that was deleted together with the item: a folder returns with its sub-folders and their cases, a case with its steps and attachments, a run with its run cases and results (each run case's status is recomputed from the results that come back), a session with its results, a dataset with its rows.
 
 If the restore cannot go ahead you are told why: the item's folder or parent is still deleted, an item with the same name now exists in that place, the window has passed, or you no longer have permission in that project.
 

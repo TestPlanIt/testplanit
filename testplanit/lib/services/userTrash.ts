@@ -7,6 +7,7 @@ import {
   type EffectiveProjectAccess,
 } from "~/lib/services/areaPermission";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import { syncRunCaseStatusAfterResultRemoval } from "~/lib/services/runCaseStatusSync";
 import {
   RENAMED_ON_DELETE_DELEGATES,
   USER_TRASH_WINDOW_DAYS_DEFAULT,
@@ -270,6 +271,43 @@ export class UserTrashRestoreError extends Error {
 }
 
 /**
+ * Run-cases whose results came back in a cascade. `TestRunCases.statusId` is
+ * denormalized from the newest live result, and deleting a result (which is
+ * what put it in the cascade's path — deleting a run leaves its results alone)
+ * re-derived it without that result. Restoring the result has to re-derive it
+ * again, once the whole cascade (iterations included) is back.
+ */
+type TouchedRunCases = Map<
+  string,
+  { testRunCaseId: number; iterationId: number | null }
+>;
+
+const RUN_RESULT_DELEGATE = "testRunResults";
+
+function childSelect(delegate: string): Record<string, true> {
+  if (RENAMED_ON_DELETE_DELEGATES.has(delegate)) {
+    return { id: true, name: true };
+  }
+  if (delegate === RUN_RESULT_DELEGATE) {
+    return { id: true, testRunCaseId: true, iterationId: true };
+  }
+  return { id: true };
+}
+
+function noteTouchedRunCases(touched: TouchedRunCases, results: Row[]): void {
+  for (const result of results) {
+    const testRunCaseId = result.testRunCaseId;
+    if (typeof testRunCaseId !== "number") continue;
+    const iterationId =
+      typeof result.iterationId === "number" ? result.iterationId : null;
+    touched.set(`${testRunCaseId}:${iterationId ?? ""}`, {
+      testRunCaseId,
+      iterationId,
+    });
+  }
+}
+
+/**
  * Restores every soft-deleted owned child of `ids`. A self-referencing child
  * (sub-folder, child milestone) is an owner of the same kind, so it receives
  * the whole child set again — that walks the tree to its leaves and restores
@@ -279,7 +317,8 @@ async function restoreChildren(
   tx: unknown,
   children: UserTrashChild[],
   ids: Array<number | string>,
-  restored: Record<string, number>
+  restored: Record<string, number>,
+  touched: TouchedRunCases
 ): Promise<void> {
   if (ids.length === 0) return;
   for (const child of children) {
@@ -287,10 +326,13 @@ async function restoreChildren(
     const renamed = RENAMED_ON_DELETE_DELEGATES.has(child.delegate);
     const deleted = await delegate.findMany({
       where: { [child.fk]: { in: ids }, isDeleted: true },
-      select: renamed ? { id: true, name: true } : { id: true },
+      select: childSelect(child.delegate),
     });
     const childIds = deleted.map((row) => row.id);
     if (childIds.length === 0) continue;
+    if (child.delegate === RUN_RESULT_DELEGATE) {
+      noteTouchedRunCases(touched, deleted);
+    }
     let count: number;
     if (renamed) {
       for (const row of deleted) {
@@ -311,7 +353,8 @@ async function restoreChildren(
       tx,
       child.self ? children : (child.children ?? []),
       childIds,
-      restored
+      restored,
+      touched
     );
   }
 }
@@ -382,7 +425,11 @@ export async function restoreUserTrashItem(args: {
         where: { id },
         data: restoreData(entry.delegate, row),
       });
-      await restoreChildren(tx, entry.children, [id], restored);
+      const touched: TouchedRunCases = new Map();
+      await restoreChildren(tx, entry.children, [id], restored, touched);
+      for (const runCase of touched.values()) {
+        await syncRunCaseStatusAfterResultRemoval(tx, runCase);
+      }
       return updated;
     });
   } catch (error) {

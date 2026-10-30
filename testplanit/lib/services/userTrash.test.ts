@@ -100,6 +100,18 @@ vi.mock("~/lib/audit/auditedTransaction", () => ({
     fn(state.db!.db),
 }));
 vi.mock("~/lib/services/auditLog", () => ({ captureAuditEvent }));
+const syncRunCaseStatus = vi.fn<
+  (params: {
+    testRunCaseId: number;
+    iterationId: number | null;
+  }) => Promise<void>
+>(async () => {});
+vi.mock("~/lib/services/runCaseStatusSync", () => ({
+  syncRunCaseStatusAfterResultRemoval: (
+    _tx: unknown,
+    params: { testRunCaseId: number; iterationId: number | null }
+  ) => syncRunCaseStatus(params),
+}));
 vi.mock("~/lib/utils/errors", () => ({ isUniqueConstraintError }));
 vi.mock("~/lib/services/areaPermission", () => ({
   resolveEffectiveProjectAccess: (userId: string, projectId: number) =>
@@ -479,5 +491,65 @@ describe("restoreUserTrashItem", () => {
         now: NOW,
       })
     ).rejects.toMatchObject({ code: "name_conflict" });
+  });
+
+  it("re-derives run-case status once per run-case/iteration after the results come back", async () => {
+    const { restoreUserTrashItem } = await import("./userTrash");
+    const deletedAt = new Date(NOW.getTime() - 2 * DAY);
+    const t = state.db!.tables;
+    t.testRuns = [
+      {
+        id: 200,
+        name: "My run",
+        projectId: 1,
+        isDeleted: true,
+        deletedAt,
+        deletedById: ME,
+      },
+    ];
+    t.testRunCases = [
+      { id: 300, testRunId: 200, isDeleted: true },
+      { id: 301, testRunId: 200, isDeleted: true },
+      { id: 302, testRunId: 200, isDeleted: false },
+    ];
+    t.testRunResults = [
+      { id: 400, testRunCaseId: 300, iterationId: null, isDeleted: true },
+      { id: 401, testRunCaseId: 300, iterationId: null, isDeleted: true },
+      { id: 402, testRunCaseId: 301, iterationId: 7, isDeleted: true },
+      { id: 403, testRunCaseId: 301, iterationId: 7, isDeleted: false },
+      // Under a live run-case: the walk only descends through deleted rows,
+      // so this stays deleted and its run-case is left alone.
+      { id: 404, testRunCaseId: 302, iterationId: null, isDeleted: true },
+    ];
+    t.testRunCaseIteration = [{ id: 7, testRunCaseId: 301, isDeleted: true }];
+    const iterationLiveWhenSynced: boolean[] = [];
+    syncRunCaseStatus.mockImplementation(async () => {
+      iterationLiveWhenSynced.push(
+        t.testRunCaseIteration.find((r) => r.id === 7)!.isDeleted === false
+      );
+    });
+
+    const result = await restoreUserTrashItem({
+      actor,
+      itemType: "TestRuns",
+      itemId: "200",
+      now: NOW,
+    });
+
+    expect(result.restored).toEqual({
+      testRunCases: 2,
+      testRunResults: 3,
+      testRunCaseIteration: 1,
+    });
+    expect(t.testRunResults.find((r) => r.id === 404)!.isDeleted).toBe(true);
+    // Two results on run-case 300 collapse to one sync; the iteration result
+    // syncs with its iteration; run-case 302 is never touched.
+    expect(syncRunCaseStatus.mock.calls.map(([p]) => p)).toEqual([
+      { testRunCaseId: 300, iterationId: null },
+      { testRunCaseId: 301, iterationId: 7 },
+    ]);
+    // The rollup reads live iterations, so the sync must run after the whole
+    // cascade — iteration 7 is restored by a later step than its result.
+    expect(iterationLiveWhenSynced).toEqual([true, true]);
   });
 });
