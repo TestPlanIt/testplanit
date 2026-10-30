@@ -8,6 +8,7 @@ import { stringToColorCode } from "~/utils/stringToColorCode";
 import { formatReportPeriod } from "~/utils/reportPeriodFormat";
 import type { DateGrouping } from "~/lib/reports/dateGrouping";
 import type { ResultsTrendMeta } from "~/utils/resultsTrendShared";
+import type { TestCaseHealthSummary } from "~/utils/testCaseHealthSummary";
 import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
 import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
 import RecentResultsDonut from "./RecentResultsDonut";
@@ -109,6 +110,11 @@ const TOTAL_SERIES_COLOR = "hsl(262, 83%, 58%)";
 // Props for the main chart component
 interface ReportChartProps {
   results: any[];
+  /**
+   * A server-paged report's chart numbers over its whole filtered set
+   * (test-case-health `summary`), when `results` is only a page.
+   */
+  chartSummary?: unknown;
   /** Multi-line chart: also plot the sum of every series at each date. */
   showTotals?: boolean;
   dimensions: { value: string; label: string }[];
@@ -376,6 +382,7 @@ const getColor = (
 
 export const ReportChart: React.FC<ReportChartProps> = ({
   results,
+  chartSummary,
   showTotals = false,
   dimensions,
   metrics,
@@ -532,7 +539,13 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   // Special handling for test case health report - use combined donut + scatter chart
   // Shows health status distribution and health score vs days since execution
   if (reportType && matchesReportType(reportType, "test-case-health")) {
-    return <TestCaseHealthChart data={results} projectId={projectId} />;
+    return (
+      <TestCaseHealthChart
+        data={results}
+        summary={chartSummary as TestCaseHealthSummary | null | undefined}
+        projectId={projectId}
+      />
+    );
   }
 
   // Impact analysis history: summary tiles + analyses per week by trigger.

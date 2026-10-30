@@ -164,6 +164,10 @@ import {
 } from "~/utils/reportUtils";
 import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
 import {
+  isServerPagedReport,
+  serverPageSize,
+} from "~/utils/serverPagedReports";
+import {
   mergeSeenOptions,
   mergeSeenProjectOptions,
   withLatestCounts,
@@ -425,10 +429,6 @@ const dateRangeSchema = z.object({
 
 type DateRangeFormData = z.infer<typeof dateRangeSchema>;
 
-// Rows fetched per execution-log scroll page. Kept within the server's
-// per-request clamp (1–200) so `loaded < total` math stays accurate.
-const EXECUTION_LOG_PAGE_SIZE = 100;
-
 // Inner component
 function ReportBuilderContent({
   mode,
@@ -585,6 +585,9 @@ function ReportBuilderContent({
   const [metrics, setMetrics] = useState<any[]>([]);
   const [results, setResults] = useState<any[] | null>(null);
   const [allResults, setAllResults] = useState<any[] | null>(null); // Full dataset for charts
+  // A server-paged report's chart numbers over its whole filtered set
+  // (test-case-health `summary`); the rows in `results` are one page.
+  const [chartSummary, setChartSummary] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [compatWarning, setCompatWarning] = useState<string | null>(null);
@@ -2293,6 +2296,7 @@ function ReportBuilderContent({
     // Clear stale results so old-typed rows don't render with new-typed columns
     setResults(null);
     setAllResults(null);
+    setChartSummary(null);
     // Dimension value filters are report-specific
     setDimensionValueFilters({});
     setDimensionFilterModes({});
@@ -2348,6 +2352,7 @@ function ReportBuilderContent({
     setTotalCount(0);
     setResults(null);
     setAllResults(null);
+    setChartSummary(null);
     setError(null);
     setCompatWarning(null);
 
@@ -2380,6 +2385,7 @@ function ReportBuilderContent({
     setMetrics([]);
     setResults(null);
     setAllResults(null);
+    setChartSummary(null);
     setError(null);
     setCompatWarning(null);
     setLastUsedDimensions([]);
@@ -2731,16 +2737,18 @@ function ReportBuilderContent({
           return;
         }
 
-        // Only execution-log is truly server-paginated (real DB skip/take); it
-        // fetches a window per scroll. Every other report returns its full set,
-        // so we ask for everything in one request and virtualize it client-side.
+        // Server-paged reports (execution-log, test-case-health) fetch a
+        // window per scroll and get their chart from a summary. Every other
+        // report returns its full set, so we ask for everything in one
+        // request and virtualize it client-side.
         const isExecLog = matchesReportType(reportType, "execution-log");
+        const pagedSize = serverPageSize(reportType);
         const dateRange = form.getValues("dateRange");
         const body: any = {
           dimensions: selectedDimensions.map((d) => d.value),
           metrics: selectedMetrics.map((m) => m.value),
-          page: isExecLog ? page : 1,
-          pageSize: isExecLog ? EXECUTION_LOG_PAGE_SIZE : "All",
+          page: pagedSize ? page : 1,
+          pageSize: pagedSize ?? "All",
         };
 
         if (mode === "project" && projectId) {
@@ -3169,26 +3177,42 @@ function ReportBuilderContent({
 
         // Handle client-side pagination for pre-built reports
         if (currentReport?.isPreBuilt) {
-          // Execution log uses true server-side pagination — accumulate pages
-          // as the user scrolls instead of replacing the visible page.
-          if (isExecLog) {
+          // Server-paged reports accumulate pages as the user scrolls
+          // instead of replacing the visible page.
+          if (pagedSize) {
             const tableData = data.data || data.results || [];
+            // Rows are keyed by id (execution-log) or testCaseId (health).
+            const rowKey = (r: any) => r.id ?? r.testCaseId;
             setResults((prev) => {
               if (!append || !prev) return tableData;
-              // De-dupe by row id in case a page boundary overlaps.
-              const seen = new Set(prev.map((r: any) => r.id));
-              const fresh = tableData.filter((r: any) => !seen.has(r.id));
+              // De-dupe by row key in case a page boundary overlaps.
+              const seen = new Set(prev.map(rowKey));
+              const fresh = tableData.filter((r: any) => !seen.has(rowKey(r)));
               return fresh.length ? [...prev, ...fresh] : prev;
             });
             setTotalCount(data.total ?? tableData.length);
-            // Only on a fresh run (never on append): store the status breakdown
-            // for the chart so scrolling doesn't disturb it.
+            // Never on append: the chart's numbers come with the first page
+            // (execution-log's status breakdown rides in `allResults`, the
+            // health summary in `chartSummary`) so scrolling doesn't disturb
+            // them. A sort refetch (page 1, not appending) refreshes them too.
+            if (!append) {
+              setAllResults(isExecLog ? data.statusBreakdown || [] : null);
+              setChartSummary(data.summary ?? null);
+            }
             if (updateUrl && !append) {
-              setAllResults(data.statusBreakdown || []);
               setLastUsedDimensions(selectedDimensions);
             }
             setReportGeneratedAt(new Date());
-            setLastRequestBody(body);
+            {
+              const {
+                page: _page,
+                pageSize: _pageSize,
+                sortColumn: _sortColumn,
+                sortDirection: _sortDirection,
+                ...shareableBody
+              } = body;
+              setLastRequestBody(shareableBody);
+            }
             return;
           }
 
@@ -3442,11 +3466,12 @@ function ReportBuilderContent({
     [fetchReportData]
   );
 
-  // Infinite scroll only applies to execution-log (the one truly server-paged
-  // report). Every other report has its full set loaded, so hasMore stays false.
+  // Infinite scroll only applies to the server-paged reports. Every other
+  // report has its full set loaded, so hasMore stays false.
   const isExecutionLog = matchesReportType(reportType, "execution-log");
+  const isServerPaged = isServerPagedReport(reportType);
   const loadedCount = results?.length ?? 0;
-  const hasMore = isExecutionLog && loadedCount < totalCount;
+  const hasMore = isServerPaged && loadedCount < totalCount;
 
   // The first report run is in flight or guaranteed to fire (URL selections
   // awaiting resolution, or a pre-built report's mount auto-run) and none has
@@ -3465,17 +3490,18 @@ function ReportBuilderContent({
       hasReportSelectionInUrl(searchParams));
 
   const handleLoadMore = useCallback(() => {
-    if (!isExecutionLog || loadingMore) return;
+    const pagedSize = serverPageSize(reportType);
+    if (!pagedSize || loadingMore) return;
     const loaded = results?.length ?? 0;
     if (loaded >= totalCount) return;
-    const nextPage = Math.floor(loaded / EXECUTION_LOG_PAGE_SIZE) + 1;
+    const nextPage = Math.floor(loaded / pagedSize) + 1;
     setLoadingMore(true);
     void fetchReportData(lastUsedDimensions, lastUsedMetrics, false, {
       append: true,
       page: nextPage,
     }).finally(() => setLoadingMore(false));
   }, [
-    isExecutionLog,
+    reportType,
     loadingMore,
     results,
     totalCount,
@@ -3484,26 +3510,46 @@ function ReportBuilderContent({
     lastUsedMetrics,
   ]);
 
-  // CSV export. Full-set reports serialize the in-memory `allResults`;
-  // execution-log (truly server-paged) fetches every page first so the export
-  // is complete.
+  // CSV export. Full-set reports serialize the in-memory `allResults`.
+  // The server-paged reports hold one page, so the export asks the server
+  // for the complete set: execution-log page by page (its "All" is
+  // unbounded and carries step sub-rows), test-case-health in one
+  // `pageSize: "All"` request, the same body the full-set reports used.
   const { isExporting: isExportingCsv, exportCsv } = useReportCsvExport();
   const handleExportCsv = useCallback(() => {
     const getRows = async (): Promise<any[]> => {
-      if (!isExecutionLog) return allResults ?? results ?? [];
+      if (!isServerPaged) return allResults ?? results ?? [];
+      const endpoint = currentReport?.endpoint;
+      if (!endpoint) return [];
+      const exportBody = {
+        ...(lastRequestBody || {}),
+        ...(sortConfig
+          ? {
+              sortColumn: sortConfig.column,
+              sortDirection: sortConfig.direction,
+            }
+          : {}),
+      };
+      if (!isExecutionLog) {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...exportBody, page: 1, pageSize: "All" }),
+        });
+        if (!response.ok) throw new Error("Failed to fetch report for export");
+        const data = await response.json();
+        return data.data || data.results || [];
+      }
+      const pagedSize = serverPageSize(reportType) ?? 100;
       const all: any[] = [];
       const seen = new Set<number | string>();
       let page = 1;
       // Loop the report endpoint until every row is fetched (no truncation).
-      while (currentReport?.endpoint) {
-        const response = await fetch(currentReport.endpoint, {
+      for (;;) {
+        const response = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...(lastRequestBody || {}),
-            page,
-            pageSize: EXECUTION_LOG_PAGE_SIZE,
-          }),
+          body: JSON.stringify({ ...exportBody, page, pageSize: pagedSize }),
         });
         if (!response.ok) throw new Error("Failed to fetch report for export");
         const data = await response.json();
@@ -3515,8 +3561,7 @@ function ReportBuilderContent({
           }
         }
         const total = data.total ?? all.length;
-        if (batch.length < EXECUTION_LOG_PAGE_SIZE || all.length >= total)
-          break;
+        if (batch.length < pagedSize || all.length >= total) break;
         page += 1;
       }
       return all;
@@ -3536,6 +3581,8 @@ function ReportBuilderContent({
   }, [
     exportCsv,
     isExecutionLog,
+    isServerPaged,
+    sortConfig,
     allResults,
     results,
     currentReport,
@@ -3599,24 +3646,23 @@ function ReportBuilderContent({
     changesMissingBaseline,
   ]);
 
-  // Pre-built (non-execution-log) reports hold their full set client-side and
-  // re-sort it in place — no server round-trip, no paging.
+  // Full-set pre-built reports hold every row client-side and re-sort it in
+  // place — no server round-trip, no paging.
   useEffect(() => {
     if (!currentReport?.isPreBuilt) return;
-    if (matchesReportType(reportType, "execution-log")) return;
+    if (isServerPagedReport(reportType)) return;
     if (!allResults || allResults.length === 0) return;
 
     setResults(sortPreBuiltReportRows(reportType, allResults, sortConfig));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortConfig, reportType, allResults]);
 
-  // Server-sorted reports (custom + execution-log) refetch the full sorted set
-  // when sort changes. Execution-log restarts its accumulation from page 1
-  // (append:false replaces the rows) since the whole list reorders.
+  // Server-sorted reports (custom + server-paged) refetch the sorted set
+  // when sort changes. A server-paged report restarts its accumulation from
+  // page 1 (append:false replaces the rows) since the whole list reorders.
   useEffect(() => {
     if (
-      (!currentReport?.isPreBuilt ||
-        matchesReportType(reportType, "execution-log")) &&
+      (!currentReport?.isPreBuilt || isServerPagedReport(reportType)) &&
       results
     ) {
       void fetchReportData(lastUsedDimensions, lastUsedMetrics, false, {
@@ -5290,6 +5336,7 @@ function ReportBuilderContent({
                 : undefined
             }
             chartData={allResults ?? undefined}
+            chartSummary={chartSummary}
             showChartTotals={includeTotals}
             reportType={reportType}
             dimensions={lastUsedDimensions}

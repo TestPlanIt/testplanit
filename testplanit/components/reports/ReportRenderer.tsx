@@ -77,6 +77,9 @@ interface ReportRendererProps {
   // Data
   results: any[];
   chartData?: any[];
+  // A server-paged report's chart numbers over its whole filtered set
+  // (test-case-health `summary`), when `results` is only a page.
+  chartSummary?: unknown;
   // Multi-line chart: also plot the sum of every series at each date.
   showChartTotals?: boolean;
 
@@ -183,6 +186,7 @@ interface ReportRendererProps {
 export function ReportRenderer({
   results,
   chartData,
+  chartSummary,
   showChartTotals = false,
   reportType,
   dimensions = [],
@@ -518,6 +522,7 @@ export function ReportRenderer({
       chart: (
         <ReportChart
           results={chartResults}
+          chartSummary={chartSummary}
           showTotals={showChartTotals}
           dimensions={dimensions}
           metrics={metrics}
@@ -542,6 +547,7 @@ export function ReportRenderer({
     };
   }, [
     chartData,
+    chartSummary,
     customDateGrouping,
     showChartTotals,
     results,

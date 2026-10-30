@@ -81,8 +81,17 @@ vi.mock("~/components/tables/DataTable", () => ({
 
 // Mock ReportChart to avoid D3 complexity
 vi.mock("@/components/dataVisualizations/ReportChart", () => ({
-  ReportChart: ({ results }: { results: any[] }) => (
-    <div data-testid="report-chart">chart-data-length:{results.length}</div>
+  ReportChart: ({
+    results,
+    chartSummary,
+  }: {
+    results: any[];
+    chartSummary?: { total: number } | null;
+  }) => (
+    <div data-testid="report-chart">
+      chart-data-length:{results.length}
+      {chartSummary ? ` summary-total:${chartSummary.total}` : ""}
+    </div>
   ),
 }));
 

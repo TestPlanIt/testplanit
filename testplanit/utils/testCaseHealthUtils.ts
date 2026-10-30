@@ -7,9 +7,23 @@ import {
   automatedFlagFilter,
   parseEnumFilter,
 } from "~/utils/reportFilterParams";
+import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
+import {
+  summarizeTestCaseHealth,
+  type HealthStatus,
+} from "~/utils/testCaseHealthSummary";
 
-export type HealthStatus =
-  "healthy" | "never_executed" | "always_passing" | "always_failing";
+export type {
+  HealthStatus,
+  TestCaseHealthSummary,
+} from "~/utils/testCaseHealthSummary";
+
+/**
+ * Largest page a caller may request. The ReportBuilder scrolls through
+ * pages of this order; `pageSize: "All"` (the default, kept for API
+ * clients and CSV export) returns the complete set.
+ */
+export const TEST_CASE_HEALTH_MAX_PAGE_SIZE = 500;
 
 export interface TestCaseHealthRow {
   testCaseId: number;
@@ -174,6 +188,13 @@ export async function handleTestCaseHealthPOST(
       healthStatusFilter, // "healthy" | "never_executed" | "always_passing" | "always_failing"
       staleFilter, // "stale" | "notStale"
       dimensions = [],
+      // Paging and header sort. The default serves every row, so API
+      // clients and the CSV export keep the complete set; the ReportBuilder
+      // asks for a page and reads the chart from `summary`.
+      page = 1,
+      pageSize = "All",
+      sortColumn,
+      sortDirection,
     } = body;
 
     // Check if project dimension is requested
@@ -323,35 +344,48 @@ export async function handleTestCaseHealthPOST(
       ),
       -- All-time last execution per case (no window filters): decides
       -- never_executed vs merely-not-executed-recently (stale).
-      all_time_executions AS (
-        SELECT rc.id as test_case_id, MAX(x.executed_at) as all_time_last
+      -- Two set-based aggregates, one per result source, joined on the
+      -- case. A per-case LATERAL here ran once for every live case,
+      -- including the majority that have never executed; the aggregates
+      -- touch only cases with results (100k cases: 7 s -> 0.9 s).
+      manual_all_time AS (
+        SELECT rc.id as test_case_id, MAX(trr."executedAt") as last_at
         FROM "RepositoryCases" rc
-        INNER JOIN LATERAL (
-          SELECT trr."executedAt" as executed_at
-          FROM "TestRunCases" trc
-          INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
-          INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id
-          INNER JOIN "Status" s ON s.id = trr."statusId"
-            AND (s."isSuccess" = true OR s."isFailure" = true)
-          WHERE trc."repositoryCaseId" = rc.id
-          UNION ALL
-          SELECT jr."executedAt"
-          FROM "JUnitTestResult" jr
-          INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
-          INNER JOIN "TestRuns" tr ON tr.id = jts."testRunId" AND tr."isDeleted" = false
-          LEFT JOIN "Status" js ON js.id = jr."statusId"
-          WHERE jr."repositoryCaseId" = rc.id
-            AND jr."executedAt" IS NOT NULL
-            AND (
-              COALESCE(js."isSuccess", jr.type = 'PASSED') = true
-              OR COALESCE(js."isFailure", jr.type IN ('FAILURE', 'ERROR')) = true
-            )
-        ) x ON true
+        INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
+        INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+        INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id
+        INNER JOIN "Status" s ON s.id = trr."statusId"
+          AND (s."isSuccess" = true OR s."isFailure" = true)
         WHERE rc."isDeleted" = false
           AND rc."isArchived" = false
           ${sourceFilterSql}
           ${projectFilterSql}
         GROUP BY rc.id
+      ),
+      junit_all_time AS (
+        SELECT rc.id as test_case_id, MAX(jr."executedAt") as last_at
+        FROM "RepositoryCases" rc
+        INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+          AND jr."executedAt" IS NOT NULL
+        INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+        INNER JOIN "TestRuns" tr ON tr.id = jts."testRunId" AND tr."isDeleted" = false
+        LEFT JOIN "Status" js ON js.id = jr."statusId"
+        WHERE rc."isDeleted" = false
+          AND rc."isArchived" = false
+          AND (
+            COALESCE(js."isSuccess", jr.type = 'PASSED') = true
+            OR COALESCE(js."isFailure", jr.type IN ('FAILURE', 'ERROR')) = true
+          )
+          ${sourceFilterSql}
+          ${projectFilterSql}
+        GROUP BY rc.id
+      ),
+      all_time_executions AS (
+        SELECT
+          COALESCE(m.test_case_id, j.test_case_id) as test_case_id,
+          GREATEST(m.last_at, j.last_at) as all_time_last
+        FROM manual_all_time m
+        FULL OUTER JOIN junit_all_time j ON j.test_case_id = m.test_case_id
       )
       SELECT
         rc.id as test_case_id,
@@ -467,31 +501,59 @@ export async function handleTestCaseHealthPOST(
       return true;
     });
 
-    // Sort by health score (lowest first - show unhealthy tests at top)
-    filteredResults.sort((a, b) => {
-      // Primary sort: by health status priority
-      const statusPriority: Record<HealthStatus, number> = {
-        always_failing: 1,
-        never_executed: 2,
-        always_passing: 3,
-        healthy: 4,
-      };
-      const statusDiff =
-        statusPriority[a.healthStatus] - statusPriority[b.healthStatus];
-      if (statusDiff !== 0) return statusDiff;
+    // The chart's numbers, over the whole filtered set, before paging.
+    const summary = summarizeTestCaseHealth(filteredResults);
 
-      // Secondary sort: stale tests first within same status
-      if (a.isStale !== b.isStale) {
-        return a.isStale ? -1 : 1;
-      }
+    // A header sort orders the full set the way the client's column menus
+    // did when every row was in the browser (same comparator, same
+    // column ids); otherwise the default order: worst status first, stale
+    // before fresh within a status, then the lowest score.
+    const direction: "asc" | "desc" = sortDirection === "desc" ? "desc" : "asc";
+    const sortedResults =
+      typeof sortColumn === "string" && sortColumn.length > 0
+        ? sortPreBuiltReportRows(
+            isCrossProject
+              ? "cross-project-test-case-health"
+              : "test-case-health",
+            filteredResults,
+            { column: sortColumn, direction }
+          )
+        : filteredResults.sort((a, b) => {
+            const statusPriority: Record<HealthStatus, number> = {
+              always_failing: 1,
+              never_executed: 2,
+              always_passing: 3,
+              healthy: 4,
+            };
+            const statusDiff =
+              statusPriority[a.healthStatus] - statusPriority[b.healthStatus];
+            if (statusDiff !== 0) return statusDiff;
 
-      // Tertiary sort: by health score (lower = worse)
-      return a.healthScore - b.healthScore;
-    });
+            if (a.isStale !== b.isStale) {
+              return a.isStale ? -1 : 1;
+            }
+
+            return a.healthScore - b.healthScore;
+          });
+
+    const pageNum = Math.max(1, Math.floor(Number(page)) || 1);
+    const pageSizeNum =
+      pageSize === "All" || pageSize == null
+        ? null
+        : Math.min(
+            Math.max(1, Math.floor(Number(pageSize)) || 1),
+            TEST_CASE_HEALTH_MAX_PAGE_SIZE
+          );
+    const pageRows = pageSizeNum
+      ? sortedResults.slice((pageNum - 1) * pageSizeNum, pageNum * pageSizeNum)
+      : sortedResults;
 
     return Response.json({
-      data: filteredResults,
-      total: filteredResults.length,
+      data: pageRows,
+      total: sortedResults.length,
+      summary,
+      page: pageNum,
+      pageSize: pageSizeNum ?? "All",
       staleDaysThreshold: staleThreshold,
       minExecutionsForRate: minExecutions,
       lookbackDays: lookback,

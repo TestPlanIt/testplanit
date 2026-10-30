@@ -219,6 +219,9 @@ export async function buildSharedReportPayload({
     },
     // Pass through additional fields for specialized reports (automation-trends, flaky-tests, etc.)
     ...(reportData.projects && { projects: reportData.projects }),
+    // Test-case-health: the chart's numbers over the whole set, so the
+    // viewer draws them from the summary rather than from every row.
+    ...(reportData.summary && { chartSummary: reportData.summary }),
     ...(reportData.dateGrouping && {
       dateGrouping: reportData.dateGrouping,
     }),

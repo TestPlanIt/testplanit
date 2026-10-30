@@ -169,6 +169,48 @@ describe("buildSharedReportPayload", () => {
     });
   });
 
+  it("carries a paged report's summary as chartSummary beside its rows", async () => {
+    const data = [{ testCaseId: 1, healthStatus: "healthy" }];
+    const summary = {
+      total: 76770,
+      counts: {
+        healthy: 45306,
+        never_executed: 29875,
+        always_passing: 1489,
+        always_failing: 100,
+      },
+      staleCount: 12000,
+      needsAttention: 41975,
+      healthy: 46795,
+      avgHealthScore: 63,
+    };
+    mockFetch
+      .mockResolvedValueOnce(respond(metadata))
+      .mockResolvedValueOnce(
+        respond({ data, summary, total: 76770, page: 1, pageSize: "All" })
+      );
+
+    const result = await buildSharedReportPayload({
+      config: { reportType: "test-execution", dimensions: [], metrics: [] },
+      projectId: 7,
+      authHeaders: {},
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      payload: {
+        results: data,
+        chartData: data,
+        chartSummary: summary,
+        pagination: { totalCount: 76770, pageSize: "All" },
+      },
+    });
+    // The share replay still asks for the complete set.
+    expect(JSON.parse(mockFetch.mock.calls[1][1].body)).toMatchObject({
+      pageSize: "All",
+    });
+  });
+
   it("passes the iteration matrix and automation candidates through", async () => {
     mockFetch
       .mockResolvedValueOnce(respond({}))

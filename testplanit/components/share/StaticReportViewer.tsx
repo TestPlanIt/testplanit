@@ -317,6 +317,7 @@ export function StaticReportViewer({
         <ReportRenderer
           results={sortedResults}
           chartData={reportData.chartData || reportData.results}
+          chartSummary={reportData.chartSummary}
           showChartTotals={config.includeTotals === true}
           reportType={config.reportType}
           dimensions={reportData.dimensions || []}

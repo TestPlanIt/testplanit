@@ -15,7 +15,11 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
-import type { HealthStatus } from "~/utils/testCaseHealthUtils";
+import {
+  summarizeTestCaseHealth,
+  type HealthStatus,
+  type TestCaseHealthSummary,
+} from "~/utils/testCaseHealthSummary";
 
 interface TestCaseHealthData {
   testCaseId: number;
@@ -39,6 +43,13 @@ interface TestCaseHealthData {
 
 interface TestCaseHealthChartProps {
   data: TestCaseHealthData[];
+  /**
+   * The server's summary over the whole filtered set. When present, the
+   * chart draws from it and `data` may be just the rows on screen; without
+   * it (payloads captured before the summary existed) the chart computes
+   * the same numbers from `data`.
+   */
+  summary?: TestCaseHealthSummary | null;
   projectId?: number | string;
   onTestClick?: (testCaseId: number, projectId?: number) => void;
 }
@@ -61,6 +72,7 @@ const healthStatusOrder: HealthStatus[] = [
 
 export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
   data,
+  summary,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -88,27 +100,12 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
     [t]
   );
 
-  // Calculate summary stats
-  const summaryStats = useMemo(() => {
-    const counts: Record<HealthStatus, number> = {
-      healthy: 0,
-      never_executed: 0,
-      always_passing: 0,
-      always_failing: 0,
-    };
-
-    for (const test of data) {
-      if (
-        test &&
-        test.healthStatus &&
-        counts[test.healthStatus] !== undefined
-      ) {
-        counts[test.healthStatus]++;
-      }
-    }
-
-    return counts;
-  }, [data]);
+  const resolvedSummary = useMemo(
+    () => summary ?? summarizeTestCaseHealth(data),
+    [summary, data]
+  );
+  const summaryStats = resolvedSummary.counts;
+  const totalTests = resolvedSummary.total;
 
   // Setup tooltip
   useEffect(() => {
@@ -204,7 +201,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
             <div style="font-size: 11px;">
               <span style="opacity: 0.7;">${t("count")}:</span>
               <span style="font-weight: 500;">${d.data.count}</span>
-              <span style="opacity: 0.7;"> (${Math.round((d.data.count / data.length) * 100)}%)</span>
+              <span style="opacity: 0.7;"> (${Math.round((d.data.count / totalTests) * 100)}%)</span>
             </div>
           `;
         }
@@ -231,7 +228,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
       .style("fill", "hsl(var(--foreground))")
       .style("font-size", `${Math.min(32, radius * 0.4)}px`)
       .style("font-weight", "700")
-      .text(data.length.toLocaleString(locale));
+      .text(totalTests.toLocaleString(locale));
 
     donutG
       .append("text")
@@ -314,48 +311,33 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
         .style("font-weight", "600")
         .text(count.toLocaleString(locale));
     });
-  }, [summaryStats, data, width, height, getHealthStatusLabel, t, locale]);
+  }, [
+    summaryStats,
+    totalTests,
+    width,
+    height,
+    getHealthStatusLabel,
+    t,
+    locale,
+  ]);
 
-  // Calculate additional summary metrics
+  // The tiles: counts from the summary, percentages of the total.
   const summaryMetrics = useMemo(() => {
-    // Filter to only valid test data entries
-    const validData = data.filter(
-      (d) => d && typeof d.healthScore === "number"
-    );
-    // Count stale tests separately (isStale is now a boolean flag)
-    const staleCount = validData.filter((d) => d.isStale).length;
-    const needsAttention =
-      summaryStats.always_failing + summaryStats.never_executed + staleCount;
-    const healthyCount = summaryStats.healthy + summaryStats.always_passing;
-    const avgHealthScore =
-      validData.length > 0
-        ? Math.round(
-            validData.reduce((sum, d) => sum + d.healthScore, 0) /
-              validData.length
-          )
-        : 0;
-
-    const needsAttentionPct =
-      data.length > 0 ? Math.round((needsAttention / data.length) * 100) : 0;
-    const healthyPct =
-      data.length > 0 ? Math.round((healthyCount / data.length) * 100) : 0;
-
-    const stalePct =
-      data.length > 0 ? Math.round((staleCount / data.length) * 100) : 0;
-
+    const pct = (n: number) =>
+      totalTests > 0 ? Math.round((n / totalTests) * 100) : 0;
     return {
-      total: data.length,
-      needsAttention,
-      needsAttentionPct,
-      staleCount,
-      stalePct,
-      healthy: healthyCount,
-      healthyPct,
-      avgHealthScore,
+      total: totalTests,
+      needsAttention: resolvedSummary.needsAttention,
+      needsAttentionPct: pct(resolvedSummary.needsAttention),
+      staleCount: resolvedSummary.staleCount,
+      stalePct: pct(resolvedSummary.staleCount),
+      healthy: resolvedSummary.healthy,
+      healthyPct: pct(resolvedSummary.healthy),
+      avgHealthScore: resolvedSummary.avgHealthScore,
     };
-  }, [data, summaryStats]);
+  }, [resolvedSummary, totalTests]);
 
-  if (data.length === 0) {
+  if (totalTests === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         {t("noData")}

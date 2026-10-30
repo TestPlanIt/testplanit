@@ -39,4 +39,4 @@ Filters live in the **Filters** menu at the bottom of the report settings. Each 
 
 ## Sort Order
 
-Results are sorted by health-status priority (Always Failing first), then by staleness, then by score.
+Results are sorted by health-status priority (Always Failing first), then by staleness, then by score. Sorting by a column reorders the whole result set; the table loads more rows as you scroll, and the summary tiles and chart always describe every matching case, not just the rows loaded so far. **Export CSV** exports every matching case.
