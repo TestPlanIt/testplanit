@@ -1,3 +1,9 @@
+## [1.2.0-beta.21](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.20...v1.2.0-beta.21) (2026-10-30)
+
+### Bug Fixes
+
+* **reports:** keep visualization summary card text inside the card ([e065688](https://github.com/TestPlanIt/testplanit/commit/e065688aea9c28940f7c267d40f60add045fd41d))
+
 ## [1.2.0-beta.20](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.19...v1.2.0-beta.20) (2026-10-30)
 
 ### Features
