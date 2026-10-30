@@ -364,6 +364,7 @@ export default function SoftDeletedDataTable({
         <div className="w-full md:w-1/3 min-w-[250px]">
           <Filter
             key={`${itemType}-filter`}
+            dataTestId="trash-item-filter"
             placeholder={tCommon("filter.placeholder", {
               item: itemTypeLabel.toLowerCase(),
             })}

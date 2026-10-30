@@ -21,11 +21,12 @@ async function setWindowDays(
   days: number | null
 ) {
   if (days === null) {
-    await request
-      .delete(`${baseURL}/api/model/appConfig/delete`, {
-        data: { where: { key: WINDOW_KEY } },
-      })
-      .catch(() => {});
+    // The model route reads DELETE args from `q`, not the body — a body-only
+    // call fails and would leave the window at whatever the test set.
+    const res = await request.delete(`${baseURL}/api/model/appConfig/delete`, {
+      params: { q: JSON.stringify({ where: { key: WINDOW_KEY } }) },
+    });
+    expect(res.ok() || res.status() === 404).toBeTruthy();
     return;
   }
   const res = await request.post(`${baseURL}/api/model/appConfig/upsert`, {
@@ -488,6 +489,9 @@ test.describe("User trash", () => {
         // The rail button's accessible name carries its count badge once the
         // counts load ("Repository Cases 1"), so match the label as a prefix.
         await page.getByRole("button", { name: /^Repository Cases/ }).click();
+        // Under a full suite run this type holds hundreds of rows, so narrow
+        // the table to ours rather than expecting it on the first page.
+        await page.getByTestId("trash-item-filter").fill(`Windowed ${tag}`);
         await expect(
           page.getByTestId(`trash-RepositoryCases-row-${caseId}`)
         ).toBeVisible({ timeout: 15000 });
