@@ -679,7 +679,7 @@ export function createTestExecutionDimensionRegistry(
         const cases = await db.repositoryCases.findMany({
           where: {
             OR: [
-              { testRuns: { some: { testRun: runScope } } },
+              { testRunCases: { some: { testRun: runScope } } },
               {
                 junitResults: {
                   some: { testSuite: { testRun: runScope } },
@@ -719,7 +719,7 @@ export function createTestExecutionDimensionRegistry(
             ? { name: { contains: opts.search, mode: "insensitive" as const } }
             : {}),
           OR: [
-            { testRuns: { some: { testRun: runScope } } },
+            { testRunCases: { some: { testRun: runScope } } },
             {
               junitResults: {
                 some: { testSuite: { testRun: runScope } },
