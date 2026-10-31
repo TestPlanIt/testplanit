@@ -583,7 +583,6 @@ export default function UserAlertsPage() {
           className="w-full"
           title={tCommon("pageTitles.alerts")}
           helpKey="userAlerts"
-          backHref={`/users/profile/${profileUserId}`}
           description={
             isOwn
               ? t("pageDescription")
