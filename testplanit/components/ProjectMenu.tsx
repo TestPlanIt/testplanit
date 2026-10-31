@@ -274,17 +274,6 @@ export default function ProjectsMenu({
       id: "test-runs-link",
       section: "management",
     },
-    ...(failureTriageEnabled
-      ? [
-          {
-            icon: Fingerprint,
-            label: tCommon("pageTitles.triage"),
-            path: "triage",
-            id: "project-triage-link",
-            section: "management" as MenuSection,
-          },
-        ]
-      : []),
     {
       icon: SessionsIcon,
       label: t("common.fields.sessions"),
@@ -306,6 +295,17 @@ export default function ProjectsMenu({
       id: "project-issues-link",
       section: "management",
     },
+    ...(failureTriageEnabled
+      ? [
+          {
+            icon: Fingerprint,
+            label: tCommon("pageTitles.triage"),
+            path: "triage",
+            id: "project-triage-link",
+            section: "management" as MenuSection,
+          },
+        ]
+      : []),
     ...(canSeeReports
       ? [
           {
