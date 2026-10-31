@@ -1,3 +1,10 @@
+## [1.2.0-beta.23](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.22...v1.2.0-beta.23) (2026-10-31)
+
+### Enhancements
+
+* **alerts:** drop the back link from the Notifications & Alerts page ([85e42c3](https://github.com/TestPlanIt/testplanit/commit/85e42c3ee80e41b9cf45082c46e6efefaa20beac))
+* **navigation:** list Failure Patterns after Issues in the project menu ([91a7061](https://github.com/TestPlanIt/testplanit/commit/91a706184d951d792901afbb87d52ef7ecbb03b8))
+
 ## [1.2.0-beta.22](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.21...v1.2.0-beta.22) (2026-10-30)
 
 ### Bug Fixes
