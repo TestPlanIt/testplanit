@@ -341,6 +341,7 @@
       "milestoneTypes": "Meilensteintypen",
       "milestones": "Meilensteine",
       "createdAt": "Erstellt am",
+      "stagedAt": "Bereitgestellt am",
       "completedOn": "Abgeschlossen am",
       "variants": "Varianten",
       "emailVerified": "E-Mail verifiziert",

@@ -341,6 +341,7 @@
       "milestoneTypes": "Mijlpaaltypen",
       "milestones": "Mijlpalen",
       "createdAt": "Gemaakt op",
+      "stagedAt": "Gefaseerd op",
       "completedOn": "Voltooid op",
       "variants": "Varianten",
       "emailVerified": "E-mail geverifieerd",

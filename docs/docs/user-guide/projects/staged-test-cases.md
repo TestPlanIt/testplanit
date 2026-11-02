@@ -41,7 +41,9 @@ it was last updated.
 
 - **Open** a staged case (click it) to review or change it in the Add Case
   dialog. **Create** there creates that one case and removes it from the list.
-- **Rename** (which renames the test case) or **Delete** a staged case from its menu.
+- **Rename** (which renames the test case) or **Delete** a staged case from its
+  menu. A deleted staged case is removed from the list; it was never created,
+  so nothing else changes.
 - If you have staged cases in other projects, the bottom of the list names
   those projects with their counts; each name opens that project's repository
   with its staged cases shown, so nothing you staged is out of reach.
@@ -61,3 +63,11 @@ rules for the chosen state. Entries with problems are left out.
 
 Each created entry is removed from the list. One that could not be created
 stays in the list with the reason, so you can open it, fix it, and try again.
+
+## Where staging is recorded
+
+A test case created from a staged case shows **Staged At**, the time it was
+staged, next to **Created At** on its details page. The same value is part of
+the case's creation entry in the [audit log](./audit-log.md),
+so a reviewer can tell a staged case from one created directly. A test case
+created without staging has no Staged At.

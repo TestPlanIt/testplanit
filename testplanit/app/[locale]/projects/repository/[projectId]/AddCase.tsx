@@ -1315,6 +1315,9 @@ export function AddCase({
               versionIssues,
               attachments: uploadedAttachments,
               steps: stepRowsForCase,
+              // Opened from a staged case: the case records when it was
+              // staged and the server retires the staged case with it.
+              ...(savedDraftId ? { stagedDraftId: savedDraftId } : {}),
               // PARAM-AddCase: forward inline state when the user has
               // actually authored columns. The Sheet is the only path that
               // populates `inlineParameters`, and the `templateHasSteps`
@@ -1343,16 +1346,10 @@ export function AddCase({
         // even inactive queries app-wide) takes typical post-save latency
         // from "freeze 1-2s" to a single render of the visible folder view.
         // The case now exists, so the draft that described it is spent —
-        // the auto-saved recovery copy and, when the form was opened from
-        // one, the saved draft.
+        // the auto-saved recovery copy here, and, when the form was opened
+        // from a staged case, that staged case server-side; re-read the list.
         draft.clear();
-        if (savedDraftId) {
-          savedDrafts.remove(savedDraftId).catch(() => {
-            toast.error(t("repository.savedDrafts.deleteFailed"), {
-              position: "bottom-right",
-            });
-          });
-        }
+        if (savedDraftId) savedDrafts.refresh();
         onClose();
         setIsSubmitting(false);
 

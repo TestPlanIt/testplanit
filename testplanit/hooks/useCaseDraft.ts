@@ -158,7 +158,11 @@ export function useCaseDraft({
   // `clear()` evicts the entry, and `refetchOnMount` re-reads on the next open.
   const { data: serverDraft } = useClientQueries(schema).caseDraft.useFindFirst(
     {
-      where: { userId: userId ?? "", draftKey: draftKey ?? "" },
+      where: {
+        userId: userId ?? "",
+        draftKey: draftKey ?? "",
+        isDeleted: false,
+      },
     },
     {
       enabled: detecting && !!userId && !!draftKey,

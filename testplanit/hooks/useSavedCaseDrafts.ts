@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { useCallback } from "react";
 import {
@@ -42,14 +43,24 @@ const toColumn = toCaseDraftColumn;
  * list and the two editors make to them. Reads and writes go through the
  * CaseDraft policy, which admits the author only, so no caller filters by
  * user id except to keep the query key per user.
+ *
+ * A saved draft is never hard-deleted: `remove` tombstones it, and creating
+ * the case retires it server-side (see the importer's `stagedDraftId`), after
+ * which `refresh` re-reads the list.
  */
 export function useSavedCaseDrafts(projectId: number, userId?: string) {
   const client = useClientQueries(schema);
+  const queryClient = useQueryClient();
   const enabled = !!userId && Number.isFinite(projectId) && projectId > 0;
 
   const { data, isLoading } = client.caseDraft.useFindMany(
     {
-      where: { projectId, userId: userId ?? "", isSaved: true },
+      where: {
+        projectId,
+        userId: userId ?? "",
+        isSaved: true,
+        isDeleted: false,
+      },
       include: {
         folder: { select: { id: true, name: true, isDeleted: true } },
       },
@@ -79,7 +90,6 @@ export function useSavedCaseDrafts(projectId: number, userId?: string) {
 
   const { mutateAsync: createDraft } = client.caseDraft.useCreate();
   const { mutateAsync: updateDraft } = client.caseDraft.useUpdate();
-  const { mutateAsync: deleteDraft } = client.caseDraft.useDelete();
 
   const save = useCallback(
     async (input: SaveCaseDraftInput): Promise<string> => {
@@ -130,12 +140,29 @@ export function useSavedCaseDrafts(projectId: number, userId?: string) {
 
   const remove = useCallback(
     async (id: string): Promise<void> => {
-      await deleteDraft({ where: { id } });
+      await updateDraft({
+        where: { id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          ...(userId ? { deletedById: userId } : {}),
+        },
+      });
     },
-    [deleteDraft]
+    [updateDraft, userId]
   );
 
-  return { drafts, isLoading, save, update, remove };
+  /** Re-read every staged-case query after a write that bypassed the hooks. */
+  const refresh = useCallback(() => {
+    void queryClient.invalidateQueries({
+      predicate: (query) =>
+        Array.isArray(query.queryKey) &&
+        query.queryKey[0] === "zenstack" &&
+        query.queryKey[1] === "CaseDraft",
+    });
+  }, [queryClient]);
+
+  return { drafts, isLoading, save, update, remove, refresh };
 }
 
 /**
@@ -154,6 +181,7 @@ export function useStagedCasesElsewhere(
       where: {
         userId: userId ?? "",
         isSaved: true,
+        isDeleted: false,
         projectId: { not: projectId },
         project: { isDeleted: false },
       },

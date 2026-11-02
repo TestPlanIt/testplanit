@@ -341,6 +341,7 @@
       "milestoneTypes": "Dönüm Noktası Türleri",
       "milestones": "Dönüm Noktaları",
       "createdAt": "Oluşturulma Tarihi",
+      "stagedAt": "Hazırlanan Tarih",
       "completedOn": "Tamamlandı",
       "variants": "Varyantlar",
       "emailVerified": "E-posta Doğrulandı",

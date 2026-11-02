@@ -341,6 +341,7 @@
       "milestoneTypes": "Milestone Types",
       "milestones": "Milestones",
       "createdAt": "Created At",
+      "stagedAt": "Staged At",
       "completedOn": "Completed On",
       "variants": "Variants",
       "emailVerified": "Email Verified",

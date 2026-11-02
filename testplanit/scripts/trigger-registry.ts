@@ -569,4 +569,5 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "RequirementTraceabilitySnapshot" },
   { table: "Comment" },
   { table: "ImportMapping" },
+  { table: "CaseDraft" },
 ];

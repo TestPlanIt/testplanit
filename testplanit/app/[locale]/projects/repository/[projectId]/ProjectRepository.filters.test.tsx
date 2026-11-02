@@ -155,6 +155,9 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
     await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...original,
+    // No QueryClientProvider in this tree; useSavedCaseDrafts reads the client
+    // for its refresh() and never calls it here.
+    useQueryClient: () => ({ invalidateQueries: vi.fn() }),
     useQuery: (options: any) => {
       if (options?.queryKey?.[0] === "viewOptions") {
         viewOptionsQueryHolder.current = options;

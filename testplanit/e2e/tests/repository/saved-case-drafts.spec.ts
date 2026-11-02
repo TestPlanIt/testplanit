@@ -13,7 +13,8 @@ import {
  * `draftCaseCreation.test.ts`. What lives here is the path those cannot
  * reach: the form's Save Draft, the list reading the draft back through the
  * database, the bulk-create request from the list, the case table picking
- * the new case up, and the draft disappearing once created.
+ * the new case up, the draft disappearing once created, and the created case
+ * showing when it was staged.
  */
 
 async function setupProjectAndFolder(
@@ -91,6 +92,77 @@ test.describe("Saved case drafts", () => {
       );
       await expect(action).not.toContainText("(");
       await page.keyboard.press("Escape");
+    });
+
+    await test.step("The created case records when it was staged", async () => {
+      await repositoryPage
+        .getTestCaseByName(names[0])
+        .locator('a[href*="/projects/repository/"]')
+        .first()
+        .click();
+      // The row opens the case in the details panel, which shows the same
+      // creation block as the full page. The label collapses to an icon when
+      // the panel is narrow, so assert on the date rather than the text.
+      const stagedAt = page.getByTestId("creation-info-staged-at");
+      await expect(stagedAt).toBeVisible({ timeout: 15_000 });
+      await expect(stagedAt).toContainText(/\d{2}:\d{2}/);
+    });
+  });
+
+  test("deleting a staged case removes it from the list for good", async ({
+    api,
+    page,
+  }) => {
+    const repositoryPage = new RepositoryPage(page);
+    const { projectId, folderId } = await setupProjectAndFolder(api);
+    const name = `Discarded ${Date.now()}`;
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.selectFolder(folderId);
+    await repositoryPage.openAddCaseModal();
+    await page
+      .getByTestId("add-case-dialog")
+      .getByTestId("case-name-input")
+      .fill(name);
+    await page.getByTestId("case-save-draft-button").click();
+    await expect(page.getByTestId("add-case-dialog")).toHaveCount(0, {
+      timeout: 10_000,
+    });
+
+    await test.step("Delete it from the list", async () => {
+      await clickOverflowAction(
+        page,
+        "staged-cases-button",
+        "repository-actions-menu"
+      );
+      const sheet = page.getByTestId("staged-cases-sheet");
+      const item = sheet
+        .locator('[data-testid^="staged-cases-item-"]')
+        .filter({ hasText: name });
+      await expect(item).toBeVisible();
+      await item.locator('[data-testid^="staged-cases-menu-"]').click();
+      await page
+        .locator('[data-testid^="staged-cases-delete-"]')
+        .first()
+        .click();
+      await page.getByTestId("staged-cases-delete-submit").click();
+      await expect(page.getByTestId("staged-cases-empty")).toBeVisible({
+        timeout: 10_000,
+      });
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("It stays gone after a reload and was never created", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
+      const action = await revealOverflowAction(
+        page,
+        "staged-cases-button",
+        "repository-actions-menu"
+      );
+      await expect(action).not.toContainText("(");
+      await page.keyboard.press("Escape");
+      await expect(repositoryPage.getTestCaseByName(name)).toHaveCount(0);
     });
   });
 

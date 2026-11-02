@@ -341,6 +341,7 @@
       "milestoneTypes": "Tipi di milestone",
       "milestones": "Pietre miliari",
       "createdAt": "Creato a",
+      "stagedAt": "Messo in staging a",
       "completedOn": "Completato il",
       "variants": "Varianti",
       "emailVerified": "Email verificata",

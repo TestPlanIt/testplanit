@@ -341,6 +341,7 @@
       "milestoneTypes": "Tipos de marcos",
       "milestones": "Conquistas",
       "createdAt": "Criado em",
+      "stagedAt": "Preparado em",
       "completedOn": "Concluído em",
       "variants": "Variantes",
       "emailVerified": "E-mail verificado",

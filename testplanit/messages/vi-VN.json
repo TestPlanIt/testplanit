@@ -341,6 +341,7 @@
       "milestoneTypes": "Các loại cột mốc",
       "milestones": "Các cột mốc",
       "createdAt": "Được tạo vào lúc",
+      "stagedAt": "Được lưu lúc",
       "completedOn": "Hoàn thành vào ngày",
       "variants": "Các biến thể",
       "emailVerified": "Email đã được xác minh",

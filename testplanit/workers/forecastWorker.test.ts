@@ -823,7 +823,9 @@ describe("JOB_PURGE_STALE_CASE_DRAFTS", () => {
   };
 
   it("deletes only drafts untouched for the full retention window", async () => {
-    mockDb.caseDraft.deleteMany.mockResolvedValue({ count: 3 });
+    mockDb.caseDraft.deleteMany
+      .mockResolvedValueOnce({ count: 3 })
+      .mockResolvedValueOnce({ count: 0 });
 
     const result = await runProcessor();
 
@@ -856,6 +858,30 @@ describe("JOB_PURGE_STALE_CASE_DRAFTS", () => {
 
     const arg = mockDb.caseDraft.deleteMany.mock.calls[0][0];
     expect(arg.where.isSaved).toBe(false);
+  });
+
+  it("purges discarded staged cases after the window but keeps the ones that became cases", async () => {
+    mockDb.caseDraft.deleteMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 2 });
+
+    const result = await runProcessor();
+
+    const { CASE_DRAFT_RETENTION_DAYS } =
+      await import("../lib/services/caseDraft");
+    const cutoff = new Date(
+      FIXED_NOW.getTime() - CASE_DRAFT_RETENTION_DAYS * 24 * 60 * 60 * 1000
+    );
+    expect(mockDb.caseDraft.deleteMany).toHaveBeenCalledTimes(2);
+    expect(mockDb.caseDraft.deleteMany.mock.calls[1][0]).toEqual({
+      where: {
+        isSaved: true,
+        isDeleted: true,
+        caseId: null,
+        deletedAt: { lt: cutoff },
+      },
+    });
+    expect(result).toMatchObject({ status: "completed", successCount: 3 });
   });
 
   it("propagates a purge failure so BullMQ retries the job", async () => {

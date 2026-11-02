@@ -341,6 +341,7 @@
       "milestoneTypes": "マイルストーンの種類",
       "milestones": "マイルストーン",
       "createdAt": "作成日",
+      "stagedAt": "ステージング日時",
       "completedOn": "完了日",
       "variants": "変種",
       "emailVerified": "メール認証済み",

@@ -65,6 +65,10 @@ const caseSchema = z.object({
   // Ids of issues already linked to the project (the shape the Add Case
   // form holds), for callers inside the app such as the My Drafts list.
   issueIds: z.array(z.number().int().positive()).max(50).optional(),
+  // The caller's staged case this case is created from (My Staged Cases).
+  // The importer records when the case was staged and retires the staged
+  // case; an id that is not the caller's own live staged case fails the case.
+  stagedDraftId: z.string().min(1).max(64).optional(),
 });
 
 const bulkCreateSchema = z.object({
@@ -454,6 +458,7 @@ export const POST = withAuditContext(
             ...(issueIds?.length ? { issueIds } : {}),
             ...(c.automated !== undefined ? { automated: c.automated } : {}),
             ...(c.estimate !== undefined ? { estimate: c.estimate } : {}),
+            ...(c.stagedDraftId ? { stagedDraftId: c.stagedDraftId } : {}),
           };
         });
 

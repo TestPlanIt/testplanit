@@ -7,13 +7,17 @@
  * INDEXED_MODELS, and sideEffectsPlugin's GUC_MODELS / BEFORE_IMAGE_MODELS —
  * so writing one bumps no version, logs no change, reindexes nothing and fires
  * no webhook or notification. Adding CaseDraft to any of those registries would
- * silently break that guarantee.
+ * silently break that guarantee. The one registry it is in is
+ * SOFT_DELETE_REGISTRY, so the deletedAt/deletedById stamp applies.
  *
  * Three kinds of draft exist, distinguished by `draftKey`:
  *   - `case:<id>`   an auto-saved edit in progress on an existing case
  *   - `folder:<id>` an auto-saved new case being authored into that folder
- *   - `saved:<uuid>` a draft the author saved on purpose (`isSaved`), named
- *     and kept until it is created from the My Drafts list or deleted
+ *   - `saved:<uuid>` a staged case: a draft the author saved on purpose
+ *     (`isSaved`), named, and retired rather than deleted — creating the case
+ *     tombstones it with `caseId` set (the case's `stagedAt` comes from its
+ *     `createdAt`); deleting it from the list tombstones it with `caseId`
+ *     null, and the retention job purges those
  *
  * Drafts live in two places at once. localStorage is written synchronously on
  * every change so a crash loses at most the last keystroke; the server row is

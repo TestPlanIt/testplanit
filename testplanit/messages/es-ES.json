@@ -341,6 +341,7 @@
       "milestoneTypes": "Tipos de hito",
       "milestones": "Milestones",
       "createdAt": "Creado el",
+      "stagedAt": "Preparado el",
       "completedOn": "Completado el",
       "variants": "Variantes",
       "emailVerified": "Email verificado",

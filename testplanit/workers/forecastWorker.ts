@@ -1050,17 +1050,27 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           const cutoff = new Date(
             Date.now() - CASE_DRAFT_RETENTION_DAYS * 24 * 60 * 60 * 1000
           );
-          // Deleted outright rather than soft-deleted: a draft is scratch
+          // Auto-saved recovery copies are deleted outright: they are scratch
           // space, never a record of anything, and a tombstoned one would
           // still trip the unique (userId, draftKey) index on the next edit.
-          // Only the auto-saved recovery copies age out; a draft the author
-          // saved on purpose stays until they create or delete it.
+          // Only the ones untouched for the window age out.
           const { count } = await db.caseDraft.deleteMany({
             where: { updatedAt: { lt: cutoff }, isSaved: false },
           });
-          successCount = count;
+          // A staged case the author deleted is a tombstone (isDeleted, no
+          // caseId) and ages out the same way. One that became a case keeps
+          // its caseId and is kept: it records when the case was staged.
+          const { count: discarded } = await db.caseDraft.deleteMany({
+            where: {
+              isSaved: true,
+              isDeleted: true,
+              caseId: null,
+              deletedAt: { lt: cutoff },
+            },
+          });
+          successCount = count + discarded;
           console.log(
-            `Job ${job.id} completed: purged ${count} case draft(s) untouched since ${cutoff.toISOString()}.`
+            `Job ${job.id} completed: purged ${count} case draft(s) untouched since ${cutoff.toISOString()} and ${discarded} discarded staged case(s).`
           );
         } catch (error) {
           console.error(`Job ${job.id}: Error purging case drafts`, error);

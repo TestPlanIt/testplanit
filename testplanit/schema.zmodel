@@ -2184,6 +2184,9 @@ model RepositoryCases {
     riskComputedAt          DateTime?                    @db.Timestamptz(6) @deny('update', true)
     order                   Int                          @default(0)
     createdAt               DateTime                     @default(now()) @db.Timestamptz(6)
+    // When the case was staged (CaseDraft.createdAt), for a case created from
+    // a staged case; null otherwise.
+    stagedAt                DateTime?                    @db.Timestamptz(6)
     creatorId               String                       @deny('update', true)
     creator                 User                         @relation(fields: [creatorId], references: [id])
     automated               Boolean                      @default(false)
@@ -2315,6 +2318,12 @@ model CaseDraft {
     name         String?
     rowCount     Int                @default(1)
     problemCount Int                @default(0)
+    // A saved draft is never hard-deleted. Creating the case retires it with
+    // caseId pointing at the case; deleting it from the list leaves caseId
+    // null. Auto-saved recovery copies are still deleted outright.
+    isDeleted    Boolean            @default(false)
+    deletedAt    DateTime?          @db.Timestamptz(6)
+    deletedById  String?
     createdAt    DateTime           @default(now()) @db.Timestamptz(6)
     updatedAt    DateTime           @updatedAt @db.Timestamptz(6)
 

@@ -341,6 +341,7 @@
       "milestoneTypes": "Typy milníků",
       "milestones": "Milníky",
       "createdAt": "Vytvořeno",
+      "stagedAt": "Připraveno v",
       "completedOn": "Dokončeno",
       "variants": "Varianty",
       "emailVerified": "Email ověřen",

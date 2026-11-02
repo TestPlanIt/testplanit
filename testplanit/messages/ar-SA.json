@@ -341,6 +341,7 @@
       "milestoneTypes": "أنواع المعالم الرئيسية",
       "milestones": "المعالم الرئيسية",
       "createdAt": "تاريخ الإنشاء",
+      "stagedAt": "تم التحضير في",
       "completedOn": "تاريخ الإكمال",
       "variants": "المتغيرات",
       "emailVerified": "تم التحقق من البريد الإلكتروني",

@@ -429,6 +429,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   <CreationInfo
                     userId={testcase.creator?.id}
                     createdAt={testcase.createdAt}
+                    stagedAt={testcase.stagedAt}
                   />
                   <Separator
                     orientation="horizontal"

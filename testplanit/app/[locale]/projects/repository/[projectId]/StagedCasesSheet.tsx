@@ -106,7 +106,7 @@ export function StagedCasesSheet({
   const tGlobal = useTranslations();
   const locale = useLocale();
   const { data: session } = useSession();
-  const { drafts, isLoading, update, remove } = useSavedCaseDrafts(
+  const { drafts, isLoading, update, remove, refresh } = useSavedCaseDrafts(
     projectId,
     session?.user?.id
   );
@@ -208,7 +208,8 @@ export function StagedCasesSheet({
 
   /**
    * Create the given staged cases, one bulk-create request per template in
-   * list order. Created entries are deleted; the rest keep their error.
+   * list order. The server retires each created entry (the case records when
+   * it was staged); the rest keep their error.
    */
   const createDrafts = async (targets: SavedCaseDraft[]) => {
     if (!workflows || targets.length === 0) return;
@@ -224,11 +225,14 @@ export function StagedCasesSheet({
           {
             draft,
             templateId: check.template.id,
-            body: draftToBulkCreateCase(
-              { ...check, template: check.template },
-              { folderId: draft.folderId, payload: draft.payload },
-              workflows
-            ),
+            body: {
+              ...draftToBulkCreateCase(
+                { ...check, template: check.template },
+                { folderId: draft.folderId, payload: draft.payload },
+                workflows
+              ),
+              stagedDraftId: draft.id,
+            },
           },
         ];
       });
@@ -255,11 +259,6 @@ export function StagedCasesSheet({
             const result = data.results[index];
             if (result?.status === "success" && result.caseId != null) {
               createdCount += 1;
-              try {
-                await remove(g.draft.id);
-              } catch {
-                errors.set(g.draft.id, t("deleteFailed"));
-              }
             } else {
               errors.set(g.draft.id, result?.error || tCommon("errors.error"));
             }
@@ -271,6 +270,7 @@ export function StagedCasesSheet({
         }
       }
       if (createdCount > 0) {
+        refresh();
         refreshCaseList();
         toast.success(t("createdToast", { count: createdCount }), {
           position: "bottom-right",

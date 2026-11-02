@@ -341,6 +341,7 @@
       "milestoneTypes": "里程碑類型",
       "milestones": "里程碑",
       "createdAt": "創建於",
+      "stagedAt": "暫存於",
       "completedOn": "已完成",
       "variants": "變體",
       "emailVerified": "電子郵件已驗證",

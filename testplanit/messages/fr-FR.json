@@ -341,6 +341,7 @@
       "milestoneTypes": "Types d'étapes clés",
       "milestones": "Étapes clés",
       "createdAt": "Créé à",
+      "stagedAt": "Mis en scène le",
       "completedOn": "Terminé le",
       "variants": "Variantes",
       "emailVerified": "Adresse e-mail vérifiée",

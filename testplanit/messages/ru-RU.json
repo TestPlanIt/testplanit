@@ -341,6 +341,7 @@
       "milestoneTypes": "Типы этапов",
       "milestones": "Важные этапы",
       "createdAt": "Создано в",
+      "stagedAt": "Размещено в",
       "completedOn": "Завершено",
       "variants": "Варианты",
       "emailVerified": "Адрес электронной почты подтвержден",
