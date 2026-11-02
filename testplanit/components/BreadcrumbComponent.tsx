@@ -68,7 +68,7 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
-                        href={`/projects/repository/${projectId}/?node=${folder.id}`}
+                        href={`/projects/repository/${projectId}/?node=${folder.id}&view=folders`}
                         // Full opacity, not /50: primary at half strength is
                         // 3.4:1 on white and 2.3:1 in the purple theme, and the
                         // accessible themes already force `text-primary/*` back

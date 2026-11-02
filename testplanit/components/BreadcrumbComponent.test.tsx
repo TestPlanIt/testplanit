@@ -196,4 +196,26 @@ describe("BreadcrumbComponent", () => {
     expect(link?.getAttribute("href")).toContain("/projects/repository/123/");
     expect(link?.getAttribute("href")).toContain("node=42");
   });
+
+  it("links to the folders view so the repository shows the folder", () => {
+    // The details panel renders inside the repository page, which keeps its
+    // current grouping axis (status, templates, ...) across the navigation.
+    // Without an explicit view the folder tree never appears.
+    render(
+      <BreadcrumbComponent
+        breadcrumbItems={[rootFolder, childFolder]}
+        projectId="1"
+        isLastClickable={true}
+      />
+    );
+
+    const hrefs = Array.from(document.querySelectorAll("a")).map((a) =>
+      a.getAttribute("href")
+    );
+    expect(hrefs).toHaveLength(2);
+    for (const href of hrefs) {
+      const query = new URLSearchParams(href!.split("?")[1]);
+      expect(query.get("view")).toBe("folders");
+    }
+  });
 });
