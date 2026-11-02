@@ -1,3 +1,9 @@
+## [1.2.0-beta.24](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.23...v1.2.0-beta.24) (2026-11-02)
+
+### Bug Fixes
+
+* **webhooks:** reschedule busy tracker actions instead of spending retries ([14712ec](https://github.com/TestPlanIt/testplanit/commit/14712ec82dc96b9958f02a878cc621654344e85f))
+
 ## [1.2.0-beta.23](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.22...v1.2.0-beta.23) (2026-10-31)
 
 ### Enhancements
