@@ -38,7 +38,7 @@ export function ChangePasswordModal({
   const t = useTranslations("users.profile.changePasswordModal");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -114,6 +114,11 @@ export function ChangePasswordModal({
           setErrors([result.error || tCommon("errors.somethingWentWrong")]);
         }
       } else {
+        // The route already re-issued this browser's cookie with the new
+        // passwordChangedAt, but NextAuth re-signs the cookie on every session
+        // fetch, so one in flight at that moment can overwrite it with the old
+        // claims. This update re-reads the DB and writes the fresh cookie last.
+        await updateSession();
         toast.success(t("success.passwordChanged"));
         onClose();
       }

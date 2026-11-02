@@ -1248,6 +1248,7 @@
       "accessDenied": "Erişim engellendi. Hesabınız devre dışı olabilir veya oturum açma izniniz olmayabilir.",
       "configuration": "Sunucu yapılandırmasında bir sorun var.",
       "verification": "Bu giriş bağlantısının süresi doldu veya zaten kullanıldı. Magic Link'ler yalnızca bir kez kullanılabilir — giriş yapmak için lütfen yeni bir tane isteyin.",
+      "sessionEnded": "Oturumunuz sona erdi. Lütfen tekrar oturum açın.",
       "invalid2FACode": "Geçersiz doğrulama kodu. Lütfen tekrar deneyin.",
       "twoFactorTokenRequired": "Token gereklidir.",
       "verificationCodeRequired": "Doğrulama kodu gereklidir."
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "Yeni parola güvenlik gereksinimlerini karşılamıyor."
         },
         "success": {
-          "passwordChanged": "Şifre başarıyla değiştirildi."
+          "passwordChanged": "Şifre başarıyla değiştirildi. Diğer cihazlar ve tarayıcılardan oturum kapatıldı."
         }
       },
       "auditLog": {

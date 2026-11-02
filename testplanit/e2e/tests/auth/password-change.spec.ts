@@ -96,6 +96,9 @@ test.describe("Password Change", () => {
         ) {
           await signoutButton.click();
         }
+        // A signed-in browser is sent away from /signin, so make sure the
+        // session is really gone before heading there.
+        await page.context().clearCookies();
       });
 
       await test.step("Sign in with the new password and confirm access", async () => {
@@ -117,6 +120,7 @@ test.describe("Password Change", () => {
   test("Session persists after password change via API", async ({
     page,
     api,
+    baseURL,
   }) => {
     const timestamp = Date.now();
     const testEmail = `pw-session-${timestamp}@${TEST_EMAIL_DOMAIN}`;
@@ -143,6 +147,12 @@ test.describe("Password Change", () => {
       });
 
       await test.step("Change password via the API in the authenticated session", async () => {
+        // Land on a fully settled page first. Load states are sticky per
+        // navigation, so this has to be a real navigation: it lets the
+        // post-sign-in requests (which still carry the old cookie) finish
+        // before the change-password response re-issues the cookie.
+        await page.goto(`${baseURL}/en-US/`);
+        await page.waitForLoadState("networkidle");
         // Change password via the API using the browser's authenticated context
         // Use page.evaluate to call fetch from within the browser page (shares session cookies)
         const changeResult = await page.evaluate(
@@ -169,6 +179,102 @@ test.describe("Password Change", () => {
         expect(page.url()).not.toContain("/signin");
       });
     } finally {
+      await api.deleteUser(userId);
+    }
+  });
+
+  test("Other sessions are signed out after a password change; the changing session stays", async ({
+    page,
+    browser,
+    api,
+    baseURL,
+  }) => {
+    const timestamp = Date.now();
+    const testEmail = `pw-other-sessions-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const originalPassword = "Password123!";
+    const newPassword = "RotatedPassword321!";
+
+    // A brand-new account has never changed its password, so every session it
+    // opens carries no passwordChangedAt claim. This is the case the report
+    // reproduced: the guard used to skip when that claim was missing.
+    const userResult = await api.createUser({
+      name: `Other Sessions User ${timestamp}`,
+      email: testEmail,
+      password: originalPassword,
+    });
+    const userId = userResult.data.id;
+    const profileUrl = `${baseURL}/en-US/users/profile/${userId}`;
+
+    const otherContext = await browser.newContext({
+      storageState: { cookies: [], origins: [] },
+    });
+    const otherPage = await otherContext.newPage();
+
+    try {
+      await test.step("Sign in on browser A", async () => {
+        const signinPage = new SigninPage(page);
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, originalPassword);
+        await signinPage.submit();
+        await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
+      });
+
+      await test.step("Sign in to the same account on browser B", async () => {
+        const otherSignin = new SigninPage(otherPage);
+        await otherSignin.goto();
+        await otherSignin.fillCredentials(testEmail, originalPassword);
+        await otherSignin.submit();
+        await otherPage.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
+        await otherPage.goto(profileUrl);
+        await otherPage.waitForLoadState("networkidle");
+        expect(otherPage.url()).not.toContain("/signin");
+      });
+
+      await test.step("Change the password from browser A", async () => {
+        await page.goto(profileUrl);
+        await page.waitForLoadState("networkidle");
+        await page
+          .getByRole("button", { name: /^change password$/i })
+          .first()
+          .click();
+
+        const dialog = page.locator('[role="dialog"]').first();
+        await expect(dialog).toBeVisible({ timeout: 10000 });
+        await dialog.locator("#currentPassword").fill(originalPassword);
+        await dialog.locator("#newPassword").fill(newPassword);
+        await dialog.locator("#confirmPassword").fill(newPassword);
+        await dialog
+          .getByRole("button", { name: /change.*password|save|submit/i })
+          .first()
+          .click();
+        await expect(dialog).not.toBeVisible({ timeout: 10000 });
+      });
+
+      await test.step("Browser A is still signed in", async () => {
+        await page.reload();
+        await page.waitForLoadState("networkidle");
+        expect(page.url()).not.toContain("/signin");
+        await expect(
+          page.getByRole("button", { name: /^change password$/i }).first()
+        ).toBeVisible({ timeout: 10000 });
+      });
+
+      await test.step("Browser B is sent to sign-in with the session-ended notice", async () => {
+        await otherPage.goto(profileUrl);
+        await otherPage.waitForURL((url) => url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
+        expect(otherPage.url()).toContain("error=SessionEnded");
+        await expect(
+          otherPage.getByText(/your session has expired/i)
+        ).toBeVisible({ timeout: 10000 });
+      });
+    } finally {
+      await otherContext.close();
       await api.deleteUser(userId);
     }
   });

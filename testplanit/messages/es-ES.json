@@ -1248,6 +1248,7 @@
       "accessDenied": "Acceso denegado. Es posible que tu cuenta esté inactiva o que no tengas permiso para iniciar sesión.",
       "configuration": "Hay un problema con la configuración del servidor.",
       "verification": "Este enlace de inicio de sesión ha expirado o ya se utilizó. Los Magic Links solo se pueden usar una vez; solicite uno nuevo para iniciar sesión.",
+      "sessionEnded": "Su sesión ha expirado. Por favor, inicie sesión de nuevo.",
       "invalid2FACode": "Código de verificación no válido. Inténtalo de nuevo.",
       "twoFactorTokenRequired": "Se requiere token",
       "verificationCodeRequired": "Se requiere un código de verificación."
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "La nueva contraseña no cumple con los requisitos de seguridad."
         },
         "success": {
-          "passwordChanged": "Contraseña cambiada con éxito."
+          "passwordChanged": "Contraseña cambiada exitosamente. Se ha cerrado la sesión en otros dispositivos y navegadores."
         }
       },
       "auditLog": {

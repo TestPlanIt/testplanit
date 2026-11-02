@@ -1248,6 +1248,7 @@
       "accessDenied": "Accès refusé. Votre compte est peut-être inactif ou vous n'avez pas l'autorisation de vous connecter.",
       "configuration": "Il y a un problème avec la configuration du serveur.",
       "verification": "Ce lien de connexion a expiré ou a déjà été utilisé. Les liens magiques ne peuvent être utilisés qu'une seule fois — veuillez en demander un nouveau pour vous connecter.",
+      "sessionEnded": "Votre session a expiré. Veuillez vous reconnecter.",
       "invalid2FACode": "Code de vérification invalide. Veuillez réessayer.",
       "twoFactorTokenRequired": "Un jeton est requis.",
       "verificationCodeRequired": "Un code de vérification est requis."
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "Le nouveau mot de passe ne répond pas aux exigences de sécurité."
         },
         "success": {
-          "passwordChanged": "Mot de passe modifié avec succès."
+          "passwordChanged": "Mot de passe modifié avec succès. Vous avez été déconnecté des autres appareils et navigateurs."
         }
       },
       "auditLog": {

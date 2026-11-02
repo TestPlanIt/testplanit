@@ -1248,6 +1248,7 @@
       "accessDenied": "Zugriff verweigert. Ihr Konto ist möglicherweise inaktiv oder Sie haben keine Berechtigung zum Anmelden.",
       "configuration": "Es gibt ein Problem mit der Serverkonfiguration.",
       "verification": "Dieser Anmeldelink ist abgelaufen oder wurde bereits verwendet. Magic Links können nur einmal verwendet werden — bitte fordern Sie einen neuen an, um sich anzumelden.",
+      "sessionEnded": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
       "invalid2FACode": "Ungültiger Bestätigungscode. Bitte versuchen Sie es erneut.",
       "twoFactorTokenRequired": "Token erforderlich",
       "verificationCodeRequired": "Ein Bestätigungscode ist erforderlich."
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "Das neue Passwort erfüllt nicht die Sicherheitsanforderungen."
         },
         "success": {
-          "passwordChanged": "Passwort erfolgreich geändert."
+          "passwordChanged": "Passwort erfolgreich geändert. Sie wurden auf anderen Geräten und Browsern abgemeldet."
         }
       },
       "auditLog": {

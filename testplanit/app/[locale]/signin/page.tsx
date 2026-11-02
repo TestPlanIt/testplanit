@@ -156,6 +156,8 @@ const Signin: NextPage = () => {
       setSubmissionError(t("auth.errors.configuration"));
     } else if (error === "Verification") {
       setSubmissionError(t("auth.errors.verification"));
+    } else if (error === "SessionEnded") {
+      setSubmissionError(t("auth.errors.sessionEnded"));
     } else if (error) {
       // Generic error fallback
       setSubmissionError(t("common.errors.invalidCredentials"));

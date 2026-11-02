@@ -196,6 +196,22 @@ describe("Signin Page", () => {
     });
   });
 
+  it("shows the session-ended notice when arriving with error=SessionEnded", async () => {
+    const navigation = await import("next/navigation");
+    const spy = vi
+      .spyOn(navigation, "useSearchParams")
+      .mockReturnValue(new URLSearchParams("error=SessionEnded") as never);
+    try {
+      render(<Signin />);
+      await waitForFormToRender();
+      expect(
+        await screen.findByText("auth.errors.sessionEnded")
+      ).toBeInTheDocument();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("shows 2FA dialog when sign-in returns 2FA_REQUIRED error", async () => {
     const user = userEvent.setup();
     mockSignIn.mockResolvedValue({

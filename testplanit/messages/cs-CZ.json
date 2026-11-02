@@ -1248,6 +1248,7 @@
       "accessDenied": "Přístup odepřen. Váš účet může být neaktivní nebo nemáte oprávnění se přihlásit.",
       "configuration": "Došlo k problému s konfigurací serveru.",
       "verification": "Tento přihlašovací odkaz vypršel nebo již byl použit. Magické odkazy lze použít pouze jednou — pro přihlášení si prosím vyžádejte nový.",
+      "sessionEnded": "Vaše relace vypršela. Prosím, přihlaste se znovu.",
       "invalid2FACode": "Neplatný ověřovací kód. Zkuste to prosím znovu.",
       "twoFactorTokenRequired": "Token je povinný",
       "verificationCodeRequired": "Ověřovací kód je povinný"
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "Nové heslo nesplňuje bezpečnostní požadavky."
         },
         "success": {
-          "passwordChanged": "Heslo bylo úspěšně změněno."
+          "passwordChanged": "Heslo bylo úspěšně změněno. Byli jste odhlášeni na všech ostatních zařízeních a prohlížečích."
         }
       },
       "auditLog": {

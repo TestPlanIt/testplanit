@@ -513,4 +513,259 @@ describe("External API Access Control", () => {
       expect(response.status).toBe(403);
     });
   });
+  describe("Stale session cookie on page routes", () => {
+    const pageHeaders = { "sec-fetch-site": "same-origin" };
+
+    it("redirects to the localized sign-in with a reason and clears the cookie when the password changed since the token was issued", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        passwordChangedAt: null, // issued before the user's first-ever change
+      });
+      mockGetCachedSessionUser.mockResolvedValue({
+        authMethod: "INTERNAL",
+        passwordChangedAt: "2026-06-01T00:00:00.000Z",
+        isActive: true,
+      });
+
+      const response = await middlewareWithPreferences(
+        createMockRequest("/en-US/users/profile/user-123", pageHeaders)
+      );
+
+      expect(response.status).toBe(307);
+      const location = new URL(response.headers.get("location")!);
+      expect(location.pathname).toBe("/en-US/signin");
+      expect(location.searchParams.get("error")).toBe("SessionEnded");
+      // Never clear the cookie here: this request's cookie may be older than
+      // the one the browser now holds.
+      expect(response.headers.get("set-cookie")).toBeNull();
+    });
+
+    it("redirects a deactivated user whatever their auth method", async () => {
+      mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+      mockGetCachedSessionUser.mockResolvedValue({
+        authMethod: "SSO",
+        passwordChangedAt: null,
+        isActive: false,
+      });
+
+      const response = await middlewareWithPreferences(
+        createMockRequest("/en-US/projects", pageHeaders)
+      );
+
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get("location")!).pathname).toBe(
+        "/en-US/signin"
+      );
+    });
+
+    it("passes through when the token carries the current timestamp", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        passwordChangedAt: "2026-06-01T00:00:00.000Z",
+      });
+      mockGetCachedSessionUser.mockResolvedValue({
+        authMethod: "INTERNAL",
+        passwordChangedAt: "2026-06-01T00:00:00.000Z",
+        isActive: true,
+      });
+
+      const response = await middlewareWithPreferences(
+        createMockRequest("/en-US/projects", pageHeaders)
+      );
+
+      expect(response.status).not.toBe(307);
+    });
+
+    it("ignores password timestamps for SSO-only users", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        passwordChangedAt: null,
+      });
+      mockGetCachedSessionUser.mockResolvedValue({
+        authMethod: "SSO",
+        passwordChangedAt: "2026-06-01T00:00:00.000Z",
+        isActive: true,
+      });
+
+      const response = await middlewareWithPreferences(
+        createMockRequest("/en-US/projects", pageHeaders)
+      );
+
+      expect(response.status).not.toBe(307);
+    });
+
+    it("passes through on a cache miss and never runs the check on public routes", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        passwordChangedAt: null,
+      });
+      mockGetCachedSessionUser.mockResolvedValue(null);
+
+      let response = await middlewareWithPreferences(
+        createMockRequest("/en-US/projects", pageHeaders)
+      );
+      expect(response.status).not.toBe(307);
+
+      mockGetCachedSessionUser.mockClear();
+      response = await middlewareWithPreferences(
+        createMockRequest("/en-US/share/some-token", pageHeaders)
+      );
+      expect(mockGetCachedSessionUser).not.toHaveBeenCalled();
+    });
+  });
+  describe("Signed-in visitor on the sign-in page", () => {
+    const pageHeaders = { "sec-fetch-site": "same-origin" };
+    const liveUser = {
+      authMethod: "INTERNAL",
+      passwordChangedAt: null,
+      isActive: true,
+    };
+
+    beforeEach(() => {
+      process.env.NEXTAUTH_URL = "http://localhost:3000";
+    });
+
+    afterEach(() => {
+      delete process.env.NEXTAUTH_URL;
+    });
+
+    it("sends a signed-in visitor to the localized home page", async () => {
+      mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+      mockGetCachedSessionUser.mockResolvedValue(liveUser);
+
+      const response = await middlewareWithPreferences(
+        createMockRequest("/en-US/signin", pageHeaders)
+      );
+
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get("location")!).pathname).toBe(
+        "/en-US/"
+      );
+    });
+
+    it("honours a same-origin callbackUrl", async () => {
+      mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+      mockGetCachedSessionUser.mockResolvedValue(liveUser);
+
+      const response = await middlewareWithPreferences(
+        createMockRequest(
+          "/en-US/signin?callbackUrl=%2Fen-US%2Fprojects%2Frepository%2F1",
+          pageHeaders
+        )
+      );
+
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get("location")!).pathname).toBe(
+        "/en-US/projects/repository/1"
+      );
+    });
+
+    it("ignores an off-site callbackUrl and goes home instead", async () => {
+      mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+      mockGetCachedSessionUser.mockResolvedValue(liveUser);
+
+      const response = await middlewareWithPreferences(
+        createMockRequest(
+          "/en-US/signin?callbackUrl=https%3A%2F%2Fevil.example%2Fphish",
+          pageHeaders
+        )
+      );
+
+      expect(response.status).toBe(307);
+      const location = new URL(response.headers.get("location")!);
+      expect(location.origin).toBe("http://localhost:3000");
+      expect(location.pathname).toBe("/en-US/");
+    });
+
+    it("sends a session the server no longer honours back with the reason, without touching the cookie", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        passwordChangedAt: null,
+      });
+      mockGetCachedSessionUser.mockResolvedValue({
+        ...liveUser,
+        passwordChangedAt: "2026-06-01T00:00:00.000Z",
+      });
+
+      const response = await middlewareWithPreferences(
+        createMockRequest("/en-US/signin", pageHeaders)
+      );
+
+      expect(response.status).toBe(307);
+      const location = new URL(response.headers.get("location")!);
+      expect(location.pathname).toBe("/en-US/signin");
+      expect(location.searchParams.get("error")).toBe("SessionEnded");
+      expect(response.headers.get("set-cookie")).toBeNull();
+    });
+
+    it("renders the page for an ended session that already carries the reason", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        passwordChangedAt: null,
+      });
+      mockGetCachedSessionUser.mockResolvedValue({
+        ...liveUser,
+        passwordChangedAt: "2026-06-01T00:00:00.000Z",
+      });
+
+      const response = await middlewareWithPreferences(
+        createMockRequest("/en-US/signin?error=SessionEnded", pageHeaders)
+      );
+
+      expect(response.status).not.toBe(307);
+    });
+
+    it("sends a browser that still holds a VALID cookie home even if it arrives with error=SessionEnded", async () => {
+      // A raced request with an older cookie triggered the redirect, but the
+      // browser followed it with the newer cookie it already had.
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        passwordChangedAt: "2026-06-01T00:00:00.000Z",
+      });
+      mockGetCachedSessionUser.mockResolvedValue({
+        ...liveUser,
+        passwordChangedAt: "2026-06-01T00:00:00.000Z",
+      });
+
+      const response = await middlewareWithPreferences(
+        createMockRequest("/en-US/signin?error=SessionEnded", pageHeaders)
+      );
+
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get("location")!).pathname).toBe(
+        "/en-US/"
+      );
+    });
+
+    it("lets an anonymous visitor through", async () => {
+      mockGetToken.mockResolvedValue(null);
+
+      const response = await middlewareWithPreferences(
+        createMockRequest("/en-US/signin", pageHeaders)
+      );
+
+      expect(response.status).not.toBe(307);
+    });
+
+    it("still shows the page for NextAuth error redirects", async () => {
+      mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+
+      const response = await middlewareWithPreferences(
+        createMockRequest(
+          "/en-US/signin?error=OAuthAccountNotLinked",
+          pageHeaders
+        )
+      );
+
+      expect(response.status).not.toBe(307);
+      expect(mockGetToken).not.toHaveBeenCalled();
+    });
+  });
 });

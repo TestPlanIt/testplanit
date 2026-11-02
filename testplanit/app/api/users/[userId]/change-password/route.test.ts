@@ -1,5 +1,12 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { decode, encode } from "next-auth/jwt";
 import { NextRequest } from "next/server";
+
+vi.hoisted(() => {
+  process.env.NEXTAUTH_SECRET = "test-secret-key-at-least-32-chars-long";
+  process.env.NEXTAUTH_URL = "http://localhost:3000";
+});
 
 vi.mock("~/server/auth", () => ({
   getServerAuthSession: vi.fn(),
@@ -58,7 +65,11 @@ const mockDb = vi.mocked(db, true);
 const mockValidatePasswordPolicy = vi.mocked(validatePasswordPolicy);
 const mockUpdatePasswordHistory = vi.mocked(updatePasswordHistory);
 
-function makeRequest(userId: string, body: Record<string, unknown> = {}) {
+function makeRequest(
+  userId: string,
+  body: Record<string, unknown> = {},
+  extraHeaders: Record<string, string> = {}
+) {
   return new NextRequest(
     `http://localhost/api/users/${userId}/change-password`,
     {
@@ -69,6 +80,7 @@ function makeRequest(userId: string, body: Record<string, unknown> = {}) {
         // frame carries ipAddress/userAgent/requestId on every test.
         "x-forwarded-for": "10.0.0.1",
         "user-agent": "vitest-agent/1.0",
+        ...extraHeaders,
       },
       body: JSON.stringify({
         currentPassword: "OldPassword1!",
@@ -317,5 +329,68 @@ describe("POST /api/users/[userId]/change-password", () => {
     expect(auditPasswordChange).toHaveBeenCalled();
     expect(capturedRow).not.toBeNull();
     expectAuditRowComplete(capturedRow!);
+  });
+  it("re-issues the caller's session cookie carrying the new passwordChangedAt", async () => {
+    mockGetServerAuthSession.mockResolvedValue(makeUserSession());
+    mockDb.user.findUnique.mockResolvedValue({
+      id: "user-1",
+      password: "$2b$10$hashed-old-password",
+      email: "user@test.com",
+    } as any);
+    mockDb.registrationSettings.findFirst.mockResolvedValue({
+      passwordHistoryDepth: 0,
+    } as any);
+    mockDb.user.update.mockResolvedValue({} as any);
+
+    const staleCookie = await encode({
+      token: { sub: "user-1", access: "USER", passwordChangedAt: null },
+      secret: process.env.NEXTAUTH_SECRET!,
+    });
+
+    const res = await POST(
+      makeRequest(
+        "user-1",
+        {},
+        { cookie: `next-auth.session-token=${staleCookie}` }
+      ),
+      { params: Promise.resolve({ userId: "user-1" }) }
+    );
+
+    expect(res.status).toBe(200);
+
+    // The timestamp the DB got is the one the cookie carries.
+    const updateData = mockDb.user.update.mock.calls[0][0].data as {
+      passwordChangedAt: Date;
+    };
+    const cookie = res.cookies.get("next-auth.session-token");
+    expect(cookie).toBeDefined();
+    const claims = await decode({
+      token: cookie!.value,
+      secret: process.env.NEXTAUTH_SECRET!,
+    });
+    expect(claims?.sub).toBe("user-1");
+    expect(claims?.passwordChangedAt).toBe(
+      updateData.passwordChangedAt.toISOString()
+    );
+  });
+
+  it("sets no cookie when the caller has no session cookie", async () => {
+    mockGetServerAuthSession.mockResolvedValue(makeUserSession());
+    mockDb.user.findUnique.mockResolvedValue({
+      id: "user-1",
+      password: "$2b$10$hashed-old-password",
+      email: "user@test.com",
+    } as any);
+    mockDb.registrationSettings.findFirst.mockResolvedValue({
+      passwordHistoryDepth: 0,
+    } as any);
+    mockDb.user.update.mockResolvedValue({} as any);
+
+    const res = await POST(makeRequest("user-1"), {
+      params: Promise.resolve({ userId: "user-1" }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("set-cookie")).toBeNull();
   });
 });

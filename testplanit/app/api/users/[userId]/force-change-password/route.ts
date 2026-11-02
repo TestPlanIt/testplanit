@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { reissueSessionCookie } from "~/lib/auth/sessionCookie";
 import { validatePasswordPolicy } from "~/lib/validate-password-policy";
 import { updatePasswordHistory } from "~/lib/password-history";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
@@ -62,11 +63,12 @@ export const POST = withAuditContext(
         select: { passwordHistoryDepth: true },
       });
 
+      const changedAt = new Date();
       await db.user.update({
         where: { id: userId },
         data: {
           password: hashedNewPassword,
-          passwordChangedAt: new Date(),
+          passwordChangedAt: changedAt,
           mustChangePassword: false,
         },
       });
@@ -97,7 +99,14 @@ export const POST = withAuditContext(
         metadata: { forced: true },
       });
 
-      return NextResponse.json({ success: true }, { status: 200 });
+      const response = NextResponse.json({ success: true }, { status: 200 });
+      // The new passwordChangedAt signs out every other session via the
+      // SECURITY-03 guard; re-issue this caller's cookie so it survives.
+      await reissueSessionCookie(request, response, {
+        passwordChangedAt: changedAt.toISOString(),
+        mustChangePassword: false,
+      });
+      return response;
     } catch (error) {
       console.error("Error in force-change-password:", error);
       return NextResponse.json(

@@ -28,7 +28,7 @@ The header features a gradient background and contains:
 - **Email Address**: The user's registered email (editable inline when viewing own profile)
 - **Action Buttons** (own profile only):
   - **Edit Profile**: Enables inline editing mode for user information and preferences
-  - **Change Password**: Opens a modal to update your password
+  - **Change Password**: Opens a modal to update your password. Changing it signs out every other device and browser where you are logged in; the browser you changed it from stays signed in.
 
 ## Information Sections
 

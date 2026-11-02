@@ -1248,6 +1248,7 @@
       "accessDenied": "Dostęp zabroniony. Twoje konto może być nieaktywne lub nie masz uprawnień do logowania.",
       "configuration": "Wystąpił problem z konfiguracją serwera.",
       "verification": "Ten link do logowania wygasł lub został już użyty. Magic linki można wykorzystać tylko raz — poproś o nowy, aby się zalogować.",
+      "sessionEnded": "Twoja sesja wygasła. Zaloguj się ponownie.",
       "invalid2FACode": "Nieprawidłowy kod weryfikacyjny. Spróbuj ponownie.",
       "twoFactorTokenRequired": "Token jest wymagany",
       "verificationCodeRequired": "Wymagany jest kod weryfikacyjny"
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "Nowe hasło nie spełnia wymagań bezpieczeństwa."
         },
         "success": {
-          "passwordChanged": "Hasło zostało pomyślnie zmienione."
+          "passwordChanged": "Hasło zmienione pomyślnie. Wylogowano Cię z innych urządzeń i przeglądarek."
         }
       },
       "auditLog": {

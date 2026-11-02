@@ -1248,6 +1248,7 @@
       "accessDenied": "Accesso negato. Il tuo account potrebbe essere inattivo o non hai l'autorizzazione per accedere.",
       "configuration": "Si è verificato un problema con la configurazione del server.",
       "verification": "Questo link di accesso è scaduto o è già stato utilizzato. I Magic Link possono essere utilizzati solo una volta — richiedine uno nuovo per accedere.",
+      "sessionEnded": "La sessione è scaduta. Accedi di nuovo.",
       "invalid2FACode": "Codice di verifica non valido. Riprova.",
       "twoFactorTokenRequired": "È necessario il token",
       "verificationCodeRequired": "È richiesto il codice di verifica"
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "La nuova password non soddisfa i requisiti di sicurezza."
         },
         "success": {
-          "passwordChanged": "Password modificata con successo."
+          "passwordChanged": "Password modificata correttamente. Tutti gli altri dispositivi e browser sono stati disconnessi."
         }
       },
       "auditLog": {

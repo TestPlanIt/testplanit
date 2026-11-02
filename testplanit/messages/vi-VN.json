@@ -1248,6 +1248,7 @@
       "accessDenied": "Truy cập bị từ chối. Tài khoản của bạn có thể không hoạt động hoặc bạn không có quyền đăng nhập.",
       "configuration": "Có vấn đề với cấu hình máy chủ.",
       "verification": "Liên kết đăng nhập này đã hết hạn hoặc đã được sử dụng. Liên kết ma thuật chỉ có thể được sử dụng một lần — vui lòng yêu cầu liên kết mới để đăng nhập.",
+      "sessionEnded": "Phiên làm việc của bạn đã hết hạn. Vui lòng đăng nhập lại.",
       "invalid2FACode": "Mã xác minh không hợp lệ. Vui lòng thử lại.",
       "twoFactorTokenRequired": "Cần có mã thông báo.",
       "verificationCodeRequired": "Cần có mã xác minh."
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "Mật khẩu mới không đáp ứng các yêu cầu bảo mật."
         },
         "success": {
-          "passwordChanged": "Mật khẩu đã được thay đổi thành công."
+          "passwordChanged": "Mật khẩu đã được thay đổi thành công. Các thiết bị và trình duyệt khác đã được đăng xuất."
         }
       },
       "auditLog": {

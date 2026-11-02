@@ -5,6 +5,9 @@ import { NextResponse } from "next/server";
 import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
 import { isLinkPreviewBot, matchPreviewRoute } from "~/lib/linkPreview";
 import { normalizeRecordKeyPath } from "~/lib/recordKeyRoutes";
+import { sanitizeCallbackUrl } from "~/lib/auth-security";
+import { isPublicPath } from "~/lib/auth/publicRoutes";
+import { isSessionEnded } from "~/lib/auth/sessionInvalidation";
 import { getCachedSessionUser } from "~/lib/session-cache";
 import { defaultLocale, locales } from "./i18n/navigation";
 
@@ -303,18 +306,6 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     }
   }
 
-  // Define public routes that don't require authentication
-  const publicRoutes = [
-    "/signin",
-    "/signup",
-    "/verify-email",
-    "/trial-expired",
-    "/auth/two-factor-setup",
-    "/auth/two-factor-verify",
-    "/share",
-    "/passwordless",
-  ];
-
   // Extract the route path without locale (e.g., /en-US/signin -> /signin)
   const pathWithoutLocale = pathname.replace(/^\/[^/]+/, "");
 
@@ -339,11 +330,47 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // A signed-in visitor has no business on the sign-in page: send them into
+  // the app (or to the sanitized callbackUrl), as GitHub, Atlassian and Linear
+  // do. Left alone, the page's corrupt-cookie recovery wipes the live session
+  // underneath a header that still shows the user as signed in. A session the
+  // server no longer honours is sent back here with the reason attached and
+  // then rendered, so the page's cookie wipe runs for a now-anonymous visitor.
+  // Other `error` params are NextAuth's own error redirects and show the page.
+  //
+  // Nothing here deletes the cookie: the cookie on THIS request may be older
+  // than the one the browser now holds (the change-password response re-issues
+  // it), and a request that raced it must not wipe the newer one. That is also
+  // why a valid session arriving with `error=SessionEnded` goes home.
+  if (pathWithoutLocale === "/signin") {
+    const error = url.searchParams.get("error");
+    const token =
+      error === null || error === "SessionEnded"
+        ? await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+        : null;
+    if (token) {
+      const first = pathname.split("/").filter(Boolean)[0];
+      const locale = locales.includes(first as any) ? first : defaultLocale;
+      const cached = token.sub ? await getCachedSessionUser(token.sub) : null;
+      const ended = cached !== null && isSessionEnded(token, cached);
+      if (ended && error !== "SessionEnded") {
+        const redirectUrl = new URL(request.url);
+        redirectUrl.search = "";
+        redirectUrl.searchParams.set("error", "SessionEnded");
+        redirectUrl.hash = "";
+        return NextResponse.redirect(redirectUrl);
+      }
+      if (!ended) {
+        const target = sanitizeCallbackUrl(url.searchParams.get("callbackUrl"));
+        return NextResponse.redirect(
+          new URL(target === "/" ? `/${locale}/` : target, request.url)
+        );
+      }
+    }
+  }
+
   // Check if this is a public route
-  const isPublicRoute = publicRoutes.some(
-    (route) =>
-      pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
-  );
+  const isPublicRoute = isPublicPath(pathWithoutLocale);
 
   // Get the JWT token from the request for all protected routes
   let token = null;
@@ -392,6 +419,35 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       }
       redirectUrl.hash = ""; // Clear any hash
       return NextResponse.redirect(redirectUrl);
+    }
+
+    // A session cookie stays cryptographically valid after the server has
+    // stopped honouring it (password changed in another browser, account
+    // deactivated): the session callback then returns an empty session, page
+    // queries fail, and the browser falls through to a 404 instead of being
+    // asked to sign in. Catch it here against the short-TTL user cache — the
+    // password routes and the user PATCH route invalidate it, so for those
+    // this is immediate — and send the browser to sign-in with a reason. The
+    // session callback's uncached read remains the authoritative guard.
+    //
+    // The cookie is deliberately NOT cleared here. A request already in flight
+    // with the old cookie can reach this point after the change-password
+    // response re-issued a newer one; clearing would wipe that newer cookie
+    // and sign out the very browser that made the change. The sign-in branch
+    // above sends a browser that still holds a valid cookie straight home, and
+    // the page itself clears the cookies of one that does not.
+    if (token.sub) {
+      const cached = await getCachedSessionUser(token.sub);
+      if (cached && isSessionEnded(token, cached)) {
+        const first = pathname.split("/").filter(Boolean)[0];
+        const locale = locales.includes(first as any) ? first : defaultLocale;
+        const redirectUrl = new URL(request.url);
+        redirectUrl.pathname = `/${locale}/signin`;
+        redirectUrl.search = "";
+        redirectUrl.searchParams.set("error", "SessionEnded");
+        redirectUrl.hash = "";
+        return NextResponse.redirect(redirectUrl);
+      }
     }
 
     // Check if 2FA verification is required for SSO users

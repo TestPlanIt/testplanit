@@ -1248,6 +1248,7 @@
       "accessDenied": "Access denied. Your account may be inactive or you don't have permission to sign in.",
       "configuration": "There is a problem with the server configuration.",
       "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "sessionEnded": "Your session has expired. Please sign in again.",
       "invalid2FACode": "Invalid verification code. Please try again.",
       "twoFactorTokenRequired": "Token is required",
       "verificationCodeRequired": "Verification code is required"
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "New password does not meet the security requirements."
         },
         "success": {
-          "passwordChanged": "Password changed successfully."
+          "passwordChanged": "Password changed successfully. Other devices and browsers have been signed out."
         }
       },
       "auditLog": {

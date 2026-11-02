@@ -1248,6 +1248,7 @@
       "accessDenied": "Toegang geweigerd. Uw account is mogelijk inactief of u hebt geen toestemming om u aan te melden.",
       "configuration": "Er is een probleem met de serverconfiguratie.",
       "verification": "Deze aanmeldingslink is verlopen of al gebruikt. Magic links kunnen maar één keer worden gebruikt — vraag een nieuwe aan om u aan te melden.",
+      "sessionEnded": "Uw sessie is verlopen. Meld u alstublieft opnieuw aan.",
       "invalid2FACode": "Ongeldige verificatiecode. Probeer het opnieuw.",
       "twoFactorTokenRequired": "Token vereist",
       "verificationCodeRequired": "Een verificatiecode is vereist."
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "Het nieuwe wachtwoord voldoet niet aan de beveiligingsvereisten."
         },
         "success": {
-          "passwordChanged": "Wachtwoord succesvol gewijzigd."
+          "passwordChanged": "Wachtwoord succesvol gewijzigd. U bent afgemeld op alle andere apparaten en browsers."
         }
       },
       "auditLog": {

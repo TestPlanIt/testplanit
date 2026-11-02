@@ -1248,6 +1248,7 @@
       "accessDenied": "访问被拒绝。您的帐户可能已停用或您没有登录权限。",
       "configuration": "服务器配置存在问题。",
       "verification": "此登录链接已过期或已被使用。Magic Link 只能使用一次 — 请重新申请以登录。",
+      "sessionEnded": "您的会话已过期。请重新登录。",
       "invalid2FACode": "验证码无效，请重试。",
       "twoFactorTokenRequired": "需要令牌",
       "verificationCodeRequired": "需要验证码"
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "新密码不符合安全要求。"
         },
         "success": {
-          "passwordChanged": "密码已成功更改。"
+          "passwordChanged": "密码已成功更改。其他设备和浏览器已退出登录。"
         }
       },
       "auditLog": {

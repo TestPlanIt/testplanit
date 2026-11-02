@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { ReviewGateMutationListener } from "@/components/reviews/ReviewGateMutationListener";
+import { SessionEndedGuard } from "@/components/SessionEndedGuard";
 import { RunGenerationProgressMount } from "@/components/runs/RunGenerationProgressToast";
 import { UpdateAvailableBanner } from "@/components/UpdateAvailableBanner";
 import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
@@ -54,6 +55,7 @@ export default async function RootLayout(props: any) {
       <NextIntlClientProvider messages={messages} locale={locale}>
         <DirectionProvider dir={dir}>
           <NextStepOnboarding>
+            <SessionEndedGuard />
             <UpgradeNotificationChecker />
             <UpdateAvailableBanner />
             <ReviewGateMutationListener />

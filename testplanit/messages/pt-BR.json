@@ -1248,6 +1248,7 @@
       "accessDenied": "Acesso negado. Sua conta pode estar inativa ou você não tem permissão para fazer login.",
       "configuration": "Existe um problema com a configuração do servidor.",
       "verification": "Este link de acesso expirou ou já foi usado. Links mágicos só podem ser usados uma vez — solicite um novo para entrar.",
+      "sessionEnded": "Sua sessão expirou. Faça login novamente.",
       "invalid2FACode": "Código de verificação inválido. Tente novamente.",
       "twoFactorTokenRequired": "É necessário um token.",
       "verificationCodeRequired": "É necessário um código de verificação."
@@ -3112,7 +3113,7 @@
           "newPasswordTooShort": "A nova senha não atende aos requisitos de segurança."
         },
         "success": {
-          "passwordChanged": "Senha alterada com sucesso."
+          "passwordChanged": "Senha alterada com sucesso. Outros dispositivos e navegadores foram desconectados."
         }
       },
       "auditLog": {

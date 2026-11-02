@@ -49,6 +49,8 @@ export interface CachedSessionUser {
   preferences: UserPreferences | null;
   lastActiveAt: string | null; // ISO string
   isApi: boolean;
+  passwordChangedAt: string | null; // ISO string
+  isActive: boolean;
 }
 
 type SelectedUser = Pick<
@@ -60,6 +62,8 @@ type SelectedUser = Pick<
   | "authMethod"
   | "lastActiveAt"
   | "isApi"
+  | "passwordChangedAt"
+  | "isActive"
 > & { userPreferences: UserPreferences | null };
 
 /**
@@ -95,6 +99,8 @@ export async function getCachedSessionUser(
       authMethod: true,
       lastActiveAt: true,
       isApi: true,
+      passwordChangedAt: true,
+      isActive: true,
       userPreferences: true,
     },
   });
@@ -124,6 +130,10 @@ export async function getCachedSessionUser(
     preferences,
     lastActiveAt: user.lastActiveAt ? user.lastActiveAt.toISOString() : null,
     isApi: user.isApi,
+    passwordChangedAt: user.passwordChangedAt
+      ? user.passwordChangedAt.toISOString()
+      : null,
+    isActive: user.isActive,
   };
 
   // 4. Populate cache (best-effort)
