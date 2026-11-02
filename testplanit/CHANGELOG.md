@@ -1,3 +1,10 @@
+## [1.2.0-beta.25](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.24...v1.2.0-beta.25) (2026-11-02)
+
+### Bug Fixes
+
+* **auth:** sign out other sessions on password change and send stale sessions to sign-in ([9fe4608](https://github.com/TestPlanIt/testplanit/commit/9fe4608f5bed7efcaff848c8c9ba8cfdff295b29))
+* **repository:** folder breadcrumbs open the folders view ([b6ea563](https://github.com/TestPlanIt/testplanit/commit/b6ea563422726f96baaf3a73343652ba011a3c65))
+
 ## [1.2.0-beta.24](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.23...v1.2.0-beta.24) (2026-11-02)
 
 ### Bug Fixes
