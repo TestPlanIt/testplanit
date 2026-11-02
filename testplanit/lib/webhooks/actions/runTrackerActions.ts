@@ -29,9 +29,11 @@ export interface TrackerActionsJob {
   /** The issue key the tracker's payload named. */
   externalKey: string;
   tenantId?: string;
+  /** Times the worker has rescheduled this job because the issue was busy. */
+  busyCount?: number;
 }
 
-/** Thrown when another sync holds the issue; the job retries. */
+/** Thrown when another sync holds the issue; the job is rescheduled. */
 export class IssueSyncBusyError extends Error {
   constructor(key: string) {
     super(`Issue ${key} is being synced; retrying`);

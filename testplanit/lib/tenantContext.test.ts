@@ -65,6 +65,15 @@ describe("withTenantContext", () => {
     expect(result).toBe(job);
   });
 
+  it("passes the worker's lock token through", async () => {
+    const processor = vi.fn(async (_job: any, token?: string) => token);
+    const wrapped = withTenantContext(processor);
+
+    await expect(wrapped({ data: { tenantId: "acme" } }, "tok")).resolves.toBe(
+      "tok"
+    );
+  });
+
   it("runs without context when job has no tenantId", async () => {
     const processor = vi.fn(async () => getTenantContext());
     const wrapped = withTenantContext(processor);

@@ -1,4 +1,4 @@
-import { Job, Worker } from "bullmq";
+import { DelayedError, Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
   getDbClientForJob,
@@ -14,16 +14,34 @@ import {
   type DraftCasesJob,
 } from "../lib/webhooks/actions/draftCases";
 import {
+  IssueSyncBusyError,
   runTrackerActions,
   type TrackerActionsJob,
 } from "../lib/webhooks/actions/runTrackerActions";
 
 /**
+ * How often a busy job can be rescheduled before a busy issue counts as an
+ * ordinary failure and spends the job's retries.
+ */
+export const BUSY_RESCHEDULE_LIMIT = 20;
+/**
+ * A busy job waits a random 2–10s. Trackers send bursts of deliveries for one
+ * issue, and identical backoff kept the whole burst colliding on the issue's
+ * sync lock until every retry was spent; a spread lets them take turns.
+ */
+export const BUSY_DELAY_MIN_MS = 2000;
+export const BUSY_DELAY_SPREAD_MS = 8000;
+
+/**
  * Inbound webhook actions: an issue-tracker delivery's rules (import the
  * issue, create test runs) run here, after the receiver has recorded and
- * answered the delivery. A job whose issue is mid-sync throws and retries.
+ * answered the delivery. A job whose issue is mid-sync is rescheduled
+ * without spending a retry.
  */
-const processor = async (job: Job<TrackerActionsJob | DraftCasesJob>) => {
+const processor = async (
+  job: Job<TrackerActionsJob | DraftCasesJob>,
+  token?: string
+) => {
   validateMultiTenantJobData(job.data);
   const db = getDbClientForJob(job.data);
   if (job.name === JOB_DRAFT_CASES) {
@@ -35,7 +53,26 @@ const processor = async (job: Job<TrackerActionsJob | DraftCasesJob>) => {
     }
     return drafted;
   }
-  const result = await runTrackerActions(db, job.data as TrackerActionsJob);
+  const data = job.data as TrackerActionsJob;
+  let result;
+  try {
+    result = await runTrackerActions(db, data);
+  } catch (error) {
+    const busyCount = data.busyCount ?? 0;
+    if (
+      !(error instanceof IssueSyncBusyError) ||
+      !token ||
+      busyCount >= BUSY_RESCHEDULE_LIMIT
+    ) {
+      throw error;
+    }
+    await job.updateData({ ...data, busyCount: busyCount + 1 });
+    await job.moveToDelayed(
+      Date.now() + BUSY_DELAY_MIN_MS + Math.random() * BUSY_DELAY_SPREAD_MS,
+      token
+    );
+    throw new DelayedError();
+  }
   if (result.outcome === "done" && result.runIds.length > 0) {
     console.log(
       `[WebhookActionsWorker] delivery ${job.data.deliveryId}: ${result.runIds.length} run(s) created`

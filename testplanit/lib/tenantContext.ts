@@ -63,8 +63,12 @@ export async function runWithTenantContext<T>(
 export function withTenantContext<
   J extends { data?: { tenantId?: string } },
   R,
->(processor: (job: J) => Promise<R>): (job: J) => Promise<R> {
-  return (job: J) => {
+>(
+  processor: (job: J, token?: string) => Promise<R>
+): (job: J, token?: string) => Promise<R> {
+  // The worker's lock token passes through for processors that reschedule
+  // their own job (moveToDelayed needs it).
+  return (job: J, token?: string) => {
     const tenantId = job.data?.tenantId;
     if (!tenantId && isMultiTenantMode()) {
       console.warn(
@@ -76,7 +80,7 @@ export function withTenantContext<
     // configured) auto-pins reads to the primary after the job's first write
     // (read-your-own-writes). No-op when replicas aren't configured.
     return runWithDbRouting(() =>
-      runWithTenantContext(tenantId, () => processor(job))
+      runWithTenantContext(tenantId, () => processor(job, token))
     );
   };
 }
