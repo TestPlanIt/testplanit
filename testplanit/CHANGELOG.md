@@ -1,3 +1,13 @@
+## [1.2.0-beta.27](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.26...v1.2.0-beta.27) (2026-11-03)
+
+### Bug Fixes
+
+* **translations:** update empty folder context messages for multiple languages ([12d9f33](https://github.com/TestPlanIt/testplanit/commit/12d9f33ab6de685beb80b076b8071f9084106fc1))
+
+### Enhancements
+
+* **llm:** use related test cases from across the project as generation context ([71e8d2d](https://github.com/TestPlanIt/testplanit/commit/71e8d2dbcd4481a6914b21a45752d47dd800081f))
+
 ## [1.2.0-beta.26](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.25...v1.2.0-beta.26) (2026-11-03)
 
 ### Bug Fixes
