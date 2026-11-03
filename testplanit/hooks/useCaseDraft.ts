@@ -25,10 +25,14 @@ import {
 } from "~/lib/services/caseDraft";
 
 /**
- * Prefix of every React Query entry ZenStack keeps for this model. Keys are
- * `["zenstack", <Model>, <operation>, args]`, so this matches all of them.
+ * Prefix of the React Query entries this hook's own read creates. Keys are
+ * `["zenstack", <Model>, <operation>, args]`; the operation is part of the
+ * prefix on purpose. The bare model prefix also matched the My Staged Cases
+ * list and the staged-elsewhere counts (both `findMany`), so every Create or
+ * Stage from the Add Case dialog blanked the staged-case count until the
+ * next refetch.
  */
-const CASE_DRAFT_QUERY_KEY = ["zenstack", "CaseDraft"] as const;
+const CASE_DRAFT_QUERY_KEY = ["zenstack", "CaseDraft", "findFirst"] as const;
 
 export type CaseDraftStatus = "idle" | "dirty" | "saving" | "saved" | "error";
 
