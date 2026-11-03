@@ -45,63 +45,70 @@ export interface PromptVariable {
 }
 
 /**
+ * The template-driven variables of the test case generation prompt. The two
+ * Generate-from-URL features build their prompts the same way (the crawled
+ * page stands in for the issue), so they offer the same variables.
+ */
+const TEST_CASE_GENERATION_VARIABLES: PromptVariable[] = [
+  {
+    name: "EXAMPLE_STRUCTURE",
+    description: "JSON structure example based on template fields",
+  },
+  {
+    name: "REQUIRED_FIELDS_LIST",
+    description: "List of required template fields",
+  },
+  {
+    name: "OPTIONAL_FIELDS_LIST",
+    description: "List of optional template fields",
+  },
+  {
+    name: "EXCLUDED_FIELDS_LIST",
+    description:
+      "List of template fields the user deselected — instruct the model never to emit these",
+  },
+  {
+    name: "QUANTITY_GUIDANCE",
+    description:
+      "Quantity of test cases to generate (e.g. '4-6 test cases' or 'as many test cases as needed for comprehensive coverage')",
+  },
+  { name: "STEPS_INSTRUCTION", description: "Instructions for test steps" },
+  {
+    name: "PRIORITY_INSTRUCTION",
+    description: "Instructions for priority field values",
+  },
+  {
+    name: "TAG_INSTRUCTIONS",
+    description: "Instructions for auto-generating tags",
+  },
+  { name: "ISSUE_KEY", description: "Issue identifier (e.g. PROJ-123)" },
+  { name: "ISSUE_TITLE", description: "Issue title" },
+  { name: "ISSUE_DESCRIPTION", description: "Issue description text" },
+  { name: "ISSUE_STATUS", description: "Current issue status" },
+  { name: "ISSUE_PRIORITY", description: "Issue priority level" },
+  { name: "COMMENTS_SECTION", description: "Relevant issue comments" },
+  {
+    name: "LINKED_ISSUES_SECTION",
+    description: "Related linked issues with their bodies and comments",
+  },
+  {
+    name: "USER_NOTES_SECTION",
+    description: "Additional user-provided notes",
+  },
+  {
+    name: "EXISTING_CASES_SECTION",
+    description: "Existing test cases to avoid duplicating",
+  },
+];
+
+/**
  * The runtime variables available for substitution in each feature's prompts.
  * These are injected by the server before the LLM call and shown in the admin
  * prompt editor as an "Insert variable" picker.
  */
 export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
   [LLM_FEATURES.MARKDOWN_PARSING]: [],
-  [LLM_FEATURES.TEST_CASE_GENERATION]: [
-    {
-      name: "EXAMPLE_STRUCTURE",
-      description: "JSON structure example based on template fields",
-    },
-    {
-      name: "REQUIRED_FIELDS_LIST",
-      description: "List of required template fields",
-    },
-    {
-      name: "OPTIONAL_FIELDS_LIST",
-      description: "List of optional template fields",
-    },
-    {
-      name: "EXCLUDED_FIELDS_LIST",
-      description:
-        "List of template fields the user deselected — instruct the model never to emit these",
-    },
-    {
-      name: "QUANTITY_GUIDANCE",
-      description:
-        "Quantity of test cases to generate (e.g. '4-6 test cases' or 'as many test cases as needed for comprehensive coverage')",
-    },
-    { name: "STEPS_INSTRUCTION", description: "Instructions for test steps" },
-    {
-      name: "PRIORITY_INSTRUCTION",
-      description: "Instructions for priority field values",
-    },
-    {
-      name: "TAG_INSTRUCTIONS",
-      description: "Instructions for auto-generating tags",
-    },
-    { name: "ISSUE_KEY", description: "Issue identifier (e.g. PROJ-123)" },
-    { name: "ISSUE_TITLE", description: "Issue title" },
-    { name: "ISSUE_DESCRIPTION", description: "Issue description text" },
-    { name: "ISSUE_STATUS", description: "Current issue status" },
-    { name: "ISSUE_PRIORITY", description: "Issue priority level" },
-    { name: "COMMENTS_SECTION", description: "Relevant issue comments" },
-    {
-      name: "LINKED_ISSUES_SECTION",
-      description: "Related linked issues with their bodies and comments",
-    },
-    {
-      name: "USER_NOTES_SECTION",
-      description: "Additional user-provided notes",
-    },
-    {
-      name: "EXISTING_CASES_SECTION",
-      description: "Existing test cases to avoid duplicating",
-    },
-  ],
+  [LLM_FEATURES.TEST_CASE_GENERATION]: TEST_CASE_GENERATION_VARIABLES,
   [LLM_FEATURES.MAGIC_SELECT_CASES]: [],
   [LLM_FEATURES.EDITOR_ASSISTANT]: [],
   [LLM_FEATURES.LLM_TEST]: [],
@@ -131,8 +138,8 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
   ],
   [LLM_FEATURES.AUTO_TAG]: [],
   [LLM_FEATURES.DUPLICATE_DETECTION]: [],
-  [LLM_FEATURES.GENERATE_FROM_URL]: [],
-  [LLM_FEATURES.GENERATE_FROM_URL_APP]: [],
+  [LLM_FEATURES.GENERATE_FROM_URL]: TEST_CASE_GENERATION_VARIABLES,
+  [LLM_FEATURES.GENERATE_FROM_URL_APP]: TEST_CASE_GENERATION_VARIABLES,
   [LLM_FEATURES.AUTOMATION_CANDIDATES]: [
     {
       name: "PROJECT_NAME",

@@ -935,8 +935,34 @@ ${excludedFieldNames.map((name) => `- ${name}`).join("\n")}
     const languageTail = rendered.includes("LANGUAGE CONSISTENCY")
       ? ""
       : languageConsistencyInstruction;
+    // A prompt that does not place {{EXAMPLE_STRUCTURE}} never shows the
+    // model the template's fields, so the model answers in a shape of its
+    // own (top-level `description` and `steps`, say) and every field value
+    // is lost before the preview. The output format is appended for such a
+    // prompt, worded to override any structure the prompt text describes.
+    const outputFormat = baseTemplate.includes("{{EXAMPLE_STRUCTURE}}")
+      ? ""
+      : `OUTPUT FORMAT (the only accepted response shape; it replaces any JSON structure described above):
+{
+  "testCases": [
+${exampleStructure}
+  ]
+}
+
+REQUIRED FIELDS (must be included in every test case):
+${requiredFieldsList || "- (none)"}
+
+ADDITIONAL FIELDS (include ALL of these in fieldValues):
+${optionalFieldsList || "- (none)"}
+
+- Each test case object must contain ONLY: id, name, fieldValues${autoGenerateTags ? ", tags" : ""}. Do NOT include description, priority, automated, steps, or any other top-level keys.
+- ALL data belongs inside fieldValues using the exact field names shown above${stepsInstruction}${priorityInstruction}
+- For single-select fields with options, use exactly one of the provided options
+- For multiselect fields, provide an array of 1-3 relevant options from the list
+- CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly${tagInstructions ? `\n${tagInstructions}` : ""}`;
     return [
       rendered,
+      outputFormat,
       usesExclusionVariable ? "" : exclusionInstruction,
       parameterInstructions,
       languageTail,
@@ -1393,7 +1419,18 @@ export function parseAndValidateTestCases(
   try {
     const cleanContent = rawContent.trim();
 
-    let jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+    // A bare array of cases, `[ {...}, {...} ]`, fenced or not, is what a
+    // model falls back to when nothing pinned the structure. The object
+    // matcher would take the first "{" through the last "}" of it and fail
+    // on the comma between the cases, so the array is matched whole; the
+    // parsed-array branch below already accepts it.
+    const unfenced = cleanContent
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/```\s*$/, "")
+      .trim();
+    let jsonMatch = unfenced.startsWith("[")
+      ? unfenced.match(/\[[\s\S]*\]/)
+      : cleanContent.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
       const codeBlockMatch = cleanContent.match(
@@ -1592,6 +1629,7 @@ export function parseAndValidateTestCases(
         tc.fieldValues,
         template
       );
+      liftTopLevelFieldValues(tc, template, validatedFieldValues);
 
       template.fields.forEach((field) => {
         if (field.options && validatedFieldValues[field.name]) {
@@ -1618,17 +1656,6 @@ export function parseAndValidateTestCases(
       });
 
       normalizeStepsFieldValue(validatedFieldValues, template, tc.steps);
-
-      // If the LLM put priority at the top level instead of in fieldValues,
-      // move it into fieldValues for any priority-like field
-      if (tc.priority && typeof tc.priority === "string") {
-        const priorityFieldDef = template.fields.find((f) =>
-          f.name.toLowerCase().includes("priority")
-        );
-        if (priorityFieldDef && !validatedFieldValues[priorityFieldDef.name]) {
-          validatedFieldValues[priorityFieldDef.name] = tc.priority;
-        }
-      }
 
       // INT-06: extract + validate parameters and starterDataset when
       // present. ABSENT keys preserve legacy behavior (no fields, no
@@ -1879,6 +1906,60 @@ function normalizeStepsFieldValue(
   if (steps.length > 0) fieldValues[stepsFieldDef.name] = steps;
 }
 
+/** Keys of a generated case that are never field values. */
+const TOP_LEVEL_CASE_KEYS = new Set([
+  "id",
+  "name",
+  "fieldValues",
+  "tags",
+  "steps",
+  "automated",
+  "parameters",
+  "starterDataset",
+]);
+
+/** `Post Conditions`, `post_conditions` and `postConditions` compare equal. */
+const canonicalFieldKey = (key: string): string =>
+  key.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * Field values a model put at the top level of a case instead of under
+ * `fieldValues`: `"description": …` for a Description field, `"priority"`
+ * for a priority-like one. Matched by field name with case, spaces and
+ * punctuation ignored; a value already present under fieldValues wins, and
+ * steps keep their own normalization.
+ */
+function liftTopLevelFieldValues(
+  tc: GeneratedTestCase,
+  template: TemplateData,
+  fieldValues: Record<string, any>
+): void {
+  const topLevel = tc as unknown as Record<string, unknown>;
+  const byCanonical = new Map<string, unknown>();
+  for (const [key, value] of Object.entries(topLevel)) {
+    if (TOP_LEVEL_CASE_KEYS.has(key) || value === null || value === undefined)
+      continue;
+    const canonical = canonicalFieldKey(key);
+    if (!byCanonical.has(canonical)) byCanonical.set(canonical, value);
+  }
+  if (byCanonical.size === 0) return;
+
+  for (const field of template.fields) {
+    if (field.type.toLowerCase() === "steps") continue;
+    const current = fieldValues[field.name];
+    if (current !== undefined && current !== null && current !== "") continue;
+    let value = byCanonical.get(canonicalFieldKey(field.name));
+    if (
+      value === undefined &&
+      field.name.toLowerCase().includes("priority") &&
+      typeof topLevel.priority === "string"
+    ) {
+      value = topLevel.priority;
+    }
+    if (value !== undefined) fieldValues[field.name] = value;
+  }
+}
+
 function stripUnknownFieldValues(
   fieldValues: Record<string, any> | undefined,
   template: TemplateData
@@ -1903,6 +1984,7 @@ export function validateTestCase(
     tc.fieldValues,
     template
   );
+  liftTopLevelFieldValues(tc, template, validatedFieldValues);
   template.fields.forEach((field) => {
     if (field.options && validatedFieldValues[field.name]) {
       const fieldValue = validatedFieldValues[field.name];
@@ -1927,16 +2009,6 @@ export function validateTestCase(
   });
 
   normalizeStepsFieldValue(validatedFieldValues, template, tc.steps);
-
-  // If the LLM put priority at the top level, move into fieldValues
-  if (tc.priority && typeof tc.priority === "string") {
-    const priorityFieldDef = template.fields.find((f) =>
-      f.name.toLowerCase().includes("priority")
-    );
-    if (priorityFieldDef && !validatedFieldValues[priorityFieldDef.name]) {
-      validatedFieldValues[priorityFieldDef.name] = tc.priority;
-    }
-  }
 
   return {
     id: tc.id || `generated_${Date.now()}_${index}`,

@@ -18,6 +18,7 @@ import {
   fetchExistingCasesContext,
   fetchIssueLinkedCasesContext,
   fetchLinkedIssuesContext,
+  extractStreamedTestCases,
   parseAndValidateTestCases,
   type GenerationContext,
   type LinkedIssueContext,
@@ -1540,5 +1541,131 @@ describe("parseAndValidateTestCases — finish-reason-aware truncation classific
 
     expect(parseError).toBeDefined();
     expect(parseError!.seemsTruncated).toBe(true);
+  });
+});
+
+describe("buildSystemPrompt — custom prompts without the structure placeholder", () => {
+  // A stored Generate-from-URL prompt as installs carry it: the focus text
+  // and "respond with ONLY valid JSON", but no structure at all.
+  const stored =
+    "You are an expert QA engineer. Analyze the web page.\n\nCRITICAL: You must respond with ONLY valid JSON.";
+
+  it("appends the template's output format when the prompt never places {{EXAMPLE_STRUCTURE}}", () => {
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      true,
+      stored
+    );
+    expect(prompt.startsWith(stored)).toBe(true);
+    expect(prompt).toContain("OUTPUT FORMAT");
+    expect(prompt).toContain('"testCases"');
+    expect(prompt).toContain('"fieldValues"');
+    expect(prompt).toContain("- Description (Text Long)");
+    expect(prompt).toContain(
+      "- Priority (Dropdown) - options: [High, Medium, Low]"
+    );
+    expect(prompt).toContain(
+      "Do NOT include description, priority, automated, steps"
+    );
+    expect(prompt).toContain("For the Steps field in fieldValues");
+    expect(prompt).toContain("TAGS:");
+  });
+
+  it("leaves a prompt that renders the placeholder itself alone", () => {
+    const withPlaceholder =
+      "Shape:\n{{EXAMPLE_STRUCTURE}}\nFields:\n{{REQUIRED_FIELDS_LIST}}";
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      withPlaceholder
+    );
+    expect(prompt).not.toContain("OUTPUT FORMAT");
+    expect(prompt).not.toContain("{{EXAMPLE_STRUCTURE}}");
+    expect(prompt).toContain('"fieldValues"');
+  });
+});
+
+describe("parseAndValidateTestCases — bare array with top-level field keys", () => {
+  // The shape a model falls back to when the prompt pinned no structure:
+  // a fenced array, field values as top-level keys, steps keyed action /
+  // expected.
+  const raw = [
+    "```json",
+    "[",
+    '  { "name": "Login", "description": "Validates login.", "post_conditions": "Sign out.", "priority": "high", "steps": [ { "step": "Open", "expected": "Opened" } ], "tags": ["Smoke"] },',
+    '  { "name": "Logout", "description": "Validates logout.", "steps": [ { "action": "Click", "expectedResult": "Done" } ] }',
+    "]",
+    "```",
+  ].join("\n");
+  const template: TemplateData = {
+    ...sampleTemplate,
+    fields: [
+      ...sampleTemplate.fields,
+      { id: 13, name: "Post Conditions", type: "Text Long", required: false },
+    ],
+  };
+
+  it("parses the array and lifts the top-level values onto the matching template fields", () => {
+    const { testCases, parseError } = parseAndValidateTestCases(
+      raw,
+      template,
+      sampleIssue,
+      true,
+      "few"
+    );
+    expect(parseError).toBeUndefined();
+    expect(testCases).toHaveLength(2);
+    expect(testCases[0].fieldValues.Description).toBe("Validates login.");
+    expect(testCases[0].fieldValues["Post Conditions"]).toBe("Sign out.");
+    // Lifted before option mapping, so the dropdown value is normalized.
+    expect(testCases[0].fieldValues.Priority).toBe("High");
+    expect(testCases[0].fieldValues.Steps).toHaveLength(1);
+    expect(testCases[0].fieldValues.Steps[0]).toMatchObject({
+      step: "Open",
+      expectedResult: "Opened",
+    });
+    expect(testCases[0].tags).toEqual(["Smoke"]);
+    expect(testCases[1].fieldValues.Description).toBe("Validates logout.");
+    expect(testCases[1].fieldValues.Steps[0]).toMatchObject({
+      step: "Click",
+      expectedResult: "Done",
+    });
+  });
+
+  it("prefers a value already under fieldValues over a top-level one", () => {
+    const { testCases } = parseAndValidateTestCases(
+      JSON.stringify({
+        testCases: [
+          {
+            name: "X",
+            description: "top",
+            fieldValues: { Description: "inner" },
+          },
+        ],
+      }),
+      template,
+      sampleIssue,
+      false,
+      "few"
+    );
+    expect(testCases[0].fieldValues.Description).toBe("inner");
+  });
+});
+
+describe("extractStreamedTestCases — top-level field keys", () => {
+  it("lifts a top-level description from a bare array while the stream is still growing", () => {
+    const accumulated =
+      '[\n  { "name": "A", "description": "Desc A", "steps": [ { "step": "s", "expected": "e" } ] },\n  { "name": "B", "desc';
+    const cases = extractStreamedTestCases(accumulated, sampleTemplate, 0);
+    expect(cases).toHaveLength(1);
+    expect(cases[0].fieldValues.Description).toBe("Desc A");
+    expect(cases[0].fieldValues.Steps[0]).toMatchObject({
+      step: "s",
+      expectedResult: "e",
+    });
   });
 });

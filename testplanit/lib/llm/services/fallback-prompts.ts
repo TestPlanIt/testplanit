@@ -260,16 +260,30 @@ CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, n
 JSON structure (EXACT format required):
 {
   "testCases": [
-    {
-      "name": "Test case name",
-      "description": "What this test validates",
-      "steps": [
-        { "action": "Step action", "expectedResult": "Expected outcome" }
-      ],
-      "tags": ["optional", "tags"]
-    }
+    {{EXAMPLE_STRUCTURE}}
   ]
 }
+
+REQUIRED FIELDS (must be included in every test case):
+{{REQUIRED_FIELDS_LIST}}
+
+ADDITIONAL FIELDS (include ALL of these in fieldValues):
+{{OPTIONAL_FIELDS_LIST}}
+
+REQUIREMENTS:
+- Generate {{QUANTITY_GUIDANCE}} that are SPECIFIC to the requirements in the web content
+- Each test case object must contain ONLY: id, name, fieldValues, tags. Do NOT include description, priority, automated, steps, or any other top-level keys.
+- ALL data belongs inside fieldValues using the exact field names shown above
+- Each test case name should reference the actual requirement being tested
+{{STEPS_INSTRUCTION}}
+{{PRIORITY_INSTRUCTION}}
+- CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
+- IMPORTANT: Include ALL optional fields listed above in fieldValues, especially text fields
+- For every text/textarea field listed above (and ONLY those), keep the content short and specific: a description says in one or two sentences what the test validates; preconditions list the state, test data and permissions needed before the first step; post-conditions note only system state that matters after the test
+- For single-select fields with options, use exactly one of the provided options
+- For multiselect fields, provide an array of 1-3 relevant options from the list
+- CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly
+{{TAG_INSTRUCTIONS}}
 
 Return ONLY the JSON.`,
     userPrompt: "",
@@ -301,16 +315,30 @@ CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, n
 JSON structure (EXACT format required):
 {
   "testCases": [
-    {
-      "name": "Test case name",
-      "description": "What this test validates",
-      "steps": [
-        { "action": "Step action", "expectedResult": "Expected outcome" }
-      ],
-      "tags": ["optional", "tags"]
-    }
+    {{EXAMPLE_STRUCTURE}}
   ]
 }
+
+REQUIRED FIELDS (must be included in every test case):
+{{REQUIRED_FIELDS_LIST}}
+
+ADDITIONAL FIELDS (include ALL of these in fieldValues):
+{{OPTIONAL_FIELDS_LIST}}
+
+REQUIREMENTS:
+- Generate {{QUANTITY_GUIDANCE}} that are SPECIFIC to the pages in the web content
+- Each test case object must contain ONLY: id, name, fieldValues, tags. Do NOT include description, priority, automated, steps, or any other top-level keys.
+- ALL data belongs inside fieldValues using the exact field names shown above
+- Each test case name should reference the actual page element or flow being tested
+{{STEPS_INSTRUCTION}}
+{{PRIORITY_INSTRUCTION}}
+- CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
+- IMPORTANT: Include ALL optional fields listed above in fieldValues, especially text fields
+- For every text/textarea field listed above (and ONLY those), keep the content short and specific: a description says in one or two sentences what the test validates; preconditions list the state, test data and permissions needed before the first step; post-conditions note only system state that matters after the test
+- For single-select fields with options, use exactly one of the provided options
+- For multiselect fields, provide an array of 1-3 relevant options from the list
+- CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly
+{{TAG_INSTRUCTIONS}}
 
 Return ONLY the JSON.`,
     userPrompt: "",
