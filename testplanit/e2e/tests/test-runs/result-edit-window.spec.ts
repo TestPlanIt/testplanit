@@ -60,6 +60,9 @@ test("blocks a non-admin result edit when the project disables editing; admin st
   });
 
   const userContext = await browser.newContext();
+  // The project's storageState seeds every new context with the admin session,
+  // and a signed-in browser is sent away from /signin.
+  await userContext.clearCookies();
   // `sec-fetch-site: same-origin` marks this as the in-app browser request it
   // simulates (the proxy otherwise treats header-less calls as external API).
   const sameOrigin = { "sec-fetch-site": "same-origin" };

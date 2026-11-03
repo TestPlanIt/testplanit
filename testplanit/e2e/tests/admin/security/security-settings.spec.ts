@@ -188,7 +188,11 @@ test.describe("User Table Password Actions", () => {
     });
 
     await test.step("Open the three-dot menu for the test user", async () => {
-      // Find the test user's row
+      // The table is virtualized and sorted by name, so a row this far down
+      // is not in the DOM until the list is narrowed to it.
+      await page
+        .getByPlaceholder("Filter users...")
+        .fill("Password Actions Test");
       const userRow = page.getByRole("row").filter({ hasText: testEmail });
       await expect(userRow).toBeVisible({ timeout: 10000 });
 
