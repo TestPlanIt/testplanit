@@ -4,6 +4,7 @@ import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
 import { baseDb } from "@/lib/db";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import {
   FORGE_CORS_HEADERS,
   forgeUserHasProjectAccess,
@@ -325,6 +326,13 @@ export async function POST(req: NextRequest) {
                 {
                   folderId: folderId ?? 0,
                   issueRef: { issueKey, externalId: issueId, integrationId },
+                  related: {
+                    title: issue.title,
+                    description: issue.description,
+                    notes: userNotes,
+                    templateId: template.id,
+                    tenantId: getCurrentTenantId(),
+                  },
                 },
                 caseContextBudget
               )

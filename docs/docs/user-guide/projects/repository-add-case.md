@@ -86,7 +86,7 @@ When the combined context (your issue + its linked issues + all their comments) 
 ### Key Features
 
 - **Smart Field Population**: AI automatically fills template fields with contextually relevant content
-- **Context Awareness**: Considers existing test cases in the folder to avoid duplication
+- **Context Awareness**: Considers existing test cases in the folder to avoid duplication, and related test cases from elsewhere in the project to match your style
 - **Flexible Quantity**: Generate from single test cases to comprehensive test suites
 - **Auto-tagging**: Automatically generates and assigns relevant tags
 - **Test Steps Generation**: Creates detailed action/expected result pairs

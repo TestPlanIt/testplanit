@@ -3,6 +3,7 @@ import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest, LlmResponse } from "@/lib/llm/types";
 import { baseDb } from "@/lib/db";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -321,7 +322,16 @@ export async function POST(request: NextRequest) {
           ? await fetchExistingCasesContext(
               baseDb,
               projectId,
-              { folderId: context.folderContext, issueRef },
+              {
+                folderId: context.folderContext,
+                issueRef,
+                related: {
+                  title: issue.title,
+                  description: issue.description,
+                  notes: context.userNotes,
+                  tenantId: getCurrentTenantId(),
+                },
+              },
               caseContextBudget,
               "names"
             )

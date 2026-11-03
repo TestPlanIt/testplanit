@@ -7,6 +7,13 @@ import type {
   LinkedIssueRef,
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
+
+const relatedMocks = vi.hoisted(() => ({
+  findRelatedCaseIds: vi.fn(),
+  findRecentTemplateCaseIds: vi.fn(),
+}));
+vi.mock("./related-cases", () => relatedMocks);
+
 import {
   buildCommentsSection,
   buildExpandUserPrompt,
@@ -655,6 +662,365 @@ describe("existing-case context — issue-linked cases", () => {
       "names"
     );
     expect(tight).toEqual([]);
+  });
+});
+
+describe("existing-case context — related cases from across the project", () => {
+  function makeDb(opts: {
+    caseRowsPerCall?: any[][];
+    folders?: { id: number; parentId: number | null }[];
+  }) {
+    const calls: any[] = [];
+    const queue = [...(opts.caseRowsPerCall ?? [])];
+    return {
+      calls,
+      db: {
+        repositoryCases: {
+          findMany: vi.fn(async (args: any) => {
+            calls.push(args);
+            return queue.shift() ?? [];
+          }),
+        },
+        repositoryFolders: {
+          findMany: vi.fn(async () => opts.folders ?? []),
+        },
+      } as unknown as DbClient,
+    };
+  }
+
+  const caseRow = (id: number, name: string) => ({
+    id,
+    name,
+    template: { templateName: "Functional" },
+    caseFieldValues: [],
+    steps: [{ step: "Open the page", expectedResult: "It loads", order: 0 }],
+  });
+
+  const related = {
+    title: "Reset password",
+    description: "Email link flow",
+    notes: "expiry",
+    templateId: 2,
+    tenantId: "acme",
+  };
+
+  beforeEach(() => {
+    relatedMocks.findRelatedCaseIds.mockReset();
+    relatedMocks.findRecentTemplateCaseIds.mockReset();
+  });
+
+  it("fills an empty folder with content-matched cases, tagged as related", async () => {
+    // Call 1: the (empty) folder. Call 2: hydration of the ids the finder ranked.
+    const { db, calls } = makeDb({
+      caseRowsPerCall: [[], [caseRow(3, "Third"), caseRow(12, "Twelfth")]],
+      folders: [{ id: 5, parentId: null }],
+    });
+    const find = vi.fn(async () => [12, 3]);
+
+    const cases = await fetchExistingCasesContext(
+      db,
+      7,
+      { folderId: 5, related: { ...related, find } },
+      5000
+    );
+
+    expect(find).toHaveBeenCalledWith({
+      projectId: 7,
+      title: "Reset password",
+      description: "Email link flow",
+      notes: "expiry",
+      templateId: 2,
+      tenantId: "acme",
+      excludeCaseIds: new Set(),
+      limit: 8,
+    });
+    // Ranked order from the finder wins over the database's row order.
+    expect(cases.map((c) => c.name)).toEqual(["Twelfth", "Third"]);
+    expect(cases.every((c) => c.source === "related")).toBe(true);
+    expect(cases[0].steps).toEqual([
+      { step: "Open the page", expectedResult: "It loads" },
+    ]);
+    expect(calls[1].where).toMatchObject({
+      id: { in: [12, 3] },
+      projectId: 7,
+      isDeleted: false,
+      isArchived: false,
+    });
+  });
+
+  it("tags folder cases as hierarchy, lists them first, and keeps them out of the related lookup", async () => {
+    const { db } = makeDb({
+      caseRowsPerCall: [
+        [{ ...caseRow(1, "In folder"), folderId: 5 }],
+        [caseRow(2, "Elsewhere")],
+      ],
+      folders: [{ id: 5, parentId: null }],
+    });
+    const find = vi.fn(async () => [2]);
+
+    const cases = await fetchExistingCasesContext(
+      db,
+      7,
+      { folderId: 5, related: { ...related, find } },
+      5000,
+      "names"
+    );
+
+    expect(cases.map((c) => [c.name, c.source])).toEqual([
+      ["In folder", "hierarchy"],
+      ["Elsewhere", "related"],
+    ]);
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({ excludeCaseIds: new Set([1]), limit: 20 })
+    );
+  });
+
+  it("bills related cases against the budget the earlier tiers left", async () => {
+    const { db } = makeDb({
+      caseRowsPerCall: [
+        [{ ...caseRow(1, "A".repeat(100)), folderId: 5 }],
+        [caseRow(2, "B".repeat(100)), caseRow(3, "C".repeat(100))],
+      ],
+      folders: [{ id: 5, parentId: null }],
+    });
+    const find = vi.fn(async () => [2, 3]);
+
+    // Names mode: ~27 tokens per 100-char name. Room for two, not three.
+    const cases = await fetchExistingCasesContext(
+      db,
+      7,
+      { folderId: 5, related: { ...related, find } },
+      60,
+      "names"
+    );
+
+    expect(cases.map((c) => c.name[0])).toEqual(["A", "B"]);
+  });
+
+  it("caps the total with maxCases so the expand phase gets a few exemplars", async () => {
+    const { db } = makeDb({
+      caseRowsPerCall: [
+        [
+          { ...caseRow(1, "One"), folderId: 5 },
+          { ...caseRow(2, "Two"), folderId: 5 },
+        ],
+        [caseRow(3, "Three")],
+      ],
+      folders: [{ id: 5, parentId: null }],
+    });
+    const find = vi.fn(async () => [3]);
+
+    const cases = await fetchExistingCasesContext(
+      db,
+      7,
+      { folderId: 5, related: { ...related, find } },
+      5000,
+      "full",
+      { maxCases: 3 }
+    );
+
+    expect(cases.map((c) => c.name)).toEqual(["One", "Two", "Three"]);
+    expect(find).toHaveBeenCalledWith(expect.objectContaining({ limit: 1 }));
+
+    const { db: fullDb } = makeDb({
+      caseRowsPerCall: [
+        [
+          { ...caseRow(1, "One"), folderId: 5 },
+          { ...caseRow(2, "Two"), folderId: 5 },
+          { ...caseRow(3, "Three"), folderId: 5 },
+        ],
+      ],
+      folders: [{ id: 5, parentId: null }],
+    });
+    const unusedFind = vi.fn(async () => [9]);
+    const capped = await fetchExistingCasesContext(
+      fullDb,
+      7,
+      { folderId: 5, related: { ...related, find: unusedFind } },
+      5000,
+      "full",
+      { maxCases: 2 }
+    );
+    expect(capped.map((c) => c.name)).toEqual(["One", "Two"]);
+    expect(unusedFind).not.toHaveBeenCalled();
+  });
+
+  it("falls back to a same-template sample when no similarity search is available", async () => {
+    const { db } = makeDb({
+      caseRowsPerCall: [
+        [{ ...caseRow(1, "In folder"), folderId: 5 }],
+        [caseRow(4, "Recent on template")],
+      ],
+      folders: [{ id: 5, parentId: null }],
+    });
+    relatedMocks.findRelatedCaseIds.mockResolvedValue(null);
+    relatedMocks.findRecentTemplateCaseIds.mockResolvedValue([4]);
+
+    const cases = await fetchExistingCasesContext(
+      db,
+      7,
+      { folderId: 5, related },
+      5000
+    );
+
+    expect(cases.map((c) => c.name)).toEqual([
+      "In folder",
+      "Recent on template",
+    ]);
+    expect(relatedMocks.findRecentTemplateCaseIds).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        projectId: 7,
+        templateId: 2,
+        excludeCaseIds: new Set([1]),
+      })
+    );
+  });
+
+  it("skips the related tier entirely when the caller gives nothing to match on", async () => {
+    const { db } = makeDb({
+      caseRowsPerCall: [[{ ...caseRow(1, "In folder"), folderId: 5 }]],
+      folders: [{ id: 5, parentId: null }],
+    });
+
+    const cases = await fetchExistingCasesContext(db, 7, { folderId: 5 }, 5000);
+
+    expect(cases.map((c) => c.name)).toEqual(["In folder"]);
+    expect(relatedMocks.findRelatedCaseIds).not.toHaveBeenCalled();
+    expect(relatedMocks.findRecentTemplateCaseIds).not.toHaveBeenCalled();
+  });
+});
+
+describe("prompt sections — folder cases vs related cases", () => {
+  const folderCase = {
+    name: "Login with locked account",
+    template: "Default",
+    description: "Locked after 5 failures",
+    steps: [{ step: "Enter bad password 5 times", expectedResult: "Locked" }],
+    source: "hierarchy" as const,
+  };
+  const relatedCase = {
+    name: "Reset password via email link",
+    template: "Default",
+    description: "Happy path reset",
+    steps: [{ step: "Request reset", expectedResult: "Email arrives" }],
+    source: "related" as const,
+  };
+
+  it("buildUserPrompt renders folder cases and related cases in separate sections", () => {
+    const prompt = buildUserPrompt(sampleIssue, {
+      folderContext: 5,
+      existingTestCases: [folderCase, relatedCase],
+    });
+    const folderAt = prompt.indexOf("EXISTING TEST CASES IN FOLDER:");
+    const relatedAt = prompt.indexOf(
+      "RELATED TEST CASES ELSEWHERE IN THIS PROJECT:"
+    );
+    expect(folderAt).toBeGreaterThan(-1);
+    expect(relatedAt).toBeGreaterThan(folderAt);
+    expect(prompt).toContain("1. Login with locked account");
+    expect(prompt).toContain("1. Reset password via email link");
+    expect(prompt).toContain("Request reset → Expected: Email arrives");
+    expect(prompt).toContain("examples of this project's naming");
+  });
+
+  it("buildUserPrompt omits the folder heading when only related cases exist", () => {
+    const prompt = buildUserPrompt(sampleIssue, {
+      folderContext: 5,
+      existingTestCases: [relatedCase],
+    });
+    expect(prompt).not.toContain("EXISTING TEST CASES IN FOLDER");
+    expect(prompt).toContain("RELATED TEST CASES ELSEWHERE IN THIS PROJECT:");
+  });
+
+  it("buildUserPrompt treats untagged cases as folder cases", () => {
+    const { source: _source, ...untagged } = folderCase;
+    const prompt = buildUserPrompt(sampleIssue, {
+      folderContext: 5,
+      existingTestCases: [untagged],
+    });
+    expect(prompt).toContain("EXISTING TEST CASES IN FOLDER:");
+    expect(prompt).not.toContain("RELATED TEST CASES");
+  });
+
+  it("buildUserPrompt puts both sections into a custom template's existing-cases slot", () => {
+    const prompt = buildUserPrompt(
+      sampleIssue,
+      { folderContext: 5, existingTestCases: [folderCase, relatedCase] },
+      "ISSUE {{ISSUE_KEY}}{{COMMENTS_SECTION}}{{LINKED_ISSUES_SECTION}}{{USER_NOTES_SECTION}}{{EXISTING_CASES_SECTION}}"
+    );
+    expect(prompt.startsWith("ISSUE PROJ-1")).toBe(true);
+    expect(prompt).toContain("EXISTING TEST CASES IN FOLDER:");
+    expect(prompt).toContain("RELATED TEST CASES ELSEWHERE IN THIS PROJECT:");
+  });
+
+  it("buildOutlineUserPrompt lists related titles under their own heading, names only", () => {
+    const prompt = buildOutlineUserPrompt(sampleIssue, {
+      folderContext: 5,
+      existingTestCases: [folderCase, relatedCase],
+    });
+    expect(prompt).toContain(
+      "EXISTING TEST CASE TITLES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP:\n1. Login with locked account"
+    );
+    expect(prompt).toContain(
+      "RELATED TEST CASE TITLES ELSEWHERE IN THIS PROJECT:\n1. Reset password via email link"
+    );
+    expect(prompt).toContain("Match their naming style");
+    expect(prompt).not.toContain("Happy path reset");
+    expect(prompt).not.toContain("Request reset");
+  });
+
+  it("buildOutlineUserPrompt omits the do-not-duplicate list when only related cases exist", () => {
+    const prompt = buildOutlineUserPrompt(sampleIssue, {
+      folderContext: 5,
+      existingTestCases: [relatedCase],
+    });
+    expect(prompt).not.toContain("DO NOT DUPLICATE");
+    expect(prompt).toContain(
+      "RELATED TEST CASE TITLES ELSEWHERE IN THIS PROJECT:"
+    );
+  });
+
+  it("buildExpandUserPrompt folds in full exemplars ahead of the case to generate", () => {
+    const outline = {
+      title: "Reset with expired link",
+      summary: "Link past expiry",
+    };
+    const prompt = buildExpandUserPrompt(sampleIssue, outline, {
+      folderContext: 5,
+      existingTestCases: [folderCase, relatedCase],
+    });
+    const exemplarsAt = prompt.indexOf("EXAMPLE TEST CASES FROM THIS PROJECT:");
+    const targetAt = prompt.indexOf("TEST CASE TO GENERATE:");
+    expect(exemplarsAt).toBeGreaterThan(-1);
+    expect(targetAt).toBeGreaterThan(exemplarsAt);
+    expect(prompt).toContain("Enter bad password 5 times → Expected: Locked");
+    expect(prompt).toContain("Request reset → Expected: Email arrives");
+    expect(prompt).toContain("Do not copy their content");
+  });
+
+  it("buildExpandUserPrompt renders exemplars inside a custom template too", () => {
+    const outline = {
+      title: "Reset with expired link",
+      summary: "Link past expiry",
+    };
+    const prompt = buildExpandUserPrompt(
+      sampleIssue,
+      outline,
+      { folderContext: 5, existingTestCases: [relatedCase] },
+      "ISSUE {{ISSUE_KEY}}{{COMMENTS_SECTION}}{{LINKED_ISSUES_SECTION}}{{USER_NOTES_SECTION}}{{EXISTING_CASES_SECTION}}"
+    );
+    expect(prompt).toContain("EXAMPLE TEST CASES FROM THIS PROJECT:");
+    expect(prompt).toContain('Title: "Reset with expired link"');
+  });
+
+  it("buildExpandUserPrompt has no exemplar section when none were fetched", () => {
+    const outline = { title: "T", summary: "S" };
+    const prompt = buildExpandUserPrompt(sampleIssue, outline, {
+      folderContext: 5,
+    });
+    expect(prompt).not.toContain("EXAMPLE TEST CASES");
+    expect(prompt).toContain("TEST CASE TO GENERATE:");
   });
 });
 

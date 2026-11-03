@@ -203,6 +203,7 @@ export async function runDraftCases(
     quantity: options.quantity,
     autoGenerateTags,
     userId: actorId,
+    tenantId: job.tenantId,
   });
   if (!generated.ok) {
     const detail = String(generated.body.error ?? "generation failed");

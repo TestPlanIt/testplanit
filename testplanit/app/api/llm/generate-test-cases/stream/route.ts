@@ -422,7 +422,17 @@ export async function POST(req: NextRequest) {
             ? await fetchExistingCasesContext(
                 baseDb,
                 projectId,
-                { folderId: context.folderContext, issueRef },
+                {
+                  folderId: context.folderContext,
+                  issueRef,
+                  related: {
+                    title: issue.title,
+                    description: issue.description,
+                    notes: context.userNotes,
+                    templateId: template.id,
+                    tenantId: getCurrentTenantId(),
+                  },
+                },
                 caseContextBudget
               )
             : [];

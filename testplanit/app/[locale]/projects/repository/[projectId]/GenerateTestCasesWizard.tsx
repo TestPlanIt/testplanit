@@ -4274,8 +4274,8 @@ export function GenerateTestCasesWizard({
                 at import), so the tip is hidden there. */}
             {!isSeeded &&
               (folderContextCaseCount === 0 ? (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertTriangle className="h-4 w-4" />
+                <Alert className="mt-2">
+                  <Info className="h-4 w-4" />
                   <AlertTitle>
                     {t(
                       "generateTestCases.selectSource.folderContextEmptyTitle"
