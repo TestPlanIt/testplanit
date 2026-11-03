@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Generazione di casi di test con l'intelligenza artificiale...",
       "expandProgress": "{done, number} di {total, number} generato",
       "import": "{count, plural, =0 {Importa casi di test} =1 {Importa 1 caso di test} other {Importa # casi di test}}",
+      "stage": "{count, plural, =0 {Casi di test dello stage} =1 {Stage 1 caso di test} other {Stage # casi di test}}",
+      "stageDescription": "I casi di test gestiti sono privati. Visualizzali in My Staged Cases e creali da lì; nulla viene aggiunto al repository finché non lo fai.",
       "importing": "{count, plural, =0 {Importazione dei casi di test in corso...} =1 {Importazione di 1 caso di test in corso...} other {Importazione di # casi di test in corso...}}",
       "externalSystem": "Sistema esterno",
       "autoGenerateTags": "Genera automaticamente tag per i casi di test",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...e {count, plural, one {# altra riga} other {# altre righe}}",
       "parameterChipSensitive": "sensibile",
       "success": {
-        "imported": "{count, plural, =1 {Importato con successo 1 caso di test} other {Importati con successo # casi di test}}"
+        "imported": "{count, plural, =1 {Importato con successo 1 caso di test} other {Importati con successo # casi di test}}",
+        "staged": "{count, plural, =1 {Gestito 1 caso di test} other {Gestiti # casi di test}}"
       },
       "importData": {
         "issueDescription": "Problema esterno collegato alla generazione del caso di test",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Impossibile generare i casi di test. Riprova.",
         "importFailed": "Impossibile importare i casi di test. Riprova.",
+        "stageFailed": "Impossibile gestire i casi di test. Riprova.",
         "noTestCasesGenerated": "Non sono stati generati casi di test. Riprova con input diversi.",
         "jobNoLongerAvailable": "Questa generazione non è più disponibile. Avviane una nuova tramite la procedura guidata Genera casi di test.",
         "noAiModel": "Per questo progetto non è configurato alcun modello di intelligenza artificiale. Si prega di configurare un modello di intelligenza artificiale nelle impostazioni del progetto.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Seleziona un modello per i casi di test.",
         "noFieldsSelected": "Seleziona almeno un campo per il quale desideri generare contenuti.",
         "noTestCasesSelectedForImport": "Seleziona almeno un caso di test da importare.",
+        "noTestCasesSelectedForStage": "Seleziona almeno un caso di test da gestire.",
         "templateRequired": "È necessario selezionare un modello. Torna indietro e seleziona un modello.",
         "repositoryNotFound": "Repository del progetto non trovato. Contattare l'amministratore.",
         "workflowNotConfigured": "Flusso di lavoro del progetto non configurato. Verificare le impostazioni del progetto.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Hai 1 caso di test con modifiche non salvate.} other {Hai # casi di test con modifiche non salvate.}}",
         "warning": "Se procedi senza salvare, le modifiche andranno perse.",
         "saveAllAndImport": "Salva tutto e importa",
-        "discardAndImport": "Annulla modifiche e importa"
+        "discardAndImport": "Annulla modifiche e importa",
+        "saveAllAndStage": "Salva tutto e gestisci",
+        "discardAndStage": "Annulla modifiche e gestisci"
       },
       "linkedIssuesDroppedTitle": "Alcuni problemi correlati non sono stati inclusi",
       "linkedIssuesDropped": "{count, plural, =1 {# il problema collegato è stato eliminato} other {# i problemi collegati sono stati eliminati}} a causa del budget dei token: {keys}.",

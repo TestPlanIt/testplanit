@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { useCallback } from "react";
 import {
@@ -37,6 +37,19 @@ export interface SaveCaseDraftInput {
 }
 
 const toColumn = toCaseDraftColumn;
+
+/**
+ * Re-read every staged-case query after a write that bypassed the hooks,
+ * such as the generation wizard's Stage action (a server action).
+ */
+export function invalidateStagedCaseQueries(queryClient: QueryClient): void {
+  void queryClient.invalidateQueries({
+    predicate: (query) =>
+      Array.isArray(query.queryKey) &&
+      query.queryKey[0] === "zenstack" &&
+      query.queryKey[1] === "CaseDraft",
+  });
+}
 
 /**
  * The current user's saved drafts in a project, and the writes the My Drafts
@@ -154,12 +167,7 @@ export function useSavedCaseDrafts(projectId: number, userId?: string) {
 
   /** Re-read every staged-case query after a write that bypassed the hooks. */
   const refresh = useCallback(() => {
-    void queryClient.invalidateQueries({
-      predicate: (query) =>
-        Array.isArray(query.queryKey) &&
-        query.queryKey[0] === "zenstack" &&
-        query.queryKey[1] === "CaseDraft",
-    });
+    invalidateStagedCaseQueries(queryClient);
   }, [queryClient]);
 
   return { drafts, isLoading, save, update, remove, refresh };

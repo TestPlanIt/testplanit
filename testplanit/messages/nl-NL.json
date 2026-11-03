@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Testgevallen genereren met AI...",
       "expandProgress": "{done, number} van {total, number} gegenereerd",
       "import": "{count, plural, =0 {Testcases importeren} =1 {1 testcase importeren} other {# Testcases importeren}}",
+      "stage": "{count, plural, =0 {Staging testcases} =1 {Staging 1 testcase} other {Staging # testcases}}",
+      "stageDescription": "Faseringsgestelde testcases zijn privé voor u. Controleer ze in Mijn gefaseerde zaken en maak ze daar aan; niets wordt aan de repository toegevoegd totdat u dat doet.",
       "importing": "{count, plural, =0 {Testgevallen importeren...} =1 {1 testgeval importeren...} other {# testgevallen importeren...}}",
       "externalSystem": "Extern systeem",
       "autoGenerateTags": "Automatisch tags genereren voor testcases",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...en {count, plural, one {# meer rij} other {# meer rijen}}",
       "parameterChipSensitive": "gevoelig",
       "success": {
-        "imported": "{count, plural, =1 {1 testcase succesvol geïmporteerd} other {# testcases succesvol geïmporteerd}}"
+        "imported": "{count, plural, =1 {1 testcase succesvol geïmporteerd} other {# testcases succesvol geïmporteerd}}",
+        "staged": "{count, plural, =1 {1 testcase gefaseerd} other {# testcases gefaseerd}}"
       },
       "importData": {
         "issueDescription": "Externe kwestie gekoppeld aan het genereren van testgevallen",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Het genereren van testcases is mislukt. Probeer het opnieuw.",
         "importFailed": "Het importeren van testcases is mislukt. Probeer het opnieuw.",
+        "stageFailed": "Het faseren van testcases is mislukt. Probeer het opnieuw.",
         "noTestCasesGenerated": "Er zijn geen testcases gegenereerd. Probeer het opnieuw met andere invoer.",
         "jobNoLongerAvailable": "Deze generatie is niet langer beschikbaar. Start een nieuwe generatie via de wizard 'Testgevallen genereren'.",
         "noAiModel": "Er is geen AI-model geconfigureerd voor dit project. Configureer een AI-model in de projectinstellingen.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Selecteer een sjabloon voor de testgevallen.",
         "noFieldsSelected": "Selecteer ten minste één veld waarvoor u inhoud wilt genereren.",
         "noTestCasesSelectedForImport": "Selecteer ten minste één testcase om te importeren.",
+        "noTestCasesSelectedForStage": "Selecteer ten minste één testcase om te faseren.",
         "templateRequired": "U moet een sjabloon selecteren. Ga terug en kies een sjabloon.",
         "repositoryNotFound": "Projectrepository niet gevonden. Neem contact op met uw beheerder.",
         "workflowNotConfigured": "Projectworkflow niet geconfigureerd. Controleer de projectinstellingen.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Je hebt 1 testgeval met niet-opgeslagen wijzigingen.} other {Je hebt # testgevallen met niet-opgeslagen wijzigingen.}}",
         "warning": "Als u doorgaat zonder op te slaan, gaan uw wijzigingen verloren.",
         "saveAllAndImport": "Alles opslaan en importeren",
-        "discardAndImport": "Bewerkingen verwijderen en importeren"
+        "discardAndImport": "Bewerkingen verwijderen en importeren",
+        "saveAllAndStage": "Alles opslaan en faseren",
+        "discardAndStage": "Bewerkingen verwijderen en faseren"
       },
       "linkedIssuesDroppedTitle": "Sommige gerelateerde onderwerpen zijn niet opgenomen.",
       "linkedIssuesDropped": "{count, plural, =1 {# gekoppeld probleem is verwijderd} other {# gekoppelde problemen zijn verwijderd}} vanwege tokenbudget: {keys}.",

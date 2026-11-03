@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Generování testovacích případů pomocí AI...",
       "expandProgress": "{done, number} z {total, number} vygenerováno",
       "import": "{count, plural, =0 {Importovat testovací případy} =1 {Importovat 1 testovací případ} other {Importovat # testovacích případů}}",
+      "stage": "{count, plural, =0 {Testovací případy v přípravě} =1 {Testovací případ v přípravě 1} other {Testovací případy v přípravě #}}",
+      "stageDescription": "Testovací případy v přípravě jsou soukromé. Zkontrolujte je v sekci Moje případy v přípravě a vytvořte je tam. Do úložiště se přidají teprve poté, když to uděláte.",
       "importing": "{count, plural, =0 {Importování testovacích případů...} =1 {Importování 1 testovacího případu...} other {Importování # testovacích případů...}}",
       "externalSystem": "Externí systém",
       "autoGenerateTags": "Automaticky generovat štítky pro testovací případy",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...a {count, plural, one {# další řádek} few {# další řádky} many {# dalšího řádku} other {# dalších řádků}}",
       "parameterChipSensitive": "citlivé",
       "success": {
-        "imported": "{count, plural, =1 {Úspěšně importován 1 testovací případ} other {Úspěšně importováno # testovacích případů}}"
+        "imported": "{count, plural, =1 {Úspěšně importován 1 testovací případ} other {Úspěšně importováno # testovacích případů}}",
+        "staged": "{count, plural, =1 {V přípravě 1 testovací případ} other {V přípravě # testovacích případů}}"
       },
       "importData": {
         "issueDescription": "Externí problém propojený z generování testovacích případů",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Generování testovacích případů se nezdařilo. Zkuste to prosím znovu.",
         "importFailed": "Import testovacích případů se nezdařil. Zkuste to prosím znovu.",
+        "stageFailed": "Nepodařilo se připravit testovací případy. Zkuste to prosím znovu.",
         "noTestCasesGenerated": "Nebyly vygenerovány žádné testovací případy. Zkuste to prosím znovu s jinými vstupy.",
         "jobNoLongerAvailable": "Toto generování již není k dispozici. Spusťte nové z průvodce Generovat testovací případy.",
         "noAiModel": "Pro tento projekt není nakonfigurován žádný AI model. Nakonfigurujte prosím AI model v nastavení projektu.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Vyberte prosím šablonu pro testovací případy.",
         "noFieldsSelected": "Vyberte prosím alespoň jedno pole, pro které se má obsah generovat.",
         "noTestCasesSelectedForImport": "Vyberte prosím alespoň jeden testovací případ k importu.",
+        "noTestCasesSelectedForStage": "Vyberte prosím alespoň jeden testovací případ k přípravě.",
         "templateRequired": "Výběr šablony je povinný. Vraťte se prosím zpět a vyberte šablonu.",
         "repositoryNotFound": "Úložiště projektu nebylo nalezeno. Kontaktujte prosím svého správce.",
         "workflowNotConfigured": "Pracovní postup projektu není nakonfigurován. Zkontrolujte prosím nastavení projektu.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Máte 1 testovací případ s neuloženými úpravami.} other {Máte # testovacích případů s neuloženými úpravami.}}",
         "warning": "Pokud budete pokračovat bez uložení, vaše změny budou ztraceny.",
         "saveAllAndImport": "Uložit vše a importovat",
-        "discardAndImport": "Zahodit úpravy a importovat"
+        "discardAndImport": "Zahodit úpravy a importovat",
+        "saveAllAndStage": "Uložit vše a připravit",
+        "discardAndStage": "Zahodit změny a připravit"
       },
       "linkedIssuesDroppedTitle": "Některé propojené problémy nebyly zahrnuty",
       "linkedIssuesDropped": "{count, plural, =1 {# propojený problém byl vynechán} other {# propojených problémů bylo vynecháno}} kvůli limitu tokenů: {keys}.",

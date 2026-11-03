@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Generating test cases with AI...",
       "expandProgress": "{done, number} of {total, number} generated",
       "import": "{count, plural, =0 {Import Test Cases} =1 {Import 1 Test Case} other {Import # Test Cases}}",
+      "stage": "{count, plural, =0 {Stage Test Cases} =1 {Stage 1 Test Case} other {Stage # Test Cases}}",
+      "stageDescription": "Staged test cases are private to you. Review them in My Staged Cases and create them from there; nothing is added to the repository until you do.",
       "importing": "{count, plural, =0 {Importing Test Cases...} =1 {Importing 1 Test Case...} other {Importing # Test Cases...}}",
       "externalSystem": "External System",
       "autoGenerateTags": "Automatically generate tags for test cases",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...and {count, plural, one {# more row} other {# more rows}}",
       "parameterChipSensitive": "sensitive",
       "success": {
-        "imported": "{count, plural, =1 {Successfully imported 1 test case} other {Successfully imported # test cases}}"
+        "imported": "{count, plural, =1 {Successfully imported 1 test case} other {Successfully imported # test cases}}",
+        "staged": "{count, plural, =1 {Staged 1 test case} other {Staged # test cases}}"
       },
       "importData": {
         "issueDescription": "External issue linked from test case generation",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Failed to generate test cases. Please try again.",
         "importFailed": "Failed to import test cases. Please try again.",
+        "stageFailed": "Failed to stage test cases. Please try again.",
         "noTestCasesGenerated": "No test cases were generated. Please try again with different inputs.",
         "jobNoLongerAvailable": "This generation is no longer available. Start a new one from the Generate Test Cases wizard.",
         "noAiModel": "No AI model is configured for this project. Please configure an AI model in project settings.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Please select a template for the test cases.",
         "noFieldsSelected": "Please select at least one field to generate content for.",
         "noTestCasesSelectedForImport": "Please select at least one test case to import.",
+        "noTestCasesSelectedForStage": "Please select at least one test case to stage.",
         "templateRequired": "Template selection is required. Please go back and select a template.",
         "repositoryNotFound": "Project repository not found. Please contact your administrator.",
         "workflowNotConfigured": "Project workflow not configured. Please verify project settings.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {You have 1 test case with unsaved edits.} other {You have # test cases with unsaved edits.}}",
         "warning": "If you proceed without saving, your changes will be lost.",
         "saveAllAndImport": "Save All & Import",
-        "discardAndImport": "Discard Edits & Import"
+        "discardAndImport": "Discard Edits & Import",
+        "saveAllAndStage": "Save All & Stage",
+        "discardAndStage": "Discard Edits & Stage"
       },
       "linkedIssuesDroppedTitle": "Some linked issues were not included",
       "linkedIssuesDropped": "{count, plural, =1 {# linked issue was dropped} other {# linked issues were dropped}} due to token budget: {keys}.",

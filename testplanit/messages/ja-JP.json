@@ -3900,6 +3900,8 @@
       "generatingLegacy": "AIによるテストケースの生成...",
       "expandProgress": "{done, number} の {total, number} が生成されました",
       "import": "{count, plural, =0 {テストケースをインポート} =1 {1 つのテストケースをインポート} other {# つのテストケースをインポート}}",
+      "stage": "{count, plural, =0 {ステージテストケース} =1 {ステージ 1 テストケース} other {ステージ # テストケース}}",
+      "stageDescription": "ステージ済みテストケースはお客様のみが利用できます。「マイステージケース」で確認してから作成してください。リポジトリには作成するまで何も追加されません。",
       "importing": "{count, plural, =0 {テストケースをインポートしています...} =1 {1 つのテストケースをインポートしています...} other {# つのテストケースをインポートしています...}}",
       "externalSystem": "外部システム",
       "autoGenerateTags": "テストケースのタグを自動生成する",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...そして {count, plural, one {# 行がさらに続く} other {# 行がさらに続く}}",
       "parameterChipSensitive": "センシティブ",
       "success": {
-        "imported": "{count, plural, =1 {1 つのテストケースを正常にインポートしました} other {# つのテストケースを正常にインポートしました}}"
+        "imported": "{count, plural, =1 {1 つのテストケースを正常にインポートしました} other {# つのテストケースを正常にインポートしました}}",
+        "staged": "{count, plural, =1 {# テストケースをステージ済みにしました} other {# テストケースをステージ済みにしました}}"
       },
       "importData": {
         "issueDescription": "テストケース生成からリンクされた外部問題",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "テストケースを生成できませんでした。もう一度お試しください。",
         "importFailed": "テストケースのインポートに失敗しました。もう一度お試しください。",
+        "stageFailed": "テストケースをステージできませんでした。もう一度お試しください。",
         "noTestCasesGenerated": "テストケースが生成されませんでした。別の入力でもう一度お試しください。",
         "jobNoLongerAvailable": "この生成方法は現在利用できません。テストケース生成ウィザードから新しい生成を開始してください。",
         "noAiModel": "このプロジェクトにはAIモデルが設定されていません。プロジェクト設定でAIモデルを設定してください。",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "テストケースのテンプレートを選択してください。",
         "noFieldsSelected": "コンテンツを生成するフィールドを少なくとも1つ選択してください。",
         "noTestCasesSelectedForImport": "インポートするテストケースを少なくとも1つ選択してください。",
+        "noTestCasesSelectedForStage": "ステージするテストケースを少なくとも1つ選択してください。",
         "templateRequired": "テンプレートの選択が必要です。戻ってテンプレートを選択してください。",
         "repositoryNotFound": "プロジェクトリポジトリが見つかりません。管理者にお問い合わせください。",
         "workflowNotConfigured": "プロジェクトのワークフローが設定されていません。プロジェクト設定を確認してください。",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {保存されていない編集のあるテストケースが 1 件あります。} other {保存されていない編集のあるテストケースが # 件あります。}}",
         "warning": "保存せずに続行すると、変更内容は失われます。",
         "saveAllAndImport": "すべて保存してインポート",
-        "discardAndImport": "編集を破棄してインポート"
+        "discardAndImport": "編集を破棄してインポート",
+        "saveAllAndStage": "すべて保存してステージ",
+        "discardAndStage": "編集を破棄してステージ"
       },
       "linkedIssuesDroppedTitle": "関連する問題の一部は含まれていません",
       "linkedIssuesDropped": "{count, plural, =1 {# リンクされた問題は削除されました} other {# リンクされた問題は削除されました}} トークン予算のため: {keys}。",

@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Generowanie przypadków testowych za pomocą sztucznej inteligencji...",
       "expandProgress": "{done, number} z {total, number} wygenerowano",
       "import": "{count, plural, =0 {Importuj przypadki testowe} =1 {Importuj 1 przypadek testowy} other {Importuj # przypadków testowych}}",
+      "stage": "{count, plural, =0 {Etapy przypadków testowych} =1 {Etap 1 przypadku testowego} other {Etap # przypadków testowych}}",
+      "stageDescription": "Etapowe przypadki testowe są prywatne dla Ciebie. Przejrzyj je w sekcji Moje przypadki przygotowane i utwórz je stamtąd; nic nie jest dodawane do repozytorium, dopóki tego nie zrobisz.",
       "importing": "{count, plural, =0 {Importowanie przypadków testowych...} =1 {Importowanie 1 przypadku testowego...} other {Importowanie # przypadków testowych...}}",
       "externalSystem": "System zewnętrzny",
       "autoGenerateTags": "Automatyczne generowanie tagów dla przypadków testowych",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...i {count, plural, one {# więcej wierszy} other {# więcej wierszy}}",
       "parameterChipSensitive": "wrażliwy",
       "success": {
-        "imported": "{count, plural, =1 {Pomyślnie zaimportowano 1 przypadek testowy} other {Pomyślnie zaimportowano # przypadków testowych}}"
+        "imported": "{count, plural, =1 {Pomyślnie zaimportowano 1 przypadek testowy} other {Pomyślnie zaimportowano # przypadków testowych}}",
+        "staged": "{count, plural, =1 {Przygotowano 1 przypadek testowy} other {Przygotowano # przypadków testowych}}"
       },
       "importData": {
         "issueDescription": "Problem zewnętrzny powiązany z generowaniem przypadków testowych",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Nie udało się wygenerować przypadków testowych. Spróbuj ponownie.",
         "importFailed": "Nie udało się zaimportować przypadków testowych. Spróbuj ponownie.",
+        "stageFailed": "Nie udało się przygotować przypadków testowych. Spróbuj ponownie.",
         "noTestCasesGenerated": "Nie wygenerowano żadnych przypadków testowych. Spróbuj ponownie, podając inne dane wejściowe.",
         "jobNoLongerAvailable": "Ta generacja nie jest już dostępna. Uruchom nową w kreatorze generowania przypadków testowych.",
         "noAiModel": "W tym projekcie nie skonfigurowano żadnego modelu AI. Skonfiguruj model AI w ustawieniach projektu.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Proszę wybrać szablon dla przypadków testowych.",
         "noFieldsSelected": "Proszę wybrać co najmniej jedno pole, dla którego ma zostać wygenerowana treść.",
         "noTestCasesSelectedForImport": "Proszę wybrać co najmniej jeden przypadek testowy do zaimportowania.",
+        "noTestCasesSelectedForStage": "Proszę wybrać co najmniej jeden przypadek testowy do przygotowania.",
         "templateRequired": "Wymagany jest wybór szablonu. Wróć i wybierz szablon.",
         "repositoryNotFound": "Nie znaleziono repozytorium projektu. Skontaktuj się z administratorem.",
         "workflowNotConfigured": "Przepływ pracy projektu nie został skonfigurowany. Sprawdź ustawienia projektu.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Masz 1 przypadek testowy z niezapisanymi edycjami.} other {Masz # przypadków testowych z niezapisanymi edycjami.}}",
         "warning": "Jeśli kontynuujesz bez zapisania, zmiany zostaną utracone.",
         "saveAllAndImport": "Zapisz wszystko i importuj",
-        "discardAndImport": "Odrzuć edycje i importuj"
+        "discardAndImport": "Odrzuć edycje i importuj",
+        "saveAllAndStage": "Zapisz wszystko i przygotuj",
+        "discardAndStage": "Odrzuć edycje i przygotuj"
       },
       "linkedIssuesDroppedTitle": "Niektóre powiązane problemy nie zostały uwzględnione",
       "linkedIssuesDropped": "{count, plural, =1 {# powiązane problemy zostały usunięte} other {# powiązane problemy zostały usunięte}} z powodu budżetu tokenów: {keys}.",

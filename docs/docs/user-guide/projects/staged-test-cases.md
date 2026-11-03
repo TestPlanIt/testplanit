@@ -29,6 +29,12 @@ Files you have selected but not yet uploaded are not part of a staged case.
 Attach them after the case is created.
 :::
 
+Test cases produced by [AI test generation](../llm-test-generation.md) can be
+staged too: on the wizard's review step, **Stage** saves the selected cases as
+staged cases instead of importing them. Each one opens in the Add Case dialog
+like any other staged case, with the generated field values, steps, tags, and
+source-issue link already filled in.
+
 The automatic [recovery of unsaved changes](./case-draft-autosave.md) that
 protects you from an interrupted session is separate from staging and keeps its
 own 30-day retention. Staged cases are kept until you create or delete them.

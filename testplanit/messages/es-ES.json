@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Generación de casos de prueba con IA...",
       "expandProgress": "{done, number} de {total, number} generado",
       "import": "{count, plural, =0 {Importar casos de prueba} =1 {Importar 1 caso de prueba} other {Importar # casos de prueba}}",
+      "stage": "{count, plural, =0 {Casos de prueba de etapa} =1 {Caso de prueba de etapa 1} other {Casos de prueba de etapa #}}",
+      "stageDescription": "Los casos de prueba en etapa son privados para ti. Revísalos en Mis casos en etapa y créalos desde allí; nada se agrega al repositorio hasta que lo hagas.",
       "importing": "{count, plural, =0 {Importando casos de prueba...} =1 {Importando 1 caso de prueba...} other {Importando # casos de prueba...}}",
       "externalSystem": "Sistema externo",
       "autoGenerateTags": "Generar automáticamente etiquetas para casos de prueba",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...y {count, plural, one {# más filas} other {# más filas}}",
       "parameterChipSensitive": "sensible",
       "success": {
-        "imported": "{count, plural, =1 {¡Se ha importado con éxito 1 caso de prueba} other {¡# casos de prueba importados con éxito}}"
+        "imported": "{count, plural, =1 {¡Se ha importado con éxito 1 caso de prueba} other {¡# casos de prueba importados con éxito}}",
+        "staged": "{count, plural, =1 {Etapa # caso de prueba} other {Etapa # casos de prueba}}"
       },
       "importData": {
         "issueDescription": "Problema externo vinculado a la generación del caso de prueba",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Error al generar casos de prueba. Vuelve a intentarlo.",
         "importFailed": "Error al importar casos de prueba. Vuelve a intentarlo.",
+        "stageFailed": "Error al poner en etapa los casos de prueba. Vuelve a intentarlo.",
         "noTestCasesGenerated": "No se han generado casos de prueba. Por favor, inténtalo de nuevo con entradas diferentes.",
         "jobNoLongerAvailable": "Esta generación ya no está disponible. Inicie una nueva desde el asistente Generar casos de prueba.",
         "noAiModel": "No hay ningún modelo de IA configurado para este proyecto. Configure un modelo de IA en la configuración del proyecto.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Seleccione una plantilla para los casos de prueba.",
         "noFieldsSelected": "Seleccione al menos un campo para generar contenido.",
         "noTestCasesSelectedForImport": "Seleccione al menos un caso de prueba para importar.",
+        "noTestCasesSelectedForStage": "Selecciona al menos un caso de prueba para poner en etapa.",
         "templateRequired": "Es necesario seleccionar una plantilla. Vuelve y selecciona una.",
         "repositoryNotFound": "No se encontró el repositorio del proyecto. Contacte con su administrador.",
         "workflowNotConfigured": "El flujo de trabajo del proyecto no está configurado. Verifique la configuración del proyecto.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Tienes 1 caso de prueba con ediciones sin guardar.} other {Tienes # casos de prueba con ediciones sin guardar.}}",
         "warning": "Si continúa sin guardar, sus cambios se perderán.",
         "saveAllAndImport": "Guardar todo e importar",
-        "discardAndImport": "Descartar ediciones e importar"
+        "discardAndImport": "Descartar ediciones e importar",
+        "saveAllAndStage": "Guardar todo y poner en etapa",
+        "discardAndStage": "Descartar ediciones y poner en etapa"
       },
       "linkedIssuesDroppedTitle": "Algunos temas relacionados no fueron incluidos.",
       "linkedIssuesDropped": "{count, plural, =1 {# El problema vinculado fue descartado} other {# Los problemas vinculados fueron descartados}} debido al presupuesto de tokens: {keys}.",

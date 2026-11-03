@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Yapay zekâ ile test senaryoları oluşturma...",
       "expandProgress": "{done, number} 'dan {total, number} üretildi",
       "import": "{count, plural, =0 {Test Senaryolarını İçe Aktar} =1 {1 Test Senaryosunu İçe Aktar} other {# Test Senaryosunu İçe Aktar}}",
+      "stage": "{count, plural, =0 {Aşama Test Senaryoları} =1 {Aşama 1 Test Senaryosu} other {Aşama # Test Senaryoları}}",
+      "stageDescription": "Hazırlanmış test senaryoları size özeldir. Bunları Benim Hazırlanmış Senaryolarımda inceleyin ve oradan oluşturun; depo'ya depoya kadar hiçbir şey eklenmez.",
       "importing": "{count, plural, =0 {Test Senaryoları İçe Aktarılıyor...} =1 {1 Test Senaryosu İçe Aktarılıyor...} other {# Test Senaryosu İçe Aktarılıyor...}}",
       "externalSystem": "Harici Sistem",
       "autoGenerateTags": "Test senaryoları için otomatik olarak etiket oluşturun.",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...ve {count, plural, one {# daha fazla satır} other {# daha fazla satır}}",
       "parameterChipSensitive": "hassas",
       "success": {
-        "imported": "{count, plural, =1 {1 test durumu başarıyla içe aktarıldı} other {# test durumu başarıyla içe aktarıldı}}"
+        "imported": "{count, plural, =1 {1 test durumu başarıyla içe aktarıldı} other {# test durumu başarıyla içe aktarıldı}}",
+        "staged": "{count, plural, =1 {1 test senaryosu hazırlandı} other {# test senaryosu hazırlandı}}"
       },
       "importData": {
         "issueDescription": "Test senaryosu oluşturulmasından kaynaklanan harici sorun.",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Test senaryoları oluşturulamadı. Lütfen tekrar deneyin.",
         "importFailed": "Test senaryoları içe aktarılamadı. Lütfen tekrar deneyin.",
+        "stageFailed": "Test senaryoları hazırlanamadı. Lütfen tekrar deneyin.",
         "noTestCasesGenerated": "Hiçbir test senaryosu oluşturulmadı. Lütfen farklı girdilerle tekrar deneyin.",
         "jobNoLongerAvailable": "Bu sürüm artık kullanılamıyor. Test Senaryoları Oluşturma sihirbazından yeni bir sürüm başlatın.",
         "noAiModel": "Bu proje için herhangi bir yapay zeka modeli yapılandırılmamıştır. Lütfen proje ayarlarında bir yapay zeka modeli yapılandırın.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Lütfen test senaryoları için bir şablon seçin.",
         "noFieldsSelected": "Lütfen içerik oluşturulmasını istediğiniz en az bir alanı seçin.",
         "noTestCasesSelectedForImport": "Lütfen içe aktarmak için en az bir test senaryosu seçin.",
+        "noTestCasesSelectedForStage": "Lütfen hazırlamak için en az bir test senaryosu seçin.",
         "templateRequired": "Şablon seçimi zorunludur. Lütfen geri dönüp bir şablon seçin.",
         "repositoryNotFound": "Proje deposu bulunamadı. Lütfen yöneticinizle iletişime geçin.",
         "workflowNotConfigured": "Proje iş akışı yapılandırılmamış. Lütfen proje ayarlarını doğrulayın.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Kaydedilmemiş düzenlemeleri olan 1 test senaryonuz var.} other {Kaydedilmemiş düzenlemeleri olan # test senaryonuz var.}}",
         "warning": "Kaydetmeden devam ederseniz, yaptığınız değişiklikler kaybolacaktır.",
         "saveAllAndImport": "Tümünü Kaydet ve İçe Aktar",
-        "discardAndImport": "Düzenlemeleri İptal Et ve İçe Aktar"
+        "discardAndImport": "Düzenlemeleri İptal Et ve İçe Aktar",
+        "saveAllAndStage": "Tümünü Kaydet ve Hazırla",
+        "discardAndStage": "Düzenlemeleri İptal Et ve Hazırla"
       },
       "linkedIssuesDroppedTitle": "Bağlantılı bazı konular dahil edilmemiştir.",
       "linkedIssuesDropped": "{count, plural, =1 {# bağlantılı sorun, token bütçesi nedeniyle kaldırıldı} other {# bağlantılı sorunlar, token bütçesi nedeniyle kaldırıldı}} : {keys}.",

@@ -447,6 +447,11 @@ const EXEMPT_INGESTION_IMPORT_FILES = [
   // just narrow a picker.
   "lib/integrations/adapters/SimpleUrlAdapter.ts",
   "lib/services/testCaseImport.ts",
+  // The generation wizard's Stage action: the same id + project-scoped
+  // lookup of the seeded issue the importer makes (the seeded flows link
+  // requirements and defects alike), so the staged case carries the link
+  // the imported one would.
+  "lib/services/generatedCaseStaging.ts",
   "workers/testmoImport/issueImports.ts",
 ];
 

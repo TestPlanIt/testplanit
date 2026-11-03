@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Generierung von Testfällen mit KI...",
       "expandProgress": "{done, number} von {total, number} generiert",
       "import": "{count, plural, =0 {Testfälle importieren} =1 {1 Testfall importieren} other {# Testfälle importieren}}",
+      "stage": "{count, plural, =0 {Testfälle inszenieren} =1 {1 Testfall inszenieren} other {# Testfälle inszenieren}}",
+      "stageDescription": "Bereitgestellte Testfälle sind privat für Sie. Überprüfen Sie sie unter \"Meine bereitgestellten Fälle\" und erstellen Sie sie von dort aus. Nichts wird zum Repository hinzugefügt, bis Sie dies tun.",
       "importing": "{count, plural, =0 {Importiere Testfälle...} =1 {Importiere 1 Testfall...} other {Importiere # Testfälle...}}",
       "externalSystem": "Externes System",
       "autoGenerateTags": "Tags für Testfälle automatisch generieren",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...und {count, plural, one {# weitere Zeile} other {# weitere Zeilen}}",
       "parameterChipSensitive": "empfindlich",
       "success": {
-        "imported": "{count, plural, =1 {1 Testfall erfolgreich importiert} other {# Testfälle erfolgreich importiert}}"
+        "imported": "{count, plural, =1 {1 Testfall erfolgreich importiert} other {# Testfälle erfolgreich importiert}}",
+        "staged": "{count, plural, =1 {1 Testfall bereitgestellt} other {# Testfälle bereitgestellt}}"
       },
       "importData": {
         "issueDescription": "Externes Ticket im Zusammenhang mit der Testfallgenerierung",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Es konnten keine Testfälle generiert werden. Bitte versuchen Sie es erneut.",
         "importFailed": "Die Testfälle konnten nicht importiert werden. Bitte versuchen Sie es erneut.",
+        "stageFailed": "Testfälle konnten nicht bereitgestellt werden. Bitte versuchen Sie es erneut.",
         "noTestCasesGenerated": "Es wurden keine Testfälle generiert. Bitte versuchen Sie es erneut mit anderen Eingaben.",
         "jobNoLongerAvailable": "Diese Generation ist nicht mehr verfügbar. Starten Sie eine neue Generation über den Assistenten zum Generieren von Testfällen.",
         "noAiModel": "Für dieses Projekt ist kein KI-Modell konfiguriert. Bitte konfigurieren Sie ein KI-Modell in den Projekteinstellungen.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Bitte wählen Sie eine Vorlage für die Testfälle aus.",
         "noFieldsSelected": "Bitte wählen Sie mindestens ein Feld aus, für das Inhalte generiert werden sollen.",
         "noTestCasesSelectedForImport": "Bitte wählen Sie mindestens einen Testfall zum Importieren aus.",
+        "noTestCasesSelectedForStage": "Bitte wählen Sie mindestens einen Testfall zum Bereitstellen aus.",
         "templateRequired": "Sie müssen eine Vorlage auswählen. Bitte gehen Sie zurück und wählen Sie eine Vorlage aus.",
         "repositoryNotFound": "Das Projekt-Repository wurde nicht gefunden. Bitte wenden Sie sich an Ihren Administrator.",
         "workflowNotConfigured": "Der Projekt-Workflow ist nicht konfiguriert. Bitte überprüfen Sie die Projekteinstellungen.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Es gibt 1 Testfall mit ungespeicherten Änderungen.} other {Es gibt # Testfälle mit ungespeicherten Änderungen.}}",
         "warning": "Wenn Sie fortfahren, ohne zu speichern, gehen Ihre Änderungen verloren.",
         "saveAllAndImport": "Alles speichern & importieren",
-        "discardAndImport": "Änderungen verwerfen & importieren"
+        "discardAndImport": "Änderungen verwerfen & importieren",
+        "saveAllAndStage": "Alles speichern & bereitstellen",
+        "discardAndStage": "Änderungen verwerfen & bereitstellen"
       },
       "linkedIssuesDroppedTitle": "Einige damit zusammenhängende Tickets wurden nicht berücksichtigt.",
       "linkedIssuesDropped": "{count, plural, =1 {# verknüpftes Ticket wurde verworfen} other {# verknüpfte Tickets wurden verworfen}} aufgrund des Token-Budgets: {keys}.",

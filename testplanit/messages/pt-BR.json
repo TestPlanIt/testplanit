@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Geração de casos de teste com IA...",
       "expandProgress": "{done, number} de {total, number} gerado",
       "import": "{count, plural, =0 {Importar casos de teste} =1 {Importar 1 caso de teste} other {Importar # casos de teste}}",
+      "stage": "{count, plural, =0 {Stage Test Cases} =1 {Stage 1 Test Case} other {Stage # Test Cases}}",
+      "stageDescription": "Os casos de teste preparados são privados para você. Revise-os em Meus casos preparados e crie-os de lá; nada é adicionado ao repositório até que você faça isso.",
       "importing": "{count, plural, =0 {Importando casos de teste...} =1 {Importando 1 caso de teste...} other {Importando # casos de teste...}}",
       "externalSystem": "Sistema externo",
       "autoGenerateTags": "Gere automaticamente etiquetas para casos de teste.",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...e {count, plural, one {# mais linhas} other {# mais linhas}}",
       "parameterChipSensitive": "confidencial",
       "success": {
-        "imported": "{count, plural, =1 {Importado com sucesso 1 caso de teste} other {Importados com sucesso # casos de teste}}"
+        "imported": "{count, plural, =1 {Importado com sucesso 1 caso de teste} other {Importados com sucesso # casos de teste}}",
+        "staged": "{count, plural, =1 {Staged 1 test case} other {Staged # test cases}}"
       },
       "importData": {
         "issueDescription": "Problema externo vinculado à geração de casos de teste",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Falha ao gerar os casos de teste. Tente novamente.",
         "importFailed": "Falha ao importar os casos de teste. Tente novamente.",
+        "stageFailed": "Falha ao preparar os casos de teste. Tente novamente.",
         "noTestCasesGenerated": "Nenhum caso de teste foi gerado. Tente novamente com entradas diferentes.",
         "jobNoLongerAvailable": "Esta geração não está mais disponível. Inicie uma nova a partir do assistente Gerar Casos de Teste.",
         "noAiModel": "Nenhum modelo de IA está configurado para este projeto. Por favor, configure um modelo de IA nas configurações do projeto.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Por favor, selecione um modelo para os casos de teste.",
         "noFieldsSelected": "Selecione pelo menos um campo para o qual deseja gerar conteúdo.",
         "noTestCasesSelectedForImport": "Selecione pelo menos um caso de teste para importar.",
+        "noTestCasesSelectedForStage": "Selecione pelo menos um caso de teste para preparar.",
         "templateRequired": "É necessário selecionar um modelo. Por favor, volte e selecione um modelo.",
         "repositoryNotFound": "Repositório do projeto não encontrado. Por favor, entre em contato com o administrador.",
         "workflowNotConfigured": "Fluxo de trabalho do projeto não configurado. Verifique as configurações do projeto.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Você tem 1 caso de teste com edições não salvas.} other {Você tem # casos de teste com edições não salvas.}}",
         "warning": "Se você prosseguir sem salvar, suas alterações serão perdidas.",
         "saveAllAndImport": "Salvar tudo e importar",
-        "discardAndImport": "Descartar edições e importar"
+        "discardAndImport": "Descartar edições e importar",
+        "saveAllAndStage": "Salvar tudo e preparar",
+        "discardAndStage": "Descartar edições e preparar"
       },
       "linkedIssuesDroppedTitle": "Algumas questões relacionadas não foram incluídas.",
       "linkedIssuesDropped": "{count, plural, =1 {# problema vinculado foi descartado} other {# problemas vinculados foram descartados}} devido ao orçamento de tokens: {keys}.",

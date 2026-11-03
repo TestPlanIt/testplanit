@@ -287,3 +287,89 @@ describe("en-US.json — INT-06 i18n keys", () => {
     expect(typeof ns.parameterChipSensitive).toBe("string");
   });
 });
+
+describe("GenerateTestCasesWizard — stage selected cases", () => {
+  it("offers Stage only when the wizard has a folder and was not seeded", () => {
+    const src = readWizard();
+    expect(src).toMatch(/const canStage = folderId > 0 && !seedIssue;/);
+    expect(src).toMatch(
+      /\{isLastStep && canStage && \([\s\S]*?data-testid="generate-stage-button"/
+    );
+  });
+
+  it("stages through the server action with the same field mappings and issue link as the import", () => {
+    const src = readWizard();
+    const stageIdx = src.indexOf("await stageGeneratedTestCases({");
+    expect(stageIdx).toBeGreaterThan(-1);
+    const stageSnippet = src.slice(stageIdx, stageIdx + 1500);
+    expect(stageSnippet).toMatch(
+      /fieldMappings: selectedFieldMappingsFor\(selectedTemplate\)/
+    );
+    expect(stageSnippet).toMatch(/issue: sourceIssueLink\(\)/);
+    const importIdx = src.indexOf("await importGeneratedTestCases({");
+    expect(importIdx).toBeGreaterThan(-1);
+    expect(src.slice(importIdx - 200, importIdx)).toMatch(
+      /const fieldMappings = selectedFieldMappingsFor\(selectedTemplate\);\s*\n\s*const issue = sourceIssueLink\(\);/
+    );
+  });
+
+  it("re-reads the staged-case queries after staging, since the action bypasses the hooks", () => {
+    const src = readWizard();
+    expect(src).toMatch(/invalidateStagedCaseQueries\(queryClient\);/);
+  });
+
+  it("resumes the chosen action from the unsaved-edits dialog", () => {
+    const src = readWizard();
+    expect(src).toMatch(
+      /const handleImportClick = \(\) => handleFinishClick\("import"\);/
+    );
+    expect(src).toMatch(
+      /const handleStageClick = \(\) => handleFinishClick\("stage"\);/
+    );
+    expect(src).toMatch(/runFinishAction\(pendingFinishAction, savedEdits\)/);
+    // The finish runs on the cases the saves returned, never on a timer.
+    expect(src).not.toMatch(/setTimeout\(\(\) => \{\s*runFinishAction/);
+    expect(src).toMatch(/unsavedEdits\.discardAndStage/);
+    expect(src).toMatch(/unsavedEdits\.saveAllAndStage/);
+  });
+
+  it("holds navigation and the footer while staging, as it does while importing", () => {
+    const src = readWizard();
+    expect(src).toMatch(/const isFinishing = isImporting \|\| isStaging;/);
+    expect(src).toMatch(/isImporting=\{isFinishing\}/);
+    expect(src).not.toMatch(/disabled=\{isImporting\}/);
+  });
+
+  it("references the staging i18n keys, which exist in en-US.json", () => {
+    const src = readWizard();
+    const en = JSON.parse(
+      readFileSync(
+        path.join(
+          __dirname,
+          "..",
+          "..",
+          "..",
+          "..",
+          "..",
+          "messages",
+          "en-US.json"
+        ),
+        "utf8"
+      )
+    );
+    const ns = en.repository.generateTestCases;
+    for (const key of [
+      "stage",
+      "stageDescription",
+      "success.staged",
+      "errors.stageFailed",
+      "errors.noTestCasesSelectedForStage",
+      "unsavedEdits.saveAllAndStage",
+      "unsavedEdits.discardAndStage",
+    ]) {
+      expect(src).toContain(`generateTestCases.${key}`);
+      const value = key.split(".").reduce((o, k) => o?.[k], ns);
+      expect(typeof value).toBe("string");
+    }
+  });
+});

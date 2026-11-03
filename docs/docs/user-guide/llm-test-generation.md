@@ -108,6 +108,8 @@ Choose your test generation source:
 - Bulk select/deselect options available
 - Edit any test case inline before importing (click the Edit button)
 - Tags can be added or removed interactively during editing using tag badges with add/remove controls
+- **Import** creates the selected test cases in the repository
+- **Stage** saves the selected test cases as your [staged test cases](./projects/staged-test-cases.md) instead of creating them, so you can review each one in the Add Case dialog and create them later from **My Staged Cases**. Staged cases keep the template, field values, steps, generated tags, and the link to the source issue that an import would have written. Stage is available when the wizard was opened from a repository folder; the pre-seeded launches from a milestone or the coverage-gaps report import only
 
 **Linked-issue context notice:**
 

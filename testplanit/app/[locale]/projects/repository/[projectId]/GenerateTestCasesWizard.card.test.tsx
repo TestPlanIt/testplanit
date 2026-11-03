@@ -146,7 +146,8 @@ function ReviewStep({
   const [testCase, setTestCase] = useState<any>(generatedCase);
   const [isEditing, setIsEditing] = useState(false);
   const [churn, setChurn] = useState(0);
-  const formSubmitHandlersRef = useRef(new Map<string, () => void>());
+  // The card's save handler type is private to the wizard module.
+  const formSubmitHandlersRef = useRef(new Map<string, any>());
 
   return (
     <>

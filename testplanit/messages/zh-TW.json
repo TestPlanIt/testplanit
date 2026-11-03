@@ -3900,6 +3900,8 @@
       "generatingLegacy": "利用人工智慧產生測試用例…",
       "expandProgress": "{done, number} 的 {total, number} 生成",
       "import": "{count, plural, =0 {匯入測試案例} =1 {匯入 1 個測試案例} other {匯入 # 個測試案例}}",
+      "stage": "{count, plural, =0 {舞台測試案例} =1 {舞台 1 個測試案例} other {舞台 # 個測試案例}}",
+      "stageDescription": "暫存的測試案例是您私人的。在「我的暫存案例」中檢閱它們並從那裡建立它們；在您這樣做之前，沒有任何內容會新增到儲存庫。",
       "importing": "{count, plural, =0 {正在匯入測試案例……} =1 {正在匯入 1 個測試案例……} other {正在匯入 # 個測試案例……}}",
       "externalSystem": "外部系統",
       "autoGenerateTags": "自動為測試用例產生標籤",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "……以及 {count, plural, one {# 更多行} other {# 更多行}}",
       "parameterChipSensitive": "敏感的",
       "success": {
-        "imported": "{count, plural, =1 {成功匯入 1 個測試案例} other {成功匯入 # 個測試案例}}"
+        "imported": "{count, plural, =1 {成功匯入 1 個測試案例} other {成功匯入 # 個測試案例}}",
+        "staged": "{count, plural, =1 {暫存 1 個測試案例} other {暫存 # 個測試案例}}"
       },
       "importData": {
         "issueDescription": "與測試用例產生相關的外部問題",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "測試用例產生失敗，請重試。",
         "importFailed": "導入測試用例失敗，請重試。",
+        "stageFailed": "暫存測試案例失敗。請重試。",
         "noTestCasesGenerated": "未產生任何測試用例。請使用不同的輸入重試。",
         "jobNoLongerAvailable": "此版本已不再可用。請從「產生測試案例」精靈開始新的版本。",
         "noAiModel": "此項目未配置任何 AI 模型。請在專案設定中配置 AI 模型。",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "請為測試案例選擇一個模板。",
         "noFieldsSelected": "請至少選擇一個欄位以產生內容。",
         "noTestCasesSelectedForImport": "請至少選擇一個測試用例導入。",
+        "noTestCasesSelectedForStage": "請至少選擇一個測試案例進行暫存。",
         "templateRequired": "必須選擇模板。請返回並選擇模板。",
         "repositoryNotFound": "項目倉庫未找到。請聯絡管理員。",
         "workflowNotConfigured": "專案工作流程未配置。請檢查項目設定。",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {您有 1 個測試案例存在未儲存的編輯。} other {您有 # 個測試案例存在未儲存的編輯。}}",
         "warning": "如果您在不儲存的情況下繼續操作，您的變更將會遺失。",
         "saveAllAndImport": "全部儲存並導入",
-        "discardAndImport": "放棄編輯並導入"
+        "discardAndImport": "放棄編輯並導入",
+        "saveAllAndStage": "全部儲存並暫存",
+        "discardAndStage": "放棄編輯並暫存"
       },
       "linkedIssuesDroppedTitle": "部分相關問題未包含在內。",
       "linkedIssuesDropped": "{count, plural, =1 {# 個連結問題已被捨棄} other {# 個連結問題已被捨棄}}，原因是權杖預算限制：{keys}。",

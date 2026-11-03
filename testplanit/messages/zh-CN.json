@@ -3900,6 +3900,8 @@
       "generatingLegacy": "利用人工智能生成测试用例……",
       "expandProgress": "{done, number} 的 {total, number} 生成",
       "import": "{count, plural, =0 {导入测试用例} =1 {导入 1 个测试用例} other {导入 # 个测试用例}}",
+      "stage": "{count, plural, =0 {阶段测试用例} =1 {阶段 1 个测试用例} other {阶段 # 个测试用例}}",
+      "stageDescription": "分阶段的测试用例仅供您个人使用。在\"我的分阶段用例\"中查看它们，并从那里创建它们；在您执行此操作之前，不会向存储库添加任何内容。",
       "importing": "{count, plural, =0 {正在导入测试用例...} =1 {正在导入 1 个测试用例...} other {正在导入 # 个测试用例...}}",
       "externalSystem": "外部系统",
       "autoGenerateTags": "自动为测试用例生成标签",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "……以及 {count, plural, one {# 更多行} other {# 更多行}}",
       "parameterChipSensitive": "敏感的",
       "success": {
-        "imported": "{count, plural, =1 {成功导入 1 个测试用例} other {成功导入 # 个测试用例}}"
+        "imported": "{count, plural, =1 {成功导入 1 个测试用例} other {成功导入 # 个测试用例}}",
+        "staged": "{count, plural, =1 {已分阶段 1 个测试用例} other {已分阶段 # 个测试用例}}"
       },
       "importData": {
         "issueDescription": "与测试用例生成相关的外部问题",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "测试用例生成失败，请重试。",
         "importFailed": "导入测试用例失败，请重试。",
+        "stageFailed": "分阶段测试用例失败。请重试。",
         "noTestCasesGenerated": "未生成任何测试用例。请使用不同的输入重试。",
         "jobNoLongerAvailable": "此版本已不再可用。请从“生成测试用例”向导开始新的版本。",
         "noAiModel": "此项目未配置任何 AI 模型。请在项目设置中配置 AI 模型。",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "请为测试用例选择一个模板。",
         "noFieldsSelected": "请至少选择一个字段以生成内容。",
         "noTestCasesSelectedForImport": "请至少选择一个测试用例导入。",
+        "noTestCasesSelectedForStage": "请至少选择一个测试用例进行分阶段。",
         "templateRequired": "必须选择模板。请返回并选择模板。",
         "repositoryNotFound": "项目仓库未找到。请联系管理员。",
         "workflowNotConfigured": "项目工作流程未配置。请检查项目设置。",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {您有 1 个测试用例存在未保存的编辑。} other {您有 # 个测试用例存在未保存的编辑。}}",
         "warning": "如果您在不保存的情况下继续操作，您的更改将会丢失。",
         "saveAllAndImport": "全部保存并导入",
-        "discardAndImport": "放弃编辑并导入"
+        "discardAndImport": "放弃编辑并导入",
+        "saveAllAndStage": "全部保存并分阶段",
+        "discardAndStage": "放弃编辑并分阶段"
       },
       "linkedIssuesDroppedTitle": "部分相关问题未包含在内。",
       "linkedIssuesDropped": "{count, plural, =1 {# 关联的问题已被删除} other {# 关联的问题已被删除}} 由于代币预算： {keys}。",

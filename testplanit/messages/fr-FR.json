@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Générer des cas de test avec l'IA...",
       "expandProgress": "{done, number} de {total, number} généré",
       "import": "{count, plural, =0 {Importer les cas de test} =1 {Importer 1 cas de test} other {Importer # cas de test}}",
+      "stage": "{count, plural, =0 {Cas de test d'étape} =1 {Cas de test d'étape 1} other {# cas de test d'étape}}",
+      "stageDescription": "Les cas de test en attente sont privés pour vous. Consultez-les dans Mes cas en attente et créez-les à partir de là ; rien n'est ajouté au référentiel jusqu'à ce que vous le fassiez.",
       "importing": "{count, plural, =0 {Importation des cas de test...} =1 {Importation de 1 cas de test...} other {Importation de # cas de test...}}",
       "externalSystem": "Système externe",
       "autoGenerateTags": "Générer automatiquement des étiquettes pour les cas de test",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...et {count, plural, one {# autre ligne} other {# autres lignes}}",
       "parameterChipSensitive": "sensible",
       "success": {
-        "imported": "{count, plural, =1 {1 cas de test importé avec succès} other {# cas de test importés avec succès}}"
+        "imported": "{count, plural, =1 {1 cas de test importé avec succès} other {# cas de test importés avec succès}}",
+        "staged": "{count, plural, =1 {# cas de test en attente} other {# cas de test en attente}}"
       },
       "importData": {
         "issueDescription": "Problème externe lié à la génération des cas de test",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Impossible de générer les cas de test. Veuillez réessayer.",
         "importFailed": "L'importation des cas de test a échoué. Veuillez réessayer.",
+        "stageFailed": "Impossible de placer les cas de test en attente. Veuillez réessayer.",
         "noTestCasesGenerated": "Aucun cas de test n'a été généré. Veuillez réessayer avec des entrées différentes.",
         "jobNoLongerAvailable": "Cette génération n'est plus disponible. Veuillez en créer une nouvelle à partir de l'assistant Générer des cas de test.",
         "noAiModel": "Aucun modèle d'IA n'est configuré pour ce projet. Veuillez configurer un modèle d'IA dans les paramètres du projet.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Veuillez sélectionner un modèle pour les cas de test.",
         "noFieldsSelected": "Veuillez sélectionner au moins un champ pour lequel générer du contenu.",
         "noTestCasesSelectedForImport": "Veuillez sélectionner au moins un cas de test à importer.",
+        "noTestCasesSelectedForStage": "Veuillez sélectionner au moins un cas de test à placer en attente.",
         "templateRequired": "Vous devez sélectionner un modèle. Veuillez revenir en arrière et choisir un modèle.",
         "repositoryNotFound": "Le dépôt du projet est introuvable. Veuillez contacter votre administrateur.",
         "workflowNotConfigured": "Le flux de travail du projet n'est pas configuré. Veuillez vérifier les paramètres du projet.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Vous avez 1 cas de test avec des modifications non enregistrées.} other {Vous avez # cas de test avec des modifications non enregistrées.}}",
         "warning": "Si vous continuez sans enregistrer, vos modifications seront perdues.",
         "saveAllAndImport": "Tout enregistrer et importer",
-        "discardAndImport": "Annuler les modifications et importer"
+        "discardAndImport": "Annuler les modifications et importer",
+        "saveAllAndStage": "Tout enregistrer et placer en attente",
+        "discardAndStage": "Annuler les modifications et placer en attente"
       },
       "linkedIssuesDroppedTitle": "Certains problèmes liés n'ont pas été inclus.",
       "linkedIssuesDropped": "{count, plural, =1 {# problème lié a été supprimé} other {# problèmes liés ont été supprimés}} en raison du budget de jetons : {keys}.",

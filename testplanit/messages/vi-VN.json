@@ -3900,6 +3900,8 @@
       "generatingLegacy": "Tạo các trường hợp thử nghiệm bằng AI...",
       "expandProgress": "{done, number} của {total, number} được tạo ra",
       "import": "{count, plural, =0 {Nhập các trường hợp kiểm thử} =1 {Nhập 1 trường hợp kiểm thử} other {Nhập # trường hợp kiểm thử}}",
+      "stage": "{count, plural, =0 {Các trường hợp kiểm thử giai đoạn} =1 {Giai đoạn 1 trường hợp kiểm thử} other {Giai đoạn # các trường hợp kiểm thử}}",
+      "stageDescription": "Các trường hợp kiểm thử theo giai đoạn là riêng tư cho bạn. Xem lại chúng trong Các trường hợp kiểm thử theo giai đoạn của tôi và tạo chúng từ đó; không có gì được thêm vào kho lưu trữ cho đến khi bạn thực hiện.",
       "importing": "{count, plural, =0 {Đang nhập các trường hợp kiểm thử...} =1 {Đang nhập 1 trường hợp kiểm thử...} other {Đang nhập # trường hợp kiểm thử...}}",
       "externalSystem": "Hệ thống bên ngoài",
       "autoGenerateTags": "Tự động tạo thẻ cho các trường hợp kiểm thử",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...và {count, plural, one {# thêm hàng} other {# thêm hàng}}",
       "parameterChipSensitive": "nhạy cảm",
       "success": {
-        "imported": "{count, plural, =1 {Đã nhập thành công 1 trường hợp thử nghiệm} other {Đã nhập thành công # trường hợp thử nghiệm}}"
+        "imported": "{count, plural, =1 {Đã nhập thành công 1 trường hợp thử nghiệm} other {Đã nhập thành công # trường hợp thử nghiệm}}",
+        "staged": "{count, plural, =1 {Đã sắp xếp 1 trường hợp kiểm thử} other {Đã sắp xếp # trường hợp kiểm thử}}"
       },
       "importData": {
         "issueDescription": "Vấn đề bên ngoài phát sinh từ quá trình tạo trường hợp kiểm thử",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "Không thể tạo các trường hợp kiểm thử. Vui lòng thử lại.",
         "importFailed": "Không thể nhập các trường hợp kiểm thử. Vui lòng thử lại.",
+        "stageFailed": "Không thể sắp xếp các trường hợp kiểm thử. Vui lòng thử lại.",
         "noTestCasesGenerated": "Không có trường hợp kiểm thử nào được tạo ra. Vui lòng thử lại với các dữ liệu đầu vào khác.",
         "jobNoLongerAvailable": "Thế hệ này không còn khả dụng nữa. Hãy bắt đầu một thế hệ mới từ trình hướng dẫn Tạo trường hợp kiểm thử.",
         "noAiModel": "Hiện chưa có mô hình AI nào được cấu hình cho dự án này. Vui lòng cấu hình mô hình AI trong cài đặt dự án.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "Vui lòng chọn một mẫu cho các trường hợp kiểm thử.",
         "noFieldsSelected": "Vui lòng chọn ít nhất một trường để tạo nội dung.",
         "noTestCasesSelectedForImport": "Vui lòng chọn ít nhất một trường hợp thử nghiệm để nhập.",
+        "noTestCasesSelectedForStage": "Vui lòng chọn ít nhất một trường hợp kiểm thử để sắp xếp.",
         "templateRequired": "Bạn cần chọn mẫu. Vui lòng quay lại và chọn mẫu.",
         "repositoryNotFound": "Không tìm thấy kho lưu trữ dự án. Vui lòng liên hệ với quản trị viên của bạn.",
         "workflowNotConfigured": "Quy trình làm việc của dự án chưa được cấu hình. Vui lòng kiểm tra lại cài đặt dự án.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {Bạn có 1 trường hợp kiểm thử với các chỉnh sửa chưa được lưu.} other {Bạn có # trường hợp kiểm thử với các chỉnh sửa chưa được lưu.}}",
         "warning": "Nếu bạn tiếp tục mà không lưu, những thay đổi của bạn sẽ bị mất.",
         "saveAllAndImport": "Lưu tất cả & Nhập",
-        "discardAndImport": "Hủy bỏ chỉnh sửa & Nhập"
+        "discardAndImport": "Hủy bỏ chỉnh sửa & Nhập",
+        "saveAllAndStage": "Lưu tất cả & Sắp xếp",
+        "discardAndStage": "Hủy bỏ chỉnh sửa & Sắp xếp"
       },
       "linkedIssuesDroppedTitle": "Một số vấn đề liên quan không được bao gồm.",
       "linkedIssuesDropped": "{count, plural, =1 {# Vấn đề được liên kết đã bị hủy bỏ} other {# Vấn đề được liên kết đã bị hủy bỏ}} do hạn mức token: {keys}.",

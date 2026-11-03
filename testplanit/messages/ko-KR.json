@@ -3900,6 +3900,8 @@
       "generatingLegacy": "AI를 이용한 테스트 케이스 생성...",
       "expandProgress": "{done, number} {total, number} 생성됨",
       "import": "{count, plural, =0 {테스트 케이스 가져오기} =1 {테스트 케이스 1개 가져오기} other {테스트 케이스 #개 가져오기}}",
+      "stage": "{count, plural, =0 {스테이지 테스트 케이스} =1 {스테이지 1개 테스트 케이스} other {스테이지 #개 테스트 케이스}}",
+      "stageDescription": "스테이징된 테스트 케이스는 귀하의 개인 데이터입니다. 내 스테이징된 케이스에서 검토하고 거기서 생성하세요. 생성할 때까지 저장소에 아무것도 추가되지 않습니다.",
       "importing": "{count, plural, =0 {테스트 케이스를 가져오는 중...} =1 {테스트 케이스 1개를 가져오는 중...} other {테스트 케이스 #개를 가져오는 중...}}",
       "externalSystem": "외부 시스템",
       "autoGenerateTags": "테스트 케이스에 대한 태그를 자동으로 생성합니다.",
@@ -3913,7 +3915,8 @@
       "datasetMoreRows": "...그리고 {count, plural, one {# 더 많은 행} other {# 더 많은 행}}",
       "parameterChipSensitive": "예민한",
       "success": {
-        "imported": "{count, plural, =1 {테스트 케이스 1개를 성공적으로 가져왔습니다.} other {테스트 케이스 #개를 성공적으로 가져왔습니다.}}"
+        "imported": "{count, plural, =1 {테스트 케이스 1개를 성공적으로 가져왔습니다.} other {테스트 케이스 #개를 성공적으로 가져왔습니다.}}",
+        "staged": "{count, plural, =1 {테스트 케이스 1개 스테이징됨} other {테스트 케이스 #개 스테이징됨}}"
       },
       "importData": {
         "issueDescription": "테스트 케이스 생성과 관련된 외부 문제",
@@ -3922,6 +3925,7 @@
       "errors": {
         "generateFailed": "테스트 케이스 생성에 실패했습니다. 다시 시도해 주세요.",
         "importFailed": "테스트 케이스를 가져오는 데 실패했습니다. 다시 시도해 주세요.",
+        "stageFailed": "테스트 케이스 스테이징에 실패했습니다. 다시 시도해 주세요.",
         "noTestCasesGenerated": "테스트 케이스가 생성되지 않았습니다. 다른 입력값을 사용하여 다시 시도해 주세요.",
         "jobNoLongerAvailable": "이 생성 기능은 더 이상 사용할 수 없습니다. 테스트 케이스 생성 마법사를 사용하여 새 생성을 시작하십시오.",
         "noAiModel": "이 프로젝트에는 AI 모델이 설정되어 있지 않습니다. 프로젝트 설정에서 AI 모델을 설정해 주세요.",
@@ -3930,6 +3934,7 @@
         "noTemplateSelected": "테스트 케이스에 사용할 템플릿을 선택해 주세요.",
         "noFieldsSelected": "콘텐츠를 생성할 필드를 하나 이상 선택해 주세요.",
         "noTestCasesSelectedForImport": "가져올 테스트 케이스를 최소 하나 이상 선택하십시오.",
+        "noTestCasesSelectedForStage": "스테이징할 테스트 케이스를 최소 하나 이상 선택하십시오.",
         "templateRequired": "템플릿 선택이 필요합니다. 뒤로 돌아가서 템플릿을 선택하세요.",
         "repositoryNotFound": "프로젝트 저장소를 찾을 수 없습니다. 관리자에게 문의하십시오.",
         "workflowNotConfigured": "프로젝트 워크플로가 구성되지 않았습니다. 프로젝트 설정을 확인하십시오.",
@@ -4011,7 +4016,9 @@
         "description": "{count, plural, =1 {저장되지 않은 편집 내용이 있는 테스트 케이스가 1개 있습니다.} other {저장되지 않은 편집 내용이 있는 테스트 케이스가 #개 있습니다.}}",
         "warning": "저장하지 않고 진행하면 변경 내용이 손실됩니다.",
         "saveAllAndImport": "모두 저장 및 가져오기",
-        "discardAndImport": "수정 내용 삭제 및 가져오기"
+        "discardAndImport": "수정 내용 삭제 및 가져오기",
+        "saveAllAndStage": "모두 저장 및 스테이징",
+        "discardAndStage": "수정 내용 삭제 및 스테이징"
       },
       "linkedIssuesDroppedTitle": "일부 연관된 문제가 포함되지 않았습니다.",
       "linkedIssuesDropped": "{count, plural, =1 {# 연결된 이슈가 삭제되었습니다} other {# 연결된 이슈가 삭제되었습니다}} 토큰 예산 부족으로 인해: {keys}.",
