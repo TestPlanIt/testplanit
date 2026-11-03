@@ -132,6 +132,7 @@ async function loadPanelTestRuns(testRunIds: number[], lazyRunCases: boolean) {
         name: true,
         isDeleted: true,
         state: PANEL_STATE_SELECT,
+        configuration: { select: { name: true } },
         project: { select: { id: true } },
       },
     }),
@@ -149,6 +150,9 @@ async function loadPanelTestRuns(testRunIds: number[], lazyRunCases: boolean) {
       {
         id: testRun.id,
         name: testRun.name,
+        // Runs created for several configurations share a name; the panel
+        // shows this beside it so they do not read as one run repeated.
+        configurationName: testRun.configuration?.name ?? null,
         status: testRun.state.name,
         statusIcon: testRun.state.icon?.name,
         statusColor: testRun.state.color?.value,
@@ -455,7 +459,12 @@ async function loadPanelTestCases(
               select: {
                 id: true,
                 testRun: {
-                  select: { id: true, name: true, isCompleted: true },
+                  select: {
+                    id: true,
+                    name: true,
+                    isCompleted: true,
+                    configuration: { select: { name: true } },
+                  },
                 },
               },
             },
@@ -472,7 +481,12 @@ async function loadPanelTestCases(
             testSuite: {
               select: {
                 testRun: {
-                  select: { id: true, name: true, isCompleted: true },
+                  select: {
+                    id: true,
+                    name: true,
+                    isCompleted: true,
+                    configuration: { select: { name: true } },
+                  },
                 },
               },
             },
@@ -528,6 +542,7 @@ async function loadPanelTestCases(
             resultId: execution.resultId,
             testRunId: testRun?.id ?? execution.testRunId,
             testRunName: testRun?.name || "Automated Run",
+            testRunConfigurationName: testRun?.configuration?.name ?? null,
             testRunIsCompleted: testRun?.isCompleted || false,
             testRunCaseId: null,
             status: execution.statusName,
@@ -551,6 +566,7 @@ async function loadPanelTestCases(
           resultId: execution.resultId,
           testRunId: testRun?.id ?? execution.testRunId,
           testRunName: testRun?.name || "Unknown Test Run",
+          testRunConfigurationName: testRun?.configuration?.name ?? null,
           testRunIsCompleted: testRun?.isCompleted || false,
           testRunCaseId: detail?.testRunCase?.id ?? null,
           status: execution.statusName,

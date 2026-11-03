@@ -248,7 +248,12 @@ describe("jira test-info deleted cases", () => {
         editedBy: null,
         testRunCase: {
           id: 55,
-          testRun: { id: 7, name: "Regression", isCompleted: true },
+          testRun: {
+            id: 7,
+            name: "Regression",
+            isCompleted: true,
+            configuration: { name: "Chrome / Windows" },
+          },
         },
       },
     ] as never);
@@ -269,6 +274,7 @@ describe("jira test-info deleted cases", () => {
         resultId: 900,
         testRunId: 7,
         testRunName: "Regression",
+        testRunConfigurationName: "Chrome / Windows",
         testRunIsCompleted: true,
         status: "Passed",
         statusColor: "#16a34a",
@@ -359,6 +365,7 @@ describe("jira test-info deleted cases", () => {
         resultId: 5000,
         testRunId: 70,
         testRunName: "Web Regression",
+        testRunConfigurationName: null,
         status: "Failed",
         // CI wrote it: no user, no edit trail, no per-case version.
         executedBy: { id: null, name: "Automation" },
@@ -665,11 +672,13 @@ describe("jira test-info field queries", () => {
 });
 
 describe("jira test-info runs and sessions", () => {
+  // Run 7 was created for a configuration; run 8 has none.
   const runRow = (id: number) => ({
     id,
     name: `Run ${id}`,
     isDeleted: false,
     state: { name: "Active", icon: { name: "Play" }, color: { value: "#00f" } },
+    configuration: id === 7 ? { name: "Chrome / Windows" } : null,
     project: { id: 5 },
   });
 
@@ -751,6 +760,7 @@ describe("jira test-info runs and sessions", () => {
     });
     expect(body.testRuns.map((run: any) => run.id)).toEqual([7, 8]);
     expect(body.testRuns[0]).toMatchObject({
+      configurationName: "Chrome / Windows",
       total: 2,
       passedCount: 1,
       summaryText: "1 Passed, 1 Pending",
@@ -772,6 +782,7 @@ describe("jira test-info runs and sessions", () => {
       },
     ]);
     expect(body.testRuns[1]).toMatchObject({
+      configurationName: null,
       total: 0,
       summaryText: "",
       displayItems: [],

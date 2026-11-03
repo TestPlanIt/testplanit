@@ -652,6 +652,10 @@ const TestCaseRow = ({ testCase, onOpen, onOpenRun }) => {
                             </span>
                           )}
                         </div>
+                        <ConfigurationChip
+                          name={result.testRunConfigurationName}
+                          className="mt-0.5 ml-4"
+                        />
                       </div>
                       <div className="col-span-2 flex justify-start">
                         <span
@@ -851,6 +855,22 @@ const SessionRow = ({ session, onOpen }) => {
   );
 };
 
+// The run's configuration (e.g. "Chrome / Windows"), shown wherever a run
+// name appears. Runs created for several configurations share a name, so
+// without this they look like one run repeated.
+const ConfigurationChip = ({ name, className = "" }) => {
+  if (!name) return null;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-xs testplanit-text-muted testplanit-muted-bg px-2 py-0.5 rounded max-w-[min(12rem,100%)] min-w-0 shrink ${className}`}
+      title={name}
+    >
+      <DynamicIcon name="Combine" className="h-3 w-3 shrink-0" />
+      <span className="truncate">{name}</span>
+    </span>
+  );
+};
+
 // Test run row component
 const TestRunRow = ({ testRun, onOpen }) => {
   const [expanded, setExpanded] = useState(false);
@@ -901,13 +921,19 @@ const TestRunRow = ({ testRun, onOpen }) => {
       <div className="flex items-center justify-between p-2 testplanit-hover">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <DynamicIcon name="PlayCircle" className="h-4 w-4 shrink-0" />
-          <button
-            className="text-sm font-medium testplanit-primary flex-1 truncate text-left"
-            onClick={handleTitleClick}
-            title={testRun.name}
-          >
-            {testRun.name}
-          </button>
+          {/* Name and configuration share the leftover width; the chip
+              drops under the name when both are long rather than squeezing
+              the name out. The badges keep their width either way. */}
+          <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <button
+              className="text-sm font-medium testplanit-primary min-w-0 max-w-full truncate text-left"
+              onClick={handleTitleClick}
+              title={testRun.name}
+            >
+              {testRun.name}
+            </button>
+            <ConfigurationChip name={testRun.configurationName} />
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-xs testplanit-text-muted testplanit-muted-bg px-2 py-1 rounded">
               {passRate}% passed
