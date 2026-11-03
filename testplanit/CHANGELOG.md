@@ -1,3 +1,18 @@
+## [1.2.0-beta.26](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.25...v1.2.0-beta.26) (2026-11-03)
+
+### Bug Fixes
+
+* **e2e:** clear the inherited admin session before signing in as another user ([390d6c2](https://github.com/TestPlanIt/testplanit/commit/390d6c2e77f2f7d27de19d8031dc89d65fdbe96d))
+* **jira-panel:** show the run configuration beside the run name ([3a83102](https://github.com/TestPlanIt/testplanit/commit/3a8310219f3536408e7058a50ad68ee2b84a2359))
+* **llm:** ask URL generation for the template's fields and keep them in the preview ([775cadc](https://github.com/TestPlanIt/testplanit/commit/775cadcd7d407b144c77e5625a5e40889ed508cf))
+* **repository:** keep the staged-case count after creating or staging from Add Case ([c63efa5](https://github.com/TestPlanIt/testplanit/commit/c63efa508caa49482b842d2f60341c099180b802))
+
+### Enhancements
+
+* **docs:** add npm installation instructions for beta packages and clarify MCP server compatibility ([3db457c](https://github.com/TestPlanIt/testplanit/commit/3db457c92a65c36166ca1a8d334e2496761b81cd))
+* **repository:** record when a test case was staged ([ab38459](https://github.com/TestPlanIt/testplanit/commit/ab38459ef72ba98edd8a5193b9d4fccf9a63a507))
+* **repository:** stage generated test cases from the wizard ([a1a02f4](https://github.com/TestPlanIt/testplanit/commit/a1a02f4573a85c7bcd64d47509e9ea7796ca904f))
+
 ## [1.2.0-beta.25](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.24...v1.2.0-beta.25) (2026-11-02)
 
 ### Bug Fixes
