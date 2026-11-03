@@ -3900,7 +3900,7 @@
       "generatingLegacy": "Geração de casos de teste com IA...",
       "expandProgress": "{done, number} de {total, number} gerado",
       "import": "{count, plural, =0 {Importar casos de teste} =1 {Importar 1 caso de teste} other {Importar # casos de teste}}",
-      "stage": "{count, plural, =0 {Stage Test Cases} =1 {Stage 1 Test Case} other {Stage # Test Cases}}",
+      "stage": "{count, plural, =0 {Casos de teste do Stage} =1 {1 caso de teste do Stage} other {# casos de teste do Stage}}",
       "stageDescription": "Os casos de teste preparados são privados para você. Revise-os em Meus casos preparados e crie-os de lá; nada é adicionado ao repositório até que você faça isso.",
       "importing": "{count, plural, =0 {Importando casos de teste...} =1 {Importando 1 caso de teste...} other {Importando # casos de teste...}}",
       "externalSystem": "Sistema externo",
@@ -3916,7 +3916,7 @@
       "parameterChipSensitive": "confidencial",
       "success": {
         "imported": "{count, plural, =1 {Importado com sucesso 1 caso de teste} other {Importados com sucesso # casos de teste}}",
-        "staged": "{count, plural, =1 {Staged 1 test case} other {Staged # test cases}}"
+        "staged": "{count, plural, =1 {1 caso de teste preparado} other {# casos de teste preparados}}"
       },
       "importData": {
         "issueDescription": "Problema externo vinculado à geração de casos de teste",
