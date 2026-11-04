@@ -5,8 +5,11 @@ import * as fs from "fs";
 
 import { getPoolConfig } from "~/lib/db/poolConfig";
 import { createDialect } from "~/lib/db/readWriteDialect";
+import { TenantNotConfiguredError } from "~/lib/tenantErrors";
 import { type DbClient } from "~/lib/zenstack";
 import { createAppZenStackClient } from "~/lib/zenstackClientFactory";
+
+export { TenantNotConfiguredError };
 
 /**
  * Tenant configuration interface
@@ -312,7 +315,7 @@ export function getTenantDbClient(tenantId: string): DbClient {
   }
 
   if (!config) {
-    throw new Error(`No configuration found for tenant: ${tenantId}`);
+    throw new TenantNotConfiguredError(tenantId);
   }
 
   // Check cache - but invalidate if credentials or replicas have changed
