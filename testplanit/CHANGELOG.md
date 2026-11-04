@@ -1,3 +1,10 @@
+## [1.1.18](https://github.com/TestPlanIt/testplanit/compare/v1.1.17...v1.1.18) (2026-11-04)
+
+### Bug Fixes
+
+* **deps:** keep happy-dom a runtime dependency ([#725](https://github.com/TestPlanIt/testplanit/issues/725)) ([264aa1b](https://github.com/TestPlanIt/testplanit/commit/264aa1b6e3e60c4ff3825be2b2ec5023b32c34a5))
+* **workers:** reconcile report-builder sweep schedulers and retry jobs for not-yet-configured tenants ([#728](https://github.com/TestPlanIt/testplanit/issues/728)) ([07a7fca](https://github.com/TestPlanIt/testplanit/commit/07a7fca93312704a16b196c332c3f33b3bc9c8b3))
+
 ## [1.1.17](https://github.com/TestPlanIt/testplanit/compare/v1.1.16...v1.1.17) (2026-10-28)
 
 ### Bug Fixes
