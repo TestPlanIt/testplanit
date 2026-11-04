@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import {
   buildSearchQueryParts,
+  escapeQueryStringSyntax,
+  isQueryStringParseError,
   withFacetFilters,
   buildSearchAggregations,
   buildSort,
@@ -49,11 +51,11 @@ export async function POST(request: NextRequest) {
     const indices = getIndicesForEntityTypes(filters.entityTypes, tenantId);
 
     // Build the Elasticsearch query
-    const { query: esQuery, facetFilters } = await buildSearchQueryParts(
+    let { query: esQuery, facetFilters } = await buildSearchQueryParts(
       filters,
       session.user
     );
-    const fullQuery = withFacetFilters(esQuery, facetFilters);
+    let fullQuery = withFacetFilters(esQuery, facetFilters);
 
     // Facet selections narrow the hits as a post_filter, so each facet's
     // aggregation can be scoped by the other facets' selections only.
@@ -95,33 +97,52 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      searchResponse = await client.search({
-        index: existingIndices,
-        query: esQuery,
-        ...(postFilter && { post_filter: postFilter }),
-        ...(aggs && { aggs }),
-        ...(trackTotalHits && { track_total_hits: true }),
-        ...(sort && { sort: buildSort(sort) }),
-        ...(pagination && {
-          from: (pagination.page - 1) * pagination.size,
-          size: pagination.size,
-        }),
-        ...(highlight && {
-          highlight: {
-            type: "plain",
-            fields: {
-              name: { number_of_fragments: 1 },
-              searchableContent: { number_of_fragments: 3 },
-              note: { number_of_fragments: 2 },
-              mission: { number_of_fragments: 2 },
-              docs: { number_of_fragments: 2 },
+      const search = (query: any) =>
+        client.search({
+          index: existingIndices,
+          query,
+          ...(postFilter && { post_filter: postFilter }),
+          ...(aggs && { aggs }),
+          ...(trackTotalHits && { track_total_hits: true }),
+          ...(sort && { sort: buildSort(sort) }),
+          ...(pagination && {
+            from: (pagination.page - 1) * pagination.size,
+            size: pagination.size,
+          }),
+          ...(highlight && {
+            highlight: {
+              type: "plain",
+              fields: {
+                name: { number_of_fragments: 1 },
+                searchableContent: { number_of_fragments: 3 },
+                note: { number_of_fragments: 2 },
+                mission: { number_of_fragments: 2 },
+                docs: { number_of_fragments: 2 },
+              },
+              pre_tags: ['<mark class="search-highlight">'],
+              post_tags: ["</mark>"],
+              require_field_match: false,
             },
-            pre_tags: ['<mark class="search-highlight">'],
-            post_tags: ["</mark>"],
-            require_field_match: false,
-          },
-        }),
-      });
+          }),
+        });
+
+      try {
+        searchResponse = await search(esQuery);
+      } catch (firstError: any) {
+        // The query text is Lucene syntax (the help panel documents the
+        // operators), so pasted punctuation such as `ABT-49444"` fails to
+        // parse. Search it again as plain words rather than answering
+        // "no results".
+        if (!filters.query || !isQueryStringParseError(firstError)) {
+          throw firstError;
+        }
+        ({ query: esQuery, facetFilters } = await buildSearchQueryParts(
+          { ...filters, query: escapeQueryStringSyntax(filters.query) },
+          session.user
+        ));
+        fullQuery = withFacetFilters(esQuery, facetFilters);
+        searchResponse = await search(esQuery);
+      }
     } catch (searchError: any) {
       console.error("Elasticsearch search error:", searchError);
       console.error("Error details:", searchError.meta?.body?.error);

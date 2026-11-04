@@ -15,7 +15,9 @@ import {
   buildElasticsearchQuery,
   buildSearchAggregations,
   buildSearchQueryParts,
+  escapeQueryStringSyntax,
   facetForClause,
+  isQueryStringParseError,
   withFacetFilters,
   buildSort,
   getEntityTypeCounts,
@@ -1631,5 +1633,87 @@ describe("getEntityTypeCounts", () => {
     expect(result[SearchableEntityType.REPOSITORY_CASE]).toBe(100);
     // The errored index should not have a count
     expect(Object.keys(result)).toHaveLength(1);
+  });
+});
+
+describe("escapeQueryStringSyntax", () => {
+  it("escapes every Lucene syntax character so the text reads as words", () => {
+    expect(escapeQueryStringSyntax('ABT-49444"')).toBe('ABT\\-49444\\"');
+    expect(escapeQueryStringSyntax("login (flow")).toBe("login \\(flow");
+    expect(escapeQueryStringSyntax("a/b [c] {d} ~e ^f :g *h ?i \\j !k")).toBe(
+      "a\\/b \\[c\\] \\{d\\} \\~e \\^f \\:g \\*h \\?i \\\\j \\!k"
+    );
+  });
+
+  it("turns the boolean operators into plain words", () => {
+    expect(escapeQueryStringSyntax("AND OR NOT")).toBe("and or not");
+    // Only whole uppercase words are operators.
+    expect(escapeQueryStringSyntax("ANDROID Nothing")).toBe("ANDROID Nothing");
+  });
+
+  it("leaves ordinary text alone", () => {
+    expect(escapeQueryStringSyntax("checkout totals")).toBe("checkout totals");
+  });
+});
+
+describe("isQueryStringParseError", () => {
+  const esError = (error: any) => ({ meta: { body: { error } } });
+
+  it("recognizes a query_shard_exception that failed to parse the query", () => {
+    expect(
+      isQueryStringParseError(
+        esError({
+          type: "search_phase_execution_exception",
+          reason: "all shards failed",
+          root_cause: [
+            {
+              type: "query_shard_exception",
+              reason: 'Failed to parse query [ABT-49444"]',
+            },
+          ],
+        })
+      )
+    ).toBe(true);
+  });
+
+  it("recognizes a parse_exception nested under a failed shard", () => {
+    expect(
+      isQueryStringParseError(
+        esError({
+          type: "search_phase_execution_exception",
+          failed_shards: [
+            {
+              shard: 0,
+              reason: {
+                type: "query_shard_exception",
+                reason: "failed to create query: Cannot parse 'x\"'",
+                caused_by: {
+                  type: "parse_exception",
+                  reason: "Cannot parse 'x\"': Lexical error",
+                },
+              },
+            },
+          ],
+        })
+      )
+    ).toBe(true);
+  });
+
+  it("is false for anything else", () => {
+    expect(
+      isQueryStringParseError(
+        esError({ type: "index_not_found_exception", reason: "no such index" })
+      )
+    ).toBe(false);
+    expect(
+      isQueryStringParseError(
+        esError({
+          type: "query_shard_exception",
+          reason: "No mapping found for [missing] in order to sort on",
+        })
+      )
+    ).toBe(false);
+    expect(isQueryStringParseError(new Error("ECONNREFUSED"))).toBe(false);
+    expect(isQueryStringParseError(undefined)).toBe(false);
   });
 });

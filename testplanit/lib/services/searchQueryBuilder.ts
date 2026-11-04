@@ -30,6 +30,47 @@ const FIELD_TO_FACET: Record<string, string> = Object.fromEntries(
   Object.entries(SEARCH_FACET_FIELDS).map(([facet, field]) => [field, facet])
 );
 
+/**
+ * The query text with every Lucene query-syntax character escaped, so it is
+ * read as words only. Used once a query failed to parse: an unbalanced quote
+ * or parenthesis, or a stray operator, is far more often pasted punctuation
+ * than an operator the user meant.
+ */
+export function escapeQueryStringSyntax(query: string): string {
+  return query
+    .replace(/[+\-=&|><!(){}[\]^"~*?:\\/]/g, "\\$&")
+    .replace(/\b(AND|OR|NOT)\b/g, (word) => word.toLowerCase());
+}
+
+/**
+ * Whether an Elasticsearch error is the query text failing to parse (as
+ * opposed to the cluster or an index being unavailable), in any of the
+ * shapes the client reports it.
+ */
+export function isQueryStringParseError(error: unknown): boolean {
+  const PARSE_TYPES = new Set(["query_shard_exception", "parse_exception"]);
+  const seen = new Set<unknown>();
+  const visit = (node: any): boolean => {
+    if (!node || typeof node !== "object" || seen.has(node)) return false;
+    seen.add(node);
+    if (
+      typeof node.type === "string" &&
+      PARSE_TYPES.has(node.type) &&
+      /parse/i.test(String(node.reason ?? ""))
+    ) {
+      return true;
+    }
+    if (node.type === "parse_exception") return true;
+    return [
+      node.caused_by,
+      node.reason,
+      ...(Array.isArray(node.root_cause) ? node.root_cause : []),
+      ...(Array.isArray(node.failed_shards) ? node.failed_shards : []),
+    ].some(visit);
+  };
+  return visit((error as any)?.meta?.body?.error);
+}
+
 /** A filter clause that is one facet's own selection. */
 export interface FacetFilterClause {
   facet: string;
