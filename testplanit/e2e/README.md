@@ -80,6 +80,27 @@ pnpm test:e2e:debug
 pnpm test:e2e:report
 ```
 
+### Smoke-test an install served under a path prefix
+
+Builds made with `BASE_PATH` serve the whole app under that prefix. The
+regular suite navigates with root-relative paths, which Playwright resolves
+against the origin, so only the dedicated smoke suite runs in this mode. It
+signs in, loads pages, signs out, and fails on any same-origin request that
+leaves the prefix.
+
+```bash
+BASE_PATH=/testplanit pnpm build
+BASE_PATH=/testplanit E2E_PROD=on E2E_BASE_PATH=/testplanit \
+E2E_BASE_URL=http://localhost:3002/testplanit \
+APP_URL=http://localhost:3002/testplanit \
+NEXTAUTH_URL=http://localhost:3002/testplanit/api/auth \
+pnpm test:e2e e2e/tests/subpath/subpath-smoke.spec.ts
+```
+
+`BASE_PATH` is needed at run time as well: `next start` re-reads next.config.ts
+(the Docker image serves the frozen build config instead). Rebuild without
+`BASE_PATH` before running the regular suite again.
+
 ## Project Structure
 
 ```monospace

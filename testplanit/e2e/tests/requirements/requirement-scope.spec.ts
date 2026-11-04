@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import { withE2EBasePath } from "../../fixtures/basePath";
 
 /**
  * Coverage execution scoping: the coverage rollup counts only executions
@@ -158,7 +159,7 @@ test.describe("Requirement coverage scoping", () => {
         const sent = response.request();
         return (
           sent.method() === "POST" &&
-          new URL(response.url()).pathname === path &&
+          new URL(response.url()).pathname === withE2EBasePath(path) &&
           matchesUrl(response.url()) &&
           (sent.postDataJSON()?.[axis]?.length ?? 0) === axisSize
         );

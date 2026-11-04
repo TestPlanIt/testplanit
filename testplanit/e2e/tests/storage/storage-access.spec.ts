@@ -67,17 +67,19 @@ test.describe("Storage access", () => {
     });
     try {
       for (const endpoint of PRESIGN_ENDPOINTS) {
-        const response = await anonymous.get(`${endpoint}?prependString=E2E`);
+        const response = await anonymous.get(
+          `${baseURL}${endpoint}?prependString=E2E`
+        );
         expect(response.status(), endpoint).toBe(401);
       }
       for (const endpoint of UPLOAD_ENDPOINTS) {
-        const response = await anonymous.post(endpoint, {
+        const response = await anonymous.post(`${baseURL}${endpoint}`, {
           multipart: { file: pngFile(), prependString: "E2E" },
         });
         expect(response.status(), endpoint).toBe(401);
       }
       const read = await anonymous.get(
-        "/api/storage/uploads/attachments/does-not-matter.png"
+        `${baseURL}/api/storage/uploads/attachments/does-not-matter.png`
       );
       expect(read.status()).toBe(401);
     } finally {
