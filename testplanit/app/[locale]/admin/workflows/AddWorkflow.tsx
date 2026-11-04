@@ -212,7 +212,7 @@ export function AddWorkflows({
           name: data.name,
           iconId: selectedIconId || defaultIconData?.id!,
           colorId: selectedColorId || defaultColorData?.id!,
-          isEnabled: data.isEnabled || true,
+          isEnabled: data.isEnabled ?? true,
           isDefault: data.isDefault || mustBeDefault,
           requiresReview: data.requiresReview || false,
           scope: data.scope || "",

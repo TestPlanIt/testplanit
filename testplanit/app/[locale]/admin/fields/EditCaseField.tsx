@@ -619,9 +619,9 @@ export function EditCaseField({
           isRestricted: data.isRestricted,
           defaultValue: data.defaultValue,
           isChecked: data.isChecked || false,
-          minValue: data.minValue || null,
-          maxValue: data.maxValue || null,
-          initialHeight: data.initialHeight || null,
+          minValue: data.minValue ?? null,
+          maxValue: data.maxValue ?? null,
+          initialHeight: data.initialHeight ?? null,
         },
       });
 
