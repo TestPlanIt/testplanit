@@ -395,6 +395,11 @@ async function scheduleJobs() {
     // single-tenant deployments use suffix-less scheduler ids and have no
     // group concept. Own try/catch — reconciliation failures must not trip
     // the process.exit(1) below.
+    //
+    // Every job name upserted above MUST be listed here for its queue, or
+    // that scheduler is never removed for a departed tenant and keeps firing
+    // (and failing) forever. scheduler.reconcile.test.ts checks the two lists
+    // against each other.
     if (multiTenant) {
       try {
         await reconcileStaleSchedulers(
@@ -407,6 +412,7 @@ async function scheduleJobs() {
                 JOB_MILESTONE_DUE_NOTIFICATIONS,
                 JOB_REVIEW_REMINDERS,
                 JOB_SWEEP_ABANDONED_RUNS,
+                JOB_SWEEP_REPORT_BUILDER_STATES,
                 JOB_PURGE_STALE_CASE_DRAFTS,
               ],
             },

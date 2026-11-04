@@ -1,9 +1,13 @@
+import { DelayedError } from "bullmq";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  TENANT_CONFIG_GRACE_MS,
+  TENANT_CONFIG_RETRY_DELAY_MS,
   getTenantContext,
   runWithTenantContext,
   withTenantContext,
 } from "./tenantContext";
+import { TenantNotConfiguredError } from "./tenantErrors";
 
 vi.mock("./tenantSecrets", () => ({
   getTenantEncryptionKey: vi.fn(
@@ -65,6 +69,15 @@ describe("withTenantContext", () => {
     expect(result).toBe(job);
   });
 
+  it("passes the worker's lock token through", async () => {
+    const processor = vi.fn(async (_job: any, token?: string) => token);
+    const wrapped = withTenantContext(processor);
+
+    await expect(wrapped({ data: { tenantId: "acme" } }, "tok")).resolves.toBe(
+      "tok"
+    );
+  });
+
   it("runs without context when job has no tenantId", async () => {
     const processor = vi.fn(async () => getTenantContext());
     const wrapped = withTenantContext(processor);
@@ -94,5 +107,99 @@ describe("withTenantContext", () => {
 
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe("withTenantContext — tenant not configured yet", () => {
+  function fakeJob(ageMs: number) {
+    return {
+      data: { tenantId: "newco" },
+      timestamp: Date.now() - ageMs,
+      moveToDelayed: vi.fn(async () => {}),
+    };
+  }
+
+  it("parks a young job and throws DelayedError instead of failing it", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-03T12:00:00Z"));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const processor = vi.fn(async () => {
+        throw new TenantNotConfiguredError("newco");
+      });
+      const wrapped = withTenantContext(processor);
+      const job = fakeJob(30_000);
+
+      await expect(wrapped(job, "tok")).rejects.toBeInstanceOf(DelayedError);
+
+      expect(job.moveToDelayed).toHaveBeenCalledWith(
+        Date.now() + TENANT_CONFIG_RETRY_DELAY_MS,
+        "tok"
+      );
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('tenant "newco" not in this worker')
+      );
+    } finally {
+      warn.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it("completes normally once the tenant appears, with no attempt consumed", async () => {
+    // Simulates BullMQ re-running the delayed job: the processor is invoked
+    // again on the same job object and this time the tenant resolves.
+    let configured = false;
+    const processor = vi.fn(async () => {
+      if (!configured) throw new TenantNotConfiguredError("newco");
+      return "done";
+    });
+    const wrapped = withTenantContext(processor);
+    const job = fakeJob(30_000);
+
+    await expect(wrapped(job, "tok")).rejects.toBeInstanceOf(DelayedError);
+    configured = true;
+    await expect(wrapped(job, "tok")).resolves.toBe("done");
+    // Each run threw DelayedError or succeeded — never a plain failure, so
+    // BullMQ's attemptsMade stays at 0 (the worker only bumps it on failure).
+    expect(job.moveToDelayed).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets the error through once the job is older than the grace window", async () => {
+    const processor = vi.fn(async () => {
+      throw new TenantNotConfiguredError("gone-co");
+    });
+    const wrapped = withTenantContext(processor);
+    const job = {
+      ...fakeJob(TENANT_CONFIG_GRACE_MS + 1),
+      data: { tenantId: "gone-co" },
+    };
+
+    await expect(wrapped(job, "tok")).rejects.toBeInstanceOf(
+      TenantNotConfiguredError
+    );
+    expect(job.moveToDelayed).not.toHaveBeenCalled();
+  });
+
+  it("lets the error through when there is no lock token to delay with", async () => {
+    const processor = vi.fn(async () => {
+      throw new TenantNotConfiguredError("newco");
+    });
+    const wrapped = withTenantContext(processor);
+    const job = fakeJob(1_000);
+
+    await expect(wrapped(job)).rejects.toBeInstanceOf(TenantNotConfiguredError);
+    expect(job.moveToDelayed).not.toHaveBeenCalled();
+  });
+
+  it("does not intercept other errors", async () => {
+    const boom = new Error("db down");
+    const processor = vi.fn(async () => {
+      throw boom;
+    });
+    const wrapped = withTenantContext(processor);
+    const job = fakeJob(1_000);
+
+    await expect(wrapped(job, "tok")).rejects.toBe(boom);
+    expect(job.moveToDelayed).not.toHaveBeenCalled();
   });
 });
