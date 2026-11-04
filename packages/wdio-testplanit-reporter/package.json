@@ -59,11 +59,11 @@
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
-    "@vitest/coverage-v8": "^4.1.11",
-    "@wdio/reporter": "^9.31.2",
-    "@wdio/types": "^9.31.2",
-    "tsup": "^8.5.1",
+    "@vitest/coverage-v8": "^5.0.5",
+    "@wdio/reporter": "^10.1.0",
+    "@wdio/types": "^10.1.0",
+    "tsup": "^9.0.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.5"
   }
 }
