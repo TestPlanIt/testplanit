@@ -312,7 +312,13 @@ describe("multiTenantDb", () => {
 
       expect(getTenantDbClient("tenant-b")).toBeTruthy();
 
-      // A genuinely unknown tenant still throws after the forced reload.
+      // A genuinely unknown tenant still throws after the forced reload —
+      // as TenantNotConfiguredError, which withTenantContext treats as
+      // retryable for a grace window.
+      const { TenantNotConfiguredError } = await import("./tenantErrors");
+      expect(() => getTenantDbClient("tenant-nope")).toThrow(
+        TenantNotConfiguredError
+      );
       expect(() => getTenantDbClient("tenant-nope")).toThrow(
         "No configuration found for tenant: tenant-nope"
       );

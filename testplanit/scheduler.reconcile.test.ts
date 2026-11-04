@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Unit tests for reconcileStaleSchedulers (scheduler.ts). The function is
@@ -204,5 +206,62 @@ describe("reconcileStaleSchedulers", () => {
       )
     ).resolves.toBeUndefined();
     expect(q.removeJobScheduler).not.toHaveBeenCalled();
+  });
+});
+
+describe("scheduleJobs upsert/reconcile parity", () => {
+  // The upsert loop and the reconcile list in scheduleJobs are two hand-kept
+  // lists. They drifted once: JOB_SWEEP_REPORT_BUILDER_STATES was upserted
+  // per tenant but missing from the forecast reconcile list, so deprovisioned
+  // tenants kept running (and failing) that sweep every day. This reads the
+  // source and checks that every job name handed to upsertJobScheduler is
+  // also named in the reconcileStaleSchedulers call.
+  it("lists every upserted job name in the reconcile call", () => {
+    const source = fs.readFileSync(
+      path.join(__dirname, "scheduler.ts"),
+      "utf8"
+    );
+    const bodyStart = source.indexOf("async function scheduleJobs()");
+    const reconcileStart = source.indexOf(
+      "await reconcileStaleSchedulers(",
+      bodyStart
+    );
+    expect(bodyStart).toBeGreaterThan(-1);
+    expect(reconcileStart).toBeGreaterThan(bodyStart);
+
+    const upsertSection = source.slice(bodyStart, reconcileStart);
+    const reconcileSection = source.slice(reconcileStart);
+
+    const upserted = new Set(
+      [...upsertSection.matchAll(/name:\s*(JOB_[A-Z0-9_]+)/g)].map((m) => m[1])
+    );
+    const reconciled = new Set(
+      [...reconcileSection.matchAll(/\b(JOB_[A-Z0-9_]+)\b/g)].map((m) => m[1])
+    );
+
+    expect(upserted.size).toBeGreaterThan(0);
+    const missing = [...upserted].filter((n) => !reconciled.has(n));
+    expect(missing).toEqual([]);
+  });
+
+  it("removes all seven forecast schedulers of a departed tenant", async () => {
+    const forecastJobs = [
+      "update-all-cases-forecast",
+      "auto-complete-milestones",
+      "milestone-due-notifications",
+      "review-reminders",
+      "sweep-abandoned-runs",
+      "sweep-report-builder-states",
+      "purge-stale-case-drafts",
+    ];
+    const q = fakeQueue([
+      ...forecastJobs.map((j) => `${j}-a`),
+      ...forecastJobs.map((j) => `${j}-b`),
+    ]);
+    await reconcileStaleSchedulers(
+      [{ queue: q, jobNames: forecastJobs }],
+      new Set(["a"])
+    );
+    expect(q.removed.sort()).toEqual(forecastJobs.map((j) => `${j}-b`).sort());
   });
 });
