@@ -1,3 +1,9 @@
+## [1.2.0-beta.28](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.27...v1.2.0-beta.28) (2026-11-04)
+
+### Bug Fixes
+
+* **workers:** reconcile report-builder sweep schedulers and retry jobs for not-yet-configured tenants ([3807064](https://github.com/TestPlanIt/testplanit/commit/3807064b7c7c448b4c8add944779d4d3c3350982))
+
 ## [1.2.0-beta.27](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.26...v1.2.0-beta.27) (2026-11-03)
 
 ### Bug Fixes
