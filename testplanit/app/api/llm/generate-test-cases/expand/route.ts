@@ -18,6 +18,7 @@ import {
   type TemplateData,
   type TestCaseOutline,
 } from "../shared";
+import { makeRelatedCaseFinder } from "../related-cases";
 import {
   classifyLlmStreamError,
   type LlmStreamErrorCode,
@@ -229,6 +230,7 @@ export async function POST(req: NextRequest) {
           {
             folderId: context.folderContext,
             related: {
+              find: makeRelatedCaseFinder(baseDb),
               title: `${issue.title} ${outline.title}`,
               description: issue.description,
               notes: context.userNotes,

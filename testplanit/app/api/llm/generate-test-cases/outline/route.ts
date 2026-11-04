@@ -25,6 +25,7 @@ import {
   type LinkedIssueContext,
   type TestCaseOutline,
 } from "../shared";
+import { makeRelatedCaseFinder } from "../related-cases";
 import {
   OUTLINE_CTX_MIN_USEFUL,
   OUTLINE_RETRY_MAX_DEPTH,
@@ -326,6 +327,7 @@ export async function POST(request: NextRequest) {
                 folderId: context.folderContext,
                 issueRef,
                 related: {
+                  find: makeRelatedCaseFinder(baseDb),
                   title: issue.title,
                   description: issue.description,
                   notes: context.userNotes,

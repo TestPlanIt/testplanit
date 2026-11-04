@@ -28,6 +28,7 @@ import {
   type ParseWarning,
   type TemplateData,
 } from "./shared";
+import { makeRelatedCaseFinder } from "./related-cases";
 
 export interface GenerateTestCasesParams {
   projectId: number;
@@ -172,6 +173,7 @@ export async function generateTestCasesForProject(
             folderId: context.folderContext,
             issueRef,
             related: {
+              find: makeRelatedCaseFinder(baseDb),
               title: issue.title,
               description: issue.description,
               notes: context.userNotes,

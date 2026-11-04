@@ -14,7 +14,11 @@ vi.mock("~/services/elasticsearchService", () => ({
       : "testplanit-repository-cases",
 }));
 
-import { findRecentTemplateCaseIds, findRelatedCaseIds } from "./related-cases";
+import {
+  findRecentTemplateCaseIds,
+  findRelatedCaseIds,
+  makeRelatedCaseFinder,
+} from "./related-cases";
 
 describe("findRelatedCaseIds", () => {
   beforeEach(() => {
@@ -93,6 +97,46 @@ describe("findRelatedCaseIds", () => {
     const ids = await findRelatedCaseIds({ projectId: 7, title: "Login" });
     expect(ids).toBeNull();
     errorSpy.mockRestore();
+  });
+});
+
+describe("makeRelatedCaseFinder", () => {
+  beforeEach(() => {
+    mocks.search.mockReset();
+  });
+
+  it("returns the Elasticsearch ranking when the search is available", async () => {
+    mocks.getElasticsearchClient.mockReturnValue({ search: mocks.search });
+    mocks.search.mockResolvedValue({ hits: { hits: [{ _id: "8" }] } });
+    const findMany = vi.fn(async () => [{ id: 1 }]);
+    const db = { repositoryCases: { findMany } } as unknown as DbClient;
+
+    const ids = await makeRelatedCaseFinder(db)({
+      projectId: 7,
+      title: "Login",
+    });
+
+    expect(ids).toEqual([8]);
+    expect(findMany).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the newest same-template cases without Elasticsearch", async () => {
+    mocks.getElasticsearchClient.mockReturnValue(null);
+    const findMany = vi.fn(async () => [{ id: 1 }, { id: 2 }]);
+    const db = { repositoryCases: { findMany } } as unknown as DbClient;
+
+    const ids = await makeRelatedCaseFinder(db)({
+      projectId: 7,
+      title: "Login",
+      templateId: 3,
+    });
+
+    expect(ids).toEqual([1, 2]);
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ projectId: 7, templateId: 3 }),
+      })
+    );
   });
 });
 

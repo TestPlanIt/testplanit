@@ -8,12 +8,6 @@ import type {
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 
-const relatedMocks = vi.hoisted(() => ({
-  findRelatedCaseIds: vi.fn(),
-  findRecentTemplateCaseIds: vi.fn(),
-}));
-vi.mock("./related-cases", () => relatedMocks);
-
 import {
   buildCommentsSection,
   buildExpandUserPrompt,
@@ -704,11 +698,6 @@ describe("existing-case context — related cases from across the project", () =
     tenantId: "acme",
   };
 
-  beforeEach(() => {
-    relatedMocks.findRelatedCaseIds.mockReset();
-    relatedMocks.findRecentTemplateCaseIds.mockReset();
-  });
-
   it("fills an empty folder with content-matched cases, tagged as related", async () => {
     // Call 1: the (empty) folder. Call 2: hydration of the ids the finder ranked.
     const { db, calls } = makeDb({
@@ -845,38 +834,6 @@ describe("existing-case context — related cases from across the project", () =
     expect(unusedFind).not.toHaveBeenCalled();
   });
 
-  it("falls back to a same-template sample when no similarity search is available", async () => {
-    const { db } = makeDb({
-      caseRowsPerCall: [
-        [{ ...caseRow(1, "In folder"), folderId: 5 }],
-        [caseRow(4, "Recent on template")],
-      ],
-      folders: [{ id: 5, parentId: null }],
-    });
-    relatedMocks.findRelatedCaseIds.mockResolvedValue(null);
-    relatedMocks.findRecentTemplateCaseIds.mockResolvedValue([4]);
-
-    const cases = await fetchExistingCasesContext(
-      db,
-      7,
-      { folderId: 5, related },
-      5000
-    );
-
-    expect(cases.map((c) => c.name)).toEqual([
-      "In folder",
-      "Recent on template",
-    ]);
-    expect(relatedMocks.findRecentTemplateCaseIds).toHaveBeenCalledWith(
-      db,
-      expect.objectContaining({
-        projectId: 7,
-        templateId: 2,
-        excludeCaseIds: new Set([1]),
-      })
-    );
-  });
-
   it("skips the related tier entirely when the caller gives nothing to match on", async () => {
     const { db } = makeDb({
       caseRowsPerCall: [[{ ...caseRow(1, "In folder"), folderId: 5 }]],
@@ -886,8 +843,8 @@ describe("existing-case context — related cases from across the project", () =
     const cases = await fetchExistingCasesContext(db, 7, { folderId: 5 }, 5000);
 
     expect(cases.map((c) => c.name)).toEqual(["In folder"]);
-    expect(relatedMocks.findRelatedCaseIds).not.toHaveBeenCalled();
-    expect(relatedMocks.findRecentTemplateCaseIds).not.toHaveBeenCalled();
+    // Folder query only — no hydration call for a related tier.
+    expect(db.repositoryCases.findMany).toHaveBeenCalledTimes(1);
   });
 });
 

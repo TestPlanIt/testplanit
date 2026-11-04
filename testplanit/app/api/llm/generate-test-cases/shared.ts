@@ -4,7 +4,6 @@
  */
 
 import type { DbClient } from "~/lib/zenstack";
-import type { RelatedCasesQuery } from "./related-cases";
 import { z } from "zod/v4";
 import type {
   IssueAdapter,
@@ -416,14 +415,31 @@ export interface RelatedCasesSource {
   notes?: string;
   templateId?: number;
   tenantId?: string;
-  /** Test seam — defaults to the Elasticsearch lookup in ./related-cases. */
-  find?: RelatedCaseFinder;
+  /**
+   * Ranks the project's cases by relevance — `makeRelatedCaseFinder` in
+   * ./related-cases. Injected because this module is also loaded by the
+   * wizard in the browser and must not import the search client itself.
+   */
+  find: RelatedCaseFinder;
 }
 
-/** Ranked case ids, or null when no similarity search is available. */
-export type RelatedCaseFinder = (
-  query: RelatedCasesQuery
-) => Promise<number[] | null>;
+/** The finder's input: who is generating what, and which cases to skip. */
+export interface RelatedCasesQuery {
+  projectId: number;
+  /** Issue title, document title, or page title. */
+  title: string;
+  description?: string;
+  /** The user's extra guidance — usually names the feature under test. */
+  notes?: string;
+  /** Cases on this template are ranked ahead of otherwise equal matches. */
+  templateId?: number;
+  excludeCaseIds?: Set<number>;
+  tenantId?: string;
+  limit?: number;
+}
+
+/** Ranked case ids, best match first. */
+export type RelatedCaseFinder = (query: RelatedCasesQuery) => Promise<number[]>;
 
 /** How many related cases to hydrate before the token budget trims. */
 const RELATED_CASES_LIMIT: Record<HierarchyContextMode, number> = {
@@ -432,10 +448,9 @@ const RELATED_CASES_LIMIT: Record<HierarchyContextMode, number> = {
 };
 
 /**
- * Cases from anywhere in the project that read like the issue, ranked by
- * Elasticsearch `more_like_this` over name and searchable content. When
- * Elasticsearch is not configured, the newest cases on the same template
- * stand in so the model still sees how this project writes cases.
+ * Cases from anywhere in the project that read like the issue, in the order
+ * the finder ranked them (see ./related-cases for what that means with and
+ * without Elasticsearch), hydrated from the database within the budget.
  */
 export async function fetchRelatedCasesContext(
   db: DbClient,
@@ -463,13 +478,7 @@ export async function fetchRelatedCasesContext(
     limit,
   };
 
-  const find =
-    related.find ?? (await import("./related-cases")).findRelatedCaseIds;
-  let ids = await find(query);
-  if (ids === null) {
-    const { findRecentTemplateCaseIds } = await import("./related-cases");
-    ids = await findRecentTemplateCaseIds(db, query);
-  }
+  const ids = await related.find(query);
   if (ids.length === 0) return [];
 
   const namesOnly = mode === "names";

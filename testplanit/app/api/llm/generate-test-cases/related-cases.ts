@@ -3,20 +3,23 @@ import {
   getElasticsearchClient,
   getRepositoryCaseIndexName,
 } from "~/services/elasticsearchService";
+import type { RelatedCaseFinder, RelatedCasesQuery } from "./shared";
 
-/** What the generator is about, used to find related cases by content. */
-export interface RelatedCasesQuery {
-  projectId: number;
-  /** Issue title, document title, or page title. */
-  title: string;
-  description?: string;
-  /** The user's extra guidance — usually names the feature under test. */
-  notes?: string;
-  /** Cases on this template are ranked ahead of otherwise equal matches. */
-  templateId?: number;
-  excludeCaseIds?: Set<number>;
-  tenantId?: string;
-  limit?: number;
+/**
+ * Server-only. This module pulls in the Elasticsearch client and the raw
+ * database client, so ./shared (which the wizard also loads in the browser)
+ * receives the finder as an argument instead of importing it.
+ */
+
+/**
+ * The finder the generation routes hand to `fetchExistingCasesContext`:
+ * Elasticsearch similarity when available, otherwise the newest cases on
+ * the same template so the model still sees how this project writes cases.
+ */
+export function makeRelatedCaseFinder(db: DbClient): RelatedCaseFinder {
+  return async (query) =>
+    (await findRelatedCaseIds(query)) ??
+    (await findRecentTemplateCaseIds(db, query));
 }
 
 /** Cap on how much issue text feeds the similarity query. */
