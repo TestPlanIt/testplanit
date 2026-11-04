@@ -55,6 +55,7 @@ import {
   contrastingTextColor,
   statusSurfaceVars,
 } from "~/utils/contrastingTextColor";
+import { apiFetch } from "~/lib/basePath";
 
 const _testRunPropSelect = {
   id: true,
@@ -311,7 +312,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
         if (testRunIds.length === 0) {
           return { summaries: {} };
         }
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/test-runs/summaries?testRunIds=${testRunIds.join(",")}`
         );
         if (!response.ok) {

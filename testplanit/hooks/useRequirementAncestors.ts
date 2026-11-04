@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRequirementSubtreeCount } from "~/hooks/useRequirementSubtreeCount";
 import type { RequirementAncestorRow } from "~/lib/services/requirementTree";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Tree context for the surfaces that show a requirement WITHOUT the list --
@@ -41,7 +42,7 @@ export function useRequirementAncestors(
   const { data, isLoading } = useQuery<RequirementAncestorsResponse>({
     queryKey: ["requirementAncestors", projectId, requirementId],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/projects/${projectId}/requirements/${requirementId}/ancestors`
       );
       if (!response.ok) {

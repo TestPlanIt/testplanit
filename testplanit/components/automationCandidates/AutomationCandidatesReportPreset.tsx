@@ -42,6 +42,7 @@ import {
   extractSummaryFromBuffer,
   type PartialCandidate,
 } from "./streamingParser";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Inline report preset for the Automation Candidates report.
@@ -277,7 +278,7 @@ export function AutomationCandidatesReportPreset({
 
       let response: Response;
       try {
-        response = await fetch("/api/reports/automation-candidates", {
+        response = await apiFetch("/api/reports/automation-candidates", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -462,7 +463,7 @@ export function AutomationCandidatesReportPreset({
     setDeleting(true);
     setDeleteError(null);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/reports/automation-candidates/${deleteTargetId}`,
         { method: "DELETE" }
       );

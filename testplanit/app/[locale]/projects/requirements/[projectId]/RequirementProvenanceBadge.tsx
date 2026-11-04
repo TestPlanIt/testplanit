@@ -32,6 +32,7 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { safeExternalUrl } from "~/utils/externalUrl";
 import { JiraGlyph } from "@/components/MilestoneSourceBadge";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * 26.2-09's gap-closure fix for the recurring "Maximum update depth
@@ -136,7 +137,7 @@ export function RequirementProvenanceBadge({
 
   const handleExclude = async () => {
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/requirements/${requirement.id}/override`,
         {
           method: "POST",
@@ -159,7 +160,7 @@ export function RequirementProvenanceBadge({
   const handleDetach = async () => {
     setIsDetaching(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/requirements/${requirement.id}/detach`,
         { method: "POST" }
       );

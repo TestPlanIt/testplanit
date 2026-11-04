@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { type DuplicateCandidateRow, getColumns } from "./duplicateColumns";
 import { DuplicateComparisonDialog } from "./DuplicateComparisonDialog";
+import { apiFetch } from "~/lib/basePath";
 
 interface DuplicateCandidate {
   id: number;
@@ -123,7 +124,7 @@ export function DuplicateResultsTable({
   const { data: allItems, isLoading } = useQuery<DuplicateCandidate[]>({
     queryKey: ["duplicate-scan-candidates", projectId],
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/duplicate-scan/candidates?projectId=${projectId}&limit=10000`
       );
       if (!res.ok) return [];
@@ -322,7 +323,7 @@ export function DuplicateResultsTable({
                   projectId: Number(projectId),
                 };
 
-          const res = await fetch("/api/duplicate-scan/resolve", {
+          const res = await apiFetch("/api/duplicate-scan/resolve", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),

@@ -13,6 +13,7 @@ import type {
   PinStaleness,
   PinStaleReason,
 } from "~/lib/services/impact/codePins";
+import { apiFetch } from "~/lib/basePath";
 
 export type { CodePinKind, PinStaleness, PinStaleReason };
 
@@ -167,7 +168,7 @@ async function requestJson<T>(
   init: RequestInit | undefined,
   fallbackMessage: string
 ): Promise<T> {
-  const res = await fetch(url, init);
+  const res = await apiFetch(url, init);
   if (!res.ok) {
     let message = fallbackMessage;
     let code: CodePinErrorCode | null = null;

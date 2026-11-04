@@ -49,6 +49,7 @@ import {
   type AppliedImportMapping,
   type ImportColumnMapping,
 } from "~/lib/schemas/savedImportMapping";
+import { apiFetch } from "~/lib/basePath";
 
 interface ImportSharedStepsWizardProps {
   open: boolean;
@@ -525,7 +526,7 @@ export function ImportSharedStepsWizard({
     setIsImporting(true);
 
     try {
-      const response = await fetch(`/api/shared-steps/import`, {
+      const response = await apiFetch(`/api/shared-steps/import`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

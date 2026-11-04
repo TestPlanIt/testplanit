@@ -47,6 +47,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { apiFetch } from "~/lib/basePath";
 
 interface ApiTokenSettingsProps {
   userId: string;
@@ -108,7 +109,7 @@ export function ApiTokenSettings({
       if (readOnly) scopes.push("mode:read");
       if (agentToken) scopes.push("client:mcp");
 
-      const response = await fetch("/api/api-tokens", {
+      const response = await apiFetch("/api/api-tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

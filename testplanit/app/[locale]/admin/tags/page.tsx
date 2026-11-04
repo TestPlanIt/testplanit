@@ -20,6 +20,7 @@ import { AddTag } from "./AddTag";
 import { ExtendedTags, useColumns } from "./columns";
 import { DeleteTag } from "./DeleteTag";
 import { EditTag } from "./EditTag";
+import { apiFetch } from "~/lib/basePath";
 
 const PAGE_SIZE = 50;
 
@@ -174,12 +175,12 @@ function TagList() {
       try {
         // Fetch counts and projects in parallel
         const [countsResponse, projectsResponse] = await Promise.all([
-          fetch("/api/tags/counts", {
+          apiFetch("/api/tags/counts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tagIds: newIds }),
           }),
-          fetch("/api/tags/projects", {
+          apiFetch("/api/tags/projects", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tagIds: newIds }),

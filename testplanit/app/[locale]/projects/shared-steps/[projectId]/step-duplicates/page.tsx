@@ -23,6 +23,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRouter } from "~/lib/navigation";
+import { apiFetch } from "~/lib/basePath";
 
 const STORAGE_KEY_PREFIX = "step-scan-job:";
 
@@ -56,7 +57,7 @@ export default function StepDuplicatesPage() {
     const jobId = jobIdRef.current;
     if (!jobId) return;
     try {
-      await fetch(`/api/step-scan/cancel/${jobId}`, { method: "POST" });
+      await apiFetch(`/api/step-scan/cancel/${jobId}`, { method: "POST" });
     } catch {
       /* ignore */
     }
@@ -76,7 +77,7 @@ export default function StepDuplicatesPage() {
 
       const poll = async () => {
         try {
-          const statusRes = await fetch(`/api/step-scan/status/${jobId}`);
+          const statusRes = await apiFetch(`/api/step-scan/status/${jobId}`);
           if (!statusRes.ok) {
             // Job no longer exists (obliterated/expired)
             sessionStorage.removeItem(storageKey);
@@ -159,7 +160,7 @@ export default function StepDuplicatesPage() {
   const handleRescan = async () => {
     setIsScanning(true);
     try {
-      const res = await fetch("/api/step-scan/submit", {
+      const res = await apiFetch("/api/step-scan/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: parseInt(projectId) }),

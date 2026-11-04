@@ -3,6 +3,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import React, { useCallback } from "react";
 import { BubbleChart } from "~/components/dataVisualizations/BubbleChart";
 import { useRouter } from "~/lib/navigation";
+import { apiFetch } from "~/lib/basePath";
 
 interface TagsSectionProps {
   projectId: number;
@@ -26,7 +27,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
   const { data, isLoading: isLoadingTags } = useQuery({
     queryKey: ["tagsForProject", projectId],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/tags/for-project?projectId=${projectId}`
       );
       if (!response.ok) {

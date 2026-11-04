@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { ACTIVE_EXECUTION_STATUSES } from "~/lib/execution/types";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Dispatch history for a run, from the executions route (the ExecutionTarget
@@ -65,7 +66,7 @@ export function useTestRunExecutions(
   const query = useQuery({
     queryKey: testRunExecutionsQueryKey(runId ?? 0),
     queryFn: async (): Promise<TestRunExecutionRow[]> => {
-      const res = await fetch(`/api/test-runs/${runId}/executions?limit=25`);
+      const res = await apiFetch(`/api/test-runs/${runId}/executions?limit=25`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { executions: TestRunExecutionRow[] };
       return data.executions;

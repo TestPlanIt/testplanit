@@ -22,6 +22,7 @@ import {
   ExecuteAutomationDialog,
   readExecuteError,
 } from "./ExecuteAutomationDialog";
+import { apiFetch } from "~/lib/basePath";
 
 export const executionTargetChoicesQueryKey = (projectId: number) => [
   "executionTargetChoices",
@@ -211,7 +212,7 @@ export function ExecuteAutomationButton({
         initialRef={retryOf?.ref ?? null}
         initialInputs={retryInputs}
         submit={async ({ targetId, ref, inputs }) => {
-          const res = await fetch(`/api/test-runs/${runId}/execute`, {
+          const res = await apiFetch(`/api/test-runs/${runId}/execute`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

@@ -62,6 +62,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { UserNameCell } from "./tables/UserNameCell";
+import { apiFetch } from "~/lib/basePath";
 
 interface LinkedCasesPanelProps {
   caseId: number;
@@ -209,7 +210,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       take: pageSize,
     };
     const url = `/api/model/RepositoryCases/findMany?q=${encodeURIComponent(JSON.stringify(params))}`;
-    const res = await fetch(url);
+    const res = await apiFetch(url);
     const data = await res.json();
     const results = Array.isArray(data.data) ? data.data : [];
 

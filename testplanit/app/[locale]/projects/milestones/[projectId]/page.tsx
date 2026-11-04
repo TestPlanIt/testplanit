@@ -48,6 +48,7 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useTabState } from "~/hooks/useTabState";
 import { useRouter } from "~/lib/navigation";
+import { apiFetch } from "~/lib/basePath";
 
 interface ProjectMilestonesProps {
   params: Promise<{ projectId: string }>;
@@ -374,7 +375,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
       );
       if (!mapping) continue;
 
-      void fetch(
+      void apiFetch(
         `/api/integrations/${integrationId}/milestone-sync/now?trigger=hover`,
         {
           method: "POST",

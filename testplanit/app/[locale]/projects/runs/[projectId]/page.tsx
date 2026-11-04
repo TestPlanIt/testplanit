@@ -84,6 +84,7 @@ import {
   type RunFilters,
 } from "./runFilters";
 import TestRunDisplay, { type TestRunsWithDetails } from "./TestRunDisplay";
+import { apiFetch } from "~/lib/basePath";
 
 interface ProjectTestRunsProps {
   params: Promise<{ projectId: string }>;
@@ -631,7 +632,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
           participant: participantFilter,
         });
 
-        const response = await fetch(`/api/test-runs/completed?${params}`);
+        const response = await apiFetch(`/api/test-runs/completed?${params}`);
         if (!response.ok) {
           throw new Error("Failed to fetch completed test runs");
         }

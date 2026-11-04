@@ -28,6 +28,7 @@ import { Link } from "~/lib/navigation";
 import { isSafeExternalUrl } from "~/utils/externalUrl";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { schema } from "~/zenstack/schema";
+import { apiFetch } from "~/lib/basePath";
 
 interface RequirementReferencesPanelProps {
   projectId: number | string;
@@ -161,7 +162,7 @@ export function RequirementReferencesPanel({
     try {
       const responses = await Promise.all(
         issues.map((issue) =>
-          fetch(
+          apiFetch(
             `/api/projects/${projectId}/requirements/${requirementId}/references`,
             {
               method: "POST",
@@ -204,7 +205,7 @@ export function RequirementReferencesPanel({
   const handleRemove = async (referencedIssueId: number) => {
     setIsMutating(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/requirements/${requirementId}/references/${referencedIssueId}`,
         { method: "DELETE" }
       );

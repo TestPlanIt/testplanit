@@ -10,6 +10,7 @@ import React, { useCallback, useMemo } from "react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { ProjectIcon } from "../ProjectIcon";
+import { apiFetch } from "~/lib/basePath";
 
 interface ProjectListProps {
   projects?: Array<{ projectId: number } | ProjectLike>;
@@ -152,7 +153,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
         },
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/model/Projects/findMany?q=${encodeURIComponent(JSON.stringify(params))}`
       );
 
@@ -170,7 +171,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
       const needsCount = query.trim().length > 0 || computedCount === undefined;
 
       if (needsCount) {
-        const countResponse = await fetch(
+        const countResponse = await apiFetch(
           `/api/model/Projects/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
         );
 

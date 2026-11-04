@@ -22,6 +22,7 @@ import { AddLlmIntegration } from "./AddLlmIntegration";
 import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
 import { EditLlmIntegration } from "./EditLlmIntegration";
 import { ExtendedLlmIntegration, useColumns } from "./columns";
+import { apiFetch } from "~/lib/basePath";
 
 export default function LlmAdminPage() {
   return <LlmIntegrationList />;
@@ -235,7 +236,7 @@ function LlmIntegrationList() {
     setRefreshing(true);
     try {
       const promises = (integrations || []).map(async (integration) => {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/admin/llm/integrations/${integration.id}/test`,
           {
             method: "POST",

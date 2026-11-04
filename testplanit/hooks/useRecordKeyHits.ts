@@ -9,6 +9,7 @@ import {
   splitRecordQueryTerms,
 } from "~/lib/recordKey";
 import type { SearchHit } from "~/types/search";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Resolve a search query that names records — bare numeric ids (`1234`,
@@ -41,7 +42,7 @@ export function useRecordKeyHits(query: string): SearchHit[] {
     queryFn: async () => {
       const perTerm = await Promise.all(
         terms.map(async (term) => {
-          const res = await fetch(
+          const res = await apiFetch(
             `/api/record-key/resolve?key=${encodeURIComponent(term)}`
           );
           if (!res.ok) return [] as SearchHit[];

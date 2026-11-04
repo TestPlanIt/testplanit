@@ -27,6 +27,7 @@ import { siGithub, siJira } from "simple-icons";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { safeExternalUrl } from "~/utils/externalUrl";
+import { apiFetch } from "~/lib/basePath";
 
 export interface MilestoneSourceBadgeMilestone {
   id: number;
@@ -310,7 +311,7 @@ function SourceBadgeWithUnlinkMenu({
   const handleUnlink = async () => {
     setIsUnlinking(true);
     try {
-      const res = await fetch(`/api/milestones/${milestone.id}/unlink`, {
+      const res = await apiFetch(`/api/milestones/${milestone.id}/unlink`, {
         method: "POST",
       });
       if (!res.ok) {

@@ -22,6 +22,7 @@ import type { TestCaseParameter } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { SquareStack } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { apiFetch } from "~/lib/basePath";
 
 export interface ParametersTabProps {
   caseId: number;
@@ -53,7 +54,7 @@ export function ParametersTab({
 
     await Promise.all(
       reordered.map((p, idx) =>
-        fetch(`/api/repository/cases/${caseId}/parameters/${p.id}`, {
+        apiFetch(`/api/repository/cases/${caseId}/parameters/${p.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: idx }),

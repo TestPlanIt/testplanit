@@ -5,6 +5,7 @@ import {
   matchesPostFetchFilters,
   type PostFetchFilter,
 } from "./useRepositoryCasesWithFilteredFields";
+import { apiFetch } from "~/lib/basePath";
 
 interface Params {
   projectId: number;
@@ -51,7 +52,7 @@ export function useFindManyRepositoryCasesByDescendants(
     ],
     enabled,
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/cases/by-folder-descendants`,
         {
           method: "POST",

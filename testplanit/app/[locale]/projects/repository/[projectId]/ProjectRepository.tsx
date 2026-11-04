@@ -137,6 +137,7 @@ import { GenerateTestCasesWizard } from "./GenerateTestCasesWizard";
 import { ImportCasesWizard } from "./ImportCasesWizard";
 import type { FolderNode } from "./TreeView";
 import TreeView from "./TreeView";
+import { apiFetch } from "~/lib/basePath";
 
 // Conditional wrapper to avoid nested DndProviders.
 // When skipDndProvider is true, we skip both the DndProvider and UnifiedDragPreview
@@ -858,7 +859,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       activeSearchKey,
     ],
     queryFn: async () => {
-      const response = await fetch("/api/repository-cases/view-options", {
+      const response = await apiFetch("/api/repository-cases/view-options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1634,7 +1635,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       setEsSearchLoading(true);
       try {
         // First page
-        const response = await fetch("/api/search", {
+        const response = await apiFetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(searchBody(1)),
@@ -1658,7 +1659,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           );
           const pageResults = await Promise.all(
             remainingPages.map((page) =>
-              fetch("/api/search", {
+              apiFetch("/api/search", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(searchBody(page)),

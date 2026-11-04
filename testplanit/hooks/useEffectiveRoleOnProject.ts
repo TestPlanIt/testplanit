@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Result shape exposed by useEffectiveRoleOnProject.
@@ -51,7 +52,7 @@ export function useEffectiveRoleOnProject(
   }>({
     queryKey: ["effective-role-on-project", projectId, userId],
     queryFn: async () => {
-      const response = await fetch("/api/get-user-permissions", {
+      const response = await apiFetch("/api/get-user-permissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, projectId }),

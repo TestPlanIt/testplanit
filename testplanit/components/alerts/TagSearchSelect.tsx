@@ -3,6 +3,7 @@
 import { Tag } from "lucide-react";
 import { useCallback } from "react";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { apiFetch } from "~/lib/basePath";
 
 interface TagOption {
   id: number;
@@ -42,10 +43,10 @@ export function TagSearchSelect({
         take: pageSize,
       };
       const [listRes, countRes] = await Promise.all([
-        fetch(
+        apiFetch(
           `/api/model/tags/findMany?q=${encodeURIComponent(JSON.stringify(listParams))}`
         ),
-        fetch(
+        apiFetch(
           `/api/model/tags/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
         ),
       ]);

@@ -4,6 +4,7 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import type { CaseLatestExecutionResponse } from "~/app/api/repository-cases/[caseId]/latest-execution/route";
+import { apiFetch } from "~/lib/basePath";
 
 /** The literal first element of every query key this hook issues. Exported
  *  for the same reason `useRequirementCoveringCases.ts` and
@@ -82,7 +83,7 @@ export function useCaseLatestExecution(caseId: number | undefined) {
   return useQuery<CaseLatestExecutionResponse>({
     queryKey: [CASE_LATEST_EXECUTION_QUERY_KEY_ROOT, caseId],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/repository-cases/${caseId}/latest-execution`
       );
       if (!response.ok) {

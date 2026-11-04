@@ -1,6 +1,7 @@
 import { ApplicationArea } from "~/zenstack/models";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { apiFetch } from "~/lib/basePath";
 
 // Type for permissions of a single area
 export type AreaPermissions = {
@@ -102,7 +103,7 @@ export function useProjectPermissions(
         body.area = area;
       }
 
-      const response = await fetch("/api/get-user-permissions", {
+      const response = await apiFetch("/api/get-user-permissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

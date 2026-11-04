@@ -29,6 +29,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface ElasticsearchStatus {
   available: boolean;
@@ -90,7 +91,7 @@ export function ElasticsearchAdmin({
   const checkElasticsearchStatus = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/elasticsearch/reindex");
+      const response = await apiFetch("/api/admin/elasticsearch/reindex");
       const data = await response.json();
       setStatus(data);
     } catch (error) {
@@ -108,7 +109,7 @@ export function ElasticsearchAdmin({
 
   const loadReplicaSettings = async () => {
     try {
-      const response = await fetch("/api/admin/elasticsearch/settings");
+      const response = await apiFetch("/api/admin/elasticsearch/settings");
       if (response.ok) {
         const data = await response.json();
         setNumberOfReplicas(data.numberOfReplicas || 0);
@@ -121,7 +122,7 @@ export function ElasticsearchAdmin({
   const saveReplicaSettings = async () => {
     try {
       setSavingReplicas(true);
-      const response = await fetch("/api/admin/elasticsearch/settings", {
+      const response = await apiFetch("/api/admin/elasticsearch/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ numberOfReplicas }),
@@ -133,7 +134,7 @@ export function ElasticsearchAdmin({
         });
 
         // Update existing indices
-        const updateResponse = await fetch(
+        const updateResponse = await apiFetch(
           "/api/admin/elasticsearch/settings",
           {
             method: "PUT",
@@ -168,7 +169,7 @@ export function ElasticsearchAdmin({
 
     const pollInterval = setInterval(async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/admin/elasticsearch/reindex/${currentJobId}`
         );
         if (!response.ok) {
@@ -243,7 +244,7 @@ export function ElasticsearchAdmin({
       setProgress({ progress: 0, message: "Queueing reindex job..." });
       setJobLogs([]);
 
-      const response = await fetch("/api/admin/elasticsearch/reindex", {
+      const response = await apiFetch("/api/admin/elasticsearch/reindex", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ entityType }),

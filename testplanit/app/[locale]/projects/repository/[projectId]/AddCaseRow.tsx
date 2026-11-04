@@ -27,6 +27,7 @@ import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases
 import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
 import { IconName } from "~/types/globals";
 import { randomUuid } from "~/utils/randomUuid";
+import { apiFetch } from "~/lib/basePath";
 
 function buildFormSchema(t: (key: any) => string) {
   return z.object({
@@ -230,7 +231,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
 
   const checkForDuplicates = async (caseName: string, caseId: number) => {
     try {
-      const res = await fetch("/api/duplicate-scan/check-new", {
+      const res = await apiFetch("/api/duplicate-scan/check-new", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -109,6 +109,7 @@ import {
   ProjectUserPermissions,
   UserPermissionFormState,
 } from "./ProjectUserPermissions";
+import { apiFetch } from "~/lib/basePath";
 
 const SYSTEM_DEFAULT_TEMPLATE = "system";
 
@@ -406,7 +407,7 @@ export function CreateProjectWizard({
       setNameValidationMessage(null);
 
       try {
-        const response = await fetch("/api/admin/validate-project-name", {
+        const response = await apiFetch("/api/admin/validate-project-name", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -40,6 +40,7 @@ import {
   userTrashItemTypes,
   type UserTrashItem,
 } from "~/lib/userTrash/itemTypes";
+import { apiFetch } from "~/lib/basePath";
 
 interface TrashResponse {
   windowDays: number;
@@ -62,7 +63,7 @@ export function userTrashQueryKey(userId: string) {
 }
 
 async function fetchTrash(userId: string): Promise<TrashResponse> {
-  const response = await fetch(
+  const response = await apiFetch(
     `/api/trash?userId=${encodeURIComponent(userId)}`
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -166,7 +167,7 @@ export function UserTrash({ userId }: { userId: string }) {
 
   const restoreOne = useCallback(
     async (row: TrashRow): Promise<string | null> => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/trash/${encodeURIComponent(row.itemType)}/${encodeURIComponent(row.id)}`,
         { method: "PATCH" }
       );

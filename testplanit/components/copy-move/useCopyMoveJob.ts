@@ -8,6 +8,7 @@ import type {
   CopyMoveJobResult,
   FolderTreeNode,
 } from "~/workers/copyMoveWorker";
+import { apiFetch } from "~/lib/basePath";
 
 const POLL_INTERVAL_MS = 2000;
 
@@ -79,7 +80,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
       setError(null);
 
       try {
-        const res = await fetch("/api/repository/copy-move/preflight", {
+        const res = await apiFetch("/api/repository/copy-move/preflight", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(args),
@@ -128,7 +129,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
       submitAbortRef.current = abortController;
 
       try {
-        const res = await fetch("/api/repository/copy-move", {
+        const res = await apiFetch("/api/repository/copy-move", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(args),
@@ -144,7 +145,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
 
         // If cancelled while submit was in flight, cancel the newly created job
         if (abortController.signal.aborted) {
-          fetch(`/api/repository/copy-move/cancel/${data.jobId}`, {
+          apiFetch(`/api/repository/copy-move/cancel/${data.jobId}`, {
             method: "POST",
           }).catch(() => {});
           return;
@@ -172,7 +173,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
 
     const poll = async () => {
       try {
-        const res = await fetch(`/api/repository/copy-move/status/${jobId}`);
+        const res = await apiFetch(`/api/repository/copy-move/status/${jobId}`);
         if (!res.ok) {
           throw new Error(`Status check failed (${res.status})`);
         }
@@ -248,7 +249,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
 
     if (jobId) {
       try {
-        await fetch(`/api/repository/copy-move/cancel/${jobId}`, {
+        await apiFetch(`/api/repository/copy-move/cancel/${jobId}`, {
           method: "POST",
         });
       } catch {

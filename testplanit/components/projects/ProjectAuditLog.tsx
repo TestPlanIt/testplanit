@@ -28,6 +28,7 @@ import { AUDIT_ACTIONS, formatAuditAction } from "~/lib/audit/auditActions";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import { logDataExport } from "~/lib/services/auditClient";
+import { apiFetch } from "~/lib/basePath";
 
 // Rows fetched per scroll page — matches the admin audit-log surface: audit
 // rows are cheap (heavy Json columns excluded) and operationId grouping can
@@ -232,7 +233,7 @@ export function ProjectAuditLog({
         page: String(page),
         pageSize: String(pageSize),
       });
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/projects/${projectId}/audit-log-users?${params}`
       );
       if (!response.ok) {

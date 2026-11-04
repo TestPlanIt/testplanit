@@ -89,6 +89,7 @@ import {
 } from "~/types/search";
 import { cn } from "~/utils";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { apiFetch } from "~/lib/basePath";
 
 interface UnifiedSearchProps {
   // Context overrides
@@ -300,7 +301,7 @@ export function UnifiedSearch({
           ],
         };
 
-        const response = await fetch("/api/search", {
+        const response = await apiFetch("/api/search", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -9,6 +9,7 @@ import React, { useCallback } from "react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import type { FailureSignatureWhereInput } from "~/zenstack/input";
+import { apiFetch } from "~/lib/basePath";
 
 interface SignatureOption {
   id: number;
@@ -56,7 +57,7 @@ export const SignaturesListDisplay: React.FC<{
           project: { select: { name: true, iconUrl: true } },
         },
       };
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/model/FailureSignature/findMany?q=${encodeURIComponent(JSON.stringify(params))}`
       );
       if (!response.ok) {
@@ -69,7 +70,7 @@ export const SignaturesListDisplay: React.FC<{
         : [];
       let total = count;
       if (trimmed) {
-        const countResponse = await fetch(
+        const countResponse = await apiFetch(
           `/api/model/FailureSignature/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
         );
         if (countResponse.ok) {

@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "~/lib/basePath";
 
 export interface IterationBulkConfirmDialogProps {
   open: boolean;
@@ -109,7 +110,7 @@ export function IterationBulkConfirmDialog({
     if (!chosenStatus) return;
     setSubmitting(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/test-runs/${runId}/cases/${caseId}/iterations/bulk-skip`,
         {
           method: "POST",

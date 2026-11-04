@@ -71,6 +71,7 @@ import type { RepoBranch } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { formatReportDate } from "./formatReportDate";
 import { isIssueScanInFlight, readIssueScanReport } from "./issueScanReport";
 import { readMarkerScanReport } from "./markerScanReport";
+import { apiFetch } from "~/lib/basePath";
 
 export interface CodeRepositoryOption {
   id: number;
@@ -359,7 +360,7 @@ export function ImpactRepositoryForm({
       const key = `${selectedRepositoryId}:${branchesConfigId}`;
       const base = `/api/code-repositories/${selectedRepositoryId}/branches?configId=${branchesConfigId}`;
       const load = async (url: string) => {
-        const res = await fetch(url);
+        const res = await apiFetch(url);
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data.error) {
           throw new Error(data.error ?? branchesFetchFailed);

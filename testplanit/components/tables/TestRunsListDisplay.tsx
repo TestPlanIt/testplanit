@@ -14,6 +14,7 @@ import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
+import { apiFetch } from "~/lib/basePath";
 
 interface TestRunsListDisplayProps {
   testRunIds?: number[];
@@ -308,7 +309,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
         },
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/model/TestRuns/findMany?q=${encodeURIComponent(JSON.stringify(params))}`
       );
 
@@ -323,7 +324,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
         : [];
 
       // Always fetch total count since we include deleted runs but computedCount only has active runs
-      const countResponse = await fetch(
+      const countResponse = await apiFetch(
         `/api/model/TestRuns/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
       );
 

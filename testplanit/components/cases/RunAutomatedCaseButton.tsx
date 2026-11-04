@@ -11,6 +11,7 @@ import {
   ExecuteAutomationDialog,
   readExecuteError,
 } from "@/components/runs/ExecuteAutomationDialog";
+import { apiFetch } from "~/lib/basePath";
 
 interface Props {
   projectId: number;
@@ -55,7 +56,7 @@ export function RunAutomatedCaseDialog({
       title={t("title")}
       description={t("description")}
       submit={async ({ targetId, ref, inputs }) => {
-        const res = await fetch(`/api/projects/${projectId}/execute-cases`, {
+        const res = await apiFetch(`/api/projects/${projectId}/execute-cases`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

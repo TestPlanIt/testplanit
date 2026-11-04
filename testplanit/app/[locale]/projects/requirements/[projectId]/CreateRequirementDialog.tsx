@@ -24,6 +24,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface CreateRequirementDialogProps {
   projectId: string;
@@ -147,7 +148,7 @@ export function CreateRequirementDialog({
         try {
           const responses = await Promise.all(
             referencedIssueIds.map((referencedIssueId) =>
-              fetch(
+              apiFetch(
                 `/api/projects/${projectId}/requirements/${created.id}/references`,
                 {
                   method: "POST",
@@ -181,7 +182,7 @@ export function CreateRequirementDialog({
     if (!promoteTarget || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/requirements/${promoteTarget.id}/override`,
         {
           method: "POST",

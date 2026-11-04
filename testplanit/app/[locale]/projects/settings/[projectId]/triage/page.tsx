@@ -27,6 +27,7 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
 import { ApplicationArea } from "~/zenstack/models";
 import { schema } from "~/zenstack/schema";
+import { apiFetch } from "~/lib/basePath";
 
 type BackfillStatus = {
   state: "none" | "waiting" | "active" | "completed" | "failed" | string;
@@ -82,7 +83,7 @@ export default function TriageSettingsPage() {
 
   const pollBackfill = useCallback(async () => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/triage/backfill`);
+      const res = await apiFetch(`/api/projects/${projectId}/triage/backfill`);
       if (!res.ok) return;
       const next = (await res.json()) as BackfillStatus;
       setBackfill((prev) => {
@@ -169,7 +170,7 @@ export default function TriageSettingsPage() {
   const startBackfill = async () => {
     setStarting(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/triage/backfill`, {
+      const res = await apiFetch(`/api/projects/${projectId}/triage/backfill`, {
         method: "POST",
       });
       if (res.status === 409) {

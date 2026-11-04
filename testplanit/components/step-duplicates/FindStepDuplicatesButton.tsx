@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 type ScanState = "idle" | "active" | "complete" | "failed";
 
@@ -55,7 +56,7 @@ export function FindStepDuplicatesButton({
   const { data: statusData } = useQuery<StatusData>({
     queryKey: ["step-scan-status", scanJobId],
     queryFn: async () => {
-      const r = await fetch(`/api/step-scan/status/${scanJobId}`);
+      const r = await apiFetch(`/api/step-scan/status/${scanJobId}`);
       if (!r.ok) return { state: "unknown" };
       return r.json();
     },
@@ -88,7 +89,7 @@ export function FindStepDuplicatesButton({
   const handleScan = async () => {
     try {
       setScanState("active");
-      const res = await fetch("/api/step-scan/submit", {
+      const res = await apiFetch("/api/step-scan/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: parseInt(projectId) }),
@@ -111,7 +112,7 @@ export function FindStepDuplicatesButton({
   const handleCancel = async () => {
     if (!scanJobId) return;
     try {
-      await fetch(`/api/step-scan/cancel/${scanJobId}`, {
+      await apiFetch(`/api/step-scan/cancel/${scanJobId}`, {
         method: "POST",
       });
     } catch {

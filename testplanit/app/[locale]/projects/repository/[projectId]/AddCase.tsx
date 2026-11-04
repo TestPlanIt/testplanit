@@ -105,6 +105,7 @@ import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { randomUuid } from "~/utils/randomUuid";
 import RenderField from "./RenderField";
+import { apiFetch } from "~/lib/basePath";
 
 const mapFieldToZodType = (field: any, t: (key: any) => string) => {
   const isRequired = field.caseField.isRequired;
@@ -987,7 +988,7 @@ export function AddCase({
     tagNames: string[]
   ) => {
     try {
-      const res = await fetch("/api/duplicate-scan/check-new", {
+      const res = await apiFetch("/api/duplicate-scan/check-new", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1256,7 +1257,7 @@ export function AddCase({
         }[] = [];
         if (linkedIssueIds.length > 0) {
           try {
-            const res = await fetch(
+            const res = await apiFetch(
               `/api/model/issue/findMany?q=${encodeURIComponent(
                 JSON.stringify({
                   where: { id: { in: linkedIssueIds } },

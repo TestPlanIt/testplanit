@@ -39,6 +39,7 @@ import {
 } from "~/lib/schemas/iterationOverrideSchema";
 
 import { OverrideUnsavedAlertDialog } from "./OverrideUnsavedAlertDialog";
+import { apiFetch } from "~/lib/basePath";
 
 export interface OverrideValuesDialogProps {
   open: boolean;
@@ -181,7 +182,7 @@ export function OverrideValuesDialog({
     setSubmitting(true);
     try {
       const coerced = coerceForSubmit(raw, orderedSchema);
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/test-runs/${runId}/cases/${caseId}/iterations/${iterationId}/values`,
         {
           method: "PATCH",

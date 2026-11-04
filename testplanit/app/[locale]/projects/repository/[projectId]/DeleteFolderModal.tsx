@@ -16,6 +16,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
+import { apiFetch } from "~/lib/basePath";
 
 export interface FolderNode {
   id: number;
@@ -75,7 +76,7 @@ export function DeleteFolderModal({
       // name-freeing rename) and their cases atomically — replacing the old
       // client-side fan-out of one PUT per folder, which exhausted browser
       // connections (net::ERR_INSUFFICIENT_RESOURCES) on large trees.
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/folders/delete-subtree`,
         {
           method: "POST",

@@ -177,6 +177,7 @@ import {
 } from "./TestCasesSection";
 import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestRunFormControls from "./TestRunFormControls";
+import { apiFetch } from "~/lib/basePath";
 
 // Form Values interface
 interface FormValues {
@@ -605,7 +606,7 @@ export default function TestRunPage() {
     if (isTogglingCompositionLock) return;
     setIsTogglingCompositionLock(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/test-runs/${Number(runId)}/composition-lock`,
         {
           method: "PATCH",
@@ -1346,7 +1347,7 @@ export default function TestRunPage() {
 
         // Data-driven cases added here need their iterations, as on a new
         // run. The route skips cases that already have them.
-        await fetch(`/api/test-runs/${runId}/generate-iterations`, {
+        await apiFetch(`/api/test-runs/${runId}/generate-iterations`, {
           method: "POST",
         }).catch((fanOutErr) => {
           console.error("[generate-iterations]", fanOutErr);
@@ -1820,7 +1821,7 @@ export default function TestRunPage() {
       ...effectiveRunIdsForResults,
     ],
     queryFn: async () => {
-      const response = await fetch("/api/repository-cases/view-options", {
+      const response = await apiFetch("/api/repository-cases/view-options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

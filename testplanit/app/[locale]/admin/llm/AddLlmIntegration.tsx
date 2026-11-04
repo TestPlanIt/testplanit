@@ -52,6 +52,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
+import { apiFetch } from "~/lib/basePath";
 
 const createFormSchema = (t: any, existingNames: string[]) =>
   z.object({
@@ -349,7 +350,7 @@ export function AddLlmIntegration({
       modelPricingRef.current = {};
 
       try {
-        const response = await fetch("/api/admin/llm/available-models", {
+        const response = await apiFetch("/api/admin/llm/available-models", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -461,7 +462,7 @@ export function AddLlmIntegration({
     const values = form.getValues();
 
     try {
-      const response = await fetch("/api/admin/llm/test-credentials", {
+      const response = await apiFetch("/api/admin/llm/test-credentials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -532,7 +533,7 @@ export function AddLlmIntegration({
     let capabilitiesForSave = probedCapabilities;
     if (!capabilitiesForSave) {
       try {
-        const probeResp = await fetch("/api/admin/llm/test-credentials", {
+        const probeResp = await apiFetch("/api/admin/llm/test-credentials", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

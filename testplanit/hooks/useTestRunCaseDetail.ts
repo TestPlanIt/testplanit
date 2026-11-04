@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { TestRunCaseDetail } from "~/lib/services/testRunCaseDetail";
 import { filterOrphanedFieldValues } from "./useRepositoryCasesWithFilteredFields";
+import { apiFetch } from "~/lib/basePath";
 
 interface CaseDetailResponse {
   testcase: TestRunCaseDetail | null;
@@ -31,7 +32,7 @@ export function useTestRunCaseDetail(
       if (testRunId != null) {
         params.set("testRunId", String(testRunId));
       }
-      const response = await fetch(`/api/test-runs/case-detail?${params}`);
+      const response = await apiFetch(`/api/test-runs/case-detail?${params}`);
       const payload = (await response
         .json()
         .catch(() => null)) as CaseDetailResponse | null;

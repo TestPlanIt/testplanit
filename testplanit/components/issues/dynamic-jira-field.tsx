@@ -26,6 +26,7 @@ const EMPTY_FETCH_OPTIONS = async () => ({ results: [], total: 0 });
 import { Controller, UseFormReturn } from "react-hook-form";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { apiFetch } from "~/lib/basePath";
 
 interface JiraField {
   key: string;
@@ -140,7 +141,7 @@ function UserPickerField({
         if (projectKey) {
           params.append("projectKey", projectKey);
         }
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${integrationId}/search-users?${params.toString()}`
         );
         if (!response.ok) throw new Error("Failed to search users");
@@ -331,7 +332,7 @@ export function DynamicJiraField({
   const fetchLinkableIssues = useCallback(
     async (query: string) => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${integrationId}/search-issues?query=${encodeURIComponent(query)}`
         );
         if (!response.ok) throw new Error("Failed to search issues");

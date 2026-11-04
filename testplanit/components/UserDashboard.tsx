@@ -43,6 +43,7 @@ import UserWorkGanttChart, {
   type PlotTask,
 } from "./dataVisualizations/UserWorkGanttChart";
 import LoadingSpinner from "./LoadingSpinner";
+import { apiFetch } from "~/lib/basePath";
 
 // Updated Helper type for TestRunCases
 type TestCaseWithResults = TestRunCases & {
@@ -281,7 +282,7 @@ export function UserDashboard() {
     useQuery<UserDashboardData>({
       queryKey: ["userDashboard", userId],
       queryFn: async () => {
-        const response = await fetch(`/api/users/${userId}/dashboard`);
+        const response = await apiFetch(`/api/users/${userId}/dashboard`);
         if (!response.ok) {
           throw new Error("Failed to fetch user dashboard data");
         }

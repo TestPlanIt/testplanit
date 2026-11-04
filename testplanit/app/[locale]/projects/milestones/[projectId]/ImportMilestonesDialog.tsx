@@ -24,6 +24,7 @@ import { AlertCircle, Loader2, PackageOpen, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface ExternalMilestone {
   id: string;
@@ -160,7 +161,7 @@ export function ImportMilestonesDialog({
           // kinds the project has enabled in its milestone-sync settings.
           ...(kind ? { kind } : {}),
         });
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/integrations/${integrationId}/milestone-sync/preview?${params.toString()}`
         );
         const data = await readJsonBody(res);
@@ -279,7 +280,7 @@ export function ImportMilestonesDialog({
     setIsImporting(true);
     setError(null);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/integrations/${integrationId}/milestone-sync/import`,
         {
           method: "POST",

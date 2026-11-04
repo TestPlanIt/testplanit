@@ -122,6 +122,7 @@ import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
 import { RunAutomatedCaseDialog } from "@/components/cases/RunAutomatedCaseButton";
 import { useExecutionTargetChoices } from "@/components/runs/ExecuteAutomationButton";
+import { apiFetch } from "~/lib/basePath";
 
 type PageSizeOption = number | "All";
 
@@ -3122,7 +3123,7 @@ export default function Cases({
             select: { id: true },
           }),
         });
-        const resp = await fetch(
+        const resp = await apiFetch(
           `/api/model/repositoryCases/findMany?${params.toString()}`,
           { credentials: "include" }
         );

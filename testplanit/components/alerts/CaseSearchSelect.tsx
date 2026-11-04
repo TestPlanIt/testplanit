@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { apiFetch } from "~/lib/basePath";
 
 interface CaseOption {
   id: number;
@@ -53,10 +54,10 @@ export function CaseSearchSelect({
         take: pageSize,
       };
       const [listRes, countRes] = await Promise.all([
-        fetch(
+        apiFetch(
           `/api/model/repositoryCases/findMany?q=${encodeURIComponent(JSON.stringify(listParams))}`
         ),
-        fetch(
+        apiFetch(
           `/api/model/repositoryCases/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
         ),
       ]);

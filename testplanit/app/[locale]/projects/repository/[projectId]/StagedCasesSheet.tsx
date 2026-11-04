@@ -66,6 +66,7 @@ import {
   groupByTemplate,
   type DraftTemplate,
 } from "./draftCaseCreation";
+import { apiFetch } from "~/lib/basePath";
 
 export interface StagedCasesSheetProps {
   projectId: number;
@@ -238,7 +239,7 @@ export function StagedCasesSheet({
       });
       for (const [templateId, group] of groupByTemplate(items)) {
         try {
-          const res = await fetch(
+          const res = await apiFetch(
             `/api/projects/${projectId}/cases/bulk-create`,
             {
               method: "POST",

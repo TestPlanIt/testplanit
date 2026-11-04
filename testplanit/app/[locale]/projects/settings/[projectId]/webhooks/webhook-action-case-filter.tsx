@@ -27,6 +27,7 @@ import {
 } from "~/lib/schemas/repositoryFilterPredicates";
 import { schema } from "~/zenstack/schema";
 import { getDateFnsLocale } from "~/utils/locales";
+import { apiFetch } from "~/lib/basePath";
 
 export interface ProjectCaseFilterOptions {
   /** The project's repository filter dimensions, as the repository page builds them. */
@@ -51,7 +52,7 @@ export function useProjectCaseFilterOptions(
   const { data: viewOptions } = useQuery<FilterBarViewOptions>({
     queryKey: ["viewOptions", projectId, "caseFilter"],
     queryFn: async () => {
-      const response = await fetch("/api/repository-cases/view-options", {
+      const response = await apiFetch("/api/repository-cases/view-options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId }),

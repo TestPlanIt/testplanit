@@ -21,6 +21,7 @@ import {
   buildRowSchemaFromParameters,
   type ParameterShape,
 } from "~/lib/schemas/datasetRowSchema";
+import { apiFetch } from "~/lib/basePath";
 
 interface ParameterRecord {
   id: number;
@@ -119,7 +120,7 @@ export function PasteCsvDialog({
         mapping[h] = paramNames.has(h) ? h : "__skip__";
       });
 
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/cases/${caseId}/dataset/import-csv`,
         {
           method: "POST",

@@ -83,6 +83,7 @@ import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import ProjectRepository from "../../repository/[projectId]/ProjectRepository";
+import { apiFetch } from "~/lib/basePath";
 
 interface WorkflowOption {
   value: string;
@@ -627,7 +628,7 @@ const TestCasesDialog = React.memo(
 
         setIsLoadingTestCasesForDrawer(true);
         try {
-          const response = await fetch(
+          const response = await apiFetch(
             `/api/projects/${projectId}/cases/fetch-many`,
             {
               method: "POST",
@@ -671,7 +672,7 @@ const TestCasesDialog = React.memo(
         }
         setIsLoadingForecast(true);
         try {
-          const response = await fetch("/api/repository-cases/forecast", {
+          const response = await apiFetch("/api/repository-cases/forecast", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -1561,7 +1562,7 @@ export default function AddTestRunModal({
           // but do NOT throw (other configs in the loop should still get
           // their fan-out attempt).
           try {
-            const fanOutRes = await fetch(
+            const fanOutRes = await apiFetch(
               `/api/test-runs/${newTestRun.id}/generate-iterations`,
               {
                 method: "POST",

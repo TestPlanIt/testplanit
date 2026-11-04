@@ -27,6 +27,7 @@ import type {
   IterationMenuAction,
   IterationParameterMeta,
 } from "./types";
+import { apiFetch } from "~/lib/basePath";
 
 interface IterationAwareTestRunCaseDetailsProps {
   testRunCaseId: number;
@@ -375,7 +376,7 @@ export function IterationAwareTestRunCaseDetails({
         });
         return;
       }
-      const res = await fetch(`/api/test-runs/submit-result`, {
+      const res = await apiFetch(`/api/test-runs/submit-result`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

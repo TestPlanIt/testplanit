@@ -27,6 +27,7 @@ import {
   readRequirementTypeConfig,
   type RequirementTypeConfig,
 } from "~/lib/integrations/requirementTypeConfig";
+import { apiFetch } from "~/lib/basePath";
 
 /** The target/preselection shape the shared ImportIssuesDialog (28-20)
  *  accepts -- opening it is now the caller's job, not this component's. */
@@ -167,7 +168,7 @@ export function RequirementsConfigSettings({
     const addedTypesAtSaveTime = diff.added;
     try {
       const { issueTypeIds, issueTypeNames } = savedIssueTypes(selected);
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/integrations/${integration.id}/requirements-config`,
         {
           method: "PUT",

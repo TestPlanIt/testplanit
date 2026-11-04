@@ -1,4 +1,5 @@
 import { operationIdRef } from "~/lib/zenstackFetcher";
+import { apiFetch } from "~/lib/basePath";
 
 export interface SubmitTestRunResultInput {
   testRunId: number;
@@ -184,7 +185,7 @@ export async function editTestRunResult(
   if (operationIdRef.current) {
     editHeaders["X-Operation-Id"] = operationIdRef.current;
   }
-  const response = await fetch("/api/test-runs/edit-result", {
+  const response = await apiFetch("/api/test-runs/edit-result", {
     method: "POST",
     headers: editHeaders,
     body: JSON.stringify(input),
@@ -221,7 +222,7 @@ export async function deleteTestRunResult(resultId: number): Promise<void> {
   if (operationIdRef.current) {
     headers["X-Operation-Id"] = operationIdRef.current;
   }
-  const response = await fetch("/api/test-runs/delete-result", {
+  const response = await apiFetch("/api/test-runs/delete-result", {
     method: "POST",
     headers,
     body: JSON.stringify({ resultId }),
@@ -254,7 +255,7 @@ export async function submitTestRunResult(
   if (operationIdRef.current) {
     headers["X-Operation-Id"] = operationIdRef.current;
   }
-  const response = await fetch("/api/test-runs/submit-result", {
+  const response = await apiFetch("/api/test-runs/submit-result", {
     method: "POST",
     headers,
     body: JSON.stringify(input),

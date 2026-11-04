@@ -53,6 +53,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { getBillingPeriodStart } from "~/lib/utils/billingPeriod";
+import { apiFetch } from "~/lib/basePath";
 
 const createFormSchema = (
   t: any,
@@ -289,7 +290,7 @@ export function EditLlmIntegration({
     modelPricingRef.current = {};
 
     try {
-      const response = await fetch("/api/admin/llm/available-models", {
+      const response = await apiFetch("/api/admin/llm/available-models", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -384,7 +385,7 @@ export function EditLlmIntegration({
     setStoredCredentials(null);
     void (async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/admin/llm/integrations/${integration.id}/credentials`
         );
         if (!response.ok || cancelled) return;
@@ -453,7 +454,7 @@ export function EditLlmIntegration({
         defaultModel: values.defaultModel,
       };
 
-      const response = await fetch("/api/admin/llm/test-credentials", {
+      const response = await apiFetch("/api/admin/llm/test-credentials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -513,7 +514,7 @@ export function EditLlmIntegration({
     let capabilitiesForSave = probedCapabilities;
     if (!capabilitiesForSave) {
       try {
-        const probeResp = await fetch("/api/admin/llm/test-credentials", {
+        const probeResp = await apiFetch("/api/admin/llm/test-credentials", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -623,7 +624,7 @@ export function EditLlmIntegration({
 
       // Clear the server-side LLM adapter cache so the new settings take effect
       try {
-        await fetch("/api/admin/llm/clear-cache", {
+        await apiFetch("/api/admin/llm/clear-cache", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ llmIntegrationId: integration.id }),

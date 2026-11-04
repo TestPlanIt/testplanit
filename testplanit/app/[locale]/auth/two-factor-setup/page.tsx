@@ -24,6 +24,7 @@ import { Alert } from "~/components/ui/alert";
 import { translateServerError } from "~/lib/i18n/translateServerError";
 import { useRouter } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
+import { apiFetch } from "~/lib/basePath";
 
 export default function TwoFactorSetupPage() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function TwoFactorSetupPage() {
         : "/api/auth/two-factor/setup-required";
       const body = isSsoFlow ? {} : { setupToken: token };
 
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         method: isSsoFlow ? "GET" : "POST",
         headers: isSsoFlow ? {} : { "Content-Type": "application/json" },
         body: isSsoFlow ? undefined : JSON.stringify(body),
@@ -107,7 +108,7 @@ export default function TwoFactorSetupPage() {
         ? { token: verificationCode }
         : { token: verificationCode, setupToken: token };
 
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

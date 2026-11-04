@@ -11,6 +11,7 @@ import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { cn } from "~/utils";
 import { CaseDisplay } from "./CaseDisplay";
+import { apiFetch } from "~/lib/basePath";
 
 interface CasesListProps {
   caseIds?: number[];
@@ -128,7 +129,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
         },
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/model/RepositoryCases/findMany?q=${encodeURIComponent(JSON.stringify(params))}`
       );
 
@@ -146,7 +147,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
       const needsCount = query.trim().length > 0 || computedCount === undefined;
 
       if (needsCount) {
-        const countResponse = await fetch(
+        const countResponse = await apiFetch(
           `/api/model/RepositoryCases/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
         );
 

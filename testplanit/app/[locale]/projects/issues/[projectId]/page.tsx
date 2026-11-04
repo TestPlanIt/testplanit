@@ -46,6 +46,7 @@ import {
 } from "~/lib/issues/issueFacetConditions";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
+import { apiFetch } from "~/lib/basePath";
 
 const PAGE_SIZE = 50;
 
@@ -166,7 +167,7 @@ function ProjectIssues() {
       successMessage: string
     ) => {
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/projects/${projectId}/requirements/${issueId}/override`,
           {
             method: "POST",
@@ -408,7 +409,7 @@ function ProjectIssues() {
       setIsLoadingCounts(true);
       try {
         // For project-scoped issues, we fetch counts scoped to this project
-        const response = await fetch("/api/issues/counts", {
+        const response = await apiFetch("/api/issues/counts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ issueIds: newIds, projectId }),

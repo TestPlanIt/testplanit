@@ -68,6 +68,7 @@ import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
+import { apiFetch } from "~/lib/basePath";
 
 interface ConfigurationOption {
   id: number;
@@ -788,7 +789,7 @@ export function AddSessionModal({
         if (duplicationPreset?.originalFieldValues?.length) {
           for (const fv of duplicationPreset.originalFieldValues) {
             try {
-              await fetch(`/api/model/sessionFieldValues`, {
+              await apiFetch(`/api/model/sessionFieldValues`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

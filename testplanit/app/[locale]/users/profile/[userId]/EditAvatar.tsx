@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { apiFetch } from "~/lib/basePath";
 
 const FormSchema = z.object({});
 
@@ -51,7 +52,7 @@ export function EditAvatar({ user, open, onClose }: EditAvatarProps) {
     try {
       // Use dedicated update API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with nested update operations)
-      const response = await fetch(`/api/users/${user.id}`, {
+      const response = await apiFetch(`/api/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

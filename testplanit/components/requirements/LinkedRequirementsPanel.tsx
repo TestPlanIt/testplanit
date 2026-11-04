@@ -50,6 +50,7 @@ import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
+import { apiFetch } from "~/lib/basePath";
 
 interface LinkedRequirementsPanelProps {
   caseId: number;
@@ -197,7 +198,7 @@ export function LinkedRequirementsPanel({
       const url = `/api/model/Issue/findMany?q=${encodeURIComponent(
         JSON.stringify(params)
       )}`;
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       const data = await res.json();
       const results = Array.isArray(data.data) ? data.data : [];
 

@@ -54,6 +54,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { randomUuid } from "~/utils/randomUuid";
 import type { Roles } from "~/zenstack/models";
+import { apiFetch } from "~/lib/basePath";
 
 interface AddUserProps {
   open: boolean;
@@ -308,7 +309,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
   useEffect(() => {
     const checkEmailServerConfig = async () => {
       try {
-        const response = await fetch("/api/admin/sso/magic-link-status");
+        const response = await apiFetch("/api/admin/sso/magic-link-status");
         if (response.ok) {
           const data = await response.json();
           setIsEmailServerConfigured(data.configured);
@@ -331,7 +332,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
 
       // Restore the user by marking isDeleted as false
       // Note: We only restore the user, not update their info. Admin can edit after restoration.
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await apiFetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -410,7 +411,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
         emailVerified: requireEmailVerification ? undefined : null,
       };
 
-      const response = await fetch("/api/admin/users/create", {
+      const response = await apiFetch("/api/admin/users/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(apiPayload),

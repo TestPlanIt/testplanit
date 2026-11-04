@@ -45,6 +45,7 @@ import {
 import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 const PAGE_SIZE = 25;
 
@@ -102,7 +103,7 @@ export function QueueJobsView({
       setLoading(true);
       const start = page * PAGE_SIZE;
       const end = start + PAGE_SIZE;
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/admin/queues/${queueName}/jobs?state=${state}&start=${start}&end=${end}`
       );
       if (!response.ok) {
@@ -148,7 +149,7 @@ export function QueueJobsView({
           ? `/api/admin/queues/${queueName}/jobs/${jobId}?force=true`
           : `/api/admin/queues/${queueName}/jobs/${jobId}`;
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: action === "remove" ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
         body:

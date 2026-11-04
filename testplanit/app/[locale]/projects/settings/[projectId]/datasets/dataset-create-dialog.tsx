@@ -28,6 +28,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { useRouter } from "~/lib/navigation";
+import { apiFetch } from "~/lib/basePath";
 
 interface DatasetCreateDialogProps {
   projectId: number;
@@ -74,7 +75,7 @@ export function DatasetCreateDialog({
   const onSubmit = async (values: FormData) => {
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/datasets`, {
+      const res = await apiFetch(`/api/projects/${projectId}/datasets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

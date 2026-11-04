@@ -25,6 +25,7 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface ChangePasswordModalProps {
   open: boolean;
@@ -50,7 +51,7 @@ export function ChangePasswordModal({
 
   useEffect(() => {
     if (!session?.user?.id) return;
-    fetch(`/api/users/${session.user.id}/password-policy`)
+    apiFetch(`/api/users/${session.user.id}/password-policy`)
       .then((res) => res.json())
       .then((data) => {
         if (data.policy) setPolicy(data.policy);
@@ -85,7 +86,7 @@ export function ChangePasswordModal({
     setIsLoading(true);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/users/${session.user.id}/change-password`,
         {
           method: "POST",

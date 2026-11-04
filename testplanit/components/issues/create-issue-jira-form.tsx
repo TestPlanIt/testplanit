@@ -27,6 +27,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { DynamicJiraField } from "./dynamic-jira-field";
+import { apiFetch } from "~/lib/basePath";
 
 interface JiraField {
   key: string;
@@ -229,7 +230,7 @@ export function CreateIssueJiraForm({
 
       setIssueTypesLoading(true);
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${integrationId}/issue-types?projectKey=${selectedProjectKey}`
         );
 
@@ -270,7 +271,7 @@ export function CreateIssueJiraForm({
       setError(null);
 
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${integrationId}/issue-type-fields?projectKey=${selectedProjectKey}&issueTypeId=${selectedIssueType}`
         );
 
@@ -474,7 +475,7 @@ export function CreateIssueJiraForm({
         }
       });
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/integrations/${integrationId}/create-issue`,
         {
           method: "POST",

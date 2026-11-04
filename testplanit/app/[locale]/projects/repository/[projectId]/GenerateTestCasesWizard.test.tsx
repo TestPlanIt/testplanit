@@ -56,7 +56,7 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
     // The stream fetch body must include `includeParameters` alongside
     // `autoGenerateTags`.
     const streamFetchIdx = src.indexOf(
-      'fetch("/api/llm/generate-test-cases/stream"'
+      'apiFetch("/api/llm/generate-test-cases/stream"'
     );
     expect(streamFetchIdx).toBeGreaterThan(-1);
     const streamSnippet = src.slice(streamFetchIdx, streamFetchIdx + 1500);

@@ -1,3 +1,4 @@
+import { apiFetch } from "~/lib/basePath";
 /**
  * Best-effort feedback write: which affected tests the reviewer kept and the
  * run they went into. Failures are logged, never surfaced; the run itself is
@@ -13,7 +14,7 @@ export async function recordImpactAcceptance(
   }
 ): Promise<void> {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/projects/${projectId}/impact/analyses/${analysisId}/cases`,
       {
         method: "PATCH",

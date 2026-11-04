@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { useCallback } from "react";
 import { schema } from "~/zenstack/schema";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * One issue type as a picker shows it. Tracker projects that each define
@@ -154,7 +155,7 @@ export function useTrackerIssueTypes(
           async (mapping): Promise<{ id: string; name: string }[]> => {
             try {
               const projectRef = projectRefFor(integration.provider, mapping);
-              const response = await fetch(
+              const response = await apiFetch(
                 `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(projectRef)}`
               );
               if (!response.ok) return [];
@@ -238,7 +239,7 @@ export function useTrackerStatuses(
         refs.map(async (ref): Promise<{ name: string }[]> => {
           try {
             const query = ref ? `?projectKey=${encodeURIComponent(ref)}` : "";
-            const response = await fetch(
+            const response = await apiFetch(
               `/api/integrations/${integration.id}/statuses${query}`
             );
             if (!response.ok) return [];

@@ -14,6 +14,7 @@ import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface DeleteRequirementModalProps {
   projectId: string;
@@ -80,7 +81,7 @@ export function DeleteRequirementModal({
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/requirements/${requirementId}/delete-subtree`,
         { method: "POST" }
       );

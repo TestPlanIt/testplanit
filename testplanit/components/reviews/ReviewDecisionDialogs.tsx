@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { UserMention } from "~/components/UserMention";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import type { IconName } from "~/types/globals";
+import { apiFetch } from "~/lib/basePath";
 
 export type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
 
@@ -89,7 +90,7 @@ async function postDecision(
 ): Promise<{ ok: true } | { ok: false; err: DecideErrorPayload }> {
   let response: Response;
   try {
-    response = await fetch(`/api/reviews/${reviewRequestId}/decide`, {
+    response = await apiFetch(`/api/reviews/${reviewRequestId}/decide`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

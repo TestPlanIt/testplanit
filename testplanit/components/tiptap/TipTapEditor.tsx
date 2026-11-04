@@ -116,6 +116,7 @@ import { Separator } from "../ui/separator";
 import { InsertParameterToolbarButton } from "./InsertParameterToolbarButton";
 import { UndeclaredParameterWarning } from "./UndeclaredParameterWarning";
 import { readToolbarState, type ToolbarState } from "./toolbarState";
+import { apiFetch } from "~/lib/basePath";
 
 interface TipTapEditorProps {
   content: object;
@@ -628,7 +629,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     try {
       const activeLlm = llmIntegrations[0]; // Use first active LLM
 
-      const response = await fetch(`/api/llm/chat`, {
+      const response = await apiFetch(`/api/llm/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

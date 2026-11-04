@@ -8,6 +8,7 @@ import { Loader2, Plus, Save, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface JunitIterationPropertyFormProps {
   projectId: number;
@@ -91,7 +92,7 @@ export function JunitIterationPropertyForm({
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/junit-iteration-property-names`,
         {
           method: "PUT",

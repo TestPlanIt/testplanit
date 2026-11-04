@@ -16,6 +16,7 @@ import {
   softDeletedItemTypes,
   type TrashIconName as IconName,
 } from "./itemTypes";
+import { apiFetch } from "~/lib/basePath";
 
 export default function TrashPage() {
   const tGlobal = useTranslations();
@@ -29,7 +30,7 @@ export default function TrashPage() {
 
   const fetchCounts = useCallback(async () => {
     try {
-      const response = await fetch("/api/admin/trash/counts");
+      const response = await apiFetch("/api/admin/trash/counts");
       if (!response.ok) return;
       const { counts: fetchedCounts } = await response.json();
       setCounts(fetchedCounts ?? {});

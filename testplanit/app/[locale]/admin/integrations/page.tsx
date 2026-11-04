@@ -29,6 +29,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
 import { useColumns } from "./columns";
+import { apiFetch } from "~/lib/basePath";
 
 export default function IntegrationsPage() {
   return <IntegrationList />;
@@ -157,7 +158,7 @@ function IntegrationList() {
       try {
         const toastId = toast.loading("Testing Connection");
 
-        const response = await fetch("/api/integrations/test-connection", {
+        const response = await apiFetch("/api/integrations/test-connection", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

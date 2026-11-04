@@ -156,6 +156,7 @@ import { StepsDisplay } from "./StepsDisplay";
 import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestCaseFormControls from "./TestCaseFormControl";
 import { tipTapJSONEquals } from "~/utils/tiptapConversion";
+import { apiFetch } from "~/lib/basePath";
 
 // Type Definitions (ensure these are present and correct)
 // Helper function to parse JsonValue to TipTap content (ensure this is present)
@@ -1916,7 +1917,7 @@ export function TestCaseDetailsView({
       }[] = [];
       if (newIssueIds.length > 0) {
         try {
-          const res = await fetch(
+          const res = await apiFetch(
             `/api/model/issue/findMany?q=${encodeURIComponent(
               JSON.stringify({
                 where: { id: { in: newIssueIds } },
@@ -2017,7 +2018,7 @@ export function TestCaseDetailsView({
 
       // Create version snapshot using centralized API endpoint
       // Note: The test case was already updated with currentVersion + 1 above and refetched
-      const versionResponse = await fetch(
+      const versionResponse = await apiFetch(
         `/api/repository/cases/${updatedTestCase.id}/versions`,
         {
           method: "POST",

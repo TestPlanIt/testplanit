@@ -13,6 +13,7 @@ import { NotificationTypePreferences } from "@/components/notifications/Notifica
 import { resolveEffectiveNotificationMode } from "~/lib/notifications/delivery";
 import { NotificationMode, NotificationType } from "~/zenstack/models";
 import { schema } from "~/zenstack/schema";
+import { apiFetch } from "~/lib/basePath";
 
 const MODES: NotificationMode[] = [
   NotificationMode.USE_GLOBAL,
@@ -77,7 +78,7 @@ export function NotificationPreferencesCard({
     setDraft(next);
     inFlight.current += 1;
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await apiFetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -27,6 +27,7 @@ import { toHumanReadable } from "~/utils/duration";
 import { ElapsedTime } from "./ElapsedTime";
 import { sortSummaryItems } from "~/utils/summarySort";
 import { computeStatusBarSegmentWidths } from "~/utils/statusBarSegmentWidths";
+import { apiFetch } from "~/lib/basePath";
 
 interface SessionResultsSummaryProps {
   sessionId: number;
@@ -56,7 +57,7 @@ export function SessionResultsSummary({
   const { data: summaryData, isLoading } = useQuery<SessionSummaryData>({
     queryKey: ["sessionSummary", sessionId],
     queryFn: async () => {
-      const response = await fetch(`/api/sessions/${sessionId}/summary`);
+      const response = await apiFetch(`/api/sessions/${sessionId}/summary`);
       if (!response.ok) {
         throw new Error("Failed to fetch session summary");
       }

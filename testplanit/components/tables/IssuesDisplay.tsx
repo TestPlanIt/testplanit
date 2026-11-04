@@ -28,6 +28,7 @@ import { schema } from "~/zenstack/schema";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import { safeExternalUrl } from "~/utils/externalUrl";
+import { apiFetch } from "~/lib/basePath";
 
 interface IssueDisplayProps {
   id: number;
@@ -176,7 +177,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
 
     // Fire and forget — the server returns `cached: true` cheaply when the
     // issue is already fresh, so calling unconditionally is correct.
-    fetch(`/api/issues/${id}/sync?trigger=hover`, {
+    apiFetch(`/api/issues/${id}/sync?trigger=hover`, {
       method: "POST",
     }).catch((_err) => {
       // Silently fail — this is a background optimization.
@@ -202,7 +203,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
       setIsLoading(true);
       setError(null);
 
-      fetch(
+      apiFetch(
         `/api/integrations/issue-details?issueKey=${encodeURIComponent(name)}&integrationId=${integrationId}`
       )
         .then(async (res) => {

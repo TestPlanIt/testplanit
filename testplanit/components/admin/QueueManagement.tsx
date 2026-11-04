@@ -32,6 +32,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { QueueJobsView } from "./QueueJobsView";
+import { apiFetch } from "~/lib/basePath";
 
 interface QueueCounts {
   waiting: number;
@@ -74,7 +75,7 @@ export function QueueManagement() {
   const loadQueues = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/queues");
+      const response = await apiFetch("/api/admin/queues");
       if (!response.ok) {
         throw new Error("Failed to load queues");
       }
@@ -127,7 +128,7 @@ export function QueueManagement() {
 
     try {
       setActionInProgress(queueName);
-      const response = await fetch(`/api/admin/queues/${queueName}`, {
+      const response = await apiFetch(`/api/admin/queues/${queueName}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),

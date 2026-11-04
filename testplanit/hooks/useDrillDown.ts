@@ -9,6 +9,7 @@ import type {
   DrillDownRecord,
   DrillDownResponse,
 } from "~/lib/types/reportDrillDown";
+import { apiFetch } from "~/lib/basePath";
 
 // Sized for result sets in the tens of thousands: the count/record queries
 // are cheap, and the drawer renders through the virtualized table, so a
@@ -69,7 +70,7 @@ export function useDrillDown(): UseDrillDownReturn {
     queryFn: async () => {
       if (!context) return null;
 
-      const response = await fetch("/api/report-builder/drill-down", {
+      const response = await apiFetch("/api/report-builder/drill-down", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

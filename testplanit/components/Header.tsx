@@ -48,6 +48,7 @@ import { UserDropdownMenu } from "@/components/UserDropdownMenu";
 import { useHeaderAlertCounts } from "~/hooks/useHeaderAlertCounts";
 import { getVersionString } from "~/lib/version";
 import { cn } from "~/utils";
+import { apiFetch } from "~/lib/basePath";
 
 export const Header = () => {
   const router = useRouter();
@@ -127,7 +128,7 @@ export const Header = () => {
   useEffect(() => {
     const fetchTrialConfig = async () => {
       try {
-        const response = await fetch("/api/config/trial");
+        const response = await apiFetch("/api/config/trial");
         if (response.ok) {
           const data = await response.json();
           if (data.feedbackSurveyUrl) {

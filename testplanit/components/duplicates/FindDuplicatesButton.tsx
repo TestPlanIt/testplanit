@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 type ScanState = "idle" | "active" | "complete" | "failed";
 
@@ -61,7 +62,7 @@ export function FindDuplicatesButton({
   const { data: pendingCount } = useQuery<number>({
     queryKey: ["duplicate-scan-pending-count", projectId],
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/duplicate-scan/candidates?projectId=${projectId}&limit=10000`
       );
       if (!res.ok) return 0;
@@ -75,7 +76,7 @@ export function FindDuplicatesButton({
   const { data: refreshedCount } = useQuery<number>({
     queryKey: ["duplicate-scan-pending-count-refresh", projectId, scanState],
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/duplicate-scan/candidates?projectId=${projectId}&limit=10000`
       );
       if (!res.ok) return 0;
@@ -91,7 +92,7 @@ export function FindDuplicatesButton({
   const { data: statusData } = useQuery<StatusData>({
     queryKey: ["duplicate-scan-status", scanJobId],
     queryFn: async () => {
-      const r = await fetch(`/api/duplicate-scan/status/${scanJobId}`);
+      const r = await apiFetch(`/api/duplicate-scan/status/${scanJobId}`);
       if (!r.ok) return { state: "unknown" };
       return r.json();
     },
@@ -124,7 +125,7 @@ export function FindDuplicatesButton({
   const handleScan = async () => {
     try {
       setScanState("active");
-      const res = await fetch("/api/duplicate-scan/submit", {
+      const res = await apiFetch("/api/duplicate-scan/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: parseInt(projectId) }),
@@ -152,7 +153,7 @@ export function FindDuplicatesButton({
   const handleCancel = async () => {
     if (!scanJobId) return;
     try {
-      await fetch(`/api/duplicate-scan/cancel/${scanJobId}`, {
+      await apiFetch(`/api/duplicate-scan/cancel/${scanJobId}`, {
         method: "POST",
       });
     } catch {

@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Soft-deletes a traceability snapshot through its route (Reporting
@@ -12,7 +13,7 @@ export async function deleteRequirementSnapshot(
   snapshotId: number,
   queryClient: QueryClient
 ): Promise<void> {
-  const response = await fetch(
+  const response = await apiFetch(
     `/api/projects/${projectId}/requirements/snapshots/${snapshotId}`,
     { method: "DELETE" }
   );

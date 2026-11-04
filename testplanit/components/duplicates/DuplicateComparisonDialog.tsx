@@ -24,6 +24,7 @@ import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { scoreToConfidence } from "~/lib/utils/similarity";
 import { wordDiffTokens } from "~/lib/utils/wordDiff";
+import { apiFetch } from "~/lib/basePath";
 
 interface CaseDetails {
   id: number;
@@ -496,7 +497,7 @@ export function DuplicateComparisonDialog({
   const { data, isLoading, isError } = useQuery<CaseDetailsResponse>({
     queryKey: ["duplicate-case-details", pair?.caseAId, pair?.caseBId],
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/duplicate-scan/case-details?caseAId=${pair!.caseAId}&caseBId=${pair!.caseBId}`
       );
       if (!res.ok) throw new Error("Failed to fetch case details");
@@ -542,7 +543,7 @@ export function DuplicateComparisonDialog({
         };
       }
 
-      const res = await fetch("/api/duplicate-scan/resolve", {
+      const res = await apiFetch("/api/duplicate-scan/resolve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

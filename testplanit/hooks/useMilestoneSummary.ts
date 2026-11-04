@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { MilestoneSummaryData } from "~/app/api/milestones/[milestoneId]/summary/route";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Shared fetcher for `/api/milestones/{id}/summary`, keyed identically to
@@ -12,7 +13,7 @@ export function useMilestoneSummary(milestoneId: number | undefined) {
   return useQuery<MilestoneSummaryData>({
     queryKey: ["milestoneSummary", milestoneId],
     queryFn: async () => {
-      const response = await fetch(`/api/milestones/${milestoneId}/summary`);
+      const response = await apiFetch(`/api/milestones/${milestoneId}/summary`);
       if (!response.ok) {
         throw new Error("Failed to fetch milestone summary");
       }

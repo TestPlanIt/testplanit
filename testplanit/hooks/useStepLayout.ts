@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useCallback, useSyncExternalStore } from "react";
 
 import { StepLayout } from "~/zenstack/models";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * The layout the user last chose in this page, keyed by who chose it. The
@@ -58,7 +59,7 @@ export function useStepLayout(): {
       const previous = chosen;
       setChosen({ userId, layout: next });
       try {
-        const response = await fetch(`/api/users/${userId}`, {
+        const response = await apiFetch(`/api/users/${userId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userPreferences: { stepLayout: next } }),

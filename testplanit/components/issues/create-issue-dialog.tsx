@@ -46,6 +46,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
+import { apiFetch } from "~/lib/basePath";
 
 // INT-05: description accepts either a plain string (manual issue create
 // flow) or a TipTap doc (programmatic prefill from a failed iteration).
@@ -387,7 +388,7 @@ export function CreateIssueDialog({
     if (!integrationId) return { authenticated: false };
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/integrations/${integrationId}/auth/check`
       );
       const data = await response.json();
@@ -403,7 +404,7 @@ export function CreateIssueDialog({
       if (!activeIntegration) return [];
 
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${activeIntegration.integrationId}/issue-types`
         );
         if (response.ok) {
@@ -476,7 +477,7 @@ export function CreateIssueDialog({
 
     setLoadingFields(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/integrations/${activeIntegration.integrationId}/issue-type-fields?issueTypeId=${selectedIssueType.id}&projectKey=${encodeURIComponent(effectiveProjectKey)}`
       );
       if (response.ok) {
@@ -551,7 +552,7 @@ export function CreateIssueDialog({
 
     let cancelled = false;
     setLoadingMetadata(true);
-    fetch(
+    apiFetch(
       `/api/integrations/${integrationId}/create-metadata?projectKey=${encodeURIComponent(effectiveProjectKey)}`
     )
       .then(async (response) => {
@@ -861,7 +862,7 @@ export function CreateIssueDialog({
           }
         }
 
-        const response = await fetch(endpoint, {
+        const response = await apiFetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

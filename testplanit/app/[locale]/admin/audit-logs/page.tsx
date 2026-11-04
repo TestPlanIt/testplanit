@@ -32,6 +32,7 @@ import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
 import { buildAuditLogOrderBy, ExtendedAuditLog, useColumns } from "./columns";
+import { apiFetch } from "~/lib/basePath";
 
 // Rows fetched per scroll page. Audit rows are cheap (the heavy `changes` /
 // `metadata` Json columns are excluded from the list select), and operationId
@@ -72,7 +73,7 @@ interface ProjectFilterOption {
 async function fetchFilterOptions<T>(
   params: Record<string, string>
 ): Promise<T> {
-  const response = await fetch(
+  const response = await apiFetch(
     `/api/admin/audit-logs/filters?${new URLSearchParams(params)}`
   );
   if (!response.ok) {

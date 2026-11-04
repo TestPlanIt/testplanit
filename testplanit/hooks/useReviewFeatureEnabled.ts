@@ -1,6 +1,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Result shape exposed by useReviewFeatureEnabled.
@@ -56,7 +57,7 @@ export function useReviewFeatureEnabled(
   }>({
     queryKey: ["config", "review-feature"],
     queryFn: async () => {
-      const response = await fetch("/api/config/review-feature");
+      const response = await apiFetch("/api/config/review-feature");
       if (!response.ok) {
         throw new Error(
           `Failed to fetch review-feature config: ${response.status}`

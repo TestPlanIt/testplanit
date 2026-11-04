@@ -22,6 +22,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 const DAY_WINDOW_OPTIONS = [30, 90, 180, 365] as const;
 /** Sentinel Select value for "no recency window" -- paired with a cleared
@@ -175,7 +176,7 @@ export function ImportIssuesDialog({
           setError(t("requirementsConfig.importNoTypes"));
           return;
         }
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/integrations/${integrationId}/requirements-import/preview`,
           {
             method: "POST",
@@ -205,7 +206,7 @@ export function ImportIssuesDialog({
               : "exact",
         });
       } else {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/integrations/${integrationId}/import-issues/preview`,
           {
             method: "POST",
@@ -239,7 +240,7 @@ export function ImportIssuesDialog({
     setError(null);
     try {
       if (useTypedPath) {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/integrations/${integrationId}/requirements-import`,
           {
             method: "POST",
@@ -263,7 +264,7 @@ export function ImportIssuesDialog({
         onStarted();
         onOpenChange(false);
       } else {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/integrations/${integrationId}/import-issues`,
           {
             method: "POST",

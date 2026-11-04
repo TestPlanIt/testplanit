@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 export interface RepoCacheSnapshot {
   cacheStatus?: string | null;
@@ -60,7 +61,7 @@ export function useRepoCacheRefresh({
     setRefreshStep(messages.pending);
 
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/code-repositories/${repositoryId}/refresh-cache`,
         {
           method: "POST",

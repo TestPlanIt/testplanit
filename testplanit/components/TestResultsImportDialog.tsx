@@ -46,6 +46,7 @@ import { FolderSelect, transformFolders } from "./forms/FolderSelect";
 import { MilestoneSelect, transformMilestones } from "./forms/MilestoneSelect";
 import { ManageTags } from "./ManageTags";
 import UploadAttachments from "./UploadAttachments";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Supported test result formats
@@ -280,7 +281,7 @@ export default function TestResultsImportDialog({
         formData.append("files", file)
       );
 
-      const response = await fetch("/api/test-results/import", {
+      const response = await apiFetch("/api/test-results/import", {
         method: "POST",
         body: formData,
       });

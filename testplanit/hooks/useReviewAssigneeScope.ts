@@ -8,6 +8,7 @@ import {
   type ReviewAssigneeScope,
   type ReviewEntityType,
 } from "~/lib/services/reviewInboxScope";
+import { apiFetch } from "~/lib/basePath";
 
 export interface ReviewAssigneeRow {
   projectId: number;
@@ -43,7 +44,7 @@ export function useReviewAssigneeScope(
     enabled: !!userId,
     staleTime: 60_000,
     queryFn: async () => {
-      const response = await fetch("/api/reviews/assignee-scope");
+      const response = await apiFetch("/api/reviews/assignee-scope");
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return (await response.json()) as ReviewAssigneeScope & {
         where: ReviewRequestWhereInput[];

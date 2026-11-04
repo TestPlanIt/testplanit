@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import type { ExternalIssueDetails } from "~/lib/integrations/issueDetails";
 import { Link } from "~/lib/navigation";
 import { SearchIssuesDialog } from "./search-issues-dialog";
+import { apiFetch } from "~/lib/basePath";
 
 // Utility function to format provider names for display
 const formatProviderName = (provider: string): string => {
@@ -119,7 +120,7 @@ function LinkedIssueBadge({
       setIsLoading(true);
       setError(null);
 
-      fetch(
+      apiFetch(
         `/api/integrations/issue-details?issueKey=${encodeURIComponent(issue.key)}&integrationId=${integrationId}`
       )
         .then(async (res) => {
@@ -475,7 +476,7 @@ export function ManageExternalIssues({
         url += `testCaseId=${testCaseId}`;
       }
 
-      const response = await fetch(url);
+      const response = await apiFetch(url);
       if (response.ok) {
         const data = await response.json();
         const issues = data.linkedIssues || [];
@@ -533,7 +534,7 @@ export function ManageExternalIssues({
         body.testCaseId = testCaseId;
       }
 
-      const response = await fetch("/api/integrations/jira/link-issue", {
+      const response = await apiFetch("/api/integrations/jira/link-issue", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -593,7 +594,7 @@ export function ManageExternalIssues({
         body.testCaseId = testCaseId;
       }
 
-      const response = await fetch("/api/integrations/jira/link-issue", {
+      const response = await apiFetch("/api/integrations/jira/link-issue", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

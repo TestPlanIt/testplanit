@@ -10,6 +10,7 @@ import {
   matchesPostFetchFilters,
   type PostFetchFilter,
 } from "./useRepositoryCasesWithFilteredFields";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * The ONE read path for the case table, in both of its modes
@@ -312,7 +313,7 @@ export function useRepositoryCasesQuery(
     }),
     enabled,
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/cases/query`, {
+      const res = await apiFetch(`/api/projects/${projectId}/cases/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

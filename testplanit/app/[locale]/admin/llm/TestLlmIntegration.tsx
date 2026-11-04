@@ -16,6 +16,7 @@ import { CheckCircle, Activity, Loader2, Send, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface TestLlmIntegrationProps {
   integration: any;
@@ -37,7 +38,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
     setResponse("");
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/admin/llm/integrations/${integration.id}/test`,
         {
           method: "POST",
@@ -70,7 +71,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
     setResponse("");
 
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/admin/llm/integrations/${integration.id}/chat`,
         {
           method: "POST",

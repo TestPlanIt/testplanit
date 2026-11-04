@@ -44,6 +44,7 @@ import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { sortSummaryItems } from "~/utils/summarySort";
 import { computeStatusBarSegmentWidths } from "~/utils/statusBarSegmentWidths";
+import { apiFetch } from "~/lib/basePath";
 
 interface TestRunCasesSummaryProps {
   testRunId: number;
@@ -96,7 +97,7 @@ export function TestRunCasesSummary({
     queryFn: async () => {
       if (!isMultiConfig) {
         // Single test run - use existing endpoint with case details for color bar
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/test-runs/${testRunId}/summary?includeCaseDetails=true`
         );
         if (!response.ok) {
@@ -108,7 +109,7 @@ export function TestRunCasesSummary({
       // Multi-config - fetch all and aggregate
       const summaries = await Promise.all(
         effectiveTestRunIds.map(async (id) => {
-          const response = await fetch(
+          const response = await apiFetch(
             `/api/test-runs/${id}/summary?includeCaseDetails=true`
           );
           if (!response.ok) {

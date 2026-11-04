@@ -48,6 +48,7 @@ import {
 import { IconName } from "~/types/globals";
 import { ApplicationArea } from "~/zenstack/models";
 import { schema } from "~/zenstack/schema";
+import { apiFetch } from "~/lib/basePath";
 
 type BackfillStatus = {
   state: "none" | "waiting" | "active" | "completed" | "failed" | string;
@@ -114,7 +115,7 @@ export default function RiskSettingsPage() {
 
   const pollBackfill = useCallback(async () => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/risk/backfill`);
+      const res = await apiFetch(`/api/projects/${projectId}/risk/backfill`);
       if (!res.ok) return;
       const next = (await res.json()) as BackfillStatus;
       setBackfill((prev) => {
@@ -148,7 +149,7 @@ export default function RiskSettingsPage() {
     async (options: { silent?: boolean } = {}) => {
       setStarting(true);
       try {
-        const res = await fetch(`/api/projects/${projectId}/risk/backfill`, {
+        const res = await apiFetch(`/api/projects/${projectId}/risk/backfill`, {
           method: "POST",
         });
         if (res.status === 409) {
@@ -360,7 +361,7 @@ export default function RiskSettingsPage() {
 
   const loadPriorities = useCallback(async () => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/risk/priorities`);
+      const res = await apiFetch(`/api/projects/${projectId}/risk/priorities`);
       if (!res.ok) return;
       const body = (await res.json()) as { priorities: PriorityRow[] };
       setPriorityRows(body.priorities);

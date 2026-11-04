@@ -10,6 +10,7 @@ import { UserRoundIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback } from "react";
 import { cn } from "~/utils";
+import { apiFetch } from "~/lib/basePath";
 
 interface UserListProps {
   /**
@@ -68,7 +69,7 @@ export const UserListDisplay: React.FC<UserListProps> = ({
   const { data: memberCount, isLoading: countLoading } = useQuery({
     queryKey: ["user-list-display-count", filter],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/model/user/count?q=${encodeQuery({ where: buildWhere("") })}`
       );
       if (!response.ok) {
@@ -91,7 +92,7 @@ export const UserListDisplay: React.FC<UserListProps> = ({
         select: { id: true, name: true, image: true },
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/model/user/findMany?q=${encodeQuery(params)}`
       );
 
@@ -108,7 +109,7 @@ export const UserListDisplay: React.FC<UserListProps> = ({
       // Reuse the resolved member count when not searching; recompute per-search.
       let total = memberCount ?? results.length;
       if (query.trim().length > 0) {
-        const countResponse = await fetch(
+        const countResponse = await apiFetch(
           `/api/model/user/count?q=${encodeQuery({ where })}`
         );
         if (countResponse.ok) {

@@ -29,6 +29,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { useTagColumns } from "./columns";
+import { apiFetch } from "~/lib/basePath";
 
 const PAGE_SIZE = 50;
 
@@ -215,12 +216,12 @@ function Tags() {
       setIsLoadingCounts(true);
       try {
         const [countsResponse, projectsResponse] = await Promise.all([
-          fetch("/api/tags/counts", {
+          apiFetch("/api/tags/counts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tagIds: newIds }),
           }),
-          fetch("/api/tags/projects", {
+          apiFetch("/api/tags/projects", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tagIds: newIds }),

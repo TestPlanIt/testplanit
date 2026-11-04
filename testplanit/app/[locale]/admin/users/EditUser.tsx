@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { apiFetch } from "~/lib/basePath";
 
 interface ExtendedUser extends User {
   projects: { projectId: number }[];
@@ -241,7 +242,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
       // Update user core data
       // Use dedicated update API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with nested update operations)
-      const response = await fetch(`/api/users/${user.id}`, {
+      const response = await apiFetch(`/api/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(apiPayload),

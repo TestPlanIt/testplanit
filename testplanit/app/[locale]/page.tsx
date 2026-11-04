@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/resizable";
 import { UserDashboard } from "@/components/UserDashboard";
 import { Boxes, ChevronLeft, ChevronRight } from "lucide-react";
+import { apiFetch } from "~/lib/basePath";
 
 type AuthUser = {
   id: string;
@@ -130,7 +131,7 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
       setIsLoadingIssueCounts(true);
       try {
         const projectIds = processedProjectsData.map((p) => p.id);
-        const response = await fetch("/api/projects/issue-counts", {
+        const response = await apiFetch("/api/projects/issue-counts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ projectIds }),
