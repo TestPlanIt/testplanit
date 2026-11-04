@@ -989,6 +989,61 @@ describe("webhook-config server actions", () => {
       expect(init.body).toBe(EXPECTED_SYNTHETIC_PAYLOAD);
     });
 
+    it("posts a signed synthetic issue_comment to a GitHub issue webhook when asked for that event", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: FIXTURE_SECRET_ENC,
+        projectId: 42,
+        adapterType: "GITHUB",
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      await sendTestWebhook("cfg-gh", "issue_comment");
+
+      const [, init] = fetchSpy.mock.calls[0];
+      expect(JSON.parse(init.body as string)).toMatchObject({
+        action: "created",
+        issue: { number: 0 },
+        comment: { id: 0 },
+        repository: { full_name: "__synthetic__/__synthetic__" },
+      });
+      expect(init.headers).toMatchObject({
+        "x-github-event": "issue_comment",
+        "x-hub-signature-256":
+          "sha256=" +
+          createHmac("sha256", FIXTURE_SECRET_PLAIN)
+            .update(init.body as string)
+            .digest("hex"),
+      });
+    });
+
+    it("falls back to the issues payload for an unknown event name", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: FIXTURE_SECRET_ENC,
+        projectId: 42,
+        adapterType: "GITHUB",
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      await sendTestWebhook("cfg-gh", "release");
+
+      const [, init] = fetchSpy.mock.calls[0];
+      expect(init.headers).toMatchObject({ "x-github-event": "issues" });
+      expect(JSON.parse(init.body as string)).toMatchObject({
+        action: "opened",
+        issue: { number: 0, state: "open" },
+      });
+    });
+
     it("posts a signed synthetic pull request to a repository webhook", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         token: FIXTURE_TOKEN,

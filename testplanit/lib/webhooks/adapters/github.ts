@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { githubIssueStatus } from "~/lib/integrations/githubIssueStatus";
 import type { AdapterType } from "~/zenstack/models";
 import type {
   ParsedWebhookPayload,
@@ -29,9 +30,17 @@ interface GithubIssuesPayload {
     state?: string;
     state_reason?: string | null;
     title?: string;
+    /** Present when the comment belongs to a pull request. */
+    pull_request?: unknown;
   };
   repository?: { full_name?: string };
 }
+
+/**
+ * Events that carry the issue they concern. `issue_comment` is also sent for
+ * pull request comments, which the status extractor leaves alone.
+ */
+const ISSUE_EVENTS = new Set(["issues", "issue_comment"]);
 
 function constantTimeEqualHex(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -75,8 +84,9 @@ export const githubAdapter: WebhookAdapter = {
       typeof repo === "string" && typeof num === "number"
         ? `${repo}#${num}`
         : "";
-    const externalStatus =
-      typeof parsed.issue?.state === "string" ? parsed.issue.state : "";
+    const externalStatus = parsed.issue
+      ? (githubIssueStatus(parsed.issue) ?? "")
+      : "";
     const synthetic =
       repo === SYNTHETIC_REPO_FULL_NAME && num === SYNTHETIC_ISSUE_NUMBER;
 
@@ -104,10 +114,11 @@ export const githubAdapter: WebhookAdapter = {
   },
 
   extractExternalStatus(payload, eventType) {
-    if (eventType !== "issues") return null;
+    if (!ISSUE_EVENTS.has(eventType)) return null;
     const raw = (payload as ParsedWebhookPayload).data ?? payload;
     const p = raw as GithubIssuesPayload;
-    const state = p.issue?.state;
-    return typeof state === "string" ? state : null;
+    if (!p.issue) return null;
+    if (eventType === "issue_comment" && p.issue.pull_request) return null;
+    return githubIssueStatus(p.issue);
   },
 };

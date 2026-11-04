@@ -302,6 +302,114 @@ describe("GitHubAdapter", () => {
     });
   });
 
+  describe("OAuth token refresh", () => {
+    const oauthAdapter = () =>
+      new GitHubAdapter({
+        provider: "GITHUB",
+        clientId: "client-123",
+        clientSecret: "secret-456",
+        redirectUri:
+          "https://app.example.com/api/integrations/oauth/github/callback",
+      });
+
+    it("keeps the refresh token and expiry the code exchange returns", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            access_token: "ghu_token",
+            expires_in: 28800,
+            refresh_token: "ghr_token",
+            refresh_token_expires_in: 15811200,
+          }),
+      });
+
+      const tokens = await oauthAdapter().exchangeCodeForTokens("auth-code");
+
+      expect(tokens.refreshToken).toBe("ghr_token");
+      expect(tokens.expiresAt).toBeInstanceOf(Date);
+      expect(tokens.expiresAt!.getTime() - Date.now()).toBeGreaterThan(
+        28000 * 1000
+      );
+    });
+
+    it("renews the token pair with the refresh token", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            access_token: "ghu_next",
+            expires_in: 28800,
+            refresh_token: "ghr_next",
+          }),
+      });
+
+      const tokens = await oauthAdapter().refreshTokens("ghr_old");
+
+      const [calledUrl, options] = mockFetch.mock.calls[0];
+      expect(calledUrl).toBe("https://github.com/login/oauth/access_token");
+      expect(JSON.parse(options.body)).toEqual({
+        client_id: "client-123",
+        client_secret: "secret-456",
+        grant_type: "refresh_token",
+        refresh_token: "ghr_old",
+      });
+      expect(tokens).toMatchObject({
+        accessToken: "ghu_next",
+        refreshToken: "ghr_next",
+      });
+      expect(tokens.expiresAt).toBeInstanceOf(Date);
+    });
+
+    it("refreshes against the GHES web host", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ access_token: "t" }),
+      });
+      const ghes = new GitHubAdapter({
+        provider: "GITHUB",
+        clientId: "c",
+        clientSecret: "s",
+        redirectUri: "https://app/cb",
+        baseUrl: "https://github.example.com/api/v3",
+      });
+
+      await ghes.refreshTokens("rt");
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "https://github.example.com/login/oauth/access_token"
+      );
+    });
+
+    it("reports a dead refresh token as invalid_grant", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            error: "bad_refresh_token",
+            error_description:
+              "The refresh token passed is incorrect or expired.",
+          }),
+      });
+
+      await expect(oauthAdapter().refreshTokens("ghr_dead")).rejects.toThrow(
+        /incorrect or expired.*invalid_grant/
+      );
+    });
+
+    it("does not call a transport failure invalid_grant", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        text: () => Promise.resolve("upstream unavailable"),
+      });
+
+      await expect(oauthAdapter().refreshTokens("ghr")).rejects.toThrow(
+        /^Failed to refresh tokens: upstream unavailable$/
+      );
+    });
+  });
+
   describe("getIssueTypes (labels as the designation vocabulary)", () => {
     beforeEach(async () => {
       mockFetch.mockResolvedValueOnce({
@@ -443,6 +551,26 @@ describe("GitHubAdapter", () => {
         updatedAt: new Date("2024-01-15T12:00:00Z"),
         url: "https://github.com/testowner/testrepo/issues/42",
       });
+    });
+
+    it("keeps each label's colour beside the label names", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...mockGitHubIssue,
+            labels: [
+              { name: "bug", color: "d73a4a" },
+              { name: "docs", color: "0075ca" },
+              "plain",
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssue("#42");
+
+      expect(result.labels).toEqual(["bug", "docs", "plain"]);
+      expect(result.labelColors).toEqual({ bug: "d73a4a", docs: "0075ca" });
     });
 
     it("should create an issue with assignee", async () => {
@@ -1388,6 +1516,57 @@ describe("GitHubAdapter", () => {
       expect(result.hasMore).toBe(false);
     });
 
+    it("fetches an issue by number for a '#42' query instead of searching", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGitHubIssue),
+      });
+
+      const result = await adapter.searchIssues({ query: "#42" });
+
+      expect(mockFetch).toHaveBeenLastCalledWith(
+        "https://api.github.com/repos/testowner/testrepo/issues/42",
+        expect.any(Object)
+      );
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].key).toBe("#42");
+      expect(result.total).toBe(1);
+    });
+
+    it("answers an empty list when the numbered issue is missing or a pull request", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        json: () => Promise.resolve({ message: "Not Found" }),
+        text: () => Promise.resolve("Not Found"),
+      });
+      expect(await adapter.searchIssues({ query: "#999" })).toEqual({
+        issues: [],
+        total: 0,
+        hasMore: false,
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ ...mockGitHubIssue, pull_request: { url: "x" } }),
+      });
+      expect((await adapter.searchIssues({ query: "#42" })).issues).toEqual([]);
+    });
+
+    it("applies the status filter to a numbered lookup", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ...mockGitHubIssue, state: "open" }),
+      });
+      const result = await adapter.searchIssues({
+        query: "#42",
+        status: ["closed"],
+      });
+      expect(result.issues).toEqual([]);
+    });
+
     it("should search with status filter", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -1475,19 +1654,6 @@ describe("GitHubAdapter", () => {
       const result = await adapter.searchIssues({});
 
       expect(result.hasMore).toBe(true);
-    });
-
-    it("should use number: qualifier when query is a key format #number", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockSearchResponse),
-      });
-
-      await adapter.searchIssues({ query: "#42" });
-
-      const url = mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0];
-      expect(url).toContain("number%3A42");
-      expect(url).not.toContain("%2342"); // raw "#42" should not appear as freetext
     });
 
     it("should use plain query text for non-key searches", async () => {
@@ -1825,6 +1991,241 @@ describe("GitHubAdapter", () => {
       );
       const body = JSON.parse(postCall![1].body as string);
       expect(body.body).toBe("");
+    });
+  });
+
+  describe("create-form fields", () => {
+    const okJson = (payload: unknown) => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(payload),
+    });
+    const notFound = () => ({
+      ok: false,
+      status: 404,
+      text: () => Promise.resolve("Not Found"),
+      headers: { get: () => null },
+    });
+    const lastRequestUrl = () =>
+      String(mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0]);
+
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce(okJson({ login: "testuser" }));
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+    });
+
+    it("createIssue sends every assignee, the milestone number and the type", async () => {
+      mockFetch.mockResolvedValueOnce(okJson(mockGitHubIssue));
+
+      await adapter.createIssue({
+        title: "Test Issue",
+        description: "body",
+        projectId: "testowner/testrepo",
+        labels: ["bug"],
+        assigneeId: "ignored-when-ids-given",
+        assigneeIds: ["alice", "bob", "alice"],
+        milestone: "7",
+        issueType: "Bug",
+      });
+
+      const body = JSON.parse(mockFetch.mock.lastCall![1].body as string);
+      expect(body).toEqual({
+        title: "Test Issue",
+        body: "body",
+        labels: ["bug"],
+        assignees: ["alice", "bob"],
+        milestone: 7,
+        type: "Bug",
+      });
+    });
+
+    it("createIssue caps assignees at ten and drops a non-numeric milestone", async () => {
+      mockFetch.mockResolvedValueOnce(okJson(mockGitHubIssue));
+
+      await adapter.createIssue({
+        title: "Test Issue",
+        projectId: "testowner/testrepo",
+        assigneeIds: Array.from({ length: 12 }, (_, i) => `user${i}`),
+        milestone: "v1.2",
+      });
+
+      const body = JSON.parse(mockFetch.mock.lastCall![1].body as string);
+      expect(body.assignees).toHaveLength(10);
+      expect(body).not.toHaveProperty("milestone");
+    });
+
+    it("createIssue still sends a single assigneeId as before", async () => {
+      mockFetch.mockResolvedValueOnce(okJson(mockGitHubIssue));
+
+      await adapter.createIssue({
+        title: "Test Issue",
+        projectId: "testowner/testrepo",
+        assigneeId: "alice",
+      });
+
+      const body = JSON.parse(mockFetch.mock.lastCall![1].body as string);
+      expect(body.assignees).toEqual(["alice"]);
+    });
+
+    it("updateIssue maps assigneeIds and milestone", async () => {
+      mockFetch.mockResolvedValueOnce(okJson(mockGitHubIssue));
+
+      await adapter.updateIssue("42", {
+        assigneeIds: ["alice", "bob"],
+        milestone: "3",
+      });
+
+      const body = JSON.parse(mockFetch.mock.lastCall![1].body as string);
+      expect(body).toEqual({ assignees: ["alice", "bob"], milestone: 3 });
+    });
+
+    it("getLabels resolves the repository and reads every page", async () => {
+      const page1 = Array.from({ length: 100 }, (_, i) => ({
+        name: `label-${i}`,
+        color: "ededed",
+      }));
+      mockFetch
+        .mockResolvedValueOnce(okJson(page1))
+        .mockResolvedValueOnce(okJson([{ name: "last", color: "ff0000" }]));
+
+      const labels = await adapter.getLabels("testowner/testrepo");
+
+      expect(labels).toHaveLength(101);
+      expect(labels[100]).toEqual({
+        id: "last",
+        name: "last",
+        color: "ff0000",
+      });
+      expect(String(mockFetch.mock.calls[1][0])).toContain(
+        "/repos/testowner/testrepo/labels?"
+      );
+      expect(lastRequestUrl()).toContain("page=2");
+    });
+
+    it("getMilestones keys by number, keeps the due date and asks for open ones", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson([
+          {
+            number: 4,
+            title: "v1.2",
+            state: "open",
+            due_on: "2026-11-17T00:00:00Z",
+          },
+          { number: 5, title: "Backlog", state: "open", due_on: null },
+        ])
+      );
+
+      const milestones = await adapter.getMilestones("testowner/testrepo");
+
+      expect(milestones).toEqual([
+        {
+          id: "4",
+          title: "v1.2",
+          state: "open",
+          dueOn: "2026-11-17T00:00:00Z",
+        },
+        { id: "5", title: "Backlog", state: "open", dueOn: null },
+      ]);
+      expect(lastRequestUrl()).toContain("/milestones?state=open");
+    });
+
+    it("getOrgIssueTypes returns an empty list when the owner has none", async () => {
+      mockFetch.mockResolvedValueOnce(notFound());
+
+      await expect(
+        adapter.getOrgIssueTypes("testowner/testrepo")
+      ).resolves.toEqual([]);
+      expect(lastRequestUrl()).toBe(
+        "https://api.github.com/orgs/testowner/issue-types"
+      );
+    });
+
+    it("getOrgIssueTypes keeps only enabled types, keyed by name", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson([
+          { id: 1, name: "Bug", is_enabled: true, color: "red" },
+          { id: 2, name: "Task", is_enabled: false, color: "blue" },
+          { id: 3, name: "Feature", is_enabled: true, description: "New" },
+        ])
+      );
+
+      const types = await adapter.getOrgIssueTypes("testowner/testrepo");
+
+      expect(types.map((type) => type.id)).toEqual(["Bug", "Feature"]);
+      expect(types[1]).toEqual({
+        id: "Feature",
+        name: "Feature",
+        description: "New",
+        color: null,
+      });
+    });
+
+    it("searchUsers filters the repository's assignees by login and pages them", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson([
+          { login: "alice", avatar_url: "https://a/alice.png" },
+          { login: "bob", avatar_url: "https://a/bob.png" },
+          { login: "alicia", avatar_url: "https://a/alicia.png" },
+        ])
+      );
+
+      const result = await adapter.searchUsers(
+        "ali",
+        "testowner/testrepo",
+        1,
+        1
+      );
+
+      expect(lastRequestUrl()).toContain(
+        "/repos/testowner/testrepo/assignees?"
+      );
+      expect(result).toEqual({
+        users: [
+          {
+            accountId: "alicia",
+            displayName: "alicia",
+            avatarUrls: { "48x48": "https://a/alicia.png" },
+          },
+        ],
+        total: 2,
+      });
+    });
+
+    it("getCreateIssueMetadata returns the lists together and empties one that fails", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      mockFetch.mockImplementation(async (url: string) => {
+        if (url.includes("/labels")) {
+          return okJson([{ name: "bug", color: "d73a4a" }]);
+        }
+        if (url.includes("/milestones")) {
+          return okJson([{ number: 1, title: "v1", state: "open" }]);
+        }
+        if (url.includes("/assignees")) {
+          return {
+            ok: false,
+            status: 403,
+            text: () => Promise.resolve("Forbidden"),
+            headers: { get: () => null },
+          };
+        }
+        if (url.includes("/issue-types")) {
+          return notFound();
+        }
+        throw new Error(`unexpected ${url}`);
+      });
+
+      const metadata =
+        await adapter.getCreateIssueMetadata("testowner/testrepo");
+
+      expect(metadata).toEqual({
+        labels: [{ id: "bug", name: "bug", color: "d73a4a" }],
+        milestones: [{ id: "1", title: "v1", state: "open", dueOn: null }],
+        assignees: [],
+        issueTypes: [],
+      });
+      consoleError.mockRestore();
     });
   });
 });

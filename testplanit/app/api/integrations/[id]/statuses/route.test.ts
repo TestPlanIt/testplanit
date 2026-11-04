@@ -99,12 +99,12 @@ describe("GET /api/integrations/[id]/statuses", () => {
   });
 
   it.each([
-    ["GITHUB", "open"],
-    ["GITEA", "open"],
-    ["GITLAB", "opened"],
-  ])(
+    ["GITHUB", "open", [{ id: "not_planned", name: "not_planned" }]],
+    ["GITEA", "open", []],
+    ["GITLAB", "opened", []],
+  ] as const)(
     "answers %s's fixed statuses without credentials or the adapter",
-    async (provider, openName) => {
+    async (provider, openName, extraStatuses) => {
       findUnique.mockResolvedValue({
         id: 7,
         provider,
@@ -120,6 +120,7 @@ describe("GET /api/integrations/[id]/statuses", () => {
       expect(data.statuses).toEqual([
         { id: openName, name: openName },
         { id: "closed", name: "closed" },
+        ...extraStatuses,
       ]);
       expect(findFirst).not.toHaveBeenCalled();
       expect(IntegrationManager.getInstance).not.toHaveBeenCalled();

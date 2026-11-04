@@ -1,9 +1,14 @@
 import { FIXED_TRACKER_STATUSES } from "../fixedTrackerStatuses";
+import {
+  GITHUB_NOT_PLANNED_STATUS,
+  githubIssueStatus,
+} from "../githubIssueStatus";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
   CreateIssueData,
+  CreateIssueMetadata,
   IssueAdapterCapabilities,
   IssueComment,
   IssueData,
@@ -38,6 +43,49 @@ function renderGitHubDescription(description: unknown): string {
   // Defensive: stringify any other shape so the issue body is never
   // `[object Object]` in the tracker.
   return String(description);
+}
+
+/** GitHub caps an issue at ten assignees; the API rejects more. */
+const MAX_ASSIGNEES = 10;
+
+/** Every page of a repository listing is read in full-size pages. */
+const PAGE_SIZE = 100;
+
+/** Repository listings are read up to this many pages (3,000 entries). */
+const MAX_PAGES = 30;
+
+function resolveAssignees(data: {
+  assigneeIds?: string[];
+  assigneeId?: string;
+}): string[] {
+  const logins =
+    data.assigneeIds && data.assigneeIds.length > 0
+      ? data.assigneeIds
+      : data.assigneeId
+        ? [data.assigneeId]
+        : [];
+  return Array.from(new Set(logins.filter(Boolean))).slice(0, MAX_ASSIGNEES);
+}
+
+/** GitHub addresses milestones by number; anything else is dropped. */
+/** Hex colour per label name, or undefined when no label carries one. */
+function labelColorsOf(labels: unknown): Record<string, string> | undefined {
+  if (!Array.isArray(labels)) return undefined;
+  const entries = labels
+    .filter(
+      (label: any) =>
+        label && typeof label === "object" && label.name && label.color
+    )
+    .map((label: any) => [String(label.name), String(label.color)]);
+  return entries.length ? Object.fromEntries(entries) : undefined;
+}
+
+function parseMilestoneNumber(milestone: string | undefined): number | null {
+  if (milestone === undefined || milestone === null || milestone === "") {
+    return null;
+  }
+  const num = Number(milestone);
+  return Number.isInteger(num) && num > 0 ? num : null;
 }
 
 /**
@@ -164,10 +212,44 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   /**
-   * Exchange the authorization code for an access token. GitHub OAuth App
-   * tokens do not expire by default, so no refresh token is returned.
+   * Exchange the authorization code for an access token. An OAuth app with
+   * "Expire user access tokens" enabled (GitHub's default for new apps) also
+   * returns a refresh token and an 8-hour `expires_in`; an app without it
+   * returns a token that never expires and no refresh token.
    */
   async exchangeCodeForTokens(code: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    return this.requestToken(
+      { code, redirect_uri: this.redirectUri },
+      "exchange code for tokens"
+    );
+  }
+
+  /**
+   * Renew an expiring user access token with its refresh token. GitHub
+   * rotates both on every refresh; the manager persists the pair. A dead
+   * refresh token (revoked, already rotated, or past its 6-month life) is
+   * reported with `invalid_grant` so the manager flags the row for
+   * re-authorization instead of retrying.
+   */
+  async refreshTokens(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    return this.requestToken(
+      { grant_type: "refresh_token", refresh_token: refreshToken },
+      "refresh tokens"
+    );
+  }
+
+  private async requestToken(
+    body: Record<string, string | undefined>,
+    what: string
+  ): Promise<{
     accessToken: string;
     refreshToken?: string;
     expiresAt?: Date;
@@ -183,21 +265,23 @@ export class GitHubAdapter extends BaseAdapter {
         body: JSON.stringify({
           client_id: this.clientId,
           client_secret: this.clientSecret,
-          code,
-          redirect_uri: this.redirectUri,
+          ...body,
         }),
       }
     );
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Failed to exchange code for tokens: ${error}`);
+      throw new Error(`Failed to ${what}: ${error}`);
     }
 
+    // GitHub answers 200 with an error object rather than a 4xx.
     const data = await response.json();
     if (data.error) {
+      const detail = data.error_description || data.error;
+      const dead = data.error === "bad_refresh_token";
       throw new Error(
-        `Failed to exchange code for tokens: ${data.error_description || data.error}`
+        `Failed to ${what}: ${detail}${dead ? " (invalid_grant)" : ""}`
       );
     }
 
@@ -229,11 +313,17 @@ export class GitHubAdapter extends BaseAdapter {
 
     // INT-05: description may arrive as a TipTap doc (e.g. failed-iteration
     // body builder). Render to GFM markdown before posting to GitHub.
+    const assignees = resolveAssignees(data);
+    const milestone = parseMilestoneNumber(data.milestone);
     const githubPayload = {
       title: data.title,
       body: renderGitHubDescription(data.description),
       labels: data.labels || [],
-      assignees: data.assigneeId ? [data.assigneeId] : undefined,
+      assignees: assignees.length > 0 ? assignees : undefined,
+      milestone: milestone ?? undefined,
+      // Organization issue types are addressed by name; GitHub ignores
+      // the field on repositories whose owner has none.
+      type: data.issueType || undefined,
     };
 
     const response = await this.makeRequest<any>(
@@ -269,8 +359,12 @@ export class GitHubAdapter extends BaseAdapter {
       updatePayload.labels = data.labels;
     }
 
-    if (data.assigneeId !== undefined) {
-      updatePayload.assignees = [data.assigneeId];
+    if (data.assigneeIds !== undefined || data.assigneeId !== undefined) {
+      updatePayload.assignees = resolveAssignees(data);
+    }
+
+    if (data.milestone !== undefined) {
+      updatePayload.milestone = parseMilestoneNumber(data.milestone);
     }
 
     const response = await this.makeRequest<any>(
@@ -367,6 +461,13 @@ export class GitHubAdapter extends BaseAdapter {
     total: number;
     hasMore: boolean;
   }> {
+    // "#42" is an exact lookup. GitHub's search API has no `number:`
+    // qualifier and indexes new issues late, so fetch the issue itself.
+    const numMatch = options.query?.match(/^#(\d+)$/);
+    if (numMatch) {
+      return this.lookupIssueByNumber(numMatch[1], options);
+    }
+
     const searchQuery: string[] = [];
 
     // Always add is:issue to filter out pull requests (required by GitHub API)
@@ -379,15 +480,8 @@ export class GitHubAdapter extends BaseAdapter {
       searchQuery.push(`repo:${options.projectId}`);
     }
 
-    // Add search query
     if (options.query) {
-      // Key format: "#42" — use number: qualifier for exact issue lookup
-      const numMatch = options.query.match(/^#(\d+)$/);
-      if (numMatch) {
-        searchQuery.push(`number:${numMatch[1]}`);
-      } else {
-        searchQuery.push(options.query);
-      }
+      searchQuery.push(options.query);
     }
 
     // Add status filter
@@ -438,6 +532,34 @@ export class GitHubAdapter extends BaseAdapter {
         response.incomplete_results ||
         response.total_count > (options.offset || 0) + response.items.length,
     };
+  }
+
+  private async lookupIssueByNumber(
+    issueNumber: string,
+    options: IssueSearchOptions
+  ): Promise<{ issues: IssueData[]; total: number; hasMore: boolean }> {
+    const empty = { issues: [], total: 0, hasMore: false };
+    const repoPath =
+      this.owner && this.repo
+        ? `${this.owner}/${this.repo}`
+        : options.projectId;
+    if (!repoPath) return empty;
+    let raw: any;
+    try {
+      raw = await this.makeRequest<any>(
+        `${this.baseUrl}/repos/${repoPath}/issues/${issueNumber}`
+      );
+    } catch (error: any) {
+      if (error?.status === 404) return empty;
+      throw error;
+    }
+    // The issues endpoint also answers for pull requests.
+    if (!raw || raw.pull_request) return empty;
+    const issue = this.mapGitHubIssue(raw);
+    if (options.status?.length && !options.status.includes(issue.status)) {
+      return empty;
+    }
+    return { issues: [issue], total: 1, hasMore: false };
   }
 
   protected async addComment(issueId: string, comment: string): Promise<void> {
@@ -577,19 +699,39 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   /**
-   * Get available labels for a repository
+   * Reads every page of a repository-scoped list endpoint. `url` must not
+   * already carry a query string.
    */
-  async getLabels(): Promise<
-    Array<{ id: string; name: string; color: string }>
-  > {
-    if (!this.owner || !this.repo) {
-      throw new Error("Repository not configured");
+  private async listAllPages<T = any>(
+    url: string,
+    query: Record<string, string> = {}
+  ): Promise<T[]> {
+    const items: T[] = [];
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const params = new URLSearchParams({
+        ...query,
+        per_page: String(PAGE_SIZE),
+        page: String(page),
+      });
+      const pageItems = await this.makeRequest<T[]>(`${url}?${params}`);
+      items.push(...pageItems);
+      if (pageItems.length < PAGE_SIZE) {
+        break;
+      }
     }
+    return items;
+  }
 
-    const labels = await this.makeRequest<any[]>(
-      this.buildUrl(`/repos/{owner}/{repo}/labels`)
+  /**
+   * The repository's labels, by name — the key GitHub takes on create.
+   */
+  async getLabels(
+    projectKey: string
+  ): Promise<Array<{ id: string; name: string; color: string }>> {
+    const { owner, repo } = await this.resolveRepository(projectKey);
+    const labels = await this.listAllPages<any>(
+      `${this.baseUrl}/repos/${owner}/${repo}/labels`
     );
-
     return labels.map((label) => ({
       id: label.name,
       name: label.name,
@@ -598,24 +740,142 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   /**
-   * Get available milestones for a repository
+   * The repository's milestones, by number — the key GitHub takes on
+   * create. Open ones by default; `state: "all"` includes closed ones.
    */
-  async getMilestones(): Promise<
-    Array<{ id: string; title: string; state: string }>
+  async getMilestones(
+    projectKey: string,
+    state: "open" | "closed" | "all" = "open"
+  ): Promise<
+    Array<{ id: string; title: string; state: string; dueOn: string | null }>
   > {
-    if (!this.owner || !this.repo) {
-      throw new Error("Repository not configured");
-    }
-
-    const milestones = await this.makeRequest<any[]>(
-      this.buildUrl(`/repos/{owner}/{repo}/milestones`)
+    const { owner, repo } = await this.resolveRepository(projectKey);
+    const milestones = await this.listAllPages<any>(
+      `${this.baseUrl}/repos/${owner}/${repo}/milestones`,
+      { state, sort: "due_on", direction: "asc" }
     );
-
     return milestones.map((milestone) => ({
-      id: milestone.number.toString(),
+      id: String(milestone.number),
       title: milestone.title,
       state: milestone.state,
+      dueOn: milestone.due_on ?? null,
     }));
+  }
+
+  /**
+   * The users the repository lets an issue be assigned to.
+   */
+  async getAssignableUsers(
+    projectKey: string
+  ): Promise<Array<{ id: string; name: string; avatarUrl?: string }>> {
+    const { owner, repo } = await this.resolveRepository(projectKey);
+    const users = await this.listAllPages<any>(
+      `${this.baseUrl}/repos/${owner}/${repo}/assignees`
+    );
+    return users.map((user) => ({
+      id: user.login,
+      name: user.login,
+      avatarUrl: user.avatar_url,
+    }));
+  }
+
+  /**
+   * The issue types the repository owner's organization defines, by name
+   * — the key GitHub takes on create. A repository owned by a user, or a
+   * GitHub Enterprise Server without the feature, has none: the endpoint
+   * answers 404 and this returns an empty list. Disabled types are left
+   * out because GitHub refuses them on create.
+   */
+  async getOrgIssueTypes(projectKey: string): Promise<
+    Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      color: string | null;
+    }>
+  > {
+    const { owner } = await this.resolveRepository(projectKey);
+    let types: any[];
+    try {
+      types = await this.makeRequest<any[]>(
+        `${this.baseUrl}/orgs/${encodeURIComponent(owner)}/issue-types`
+      );
+    } catch (error: any) {
+      if (error?.status === 404) {
+        return [];
+      }
+      throw error;
+    }
+    return (Array.isArray(types) ? types : [])
+      .filter((type) => type.is_enabled !== false)
+      .map((type) => ({
+        id: type.name,
+        name: type.name,
+        description: type.description ?? null,
+        color: type.color ?? null,
+      }));
+  }
+
+  /**
+   * Everything the create form can offer for one repository. The lists
+   * are fetched together; one that fails is returned empty so the form
+   * still opens with the rest.
+   */
+  async getCreateIssueMetadata(
+    projectKey: string
+  ): Promise<CreateIssueMetadata> {
+    const [labels, milestones, assignees, issueTypes] = await Promise.all([
+      this.getLabels(projectKey).catch((error) => {
+        console.error("[GitHubAdapter] getLabels failed:", error);
+        return [];
+      }),
+      this.getMilestones(projectKey).catch((error) => {
+        console.error("[GitHubAdapter] getMilestones failed:", error);
+        return [];
+      }),
+      this.getAssignableUsers(projectKey).catch((error) => {
+        console.error("[GitHubAdapter] getAssignableUsers failed:", error);
+        return [];
+      }),
+      this.getOrgIssueTypes(projectKey).catch((error) => {
+        console.error("[GitHubAdapter] getOrgIssueTypes failed:", error);
+        return [];
+      }),
+    ]);
+    return { labels, milestones, assignees, issueTypes };
+  }
+
+  /**
+   * Looks assignable users up by login. GitHub has no user search scoped
+   * to a repository, so the assignee list is filtered here.
+   */
+  async searchUsers(
+    query: string,
+    projectKey?: string,
+    startAt: number = 0,
+    maxResults: number = 50
+  ): Promise<{
+    users: Array<{
+      accountId: string;
+      displayName: string;
+      emailAddress?: string;
+      avatarUrls?: any;
+    }>;
+    total: number;
+  }> {
+    const assignees = await this.getAssignableUsers(projectKey ?? "");
+    const needle = query.trim().toLowerCase();
+    const matches = needle
+      ? assignees.filter((user) => user.name.toLowerCase().includes(needle))
+      : assignees;
+    return {
+      users: matches.slice(startAt, startAt + maxResults).map((user) => ({
+        accountId: user.id,
+        displayName: user.name,
+        avatarUrls: user.avatarUrl ? { "48x48": user.avatarUrl } : undefined,
+      })),
+      total: matches.length,
+    };
   }
 
   /** Its issues are only ever open or closed. */
@@ -627,6 +887,7 @@ export class GitHubAdapter extends BaseAdapter {
     const lowerStatus = status.toLowerCase();
     if (
       lowerStatus === "closed" ||
+      lowerStatus === GITHUB_NOT_PLANNED_STATUS ||
       lowerStatus === "done" ||
       lowerStatus === "resolved"
     ) {
@@ -769,15 +1030,36 @@ export class GitHubAdapter extends BaseAdapter {
       key: `#${githubIssue.number}`,
       title: githubIssue.title,
       description: githubIssue.body,
-      status: githubIssue.state,
+      status: githubIssueStatus(githubIssue) ?? githubIssue.state,
       priority: undefined, // GitHub doesn't have priority
       assignee: githubIssue.assignee
         ? {
             id: githubIssue.assignee.login,
             name: githubIssue.assignee.login,
             email: githubIssue.assignee.email,
+            avatarUrl: githubIssue.assignee.avatar_url,
           }
         : undefined,
+      assignees: Array.isArray(githubIssue.assignees)
+        ? githubIssue.assignees.map((user: any) => ({
+            id: user.login,
+            name: user.login,
+            email: user.email,
+            avatarUrl: user.avatar_url,
+          }))
+        : undefined,
+      milestone: githubIssue.milestone
+        ? {
+            id: String(githubIssue.milestone.number),
+            name: githubIssue.milestone.title,
+            state: githubIssue.milestone.state,
+            dueDate: githubIssue.milestone.due_on ?? undefined,
+          }
+        : undefined,
+      commentCount:
+        typeof githubIssue.comments === "number"
+          ? githubIssue.comments
+          : undefined,
       reporter: githubIssue.user
         ? {
             id: githubIssue.user.login,
@@ -794,6 +1076,7 @@ export class GitHubAdapter extends BaseAdapter {
             typeof label === "string" ? label : label.name
           )
         : [],
+      labelColors: labelColorsOf(githubIssue.labels),
       // Store repo context in customFields for sync support
       customFields: {
         _github_owner: owner,

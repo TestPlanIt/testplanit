@@ -5,10 +5,11 @@ import { GiteaAdapter } from "./adapters/GiteaAdapter";
 import { FIXED_TRACKER_STATUSES } from "./fixedTrackerStatuses";
 
 describe("FIXED_TRACKER_STATUSES", () => {
-  it("lists open/closed for GitHub and Gitea and opened/closed for GitLab", () => {
+  it("lists open/closed (plus not_planned for GitHub) and opened/closed for GitLab", () => {
     expect(FIXED_TRACKER_STATUSES.GITHUB).toEqual([
       { id: "open", name: "open" },
       { id: "closed", name: "closed" },
+      { id: "not_planned", name: "not_planned" },
     ]);
     expect(FIXED_TRACKER_STATUSES.GITEA).toEqual([
       { id: "open", name: "open" },
@@ -61,6 +62,7 @@ describe("fixed-state adapters' getStatuses", () => {
     "%s returns a fresh copy of its fixed list",
     async (provider, make) => {
       const adapter = make();
+      const fixedLength = FIXED_TRACKER_STATUSES[provider].length;
       const first = await adapter.getStatuses();
       const second = await adapter.getStatuses();
 
@@ -69,7 +71,7 @@ describe("fixed-state adapters' getStatuses", () => {
       expect(first).not.toBe(second);
 
       first.push({ id: "x", name: "x" });
-      expect(FIXED_TRACKER_STATUSES[provider]).toHaveLength(2);
+      expect(FIXED_TRACKER_STATUSES[provider]).toHaveLength(fixedLength);
     }
   );
 });

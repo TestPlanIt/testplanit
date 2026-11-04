@@ -44,7 +44,7 @@ For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs and Bitbucket, TestPlanIt mints a r
 The Connect step includes per-provider setup steps. The general flow is:
 
 - **Jira** — In your Jira project's webhook settings, paste the URL, paste the secret as the HMAC signing secret, and subscribe the webhook to issue-created and issue-updated events.
-- **GitHub** — In your repository's **Settings** → **Webhooks** page, paste the URL, paste the secret, set Content type to `application/json`, and subscribe to **Issues** events.
+- **GitHub** — In your repository's **Settings** → **Webhooks** page, paste the URL, paste the secret, set Content type to `application/json`, and subscribe to **Issues** and **Issue comments** events. A comment on a linked issue refreshes that issue the same way an edit does; comments on pull requests are ignored. An issue closed as *not planned* syncs with the status `not_planned`, so it can be mapped separately from one closed as completed (`closed`).
 - **GitLab** — In your project's **Settings → Webhooks**, paste the URL, paste the secret into the **Secret token** field, and enable the **Issues events** trigger.
 - **Gitea / Forgejo / Gogs** — In your repository's **Settings → Webhooks**, add a webhook, paste the URL, paste the secret, set the content type to `application/json`, and enable **Issue** events.
 - **Azure DevOps** — Create two Service Hooks of type **Web Hooks**, one for **Work item created** and one for **Work item updated**. In each, paste the URL, then paste the username and password you typed into TestPlanIt as the Basic-Auth credentials.

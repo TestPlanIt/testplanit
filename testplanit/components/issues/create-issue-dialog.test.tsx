@@ -560,4 +560,161 @@ describe("CreateIssueDialog", () => {
       expect(screen.getByTestId("iteration-context-hint")).toBeTruthy();
     });
   });
+
+  describe("GitHub create-form fields", () => {
+    const metadata = {
+      labels: [{ id: "bug", name: "bug", color: "d73a4a" }],
+      milestones: [{ id: "4", title: "v1.2", state: "open", dueOn: null }],
+      assignees: [{ id: "alice", name: "alice" }],
+      issueTypes: [{ id: "Bug", name: "Bug" }],
+    };
+
+    let metadataRequests: string[];
+    let createBody: Record<string, unknown> | undefined;
+
+    const mockGitHubFetch = (metadataBody: unknown) => {
+      metadataRequests = [];
+      createBody = undefined;
+      global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes("/create-metadata")) {
+          metadataRequests.push(url);
+          return { ok: true, status: 200, json: async () => metadataBody };
+        }
+        if (url.includes("/create-issue")) {
+          createBody = JSON.parse(String(init?.body));
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ id: 1, key: "#1" }),
+          };
+        }
+        if (url.includes("/auth")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ authenticated: true }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => [] };
+      }) as any;
+    };
+
+    // The dialog keeps what a repository offers in a module-level cache keyed
+    // by integration and project, so each test gets its own integration id.
+    const mockGitHubIntegration = (integrationId: number) => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [
+          {
+            id: `pi-${integrationId}`,
+            integrationId,
+            isActive: true,
+            config: {},
+            integration: {
+              id: integrationId,
+              name: "My GitHub",
+              provider: "GITHUB",
+            },
+          },
+        ],
+      });
+      mockUseFindManyIntegrationProject.mockReturnValue({
+        data: [
+          {
+            id: "ip-1",
+            externalProjectId: "testowner/testrepo",
+            externalProjectKey: "testrepo",
+            externalProjectName: "testowner/testrepo",
+            isDefault: true,
+          },
+        ],
+      });
+    };
+
+    beforeEach(() => {
+      class StubIntersectionObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+        takeRecords() {
+          return [];
+        }
+      }
+      (global as any).IntersectionObserver = StubIntersectionObserver;
+    });
+
+    it("loads the repository's choices and shows labels, assignees, milestone and type", async () => {
+      mockGitHubIntegration(51);
+      mockGitHubFetch(metadata);
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("tracker-labels")).toBeTruthy();
+      });
+      expect(metadataRequests[0]).toContain(
+        "/api/integrations/51/create-metadata?projectKey=testrepo"
+      );
+      expect(screen.getByTestId("tracker-assignees")).toBeTruthy();
+      // The Select stub renders each option as select-item-<value>.
+      expect(screen.getByTestId("select-item-4")).toBeTruthy();
+      expect(screen.getByTestId("select-item-Bug")).toBeTruthy();
+      expect(screen.queryByText("priority")).toBeNull();
+    });
+
+    it("keeps the milestone picker (None only) and hides the type picker when the repository offers none", async () => {
+      mockGitHubIntegration(52);
+      mockGitHubFetch({ ...metadata, milestones: [], issueTypes: [] });
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("tracker-labels")).toBeTruthy();
+      });
+      // The dialog keeps its height while metadata loads: labels, assignees
+      // and milestone are always rendered; only the type picker is optional.
+      expect(screen.getAllByTestId("select")).toHaveLength(1);
+      expect(screen.getByTestId("select-item-__none__")).toBeTruthy();
+      expect(screen.queryByTestId("select-item-Bug")).toBeNull();
+    });
+
+    it("survives a metadata response that is not an object", async () => {
+      mockGitHubIntegration(53);
+      mockGitHubFetch([]);
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(metadataRequests).toHaveLength(1);
+      });
+      expect(screen.getByRole("dialog")).toBeTruthy();
+      expect(screen.getByTestId("tracker-labels")).toBeTruthy();
+      expect(screen.queryByTestId("select-item-4")).toBeNull();
+    });
+
+    it("does not send a priority to GitHub", async () => {
+      mockGitHubIntegration(54);
+      mockGitHubFetch(metadata);
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("tracker-labels")).toBeTruthy();
+      });
+      fireEvent.change(screen.getAllByRole("textbox")[0], {
+        target: { value: "Broken login" },
+      });
+      const form = document.querySelector("form");
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => {
+        expect(createBody).toBeDefined();
+      });
+      expect(createBody).not.toHaveProperty("priority");
+      expect(createBody).not.toHaveProperty("labels");
+      expect(createBody).not.toHaveProperty("assigneeIds");
+      expect(createBody).not.toHaveProperty("milestone");
+    });
+  });
 });

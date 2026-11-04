@@ -9,6 +9,7 @@ export const FIXED_TRACKER_STATUSES: Record<
   GITHUB: [
     { id: "open", name: "open" },
     { id: "closed", name: "closed" },
+    { id: "not_planned", name: "not_planned" },
   ],
   GITEA: [
     { id: "open", name: "open" },

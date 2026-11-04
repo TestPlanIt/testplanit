@@ -48,6 +48,8 @@ interface MultiAsyncComboboxProps<T> {
   /** Renders a list entry; `search` is the text the listed options were fetched for. */
   renderOption: (option: T, search: string) => React.ReactNode;
   renderSelectedOption?: (option: T) => React.ReactNode;
+  /** Inline style for a selected option's chip, e.g. a tracker label's colour. */
+  getSelectedOptionStyle?: (option: T) => React.CSSProperties | undefined;
   getOptionValue: (option: T) => string | number;
   getOptionLabel: (option: T) => string;
   placeholder?: string;
@@ -71,6 +73,7 @@ export function MultiAsyncCombobox<T>({
   fetchOptions,
   renderOption,
   renderSelectedOption,
+  getSelectedOptionStyle,
   getOptionValue,
   getOptionLabel,
   placeholder,
@@ -251,6 +254,7 @@ export function MultiAsyncCombobox<T>({
                   key={getOptionValue(v)}
                   variant="secondary"
                   className="me-1 shrink-0 min-w-[80px] max-w-[200px] overflow-hidden"
+                  style={getSelectedOptionStyle?.(v)}
                   title={getOptionLabel(v)}
                 >
                   <span className="min-w-0 flex-1 truncate">

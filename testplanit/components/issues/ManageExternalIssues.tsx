@@ -1,16 +1,20 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { trackerLabelStyle } from "~/lib/integrations/trackerLabelStyle";
+import { isDarkTheme } from "~/utils/theme";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Bug, ExternalLink, Loader2, Plus, X } from "lucide-react";
+import { Bug, ExternalLink, Loader2, Milestone, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import type { ExternalIssueDetails } from "~/lib/integrations/issueDetails";
 import { Link } from "~/lib/navigation";
 import { SearchIssuesDialog } from "./search-issues-dialog";
 
@@ -47,34 +51,6 @@ interface ExternalIssue {
   status?: string;
   url?: string;
   externalId?: string;
-}
-
-interface JiraIssueDetails {
-  key: string;
-  summary: string;
-  description: string;
-  status: {
-    name: string;
-    color?: string;
-  };
-  priority?: {
-    name: string;
-    iconUrl?: string;
-  };
-  assignee?: {
-    displayName: string;
-    avatarUrl?: string;
-  } | null;
-  reporter?: {
-    displayName: string;
-    avatarUrl?: string;
-  };
-  issueType: {
-    name: string;
-    iconUrl?: string;
-  };
-  created: string;
-  updated: string;
 }
 
 interface ManageExternalIssuesProps {
@@ -117,8 +93,13 @@ function LinkedIssueBadge({
   onUnlink: (issueId: number) => void;
 }) {
   const t = useTranslations();
+  const { resolvedTheme } = useTheme();
+  const darkTheme = isDarkTheme(resolvedTheme);
   const [isOpen, setIsOpen] = useState(false);
-  const [jiraDetails, setJiraDetails] = useState<JiraIssueDetails | null>(null);
+  const [details, setDetails] = useState<ExternalIssueDetails | null>(null);
+  // Only the trackers whose keys the details route resolves are asked.
+  const hasTrackerDetails =
+    ["JIRA", "GITHUB"].includes(provider ?? "") && !!integrationId;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -132,14 +113,14 @@ function LinkedIssueBadge({
     };
   }, []);
 
-  // Fetch Jira issue details when popover opens
+  // Fetch the tracker's issue details when the popover opens
   useEffect(() => {
-    if (isOpen && provider === "JIRA" && integrationId && !jiraDetails) {
+    if (isOpen && hasTrackerDetails && !details) {
       setIsLoading(true);
       setError(null);
 
       fetch(
-        `/api/integrations/jira/issue-details?issueKey=${encodeURIComponent(issue.key)}&integrationId=${integrationId}`
+        `/api/integrations/issue-details?issueKey=${encodeURIComponent(issue.key)}&integrationId=${integrationId}`
       )
         .then(async (res) => {
           if (!res.ok) {
@@ -148,7 +129,7 @@ function LinkedIssueBadge({
           return res.json();
         })
         .then((data) => {
-          setJiraDetails(data);
+          setDetails(data);
           setIsLoading(false);
         })
         .catch((err) => {
@@ -156,7 +137,7 @@ function LinkedIssueBadge({
           setIsLoading(false);
         });
     }
-  }, [isOpen, provider, integrationId, issue.key, jiraDetails]);
+  }, [isOpen, hasTrackerDetails, integrationId, issue.key, details]);
 
   const displayText =
     issue.summary && issue.summary !== issue.key
@@ -200,7 +181,7 @@ function LinkedIssueBadge({
     </Badge>
   );
 
-  if (provider === "JIRA") {
+  if (hasTrackerDetails) {
     return (
       <div
         className="w-full max-w-full"
@@ -252,83 +233,123 @@ function LinkedIssueBadge({
                 {t("common.errors.unknown")}: {error}
               </div>
             )}
-            {jiraDetails && !isLoading && !error && (
+            {details && !isLoading && !error && (
               <div className="p-4 space-y-3">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    {jiraDetails.issueType?.iconUrl && (
+                    {details.issueType?.iconUrl && (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
-                        src={jiraDetails.issueType.iconUrl}
-                        alt={jiraDetails.issueType.name}
+                        src={details.issueType.iconUrl}
+                        alt={details.issueType.name}
                         className="h-4 w-4"
                       />
                     )}
-                    <span className="font-semibold">{jiraDetails.key}</span>
+                    <span className="font-semibold">{details.key}</span>
                   </div>
                   <span
                     className={`text-xs px-2 py-1 rounded-sm ${
-                      jiraDetails.status.color === "green"
+                      details.status.color === "green"
                         ? "bg-green-100 text-green-800"
-                        : jiraDetails.status.color === "yellow"
+                        : details.status.color === "yellow"
                           ? "bg-yellow-100 text-yellow-800"
-                          : jiraDetails.status.color === "blue"
+                          : details.status.color === "blue"
                             ? "bg-blue-100 text-blue-800"
                             : "bg-muted"
                     }`}
                   >
-                    {jiraDetails.status.name}
+                    {details.status.name}
                   </span>
                 </div>
 
                 {/* Summary */}
-                <h4 className="font-medium">{jiraDetails.summary}</h4>
+                <h4 className="font-medium">{details.summary}</h4>
 
                 {/* Description */}
-                {jiraDetails.description && (
+                {details.description && (
                   <div className="text-sm text-muted-foreground line-clamp-3">
-                    {jiraDetails.description}
+                    {details.description}
                   </div>
                 )}
 
                 {/* Priority and Assignee */}
                 <div className="flex items-center gap-4 text-sm">
-                  {jiraDetails.priority && (
+                  {details.priority && (
                     <div className="flex items-center gap-1">
-                      {jiraDetails.priority.iconUrl && (
+                      {details.priority.iconUrl && (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
-                          src={jiraDetails.priority.iconUrl}
-                          alt={jiraDetails.priority.name}
+                          src={details.priority.iconUrl}
+                          alt={details.priority.name}
                           className="h-4 w-4"
                         />
                       )}
                       <span className="font-medium">
-                        {jiraDetails.priority.name}
+                        {details.priority.name}
                       </span>
                     </div>
                   )}
-                  {jiraDetails.assignee && (
+                  {details.assignees.length > 0 && (
                     <div className="flex items-center gap-1">
-                      {jiraDetails.assignee.avatarUrl && (
+                      {details.assignees[0].avatarUrl && (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
-                          src={jiraDetails.assignee.avatarUrl}
-                          alt={jiraDetails.assignee.displayName}
+                          src={details.assignees[0].avatarUrl}
+                          alt={details.assignees[0].displayName}
                           className="h-5 w-5 rounded-full"
                         />
                       )}
-                      <span>{jiraDetails.assignee.displayName}</span>
+                      <span>
+                        {details.assignees
+                          .map((assignee) => assignee.displayName)
+                          .join(", ")}
+                      </span>
                     </div>
                   )}
                 </div>
+
+                {details.labels.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1 text-sm">
+                    <span className="text-muted-foreground text-xs">
+                      {t(
+                        "projects.settings.integrations.integration.requirementsConfig.labelsLabel"
+                      )}
+                      :
+                    </span>
+                    {details.labels.map((label) => (
+                      <Badge
+                        key={label}
+                        variant="outline"
+                        className="text-xs"
+                        style={trackerLabelStyle(
+                          details.labelColors?.[label],
+                          darkTheme
+                        )}
+                      >
+                        {label}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {details.milestone && (
+                  <div className="flex items-center gap-1 text-sm">
+                    <Milestone className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground text-xs">
+                      {t("common.fields.milestone")}:
+                    </span>
+                    <span>{details.milestone.name}</span>
+                  </div>
+                )}
 
                 {/* Footer */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                   <span>
                     {t("common.updated")}:{" "}
-                    {new Date(jiraDetails.updated).toLocaleDateString()}
+                    {details.updated
+                      ? new Date(details.updated).toLocaleDateString()
+                      : ""}
                   </span>
                   {issue.url && (
                     <Link
@@ -352,7 +373,7 @@ function LinkedIssueBadge({
     );
   }
 
-  // For non-JIRA providers, just return the badge without popover
+  // Without a tracker to ask, the badge is all there is to show
   return badgeContent;
 }
 

@@ -30,7 +30,9 @@ const createIssueSchema = z.object({
   issueType: z.string().optional(),
   priority: z.string().optional(),
   assigneeId: z.string().optional(),
+  assigneeIds: z.array(z.string()).max(10).optional(),
   labels: z.array(z.string()).optional(),
+  milestone: z.string().optional(),
   customFields: z.record(z.string(), z.any()).optional(),
   testCaseId: z.string().optional(),
   testRunId: z.string().optional(),
@@ -397,7 +399,9 @@ export async function POST(
       issueType: validatedData.issueType,
       priority: validatedData.priority,
       assigneeId: validatedData.assigneeId,
+      assigneeIds: validatedData.assigneeIds,
       labels: validatedData.labels,
+      milestone: validatedData.milestone,
       customFields: validatedData.customFields,
     };
 

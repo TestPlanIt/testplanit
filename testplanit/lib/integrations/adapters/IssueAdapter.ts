@@ -129,13 +129,34 @@ export interface IssueData {
     id: string;
     name: string;
     email?: string;
+    avatarUrl?: string;
   };
+  /**
+   * Every assignee when the tracker allows more than one (GitHub permits
+   * ten); `assignee` stays the first of them.
+   */
+  assignees?: Array<{
+    id: string;
+    name: string;
+    email?: string;
+    avatarUrl?: string;
+  }>;
   reporter?: {
     id: string;
     name: string;
     email?: string;
   };
   labels?: string[];
+  /** Hex colour per label name, for the trackers that colour labels. */
+  labelColors?: Record<string, string>;
+  /** The tracker milestone the issue belongs to, when it has one. */
+  milestone?: {
+    id: string;
+    name: string;
+    state?: string;
+    dueDate?: string;
+  };
+  commentCount?: number;
   /**
    * Jira components (or the provider's equivalent area/ownership taxonomy)
    * by display name. Empty array when the provider has no concept of
@@ -168,7 +189,14 @@ export interface CreateIssueData {
   issueType?: string;
   priority?: string;
   assigneeId?: string;
+  /**
+   * Every assignee, for trackers that take more than one (GitHub allows ten).
+   * Takes precedence over `assigneeId` when both are given.
+   */
+  assigneeIds?: string[];
   labels?: string[];
+  /** The tracker's milestone id (GitHub: the milestone number). */
+  milestone?: string;
   customFields?: Record<string, any>;
 }
 
@@ -178,8 +206,36 @@ export interface UpdateIssueData {
   status?: string;
   priority?: string;
   assigneeId?: string;
+  assigneeIds?: string[];
   labels?: string[];
+  milestone?: string;
   customFields?: Record<string, any>;
+}
+
+/**
+ * The choices a tracker offers when an issue is created in one of its
+ * projects: everything the create form can show beyond title and body.
+ * Each list is empty when the tracker, or this project, has none.
+ */
+export interface CreateIssueMetadata {
+  labels: Array<{ id: string; name: string; color?: string }>;
+  milestones: Array<{
+    id: string;
+    title: string;
+    state: string;
+    dueOn?: string | null;
+  }>;
+  assignees: Array<{
+    id: string;
+    name: string;
+    avatarUrl?: string;
+  }>;
+  issueTypes: Array<{
+    id: string;
+    name: string;
+    description?: string | null;
+    color?: string | null;
+  }>;
 }
 
 export interface AuthenticationData {
@@ -410,6 +466,13 @@ export interface IssueAdapter {
    * Get available priorities
    */
   getPriorities?(): Promise<Array<{ id: string; name: string }>>;
+
+  /**
+   * The labels, milestones, assignable users and issue types the create
+   * form can offer for one tracker project. Adapters whose trackers take
+   * none of these omit the method.
+   */
+  getCreateIssueMetadata?(projectKey: string): Promise<CreateIssueMetadata>;
 
   /**
    * Get available statuses. `projectKey` scopes them to one tracker project

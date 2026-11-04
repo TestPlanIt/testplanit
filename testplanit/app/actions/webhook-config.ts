@@ -79,6 +79,24 @@ const SYNTHETIC_GITHUB_PAYLOAD = JSON.stringify({
   repository: { full_name: "__synthetic__/__synthetic__" },
 });
 
+const SYNTHETIC_GITHUB_ISSUE_COMMENT_PAYLOAD = JSON.stringify({
+  action: "created",
+  issue: { number: 0, state: "open", title: "Synthetic test" },
+  comment: { id: 0, body: "Synthetic test" },
+  repository: { full_name: "__synthetic__/__synthetic__" },
+});
+
+const SYNTHETIC_GITHUB_NOT_PLANNED_PAYLOAD = JSON.stringify({
+  action: "closed",
+  issue: {
+    number: 0,
+    state: "closed",
+    state_reason: "not_planned",
+    title: "Synthetic test",
+  },
+  repository: { full_name: "__synthetic__/__synthetic__" },
+});
+
 const SYNTHETIC_ADO_PAYLOAD = JSON.stringify({
   eventType: "workitem.updated",
   resource: { id: 0, fields: { "System.State": "Synthetic" } },
@@ -181,6 +199,25 @@ const ISSUE_SYNTHETIC_REQUESTS: Partial<Record<AdapterType, SyntheticRequest>> =
     MANTISBT: { body: SYNTHETIC_MANTISBT_PAYLOAD },
     CLICKUP: { body: SYNTHETIC_CLICKUP_PAYLOAD },
   };
+
+/**
+ * Other events the Send test action can post to an issue-tracker webhook,
+ * keyed by the provider's event name.
+ */
+const ISSUE_SYNTHETIC_EVENT_REQUESTS: Partial<
+  Record<AdapterType, Record<string, SyntheticRequest>>
+> = {
+  GITHUB: {
+    issue_comment: {
+      body: SYNTHETIC_GITHUB_ISSUE_COMMENT_PAYLOAD,
+      event: "issue_comment",
+    },
+    "issues:not_planned": {
+      body: SYNTHETIC_GITHUB_NOT_PLANNED_PAYLOAD,
+      event: "issues",
+    },
+  },
+};
 
 /** What the Send test action posts to a repository webhook. */
 const REPOSITORY_SYNTHETIC_REQUESTS: Partial<
@@ -1050,7 +1087,8 @@ export interface SendTestWebhookResult {
  * receiver's dedup INSERT.
  */
 export async function sendTestWebhook(
-  configId: string
+  configId: string,
+  event?: string
 ): Promise<SendTestWebhookResult> {
   const session = await getServerAuthSession();
   if (!session?.user) {
@@ -1124,7 +1162,9 @@ export async function sendTestWebhook(
   const synthetic =
     config.codeRepositoryConfigId != null
       ? REPOSITORY_SYNTHETIC_REQUESTS[config.adapterType]
-      : ISSUE_SYNTHETIC_REQUESTS[config.adapterType];
+      : ((event
+          ? ISSUE_SYNTHETIC_EVENT_REQUESTS[config.adapterType]?.[event]
+          : undefined) ?? ISSUE_SYNTHETIC_REQUESTS[config.adapterType]);
   if (!synthetic) {
     // SLACK / GENERIC_HMAC are OUTBOUND-only adapters; reaching this code
     // path indicates a corrupted INBOUND row. Defensive guard.

@@ -2084,7 +2084,7 @@ export class SyncService {
    * Short-circuits when externalIssueId is already in that form (webhook
    * receivers always pass it that way via `extractLinkedIssueRef`).
    */
-  private async _resolveGitHubIssueIdForSync(
+  async _resolveGitHubIssueIdForSync(
     db: DbClient,
     integrationId: number,
     externalIssueId: string
