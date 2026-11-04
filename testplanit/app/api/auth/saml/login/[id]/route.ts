@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAppBaseUrl } from "~/lib/auth-security";
+import { absoluteAppUrl } from "~/lib/appUrl";
 
 /**
  * GET /api/auth/saml/login/[id]
@@ -17,7 +17,7 @@ export async function GET(
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   // Redirect to the SAML initiation handler with the provider ID as a query param
-  const samlUrl = new URL("/api/auth/saml", getAppBaseUrl(request));
+  const samlUrl = new URL(absoluteAppUrl("/api/auth/saml"));
   samlUrl.searchParams.set("provider", id);
   samlUrl.searchParams.set("callbackUrl", callbackUrl);
 

@@ -4,6 +4,7 @@ import { getAppBaseUrl } from "~/lib/auth-security";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { auditAuthEvent } from "~/lib/services/auditLog";
+import { absoluteAppUrl } from "~/lib/appUrl";
 
 /**
  * POST /api/auth/send-magic-link
@@ -76,9 +77,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     const baseUrl = getAppBaseUrl(req);
 
     // Ensure callbackUrl has a trailing slash for proper routing
-    let finalCallbackUrl = callbackUrl.startsWith("http")
-      ? callbackUrl
-      : baseUrl + callbackUrl;
+    let finalCallbackUrl = absoluteAppUrl(callbackUrl);
     if (!finalCallbackUrl.endsWith("/")) {
       finalCallbackUrl += "/";
     }

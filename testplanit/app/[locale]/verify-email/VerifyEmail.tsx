@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { toast } from "sonner";
 import svgIcon from "~/public/tpi_logo.svg";
+import { withBasePath } from "~/lib/basePath";
 
 const VerifyEmail = () => {
   const t = useTranslations("auth.verifyEmail");
@@ -117,7 +118,7 @@ const VerifyEmail = () => {
   }
 
   async function onSignout() {
-    await signOut({ redirect: true, callbackUrl: "/signin" });
+    await signOut({ redirect: true, callbackUrl: withBasePath("/signin") });
     router.push("/signin");
   }
 

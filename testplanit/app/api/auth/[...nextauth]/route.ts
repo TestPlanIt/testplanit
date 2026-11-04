@@ -5,6 +5,7 @@ import {
   runWithAuditContext,
 } from "~/lib/auditContext";
 import { getAuthOptions } from "~/server/auth";
+import { COOKIE_PATH } from "~/lib/basePath";
 
 /**
  * Clear existing session cookies to prevent conflicts when signing in
@@ -22,7 +23,7 @@ async function clearSessionCookies() {
 
   for (const cookieName of sessionCookieNames) {
     try {
-      cookieStore.delete(cookieName);
+      cookieStore.delete({ name: cookieName, path: COOKIE_PATH });
     } catch {
       // Cookie might not exist, that's fine
     }

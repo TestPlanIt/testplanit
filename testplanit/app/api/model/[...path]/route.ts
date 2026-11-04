@@ -101,6 +101,7 @@ import { syncSessionToElasticsearch } from "~/services/sessionSearch";
 import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
 import { syncTestRunToElasticsearch } from "~/services/testRunSearch";
 import { findBlockingPrerequisites } from "~/lib/services/dependencyGate";
+import { COOKIE_PATH } from "~/lib/basePath";
 
 // Use AsyncLocalStorage for request-scoped API token auth (thread-safe)
 type ApiAuthContext = { userId: string; email?: string; name?: string } | null;
@@ -1853,7 +1854,7 @@ async function handleRequest(
         newResponse.cookies.set(PRIMARY_STICKY_COOKIE, "1", {
           httpOnly: true,
           sameSite: "lax",
-          path: "/",
+          path: COOKIE_PATH,
           maxAge: Math.ceil(stickyMs / 1000),
           secure: process.env.NODE_ENV === "production",
         });

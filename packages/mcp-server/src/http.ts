@@ -71,7 +71,8 @@ export async function validateToken(
 ): Promise<ValidateResult> {
   let response: Response;
   try {
-    const url = new URL("/api/auth/whoami", env.apiUrl);
+    // String join: new URL(path, base) would drop a path prefix on apiUrl.
+    const url = new URL(`${env.apiUrl}/api/auth/whoami`);
     response = await fetch(url, {
       method: "GET",
       headers: {

@@ -75,6 +75,7 @@ import {
   type RepositoryWebhookRow,
 } from "./repository-webhook-card";
 import { WebhookActionsSection } from "./webhook-actions-section";
+import { withBasePath } from "~/lib/basePath";
 
 interface WebhookConfigFormProps {
   projectId: number;
@@ -518,7 +519,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     const isRevealedHere = revealed?.configId === config.id;
     const url = `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/api/webhooks/${config.token}`;
+    }${withBasePath(`/api/webhooks/${config.token}`)}`;
     const healthLabelKey: `healthBadge.${EndpointHealth}` = `healthBadge.${config.endpointHealth}`;
     return (
       <Card

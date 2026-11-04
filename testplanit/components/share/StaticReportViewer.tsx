@@ -26,6 +26,7 @@ import {
   resolveRequestDateRange,
 } from "~/lib/reports/dateRangePresets";
 import { formatDateRange } from "~/utils/dateFormat";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 interface StaticReportViewerProps {
   shareData: any;
@@ -171,14 +172,14 @@ export function StaticReportViewer({
 
       // Call the share report API to fetch data
       const url = new URL(
-        `/api/share/${shareKey}/report`,
+        withBasePath(`/api/share/${shareKey}/report`),
         window.location.origin
       );
       if (token) {
         url.searchParams.set("token", token);
       }
 
-      const response = await fetch(url.toString());
+      const response = await apiFetch(url.toString());
 
       if (!response.ok) {
         const errorData = await response.json();

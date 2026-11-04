@@ -85,6 +85,8 @@ import { ChangePasswordModal } from "./ChangePasswordModal";
 import { EditAvatar } from "./EditAvatar";
 import { RemoveAvatar } from "./RemoveAvatar";
 import { TwoFactorSettings } from "./TwoFactorSettings";
+import { apiFetch } from "~/lib/basePath";
+import { clientCookie } from "~/lib/auth/cookieScope";
 
 interface UserProfileProps {
   params: Promise<{ userId: string }>;
@@ -373,7 +375,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
       // Use dedicated update API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with nested update operations)
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await apiFetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData),
@@ -389,7 +391,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
       // If locale changed, update cookie and reload the page
       if (localeChanged) {
         const urlLocale = data.locale.replace("_", "-");
-        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+          "max-age=31536000",
+        ]);
         window.location.reload();
         return; // Exit early since page will reload
       }

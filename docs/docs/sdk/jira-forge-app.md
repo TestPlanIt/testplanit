@@ -63,7 +63,7 @@ Select your Jira instance when prompted.
 ### Step 2: Configure the App in Jira
 
 1. In Jira, go to **Settings (gear icon) > Apps > TestPlanIt Settings**
-2. Enter your **TestPlanIt Instance URL** (e.g., `https://yourcompany.testplanit.com`)
+2. Enter your **TestPlanIt Instance URL** (e.g., `https://yourcompany.testplanit.com`). If the instance is served under a path prefix, include it (e.g., `https://example.com/testplanit`)
 3. Enter the **Forge API Key** from Step 1
 4. Click **Test Connection** to verify connectivity
 5. Click **Save Configuration**

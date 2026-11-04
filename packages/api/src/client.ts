@@ -205,7 +205,8 @@ export class TestPlanItClient {
       timeout?: number;
     }
   ): Promise<T> {
-    const url = new URL(path, this.baseUrl);
+    // Joined as strings: new URL(path, base) would drop a path prefix on base.
+    const url = new URL(`${this.baseUrl}${path}`);
 
     // Add query parameters
     if (options?.query) {
@@ -452,7 +453,8 @@ export class TestPlanItClient {
       timeout?: number;
     }
   ): Promise<T> {
-    const url = new URL(path, this.baseUrl);
+    // Joined as strings: new URL(path, base) would drop a path prefix on base.
+    const url = new URL(`${this.baseUrl}${path}`);
 
     if (options?.query) {
       for (const [key, value] of Object.entries(options.query)) {
@@ -1963,7 +1965,7 @@ export class TestPlanItClient {
       }
     }
 
-    const url = new URL("/api/test-results/import", this.baseUrl);
+    const url = new URL(`${this.baseUrl}/api/test-results/import`);
 
     const response = await fetch(url.toString(), {
       method: "POST",

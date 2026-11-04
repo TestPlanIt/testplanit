@@ -24,6 +24,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import svgIcon from "~/public/tpi_logo.svg";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 export default function ForceChangePasswordPage() {
   const { data: session, update: updateSession } = useSession();
@@ -40,7 +41,7 @@ export default function ForceChangePasswordPage() {
   // Fetch policy requirements on mount (per D-05, CONTEXT specifics)
   useEffect(() => {
     if (!session?.user?.id) return;
-    fetch(`/api/users/${session.user.id}/password-policy`)
+    apiFetch(`/api/users/${session.user.id}/password-policy`)
       .then((res) => res.json())
       .then((data) => {
         if (data.policy) setPolicy(data.policy);
@@ -67,7 +68,7 @@ export default function ForceChangePasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/users/${session?.user?.id}/force-change-password`,
         {
           method: "POST",
@@ -99,7 +100,7 @@ export default function ForceChangePasswordPage() {
 
       // Hard redirect — window.location.href forces full page load,
       // ensuring middleware re-reads the updated JWT
-      window.location.href = "/";
+      window.location.href = withBasePath("/");
     } catch {
       setErrors([t("auth.forceChangePassword.genericError")]);
       setIsLoading(false);
@@ -108,7 +109,7 @@ export default function ForceChangePasswordPage() {
 
   async function handleSignOut() {
     const { signOut } = await import("next-auth/react");
-    await signOut({ callbackUrl: "/signin" });
+    await signOut({ callbackUrl: withBasePath("/signin") });
   }
 
   return (

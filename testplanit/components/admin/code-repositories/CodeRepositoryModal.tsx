@@ -37,6 +37,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { CodeRepositoryConfigForm } from "./CodeRepositoryConfigForm";
+import { apiFetch } from "~/lib/basePath";
 
 const PROVIDERS = [
   { value: "GITHUB", label: "GitHub" },
@@ -179,11 +180,14 @@ export function CodeRepositoryModal({
       };
       if (repository?.id) body.repositoryId = repository.id;
 
-      const response = await fetch("/api/code-repositories/test-connection", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const response = await apiFetch(
+        "/api/code-repositories/test-connection",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
 
       const data = await response.json();
       setTestResult(data);

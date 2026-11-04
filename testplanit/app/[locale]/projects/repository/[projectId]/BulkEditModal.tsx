@@ -69,6 +69,7 @@ import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { FieldValueInput } from "./FieldValueInput";
 import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
+import { apiFetch } from "~/lib/basePath";
 
 // --- Type Definitions ---
 
@@ -276,7 +277,7 @@ export function BulkEditModal({
     setCasesError(null);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/projects/${projectId}/cases/fetch-many`,
         {
           method: "POST",
@@ -1773,13 +1774,16 @@ export function BulkEditModal({
    */
   const postBulkEdit = async (payload: any): Promise<void> => {
     // Call the bulk edit API
-    const response = await fetch(`/api/projects/${projectId}/cases/bulk-edit`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const response = await apiFetch(
+      `/api/projects/${projectId}/cases/bulk-edit`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
     if (!response.ok) {
       const errBody = await response.json().catch(() => ({}));

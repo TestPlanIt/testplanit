@@ -9,6 +9,7 @@ import {
 import type { Integration } from "~/zenstack/models";
 import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { withBasePath } from "~/lib/basePath";
 
 interface AuthorizeIntegrationButtonProps {
   integration: Integration;
@@ -36,7 +37,9 @@ export function AuthorizeIntegrationButton({
     const params = new URLSearchParams({
       integrationId: integration.id.toString(),
     });
-    window.location.href = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?${params.toString()}`;
+    window.location.href = withBasePath(
+      `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?${params.toString()}`
+    );
   };
 
   // Reserve the slot with the same Button + icon (identical size) but hidden

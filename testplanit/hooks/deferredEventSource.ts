@@ -1,5 +1,7 @@
 "use client";
 
+import { withBasePath } from "~/lib/basePath";
+
 /**
  * Drop-in stand-in for `new EventSource(url)` that defers opening the real
  * connection until the browser next goes idle (bounded by a fallback timeout).
@@ -50,7 +52,7 @@ export function createDeferredEventSource(url: string): DeferredEventSource {
     idleHandle = undefined;
     timerHandle = undefined;
     if (closed) return;
-    es = new EventSource(url);
+    es = new EventSource(withBasePath(url));
     // Read the latest handler at dispatch time so a handler assigned after
     // open() (or reassigned later) still takes effect.
     es.onmessage = (ev) => handlers.onmessage?.(ev);

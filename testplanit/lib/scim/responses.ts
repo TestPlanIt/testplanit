@@ -22,6 +22,7 @@ import {
   SCIM_CONTENT_TYPE,
   SCIM_LIST_RESPONSE_SCHEMA_URN,
 } from "./constants";
+import { getAppUrl } from "~/lib/appUrl";
 
 /**
  * Base URL for SCIM resource locations.
@@ -32,7 +33,7 @@ import {
  * `Host`, `X-Forwarded-Host`, or `Forwarded` header.
  */
 export function getScimBaseUrl(): string {
-  return process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  return getAppUrl();
 }
 
 /**

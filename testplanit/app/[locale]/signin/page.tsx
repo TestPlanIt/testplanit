@@ -45,6 +45,8 @@ import Image from "next/image";
 import { siApple, siGoogle } from "simple-icons";
 import { Link } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
+import { apiFetch, stripBasePath, withBasePath } from "~/lib/basePath";
+import { clientCookie } from "~/lib/auth/cookieScope";
 
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -81,8 +83,13 @@ function clearSessionCookies() {
 
   for (const name of cookieNames) {
     // Clear for all possible paths
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+    document.cookie = clientCookie(name, "", [
+      "expires=Thu, 01 Jan 1970 00:00:00 GMT",
+    ]);
+    document.cookie = clientCookie(name, "", [
+      "expires=Thu, 01 Jan 1970 00:00:00 GMT",
+      `domain=${window.location.hostname}`,
+    ]);
   }
 }
 
@@ -135,7 +142,7 @@ const Signin: NextPage = () => {
   // Fetch admin contact email (wait for session to be cleared first)
   useEffect(() => {
     if (!sessionCleared) return;
-    fetch("/api/admin-contact")
+    apiFetch("/api/admin-contact")
       .then((res) => res.json())
       .then((data) => {
         setShowAdminContact(data.enabled !== false);
@@ -287,13 +294,15 @@ const Signin: NextPage = () => {
 
     if (result?.ok) {
       // Get user preferences from session
-      const response = await fetch("/api/auth/session");
+      const response = await apiFetch("/api/auth/session");
       const session = await response.json();
 
       // Set language cookie if user has a locale preference
       if (session?.user?.preferences?.locale) {
         const urlLocale = session.user.preferences.locale.replace("_", "-");
-        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+          "max-age=31536000",
+        ]);
       }
 
       // Redirect to callback URL if present, otherwise home
@@ -310,7 +319,7 @@ const Signin: NextPage = () => {
       }
 
       const callbackUrl = searchParams.get("callbackUrl") || "/";
-      router.push(callbackUrl);
+      router.push(stripBasePath(callbackUrl));
     } else if (result?.error === "EMAIL_NOT_VERIFIED") {
       router.push("/verify-email?email=" + encodeURIComponent(data.email));
     } else if (result?.error?.startsWith("2FA_REQUIRED:")) {
@@ -343,18 +352,20 @@ const Signin: NextPage = () => {
 
     if (result?.ok) {
       // Get user preferences from session
-      const response = await fetch("/api/auth/session");
+      const response = await apiFetch("/api/auth/session");
       const session = await response.json();
 
       // Set language cookie if user has a locale preference
       if (session?.user?.preferences?.locale) {
         const urlLocale = session.user.preferences.locale.replace("_", "-");
-        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+          "max-age=31536000",
+        ]);
       }
 
       // Redirect to callback URL if present, otherwise home
       const callbackUrl = searchParams.get("callbackUrl") || "/";
-      router.push(callbackUrl);
+      router.push(stripBasePath(callbackUrl));
     } else {
       setSubmissionError(
         t("auth.errors.invalid2FACode") || "Invalid verification code"
@@ -388,14 +399,16 @@ const Signin: NextPage = () => {
       const callbackUrl = searchParams.get("callbackUrl") || "/";
 
       if (provider.type === SsoProviderType.GOOGLE) {
-        await signIn("google", { callbackUrl });
+        await signIn("google", { callbackUrl: withBasePath(callbackUrl) });
       } else if (provider.type === SsoProviderType.APPLE) {
-        await signIn("apple", { callbackUrl });
+        await signIn("apple", { callbackUrl: withBasePath(callbackUrl) });
       } else if (provider.type === SsoProviderType.MICROSOFT) {
-        await signIn("azure-ad", { callbackUrl });
+        await signIn("azure-ad", { callbackUrl: withBasePath(callbackUrl) });
       } else if (provider.type === SsoProviderType.SAML) {
         // Redirect to SAML login endpoint
-        window.location.href = `/api/auth/saml/login/${provider.id}`;
+        window.location.href = withBasePath(
+          `/api/auth/saml/login/${provider.id}`
+        );
       }
     } catch (error) {
       console.error("SSO sign-in error:", error);
@@ -423,10 +436,14 @@ const Signin: NextPage = () => {
       let deviceBound = false;
       try {
         const csrfToken = await getCsrfToken();
-        const res = await fetch("/api/auth/passwordless/request", {
+        const res = await apiFetch("/api/auth/passwordless/request", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: data.email, callbackUrl, csrfToken }),
+          body: JSON.stringify({
+            email: data.email,
+            callbackUrl: withBasePath(callbackUrl),
+            csrfToken,
+          }),
         });
         if (res.ok) {
           const body = await res.json();
@@ -449,7 +466,7 @@ const Signin: NextPage = () => {
         await signIn("email", {
           email: data.email,
           redirect: false,
-          callbackUrl,
+          callbackUrl: withBasePath(callbackUrl),
         });
       }
 
@@ -470,14 +487,16 @@ const Signin: NextPage = () => {
   // Shared post-sign-in handling (locale cookie + redirect), mirroring the
   // credentials flow above.
   async function completeSignedInRedirect() {
-    const response = await fetch("/api/auth/session");
+    const response = await apiFetch("/api/auth/session");
     const session = await response.json();
     if (session?.user?.preferences?.locale) {
       const urlLocale = session.user.preferences.locale.replace("_", "-");
-      document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+      document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+        "max-age=31536000",
+      ]);
     }
     const callbackUrl = searchParams.get("callbackUrl") || "/";
-    router.push(callbackUrl);
+    router.push(stripBasePath(callbackUrl));
   }
 
   async function handleVerifyPasswordlessCode() {
@@ -525,15 +544,17 @@ const Signin: NextPage = () => {
     if (!magicLinkSent || !passwordlessPendingId) return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/auth/session");
+        const res = await apiFetch("/api/auth/session");
         const session = await res.json();
         if (session?.user?.id) {
           clearInterval(interval);
           if (session.user.preferences?.locale) {
             const urlLocale = session.user.preferences.locale.replace("_", "-");
-            document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+            document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+              "max-age=31536000",
+            ]);
           }
-          router.push(searchParams.get("callbackUrl") || "/");
+          router.push(stripBasePath(searchParams.get("callbackUrl") || "/"));
         }
       } catch {
         // Transient network error — keep polling.

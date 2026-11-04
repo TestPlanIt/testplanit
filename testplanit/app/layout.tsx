@@ -4,6 +4,8 @@ import { getLocale } from "next-intl/server";
 import Script from "next/script";
 import { getLocaleDirection } from "~/i18n/direction";
 import "~/styles/globals.css";
+import { getAppUrl } from "~/lib/appUrl";
+import { withBasePath } from "~/lib/basePath";
 
 export const metadata: Metadata = {
   title: {
@@ -12,12 +14,15 @@ export const metadata: Metadata = {
   },
   description:
     "Streamline your software testing with TestPlanIt's powerful test case management, execution tracking, and comprehensive reporting tools.",
+  // Next does not prefix icon paths or absolute-URL metadata with basePath.
   icons: {
-    icon: "/tpi_logo.svg",
-    apple: "/tpi_logo_square.png",
+    icon: withBasePath("/tpi_logo.svg"),
+    apple: withBasePath("/tpi_logo_square.png"),
   },
   metadataBase: new URL(
-    process.env.NEXTAUTH_URL || "https://app.testplanit.com"
+    process.env.APP_URL || process.env.NEXTAUTH_URL
+      ? `${getAppUrl()}/`
+      : "https://app.testplanit.com"
   ),
   openGraph: {
     title: "TestPlanIt - Modern Test Management Platform",

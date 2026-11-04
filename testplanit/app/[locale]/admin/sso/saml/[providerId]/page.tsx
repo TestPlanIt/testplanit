@@ -24,6 +24,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
+import { withBasePath } from "~/lib/basePath";
 
 // Get all Access enum values dynamically with their translation keys
 const AccessLevels = [
@@ -136,7 +137,7 @@ export default function SAMLConfigurationPage() {
       // Set default callback URL
       setFormData((prev) => ({
         ...prev,
-        callbackUrl: `${window.location.origin}/api/auth/callback/saml`,
+        callbackUrl: `${window.location.origin}${withBasePath("/api/auth/callback/saml")}`,
       }));
     }
   }, [samlConfig]);

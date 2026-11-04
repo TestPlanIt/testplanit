@@ -2,6 +2,7 @@ import type { TxClient } from "~/lib/zenstack";
 import type { User } from "next-auth";
 
 import { DbNull, JsonNull, type JsonValue } from "@zenstackhq/orm";
+import { getAppUrl } from "~/lib/appUrl";
 
 /**
  * Service for creating test case versions.
@@ -85,7 +86,7 @@ export async function createTestCaseVersion(
 ): Promise<CreateVersionResult> {
   try {
     // For server-side calls, we need to construct the full URL
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const baseUrl = getAppUrl();
     const url = `${baseUrl}/api/repository/cases/${options.caseId}/versions`;
 
     // Prepare the request body

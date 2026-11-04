@@ -4,7 +4,6 @@ import {
   checkRateLimit,
   consumeSamlRelayState,
   createTempSessionToken,
-  getAppBaseUrl,
   getSecurityHeaders,
   registerSamlAssertion,
   sanitizeCallbackUrl,
@@ -14,6 +13,7 @@ import { NotificationService } from "~/lib/services/notificationService";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { db } from "~/server/db";
 import { createSAMLClient, validateSAMLResponse } from "~/server/saml-provider";
+import { absoluteAppUrl } from "~/lib/appUrl";
 
 /**
  * Resolve an IdP-initiated SAMLResponse (no RelayState — e.g. an Okta dashboard
@@ -391,9 +391,8 @@ export async function POST(request: NextRequest) {
     // (which only exports GET) — without this the browser would re-POST and
     // hit 405. NextResponse.redirect() defaults to 307, preserving method.
     const response = NextResponse.redirect(
-      new URL(
-        `/api/auth/saml/complete?token=${tempToken}&callbackUrl=${encodeURIComponent(callbackUrl)}`,
-        getAppBaseUrl(request)
+      absoluteAppUrl(
+        `/api/auth/saml/complete?token=${tempToken}&callbackUrl=${encodeURIComponent(callbackUrl)}`
       ),
       303
     );

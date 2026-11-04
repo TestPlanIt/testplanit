@@ -9,6 +9,7 @@
  */
 
 import { getUrl, getToken } from "./config.js";
+import { joinUrl } from "./url.js";
 import type { APIError } from "../types.js";
 
 export interface AutomationPlanCase {
@@ -90,7 +91,7 @@ async function hostJson<T>(
   init: RequestInit & { query?: Record<string, string | undefined> } = {}
 ): Promise<T> {
   const { url, token } = requireConfig();
-  const target = new URL(path, url);
+  const target = new URL(joinUrl(url, path));
   for (const [key, value] of Object.entries(init.query ?? {})) {
     if (value !== undefined) target.searchParams.set(key, value);
   }

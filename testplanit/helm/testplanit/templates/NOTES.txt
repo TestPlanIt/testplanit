@@ -9,7 +9,7 @@ TestPlanIt has been deployed as release "{{ .Release.Name }}" in namespace "{{ .
 
    kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "testplanit.fullname" . }}
    kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "testplanit.fullname" . }} 3000:{{ .Values.service.port }}
-   # then: curl -s localhost:3000/api/health | jq
+   # then: curl -s localhost:3000{{ .Values.basePath }}/api/health | jq
 
 {{- if .Values.ingress.enabled }}
 

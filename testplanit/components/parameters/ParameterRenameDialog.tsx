@@ -15,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 export interface ParameterRenameDialogProps {
   open: boolean;
@@ -53,7 +54,7 @@ export function ParameterRenameDialog({
   const handlePatch = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/cases/${caseId}/parameters/${paramId}`,
         {
           method: "PATCH",
@@ -93,7 +94,7 @@ export function ParameterRenameDialog({
     }
 
     let cancelled = false;
-    fetch(
+    apiFetch(
       `/api/repository/cases/${caseId}/parameters/${paramId}/scan-references`
     )
       .then((r) => r.json())
@@ -109,11 +110,14 @@ export function ParameterRenameDialog({
         if (total === 0 && !silentPatchFiredRef.current) {
           silentPatchFiredRef.current = true;
           // Silent rename: zero-refs path bypasses dialog body entirely.
-          await fetch(`/api/repository/cases/${caseId}/parameters/${paramId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: newName }),
-          });
+          await apiFetch(
+            `/api/repository/cases/${caseId}/parameters/${paramId}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: newName }),
+            }
+          );
           if (cancelled) return;
           toast.message(t("renameNoRefsToast"));
           void queryClient.invalidateQueries({

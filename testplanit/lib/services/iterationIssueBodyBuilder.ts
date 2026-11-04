@@ -12,6 +12,7 @@ import {
   type ParameterSchemaEntry,
 } from "~/lib/services/parameterRedaction";
 import { buildIterationDeepLink } from "~/lib/services/iterationDeepLink";
+import { getAppUrl } from "~/lib/appUrl";
 
 // ── Type shapes ───────────────────────────────────────────────────────
 //
@@ -266,9 +267,7 @@ export async function buildIterationIssueBody(
   // body (Jira/GitHub/Azure DevOps), so a relative path can't resolve —
   // the link MUST be absolute. NEXTAUTH_URL is the canonical app origin.
   const origin =
-    typeof process.env.NEXTAUTH_URL === "string"
-      ? process.env.NEXTAUTH_URL
-      : null;
+    process.env.APP_URL || process.env.NEXTAUTH_URL ? getAppUrl() : null;
   const href = buildIterationDeepLink({
     projectId,
     runId,

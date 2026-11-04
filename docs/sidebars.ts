@@ -33,6 +33,7 @@ const sidebars: SidebarsConfig = {
         'deployment', // Add deployment.md after Installation
         'external-database-deployment', // Add external-database-deployment.md
         'kubernetes-deployment', // Kubernetes / Helm chart deployment
+        'subpath-deployment', // Serving the app under a path prefix (basePath)
         'migrating-from-minio', // Moving bundled file storage from MinIO to RustFS
         'horizontal-read-scaling', // Read-replica horizontal read scaling
         'building-from-source', // Build from source / try a beta pre-release

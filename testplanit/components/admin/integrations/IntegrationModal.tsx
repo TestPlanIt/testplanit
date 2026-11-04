@@ -30,6 +30,7 @@ import * as z from "zod/v4";
 import { IntegrationConfigForm } from "./IntegrationConfigForm";
 import { IntegrationErrorAlert } from "./IntegrationErrorAlert";
 import { IntegrationTypeSelector } from "./IntegrationTypeSelector";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 interface IntegrationModalProps {
   isOpen: boolean;
@@ -179,7 +180,7 @@ export function IntegrationModal({
     const values = form.getValues();
 
     try {
-      const response = await fetch("/api/integrations/test-connection", {
+      const response = await apiFetch("/api/integrations/test-connection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -256,7 +257,9 @@ export function IntegrationModal({
     const params = new URLSearchParams({
       integrationId: integration.id.toString(),
     });
-    window.location.href = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?${params.toString()}`;
+    window.location.href = withBasePath(
+      `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?${params.toString()}`
+    );
   };
 
   const onSubmit = async (values: FormData) => {
@@ -281,7 +284,7 @@ export function IntegrationModal({
     setIsSaving(true);
     try {
       const response = integration
-        ? await fetch(`/api/integrations/${integration.id}`, {
+        ? await apiFetch(`/api/integrations/${integration.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -295,7 +298,7 @@ export function IntegrationModal({
                 : {}),
             }),
           })
-        : await fetch("/api/integrations", {
+        : await apiFetch("/api/integrations", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

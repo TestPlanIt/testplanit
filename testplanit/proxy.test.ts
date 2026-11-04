@@ -769,3 +769,269 @@ describe("External API Access Control", () => {
     });
   });
 });
+
+// Installs served under a path prefix (next.config basePath). Next strips the
+// prefix from request.nextUrl.pathname and restores it when a cloned NextURL
+// is formatted, so the proxy must read and build every URL through nextUrl.
+// These tests build requests the way the Next server does under a prefix and
+// check that every branch sees the same paths as at the root and sends the
+// browser back inside the prefix.
+describe("Path-prefixed install (basePath)", () => {
+  const BASE = "/testplanit";
+  const pageHeaders = { "sec-fetch-site": "same-origin" };
+  const liveUser = {
+    authMethod: "INTERNAL",
+    passwordChangedAt: null,
+    isActive: true,
+  };
+
+  function createPrefixedRequest(
+    path: string,
+    headers: Record<string, string> = {}
+  ): NextRequest {
+    return new NextRequest(new URL(`${BASE}${path}`, "http://localhost:3000"), {
+      headers: new Headers(headers),
+      nextConfig: { basePath: BASE },
+    });
+  }
+
+  const locationOf = (response: Response) =>
+    new URL(response.headers.get("location")!);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.NEXTAUTH_SECRET = "test-secret";
+    process.env.NEXTAUTH_URL = `http://localhost:3000${BASE}/api/auth`;
+    mockGetCachedSessionUser.mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    delete process.env.NEXTAUTH_SECRET;
+    delete process.env.NEXTAUTH_URL;
+    delete process.env.IS_TRIAL_INSTANCE;
+    delete process.env.TRIAL_END_DATE;
+  });
+
+  it("still applies the external API access gate under the prefix", async () => {
+    mockGetToken.mockResolvedValue({
+      sub: "user-123",
+      access: "USER",
+      isApi: false,
+    });
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/api/model/users", {})
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it("still exempts the auth, health and version routes under the prefix", async () => {
+    for (const path of ["/api/auth/session", "/api/health", "/api/version"]) {
+      const response = await middlewareWithPreferences(
+        createPrefixedRequest(path, {})
+      );
+      expect(response.status).toBe(200);
+      expect(mockGetToken).not.toHaveBeenCalled();
+    }
+  });
+
+  it("sends an anonymous visitor to the sign-in page inside the prefix", async () => {
+    mockGetToken.mockResolvedValue(null);
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/en-US/projects?tab=runs", pageHeaders)
+    );
+
+    expect(response.status).toBe(307);
+    const location = locationOf(response);
+    expect(location.pathname).toBe(`${BASE}/en-US/signin`);
+    expect(location.origin).toBe("http://localhost:3000");
+  });
+
+  it("rewrites a link-preview bot to the preview route inside the prefix", async () => {
+    mockGetToken.mockResolvedValue(null);
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/en-US/projects/repository/5/123", {
+        "user-agent":
+          "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)",
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(
+      new URL(response.headers.get("x-middleware-rewrite")!).pathname
+    ).toBe(`${BASE}/api/link-preview`);
+    expect(
+      response.headers.get("x-middleware-request-x-link-preview-path")
+    ).toBe("/en-US/projects/repository/5/123");
+  });
+
+  it("localizes an emailed /share link inside the prefix", async () => {
+    mockGetToken.mockResolvedValue(null);
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/share/abc123", pageHeaders)
+    );
+
+    expect(response.status).toBe(307);
+    expect(locationOf(response).pathname).toBe(`${BASE}/en-US/share/abc123`);
+  });
+
+  it("canonicalizes a project-prefixed record key inside the prefix", async () => {
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest(
+        "/en-US/projects/repository/5/PROJECT-TC-1234",
+        pageHeaders
+      )
+    );
+
+    expect(response.status).toBe(307);
+    expect(locationOf(response).pathname).toBe(
+      `${BASE}/en-US/projects/repository/5/1234`
+    );
+  });
+
+  it("sends a user who must verify 2FA to the verify page inside the prefix", async () => {
+    mockGetToken.mockResolvedValue({
+      sub: "user-123",
+      access: "USER",
+      twoFactorRequired: true,
+      twoFactorVerified: false,
+    });
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/en-US/projects", pageHeaders)
+    );
+
+    expect(response.status).toBe(307);
+    expect(locationOf(response).pathname).toBe(
+      `${BASE}/en-US/auth/two-factor-verify`
+    );
+  });
+
+  it("sends a user who must change their password to the force-change page inside the prefix", async () => {
+    mockGetToken.mockResolvedValue({
+      sub: "user-123",
+      access: "USER",
+      mustChangePassword: true,
+    });
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/en-US/projects", pageHeaders)
+    );
+
+    expect(response.status).toBe(307);
+    expect(locationOf(response).pathname).toBe(
+      `${BASE}/en-US/auth/force-change-password`
+    );
+
+    // The page itself and its API are let through, as at the root.
+    const onPage = await middlewareWithPreferences(
+      createPrefixedRequest("/en-US/auth/force-change-password", pageHeaders)
+    );
+    expect(onPage.status).not.toBe(307);
+  });
+
+  it("sends an ended session to sign-in with the reason, inside the prefix", async () => {
+    mockGetToken.mockResolvedValue({
+      sub: "user-123",
+      access: "USER",
+      passwordChangedAt: null,
+    });
+    mockGetCachedSessionUser.mockResolvedValue({
+      authMethod: "INTERNAL",
+      passwordChangedAt: "2026-06-01T00:00:00.000Z",
+      isActive: true,
+    });
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/en-US/projects", pageHeaders)
+    );
+
+    expect(response.status).toBe(307);
+    const location = locationOf(response);
+    expect(location.pathname).toBe(`${BASE}/en-US/signin`);
+    expect(location.searchParams.get("error")).toBe("SessionEnded");
+  });
+
+  it("sends a signed-in visitor on the sign-in page home inside the prefix", async () => {
+    mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+    mockGetCachedSessionUser.mockResolvedValue(liveUser);
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/en-US/signin", pageHeaders)
+    );
+
+    expect(response.status).toBe(307);
+    expect(locationOf(response).pathname).toBe(`${BASE}/en-US/`);
+  });
+
+  it("prefixes a root-relative callbackUrl exactly once", async () => {
+    mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+    mockGetCachedSessionUser.mockResolvedValue(liveUser);
+
+    const unprefixed = await middlewareWithPreferences(
+      createPrefixedRequest(
+        "/en-US/signin?callbackUrl=%2Fen-US%2Fprojects%2Frepository%2F1",
+        pageHeaders
+      )
+    );
+    expect(locationOf(unprefixed).pathname).toBe(
+      `${BASE}/en-US/projects/repository/1`
+    );
+
+    const prefixed = await middlewareWithPreferences(
+      createPrefixedRequest(
+        `/en-US/signin?callbackUrl=${encodeURIComponent(`${BASE}/en-US/projects/repository/1`)}`,
+        pageHeaders
+      )
+    );
+    expect(locationOf(prefixed).pathname).toBe(
+      `${BASE}/en-US/projects/repository/1`
+    );
+  });
+
+  it("sends a non-admin away from admin pages to the prefixed home", async () => {
+    mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+    mockGetCachedSessionUser.mockResolvedValue(liveUser);
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/en-US/admin/users?x=1", pageHeaders)
+    );
+
+    expect(response.status).toBe(307);
+    const location = locationOf(response);
+    // NextURL normalizes the trailing slash away when it formats.
+    expect(location.pathname).toBe(`${BASE}/en-US`);
+    expect(location.search).toBe("");
+  });
+
+  it("adds the preferred locale inside the prefix", async () => {
+    mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+    mockGetCachedSessionUser.mockResolvedValue(liveUser);
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/projects", {
+        ...pageHeaders,
+        cookie: "NEXT_LOCALE=en-US",
+      })
+    );
+
+    expect(response.status).toBe(307);
+    expect(locationOf(response).pathname).toBe(`${BASE}/en-US/projects`);
+  });
+
+  it("sends an expired trial to the trial page inside the prefix", async () => {
+    process.env.IS_TRIAL_INSTANCE = "true";
+    process.env.TRIAL_END_DATE = "2000-01-01T00:00:00.000Z";
+
+    const response = await middlewareWithPreferences(
+      createPrefixedRequest("/en-US/projects", pageHeaders)
+    );
+
+    expect(response.status).toBe(307);
+    expect(locationOf(response).pathname).toBe(`${BASE}/en-US/trial-expired`);
+  });
+});

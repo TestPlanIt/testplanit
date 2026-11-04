@@ -1,7 +1,9 @@
 import { encode } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
-import { consumeTempSessionToken, getAppBaseUrl } from "~/lib/auth-security";
+import { consumeTempSessionToken } from "~/lib/auth-security";
 import { db } from "~/server/db";
+import { absoluteAppUrl } from "~/lib/appUrl";
+import { COOKIE_PATH } from "~/lib/basePath";
 
 // SAML completion handler - creates NextAuth session
 export async function GET(request: NextRequest) {
@@ -86,15 +88,13 @@ export async function GET(request: NextRequest) {
     // reliably propagate to a separately-constructed NextResponse.redirect()
     // — Set-Cookie ends up missing from the wire and the user lands back on
     // the sign-in page after Okta.
-    const response = NextResponse.redirect(
-      new URL(callbackUrl, getAppBaseUrl(request))
-    );
+    const response = NextResponse.redirect(absoluteAppUrl(callbackUrl));
 
     response.cookies.set("next-auth.session-token", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      path: "/",
+      path: COOKIE_PATH,
       maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
-        path: "/",
+        path: COOKIE_PATH,
         maxAge: 30 * 24 * 60 * 60, // 30 days
       });
     }

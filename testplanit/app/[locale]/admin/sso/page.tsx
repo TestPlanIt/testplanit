@@ -37,6 +37,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
+import { BASE_PATH, apiFetch } from "~/lib/basePath";
 
 type SignInProviderRow = {
   id: string;
@@ -136,7 +137,7 @@ export default function SSOAdminPage() {
     let cancelled = false;
     void (async () => {
       try {
-        const response = await fetch("/api/admin/sso/config-summary");
+        const response = await apiFetch("/api/admin/sso/config-summary");
         if (!response.ok) return;
         const body = (await response.json()) as {
           providers: Record<string, SsoConfigSummary>;
@@ -213,7 +214,7 @@ export default function SSOAdminPage() {
     // Fetch magic link configuration status from server
     const checkMagicLinkConfig = async () => {
       try {
-        const response = await fetch("/api/admin/sso/magic-link-status");
+        const response = await apiFetch("/api/admin/sso/magic-link-status");
         if (response.ok) {
           const data = await response.json();
           setMagicLinkConfigured(data.configured);
@@ -845,7 +846,7 @@ export default function SSOAdminPage() {
     setIsVerifyingAllUsers(true);
     try {
       // First, verify all existing users
-      const response = await fetch("/api/admin/users/verify-all", {
+      const response = await apiFetch("/api/admin/users/verify-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -1328,7 +1329,7 @@ export default function SSOAdminPage() {
                   {t("admin.sso.dialogs.googleOAuth.instructions.step5")}{" "}
                   <code className="bg-muted px-1 rounded">
                     {typeof window !== "undefined"
-                      ? window.location.origin
+                      ? `${window.location.origin}${BASE_PATH}`
                       : ""}
                     {t("admin.sso.dialogs.googleOAuth.redirectUri")}
                   </code>
@@ -1442,7 +1443,7 @@ export default function SSOAdminPage() {
                   {t("common.dialogs.complete.apple.instructions.step5")}{" "}
                   <code className="bg-muted px-1 rounded">
                     {typeof window !== "undefined"
-                      ? window.location.origin
+                      ? `${window.location.origin}${BASE_PATH}`
                       : ""}
                     {t("common.dialogs.complete.apple.redirectUri")}
                   </code>
@@ -1549,7 +1550,7 @@ export default function SSOAdminPage() {
                   {t("admin.sso.dialogs.microsoft.instructions.step5")}{" "}
                   <code className="bg-muted px-1 rounded">
                     {typeof window !== "undefined"
-                      ? window.location.origin
+                      ? `${window.location.origin}${BASE_PATH}`
                       : ""}
                     {t("admin.sso.dialogs.microsoft.redirectUri")}
                   </code>

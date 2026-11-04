@@ -36,6 +36,13 @@ services:
         # Substitution reads the build environment (shell / default .env /
         # --env-file), NOT the .env.production env_file.
         UPLOAD_MAX_MB: ${UPLOAD_MAX_MB:-10}
+        # Serve the app under a path prefix on a shared host (e.g. /testplanit).
+        # Build-time only: Next compiles the prefix into the client bundle, so
+        # the prebuilt image above cannot be switched with an env var; build
+        # with `--build` and BASE_PATH set. Then APP_URL and NEXTAUTH_URL in
+        # .env.production must carry the prefix (see docs "Serving TestPlanIt
+        # under a subpath"). Empty = root.
+        BASE_PATH: ${BASE_PATH:-}
     env_file:
       - .env.production
     environment:

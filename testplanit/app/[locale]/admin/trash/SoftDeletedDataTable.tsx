@@ -22,6 +22,7 @@ import { AlertTriangle, UndoDot } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "~/utils";
+import { apiFetch } from "~/lib/basePath";
 
 // Item type is now generic, but we ensure 'id' for actions
 interface SoftDeletedItem extends Record<string, any> {
@@ -122,7 +123,7 @@ export default function SoftDeletedDataTable({
     setLoadMoreError(false);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/admin/trash/${itemType}?${buildQuery(0)}`
       );
       if (!response.ok) {
@@ -160,7 +161,7 @@ export default function SoftDeletedDataTable({
     setLoadMoreError(false);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/admin/trash/${itemType}?${buildQuery(dataLengthRef.current)}`
       );
       if (!response.ok) {
@@ -196,13 +197,19 @@ export default function SoftDeletedDataTable({
     try {
       let response;
       if (alertActionType === "restore") {
-        response = await fetch(`/api/admin/trash/${itemType}/${alertItemId}`, {
-          method: "PATCH",
-        });
+        response = await apiFetch(
+          `/api/admin/trash/${itemType}/${alertItemId}`,
+          {
+            method: "PATCH",
+          }
+        );
       } else if (alertActionType === "purge") {
-        response = await fetch(`/api/admin/trash/${itemType}/${alertItemId}`, {
-          method: "DELETE",
-        });
+        response = await apiFetch(
+          `/api/admin/trash/${itemType}/${alertItemId}`,
+          {
+            method: "DELETE",
+          }
+        );
       }
 
       if (response && !response.ok) {

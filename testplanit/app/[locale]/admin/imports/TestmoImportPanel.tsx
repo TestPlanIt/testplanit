@@ -68,6 +68,7 @@ import {
   serializeMappingConfiguration,
 } from "~/services/imports/testmo/configuration";
 import { generateRandomPassword } from "~/utils/randomPassword";
+import { apiFetch } from "~/lib/basePath";
 
 const formatDuration = (ms: number): string => {
   if (ms < 1000) {
@@ -213,7 +214,7 @@ export function TestmoImportPanel() {
     setJobHistoryLoading(true);
     setJobHistoryError(null);
     try {
-      const response = await fetch("/api/imports/testmo/jobs?limit=20");
+      const response = await apiFetch("/api/imports/testmo/jobs?limit=20");
       if (!response.ok) {
         throw new Error("failed");
       }
@@ -240,7 +241,7 @@ export function TestmoImportPanel() {
     ) => {
       const { autoStep = true, setSelected = true } = options;
       try {
-        const detailResponse = await fetch(
+        const detailResponse = await apiFetch(
           `/api/imports/testmo/jobs/${jobId}?include=datasets`
         );
 
@@ -909,7 +910,7 @@ export function TestmoImportPanel() {
     let storageKey: string | null = null;
 
     try {
-      const presignResponse = await fetch("/api/imports/testmo/upload-url", {
+      const presignResponse = await apiFetch("/api/imports/testmo/upload-url", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -976,7 +977,7 @@ export function TestmoImportPanel() {
     let success = false;
     try {
       setProcessingState("analyzing");
-      const createJobResponse = await fetch("/api/imports/testmo/jobs", {
+      const createJobResponse = await apiFetch("/api/imports/testmo/jobs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1057,7 +1058,7 @@ export function TestmoImportPanel() {
     try {
       const serializedConfig = serializeMappingConfiguration(mappingConfig);
 
-      const saveResponse = await fetch(
+      const saveResponse = await apiFetch(
         `/api/imports/testmo/jobs/${currentJob.id}/configuration`,
         {
           method: "POST",
@@ -1078,7 +1079,7 @@ export function TestmoImportPanel() {
       setMappingConfig(normalizeMappingConfiguration(savedJob.configuration));
       setConfigurationError(null);
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/imports/testmo/jobs/${savedJob.id}/import`,
         {
           method: "POST",
@@ -1279,7 +1280,9 @@ export function TestmoImportPanel() {
 
     const poll = async () => {
       try {
-        const response = await fetch(`/api/imports/testmo/jobs/${activeJobId}`);
+        const response = await apiFetch(
+          `/api/imports/testmo/jobs/${activeJobId}`
+        );
 
         if (!response.ok) {
           throw new Error("status-failed");
@@ -1392,7 +1395,7 @@ export function TestmoImportPanel() {
       try {
         setAnalysisLoading(true);
         setAnalysisError(null);
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/imports/testmo/jobs/${jobId}/analysis`,
           {
             signal: controller.signal,
@@ -1939,7 +1942,7 @@ export function TestmoImportPanel() {
 
     let cancelled = false;
 
-    fetch(`/api/imports/testmo/jobs/${jobId}/datasets`)
+    apiFetch(`/api/imports/testmo/jobs/${jobId}/datasets`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("summary-failed");
@@ -1996,7 +1999,7 @@ export function TestmoImportPanel() {
 
     setCancelLoading(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/imports/testmo/jobs/${currentJob.id}`,
         {
           method: "POST",
@@ -2032,7 +2035,7 @@ export function TestmoImportPanel() {
 
     setCancelLoading(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/imports/testmo/jobs/${currentJob.id}`,
         {
           method: "POST",
@@ -2109,7 +2112,7 @@ export function TestmoImportPanel() {
     setDetailLoading(true);
     setDetailError(null);
 
-    fetch(
+    apiFetch(
       `/api/imports/testmo/jobs/${currentJob.id}/datasets/${selectedDatasetSummary.id}`
     )
       .then((response) => {

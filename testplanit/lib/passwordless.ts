@@ -1,5 +1,6 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 import type { DbClient } from "~/lib/zenstack";
+import { withBasePath } from "~/lib/basePath";
 
 /**
  * Device-bound magic-link + OTP sign-in ("passwordless").
@@ -92,7 +93,8 @@ export function getVerifierCookieOptions(): {
     httpOnly: true,
     secure: secureCookiesEnabled(),
     sameSite: "lax",
-    path: "/api/auth",
+    // Scoped to the auth route, inside the install's path prefix.
+    path: withBasePath("/api/auth"),
     maxAge: PASSWORDLESS_TTL_MINUTES * 60,
   };
 }

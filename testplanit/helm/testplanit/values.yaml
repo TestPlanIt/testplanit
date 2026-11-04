@@ -37,9 +37,16 @@ image:
   pullSecrets: []
   # - name: regcred
 
-# Public URL of this instance (the hostname you serve it on). Sets NEXTAUTH_URL.
-# REQUIRED.
-appUrl: "" # e.g. https://testplanit.example.com
+# Public URL of this instance, including the path prefix when there is one
+# (see basePath). Sets APP_URL and NEXTAUTH_URL. REQUIRED.
+appUrl: "" # e.g. https://testplanit.example.com  or  https://example.com/testplanit
+
+# Path prefix the app is served under on a shared host, e.g. "/testplanit".
+# Leave empty to serve at the root. The prefix is compiled into the image, so
+# a non-empty value needs an image built with --build-arg BASE_PATH=<prefix>
+# (image.repository / image.tag above) and appUrl must end with the same
+# prefix. Drives the ingress path, the readiness probe path and NEXTAUTH_URL.
+basePath: ""
 
 nameOverride: ""
 fullnameOverride: ""

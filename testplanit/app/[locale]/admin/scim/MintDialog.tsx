@@ -46,6 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { withBasePath } from "~/lib/basePath";
 
 type IdpName = "OKTA" | "ENTRA" | "ONELOGIN" | "OTHER";
 type ExpiresOption = "never" | "30d" | "90d" | "1y" | "custom";
@@ -241,7 +242,7 @@ export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
   const [baseUrl, setBaseUrl] = useState("");
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setBaseUrl(`${window.location.origin}${SCIM_BASE_PATH}`);
+      setBaseUrl(`${window.location.origin}${withBasePath(SCIM_BASE_PATH)}`);
     }
   }, []);
 

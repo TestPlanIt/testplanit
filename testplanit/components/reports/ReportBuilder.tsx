@@ -193,6 +193,7 @@ import {
   initialDateRangeFromUrl,
   parsePerTypeReportParams,
 } from "./reportShareParams";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -2006,7 +2007,10 @@ function ReportBuilderContent({
     if (!currentReportEndpoint) return fetchers;
     dimensions.forEach((dimension: any) => {
       fetchers[dimension.value] = async (query, page, pageSize) => {
-        const url = new URL(currentReportEndpoint, window.location.origin);
+        const url = new URL(
+          withBasePath(currentReportEndpoint),
+          window.location.origin
+        );
         if (mode === "project" && projectId) {
           url.searchParams.set("projectId", projectId.toString());
         }
@@ -2014,7 +2018,7 @@ function ReportBuilderContent({
         if (query) url.searchParams.set("search", query);
         url.searchParams.set("page", String(page));
         url.searchParams.set("pageSize", String(pageSize));
-        const response = await fetch(url.toString());
+        const response = await apiFetch(url.toString());
         if (!response.ok) return { results: [], total: 0 };
         return (await response.json()) as { results: any[]; total: number };
       };
@@ -2173,12 +2177,15 @@ function ReportBuilderContent({
       });
       return;
     }
-    const url = new URL(currentReportEndpoint, window.location.origin);
+    const url = new URL(
+      withBasePath(currentReportEndpoint),
+      window.location.origin
+    );
     if (mode === "project" && projectId) {
       url.searchParams.set("projectId", String(projectId));
     }
     let cancelled = false;
-    fetch(url.toString())
+    apiFetch(url.toString())
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
@@ -2215,12 +2222,15 @@ function ReportBuilderContent({
       return;
     }
     if (mode === "project" && !projectId) return;
-    const url = new URL(currentReportEndpoint, window.location.origin);
+    const url = new URL(
+      withBasePath(currentReportEndpoint),
+      window.location.origin
+    );
     if (mode === "project" && projectId) {
       url.searchParams.set("projectId", String(projectId));
     }
     let cancelled = false;
-    fetch(url.toString())
+    apiFetch(url.toString())
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
@@ -2264,7 +2274,7 @@ function ReportBuilderContent({
       mode === "project"
     ) {
       // Fetch priority values from the backend
-      fetch(`/api/case-fields/priority/values?projectId=${projectId}`)
+      apiFetch(`/api/case-fields/priority/values?projectId=${projectId}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.values) {
@@ -2410,12 +2420,15 @@ function ReportBuilderContent({
       );
 
       try {
-        const url = new URL(currentReport.endpoint, window.location.origin);
+        const url = new URL(
+          withBasePath(currentReport.endpoint),
+          window.location.origin
+        );
         if (mode === "project" && projectId) {
           url.searchParams.set("projectId", projectId.toString());
         }
 
-        const response = await fetch(url.toString(), {
+        const response = await apiFetch(url.toString(), {
           method: "GET",
         });
 
@@ -2468,7 +2481,7 @@ function ReportBuilderContent({
         let urlConfig: ReportBuilderStateConfig | null = null;
         if (stateId) {
           try {
-            const stateResponse = await fetch(
+            const stateResponse = await apiFetch(
               `/api/reports/state?id=${encodeURIComponent(stateId)}`
             );
             if (stateResponse.ok) {
@@ -3539,7 +3552,7 @@ function ReportBuilderContent({
           : {}),
       };
       if (!isExecutionLog) {
-        const response = await fetch(endpoint, {
+        const response = await apiFetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...exportBody, page: 1, pageSize: "All" }),
@@ -3554,7 +3567,7 @@ function ReportBuilderContent({
       let page = 1;
       // Loop the report endpoint until every row is fetched (no truncation).
       for (;;) {
-        const response = await fetch(endpoint, {
+        const response = await apiFetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...exportBody, page, pageSize: pagedSize }),

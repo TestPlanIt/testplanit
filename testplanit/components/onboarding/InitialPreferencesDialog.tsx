@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import { languageNames } from "~/i18n/navigation";
 import { colorSchemeForTheme } from "~/utils/theme";
+import { clientCookie } from "~/lib/auth/cookieScope";
 
 type TimezoneOption = {
   id: string;
@@ -349,7 +350,9 @@ export function InitialPreferencesDialog() {
 
       if (localeChanged) {
         const urlLocale = data.locale.replace("_", "-");
-        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+          "max-age=31536000",
+        ]);
         window.location.reload();
         return;
       }

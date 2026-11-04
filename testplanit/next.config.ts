@@ -3,6 +3,7 @@ import path from "path";
 import type { NextConfig } from "next";
 import type { RemotePattern } from "next/dist/shared/lib/image-config";
 import createNextIntlPlugin from "next-intl/plugin";
+import { normalizeBasePath } from "./lib/basePath";
 
 const withNextIntl = createNextIntlPlugin({
   requestConfig: "./i18n/request.ts",
@@ -152,12 +153,22 @@ const buildAllowedDevOrigins = (): string[] => {
 const enableTurbopackBuildCache =
   !process.env.CI && process.env.DOCKER_BUILD !== "true";
 
+// Serve the whole app under a path prefix (https://host/testplanit). Next
+// inlines basePath into the client bundle, so it is a build-time setting: a
+// prefixed install needs its own image, built with --build-arg BASE_PATH=/x.
+// The value is also inlined as NEXT_PUBLIC_BASE_PATH for lib/basePath.ts,
+// which prefixes the URLs the app builds by hand (fetch, window.location,
+// server redirects). Empty = root, which is every existing install.
+const basePath = normalizeBasePath(process.env.BASE_PATH);
+
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   output: "standalone",
   generateBuildId: () => buildId,
+  ...(basePath ? { basePath } : {}),
   env: {
     NEXT_PUBLIC_BUILD_ID: buildId,
+    NEXT_PUBLIC_BASE_PATH: basePath,
   },
   allowedDevOrigins: buildAllowedDevOrigins(),
   turbopack: {

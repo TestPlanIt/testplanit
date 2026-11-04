@@ -42,6 +42,8 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Link } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
+import { apiFetch } from "~/lib/basePath";
+import { clientCookie } from "~/lib/auth/cookieScope";
 
 /**
  * Manually clear NextAuth session cookies via document.cookie
@@ -60,8 +62,13 @@ function clearSessionCookies() {
 
   for (const name of cookieNames) {
     // Clear for all possible paths
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+    document.cookie = clientCookie(name, "", [
+      "expires=Thu, 01 Jan 1970 00:00:00 GMT",
+    ]);
+    document.cookie = clientCookie(name, "", [
+      "expires=Thu, 01 Jan 1970 00:00:00 GMT",
+      `domain=${window.location.hostname}`,
+    ]);
   }
 }
 
@@ -200,7 +207,7 @@ const Signup: NextPage = () => {
     try {
       // Use dedicated signup API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with unauthenticated nested creates)
-      const response = await fetch("/api/auth/signup", {
+      const response = await apiFetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

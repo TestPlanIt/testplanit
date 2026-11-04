@@ -67,6 +67,7 @@ import { getMilestoneCaseCompletion } from "~/lib/services/effectiveCaseStatus";
 import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { subjectPath } from "~/lib/alerts/subjectPath";
+import { getAppUrl } from "~/lib/appUrl";
 
 export const ALERT_WEBHOOK_EVENT = "alert.triggered";
 
@@ -2099,6 +2100,6 @@ function subjectUrl(
   subjectRef?: string | null,
   details?: Record<string, unknown> | null
 ): string {
-  const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const base = getAppUrl();
   return `${base}${subjectPath(subjectType, projectId, subjectId, testRunId, { subjectRef, details })}`;
 }

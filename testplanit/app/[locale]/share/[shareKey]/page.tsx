@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { internalAppUrl } from "~/lib/internalAppUrl";
+import { withBasePath } from "~/lib/basePath";
 import { redirect } from "~/lib/navigation";
 import { authOptions } from "~/server/auth";
 
@@ -26,10 +27,13 @@ async function fetchShareMetadata(shareKey: string) {
   try {
     // Forward the viewer's session so a saved report resolves for its owner.
     const cookie = (await headers()).get("cookie");
-    const response = await fetch(`${baseUrl}/api/share/${shareKey}`, {
-      cache: "no-store",
-      headers: cookie ? { cookie } : undefined,
-    });
+    const response = await fetch(
+      `${baseUrl}${withBasePath(`/api/share/${shareKey}`)}`,
+      {
+        cache: "no-store",
+        headers: cookie ? { cookie } : undefined,
+      }
+    );
 
     // Parse response body even for error status codes (403 for revoked/expired, 404 for not found)
     const data = await response.json().catch(() => null);
@@ -91,7 +95,7 @@ export default async function SharePage({ params }: SharePageProps) {
     if (!session) {
       // Redirect to signin with callback
       redirect({
-        href: `/signin?callbackUrl=/share/${shareKey}`,
+        href: `/signin?callbackUrl=${withBasePath(`/share/${shareKey}`)}`,
         locale: "en-US",
       });
     }

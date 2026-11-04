@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAppBaseUrl } from "~/lib/auth-security";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditAuthEvent } from "~/lib/services/auditLog";
+import { absoluteAppUrl } from "~/lib/appUrl";
+import { COOKIE_PATH } from "~/lib/basePath";
 
 export const GET = withAuditContext(async (request: NextRequest) => {
   try {
@@ -27,14 +28,14 @@ export const GET = withAuditContext(async (request: NextRequest) => {
 
     // Clear any remaining SAML cookies
     const response = NextResponse.redirect(
-      new URL("/signin?logout=success", getAppBaseUrl(request))
+      absoluteAppUrl("/signin?logout=success")
     );
 
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax" as const,
-      path: "/",
+      path: COOKIE_PATH,
       maxAge: 0, // Expire immediately
     };
 
@@ -46,7 +47,7 @@ export const GET = withAuditContext(async (request: NextRequest) => {
   } catch (error) {
     console.error("SAML logout callback error:", error);
     return NextResponse.redirect(
-      new URL("/signin?error=logout-callback-failed", getAppBaseUrl(request))
+      absoluteAppUrl("/signin?error=logout-callback-failed")
     );
   }
 });

@@ -88,6 +88,7 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "./UploadAttachments";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import { BASE_PATH } from "~/lib/basePath";
 
 // Define the ExtendedSessionResults interface to match the query structure
 interface ExtendedSessionResults extends SessionResults {
@@ -1056,7 +1057,7 @@ export function SessionResultsList({
     (resultId: number) => {
       if (typeof window !== "undefined") {
         // Get the origin
-        const origin = window.location.origin;
+        const origin = `${window.location.origin}${BASE_PATH}`;
 
         // Construct URL with explicit locale path
         const path = `/${currentLocale}/projects/sessions/${projectId}/${sessionId}#result-${resultId}`;

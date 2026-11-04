@@ -82,6 +82,8 @@ const eslintConfig = [
         },
       ],
       "@typescript-eslint/no-explicit-any": "off",
+      // One list: a second `no-restricted-syntax` key in the same object would
+      // silently replace this one.
       // Every ORM client is built by createAppZenStackClient() so it carries
       // the plugins that must never be missing (jsonNullPlugin: a nullable
       // Json field written as a plain null is rejected by ZenStack). An
@@ -94,11 +96,57 @@ const eslintConfig = [
           message:
             "Construct ORM clients with createAppZenStackClient() from ~/lib/zenstackClientFactory so every client carries the app plugins.",
         },
+        // The `any`-typed client check that used to sit here was never in
+        // force (a later duplicate key replaced this list) and 21 sites still
+        // violate it; it returns once those are typed.
+        // Next encrypts what an inline server action closes over with
+        // NEXT_SERVER_ACTIONS_ENCRYPTION_KEY, which is fixed and ships inside
+        // the public image (see Dockerfile), so those values would not be
+        // secret.
         {
           selector:
-            "Identifier[name=/^(tx|db|client|prisma)$/] > TSTypeAnnotation > TSAnyKeyword",
+            ":function > BlockStatement > ExpressionStatement[directive='use server']",
           message:
-            "Type database clients as DbClient / TxClient from ~/lib/zenstack; `any` hides ZenStack's input validation.",
+            'Define server actions in a "use server" module and pass values as arguments; inline actions encrypt captured values with a key that ships in the public image.',
+        },
+        // Installs served under a path prefix (next.config basePath) break on
+        // any URL the app builds by hand from the host root. Route them
+        // through ~/lib/basePath (apiFetch / withBasePath) instead.
+        {
+          selector:
+            "CallExpression[callee.name='fetch'][arguments.0.type='Literal'][arguments.0.value=/^\\/(?!\\/)/]",
+          message:
+            "Root-relative fetch() ignores the install's path prefix. Use apiFetch() from ~/lib/basePath.",
+        },
+        {
+          selector:
+            "CallExpression[callee.name='fetch'][arguments.0.type='TemplateLiteral'][arguments.0.quasis.0.value.raw=/^\\/(?!\\/)/]",
+          message:
+            "Root-relative fetch() ignores the install's path prefix. Use apiFetch() from ~/lib/basePath.",
+        },
+        {
+          selector:
+            "AssignmentExpression[left.property.name='href']:matches([left.object.name='location'], [left.object.property.name='location'])[right.type='Literal'][right.value=/^\\/(?!\\/)/]",
+          message:
+            "A root-relative location.href ignores the install's path prefix. Wrap it in withBasePath() from ~/lib/basePath.",
+        },
+        {
+          selector:
+            "AssignmentExpression[left.property.name='href']:matches([left.object.name='location'], [left.object.property.name='location'])[right.type='TemplateLiteral'][right.quasis.0.value.raw=/^\\/(?!\\/)/]",
+          message:
+            "A root-relative location.href ignores the install's path prefix. Wrap it in withBasePath() from ~/lib/basePath.",
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name=/^(assign|replace)$/]:matches([callee.object.name='location'], [callee.object.property.name='location'])[arguments.0.type='Literal'][arguments.0.value=/^\\/(?!\\/)/]",
+          message:
+            "A root-relative location.assign/replace ignores the install's path prefix. Wrap it in withBasePath() from ~/lib/basePath.",
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name=/^(assign|replace)$/]:matches([callee.object.name='location'], [callee.object.property.name='location'])[arguments.0.type='TemplateLiteral'][arguments.0.quasis.0.value.raw=/^\\/(?!\\/)/]",
+          message:
+            "A root-relative location.assign/replace ignores the install's path prefix. Wrap it in withBasePath() from ~/lib/basePath.",
         },
       ],
       "@typescript-eslint/no-empty-object-type": "off",
@@ -139,19 +187,6 @@ const eslintConfig = [
           allowedStrings: ["/", "-", "|", " ", ".", ":", ","], // Common separators that don't need translation
           ignoreProps: true, // Allow string literals in props
           noAttributeStrings: false, // Don't check attribute strings
-        },
-      ],
-
-      // Next encrypts what an inline server action closes over with
-      // NEXT_SERVER_ACTIONS_ENCRYPTION_KEY, which is fixed and ships inside the
-      // public image (see Dockerfile), so those values would not be secret.
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector:
-            ":function > BlockStatement > ExpressionStatement[directive='use server']",
-          message:
-            'Define server actions in a "use server" module and pass values as arguments; inline actions encrypt captured values with a key that ships in the public image.',
         },
       ],
 

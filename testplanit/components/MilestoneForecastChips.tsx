@@ -2,6 +2,7 @@
 
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "~/lib/basePath";
 
 interface MilestoneForecastData {
   manualEstimate: number;
@@ -31,7 +32,9 @@ export function MilestoneForecastChips({
   const { data } = useQuery<MilestoneForecastData>({
     queryKey: ["milestoneForecast", milestoneId],
     queryFn: async () => {
-      const response = await fetch(`/api/milestones/${milestoneId}/forecast`);
+      const response = await apiFetch(
+        `/api/milestones/${milestoneId}/forecast`
+      );
       if (!response.ok) {
         throw new Error(`Forecast request failed with ${response.status}`);
       }

@@ -100,6 +100,7 @@ import {
   type ParameterShape,
 } from "~/lib/schemas/datasetRowSchema";
 import { applyMapping } from "~/lib/utils/datasetMapping";
+import { apiFetch } from "~/lib/basePath";
 
 interface ParameterRecord {
   id: number;
@@ -550,7 +551,7 @@ export function DatasetTab({
     setIsLoadingDataset(true);
     try {
       const url = `/api/repository/cases/${caseId}/dataset?page=${page}&pageSize=${pageSize}`;
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       if (!res.ok) return;
       const json = await res.json();
       if (typeof json?.totalRows === "number") setTotalRows(json.totalRows);
@@ -559,7 +560,7 @@ export function DatasetTab({
         return;
       }
       // No dataset yet — idempotent attach
-      const attach = await fetch(`/api/repository/cases/${caseId}/dataset`, {
+      const attach = await apiFetch(`/api/repository/cases/${caseId}/dataset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -656,11 +657,14 @@ export function DatasetTab({
   // ---------- Mutations ----------
   const patchRow = useCallback(
     async (body: Record<string, unknown>) => {
-      const res = await fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await apiFetch(
+        `/api/repository/cases/${caseId}/dataset/rows`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
       if (!res.ok) {
         toast.error(t("datasetSaveError"));
         return false;
@@ -783,7 +787,7 @@ export function DatasetTab({
       if (lastPage !== page) setPage(lastPage);
       return;
     }
-    const res = await fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
+    const res = await apiFetch(`/api/repository/cases/${caseId}/dataset/rows`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -901,7 +905,7 @@ export function DatasetTab({
     );
     await Promise.all(
       reordered.map((r, idx) =>
-        fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
+        apiFetch(`/api/repository/cases/${caseId}/dataset/rows`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ rowId: r.id, rowIndex: pageStart + idx }),
@@ -929,7 +933,7 @@ export function DatasetTab({
       }
       setDeleteColumnLoading(true);
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/projects/${projectId}/datasets/${caseId}/column-usage?column=${encodeURIComponent(target.name)}`
         );
         if (!res.ok) {
@@ -1002,7 +1006,7 @@ export function DatasetTab({
       }
       setIsSelectAllPending(true);
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/repository/cases/${caseId}/dataset?pageSize=10000`
         );
         if (!res.ok) {
@@ -1415,7 +1419,7 @@ export function DatasetTab({
 
   const handleConfirmSwitchToLocal = async () => {
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/cases/${caseId}/shared-dataset`,
         { method: "DELETE" }
       );

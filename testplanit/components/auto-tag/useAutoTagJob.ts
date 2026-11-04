@@ -8,6 +8,7 @@ import type {
   AutoTagSuggestionEntity,
   UseAutoTagJobReturn,
 } from "./types";
+import { apiFetch } from "~/lib/basePath";
 
 const POLL_INTERVAL_MS = 1000;
 
@@ -98,7 +99,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
           payload.allowNewTags = options.allowNewTags;
         }
 
-        const res = await fetch("/api/auto-tag/submit", {
+        const res = await apiFetch("/api/auto-tag/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -114,9 +115,9 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
 
         // If cancelled while submit was in flight, cancel the newly created job
         if (abortController.signal.aborted) {
-          fetch(`/api/auto-tag/cancel/${data.jobId}`, { method: "POST" }).catch(
-            () => {}
-          );
+          apiFetch(`/api/auto-tag/cancel/${data.jobId}`, {
+            method: "POST",
+          }).catch(() => {});
           return;
         }
 
@@ -155,7 +156,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
 
     const poll = async () => {
       try {
-        const res = await fetch(`/api/auto-tag/status/${jobId}`);
+        const res = await apiFetch(`/api/auto-tag/status/${jobId}`);
         if (!res.ok) {
           throw new Error(`Status check failed (${res.status})`);
         }
@@ -365,7 +366,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
         return;
       }
 
-      const res = await fetch("/api/auto-tag/apply", {
+      const res = await apiFetch("/api/auto-tag/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ suggestions: payload }),
@@ -397,7 +398,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
       jobId ?? (persistKey ? getPersistedJobId(persistKey) : null);
     if (effectiveJobId) {
       try {
-        await fetch(`/api/auto-tag/cancel/${effectiveJobId}`, {
+        await apiFetch(`/api/auto-tag/cancel/${effectiveJobId}`, {
           method: "POST",
         });
       } catch {

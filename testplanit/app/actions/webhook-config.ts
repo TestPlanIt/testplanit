@@ -32,6 +32,7 @@ import {
 import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
 import { decrypt, encrypt } from "~/utils/encryption";
 import { getServerAuthSession } from "~/server/auth";
+import { getAppUrl } from "~/lib/appUrl";
 
 /**
  * Byte-identical synthetic payload across clicks.
@@ -632,7 +633,7 @@ export async function createOrRotateInboundWebhook(input: {
       }
 
       const token = generateToken();
-      const origin = process.env.NEXTAUTH_URL ?? "";
+      const origin = getAppUrl();
       const url = `${origin}/api/webhooks/${token}`;
 
       let existing: { id: string; externalWebhookId: string | null } | null;
@@ -1154,7 +1155,7 @@ export async function sendTestWebhook(
     };
   }
 
-  const origin = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const origin = getAppUrl();
   const target = `${origin}/api/webhooks/${config.token}`;
 
   // Each synthetic body is a module-level const, so two clicks produce
@@ -2324,7 +2325,7 @@ export async function createOrRotateCodeRepositoryWebhook(input: {
           error: "Failed to save webhook configuration",
         };
       }
-      const origin = process.env.NEXTAUTH_URL ?? "";
+      const origin = getAppUrl();
       const url = `${origin}/api/webhooks/${token}`;
 
       try {

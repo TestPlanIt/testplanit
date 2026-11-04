@@ -131,6 +131,7 @@ import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { sanitizeName } from "~/utils";
 import type { LinkedIssueRef } from "~/lib/integrations/adapters/IssueAdapter";
 import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
+import { apiFetch } from "~/lib/basePath";
 
 interface ExternalIssue {
   id: string;
@@ -1601,7 +1602,7 @@ export function GenerateTestCasesWizard({
   const fetchRecentUrlJobs = useCallback(async () => {
     setRecentUrlJobsLoading(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/llm/generate-from-url/jobs?projectId=${projectId}&limit=5`
       );
       if (res.ok) {
@@ -1641,7 +1642,7 @@ export function GenerateTestCasesWizard({
       selectedIssue.externalKey ||
       String(selectedIssue.id);
     const ctrl = new AbortController();
-    fetch(
+    apiFetch(
       `/api/integrations/linked-issues?projectId=${projectId}&issueKey=${encodeURIComponent(issueKey)}`,
       { signal: ctrl.signal }
     )
@@ -1672,7 +1673,7 @@ export function GenerateTestCasesWizard({
       selectedIssue.externalKey ||
       String(selectedIssue.id);
     const ctrl = new AbortController();
-    fetch("/api/llm/generate-test-cases/context-images", {
+    apiFetch("/api/llm/generate-test-cases/context-images", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1754,7 +1755,7 @@ export function GenerateTestCasesWizard({
     // Vision capability for the notice — reuses the listing route without an
     // issue key (attachments skipped server-side).
     const ctrl = new AbortController();
-    fetch("/api/llm/generate-test-cases/context-images", {
+    apiFetch("/api/llm/generate-test-cases/context-images", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ projectId, visionOnly: true }),
@@ -2147,7 +2148,7 @@ export function GenerateTestCasesWizard({
     if (!urlJobId) return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/llm/generate-from-url/status/${urlJobId}`
         );
         const data = await res.json();
@@ -2225,7 +2226,7 @@ export function GenerateTestCasesWizard({
   // Cancel active URL job when user switches away from URL tab
   useEffect(() => {
     if (sourceType !== "url" && urlJobId) {
-      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+      apiFetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
         method: "POST",
       }).catch(() => {});
       setUrlJobId(null);
@@ -2249,7 +2250,9 @@ export function GenerateTestCasesWizard({
       setOpen(true);
 
       try {
-        const res = await fetch(`/api/llm/generate-from-url/status/${jobId}`);
+        const res = await apiFetch(
+          `/api/llm/generate-from-url/status/${jobId}`
+        );
         const data = await res.json();
 
         // Check for previously generated test cases (saved after SSE streaming)
@@ -2768,7 +2771,7 @@ export function GenerateTestCasesWizard({
           });
         }
 
-        const response = await fetch("/api/llm/generate-test-cases/stream", {
+        const response = await apiFetch("/api/llm/generate-test-cases/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -2952,7 +2955,7 @@ export function GenerateTestCasesWizard({
 
         // Save after each page so closing the wizard preserves completed pages
         if (finalizedCases.length > 0 && lastCrawlJobIdRef.current) {
-          fetch(
+          apiFetch(
             `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
             {
               method: "PUT",
@@ -2976,7 +2979,7 @@ export function GenerateTestCasesWizard({
       }
       // Save whatever was completed before the abort/error
       if (finalizedCases.length > 0 && lastCrawlJobIdRef.current) {
-        fetch(
+        apiFetch(
           `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
           {
             method: "PUT",
@@ -3063,7 +3066,7 @@ export function GenerateTestCasesWizard({
       }
       // Cancel any existing URL job before submitting a new one
       if (urlJobId) {
-        fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+        apiFetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
           method: "POST",
         }).catch(() => {});
         setUrlJobId(null);
@@ -3072,7 +3075,7 @@ export function GenerateTestCasesWizard({
       }
       setUrlValidationError(null);
       try {
-        const submitRes = await fetch("/api/llm/generate-from-url/submit", {
+        const submitRes = await apiFetch("/api/llm/generate-from-url/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3184,61 +3187,64 @@ export function GenerateTestCasesWizard({
 
       // Phase 1: Get test case titles from the outline endpoint
       setGeneratingStatus("calling_ai");
-      const outlineRes = await fetch("/api/llm/generate-test-cases/outline", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId,
-          issue: issueData,
-          context: contextPayload,
-          quantity,
-          // Enrich real synced issues with their comments + one-hop linked
-          // issues. The document flow (issue.key = a document id) never maps to
-          // a tracker issue; a seeded MANUAL milestone issue has no source
-          // integration — both stay un-enriched.
-          enrichFromIssue:
-            sourceType === "issue" &&
-            (!seedIssue || Boolean(seedIssue.integrationId)),
-          // For a seeded synced issue, enrich via its own source integration;
-          // the repository search flow omits it and the server falls back to
-          // the project's first active integration.
-          ...(seedIssue?.integrationId
-            ? { integrationId: seedIssue.integrationId }
-            : {}),
-          ...(issueRefPayload ? { issueRef: issueRefPayload } : {}),
-          // outline endpoint accepts-but-ignores includeParameters — kept for
-          // uniform wizard plumbing.
-          includeParameters,
-          // Selected context images (opaque selectors — the server
-          // re-derives candidates from its own sources and intersects;
-          // bytes never travel through the client). Issue mode sends
-          // attachment ids; document mode sends editor srcs + the doc they
-          // must come from.
-          ...(sourceType === "issue" &&
-          contextImageOptions.some((o) => o.checked)
-            ? {
-                contextImages: {
-                  attachmentIds: contextImageOptions
-                    .filter((o) => o.checked)
-                    .map((o) => o.id),
-                },
-              }
-            : {}),
-          ...(sourceType === "document" &&
-          documentRequirements?.doc &&
-          contextImageOptions.some((o) => o.checked)
-            ? {
-                documentDoc: documentRequirements.doc,
-                contextImages: {
-                  editorSrcs: contextImageOptions
-                    .filter((o) => o.checked)
-                    .map((o) => o.id),
-                },
-              }
-            : {}),
-        }),
-        signal: abortController.signal,
-      });
+      const outlineRes = await apiFetch(
+        "/api/llm/generate-test-cases/outline",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId,
+            issue: issueData,
+            context: contextPayload,
+            quantity,
+            // Enrich real synced issues with their comments + one-hop linked
+            // issues. The document flow (issue.key = a document id) never maps to
+            // a tracker issue; a seeded MANUAL milestone issue has no source
+            // integration — both stay un-enriched.
+            enrichFromIssue:
+              sourceType === "issue" &&
+              (!seedIssue || Boolean(seedIssue.integrationId)),
+            // For a seeded synced issue, enrich via its own source integration;
+            // the repository search flow omits it and the server falls back to
+            // the project's first active integration.
+            ...(seedIssue?.integrationId
+              ? { integrationId: seedIssue.integrationId }
+              : {}),
+            ...(issueRefPayload ? { issueRef: issueRefPayload } : {}),
+            // outline endpoint accepts-but-ignores includeParameters — kept for
+            // uniform wizard plumbing.
+            includeParameters,
+            // Selected context images (opaque selectors — the server
+            // re-derives candidates from its own sources and intersects;
+            // bytes never travel through the client). Issue mode sends
+            // attachment ids; document mode sends editor srcs + the doc they
+            // must come from.
+            ...(sourceType === "issue" &&
+            contextImageOptions.some((o) => o.checked)
+              ? {
+                  contextImages: {
+                    attachmentIds: contextImageOptions
+                      .filter((o) => o.checked)
+                      .map((o) => o.id),
+                  },
+                }
+              : {}),
+            ...(sourceType === "document" &&
+            documentRequirements?.doc &&
+            contextImageOptions.some((o) => o.checked)
+              ? {
+                  documentDoc: documentRequirements.doc,
+                  contextImages: {
+                    editorSrcs: contextImageOptions
+                      .filter((o) => o.checked)
+                      .map((o) => o.id),
+                  },
+                }
+              : {}),
+          }),
+          signal: abortController.signal,
+        }
+      );
 
       if (!outlineRes.ok) {
         const errData = await outlineRes.json().catch(() => ({}));
@@ -3588,7 +3594,7 @@ export function GenerateTestCasesWizard({
     expandAbortControllersRef.current.clear();
     // Cancel URL crawl background job if still running
     if (urlJobId) {
-      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+      apiFetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
         method: "POST",
       }).catch(() => {});
       setUrlJobId(null);
@@ -3622,7 +3628,7 @@ export function GenerateTestCasesWizard({
     });
 
     try {
-      const expandRes = await fetch("/api/llm/generate-test-cases/expand", {
+      const expandRes = await apiFetch("/api/llm/generate-test-cases/expand", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3910,7 +3916,7 @@ export function GenerateTestCasesWizard({
       // Clean up Redis crawled pages so the notification link can't
       // re-trigger generation
       if (lastCrawlJobIdRef.current) {
-        fetch(
+        apiFetch(
           `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
           {
             method: "DELETE",
@@ -4048,7 +4054,7 @@ export function GenerateTestCasesWizard({
 
       // Clean up Redis crawled pages so notification link can't re-trigger generation
       if (lastCrawlJobIdRef.current) {
-        fetch(
+        apiFetch(
           `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
           {
             method: "DELETE",
@@ -6086,7 +6092,7 @@ export function GenerateTestCasesWizard({
                 onClick={() => {
                   // Cancel any active URL generation job before closing
                   if (urlJobId) {
-                    fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+                    apiFetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
                       method: "POST",
                     }).catch(() => {});
                   }
@@ -6276,7 +6282,7 @@ export function GenerateTestCasesWizard({
               className="bg-destructive text-destructive-foreground"
               onClick={() => {
                 if (jobToRemove) {
-                  fetch(`/api/llm/generate-from-url/status/${jobToRemove}`, {
+                  apiFetch(`/api/llm/generate-from-url/status/${jobToRemove}`, {
                     method: "DELETE",
                   }).catch(() => {});
                   setRecentUrlJobs((prev) =>

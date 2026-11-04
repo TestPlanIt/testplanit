@@ -87,6 +87,7 @@ import { buildSignatureIssueDraft } from "~/lib/services/triage/issueDraft";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
 import type { SignatureCaseRow } from "~/app/api/projects/[projectId]/triage/signatures/[signatureId]/cases/route";
 import { schema } from "~/zenstack/schema";
+import { BASE_PATH, apiFetch } from "~/lib/basePath";
 
 const OCCURRENCES_LIMIT = 25;
 
@@ -285,7 +286,7 @@ export default function SignatureDetailPage() {
   const { data: caseGroups } = useQuery({
     queryKey: ["triage-signature-cases", projectId, signatureId],
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/triage/signatures/${signatureId}/cases`
       );
       if (!res.ok) throw new Error("Failed to load affected cases");
@@ -647,7 +648,10 @@ export default function SignatureDetailPage() {
 
   const issueDraft = useMemo<SignatureIssueDraft | undefined>(() => {
     if (!signature) return undefined;
-    const origin = typeof window === "undefined" ? "" : window.location.origin;
+    const origin =
+      typeof window === "undefined"
+        ? ""
+        : `${window.location.origin}${BASE_PATH}`;
     return buildSignatureIssueDraft(
       {
         title: signature.title,
@@ -773,7 +777,7 @@ export default function SignatureDetailPage() {
   const classifyNow = async () => {
     setClassifying(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/triage/signatures/${signature.id}/classify`,
         {
           method: "POST",

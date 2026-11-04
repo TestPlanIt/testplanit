@@ -81,6 +81,7 @@ import {
 } from "~/utils/markdownTestCaseParser";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
+import { apiFetch } from "~/lib/basePath";
 
 interface ImportCasesWizardProps {
   onImportComplete?: () => void;
@@ -394,7 +395,7 @@ export function ImportCasesWizard({
             }
           }
 
-          const res = await fetch("/api/duplicate-scan/check-new", {
+          const res = await apiFetch("/api/duplicate-scan/check-new", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ projectId: Number(projectId), name, tags }),
@@ -724,11 +725,14 @@ export function ImportCasesWizard({
       // Try LLM-assisted parsing if user opted in
       if (useAiParsing && hasLlmIntegration) {
         try {
-          const response = await fetch("/api/llm/parse-markdown-test-cases", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ projectId, markdown: text }),
-          });
+          const response = await apiFetch(
+            "/api/llm/parse-markdown-test-cases",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ projectId, markdown: text }),
+            }
+          );
 
           if (response.ok) {
             const data = await response.json();
@@ -933,7 +937,7 @@ export function ImportCasesWizard({
     setImportWarnings([]);
 
     try {
-      const response = await fetch(`/api/repository/import`, {
+      const response = await apiFetch(`/api/repository/import`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

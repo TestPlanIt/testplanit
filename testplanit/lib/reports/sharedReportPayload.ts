@@ -1,4 +1,5 @@
 import { internalAppUrl } from "~/lib/internalAppUrl";
+import { withBasePath } from "~/lib/basePath";
 import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
@@ -86,7 +87,8 @@ export async function buildSharedReportPayload({
   const baseUrl = internalAppUrl();
 
   // First, fetch metadata (dimensions and metrics with labels) from GET endpoint
-  const metadataUrl = new URL(endpoint, baseUrl);
+  // The standalone server answers only under the prefix, even on loopback.
+  const metadataUrl = new URL(withBasePath(endpoint), baseUrl);
   if (projectId) {
     metadataUrl.searchParams.set("projectId", projectId.toString());
   }
@@ -111,7 +113,7 @@ export async function buildSharedReportPayload({
 
   // Then, call the report builder POST endpoint to get data
   // Always fetch ALL results for shared reports (ignore saved pagination settings)
-  const reportBuilderUrl = new URL(endpoint, baseUrl);
+  const reportBuilderUrl = new URL(withBasePath(endpoint), baseUrl);
 
   // Forward ALL config parameters to the report endpoint (generic approach)
   // This ensures pre-built reports get all their required parameters

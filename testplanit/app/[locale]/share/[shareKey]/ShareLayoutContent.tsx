@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "~/components/theme-provider";
 import { Link } from "~/lib/navigation";
+import { withBasePath } from "~/lib/basePath";
 
 interface ShareLayoutContentProps {
   session: Session | null;
@@ -97,7 +98,7 @@ export function ShareLayoutContent({
           >
             <span className="font-semibold flex items-center">
               <Image
-                src="/tpi_logo.svg"
+                src={withBasePath("/tpi_logo.svg")}
                 alt={tBranding("logoAlt")}
                 width={16}
                 height={16}

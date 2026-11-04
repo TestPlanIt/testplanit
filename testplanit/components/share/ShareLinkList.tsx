@@ -47,6 +47,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "~/lib/navigation";
+import { withBasePath } from "~/lib/basePath";
 
 interface ShareLinkListProps {
   projectId?: number; // Optional for cross-project reports
@@ -146,7 +147,7 @@ export function ShareLinkList({
     async (shareKey: string, shareId: string) => {
       const protocol = window.location.protocol;
       const host = window.location.host;
-      const shareUrl = `${protocol}//${host}/share/${shareKey}`;
+      const shareUrl = `${protocol}//${host}${withBasePath(`/share/${shareKey}`)}`;
 
       try {
         await navigator.clipboard.writeText(shareUrl);

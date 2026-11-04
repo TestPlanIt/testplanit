@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { BASE_PATH } from "~/lib/basePath";
 
 interface IntegrationConfigFormProps {
   provider: IntegrationProvider;
@@ -378,7 +379,7 @@ export function IntegrationConfigForm({
   // own domain) to avoid an SSR/CSR hydration mismatch.
   const [origin, setOrigin] = useState("");
   useEffect(() => {
-    setOrigin(window.location.origin);
+    setOrigin(`${window.location.origin}${BASE_PATH}`);
   }, []);
   const callbackUrl = origin
     ? `${origin}/api/integrations/oauth/${provider.toLowerCase()}/callback`

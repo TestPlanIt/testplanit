@@ -1,4 +1,5 @@
 import type { UserPreferences } from "~/zenstack/models";
+import { withBasePath } from "~/lib/basePath";
 import type { DbClient } from "~/lib/zenstack";
 import { compare } from "bcrypt";
 
@@ -35,6 +36,7 @@ import { passwordChangedSinceIssue } from "~/lib/auth/sessionInvalidation";
 import { resolveSsoConfig } from "~/lib/auth/ssoConfig";
 import { db } from "~/server/db";
 import { createCustomDbAdapter } from "./auth-adapter";
+import { authCookies, secureAuthCookiesEnabled } from "~/lib/auth/cookieScope";
 
 /**
  * Helper function to generate Apple client secret from database config
@@ -322,9 +324,12 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
     session: {
       strategy: "jwt",
     },
+    // Scoped to the path prefix on a shared host; undefined at the root.
+    cookies: authCookies(secureAuthCookiesEnabled()),
     pages: {
-      signIn: "/signin",
-      error: "/signin",
+      // next-auth redirects to these literally, so they carry the prefix.
+      signIn: withBasePath("/signin"),
+      error: withBasePath("/signin"),
     },
     callbacks: {
       async session({ session, token }) {
@@ -739,9 +744,10 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  cookies: authCookies(secureAuthCookiesEnabled()),
   pages: {
-    signIn: "/signin",
-    error: "/signin",
+    signIn: withBasePath("/signin"),
+    error: withBasePath("/signin"),
   },
   callbacks: {
     async session({ session, token }) {

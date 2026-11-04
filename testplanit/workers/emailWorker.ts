@@ -27,6 +27,7 @@ import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import { isTipTapContent, tiptapToHtml } from "../utils/tiptapToHtml";
 import { formatHoursAsRelativeDuration } from "../utils/duration";
+import { getAppUrl } from "~/lib/appUrl";
 
 interface SendNotificationEmailJobData extends MultiTenantJobData {
   notificationId: string;
@@ -93,10 +94,7 @@ const processor = async (job: Job) => {
         const tenantConfig = notificationData.tenantId
           ? getTenantConfig(notificationData.tenantId)
           : undefined;
-        const baseUrl =
-          tenantConfig?.baseUrl ||
-          process.env.NEXTAUTH_URL ||
-          "http://localhost:3000";
+        const baseUrl = tenantConfig?.baseUrl || getAppUrl();
         const userLocale = notification.user.userPreferences?.locale || "en_US";
         const urlLocale = formatLocaleForUrl(userLocale);
 
@@ -578,10 +576,7 @@ const processor = async (job: Job) => {
         const digestTenantConfig = digestData.tenantId
           ? getTenantConfig(digestData.tenantId)
           : undefined;
-        const digestBaseUrl =
-          digestTenantConfig?.baseUrl ||
-          process.env.NEXTAUTH_URL ||
-          "http://localhost:3000";
+        const digestBaseUrl = digestTenantConfig?.baseUrl || getAppUrl();
         const notificationsWithUrls = await Promise.all(
           fullNotifications.map(async (notification: any) => {
             const baseUrl = digestBaseUrl;

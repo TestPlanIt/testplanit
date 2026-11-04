@@ -1,5 +1,6 @@
 import { encode, getToken, type JWT } from "next-auth/jwt";
 import type { NextRequest, NextResponse } from "next/server";
+import { COOKIE_PATH } from "~/lib/basePath";
 
 // Mirrors NextAuth's defaults: the session cookie lives 30 days, and the
 // `__Secure-` name is used exactly when NEXTAUTH_URL is https (getToken
@@ -52,7 +53,7 @@ export async function reissueSessionCookie(
   response.cookies.set(sessionCookieName(), sessionToken, {
     httpOnly: true,
     sameSite: "lax",
-    path: "/",
+    path: COOKIE_PATH,
     secure: secureCookiesEnabled(),
     maxAge: SESSION_MAX_AGE_SECONDS,
   });

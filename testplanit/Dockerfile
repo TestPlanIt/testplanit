@@ -149,6 +149,11 @@ ARG BASE_DOMAIN
 # SaaS build leaves it unset and bakes BASE_DOMAIN instead. See next.config.ts.
 ARG SELF_HOSTED
 ENV SELF_HOSTED=${SELF_HOSTED}
+# Serve the app under a path prefix (e.g. /testplanit). Next inlines it into
+# the client bundle, so a prefixed install is its own build; empty = root. See
+# next.config.ts and lib/basePath.ts.
+ARG BASE_PATH
+ENV BASE_PATH=${BASE_PATH}
 # Sizes serverActions.bodySizeLimit in next.config.ts. Next freezes experimental
 # config into the standalone output, so this sets the image's DEFAULT ceiling;
 # docker-entrypoint.sh re-syncs the frozen value from the runtime UPLOAD_MAX_MB
@@ -192,6 +197,12 @@ WORKDIR /app
 # .env drives both the body limit and the per-file limit.
 ARG UPLOAD_MAX_MB
 ENV UPLOAD_MAX_MB=${UPLOAD_MAX_MB}
+# Mirrors the build-time prefix for server code that reads it at runtime
+# (lib/basePath.ts), and for `next start`, which re-reads next.config.ts.
+# Empty at the root.
+ARG BASE_PATH
+ENV BASE_PATH=${BASE_PATH}
+ENV NEXT_PUBLIC_BASE_PATH=${BASE_PATH}
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN apk add --no-cache curl
@@ -265,6 +276,12 @@ LABEL org.opencontainers.image.source="https://github.com/TestPlanIt/testplanit"
 
 # ---- Workers ----
 FROM node:24-alpine AS workers
+# Mirrors the build-time prefix for server code that reads it at runtime
+# (lib/basePath.ts), and for `next start`, which re-reads next.config.ts.
+# Empty at the root.
+ARG BASE_PATH
+ENV BASE_PATH=${BASE_PATH}
+ENV NEXT_PUBLIC_BASE_PATH=${BASE_PATH}
 ENV NODE_ENV=production
 WORKDIR /app/testplanit
 # git: the repo-cache worker reads Bitbucket repositories with a shallow fetch.

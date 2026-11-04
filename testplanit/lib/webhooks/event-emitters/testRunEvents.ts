@@ -14,6 +14,7 @@ import {
 import { publishTestRunWakeUp } from "~/lib/live/publish";
 import { webhookEvents } from "~/lib/webhooks/events";
 import { completeExecutionsForRun } from "~/lib/execution/service";
+import { getAppUrl } from "~/lib/appUrl";
 
 /**
  * Derive the cosmetic `TEST_RUN` display key (e.g. `WEB-TR-1234`) for a run
@@ -302,7 +303,7 @@ export async function emitTestRunUpdateEvents(
       newRow.id,
       tx
     );
-    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const baseUrl = getAppUrl();
     // Locale-less path; next-intl resolves the recipient's preferred locale at request time.
     const runUrl = `${baseUrl}/projects/runs/${newRow.projectId}/${newRow.id}`;
     await webhookEvents.emit(

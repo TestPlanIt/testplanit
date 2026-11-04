@@ -31,6 +31,8 @@ Edit your Claude Desktop config file:
 }
 ```
 
+If the instance is served under a path prefix, include it in the URL, for example `https://example.com/testplanit`.
+
 Restart Claude Desktop after editing. The TestPlanIt server appears in the MCP servers list. Send a message asking Claude to *use the testplanit whoami tool* to verify the wiring.
 
 ### Cursor

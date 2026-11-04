@@ -2,6 +2,7 @@ import type { TxClient } from "~/lib/zenstack";
 
 import { baseDb } from "~/lib/db";
 import { webhookEvents } from "~/lib/webhooks/events";
+import { getAppUrl } from "~/lib/appUrl";
 
 type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
 
@@ -120,7 +121,7 @@ function entityUrlFor(
   projectId: number,
   entityId: number
 ): string {
-  const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const base = getAppUrl();
   if (entityType === "CASE") {
     return `${base}/projects/repository/${projectId}/${entityId}`;
   }

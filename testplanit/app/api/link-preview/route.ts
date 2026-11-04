@@ -4,6 +4,8 @@ import { baseDb } from "~/lib/db";
 import { getLinkPreviewMode, type PreviewEntity } from "~/lib/linkPreview";
 import { loadEntityPreview } from "~/lib/linkPreviewData";
 import { defaultLocale, locales, type Locale } from "~/i18n/navigation";
+import { getAppUrl } from "~/lib/appUrl";
+import { BASE_PATH } from "~/lib/basePath";
 
 /**
  * Metadata-only document served to link unfurlers (Slack, Teams, iMessage, …)
@@ -54,12 +56,11 @@ function escapeHtml(value: string): string {
  * the visitor, so relative URLs are not an option.
  */
 function resolveBaseUrl(req: NextRequest): string {
-  const configured = process.env.NEXTAUTH_URL;
-  if (configured) return configured.replace(/\/$/, "");
+  if (process.env.APP_URL || process.env.NEXTAUTH_URL) return getAppUrl();
 
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
   const proto = req.headers.get("x-forwarded-proto") ?? "https";
-  return host ? `${proto}://${host}` : req.nextUrl.origin;
+  return `${host ? `${proto}://${host}` : req.nextUrl.origin}${BASE_PATH}`;
 }
 
 export async function GET(req: NextRequest) {

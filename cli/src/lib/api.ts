@@ -9,6 +9,7 @@ import FormData from "form-data";
 import * as fs from "fs";
 import * as path from "path";
 import { getUrl, getToken } from "./config.js";
+import { joinUrl } from "./url.js";
 import type {
   ImportOptions,
   SSEProgressEvent,
@@ -160,7 +161,7 @@ export async function importTestResults(
   }
 
   // Use the multi-format import endpoint
-  const apiUrl = new URL("/api/test-results/import", url).toString();
+  const apiUrl = joinUrl(url, "/api/test-results/import");
 
   let response: Response;
   try {
@@ -279,7 +280,7 @@ export async function lookup(
     throw new Error("API token is not configured");
   }
 
-  const apiUrl = new URL("/api/cli/lookup", url).toString();
+  const apiUrl = joinUrl(url, "/api/cli/lookup");
 
   const requestBody: Record<string, unknown> = {
     type,
@@ -501,7 +502,7 @@ export async function uploadAttachmentsBulk(
   // Add mappings as JSON
   form.append("mappings", JSON.stringify(mappings));
 
-  const apiUrl = new URL("/api/junit/attachments/bulk", url).toString();
+  const apiUrl = joinUrl(url, "/api/junit/attachments/bulk");
 
   let response: Response;
   try {
@@ -584,7 +585,7 @@ export async function uploadTestRunAttachments(
     });
   }
 
-  const apiUrl = new URL("/api/test-runs/attachments", url).toString();
+  const apiUrl = joinUrl(url, "/api/test-runs/attachments");
 
   let response: Response;
   try {

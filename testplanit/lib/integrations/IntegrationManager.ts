@@ -16,6 +16,7 @@ import { JiraAdapter } from "./adapters/JiraAdapter";
 import { MantisBTAdapter } from "./adapters/MantisBTAdapter";
 import { RedmineAdapter } from "./adapters/RedmineAdapter";
 import { SimpleUrlAdapter } from "./adapters/SimpleUrlAdapter";
+import { getAppUrl } from "~/lib/appUrl";
 
 /**
  * The same client without its access policy. A ZenStack policy client drops
@@ -459,7 +460,7 @@ export class IntegrationManager {
       if (credentials.clientId) config.clientId = credentials.clientId;
       if (credentials.clientSecret)
         config.clientSecret = credentials.clientSecret;
-      config.redirectUri = `${process.env.NEXTAUTH_URL}/api/integrations/oauth/${integration.provider.toLowerCase()}/callback`;
+      config.redirectUri = `${getAppUrl()}/api/integrations/oauth/${integration.provider.toLowerCase()}/callback`;
     }
 
     return config;

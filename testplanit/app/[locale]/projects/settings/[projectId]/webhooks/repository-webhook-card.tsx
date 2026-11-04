@@ -56,6 +56,7 @@ import {
   type EndpointHealth,
 } from "./inbound-adapters";
 import { WebhookActionsSection } from "./webhook-actions-section";
+import { BASE_PATH } from "~/lib/basePath";
 
 export interface RepositoryWebhookRow {
   id: string;
@@ -115,7 +116,10 @@ export function RepositoryWebhookCard({
   );
 
   const connection = hook.codeRepositoryConfig;
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const origin =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${BASE_PATH}`
+      : "";
   const effectiveBranch = hook.baseBranch || connection.branch || null;
   const baseBranchDirty = baseBranchDraft.trim() !== (hook.baseBranch ?? "");
   const setupKey = REPOSITORY_SETUP_KEY[hook.adapterType];

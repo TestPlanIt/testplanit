@@ -9,6 +9,7 @@ import {
   MentionSuggestionRef,
   MentionUser,
 } from "~/components/comments/MentionSuggestion";
+import { apiFetch, stripBasePath, withBasePath } from "~/lib/basePath";
 
 /**
  * Fetch users for mention suggestions
@@ -21,7 +22,7 @@ async function fetchMentionUsers(
   projectId: number
 ): Promise<MentionUser[]> {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/users/search-for-mentions?q=${encodeURIComponent(query)}&projectId=${projectId}`
     );
 
@@ -90,7 +91,8 @@ export function createMentionExtension(projectId: number) {
       const userId = node.attrs.id as string;
 
       // Get current locale from URL
-      const locale = window.location.pathname.split("/")[1] || "en-US";
+      const locale =
+        stripBasePath(window.location.pathname).split("/")[1] || "en-US";
 
       // Generate initials (same logic as Avatar component)
       const abbreviateAltText = (altText: string): string => {
@@ -145,7 +147,7 @@ export function createMentionExtension(projectId: number) {
           {
             class:
               "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 cursor-pointer hover:bg-secondary/80 transition-colors",
-            onclick: `window.location.href='/${locale}/users/profile/${userId}'`,
+            onclick: `window.location.href='${withBasePath(`/${locale}/users/profile/${userId}`)}'`,
           },
           avatarElement,
           ["span", { class: "text-sm" }, userName],

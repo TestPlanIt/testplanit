@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 interface FolderStats {
   folderId: number;
@@ -21,14 +22,14 @@ export function useFolderStats({
     queryKey: ["folderStats", projectId, runId],
     queryFn: async () => {
       const url = new URL(
-        `/api/projects/${projectId}/folders/stats`,
+        withBasePath(`/api/projects/${projectId}/folders/stats`),
         window.location.origin
       );
       if (runId) {
         url.searchParams.set("runId", runId.toString());
       }
 
-      const response = await fetch(url.toString());
+      const response = await apiFetch(url.toString());
       if (!response.ok) {
         throw new Error("Failed to fetch folder stats");
       }

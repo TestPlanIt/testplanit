@@ -66,7 +66,7 @@ const client = new TestPlanItClient({
 
 | Option | Type | Required | Default | Description |
 | -------- | ------ | ---------- | --------- | ------------- |
-| `baseUrl` | string | Yes | - | Base URL of your TestPlanIt instance |
+| `baseUrl` | string | Yes | - | Base URL of your TestPlanIt instance, including any path prefix (`https://example.com/testplanit`) |
 | `apiToken` | string | Yes | - | API token for authentication (starts with `tpi_`) |
 | `timeout` | number | No | 30000 | Request timeout in milliseconds |
 | `maxRetries` | number | No | 3 | Number of retries for failed requests |

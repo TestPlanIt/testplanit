@@ -1,6 +1,8 @@
 import { createHash, randomBytes } from "crypto";
 import jwt from "jsonwebtoken";
 import valkeyConnection from "./valkey";
+import { getAppUrl } from "~/lib/appUrl";
+import { BASE_PATH } from "~/lib/basePath";
 
 // Generate secure state parameter for OAuth/SAML flows
 export function generateSecureState(): string {
@@ -59,8 +61,10 @@ export function sanitizeCallbackUrl(url: string | null | undefined): string {
  * configured public origin, then proxy-forwarded headers, then the request.
  */
 export function getAppBaseUrl(request?: Request): string {
-  if (process.env.NEXTAUTH_URL) {
-    return process.env.NEXTAUTH_URL.replace(/\/$/, "");
+  // Prefix included (lib/appUrl.ts). Join paths with absoluteAppUrl(), never
+  // new URL(path, base): a root-relative path discards the base's prefix.
+  if (process.env.APP_URL || process.env.NEXTAUTH_URL) {
+    return getAppUrl();
   }
 
   if (request) {
@@ -68,12 +72,12 @@ export function getAppBaseUrl(request?: Request): string {
     if (forwardedHost) {
       const forwardedProto =
         request.headers.get("x-forwarded-proto") ?? "https";
-      return `${forwardedProto}://${forwardedHost}`;
+      return `${forwardedProto}://${forwardedHost}${BASE_PATH}`;
     }
-    return new URL(request.url).origin;
+    return `${new URL(request.url).origin}${BASE_PATH}`;
   }
 
-  return "http://localhost:3000";
+  return `http://localhost:3000${BASE_PATH}`;
 }
 
 // JWT token configuration for temporary session data

@@ -6,6 +6,7 @@ import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
 import { isLinkPreviewBot, matchPreviewRoute } from "~/lib/linkPreview";
 import { normalizeRecordKeyPath } from "~/lib/recordKeyRoutes";
 import { sanitizeCallbackUrl } from "~/lib/auth-security";
+import { withBasePath } from "~/lib/basePath";
 import { isPublicPath } from "~/lib/auth/publicRoutes";
 import { isSessionEnded } from "~/lib/auth/sessionInvalidation";
 import { getCachedSessionUser } from "~/lib/session-cache";
@@ -94,7 +95,12 @@ function isOAuthIntegrationRoute(pathname: string): boolean {
 }
 
 export default async function middlewareWithPreferences(request: NextRequest) {
-  const url = new URL(request.url);
+  // request.nextUrl has Next's basePath already removed, so every path check
+  // below sees the same paths at the root and under a prefix. Redirects are
+  // built from clone(), which puts the prefix back when the URL is formatted.
+  // Parsing request.url instead would keep the prefix in pathname and drop it
+  // from every redirect.
+  const url = request.nextUrl;
   const pathname = url.pathname;
 
   // Cosmetic project-prefixed record keys: if a detail-route URL carries a
@@ -109,7 +115,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     const pathAfterLocale = pathname.slice(localePrefix.length);
     const normalized = normalizeRecordKeyPath(pathAfterLocale);
     if (normalized) {
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `${localePrefix}${normalized}`;
       return NextResponse.redirect(redirectUrl);
     }
@@ -158,7 +164,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     }
 
     // Redirect to localized share URL
-    const redirectUrl = new URL(request.url);
+    const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = `/${targetLocale}${pathname}`;
     return NextResponse.redirect(redirectUrl);
   }
@@ -300,7 +306,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       // Trial has expired - redirect to expiration page
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/trial-expired`;
       return NextResponse.redirect(redirectUrl);
     }
@@ -319,7 +325,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     const pathSegments = pathname.split("/").filter(Boolean);
     const locale = pathSegments[0] || defaultLocale;
     const correctRoute = pathSegments[1]; // Get the first route segment
-    const redirectUrl = new URL(request.url);
+    const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = `/${locale}/${correctRoute}`;
     // Preserve error parameter from NextAuth (e.g., expired magic link)
     const errorParam = url.searchParams.get("error");
@@ -354,7 +360,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       const cached = token.sub ? await getCachedSessionUser(token.sub) : null;
       const ended = cached !== null && isSessionEnded(token, cached);
       if (ended && error !== "SessionEnded") {
-        const redirectUrl = new URL(request.url);
+        const redirectUrl = request.nextUrl.clone();
         redirectUrl.search = "";
         redirectUrl.searchParams.set("error", "SessionEnded");
         redirectUrl.hash = "";
@@ -363,7 +369,13 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       if (!ended) {
         const target = sanitizeCallbackUrl(url.searchParams.get("callbackUrl"));
         return NextResponse.redirect(
-          new URL(target === "/" ? `/${locale}/` : target, request.url)
+          new URL(
+            withBasePath(
+              target === "/" ? `/${locale}/` : target,
+              request.nextUrl.basePath
+            ),
+            request.url
+          )
         );
       }
     }
@@ -404,13 +416,15 @@ export default async function middlewareWithPreferences(request: NextRequest) {
         previewHeaders.set("x-link-preview-path", pathname);
         if (id !== null) previewHeaders.set("x-link-preview-id", String(id));
 
-        return NextResponse.rewrite(new URL("/api/link-preview", request.url), {
+        const previewUrl = request.nextUrl.clone();
+        previewUrl.pathname = "/api/link-preview";
+        return NextResponse.rewrite(previewUrl, {
           request: { headers: previewHeaders },
         });
       }
 
       // Redirect to signin page
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/signin`;
       // Preserve error parameter from NextAuth (e.g., expired magic link)
       const errorParam = url.searchParams.get("error");
@@ -441,7 +455,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       if (cached && isSessionEnded(token, cached)) {
         const first = pathname.split("/").filter(Boolean)[0];
         const locale = locales.includes(first as any) ? first : defaultLocale;
-        const redirectUrl = new URL(request.url);
+        const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = `/${locale}/signin`;
         redirectUrl.search = "";
         redirectUrl.searchParams.set("error", "SessionEnded");
@@ -454,7 +468,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     if (token.twoFactorRequired && !token.twoFactorVerified) {
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/auth/two-factor-verify`;
       return NextResponse.redirect(redirectUrl);
     }
@@ -463,7 +477,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     if (token.twoFactorSetupRequired) {
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/auth/two-factor-setup`;
       redirectUrl.searchParams.set("sso", "true");
       return NextResponse.redirect(redirectUrl);
@@ -493,7 +507,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       ) {
         const pathSegments = pathname.split("/").filter(Boolean);
         const locale = pathSegments[0] || defaultLocale;
-        const redirectUrl = new URL(request.url);
+        const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = `/${locale}/auth/force-change-password`;
         return NextResponse.redirect(redirectUrl);
       }
@@ -511,7 +525,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       // Redirect non-admin users to home page
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/`;
       redirectUrl.search = ""; // Clear any query params
       redirectUrl.hash = ""; // Clear any hash
@@ -529,7 +543,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       // Check if current path already starts with a locale
       const startsWithLocale = locales.includes(currentLocale as any);
 
-      const localeRedirectUrl = new URL(request.url);
+      const localeRedirectUrl = request.nextUrl.clone();
       if (startsWithLocale) {
         // Replace existing locale
         localeRedirectUrl.pathname = `/${cookieLocale}${pathname.replace(/^\/[^/]*/, "")}`;
@@ -547,6 +561,11 @@ export default async function middlewareWithPreferences(request: NextRequest) {
 export const config = {
   // Match internationalized pathnames and API routes (for external API access control)
   matcher: [
+    // The bare root. The catch-all below is built as `${basePath}/(...)`
+    // under a path prefix, which never matches a request for the prefix
+    // itself, so that URL would 404 instead of being sent to the localized
+    // home page. At the root install this entry is redundant.
+    "/",
     // Match all API routes (for external API access control)
     "/api/:path*",
     // Match all internationalized pathnames (excluding static files and the

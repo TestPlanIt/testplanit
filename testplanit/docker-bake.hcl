@@ -35,6 +35,12 @@ variable "BASE_DOMAIN" {
   default = "testplanit.com"
 }
 
+# Path prefix the app is served under (e.g. "/testplanit"). Empty = root.
+# Build-time only: the prefix is inlined into the client bundle.
+variable "BASE_PATH" {
+  default = ""
+}
+
 # Group to build all targets at once
 group "default" {
   targets = ["production", "workers"]
@@ -51,6 +57,7 @@ target "_common" {
     VERSION = "${VERSION}"
     GIT_COMMIT = "${GIT_COMMIT}"
     BASE_DOMAIN = "${BASE_DOMAIN}"
+    BASE_PATH = "${BASE_PATH}"
   }
   # Optional: read from the environment when set (see the Dockerfile build stage).
   secret = ["id=next_actions_key,env=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY"]
@@ -93,6 +100,7 @@ target "_selfhost_common" {
     VERSION = "${VERSION}"
     GIT_COMMIT = "${GIT_COMMIT}"
     SELF_HOSTED = "true"
+    BASE_PATH = "${BASE_PATH}"
   }
   secret = ["id=next_actions_key,env=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY"]
 }

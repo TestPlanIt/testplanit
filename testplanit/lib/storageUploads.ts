@@ -1,5 +1,6 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getS3Client } from "~/lib/s3Client";
+import { withBasePath } from "~/lib/basePath";
 
 // Attachment and inline-image ceilings are per-deployment. The bundled nginx
 // caps request bodies at 10 MB and operators raise that from nginx-local/, so
@@ -120,5 +121,6 @@ export async function putUpload(
     })
   );
 
-  return { url: `/api/storage/${objectKey}`, key: objectKey };
+  // Stored as served, prefix included, like the absolute storage URLs are.
+  return { url: withBasePath(`/api/storage/${objectKey}`), key: objectKey };
 }
