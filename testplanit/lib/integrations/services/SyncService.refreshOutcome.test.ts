@@ -18,7 +18,10 @@ const mocks = vi.hoisted(() => {
     issueUpsert: vi.fn(),
     integrationFindUnique: vi.fn(),
     projectsFindUnique: vi.fn(),
+    membershipFindUnique: vi.fn(),
+    membershipUpsert: vi.fn(),
     syncIssue: vi.fn(),
+    syncIssueToElasticsearch: vi.fn(),
   };
 });
 
@@ -35,6 +38,10 @@ vi.mock("@/lib/rawDb", () => ({
     },
     projects: {
       findUnique: (...a: any[]) => mocks.projectsFindUnique(...a),
+    },
+    issueProjectMembership: {
+      findUnique: (...a: any[]) => mocks.membershipFindUnique(...a),
+      upsert: (...a: any[]) => mocks.membershipUpsert(...a),
     },
   },
 }));
@@ -53,7 +60,7 @@ vi.mock("../IntegrationManager", () => ({
   },
 }));
 vi.mock("~/services/issueSearch", () => ({
-  syncIssueToElasticsearch: vi.fn().mockResolvedValue(undefined),
+  syncIssueToElasticsearch: mocks.syncIssueToElasticsearch,
 }));
 vi.mock("../../multiTenantDb", () => ({ getCurrentTenantId: vi.fn() }));
 vi.mock("../../queues", () => ({
@@ -102,10 +109,14 @@ beforeEach(() => {
     mocks.issueUpsert,
     mocks.integrationFindUnique,
     mocks.projectsFindUnique,
+    mocks.membershipFindUnique,
+    mocks.membershipUpsert,
     mocks.syncIssue,
+    mocks.syncIssueToElasticsearch,
   ]) {
     fn.mockReset();
   }
+  mocks.syncIssueToElasticsearch.mockResolvedValue(true);
   mocks.integrationFindUnique.mockResolvedValue({
     id: 3,
     authType: "PERSONAL_ACCESS_TOKEN",
@@ -118,6 +129,9 @@ beforeEach(() => {
   // Neither the post-update refetch nor the create pre-check finds a row.
   mocks.issueFindUnique.mockResolvedValue(null);
   mocks.projectsFindUnique.mockResolvedValue({ createdBy: "creator-1" });
+  // The refreshing project already holds the existing issue.
+  mocks.membershipFindUnique.mockResolvedValue({ issueId: 100 });
+  mocks.membershipUpsert.mockResolvedValue({});
 });
 
 describe("performIssueRefreshSystem — refresh outcome", () => {
@@ -141,6 +155,7 @@ describe("performIssueRefreshSystem — refresh outcome", () => {
         issueId: 100,
         projectId: 7,
         created: false,
+        addedToProject: false,
         previousStatus: "In Progress",
         status: "Ready for QA",
         issueTypeId: "10001",
@@ -207,6 +222,7 @@ describe("performIssueRefreshSystem — refresh outcome", () => {
         issueId: 900,
         projectId: 7,
         created: true,
+        addedToProject: true,
         previousStatus: null,
         status: "Ready for QA",
         issueTypeId: "10001",
@@ -231,7 +247,11 @@ describe("performIssueRefreshSystem — refresh outcome", () => {
       createIfMissing: { projectId: 7 },
     });
 
-    expect(result.issue).toMatchObject({ issueId: 900, created: false });
+    expect(result.issue).toMatchObject({
+      issueId: 900,
+      created: false,
+      addedToProject: true,
+    });
   });
 
   it("imports nothing when shouldCreate declines the unknown issue", async () => {
@@ -277,6 +297,107 @@ describe("performIssueRefreshSystem — refresh outcome", () => {
         create: expect.objectContaining({ createdById: "creator-1" }),
       })
     );
+  });
+});
+
+describe("performIssueRefreshSystem — an existing issue reaching another project", () => {
+  const EXISTING = {
+    id: 100,
+    projectId: 7,
+    externalStatus: "In Progress",
+    isRequirement: false,
+    data: null,
+  };
+
+  beforeEach(() => {
+    mocks.issueFindFirst.mockResolvedValue(EXISTING);
+  });
+
+  it("attaches the issue to the importing project and reports it as added", async () => {
+    mocks.membershipFindUnique.mockResolvedValue(null);
+    const shouldCreate = vi.fn().mockResolvedValue(true);
+
+    const result = await syncService.performIssueRefreshSystem(3, "DEMO-42", {
+      createIfMissing: { projectId: 8, shouldCreate },
+    });
+
+    expect(shouldCreate).toHaveBeenCalledWith(ISSUE_DATA);
+    expect(mocks.membershipFindUnique).toHaveBeenCalledWith({
+      where: { issueId_projectId: { issueId: 100, projectId: 8 } },
+      select: { issueId: true },
+    });
+    expect(mocks.membershipUpsert).toHaveBeenCalledWith({
+      where: { issueId_projectId: { issueId: 100, projectId: 8 } },
+      create: { issueId: 100, projectId: 8 },
+      update: {},
+    });
+    expect(result.issue).toMatchObject({
+      issueId: 100,
+      // The home project is untouched.
+      projectId: 7,
+      created: false,
+      addedToProject: true,
+      previousStatus: "In Progress",
+    });
+    // The row was still refreshed.
+    expect(mocks.issueUpdate).toHaveBeenCalledTimes(1);
+    expect(mocks.issueUpsert).not.toHaveBeenCalled();
+    // ...and re-indexed after the new project joined (the refresh indexed
+    // it once already, before the membership existed).
+    expect(mocks.syncIssueToElasticsearch).toHaveBeenLastCalledWith(100);
+    expect(mocks.syncIssueToElasticsearch).toHaveBeenCalledTimes(2);
+  });
+
+  it("attaches without an import filter when none is given", async () => {
+    mocks.membershipFindUnique.mockResolvedValue(null);
+
+    const result = await syncService.performIssueRefreshSystem(3, "DEMO-42", {
+      createIfMissing: { projectId: 8 },
+    });
+
+    expect(mocks.membershipUpsert).toHaveBeenCalledTimes(1);
+    expect(result.issue?.addedToProject).toBe(true);
+  });
+
+  it("is idempotent: a project that already holds the issue is not added again", async () => {
+    mocks.membershipFindUnique.mockResolvedValue({ issueId: 100 });
+    const shouldCreate = vi.fn().mockResolvedValue(true);
+
+    const result = await syncService.performIssueRefreshSystem(3, "DEMO-42", {
+      createIfMissing: { projectId: 8, shouldCreate },
+    });
+
+    expect(mocks.membershipUpsert).not.toHaveBeenCalled();
+    expect(shouldCreate).not.toHaveBeenCalled();
+    expect(result.issue?.addedToProject).toBe(false);
+    expect(mocks.issueUpdate).toHaveBeenCalledTimes(1);
+    expect(mocks.syncIssueToElasticsearch).toHaveBeenCalledTimes(1);
+  });
+
+  it("refreshes but doesn't attach when the project's import rules decline the issue", async () => {
+    mocks.membershipFindUnique.mockResolvedValue(null);
+
+    const result = await syncService.performIssueRefreshSystem(3, "DEMO-42", {
+      createIfMissing: { projectId: 8, shouldCreate: async () => false },
+    });
+
+    expect(mocks.membershipUpsert).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      success: true,
+      issue: { issueId: 100, created: false, addedToProject: false },
+    });
+    expect(result.notImported).toBeUndefined();
+    expect(mocks.issueUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("never attaches on a manual sync (no createIfMissing)", async () => {
+    mocks.membershipFindUnique.mockResolvedValue(null);
+
+    const result = await syncService.performIssueRefreshSystem(3, "DEMO-42");
+
+    expect(mocks.membershipFindUnique).not.toHaveBeenCalled();
+    expect(mocks.membershipUpsert).not.toHaveBeenCalled();
+    expect(result.issue?.addedToProject).toBe(false);
   });
 });
 

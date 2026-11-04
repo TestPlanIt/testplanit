@@ -70,6 +70,7 @@ const outcome = (overrides: Record<string, unknown> = {}) => ({
   issueId: 100,
   projectId: 7,
   created: false,
+  addedToProject: false,
   previousStatus: "To Do",
   status: "Ready for QA",
   issueTypeId: "10001",
@@ -363,12 +364,52 @@ describe("runTrackerActions", () => {
     expect(db.webhookDelivery.update).not.toHaveBeenCalled();
   });
 
-  it("logs nothing for import rules when the issue already existed", async () => {
+  it("logs nothing for import rules when the project already had the issue", async () => {
     const db = makeDb([
       rule({ id: "imp-1", action: "IMPORT_ISSUE", trigger: "ISSUE_EVENT" }),
     ]);
     await runTrackerActions(db, job);
     expect(logged(db)).toEqual([]);
+  });
+
+  it("logs issue_imported when another project's row is newly added to this project", async () => {
+    mocks.performIssueRefreshSystem.mockResolvedValue({
+      success: true,
+      issue: outcome({ projectId: 3, created: false, addedToProject: true }),
+    });
+    const db = makeDb([
+      rule({ id: "imp-1", action: "IMPORT_ISSUE", trigger: "ISSUE_EVENT" }),
+      rule({
+        id: "imp-2",
+        action: "IMPORT_ISSUE",
+        filter: { labels: ["other"] },
+      }),
+    ]);
+
+    const result = await runTrackerActions(db, job);
+
+    expect(result).toEqual({ outcome: "done", issueId: 100, runIds: [] });
+    expect(logged(db)).toEqual([
+      expect.objectContaining({
+        webhookActionId: "imp-1",
+        projectId: 7,
+        issueId: 100,
+        outcome: "issue_imported",
+      }),
+    ]);
+  });
+
+  it("treats an issue newly added to this project as new for its Create test run rules", async () => {
+    mocks.performIssueRefreshSystem.mockResolvedValue({
+      success: true,
+      issue: outcome({ projectId: 3, created: false, addedToProject: true }),
+    });
+    const db = makeDb([rule({ id: "r1", trigger: "ISSUE_CREATED" })]);
+
+    const result = await runTrackerActions(db, job);
+
+    expect(result).toEqual({ outcome: "done", issueId: 100, runIds: [500] });
+    expect(mocks.composeRunFromCases).toHaveBeenCalledTimes(1);
   });
 
   it("creates a run for a created issue from its linked cases, as the System user", async () => {

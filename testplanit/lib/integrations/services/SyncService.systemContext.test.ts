@@ -23,6 +23,8 @@ const mockIssueFindUnique = vi.fn();
 const mockIntegrationFindUnique = vi.fn();
 const mockUserFindUnique = vi.fn();
 const mockProjectsFindUnique = vi.fn();
+const mockMembershipFindUnique = vi.fn();
+const mockMembershipUpsert = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
@@ -45,6 +47,12 @@ vi.mock("@/lib/rawDb", () => ({
       // Auto-create looks up the project's creator to populate
       // Issue.createdById (required FK; webhooks have no user session).
       findUnique: (...args: any[]) => mockProjectsFindUnique(...args),
+    },
+    issueProjectMembership: {
+      // The update path with createIfMissing attaches the existing issue
+      // to the refreshing project when it isn't a member yet.
+      findUnique: (...args: any[]) => mockMembershipFindUnique(...args),
+      upsert: (...args: any[]) => mockMembershipUpsert(...args),
     },
   },
 }));
@@ -155,6 +163,10 @@ beforeEach(() => {
   mockIssueFindUnique.mockReset();
   mockIssueUpdate.mockReset();
   mockSyncIssue.mockReset();
+  mockMembershipFindUnique.mockReset();
+  mockMembershipUpsert.mockReset();
+  mockMembershipFindUnique.mockResolvedValue(null);
+  mockMembershipUpsert.mockResolvedValue({});
   mockValkeyPublish.mockReset();
   mockValkeyPublish.mockImplementation(async () => 1);
   mockSyncIssue.mockResolvedValue(FRESH_ISSUE_DATA);
@@ -484,6 +496,11 @@ describe("performIssueRefreshSystem — createIfMissing (auto-create)", () => {
     expect(result.success).toBe(true);
     expect(mockIssueCreate).not.toHaveBeenCalled();
     expect(mockIssueUpdate).toHaveBeenCalledTimes(1);
+    // ...and the refreshing project gets the existing row.
+    expect(mockMembershipUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({ create: { issueId: 99, projectId: 7 } })
+    );
+    expect(result.issue?.addedToProject).toBe(true);
   });
 
   it("throws when missing AND createIfMissing is NOT set (legacy manual-sync contract preserved)", async () => {

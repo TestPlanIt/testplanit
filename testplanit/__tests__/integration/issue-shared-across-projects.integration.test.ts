@@ -14,6 +14,12 @@
 //   - `issueInProjectWhere` finds the row for A and B but not for a third
 //     project that never touched it
 //
+// Then drives the real `runTrackerActions` entry point for a second ticket
+// from project A's and then project B's inbound tracker webhook, each with
+// an unfiltered Import issues rule — the webhook race in which one project
+// created the row and every other project's job only refreshed it — and
+// checks that both projects hold a membership and both log `issue_imported`.
+//
 // Run (never against the default .env DATABASE_URL — that resolves to `ew`):
 //   cd testplanit && DATABASE_URL=<scratch tpi_* URL> RUN_DB_INTEGRATION=1 \
 //     pnpm exec vitest run __tests__/integration/issue-shared-across-projects.integration.test.ts
@@ -26,6 +32,7 @@ import {
   issueInProjectWhere,
 } from "~/lib/issues/projectMembershipWhere";
 import { createRawDbClient } from "~/lib/rawDbClient";
+import type { TrackerActionsJob } from "~/lib/webhooks/actions/runTrackerActions";
 
 vi.mock("~/services/issueSearch", () => ({
   syncIssueToElasticsearch: vi.fn().mockResolvedValue(undefined),
@@ -43,6 +50,7 @@ const describeIntegration =
 const db = createRawDbClient();
 const STAMP = `isv-${Date.now()}`;
 const TICKET_EXTERNAL_ID = `${STAMP}-ticket`;
+const WEBHOOK_TICKET_EXTERNAL_ID = `${STAMP}-webhook-ticket`;
 const FIX_VERSION_ID = `${STAMP}-fixversion`;
 
 function makeIssueData(id: string) {
@@ -172,7 +180,10 @@ describeIntegration("issues shared across projects (live DB)", () => {
   afterAll(async () => {
     vi.restoreAllMocks();
     await db.issue.deleteMany({
-      where: { integrationId, externalId: TICKET_EXTERNAL_ID },
+      where: {
+        integrationId,
+        externalId: { in: [TICKET_EXTERNAL_ID, WEBHOOK_TICKET_EXTERNAL_ID] },
+      },
     });
     await db.integrationProject.deleteMany({
       where: { id: { in: integrationProjectIds } },
@@ -293,5 +304,176 @@ describeIntegration("issues shared across projects (live DB)", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].projectMemberships).toHaveLength(2);
     expect(rows[0].milestoneIssues).toHaveLength(2);
+  });
+
+  describe("tracker webhook imports", () => {
+    const configIds: Record<number, string> = {};
+    const ruleIds: Record<number, string> = {};
+    const deliveryIds: Record<number, string> = {};
+
+    beforeAll(async () => {
+      // The system-context refresh authenticates with the integration's
+      // own credentials; the milestone import above never looked at them.
+      await db.integration.update({
+        where: { id: integrationId },
+        data: {
+          authType: "PERSONAL_ACCESS_TOKEN",
+          credentials: { token: "test-token" },
+        },
+      });
+
+      const { integrationManager } =
+        await import("~/lib/integrations/IntegrationManager");
+      vi.spyOn(integrationManager, "getAdapter").mockResolvedValue({
+        getCapabilities: vi.fn().mockReturnValue({ syncIssue: true }),
+        syncIssue: vi.fn(async () => makeIssueData(WEBHOOK_TICKET_EXTERNAL_ID)),
+      } as any);
+
+      for (const projectId of [projectAId, projectBId]) {
+        const config = await db.webhookConfig.create({
+          data: {
+            projectId,
+            adapterType: "JIRA",
+            direction: "INBOUND",
+            token: `${STAMP}-token-${projectId}`,
+            secret: `${STAMP}-secret-${projectId}`,
+          },
+          select: { id: true },
+        });
+        configIds[projectId] = config.id;
+        const rule = await db.webhookAction.create({
+          data: {
+            webhookConfigId: config.id,
+            projectId,
+            trigger: "ISSUE_EVENT",
+            action: "IMPORT_ISSUE",
+          },
+          select: { id: true },
+        });
+        ruleIds[projectId] = rule.id;
+        const delivery = await db.webhookDelivery.create({
+          data: {
+            webhookConfigId: config.id,
+            direction: "INBOUND",
+            adapterType: "JIRA",
+            eventType: "jira:issue_created",
+            payloadDigest: `${STAMP}-digest-${projectId}`,
+          },
+          select: { id: true },
+        });
+        deliveryIds[projectId] = delivery.id;
+      }
+    });
+
+    afterAll(async () => {
+      // Deliveries, rules and logs cascade from the configs.
+      await db.webhookConfig.deleteMany({
+        where: { id: { in: Object.values(configIds) } },
+      });
+    });
+
+    async function receiveFrom(projectId: number) {
+      const { runTrackerActions } =
+        await import("~/lib/webhooks/actions/runTrackerActions");
+      const job: TrackerActionsJob = {
+        deliveryId: deliveryIds[projectId],
+        webhookConfigId: configIds[projectId],
+        projectId,
+        adapterType: "JIRA",
+        externalKey: `${STAMP}-${WEBHOOK_TICKET_EXTERNAL_ID}`,
+      };
+      return runTrackerActions(db as any, job);
+    }
+
+    async function webhookTicketRows() {
+      return db.issue.findMany({
+        where: { integrationId, externalId: WEBHOOK_TICKET_EXTERNAL_ID },
+        select: {
+          id: true,
+          projectId: true,
+          projectMemberships: {
+            select: { projectId: true },
+            orderBy: { projectId: "asc" },
+          },
+        },
+      });
+    }
+
+    async function importLogs() {
+      return db.webhookActionLog.findMany({
+        where: {
+          webhookConfigId: { in: Object.values(configIds) },
+          outcome: "issue_imported",
+        },
+        select: { projectId: true, webhookActionId: true, issueId: true },
+        orderBy: { projectId: "asc" },
+      });
+    }
+
+    it("project A's webhook imports the ticket and homes it there", async () => {
+      const result = await receiveFrom(projectAId);
+
+      const rows = await webhookTicketRows();
+      expect(rows).toHaveLength(1);
+      expect(result).toEqual({
+        outcome: "done",
+        issueId: rows[0].id,
+        runIds: [],
+      });
+      expect(rows[0].projectId).toBe(projectAId);
+      expect(rows[0].projectMemberships.map((m) => m.projectId)).toEqual([
+        projectAId,
+      ]);
+      expect(await importLogs()).toEqual([
+        {
+          projectId: projectAId,
+          webhookActionId: ruleIds[projectAId],
+          issueId: rows[0].id,
+        },
+      ]);
+    });
+
+    it("project B's webhook adds the existing ticket to project B and logs the import", async () => {
+      const result = await receiveFrom(projectBId);
+
+      const rows = await webhookTicketRows();
+      expect(rows).toHaveLength(1);
+      expect(result).toEqual({
+        outcome: "done",
+        issueId: rows[0].id,
+        runIds: [],
+      });
+      expect(rows[0].projectId).toBe(projectAId);
+      expect(rows[0].projectMemberships.map((m) => m.projectId)).toEqual(
+        [projectAId, projectBId].sort((a, b) => a - b)
+      );
+      expect(await importLogs()).toEqual(
+        [projectAId, projectBId]
+          .sort((a, b) => a - b)
+          .map((projectId) => ({
+            projectId,
+            webhookActionId: ruleIds[projectId],
+            issueId: rows[0].id,
+          }))
+      );
+
+      const visibleToC = await db.issue.count({
+        where: { AND: [{ id: rows[0].id }, issueInProjectWhere(projectCId)] },
+      });
+      expect(visibleToC).toBe(0);
+    });
+
+    it("a repeat delivery to project B refreshes the ticket without importing it again", async () => {
+      const result = await receiveFrom(projectBId);
+
+      const rows = await webhookTicketRows();
+      expect(result).toEqual({
+        outcome: "done",
+        issueId: rows[0].id,
+        runIds: [],
+      });
+      expect(rows[0].projectMemberships).toHaveLength(2);
+      expect(await importLogs()).toHaveLength(2);
+    });
   });
 });

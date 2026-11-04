@@ -78,6 +78,7 @@ import {
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { useSearchState } from "~/lib/contexts/SearchStateContext";
 import { type SavedSearchCriteria } from "~/lib/schemas/savedSearch";
+import { searchHitProjectId } from "~/lib/searchHitProject";
 import { IconName } from "~/types/globals";
 import {
   SearchableEntityType,
@@ -1263,11 +1264,7 @@ function SearchResultId({ hit }: { hit: SearchHit }) {
     <RecordId
       type={type}
       id={id}
-      projectId={
-        typeof hit.source?.projectId === "number"
-          ? hit.source.projectId
-          : undefined
-      }
+      projectId={searchHitProjectId(hit.source)}
       className={className}
     />
   );
@@ -1679,13 +1676,14 @@ function SearchResultCard({
           <>
             <MetadataList
               items={[
-                hit.source.projectName && hit.source.projectId && (
-                  <ProjectNameDisplay
-                    projectName={hit.source.projectName}
-                    projectId={hit.source.projectId}
-                    iconUrl={hit.source.projectIconUrl}
-                  />
-                ),
+                hit.source.projectName &&
+                  searchHitProjectId(hit.source) != null && (
+                    <ProjectNameDisplay
+                      projectName={hit.source.projectName}
+                      projectId={searchHitProjectId(hit.source)!}
+                      iconUrl={hit.source.projectIconUrl}
+                    />
+                  ),
                 hit.source.issueSystem && (
                   <MetadataItem>{hit.source.issueSystem}</MetadataItem>
                 ),

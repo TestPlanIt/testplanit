@@ -128,9 +128,21 @@ const INDEXED_MODELS: Record<string, keyof typeof syncOne> = {
  * required even though `sideEffectsPlugin` loads its own. Gated on `delete` to
  * keep it off the create/update hot path.
  */
+/**
+ * Join rows that decide which projects an issue is visible in. The issue
+ * document indexes every one of those projects, so a link appearing or
+ * disappearing re-indexes the issue it points at.
+ */
+const ISSUE_LINK_MODELS = new Set([
+  "IssueProjectMembership",
+  "RepositoryCaseIssue",
+  "MilestoneIssue",
+]);
+
 const DELETE_BEFORE_IMAGE_MODELS = new Set([
   ...Object.keys(INDEXED_MODELS),
   "RepositoryCaseTag",
+  ...ISSUE_LINK_MODELS,
 ]);
 
 function logEsError(kind: string, id: unknown) {
@@ -166,7 +178,12 @@ export const esSyncPlugin = definePlugin(schema, {
         beforeMutationEntities,
       }) => {
         const isIndexed = model in INDEXED_MODELS;
-        if (!isIndexed && model !== "RepositoryCaseTag") return;
+        if (
+          !isIndexed &&
+          model !== "RepositoryCaseTag" &&
+          !ISSUE_LINK_MODELS.has(model)
+        )
+          return;
 
         const before = (beforeMutationEntities ?? []) as any[];
         // A delete has no after-image; skip the load rather than pay for a query
@@ -189,6 +206,22 @@ export const esSyncPlugin = definePlugin(schema, {
             syncOne
               .repositoryCase(caseId)
               .catch(logEsError("repository case", caseId));
+          }
+          return;
+        }
+
+        if (ISSUE_LINK_MODELS.has(model)) {
+          const issueIds = new Set<number>();
+          for (const row of [...after, ...before]) {
+            if (row?.issueId != null) issueIds.add(row.issueId);
+          }
+          if (issueIds.size === 0) return;
+          const { syncIssueToElasticsearch } =
+            await import("~/services/issueSearch");
+          for (const issueId of issueIds) {
+            syncIssueToElasticsearch(issueId).catch(
+              logEsError("issue", issueId)
+            );
           }
           return;
         }

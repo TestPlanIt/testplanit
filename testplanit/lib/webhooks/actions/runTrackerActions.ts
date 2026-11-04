@@ -164,8 +164,11 @@ export async function runTrackerActions(
     await annotate({ error: "ignored:issue_deleted" });
     return { outcome: "done", issueId: issue.issueId, runIds: [] };
   }
+  // An issue this project hadn't imported yet is new to the project, whether
+  // or not another project's webhook created the row first.
+  const newHere = issue.created || issue.addedToProject;
   const change: IssueChange = {
-    created: issue.created,
+    created: newHere,
     statusChanged: statusChanged(issue.previousStatus, issue.status),
   };
   const facts: IssueFacts = {
@@ -192,7 +195,7 @@ export async function runTrackerActions(
       ...entry,
     });
 
-  if (issue.created) {
+  if (newHere) {
     for (const rule of importRules) {
       if (trackerRuleFires(rule, newIssue, facts)) {
         await log(rule, { outcome: "issue_imported" });

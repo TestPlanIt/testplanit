@@ -80,6 +80,13 @@ export interface IssueRefreshOutcome {
   projectId: number | null;
   /** The row was created by this refresh. */
   created: boolean;
+  /**
+   * This refresh made the issue reachable from `createIfMissing.projectId`:
+   * true for a created row, and for an existing row newly attached to that
+   * project. False when the project already had it, when the project's
+   * import rules declined it, or when no `createIfMissing` was given.
+   */
+  addedToProject: boolean;
   /** The tracker status before this refresh (null for a created row). */
   previousStatus: string | null;
   status: string | null;
@@ -1988,7 +1995,53 @@ export class SyncService {
         integrationId,
         issueData
       );
-      return { success: true, issue };
+      // The row exists because some project imported it first. A second
+      // project's import still has to attach the issue to that project,
+      // otherwise whichever project's job won the race keeps it alone.
+      // Membership is checked directly rather than through
+      // `issueInProjectWhere`: an issue only reachable via a case link
+      // still needs a real membership when an import rule asks for it.
+      let addedToProject = false;
+      if (createIfMissing) {
+        const alreadyMember = await db.issueProjectMembership.findUnique({
+          where: {
+            issueId_projectId: {
+              issueId: existingIssue.id,
+              projectId: createIfMissing.projectId,
+            },
+          },
+          select: { issueId: true },
+        });
+        if (
+          !alreadyMember &&
+          (!createIfMissing.shouldCreate ||
+            (await createIfMissing.shouldCreate(issueData)))
+        ) {
+          await ensureIssueProjectMembership(
+            db,
+            existingIssue.id,
+            createIfMissing.projectId
+          );
+          addedToProject = true;
+          // The issue document lists every project it is visible in; the
+          // refresh above indexed it before this project joined.
+          await syncIssueToElasticsearch(existingIssue.id).catch(
+            (error: any) => {
+              console.error(
+                `Failed to sync issue ${existingIssue.id} to Elasticsearch after adding it to project ${createIfMissing.projectId}:`,
+                error
+              );
+            }
+          );
+          await publishIssueUpdate({
+            projectId: createIfMissing.projectId,
+            issueId: existingIssue.id,
+            event: "issue-created",
+            tenantId: getCurrentTenantId() ?? "default",
+          });
+        }
+      }
+      return { success: true, issue: { ...issue, addedToProject } };
     }
 
     // No local issue — caller must have opted into create-if-missing
@@ -2014,6 +2067,7 @@ export class SyncService {
           issueId: created.id,
           projectId: createIfMissing.projectId,
           created: created.created,
+          addedToProject: true,
           previousStatus: null,
           isRequirement: created.isRequirement,
         },
@@ -2470,6 +2524,7 @@ export class SyncService {
       issueId: existingIssue.id,
       projectId: existingIssue.projectId ?? null,
       created: false,
+      addedToProject: false,
       previousStatus:
         existingIssue.externalStatus ?? existingIssue.status ?? null,
       isRequirement:

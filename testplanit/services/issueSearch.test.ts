@@ -24,6 +24,7 @@ vi.mock("./unifiedElasticsearchService", () => ({
   getEntityIndexName: vi.fn(() => "test-issues"),
 }));
 
+import { ISSUE_PROJECT_IDS_SELECT } from "~/lib/issues/projectMembershipWhere";
 import { indexIssue, syncProjectIssuesToElasticsearch } from "./issueSearch";
 
 describe("issueSearch document construction", () => {
@@ -116,6 +117,68 @@ describe("issueSearch document construction", () => {
     );
     expect(documents[1]).toEqual(
       expect.objectContaining({ id: 11, isRequirement: false })
+    );
+  });
+
+  it("indexIssue lists the displayed project first, then every other project the issue reaches", async () => {
+    mockClient.index.mockResolvedValue({ _id: "1" });
+
+    await indexIssue(baseIssue() as any, undefined, [300, 100, 200]);
+
+    expect(mockClient.index).toHaveBeenCalledWith(
+      expect.objectContaining({
+        document: expect.objectContaining({
+          projectId: [100, 300, 200],
+          projectName: "Test Project",
+        }),
+      })
+    );
+  });
+
+  it("indexIssue falls back to the displayed project alone", async () => {
+    mockClient.index.mockResolvedValue({ _id: "1" });
+
+    await indexIssue(baseIssue() as any);
+
+    expect(mockClient.index.mock.calls[0][0].document.projectId).toEqual([100]);
+  });
+
+  it("syncProjectIssuesToElasticsearch reads every project each issue reaches through the one membership select", async () => {
+    mockClient.bulk.mockResolvedValue({ errors: false, items: [] });
+
+    const findMany = vi.fn(async (args: any) => {
+      // The reach query selects the membership relations; the issue load
+      // includes the display relations.
+      if (args.select?.projectMemberships) {
+        return [
+          {
+            id: 10,
+            projectId: 100,
+            projectMemberships: [{ projectId: 200 }, { projectId: 100 }],
+            caseIssues: [{ case: { projectId: 300 } }],
+          },
+          // Issue 11 reaches no other project.
+          { id: 11, projectId: 100 },
+        ];
+      }
+      return [baseIssue({ id: 10 }), baseIssue({ id: 11 })];
+    });
+    const db = { issue: { findMany } } as unknown as DbClient;
+
+    await syncProjectIssuesToElasticsearch(100, db);
+
+    expect(findMany).toHaveBeenCalledWith({
+      where: { id: { in: [10, 11] } },
+      select: { id: true, ...ISSUE_PROJECT_IDS_SELECT },
+    });
+    const documents = mockClient.bulk.mock.calls[0][0].body.filter(
+      (_: unknown, i: number) => i % 2 === 1
+    );
+    expect(documents[0]).toEqual(
+      expect.objectContaining({ id: 10, projectId: [100, 200, 300] })
+    );
+    expect(documents[1]).toEqual(
+      expect.objectContaining({ id: 11, projectId: [100] })
     );
   });
 

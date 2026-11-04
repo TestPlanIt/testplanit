@@ -709,16 +709,29 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
       "isRequirement: issue.isRequirement"
     );
 
-    if (roleAssignments !== 2) {
+    // One shared document builder writes the role; a second literal would
+    // be a writer that can drift from it.
+    if (roleAssignments !== 1) {
       throw new Error(
         `${searchFile} writes the requirement role in ${roleAssignments} document ` +
-          "literal(s); expected exactly 2 (indexIssue and syncProjectIssuesToElasticsearch — " +
-          "the two-writer invariant made structural). A third writer, or only one of the two " +
-          "being updated, means the live index and the app's role filter can disagree — " +
-          "add the missing assignment, or investigate why a third writer exists."
+          "literal(s); expected exactly 1 (buildIssueDocument, shared by indexIssue and " +
+          "syncProjectIssuesToElasticsearch). A second literal means a writer bypasses the " +
+          "shared builder and the live index and the app's role filter can disagree — " +
+          "route it through buildIssueDocument, or investigate why a second writer exists."
       );
     }
-    expect(roleAssignments).toBe(2);
+    expect(roleAssignments).toBe(1);
+
+    // ...and both writers go through it: the definition plus two call sites.
+    const builderUses = countOccurrences(searchContent, "buildIssueDocument(");
+    if (builderUses !== 3) {
+      throw new Error(
+        `${searchFile} mentions buildIssueDocument( ${builderUses} time(s); expected exactly 3 ` +
+          "(its definition, the indexIssue call and the syncProjectIssuesToElasticsearch call). " +
+          "A writer that stopped calling it builds its own document and can drift."
+      );
+    }
+    expect(builderUses).toBe(3);
 
     // The bulk indexer's own source query must NOT carry the defect-scope
     // predicate: the index has to contain every row kind so the in-app

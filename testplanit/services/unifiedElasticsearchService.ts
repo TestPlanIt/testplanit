@@ -317,6 +317,9 @@ export const ENTITY_MAPPINGS = {
   },
   [SearchableEntityType.ISSUE]: {
     properties: {
+      // `projectId` holds every project the issue is visible in (an issue
+      // row is shared across the projects that import or link it); the
+      // integer mapping accepts the list as-is.
       ...baseMapping.properties,
       name: {
         type: "text" as const,
