@@ -1,3 +1,12 @@
+## [1.2.0-beta.29](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.28...v1.2.0-beta.29) (2026-11-04)
+
+### Bug Fixes
+
+* **admin:** stop || from discarding falsy form values on save ([3fcfd39](https://github.com/TestPlanIt/testplanit/commit/3fcfd390157aaa805a0c44dec42c5eb7ce802cb0))
+* **issues:** add a webhook-imported issue to every project that imports it and index all of them ([49b9e4a](https://github.com/TestPlanIt/testplanit/commit/49b9e4affb956a40e18d2ad54d62e618ae98c37a))
+* **reports:** route report-builder reads to read replicas again ([7061142](https://github.com/TestPlanIt/testplanit/commit/7061142ee70e447fcbe66f13108a24b7f047c73c)), closes [#198](https://github.com/TestPlanIt/testplanit/issues/198)
+* **search:** retry a query that fails to parse as plain words ([92c74c1](https://github.com/TestPlanIt/testplanit/commit/92c74c1477e3d2220676040956507c43d0890c01))
+
 ## [1.2.0-beta.28](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.27...v1.2.0-beta.28) (2026-11-04)
 
 ### Bug Fixes
