@@ -28,6 +28,7 @@ import {
   getQueryBuilderForMetric,
 } from "~/utils/drillDownQueryBuilders";
 import { getFolderSubtreeIds } from "~/utils/reportGrouping";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
 /**
  * Result-level metrics on the test-execution and user-engagement reports
@@ -302,7 +303,7 @@ async function resolveAutomatedRunCaseStatuses(rows: any[]) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -503,3 +504,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withReplicaRoute(reportPost);

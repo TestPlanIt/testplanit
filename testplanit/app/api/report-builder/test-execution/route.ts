@@ -4,6 +4,7 @@ import {
   createTestExecutionDimensionRegistry,
   createTestExecutionMetricRegistry,
 } from "~/utils/reportUtils";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
 const config = {
   reportType: "test-execution",
@@ -13,10 +14,13 @@ const config = {
   createMetricRegistry: createTestExecutionMetricRegistry,
 };
 
-export async function GET(req: NextRequest) {
+async function reportGet(req: NextRequest) {
   return handleReportGET(req, config);
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   return handleReportPOST(req, config);
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

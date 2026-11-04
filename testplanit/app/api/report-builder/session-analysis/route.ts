@@ -4,6 +4,7 @@ import { buildDateFilter } from "@/utils/reportUtils";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { sortReportRows } from "~/utils/reportRowSort";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
 // Note: Session analysis uses custom session-specific logic
 // This handles unique session dimensions like assignedTo, template, state, etc.
@@ -720,7 +721,7 @@ const METRIC_REGISTRY: Record<
   },
 };
 
-export async function GET(req: NextRequest) {
+async function reportGet(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const projectId = url.searchParams.get("projectId");
@@ -758,7 +759,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   try {
     const requestBody = await req.json();
     const { projectId, dimensions, metrics } = requestBody;
@@ -949,3 +950,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: e.message }, { status: 500 });
   }
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

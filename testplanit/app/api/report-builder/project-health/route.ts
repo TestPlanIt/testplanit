@@ -6,6 +6,7 @@ import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { buildDateFilter } from "~/utils/reportUtils";
 import { sortReportRows } from "~/utils/reportRowSort";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
 // Note: Project health uses custom milestone and issue-based logic
 // This doesn't fit the existing shared patterns but could be a candidate
@@ -505,7 +506,7 @@ function cartesianProduct(arrays: any[][]): any[][] {
   );
 }
 
-export async function GET(req: NextRequest) {
+async function reportGet(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const projectId = url.searchParams.get("projectId");
@@ -545,7 +546,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   try {
     let body: {
       projectId?: unknown;
@@ -799,3 +800,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: e.message }, { status: 500 });
   }
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

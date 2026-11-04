@@ -9,6 +9,7 @@ import { aggregateMilestoneReadiness } from "~/app/[locale]/projects/milestones/
 import { authOptions } from "~/server/auth";
 import { isMilestoneInDateRange, milestoneDate } from "./milestoneDateRange";
 import { sortReportRows } from "~/utils/reportRowSort";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
 /**
  * Milestone Readiness report (fast-follow READY, R5). One row per milestone,
@@ -86,7 +87,7 @@ async function listVisibleMilestones(session: any, projectId: number) {
   });
 }
 
-export async function GET(req: NextRequest) {
+async function reportGet(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -117,7 +118,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -250,3 +251,6 @@ export async function POST(req: NextRequest) {
 
   return Response.json({ results });
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

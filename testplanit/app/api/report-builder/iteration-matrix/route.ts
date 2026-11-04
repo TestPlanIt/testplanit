@@ -12,6 +12,7 @@ import {
 import { baseDb } from "~/lib/db";
 import { matrixFiltersSchema } from "~/lib/schemas/matrixFiltersSchema";
 import { authOptions } from "~/server/auth";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
 /**
  * POST /api/report-builder/iteration-matrix
@@ -82,11 +83,11 @@ const reportBuilderMatrixBodySchema = z.object({
  * grid keyed on cases × configurations × parameter rows — so we return empty
  * arrays. Mirrors the execution-log preset's GET stub.
  */
-export async function GET() {
+async function reportGet() {
   return NextResponse.json({ dimensions: [], metrics: [] });
 }
 
-export async function POST(request: NextRequest) {
+async function reportPost(request: NextRequest) {
   try {
     // Shared-report bypass: the public share endpoint
     // (`/api/share/[shareKey]/report`) forwards POSTs server-to-server with
@@ -179,3 +180,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);
