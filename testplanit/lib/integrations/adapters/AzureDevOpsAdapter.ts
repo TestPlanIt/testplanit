@@ -310,12 +310,25 @@ export class AzureDevOpsAdapter extends BaseAdapter {
   async getIssueComments(issueId: string): Promise<IssueComment[]> {
     try {
       const encodedId = encodeURIComponent(issueId);
-      const response = await this.makeRequest<any>(
-        this.buildUrl(
-          `/_apis/wit/workitems/${encodedId}/comments?api-version=${this.apiVersion}-preview`
-        )
-      );
-      return this.mapAzureDevOpsComments(response);
+      const base = `/_apis/wit/workitems/${encodedId}/comments?api-version=${this.apiVersion}-preview&$top=200`;
+      const comments: IssueComment[] = [];
+      let continuationToken: string | undefined;
+      do {
+        const response = await this.makeRequest<any>(
+          this.buildUrl(
+            continuationToken
+              ? `${base}&continuationToken=${encodeURIComponent(continuationToken)}`
+              : base
+          )
+        );
+        comments.push(...this.mapAzureDevOpsComments(response));
+        continuationToken =
+          typeof response?.continuationToken === "string" &&
+          response.continuationToken !== ""
+            ? response.continuationToken
+            : undefined;
+      } while (continuationToken);
+      return comments;
     } catch (error) {
       const status = this.parseStatusFromError(error);
       const level = status === null || status >= 500 ? "error" : "warn";
@@ -464,11 +477,20 @@ export class AzureDevOpsAdapter extends BaseAdapter {
   async getProjects(): Promise<
     Array<{ id: string; key: string; name: string }>
   > {
-    const response = await this.makeRequest<any>(
-      this.buildUrl(`/_apis/projects?api-version=${this.apiVersion}`)
-    );
+    const top = 100;
+    const projects: any[] = [];
+    for (let skip = 0; ; skip += top) {
+      const response = await this.makeRequest<any>(
+        this.buildUrl(
+          `/_apis/projects?api-version=${this.apiVersion}&$top=${top}&$skip=${skip}`
+        )
+      );
+      const page: any[] = Array.isArray(response?.value) ? response.value : [];
+      projects.push(...page);
+      if (page.length < top) break;
+    }
 
-    return response.value.map((project: any) => ({
+    return projects.map((project: any) => ({
       id: project.id,
       key: project.name,
       name: project.name,

@@ -1149,6 +1149,38 @@ describe("GitHubAdapter", () => {
       expect(calledUrl).toContain("/repos/acme/widgets/issues/42/comments");
     });
 
+    it("walks every page of the comments endpoint", async () => {
+      (adapter as any).rateLimitDelay = 0;
+      const comments = (from: number, count: number) =>
+        Array.from({ length: count }, (_, i) => ({
+          id: from + i + 1,
+          body: `c${from + i + 1}`,
+          user: { login: "alice" },
+          created_at: "2026-01-01T00:00:00Z",
+        }));
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(comments(0, 100)),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(comments(100, 1)),
+        });
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toHaveLength(101);
+      expect(result[100].id).toBe("101");
+      const urls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("/comments"));
+      expect(urls).toEqual([
+        "https://api.github.com/repos/testowner/testrepo/issues/42/comments?per_page=100&page=1",
+        "https://api.github.com/repos/testowner/testrepo/issues/42/comments?per_page=100&page=2",
+      ]);
+    });
+
     it("should map all comments to IssueComment[] on the happy path", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -1526,13 +1558,43 @@ describe("GitHubAdapter", () => {
       const result = await adapter.getProjects();
 
       expect(mockFetch).toHaveBeenLastCalledWith(
-        "https://api.github.com/user/repos?per_page=100&sort=updated",
+        "https://api.github.com/user/repos?sort=updated&per_page=100&page=1",
         expect.any(Object)
       );
 
       expect(result).toEqual([
         { id: "user/repo1", key: "repo1", name: "user/repo1" },
         { id: "user/repo2", key: "repo2", name: "user/repo2" },
+      ]);
+    });
+
+    it("walks every page of /user/repos", async () => {
+      (adapter as any).rateLimitDelay = 0;
+      const repos = (from: number, count: number) =>
+        Array.from({ length: count }, (_, i) => ({
+          full_name: `user/repo${from + i + 1}`,
+          name: `repo${from + i + 1}`,
+        }));
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(repos(0, 100)),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(repos(100, 3)),
+        });
+
+      const result = await adapter.getProjects();
+
+      expect(result).toHaveLength(103);
+      expect(result[102].id).toBe("user/repo103");
+      const urls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("/user/repos"));
+      expect(urls).toEqual([
+        "https://api.github.com/user/repos?sort=updated&per_page=100&page=1",
+        "https://api.github.com/user/repos?sort=updated&per_page=100&page=2",
       ]);
     });
   });
