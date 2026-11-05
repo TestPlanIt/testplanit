@@ -1,3 +1,9 @@
+## [1.2.0-beta.32](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.31...v1.2.0-beta.32) (2026-11-05)
+
+### Bug Fixes
+
+* **integrations:** read every page of provider project and comment lists ([447bc9a](https://github.com/TestPlanIt/testplanit/commit/447bc9af9a86c8dc60917ea82c142159d448bb21)), closes [#730](https://github.com/TestPlanIt/testplanit/issues/730)
+
 ## [1.2.0-beta.31](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.30...v1.2.0-beta.31) (2026-11-05)
 
 ### Bug Fixes
