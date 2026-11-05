@@ -1,3 +1,9 @@
+## [1.1.19](https://github.com/TestPlanIt/testplanit/compare/v1.1.18...v1.1.19) (2026-11-05)
+
+### Bug Fixes
+
+* **integrations:** read every page of provider project and comment lists ([#731](https://github.com/TestPlanIt/testplanit/issues/731)) ([f8b3cd1](https://github.com/TestPlanIt/testplanit/commit/f8b3cd1fe02df00fb5185ad9fd53f91ab2afa16c)), closes [#730](https://github.com/TestPlanIt/testplanit/issues/730)
+
 ## [1.1.18](https://github.com/TestPlanIt/testplanit/compare/v1.1.17...v1.1.18) (2026-11-04)
 
 ### Bug Fixes
