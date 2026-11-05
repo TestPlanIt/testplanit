@@ -1,3 +1,15 @@
+## [1.2.0-beta.31](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.30...v1.2.0-beta.31) (2026-11-05)
+
+### Bug Fixes
+
+* **i18n:** restore truncated de-DE milestones.import.requestTimedOut ([b6e72d7](https://github.com/TestPlanIt/testplanit/commit/b6e72d753436687360c82e637fe406c454d11235))
+* **sse:** share one notification stream per tab and stop evicted streams from reconnecting ([5e73224](https://github.com/TestPlanIt/testplanit/commit/5e7322403a7d1124a4d28603d1c6fe58b7babab3))
+
+### Performance Improvements
+
+* **deps:** memoise useClientQueries per schema via pnpm patch ([9be67b7](https://github.com/TestPlanIt/testplanit/commit/9be67b7e1f8548aadc3f5db811226377c920284a)), closes [zenstackhq/zenstack#2908](https://github.com/zenstackhq/zenstack/issues/2908)
+* **duplicates:** resolve bulk Not Duplicates / Link in one request ([cf45d78](https://github.com/TestPlanIt/testplanit/commit/cf45d78230d2557dfab1e469867f07b235eff6f8))
+
 ## [1.2.0-beta.30](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.29...v1.2.0-beta.30) (2026-11-05)
 
 ### Features
