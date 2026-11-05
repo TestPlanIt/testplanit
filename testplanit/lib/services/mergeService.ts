@@ -325,77 +325,144 @@ export async function mergeCases(
 }
 
 // ---------------------------------------------------------------------------
-// linkCases
+// Pair resolution (link / dismiss), single and bulk
 // ---------------------------------------------------------------------------
 
+export interface CasePair {
+  caseAId: number;
+  caseBId: number;
+}
+
 /**
- * Creates a RepositoryCaseLink(SAME_TEST_DIFFERENT_SOURCE) and updates the
- * DuplicateScanResult status to LINKED.
- *
- * Both operations run in a single transaction-style call. Uses a static
- * array form of rawDb.$transaction for simplicity (no interactive tx needed).
+ * Pairs per statement. Each pair becomes two OR branches (both orientations),
+ * so 500 pairs = 1,000 branches, well inside Postgres' comfort zone and the
+ * bind-parameter limit.
  */
+export const PAIR_CHUNK_SIZE = 500;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size));
+  }
+  return out;
+}
+
+/** Drops exact and reversed duplicates so each pair is touched once. */
+function uniquePairs(pairs: CasePair[]): CasePair[] {
+  const seen = new Set<string>();
+  const out: CasePair[] = [];
+  for (const p of pairs) {
+    const key =
+      p.caseAId < p.caseBId
+        ? `${p.caseAId}:${p.caseBId}`
+        : `${p.caseBId}:${p.caseAId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(p);
+  }
+  return out;
+}
+
+/** Matches a pair's scan-result rows in either orientation. */
+function pairOrClause(pairs: CasePair[]) {
+  return pairs.flatMap(({ caseAId, caseBId }) => [
+    { caseAId, caseBId },
+    { caseAId: caseBId, caseBId: caseAId },
+  ]);
+}
+
+/**
+ * Creates RepositoryCaseLink(SAME_TEST_DIFFERENT_SOURCE) rows and marks the
+ * matching DuplicateScanResult rows LINKED.
+ *
+ * Only pairs that have a scan result in `projectId` are acted on, so a caller
+ * can't link arbitrary cases (or cases in another project) through this path.
+ * Each chunk runs as one transaction: createMany(skipDuplicates) + updateMany.
+ */
+export async function linkPairs(
+  pairs: CasePair[],
+  userId: string,
+  projectId: number
+): Promise<{ linked: number }> {
+  let linked = 0;
+
+  for (const batch of chunk(uniquePairs(pairs), PAIR_CHUNK_SIZE)) {
+    const where = { projectId, OR: pairOrClause(batch) };
+
+    const existing = await rawDb.duplicateScanResult.findMany({
+      where,
+      select: { caseAId: true, caseBId: true },
+    });
+    const known = new Set(
+      existing.flatMap((r) => [
+        `${r.caseAId}:${r.caseBId}`,
+        `${r.caseBId}:${r.caseAId}`,
+      ])
+    );
+    const valid = batch.filter((p) => known.has(`${p.caseAId}:${p.caseBId}`));
+    if (valid.length === 0) continue;
+
+    await rawDb.$transaction([
+      rawDb.repositoryCaseLink.createMany({
+        data: valid.map(({ caseAId, caseBId }) => ({
+          caseAId,
+          caseBId,
+          type: LinkType.SAME_TEST_DIFFERENT_SOURCE,
+          createdById: userId,
+        })),
+        skipDuplicates: true, // already linked — no-op
+      }),
+      rawDb.duplicateScanResult.updateMany({
+        where: { projectId, OR: pairOrClause(valid) },
+        data: { status: "LINKED" },
+      }),
+    ]);
+    linked += valid.length;
+  }
+
+  return { linked };
+}
+
+/**
+ * Sets DuplicateScanResult status to DISMISSED for every given pair in the
+ * project. Dismissed pairs are excluded from the candidates list (filtered by
+ * status=PENDING). One updateMany per chunk.
+ */
+export async function dismissPairs(
+  pairs: CasePair[],
+  projectId: number
+): Promise<{ dismissed: number }> {
+  let dismissed = 0;
+
+  for (const batch of chunk(uniquePairs(pairs), PAIR_CHUNK_SIZE)) {
+    const result = await rawDb.duplicateScanResult.updateMany({
+      where: { projectId, OR: pairOrClause(batch) },
+      data: { status: "DISMISSED" },
+    });
+    dismissed += result.count;
+  }
+
+  return { dismissed };
+}
+
+/** Single-pair link; see linkPairs. */
 export async function linkCases(
   caseAId: number,
   caseBId: number,
   userId: string,
-  _projectId: number
+  projectId: number
 ): Promise<{ linked: true }> {
-  // Use upsert to handle cases where the link already exists (idempotent)
-  await rawDb.$transaction([
-    rawDb.repositoryCaseLink.upsert({
-      where: {
-        caseAId_caseBId_type: {
-          caseAId,
-          caseBId,
-          type: "SAME_TEST_DIFFERENT_SOURCE",
-        },
-      },
-      create: {
-        caseAId,
-        caseBId,
-        type: "SAME_TEST_DIFFERENT_SOURCE",
-        createdById: userId,
-      },
-      update: {}, // Already linked — no-op
-    }),
-    rawDb.duplicateScanResult.updateMany({
-      where: {
-        OR: [
-          { caseAId, caseBId },
-          { caseAId: caseBId, caseBId: caseAId },
-        ],
-      },
-      data: { status: "LINKED" },
-    }),
-  ]);
-
+  await linkPairs([{ caseAId, caseBId }], userId, projectId);
   return { linked: true };
 }
 
-// ---------------------------------------------------------------------------
-// dismissPair
-// ---------------------------------------------------------------------------
-
-/**
- * Sets DuplicateScanResult status to DISMISSED for a case pair.
- * Dismissed pairs are excluded from the candidates list (filtered by status=PENDING).
- */
+/** Single-pair dismiss; see dismissPairs. */
 export async function dismissPair(
   caseAId: number,
   caseBId: number,
   projectId: number
 ): Promise<{ dismissed: true }> {
-  await rawDb.duplicateScanResult.updateMany({
-    where: {
-      OR: [
-        { caseAId, caseBId },
-        { caseAId: caseBId, caseBId: caseAId },
-      ],
-      projectId,
-    },
-    data: { status: "DISMISSED" },
-  });
-
+  await dismissPairs([{ caseAId, caseBId }], projectId);
   return { dismissed: true };
 }
