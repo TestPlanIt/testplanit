@@ -1,3 +1,11 @@
+## [1.2.0-beta.30](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.29...v1.2.0-beta.30) (2026-11-05)
+
+### Features
+
+* **deploy:** serve the app under a path prefix (BASE_PATH) ([c1d735a](https://github.com/TestPlanIt/testplanit/commit/c1d735a8b7a7ed282f072b423c20f767056ace39))
+* **integrations:** close GitHub Issues gaps in the create form, webhooks, details and OAuth ([918c4c5](https://github.com/TestPlanIt/testplanit/commit/918c4c584d13738bafc61e43f31c3a9a8f27c76f))
+* **integrations:** sync GitHub repository milestones ([6cb4256](https://github.com/TestPlanIt/testplanit/commit/6cb42563bf2ec0796fa83489aba6144acf00cb47))
+
 ## [1.2.0-beta.29](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.28...v1.2.0-beta.29) (2026-11-04)
 
 ### Bug Fixes
