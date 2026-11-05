@@ -1746,7 +1746,7 @@
         "inboundChooserGitea": "Gitea",
         "inboundJiraTitle": "Příchozí webhook Jira",
         "inboundGithubTitle": "Příchozí webhook GitHub",
-        "inboundGithubScopeHint": "Události GitHub <code>issues</code> aktualizují propojené problémy TestPlanIt. Události pull request a komentáře k problémům jsou přijímány, ale zatím problémy neaktualizují.",
+        "inboundGithubScopeHint": "Události GitHub <code>issues</code> aktualizují propojené problémy TestPlanIt, včetně jejich uzavření jako neplánovaných, a události <code>issue_comment</code> je osvěžují. Události pull requestu jsou přijímány, ale neaktualizují problémy.",
         "inboundGitlabTitle": "Příchozí webhook GitLab",
         "inboundGitlabScopeHint": "Události GitLab <code>Issue Hook</code> aktualizují propojené problémy TestPlanIt. Ostatní typy událostí jsou přijímány, ale problémy neaktualizují.",
         "inboundGiteaTitle": "Příchozí webhook Gitea",
@@ -1766,7 +1766,7 @@
         "setupStepsGithubStep1": "Ve svém GitHub úložišti přejděte do Settings → Webhooks → Add webhook.",
         "setupStepsGithubStep2": "Vložte níže uvedenou URL do pole Payload URL. Nastavte Content type na application/json.",
         "setupStepsGithubStep3": "Vložte níže uvedený tajný klíč do pole Secret.",
-        "setupStepsGithubStep4": "Zvolte „Let me select individual events“ a zaškrtněte „Issues“.",
+        "setupStepsGithubStep4": "Zvolte \"Nechat si vybrat jednotlivé události\" a zaškrtněte \"Issues\" a \"Issue comments\".",
         "setupStepsGithubStep5": "Klikněte na „Add webhook“. Pomocí „Odeslat testovací webhook“ níže ověřte pipeline.",
         "setupStepsAdoStep1": "Ve svém projektu Azure DevOps přejděte do Project settings → Service hooks → Create subscription.",
         "setupStepsAdoStep2": "Zvolte \"Web Hooks\" jako službu. Nastavte Trigger na \"Work item created\", poté opakujte tyto kroky pro druhé předplatné s \"Work item updated\".",
@@ -2628,8 +2628,8 @@
       "overdue": "Milník „{name}“ měl termín splnění {dueDate}"
     },
     "import": {
-      "importTitle": "Import z {provider}",
-      "importDescription": "Vyberte {provider} Fix Versions a sprinty pro synchronizaci jako milníky TestPlanIt.",
+      "importTitle": "Importovat z {provider}",
+      "importDescription": "Vyberte milníky {provider} pro synchronizaci jako milníky TestPlanIt.",
       "showClosed": "Zobrazit uzavřené",
       "alreadyLinked": "Již propojeno",
       "selectedCount": "{count, plural, one {# vybráno} few {# vybráno} many {# vybráno} other {# vybráno}}",
@@ -2638,7 +2638,7 @@
       "empty": "Nenalezeny žádné milníky",
       "previewFailed": "Nepodařilo se načíst milníky z {provider}",
       "importFailed": "Nepodařilo se importovat vybrané milníky",
-      "requestTimedOut": "{provider} odpovídala příliš dlouho a požadavek vypršel. To obvykle znamená, že propojené projekty {provider} mají velký počet verzí nebo nástěnek. Zkuste to znovu a ponechte volbu „Zobrazit uzavřené“ vypnutou, abyste zúžili požadavek.",
+      "requestTimedOut": "Služba {provider} příliš dlouho reaguje a požadavek vypršel. Obvykle to znamená, že propojené projekty {provider} mají velký počet verzí nebo desek. Zkuste to znovu a nechte \"Zobrazit uzavřené\" vypnuté, abyste zúžili požadavek.",
       "serviceUnavailable": "Server je dočasně nedostupný. Zkuste to prosím za chvíli znovu.",
       "unexpectedResponse": "Neočekávaná odpověď ze serveru (HTTP {status}). Zkuste to prosím znovu a pokud problém přetrvává, kontaktujte svého administrátora.",
       "importStarted": "Import zahájen",
@@ -2647,14 +2647,15 @@
       "searchPlaceholder": "Hledat vydání a sprinty...",
       "emptyFiltered": "Žádné milníky neodpovídají vašim filtrům.",
       "partialWarning": "Některé projekty {provider} se nepodařilo načíst:",
-      "importing": "Importuje se {count, plural, one {# milník} few {# milníky} many {# milníku} other {# milníků}} z {provider}…",
-      "completed": "Importováno {count, plural, one {# milník} few {# milníky} many {# milníku} other {# milníků}} z {provider}",
+      "importing": "Importuji {count, plural, one {# milník} few {# milníky} many {# milníků} other {# milníků}} z {provider}…",
+      "completed": "Importováno {count, plural, one {# milník} few {# milníky} many {# milníků} other {# milníků}} z {provider}",
       "stillRunning": "Import stále běží na pozadí — milníky se zobrazí po jeho dokončení."
     },
     "sync": {
-      "managedByJira": "Spravováno prostřednictvím {provider}",
+      "managedByJira": "Spravováno poskytovatelem {provider}",
       "lastSynced": "Naposledy synchronizováno {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Synchronizovat nyní",
       "unlinkMenuItem": "Zrušit propojení s {provider}",
@@ -8090,7 +8091,7 @@
       "documentation": "## Dokumentace\nDoplňující podrobnosti, odkazy a podpůrné materiály.\n\n- Technické specifikace\n- Návrhové dokumenty\n- Externí odkazy\n- Poznámky ze schůzek a rozhodnutí",
       "automaticCompletion": "## Automatické dokončení k datu splatnosti\nAutomaticky označí tento milník jako dokončený po dosažení jeho data splatnosti.\n\n- Milník bude dokončen v naplánovaném čase v den splatnosti\n- Užitečné pro časově ohraničené milníky, které by se měly uzavřít bez ohledu na stav dokončení\n- Lze přepsat ručním dokončením milníku před datem splatnosti\n- Vyžaduje nastavené datum splatnosti",
       "notifyDaysBefore": "## Upozornit dnů před datem splatnosti\nOdesílá oznámení přiřazeným členům týmu, když se blíží datum splatnosti milníku.\n\n- Zapnutím povolíte oznámení, vypnutím je zakážete\n- Zadejte počet dnů před datem splatnosti, kdy se mají začít odesílat připomínky\n- Oznámení jsou odesílána uživatelům přiřazeným k testovacím běhům a relacím v rámci tohoto milníku\n- U milníků po termínu budou připomínky odesílány i nadále, dokud nebudou dokončeny",
-      "managedByJira": "## Spravováno pomocí Jira\nNázev, data a stav tohoto milníku jsou spravovány pomocí Jira. Proveďte změny tam, aby se aktualizovaly zde."
+      "managedByJira": "## Spravováno nástrojem pro sledování\nNázev, data a stav tohoto milníku jsou spravovány nástrojem pro sledování problémů, ze kterého byl importován. Proveďte tam změny, aby se aktualizovaly i zde."
     },
     "session": {
       "name": "## Název relace\nJasný, výstižný název, který identifikuje účel vaší testovací relace.\n\n- Měl by být jedinečný a smysluplný\n- Pomáhá členům týmu pochopit, co se testuje\n- Používá se v sestavách a sledování",

@@ -1746,7 +1746,7 @@
         "inboundChooserGitea": "ギテア",
         "inboundJiraTitle": "JiraインバウンドWebhook",
         "inboundGithubTitle": "GitHubの受信Webhook",
-        "inboundGithubScopeHint": "GitHub <code>の課題</code> のイベントは、リンクされた TestPlanIt の課題を更新します。プル リクエストと課題コメントのイベントは受け付けられますが、課題はまだ更新されません。",
+        "inboundGithubScopeHint": "GitHub <code>issues</code> イベントはリンクされた TestPlanIt の課題を更新し、未完了として閉じることを含めて、<code>issue_comment</code> イベントはそれらを更新します。プル リクエスト イベントは受け付けられていますが、課題は更新されません。",
         "inboundGitlabTitle": "GitLabの受信Webhook",
         "inboundGitlabScopeHint": "GitLab <code>Issue Hook</code> イベントは、リンクされた TestPlanIt の課題を更新します。他のイベントタイプも受け入れられますが、課題は更新されません。",
         "inboundGiteaTitle": "Giteaの受信Webhook",
@@ -1766,7 +1766,7 @@
         "setupStepsGithubStep1": "GitHubリポジトリで、[設定] → [Webhook] → [Webhookを追加] に移動します。",
         "setupStepsGithubStep2": "以下のURLをペイロードURLフィールドに貼り付けてください。コンテンツタイプをapplication/jsonに設定してください。",
         "setupStepsGithubStep3": "以下の秘密情報を「秘密情報」欄に貼り付けてください。",
-        "setupStepsGithubStep4": "「個々のイベントを選択する」を選択し、「問題」にチェックを入れます。",
+        "setupStepsGithubStep4": "「個々のイベントを選択する」を選択し、「Issues」と「Issue comments」にチェックを入れます。",
         "setupStepsGithubStep5": "「Webhookを追加」をクリックしてください。パイプラインを確認するには、下の「テストWebhookを送信」を使用してください。",
         "setupStepsAdoStep1": "Azure DevOps プロジェクトで、[プロジェクト設定] → [サービス フック] → [サブスクリプションの作成] に移動します。",
         "setupStepsAdoStep2": "サービスとして「Web Hooks」を選択します。トリガーを「Work item created」に設定してから、「Work item updated」で2番目のサブスクリプションについてこれらの手順を繰り返します。",
@@ -2629,7 +2629,7 @@
     },
     "import": {
       "importTitle": "{provider} からインポート",
-      "importDescription": "TestPlanIt マイルストーンとして同期する {provider} の Fix Version とスプリントを選択してください。",
+      "importDescription": "TestPlanIt マイルストーンとして同期する {provider} マイルストーンを選択してください。",
       "showClosed": "終了したものを表示",
       "alreadyLinked": "既にリンクされています",
       "selectedCount": "{count, plural, other {#件選択済み}}",
@@ -2638,7 +2638,7 @@
       "empty": "マイルストーンが見つかりません",
       "previewFailed": "{provider} からマイルストーンを読み込めませんでした",
       "importFailed": "選択したマイルストーンのインポートに失敗しました",
-      "requestTimedOut": "{provider}の応答に時間がかかりすぎたため、リクエストがタイムアウトしました。これは通常、連携している{provider}プロジェクトに多数のバージョンやボードが存在する場合に発生します。「クローズ済みを表示」をオフにしたまま、もう一度お試しください。",
+      "requestTimedOut": "{provider} は応答に時間がかかり、リクエストがタイムアウトしました。これは通常、リンクされた {provider} プロジェクトが多くのバージョンまたはボードを持っていることを意味します。もう一度試して、「完了したものを表示」をオフのままにしてリクエストを絞ります。",
       "serviceUnavailable": "サーバーが一時的に利用できません。しばらくしてからもう一度お試しください。",
       "unexpectedResponse": "サーバーから予期しない応答がありました（HTTP {status}）。もう一度お試しいただき、問題が続く場合は管理者にお問い合わせください。",
       "importStarted": "インポートを開始しました",
@@ -2655,6 +2655,7 @@
       "managedByJira": "{provider} によって管理されています",
       "lastSynced": "最終同期: {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "今すぐ同期",
       "unlinkMenuItem": "{provider} からリンクを解除",
@@ -8090,7 +8091,7 @@
       "documentation": "## ドキュメント\n追加の詳細、参考資料、およびサポート資料。\n\n- 技術仕様\n- 設計ドキュメント\n- 外部参照\n- 会議の議事録と決定事項",
       "automaticCompletion": "## 期日自動完了\n期日が来ると、このマイルストーンを自動的に完了としてマークします。\n\n- マイルストーンは期日の予定時刻に完了します\n- 完了ステータスに関係なく閉じる必要がある時間指定のマイルストーンに役立ちます\n- 期日前にマイルストーンを手動で完了することで上書きできます\n- 期日を設定する必要があります",
       "notifyDaysBefore": "## 期日前に通知\nマイルストーンの期日が近づくと、割り当てられたチームメンバーに通知を送信します。\n\n- 通知を有効にするにはオンに切り替え、無効にするにはオフにします\n- 期日の何日前にリマインダーの送信を開始するかを入力します\n- 通知は、このマイルストーン内のテスト実行とセッションに割り当てられたユーザーに送信されます\n- 期限を過ぎたマイルストーンは、完了するまでリマインダーを送信し続けます",
-      "managedByJira": "## Jiraによって管理\nこのマイルストーンの名前、日付、状態は Jira によって管理されています。こちらで更新するには、そちらで変更してください。"
+      "managedByJira": "## トラッカーによって管理されています\nこのマイルストーンの名前、日付、および状態は、それがインポートされた課題トラッカーによって管理されています。こちらで更新するには、そちらで変更してください。"
     },
     "session": {
       "name": "## セッション名\nテストセッションの目的を明確に示す説明的な名前。\n\n- ユニークで意味のあるものにする必要があります\n- チームメンバーがテスト対象を理解するのに役立ちます\n- レポートや追跡で使用されます",

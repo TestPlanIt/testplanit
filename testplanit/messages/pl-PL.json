@@ -1746,7 +1746,7 @@
         "inboundChooserGitea": "Gitea",
         "inboundJiraTitle": "Przychodzący webhook Jira",
         "inboundGithubTitle": "GitHub przychodzący webhook",
-        "inboundGithubScopeHint": "Zdarzenia GitHub <code>dotyczące problemów</code> aktualizują powiązane problemy TestPlanIt. Zdarzenia pull request i komentarzy do problemów są akceptowane, ale nie aktualizują jeszcze problemów.",
+        "inboundGithubScopeHint": "Zdarzenia GitHub <code>issues</code> aktualizują powiązane problemy TestPlanIt, w tym zamykanie jako niezaplanowane, a zdarzenia <code>issue_comment</code> je odświeżają. Zdarzenia pull request są akceptowane, ale nie aktualizują problemów.",
         "inboundGitlabTitle": "GitLab przychodzący webhook",
         "inboundGitlabScopeHint": "Zdarzenia GitLab <code>Issue Hook</code> aktualizują powiązane zgłoszenia TestPlanIt. Akceptowane są inne typy zdarzeń, ale nie aktualizują zgłoszeń.",
         "inboundGiteaTitle": "Gitea przychodzący webhook",
@@ -1766,7 +1766,7 @@
         "setupStepsGithubStep1": "W repozytorium GitHub przejdź do Ustawienia → Webhooki → Dodaj webhook.",
         "setupStepsGithubStep2": "Wklej poniższy adres URL w polu „Adres URL treści”. Ustaw typ zawartości na application/json.",
         "setupStepsGithubStep3": "Wklej poniższy sekret w polu Sekret.",
-        "setupStepsGithubStep4": "Wybierz opcję „Pozwól mi wybrać pojedyncze zdarzenia” i zaznacz „Problemy”.",
+        "setupStepsGithubStep4": "Wybierz opcję „Pozwól mi wybrać pojedyncze zdarzenia",
         "setupStepsGithubStep5": "Kliknij „Dodaj webhook”. Użyj poniższej opcji „Wyślij testowy webhook”, aby zweryfikować potok.",
         "setupStepsAdoStep1": "W projekcie Azure DevOps przejdź do Ustawień projektu → Haki usługi → Utwórz subskrypcję.",
         "setupStepsAdoStep2": "Wybierz \"Web Hooks\" jako usługę. Ustaw wyzwalacz na \"Work item created\", a następnie powtórz te kroki dla drugiej subskrypcji z \"Work item updated\".",
@@ -2629,7 +2629,7 @@
     },
     "import": {
       "importTitle": "Importuj z {provider}",
-      "importDescription": "Wybierz wersje Fix Version i sprinty {provider} do synchronizacji jako kamienie milowe TestPlanIt.",
+      "importDescription": "Wybierz kamienie milowe {provider} do synchronizacji jako kamienie milowe TestPlanIt.",
       "showClosed": "Pokaż zamknięte",
       "alreadyLinked": "Już połączone",
       "selectedCount": "{count, plural, one {# wybrano} few {# wybrano} many {# wybrano} other {# wybrano}}",
@@ -2638,7 +2638,7 @@
       "empty": "Nie znaleziono kamieni milowych",
       "previewFailed": "Nie udało się wczytać kamieni milowych z {provider}",
       "importFailed": "Nie udało się zaimportować wybranych kamieni milowych",
-      "requestTimedOut": "{provider} zbyt długo odpowiadała i upłynął limit czasu żądania. Zazwyczaj oznacza to, że powiązane projekty {provider} mają dużą liczbę wersji lub tablic. Spróbuj ponownie i pozostaw wyłączoną opcję \"Pokaż zamknięte\", aby zawęzić żądanie.",
+      "requestTimedOut": "{provider} zbyt długo nie odpowiadał i upłynął limit czasu żądania. Zwykle oznacza to, że powiązane projekty {provider} mają dużą liczbę wersji lub tablic. Spróbuj ponownie i wyłącz opcję „Pokaż zamknięte",
       "serviceUnavailable": "Serwer jest tymczasowo niedostępny. Spróbuj ponownie za chwilę.",
       "unexpectedResponse": "Nieoczekiwana odpowiedź serwera (HTTP {status}). Spróbuj ponownie, a jeśli problem się powtarza, skontaktuj się z administratorem.",
       "importStarted": "Import rozpoczęty",
@@ -2655,6 +2655,7 @@
       "managedByJira": "Zarządzane przez {provider}",
       "lastSynced": "Ostatnia synchronizacja: {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Synchronizuj teraz",
       "unlinkMenuItem": "Odłącz od {provider}",
@@ -8090,7 +8091,7 @@
       "documentation": "## Dokumentacja\nDodatkowe szczegóły, odniesienia i materiały pomocnicze.\n\n- Specyfikacje techniczne\n- Dokumentacja projektowa\n- Odniesienia zewnętrzne\n- Notatki ze spotkań i decyzje",
       "automaticCompletion": "## Automatyczne uzupełnianie w terminie\nAutomatycznie oznacza ten kamień milowy jako ukończony po osiągnięciu jego terminu.\n\n- Kamień milowy zostanie ukończony w zaplanowanym czasie w terminie\n- Przydatne w przypadku kamieni milowych ograniczonych czasowo, które powinny zostać zamknięte niezależnie od statusu ukończenia\n- Można pominąć, ręcznie uzupełniając kamień milowy przed terminem\n- Wymaga ustawienia terminu",
       "notifyDaysBefore": "## Powiadom na dni przed terminem\nWysyłaj powiadomienia do przypisanych członków zespołu, gdy zbliża się termin osiągnięcia kamienia milowego.\n\n— Włącz, aby włączyć powiadomienia, wyłącz, aby je wyłączyć\n— Wprowadź liczbę dni przed terminem, aby rozpocząć wysyłanie przypomnień\n— Powiadomienia są wysyłane do użytkowników przypisanych do przebiegów testowych i sesji w ramach tego kamienia milowego\n— Przekroczone kamienie milowe będą nadal wysyłać przypomnienia do momentu ich ukończenia",
-      "managedByJira": "## Zarządzane przez Jira\nNazwa, daty i status tego kamienia milowego są zarządzane przez Jira. Wprowadź zmiany tam, aby zaktualizować je tutaj."
+      "managedByJira": "## Zarządzane przez tracker\nNazwa, daty i status tego kamienia milowego są zarządzane przez tracker problemów, z którego został zaimportowany. Wprowadź zmiany tam, aby zaktualizować je tutaj."
     },
     "session": {
       "name": "## Nazwa sesji\nJasna, opisowa nazwa identyfikująca cel sesji testowej.\n\n– Powinna być unikatowa i znacząca\n– Pomaga członkom zespołu zrozumieć, co jest testowane\n– Używana w raportach i śledzeniu",

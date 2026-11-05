@@ -1746,7 +1746,7 @@
         "inboundChooserGitea": "吉特亞",
         "inboundJiraTitle": "Jira 入站 webhook",
         "inboundGithubTitle": "GitHub 入站 webhook",
-        "inboundGithubScopeHint": "GitHub <code>issues</code> events 會更新相關的 TestPlanIt 問題。 Pull request 和 issue comment 事件已被接受，但目前不會更新問題。",
+        "inboundGithubScopeHint": "GitHub <code>issues</code> events 會更新相關的 TestPlanIt 問題，包括標記為未規劃而關閉，<code>issue_comment</code> events 會重新整理它們。Pull request events 已被接受但不會更新問題。",
         "inboundGitlabTitle": "GitLab 入站 webhook",
         "inboundGitlabScopeHint": "GitLab <code>Issue Hook</code> 事件會更新相關的 TestPlanIt 問題。其他事件類型也會被接受，但不會更新問題。",
         "inboundGiteaTitle": "Gitea 入站 webhook",
@@ -1766,7 +1766,7 @@
         "setupStepsGithubStep1": "在您的 GitHub 儲存庫中，前往「設定」→「Webhooks」→「新增 webhook」。",
         "setupStepsGithubStep2": "將以下 URL 貼到「有效負載 URL」欄位中。將內容類型設定為 application/json。",
         "setupStepsGithubStep3": "將以下秘密貼到「秘密」欄位中。",
-        "setupStepsGithubStep4": "選擇“讓我選擇單一事件”，然後勾選“問題”。",
+        "setupStepsGithubStep4": "選擇「讓我選擇單一事件」，然後勾選「Issues」和「Issue comments」。",
         "setupStepsGithubStep5": "點選「新增 webhook」。使用下面的「發送測試 webhook」來驗證管道。",
         "setupStepsAdoStep1": "在 Azure DevOps 專案中，前往「專案設定」→「服務掛鉤」→「建立訂閱」。",
         "setupStepsAdoStep2": "選擇 \"Web Hooks\" 作為服務。將觸發條件設置為 \"Work item created\"，然後對第二個訂閱重複這些步驟，使用 \"Work item updated\"。",
@@ -2629,7 +2629,7 @@
     },
     "import": {
       "importTitle": "從 {provider} 匯入",
-      "importDescription": "選擇要同步為 TestPlanIt 里程碑的 {provider} 修復版本和衝刺。",
+      "importDescription": "選擇要同步為 TestPlanIt 里程碑的 {provider} 里程碑。",
       "showClosed": "顯示已關閉",
       "alreadyLinked": "已連結",
       "selectedCount": "{count, plural, other {已選擇 # 個}}",
@@ -2638,7 +2638,7 @@
       "empty": "找不到里程碑",
       "previewFailed": "從 {provider} 載入里程碑失敗",
       "importFailed": "匯入所選里程碑失敗",
-      "requestTimedOut": "{provider} 回應時間過長，請求已逾時。這通常表示所連結的 {provider} 專案版本或看板數量過多。請再試一次，並保持「顯示已關閉」選項為關閉狀態，以縮小請求範圍。",
+      "requestTimedOut": "{provider} 回應時間過長，請求已逾時。這通常表示相關的 {provider} 專案有大量版本或看板。請重試，並保持「顯示已關閉」為關閉狀態以縮小請求範圍。",
       "serviceUnavailable": "伺服器暫時無法使用，請稍後再試。",
       "unexpectedResponse": "伺服器傳回非預期的回應（HTTP {status}）。請再試一次，若問題持續發生，請聯絡您的管理員。",
       "importStarted": "匯入已開始",
@@ -2647,7 +2647,7 @@
       "searchPlaceholder": "搜尋發行版本和衝刺……",
       "emptyFiltered": "沒有符合您篩選條件的里程碑。",
       "partialWarning": "部分 {provider} 專案無法取得：",
-      "importing": "正在從 {provider} 匯入 {count, plural, other {# 個里程碑}}…",
+      "importing": "正在從 {provider} 匯入 {count, plural, other {# 個里程碑}}……",
       "completed": "已從 {provider} 匯入 {count, plural, other {# 個里程碑}}",
       "stillRunning": "匯入仍在背景執行中 — 里程碑將在完成後出現。"
     },
@@ -2655,6 +2655,7 @@
       "managedByJira": "由 {provider} 管理",
       "lastSynced": "上次同步時間 {time}",
       "providerJira": "吉拉",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "立即同步",
       "unlinkMenuItem": "取消與 {provider} 的連結",
@@ -8090,7 +8091,7 @@
       "documentation": "## 文件\n更多詳情、參考資料和支援資料。\n\n- 技術規格\n- 設計文件\n- 外部參考資料\n- 會議記錄與決議",
       "automaticCompletion": "## 截止日期自動完成\n當里程碑的截止日期到來時，會自動標記為已完成。\n\n- 里程碑將在截止日期當天按計畫時間完成。\n- 適用於無論完成狀態如何都應關閉的限時里程碑。\n- 可以透過在截止日期前手動完成里程碑來覆蓋此設定。\n- 需要設定截止日期。",
       "notifyDaysBefore": "## 截止日期前通知\n當里程碑截止日期臨近時，向指定的團隊成員發送通知。\n\n- 開啟此開關以啟用通知，關閉此開關以停用通知。\n- 輸入截止日期前開始發送提醒的天數。\n- 通知將傳送給指派到此里程碑內測試運行和會話的使用者。\n- 逾期里程碑將持續傳送提醒，直至完成。",
-      "managedByJira": "## 由 Jira 管理\n此里程碑的名稱、日期和狀態由 Jira 管理。請在 Jira 中進行變更以更新此處的資訊。"
+      "managedByJira": "## 由追蹤工具管理\n此里程碑的名稱、日期和狀態由它所匯入的問題追蹤工具管理。請在該處進行變更以更新此處的資訊。"
     },
     "session": {
       "name": "## 會話名稱\n一個清晰、描述性的名稱，用於明確測試會話的目的。\n\n- 應唯一且有意義。\n- 幫助團隊成員了解測驗內容。\n- 用於報告和追蹤。",

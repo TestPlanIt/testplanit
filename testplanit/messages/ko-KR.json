@@ -1746,7 +1746,7 @@
         "inboundChooserGitea": "기테아",
         "inboundJiraTitle": "Jira 인바운드 웹훅",
         "inboundGithubTitle": "GitHub 인바운드 웹훅",
-        "inboundGithubScopeHint": "GitHub <code>이슈</code> 이벤트는 연결된 TestPlanIt 이슈를 업데이트합니다. 풀 리퀘스트 및 이슈 댓글 이벤트는 허용되지만 아직 이슈를 업데이트하지는 않습니다.",
+        "inboundGithubScopeHint": "GitHub <code>이슈</code> 이벤트는 연결된 TestPlanIt 이슈를 업데이트하며, 계획하지 않은 상태로 종료하는 것도 포함하고, <code>issue_comment</code> 이벤트는 이를 새로고침합니다. 풀 리퀘스트 이벤트는 허용되지만 이슈를 업데이트하지는 않습니다.",
         "inboundGitlabTitle": "GitLab 인바운드 웹훅",
         "inboundGitlabScopeHint": "GitLab <code>이슈 훅</code> 이벤트는 연결된 TestPlanIt 이슈를 업데이트합니다. 다른 이벤트 유형도 허용되지만 이슈는 업데이트하지 않습니다.",
         "inboundGiteaTitle": "Gitea 인바운드 웹훅",
@@ -1766,7 +1766,7 @@
         "setupStepsGithubStep1": "GitHub 저장소에서 설정 → 웹훅 → 웹훅 추가로 이동하세요.",
         "setupStepsGithubStep2": "아래 URL을 페이로드 URL 필드에 붙여넣으세요. 콘텐츠 유형을 application/json으로 설정하세요.",
         "setupStepsGithubStep3": "아래의 비밀을 비밀 입력란에 붙여넣으세요.",
-        "setupStepsGithubStep4": "\"개별 이벤트를 직접 선택\"을 선택하고 \"문제\"를 체크하세요.",
+        "setupStepsGithubStep4": "\"개별 이벤트를 직접 선택\"을 선택하고 \"이슈\" 및 \"이슈 댓글\"을 체크하세요.",
         "setupStepsGithubStep5": "\"웹훅 추가\"를 클릭하세요. 아래의 \"테스트 웹훅 보내기\"를 사용하여 파이프라인을 확인하세요.",
         "setupStepsAdoStep1": "Azure DevOps 프로젝트에서 프로젝트 설정 → 서비스 후크 → 구독 만들기로 이동합니다.",
         "setupStepsAdoStep2": "\"웹 후크\"를 서비스로 선택합니다. 트리거를 \"작업 항목 생성\"으로 설정한 다음 \"작업 항목 업데이트\"를 사용하여 두 번째 구독에 대해 이 단계를 반복합니다.",
@@ -2629,7 +2629,7 @@
     },
     "import": {
       "importTitle": "{provider}에서 가져오기",
-      "importDescription": "TestPlanIt 마일스톤으로 동기화할 {provider} 수정 버전 및 스프린트를 선택하세요.",
+      "importDescription": "TestPlanIt 마일스톤으로 동기화할 {provider} 마일스톤을 선택하세요.",
       "showClosed": "닫힌 항목 표시",
       "alreadyLinked": "이미 연결됨",
       "selectedCount": "{count, plural, other {#개 선택됨}}",
@@ -2638,7 +2638,7 @@
       "empty": "마일스톤을 찾을 수 없습니다",
       "previewFailed": "{provider}에서 마일스톤을 불러오는 데 실패했습니다",
       "importFailed": "선택한 마일스톤을 가져오는 데 실패했습니다",
-      "requestTimedOut": "{provider}가 응답하는 데 너무 오래 걸려 요청이 시간 초과되었습니다. 이는 일반적으로 연결된 {provider} 프로젝트에 버전 또는 보드가 많다는 것을 의미합니다. 다시 시도하고, 요청 범위를 좁히기 위해 \"닫힌 항목 표시\"를 비활성화 상태로 유지하세요.",
+      "requestTimedOut": "{provider}의 응답 시간이 너무 오래 걸려 요청이 시간 초과되었습니다. 이는 일반적으로 연결된 {provider} 프로젝트에 많은 수의 버전 또는 보드가 있음을 의미합니다. 다시 시도하고 \"종료됨 표시\" 옵션을 꺼서 요청 범위를 좁혀보세요.",
       "serviceUnavailable": "서버를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
       "unexpectedResponse": "서버에서 예기치 않은 응답이 발생했습니다(HTTP {status}). 다시 시도해 주시고, 계속 발생하면 관리자에게 문의하세요.",
       "importStarted": "가져오기가 시작되었습니다",
@@ -2655,6 +2655,7 @@
       "managedByJira": "{provider}에서 관리됨",
       "lastSynced": "마지막 동기화: {time}",
       "providerJira": "지라",
+      "providerGitHub": "깃허브",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "지금 동기화",
       "unlinkMenuItem": "{provider}에서 연결 해제",
@@ -8090,7 +8091,7 @@
       "documentation": "## 문서\n추가 정보, 참고 자료 및 보충 자료.\n\n- 기술 사양\n- 설계 문서\n- 외부 참고 자료\n- 회의록 및 결정 사항",
       "automaticCompletion": "## 마감일 자동 완료\n마감일이 되면 이 마일스톤을 자동으로 완료로 표시합니다.\n\n- 마일스톤은 마감일의 예정된 시간에 완료됩니다.\n- 완료 여부와 관계없이 마감되어야 하는 시간 제한 마일스톤에 유용합니다.\n- 마감일 전에 수동으로 마일스톤을 완료하면 이 설정을 무시할 수 있습니다.\n- 마감일을 설정해야 합니다.",
       "notifyDaysBefore": "## 마감일 며칠 전 알림\n마일스톤 마감일이 다가오면 지정된 팀원에게 알림을 보냅니다.\n\n- 알림을 활성화하려면 켜고, 비활성화하려면 끄세요.\n- 마감일 며칠 전부터 알림을 보낼지 입력하세요.\n- 이 마일스톤 내의 테스트 실행 및 세션에 지정된 사용자에게 알림이 전송됩니다.\n- 마감일이 지난 마일스톤은 완료될 때까지 알림이 계속 전송됩니다.",
-      "managedByJira": "## Jira에서 관리\n이 마일스톤의 이름, 날짜, 상태는 Jira에서 관리됩니다. 여기에서 업데이트하려면 Jira에서 변경하세요."
+      "managedByJira": "## 추적기에서 관리됨\n이 마일스톤의 이름, 날짜 및 상태는 가져온 이슈 추적기에서 관리됩니다. 여기에서 업데이트하려면 해당 위치에서 변경하세요."
     },
     "session": {
       "name": "## 세션 이름\n테스트 세션의 목적을 명확하고 설명적으로 나타내는 이름입니다.\n\n- 고유하고 의미 있는 이름이어야 합니다.\n- 팀 구성원이 테스트 대상을 이해하는 데 도움이 됩니다.\n- 보고서 및 추적에 사용됩니다.",

@@ -1746,7 +1746,7 @@
         "inboundChooserGitea": "吉特亚",
         "inboundJiraTitle": "Jira 入站 webhook",
         "inboundGithubTitle": "GitHub 入站 webhook",
-        "inboundGithubScopeHint": "GitHub <code>issues</code> events 会更新关联的 TestPlanIt 问题。Pull request 和 issue comment 事件已接受，但目前不会更新问题。",
+        "inboundGithubScopeHint": "GitHub <code>issues</code> 事件会更新关联的 TestPlanIt 问题（包括作为未计划关闭），<code>issue_comment</code> 事件会刷新它们。Pull request 事件已接受，但不会更新问题。",
         "inboundGitlabTitle": "GitLab 入站 webhook",
         "inboundGitlabScopeHint": "GitLab <code>Issue Hook</code> 事件会更新关联的 TestPlanIt 问题。其他事件类型也会被接受，但不会更新问题。",
         "inboundGiteaTitle": "Gitea 入站 webhook",
@@ -1766,7 +1766,7 @@
         "setupStepsGithubStep1": "在您的 GitHub 存储库中，转到“设置”→“Webhooks”→“添加 webhook”。",
         "setupStepsGithubStep2": "将以下 URL 粘贴到“有效负载 URL”字段中。将内容类型设置为 application/json。",
         "setupStepsGithubStep3": "将以下秘密粘贴到“秘密”字段中。",
-        "setupStepsGithubStep4": "选择“让我选择单个事件”，然后勾选“问题”。",
+        "setupStepsGithubStep4": "选择",
         "setupStepsGithubStep5": "点击“添加 webhook”。使用下面的“发送测试 webhook”来验证管道。",
         "setupStepsAdoStep1": "在 Azure DevOps 项目中，转到项目设置 → 服务挂钩 → 创建订阅。",
         "setupStepsAdoStep2": "选择",
@@ -2629,7 +2629,7 @@
     },
     "import": {
       "importTitle": "从 {provider} 导入",
-      "importDescription": "选择要同步为 TestPlanIt 里程碑的 {provider} 修复版本和迭代。",
+      "importDescription": "选择要同步为 TestPlanIt 里程碑的 {provider} 里程碑。",
       "showClosed": "显示已关闭",
       "alreadyLinked": "已链接",
       "selectedCount": "{count, plural, other {# 已选择}}",
@@ -2638,7 +2638,7 @@
       "empty": "未找到里程碑",
       "previewFailed": "从 {provider} 加载里程碑失败",
       "importFailed": "导入所选里程碑失败",
-      "requestTimedOut": "{provider} 响应时间过长，请求已超时。这通常意味着关联的 {provider} 项目拥有大量版本或看板。请重试，并保持“显示已关闭”选项处于关闭状态以缩小请求范围。",
+      "requestTimedOut": "{provider} 响应耗时过长，请求超时。这通常意味着关联的 {provider} 项目有大量版本或看板。请重试，并关闭",
       "serviceUnavailable": "服务器暂时不可用，请稍后再试。",
       "unexpectedResponse": "服务器返回了意外响应（HTTP {status}）。请重试，如果问题持续发生，请联系您的管理员。",
       "importStarted": "导入已开始",
@@ -2647,7 +2647,7 @@
       "searchPlaceholder": "搜索版本和迭代……",
       "emptyFiltered": "没有符合筛选条件的里程碑。",
       "partialWarning": "无法获取部分 {provider} 项目：",
-      "importing": "正在从 {provider} 导入 {count, plural, other {# 个里程碑}}…",
+      "importing": "正在从 {provider} 导入 {count, plural, other {# 个里程碑}}……",
       "completed": "已从 {provider} 导入 {count, plural, other {# 个里程碑}}",
       "stillRunning": "导入仍在后台运行 — 完成后里程碑将会显示。"
     },
@@ -2655,6 +2655,7 @@
       "managedByJira": "由 {provider} 管理",
       "lastSynced": "上次同步：{time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "立即同步",
       "unlinkMenuItem": "取消与 {provider} 的链接",
@@ -8090,7 +8091,7 @@
       "documentation": "## 文档\n更多详情、参考资料和支持材料。\n\n- 技术规范\n- 设计文档\n- 外部参考资料\n- 会议记录和决议",
       "automaticCompletion": "## 截止日期自动完成\n当里程碑的截止日期到来时，会自动将其标记为已完成。\n\n- 里程碑将在截止日期当天按计划时间完成。\n- 适用于无论完成状态如何都应关闭的限时里程碑。\n- 可以通过在截止日期前手动完成里程碑来覆盖此设置。\n- 需要设置截止日期。",
       "notifyDaysBefore": "## 截止日期前通知\n当里程碑截止日期临近时，向指定的团队成员发送通知。\n\n- 开启此开关以启用通知，关闭此开关以禁用通知。\n- 输入截止日期前开始发送提醒的天数。\n- 通知将发送给分配到此里程碑内测试运行和会话的用户。\n- 逾期里程碑将持续发送提醒，直至完成。",
-      "managedByJira": "## 由 Jira 管理\n此里程碑的名称、日期和状态由 Jira 管理。请在 Jira 中进行更改，以在此处更新它们。"
+      "managedByJira": "## 由追踪系统管理\n此里程碑的名称、日期和状态由其导入来源的问题追踪系统管理。请在那里进行更改以在此处更新它们。"
     },
     "session": {
       "name": "## 会话名称\n一个清晰、描述性的名称，用于明确测试会话的目的。\n\n- 应唯一且有意义\n- 帮助团队成员了解测试内容\n- 用于报告和跟踪",

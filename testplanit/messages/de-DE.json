@@ -1746,7 +1746,7 @@
         "inboundChooserGitea": "Gitea",
         "inboundJiraTitle": "Jira Inbound-Webhook",
         "inboundGithubTitle": "GitHub-Webhook",
-        "inboundGithubScopeHint": "GitHub <code>veröffentlicht</code> events aktualisieren verknüpfte TestPlanIt Issues. Pull-Request und Issue-Kommentar Ereignisse werden akzeptiert, aber Aktualisieren Sie die Probleme noch nicht.",
+        "inboundGithubScopeHint": "GitHub <code>issues</code> Events aktualisieren verknüpfte TestPlanIt Issues, einschließlich des Schließens als nicht geplant, und <code>issue_comment</code> Events aktualisieren sie. Pull-Request-Events werden akzeptiert, aber aktualisieren Issues nicht.",
         "inboundGitlabTitle": "GitLab-Eingangs-Webhook",
         "inboundGitlabScopeHint": "GitLab-Ereignisse ( <code>Issue Hook</code> ) aktualisieren verknüpfte TestPlanIt-Tickets. Andere Ereignistypen werden zwar akzeptiert, aktualisieren aber keine Tickets.",
         "inboundGiteaTitle": "Gitea Inbound-Webhook",
@@ -1766,7 +1766,7 @@
         "setupStepsGithubStep1": "Gehen Sie in Ihrem GitHub-Repository zu Einstellungen → Webhooks → Webhook hinzufügen.",
         "setupStepsGithubStep2": "Fügen Sie die unten stehende URL in das Feld „Payload-URL“ ein. Stellen Sie den Inhaltstyp auf „application/json“ ein.",
         "setupStepsGithubStep3": "Fügen Sie das unten stehende Geheimnis in das Feld „Geheimnis“ ein.",
-        "setupStepsGithubStep4": "Wählen Sie „Einzelne Ereignisse auswählen“ und aktivieren Sie „Tickets“.",
+        "setupStepsGithubStep4": "Wählen Sie „Einzelne Ereignisse auswählen",
         "setupStepsGithubStep5": "Klicken Sie auf „Webhook hinzufügen“. Verwenden Sie anschließend „Test-Webhook senden“, um die Pipeline zu überprüfen.",
         "setupStepsAdoStep1": "Gehen Sie in Ihrem Azure DevOps-Projekt zu Projekteinstellungen → Diensthooks → Abonnement erstellen.",
         "setupStepsAdoStep2": "Wählen Sie \"Web Hooks\" als Dienst aus. Setzen Sie den Auslöser auf \"Work item created\" und wiederholen Sie diese Schritte für ein zweites Abonnement mit \"Work item updated\".",
@@ -2629,7 +2629,7 @@
     },
     "import": {
       "importTitle": "Aus {provider} importieren",
-      "importDescription": "Wähle die {provider}-Fix-Versionen und Sprints aus, die als TestPlanIt-Meilensteine synchronisiert werden sollen.",
+      "importDescription": "Wählen Sie die {provider}-Meilensteine aus, die als TestPlanIt-Meilensteine synchronisiert werden sollen.",
       "showClosed": "Geschlossene anzeigen",
       "alreadyLinked": "Bereits verlinkt",
       "selectedCount": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
@@ -2638,7 +2638,7 @@
       "empty": "Keine Meilensteine gefunden",
       "previewFailed": "Meilensteine konnten nicht aus {provider} geladen werden",
       "importFailed": "Ausgewählte Meilensteine konnten nicht importiert werden",
-      "requestTimedOut": "{provider} hat zu lange für die Antwort gebraucht, sodass die Anfrage abgebrochen wurde. Dies bedeutet in der Regel, dass die verknüpften {provider}-Projekte eine große Anzahl an Versionen oder Boards haben. Versuchen Sie es erneut und lassen Sie \"Geschlossene anzeigen\" deaktiviert, um die Anfrage einzugrenzen.",
+      "requestTimedOut": "\"Show closed\" ausgeschaltet, um die Anfrage einzugrenzen.",
       "serviceUnavailable": "Der Server ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut.",
       "unexpectedResponse": "Unerwartete Antwort vom Server (HTTP {status}). Bitte versuchen Sie es erneut und wenden Sie sich an Ihren Administrator, falls dies weiterhin auftritt.",
       "importStarted": "Import gestartet",
@@ -2655,6 +2655,7 @@
       "managedByJira": "Verwaltet von {provider}",
       "lastSynced": "Zuletzt synchronisiert {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Jetzt synchronisieren",
       "unlinkMenuItem": "Von {provider} trennen",
@@ -8090,7 +8091,7 @@
       "documentation": "## Dokumentation\nZusätzliche Details, Referenzen und Begleitmaterialien.\n\n- Technische Spezifikationen\n- Konstruktionsdokumente\n- Externe Referenzen\n- Besprechungsprotokolle und Beschlüsse",
       "automaticCompletion": "## Automatische Fertigstellung am Fälligkeitsdatum\nMarkiert diesen Meilenstein automatisch als abgeschlossen, sobald sein Fälligkeitsdatum erreicht ist.\n\n- Der Meilenstein wird zum geplanten Zeitpunkt am Fälligkeitsdatum abgeschlossen.\n- Nützlich für zeitlich begrenzte Meilensteine, die unabhängig vom Abschlussstatus abgeschlossen werden sollen.\n- Kann durch manuelles Abschließen des Meilensteins vor dem Fälligkeitsdatum überschrieben werden.\n- Erfordert die Festlegung eines Fälligkeitsdatums.",
       "notifyDaysBefore": "## Benachrichtigung Tage vor dem Fälligkeitsdatum\nBenachrichtigungen an zugewiesene Teammitglieder senden, wenn sich das Fälligkeitsdatum des Meilensteins nähert.\n\n- Aktivieren, um Benachrichtigungen einzuschalten, deaktivieren, um sie zu deaktivieren.\n- Anzahl der Tage vor dem Fälligkeitsdatum eingeben, um Erinnerungen zu versenden.\n- Benachrichtigungen werden an Benutzer gesendet, die Testläufen und Sitzungen innerhalb dieses Meilensteins zugewiesen sind.\n- Überfällige Meilensteine senden weiterhin Erinnerungen, bis sie abgeschlossen sind.",
-      "managedByJira": "## Von Jira verwaltet\nName, Termine und Status dieses Meilensteins werden von Jira verwaltet. Nimm dort Änderungen vor, um sie hier zu aktualisieren."
+      "managedByJira": "## Verwaltet vom Tracker\nName, Termine und Status dieses Meilensteins werden vom Issue-Tracker verwaltet, aus dem er importiert wurde. Nehmen Sie dort Änderungen vor, um sie hier zu aktualisieren."
     },
     "session": {
       "name": "## Sitzungsname\nEin klarer, aussagekräftiger Name, der den Zweck Ihrer Testsitzung beschreibt.\n\n- Sollte eindeutig und aussagekräftig sein.\n- Hilft Teammitgliedern zu verstehen, was getestet wird.\n- Wird in Berichten und zur Nachverfolgung verwendet.",

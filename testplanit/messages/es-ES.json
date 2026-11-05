@@ -1746,7 +1746,7 @@
         "inboundChooserGitea": "Gitea",
         "inboundJiraTitle": "Webhook entrante de Jira",
         "inboundGithubTitle": "Webhook entrante de GitHub",
-        "inboundGithubScopeHint": "GitHub <code>incidencias</code> eventos actualiza incidencias vinculadas de TestPlanIt. Se aceptan eventos de solicitud de extracción y comentarios de incidencias, pero aún no actualizan las incidencias.",
+        "inboundGithubScopeHint": "GitHub <code>incidencias</code> eventos actualizan incidencias vinculadas de TestPlanIt, incluyendo cerrarlas como no planificadas, y eventos <code>issue_comment</code> las actualizan. Se aceptan eventos de solicitud de extracción pero no actualizan incidencias.",
         "inboundGitlabTitle": "Webhook entrante de GitLab",
         "inboundGitlabScopeHint": "Los eventos de GitLab <code>Issue Hook</code> actualizan los problemas vinculados de TestPlanIt. Se aceptan otros tipos de eventos, pero no actualizan los problemas.",
         "inboundGiteaTitle": "Webhook entrante de Gitea",
@@ -1766,7 +1766,7 @@
         "setupStepsGithubStep1": "En tu repositorio de GitHub, ve a Configuración → Webhooks → Agregar webhook.",
         "setupStepsGithubStep2": "Pegue la siguiente URL en el campo URL de carga útil. Establezca el tipo de contenido en application/json.",
         "setupStepsGithubStep3": "Pega el siguiente secreto en el campo \"Secreto\".",
-        "setupStepsGithubStep4": "Seleccione \"Permitirme seleccionar eventos individuales\" y marque \"Problemas\".",
+        "setupStepsGithubStep4": "Seleccione \"Permitirme seleccionar eventos individuales\" y marque \"Incidencias\" e \"Incidencias comentarios\".",
         "setupStepsGithubStep5": "Haz clic en \"Agregar webhook\". Usa \"Enviar webhook de prueba\" a continuación para verificar la canalización.",
         "setupStepsAdoStep1": "En tu proyecto de Azure DevOps, ve a Configuración del proyecto → Ganchos de servicio → Crear suscripción.",
         "setupStepsAdoStep2": "Seleccione \"Web Hooks\" como el servicio. Configure el desencadenador a \"Elemento de trabajo creado\", luego repita estos pasos para una segunda suscripción con \"Elemento de trabajo actualizado\".",
@@ -2629,7 +2629,7 @@
     },
     "import": {
       "importTitle": "Importar desde {provider}",
-      "importDescription": "Seleccione las Versiones de Corrección y Sprints de {provider} para sincronizar como Hitos de TestPlanIt.",
+      "importDescription": "Seleccione los hitos de {provider} para sincronizar como Hitos de TestPlanIt.",
       "showClosed": "Mostrar cerrados",
       "alreadyLinked": "Ya vinculado",
       "selectedCount": "{count, plural, one {# seleccionado} other {# seleccionados}}",
@@ -2638,7 +2638,7 @@
       "empty": "No se encontraron hitos",
       "previewFailed": "No se pudieron cargar los hitos desde {provider}",
       "importFailed": "No se pudieron importar los hitos seleccionados",
-      "requestTimedOut": "{provider} tardó demasiado en responder y se agotó el tiempo de espera de la solicitud. Esto normalmente significa que los proyectos de {provider} vinculados tienen una gran cantidad de versiones o tableros. Inténtalo de nuevo y mantén desactivada la opción \"Mostrar cerrados\" para acotar la solicitud.",
+      "requestTimedOut": "{provider} tardó demasiado en responder y la solicitud venció. Esto generalmente significa que los proyectos de {provider} vinculados tienen una gran cantidad de versiones o tableros. Inténtelo de nuevo y mantenga \"Mostrar cerrados\" desactivado para limitar la solicitud.",
       "serviceUnavailable": "El servidor no está disponible temporalmente. Por favor, inténtalo de nuevo en un momento.",
       "unexpectedResponse": "Respuesta inesperada del servidor (HTTP {status}). Por favor, inténtalo de nuevo y contacta a tu administrador si esto sigue ocurriendo.",
       "importStarted": "Importación iniciada",
@@ -2655,6 +2655,7 @@
       "managedByJira": "Gestionado por {provider}",
       "lastSynced": "Última sincronización {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Sincronizar ahora",
       "unlinkMenuItem": "Desvincular de {provider}",
@@ -8090,7 +8091,7 @@
       "documentation": "## Documentación\nMás detalles, referencias y materiales de soporte.\n\n- Especificaciones técnicas\n- Documentos de diseño\n- Referencias externas\n- Notas y decisiones de reuniones",
       "automaticCompletion": "## Completar automáticamente en la fecha de vencimiento\nMarca automáticamente este hito como completado cuando se alcanza su fecha de vencimiento.\n\n- El hito se completará a la hora programada en la fecha de vencimiento\n- Útil para hitos con límite de tiempo que deben cerrarse independientemente del estado de finalización\n- Se puede anular completando manualmente el hito antes de la fecha de vencimiento\n- Requiere que se establezca una fecha de vencimiento",
       "notifyDaysBefore": "## Notificar días antes de la fecha de vencimiento\nEnvíe notificaciones a los miembros del equipo asignados cuando se acerque la fecha de vencimiento del hito.\n\n- Active para habilitar las notificaciones, desactívelas para deshabilitarlas\n- Ingrese el número de días antes de la fecha de vencimiento para comenzar a enviar recordatorios\n- Las notificaciones se envían a los usuarios asignados a ejecuciones de prueba y sesiones dentro de este hito\n- Los hitos vencidos continuarán enviando recordatorios hasta que se completen",
-      "managedByJira": "## Gestionado por Jira\nEl nombre, las fechas y el estado de este hito son gestionados por Jira. Realice los cambios allí para actualizarlos aquí."
+      "managedByJira": "## Gestionado por el rastreador\nEl nombre, las fechas y el estado de este hito son gestionados por el rastreador de incidencias desde el cual se importó. Realice los cambios allí para actualizarlos aquí."
     },
     "session": {
       "name": "## Nombre de la sesión\nUn nombre claro y descriptivo que identifica el propósito de su sesión de prueba.\n\n- Debe ser único y significativo\n- Ayuda a los miembros del equipo a entender lo que se está probando\n- Utilizado en informes y seguimiento",
