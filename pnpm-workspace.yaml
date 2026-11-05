@@ -134,6 +134,7 @@ overrides:
 
 patchedDependencies:
   '@acid-info/docusaurus-og@1.0.3-beta.2': patches/@acid-info__docusaurus-og@1.0.3-beta.2.patch
+  '@zenstackhq/tanstack-query@3.10.0': patches/@zenstackhq__tanstack-query@3.10.0.patch
   gray-matter@4.0.3: patches/gray-matter@4.0.3.patch
 
 permissions:

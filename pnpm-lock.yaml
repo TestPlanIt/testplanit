@@ -252,6 +252,7 @@ overrides:
 
 patchedDependencies:
   '@acid-info/docusaurus-og@1.0.3-beta.2': beddb9454387dac2126078c1626f4582ba524500d1c488c358685c5365660068
+  '@zenstackhq/tanstack-query@3.10.0': 9de5f759e2459d278ba9023cf6c25c31127a30b3a1ea82d65d911c51611a1164
   gray-matter@4.0.3: 82198c3ee34e2823c4e9793c5209cf97bd566d5610c3f6582dc3f044ca423d6f
 
 importers:
@@ -923,7 +924,7 @@ importers:
         version: 3.10.0(express@5.3.0(supports-color@10.2.2))(hono@4.13.14)(next@16.4.3(@babel/core@8.0.10)(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
       '@zenstackhq/tanstack-query':
         specifier: ^3.10.0
-        version: 3.10.0(@tanstack/react-query@5.105.0(@types/react@19.3.0)(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
+        version: 3.10.0(patch_hash=9de5f759e2459d278ba9023cf6c25c31127a30b3a1ea82d65d911c51611a1164)(@tanstack/react-query@5.105.0(@types/react@19.3.0)(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
       '@zxcvbn-ts/core':
         specifier: ^4.2.0
         version: 4.2.0
@@ -27126,7 +27127,7 @@ snapshots:
       - pg
       - sql.js
 
-  '@zenstackhq/tanstack-query@3.10.0(@tanstack/react-query@5.105.0(@types/react@19.3.0)(react@19.3.1))(pg@8.23.1)(zod@4.6.7)':
+  '@zenstackhq/tanstack-query@3.10.0(patch_hash=9de5f759e2459d278ba9023cf6c25c31127a30b3a1ea82d65d911c51611a1164)(@tanstack/react-query@5.105.0(@types/react@19.3.0)(react@19.3.1))(pg@8.23.1)(zod@4.6.7)':
     dependencies:
       '@zenstackhq/client-helpers': 3.10.0(pg@8.23.1)(zod@4.6.7)
       '@zenstackhq/common-helpers': 3.10.0

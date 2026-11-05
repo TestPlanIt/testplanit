@@ -105,7 +105,7 @@ COPY testplanit/ ./testplanit/
 # @testplanit/api workspace dependency, so `pnpm deploy` bundles it into the
 # self-contained production node_modules.
 COPY packages/api ./packages/api/
-# The workspace patches target the docs site, which testplanit's production
+# Some workspace patches target the docs site, which testplanit's production
 # dependencies never include; pnpm 12 fails a deploy on unused patches.
 RUN pnpm_config_allow_unused_patches=true pnpm --filter=testplanit deploy --prod --legacy --ignore-scripts /app/deploy
 # Rebuild native modules in the deployed tree.
