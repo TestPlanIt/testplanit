@@ -489,6 +489,78 @@ describe("GiteaAdapter", () => {
       expect(projects).toHaveLength(1);
       expect(projects[0].id).toBe("testowner/testrepo");
     });
+
+    it("walks every page of /repos/search", async () => {
+      (adapter as any).rateLimitDelay = 0;
+      const repos = (from: number, count: number) =>
+        Array.from({ length: count }, (_, i) => ({
+          full_name: `o/r${from + i + 1}`,
+          name: `r${from + i + 1}`,
+        }));
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: repos(0, 50) }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: repos(50, 4) }),
+        });
+
+      const projects = await adapter.getProjects();
+
+      expect(projects).toHaveLength(54);
+      expect(projects[53].id).toBe("o/r54");
+      const urls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("/repos/search"));
+      expect(urls).toEqual([
+        "https://gitea.example.com/api/v1/repos/search?token=&limit=50&page=1",
+        "https://gitea.example.com/api/v1/repos/search?token=&limit=50&page=2",
+      ]);
+    });
+  });
+
+  describe("getIssueComments", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1 }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "gitea-token" });
+      (adapter as any).rateLimitDelay = 0;
+    });
+
+    it("walks every page of the comments endpoint", async () => {
+      const comments = (from: number, count: number) =>
+        Array.from({ length: count }, (_, i) => ({
+          id: from + i + 1,
+          body: `c${from + i + 1}`,
+          user: { login: "alice" },
+          created: "2026-01-01T00:00:00Z",
+        }));
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(comments(0, 50)),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(comments(50, 1)),
+        });
+
+      const result = await adapter.getIssueComments!("testowner/testrepo#7");
+
+      expect(result).toHaveLength(51);
+      expect(result[50].id).toBe("51");
+      const urls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("/comments"));
+      expect(urls).toEqual([
+        "https://gitea.example.com/api/v1/repos/testowner/testrepo/issues/7/comments?limit=50&page=1",
+        "https://gitea.example.com/api/v1/repos/testowner/testrepo/issues/7/comments?limit=50&page=2",
+      ]);
+    });
   });
 
   describe("getIssueTypes (labels as the designation vocabulary)", () => {

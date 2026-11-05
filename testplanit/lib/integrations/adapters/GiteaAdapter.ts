@@ -278,10 +278,9 @@ export class GiteaAdapter extends BaseAdapter {
   async getIssueComments(issueId: string): Promise<IssueComment[]> {
     try {
       const { owner, repo, number } = this.parseIssueRef(issueId);
-      const response = await this.makeRequest<any[]>(
-        `${this.baseUrl}/api/v1/repos/${owner}/${repo}/issues/${number}/comments?limit=50`
+      const response = await this.listAllPages(
+        `${this.baseUrl}/api/v1/repos/${owner}/${repo}/issues/${number}/comments`
       );
-      if (!Array.isArray(response)) return [];
       return response.map((c) => ({
         id: c.id != null ? String(c.id) : undefined,
         author: c.user?.login || "Unknown",
@@ -307,16 +306,41 @@ export class GiteaAdapter extends BaseAdapter {
   async getProjects(): Promise<
     Array<{ id: string; key: string; name: string }>
   > {
-    const params = new URLSearchParams({ limit: "50", token: "" });
-    const response = await this.makeRequest<{ data?: any[] }>(
-      `${this.baseUrl}/api/v1/repos/search?${params.toString()}`
+    const repos = await this.listAllPages(
+      `${this.baseUrl}/api/v1/repos/search`,
+      { token: "" }
     );
-    const repos = Array.isArray(response) ? response : (response?.data ?? []);
     return repos.map((r) => ({
       id: r.full_name,
       key: r.name,
       name: r.full_name,
     }));
+  }
+
+  // Gitea's default MAX_RESPONSE_ITEMS is 50; larger `limit` values are
+  // silently clamped, so the loop ends on a short page rather than a count.
+  private async listAllPages(
+    url: string,
+    query: Record<string, string> = {}
+  ): Promise<any[]> {
+    const limit = 50;
+    const items: any[] = [];
+    for (let page = 1; ; page++) {
+      const params = new URLSearchParams({
+        ...query,
+        limit: String(limit),
+        page: String(page),
+      });
+      const response = await this.makeRequest<any>(`${url}?${params}`);
+      const pageItems: any[] = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+      items.push(...pageItems);
+      if (pageItems.length < limit) break;
+    }
+    return items;
   }
 
   /**
