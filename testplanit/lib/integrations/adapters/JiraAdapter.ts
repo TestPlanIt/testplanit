@@ -387,29 +387,53 @@ export class JiraAdapter extends BaseAdapter {
           name: project.name,
         }));
       }
-      // Cloud: GET /project/search returns { values: [...] }
-      const data = await this.makeRequest<any>(
+      // Cloud: GET /project/search is paginated
+      return this.fetchAllCloudProjects(
         this.buildUrl(`/rest/api/${this.apiVersion}/project/search`)
       );
-      return (data.values || []).map((project: any) => ({
-        id: project.id,
-        key: project.key,
-        name: project.name,
-      }));
     } else if (this.authData?.accessToken && this.cloudId) {
       // OAuth authentication (Cloud-only gateway)
-      const response = await this.makeRequest<any>(
+      return this.fetchAllCloudProjects(
         `https://api.atlassian.com/ex/jira/${this.cloudId}/rest/api/${this.apiVersion}/project/search`
       );
-
-      return (response.values || []).map((project: any) => ({
-        id: project.id,
-        key: project.key,
-        name: project.name,
-      }));
     } else {
       throw new Error("Not authenticated");
     }
+  }
+
+  // Jira Cloud caps /project/search at 50 projects per page.
+  private async fetchAllCloudProjects(
+    searchUrl: string
+  ): Promise<Array<{ id: string; key: string; name: string }>> {
+    const projects: Array<{ id: string; key: string; name: string }> = [];
+    const seen = new Set<string>();
+    let startAt = 0;
+    const maxResults = 50;
+    while (true) {
+      const params = new URLSearchParams({
+        startAt: startAt.toString(),
+        maxResults: maxResults.toString(),
+      });
+      const response = await this.makeRequest<any>(
+        `${searchUrl}?${params.toString()}`
+      );
+      const pageValues: any[] = Array.isArray(response?.values)
+        ? response.values
+        : [];
+      for (const project of pageValues) {
+        const id = String(project.id);
+        if (seen.has(id)) continue;
+        seen.add(id);
+        projects.push({ id: project.id, key: project.key, name: project.name });
+      }
+      const isLast =
+        typeof response?.isLast === "boolean"
+          ? response.isLast
+          : pageValues.length < maxResults;
+      if (isLast || pageValues.length === 0) break;
+      startAt += pageValues.length;
+    }
+    return projects;
   }
 
   /**
@@ -2275,16 +2299,25 @@ export class JiraAdapter extends BaseAdapter {
         // DC: GET /issue/createmeta/{key}/issuetypes/{id} returns a paginated
         // { values: [{ fieldId, name, required, schema, ... }] } array.
         // Convert to the same { fieldId: fieldData } shape Cloud uses.
-        url = this.buildUrl(
-          `/rest/api/${this.apiVersion}/issue/createmeta/${projectKey}/issuetypes/${issueTypeId}`
-        );
-        const metadata = await this.makeRequest<any>(url);
-        const vals = Array.isArray(metadata?.values) ? metadata.values : [];
         fieldsObj = {};
-        for (const v of vals) {
-          if (v.fieldId) {
-            fieldsObj[v.fieldId] = v;
+        const maxResults = 50;
+        for (let startAt = 0; ;) {
+          url = this.buildUrl(
+            `/rest/api/${this.apiVersion}/issue/createmeta/${projectKey}/issuetypes/${issueTypeId}?startAt=${startAt}&maxResults=${maxResults}`
+          );
+          const metadata = await this.makeRequest<any>(url);
+          const vals = Array.isArray(metadata?.values) ? metadata.values : [];
+          for (const v of vals) {
+            if (v.fieldId) {
+              fieldsObj[v.fieldId] = v;
+            }
           }
+          const isLast =
+            typeof metadata?.isLast === "boolean"
+              ? metadata.isLast
+              : vals.length < maxResults;
+          if (isLast || vals.length === 0) break;
+          startAt += vals.length;
         }
       } else {
         // Cloud: GET /issue/createmeta?projectKeys=...&issuetypeIds=...&expand=...

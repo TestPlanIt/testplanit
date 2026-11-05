@@ -415,6 +415,32 @@ describe("RedmineAdapter", () => {
       ]);
     });
 
+    it("getProjects pages with offset until total_count is reached", async () => {
+      await authenticate();
+      const page = (from: number, count: number) =>
+        Array.from({ length: count }, (_, i) => ({
+          id: from + i + 1,
+          identifier: `p${from + i + 1}`,
+          name: `P${from + i + 1}`,
+        }));
+      mockFetch
+        .mockResolvedValueOnce(
+          okJson({ projects: page(0, 100), total_count: 101 })
+        )
+        .mockResolvedValueOnce(
+          okJson({ projects: page(100, 1), total_count: 101 })
+        );
+
+      const projects = await adapter.getProjects();
+
+      expect(projects).toHaveLength(101);
+      expect(projects[100]).toEqual({ id: "101", key: "p101", name: "P101" });
+      expect(mockFetch.mock.calls.map((c) => c[0])).toEqual([
+        `${BASE_URL}/projects.json?limit=100&offset=0`,
+        `${BASE_URL}/projects.json?limit=100&offset=100`,
+      ]);
+    });
+
     it("getIssueTypes maps trackers", async () => {
       await authenticate();
       mockFetch.mockResolvedValueOnce(

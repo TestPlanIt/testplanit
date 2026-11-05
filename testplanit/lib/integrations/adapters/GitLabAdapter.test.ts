@@ -684,5 +684,83 @@ describe("GitLabAdapter", () => {
       const projects = await adapter.getProjects();
       expect(projects).toEqual([]);
     });
+
+    it("walks every page of /api/v4/projects", async () => {
+      (adapter as any).rateLimitDelay = 0;
+      const page = (from: number, count: number) =>
+        Array.from({ length: count }, (_, i) => ({
+          path_with_namespace: `g/p${from + i + 1}`,
+          name_with_namespace: `G / P${from + i + 1}`,
+        }));
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(page(0, 100)),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(page(100, 1)),
+        });
+
+      const projects = await adapter.getProjects();
+
+      expect(projects).toHaveLength(101);
+      expect(projects[100].id).toBe("g/p101");
+      const urls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("/api/v4/projects?"));
+      expect(urls).toEqual([
+        "https://gitlab.com/api/v4/projects?membership=true&simple=true&order_by=last_activity_at&per_page=100&page=1",
+        "https://gitlab.com/api/v4/projects?membership=true&simple=true&order_by=last_activity_at&per_page=100&page=2",
+      ]);
+    });
+  });
+
+  describe("getIssueComments", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1 }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "glpat-test" });
+      (adapter as any).rateLimitDelay = 0;
+    });
+
+    it("walks every page of notes and drops system notes", async () => {
+      const notes = (from: number, count: number) =>
+        Array.from({ length: count }, (_, i) => ({
+          id: from + i + 1,
+          body: `n${from + i + 1}`,
+          system: (from + i) % 2 === 1,
+          author: { username: "alice" },
+          created_at: "2026-01-01T00:00:00Z",
+        }));
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(notes(0, 100)),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(notes(100, 2)),
+        });
+
+      const result = await adapter.getIssueComments!("testgroup/testrepo#5");
+
+      expect(result).toHaveLength(51);
+      expect(result[50]).toEqual({
+        id: "101",
+        author: "alice",
+        body: "n101",
+        created: "2026-01-01T00:00:00Z",
+      });
+      const urls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("/notes"));
+      expect(urls).toEqual([
+        "https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/issues/5/notes?sort=asc&order_by=created_at&per_page=100&page=1",
+        "https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/issues/5/notes?sort=asc&order_by=created_at&per_page=100&page=2",
+      ]);
+    });
   });
 });

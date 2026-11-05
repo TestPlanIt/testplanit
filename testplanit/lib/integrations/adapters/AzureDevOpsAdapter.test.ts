@@ -1028,6 +1028,45 @@ describe("AzureDevOpsAdapter", () => {
       expect(calledUrl).toContain("-preview");
     });
 
+    it("follows continuationToken until the last page", async () => {
+      (adapter as any).rateLimitDelay = 0;
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...mockAdoCommentsResponse,
+              continuationToken: "tok-1",
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              count: 1,
+              comments: [
+                {
+                  id: 12,
+                  text: "Third",
+                  createdBy: { displayName: "Carol" },
+                  createdDate: "2026-01-03T00:00:00Z",
+                },
+              ],
+            }),
+        });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result.map((c) => c.id)).toEqual(["10", "11", "12"]);
+      const urls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("/comments"));
+      expect(urls).toEqual([
+        "https://dev.azure.com/testorg/_apis/wit/workitems/123/comments?api-version=7.0-preview&$top=200",
+        "https://dev.azure.com/testorg/_apis/wit/workitems/123/comments?api-version=7.0-preview&$top=200&continuationToken=tok-1",
+      ]);
+    });
+
     it("should map all comments to IssueComment[] on the happy path", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -1625,6 +1664,36 @@ describe("AzureDevOpsAdapter", () => {
       expect(result).toEqual([
         { id: "proj-1", key: "Project One", name: "Project One" },
         { id: "proj-2", key: "Project Two", name: "Project Two" },
+      ]);
+    });
+
+    it("walks every page of /_apis/projects with $top/$skip", async () => {
+      (adapter as any).rateLimitDelay = 0;
+      const page = (from: number, count: number) => ({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            count,
+            value: Array.from({ length: count }, (_, i) => ({
+              id: `proj-${from + i + 1}`,
+              name: `Project ${from + i + 1}`,
+            })),
+          }),
+      });
+      mockFetch
+        .mockResolvedValueOnce(page(0, 100))
+        .mockResolvedValueOnce(page(100, 2));
+
+      const result = await adapter.getProjects();
+
+      expect(result).toHaveLength(102);
+      expect(result[101].id).toBe("proj-102");
+      const urls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("$skip"));
+      expect(urls).toEqual([
+        "https://dev.azure.com/testorg/_apis/projects?api-version=7.0&$top=100&$skip=0",
+        "https://dev.azure.com/testorg/_apis/projects?api-version=7.0&$top=100&$skip=100",
       ]);
     });
   });

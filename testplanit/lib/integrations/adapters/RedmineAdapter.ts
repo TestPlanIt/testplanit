@@ -313,10 +313,25 @@ export class RedmineAdapter extends BaseAdapter {
   async getProjects(): Promise<
     Array<{ id: string; key: string; name: string }>
   > {
-    const resp = await this.makeRequest<{ projects?: RedmineProject[] }>(
-      `${this.baseUrl}/projects.json?limit=100`
-    );
-    return (resp.projects ?? []).map((p) => ({
+    const limit = 100;
+    const projects: RedmineProject[] = [];
+    for (let offset = 0; ;) {
+      const resp = await this.makeRequest<{
+        projects?: RedmineProject[];
+        total_count?: number;
+      }>(`${this.baseUrl}/projects.json?limit=${limit}&offset=${offset}`);
+      const page = resp.projects ?? [];
+      projects.push(...page);
+      offset += page.length;
+      if (
+        page.length === 0 ||
+        page.length < limit ||
+        (resp.total_count != null && offset >= resp.total_count)
+      ) {
+        break;
+      }
+    }
+    return projects.map((p) => ({
       id: String(p.id),
       key: p.identifier,
       name: p.name,

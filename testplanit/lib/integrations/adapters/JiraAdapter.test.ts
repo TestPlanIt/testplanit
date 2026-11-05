@@ -2172,6 +2172,7 @@ describe("JiraAdapter", () => {
               { id: "1", key: "TEST", name: "Test Project" },
               { id: "2", key: "DEV", name: "Dev Project" },
             ],
+            isLast: true,
           }),
       });
 
@@ -2181,6 +2182,121 @@ describe("JiraAdapter", () => {
         { id: "1", key: "TEST", name: "Test Project" },
         { id: "2", key: "DEV", name: "Dev Project" },
       ]);
+    });
+
+    it("walks every page of /project/search on Cloud (#730)", async () => {
+      const page = (from: number, count: number, isLast: boolean) => ({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            startAt: from,
+            maxResults: 50,
+            total: 120,
+            isLast,
+            values: Array.from({ length: count }, (_, i) => ({
+              id: String(from + i + 1),
+              key: `P${from + i + 1}`,
+              name: `Project ${from + i + 1}`,
+            })),
+          }),
+      });
+      mockFetch
+        .mockResolvedValueOnce(page(0, 50, false))
+        .mockResolvedValueOnce(page(50, 50, false))
+        .mockResolvedValueOnce(page(100, 20, true));
+
+      const result = await adapter.getProjects();
+
+      expect(result).toHaveLength(120);
+      expect(result[0]).toEqual({ id: "1", key: "P1", name: "Project 1" });
+      expect(result[119]).toEqual({
+        id: "120",
+        key: "P120",
+        name: "Project 120",
+      });
+
+      // beforeEach auth call + three pages
+      const searchCalls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("/rest/api/3/project/search"));
+      expect(searchCalls).toEqual([
+        "https://test.atlassian.net/rest/api/3/project/search?startAt=0&maxResults=50",
+        "https://test.atlassian.net/rest/api/3/project/search?startAt=50&maxResults=50",
+        "https://test.atlassian.net/rest/api/3/project/search?startAt=100&maxResults=50",
+      ]);
+    });
+
+    it("stops after a short page when the response omits isLast", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            values: [{ id: "1", key: "ONLY", name: "Only Project" }],
+          }),
+      });
+
+      const result = await adapter.getProjects();
+
+      expect(result).toEqual([{ id: "1", key: "ONLY", name: "Only Project" }]);
+      expect(
+        mockFetch.mock.calls.filter((c: any[]) =>
+          (c[0] as string).includes("/project/search")
+        )
+      ).toHaveLength(1);
+    });
+
+    it("walks every page through the OAuth gateway too", async () => {
+      vi.stubEnv("JIRA_CLIENT_ID", "test-client-id");
+      vi.stubEnv("JIRA_CLIENT_SECRET", "test-client-secret");
+      vi.stubEnv("JIRA_REDIRECT_URI", "https://app.com/callback");
+
+      const oauthAdapter = new JiraAdapter({ provider: "JIRA" });
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: "cloud-123", url: "https://test.atlassian.net" },
+          ]),
+      });
+      await oauthAdapter.authenticate({
+        type: "oauth",
+        accessToken: "test-access-token",
+      });
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              isLast: false,
+              values: [{ id: "1", key: "A", name: "A" }],
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              isLast: true,
+              values: [{ id: "2", key: "B", name: "B" }],
+            }),
+        });
+
+      const result = await oauthAdapter.getProjects();
+
+      expect(result).toEqual([
+        { id: "1", key: "A", name: "A" },
+        { id: "2", key: "B", name: "B" },
+      ]);
+      const searchCalls = mockFetch.mock.calls
+        .map((c: any[]) => c[0] as string)
+        .filter((u) => u.includes("/project/search"));
+      expect(searchCalls).toEqual([
+        "https://api.atlassian.com/ex/jira/cloud-123/rest/api/3/project/search?startAt=0&maxResults=50",
+        "https://api.atlassian.com/ex/jira/cloud-123/rest/api/3/project/search?startAt=1&maxResults=50",
+      ]);
+
+      vi.unstubAllEnvs();
     });
   });
 
@@ -3192,6 +3308,52 @@ describe("JiraAdapter Data Center / Server", () => {
     expect(projects).toEqual([
       { id: "12881", key: "TITP", name: "TestPlanIt Integration Test project" },
       { id: "10145", key: "SUPPORT", name: "Техническая поддержка" },
+    ]);
+  });
+
+  it("getIssueTypeFields: walks every page of createmeta/{key}/issuetypes/{id} on Data Center", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+    (adapter as any).rateLimitDelay = 0;
+
+    const page = (from: number, count: number, isLast: boolean) => ({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          startAt: from,
+          maxResults: 50,
+          total: 60,
+          isLast,
+          values: Array.from({ length: count }, (_, i) => ({
+            fieldId: `customfield_${10000 + from + i}`,
+            name: `Field ${from + i + 1}`,
+            required: false,
+            schema: { type: "string" },
+          })),
+        }),
+    });
+    mockFetch
+      .mockResolvedValueOnce(page(0, 50, false))
+      .mockResolvedValueOnce(page(50, 10, true));
+
+    const fields = await adapter.getIssueTypeFields("TITP", "10001");
+
+    expect(fields).toHaveLength(60);
+    expect(fields[59].key).toBe("customfield_10059");
+    const urls = mockFetch.mock.calls
+      .map((c: any[]) => c[0] as string)
+      .filter((u) => u.includes("/createmeta/"));
+    expect(urls).toEqual([
+      "https://jira.mycompany.domain/rest/api/2/issue/createmeta/TITP/issuetypes/10001?startAt=0&maxResults=50",
+      "https://jira.mycompany.domain/rest/api/2/issue/createmeta/TITP/issuetypes/10001?startAt=50&maxResults=50",
     ]);
   });
 

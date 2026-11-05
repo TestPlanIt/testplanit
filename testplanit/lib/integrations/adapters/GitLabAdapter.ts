@@ -370,11 +370,11 @@ export class GitLabAdapter extends BaseAdapter {
     try {
       const { projectPath, iid } = this.parseIssueRef(issueId);
       const encoded = encodeURIComponent(projectPath);
-      const response = await this.makeRequest<any[]>(
-        `${this.baseUrl}/api/v4/projects/${encoded}/issues/${iid}/notes?sort=asc&order_by=created_at&per_page=100`
+      const notes = await this.listAllPages(
+        `${this.baseUrl}/api/v4/projects/${encoded}/issues/${iid}/notes`,
+        { sort: "asc", order_by: "created_at" }
       );
-      if (!Array.isArray(response)) return [];
-      return response
+      return notes
         .filter((n) => !n.system)
         .map((n) => ({
           id: n.id != null ? String(n.id) : undefined,
@@ -411,21 +411,35 @@ export class GitLabAdapter extends BaseAdapter {
   async getProjects(): Promise<
     Array<{ id: string; key: string; name: string }>
   > {
-    const params = new URLSearchParams({
-      membership: "true",
-      simple: "true",
-      per_page: "100",
-      order_by: "last_activity_at",
-    });
-    const response = await this.makeRequest<any[]>(
-      `${this.baseUrl}/api/v4/projects?${params.toString()}`
+    const projects = await this.listAllPages(
+      `${this.baseUrl}/api/v4/projects`,
+      { membership: "true", simple: "true", order_by: "last_activity_at" }
     );
-    if (!Array.isArray(response)) return [];
-    return response.map((p) => ({
+    return projects.map((p) => ({
       id: p.path_with_namespace,
       key: p.path_with_namespace,
       name: p.name_with_namespace ?? p.path_with_namespace,
     }));
+  }
+
+  // GitLab caps per_page at 100; `url` must not already carry a query string.
+  private async listAllPages(
+    url: string,
+    query: Record<string, string> = {}
+  ): Promise<any[]> {
+    const items: any[] = [];
+    for (let page = 1; ; page++) {
+      const params = new URLSearchParams({
+        ...query,
+        per_page: "100",
+        page: String(page),
+      });
+      const pageItems = await this.makeRequest<any[]>(`${url}?${params}`);
+      if (!Array.isArray(pageItems)) break;
+      items.push(...pageItems);
+      if (pageItems.length < 100) break;
+    }
+    return items;
   }
 
   async searchUsers(

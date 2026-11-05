@@ -345,7 +345,7 @@ export class GitHubAdapter extends BaseAdapter {
   async getIssueComments(issueId: string): Promise<IssueComment[]> {
     try {
       const { owner, repo, issueNumber } = this.parseIssueRef(issueId);
-      const response = await this.makeRequest<any>(
+      const response = await this.listAllPages<any>(
         `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`
       );
       return this.mapGitHubComments(response);
@@ -455,9 +455,9 @@ export class GitHubAdapter extends BaseAdapter {
   async getProjects(): Promise<
     Array<{ id: string; key: string; name: string }>
   > {
-    const repos = await this.makeRequest<any[]>(
-      `${this.baseUrl}/user/repos?per_page=100&sort=updated`
-    );
+    const repos = await this.listAllPages<any>(`${this.baseUrl}/user/repos`, {
+      sort: "updated",
+    });
 
     return repos.map((repo) => ({
       id: repo.full_name,
@@ -573,6 +573,32 @@ export class GitHubAdapter extends BaseAdapter {
       }
     }
     return labels;
+  }
+
+  /**
+   * Reads every page of a list endpoint. `url` must not already carry a
+   * query string.
+   */
+  private async listAllPages<T = any>(
+    url: string,
+    query: Record<string, string> = {}
+  ): Promise<T[]> {
+    const pageSize = 100;
+    const items: T[] = [];
+    for (let page = 1; page <= 30; page++) {
+      const params = new URLSearchParams({
+        ...query,
+        per_page: String(pageSize),
+        page: String(page),
+      });
+      const pageItems = await this.makeRequest<T[]>(`${url}?${params}`);
+      if (!Array.isArray(pageItems)) break;
+      items.push(...pageItems);
+      if (pageItems.length < pageSize) {
+        break;
+      }
+    }
+    return items;
   }
 
   /**
