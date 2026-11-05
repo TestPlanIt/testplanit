@@ -2638,7 +2638,7 @@
       "empty": "Keine Meilensteine gefunden",
       "previewFailed": "Meilensteine konnten nicht aus {provider} geladen werden",
       "importFailed": "Ausgewählte Meilensteine konnten nicht importiert werden",
-      "requestTimedOut": "\"Show closed\" ausgeschaltet, um die Anfrage einzugrenzen.",
+      "requestTimedOut": "{provider} hat zu lange für eine Antwort gebraucht, und die Anfrage ist abgelaufen. Das liegt meist daran, dass die verknüpften {provider}-Projekte sehr viele Versionen oder Boards haben. Versuchen Sie es erneut und lassen Sie \"Geschlossene anzeigen\" ausgeschaltet, um die Anfrage einzugrenzen.",
       "serviceUnavailable": "Der Server ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut.",
       "unexpectedResponse": "Unerwartete Antwort vom Server (HTTP {status}). Bitte versuchen Sie es erneut und wenden Sie sich an Ihren Administrator, falls dies weiterhin auftritt.",
       "importStarted": "Import gestartet",
