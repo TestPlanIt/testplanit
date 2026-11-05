@@ -69,7 +69,8 @@ export function DuplicateResultsTable({
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
     null
   );
-  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [bulkAction, setBulkAction] = useState<"dismiss" | "link" | null>(null);
+  const isBulkProcessing = bulkAction !== null;
 
   const handleResolved = useCallback(() => {
     void queryClient.invalidateQueries({
@@ -301,57 +302,35 @@ export function DuplicateResultsTable({
     async (action: "dismiss" | "link") => {
       const items = getSelectedItems();
       if (items.length === 0) return;
-      setIsBulkProcessing(true);
+      setBulkAction(action);
 
-      let successCount = 0;
-      let failCount = 0;
+      try {
+        const res = await apiFetch("/api/duplicate-scan/resolve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: action === "dismiss" ? "bulkDismiss" : "bulkLink",
+            projectId: Number(projectId),
+            pairs: items.map((item) => ({
+              caseAId: item.caseAId,
+              caseBId: item.caseBId,
+            })),
+          }),
+        });
 
-      for (const item of items) {
-        try {
-          const body =
-            action === "dismiss"
-              ? {
-                  action: "dismiss",
-                  caseAId: item.caseAId,
-                  caseBId: item.caseBId,
-                  projectId: Number(projectId),
-                }
-              : {
-                  action: "link",
-                  caseAId: item.caseAId,
-                  caseBId: item.caseBId,
-                  projectId: Number(projectId),
-                };
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-          const res = await apiFetch("/api/duplicate-scan/resolve", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          });
-
-          if (res.ok) {
-            successCount++;
-          } else {
-            failCount++;
-          }
-        } catch {
-          failCount++;
-        }
-      }
-
-      if (successCount > 0) {
         if (action === "dismiss") {
-          toast.success(t("bulkDismissSuccess", { count: successCount }));
+          toast.success(t("bulkDismissSuccess", { count: items.length }));
         } else {
-          toast.success(t("bulkLinkSuccess", { count: successCount }));
+          toast.success(t("bulkLinkSuccess", { count: items.length }));
         }
-      }
-      if (failCount > 0) {
+      } catch {
         toast.error(t("bulkError"));
       }
 
       setRowSelection({});
-      setIsBulkProcessing(false);
+      setBulkAction(null);
       handleResolved();
     },
     [getSelectedItems, projectId, t, handleResolved]
@@ -427,7 +406,7 @@ export function DuplicateResultsTable({
             onClick={() => handleBulkAction("dismiss")}
             disabled={isBulkProcessing}
           >
-            {isBulkProcessing ? (
+            {bulkAction === "dismiss" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <CopyX className="h-4 w-4" />
@@ -440,7 +419,7 @@ export function DuplicateResultsTable({
             onClick={() => handleBulkAction("link")}
             disabled={isBulkProcessing}
           >
-            {isBulkProcessing ? (
+            {bulkAction === "link" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Link2 className="h-4 w-4" />

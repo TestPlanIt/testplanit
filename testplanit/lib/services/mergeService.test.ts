@@ -62,9 +62,11 @@ const { mockTx, mockDb } = vi.hoisted(() => {
     }),
     repositoryCaseLink: {
       create: vi.fn(),
+      createMany: vi.fn(),
       upsert: vi.fn(),
     },
     duplicateScanResult: {
+      findMany: vi.fn(),
       updateMany: vi.fn(),
     },
   };
@@ -82,7 +84,14 @@ vi.mock("~/services/repositoryCaseSync", () => ({
 }));
 
 // Import after mocks are in place
-import { mergeCases, linkCases, dismissPair } from "./mergeService";
+import {
+  mergeCases,
+  linkCases,
+  dismissPair,
+  linkPairs,
+  dismissPairs,
+  PAIR_CHUNK_SIZE,
+} from "./mergeService";
 
 // ---- Helpers ----
 
@@ -530,93 +539,134 @@ describe("mergeService", () => {
   });
 
   // ----------------------------------------------------------------
-  // 8. linkCases action
+  // 8. linkCases / linkPairs
   // ----------------------------------------------------------------
   describe("linkCases", () => {
-    it("upserts a RepositoryCaseLink with SAME_TEST_DIFFERENT_SOURCE", async () => {
+    beforeEach(() => {
       mockDb.$transaction.mockImplementation((ops: any[]) => Promise.all(ops));
-      mockDb.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
+      mockDb.repositoryCaseLink.createMany.mockResolvedValue({ count: 1 });
       mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
+    });
 
-      await linkCases(1, 2, "user-123", 5);
+    it("creates a SAME_TEST_DIFFERENT_SOURCE link and marks the pair LINKED", async () => {
+      mockDb.duplicateScanResult.findMany.mockResolvedValue([
+        { caseAId: 1, caseBId: 2 },
+      ]);
 
-      expect(mockDb.repositoryCaseLink.upsert).toHaveBeenCalledWith(
+      const result = await linkCases(1, 2, "user-123", 5);
+
+      expect(result).toEqual({ linked: true });
+      expect(mockDb.duplicateScanResult.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({
-            caseAId_caseBId_type: {
-              caseAId: 1,
-              caseBId: 2,
-              type: "SAME_TEST_DIFFERENT_SOURCE",
-            },
-          }),
-          create: expect.objectContaining({
+          where: expect.objectContaining({ projectId: 5 }),
+        })
+      );
+      expect(mockDb.repositoryCaseLink.createMany).toHaveBeenCalledWith({
+        data: [
+          {
             caseAId: 1,
             caseBId: 2,
             type: "SAME_TEST_DIFFERENT_SOURCE",
             createdById: "user-123",
-          }),
-        })
-      );
-    });
-
-    it("updates DuplicateScanResult status to LINKED", async () => {
-      mockDb.$transaction.mockImplementation((ops: any[]) => Promise.all(ops));
-      mockDb.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
-      mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
-
-      await linkCases(1, 2, "user-123", 5);
-
-      expect(mockDb.duplicateScanResult.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            OR: expect.arrayContaining([
-              expect.objectContaining({ caseAId: 1, caseBId: 2 }),
-              expect.objectContaining({ caseAId: 2, caseBId: 1 }),
-            ]),
           },
-          data: { status: "LINKED" },
-        })
-      );
+        ],
+        skipDuplicates: true,
+      });
+      expect(mockDb.duplicateScanResult.updateMany).toHaveBeenCalledWith({
+        where: {
+          projectId: 5,
+          OR: [
+            { caseAId: 1, caseBId: 2 },
+            { caseAId: 2, caseBId: 1 },
+          ],
+        },
+        data: { status: "LINKED" },
+      });
     });
 
-    it("returns { linked: true }", async () => {
-      mockDb.$transaction.mockImplementation((ops: any[]) => Promise.all(ops));
-      mockDb.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
-      mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
+    it("matches scan results stored in the reverse orientation", async () => {
+      mockDb.duplicateScanResult.findMany.mockResolvedValue([
+        { caseAId: 2, caseBId: 1 },
+      ]);
 
-      const result = await linkCases(1, 2, "user-123", 5);
-      expect(result).toEqual({ linked: true });
+      const result = await linkPairs(
+        [{ caseAId: 1, caseBId: 2 }],
+        "user-123",
+        5
+      );
+
+      expect(result).toEqual({ linked: 1 });
+      expect(mockDb.repositoryCaseLink.createMany).toHaveBeenCalled();
+    });
+
+    it("skips pairs with no scan result in the project", async () => {
+      mockDb.duplicateScanResult.findMany.mockResolvedValue([]);
+
+      const result = await linkPairs(
+        [{ caseAId: 1, caseBId: 2 }],
+        "user-123",
+        5
+      );
+
+      expect(result).toEqual({ linked: 0 });
+      expect(mockDb.repositoryCaseLink.createMany).not.toHaveBeenCalled();
+      expect(mockDb.duplicateScanResult.updateMany).not.toHaveBeenCalled();
     });
   });
 
   // ----------------------------------------------------------------
-  // 9. dismissPair action
+  // 9. dismissPair / dismissPairs
   // ----------------------------------------------------------------
   describe("dismissPair", () => {
     it("updates DuplicateScanResult status to DISMISSED", async () => {
       mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
-      await dismissPair(1, 2, 5);
+      const result = await dismissPair(1, 2, 5);
 
-      expect(mockDb.duplicateScanResult.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            OR: expect.arrayContaining([
-              expect.objectContaining({ caseAId: 1, caseBId: 2 }),
-              expect.objectContaining({ caseAId: 2, caseBId: 1 }),
-            ]),
-            projectId: 5,
-          }),
-          data: { status: "DISMISSED" },
-        })
+      expect(result).toEqual({ dismissed: true });
+      expect(mockDb.duplicateScanResult.updateMany).toHaveBeenCalledWith({
+        where: {
+          projectId: 5,
+          OR: [
+            { caseAId: 1, caseBId: 2 },
+            { caseAId: 2, caseBId: 1 },
+          ],
+        },
+        data: { status: "DISMISSED" },
+      });
+    });
+  });
+
+  describe("dismissPairs", () => {
+    it("chunks large selections into one updateMany per chunk", async () => {
+      mockDb.duplicateScanResult.updateMany.mockImplementation(
+        async ({ where }: any) => ({ count: where.OR.length / 2 })
       );
+      const pairs = Array.from({ length: PAIR_CHUNK_SIZE * 2 + 1 }, (_, i) => ({
+        caseAId: i + 1,
+        caseBId: i + 100_000,
+      }));
+
+      const result = await dismissPairs(pairs, 5);
+
+      expect(mockDb.duplicateScanResult.updateMany).toHaveBeenCalledTimes(3);
+      expect(result).toEqual({ dismissed: pairs.length });
     });
 
-    it("returns { dismissed: true }", async () => {
+    it("dedupes repeated and reversed pairs", async () => {
       mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
-      const result = await dismissPair(1, 2, 5);
-      expect(result).toEqual({ dismissed: true });
+      await dismissPairs(
+        [
+          { caseAId: 1, caseBId: 2 },
+          { caseAId: 2, caseBId: 1 },
+          { caseAId: 1, caseBId: 2 },
+        ],
+        5
+      );
+
+      const { where } = mockDb.duplicateScanResult.updateMany.mock.calls[0][0];
+      expect(where.OR).toHaveLength(2);
     });
   });
 });
