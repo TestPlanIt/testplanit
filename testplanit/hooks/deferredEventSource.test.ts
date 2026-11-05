@@ -123,3 +123,39 @@ describe("createDeferredEventSource", () => {
     }
   });
 });
+
+describe("createDeferredEventSource named events", () => {
+  it("attaches named-event listeners registered before and after the connection opens", () => {
+    const attached: Array<[string, unknown]> = [];
+    (globalThis as { EventSource: unknown }).EventSource = function (
+      url: string
+    ) {
+      const inst = {
+        url,
+        onmessage: null,
+        onerror: null,
+        close: vi.fn(),
+        addEventListener: (type: string, fn: unknown) => {
+          attached.push([type, fn]);
+        },
+      };
+      created.push(inst as unknown as MockES);
+      return inst;
+    } as unknown as typeof globalThis.EventSource;
+
+    const early = vi.fn();
+    const late = vi.fn();
+    const es = createDeferredEventSource("/api/notifications/stream");
+    es.addEventListener("superseded", early);
+    expect(attached).toEqual([]); // nothing connected yet
+
+    idleQueue.forEach((cb) => cb());
+    expect(attached).toEqual([["superseded", early]]);
+
+    es.addEventListener("shutdown", late);
+    expect(attached).toEqual([
+      ["superseded", early],
+      ["shutdown", late],
+    ]);
+  });
+});

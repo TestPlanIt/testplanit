@@ -143,7 +143,7 @@ See [SSE Notifications](sse-notifications.md).
 | Variable                    | Default | Description                                   |
 | --------------------------- | ------- | --------------------------------------------- |
 | `SSE_PER_TENANT_CAP`        | `1000`  | Open notification streams allowed per tenant. |
-| `SSE_PER_USER_CAP`          | `4`     | Open notification streams allowed per user.   |
+| `SSE_PER_USER_CAP`          | `10`    | Open notification streams allowed per user.   |
 | `SSE_ISSUES_PER_TENANT_CAP` | `1000`  | Open issue-sync streams allowed per tenant.   |
 | `SSE_ISSUES_PER_USER_CAP`   | `8`     | Open issue-sync streams allowed per user.     |
 

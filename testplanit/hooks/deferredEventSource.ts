@@ -16,14 +16,20 @@ import { withBasePath } from "~/lib/basePath";
  * stream once the main thread is idle.
  *
  * Only the EventSource surface the app actually uses is proxied — `onmessage`,
- * `onerror`, `close()`. Handlers assigned before the connection opens take
- * effect when it does (they're read at dispatch time), so assignment order and
- * later reassignment both work; `close()` before then cancels the pending open
- * so nothing ever connects.
+ * `onerror`, `addEventListener()` for named events, `close()`. Handlers
+ * assigned before the connection opens take effect when it does (they're read
+ * at dispatch time), so assignment order and later reassignment both work;
+ * `close()` before then cancels the pending open so nothing ever connects.
  */
 export interface DeferredEventSource {
   onmessage: ((ev: MessageEvent) => void) | null;
   onerror: ((ev: Event) => void) | null;
+  /**
+   * Listen for a named SSE event (`event: <type>` lines), which `onmessage`
+   * never receives. Listeners registered before the connection opens are
+   * attached when it does.
+   */
+  addEventListener(type: string, listener: (ev: MessageEvent) => void): void;
   close(): void;
 }
 
@@ -43,6 +49,11 @@ export function createDeferredEventSource(url: string): DeferredEventSource {
     onerror: ((ev: Event) => void) | null;
   } = { onmessage: null, onerror: null };
 
+  const namedListeners: Map<
+    string,
+    Set<(ev: MessageEvent) => void>
+  > = new Map();
+
   let es: EventSource | null = null;
   let closed = false;
   let idleHandle: number | undefined;
@@ -57,6 +68,11 @@ export function createDeferredEventSource(url: string): DeferredEventSource {
     // open() (or reassigned later) still takes effect.
     es.onmessage = (ev) => handlers.onmessage?.(ev);
     es.onerror = (ev) => handlers.onerror?.(ev);
+    for (const [type, listeners] of namedListeners) {
+      for (const listener of listeners) {
+        es.addEventListener(type, listener as EventListener);
+      }
+    }
   };
 
   const g = globalThis as IdleCapableGlobal;
@@ -78,6 +94,15 @@ export function createDeferredEventSource(url: string): DeferredEventSource {
     },
     set onerror(fn) {
       handlers.onerror = fn;
+    },
+    addEventListener(type, listener) {
+      let set = namedListeners.get(type);
+      if (!set) {
+        set = new Set();
+        namedListeners.set(type, set);
+      }
+      set.add(listener);
+      es?.addEventListener(type, listener as EventListener);
     },
     close() {
       closed = true;

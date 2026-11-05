@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ReviewInboxButton } from "./ReviewInboxButton";
+import { __resetNotificationStreamForTests } from "~/hooks/notificationStreamManager";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mocks
@@ -20,13 +21,21 @@ vi.mock("next-auth/react", () => ({
 const mockEventSource: {
   onmessage: ((event: MessageEvent) => void) | null;
   onerror: ((event: Event) => void) | null;
+  addEventListener: () => void;
   close: () => void;
-} = { onmessage: null, onerror: null, close: vi.fn() };
+} = {
+  onmessage: null,
+  onerror: null,
+  addEventListener: vi.fn(),
+  close: vi.fn(),
+};
 const mockCreateDeferredEventSource = vi.fn(
   (..._args: unknown[]) => mockEventSource
 );
-// The component guards on `typeof EventSource === "undefined"` so it degrades
-// gracefully outside the browser; jsdom doesn't provide it.
+// The stream manager guards on `typeof EventSource === "undefined"` so it
+// degrades gracefully outside the browser; jsdom doesn't provide it. The
+// component subscribes through notificationStreamManager, which opens the
+// (mocked) deferred EventSource below.
 vi.stubGlobal("EventSource", class {});
 vi.mock("~/hooks/deferredEventSource", () => ({
   createDeferredEventSource: (...args: unknown[]) =>
@@ -171,6 +180,8 @@ describe("ReviewInboxButton", () => {
     mockUseCountProjects.mockReset();
     mockInvalidateQueries.mockReset();
     mockCreateDeferredEventSource.mockClear();
+    mockEventSource.onmessage = null;
+    __resetNotificationStreamForTests();
   });
 
   it("(a) renders null when feature flag is disabled", () => {
@@ -304,7 +315,9 @@ describe("ReviewInboxButton", () => {
     // ZenStack model prefix carries the refresh to the other review surfaces
     // (home dashboard queue, entity status banner) off this one connection.
     expect(mockInvalidateQueries).not.toHaveBeenCalled();
-    mockEventSource.onmessage?.(new MessageEvent("message"));
+    mockEventSource.onmessage?.(
+      new MessageEvent("message", { data: '{"event":"sync"}' })
+    );
     expect(mockInvalidateQueries).toHaveBeenCalledTimes(1);
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ["zenstack", "ReviewRequest"],

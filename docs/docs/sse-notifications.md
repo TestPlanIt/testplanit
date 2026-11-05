@@ -23,8 +23,8 @@ The current architecture replaces that with:
 1. **Publish.** When the notification worker (`testplanit/workers/notificationWorker.ts`) creates a `Notification` row, it publishes a small wake-up payload (`{id, event}`) to a tenant-scoped Valkey channel. Channel keys are constructed in one place — `testplanit/lib/notifications/channels.ts`:
    - User channel: `notifications:tenant:<tenantId>:user:<userId>`
    - Broadcast channel (used for `SYSTEM_ANNOUNCEMENT`): `notifications:tenant:<tenantId>:broadcast`
-2. **Subscribe.** Each authenticated client opens a long-lived `EventSource` connection to `GET /api/notifications/stream` (`testplanit/app/api/notifications/stream/route.ts`). The route subscribes to both the user channel and the tenant broadcast channel for the requesting user.
-3. **Refetch.** On every SSE message, the bell calls `refetch()` on its existing `useFindManyNotification` query. The wake-up payload is treated as opaque "something changed" — actual notification data is fetched through the policy-enforced ZenStack hook so multi-tenant isolation and access control are re-applied on every read.
+2. **Subscribe.** Each authenticated browser tab opens one long-lived `EventSource` connection to `GET /api/notifications/stream` (`testplanit/app/api/notifications/stream/route.ts`). The route subscribes to both the user channel and the tenant broadcast channel for the requesting user. In the browser the connection is a refcounted singleton (`testplanit/hooks/notificationStreamManager.ts`): the bell, the review inbox button and the compact-header alert counts all share it, so a tab never holds more than one notification stream.
+3. **Refetch.** On every SSE message, the bell calls `refetch()` on its existing `useFindManyNotification` query, and the review surfaces invalidate their `ReviewRequest` queries. The wake-up payload is treated as opaque "something changed" — actual notification data is fetched through the policy-enforced ZenStack hook so multi-tenant isolation and access control are re-applied on every read.
 
 The pub/sub layer is treated as untrusted plumbing: even if a wake-up arrives wrongly, the read path cannot leak data because `getEnhancedDb` re-applies the tenant filter and access policy. Tenant context for both publish and subscribe is resolved server-side via `getCurrentTenantId()` (`testplanit/lib/multiTenantPrisma.ts`), which reads `INSTANCE_TENANT_ID` from the environment — never from client input.
 
@@ -143,7 +143,7 @@ Each route has its own per-tenant and per-user connection caps so a misbehaving 
 | Variable             | Default | Purpose                                                                                                                                                                                                                                                                                            |
 | -------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SSE_PER_TENANT_CAP` | `1000`  | Maximum concurrent SSE connections per tenant per pod. The Nth+1 connection receives HTTP `503 Service Unavailable` with a `Retry-After: 30` header. With N replicas, a tenant can hold up to N × cap connections cluster-wide; the per-pod cap is intentional fd-exhaustion / runaway protection. |
-| `SSE_PER_USER_CAP`   | `4`     | Maximum concurrent SSE connections per user per pod. The 5th connection is accepted; the oldest connection for that user is closed (LRU). This is a fairness mechanism — it prevents a single user with many tabs from monopolizing tenant capacity.                                               |
+| `SSE_PER_USER_CAP`   | `10`    | Maximum concurrent SSE connections per user per pod. The 11th connection is accepted; the oldest connection for that user receives `event: superseded` and is closed (LRU). The client treats `superseded` as final: it does not reconnect until its tab next becomes visible or focused, so an over-cap user loses live updates in background tabs rather than cycling connections. Each tab holds one stream, so the cap is effectively a tabs-per-pod limit. |
 
 ### Issue updates stream caps
 
@@ -177,7 +177,7 @@ Both are non-fatal: SSE is a wake-up signal, the `Notification` row is the sourc
 
 ## Graceful shutdown
 
-The route registers a `SIGTERM` handler that, on signal, writes `event: shutdown\ndata: {}\n\n` to every active stream, unsubscribes each subscriber, and closes the underlying Valkey clients. EventSource's built-in auto-reconnect on the client kicks in — combined with the route's sync-on-connect, users are reconnected and resynced on a different pod within seconds. Set `terminationGracePeriodSeconds` on the pod to at least 30 seconds (60 seconds is a safer margin) to give the handler room to drain.
+The route registers a `SIGTERM` handler that, on signal, writes `event: shutdown\ndata: {}\n\n` to every active stream, unsubscribes each subscriber, and closes the underlying Valkey clients. EventSource's built-in auto-reconnect on the client kicks in — combined with the route's sync-on-connect, users are reconnected and resynced on a different pod within seconds. Unlike `superseded`, the client reconnects immediately after `shutdown`. Set `terminationGracePeriodSeconds` on the pod to at least 30 seconds (60 seconds is a safer margin) to give the handler room to drain.
 
 ## Helm chart deployment
 
@@ -206,7 +206,7 @@ Set the per-tenant and per-user caps through `config.extraEnv`, which the chart 
 config:
   extraEnv:
     SSE_PER_TENANT_CAP: '1000'
-    SSE_PER_USER_CAP: '4'
+    SSE_PER_USER_CAP: '10'
     SSE_ISSUES_PER_TENANT_CAP: '1000'
     SSE_ISSUES_PER_USER_CAP: '8'
 ```
