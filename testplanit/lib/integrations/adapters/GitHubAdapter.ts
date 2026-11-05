@@ -9,6 +9,7 @@ import {
   AuthenticationData,
   CreateIssueData,
   CreateIssueMetadata,
+  ExternalMilestone,
   IssueAdapterCapabilities,
   IssueComment,
   IssueData,
@@ -68,6 +69,38 @@ function resolveAssignees(data: {
 }
 
 /** GitHub addresses milestones by number; anything else is dropped. */
+/** `owner/repo#number`, the external id milestone sync stores for a GitHub milestone. */
+function milestoneExternalId(owner: string, repo: string, number: number) {
+  return `${owner}/${repo}#${number}`;
+}
+
+function parseMilestoneRef(
+  id: string
+): { owner: string; repo: string; number: string } | null {
+  const match = id.match(/^([^/#\s]+)\/([^/#\s]+)#(\d+)$/);
+  return match ? { owner: match[1], repo: match[2], number: match[3] } : null;
+}
+
+function mapGitHubMilestone(
+  raw: any,
+  owner: string,
+  repo: string
+): ExternalMilestone {
+  const closed = raw.state === "closed";
+  const dueOn = raw.due_on ? new Date(raw.due_on) : undefined;
+  const closedAt = raw.closed_at ? new Date(raw.closed_at) : undefined;
+  return {
+    id: milestoneExternalId(owner, repo, raw.number),
+    kind: "RELEASE",
+    name: raw.title ?? String(raw.number),
+    description: raw.description ?? undefined,
+    endDate: closed ? (closedAt ?? dueOn) : dueOn,
+    state: closed ? "CLOSED" : "ACTIVE",
+    rawState: closed ? "closed" : "open",
+    url: raw.html_url ?? undefined,
+  };
+}
+
 /** Hex colour per label name, or undefined when no label carries one. */
 function labelColorsOf(labels: unknown): Record<string, string> | undefined {
   if (!Array.isArray(labels)) return undefined;
@@ -150,7 +183,9 @@ export class GitHubAdapter extends BaseAdapter {
       attachments: false, // GitHub doesn't support direct attachments on issues
       linkedIssues: true,
       comments: true,
-      milestones: false,
+      // Repository milestones map onto RELEASE; GitHub has no sprint-like
+      // artifact. The `milestone` webhook event keeps synced rows fresh.
+      milestones: { kinds: ["RELEASE"], webhooks: true },
     };
   }
 
@@ -760,6 +795,86 @@ export class GitHubAdapter extends BaseAdapter {
       state: milestone.state,
       dueOn: milestone.due_on ?? null,
     }));
+  }
+
+  /**
+   * Repository milestones in the provider-neutral shape milestone sync
+   * consumes. GitHub milestones are per repository and addressed by number,
+   * so the external id is `owner/repo#number` — unique across the
+   * integration and enough for `getMilestoneIssues` to find the repository
+   * again. A milestone is ACTIVE while open and CLOSED once closed; GitHub
+   * has no planned-but-not-started state. There are no ITERATION artifacts.
+   */
+  async getExternalMilestones(options: {
+    projectKey: string;
+    kind?: "RELEASE" | "ITERATION";
+    includeClosed?: boolean;
+    pageToken?: string;
+  }): Promise<{
+    items: ExternalMilestone[];
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    if (options.kind === "ITERATION") {
+      return { items: [], hasMore: false };
+    }
+    const { owner, repo } = await this.resolveRepository(options.projectKey);
+    const milestones = await this.listAllPages<any>(
+      `${this.baseUrl}/repos/${owner}/${repo}/milestones`,
+      {
+        state: options.includeClosed ? "all" : "open",
+        sort: "due_on",
+        direction: "asc",
+      }
+    );
+    return {
+      items: milestones.map((milestone) =>
+        mapGitHubMilestone(milestone, owner, repo)
+      ),
+      hasMore: false,
+    };
+  }
+
+  /**
+   * The issues in a milestone, a page at a time. The issues endpoint also
+   * lists pull requests, which are left out; a page can therefore come back
+   * short of `limit` while more pages remain, so `hasMore` follows the raw
+   * page size rather than the filtered one.
+   */
+  async getMilestoneIssues(
+    ref: { id: string; kind: "RELEASE" | "ITERATION" },
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total?: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    const parsed = parseMilestoneRef(ref.id);
+    if (!parsed || ref.kind !== "RELEASE") {
+      return { issues: [], hasMore: false };
+    }
+    const { owner, repo, number } = parsed;
+    const page = Math.max(1, Number(options?.pageToken) || 1);
+    const perPage = Math.min(100, Math.max(1, options?.limit ?? 100));
+    const params = new URLSearchParams({
+      milestone: number,
+      state: "all",
+      per_page: String(perPage),
+      page: String(page),
+    });
+    const raw = await this.makeRequest<any[]>(
+      `${this.baseUrl}/repos/${owner}/${repo}/issues?${params.toString()}`
+    );
+    const items = Array.isArray(raw) ? raw : [];
+    const hasMore = items.length === perPage;
+    return {
+      issues: items
+        .filter((issue) => !issue.pull_request)
+        .map((issue) => this.mapGitHubIssue(issue)),
+      hasMore,
+      nextPageToken: hasMore ? String(page + 1) : undefined,
+    };
   }
 
   /**

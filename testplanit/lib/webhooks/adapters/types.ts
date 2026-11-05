@@ -78,7 +78,9 @@ export type MilestoneEventRef =
  */
 export function isMilestoneEventType(eventType: string): boolean {
   return (
-    eventType.startsWith("jira:version_") || eventType.startsWith("sprint_")
+    eventType.startsWith("jira:version_") ||
+    eventType.startsWith("sprint_") ||
+    eventType.startsWith("milestone_")
   );
 }
 

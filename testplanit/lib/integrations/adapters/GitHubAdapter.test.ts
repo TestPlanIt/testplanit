@@ -65,7 +65,7 @@ describe("GitHubAdapter", () => {
         attachments: false,
         linkedIssues: true,
         comments: true,
-        milestones: false,
+        milestones: { kinds: ["RELEASE"], webhooks: true },
       });
     });
   });
@@ -1991,6 +1991,143 @@ describe("GitHubAdapter", () => {
       );
       const body = JSON.parse(postCall![1].body as string);
       expect(body.body).toBe("");
+    });
+  });
+
+  describe("milestone sync", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+    });
+
+    const milestone = {
+      number: 4,
+      title: "v1.2",
+      description: "Release train",
+      state: "open",
+      due_on: "2026-11-17T00:00:00Z",
+      closed_at: null,
+      html_url: "https://github.com/testowner/testrepo/milestone/4",
+    };
+
+    it("declares RELEASE milestones with webhook support", () => {
+      expect(adapter.getCapabilities().milestones).toEqual({
+        kinds: ["RELEASE"],
+        webhooks: true,
+      });
+    });
+
+    it("lists open milestones as ACTIVE releases keyed owner/repo#number", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([milestone]),
+      });
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+      });
+
+      expect(mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0]).toBe(
+        "https://api.github.com/repos/testowner/testrepo/milestones?state=open&sort=due_on&direction=asc&per_page=100&page=1"
+      );
+      expect(result.hasMore).toBe(false);
+      expect(result.items).toEqual([
+        {
+          id: "testowner/testrepo#4",
+          kind: "RELEASE",
+          name: "v1.2",
+          description: "Release train",
+          endDate: new Date("2026-11-17T00:00:00Z"),
+          state: "ACTIVE",
+          rawState: "open",
+          url: "https://github.com/testowner/testrepo/milestone/4",
+        },
+      ]);
+    });
+
+    it("includes closed milestones on request, as CLOSED ending when they closed", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            {
+              ...milestone,
+              number: 2,
+              state: "closed",
+              closed_at: "2026-10-01T12:00:00Z",
+            },
+          ]),
+      });
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+        includeClosed: true,
+      });
+
+      expect(
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0]
+      ).toContain("state=all");
+      expect(result.items[0]).toMatchObject({
+        id: "testowner/testrepo#2",
+        state: "CLOSED",
+        rawState: "closed",
+        endDate: new Date("2026-10-01T12:00:00Z"),
+      });
+    });
+
+    it("has no ITERATION artifacts", async () => {
+      const result = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+        kind: "ITERATION",
+      });
+      expect(result).toEqual({ items: [], hasMore: false });
+      expect(mockFetch).toHaveBeenCalledTimes(1); // authenticate only
+    });
+
+    it("pages a milestone's issues by number and drops pull requests", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            mockGitHubIssue,
+            { ...mockGitHubIssue, number: 43, pull_request: { url: "x" } },
+          ]),
+      });
+
+      const page = await adapter.getMilestoneIssues(
+        { id: "testowner/testrepo#4", kind: "RELEASE" },
+        { limit: 2 }
+      );
+
+      expect(mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0]).toBe(
+        "https://api.github.com/repos/testowner/testrepo/issues?milestone=4&state=all&per_page=2&page=1"
+      );
+      expect(page.issues.map((i) => i.key)).toEqual(["#42"]);
+      expect(page.hasMore).toBe(true);
+      expect(page.nextPageToken).toBe("2");
+    });
+
+    it("stops paging on a short page and answers empty for a malformed ref", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([mockGitHubIssue]),
+      });
+      const page = await adapter.getMilestoneIssues(
+        { id: "testowner/testrepo#4", kind: "RELEASE" },
+        { pageToken: "2", limit: 50 }
+      );
+      expect(
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0]
+      ).toContain("page=2");
+      expect(page.hasMore).toBe(false);
+      expect(page.nextPageToken).toBeUndefined();
+
+      expect(
+        await adapter.getMilestoneIssues({ id: "4", kind: "RELEASE" })
+      ).toEqual({ issues: [], hasMore: false });
     });
   });
 

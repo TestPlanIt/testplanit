@@ -453,7 +453,12 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       select: {
         externalProjectKey: true,
         externalProjectName: true,
-        projectIntegration: { select: { integrationId: true } },
+        projectIntegration: {
+          select: {
+            integrationId: true,
+            integration: { select: { provider: true } },
+          },
+        },
       },
     },
     { enabled: !isNaN(numericProjectId) && integrationIds.length > 0 }

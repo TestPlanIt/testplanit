@@ -74,7 +74,12 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
       select: {
         externalProjectKey: true,
         externalProjectName: true,
-        projectIntegration: { select: { integrationId: true } },
+        projectIntegration: {
+          select: {
+            integrationId: true,
+            integration: { select: { provider: true } },
+          },
+        },
       },
     },
     { enabled: projectId != null && integrationIds.length > 0 }

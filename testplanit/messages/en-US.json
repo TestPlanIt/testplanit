@@ -2628,17 +2628,17 @@
       "overdue": "Milestone \"{name}\" was due on {dueDate}"
     },
     "import": {
-      "importTitle": "Import from Jira",
-      "importDescription": "Select the Jira Fix Versions and Sprints to sync as TestPlanIt Milestones.",
+      "importTitle": "Import from {provider}",
+      "importDescription": "Select the {provider} milestones to sync as TestPlanIt Milestones.",
       "showClosed": "Show closed",
       "alreadyLinked": "Already linked",
       "selectedCount": "{count, plural, one {# selected} other {# selected}}",
       "confirmSelection": "Import Selected",
       "confirmSelectionCount": "{count, plural, one {Import # Milestone} other {Import # Milestones}}",
       "empty": "No milestones found",
-      "previewFailed": "Failed to load milestones from Jira",
+      "previewFailed": "Failed to load milestones from {provider}",
       "importFailed": "Failed to import selected milestones",
-      "requestTimedOut": "Jira took too long to respond and the request timed out. This usually means the linked Jira projects have a large number of versions or boards. Try again, and keep \"Show closed\" turned off to narrow the request.",
+      "requestTimedOut": "{provider} took too long to respond and the request timed out. This usually means the linked {provider} projects have a large number of versions or boards. Try again, and keep \"Show closed\" turned off to narrow the request.",
       "serviceUnavailable": "The server is temporarily unavailable. Please try again in a moment.",
       "unexpectedResponse": "Unexpected response from the server (HTTP {status}). Please try again, and contact your administrator if this keeps happening.",
       "importStarted": "Import started",
@@ -2646,15 +2646,16 @@
       "kindSprint": "Sprint",
       "searchPlaceholder": "Search releases and sprints...",
       "emptyFiltered": "No milestones match your filters.",
-      "partialWarning": "Some Jira projects could not be fetched:",
-      "importing": "Importing {count, plural, one {# milestone} other {# milestones}} from Jira…",
-      "completed": "Imported {count, plural, one {# milestone} other {# milestones}} from Jira",
+      "partialWarning": "Some {provider} projects could not be fetched:",
+      "importing": "Importing {count, plural, one {# milestone} other {# milestones}} from {provider}…",
+      "completed": "Imported {count, plural, one {# milestone} other {# milestones}} from {provider}",
       "stillRunning": "The import is still running in the background — milestones will appear when it finishes."
     },
     "sync": {
-      "managedByJira": "Managed by Jira",
+      "managedByJira": "Managed by {provider}",
       "lastSynced": "Last synced {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Sync now",
       "unlinkMenuItem": "Unlink from {provider}",
@@ -8090,7 +8091,7 @@
       "documentation": "## Documentation\nAdditional details, references, and supporting materials.\n\n- Technical specifications\n- Design documents\n- External references\n- Meeting notes and decisions",
       "automaticCompletion": "## Auto-Complete on Due Date\nAutomatically marks this milestone as completed when its due date is reached.\n\n- Milestone will be completed at the scheduled time on the due date\n- Useful for time-boxed milestones that should close regardless of completion status\n- Can be overridden by manually completing the milestone before the due date\n- Requires a due date to be set",
       "notifyDaysBefore": "## Notify Days Before Due Date\nSend notifications to assigned team members when the milestone due date is approaching.\n\n- Toggle on to enable notifications, off to disable\n- Enter the number of days before the due date to start sending reminders\n- Notifications are sent to users assigned to test runs and sessions within this milestone\n- Overdue milestones will continue to send reminders until completed",
-      "managedByJira": "## Managed by Jira\nThis milestone's name, dates, and status are managed by Jira. Make changes there to update them here."
+      "managedByJira": "## Managed by the tracker\nThis milestone's name, dates, and status are managed by the issue tracker it was imported from. Make changes there to update them here."
     },
     "session": {
       "name": "## Session Name\nA clear, descriptive name that identifies the purpose of your testing session.\n\n- Should be unique and meaningful\n- Helps team members understand what is being tested\n- Used in reports and tracking",

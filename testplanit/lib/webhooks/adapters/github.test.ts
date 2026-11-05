@@ -442,3 +442,77 @@ describe("githubAdapter — extractExternalStatus", () => {
     expect(status).toBe("closed");
   });
 });
+
+describe("githubAdapter — milestone events", () => {
+  const REPO = { full_name: "acme/app" };
+
+  function verified(event: string, payload: unknown) {
+    const body = bodyOf(payload);
+    const result = githubAdapter.verify(
+      body,
+      headersOf({
+        "x-hub-signature-256": signBody(body, SECRET),
+        "x-github-event": event,
+      }),
+      SECRET
+    );
+    if (!result.valid) throw new Error(`unexpected ${result.reason}`);
+    return result.payload;
+  }
+
+  it("turns a milestone event into milestone_<action> and extracts its ref", () => {
+    const payload = verified("milestone", {
+      action: "closed",
+      milestone: { number: 4, title: "v1.2" },
+      repository: REPO,
+    });
+
+    expect(payload.eventType).toBe("milestone_closed");
+    expect(payload.synthetic).toBe(false);
+    expect(
+      githubAdapter.extractMilestoneEventRef!(payload, "milestone_closed")
+    ).toEqual({
+      kind: "RELEASE",
+      externalId: "acme/app#4",
+      externalProjectId: "acme/app",
+      merge: false,
+    });
+  });
+
+  it("routes issues milestoned/demilestoned to milestone sync with the milestone that changed", () => {
+    const payload = verified("issues", {
+      action: "demilestoned",
+      issue: { number: 7, state: "open", milestone: null },
+      milestone: { number: 4 },
+      repository: REPO,
+    });
+
+    expect(payload.eventType).toBe("milestone_demilestoned");
+    expect(
+      githubAdapter.extractMilestoneEventRef!(payload, "milestone_demilestoned")
+    ).toMatchObject({ externalId: "acme/app#4" });
+  });
+
+  it("leaves other issues actions on the issue path", () => {
+    const payload = verified("issues", {
+      action: "edited",
+      issue: { number: 7, state: "open" },
+      repository: REPO,
+    });
+    expect(payload.eventType).toBe("issues");
+    expect(
+      githubAdapter.extractMilestoneEventRef!(payload, "issues")
+    ).toBeNull();
+  });
+
+  it("returns no ref for a milestone payload without a number", () => {
+    const payload = verified("milestone", {
+      action: "edited",
+      milestone: { title: "nameless" },
+      repository: REPO,
+    });
+    expect(
+      githubAdapter.extractMilestoneEventRef!(payload, "milestone_edited")
+    ).toBeNull();
+  });
+});

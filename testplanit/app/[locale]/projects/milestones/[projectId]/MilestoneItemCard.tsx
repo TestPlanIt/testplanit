@@ -133,6 +133,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
               <CalendarDisplay
                 date={endDate}
                 showYear={milestone.isCompleted}
+                dateOnly={hasCalendarDates(milestone)}
               />
             </div>
           ) : null

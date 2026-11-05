@@ -1,5 +1,7 @@
 "use client";
 
+import { MILESTONE_SYNC_PROVIDERS } from "~/lib/integrations/milestoneSyncProviders";
+import { providerDisplayName } from "~/lib/integrations/providerDisplayName";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useQueryClient } from "@tanstack/react-query";
@@ -46,14 +48,6 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useTabState } from "~/hooks/useTabState";
 import { useRouter } from "~/lib/navigation";
-
-/**
- * Providers whose adapter declares a non-`false` `milestones` capability
- * (`IssueAdapterCapabilities.milestones`). Mirrors the same client-safe map
- * used by `milestone-sync-settings.tsx` — source of truth is each adapter's
- * `getCapabilities()` in `lib/integrations/adapters/*Adapter.ts`.
- */
-const MILESTONE_CAPABLE_PROVIDERS = new Set(["JIRA"]);
 
 interface ProjectMilestonesProps {
   params: Promise<{ projectId: string }>;
@@ -215,6 +209,62 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
 
   // Mark queued imports as landed once their externalIds show up in the
   // loaded milestone lists; toast completion when the last one arrives.
+  // Import from Jira trigger (MSYNC-02): find an active, milestone-sync
+  // capable ProjectIntegration for this project with milestoneSync.enabled
+  // in its config. Reuses the same capability list milestone-sync-settings.tsx
+  // gates on, since adapters run server-side only.
+  const { data: milestoneSyncIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany(
+    {
+      where: {
+        projectId: Number(projectId),
+        isActive: true,
+        integration: {
+          isDeleted: false,
+          provider: { in: MILESTONE_SYNC_PROVIDERS as any },
+        },
+      },
+      select: {
+        id: true,
+        integrationId: true,
+        config: true,
+        integration: { select: { provider: true } },
+      },
+    },
+    { enabled: isAuthenticated }
+  );
+
+  const importCapableProjectIntegration = React.useMemo(() => {
+    return (milestoneSyncIntegrations ?? []).find((pi) => {
+      const config = (pi.config as Record<string, any>) || {};
+      return config?.milestoneSync?.enabled === true;
+    });
+  }, [milestoneSyncIntegrations]);
+
+  const { data: importIntegrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        projectIntegrationId: importCapableProjectIntegration?.id,
+        isActive: true,
+      },
+      select: { id: true },
+    },
+    { enabled: isAuthenticated && !!importCapableProjectIntegration }
+  );
+
+  const importProjectMappingId = importIntegrationProjects?.[0]?.id;
+
+  const canImportFromJira =
+    isProjectAdmin &&
+    !!importCapableProjectIntegration &&
+    !!importProjectMappingId;
+  const importProvider =
+    importCapableProjectIntegration?.integration?.provider ?? "JIRA";
+  const importProviderName = providerDisplayName(importProvider);
+
   useEffect(() => {
     if (!pendingImportIds || pendingImportIds.size === 0) return;
     const loadedExternalIds = new Set(
@@ -230,12 +280,21 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
       if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);
       setPendingImportIds(null);
       toast.success(
-        t("milestones.import.completed", { count: pendingImportIds.size })
+        t("milestones.import.completed", {
+          count: pendingImportIds.size,
+          provider: importProviderName,
+        })
       );
     } else {
       setPendingImportIds(stillPending);
     }
-  }, [incompleteMilestones, completedMilestones, pendingImportIds, t]);
+  }, [
+    incompleteMilestones,
+    completedMilestones,
+    pendingImportIds,
+    t,
+    importProviderName,
+  ]);
 
   const isLoading =
     isAuthLoading ||
@@ -281,58 +340,6 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     },
     { enabled: isAuthenticated && syncedIntegrationIds.length > 0 }
   );
-
-  // Import from Jira trigger (MSYNC-02): find an active, milestone-sync
-  // capable ProjectIntegration for this project with milestoneSync.enabled
-  // in its config. Reuses the same capability list milestone-sync-settings.tsx
-  // gates on, since adapters run server-side only.
-  const { data: milestoneSyncIntegrations } = useClientQueries(
-    schema
-  ).projectIntegration.useFindMany(
-    {
-      where: {
-        projectId: Number(projectId),
-        isActive: true,
-        integration: {
-          isDeleted: false,
-          provider: { in: Array.from(MILESTONE_CAPABLE_PROVIDERS) as any },
-        },
-      },
-      select: {
-        id: true,
-        integrationId: true,
-        config: true,
-      },
-    },
-    { enabled: isAuthenticated }
-  );
-
-  const importCapableProjectIntegration = React.useMemo(() => {
-    return (milestoneSyncIntegrations ?? []).find((pi) => {
-      const config = (pi.config as Record<string, any>) || {};
-      return config?.milestoneSync?.enabled === true;
-    });
-  }, [milestoneSyncIntegrations]);
-
-  const { data: importIntegrationProjects } = useClientQueries(
-    schema
-  ).integrationProject.useFindMany(
-    {
-      where: {
-        projectIntegrationId: importCapableProjectIntegration?.id,
-        isActive: true,
-      },
-      select: { id: true },
-    },
-    { enabled: isAuthenticated && !!importCapableProjectIntegration }
-  );
-
-  const importProjectMappingId = importIntegrationProjects?.[0]?.id;
-
-  const canImportFromJira =
-    isProjectAdmin &&
-    !!importCapableProjectIntegration &&
-    !!importProjectMappingId;
 
   const hasFiredPassiveRefresh = useRef(false);
 
@@ -503,6 +510,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
                       <Loader2 className="h-3 w-3 animate-spin" />
                       {t("milestones.import.importing", {
                         count: pendingImportIds?.size ?? 0,
+                        provider: importProviderName,
                       })}
                     </Badge>
                   )}
@@ -511,12 +519,16 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
                       data-testid="import-milestones-button"
                       variant="outline"
                       onClick={() => setImportMilestonesOpen(true)}
-                      aria-label={t("milestones.import.importTitle")}
+                      aria-label={t("milestones.import.importTitle", {
+                        provider: importProviderName,
+                      })}
                       className="group gap-0 transition-all duration-200 hover:gap-2"
                     >
                       <Download className="h-4 w-4" />
                       <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
-                        {t("milestones.import.importTitle")}
+                        {t("milestones.import.importTitle", {
+                          provider: importProviderName,
+                        })}
                       </span>
                     </Button>
                   )}
@@ -546,6 +558,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
                         }
                         projectId={Number(projectId)}
                         projectMappingId={importProjectMappingId}
+                        provider={importProvider}
                         open={importMilestonesOpen}
                         onOpenChange={setImportMilestonesOpen}
                         onStarted={startImportPolling}

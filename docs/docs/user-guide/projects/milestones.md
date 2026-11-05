@@ -18,11 +18,11 @@ The page shows milestones as cards, grouped under two tabs:
 * **Active:** Milestones that haven't been marked complete.
 * **Completed:** Milestones that have been marked complete.
 
-A **kind filter** dropdown above the tabs narrows both tabs to a single milestone kind. It lists **All milestones**, then an entry for each kind actually present: **Synced releases** and **Synced sprints** for milestones synced from Jira (its Fix Versions and Sprints), plus one entry per local milestone type in use — each labeled with the type's name and shown with its own type icon, rather than grouped into a single "Local" bucket. The dropdown appears only when the project has more than one kind to choose between.
+A **kind filter** dropdown above the tabs narrows both tabs to a single milestone kind. It lists **All milestones**, then an entry for each kind actually present: **Synced releases** and **Synced sprints** for milestones synced from a tracker (Jira Fix Versions and Sprints, GitHub milestones), plus one entry per local milestone type in use — each labeled with the type's name and shown with its own type icon, rather than grouped into a single "Local" bucket. The dropdown appears only when the project has more than one kind to choose between.
 
 Within each tab, child milestones are nested and indented beneath their parent. Each card shows the milestone's name, type icon, status badge and date range, its note where one is set, and a [summary bar](./milestone-details.md#summary) of its test run and session results. The summary bar carries the totals, including the total estimate and elapsed time.
 
-A milestone synced from an external tracker (currently Jira) shows a [source badge](./milestone-details.md#source-badge) next to its name — for example **Jira · Sprint · active · Website**.
+A milestone synced from an external tracker (Jira or GitHub) shows a [source badge](./milestone-details.md#source-badge) next to its name — for example **Jira · Sprint · active · Website**.
 
 When a milestone has related issues, its summary bar carries the same paired count chips documented on the [Milestone Details](./milestone-details.md#summary) page — a **Target** icon for issues in scope and a **Bug** icon for issues found in testing. On this page, clicking a chip opens a popover listing its issues instead of navigating to the details page.
 
@@ -36,23 +36,23 @@ The **Type** field is pre-selected with the default Milestone Type, which is ava
 Adding milestones requires the `Add/Edit` permission for the `Milestones` application area for the specific project. Users without this permission will not see the "Add Milestone" button.
 :::
 
-## Import from Jira
+## Import from the tracker
 
-When a milestone-capable integration (currently Jira) has milestone sync enabled for at least one of the project's linked external projects, an **Import from Jira** button appears next to **Add Milestone**.
+When a milestone-capable integration (Jira or GitHub) has milestone sync enabled for at least one of the project's linked external projects, an **Import from Jira** or **Import from GitHub** button appears next to **Add Milestone**.
 
-The dialog previews the tracker's Fix Versions and Sprints across **all** of the project's Jira mappings, with:
+The dialog previews the tracker's artifacts — Jira Fix Versions and Sprints, or GitHub milestones — across **all** of the project's mappings on that integration, with:
 
 * **Show closed:** A toggle (off by default) that includes closed or released artifacts in the preview.
 * **Search and per-Jira-project filter chips:** Narrow the preview when the project has more than one Jira mapping.
 * **Multi-select:** Pick any number of artifacts to import in one pass.
 * **Already Linked badge:** Marks artifacts already tracked as a milestone in this project. A milestone that was previously unlinked or converted to local shows as importable again; importing it re-attaches the existing milestone — its test runs and links stay intact — instead of creating a duplicate.
 
-Milestones are tracked **per project**: several TestPlanIt projects can import the same Jira version or sprint, and each project gets its own independent milestone — synced, unlinked, or deleted without affecting any other project's copy of the same artifact.
+Milestones are tracked **per project**: several TestPlanIt projects can import the same tracker version, sprint or milestone, and each project gets its own independent milestone — synced, unlinked, or deleted without affecting any other project's copy of the same artifact.
 
 Import runs in the background: the dialog closes as soon as the import is queued, an **Importing…** indicator shows progress on the list page, and a toast confirms once the import completes.
 
 :::info Permissions Required
-Importing from Jira requires **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../permissions-guide.md).
+Importing requires **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../permissions-guide.md).
 :::
 
 :::caution Sprints need extra OAuth scopes

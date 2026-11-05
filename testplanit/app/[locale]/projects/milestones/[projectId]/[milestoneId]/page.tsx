@@ -102,7 +102,10 @@ import { toCalendarDate } from "~/utils/calendarDate";
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
 import MilestoneItemCard from "../MilestoneItemCard";
-import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
+import {
+  resolveMilestoneProvider,
+  MilestoneSourceBadge,
+} from "@/components/MilestoneSourceBadge";
 import { IssuesCard, type IssuesCardHandle } from "./IssuesCard";
 import MilestoneFormControls from "./MilestoneFormControls";
 import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";
@@ -351,7 +354,12 @@ export default function MilestoneDetailsPage() {
       select: {
         externalProjectKey: true,
         externalProjectName: true,
-        projectIntegration: { select: { integrationId: true } },
+        projectIntegration: {
+          select: {
+            integrationId: true,
+            integration: { select: { provider: true } },
+          },
+        },
       },
     },
     {
@@ -1409,6 +1417,10 @@ export default function MilestoneDetailsPage() {
                       isEditMode={isEditMode}
                       isSubmitting={isSubmitting}
                       milestone={milestone}
+                      provider={resolveMilestoneProvider(
+                        milestone,
+                        milestoneIntegrationProjects
+                      )}
                       projectId={projectId}
                       milestoneId={milestoneId}
                     />

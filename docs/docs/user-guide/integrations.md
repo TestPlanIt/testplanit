@@ -286,7 +286,7 @@ The Atlassian 3LO OAuth flow used here routes through the `api.atlassian.com` ga
 
    :::caution Sprint import fails without the Jira Software scopes
 
-   Atlassian does not accept classic scopes for the Jira Software REST API, so `read:jira-work` alone never authorizes `/rest/agile/1.0/`. If the three granular scopes are missing, [milestone import](./projects/milestones.md#import-from-jira) fails with:
+   Atlassian does not accept classic scopes for the Jira Software REST API, so `read:jira-work` alone never authorizes `/rest/agile/1.0/`. If the three granular scopes are missing, [milestone import](./projects/milestones.md#import-from-the-tracker) fails with:
 
    ```text
    <PROJECT>: HTTP 401: {"code":401,"message":"Unauthorized; scope does not match"}
@@ -590,7 +590,7 @@ For OAuth integrations, users must:
 
 ### Token Refresh and Re-authorization
 
-When an OAuth access token is expired — or within a few minutes of expiring — TestPlanIt refreshes it automatically the next time the integration is used, including from background issue and milestone syncs, as long as a refresh token is on record (Jira, GitLab, and Gitea/Forgejo issue these; GitHub OAuth App tokens do not expire). The refreshed token is saved transparently, so users normally never notice expiration.
+When an OAuth access token is expired — or within a few minutes of expiring — TestPlanIt refreshes it automatically the next time the integration is used, including from background issue and milestone syncs, as long as a refresh token is on record (Jira, GitLab, Gitea/Forgejo, and GitHub OAuth apps with expiring user tokens issue these; a GitHub OAuth app without token expiration issues tokens that never expire and need no refresh). The refreshed token is saved transparently, so users normally never notice expiration.
 
 Re-authorization is only required when there is no usable refresh token — for example, the refresh token was revoked, expired from inactivity, or the OAuth app was not granted offline access. When that happens, the connection's owner receives a notification (bell and, depending on their notification preferences, email) with a **Reconnect** link that starts the consent flow directly. They can also re-authorize from anywhere the connection is used:
 
