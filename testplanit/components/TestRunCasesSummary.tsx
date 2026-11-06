@@ -202,7 +202,13 @@ export function TestRunCasesSummary({
 
       // Aggregate status counts
       summary.statusCounts.forEach((sc) => {
-        const key = `${sc.statusId}-${sc.statusName}`;
+        // Unexecuted cases of every configuration share one bucket even when
+        // some configurations are completed (Untested) and others open
+        // (Pending); the label is resolved from the aggregate below.
+        const key =
+          sc.statusId === null && !sc.resultType
+            ? "unexecuted"
+            : `${sc.statusId}-${sc.statusName}`;
         const existing = statusCountMap.get(key);
         if (existing) {
           existing.count += sc.count;
@@ -233,6 +239,7 @@ export function TestRunCasesSummary({
 
     return {
       testRunType: summaries[0].testRunType,
+      isCompleted: summaries.every((summary) => summary.isCompleted === true),
       totalCases,
       statusCounts,
       completionRate,
@@ -293,6 +300,16 @@ export function TestRunCasesSummary({
   }
 
   const isJUnitRun = isAutomatedTestRunType(summaryData.testRunType);
+
+  // A case with no status has never been executed. While the run is open it
+  // is Pending; once the run is completed it is locked, so it is Untested.
+  const unexecutedLabel = tCommon(
+    summaryData.isCompleted ? "labels.untested" : "status.pending"
+  );
+  const isUnexecutedCount = (status: {
+    statusId: number | null;
+    resultType?: string;
+  }) => status.statusId === null && !status.resultType;
 
   // If there are no cases, show a default message
   if (summaryData.totalCases === 0) {
@@ -368,7 +385,9 @@ export function TestRunCasesSummary({
           `${status.count} ${
             status.resultType === QUARANTINED_RESULT_TYPE
               ? quarantinedLabel
-              : status.statusName
+              : isUnexecutedCount(status)
+                ? unexecutedLabel
+                : status.statusName
           }`
       )
       .join(", ");
@@ -604,7 +623,9 @@ export function TestRunCasesSummary({
         `${status.count} ${
           status.resultType === QUARANTINED_RESULT_TYPE
             ? tGlobal("triage.quarantine.label")
-            : status.statusName
+            : isUnexecutedCount(status)
+              ? unexecutedLabel
+              : status.statusName
         }`
     )
     .join(", ");
@@ -645,7 +666,9 @@ export function TestRunCasesSummary({
               : (firstStatus?.color?.value ?? item.colorValue);
           const segmentStatusName = item.quarantined
             ? tGlobal("triage.quarantine.label")
-            : item.statusName;
+            : item.statusId === null
+              ? unexecutedLabel
+              : item.statusName;
 
           const segmentWidth = segmentWidths[index];
 
@@ -728,7 +751,7 @@ export function TestRunCasesSummary({
                   <div className="text-xs opacity-90 mt-1">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {tCommon("status.pending")}
+                      {unexecutedLabel}
                     </div>
                     <div className="flex items-center gap-1 mt-1">
                       {item.estimate && item.estimate > 0 && (

@@ -124,6 +124,106 @@ describe("getTestRunSummary", () => {
     });
   });
 
+  // A run-case with no status has never been executed. While the run is open
+  // it is Pending; a completed run is locked, so there it is Untested.
+  describe("never-executed cases", () => {
+    const unexecutedRow = {
+      statusId: null,
+      statusName: null,
+      colorValue: "#9ca3af",
+      quarantined: false,
+      count: BigInt(3),
+      isCompleted: null,
+      isSuccess: null,
+      isFailure: null,
+    };
+    const unexecutedCase = {
+      id: 11,
+      repositoryCaseId: 101,
+      testRunId: 1,
+      configurationName: null,
+      caseName: "Login works",
+      statusId: null,
+      statusName: null,
+      colorValue: "#9ca3af",
+      executedAt: null,
+      executedByName: null,
+      elapsed: null,
+      estimate: 60,
+      isPending: true,
+      resultCount: BigInt(0),
+      statusOrder: null,
+      quarantined: false,
+    };
+
+    it("labels them Untested and reports isCompleted on a completed run", async () => {
+      const fakeClient = makeFakeClient({
+        testRunType: "REGULAR",
+        isCompleted: true,
+        workflowType: "DONE",
+        statusRows: [unexecutedRow],
+        caseRows: [unexecutedCase],
+      });
+
+      const summary = await getTestRunSummary(1, {
+        client: fakeClient as any,
+        includeCaseDetails: true,
+      });
+
+      expect(summary.isCompleted).toBe(true);
+      expect(summary.statusCounts).toEqual([
+        expect.objectContaining({
+          statusId: null,
+          statusName: "Untested",
+          count: 3,
+        }),
+      ]);
+      expect(summary.caseDetails?.[0]).toMatchObject({
+        statusId: null,
+        statusName: "Untested",
+        isPending: true,
+      });
+    });
+
+    it("labels them Pending on an open run", async () => {
+      const fakeClient = makeFakeClient({
+        testRunType: "REGULAR",
+        isCompleted: false,
+        workflowType: "IN_PROGRESS",
+        statusRows: [unexecutedRow],
+        caseRows: [unexecutedCase],
+      });
+
+      const summary = await getTestRunSummary(1, {
+        client: fakeClient as any,
+        includeCaseDetails: true,
+      });
+
+      expect(summary.isCompleted).toBe(false);
+      expect(summary.statusCounts[0].statusName).toBe("Pending");
+      expect(summary.caseDetails?.[0].statusName).toBe("Pending");
+    });
+
+    it("keeps a real status name regardless of run completion", async () => {
+      const fakeClient = makeFakeClient({
+        testRunType: "REGULAR",
+        isCompleted: true,
+        statusRows: [
+          {
+            ...unexecutedRow,
+            statusId: 1,
+            statusName: "Passed",
+            isCompleted: true,
+          },
+        ],
+      });
+
+      const summary = await getTestRunSummary(1, { client: fakeClient as any });
+
+      expect(summary.statusCounts[0].statusName).toBe("Passed");
+    });
+  });
+
   it("throws TestRunNotFoundError when the test run does not exist", async () => {
     const fakeClient = makeFakeClient({ testRunNotFound: true });
 
@@ -210,8 +310,13 @@ interface FakeClientOptions {
   forecastManual?: number | null;
   issues?: Array<Record<string, unknown>>;
   workflowType?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | null;
+  isCompleted?: boolean;
   testRunNotFound?: boolean;
   junitAggregates?: Array<Record<string, unknown>>;
+  /** Rows for the TestRunCases per-status count query. */
+  statusRows?: Array<Record<string, unknown>>;
+  /** Rows for the per-case details query (includeCaseDetails). */
+  caseRows?: Array<Record<string, unknown>>;
 }
 
 function makeFakeClient(opts: FakeClientOptions) {
@@ -221,6 +326,7 @@ function makeFakeClient(opts: FakeClientOptions) {
       testRunType: opts.testRunType ?? "REGULAR",
       forecastManual: opts.forecastManual ?? null,
       projectId: 42,
+      isCompleted: opts.isCompleted ?? false,
       state: opts.workflowType ? { workflowType: opts.workflowType } : null,
       issues: opts.issues ?? [],
     };
@@ -248,6 +354,18 @@ function makeFakeClient(opts: FakeClientOptions) {
     // JUnit per-status aggregate (getJUnitRunSummary).
     if (text.includes("jtr.type") && text.includes("GROUP BY")) {
       return opts.junitAggregates ?? [];
+    }
+    // Per-case details (includeCaseDetails). Checked before the status counts:
+    // its result_count subquery also contains COUNT(*).
+    if (text.includes("latest_result")) {
+      return opts.caseRows ?? [];
+    }
+    // Manual per-status counts over TestRunCases (getRegularRunSummary).
+    if (
+      text.includes('"TestRunCases" trc') &&
+      text.includes("COUNT(*) as count")
+    ) {
+      return opts.statusRows ?? [];
     }
     return [];
   });

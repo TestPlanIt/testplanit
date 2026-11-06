@@ -11,6 +11,9 @@
 export type TestRunSummaryData = {
   testRunType: string;
   workflowType?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | null;
+  /** Whether the run is completed. A completed run is locked, so a case
+   *  with no result in it is Untested rather than Pending. */
+  isCompleted?: boolean;
   /** For automated runs: newest imported suite/result write, falling back to
    *  the run's creation (ISO string). The runs-page Automation card uses it
    *  to stop the "importing" spinner on runs that have gone quiet. Only the
@@ -127,6 +130,16 @@ export interface PerCaseIterationCounts {
     skipped: number;
     notRun: number;
   };
+}
+
+/**
+ * English fallback name for a run-case that has no status (never executed).
+ * While the run is open the case is still Pending; once the run is completed
+ * it is locked and the case is Untested. The in-app UI re-labels these rows
+ * in the viewer's language; webhook and panel payloads use this text as is.
+ */
+export function unexecutedStatusName(isCompleted: boolean | null | undefined) {
+  return isCompleted ? "Untested" : "Pending";
 }
 
 /**

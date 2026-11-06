@@ -24,6 +24,7 @@ import {
   QUARANTINED_COLOR,
   QUARANTINED_RESULT_TYPE,
   QUARANTINED_STATUS_NAME,
+  unexecutedStatusName,
   type PerCaseIterationCounts,
   type TestRunSummaryData,
 } from "./testRunSummary-shared";
@@ -73,6 +74,7 @@ export async function getTestRunSummary(
       testRunType: true,
       forecastManual: true,
       projectId: true,
+      isCompleted: true,
       state: {
         select: {
           workflowType: true,
@@ -124,7 +126,8 @@ export async function getTestRunSummary(
         testRunId,
         testRun.forecastManual,
         includeCaseDetails,
-        client
+        client,
+        testRun.isCompleted
       );
 
   // A hybrid run is summarised as a manual run (its automated results are
@@ -150,6 +153,7 @@ export async function getTestRunSummary(
     ...baseSummary,
     testRunType: testRun.testRunType,
     workflowType: testRun.state?.workflowType ?? null,
+    isCompleted: testRun.isCompleted,
     commentsCount,
     issues: testRun.issues.map((issue) => ({
       ...issue,
@@ -232,17 +236,21 @@ export async function getRegularRunSummary(
   testRunId: number,
   forecastManual: number | null,
   includeCaseDetails: boolean,
-  client?: DbLike
+  client?: DbLike,
+  isRunCompleted = false
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
   client ??= await defaultDbClient();
+  // Cases with no status have never been executed: Pending while the run is
+  // open, Untested once it is completed and locked.
+  const unexecutedLabel = unexecutedStatusName(isRunCompleted);
   // A failing status on a quarantined case (failure triage) is reported as
   // its own Quarantined bucket instead of as a failure.
   const rawStatusCounts = await client.$queryRaw<
     Array<{
       statusId: number | null;
-      statusName: string;
+      statusName: string | null;
       colorValue: string;
       quarantined: boolean;
       count: bigint;
@@ -253,7 +261,7 @@ export async function getRegularRunSummary(
   >`
     SELECT
       trc."statusId",
-      COALESCE(s.name, 'Pending') as "statusName",
+      s.name as "statusName",
       COALESCE(c.value, '#9ca3af') as "colorValue",
       (q.id IS NOT NULL AND s."isFailure" = true) as quarantined,
       COUNT(*) as count,
@@ -269,7 +277,12 @@ export async function getRegularRunSummary(
     GROUP BY trc."statusId", s.name, c.value, quarantined, s."isCompleted", s."isSuccess", s."isFailure"
     ORDER BY trc."statusId" ASC NULLS LAST
   `;
-  const statusCounts = foldQuarantinedStatusCounts(rawStatusCounts);
+  const statusCounts = foldQuarantinedStatusCounts(
+    rawStatusCounts.map((row) => ({
+      ...row,
+      statusName: row.statusName ?? unexecutedLabel,
+    }))
+  );
 
   const elapsedResult = await client.$queryRaw<
     Array<{ totalElapsed: bigint | null }>
@@ -326,7 +339,7 @@ export async function getRegularRunSummary(
     configurationName: string | null;
     caseName: string;
     statusId: number | null;
-    statusName: string;
+    statusName: string | null;
     colorValue: string;
     executedAt: Date | null;
     executedByName: string | null;
@@ -347,7 +360,7 @@ export async function getRegularRunSummary(
         conf.name as "configurationName",
         rc.name as "caseName",
         trc."statusId",
-        COALESCE(s.name, 'Pending') as "statusName",
+        s.name as "statusName",
         COALESCE(c.value, '#9ca3af') as "colorValue",
         latest_result."executedAt",
         u.name as "executedByName",
@@ -432,6 +445,7 @@ export async function getRegularRunSummary(
   if (includeCaseDetails) {
     result.caseDetails = caseDetails.map((item) => ({
       ...item,
+      statusName: item.statusName ?? unexecutedLabel,
       resultCount: Number(item.resultCount),
     }));
   }

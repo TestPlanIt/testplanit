@@ -87,6 +87,7 @@ export function useDrillDownColumns({
       no: tCommon("no"),
       name: tCommon("name"),
       statusPending: tCommon("status.pending"),
+      statusUntested: tCommon("labels.untested"),
       key: tCommon("fields.key"),
       summary: tCommon("fields.summary"),
       progress: tCommon("fields.progress"),
@@ -272,9 +273,13 @@ export function useDrillDownColumns({
           cell: (info) => {
             const row = info.row.original as any;
             if (!row.status) {
+              // A completed run is locked, so a case with no status there can
+              // no longer be executed: it is Untested, not Pending.
               return (
                 <span className="text-muted-foreground">
-                  {translations.statusPending}
+                  {row.testRun?.isCompleted
+                    ? translations.statusUntested
+                    : translations.statusPending}
                 </span>
               );
             }

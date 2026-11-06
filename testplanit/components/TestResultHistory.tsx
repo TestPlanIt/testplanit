@@ -1250,6 +1250,7 @@ function TestResultHistoryContent({
                   name: true,
                   milestone: { select: { name: true } },
                   isCompleted: true,
+                  completedAt: true,
                   isDeleted: true,
                   configurationGroupId: true,
                   configuration: { select: { id: true, name: true } },
@@ -1522,12 +1523,21 @@ function TestResultHistoryContent({
 
     fetchedTestCase.testRunCases?.forEach((trc: any) => {
       if (!executedOrCoveredTrcIds.has(trc.id)) {
+        // A completed run is locked, so a case with no result there can
+        // never be executed: it is Untested, not Pending. Anchor it to the
+        // run's completion time so it sorts into the history chronologically.
+        const isRunCompleted = Boolean(trc.testRun?.isCompleted);
         allUnifiedResults.push({
           displayId: `pending-${trc.id}`, // Use TestRunCases.id for pending displayId
           sourceType: "pending",
-          executedAt: new Date(),
+          executedAt:
+            isRunCompleted && trc.testRun?.completedAt
+              ? new Date(trc.testRun.completedAt)
+              : new Date(),
           status: {
-            name: tCommon("status.pending"),
+            name: isRunCompleted
+              ? tCommon("labels.untested")
+              : tCommon("status.pending"),
             color: { value: "#B1B2B3" },
           },
           isPending: true,
@@ -1548,10 +1558,15 @@ function TestResultHistoryContent({
       }
     });
 
-    // Sort results: pending first, then by executedAt descending
+    // Sort results: pending (open runs) first, then by executedAt descending.
+    // Untested rows from completed runs stay in chronological order.
+    const isOpenPending = (r: UnifiedTestResult) =>
+      r.isPending && !r.associatedTestRun?.isCompleted;
     return allUnifiedResults.sort((a, b) => {
-      if (a.isPending && !b.isPending) return -1;
-      if (!a.isPending && b.isPending) return 1;
+      const aPending = isOpenPending(a);
+      const bPending = isOpenPending(b);
+      if (aPending && !bPending) return -1;
+      if (!aPending && bPending) return 1;
       return (
         new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
       );

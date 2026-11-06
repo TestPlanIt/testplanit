@@ -440,6 +440,39 @@ describe("TestResultHistory", () => {
 
     // "status.pending" should appear
     expect(screen.getByText("status.pending")).toBeInTheDocument();
+    expect(screen.queryByText("labels.untested")).not.toBeInTheDocument();
+  });
+
+  it("renders untested instead of pending when the run is completed", () => {
+    const testCaseWithUntested = {
+      ...mockTestCase,
+      testRunCases: [
+        {
+          id: 202,
+          testRun: {
+            id: 21,
+            name: "Completed Run",
+            milestone: null,
+            isCompleted: true,
+            completedAt: new Date("2024-01-20T10:00:00Z"),
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [], // No results in a locked run = untested
+        },
+      ],
+      junitResults: [],
+    };
+    mockUseFindFirstRepositoryCases.mockReturnValue({
+      data: testCaseWithUntested,
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(screen.getByText("labels.untested")).toBeInTheDocument();
+    expect(screen.queryByText("status.pending")).not.toBeInTheDocument();
   });
 
   it("shows expand/collapse toggle buttons in table header", () => {

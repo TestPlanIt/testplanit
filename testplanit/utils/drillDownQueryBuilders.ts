@@ -1860,6 +1860,7 @@ export function buildMilestoneCompletionQuery(
         select: {
           id: true,
           name: true,
+          isCompleted: true,
           milestone: {
             select: {
               id: true,

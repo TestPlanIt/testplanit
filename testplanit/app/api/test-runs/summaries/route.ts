@@ -11,6 +11,7 @@ import {
   QUARANTINED_COLOR,
   QUARANTINED_RESULT_TYPE,
   QUARANTINED_STATUS_NAME,
+  unexecutedStatusName,
 } from "~/lib/services/testRunSummary-shared";
 import { authOptions } from "~/server/auth";
 import {
@@ -72,6 +73,7 @@ export async function GET(req: NextRequest) {
         forecastManual: true,
         projectId: true,
         createdAt: true,
+        isCompleted: true,
         state: {
           select: {
             workflowType: true,
@@ -218,6 +220,7 @@ export async function GET(req: NextRequest) {
             : {}),
           testRunType: tr.testRunType,
           workflowType: tr.state?.workflowType,
+          isCompleted: tr.isCompleted,
           lastActivityAt,
           commentsCount: commentsCounts.get(tr.id) || 0,
           issues: tr.issues.map((issue) => ({
@@ -257,7 +260,7 @@ async function getBatchRegularRunSummaries(
     Array<{
       testRunId: number;
       statusId: number | null;
-      statusName: string;
+      statusName: string | null;
       colorValue: string;
       quarantined: boolean;
       count: bigint;
@@ -267,7 +270,7 @@ async function getBatchRegularRunSummaries(
     SELECT
       trc."testRunId",
       trc."statusId",
-      COALESCE(s.name, 'Pending') as "statusName",
+      s.name as "statusName",
       COALESCE(c.value, '#9ca3af') as "colorValue",
       (q.id IS NOT NULL AND s."isFailure" = true) as quarantined,
       COUNT(*) as count,
@@ -329,7 +332,7 @@ async function getBatchRegularRunSummaries(
     configurationName: string | null;
     caseName: string;
     statusId: number | null;
-    statusName: string;
+    statusName: string | null;
     colorValue: string;
     estimate: number | null;
     isPending: boolean;
@@ -344,7 +347,7 @@ async function getBatchRegularRunSummaries(
       conf.name as "configurationName",
       rc.name as "caseName",
       trc."statusId",
-      COALESCE(s.name, 'Pending') as "statusName",
+      s.name as "statusName",
       COALESCE(c.value, '#9ca3af') as "colorValue",
       rc.estimate,
       (trc."statusId" IS NULL OR s."isCompleted" = false) as "isPending",
@@ -384,12 +387,19 @@ async function getBatchRegularRunSummaries(
   `;
   const resultWindowMap = new Map(resultWindows.map((r) => [r.testRunId, r]));
 
-  // Get forecasts for test runs
+  // Get forecasts and completion state for test runs. A case with no status
+  // has never been executed: Pending while its run is open, Untested once the
+  // run is completed and locked.
   const testRuns = await baseDb.testRuns.findMany({
     where: { id: { in: testRunIds } },
-    select: { id: true, forecastManual: true },
+    select: { id: true, forecastManual: true, isCompleted: true },
   });
   const forecastMap = new Map(testRuns.map((tr) => [tr.id, tr.forecastManual]));
+  const unexecutedLabelByRun = new Map(
+    testRuns.map((tr) => [tr.id, unexecutedStatusName(tr.isCompleted)])
+  );
+  const unexecutedLabel = (testRunId: number) =>
+    unexecutedLabelByRun.get(testRunId) ?? unexecutedStatusName(false);
 
   // Build summary map
   const summaries = new Map<
@@ -426,7 +436,12 @@ async function getBatchRegularRunSummaries(
   for (const [runId, rows] of rawStatusCountsByRun) {
     statusCountsByRun.set(
       runId,
-      foldQuarantinedStatusCounts(rows).map((row) => ({
+      foldQuarantinedStatusCounts(
+        rows.map((row) => ({
+          ...row,
+          statusName: row.statusName ?? unexecutedLabel(runId),
+        }))
+      ).map((row) => ({
         statusId: row.statusId,
         statusName: row.statusName,
         colorValue: row.colorValue,
@@ -485,7 +500,7 @@ async function getBatchRegularRunSummaries(
         configurationName: detail.configurationName,
         caseName: detail.caseName,
         statusId: detail.statusId,
-        statusName: detail.statusName,
+        statusName: detail.statusName ?? unexecutedLabel(testRunId),
         colorValue: detail.colorValue,
         estimate: detail.estimate,
         isPending: detail.isPending,
