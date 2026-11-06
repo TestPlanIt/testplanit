@@ -1,3 +1,9 @@
+## [1.2.0-beta.33](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.32...v1.2.0-beta.33) (2026-11-06)
+
+### Bug Fixes
+
+* **runs:** report never-executed cases in completed runs as Untested ([324edc1](https://github.com/TestPlanIt/testplanit/commit/324edc1ecbb279954312b32a6a566b2d93bf5714))
+
 ## [1.2.0-beta.32](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.31...v1.2.0-beta.32) (2026-11-05)
 
 ### Bug Fixes
