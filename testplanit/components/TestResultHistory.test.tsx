@@ -475,6 +475,111 @@ describe("TestResultHistory", () => {
     expect(screen.queryByText("status.pending")).not.toBeInTheDocument();
   });
 
+  // Pending rows (open runs) lead the history; everything else, including
+  // Untested rows from completed runs, follows in execution order, with an
+  // Untested row anchored to the run's completion time.
+  it("sorts open-run pending rows first and completed-run untested rows chronologically", () => {
+    const testCaseWithMixedRuns = {
+      ...mockTestCase,
+      testRunCases: [
+        ...mockTestCase.testRunCases, // Passed on 2024-01-15
+        {
+          id: 203,
+          testRun: {
+            id: 22,
+            name: "Old Completed Run",
+            milestone: null,
+            isCompleted: true,
+            completedAt: new Date("2024-01-01T10:00:00Z"),
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [],
+        },
+        {
+          id: 201,
+          testRun: {
+            id: 20,
+            name: "Pending Run",
+            milestone: null,
+            isCompleted: false,
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [],
+        },
+        {
+          id: 202,
+          testRun: {
+            id: 21,
+            name: "Recent Completed Run",
+            milestone: null,
+            isCompleted: true,
+            completedAt: new Date("2024-01-20T10:00:00Z"),
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [],
+        },
+      ],
+      // JUnit "Failed" on 2024-01-14 stays in via mockTestCase.junitResults
+    };
+    mockUseFindFirstRepositoryCases.mockReturnValue({
+      data: testCaseWithMixedRuns,
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    const labels = ["status.pending", "labels.untested", "Passed", "Failed"];
+    const rowStatuses = Array.from(document.querySelectorAll("tbody tr"))
+      .map((row) => labels.find((label) => row.textContent?.includes(label)))
+      .filter((label): label is string => Boolean(label));
+
+    expect(rowStatuses).toEqual([
+      "status.pending", // open run leads
+      "labels.untested", // completed 2024-01-20
+      "Passed", // executed 2024-01-15
+      "Failed", // executed 2024-01-14
+      "labels.untested", // completed 2024-01-01
+    ]);
+  });
+
+  it("still labels a completed run untested when it has no completion date", () => {
+    const testCaseWithUndatedCompletion = {
+      ...mockTestCase,
+      testRunCases: [
+        {
+          id: 204,
+          testRun: {
+            id: 23,
+            name: "Completed Without Date",
+            milestone: null,
+            isCompleted: true,
+            completedAt: null,
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [],
+        },
+      ],
+      junitResults: [],
+    };
+    mockUseFindFirstRepositoryCases.mockReturnValue({
+      data: testCaseWithUndatedCompletion,
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(screen.getByText("labels.untested")).toBeInTheDocument();
+    expect(screen.queryByText("status.pending")).not.toBeInTheDocument();
+  });
+
   it("shows expand/collapse toggle buttons in table header", () => {
     renderWithQueryClient(<TestResultHistory {...defaultProps} />);
 
