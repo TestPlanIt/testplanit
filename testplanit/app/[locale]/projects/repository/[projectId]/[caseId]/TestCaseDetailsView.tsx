@@ -104,6 +104,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  startTransition,
 } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { PanelImperativeHandle } from "react-resizable-panels";
@@ -1369,8 +1370,12 @@ export function TestCaseDetailsView({
       !isEditMode
     ) {
       editParamProcessed.current = true;
-      setSelectedTemplateId(testcase.template.id);
-      setIsEditMode(true);
+      // The edit form mounts an editor per field and per step; rendering it
+      // as a transition keeps the loaded view on screen until it is ready.
+      startTransition(() => {
+        setSelectedTemplateId(testcase.template.id);
+        setIsEditMode(true);
+      });
     }
   }, [searchParams, startInEditMode, canAddEdit, testcase, isEditMode]);
 

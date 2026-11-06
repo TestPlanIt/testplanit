@@ -48,7 +48,9 @@ import {
   CloudSunRain,
   Bot,
   Combine,
+  ExternalLink,
   LayoutTemplate,
+  Loader2,
   Lock,
   Plus,
   SquarePen,
@@ -56,7 +58,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { emptyEditorContent } from "~/app/constants";
@@ -77,6 +79,7 @@ import {
 import { IconName } from "~/types/globals";
 import { ForecastDisplay } from "./ForecastDisplay";
 import LinkedCasesPanel from "./LinkedCasesPanel";
+import { Link } from "~/lib/navigation";
 import { Badge } from "./ui/badge";
 import { invalidateAfterResultSubmit } from "~/lib/test-run-result-invalidation";
 
@@ -182,6 +185,11 @@ export function TestRunCaseDetails({
   // missing linked issue, so it shows the issue-required error on open.
   const [issueErrorOnOpen, setIssueErrorOnOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Switching the sheet to the editor renders every field editor of the case
+  // at once, which blocks the main thread for seconds on a long case. As a
+  // transition that render happens in the background while this sheet stays
+  // painted, and the button shows it is pending.
+  const [isOpeningEditor, startOpeningEditor] = useTransition();
   const [_showAssignModal, _setShowAssignModal] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   // submitTestRunResult uses a raw fetch call, so nothing invalidates for it.
@@ -886,6 +894,29 @@ export function TestRunCaseDetails({
         {/* --- Previous/Next Buttons --- */}
         <TooltipProvider>
           <div className="flex items-center gap-2 shrink-0 me-8">
+            {/* The repository case in a new tab, so the run keeps its place. */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  data-testid="run-case-view-in-repository"
+                >
+                  <Link
+                    href={`/projects/repository/${projectId}/${testcase.id}`}
+                    target="_blank"
+                    aria-label={tCommon("actions.viewInRepository")}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {tCommon("actions.viewInRepository")}
+              </TooltipContent>
+            </Tooltip>
             {onEditCase && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -893,11 +924,17 @@ export function TestRunCaseDetails({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={onEditCase}
+                    onClick={() => startOpeningEditor(() => onEditCase())}
+                    disabled={isOpeningEditor}
+                    aria-busy={isOpeningEditor}
                     aria-label={tCommon("actions.editTestCase")}
                     data-testid="run-case-edit-case"
                   >
-                    <SquarePen className="h-4 w-4" />
+                    {isOpeningEditor ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <SquarePen className="h-4 w-4" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -961,6 +998,8 @@ export function TestRunCaseDetails({
           <CaseDisplay
             id={testcase.id}
             name={testcase.name}
+            projectId={projectId}
+            linkTarget="_blank"
             size="large"
             source={testcase.source}
             automated={testcase.automated}
