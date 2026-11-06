@@ -4,6 +4,7 @@ import {
   StepLayoutToggle,
   stepLayoutClasses,
 } from "@/components/steps/StepLayoutToggle";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
   AlertDialog,
@@ -364,10 +365,8 @@ const StepItem: React.FC<StepItemProps> = ({
                             <ListOrdered className="me-1 h-5 w-5 shrink-0" />
                             {tCommon("fields.step")} {item.order + 1}
                           </Label>
-                          <TipTapEditor
+                          <ReadOnlyRichText
                             content={stepContentToRender}
-                            readOnly={true}
-                            projectId={projectId.toString()}
                             className="min-h-10 bg-background/50 p-1 rounded text-sm"
                           />
                         </div>
@@ -381,10 +380,8 @@ const StepItem: React.FC<StepItemProps> = ({
                             <SearchCheck className="me-1 h-5 w-5 shrink-0" />
                             {tCommon("fields.expectedResult")}
                           </Label>
-                          <TipTapEditor
+                          <ReadOnlyRichText
                             content={expectedResultContentToRender}
-                            readOnly={true}
-                            projectId={projectId.toString()}
                             className="min-h-10 bg-background/50 p-1 rounded text-sm"
                           />
                         </div>
@@ -1175,19 +1172,15 @@ function StepsForm<T extends FieldValues = FieldValues>({
                           <div className="font-semibold text-xs mb-1 text-foreground/80">
                             {tCommon("fields.step")} {item.order + 1}
                           </div>
-                          <TipTapEditor
+                          <ReadOnlyRichText
                             content={stepContentToRender}
-                            readOnly={true}
-                            projectId={projectId.toString()}
                             className="min-h-[30px] bg-background/50 p-1 rounded text-xs"
                           />
                           <div className="font-semibold text-xs mt-1 mb-1 text-foreground/80">
                             {tCommon("fields.expectedResult")}
                           </div>
-                          <TipTapEditor
+                          <ReadOnlyRichText
                             content={expectedResultContentToRender}
-                            readOnly={true}
-                            projectId={projectId.toString()}
                             className="min-h-[30px] bg-background/50 p-1 rounded text-xs"
                           />
                         </div>

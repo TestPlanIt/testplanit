@@ -35,7 +35,7 @@ vi.mock("next-intl", () => ({
     values ? `${key} ${JSON.stringify(values)}` : key,
 }));
 
-vi.mock("@/components/tiptap/TipTapEditor", () => ({
+vi.mock("@/components/tiptap/ReadOnlyRichText", () => ({
   default: ({ content }: { content: any }) => (
     <div data-testid="tiptap-editor">
       {content?.content?.[0]?.content?.[0]?.text ?? ""}

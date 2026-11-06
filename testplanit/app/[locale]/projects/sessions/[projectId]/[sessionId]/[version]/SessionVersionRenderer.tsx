@@ -3,7 +3,7 @@ import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
 import DynamicIcon from "@/components/DynamicIcon";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import { Badge } from "@/components/ui/badge";
 import type {
   Attachments,
@@ -67,7 +67,6 @@ export function SessionVersionRenderer({
   field,
   workflows,
   milestones,
-  projectId,
 }: SessionVersionRendererProps) {
   const { data: session } = useSession();
   const t = useTranslations();
@@ -311,14 +310,12 @@ export function SessionVersionRenderer({
                 className={`min-h-fit max-h-[400px] overflow-y-auto border rounded-md p-2
                 ${showPreviousVersion ? "bg-green-100" : ""}`}
               >
-                <TipTapEditor
+                <ReadOnlyRichText
                   key={`current-${fieldType}-${testSession.id}`}
                   content={
                     typeof value === "string" ? JSON.parse(value) : value
                   }
-                  readOnly={true}
                   className="h-auto"
-                  projectId={projectId?.toString()}
                 />
               </div>
             </div>
@@ -329,16 +326,14 @@ export function SessionVersionRenderer({
                   {t("sessions.version.renderer.previousVersion")}
                 </div>
                 <div className="min-h-fit max-h-[400px] overflow-y-auto border rounded-md p-2 bg-red-100">
-                  <TipTapEditor
+                  <ReadOnlyRichText
                     key={`previous-${fieldType}-${testSession.id}`}
                     content={
                       typeof previousValue === "string"
                         ? JSON.parse(previousValue)
                         : previousValue
                     }
-                    readOnly={true}
                     className="h-auto"
-                    projectId={projectId?.toString()}
                   />
                 </div>
               </div>

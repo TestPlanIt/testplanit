@@ -186,6 +186,14 @@ vi.mock("./tiptap/TipTapEditor", () => ({
   ),
 }));
 
+// Read-only content renders through the static renderer; the stub keeps the
+// editor's test id so the assertions below cover both.
+vi.mock("./tiptap/ReadOnlyRichText", () => ({
+  default: ({ content }: { content: any }) => (
+    <div data-testid="tiptap-editor">{JSON.stringify(content)}</div>
+  ),
+}));
+
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));

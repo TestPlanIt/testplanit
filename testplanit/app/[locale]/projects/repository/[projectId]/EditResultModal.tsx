@@ -10,6 +10,7 @@ import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { HelpPopover } from "@/components/ui/help-popover";
 import UploadAttachments, {
@@ -201,6 +202,7 @@ const mapFieldToZodType = (
 
 // @ts-expect-error - No type definitions for parse-duration locales
 import es from "parse-duration/locale/es.js";
+import { invalidateAfterResultSubmit } from "~/lib/test-run-result-invalidation";
 
 // Update the form schema to include dynamic fields
 const formSchema = (
@@ -1063,11 +1065,11 @@ export function EditResultModal({
         await uploadFiles(result.id);
       }
 
-      // Refresh caches in the background. The edit now goes through a raw
-      // fetch (not a ZenStack mutation hook), so nothing auto-invalidates the
-      // ZenStack query keys the result history reads from — a keyless
-      // invalidate covers them. Fire-and-forget so the modal closes at once.
-      void queryClient.invalidateQueries();
+      // Refresh caches in the background. The edit goes through a raw fetch
+      // (not a ZenStack mutation hook), so nothing auto-invalidates the query
+      // keys the run view and result history read from. Fire-and-forget so
+      // the modal closes at once.
+      void invalidateAfterResultSubmit(queryClient);
 
       toast.success(tCommon("actions.resultUpdated"));
       onClose();
@@ -1119,9 +1121,8 @@ export function EditResultModal({
 
       // Refresh caches in the background. Like the edit path, this is a raw
       // fetch rather than a ZenStack mutation hook, so nothing auto-
-      // invalidates the ZenStack query keys the run view and result history
-      // read from — a keyless invalidate covers them.
-      void queryClient.invalidateQueries();
+      // invalidates the query keys the run view and result history read from.
+      void invalidateAfterResultSubmit(queryClient);
 
       toast.success(tCommon("actions.resultDeleted"));
       onClose();
@@ -1816,10 +1817,8 @@ export function EditResultModal({
                               {index + 1}
                             </div>
                             <div className="flex-1">
-                              <TipTapEditor
+                              <ReadOnlyRichText
                                 content={stepContent}
-                                readOnly={true}
-                                projectId={`step_${step.id}`}
                                 className="prose-sm"
                                 parameters={stepParameters}
                               />
@@ -1834,10 +1833,8 @@ export function EditResultModal({
                           >
                             <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
                             <div className="flex-1">
-                              <TipTapEditor
+                              <ReadOnlyRichText
                                 content={expectedResultContent}
-                                readOnly={true}
-                                projectId={`step_${step.id}_expected`}
                                 className="prose-sm"
                                 parameters={stepParameters}
                               />

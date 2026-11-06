@@ -5,7 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Color } from "@tiptap/extension-color";
-import { Emoji, EmojiItem, gitHubEmojis } from "@tiptap/extension-emoji";
+import { EmojiItem, gitHubEmojis } from "@tiptap/extension-emoji";
 import { FileHandler } from "@tiptap/extension-file-handler";
 import Focus from "@tiptap/extension-focus";
 import { Link } from "@tiptap/extension-link";
@@ -104,6 +104,7 @@ import {
 import { useTranslations } from "next-intl";
 import { emptyEditorContent } from "~/app/constants";
 import { clearFormatting } from "~/lib/tiptap/clearFormatting";
+import { emojiExtension } from "~/lib/tiptap/emojiExtension";
 import {
   createParameterMentionExtension,
   type ParameterChipMeta,
@@ -117,6 +118,64 @@ import { InsertParameterToolbarButton } from "./InsertParameterToolbarButton";
 import { UndeclaredParameterWarning } from "./UndeclaredParameterWarning";
 import { readToolbarState, type ToolbarState } from "./toolbarState";
 import { apiFetch } from "~/lib/basePath";
+
+/**
+ * Extensions that take no per-instance options. Extension instances carry no
+ * editor state (plugins and storage are set up per editor), so one set serves
+ * every editor on the page, and the emoji extension's construction-time
+ * support scan runs once per page load instead of once per render.
+ */
+const STATIC_EXTENSIONS = [
+  StarterKit.configure({
+    heading: {
+      levels: [1, 2, 3],
+    },
+    bulletList: {
+      HTMLAttributes: {
+        class: "list-disc list-outside ps-5",
+      },
+    },
+    orderedList: {
+      HTMLAttributes: {
+        class: "list-decimal list-outside ps-5",
+      },
+    },
+    listItem: {
+      HTMLAttributes: {
+        class: "list-item",
+      },
+    },
+    link: false,
+    underline: false,
+  }),
+  Underline,
+  Link.configure({ openOnClick: false }),
+  ImageWithResize.configure({
+    // Images are block-level (the custom Image extension sets group:"block",
+    // and all stored content uses block-placed images). inline:true here
+    // contradicted that — a node flagged inline but placed at block level —
+    // which @tiptap 3.26 tolerated but 3.27's stricter content validation
+    // rejects ("contentMatchAt … invalid content"), crashing the DragHandle
+    // on any doc with an image. Keep it block so v2 image content renders.
+    inline: false,
+    allowBase64: true,
+    HTMLAttributes: {
+      class: "tiptap-image",
+    },
+  }),
+  Video,
+  Color,
+  TextStyle,
+  emojiExtension,
+  Focus.configure({
+    className: "ring-2 ring-offset-2 rounded-md ring-primary",
+    mode: "shallowest",
+  }),
+  Table,
+  TableRow,
+  TableCell,
+  TableHeader,
+];
 
 interface TipTapEditorProps {
   content: object;
@@ -262,92 +321,57 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     return content;
   }, []);
 
+  // The per-instance extensions depend on this editor's callbacks and
+  // parameters; everything else comes from the module-level set. `useEditor`
+  // only reads them when it (re)creates the editor, so building the list on
+  // every render was pure cost: each `configure` constructs the extension,
+  // and the emoji extension's storage scans the whole emoji list for support.
+  const extensions = useMemo(
+    () => [
+      ...STATIC_EXTENSIONS,
+      FileHandler.configure({
+        allowedMimeTypes: [
+          "image/png",
+          "image/jpeg",
+          "image/gif",
+          "video/mp4",
+          "video/webm",
+          "video/ogg",
+        ],
+        onDrop: (editor, files, pos) => handleFile(editor, files, pos),
+        onPaste: (editor, files) => handleFile(editor, files),
+      }),
+      Placeholder.configure({
+        placeholder,
+        emptyEditorClass:
+          "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-start before:pointer-events-none",
+      }),
+      // The markdown extension swaps its storage's manager for the editor it
+      // is created on, so it cannot be shared between editors.
+      Markdown,
+      // Always register the parameterMention NODE so step content that
+      // contains parameter references can deserialize on every surface
+      // — even read-only previews / list cells / case views without an
+      // active iteration. The `@`-trigger Suggestion popup is opt-in
+      // (param-aware editable editors only); read-only or param-less
+      // mounts get a registered schema node that renders `@label` and
+      // never crashes. See parameterMentionExtension.tsx for the
+      // CreateParameterMentionExtensionOptions contract.
+      createParameterMentionExtension(parameters ?? [], chipMessages, {
+        withSuggestion: !readOnly && (parameters?.length ?? 0) > 0,
+      }),
+    ],
+    // chipMessages intentionally omitted: useTranslations may return a new
+    // function ref on every render, and the editor only reads this list when
+    // `parameters` changes anyway. Locale changes remount the layout above.
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    [handleFile, placeholder, parameters, readOnly]
+  );
+
   const editor = useEditor(
     {
       immediatelyRender: false,
-      extensions: [
-        StarterKit.configure({
-          heading: {
-            levels: [1, 2, 3],
-          },
-          bulletList: {
-            HTMLAttributes: {
-              class: "list-disc list-outside ps-5",
-            },
-          },
-          orderedList: {
-            HTMLAttributes: {
-              class: "list-decimal list-outside ps-5",
-            },
-          },
-          listItem: {
-            HTMLAttributes: {
-              class: "list-item",
-            },
-          },
-          link: false,
-          underline: false,
-        }),
-        Underline,
-        Link.configure({ openOnClick: false }),
-        ImageWithResize.configure({
-          // Images are block-level (the custom Image extension sets group:"block",
-          // and all stored content uses block-placed images). inline:true here
-          // contradicted that — a node flagged inline but placed at block level —
-          // which @tiptap 3.26 tolerated but 3.27's stricter content validation
-          // rejects ("contentMatchAt … invalid content"), crashing the DragHandle
-          // on any doc with an image. Keep it block so v2 image content renders.
-          inline: false,
-          allowBase64: true,
-          HTMLAttributes: {
-            class: "tiptap-image",
-          },
-        }),
-        Video,
-        FileHandler.configure({
-          allowedMimeTypes: [
-            "image/png",
-            "image/jpeg",
-            "image/gif",
-            "video/mp4",
-            "video/webm",
-            "video/ogg",
-          ],
-          onDrop: (editor, files, pos) => handleFile(editor, files, pos),
-          onPaste: (editor, files) => handleFile(editor, files),
-        }),
-        Color,
-        TextStyle,
-        Emoji.configure({
-          emojis: gitHubEmojis,
-          enableEmoticons: true,
-        }),
-        Focus.configure({
-          className: "ring-2 ring-offset-2 rounded-md ring-primary",
-          mode: "shallowest",
-        }),
-        Placeholder.configure({
-          placeholder,
-          emptyEditorClass:
-            "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-start before:pointer-events-none",
-        }),
-        Markdown,
-        Table,
-        TableRow,
-        TableCell,
-        TableHeader,
-        // Always register the parameterMention NODE so step content that
-        // contains parameter references can deserialize on every surface
-        // — even read-only previews / list cells / case views without an
-        // active iteration. The `@`-trigger Suggestion popup is opt-in
-        // (param-aware editable editors only); read-only or param-less
-        // mounts get a registered schema node that renders `@label` and
-        // never crashes. See parameterMentionExtension.tsx for the
-        // CreateParameterMentionExtensionOptions contract.
-        createParameterMentionExtension(parameters ?? [], chipMessages, {
-          withSuggestion: !readOnly && (parameters?.length ?? 0) > 0,
-        }),
-      ],
+      extensions,
       content: validateContent(content),
       onUpdate: ({ editor }) => {
         if (onUpdate && editor) {
@@ -396,9 +420,6 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         },
       },
       editable: !readOnly,
-      // chipMessages intentionally omitted from deps: useTranslations may return
-      // a new function ref on every render, which would cause an infinite editor
-      // re-mount loop. Locale changes already remount the layout above.
     },
     [parameters]
   );
@@ -1352,94 +1373,6 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           </ButtonGroup>
         </div>
       )}
-      {parameters !== undefined && (
-        <style>{`
-          .parameter-ref-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.125rem;
-            padding: 0 0.375rem;
-            border-radius: 0.25rem;
-            background-color: hsl(var(--primary) / 0.10);
-            color: hsl(var(--primary));
-            font-family: ui-monospace, "SFMono-Regular", monospace;
-            font-size: 0.8125rem;
-            font-weight: 500;
-            line-height: 1.4;
-            vertical-align: baseline;
-            white-space: nowrap;
-            cursor: default;
-            user-select: all;
-          }
-          .parameter-ref-chip[data-undeclared="true"] {
-            background-color: hsl(var(--warning) / 0.10);
-            color: hsl(var(--warning-text));
-            text-decoration: underline wavy hsl(var(--warning));
-            text-underline-offset: 2px;
-          }
-          .parameter-ref-chip[data-focused="true"] {
-            outline: 2px solid hsl(var(--ring));
-            outline-offset: 1px;
-          }
-          .parameter-ref-chip-text {
-            user-select: text;
-          }
-          .parameter-ref-chip[data-sensitive="true"] {
-            cursor: pointer;
-          }
-          .parameter-ref-chip[data-sensitive="true"]:hover {
-            background-color: hsl(var(--primary) / 0.18);
-          }
-          /* The parent button is just a positioning/event target — no mask
-             on it, otherwise the ping pseudo-element's scaled output gets
-             clipped to the original icon shape. The icon itself is drawn
-             by ::before; the ping pulse by ::after. */
-          .parameter-ref-chip-copy {
-            position: relative;
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            margin-left: 0.375rem;
-            cursor: pointer;
-            user-select: none;
-          }
-          .parameter-ref-chip-copy::before,
-          .parameter-ref-chip-copy::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background-color: currentColor;
-            -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E") no-repeat center / contain;
-                    mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E") no-repeat center / contain;
-            transform-origin: center;
-            pointer-events: none;
-          }
-          /* ::before is the static icon */
-          .parameter-ref-chip-copy::before {
-            opacity: 0.85;
-            transition: opacity 120ms, background-color 120ms;
-          }
-          .parameter-ref-chip-copy:hover::before {
-            opacity: 1;
-          }
-          /* ::after is the ping pulse — invisible by default */
-          .parameter-ref-chip-copy::after {
-            opacity: 0;
-          }
-          .parameter-ref-chip-copy[data-copied="true"]::before {
-            opacity: 1;
-            background-color: hsl(var(--success, 142 70% 45%));
-          }
-          .parameter-ref-chip-copy[data-copied="true"]::after {
-            background-color: hsl(var(--success, 142 70% 45%));
-            animation: chip-copy-ping 600ms cubic-bezier(0, 0, 0.2, 1) 1;
-          }
-          @keyframes chip-copy-ping {
-            0%   { transform: scale(1);   opacity: 0.7; }
-            100% { transform: scale(2.4); opacity: 0;   }
-          }
-        `}</style>
-      )}
       <div className="overflow-y-auto flex-1 w-full relative">
         <ContentItemMenu editor={editor} editable={!readOnly} />
         <EditorContent
@@ -1540,4 +1473,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   );
 };
 
-export default TipTapEditor;
+// Memoised so a parent re-render with unchanged props (a form re-rendering on
+// another field's change, say) does not run every editor's render and effects.
+// Content changes still reach a read-only editor through the content effect
+// above, and an editable editor owns its content after creation.
+export default React.memo(TipTapEditor);

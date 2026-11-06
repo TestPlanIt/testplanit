@@ -4,7 +4,7 @@ import {
   StepLayoutToggle,
   stepLayoutClasses,
 } from "@/components/steps/StepLayoutToggle";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import type { Steps as DbSteps } from "~/zenstack/models";
 import { Layers, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -48,7 +48,7 @@ const parseContent = (value: unknown) => {
 
 const RenderSharedGroupItemsForResults: React.FC<
   RenderSharedGroupItemsForResultsProps
-> = ({ sharedStepGroupId, projectId, parameters, sideBySide }) => {
+> = ({ sharedStepGroupId, parameters, sideBySide }) => {
   const t = useTranslations("repository.steps");
   const { data: items, isLoading } = useClientQueries(
     schema
@@ -93,10 +93,8 @@ const RenderSharedGroupItemsForResults: React.FC<
               </div>
             </div>
             <div className="grow min-w-0 -mt-1">
-              <TipTapEditor
+              <ReadOnlyRichText
                 content={parseContent(item.step)}
-                readOnly={true}
-                projectId={projectId?.toString()}
                 className="bg-muted/30 p-1 rounded"
                 parameters={parameters}
               />
@@ -112,10 +110,8 @@ const RenderSharedGroupItemsForResults: React.FC<
               </div>
             </div>
             <div className="grow min-w-0 -mt-1">
-              <TipTapEditor
+              <ReadOnlyRichText
                 content={parseContent(item.expectedResult)}
-                readOnly={true}
-                projectId={projectId?.toString()}
                 className="bg-muted/30 p-1 rounded"
                 parameters={parameters}
               />
@@ -210,10 +206,8 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
                   {index + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <TipTapEditor
+                  <ReadOnlyRichText
                     content={parseContent(step.step)}
-                    readOnly={true}
-                    projectId={`step_result_${step.id}`}
                     className="prose-sm"
                     parameters={parameters}
                   />
@@ -228,10 +222,8 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
               >
                 <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
                 <div className="flex-1 min-w-0">
-                  <TipTapEditor
+                  <ReadOnlyRichText
                     content={parseContent(step.expectedResult)}
-                    readOnly={true}
-                    projectId={`step_result_${step.id}_expected`}
                     className="prose-sm"
                     parameters={parameters}
                   />

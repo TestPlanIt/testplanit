@@ -10,6 +10,7 @@ import { cn } from "~/utils";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { HelpPopover } from "@/components/ui/help-popover";
 import UploadAttachments, {
@@ -38,8 +39,8 @@ import {
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
-import React, { useEffect, useRef, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
@@ -53,6 +54,7 @@ import {
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
 } from "~/lib/test-run-result-submit";
+import { invalidateAfterResultSubmit } from "~/lib/test-run-result-invalidation";
 import { useOperationId } from "~/hooks/useOperationId";
 import { toHumanReadable } from "~/utils/duration";
 import {
@@ -312,10 +314,8 @@ export function AddResultModal({
   const locale = useLocale();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
-  const invalidateAfterSubmit = async () => {
-    // submitTestRunResult uses a raw fetch call, so we manually invalidate caches.
-    await queryClient.invalidateQueries();
-  };
+  // submitTestRunResult uses a raw fetch call, so nothing invalidates for it.
+  const invalidateAfterSubmit = () => invalidateAfterResultSubmit(queryClient);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setSelectedStatusColor] = useState<string>("#3b82f6");
   const [editorKey, setEditorKey] = useState<number>(0);
@@ -695,12 +695,18 @@ export function AddResultModal({
     },
   });
 
-  const { mutateAsync: createAttachments } =
-    useClientQueries(schema).attachments.useCreate();
-  const { mutateAsync: updateTestRunCase } =
-    useClientQueries(schema).testRunCases.useUpdate();
-  const { mutateAsync: createTestRunStepResult } =
-    useClientQueries(schema).testRunStepResults.useCreate();
+  // These run once per step after a submit; invalidateAfterSubmit refreshes
+  // everything they touch in one pass, so each must not also invalidate on
+  // its own (one refetch round of the run page per step, before).
+  const { mutateAsync: createAttachments } = useClientQueries(
+    schema
+  ).attachments.useCreate({ invalidateQueries: false });
+  const { mutateAsync: updateTestRunCase } = useClientQueries(
+    schema
+  ).testRunCases.useUpdate({ invalidateQueries: false });
+  const { mutateAsync: createTestRunStepResult } = useClientQueries(
+    schema
+  ).testRunStepResults.useCreate({ invalidateQueries: false });
 
   // Find the first IN_PROGRESS workflow state for this project
   const { data: inProgressWorkflow } = useClientQueries(
@@ -907,6 +913,50 @@ export function AddResultModal({
     );
   };
 
+  // The step rows are memoised (see StepResultRow). These handlers keep a
+  // stable identity and read the latest statuses, issue selections and flip
+  // logic through refs, so a row re-renders only for its own changes.
+  const statusesRef = useRef(statuses);
+  /* eslint-disable-next-line react-hooks/refs */
+  statusesRef.current = statuses;
+  const flipToFailureOnIssueLinkRef = useRef(flipToFailureOnIssueLink);
+  /* eslint-disable-next-line react-hooks/refs */
+  flipToFailureOnIssueLinkRef.current = flipToFailureOnIssueLink;
+  const selectedStepIssuesRef = useRef(selectedStepIssues);
+  /* eslint-disable-next-line react-hooks/refs */
+  selectedStepIssuesRef.current = selectedStepIssues;
+
+  // A failure status on a step fails the whole result, the same escalation
+  // linking an issue performs.
+  const handleStepStatusChange = useCallback(
+    (value: string) => {
+      const isFailure =
+        statusesRef.current?.find((status) => status.id.toString() === value)
+          ?.isFailure === true;
+      if (!isFailure) return;
+      form.setValue("statusId", value, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      setAnimateBorder(true);
+    },
+    [form]
+  );
+
+  const handleStepIssuesChange = useCallback(
+    (stepId: number, ids: number[]) => {
+      flipToFailureOnIssueLinkRef.current(
+        selectedStepIssuesRef.current[stepId] || [],
+        ids,
+        `step_${stepId}_statusId`
+      );
+      setSelectedStepIssues((prev) => ({ ...prev, [stepId]: ids }));
+    },
+    []
+  );
+
+  const handleMainStatusAnimate = useCallback(() => setAnimateBorder(true), []);
+
   const { beginOperation, endOperation } = useOperationId();
 
   const handleSubmit = async () => {
@@ -985,6 +1035,25 @@ export function AddResultModal({
         }
       }
 
+      // A failing step also fails its run case. submit-result already stores
+      // the submitted status on the case (and the iteration rollup for a
+      // parameterized case), so this write only matters when a step failed
+      // with a status other than the submitted one, and once per case is
+      // enough: one write per failing step was dozens of updates of the same
+      // row, each refetching the run page.
+      const submittedStatusId = parseInt(values.statusId as string);
+      const runCasesFailed = new Set<number>();
+      const failRunCase = async (runCaseId: number, statusId: number) => {
+        if (statusId === submittedStatusId || runCasesFailed.has(runCaseId)) {
+          return;
+        }
+        runCasesFailed.add(runCaseId);
+        await updateTestRunCase({
+          where: { id: runCaseId },
+          data: { statusId },
+        });
+      };
+
       // Issues are already created by DeferredIssueManager, just use the IDs directly
       const issueIdsToConnect: number[] = selectedMainIssues;
       // Step + shared-step issues are written in separate calls after the
@@ -1023,6 +1092,7 @@ export function AddResultModal({
         );
         const bulkPromises = selectedCases.map(async (selectedCase) => {
           if (!selectedCase.testRunCaseId) return;
+          const bulkRunCaseId = selectedCase.testRunCaseId;
 
           const templateFieldIds = resultFieldIdsByTemplate.get(
             selectedCase.templateId
@@ -1122,10 +1192,7 @@ export function AddResultModal({
                         itemStatusIdToUse !== undefined &&
                         isFailureStatus(itemStatusIdToUse.toString())
                       ) {
-                        await updateTestRunCase({
-                          where: { id: selectedCase.testRunCaseId },
-                          data: { statusId: itemStatusIdToUse },
-                        });
+                        await failRunCase(bulkRunCaseId, itemStatusIdToUse);
                       }
 
                       if (itemStatusIdToUse !== undefined) {
@@ -1208,18 +1275,8 @@ export function AddResultModal({
                 }
 
                 if (stepStatusIdToUse !== undefined) {
-                  if (
-                    testRunCaseId &&
-                    isFailureStatus(stepStatusIdToUse.toString()) // Updated to use stepStatusIdToUse
-                  ) {
-                    await updateTestRunCase({
-                      where: {
-                        id: testRunCaseId,
-                      },
-                      data: {
-                        statusId: stepStatusIdToUse,
-                      },
-                    });
+                  if (isFailureStatus(stepStatusIdToUse.toString())) {
+                    await failRunCase(bulkRunCaseId, stepStatusIdToUse);
                   }
 
                   const stepResultData = {
@@ -1359,10 +1416,7 @@ export function AddResultModal({
                       itemStatusIdToUse !== undefined &&
                       isFailureStatus(itemStatusIdToUse.toString())
                     ) {
-                      await updateTestRunCase({
-                        where: { id: testRunCaseId },
-                        data: { statusId: itemStatusIdToUse },
-                      });
+                      await failRunCase(testRunCaseId, itemStatusIdToUse);
                     }
 
                     if (itemStatusIdToUse !== undefined) {
@@ -1444,16 +1498,9 @@ export function AddResultModal({
               if (stepStatusIdToUse !== undefined) {
                 if (
                   testRunCaseId &&
-                  isFailureStatus(stepStatusIdToUse.toString()) // Updated to use stepStatusIdToUse
+                  isFailureStatus(stepStatusIdToUse.toString())
                 ) {
-                  await updateTestRunCase({
-                    where: {
-                      id: testRunCaseId,
-                    },
-                    data: {
-                      statusId: stepStatusIdToUse,
-                    },
-                  });
+                  await failRunCase(testRunCaseId, stepStatusIdToUse);
                 }
 
                 const stepResultData = {
@@ -2167,8 +2214,6 @@ export function AddResultModal({
                 </div>
                 <ol className="space-y-4">
                   {steps.map((step, index) => {
-                    const stepId = step.id.toString();
-
                     // Handle Shared Step Group
                     if (step.sharedStepGroupId && step.sharedStepGroup) {
                       return (
@@ -2183,10 +2228,11 @@ export function AddResultModal({
                           </div>
                           <SharedStepGroupInputs
                             sharedStepGroupId={step.sharedStepGroupId}
+                            form={form}
                             control={form.control}
                             setValue={form.setValue}
                             getValues={form.getValues}
-                            statuses={statuses || []}
+                            statuses={statuses}
                             projectId={projectId}
                             projectIntegration={
                               projectData?.projectIntegrations?.[0]
@@ -2194,226 +2240,29 @@ export function AddResultModal({
                             selectedIssues={selectedSharedItemIssues}
                             setSelectedIssues={setSelectedSharedItemIssues}
                             issueMap={issueMap}
-                            onMainStatusChange={() => setAnimateBorder(true)}
+                            onMainStatusChange={handleMainStatusAnimate}
                             parameters={parameters}
                           />
                         </li>
                       );
                     }
 
-                    // Handle Regular Step
-                    let stepContent;
-                    try {
-                      stepContent =
-                        typeof step.step === "string"
-                          ? JSON.parse(step.step)
-                          : step.step;
-                    } catch {
-                      // console.warn("Error parsing step content:", error);
-                      stepContent = emptyEditorContent;
-                    }
-
-                    let expectedResultContent;
-                    try {
-                      if (typeof step.expectedResult === "string") {
-                        expectedResultContent = JSON.parse(step.expectedResult);
-                      } else if (
-                        typeof step.expectedResult === "object" &&
-                        step.expectedResult !== null
-                      ) {
-                        expectedResultContent = step.expectedResult; // Assume it's a valid TipTap JSON object
-                      } else {
-                        // For null, undefined, boolean, number, or any other type
-                        expectedResultContent = emptyEditorContent;
-                      }
-                    } catch (error) {
-                      // This catch is primarily for JSON.parse errors
-                      console.warn(
-                        "Error processing expected result content:",
-                        error
-                      );
-                      expectedResultContent = emptyEditorContent;
-                    }
-
                     return (
-                      <li
+                      <StepResultRow
                         key={step.id}
-                        className="space-y-2 border-2 border-primary/20 rounded-lg p-2"
-                      >
-                        <div className={stepLayoutClasses.pair(isSideBySide)}>
-                          <div
-                            className={cn(
-                              "flex gap-2 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
-                              stepLayoutClasses.stepBlock(isSideBySide)
-                            )}
-                          >
-                            <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
-                              {index + 1}
-                            </div>
-                            <div className="flex-1">
-                              <TipTapEditor
-                                content={stepContent}
-                                readOnly={true}
-                                projectId={`step_${step.id}`}
-                                className="prose-sm"
-                                parameters={parameters}
-                              />
-                            </div>
-                          </div>
-                          <div
-                            className={cn(
-                              "flex gap-1 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
-                              stepLayoutClasses.expectedBlock(isSideBySide)
-                            )}
-                            data-testid={`expected-result-${index}`}
-                          >
-                            <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
-                            <div className="flex-1">
-                              <TipTapEditor
-                                content={expectedResultContent}
-                                readOnly={true}
-                                projectId={`step_${step.id}_expected`}
-                                className="prose-sm"
-                                parameters={parameters}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name={`step_${stepId}_statusId`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="flex items-center gap-2">
-                                  {tCommon("actions.status")}
-                                  <HelpPopover helpKey="testResult.stepStatus" />
-                                </FormLabel>
-                                <FormControl>
-                                  <Select
-                                    onValueChange={(value) => {
-                                      field.onChange(value);
-                                      if (value && isFailureStatus(value)) {
-                                        form.setValue("statusId", value, {
-                                          shouldValidate: true,
-                                          shouldDirty: true,
-                                        });
-                                        setAnimateBorder(true);
-                                      }
-                                    }}
-                                    value={(field.value as string) || ""}
-                                  >
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue
-                                        placeholder={t(
-                                          "common.placeholders.selectStatus"
-                                        )}
-                                      />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {statuses?.map((status) => (
-                                        <SelectItem
-                                          key={status.id}
-                                          value={status.id.toString()}
-                                        >
-                                          <div className="flex items-center">
-                                            <div
-                                              className="w-3 h-3 rounded-full me-2"
-                                              style={{
-                                                backgroundColor:
-                                                  status.color?.value ||
-                                                  "#B1B2B3",
-                                              }}
-                                            />
-                                            <span>{status.name}</span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`step_${stepId}_elapsed`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="flex items-center">
-                                  {tCommon("fields.elapsed")}
-                                  <HelpPopover helpKey="testResult.stepElapsedTime" />
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    value={(field.value as string) || ""}
-                                    placeholder={t(
-                                      "common.placeholders.duration"
-                                    )}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={form.control}
-                          name={`step_${stepId}_notes`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="flex items-center">
-                                {tCommon("actions.resultDetails")}
-                                <HelpPopover helpKey="testResult.stepNotes" />
-                              </FormLabel>
-                              <FormControl>
-                                <div className="w-full border rounded-lg">
-                                  <TipTapEditor
-                                    content={field.value || emptyEditorContent}
-                                    onUpdate={field.onChange}
-                                    placeholder={t(
-                                      "common.actions.resultDetailsPlaceholder"
-                                    )}
-                                    projectId={`step_${step.id}_notes`}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Issue linking for this step */}
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-1">
-                            <Bug className="h-4 w-4" />
-                            {tCommon("fields.issues")} {"("}
-                            {tCommon("fields.step")} {index + 1}
-                            {")"}
-                          </FormLabel>
-                          <FormControl>
-                            <UnifiedIssueManager
-                              projectId={Number(projectId)}
-                              linkedIssueIds={selectedStepIssues[step.id] || []}
-                              setLinkedIssueIds={(ids) => {
-                                flipToFailureOnIssueLink(
-                                  selectedStepIssues[step.id] || [],
-                                  ids,
-                                  `step_${step.id}_statusId`
-                                );
-                                setSelectedStepIssues((prev) => ({
-                                  ...prev,
-                                  [step.id]: ids,
-                                }));
-                              }}
-                              entityType="testRunStepResult"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      </li>
+                        step={step}
+                        index={index}
+                        form={form}
+                        statuses={statuses}
+                        projectId={projectId}
+                        parameters={parameters}
+                        isSideBySide={isSideBySide}
+                        linkedIssueIds={
+                          selectedStepIssues[step.id] ?? NO_ISSUES
+                        }
+                        onLinkedIssuesChange={handleStepIssuesChange}
+                        onStatusChange={handleStepStatusChange}
+                      />
                     );
                   })}
                 </ol>
@@ -2470,9 +2319,205 @@ type StatusForSelect = Pick<DbStatus, "id" | "name" | "isFailure" | "order"> & {
 import { UseFormGetValues, UseFormSetValue } from "react-hook-form";
 import LoadingSpinner from "~/components/LoadingSpinner";
 
+const NO_ISSUES: number[] = [];
+
+interface StepResultRowProps {
+  step: EnrichedStep;
+  index: number;
+  form: UseFormReturn<FormValues>;
+  statuses: StatusForSelect[];
+  projectId: number;
+  parameters?: ParameterChipMeta[];
+  isSideBySide: boolean;
+  linkedIssueIds: number[];
+  onLinkedIssuesChange: (stepId: number, ids: number[]) => void;
+  onStatusChange: (statusId: string) => void;
+}
+
+/**
+ * One regular step of the result form.
+ *
+ * Memoised, and rendering its fields under its own form provider: every
+ * field under a provider re-renders whenever the provider's value changes,
+ * and react-hook-form hands out a new context object on each render of the
+ * form's host, so before this split one step status click re-rendered every
+ * step's editors. The modal passes stable callbacks, so a row re-renders
+ * only for its own status, notes or issues.
+ */
+const StepResultRow = React.memo(function StepResultRow({
+  step,
+  index,
+  form,
+  statuses,
+  projectId,
+  parameters,
+  isSideBySide,
+  linkedIssueIds,
+  onLinkedIssuesChange,
+  onStatusChange,
+}: StepResultRowProps) {
+  const t = useTranslations();
+  const tCommon = useTranslations("common");
+  const stepId = step.id.toString();
+
+  return (
+    <Form {...form}>
+      <li className="space-y-2 border-2 border-primary/20 rounded-lg p-2">
+        <div className={stepLayoutClasses.pair(isSideBySide)}>
+          <div
+            className={cn(
+              "flex gap-2 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+              stepLayoutClasses.stepBlock(isSideBySide)
+            )}
+          >
+            <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+              {index + 1}
+            </div>
+            <div className="flex-1">
+              <ReadOnlyRichText
+                content={step.step}
+                className="prose-sm"
+                parameters={parameters}
+              />
+            </div>
+          </div>
+          <div
+            className={cn(
+              "flex gap-1 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+              stepLayoutClasses.expectedBlock(isSideBySide)
+            )}
+            data-testid={`expected-result-${index}`}
+          >
+            <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
+            <div className="flex-1">
+              <ReadOnlyRichText
+                content={step.expectedResult}
+                className="prose-sm"
+                parameters={parameters}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name={`step_${stepId}_statusId`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  {tCommon("actions.status")}
+                  <HelpPopover helpKey="testResult.stepStatus" />
+                </FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      if (value) onStatusChange(value);
+                    }}
+                    value={(field.value as string) || ""}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={t("common.placeholders.selectStatus")}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statuses.map((status) => (
+                        <SelectItem
+                          key={status.id}
+                          value={status.id.toString()}
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className="w-3 h-3 rounded-full me-2"
+                              style={{
+                                backgroundColor:
+                                  status.color?.value || "#B1B2B3",
+                              }}
+                            />
+                            <span>{status.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name={`step_${stepId}_elapsed`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center">
+                  {tCommon("fields.elapsed")}
+                  <HelpPopover helpKey="testResult.stepElapsedTime" />
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={(field.value as string) || ""}
+                    placeholder={t("common.placeholders.duration")}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name={`step_${stepId}_notes`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center">
+                {tCommon("actions.resultDetails")}
+                <HelpPopover helpKey="testResult.stepNotes" />
+              </FormLabel>
+              <FormControl>
+                <div className="w-full border rounded-lg">
+                  <TipTapEditor
+                    content={field.value || emptyEditorContent}
+                    onUpdate={field.onChange}
+                    placeholder={t("common.actions.resultDetailsPlaceholder")}
+                    projectId={`step_${step.id}_notes`}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Issue linking for this step */}
+        <FormItem>
+          <FormLabel className="flex items-center gap-1">
+            <Bug className="h-4 w-4" />
+            {tCommon("fields.issues")} {"("}
+            {tCommon("fields.step")} {index + 1}
+            {")"}
+          </FormLabel>
+          <FormControl>
+            <UnifiedIssueManager
+              projectId={Number(projectId)}
+              linkedIssueIds={linkedIssueIds}
+              setLinkedIssueIds={(ids) => onLinkedIssuesChange(step.id, ids)}
+              entityType="testRunStepResult"
+            />
+          </FormControl>
+        </FormItem>
+      </li>
+    </Form>
+  );
+});
+
 // New component for Shared Step Group Inputs
 interface SharedStepGroupInputsProps {
   sharedStepGroupId: number;
+  form: UseFormReturn<FormValues>;
   control: any; // Control from react-hook-form
   setValue: UseFormSetValue<FormValues>;
   getValues: UseFormGetValues<FormValues>;
@@ -2488,8 +2533,11 @@ interface SharedStepGroupInputsProps {
   parameters?: ParameterChipMeta[];
 }
 
-const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
+// Memoised for the same reason as StepResultRow: the items' fields render
+// under their own provider, so the modal re-rendering does not reach them.
+const SharedStepGroupInputs = React.memo(function SharedStepGroupInputs({
   sharedStepGroupId,
+  form,
   control,
   setValue,
   getValues,
@@ -2501,8 +2549,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   issueMap: _issueMap,
   onMainStatusChange,
   parameters,
-}): React.ReactNode => {
-  // Explicitly set return type to React.ReactNode
+}: SharedStepGroupInputsProps): React.ReactNode {
   const t = useTranslations();
   const tCommon = useTranslations("common");
   const { isSideBySide } = useStepLayout();
@@ -2591,209 +2638,190 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   }
 
   return (
-    <div className="space-y-4 ms-4 ps-4 border-s-2 border-dashed">
-      {items.map((item, index) => {
-        const itemIdStr = item.id.toString();
-        let stepContent, expectedResultContent;
-        try {
-          stepContent =
-            typeof item.step === "string"
-              ? JSON.parse(item.step)
-              : item.step || emptyEditorContent;
-        } catch {
-          stepContent = emptyEditorContent;
-        }
-        try {
-          expectedResultContent =
-            typeof item.expectedResult === "string"
-              ? JSON.parse(item.expectedResult)
-              : item.expectedResult || emptyEditorContent;
-        } catch {
-          expectedResultContent = emptyEditorContent;
-        }
+    <Form {...form}>
+      <div className="space-y-4 ms-4 ps-4 border-s-2 border-dashed">
+        {items.map((item, index) => {
+          const itemIdStr = item.id.toString();
 
-        return (
-          <div
-            key={item.id}
-            className="space-y-2 border rounded-md p-3 bg-muted/30"
-          >
-            <div className={stepLayoutClasses.pair(isSideBySide)}>
-              <div
-                className={cn(
-                  "flex gap-2 w-full min-w-0 ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground",
-                  stepLayoutClasses.stepBlock(isSideBySide)
-                )}
-              >
-                <div className="font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border border-primary rounded-full w-6 h-6 text-xs">
-                  {index + 1}
+          return (
+            <div
+              key={item.id}
+              className="space-y-2 border rounded-md p-3 bg-muted/30"
+            >
+              <div className={stepLayoutClasses.pair(isSideBySide)}>
+                <div
+                  className={cn(
+                    "flex gap-2 w-full min-w-0 ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground",
+                    stepLayoutClasses.stepBlock(isSideBySide)
+                  )}
+                >
+                  <div className="font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border border-primary rounded-full w-6 h-6 text-xs">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1">
+                    <ReadOnlyRichText
+                      content={item.step}
+                      className="prose-sm"
+                      parameters={parameters}
+                    />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <TipTapEditor
-                    content={stepContent}
-                    readOnly
-                    projectId={`shared_item_step_${item.id}`}
-                    className="prose-sm"
-                    parameters={parameters}
-                  />
+                <div
+                  className={cn(
+                    "flex gap-1 w-full min-w-0 ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground",
+                    stepLayoutClasses.expectedBlock(isSideBySide)
+                  )}
+                >
+                  <SearchCheck className="text-primary h-6 w-6 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <ReadOnlyRichText
+                      content={item.expectedResult}
+                      className="prose-sm"
+                      parameters={parameters}
+                    />
+                  </div>
                 </div>
               </div>
-              <div
-                className={cn(
-                  "flex gap-1 w-full min-w-0 ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground",
-                  stepLayoutClasses.expectedBlock(isSideBySide)
-                )}
-              >
-                <SearchCheck className="text-primary h-6 w-6 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <TipTapEditor
-                    content={expectedResultContent}
-                    readOnly
-                    projectId={`shared_item_expected_${item.id}`}
-                    className="prose-sm"
-                    parameters={parameters}
-                  />
-                </div>
-              </div>
-            </div>
 
-            <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={control}
+                  name={`shared_item_${itemIdStr}_statusId`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        {tCommon("actions.status")}{" "}
+                        <HelpPopover helpKey="testResult.stepStatus" />
+                      </FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            if (
+                              value &&
+                              statuses.find((s) => s.id.toString() === value)
+                                ?.isFailure
+                            ) {
+                              // Check isFailure directly
+                              // Also update the main form's status if a shared item fails
+                              setValue("statusId", value, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                              onMainStatusChange?.();
+                            }
+                          }}
+                          value={(field.value as string) || ""}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue
+                              placeholder={tCommon("placeholders.selectStatus")}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statuses.map((status) => (
+                              <SelectItem
+                                key={status.id}
+                                value={status.id.toString()}
+                              >
+                                <div className="flex items-center">
+                                  <div
+                                    className="w-3 h-3 rounded-full me-2"
+                                    style={{
+                                      backgroundColor:
+                                        status.color?.value || "#B1B2B3",
+                                    }}
+                                  />
+                                  <span>{status.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name={`shared_item_${itemIdStr}_elapsed`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        {tCommon("fields.elapsed")}{" "}
+                        <HelpPopover helpKey="testResult.stepElapsedTime" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={(field.value as string) || ""}
+                          placeholder={tCommon("placeholders.duration")}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={control}
-                name={`shared_item_${itemIdStr}_statusId`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      {tCommon("actions.status")}{" "}
-                      <HelpPopover helpKey="testResult.stepStatus" />
-                    </FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          if (
-                            value &&
-                            statuses.find((s) => s.id.toString() === value)
-                              ?.isFailure
-                          ) {
-                            // Check isFailure directly
-                            // Also update the main form's status if a shared item fails
-                            setValue("statusId", value, {
-                              shouldValidate: true,
-                              shouldDirty: true,
-                            });
-                            onMainStatusChange?.();
-                          }
-                        }}
-                        value={(field.value as string) || ""}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={tCommon("placeholders.selectStatus")}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statuses.map((status) => (
-                            <SelectItem
-                              key={status.id}
-                              value={status.id.toString()}
-                            >
-                              <div className="flex items-center">
-                                <div
-                                  className="w-3 h-3 rounded-full me-2"
-                                  style={{
-                                    backgroundColor:
-                                      status.color?.value || "#B1B2B3",
-                                  }}
-                                />
-                                <span>{status.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name={`shared_item_${itemIdStr}_elapsed`}
+                name={`shared_item_${itemIdStr}_notes`}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      {tCommon("fields.elapsed")}{" "}
-                      <HelpPopover helpKey="testResult.stepElapsedTime" />
+                      {tCommon("actions.resultDetails")}{" "}
+                      <HelpPopover helpKey="testResult.stepNotes" />
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        value={(field.value as string) || ""}
-                        placeholder={tCommon("placeholders.duration")}
-                      />
+                      <div className="w-full border rounded-lg">
+                        <TipTapEditor
+                          content={field.value || emptyEditorContent}
+                          onUpdate={field.onChange}
+                          placeholder={t(
+                            "common.actions.resultDetailsPlaceholder"
+                          )}
+                          projectId={`shared_item_notes_${item.id}`}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* Issue linking for this shared step item */}
+              <FormItem>
+                <FormLabel className="flex items-center gap-1">
+                  <Bug className="h-4 w-4" />
+                  {tCommon("fields.issues")} {"("}
+                  {tCommon("fields.step")} {index + 1}
+                  {")"}
+                </FormLabel>
+                <FormControl>
+                  <UnifiedIssueManager
+                    projectId={projectId}
+                    linkedIssueIds={selectedIssues[item.id] || []}
+                    setLinkedIssueIds={(ids) => {
+                      flipToFailureOnIssueLink(
+                        selectedIssues[item.id] || [],
+                        ids,
+                        `shared_item_${itemIdStr}_statusId`
+                      );
+                      setSelectedIssues((prev) => ({
+                        ...prev,
+                        [item.id]: ids,
+                      }));
+                    }}
+                    entityType="testRunStepResult"
+                  />
+                </FormControl>
+              </FormItem>
             </div>
-
-            <FormField
-              control={control}
-              name={`shared_item_${itemIdStr}_notes`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {tCommon("actions.resultDetails")}{" "}
-                    <HelpPopover helpKey="testResult.stepNotes" />
-                  </FormLabel>
-                  <FormControl>
-                    <div className="w-full border rounded-lg">
-                      <TipTapEditor
-                        content={field.value || emptyEditorContent}
-                        onUpdate={field.onChange}
-                        placeholder={t(
-                          "common.actions.resultDetailsPlaceholder"
-                        )}
-                        projectId={`shared_item_notes_${item.id}`}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Issue linking for this shared step item */}
-            <FormItem>
-              <FormLabel className="flex items-center gap-1">
-                <Bug className="h-4 w-4" />
-                {tCommon("fields.issues")} {"("}
-                {tCommon("fields.step")} {index + 1}
-                {")"}
-              </FormLabel>
-              <FormControl>
-                <UnifiedIssueManager
-                  projectId={projectId}
-                  linkedIssueIds={selectedIssues[item.id] || []}
-                  setLinkedIssueIds={(ids) => {
-                    flipToFailureOnIssueLink(
-                      selectedIssues[item.id] || [],
-                      ids,
-                      `shared_item_${itemIdStr}_statusId`
-                    );
-                    setSelectedIssues((prev) => ({
-                      ...prev,
-                      [item.id]: ids,
-                    }));
-                  }}
-                  entityType="testRunStepResult"
-                />
-              </FormControl>
-            </FormItem>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </Form>
   );
-};
+});

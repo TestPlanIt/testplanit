@@ -52,6 +52,20 @@ vi.mock("@/components/tiptap/TipTapEditor", () => ({
   ),
 }));
 
+// View mode renders stored rich text through the static renderer, which is
+// always read-only; the stub keeps the editor's test id and attributes.
+vi.mock("@/components/tiptap/ReadOnlyRichText", () => ({
+  default: vi.fn(({ content }: { content?: any }) => (
+    <div
+      data-testid="tiptap-editor"
+      data-content={JSON.stringify(content)}
+      data-readonly="true"
+    >
+      ReadOnlyRichText
+    </div>
+  )),
+}));
+
 // Mock DynamicIcon
 vi.mock("@/components/DynamicIcon", () => ({
   default: vi.fn(({ name }: { name?: string }) => (

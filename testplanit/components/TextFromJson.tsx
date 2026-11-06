@@ -1,4 +1,4 @@
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import React, { useEffect, useState } from "react";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -97,10 +97,9 @@ const TipTapEditorWrapper: React.FC<{
 
   return (
     <div className="compact-prose">
-      <TipTapEditor
+      <ReadOnlyRichText
         key={room}
         content={content}
-        readOnly={true}
         className="w-full"
         parameters={parameters}
       />

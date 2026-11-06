@@ -97,7 +97,7 @@ import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link, useRouter } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
-import TipTapEditor from "./tiptap/TipTapEditor";
+import ReadOnlyRichText from "./tiptap/ReadOnlyRichText";
 
 // Define unified result types
 interface UnifiedTestResultBase {
@@ -576,10 +576,8 @@ const StepResultsDisplay = ({
                     )}
                   >
                     <div className="bg-muted/30 rounded-lg p-2 min-w-0">
-                      <TipTapEditor
+                      <ReadOnlyRichText
                         content={stepContent as object}
-                        readOnly={true}
-                        projectId={projectId ? String(projectId) : undefined}
                         className="prose-sm"
                       />
                     </div>
@@ -592,10 +590,8 @@ const StepResultsDisplay = ({
                       >
                         {tCommon("fields.expectedResult")}
                       </div>
-                      <TipTapEditor
+                      <ReadOnlyRichText
                         content={expectedResultContent as object}
-                        readOnly={true}
-                        projectId={projectId ? String(projectId) : undefined}
                         className="prose-sm"
                       />
                     </div>
@@ -605,10 +601,8 @@ const StepResultsDisplay = ({
                       <div className="text-xs text-muted-foreground mb-1">
                         {tCommon("actions.resultDetails")}
                       </div>
-                      <TipTapEditor
+                      <ReadOnlyRichText
                         content={ensureTipTapJSON(stepResult.notes)}
-                        readOnly={true}
-                        projectId={projectId ? String(projectId) : undefined}
                         className="prose-sm"
                       />
                     </div>
@@ -745,10 +739,8 @@ const RenderSharedGroupInHistoryList: React.FC<{
                 <div className="text-xs text-muted-foreground mb-1">
                   {tCommon("actions.resultDetails")}
                 </div>
-                <TipTapEditor
+                <ReadOnlyRichText
                   content={ensureTipTapJSON(itemResult.notes)}
-                  readOnly={true}
-                  projectId={projectId ? String(projectId) : undefined}
                   className="prose-sm"
                 />
               </div>
@@ -783,12 +775,10 @@ const RenderSharedGroupInHistoryList: React.FC<{
 // the row is actually expanded and the eager history query stays row-slim.
 const ManualResultExpandedDetails = ({
   result,
-  projectId,
   activeProjectId,
   session,
 }: {
   result: ManualTestResult;
-  projectId?: number;
   activeProjectId: number;
   session: any;
 }) => {
@@ -964,10 +954,8 @@ const ManualResultExpandedDetails = ({
             {tCommon("actions.resultDetails")}
           </div>
           <div className="px-4">
-            <TipTapEditor
+            <ReadOnlyRichText
               content={ensureTipTapJSON(details.notes)}
-              readOnly={true}
-              projectId={projectId ? String(projectId) : undefined}
               className="h-auto"
             />
           </div>
@@ -2133,7 +2121,6 @@ function TestResultHistoryContent({
                     {result.sourceType === "manual" && (
                       <ManualResultExpandedDetails
                         result={result}
-                        projectId={projectId}
                         activeProjectId={activeProjectId}
                         session={session}
                       />

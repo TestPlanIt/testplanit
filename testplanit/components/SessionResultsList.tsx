@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
   AlertDialog,
@@ -1308,10 +1309,8 @@ export function SessionResultsList({
 
         return (
           <div className="border rounded-md">
-            <TipTapEditor
+            <ReadOnlyRichText
               content={content}
-              readOnly={true}
-              projectId={"0"} // This is read-only, so projectId doesn't matter
               className="min-h-[50px] max-h-[200px] overflow-y-auto"
             />
           </div>
@@ -1531,11 +1530,9 @@ export function SessionResultsList({
               >
                 {getResultData(result) &&
                 !isEmptyContent(getResultData(result)) ? (
-                  <TipTapEditor
+                  <ReadOnlyRichText
                     key={`display-${result.id}-${refreshResults}`}
                     content={getResultData(result)}
-                    readOnly
-                    projectId={projectId.toString()}
                     className="p-4 rounded-md"
                   />
                 ) : (

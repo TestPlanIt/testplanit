@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "~/lib/basePath";
+import { invalidateAfterResultSubmit } from "~/lib/test-run-result-invalidation";
 
 export interface IterationBulkConfirmDialogProps {
   open: boolean;
@@ -135,13 +136,13 @@ export function IterationBulkConfirmDialog({
       }
       toast.success(t("iterationBulkSuccess", { count, action }));
       onOpenChange(false);
-      // Bulk-apply touches multiple models and rolls up the case-level status,
-      // so broadly invalidate to refetch every consumer (run page, repository,
-      // history). Fire-and-forget: the write is durable, so closing the dialog
-      // must not block on a page-wide refetch — awaiting it here would keep the
-      // dialog open until this heavy run page settles every query (matches the
-      // IterationResultPanel submit path).
-      void queryClient.invalidateQueries().catch(() => {});
+      // Bulk-apply touches multiple models and rolls up the case-level status;
+      // the helper refetches every consumer (run page, repository, history).
+      // Fire-and-forget: the write is durable, so closing the dialog must not
+      // block on the refetch — awaiting it here would keep the dialog open
+      // until this heavy run page settles (matches the IterationResultPanel
+      // submit path).
+      void invalidateAfterResultSubmit(queryClient).catch(() => {});
     } catch {
       toast.error(t("iterationBulkError"));
     } finally {

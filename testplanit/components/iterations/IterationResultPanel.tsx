@@ -26,6 +26,7 @@ import {
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import type { IterationDTO } from "./types";
+import { invalidateAfterResultSubmit } from "~/lib/test-run-result-invalidation";
 
 export interface IterationResultPanelProps {
   testRunId: number;
@@ -165,16 +166,13 @@ export function IterationResultPanel({
 
   const successStatus = statuses?.find((s) => s.isSuccess === true);
 
-  const invalidateAfterSubmit = async () => {
-    // A submit-result write touches multiple models (TestRunResults,
-    // TestRunCases, TestRunCaseIteration) whose rollups are read via different
-    // queries on different surfaces (run page, repository, test-result-history),
-    // so a blanket invalidation is the simplest way to keep every consumer
-    // fresh. It runs in the BACKGROUND (see the fire-and-forget call site) — it
-    // must never gate `isSubmitting`, or the page-wide refetch on this heavy run
-    // page would hold the Pass button disabled until every query settles.
-    await queryClient.invalidateQueries();
-  };
+  // A submit-result write touches several models whose rollups are read by
+  // different queries on different surfaces (run page, repository,
+  // test-result-history); the helper lists them. It runs in the BACKGROUND
+  // (see the fire-and-forget call site) — it must never gate `isSubmitting`,
+  // or the refetch would hold the Pass button disabled until every query
+  // settles.
+  const invalidateAfterSubmit = () => invalidateAfterResultSubmit(queryClient);
 
   const submitWithStatus = async (statusId: number, wasSuccess: boolean) => {
     if (!canAddEditResults || isDisabled) return;

@@ -1,6 +1,7 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Input } from "@/components/ui/input";
 import {
@@ -546,14 +547,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               // console.warn("Error parsing JSON in diff view:", error);
               content = ensureTipTapJSON(val);
             }
-            return (
-              <TipTapEditor
-                content={content}
-                projectId={projectId?.toString()}
-                readOnly
-                className="h-auto"
-              />
-            );
+            return <ReadOnlyRichText content={content} className="h-auto" />;
           })
         ) : (
           (() => {
@@ -566,14 +560,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               // console.warn("Error parsing JSON in view mode:", error);
               content = ensureTipTapJSON(fieldValue);
             }
-            return (
-              <TipTapEditor
-                content={content}
-                projectId={projectId?.toString()}
-                readOnly
-                className="h-auto"
-              />
-            );
+            return <ReadOnlyRichText content={content} className="h-auto" />;
           })()
         );
       case "Steps":

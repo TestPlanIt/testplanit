@@ -13,7 +13,7 @@ import {
   type CopyDropItems,
 } from "@/components/dnd/CopyIntoFolderDropTarget";
 import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import {
   ActionOverflow,
   useContainerCompact,
@@ -2603,10 +2603,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     if (!isEmpty) {
                                       return (
                                         <div className="ms-4 bg-muted rounded-lg">
-                                          <TipTapEditor
+                                          <ReadOnlyRichText
                                             content={docsContent}
-                                            readOnly={true}
-                                            projectId={projectIdParam}
                                             className="prose prose-sm max-w-none dark:prose-invert"
                                           />
                                         </div>

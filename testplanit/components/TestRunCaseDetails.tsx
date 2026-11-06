@@ -78,6 +78,7 @@ import { IconName } from "~/types/globals";
 import { ForecastDisplay } from "./ForecastDisplay";
 import LinkedCasesPanel from "./LinkedCasesPanel";
 import { Badge } from "./ui/badge";
+import { invalidateAfterResultSubmit } from "~/lib/test-run-result-invalidation";
 
 interface TestRunCaseDetailsProps {
   caseId: number;
@@ -183,10 +184,8 @@ export function TestRunCaseDetails({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [_showAssignModal, _setShowAssignModal] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
-  const invalidateAfterSubmit = async () => {
-    // submitTestRunResult uses a raw fetch call, so we manually invalidate caches.
-    await queryClient.invalidateQueries();
-  };
+  // submitTestRunResult uses a raw fetch call, so nothing invalidates for it.
+  const invalidateAfterSubmit = () => invalidateAfterResultSubmit(queryClient);
 
   // Fetch permissions
   const {
