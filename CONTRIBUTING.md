@@ -101,7 +101,7 @@ Inside `testplanit/`:
 
 ### Prerequisites
 
-- Node.js 24
+- Node.js 24.15 or later
 - pnpm at the version pinned in the root `package.json`. Run `corepack enable` and Corepack installs the right version for you.
 - Docker, to run PostgreSQL and Valkey
 - About 8 GB of free memory for a production build (`pnpm build`). `pnpm install` and `pnpm dev` need much less.

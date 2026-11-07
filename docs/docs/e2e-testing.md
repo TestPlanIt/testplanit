@@ -9,7 +9,7 @@ This guide covers how to run and write end-to-end (E2E) tests for TestPlanIt usi
 
 ## Prerequisites
 
-- Node.js 24+ and pnpm installed
+- Node.js 24.15 or later and pnpm installed
 - Docker, to run the E2E services
 - TestPlanIt development environment set up
 
