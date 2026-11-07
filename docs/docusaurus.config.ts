@@ -1,9 +1,42 @@
+import { writeFile } from 'fs/promises';
+import { join } from 'path';
 import { themes as prismThemes } from 'prism-react-renderer';
-import type { Config } from '@docusaurus/types';
+import type { Config, Plugin } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import { docs, blog, pages } from './src/og-image/renderers.js';
+import {
+  DEFAULT_DOCS_URL,
+  VERSION_MANIFEST_PATH,
+  loadCurrentDocsVersion,
+  loadVersionManifest,
+  navbarLabel,
+} from './docsVersion.js';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+
+// Each release line is published as its own site (see README.md, Deployment).
+// The build learns which line it documents from the app version and which
+// host it is served from via DOCS_URL.
+const docsVersion = loadCurrentDocsVersion();
+const versionManifest = loadVersionManifest();
+const stableDocsUrl =
+  versionManifest.versions.find((entry) => entry.status === 'stable')?.url ??
+  DEFAULT_DOCS_URL;
+
+// The picker on every site fetches /versions.json from the stable site, so the
+// served file must be the manifest this build loaded (static/versions.json, or
+// the DOCS_VERSIONS_JSON override), not whatever static/ happens to contain.
+function versionManifestPlugin(): Plugin {
+  return {
+    name: 'docs-version-manifest',
+    async postBuild({ outDir }) {
+      await writeFile(
+        join(outDir, VERSION_MANIFEST_PATH),
+        `${JSON.stringify(versionManifest, null, 2)}\n`
+      );
+    },
+  };
+}
 
 const config: Config = {
   title: 'TestPlanIt',
@@ -11,7 +44,7 @@ const config: Config = {
   favicon: 'img/logo.svg',
 
   // Set the production url of your site here
-  url: 'https://docs.testplanit.com',
+  url: docsVersion.url,
   trailingSlash: true,
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
@@ -38,12 +71,18 @@ const config: Config = {
     locales: ['en'],
   },
 
+  customFields: {
+    docsVersion,
+    docsVersions: versionManifest.versions,
+    docsVersionsManifestUrl: `${stableDocsUrl}${VERSION_MANIFEST_PATH}`,
+  },
+
   headTags: [
     {
       tagName: 'script',
       attributes: {
         defer: 'defer',
-        'data-domain': 'docs.testplanit.com',
+        'data-domain': new URL(docsVersion.url).host,
         src: 'https://plausible.dermanouelian.com/js/script.file-downloads.hash.outbound-links.js',
       },
     },
@@ -56,6 +95,7 @@ const config: Config = {
   ],
 
   plugins: [
+    versionManifestPlugin,
     [
       '@docusaurus/plugin-client-redirects',
       {
@@ -116,6 +156,13 @@ const config: Config = {
   themeConfig: {
     // OG images are dynamically generated per-page by @acid-info/docusaurus-og
     image: 'img/social-card.png', // fallback for pages without a generated image
+    ...(docsVersion.prerelease && {
+      announcementBar: {
+        id: `beta-docs-${docsVersion.line}`,
+        content: `You are reading the documentation for TestPlanIt ${navbarLabel({ line: docsVersion.line, status: 'beta' })}. <a href="${stableDocsUrl}/docs/">Switch to the stable release</a>.`,
+        isCloseable: true,
+      },
+    }),
     navbar: {
       title: 'TestPlanIt Docs',
       logo: {
@@ -130,6 +177,7 @@ const config: Config = {
           label: 'Docs',
         },
         { to: '/blog', label: 'Blog', position: 'left' },
+        { type: 'custom-docsVersionPicker', position: 'right' },
         {
           href: 'https://github.com/testplanit/testplanit',
           label: 'GitHub',
@@ -203,11 +251,12 @@ const config: Config = {
       darkTheme: prismThemes.dracula,
     },
     // Algolia DocSearch Configuration
-    // These are public search-only credentials, safe to commit
+    // These are public search-only credentials, safe to commit.
+    // Each release line's site has its own index so results never mix.
     algolia: {
       appId: 'TIRP24VNLH',
       apiKey: '44756cc71f4fee513570b5124c24198d',
-      indexName: 'testplanit',
+      indexName: process.env.DOCS_ALGOLIA_INDEX?.trim() || 'testplanit',
       contextualSearch: true,
     },
   } satisfies Preset.ThemeConfig,
