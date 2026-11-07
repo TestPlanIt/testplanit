@@ -32,6 +32,18 @@ RUN pnpm install --filter docs --frozen-lockfile --prod=false
 # Change working directory to the docs workspace for the build step
 WORKDIR /app/docs
 
+# Which release line this site documents and where it is served from.
+# docs-release.yml derives these from the branch or tag being built.
+ARG DOCS_APP_VERSION
+ARG DOCS_URL=https://docs.testplanit.com
+ARG DOCS_ALGOLIA_INDEX=testplanit
+ARG DOCS_VERSIONS_JSON=""
+ENV DOCS_APP_VERSION=${DOCS_APP_VERSION} \
+    DOCS_URL=${DOCS_URL} \
+    DOCS_ALGOLIA_INDEX=${DOCS_ALGOLIA_INDEX} \
+    DOCS_VERSIONS_JSON=${DOCS_VERSIONS_JSON}
+RUN test -n "$DOCS_APP_VERSION" || { echo "DOCS_APP_VERSION build arg is required" >&2; exit 1; }
+
 # Build the Docusaurus site within the /app/docs directory
 RUN pnpm build
 
@@ -40,6 +52,9 @@ FROM nginx:stable-alpine
 
 # Remove default Nginx website content
 RUN rm -rf /usr/share/nginx/html/*
+
+# Serve the site's own 404 page and expose versions.json cross-origin
+COPY docs/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # Copy the built static files from the builder stage
 # The build output is still in /app/docs/build
