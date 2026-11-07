@@ -98,13 +98,22 @@ jobs:
       packages: write
 
     steps:
-    - name: Clear leftover sparse checkout
-      run: git -C "$GITHUB_WORKSPACE" sparse-checkout disable 2>/dev/null || true
-
     - name: Checkout code
       uses: actions/checkout@v7
       with:
         ref: ${{ needs.resolve.outputs.ref }}
+
+    - name: Ensure a full working tree
+      run: |
+        set -euo pipefail
+        git sparse-checkout disable 2>/dev/null || true
+        git config --local --unset core.sparseCheckout 2>/dev/null || true
+        rm -f .git/info/sparse-checkout
+        git ls-files -v | awk '/^S /{print $2}' | xargs -r git update-index --no-skip-worktree
+        git checkout -- .
+        echo "HEAD: $(git rev-parse HEAD)"
+        ls -la
+        test -f docs/Dockerfile
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -140,13 +149,22 @@ jobs:
       packages: write
 
     steps:
-    - name: Clear leftover sparse checkout
-      run: git -C "$GITHUB_WORKSPACE" sparse-checkout disable 2>/dev/null || true
-
     - name: Checkout code
       uses: actions/checkout@v7
       with:
         ref: ${{ needs.resolve.outputs.ref }}
+
+    - name: Ensure a full working tree
+      run: |
+        set -euo pipefail
+        git sparse-checkout disable 2>/dev/null || true
+        git config --local --unset core.sparseCheckout 2>/dev/null || true
+        rm -f .git/info/sparse-checkout
+        git ls-files -v | awk '/^S /{print $2}' | xargs git update-index --no-skip-worktree 2>/dev/null || true
+        git checkout -- .
+        echo "HEAD: $(git rev-parse HEAD)"
+        ls -la
+        test -f docs/Dockerfile
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
