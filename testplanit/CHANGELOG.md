@@ -1,3 +1,18 @@
+## [1.2.0-beta.34](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.33...v1.2.0-beta.34) (2026-11-07)
+
+### Features
+
+* **runs:** link the run case sheet to its repository case and show progress while the editor opens ([5a42d61](https://github.com/TestPlanIt/testplanit/commit/5a42d6116b5e36f7ce7aa03151f9953a7a5d8081))
+
+### Bug Fixes
+
+* **home:** link project card member avatars to the user profile ([bcd1df4](https://github.com/TestPlanIt/testplanit/commit/bcd1df4027d710b1012cf7978a6d354aa5c23b35))
+* **repository:** hand the saved-view dialogs their own focus restore ([5d32bc6](https://github.com/TestPlanIt/testplanit/commit/5d32bc6eb7f21840b6b1ee5d28e233ebd426c2b4))
+
+### Performance Improvements
+
+* **runs:** render read-only rich text statically and isolate Add Result step rows ([210b59b](https://github.com/TestPlanIt/testplanit/commit/210b59b2ba1a95500c32aa5da63a0105e5d4624a))
+
 ## [1.2.0-beta.33](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.32...v1.2.0-beta.33) (2026-11-06)
 
 ### Bug Fixes
