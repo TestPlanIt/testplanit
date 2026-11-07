@@ -49,26 +49,26 @@ jobs:
       docs_url: ${{ steps.line.outputs.docs_url }}
       algolia_index: ${{ steps.line.outputs.algolia_index }}
 
+    # No checkout here on purpose: a sparse checkout persists in a self-hosted
+    # runner's shared workspace and starves the next job's checkout of docs/.
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v7
-      with:
-        ref: ${{ inputs.ref || github.ref }}
-        sparse-checkout: testplanit/package.json
-        sparse-checkout-cone-mode: false
-
     - name: Resolve release line
       id: line
       env:
         INPUT_REF: ${{ inputs.ref }}
         INPUT_TAG: ${{ inputs.tag }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         set -euo pipefail
         REF="${INPUT_REF:-$GITHUB_REF_NAME}"
-        APP_VERSION="$(sed -nE 's/^[[:space:]]*"version":[[:space:]]*"([^"]+)".*/\1/p' testplanit/package.json | head -1)"
+        PKG="$(curl -sSf \
+          -H "Authorization: Bearer $GH_TOKEN" \
+          -H "Accept: application/vnd.github.raw+json" \
+          "https://api.github.com/repos/$GITHUB_REPOSITORY/contents/testplanit/package.json?ref=$REF")"
+        APP_VERSION="$(printf '%s\n' "$PKG" | sed -nE 's/^[[:space:]]*"version":[[:space:]]*"([^"]+)".*/\1/p' | head -1)"
         LINE="$(echo "$APP_VERSION" | sed -nE 's/^([0-9]+\.[0-9]+)\..*/\1/p')"
         if [ -z "$APP_VERSION" ] || [ -z "$LINE" ]; then
-          echo "Could not read a semver version from testplanit/package.json (got '$APP_VERSION')" >&2
+          echo "Could not read a semver version from testplanit/package.json at $REF (got '$APP_VERSION')" >&2
           exit 1
         fi
         if [ "$REF" = "main" ]; then
@@ -98,6 +98,9 @@ jobs:
       packages: write
 
     steps:
+    - name: Clear leftover sparse checkout
+      run: git -C "$GITHUB_WORKSPACE" sparse-checkout disable 2>/dev/null || true
+
     - name: Checkout code
       uses: actions/checkout@v7
       with:
@@ -137,6 +140,9 @@ jobs:
       packages: write
 
     steps:
+    - name: Clear leftover sparse checkout
+      run: git -C "$GITHUB_WORKSPACE" sparse-checkout disable 2>/dev/null || true
+
     - name: Checkout code
       uses: actions/checkout@v7
       with:
