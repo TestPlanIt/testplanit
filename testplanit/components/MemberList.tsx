@@ -9,6 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 
 interface MemberListProps {
@@ -61,18 +62,25 @@ export const MemberList: React.FC<MemberListProps> = ({
         if (!user) return null;
 
         return (
-          <div
+          <Link
             key={`${user.id}-${userEntry.prependText}-${index}`}
+            href={`/users/profile/${user.id}`}
             className="flex -mx-1 border-4 border-white/80 rounded-full"
+            data-testid={`member-profile-link-${user.id}`}
           >
-            <Avatar
-              alt={user.name}
-              prependText={userEntry.prependText}
-              height={25}
-              width={25}
-              image={user.image!}
-            />
-          </div>
+            {/* Named from its content so the link reads "Profile of <name>";
+                the avatar itself is hidden from assistive tech. */}
+            <span className="sr-only">{`Profile of ${user.name}`}</span>
+            <span aria-hidden="true" className="flex">
+              <Avatar
+                alt={user.name}
+                prependText={userEntry.prependText}
+                height={25}
+                width={25}
+                image={user.image!}
+              />
+            </span>
+          </Link>
         );
       })}
       {overflowCount > 0 && (
@@ -100,7 +108,7 @@ export const MemberList: React.FC<MemberListProps> = ({
                         {userEntry.prependText}:
                       </span>
                     )}
-                    <UserNameCell userId={user.id} hideLink={true} />
+                    <UserNameCell userId={user.id} shrinkLink />
                   </div>
                 );
               })}

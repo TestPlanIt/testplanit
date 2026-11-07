@@ -1,10 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- vi.hoisted for variables used in vi.mock factories ---
 const mockUseSession = vi.hoisted(() => vi.fn());
 const mockUseTranslations = vi.hoisted(() => vi.fn());
+const mockPush = vi.hoisted(() => vi.fn());
 
 // --- Mocks ---
 vi.mock("next-auth/react", () => ({
@@ -24,7 +25,7 @@ vi.mock("~/lib/navigation", () => ({
     </a>
   ),
   useRouter: () => ({
-    push: vi.fn(),
+    push: mockPush,
     replace: vi.fn(),
     back: vi.fn(),
     forward: vi.fn(),
@@ -52,20 +53,31 @@ vi.mock("@/components/ProjectIcon", () => ({
   ),
 }));
 
+// Mirrors the real MemberList: one profile link per displayed avatar.
 vi.mock("@/components/MemberList", () => ({
   MemberList: ({ users, maxUsers }: any) => (
     <div
       data-testid="member-list"
       data-users={users.length}
       data-max={maxUsers}
-    />
+    >
+      {users.map((u: any) => (
+        <a
+          key={u.userId}
+          href={`/users/profile/${u.userId}`}
+          data-testid={`member-profile-link-${u.userId}`}
+        >
+          {u.userId}
+        </a>
+      ))}
+    </div>
   ),
 }));
 
 // shadcn card components — render as simple divs
 vi.mock("@/components/ui/card", () => ({
-  Card: ({ className, children }: any) => (
-    <div data-testid="card" className={className}>
+  Card: ({ className, children, onClick }: any) => (
+    <div data-testid="card" className={className} onClick={onClick}>
       {children}
     </div>
   ),
@@ -116,6 +128,7 @@ const baseProject = {
 const mockUsers = [{ userId: "user-1" }, { userId: "user-2" }];
 
 beforeEach(() => {
+  mockPush.mockReset();
   mockUseSession.mockReturnValue({
     data: mockSession,
     status: "authenticated",
@@ -128,6 +141,25 @@ beforeEach(() => {
 });
 
 describe("ProjectCard", () => {
+  it("navigates to the project overview when the card body is clicked", () => {
+    render(<ProjectCard project={baseProject} users={mockUsers} />);
+
+    fireEvent.click(screen.getByTestId("card-footer"));
+
+    expect(mockPush).toHaveBeenCalledWith("/projects/overview/1");
+  });
+
+  it("does not navigate to the project when a member avatar link is clicked", () => {
+    render(<ProjectCard project={baseProject} users={mockUsers} />);
+
+    const avatarLink = screen.getByTestId("member-profile-link-user-1");
+    expect(avatarLink).toHaveAttribute("href", "/users/profile/user-1");
+
+    fireEvent.click(avatarLink);
+
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
   it("renders project name as a link for active project", () => {
     const project = { ...baseProject, isCompleted: false };
     render(<ProjectCard project={project} users={mockUsers} />);
@@ -186,7 +218,8 @@ describe("ProjectCard", () => {
         issues: 0,
       },
     };
-    render(<ProjectCard project={project} users={mockUsers} />);
+    // No members, so the only possible links are the title and the counts
+    render(<ProjectCard project={project} users={[]} />);
 
     // No count links for zero values
     const links = screen.queryAllByRole("link");
@@ -196,7 +229,7 @@ describe("ProjectCard", () => {
 
   it("does not render count links when _count is null", () => {
     const project = { ...baseProject, _count: null };
-    render(<ProjectCard project={project} users={mockUsers} />);
+    render(<ProjectCard project={project} users={[]} />);
 
     const links = screen.queryAllByRole("link");
     // Only the project name link should exist
@@ -206,7 +239,7 @@ describe("ProjectCard", () => {
   it("does not render count links when _count is undefined", () => {
     const project = { ...baseProject };
     // _count not present
-    render(<ProjectCard project={project} users={mockUsers} />);
+    render(<ProjectCard project={project} users={[]} />);
 
     const links = screen.queryAllByRole("link");
     expect(links).toHaveLength(1);
