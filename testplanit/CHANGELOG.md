@@ -1,3 +1,9 @@
+## [1.1.20](https://github.com/TestPlanIt/testplanit/compare/v1.1.19...v1.1.20) (2026-11-08)
+
+### Bug Fixes
+
+* **security:** stop search highlights rendering user-written markup ([#733](https://github.com/TestPlanIt/testplanit/issues/733)) ([539f0c5](https://github.com/TestPlanIt/testplanit/commit/539f0c598e7a0362ae0d7b1ac82ef74514a3d8c7))
+
 ## [1.1.19](https://github.com/TestPlanIt/testplanit/compare/v1.1.18...v1.1.19) (2026-11-05)
 
 ### Bug Fixes
