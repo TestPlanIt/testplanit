@@ -17,6 +17,7 @@ import { getLocaleDirection } from "~/i18n/direction";
 import { locales } from "~/i18n/navigation";
 import "~/styles/globals.css";
 import "~/styles/tiptap-mentions.css";
+import { CSP_NONCE_HEADER } from "~/lib/contentSecurityPolicy";
 import Providers from "../providers";
 
 export async function generateMetadata({
@@ -49,9 +50,10 @@ export default async function RootLayout(props: any) {
   if (!locales.includes(locale as any)) notFound();
   const messages = (await import(`../../messages/${locale}.json`)).default;
   const dir = getLocaleDirection(locale);
+  const nonce = headerList.get(CSP_NONCE_HEADER) ?? undefined;
 
   return (
-    <Providers>
+    <Providers nonce={nonce}>
       <NextIntlClientProvider messages={messages} locale={locale}>
         <DirectionProvider dir={dir}>
           <NextStepOnboarding>

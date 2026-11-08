@@ -11,6 +11,8 @@ type ThemeProviderProps = {
   themes?: string[];
   storageKey?: string;
   disableTransitionOnChange?: boolean;
+  /** CSP nonce for the inline script that applies the theme before paint. */
+  nonce?: string;
 };
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import { getLocale } from "next-intl/server";
+import { headers } from "next/headers";
 import Script from "next/script";
 import { getLocaleDirection } from "~/i18n/direction";
 import "~/styles/globals.css";
 import { getAppUrl } from "~/lib/appUrl";
 import { withBasePath } from "~/lib/basePath";
+import { CSP_NONCE_HEADER } from "~/lib/contentSecurityPolicy";
 
 export const metadata: Metadata = {
   title: {
@@ -65,6 +67,9 @@ export default async function RootLayout({
 
   const locale = await getLocale();
   const dir = getLocaleDirection(locale);
+  // Set by the proxy for this request; the Content-Security-Policy only lets
+  // inline scripts carrying it run.
+  const nonce = (await headers()).get(CSP_NONCE_HEADER) ?? undefined;
 
   return (
     <html
@@ -77,6 +82,7 @@ export default async function RootLayout({
         <meta name="storage-mode" content={storageMode} />
         <Script
           id="storage-mode"
+          nonce={nonce}
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `window.__STORAGE_MODE__ = "${storageMode}";`,

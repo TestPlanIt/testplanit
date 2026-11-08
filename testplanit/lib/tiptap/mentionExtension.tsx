@@ -1,4 +1,5 @@
 import Mention from "@tiptap/extension-mention";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { ReactRenderer } from "@tiptap/react";
 import { SuggestionOptions } from "@tiptap/suggestion";
 import tippy, { Instance as TippyInstance } from "tippy.js";
@@ -90,10 +91,6 @@ export function createMentionExtension(projectId: number) {
       const userImage = node.attrs.image as string | null;
       const userId = node.attrs.id as string;
 
-      // Get current locale from URL
-      const locale =
-        stripBasePath(window.location.pathname).split("/")[1] || "en-US";
-
       // Generate initials (same logic as Avatar component)
       const abbreviateAltText = (altText: string): string => {
         let result = altText.charAt(0);
@@ -147,11 +144,33 @@ export function createMentionExtension(projectId: number) {
           {
             class:
               "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 cursor-pointer hover:bg-secondary/80 transition-colors",
-            onclick: `window.location.href='${withBasePath(`/${locale}/users/profile/${userId}`)}'`,
           },
           avatarElement,
           ["span", { class: "text-sm" }, userName],
         ],
+      ];
+    },
+    // Clicking a mention opens the profile. Handled here rather than with an
+    // inline onclick attribute, which the Content-Security-Policy forbids.
+    addProseMirrorPlugins() {
+      const typeName = this.name;
+      return [
+        ...(this.parent?.() ?? []),
+        new Plugin({
+          key: new PluginKey("mentionClick"),
+          props: {
+            handleClickOn(_view, _pos, node) {
+              if (node.type.name !== typeName) return false;
+              const locale =
+                stripBasePath(window.location.pathname).split("/")[1] ||
+                "en-US";
+              window.location.href = withBasePath(
+                `/${locale}/users/profile/${node.attrs.id}`
+              );
+              return true;
+            },
+          },
+        }),
       ];
     },
   }).configure({

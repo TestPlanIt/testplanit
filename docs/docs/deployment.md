@@ -425,6 +425,7 @@ docker exec testplanit-nginx rm /etc/nginx/maintenance.json
   - Secrets management tools (Vault, AWS Secrets Manager)
 - **HTTPS**: Configure external reverse proxy for SSL/TLS termination
 - **Firewall**: Restrict access to internal service ports (5432, 6379, 9200, 9000)
+- **Content Security Policy**: Pages carry a `Content-Security-Policy` header that only lets the scripts the server emitted run. It is sent in report-only mode by default, so the browser logs what it would block without blocking it. Watch the application log for `[csp] violation` lines, add any host they name that you expect to `CSP_ALLOWED_ORIGINS`, then set `CSP_MODE=enforce`. See [Content Security Policy](environment-variables.md#content-security-policy).
 - **Link previews**: When a TestPlanIt link is pasted into a chat client, the client fetches it without a session to build its preview card. By default (`LINK_PREVIEW_MODE=safe`) the card names only the kind of record — "Test Run", "Test Case" — so no project or record name can reach a channel whose members lack access. Set `LINK_PREVIEW_MODE=names` to put record and project names on the card instead; anyone who can reach the link then sees them without signing in, so enable it only where that is acceptable.
 
 ### Monitoring & Maintenance

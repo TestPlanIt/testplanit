@@ -51,9 +51,17 @@ function RepositoryCasesCacheSync() {
   return null;
 }
 
-export default function Providers({ children }: { children: ReactNode }) {
+export default function Providers({
+  children,
+  nonce,
+}: {
+  children: ReactNode;
+  /** Per-request CSP nonce from the proxy, for next-themes' inline script. */
+  nonce?: string;
+}) {
   const content = (
     <ThemeProvider
+      nonce={nonce}
       attribute="class"
       defaultTheme="system"
       enableSystem

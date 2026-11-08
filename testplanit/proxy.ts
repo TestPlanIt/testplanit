@@ -1,12 +1,20 @@
 import { getToken } from "next-auth/jwt";
 import createMiddleware from "next-intl/middleware";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
 import { isLinkPreviewBot, matchPreviewRoute } from "~/lib/linkPreview";
 import { normalizeRecordKeyPath } from "~/lib/recordKeyRoutes";
 import { sanitizeCallbackUrl } from "~/lib/auth-security";
 import { withBasePath } from "~/lib/basePath";
+import {
+  buildContentSecurityPolicy,
+  CSP_HEADER,
+  CSP_NONCE_HEADER,
+  CSP_REPORT_PATH,
+  cspHeaderName,
+  generateCspNonce,
+  getCspMode,
+} from "~/lib/contentSecurityPolicy";
 import { isPublicPath } from "~/lib/auth/publicRoutes";
 import { isSessionEnded } from "~/lib/auth/sessionInvalidation";
 import { getCachedSessionUser } from "~/lib/session-cache";
@@ -94,7 +102,7 @@ function isOAuthIntegrationRoute(pathname: string): boolean {
   return /^\/api\/integrations\/oauth\/[^/]+\/(auth|callback)$/.test(pathname);
 }
 
-export default async function middlewareWithPreferences(request: NextRequest) {
+async function middlewareWithPreferences(request: NextRequest) {
   // request.nextUrl has Next's basePath already removed, so every path check
   // below sees the same paths at the root and under a prefix. Redirects are
   // built from clone(), which puts the prefix back when the URL is formatted.
@@ -173,13 +181,16 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   const isApiRoute = pathname.startsWith("/api/");
   const isAuthRoute = pathname.startsWith("/api/auth/");
 
-  // Auth, health, version, and share routes should pass through without any middleware processing
+  // Auth, health, version, share and CSP-report routes should pass through
+  // without any middleware processing. Browsers post CSP violation reports
+  // without the headers the external-API check looks for.
   const isShareRoute = pathname.startsWith("/api/share/");
   if (
     isAuthRoute ||
     isShareRoute ||
     pathname === "/api/health" ||
-    pathname === "/api/version"
+    pathname === "/api/version" ||
+    pathname === CSP_REPORT_PATH
   ) {
     return NextResponse.next();
   }
@@ -556,6 +567,37 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   }
 
   return middleware(request);
+}
+
+/**
+ * Every page response carries a Content-Security-Policy whose script-src
+ * trusts a nonce minted here. Next reads the nonce from the request's
+ * Content-Security-Policy header to stamp its own inline scripts, the root
+ * layout reads it from x-nonce for the one inline script of ours, and the
+ * finished policy goes on the response. API routes return JSON and get none.
+ */
+export default async function proxy(request: NextRequest) {
+  const mode = getCspMode();
+  if (mode === "off" || request.nextUrl.pathname.startsWith("/api/")) {
+    return middlewareWithPreferences(request);
+  }
+
+  const nonce = generateCspNonce();
+  const policy = buildContentSecurityPolicy({ nonce });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(CSP_NONCE_HEADER, nonce);
+  requestHeaders.set(CSP_HEADER, policy);
+
+  // The locale middleware forwards the request headers it is given to the
+  // route, so the nonce travels with a request that already carries it.
+  const response = await middlewareWithPreferences(
+    new NextRequest(request, {
+      headers: requestHeaders,
+      nextConfig: { basePath: request.nextUrl.basePath },
+    })
+  );
+  response.headers.set(cspHeaderName(mode), policy);
+  return response;
 }
 
 export const config = {

@@ -6,10 +6,18 @@ vi.mock("next-auth/jwt", () => ({
   getToken: vi.fn(),
 }));
 
-// Mock next-intl/middleware
-vi.mock("next-intl/middleware", () => ({
-  default: vi.fn(() => vi.fn(() => ({ type: "next" }))),
-}));
+// Mock next-intl/middleware. The real one forwards the request headers it is
+// handed, which the CSP tests below rely on.
+vi.mock("next-intl/middleware", async () => {
+  const { NextResponse } = await import("next/server");
+  return {
+    default: vi.fn(() =>
+      vi.fn((request: NextRequest) =>
+        NextResponse.next({ request: { headers: request.headers } })
+      )
+    ),
+  };
+});
 
 // Mock i18n/navigation
 vi.mock("./i18n/navigation", () => ({
@@ -1033,5 +1041,136 @@ describe("Path-prefixed install (basePath)", () => {
 
     expect(response.status).toBe(307);
     expect(locationOf(response).pathname).toBe(`${BASE}/en-US/trial-expired`);
+  });
+});
+
+describe("Content-Security-Policy", () => {
+  const pageHeaders = { "sec-fetch-site": "same-origin" };
+  const signedIn = {
+    sub: "user-123",
+    access: "USER",
+    isApi: false,
+    locale: "en-US",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.NEXTAUTH_SECRET = "test-secret";
+    delete process.env.CSP_MODE;
+    mockGetCachedSessionUser.mockResolvedValue(null);
+    mockGetToken.mockResolvedValue(signedIn);
+  });
+
+  afterEach(() => {
+    delete process.env.NEXTAUTH_SECRET;
+    delete process.env.CSP_MODE;
+  });
+
+  it("reports by default: a page response carries the report-only header with a nonce", async () => {
+    const response = await middlewareWithPreferences(
+      createMockRequest("/en-US/projects", pageHeaders)
+    );
+
+    const policy = response.headers.get("Content-Security-Policy-Report-Only");
+    expect(policy).toMatch(
+      /script-src 'self' 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/
+    );
+    expect(policy).toContain("report-uri /api/csp-report");
+    expect(response.headers.get("Content-Security-Policy")).toBeNull();
+  });
+
+  it("enforces when CSP_MODE=enforce", async () => {
+    process.env.CSP_MODE = "enforce";
+    const response = await middlewareWithPreferences(
+      createMockRequest("/en-US/projects", pageHeaders)
+    );
+
+    expect(response.headers.get("Content-Security-Policy")).toContain(
+      "script-src 'self' 'nonce-"
+    );
+    expect(
+      response.headers.get("Content-Security-Policy-Report-Only")
+    ).toBeNull();
+  });
+
+  it("sends no policy when CSP_MODE=off", async () => {
+    process.env.CSP_MODE = "off";
+    const response = await middlewareWithPreferences(
+      createMockRequest("/en-US/projects", pageHeaders)
+    );
+
+    expect(response.headers.get("Content-Security-Policy")).toBeNull();
+    expect(
+      response.headers.get("Content-Security-Policy-Report-Only")
+    ).toBeNull();
+  });
+
+  it("hands Next and the layout the same nonce through the request headers", async () => {
+    const response = await middlewareWithPreferences(
+      createMockRequest("/en-US/projects", pageHeaders)
+    );
+
+    const policy = response.headers.get("Content-Security-Policy-Report-Only")!;
+    const nonce = /'nonce-([^']+)'/.exec(policy)![1];
+    // NextResponse.next({ request }) forwards request headers to the route
+    // as x-middleware-request-* headers.
+    expect(response.headers.get("x-middleware-request-x-nonce")).toBe(nonce);
+    expect(
+      response.headers.get("x-middleware-request-content-security-policy")
+    ).toBe(policy);
+  });
+
+  it("mints a fresh nonce for every request", async () => {
+    const first = await middlewareWithPreferences(
+      createMockRequest("/en-US/projects", pageHeaders)
+    );
+    const second = await middlewareWithPreferences(
+      createMockRequest("/en-US/projects", pageHeaders)
+    );
+    expect(first.headers.get("Content-Security-Policy-Report-Only")).not.toBe(
+      second.headers.get("Content-Security-Policy-Report-Only")
+    );
+  });
+
+  it("leaves API responses without a policy", async () => {
+    const response = await middlewareWithPreferences(
+      createMockRequest("/api/model/users", pageHeaders)
+    );
+    expect(response.headers.get("Content-Security-Policy")).toBeNull();
+    expect(
+      response.headers.get("Content-Security-Policy-Report-Only")
+    ).toBeNull();
+  });
+
+  it("lets the browser post violation reports without a session or API flag", async () => {
+    mockGetToken.mockResolvedValue(null);
+    const response = await middlewareWithPreferences(
+      new NextRequest(new URL("/api/csp-report", "http://localhost:3000"), {
+        method: "POST",
+      })
+    );
+    expect(response.status).toBe(200);
+    expect(mockGetToken).not.toHaveBeenCalled();
+  });
+
+  it("keeps the path prefix when it rebuilds the request", async () => {
+    mockGetToken.mockResolvedValue(null);
+    const response = await middlewareWithPreferences(
+      new NextRequest(
+        new URL("/testplanit/en-US/projects", "http://localhost:3000"),
+        {
+          headers: new Headers(pageHeaders),
+          nextConfig: { basePath: "/testplanit" },
+        }
+      )
+    );
+
+    expect(response.status).toBe(307);
+    expect(new URL(response.headers.get("location")!).pathname).toBe(
+      "/testplanit/en-US/signin"
+    );
+    expect(
+      response.headers.get("Content-Security-Policy-Report-Only")
+    ).toContain("'nonce-");
   });
 });

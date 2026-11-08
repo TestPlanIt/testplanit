@@ -136,6 +136,18 @@ See [API Tokens](api-tokens.md).
 | `CRAWL_SCREENSHOTS`           | `false` | Set to `true` to capture a screenshot per page during URL-based test generation and offer it to vision-capable models. The official workers image enables this.                                            |
 | `CHROMIUM_EXECUTABLE_PATH`    | unset   | Chromium binary used for screenshots. The official workers image sets it.                                                                                                                                  |
 
+## Content Security Policy
+
+Every page is served with a `Content-Security-Policy` header that lets the browser run only the scripts the server emitted for that response. The policy is built per request, so no configuration is needed for the default install: the app's own origin, the storage endpoint the browser uploads to and downloads from (`AWS_PUBLIC_ENDPOINT_URL`, `AWS_ENDPOINT_URL`, or the bucket's own AWS hostname), the feedback survey in `FEEDBACK_SURVEY_URL`, and images and media from any web host are allowed.
+
+| Variable              | Default       | Description                                                                                                                                                                                                                                                                                                                 |
+| --------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CSP_MODE`            | `report-only` | `report-only` sends the policy as `Content-Security-Policy-Report-Only`: the browser reports what it would have blocked and blocks nothing. `enforce` blocks it. `off` sends no policy.                                                                                                                                       |
+| `CSP_ALLOWED_ORIGINS` | unset         | Extra origins pages may load from or connect to, separated by commas or spaces, such as a CDN in front of storage or a document viewer: `https://cdn.example.com https://viewer.example.com`. Added to the image, media, connection and frame sources.                                                                     |
+| `CSP_FRAME_ANCESTORS` | `'self'`      | Sites allowed to show the app inside a frame, as CSP source expressions: `'self' https://jira.example.com`. By default only the app itself can frame its pages.                                                                                                                                                             |
+
+Violations are posted by the browser to `/api/csp-report` and written to the application log as one `[csp] violation` line each, with the directive, the blocked URL and the page. Run in `report-only` mode first and watch the log while people use the instance; once it stays quiet, set `CSP_MODE=enforce`. A violation that names a host you expect means that host belongs in `CSP_ALLOWED_ORIGINS`.
+
 ## Real-Time Notifications
 
 See [SSE Notifications](sse-notifications.md).
