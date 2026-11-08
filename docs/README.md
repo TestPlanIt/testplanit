@@ -45,7 +45,7 @@ Every release line is published as its own site, built from that line's branch o
 
 Pushing changes under `docs/` to `main` or a release branch runs the workflow automatically. Run it manually with a tag as `ref` to publish a previous line after its branch is gone. Hosts stay one level below `testplanit.com` because the zone's wildcard DNS record and universal TLS certificate cover only that level.
 
-The build reads the release line from the `version` in `testplanit/package.json` (or the `DOCS_APP_VERSION` env var) and its own host from `DOCS_URL`. A prerelease version shows a beta banner. `DOCS_ALGOLIA_INDEX` selects the search index; each site needs its own index and crawler in the Algolia dashboard.
+The build reads the release line from the `version` in `testplanit/package.json` (or the `DOCS_APP_VERSION` env var) and its own host from `DOCS_URL`. A prerelease version shows a beta banner. `DOCS_ALGOLIA_INDEX` selects the search index. All sites share the one DocSearch crawler (`testplanit` in the Algolia Crawler console); the console refuses a second crawler for a new host. To index a new line, add its host to the crawler's `startUrls`, `discoveryPatterns` and `sitemaps`, add an action that writes `testplanit-vX.Y` for that host, add the matching `initialIndexSettings` entry, save and start a crawl.
 
 ### Version picker
 
@@ -57,6 +57,7 @@ When a release line graduates:
 2. Update `static/versions.json`: the new line becomes `stable` at `docs.testplanit.com`, the outgoing line becomes `previous` at its `docs-vX-Y` host, and any line no longer hosted is removed.
 3. Run the workflow manually with the outgoing line's last tag as `ref` to publish its frozen site.
 4. Point the graduated line's `docs-vX-Y` host at the stable site.
+5. In the crawler, replace the graduated line's action with one for the outgoing line's host and `testplanit-vX.Y` index, then delete the graduated line's index.
 
 To run a one-off local build as another line:
 
