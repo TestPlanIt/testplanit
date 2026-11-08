@@ -968,6 +968,9 @@ importers:
       d3-cloud:
         specifier: ^2.0.0
         version: 2.0.0
+      d3-transition:
+        specifier: ^3.0.2
+        version: 3.0.2(d3-selection@3.0.1)
       date-fns:
         specifier: ^4.4.0
         version: 4.4.0

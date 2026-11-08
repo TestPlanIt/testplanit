@@ -5,6 +5,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import * as d3 from "d3";
+// d3 ≥7.9.2 marks itself side-effect-free, so the bundler drops the
+// d3-transition module that installs selection.transition(); import it directly.
+import "d3-transition";
 import {
   Bug,
   CheckCircle2,
