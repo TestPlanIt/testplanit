@@ -1,30 +1,97 @@
 # Docs Release Workflow
 #
-# Builds and pushes the docs Docker image to GHCR.
-# Triggers on pushes to main that change docs/, or manually via GitHub Actions UI.
+# Builds and pushes a docs Docker image to GHCR. Every release line is its own
+# site, built from its own branch or tag (see docs/README.md, Deployment):
 #
-# Docker Image: ghcr.io/testplanit/testplanit:docs
+#   main          -> ghcr.io/testplanit/testplanit:docs        https://docs.testplanit.com
+#   release/vX.Y  -> ghcr.io/testplanit/testplanit:docs-vX.Y   https://docs-vX-Y.testplanit.com
+#   tag vX.Y.Z    -> ghcr.io/testplanit/testplanit:docs-vX.Y   https://docs-vX-Y.testplanit.com
+#
+# Hosts stay one level below testplanit.com so the zone's wildcard DNS record,
+# the universal TLS certificate and the tunnel's wildcard route all cover them.
+#
+# Triggers on pushes to main or a release branch that change docs/, or
+# manually via GitHub Actions UI (pass a tag as `ref` to publish a frozen line).
 #
 name: Docs Release
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'release/**'
     paths:
       - 'docs/**'
+      - '.github/workflows/docs-release.yml'
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Image tag (e.g., docs-latest, v0.12.1-docs)'
+      ref:
+        description: 'Branch or tag to build (defaults to the ref the workflow runs from)'
         required: false
-        default: 'docs'
+        default: ''
+        type: string
+      tag:
+        description: 'Image tag override (default: docs for main, docs-vX.Y otherwise)'
+        required: false
+        default: ''
         type: string
 
 permissions:
   contents: read
 
 jobs:
+  resolve:
+    runs-on: [self-hosted]
+    outputs:
+      ref: ${{ steps.line.outputs.ref }}
+      image_tag: ${{ steps.line.outputs.image_tag }}
+      app_version: ${{ steps.line.outputs.app_version }}
+      docs_url: ${{ steps.line.outputs.docs_url }}
+      algolia_index: ${{ steps.line.outputs.algolia_index }}
+
+    # No checkout here on purpose: a sparse checkout persists in a self-hosted
+    # runner's shared workspace and starves the next job's checkout of docs/.
+    steps:
+    - name: Resolve release line
+      id: line
+      env:
+        INPUT_REF: ${{ inputs.ref }}
+        INPUT_TAG: ${{ inputs.tag }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -euo pipefail
+        REF="${INPUT_REF:-$GITHUB_REF_NAME}"
+        PKG="$(curl -sSf \
+          -H "Authorization: Bearer $GH_TOKEN" \
+          -H "Accept: application/vnd.github.raw+json" \
+          "https://api.github.com/repos/$GITHUB_REPOSITORY/contents/testplanit/package.json?ref=$REF")"
+        APP_VERSION="$(printf '%s\n' "$PKG" | sed -nE 's/^[[:space:]]*"version":[[:space:]]*"([^"]+)".*/\1/p' | head -1)"
+        LINE="$(echo "$APP_VERSION" | sed -nE 's/^([0-9]+\.[0-9]+)\..*/\1/p')"
+        if [ -z "$APP_VERSION" ] || [ -z "$LINE" ]; then
+          echo "Could not read a semver version from testplanit/package.json at $REF (got '$APP_VERSION')" >&2
+          exit 1
+        fi
+        if [ "$REF" = "main" ]; then
+          IMAGE_TAG="docs"
+          DOCS_URL="https://docs.testplanit.com"
+          ALGOLIA_INDEX="testplanit"
+        else
+          IMAGE_TAG="docs-v${LINE}"
+          DOCS_URL="https://docs-v${LINE//./-}.testplanit.com"
+          ALGOLIA_INDEX="testplanit-v${LINE}"
+        fi
+        IMAGE_TAG="${INPUT_TAG:-$IMAGE_TAG}"
+        {
+          echo "ref=$REF"
+          echo "image_tag=$IMAGE_TAG"
+          echo "app_version=$APP_VERSION"
+          echo "docs_url=$DOCS_URL"
+          echo "algolia_index=$ALGOLIA_INDEX"
+        } >> "$GITHUB_OUTPUT"
+        echo "Building docs for $APP_VERSION (line $LINE) from $REF -> $IMAGE_TAG at $DOCS_URL"
+
   build-amd64:
+    needs: resolve
     runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
@@ -33,6 +100,20 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
+      with:
+        ref: ${{ needs.resolve.outputs.ref }}
+
+    - name: Ensure a full working tree
+      run: |
+        set -euo pipefail
+        git sparse-checkout disable 2>/dev/null || true
+        git config --local --unset core.sparseCheckout 2>/dev/null || true
+        rm -f .git/info/sparse-checkout
+        git ls-files -v | awk '/^S /{print $2}' | xargs -r git update-index --no-skip-worktree
+        git checkout -- .
+        echo "HEAD: $(git rev-parse HEAD)"
+        ls -la
+        test -f docs/Dockerfile
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -54,9 +135,14 @@ jobs:
         file: ./docs/Dockerfile
         platforms: linux/amd64
         push: true
-        tags: ghcr.io/${{ env.REPO_LC }}:${{ github.event.inputs.tag || 'docs' }}-amd64
+        build-args: |
+          DOCS_APP_VERSION=${{ needs.resolve.outputs.app_version }}
+          DOCS_URL=${{ needs.resolve.outputs.docs_url }}
+          DOCS_ALGOLIA_INDEX=${{ needs.resolve.outputs.algolia_index }}
+        tags: ghcr.io/${{ env.REPO_LC }}:${{ needs.resolve.outputs.image_tag }}-amd64
 
   build-arm64:
+    needs: resolve
     runs-on: [self-hosted, macOS, arm64]
     permissions:
       contents: read
@@ -65,6 +151,20 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
+      with:
+        ref: ${{ needs.resolve.outputs.ref }}
+
+    - name: Ensure a full working tree
+      run: |
+        set -euo pipefail
+        git sparse-checkout disable 2>/dev/null || true
+        git config --local --unset core.sparseCheckout 2>/dev/null || true
+        rm -f .git/info/sparse-checkout
+        git ls-files -v | awk '/^S /{print $2}' | xargs git update-index --no-skip-worktree 2>/dev/null || true
+        git checkout -- .
+        echo "HEAD: $(git rev-parse HEAD)"
+        ls -la
+        test -f docs/Dockerfile
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -93,10 +193,14 @@ jobs:
         file: ./docs/Dockerfile
         platforms: linux/arm64
         push: true
-        tags: ghcr.io/${{ env.REPO_LC }}:${{ github.event.inputs.tag || 'docs' }}-arm64
+        build-args: |
+          DOCS_APP_VERSION=${{ needs.resolve.outputs.app_version }}
+          DOCS_URL=${{ needs.resolve.outputs.docs_url }}
+          DOCS_ALGOLIA_INDEX=${{ needs.resolve.outputs.algolia_index }}
+        tags: ghcr.io/${{ env.REPO_LC }}:${{ needs.resolve.outputs.image_tag }}-arm64
 
   merge-manifests:
-    needs: [build-amd64, build-arm64]
+    needs: [resolve, build-amd64, build-arm64]
     runs-on: [self-hosted]
     permissions:
       contents: read
@@ -115,7 +219,7 @@ jobs:
 
     - name: Create multi-arch manifest
       run: |
-        TAG="${{ github.event.inputs.tag || 'docs' }}"
+        TAG="${{ needs.resolve.outputs.image_tag }}"
 
         docker buildx imagetools create -t ghcr.io/${REPO_LC}:${TAG} \
           ghcr.io/${REPO_LC}:${TAG}-amd64 \
