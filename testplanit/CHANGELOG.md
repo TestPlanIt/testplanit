@@ -1,3 +1,9 @@
+## [1.2.0-beta.36](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.35...v1.2.0-beta.36) (2026-11-08)
+
+### Features
+
+* **security:** send a Content-Security-Policy with every page ([8e9c705](https://github.com/TestPlanIt/testplanit/commit/8e9c705fba43bd71d45e91bed489b9924b507f0e))
+
 ## [1.2.0-beta.35](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.34...v1.2.0-beta.35) (2026-11-08)
 
 ### Bug Fixes
