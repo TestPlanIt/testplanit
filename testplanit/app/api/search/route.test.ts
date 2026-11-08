@@ -226,6 +226,23 @@ describe("Search Route", () => {
       );
     });
 
+    it("asks Elasticsearch to HTML-encode highlight fragments", async () => {
+      (getServerSession as any).mockResolvedValue({ user: mockUser });
+      const mockEsClient = setupEsClient();
+      await POST(createMockRequest(defaultSearchOptions));
+
+      expect(mockEsClient.search).toHaveBeenCalledWith(
+        expect.objectContaining({
+          highlight: expect.objectContaining({
+            type: "plain",
+            encoder: "html",
+            pre_tags: ['<mark class="search-highlight">'],
+            post_tags: ["</mark>"],
+          }),
+        })
+      );
+    });
+
     it("returns empty result when search throws (graceful degradation)", async () => {
       (getServerSession as any).mockResolvedValue({ user: mockUser });
       const mockEsClient = {

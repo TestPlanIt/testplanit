@@ -382,6 +382,23 @@ describe("SearchResultComponents", () => {
       expect(highlight.innerHTML).toContain("<mark>highlighted</mark>");
     });
 
+    it("should strip markup other than mark from the highlight", () => {
+      const highlights = {
+        content: [
+          'See <mark class="search-highlight">login</mark> <img src=x onerror="window.pwned=1"><script>window.pwned=1</script>',
+        ],
+      };
+
+      const { container } = render(
+        <SearchHighlight highlights={highlights} field="content" />
+      );
+
+      expect(container.querySelector("img")).toBeNull();
+      expect(container.querySelector("script")).toBeNull();
+      expect(container.innerHTML).not.toContain("onerror");
+      expect(container.querySelector("mark")).toHaveTextContent("login");
+    });
+
     it("should return null when no highlights", () => {
       const { container } = render(<SearchHighlight field="content" />);
       expect(container.firstChild).toBeNull();

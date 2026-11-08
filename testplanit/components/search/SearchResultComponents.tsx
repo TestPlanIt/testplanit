@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tag } from "lucide-react";
 import React from "react";
 import { cn } from "~/utils";
+import { sanitizeSearchHighlight } from "~/utils/searchHighlight";
 export { DateTimeDisplay } from "./DateTimeDisplay";
 
 interface MetadataItemProps {
@@ -201,7 +202,7 @@ export function SearchHighlight({
       <p
         className="line-clamp-2"
         dangerouslySetInnerHTML={{
-          __html: highlights[field][0],
+          __html: sanitizeSearchHighlight(highlights[field][0]),
         }}
       />
     </div>

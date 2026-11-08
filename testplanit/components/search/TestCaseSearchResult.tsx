@@ -1,4 +1,5 @@
 import { Bot, ListChecks, Trash } from "lucide-react";
+import { sanitizeSearchHighlight } from "~/utils/searchHighlight";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 interface TestCaseSearchResultProps {
@@ -33,7 +34,11 @@ export function TestCaseSearchResult({
     <span className="flex items-center gap-1">
       {icon}
       {highlight ? (
-        <span dangerouslySetInnerHTML={{ __html: highlight }} />
+        <span
+          dangerouslySetInnerHTML={{
+            __html: sanitizeSearchHighlight(highlight),
+          }}
+        />
       ) : (
         testCase.name || `Case ${testCase.id || "Unknown"}`
       )}
