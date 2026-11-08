@@ -252,4 +252,30 @@ describe("TestCaseSearchResult Component", () => {
       expect(screen.getByText("Case Unknown")).toBeInTheDocument();
     });
   });
+
+  describe("Highlight", () => {
+    it("renders the mark tag from the highlight", () => {
+      const { container } = render(
+        <TestCaseSearchResult
+          testCase={{ id: 1, name: "Login case" }}
+          highlight='<mark class="search-highlight">Login</mark> case'
+        />
+      );
+      expect(
+        container.querySelector("mark.search-highlight")
+      ).toHaveTextContent("Login");
+    });
+
+    it("strips markup other than mark from the highlight", () => {
+      const { container } = render(
+        <TestCaseSearchResult
+          testCase={{ id: 1, name: "x" }}
+          highlight='<mark class="search-highlight">Login</mark> <img src=x onerror="window.pwned=1">'
+        />
+      );
+      expect(container.querySelector("img")).toBeNull();
+      expect(container.innerHTML).not.toContain("onerror");
+      expect(container.querySelector("mark")).toHaveTextContent("Login");
+    });
+  });
 });

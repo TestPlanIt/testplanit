@@ -11,6 +11,10 @@ import { SavedSearchesMenu } from "@/components/search/SavedSearchesMenu";
 import { SearchHelpContent } from "@/components/search/SearchHelpContent";
 import { useRecordKeyHits } from "~/hooks/useRecordKeyHits";
 import {
+  sanitizeSearchHighlight,
+  searchHighlightText,
+} from "~/utils/searchHighlight";
+import {
   BadgeList,
   DateDisplay,
   ExternalLink,
@@ -1316,19 +1320,18 @@ function SearchResultCard({
                     ): string | null => {
                       if (!originalText || !highlightArray.length) return null;
 
-                      // Find a highlight that contains part of the original text
-                      // The highlight will have <mark> tags, so strip those for comparison
+                      // Find a highlight that contains part of the original text.
+                      // The highlight is HTML (marks + encoded text), so compare
+                      // its plain text against the original.
                       for (const highlighted of highlightArray) {
-                        const strippedHighlight = highlighted.replace(
-                          /<\/?mark[^>]*>/gi,
-                          ""
-                        );
+                        const strippedHighlight =
+                          searchHighlightText(highlighted);
                         // If the stripped highlight contains the original text or vice versa, use it
                         if (
                           strippedHighlight.includes(originalText) ||
                           originalText.includes(strippedHighlight)
                         ) {
-                          return highlighted;
+                          return sanitizeSearchHighlight(highlighted);
                         }
                       }
                       return null;
@@ -1744,7 +1747,7 @@ function SearchResultCard({
                   {hit.highlights?.name?.[0] ? (
                     <span
                       dangerouslySetInnerHTML={{
-                        __html: hit.highlights.name[0],
+                        __html: sanitizeSearchHighlight(hit.highlights.name[0]),
                       }}
                     />
                   ) : (
@@ -1753,7 +1756,9 @@ function SearchResultCard({
                 </>
               ) : hit.highlights?.name?.[0] ? (
                 <span
-                  dangerouslySetInnerHTML={{ __html: hit.highlights.name[0] }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeSearchHighlight(hit.highlights.name[0]),
+                  }}
                 />
               ) : (
                 hit.source.name
