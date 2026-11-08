@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
           ...(highlight && {
             highlight: {
               type: "plain",
+              encoder: "html",
               fields: {
                 name: { number_of_fragments: 1 },
                 searchableContent: { number_of_fragments: 3 },

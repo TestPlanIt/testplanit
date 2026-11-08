@@ -509,6 +509,40 @@ describe("buildSearchQueryParts", () => {
     expect(withFacetFilters(parts.query, [])).toBe(parts.query);
   });
 
+  it("asks Elasticsearch to HTML-encode nested highlight fragments", async () => {
+    const { query } = await buildSearchQueryParts(
+      {
+        query: "login",
+        entityTypes: [
+          SearchableEntityType.REPOSITORY_CASE,
+          SearchableEntityType.SHARED_STEP,
+        ],
+      },
+      { access: "ADMIN" }
+    );
+
+    const innerHits: any[] = [];
+    const visit = (node: any) => {
+      if (!node || typeof node !== "object") return;
+      if (node.inner_hits) innerHits.push(node.inner_hits);
+      Object.values(node).forEach(visit);
+    };
+    visit(query);
+
+    expect(innerHits.map((ih) => Object.keys(ih.highlight.fields))).toEqual([
+      ["steps.step", "steps.expectedResult"],
+      ["items.step", "items.expectedResult"],
+    ]);
+    for (const ih of innerHits) {
+      expect(ih.highlight).toMatchObject({
+        type: "plain",
+        encoder: "html",
+        pre_tags: ['<mark class="search-highlight">'],
+        post_tags: ["</mark>"],
+      });
+    }
+  });
+
   it("does not treat the access-control project clause as a facet", async () => {
     const { facetForClause: classify } = { facetForClause };
     expect(classify({ terms: { projectId: [1, 2] } })).toBe("projects");

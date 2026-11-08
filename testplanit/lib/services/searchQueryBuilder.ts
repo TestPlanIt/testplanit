@@ -205,6 +205,7 @@ export async function buildSearchQueryParts(
             size: 100,
             highlight: {
               type: "plain",
+              encoder: "html",
               fields: {
                 "steps.step": {
                   number_of_fragments: 0,
@@ -252,6 +253,7 @@ export async function buildSearchQueryParts(
             size: 100,
             highlight: {
               type: "plain",
+              encoder: "html",
               fields: {
                 "items.step": {
                   number_of_fragments: 0,
