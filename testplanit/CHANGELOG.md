@@ -1,3 +1,9 @@
+## [1.2.0-beta.35](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.34...v1.2.0-beta.35) (2026-11-08)
+
+### Bug Fixes
+
+* **security:** stop search highlights rendering user-written markup ([e5ab96a](https://github.com/TestPlanIt/testplanit/commit/e5ab96a8f088a0e7eef2f57bd36021f6f8d35f21))
+
 ## [1.2.0-beta.34](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.33...v1.2.0-beta.34) (2026-11-07)
 
 ### Features
