@@ -1,3 +1,9 @@
+## [1.2.0-beta.37](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.36...v1.2.0-beta.37) (2026-11-08)
+
+### Bug Fixes
+
+* **charts:** restore d3 transitions dropped by d3 7.9.2's sideEffects flag ([ab690ce](https://github.com/TestPlanIt/testplanit/commit/ab690ce329479cb0a80013f5c1d8461e08bc0042))
+
 ## [1.2.0-beta.36](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.35...v1.2.0-beta.36) (2026-11-08)
 
 ### Features
