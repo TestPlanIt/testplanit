@@ -25,8 +25,10 @@ export function sanitizeSearchHighlight(
 ): string {
   if (!html) return "";
   if (!DOMPurify.isSupported) {
-    // No DOM to parse with (server render): drop every tag.
-    return escapeText(html.replace(/<[^>]*>/g, ""));
+    // No DOM to parse with (server render). Highlights only arrive after the
+    // search request on the client, so this path never shows a fragment;
+    // escaping the whole string keeps it inert if it ever does.
+    return escapeText(html);
   }
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS,

@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { describe, expect, it } from "vitest";
 import {
   sanitizeSearchHighlight,
@@ -37,6 +38,22 @@ describe("sanitizeSearchHighlight", () => {
   it("leaves entity-encoded text encoded", () => {
     const html = `${MARK}login</mark> &lt;img onerror=x&gt; &amp; done`;
     expect(sanitizeSearchHighlight(html)).toBe(html);
+  });
+
+  it("escapes everything when no DOM is available", () => {
+    const supported = DOMPurify.isSupported;
+    DOMPurify.isSupported = false;
+    try {
+      expect(
+        sanitizeSearchHighlight(
+          `<scr<script>ipt>alert(1)</script> ${MARK}a</mark>`
+        )
+      ).toBe(
+        "&lt;scr&lt;script&gt;ipt&gt;alert(1)&lt;/script&gt; &lt;mark class=&quot;search-highlight&quot;&gt;a&lt;/mark&gt;"
+      );
+    } finally {
+      DOMPurify.isSupported = supported;
+    }
   });
 
   it("returns an empty string for empty input", () => {
