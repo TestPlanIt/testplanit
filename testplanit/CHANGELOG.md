@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/TestPlanIt/testplanit/compare/v1.1.20...v1.2.0) (2026-11-09)
+
+### Features
+
+* **hosted:** suspend an instance through the existing expiry gate ([6df13a9](https://github.com/TestPlanIt/testplanit/commit/6df13a90945b95f24f4749dd5402816fa1cfafb0))
+
 ## [1.1.20](https://github.com/TestPlanIt/testplanit/compare/v1.1.19...v1.1.20) (2026-11-08)
 
 ### Bug Fixes
