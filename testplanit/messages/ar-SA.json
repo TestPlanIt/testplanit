@@ -3630,7 +3630,7 @@
         "quantity": "عدد حالات الاختبار المطلوب إنشاؤها",
         "placeholder": "أضف تعليمات محددة لإنشاء حالات الاختبار...\n\nعلى سبيل المثال:\n• التركيز على اختبار الأمان\n• تضمين الحالات الحدية وشروط الحدود\n• اختبار المسار الصحيح وسيناريوهات الأخطاء\n• مراعاة سيناريوهات الأجهزة المحمولة وأجهزة سطح المكتب\n• التركيز على اختبار API",
         "linksIgnoredTitle": "الروابط في الملاحظات لا تُفتح",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {الرابط} other {الـ # روابط}} في ملاحظاتك سيتم إرسالها كنص عادي فقط. لاستخدام مستند أو جدول بيانات، الصق المحتوى ذي الصلة (السيناريوهات وبيانات الاختبار والنتائج المتوقعة) في الملاحظات.",
         "suggestions": "اقتراحات سريعة:",
         "quantityOptions": {
           "justOne": "واحدة فقط",
