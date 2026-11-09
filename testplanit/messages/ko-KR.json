@@ -714,6 +714,7 @@
       "twoFactorSetup": "2단계 인증 설정",
       "verifyEmail": "이메일 인증",
       "trialExpired": "체험 기간 만료",
+      "instanceSuspended": "Instance Suspended",
       "linkSsoAccount": "SSO 계정 연결",
       "userProfile": "사용자 프로필",
       "tagDetails": "태그 세부 정보",
@@ -9627,6 +9628,14 @@
     "nextSteps": "TestPlanIt을 계속 사용하고 테스트 데이터에 액세스하려면 영업팀에 문의하십시오.",
     "pricingPlans": "가격 플랜",
     "dataRetention": "테스트 데이터는 안전하게 저장되며, 계정을 업그레이드하시면 이용하실 수 있습니다."
+  },
+  "InstanceSuspended": {
+    "title": "This instance is paused",
+    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
+    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
+    "billingPortal": "Open billing portal",
+    "contactUs": "Contact TestPlanIt",
+    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
   },
   "parameters": {
     "configureButtonEmpty": "구성 매개변수",

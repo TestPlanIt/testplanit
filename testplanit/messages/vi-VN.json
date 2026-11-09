@@ -714,6 +714,7 @@
       "twoFactorSetup": "Thiết lập xác thực hai yếu tố",
       "verifyEmail": "Xác minh email",
       "trialExpired": "Thời gian dùng thử đã hết hạn",
+      "instanceSuspended": "Instance Suspended",
       "linkSsoAccount": "Liên kết tài khoản SSO",
       "userProfile": "Hồ sơ người dùng",
       "tagDetails": "Chi tiết thẻ",
@@ -9627,6 +9628,14 @@
     "nextSteps": "Để tiếp tục sử dụng TestPlanIt và truy cập dữ liệu kiểm thử của bạn, vui lòng liên hệ với đội ngũ bán hàng của chúng tôi.",
     "pricingPlans": "Các gói giá",
     "dataRetention": "Dữ liệu kiểm tra của bạn đã được lưu trữ an toàn và sẽ có sẵn khi bạn nâng cấp tài khoản."
+  },
+  "InstanceSuspended": {
+    "title": "This instance is paused",
+    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
+    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
+    "billingPortal": "Open billing portal",
+    "contactUs": "Contact TestPlanIt",
+    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
   },
   "parameters": {
     "configureButtonEmpty": "Cấu hình tham số",

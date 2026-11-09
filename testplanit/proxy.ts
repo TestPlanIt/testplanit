@@ -176,6 +176,21 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   }
 
   if (isApiRoute) {
+    // A suspended hosted instance (non-payment or ended subscription) serves
+    // no data at all. Auth, health, version and share passed through above so
+    // sign-out and the provisioner's health poll keep working. Expired trials
+    // keep their API on purpose (exports, integrations) and are only
+    // redirected in the browser, below.
+    if (process.env.INSTANCE_SUSPENDED === "true") {
+      return NextResponse.json(
+        {
+          error:
+            "This instance is suspended. The instance administrator can restore access from the billing portal.",
+        },
+        { status: 403 }
+      );
+    }
+
     // Rate limit only applies to API token requests (Bearer tpi_*)
     const isProgrammatic = hasApiToken(request);
 
@@ -278,27 +293,31 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     return withRateLimitHeaders(NextResponse.next());
   }
 
-  // Check trial expiration status
+  // Instance lock: an expired trial, or a hosted instance the control plane
+  // has suspended (INSTANCE_SUSPENDED=true in the instance env; set for
+  // non-payment or an ended subscription, cleared when it is paid or
+  // restarted). Both land on the same public notice page; `reason` picks the
+  // copy. Data is never touched by either state.
   const trialEndDate = process.env.TRIAL_END_DATE;
   const isTrialInstance = process.env.IS_TRIAL_INSTANCE === "true";
+  const isSuspended = process.env.INSTANCE_SUSPENDED === "true";
+  const trialExpired =
+    isTrialInstance && !!trialEndDate && new Date() > new Date(trialEndDate);
 
-  if (isTrialInstance && trialEndDate) {
-    const expirationDate = new Date(trialEndDate);
-    const now = new Date();
-
+  if (isSuspended || trialExpired) {
     // Extract the route path without locale
     const pathWithoutLocale = pathname.replace(/^\/[^/]+/, "");
 
-    // Only check trial expiration for non-trial-expired routes
-    if (
-      !pathWithoutLocale.startsWith("/trial-expired") &&
-      now > expirationDate
-    ) {
-      // Trial has expired - redirect to expiration page
+    // Only redirect routes that are not already the notice page
+    if (!pathWithoutLocale.startsWith("/trial-expired")) {
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
       const redirectUrl = new URL(request.url);
       redirectUrl.pathname = `/${locale}/trial-expired`;
+      if (isSuspended) {
+        redirectUrl.search = "";
+        redirectUrl.searchParams.set("reason", "suspended");
+      }
       return NextResponse.redirect(redirectUrl);
     }
   }
