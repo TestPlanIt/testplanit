@@ -11,6 +11,11 @@ import {
 import { AlertCircle, PauseCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "~/lib/navigation";
+import {
+  isContactWebLink,
+  resolveTrialContact,
+  trialContactHref,
+} from "~/lib/trialContact";
 
 /**
  * The instance-locked notice. proxy.ts sends every page request here when
@@ -25,11 +30,12 @@ export default async function TrialExpiredPage({
 }) {
   const { reason } = await searchParams;
   const suspended = reason === "suspended";
-  const t = await getTranslations(suspended ? "InstanceSuspended" : "TrialExpired");
+  const t = await getTranslations(
+    suspended ? "InstanceSuspended" : "TrialExpired"
+  );
   const tGlobal = await getTranslations();
 
-  const contactEmail =
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sales@testplanit.com";
+  const contact = resolveTrialContact();
   const websiteUrl =
     process.env.NEXT_PUBLIC_WEBSITE_URL || "https://testplanit.com";
 
@@ -59,7 +65,9 @@ export default async function TrialExpiredPage({
             {suspended ? (
               <>
                 <Button asChild size="lg">
-                  <Link href={`${websiteUrl}/billing`}>{t("billingPortal")}</Link>
+                  <Link href={`${websiteUrl}/billing`}>
+                    {t("billingPortal")}
+                  </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
                   <Link href={`${websiteUrl}/contact?subject=billing`}>
@@ -73,7 +81,15 @@ export default async function TrialExpiredPage({
                   <Link href={websiteUrl}>{t("pricingPlans")}</Link>
                 </Button>
                 <Button asChild size="lg">
-                  <Link href={`mailto:${contactEmail}`}>
+                  <Link
+                    href={trialContactHref(contact)}
+                    target={isContactWebLink(contact) ? "_blank" : undefined}
+                    rel={
+                      isContactWebLink(contact)
+                        ? "noopener noreferrer"
+                        : undefined
+                    }
+                  >
                     {tGlobal("Trial.contactSales")}
                   </Link>
                 </Button>

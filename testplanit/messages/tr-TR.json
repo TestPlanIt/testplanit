@@ -9532,7 +9532,7 @@
     "daysRemaining": "Duruşma {count, plural, =1 {1 gün sonra} other {# gün sonra sona eriyor}}",
     "expiresT oday": "Deneme süresi bugün sona eriyor.",
     "expired": "{count, plural, =1 {Deneme süresi 1 gün önce sona erdi} other {Deneme süresi # gün önce sona erdi}}",
-    "contactSales": "Satış Temsilcisiyle İletişime Geçin"
+    "contactSales": "Yükselt"
   },
   "feedback": {
     "sheetTitle": "Görüşlerinizi Paylaşın",
@@ -9625,7 +9625,7 @@
   "TrialExpired": {
     "title": "Deneme süreniz sona erdi.",
     "description": "TestPlanIt'i denediğiniz için teşekkür ederiz! Deneme süreniz sona erdi ve bu örneğe artık erişilemiyor.",
-    "nextSteps": "TestPlanIt'i kullanmaya devam etmek ve test verilerinize erişmek için lütfen satış ekibimizle iletişime geçin.",
+    "nextSteps": "TestPlanIt'i kullanmaya devam etmek ve test verilerinize erişmek için yükseltin.",
     "pricingPlans": "Fiyatlandırma Planları",
     "dataRetention": "Test verileriniz güvenli bir şekilde saklanmaktadır ve hesabınızı yükselttiğinizde erişilebilir olacaktır."
   },

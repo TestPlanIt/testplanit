@@ -9532,7 +9532,7 @@
     "daysRemaining": "O teste termina em {count, plural, =1 {1 dia} other {# dias}}",
     "expiresT oday": "O período de teste termina hoje.",
     "expired": "{count, plural, =1 {Período de teste expirou há 1 dia} other {Período de teste expirou há # dias}}",
-    "contactSales": "Contate o departamento de vendas."
+    "contactSales": "Atualizar"
   },
   "feedback": {
     "sheetTitle": "Compartilhe sua opinião",
@@ -9625,7 +9625,7 @@
   "TrialExpired": {
     "title": "Seu período de teste expirou.",
     "description": "Obrigado por experimentar o TestPlanIt! Seu período de avaliação terminou e esta instância não está mais acessível.",
-    "nextSteps": "Para continuar usando o TestPlanIt e acessar seus dados de teste, entre em contato com nossa equipe de vendas.",
+    "nextSteps": "Faça upgrade para continuar usando TestPlanIt e acessar seus dados de teste.",
     "pricingPlans": "Planos de preços",
     "dataRetention": "Seus dados de teste estão armazenados com segurança e estarão disponíveis quando você atualizar sua conta."
   },

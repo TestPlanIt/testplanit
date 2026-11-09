@@ -9532,7 +9532,7 @@
     "daysRemaining": "재판 종료까지 남은 시간: {count, plural, =1 {1일} other {#일}}",
     "expiresT oday": "오늘부로 무료 체험 기간이 만료됩니다.",
     "expired": "{count, plural, =1 {체험 기간이 1일 전에 만료되었습니다} other {체험 기간이 #일 전에 만료되었습니다}}",
-    "contactSales": "영업 담당자에게 문의하세요."
+    "contactSales": "업그레이드"
   },
   "feedback": {
     "sheetTitle": "여러분의 의견을 공유해주세요",
@@ -9625,7 +9625,7 @@
   "TrialExpired": {
     "title": "체험 기간이 만료되었습니다.",
     "description": "TestPlanIt을 이용해 주셔서 감사합니다! 평가 기간이 종료되어 더 이상 해당 인스턴스에 접속할 수 없습니다.",
-    "nextSteps": "TestPlanIt을 계속 사용하고 테스트 데이터에 액세스하려면 영업팀에 문의하십시오.",
+    "nextSteps": "업그레이드하여 TestPlanIt을 계속 사용하고 테스트 데이터에 액세스하세요.",
     "pricingPlans": "가격 플랜",
     "dataRetention": "테스트 데이터는 안전하게 저장되며, 계정을 업그레이드하시면 이용하실 수 있습니다."
   },

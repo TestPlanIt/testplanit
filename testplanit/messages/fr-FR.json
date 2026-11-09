@@ -9532,7 +9532,7 @@
     "daysRemaining": "Le procès se termine dans {count, plural, =1 {1 jour} other {# jours}}",
     "expiresT oday": "L'essai gratuit expire aujourd'hui",
     "expired": "{count, plural, =1 {Essai expiré il y a 1 jour} other {Essai expiré il y a # jours}}",
-    "contactSales": "Contactez le service commercial"
+    "contactSales": "Passer à la version premium"
   },
   "feedback": {
     "sheetTitle": "Partagez vos commentaires",
@@ -9625,7 +9625,7 @@
   "TrialExpired": {
     "title": "Votre période d'essai a expiré.",
     "description": "Merci d'avoir essayé TestPlanIt ! Votre période d'essai est terminée et cette instance n'est plus accessible.",
-    "nextSteps": "Pour continuer à utiliser TestPlanIt et accéder à vos données de test, contactez notre équipe commerciale.",
+    "nextSteps": "Effectuez une mise à jour pour continuer à utiliser TestPlanIt et accéder à vos données de test.",
     "pricingPlans": "Formules tarifaires",
     "dataRetention": "Vos données de test sont stockées en toute sécurité et seront disponibles lorsque vous mettrez à niveau votre compte."
   },

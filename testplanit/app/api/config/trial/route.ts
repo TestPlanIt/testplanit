@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveTrialContact } from "~/lib/trialContact";
 
 /**
  * API endpoint to return trial configuration at runtime.
@@ -13,8 +14,8 @@ export async function GET() {
   const isSuspended = process.env.INSTANCE_SUSPENDED === "true";
   const websiteUrl =
     process.env.NEXT_PUBLIC_WEBSITE_URL || "https://testplanit.com";
-  const contactEmail =
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sales@testplanit.com";
+  // An email address or a link (for example a contact form).
+  const contact = resolveTrialContact();
   const feedbackSurveyUrl = process.env.FEEDBACK_SURVEY_URL || null;
 
   return NextResponse.json({
@@ -22,7 +23,7 @@ export async function GET() {
     isSuspended,
     trialEndDate,
     websiteUrl,
-    contactEmail,
+    contact,
     feedbackSurveyUrl,
   });
 }
