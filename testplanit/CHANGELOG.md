@@ -1,3 +1,9 @@
+## [1.2.0-beta.38](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.37...v1.2.0-beta.38) (2026-11-09)
+
+### Bug Fixes
+
+* **milestones:** start the summary bar at the row edge and name each duration's source ([2970929](https://github.com/TestPlanIt/testplanit/commit/2970929cf763862e6e108dfb1ce59481bf5dd2df))
+
 ## [1.2.0-beta.37](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.36...v1.2.0-beta.37) (2026-11-08)
 
 ### Bug Fixes
