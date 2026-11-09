@@ -714,7 +714,7 @@
       "twoFactorSetup": "Nastavení dvoufaktorového ověření",
       "verifyEmail": "Ověřit email",
       "trialExpired": "Zkušební doba vypršela",
-      "instanceSuspended": "Instance Suspended",
+      "instanceSuspended": "Instance pozastavena",
       "linkSsoAccount": "Propojit SSO účet",
       "userProfile": "Uživatelský profil",
       "tagDetails": "Podrobnosti štítku",
@@ -9630,12 +9630,12 @@
     "dataRetention": "Vaše testovací data jsou bezpečně uložena a budou k dispozici po upgradu účtu."
   },
   "InstanceSuspended": {
-    "title": "This instance is paused",
-    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
-    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
-    "billingPortal": "Open billing portal",
-    "contactUs": "Contact TestPlanIt",
-    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
+    "title": "Tato instance je pozastavena",
+    "description": "Přístup byl pozastaven, protože předplatné pro tuto instanci TestPlanIt není zaplaceno nebo skončilo.",
+    "nextSteps": "Pokud tuto instanci spravujete, zaplaťte otevřenou fakturu nebo spusťte plán na portálu fakturace a přístup bude automaticky obnoven během několika minut. Všichni ostatní: kontaktujte správce své instance.",
+    "billingPortal": "Otevřít portál fakturace",
+    "contactUs": "Kontaktujte TestPlanIt",
+    "dataRetention": "Vaše projekty, testovací případy a výsledky jsou zachovány přesně tak, jak byly. Během pozastavení instance se neodstraní nic."
   },
   "parameters": {
     "configureButtonEmpty": "Konfigurovat parametry",

@@ -714,7 +714,7 @@
       "twoFactorSetup": "Configuración de dos factores",
       "verifyEmail": "Verificar correo electrónico",
       "trialExpired": "El período de prueba ha expirado.",
-      "instanceSuspended": "Instance Suspended",
+      "instanceSuspended": "Instancia suspendida",
       "linkSsoAccount": "Vincular cuenta SSO",
       "userProfile": "Perfil de usuario",
       "tagDetails": "Detalles de la etiqueta",
@@ -9630,12 +9630,12 @@
     "dataRetention": "Tus datos de prueba se almacenan de forma segura y estarán disponibles cuando actualices tu cuenta."
   },
   "InstanceSuspended": {
-    "title": "This instance is paused",
-    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
-    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
-    "billingPortal": "Open billing portal",
-    "contactUs": "Contact TestPlanIt",
-    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
+    "title": "Esta instancia está pausada",
+    "description": "El acceso se ha suspendido porque la suscripción de esta instancia de TestPlanIt no está pagada o ha finalizado.",
+    "nextSteps": "Si administras esta instancia, paga la factura pendiente o inicia un plan en el portal de facturación y el acceso se restablecerá automáticamente en unos pocos minutos. Todos los demás: contacta a tu administrador de instancia.",
+    "billingPortal": "Abrir portal de facturación",
+    "contactUs": "Contactar a TestPlanIt",
+    "dataRetention": "Tus proyectos, casos de prueba y resultados se mantienen exactamente como estaban. Nada se elimina mientras una instancia está pausada."
   },
   "parameters": {
     "configureButtonEmpty": "Configurar parámetros",

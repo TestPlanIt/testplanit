@@ -714,7 +714,7 @@
       "twoFactorSetup": "2단계 인증 설정",
       "verifyEmail": "이메일 인증",
       "trialExpired": "체험 기간 만료",
-      "instanceSuspended": "Instance Suspended",
+      "instanceSuspended": "인스턴스 일시 중지됨",
       "linkSsoAccount": "SSO 계정 연결",
       "userProfile": "사용자 프로필",
       "tagDetails": "태그 세부 정보",
@@ -9630,12 +9630,12 @@
     "dataRetention": "테스트 데이터는 안전하게 저장되며, 계정을 업그레이드하시면 이용하실 수 있습니다."
   },
   "InstanceSuspended": {
-    "title": "This instance is paused",
-    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
-    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
-    "billingPortal": "Open billing portal",
-    "contactUs": "Contact TestPlanIt",
-    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
+    "title": "이 인스턴스가 일시 중지되었습니다",
+    "description": "이 TestPlanIt 인스턴스의 구독이 미결제되었거나 종료되어 액세스가 일시 중지되었습니다.",
+    "nextSteps": "이 인스턴스를 관리하는 경우 미결제 인보이스를 결제하거나 청구 포털에서 요금제를 시작하면 몇 분 내에 액세스가 자동으로 복구됩니다. 그 외의 경우: 인스턴스 관리자에게 문의하세요.",
+    "billingPortal": "청구 포털 열기",
+    "contactUs": "TestPlanIt 문의",
+    "dataRetention": "프로젝트, 테스트 케이스 및 결과는 정확히 그대로 유지됩니다. 인스턴스가 일시 중지된 동안 아무것도 삭제되지 않습니다."
   },
   "parameters": {
     "configureButtonEmpty": "구성 매개변수",

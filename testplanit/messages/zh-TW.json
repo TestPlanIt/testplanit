@@ -714,7 +714,7 @@
       "twoFactorSetup": "雙因素設定",
       "verifyEmail": "驗證電子郵件",
       "trialExpired": "試用期已結束",
-      "instanceSuspended": "Instance Suspended",
+      "instanceSuspended": "實例已暫停",
       "linkSsoAccount": "關聯 SSO 帳戶",
       "userProfile": "用戶個人資料",
       "tagDetails": "標籤詳情",
@@ -9630,12 +9630,12 @@
     "dataRetention": "您的測試資料已安全存儲，升級帳戶後即可存取。"
   },
   "InstanceSuspended": {
-    "title": "This instance is paused",
-    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
-    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
-    "billingPortal": "Open billing portal",
-    "contactUs": "Contact TestPlanIt",
-    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
+    "title": "此實例已暫停",
+    "description": "由於此 TestPlanIt 實例的訂閱未付款或已過期，存取已被暫停。",
+    "nextSteps": "如果您管理此實例，請支付未結發票或在計費入口網站中啟動計劃，存取將在幾分鐘內自動恢復。其他所有人：請聯絡您的實例管理員。",
+    "billingPortal": "開啟計費入口網站",
+    "contactUs": "聯絡 TestPlanIt",
+    "dataRetention": "您的專案、測試案例和結果保持完全不變。實例暫停時不會刪除任何內容。"
   },
   "parameters": {
     "configureButtonEmpty": "配置參數",

@@ -714,7 +714,7 @@
       "twoFactorSetup": "إعداد التحقق بخطوتين",
       "verifyEmail": "تأكيد البريد الإلكتروني",
       "trialExpired": "انتهت الفترة التجريبية",
-      "instanceSuspended": "Instance Suspended",
+      "instanceSuspended": "تم إيقاف المثيل",
       "linkSsoAccount": "ربط حساب تسجيل الدخول الموحد",
       "userProfile": "الملف الشخصي للمستخدم",
       "tagDetails": "تفاصيل العلامة",
@@ -9630,12 +9630,12 @@
     "dataRetention": "بيانات اختباراتك محفوظة بأمان وستكون متاحة عند ترقية حسابك."
   },
   "InstanceSuspended": {
-    "title": "This instance is paused",
-    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
-    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
-    "billingPortal": "Open billing portal",
-    "contactUs": "Contact TestPlanIt",
-    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
+    "title": "هذا المثيل متوقف مؤقتًا",
+    "description": "تم إيقاف الوصول لأن اشتراك TestPlanIt لهذا المثيل لم يتم الدفع له أو انتهى صلاحيته.",
+    "nextSteps": "إذا كنت تدير هذا المثيل، فادفع الفاتورة المفتوحة أو ابدأ خطة في بوابة الفواتير وسيتم استعادة الوصول تلقائيًا خلال بضع دقائق. الآخرون: يرجى الاتصال بمسؤول المثيل الخاص بك.",
+    "billingPortal": "فتح بوابة الفواتير",
+    "contactUs": "الاتصال بـ TestPlanIt",
+    "dataRetention": "يتم الاحتفاظ بمشاريعك وحالات الاختبار والنتائج بالضبط كما كانت. لا يتم حذف أي شيء عند إيقاف المثيل مؤقتًا."
   },
   "parameters": {
     "configureButtonEmpty": "تكوين المعاملات",

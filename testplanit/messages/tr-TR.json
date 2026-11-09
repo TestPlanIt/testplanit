@@ -714,7 +714,7 @@
       "twoFactorSetup": "İki Faktörlü Kurulum",
       "verifyEmail": "E-postayı Doğrula",
       "trialExpired": "Deneme Süresi Sona Erdi",
-      "instanceSuspended": "Instance Suspended",
+      "instanceSuspended": "Örnek Askıya Alındı",
       "linkSsoAccount": "SSO Hesabını Bağla",
       "userProfile": "Kullanıcı Profili",
       "tagDetails": "Etiket Detayları",
@@ -9630,12 +9630,12 @@
     "dataRetention": "Test verileriniz güvenli bir şekilde saklanmaktadır ve hesabınızı yükselttiğinizde erişilebilir olacaktır."
   },
   "InstanceSuspended": {
-    "title": "This instance is paused",
-    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
-    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
-    "billingPortal": "Open billing portal",
-    "contactUs": "Contact TestPlanIt",
-    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
+    "title": "Bu örnek duraklatılmış",
+    "description": "Bu TestPlanIt örneği için abonelik ödenmemiş veya süresi dolmuş olduğundan erişim askıya alınmıştır.",
+    "nextSteps": "Bu örneği yönetiyorsanız, açık faturayı ödeyin veya faturalama portalında bir plan başlatın ve erişim birkaç dakika içinde otomatik olarak geri yüklenir. Diğerleri: lütfen örnek yöneticinize başvurun.",
+    "billingPortal": "Faturalama portalını aç",
+    "contactUs": "TestPlanIt ile iletişime geçin",
+    "dataRetention": "Projeleriniz, test durumlarınız ve sonuçlarınız tam olarak oldukları gibi tutulur. Bir örnek duraklatılırken hiçbir şey silinmez."
   },
   "parameters": {
     "configureButtonEmpty": "Parametreleri yapılandırın",
