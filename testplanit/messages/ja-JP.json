@@ -10100,7 +10100,7 @@
     "daysRemaining": "トライアル終了まであと {count, plural, =1 {1 日} other {# 日}}",
     "expiresT oday": "トライアルは本日終了します",
     "expired": "{count, plural, =1 {試用期間は 1 日前に終了しました} other {試用期間は # 日前に終了しました}}",
-    "contactSales": "営業担当者へのお問い合わせ"
+    "contactSales": "アップグレード"
   },
   "feedback": {
     "sheetTitle": "ご意見をお聞かせください",
@@ -10193,7 +10193,7 @@
   "TrialExpired": {
     "title": "トライアル期間が終了しました",
     "description": "TestPlanIt をお試しいただきありがとうございます。試用期間が終了しており、このインスタンスにはアクセスできなくなりました。",
-    "nextSteps": "TestPlanIt を引き続き使用し、テスト データにアクセスするには、弊社の営業チームにお問い合わせください。",
+    "nextSteps": "TestPlanItをアップグレードして、引き続き使用し、テストデータにアクセスしてください。",
     "pricingPlans": "料金プラン",
     "dataRetention": "テスト データは安全に保存され、アカウントをアップグレードすると利用できるようになります。"
   },

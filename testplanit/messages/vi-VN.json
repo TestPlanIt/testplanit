@@ -10100,7 +10100,7 @@
     "daysRemaining": "Thời gian dùng thử kết thúc sau {count, plural, =1 {1 ngày} other {# ngày}}",
     "expiresT oday": "Thời gian dùng thử kết thúc hôm nay.",
     "expired": "{count, plural, =1 {Thời gian dùng thử đã hết hạn cách đây 1 ngày} other {Thời gian dùng thử đã hết hạn cách đây # ngày}}",
-    "contactSales": "Liên hệ bộ phận bán hàng"
+    "contactSales": "Nâng cấp"
   },
   "feedback": {
     "sheetTitle": "Chia sẻ phản hồi của bạn",
@@ -10193,7 +10193,7 @@
   "TrialExpired": {
     "title": "Thời gian dùng thử của bạn đã hết hạn.",
     "description": "Cảm ơn bạn đã dùng thử TestPlanIt! Thời gian dùng thử của bạn đã kết thúc và phiên bản này không còn truy cập được nữa.",
-    "nextSteps": "Để tiếp tục sử dụng TestPlanIt và truy cập dữ liệu kiểm thử của bạn, vui lòng liên hệ với đội ngũ bán hàng của chúng tôi.",
+    "nextSteps": "Nâng cấp để tiếp tục sử dụng TestPlanIt và truy cập dữ liệu kiểm tra của bạn.",
     "pricingPlans": "Các gói giá",
     "dataRetention": "Dữ liệu kiểm tra của bạn đã được lưu trữ an toàn và sẽ có sẵn khi bạn nâng cấp tài khoản."
   },

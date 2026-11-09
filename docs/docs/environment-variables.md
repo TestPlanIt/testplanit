@@ -320,13 +320,13 @@ See [Multi-Tenant Workers](multi-tenant-workers.md).
 
 ## Trial Instances
 
-| Variable                    | Default                  | Description                                  |
-| --------------------------- | ------------------------ | -------------------------------------------- |
-| `IS_TRIAL_INSTANCE`         | `false`                  | Marks a time-limited trial.                  |
-| `TRIAL_END_DATE`            | unset                    | When the trial ends.                         |
-| `FEEDBACK_SURVEY_URL`       | unset                    | Survey link shown to trial users.            |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | `sales@testplanit.com`   | Contact shown when a trial has expired.      |
-| `NEXT_PUBLIC_WEBSITE_URL`   | `https://testplanit.com` | Website link shown when a trial has expired. |
+| Variable                    | Default                  | Description                                                                                                                              |
+| --------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `IS_TRIAL_INSTANCE`         | `false`                  | Marks a time-limited trial.                                                                                                              |
+| `TRIAL_END_DATE`            | unset                    | When the trial ends.                                                                                                                     |
+| `FEEDBACK_SURVEY_URL`       | unset                    | Survey link shown to trial users.                                                                                                        |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | `sales@testplanit.com`   | Where the "Upgrade" link in the trial banner and on the expired-trial page goes: an email address, or a URL such as a contact form page. |
+| `NEXT_PUBLIC_WEBSITE_URL`   | `https://testplanit.com` | Website link shown when a trial has expired.                                                                                             |
 
 ## Build-Time Variables
 

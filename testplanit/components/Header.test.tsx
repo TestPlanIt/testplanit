@@ -325,7 +325,7 @@ describe("Header", () => {
       json: async () => ({
         isTrialInstance: true,
         trialEndDate,
-        contactEmail: "sales@testplanit.com",
+        contact: "sales@testplanit.com",
       }),
     });
 

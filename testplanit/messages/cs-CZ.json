@@ -10100,7 +10100,7 @@
     "daysRemaining": "Zkušební období končí za {count, plural, =1 {1 den} few {# dny} many {# dne} other {# dní}}",
     "expiresT oday": "Zkušební období končí dnes",
     "expired": "Zkušební období vypršelo před {count, plural, =1 {1 dnem} few {# dny} many {# dny} other {# dny}}",
-    "contactSales": "Kontaktovat obchodní oddělení"
+    "contactSales": "Upgradovat"
   },
   "feedback": {
     "sheetTitle": "Sdílejte svou zpětnou vazbu",
@@ -10193,7 +10193,7 @@
   "TrialExpired": {
     "title": "Vaše zkušební období vypršelo",
     "description": "Děkujeme, že jste vyzkoušeli TestPlanIt! Vaše zkušební období skončilo a tato instance již není přístupná.",
-    "nextSteps": "Chcete-li pokračovat v používání TestPlanIt a mít přístup ke svým testovacím datům, kontaktujte náš obchodní tým.",
+    "nextSteps": "Upgradujte, abyste pokračovali v používání TestPlanIt a měli přístup ke svým testovacím datům.",
     "pricingPlans": "Cenové plány",
     "dataRetention": "Vaše testovací data jsou bezpečně uložena a budou k dispozici po upgradu účtu."
   },

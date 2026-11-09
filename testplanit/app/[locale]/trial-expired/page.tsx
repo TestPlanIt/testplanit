@@ -11,13 +11,17 @@ import {
 import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
+import {
+  isContactWebLink,
+  resolveTrialContact,
+  trialContactHref,
+} from "~/lib/trialContact";
 
 export default function TrialExpiredPage() {
   const t = useTranslations("TrialExpired");
   const tGlobal = useTranslations();
 
-  const contactEmail =
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sales@testplanit.com";
+  const contact = resolveTrialContact();
   const websiteUrl =
     process.env.NEXT_PUBLIC_WEBSITE_URL || "https://testplanit.com";
 
@@ -42,7 +46,13 @@ export default function TrialExpiredPage() {
               <Link href={websiteUrl}>{t("pricingPlans")}</Link>
             </Button>
             <Button asChild size="lg">
-              <Link href={`mailto:${contactEmail}`}>
+              <Link
+                href={trialContactHref(contact)}
+                target={isContactWebLink(contact) ? "_blank" : undefined}
+                rel={
+                  isContactWebLink(contact) ? "noopener noreferrer" : undefined
+                }
+              >
                 {tGlobal("Trial.contactSales")}
               </Link>
             </Button>

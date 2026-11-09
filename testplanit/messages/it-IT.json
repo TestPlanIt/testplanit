@@ -10100,7 +10100,7 @@
     "daysRemaining": "La prova termina tra {count, plural, =1 {1 giorno} other {# giorni}}",
     "expiresT oday": "La prova scade oggi",
     "expired": "{count, plural, =1 {Prova scaduta 1 giorno fa} other {Prova scaduta # giorni fa}}",
-    "contactSales": "Contatta il reparto vendite"
+    "contactSales": "Aggiorna"
   },
   "feedback": {
     "sheetTitle": "Condividi il tuo feedback",
@@ -10193,7 +10193,7 @@
   "TrialExpired": {
     "title": "La tua prova è scaduta.",
     "description": "Grazie per aver provato TestPlanIt! Il periodo di prova è terminato e questa istanza non è più accessibile.",
-    "nextSteps": "Per continuare a utilizzare TestPlanIt e accedere ai dati dei test, contatta il nostro team di vendita.",
+    "nextSteps": "Aggiorna per continuare a utilizzare TestPlanIt e accedere ai tuoi dati di test.",
     "pricingPlans": "Piani tariffari",
     "dataRetention": "I tuoi dati di prova sono archiviati in modo sicuro e saranno disponibili quando effettuerai l'upgrade del tuo account."
   },
