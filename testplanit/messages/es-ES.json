@@ -714,6 +714,7 @@
       "twoFactorSetup": "Configuración de dos factores",
       "verifyEmail": "Verificar correo electrónico",
       "trialExpired": "El período de prueba ha expirado.",
+      "instanceSuspended": "Instance Suspended",
       "linkSsoAccount": "Vincular cuenta SSO",
       "userProfile": "Perfil de usuario",
       "tagDetails": "Detalles de la etiqueta",
@@ -9627,6 +9628,14 @@
     "nextSteps": "Para continuar utilizando TestPlanIt y acceder a sus datos de prueba, póngase en contacto con nuestro equipo de ventas.",
     "pricingPlans": "Planes de precios",
     "dataRetention": "Tus datos de prueba se almacenan de forma segura y estarán disponibles cuando actualices tu cuenta."
+  },
+  "InstanceSuspended": {
+    "title": "This instance is paused",
+    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
+    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
+    "billingPortal": "Open billing portal",
+    "contactUs": "Contact TestPlanIt",
+    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
   },
   "parameters": {
     "configureButtonEmpty": "Configurar parámetros",

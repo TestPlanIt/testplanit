@@ -714,6 +714,7 @@
       "twoFactorSetup": "双因素设置",
       "verifyEmail": "验证电子邮件",
       "trialExpired": "试用期已结束",
+      "instanceSuspended": "Instance Suspended",
       "linkSsoAccount": "关联 SSO 帐户",
       "userProfile": "用户个人资料",
       "tagDetails": "标签详情",
@@ -9627,6 +9628,14 @@
     "nextSteps": "如需继续使用 TestPlanIt 并访问您的测试数据，请联系我们的销售团队。",
     "pricingPlans": "定价方案",
     "dataRetention": "您的测试数据已安全存储，升级帐户后即可访问。"
+  },
+  "InstanceSuspended": {
+    "title": "This instance is paused",
+    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
+    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
+    "billingPortal": "Open billing portal",
+    "contactUs": "Contact TestPlanIt",
+    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
   },
   "parameters": {
     "configureButtonEmpty": "配置参数",
