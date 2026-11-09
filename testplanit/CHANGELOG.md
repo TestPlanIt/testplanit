@@ -1,3 +1,9 @@
+## [1.2.0-beta.39](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.38...v1.2.0-beta.39) (2026-11-09)
+
+### Bug Fixes
+
+* **trial:** let the trial contact be an email address or a link ([89520d8](https://github.com/TestPlanIt/testplanit/commit/89520d8050f96aa5009940213a5589fa76d03ea5))
+
 ## [1.2.0-beta.38](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.37...v1.2.0-beta.38) (2026-11-09)
 
 ### Bug Fixes
