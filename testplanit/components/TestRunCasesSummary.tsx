@@ -758,13 +758,12 @@ export function TestRunCasesSummary({
                         <>
                           <CalendarClock className="h-3 w-3" />
                           <span>
-                            {`${tCommon("fields.totalEstimate")}: ${toHumanReadable(
-                              item.estimate,
-                              {
+                            {tCommon("labels.estimateFromCases", {
+                              value: toHumanReadable(item.estimate, {
                                 isSeconds: true,
                                 locale,
-                              }
-                            )}`}
+                              }),
+                            })}
                           </span>
                         </>
                       )}
@@ -820,7 +819,9 @@ export function TestRunCasesSummary({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                {`${tCommon("fields.totalEstimate")}: ${totalEstimateText}`}
+                {tCommon("labels.estimateFromCases", {
+                  value: totalEstimateText,
+                })}
               </TooltipContent>
             </Tooltip>
           ) : (

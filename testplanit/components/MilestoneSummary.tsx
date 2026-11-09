@@ -56,6 +56,11 @@ interface MilestoneSummaryProps {
   // navigates.
   onScopeChipClick?: () => void;
   onFoundInTestingChipClick?: () => void;
+  // Appended to the counts line under the bar, after the elapsed and
+  // estimate figures. The list card puts the remaining-effort forecast here
+  // so the bar keeps the full width of its row; a slot that renders nothing
+  // leaves no separator behind.
+  meta?: React.ReactNode;
 }
 
 export function MilestoneSummary({
@@ -64,6 +69,7 @@ export function MilestoneSummary({
   className,
   onScopeChipClick,
   onFoundInTestingChipClick,
+  meta,
 }: MilestoneSummaryProps) {
   const tCommon = useTranslations("common");
   const tMilestones = useTranslations("milestones");
@@ -292,13 +298,12 @@ export function MilestoneSummary({
                   <div className="text-xs opacity-90 mt-1">
                     <div className="flex items-center gap-1">
                       <CalendarClock className="h-3 w-3" />
-                      {`${tCommon("fields.totalEstimate")}: ${toHumanReadable(
-                        segment.estimate,
-                        {
+                      {tCommon("labels.estimateFromCases", {
+                        value: toHumanReadable(segment.estimate, {
                           isSeconds: true,
                           locale,
-                        }
-                      )}`}
+                        }),
+                      })}
                     </div>
                   </div>
                 ) : null}
@@ -348,11 +353,21 @@ export function MilestoneSummary({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                {`${tCommon("fields.totalEstimate")}: ${totalEstimateText}`}
+                {tCommon("labels.estimateFromCases", {
+                  value: totalEstimateText,
+                })}
               </TooltipContent>
             </Tooltip>
           ) : (
             ""
+          )}
+          {meta && (
+            <span
+              className="inline-flex items-center ms-1 shrink-[99999] min-w-0 overflow-hidden whitespace-nowrap empty:hidden before:content-['•'] before:me-1"
+              data-testid="milestone-summary-meta"
+            >
+              {meta}
+            </span>
           )}
         </div>
 

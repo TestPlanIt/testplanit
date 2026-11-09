@@ -45,7 +45,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  CloudSunRain,
   Bot,
   Combine,
   ExternalLink,
@@ -57,7 +56,8 @@ import {
   SquareStack,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { toHumanReadable } from "~/utils/duration";
 import React, { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
@@ -156,6 +156,7 @@ export function TestRunCaseDetails({
 }: TestRunCaseDetailsProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
@@ -1141,18 +1142,34 @@ export function TestRunCaseDetails({
                   <span className="font-semibold text-sm">
                     {tCommon("fields.estimate")}:
                   </span>
-                  <span className="text-muted-foreground text-sm flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <DurationDisplay seconds={testcase.estimate} />
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-muted-foreground text-sm flex items-center gap-1 cursor-default">
+                        <Clock className="w-4 h-4" />
+                        <DurationDisplay seconds={testcase.estimate} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {tCommon("labels.estimateEntered", {
+                        value: toHumanReadable(testcase.estimate, {
+                          isSeconds: true,
+                          locale,
+                        }),
+                      })}
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               )}
-              {testcase.forecastManual && (
+              {/* One Forecast line carrying whichever of the manual and
+                  automated figures exist; each display renders nothing for a
+                  missing value, and its tooltip names the source. */}
+              {((testcase.forecastManual ?? 0) > 0 ||
+                (testcase.forecastAutomated ?? 0) > 0) && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm">
                     {tCommon("fields.forecast")}:
                   </span>
-                  <span className="text-muted-foreground text-sm flex items-center gap-1  ">
+                  <span className="text-muted-foreground text-sm flex items-center gap-1">
                     <ForecastDisplay
                       seconds={testcase.forecastManual}
                       type="manual"
@@ -1160,19 +1177,6 @@ export function TestRunCaseDetails({
                     <ForecastDisplay
                       seconds={testcase.forecastAutomated}
                       type="automated"
-                    />
-                  </span>
-                </div>
-              )}
-              {testcase.forecastAutomated && (
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm">
-                    {tCommon("fields.forecast")}:
-                  </span>
-                  <span className="text-muted-foreground text-sm flex items-center gap-1  ">
-                    <CloudSunRain className="w-4 h-4" />
-                    <DurationDisplay
-                      seconds={testcase.forecastAutomated}
                       round={false}
                     />
                   </span>

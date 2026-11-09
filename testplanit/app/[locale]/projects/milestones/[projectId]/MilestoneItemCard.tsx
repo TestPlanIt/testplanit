@@ -285,17 +285,15 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
             </DropdownMenu>
           )
         }
-        chips={[
-          {
-            key: "forecast",
-            // Two short durations, and the only place the milestone's
-            // outstanding effort appears in a list — it stays at every width.
-            tier: "base",
-            content: <MilestoneForecastChips milestoneId={milestone.id} />,
-          },
-        ]}
         progress={
-          <MilestoneSummary milestoneId={milestone.id} projectId={projectId} />
+          <MilestoneSummary
+            milestoneId={milestone.id}
+            projectId={projectId}
+            // The remaining-effort forecast rides the counts line under the
+            // bar rather than a leading chip, which would push the bar's
+            // start to the right of the row.
+            meta={<MilestoneForecastChips milestoneId={milestone.id} />}
+          />
         }
         noteBelowName
         noteTier="base"

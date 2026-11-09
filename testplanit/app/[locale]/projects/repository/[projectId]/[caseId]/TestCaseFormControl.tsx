@@ -15,15 +15,21 @@ import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import type { Attachments, Tags } from "~/zenstack/models";
 import { RiskScoreCell } from "@/components/risk/RiskScoreCell";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
+import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 interface TestCaseFormControlsProps {
@@ -76,6 +82,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
   riskScoringEnabled = false,
 }) => {
   const t = useTranslations();
+  const locale = useLocale();
 
   const testcaseTags: Tags[] = (testcase?.caseTags ?? []).map(
     (ct: any) => ct.tag
@@ -238,9 +245,24 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                 <div id="estimate-display" className="font-bold">
                   {t("common.fields.estimate")}
                 </div>
-                <div aria-labelledby="estimate-display">
-                  <DurationDisplay seconds={testcase.estimate} />
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      aria-labelledby="estimate-display"
+                      className="cursor-default w-fit"
+                    >
+                      <DurationDisplay seconds={testcase.estimate} />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("common.labels.estimateEntered", {
+                      value: toHumanReadable(testcase.estimate, {
+                        isSeconds: true,
+                        locale,
+                      }),
+                    })}
+                  </TooltipContent>
+                </Tooltip>
                 <Separator
                   orientation="horizontal"
                   className="mt-2 bg-primary/30"

@@ -30,8 +30,10 @@ vi.stubGlobal("fetch", mockFetch);
 
 // Mock sub-components that fetch data or have complex deps
 vi.mock("@/components/MilestoneSummary", () => ({
-  MilestoneSummary: ({ milestoneId }: any) => (
-    <div data-testid="milestone-summary" data-milestone={milestoneId} />
+  MilestoneSummary: ({ milestoneId, meta }: any) => (
+    <div data-testid="milestone-summary" data-milestone={milestoneId}>
+      {meta}
+    </div>
   ),
 }));
 
