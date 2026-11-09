@@ -714,7 +714,7 @@
       "twoFactorSetup": "Configuração de dois fatores",
       "verifyEmail": "Verificar e-mail",
       "trialExpired": "Período de teste expirado",
-      "instanceSuspended": "Instance Suspended",
+      "instanceSuspended": "Instância Suspensa",
       "linkSsoAccount": "Vincular conta SSO",
       "userProfile": "Perfil do usuário",
       "tagDetails": "Detalhes da etiqueta",
@@ -4894,7 +4894,7 @@
           "ssoUrl": "URL de SSO (Ponto de Entrada)",
           "entityId": "ID da entidade (emissor)",
           "certificate": "Certificado X.509",
-          "callbackUrl": "ACS (Callback) URL",
+          "callbackUrl": "URL de Retorno ACS (Callback)",
           "logoutUrl": "URL de logout do SLO (opcional)",
           "wantAssertionsSigned": "Exigir declarações assinadas",
           "wantAssertionsSignedDescription": "Rejeitar respostas cuja declaração SAML não esteja assinada. Isso protege a identidade autenticada e deve permanecer ativado.",
@@ -9630,12 +9630,12 @@
     "dataRetention": "Seus dados de teste estão armazenados com segurança e estarão disponíveis quando você atualizar sua conta."
   },
   "InstanceSuspended": {
-    "title": "This instance is paused",
-    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
-    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
-    "billingPortal": "Open billing portal",
-    "contactUs": "Contact TestPlanIt",
-    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
+    "title": "Esta instância está pausada",
+    "description": "O acesso foi suspenso porque a assinatura para esta instância TestPlanIt está não paga ou expirou.",
+    "nextSteps": "Se você gerencia esta instância, pague a fatura em aberto ou inicie um plano no portal de faturamento e o acesso será restaurado automaticamente em alguns minutos. Todos os outros: entre em contato com o administrador da sua instância.",
+    "billingPortal": "Abrir portal de faturamento",
+    "contactUs": "Contactar TestPlanIt",
+    "dataRetention": "Seus projetos, casos de teste e resultados são mantidos exatamente como estavam. Nada é excluído enquanto uma instância está pausada."
   },
   "parameters": {
     "configureButtonEmpty": "Configurar parâmetros",

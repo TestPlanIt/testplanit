@@ -714,7 +714,7 @@
       "twoFactorSetup": "Konfiguracja dwuskładnikowa",
       "verifyEmail": "Zweryfikuj adres e-mail",
       "trialExpired": "Okres próbny wygasł",
-      "instanceSuspended": "Instance Suspended",
+      "instanceSuspended": "Instancja wstrzymana",
       "linkSsoAccount": "Połącz konto SSO",
       "userProfile": "Profil użytkownika",
       "tagDetails": "Szczegóły tagu",
@@ -9630,12 +9630,12 @@
     "dataRetention": "Twoje dane testowe są bezpiecznie przechowywane i będą dostępne po uaktualnieniu konta."
   },
   "InstanceSuspended": {
-    "title": "This instance is paused",
-    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
-    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
-    "billingPortal": "Open billing portal",
-    "contactUs": "Contact TestPlanIt",
-    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
+    "title": "Ta instancja jest wstrzymana",
+    "description": "Dostęp został wstrzymany, ponieważ subskrypcja dla tej instancji TestPlanIt jest nieopłacona lub wygasła.",
+    "nextSteps": "Jeśli zarządzasz tą instancją, opłać otwartą fakturę lub rozpocznij plan w portalu rozliczeniowym, a dostęp zostanie przywrócony automatycznie w ciągu kilku minut. Wszyscy pozostali: prosimy o kontakt z administratorem instancji.",
+    "billingPortal": "Otwórz portal rozliczeniowy",
+    "contactUs": "Skontaktuj się z TestPlanIt",
+    "dataRetention": "Twoje projekty, przypadki testowe i wyniki są zachowywane dokładnie tak jak były. Nic nie zostaje usunięte, gdy instancja jest wstrzymana."
   },
   "parameters": {
     "configureButtonEmpty": "Konfiguruj parametry",

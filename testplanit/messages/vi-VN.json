@@ -714,7 +714,7 @@
       "twoFactorSetup": "Thiết lập xác thực hai yếu tố",
       "verifyEmail": "Xác minh email",
       "trialExpired": "Thời gian dùng thử đã hết hạn",
-      "instanceSuspended": "Instance Suspended",
+      "instanceSuspended": "Phiên bản tạm dừng",
       "linkSsoAccount": "Liên kết tài khoản SSO",
       "userProfile": "Hồ sơ người dùng",
       "tagDetails": "Chi tiết thẻ",
@@ -9630,12 +9630,12 @@
     "dataRetention": "Dữ liệu kiểm tra của bạn đã được lưu trữ an toàn và sẽ có sẵn khi bạn nâng cấp tài khoản."
   },
   "InstanceSuspended": {
-    "title": "This instance is paused",
-    "description": "Access has been suspended because the subscription for this TestPlanIt instance is unpaid or has ended.",
-    "nextSteps": "If you manage this instance, pay the open invoice or start a plan in the billing portal and access is restored automatically within a few minutes. Everyone else: please contact your instance administrator.",
-    "billingPortal": "Open billing portal",
-    "contactUs": "Contact TestPlanIt",
-    "dataRetention": "Your projects, test cases and results are kept exactly as they were. Nothing is deleted while an instance is paused."
+    "title": "Phiên bản này đã bị tạm dừng",
+    "description": "Truy cập đã bị tạm dừng vì gói đăng ký của phiên bản TestPlanIt này chưa thanh toán hoặc đã hết hạn.",
+    "nextSteps": "Nếu bạn quản lý phiên bản này, hãy thanh toán hóa đơn mở hoặc bắt đầu một gói trong cổng thông tin thanh toán và quyền truy cập sẽ được khôi phục tự động trong vài phút. Những người khác: vui lòng liên hệ với quản trị viên phiên bản của bạn.",
+    "billingPortal": "Mở cổng thông tin thanh toán",
+    "contactUs": "Liên hệ TestPlanIt",
+    "dataRetention": "Các dự án, test case và kết quả của bạn được giữ nguyên như cũ. Không có gì bị xóa khi một phiên bản bị tạm dừng."
   },
   "parameters": {
     "configureButtonEmpty": "Cấu hình tham số",
