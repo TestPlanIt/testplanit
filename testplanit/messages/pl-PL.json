@@ -9532,7 +9532,7 @@
     "daysRemaining": "Okres próbny kończy się za {count, plural, =1 {1 dzień} other {# dni}}",
     "expiresT oday": "Okres próbny kończy się dzisiaj",
     "expired": "{count, plural, =1 {Okres próbny wygasł 1 dzień temu} other {Okres próbny wygasł # dni temu}}",
-    "contactSales": "Skontaktuj się ze sprzedażą"
+    "contactSales": "Uaktualnij"
   },
   "feedback": {
     "sheetTitle": "Podziel się swoją opinią",
@@ -9625,7 +9625,7 @@
   "TrialExpired": {
     "title": "Twój okres próbny wygasł",
     "description": "Dziękujemy za wypróbowanie TestPlanIt! Twój okres próbny dobiegł końca i ta instancja nie jest już dostępna.",
-    "nextSteps": "Aby nadal używać TestPlanIt i uzyskać dostęp do danych testowych, skontaktuj się z naszym zespołem sprzedaży.",
+    "nextSteps": "Aby kontynuować korzystanie z TestPlanIt i uzyskać dostęp do swoich danych testowych, dokonaj aktualizacji.",
     "pricingPlans": "Plany cenowe",
     "dataRetention": "Twoje dane testowe są bezpiecznie przechowywane i będą dostępne po uaktualnieniu konta."
   },

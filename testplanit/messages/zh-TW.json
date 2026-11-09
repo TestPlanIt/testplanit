@@ -9532,7 +9532,7 @@
     "daysRemaining": "審判將於 {count, plural, =1 {1天} other {#天}}結束",
     "expiresT oday": "試用期今天到期",
     "expired": "{count, plural, =1 {試用期已於 1 天前過期} other {試用期已於 # 天前過期}}",
-    "contactSales": "聯繫銷售"
+    "contactSales": "升級"
   },
   "feedback": {
     "sheetTitle": "分享您的回饋",
@@ -9625,7 +9625,7 @@
   "TrialExpired": {
     "title": "您的試用期已結束。",
     "description": "感謝您試用TestPlanIt！您的試用期已結束，此執行個體已無法存取。",
-    "nextSteps": "如需繼續使用 TestPlanIt 並存取您的測試數據，請聯絡我們的銷售團隊。",
+    "nextSteps": "升級以繼續使用 TestPlanIt 並存取您的測試資料。",
     "pricingPlans": "定價方案",
     "dataRetention": "您的測試資料已安全存儲，升級帳戶後即可存取。"
   },

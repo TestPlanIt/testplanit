@@ -48,6 +48,11 @@ import { UserDropdownMenu } from "@/components/UserDropdownMenu";
 import { useHeaderAlertCounts } from "~/hooks/useHeaderAlertCounts";
 import { getVersionString } from "~/lib/version";
 import { cn } from "~/utils";
+import {
+  DEFAULT_TRIAL_CONTACT,
+  isContactWebLink,
+  trialContactHref,
+} from "~/lib/trialContact";
 
 export const Header = () => {
   const router = useRouter();
@@ -61,8 +66,9 @@ export const Header = () => {
   const [trialDaysRemaining, setTrialDaysRemaining] = useState<number | null>(
     null
   );
-  const [trialContactEmail, setTrialContactEmail] = useState<string>(
-    "sales@testplanit.com"
+  // An email address or a link, from NEXT_PUBLIC_CONTACT_EMAIL.
+  const [trialContact, setTrialContact] = useState<string>(
+    DEFAULT_TRIAL_CONTACT
   );
   const [feedbackSurveyUrl, setFeedbackSurveyUrl] = useState<string | null>(
     null
@@ -140,8 +146,8 @@ export const Header = () => {
               (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
             );
             setTrialDaysRemaining(diff);
-            if (data.contactEmail) {
-              setTrialContactEmail(data.contactEmail);
+            if (data.contact) {
+              setTrialContact(data.contact);
             }
             // Estimate days into trial (assume 30-day trial if we can't calculate)
             const totalDays = 30;
@@ -383,7 +389,22 @@ export const Header = () => {
                 </Badge>
               )}
               {trialDaysRemaining !== null && (
-                <div className="flex items-center gap-2">
+                // The whole chip is the link, so hovering the badge means
+                // something and the click target grows as the trial runs down.
+                <Link
+                  href={trialContactHref(
+                    trialContact,
+                    `TestPlanIt Trial - ${trialDaysRemaining < 0 ? "Expired" : "Upgrade Inquiry"}`
+                  )}
+                  target={isContactWebLink(trialContact) ? "_blank" : undefined}
+                  rel={
+                    isContactWebLink(trialContact)
+                      ? "noopener noreferrer"
+                      : undefined
+                  }
+                  className="flex items-center gap-2 no-underline"
+                  data-testid="trial-upgrade-link"
+                >
                   <Badge
                     variant={
                       trialDaysRemaining < 0
@@ -407,12 +428,8 @@ export const Header = () => {
                             })}
                     </span>
                   </Badge>
-                  <Link
-                    href={`mailto:${trialContactEmail}?subject=TestPlanIt Trial - ${trialDaysRemaining < 0 ? "Expired" : "Upgrade Inquiry"}`}
-                  >
-                    {t("Trial.contactSales")}
-                  </Link>
-                </div>
+                  <span className="underline">{t("Trial.contactSales")}</span>
+                </Link>
               )}
               {!isHeaderCompact ? (
                 <>

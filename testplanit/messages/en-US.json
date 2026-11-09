@@ -9532,7 +9532,7 @@
     "daysRemaining": "Trial Ends In {count, plural, =1 {1 day} other {# days}}",
     "expiresT oday": "Trial expires today",
     "expired": "{count, plural, =1 {Trial expired 1 day ago} other {Trial expired # days ago}}",
-    "contactSales": "Contact Sales"
+    "contactSales": "Upgrade"
   },
   "feedback": {
     "sheetTitle": "Share Your Feedback",
@@ -9625,7 +9625,7 @@
   "TrialExpired": {
     "title": "Your Trial Has Expired",
     "description": "Thank you for trying TestPlanIt! Your trial period has ended and this instance is no longer accessible.",
-    "nextSteps": "To continue using TestPlanIt and access your test data, contact our sales team.",
+    "nextSteps": "Upgrade to continue using TestPlanIt and access your test data.",
     "pricingPlans": "Pricing Plans",
     "dataRetention": "Your test data is safely stored and will be available when you upgrade your account."
   },

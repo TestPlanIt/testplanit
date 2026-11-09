@@ -9532,7 +9532,7 @@
     "daysRemaining": "Proeftijd eindigt over {count, plural, =1 {1 dag} other {# dagen}}",
     "expiresT oday": "De proefperiode verloopt vandaag.",
     "expired": "{count, plural, =1 {Proefperiode 1 dag geleden verlopen} other {Proefperiode # dagen geleden verlopen}}",
-    "contactSales": "Neem contact op met de verkoopafdeling."
+    "contactSales": "Upgraden"
   },
   "feedback": {
     "sheetTitle": "Deel uw feedback",
@@ -9625,7 +9625,7 @@
   "TrialExpired": {
     "title": "Je proefperiode is verlopen.",
     "description": "Bedankt voor het uitproberen van TestPlanIt! Uw proefperiode is afgelopen en deze instantie is niet langer toegankelijk.",
-    "nextSteps": "Om TestPlanIt te blijven gebruiken en toegang te krijgen tot uw testgegevens, kunt u contact opnemen met ons verkoopteam.",
+    "nextSteps": "Upgrade om TestPlanIt te blijven gebruiken en toegang tot uw testgegevens te krijgen.",
     "pricingPlans": "Prijsplannen",
     "dataRetention": "Je testgegevens worden veilig opgeslagen en zijn beschikbaar wanneer je je account upgradet."
   },
