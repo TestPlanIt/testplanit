@@ -1,3 +1,10 @@
+## [1.1.21](https://github.com/TestPlanIt/testplanit/compare/v1.1.20...v1.1.21) (2026-11-09)
+
+### Bug Fixes
+
+* **hosted:** suspend an instance through the existing expiry gate ([329a651](https://github.com/TestPlanIt/testplanit/commit/329a651664f14966fad1ae61d88c1958c36a418b))
+* **trial:** let the trial contact be an email address or a link ([#735](https://github.com/TestPlanIt/testplanit/issues/735)) ([7319ab7](https://github.com/TestPlanIt/testplanit/commit/7319ab7ee2a9bd943e831c55fd30be1e42de2931))
+
 ## [1.1.20](https://github.com/TestPlanIt/testplanit/compare/v1.1.19...v1.1.20) (2026-11-08)
 
 ### Bug Fixes
