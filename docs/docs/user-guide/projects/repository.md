@@ -201,7 +201,7 @@ The first time you open a run's case list, an **Assigned to me** filter is appli
 
 The main table displays the following information for each test case:
 
-* **Checkbox**: For selecting multiple cases for bulk actions (like adding to a test run or deleting).
+* **Checkbox**: For selecting multiple cases for bulk actions (like [bulk editing](#bulk-editing-test-cases), adding to a test run or deleting).
 * **Name**: The title of the test case. Each row shows a type icon — robot for automated cases, checklist for manual cases — followed by a stacked-squares badge when the case is [parameterized](./parameterized-test-cases.md). Clicking the name opens the [Test Case Details](./repository-case-details.mdx) panel beside the list.
 * **Template**: The template used by the test case.
 * **State**: The current workflow state of the test case.
@@ -221,6 +221,25 @@ Additional dynamic columns appear based on the fields defined in the templates u
 ### Remembered column choices
 
 Your column layout — which columns are visible, the order they appear in, and each column's width — is saved per project and restored each time you return. The sort column and direction you last applied are remembered the same way. Because the available columns change with the templates in view, choices are matched by column: a column you hid or showed is restored whenever that column is present, and any saved choice for a column that is not in the current view — for example a removed template field, or a field that belongs to a template you are not currently looking at — is simply ignored. Switching between templates therefore keeps each template's columns the way you left them. If you open the repository from a shared link whose URL specifies columns, those columns take precedence for that visit.
+
+## Bulk Editing Test Cases
+
+Select cases with their checkboxes and choose **Bulk Edit** to change them together. The dialog lists the standard fields and the fields of the cases' templates. Tick the checkbox beside a field to edit it; fields you leave unticked are not changed. Saving records a new version of every selected case.
+
+A field whose value differs between the selected cases shows `<various>` until you tick it.
+
+Text fields offer two modes:
+
+* **Replace All**: every selected case gets the value you enter.
+* **Search & Replace**: replaces matching text in each case's existing value, with optional regular expressions and case sensitivity, and previews the matches before you save. Steps support Search & Replace only.
+
+**Tags** and **Issues** offer three modes:
+
+* **Add** (the default): adds the tags or issues you pick to every selected case. Each case keeps what it already has.
+* **Remove**: removes the tags or issues you pick from every selected case that has them. The list offers only the tags or issues currently on the selected cases.
+* **Replace All**: every selected case ends up with exactly the tags or issues you pick. Anything else on those cases is removed, so saving with nothing picked clears them.
+
+Add and Remove need at least one tag or issue picked. Switching mode clears the current pick. Requirement links are not affected by the Issues field.
 
 ## Test Case Details Panel
 
