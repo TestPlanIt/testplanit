@@ -50,11 +50,15 @@ async function openCaseSelectionStep(
 
   const nextButton = page.getByTestId("run-next-button").first();
   await expect(nextButton).toBeVisible({ timeout: 5000 });
-  await nextButton.dispatchEvent("click");
-
-  await expect(page.getByTestId("run-save-button").first()).toBeVisible({
-    timeout: 15000,
-  });
+  // A click that lands while the form is still loading its data is dropped,
+  // so keep asking until the wizard reaches the case-selection step.
+  const saveButton = page.getByTestId("run-save-button").first();
+  await expect(async () => {
+    if (!(await saveButton.isVisible())) {
+      await nextButton.dispatchEvent("click");
+    }
+    await expect(saveButton).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 20000 });
   const dialog = page
     .locator('[role="dialog"]')
     .filter({ hasText: "Select Test Cases" })
@@ -177,6 +181,9 @@ test.describe("Impact dialog", () => {
       await expect(
         impactDialog.getByTestId("impact-base-commit")
       ).toContainText(baseShort);
+      // The base list is still closing; opening the head list now would
+      // put every commit on the page twice.
+      await expect(page.getByRole("option")).toHaveCount(0);
 
       await impactDialog.getByTestId("impact-head-commit").click();
       await page.getByRole("option", { name: new RegExp(headShort) }).click();

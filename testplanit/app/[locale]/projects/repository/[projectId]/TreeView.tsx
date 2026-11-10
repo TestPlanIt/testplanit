@@ -1016,7 +1016,9 @@ const TreeView: React.FC<{
         const nodeId = selectedFolderId.toString();
         const node = treeRef.current?.get(nodeId);
         if (node) {
-          node.select();
+          // Selecting on load must not take keyboard focus: focus moving to
+          // the tree closes any menu the user has just opened.
+          node.tree.select(node, { focus: false });
           setSelectedId(nodeId);
 
           // Also ensure parent nodes are open

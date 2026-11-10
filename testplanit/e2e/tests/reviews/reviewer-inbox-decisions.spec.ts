@@ -22,6 +22,7 @@ import {
 
 test.describe("Reviewer inbox decisions", () => {
   let gatedWorkflowId: number | null = null;
+  let originWorkflowId: number | null = null;
   const pendingRequestIds: string[] = [];
   const createdUserIds: string[] = [];
 
@@ -34,6 +35,10 @@ test.describe("Reviewer inbox decisions", () => {
     if (gatedWorkflowId) {
       await softDeleteWorkflow(request, url, gatedWorkflowId);
       gatedWorkflowId = null;
+    }
+    if (originWorkflowId) {
+      await softDeleteWorkflow(request, url, originWorkflowId);
+      originWorkflowId = null;
     }
     while (createdUserIds.length) {
       const id = createdUserIds.pop();
@@ -63,31 +68,32 @@ test.describe("Reviewer inbox decisions", () => {
       const projectId = await api.createProject(
         `Reviews-InboxApprove ${Date.now()}`
       );
-      const ids = await getProjectWorkflowIds(
-        request,
-        url,
-        projectId,
-        "CASES",
-        5
-      );
-      currentStateId = ids[0];
-
       await setProjectReviewWorkflowEnabled(request, url, projectId, true);
       {
-        // Gate ordering matters now that approval applies the transition:
-        // `assertReviewGatePasses` collects gated CASES states across the
-        // whole install, so a gate another spec creates concurrently would
-        // sit in this case's path and silently block the move. The default
-        // offset (1000) is what every other review spec uses, which makes
-        // those gates tie with this one; offset 1 puts this gate strictly
-        // below them so nothing else can land between the case's current
-        // state and its target.
+        // Approval applies the transition, and `assertReviewGatePasses`
+        // collects gated CASES states across the whole install. A gate that
+        // another spec creates concurrently inside this case's path blocks
+        // the move and the case silently stays put. So the case starts in
+        // its own ungated state directly below its own gate, at a high
+        // random offset: the window is one unit wide and clear of the
+        // offsets other specs use (1, 1000, 1500, 2000, 5000-8000).
+        const baseOffset = 9000 + Math.floor(Math.random() * 3000);
+        const origin = await createGatedTestWorkflow(
+          request,
+          url,
+          projectId,
+          "CASES",
+          { orderOffset: baseOffset, requiresReview: false }
+        );
+        originWorkflowId = origin.id;
+        currentStateId = origin.id;
+
         const gated = await createGatedTestWorkflow(
           request,
           url,
           projectId,
           "CASES",
-          { orderOffset: 1 }
+          { orderOffset: baseOffset + 1 }
         );
         gatedWorkflowId = gated.id;
       }
