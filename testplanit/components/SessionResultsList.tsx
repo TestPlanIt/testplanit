@@ -1213,12 +1213,7 @@ export function SessionResultsList({
         );
       case "RichText":
       case "Text Long": {
-        const fieldId = field.resultField.id.toString();
-        const displayName = field.resultField.displayName;
-        const _hint = field.resultField.hint;
-        const isRequired = field.resultField.isRequired;
-        // Get initialHeight
-        const initialHeight = field.resultField.initialHeight;
+        const initialHeight = field.initialHeight;
         const editorClassName = "border rounded-md w-full";
 
         return (
