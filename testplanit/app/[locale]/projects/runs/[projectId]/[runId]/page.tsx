@@ -1235,9 +1235,10 @@ export default function TestRunPage() {
         ...(groupChanged
           ? configurationGroupUpdateData(data.configurationGroupId)
           : {}),
+        // A lone `set`: ZenStack applies `connect` before `set`, so
+        // `set: []` beside a `connect` clears the relation.
         attachments: {
-          set: [],
-          connect:
+          set:
             data.attachments?.map((attachment) => ({
               id: attachment.id,
             })) || [],

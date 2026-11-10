@@ -1680,6 +1680,9 @@ export function SessionResultsList({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  // This dialog is portalled, but React still bubbles its
+                  // submit to a <form> the list is rendered inside.
+                  e.stopPropagation();
                   const formData = form.getValues() as FieldFormValues;
 
                   // Log each field for debugging

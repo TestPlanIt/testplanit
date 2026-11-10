@@ -1518,6 +1518,10 @@ export default function SessionPage() {
 
   // Update onSubmit function
   const onSubmit = async (data: FormValues) => {
+    // The form wraps the whole page, so a submit can reach it from the results
+    // area while the session itself is not being edited.
+    if (!isEditMode) return;
+
     // Strict-transitive review-gate preflight. The live inline error
     // rendered under the state Select reads off the same `transitionGate`,
     // so we DON'T also `setError` here — that double-renders the message
@@ -1575,16 +1579,16 @@ export default function SessionPage() {
           ...(groupChanged
             ? configurationGroupUpdateData(data.configurationGroupId)
             : {}),
+          // A lone `set` per relation: ZenStack applies `connect` before
+          // `set`, so `set: []` beside a `connect` clears the relation.
           attachments: {
-            set: [], // Clear existing attachments
-            connect:
+            set:
               transformedData.attachments?.map((attachment) => ({
                 id: attachment.id,
               })) || [],
           },
           tags: {
-            set: [],
-            connect: selectedTags.map((tagId) => ({
+            set: selectedTags.map((tagId) => ({
               id: tagId,
             })),
           },

@@ -109,6 +109,23 @@ const eslintConfig = [
           message:
             'Define server actions in a "use server" module and pass values as arguments; inline actions encrypt captured values with a key that ships in the public image.',
         },
+        // ZenStack runs a relation's nested writes in its own fixed order
+        // (connect and create before set and deleteMany), not the order
+        // written, so "clear, then add" in one object clears what it just
+        // added. This stripped session tags on every save. `Property >` keeps
+        // it to a relation's value, where nested writes live.
+        {
+          selector:
+            "Property > ObjectExpression:has(> Property[key.name='set']):has(> Property[key.name=/^(connect|connectOrCreate|create|createMany)$/])",
+          message:
+            "ZenStack applies connect/create before `set`, so this clears the relation. Pass the full list as a lone `set`.",
+        },
+        {
+          selector:
+            "Property > ObjectExpression:has(> Property[key.name='deleteMany']):has(> Property[key.name=/^(connect|connectOrCreate|create|createMany)$/])",
+          message:
+            "ZenStack applies connect/create before `deleteMany`, so this deletes the new rows too. Split it into two writes.",
+        },
         // Installs served under a path prefix (next.config basePath) break on
         // any URL the app builds by hand from the host root. Route them
         // through ~/lib/basePath (apiFetch / withBasePath) instead.
