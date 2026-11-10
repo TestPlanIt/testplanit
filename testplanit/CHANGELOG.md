@@ -1,3 +1,10 @@
+## [1.2.0-beta.40](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.39...v1.2.0-beta.40) (2026-11-10)
+
+### Bug Fixes
+
+* **onboarding:** anchor the project tour's sections step to the menu ([8f46f57](https://github.com/TestPlanIt/testplanit/commit/8f46f571dbd47c2cf5c8fbacc46123f8960d6d88)), closes [#project-section](https://github.com/TestPlanIt/testplanit/issues/project-section)
+* **trash:** delete an attachment's file when it is purged ([2265b7c](https://github.com/TestPlanIt/testplanit/commit/2265b7caf1f80db585bdc203da8ddfedf1006985))
+
 ## [1.2.0-beta.39](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.38...v1.2.0-beta.39) (2026-11-09)
 
 ### Bug Fixes
