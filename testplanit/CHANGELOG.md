@@ -1,3 +1,11 @@
+## [1.2.0-beta.41](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.40...v1.2.0-beta.41) (2026-11-10)
+
+### Bug Fixes
+
+* **bulk-edit:** add, remove or replace tags and issues explicitly ([bcf9710](https://github.com/TestPlanIt/testplanit/commit/bcf9710a3f3b1f4d53cad6df2cced2293f84f4cb))
+* **sessions:** keep tags and attachments when a session or run is saved ([bbbc4a4](https://github.com/TestPlanIt/testplanit/commit/bbbc4a48d3772a7fcdd526c8915ca683fe216c11))
+* **sessions:** open the edit-result dialog for long-text result fields ([63a8195](https://github.com/TestPlanIt/testplanit/commit/63a81951da6ab0339229a019f29d179e56fcff25))
+
 ## [1.2.0-beta.40](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.39...v1.2.0-beta.40) (2026-11-10)
 
 ### Bug Fixes
