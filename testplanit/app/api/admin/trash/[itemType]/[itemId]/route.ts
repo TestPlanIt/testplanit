@@ -1,5 +1,6 @@
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getS3Client } from "~/lib/s3Client";
+import { storageKeyForSrc } from "~/lib/storageKeys";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -208,27 +209,39 @@ export const DELETE = withAuditContext(
         },
       });
 
-      // If itemType is Attachments, delete from S3
-      if (entry.modelName === "Attachments" && (itemToPurge as any).url) {
-        const attachmentUrl = (itemToPurge as any).url;
+      // The stored file goes with the row, unless the row is an external link
+      // (no file was ever uploaded) or another attachment still points at the
+      // same file — copying a case copies its attachment rows, not the objects.
+      const purgedAttachment = itemToPurge as {
+        url?: string;
+        mimeType?: string;
+      };
+      if (
+        entry.modelName === "Attachments" &&
+        purgedAttachment.url &&
+        purgedAttachment.mimeType !== "text/uri-list"
+      ) {
+        const attachmentUrl = purgedAttachment.url;
         try {
-          const urlObject = new URL(attachmentUrl);
-          // Assuming the S3 key is the pathname part of the URL, removing leading '/'
-          const s3Key = urlObject.pathname.startsWith("/")
-            ? urlObject.pathname.substring(1)
-            : urlObject.pathname;
-          const bucketName = process.env.AWS_BUCKET_NAME!;
+          const bucketName = process.env.AWS_BUCKET_NAME;
+          const s3Key = storageKeyForSrc(attachmentUrl);
 
           if (!bucketName) {
             console.error(
               "[S3 Delete] AWS_BUCKET_NAME environment variable is not set. Cannot delete from S3."
             );
-          } else if (s3Key) {
-            await deleteS3Object(bucketName, s3Key);
-          } else {
+          } else if (!s3Key) {
             console.warn(
               `[S3 Delete] Could not determine S3 key from URL: ${attachmentUrl}`
             );
+          } else {
+            const stillReferenced = await db.attachments.findFirst({
+              where: { url: attachmentUrl },
+              select: { id: true },
+            });
+            if (!stillReferenced) {
+              await deleteS3Object(bucketName, s3Key);
+            }
           }
         } catch (s3Error) {
           console.error(

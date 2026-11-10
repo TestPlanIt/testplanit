@@ -350,10 +350,12 @@ Users with appropriate permissions can:
 
 1. Click the delete (×) button next to attachment
 2. Confirm deletion in dialog
-3. File removed from both storage and database
+3. The attachment moves to the Trash; its file stays in storage
+
+An administrator can restore a deleted attachment from **Admin > Trash**, or purge it. Purging removes the database record and deletes the file from storage. The file is kept when another attachment still uses it, which happens when a test case with attachments has been copied. External-link attachments have no file to delete.
 
 :::warning
-Deleted attachments cannot be recovered. Ensure you have backups if needed.
+Purged attachments cannot be recovered. Ensure you have backups if needed.
 :::
 
 ## Security Features
