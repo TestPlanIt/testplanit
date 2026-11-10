@@ -8299,8 +8299,8 @@
       "state": "## État\nIndique l'état actuel du flux de travail de ces cas de test.",
       "estimate": "## Estimation\nLe temps estimé saisi manuellement pour terminer chacun de ces cas de test.",
       "automated": "## Automatisé\nIndique si ces cas de test sont automatisés ou non.",
-      "tags": "## Balises\nAppliquez des balises pertinentes pour catégoriser et filtrer ces cas de test.",
-      "issues": "## Problèmes\nLiez tous les problèmes connexes (bugs, tâches, etc.) à ces cas de test."
+      "tags": "## Étiquettes\nAppliquez les étiquettes pertinentes pour catégoriser et filtrer ces cas de test.\n\n- **Ajouter** ajoute les étiquettes sélectionnées à chaque cas de test et conserve les étiquettes qu'ils ont déjà.\n- **Supprimer** supprime les étiquettes sélectionnées de chaque cas de test qui les possède.\n- **Remplacer tout** laisse chaque cas de test avec exactement les étiquettes sélectionnées.",
+      "issues": "## Problèmes\nLiez tout problème connexe (bogues, tâches, etc.) à ces cas de test.\n\n- **Ajouter** lie les problèmes sélectionnés à chaque cas de test et conserve les problèmes déjà liés.\n- **Supprimer** dissocie les problèmes sélectionnés de chaque cas de test qui les possède.\n- **Remplacer tout** laisse chaque cas de test lié à exactement les problèmes sélectionnés."
     },
     "caseField": {
       "displayName": "## Nom d'affichage\nIl s'agit du nom lisible par l'utilisateur du champ qui sera affiché dans les formulaires et les vues. Choisissez un nom clair et descriptif.",

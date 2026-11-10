@@ -8299,8 +8299,8 @@
       "state": "## Stato\nIndica lo stato corrente del flusso di lavoro di questi casi di test.",
       "estimate": "## Stima\nIl tempo stimato inserito manualmente per completare ciascuno di questi casi di test.",
       "automated": "## Automatizzato\nIndica se questi casi di test sono automatizzati o meno.",
-      "tags": "## Tag\nApplica tag pertinenti per categorizzare e filtrare questi casi di test.",
-      "issues": "## Problemi\nCollega eventuali problemi correlati (bug, attività, ecc.) a questi casi di test."
+      "tags": "## Tag\nApplica tag rilevanti per categorizzare e filtrare questi casi di test.\n\n- **Aggiungi** aggiunge i tag selezionati a ogni caso di test e mantiene i tag che già hanno.\n- **Rimuovi** rimuove i tag selezionati da ogni caso di test che li ha.\n- **Sostituisci tutto** lascia ogni caso di test esattamente con i tag selezionati.",
+      "issues": "## Problemi\nCollegare eventuali problemi correlati (bug, attività, ecc.) a questi casi di test.\n\n- **Aggiungi** collega i problemi selezionati a ogni caso di test e mantiene i problemi già collegati.\n- **Rimuovi** scollega i problemi selezionati da ogni caso di test che li ha.\n- **Sostituisci tutto** lascia ogni caso di test collegato esattamente ai problemi selezionati."
     },
     "caseField": {
       "displayName": "## Nome visualizzato\nQuesto è il nome leggibile per il campo che verrà mostrato agli utenti nei moduli e nelle viste. Rendilo chiaro e descrittivo.",

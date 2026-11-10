@@ -8299,8 +8299,8 @@
       "state": "## Estado\nIndica o estado atual do fluxo de trabalho destes casos de teste.",
       "estimate": "## Estimativa\nO tempo estimado inserido manualmente para concluir cada um desses casos de teste.",
       "automated": "## Automatizado\nIndica se esses casos de teste são automatizados ou não.",
-      "tags": "## Etiquetas\nAplique etiquetas relevantes para categorizar e filtrar esses casos de teste.",
-      "issues": "## Problemas\nVincule quaisquer problemas relacionados (bugs, tarefas, etc.) a estes casos de teste."
+      "tags": "## Tags\nAplique tags relevantes para categorizar e filtrar estes casos de teste.\n\n- **Adicionar** adiciona as tags selecionadas a cada caso de teste e mantém as tags que já possuem.\n- **Remover** remove as tags selecionadas de cada caso de teste que as possui.\n- **Substituir Tudo** deixa cada caso de teste com exatamente as tags selecionadas.",
+      "issues": "## Problemas\nVincule quaisquer problemas relacionados (bugs, tarefas, etc.) a estes casos de teste.\n\n- **Adicionar** vincula os problemas selecionados a cada caso de teste e mantém os problemas já vinculados.\n- **Remover** desvincula os problemas selecionados de cada caso de teste que os possui.\n- **Substituir Tudo** deixa cada caso de teste vinculado a exatamente os problemas selecionados."
     },
     "caseField": {
       "displayName": "## Nome de Exibição\nEste é o nome legível para humanos do campo que será mostrado aos usuários em formulários e visualizações. Seja claro e descritivo.",

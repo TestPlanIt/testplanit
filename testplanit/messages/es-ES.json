@@ -8299,8 +8299,8 @@
       "state": "## Estado\nIndica el estado actual del flujo de trabajo de estos casos de prueba.",
       "estimate": "## Estima\nEl tiempo estimado introducido manualmente para completar cada uno de estos casos de prueba.",
       "automated": "## Automatizado\nIndica si estos casos de prueba son automatizados o no.",
-      "tags": "## Etiquetas\nAplicar etiquetas relevantes para categorizar y filtrar estos casos de prueba.",
-      "issues": "## Problemas\nEnlaza cualquier problema relacionado (bugs, tareas, etc.) a estos casos de prueba."
+      "tags": "## Etiquetas\nAplica etiquetas relevantes para categorizar y filtrar estos casos de prueba.\n\n- **Añadir** añade las etiquetas seleccionadas a todos los casos de prueba y mantiene las etiquetas que ya tienen.\n- **Eliminar** elimina las etiquetas seleccionadas de todos los casos de prueba que las tienen.\n- **Reemplazar todo** deja todos los casos de prueba con exactamente las etiquetas seleccionadas.",
+      "issues": "## Problemas\nVincula cualquier problema relacionado (bugs, tareas, etc.) a estos casos de prueba.\n\n- **Añadir** vincula los problemas seleccionados a todos los casos de prueba y mantiene los problemas ya vinculados.\n- **Eliminar** desvincula los problemas seleccionados de todos los casos de prueba que los tienen.\n- **Reemplazar todo** deja todos los casos de prueba vinculados a exactamente los problemas seleccionados."
     },
     "caseField": {
       "displayName": "## Mostrar Nombre\nEste es el nombre legible por humanos para el campo que se mostrará a los usuarios en formularios y vistas. Hágalo claro y descriptivo.",

@@ -8299,8 +8299,8 @@
       "state": "## Stav\nUveďte aktuální stav pracovního postupu těchto testovacích případů.",
       "estimate": "## Odhad\nRučně zadaný odhadovaný čas potřebný k dokončení každého z těchto testovacích případů.",
       "automated": "## Automatizováno\nUdává, zda jsou tyto testovací případy automatizované, nebo ne.",
-      "tags": "## Štítky\nPoužijte relevantní štítky pro kategorizaci a filtrování těchto testovacích případů.",
-      "issues": "## Problémy\nPropojte veškeré související problémy (chyby, úkoly atd.) s těmito testovacími případy."
+      "tags": "## Značky\nUplaťte relevantní značky pro kategorizaci a filtrování těchto testovacích případů.\n\n- **Přidat** přidá vybrané značky ke každému testovacímu případu a zachová značky, které již mají.\n- **Odebrat** odebere vybrané značky z každého testovacího případu, který je má.\n- **Nahradit vše** ponechá každý testovací případ přesně s vybranými značkami.",
+      "issues": "## Problémy\nPropojte všechny související problémy (chyby, úkoly atd.) s těmito testovacími případy.\n\n- **Přidat** propojí vybrané problémy s každým testovacím případem a zachová již propojené problémy.\n- **Odebrat** zruší propojení vybraných problémů z každého testovacího případu, který je má.\n- **Nahradit vše** ponechá každý testovací případ propojený přesně s vybranými problémy."
     },
     "caseField": {
       "displayName": "## Zobrazovaný název\nJedná se o srozumitelný název pole, který se zobrazí uživatelům ve formulářích a zobrazeních. Zvolte jej jasný a výstižný.",

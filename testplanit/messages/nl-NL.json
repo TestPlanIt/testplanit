@@ -8299,8 +8299,8 @@
       "state": "## Status\nGeeft de huidige workflowstatus van deze testcases aan.",
       "estimate": "## Schatting\nDe handmatig ingevoerde geschatte tijd om elk van deze testcases te voltooien.",
       "automated": "## Geautomatiseerd\nGeeft aan of deze testcases geautomatiseerd zijn of niet.",
-      "tags": "## Tags\nPas relevante tags toe om deze testcases te categoriseren en te filteren.",
-      "issues": "## Problemen\nKoppel alle gerelateerde problemen (bugs, taken, enz.) aan deze testcases."
+      "tags": "## Tags\nPas relevante tags toe om deze test cases te categoriseren en filteren.\n\n- **Toevoegen** voegt de geselecteerde tags toe aan elke test case en behoudt de tags die ze al hebben.\n- **Verwijderen** verwijdert de geselecteerde tags uit elke test case die deze heeft.\n- **Alles vervangen** laat elke test case met exact de geselecteerde tags achter.",
+      "issues": "## Issues\nKoppel alle gerelateerde issues (bugs, taken, enz.) aan deze test cases.\n\n- **Toevoegen** koppelt de geselecteerde issues aan elke test case en behoudt de issues die al gekoppeld zijn.\n- **Verwijderen** ontkoppelt de geselecteerde issues van elke test case die deze heeft.\n- **Alles vervangen** laat elke test case met exact de geselecteerde issues gekoppeld achter."
     },
     "caseField": {
       "displayName": "## Weergavenaam\nDit is de voor mensen leesbare naam voor het veld dat aan gebruikers wordt getoond in formulieren en weergaven. Zorg dat deze duidelijk en beschrijvend is.",

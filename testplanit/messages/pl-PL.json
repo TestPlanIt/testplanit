@@ -8299,8 +8299,8 @@
       "state": "## Stan\nWskazuje aktualny stan przepływu pracy tych przypadków testowych.",
       "estimate": "## Oszacowanie\nSzacowany, ręcznie wprowadzony czas potrzebny na ukończenie każdego z tych przypadków testowych.",
       "automated": "## Zautomatyzowany\nWskazuje, czy te przypadki testowe są zautomatyzowane, czy nie.",
-      "tags": "## Tagi\nZastosuj odpowiednie tagi, aby kategoryzować i filtrować te przypadki testowe.",
-      "issues": "## Problemy\nPowiąż wszelkie powiązane problemy (błędy, zadania itp.) z tymi przypadkami testowymi."
+      "tags": "## Tagi\nZastosuj odpowiednie tagi do kategoryzacji i filtrowania tych przypadków testowych.\n\n- **Dodaj** dodaje wybrane tagi do każdego przypadku testowego i zachowuje tagi, które już mają.\n- **Usuń** usuwa wybrane tagi z każdego przypadku testowego, który je zawiera.\n- **Zastąp wszystko** pozostawia każdy przypadek testowy z dokładnie wybranymi tagami.",
+      "issues": "## Problemy\nPołącz wszelkie powiązane problemy (błędy, zadania itp.) z tymi przypadkami testowymi.\n\n- **Dodaj** łączy wybrane problemy z każdym przypadkiem testowym i zachowuje już połączone problemy.\n- **Usuń** odłącza wybrane problemy z każdego przypadku testowego, który je zawiera.\n- **Zastąp wszystko** pozostawia każdy przypadek testowy połączony z dokładnie wybranymi problemami."
     },
     "caseField": {
       "displayName": "## Nazwa wyświetlana\nTo czytelna dla człowieka nazwa pola, która będzie wyświetlana użytkownikom w formularzach i widokach. Niech będzie jasna i opisowa.",

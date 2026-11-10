@@ -70,6 +70,10 @@ interface FieldValueInputProps {
   })[]; // Correct shape based on schema
   availableTagsData?: Pick<DbTag, "id" | "name">[];
   canCreateTags?: boolean; // Add permission prop
+  /** Limits the tag picker to these tags (bulk Remove). */
+  selectableTagIds?: number[];
+  /** Replaces the issue search with a pick list of these issues (bulk Remove). */
+  selectableIssues?: { id: number; name: string }[];
   canEditRestricted?: boolean; // Add prop
   fieldIsRestricted?: boolean; // Add prop
   // Add other necessary props like template info if needed for complex types
@@ -104,6 +108,8 @@ export function FieldValueInput({
   projectId,
   workflowsData = [],
   canCreateTags = false,
+  selectableTagIds,
+  selectableIssues,
   canEditRestricted = true,
   fieldIsRestricted = false,
 }: FieldValueInputProps) {
@@ -236,12 +242,34 @@ export function FieldValueInput({
         selectedTags={selectedTagIds}
         setSelectedTags={onChange}
         canCreateTags={canCreateTags}
+        selectableTagIds={selectableTagIds}
       />
     );
   }
 
   if (fieldKey === "issues") {
     const selectedIssueIds = Array.isArray(value) ? value.map(Number) : [];
+    if (selectableIssues) {
+      const issueOptions = selectableIssues.map((issue) => ({
+        value: issue.id,
+        label: issue.name,
+      }));
+      return (
+        <MultiSelect
+          aria-label={tCommon("fields.issues")}
+          value={issueOptions.filter((option) =>
+            selectedIssueIds.includes(option.value)
+          )}
+          onChange={(selected) =>
+            onChange(selected.map((option) => option.value))
+          }
+          options={issueOptions}
+          isMulti
+          styles={customStyles}
+          placeholder={tCommon("placeholders.selectIssues")}
+        />
+      );
+    }
     return (
       <UnifiedIssueManager
         projectId={projectId}

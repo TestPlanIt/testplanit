@@ -8299,8 +8299,8 @@
       "state": "## Status\nZeigt den aktuellen Workflow-Status dieser Testfälle an.",
       "estimate": "## Schätzung\nDie manuell eingegebene geschätzte Zeit für die Durchführung jedes dieser Testfälle.",
       "automated": "## Automatisiert\nGibt an, ob diese Testfälle automatisiert sind oder nicht.",
-      "tags": "## Tags\nWenden Sie relevante Tags an, um diese Testfälle zu kategorisieren und zu filtern.",
-      "issues": "## Probleme\nVerknüpfen Sie alle zugehörigen Probleme (Bugs, Aufgaben usw.) mit diesen Testfällen."
+      "tags": "## Tags\nWenden Sie relevante Tags an, um diese Testfälle zu kategorisieren und zu filtern.\n\n- **Hinzufügen** fügt die ausgewählten Tags zu jedem Testfall hinzu und behält die Tags bei, die sie bereits haben.\n- **Entfernen** entfernt die ausgewählten Tags von jedem Testfall, der sie hat.\n- **Alle ersetzen** hinterlässt jeden Testfall mit genau den ausgewählten Tags.",
+      "issues": "## Probleme\nVerknüpfen Sie alle zugehörigen Probleme (Fehler, Aufgaben usw.) mit diesen Testfällen.\n\n- **Hinzufügen** verknüpft die ausgewählten Probleme mit jedem Testfall und behält die bereits verknüpften Probleme bei.\n- **Entfernen** hebt die Verknüpfung der ausgewählten Probleme von jedem Testfall auf, der sie hat.\n- **Alle ersetzen** hinterlässt jeden Testfall mit genau den ausgewählten Problemen verknüpft."
     },
     "caseField": {
       "displayName": "## Anzeigename\nDies ist der lesbare Name des Feldes, der Benutzern in Formularen und Ansichten angezeigt wird. Wählen Sie einen klaren und aussagekräftigen Namen.",

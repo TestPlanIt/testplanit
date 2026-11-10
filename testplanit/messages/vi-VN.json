@@ -8299,8 +8299,8 @@
       "state": "## Trạng thái\nCho biết trạng thái quy trình công việc hiện tại của các trường hợp kiểm thử này.",
       "estimate": "## Ước tính\nThời gian ước tính được nhập thủ công để hoàn thành mỗi trường hợp kiểm thử này.",
       "automated": "## Tự động\nCho biết liệu các trường hợp kiểm thử này có được tự động hóa hay không.",
-      "tags": "## Thẻ\nÁp dụng các thẻ liên quan để phân loại và lọc các trường hợp thử nghiệm này.",
-      "issues": "## Vấn đề\nLiên kết bất kỳ vấn đề liên quan nào (lỗi, nhiệm vụ, v.v.) với các trường hợp kiểm thử này."
+      "tags": "## Thẻ\nÁp dụng các thẻ liên quan để phân loại và lọc các trường hợp kiểm tra này.\n\n- **Thêm** thêm các thẻ đã chọn vào mọi trường hợp kiểm tra và giữ lại các thẻ mà chúng đã có.\n- **Xóa** loại bỏ các thẻ đã chọn khỏi mọi trường hợp kiểm tra có chứa chúng.\n- **Thay thế Tất cả** để lại mọi trường hợp kiểm tra với chính xác các thẻ đã chọn.",
+      "issues": "## Vấn đề\nLiên kết các vấn đề liên quan (lỗi, tác vụ, v.v.) với các trường hợp kiểm tra này.\n\n- **Thêm** liên kết các vấn đề đã chọn với mọi trường hợp kiểm tra và giữ lại các vấn đề đã được liên kết.\n- **Xóa** hủy liên kết các vấn đề đã chọn khỏi mọi trường hợp kiểm tra có chứa chúng.\n- **Thay thế Tất cả** để lại mọi trường hợp kiểm tra được liên kết với chính xác các vấn đề đã chọn."
     },
     "caseField": {
       "displayName": "## Tên hiển thị\nĐây là tên dễ đọc cho trường sẽ được hiển thị cho người dùng trong các biểu mẫu và chế độ xem. Hãy đặt tên rõ ràng và mô tả.",

@@ -232,6 +232,41 @@ vi.mock("@/components/issues/UnifiedIssueManager", () => ({
       >
         clear issues
       </button>
+      <button
+        type="button"
+        data-testid="set-issue-1"
+        onClick={() => setLinkedIssueIds([1])}
+      >
+        set issue 1
+      </button>
+    </div>
+  ),
+}));
+
+// Stub the tag picker (react-select) so tests can pick tags deterministically.
+vi.mock("@/components/ManageTags", () => ({
+  ManageTags: ({ selectedTags, setSelectedTags, selectableTagIds }: any) => (
+    <div role="combobox" aria-expanded={false} aria-controls="mock-tag-list">
+      <span data-testid="selected-tag-ids">
+        {(selectedTags ?? []).join(",")}
+      </span>
+      <span data-testid="selectable-tag-ids">
+        {selectableTagIds ? selectableTagIds.join(",") : "all"}
+      </span>
+      <button
+        type="button"
+        data-testid="set-tags-1-2"
+        onClick={() => setSelectedTags([1, 2])}
+      >
+        set tags 1 and 2
+      </button>
+      <button
+        type="button"
+        data-testid="set-tags-2"
+        onClick={() => setSelectedTags([2])}
+      >
+        set tag 2
+      </button>
     </div>
   ),
 }));
@@ -996,6 +1031,65 @@ const mockCreateCaseFieldVersionValues = vi
   .fn()
   .mockImplementation(() => Promise.resolve({ id: 1 }));
 
+/**
+ * Render the modal for cases 1 and 2, tick a field's checkbox and, for a link
+ * field, choose its mode. The default mock cases are a mixed selection:
+ * case 1 has tag 1 and issue 1, case 2 has tags 2 and 3 and no issues.
+ */
+async function openModalAndEnableField(
+  fieldKey: string,
+  linkMode?: "add" | "remove" | "replace"
+) {
+  render(
+    <BulkEditModal
+      isOpen={true}
+      onClose={vi.fn()}
+      onSaveSuccess={vi.fn()}
+      selectedCaseIds={[1, 2]}
+      projectId={1}
+    />
+  );
+  await waitFor(() => {
+    expect(document.querySelector(".animate-spin")).not.toBeInTheDocument();
+    expect(document.getElementById(`edit-${fieldKey}`)).toBeInTheDocument();
+  });
+  const checkbox = document.getElementById(`edit-${fieldKey}`)!;
+  await act(async () => {
+    fireEvent.click(checkbox);
+  });
+  await waitFor(() => expect(checkbox).toBeChecked());
+  if (linkMode) await chooseLinkMode(fieldKey, linkMode);
+}
+
+async function chooseLinkMode(
+  fieldKey: string,
+  linkMode: "add" | "remove" | "replace"
+) {
+  const radio = document.getElementById(`${fieldKey}-mode-${linkMode}`)!;
+  await act(async () => {
+    fireEvent.click(radio);
+  });
+  await waitFor(() => expect(radio).toBeChecked());
+}
+
+async function clickSave() {
+  const saveButton = screen.getByRole("button", {
+    name: "[t]common.actions.save",
+  });
+  await waitFor(() => expect(saveButton).not.toBeDisabled());
+  await act(async () => {
+    fireEvent.click(saveButton);
+  });
+}
+
+async function savedPayload() {
+  await clickSave();
+  await waitFor(() => expect(bulkEditCalls.length).toBe(1), {
+    timeout: 10000,
+  });
+  return bulkEditCalls[0].payload;
+}
+
 describe("BulkEditModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -1704,82 +1798,108 @@ describe("BulkEditModal", () => {
       );
     });
 
-    it("should handle tags update correctly", async () => {
-      render(
-        <BulkEditModal
-          isOpen={true}
-          onClose={vi.fn()}
-          onSaveSuccess={vi.fn()}
-          selectedCaseIds={[1, 2]}
-          projectId={1}
-        />
+    it("opens a link field in Add mode with nothing picked", async () => {
+      await openModalAndEnableField("tags");
+
+      expect(document.getElementById("tags-mode-add")).toBeChecked();
+      expect(screen.getByTestId("selected-tag-ids")).toHaveTextContent("");
+    });
+
+    it("adds tags to every selected case when only some already have them", async () => {
+      await openModalAndEnableField("tags");
+      fireEvent.click(screen.getByTestId("set-tags-1-2"));
+
+      const payload = await savedPayload();
+      expect(payload.caseIds).toEqual([1, 2]);
+      expect(payload.updates.tags).toEqual({
+        connect: [{ id: 1 }, { id: 2 }],
+      });
+    });
+
+    it("offers every tag in Add mode and only the cases' tags in Remove mode", async () => {
+      await openModalAndEnableField("tags");
+      expect(screen.getByTestId("selectable-tag-ids")).toHaveTextContent("all");
+
+      await chooseLinkMode("tags", "remove");
+      expect(screen.getByTestId("selectable-tag-ids")).toHaveTextContent(
+        "1,2,3"
       );
+    });
 
-      // Wait for loading spinner to disappear
-      await waitFor(() => {
-        const spinner = document.querySelector(".animate-spin");
-        expect(spinner).not.toBeInTheDocument();
+    it("removes only the picked tags in Remove mode", async () => {
+      await openModalAndEnableField("tags", "remove");
+      fireEvent.click(screen.getByTestId("set-tags-2"));
+
+      const payload = await savedPayload();
+      expect(payload.updates.tags).toEqual({ disconnect: [{ id: 2 }] });
+    });
+
+    it("leaves every case with exactly the picked tags in Replace mode", async () => {
+      await openModalAndEnableField("tags", "replace");
+      // The selected cases disagree, so Replace starts empty
+      expect(screen.getByTestId("selected-tag-ids")).toHaveTextContent("");
+      fireEvent.click(screen.getByTestId("set-tags-1-2"));
+
+      const payload = await savedPayload();
+      expect(payload.updates.tags).toEqual({
+        connect: [{ id: 1 }, { id: 2 }],
+        disconnect: [{ id: 3 }],
       });
+    });
 
-      // Wait for data to load
-      await waitFor(() => {
-        expect(screen.queryByText("[t]common.fields.tags")).toBeInTheDocument();
+    it("drops the pick when the link mode changes", async () => {
+      await openModalAndEnableField("tags");
+      fireEvent.click(screen.getByTestId("set-tags-1-2"));
+      expect(screen.getByTestId("selected-tag-ids")).toHaveTextContent("1,2");
+
+      await chooseLinkMode("tags", "remove");
+      expect(screen.getByTestId("selected-tag-ids")).toHaveTextContent("");
+    });
+
+    it.each(["add", "remove"] as const)(
+      "does not save a link field in %s mode with nothing picked",
+      async (mode) => {
+        await openModalAndEnableField("tags", mode);
+        await clickSave();
+
+        await waitFor(() =>
+          expect(toast.error).toHaveBeenCalledWith(
+            "[t]repository.bulkEdit.validationError"
+          )
+        );
+        expect(
+          screen.getByText("[t]common.errors.atLeastOneTagRequired")
+        ).toBeInTheDocument();
+        expect(bulkEditCalls.length).toBe(0);
+      }
+    );
+
+    it("adds an issue to every selected case when only some already have it", async () => {
+      await openModalAndEnableField("issues");
+      fireEvent.click(screen.getByTestId("set-issue-1"));
+
+      const payload = await savedPayload();
+      expect(payload.updates.issues).toEqual({ connect: [{ id: 1 }] });
+    });
+
+    it("removes only the picked issue in Remove mode", async () => {
+      await openModalAndEnableField("issues", "remove");
+
+      // Remove swaps the issue search for a pick list of the cases' own issues
+      expect(
+        screen.queryByTestId("mock-issue-manager")
+      ).not.toBeInTheDocument();
+      const issuePicker = screen.getByRole("combobox", {
+        name: "[t]common.fields.issues",
       });
+      fireEvent.focus(issuePicker);
+      fireEvent.keyDown(issuePicker, { key: "ArrowDown", code: "ArrowDown" });
+      const options = await screen.findAllByRole("option");
+      expect(options.map((option) => option.textContent)).toEqual(["BUG-123"]);
+      fireEvent.click(options[0]);
 
-      // Enable editing for tags field
-      const tagsCheckbox = document.getElementById(
-        "edit-tags"
-      ) as HTMLInputElement;
-      await act(async () => {
-        fireEvent.click(tagsCheckbox);
-      });
-
-      // Wait for tags field to be enabled
-      await waitFor(() => {
-        expect(tagsCheckbox).toBeChecked();
-      });
-
-      // Since ManageTags uses react-select which is difficult to test,
-      // we'll verify that the component renders and the save works correctly
-      // The actual tag selection is tested in the ManageTags component tests
-
-      // Verify the tags field is rendered
-      expect(screen.getByRole("combobox")).toBeInTheDocument();
-
-      // For this test, we'll just verify that saving works when tags field is enabled
-      // even without changing the value
-      const saveButton = screen.getByRole("button", {
-        name: "[t]common.actions.save",
-      });
-
-      // Wait for save button to be enabled
-      await waitFor(() => {
-        expect(saveButton).not.toBeDisabled();
-      });
-
-      await act(async () => {
-        fireEvent.click(saveButton);
-      });
-
-      // Verify bulk-edit API was called with case IDs
-      // Note: tags field won't have updates unless new tags are selected
-      // (the component only adds tags.connect when newTagIds.length > 0)
-      await waitFor(
-        () => {
-          expect(bulkEditCalls.length).toBe(1);
-          const { payload } = bulkEditCalls[0];
-
-          // Should include both case IDs
-          expect(payload.caseIds).toEqual([1, 2]);
-
-          // Should request version creation
-          expect(payload.createVersions).toBe(true);
-
-          // Toast should be called
-          expect(toast.success).toHaveBeenCalled();
-        },
-        { timeout: 10000 }
-      );
+      const payload = await savedPayload();
+      expect(payload.updates.issues).toEqual({ disconnect: [{ id: 1 }] });
     });
 
     it("disconnects issues that are removed during bulk edit", async () => {
@@ -1869,8 +1989,9 @@ describe("BulkEditModal", () => {
       await waitFor(() => {
         expect(issuesCheckbox).toBeChecked();
       });
+      await chooseLinkMode("issues", "replace");
 
-      // Both cases share issue id 1, so editing starts with it selected
+      // Both cases share issue id 1, so Replace starts with it selected
       await waitFor(() => {
         expect(screen.getByTestId("linked-issue-ids")).toHaveTextContent("1");
       });
@@ -1905,8 +2026,8 @@ describe("BulkEditModal", () => {
     });
 
     it("clears defect links without touching requirement links", async () => {
-      // The selected cases disagree about issues, so the Issues field seeds
-      // empty — the shape in which "edit the Issues field at all" used to mean
+      // The selected cases disagree about issues, so Replace seeds the Issues
+      // field empty — the shape in which "edit the Issues field at all" used to mean
       // "disconnect every link on every selected case", requirement linkage
       // included, with no way to put it back from this modal.
       const requirement = {
@@ -2016,6 +2137,7 @@ describe("BulkEditModal", () => {
       await waitFor(() => {
         expect(issuesCheckbox).toBeChecked();
       });
+      await chooseLinkMode("issues", "replace");
 
       const saveButton = screen.getByRole("button", {
         name: "[t]common.actions.save",

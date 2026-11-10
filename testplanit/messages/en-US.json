@@ -8299,8 +8299,8 @@
       "state": "## State\nIndicate the current Workflow State of these test cases.",
       "estimate": "## Estimate\nThe manually entered estimated time to complete each of these test case.",
       "automated": "## Automated\nIndicates whether these test cases are automated or not.",
-      "tags": "## Tags\nApply relevant tags to categorize and filter these test cases.",
-      "issues": "## Issues\nLink any related issues (bugs, tasks, etc.) to these test cases."
+      "tags": "## Tags\nApply relevant tags to categorize and filter these test cases.\n\n- **Add** adds the selected tags to every test case and keeps the tags they already have.\n- **Remove** removes the selected tags from every test case that has them.\n- **Replace All** leaves every test case with exactly the selected tags.",
+      "issues": "## Issues\nLink any related issues (bugs, tasks, etc.) to these test cases.\n\n- **Add** links the selected issues to every test case and keeps the issues already linked.\n- **Remove** unlinks the selected issues from every test case that has them.\n- **Replace All** leaves every test case linked to exactly the selected issues."
     },
     "caseField": {
       "displayName": "## Display Name\nThis is the human-readable name for the field that will be shown to users in forms and views. Make it clear and descriptive.",

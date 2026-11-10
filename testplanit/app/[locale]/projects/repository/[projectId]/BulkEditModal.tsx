@@ -76,6 +76,11 @@ import { apiFetch } from "~/lib/basePath";
 // Type for field edit modes
 type FieldEditMode = "replace" | "search-replace";
 
+// How a bulk edit of a link field (tags, issues) treats the picked items
+type LinkEditMode = "add" | "remove" | "replace";
+
+const LINK_FIELD_KEYS = ["tags", "issues"];
+
 // Type for search/replace options
 interface SearchReplaceOptions {
   useRegex: boolean;
@@ -184,6 +189,40 @@ function pickableIssueIds(issues: Issue[] | undefined | null): number[] {
 }
 
 /**
+ * The connect/disconnect lists for a bulk edit of a link field.
+ *
+ * `currentIdsPerCase` holds each selected case's own links. The lists are
+ * applied to every case, so an id belongs in `connect` when any case lacks it,
+ * not only when no case has it.
+ */
+function buildLinkUpdate(
+  mode: LinkEditMode,
+  pickedIds: number[],
+  currentIdsPerCase: number[][]
+): { connect?: { id: number }[]; disconnect?: { id: number }[] } | null {
+  const picked = Array.from(new Set(pickedIds));
+  const onAnyCase = new Set(currentIdsPerCase.flat());
+  const missingSomewhere = (id: number) =>
+    currentIdsPerCase.some((ids) => !ids.includes(id));
+
+  const connect = mode === "remove" ? [] : picked.filter(missingSomewhere);
+  const disconnect =
+    mode === "add"
+      ? []
+      : mode === "remove"
+        ? picked.filter((id) => onAnyCase.has(id))
+        : Array.from(onAnyCase).filter((id) => !picked.includes(id));
+
+  if (connect.length === 0 && disconnect.length === 0) return null;
+  return {
+    ...(connect.length > 0 && { connect: connect.map((id) => ({ id })) }),
+    ...(disconnect.length > 0 && {
+      disconnect: disconnect.map((id) => ({ id })),
+    }),
+  };
+}
+
+/**
  * True when a bulk-edit body would actually change something. Stripping the
  * gated `state` from a payload can leave an update that touches nothing, and
  * POSTing that would burn a version snapshot per case for no change.
@@ -229,6 +268,7 @@ export function BulkEditModal({
   const [fieldModes, setFieldModes] = useState<Record<string, FieldEditMode>>(
     {}
   );
+  const [linkModes, setLinkModes] = useState<Record<string, LinkEditMode>>({});
   const [searchPatterns, setSearchPatterns] = useState<Record<string, string>>(
     {}
   );
@@ -1239,6 +1279,21 @@ export function BulkEditModal({
     for (const fieldKey in editedFields) {
       if (!editedFields[fieldKey]) continue; // Skip fields not being edited
 
+      // Add and Remove act on the picked items, so an empty pick is a no-op
+      const linkMode = linkModes[fieldKey] ?? "add";
+      if (
+        LINK_FIELD_KEYS.includes(fieldKey) &&
+        linkMode !== "replace" &&
+        !(Array.isArray(newValues[fieldKey]) && newValues[fieldKey].length > 0)
+      ) {
+        errors[fieldKey] = [
+          fieldKey === "tags"
+            ? t("common.errors.atLeastOneTagRequired")
+            : t("common.errors.atLeastOneIssueRequired"),
+        ];
+        continue;
+      }
+
       // Special validation for search/replace mode
       if (fieldModes[fieldKey] === "search-replace") {
         const searchPattern = searchPatterns[fieldKey] || "";
@@ -1480,7 +1535,11 @@ export function BulkEditModal({
 
       // Entering edit mode: set initial value
       const consolidatedValue = getConsolidatedDisplayValue(fieldKey);
-      if (consolidatedValue === VARIOUS_PLACEHOLDER) {
+      if (LINK_FIELD_KEYS.includes(fieldKey)) {
+        // Link fields open in Add mode with nothing picked
+        setLinkModes((prev) => ({ ...prev, [fieldKey]: "add" }));
+        handleValueChange(fieldKey, []);
+      } else if (consolidatedValue === VARIOUS_PLACEHOLDER) {
         // Values are different, set the default value (or null/empty for estimate)
         const defaultValue =
           fieldKey === "estimate" ? "" : getFieldDefaultValue(fieldKey);
@@ -1504,6 +1563,10 @@ export function BulkEditModal({
         return rest;
       });
       setFieldModes((prev) => {
+        const { [fieldKey]: _, ...rest } = prev;
+        return rest;
+      });
+      setLinkModes((prev) => {
         const { [fieldKey]: _, ...rest } = prev;
         return rest;
       });
@@ -1532,6 +1595,23 @@ export function BulkEditModal({
 
   const handleValueChange = (fieldKey: string, value: any) => {
     setNewValues((prev) => ({ ...prev, [fieldKey]: value }));
+  };
+
+  const handleLinkModeChange = (fieldKey: string, mode: LinkEditMode) => {
+    setLinkModes((prev) => ({ ...prev, [fieldKey]: mode }));
+    setInlineErrors((prev) => {
+      const { [fieldKey]: _, ...rest } = prev;
+      return rest;
+    });
+    // The pick means something different in each mode, so it never carries
+    // over. Replace starts from the links the selected cases all share.
+    const sharedValue =
+      mode === "replace" &&
+      casesData?.length &&
+      getConsolidatedDisplayValue(fieldKey) !== VARIOUS_PLACEHOLDER
+        ? getSingleCaseValue(casesData[0], fieldKey)
+        : [];
+    handleValueChange(fieldKey, sharedValue);
   };
 
   /**
@@ -1622,67 +1702,21 @@ export function BulkEditModal({
         const estimateInSeconds =
           durationMs !== null ? Math.round(durationMs / 1000) : null;
         payload.updates.estimate = estimateInSeconds;
-      } else if (fieldKey === "tags") {
-        // Get all unique tag IDs from all cases
-        const allCurrentTagIds = new Set<number>();
-        casesData.forEach((c) => {
-          (c.tags ?? []).forEach((t) => allCurrentTagIds.add(t.id));
-        });
-
-        const newTagIds = Array.isArray(newValue) ? newValue.map(Number) : [];
-
-        // Connect new tags that aren't currently on any case
-        const tagsToConnect = newTagIds
-          .filter((id) => !allCurrentTagIds.has(id))
-          .map((id) => ({ id }));
-
-        // Disconnect tags that were removed (were on cases but not in new selection)
-        const tagsToDisconnect = Array.from(allCurrentTagIds)
-          .filter((id) => !newTagIds.includes(id))
-          .map((id) => ({ id }));
-
-        // Only update tags if there are actual changes
-        if (tagsToConnect.length > 0 || tagsToDisconnect.length > 0) {
-          payload.updates.tags = {};
-          if (tagsToConnect.length > 0) {
-            payload.updates.tags.connect = tagsToConnect;
-          }
-          if (tagsToDisconnect.length > 0) {
-            payload.updates.tags.disconnect = tagsToDisconnect;
-          }
-        }
-      } else if (fieldKey === "issues") {
-        // Only the links this field's picker can express — see
+      } else if (fieldKey === "tags" || fieldKey === "issues") {
+        // Issues only ever sees the links its picker can express — see
         // pickableIssueIds. Everything else on the selected cases is outside
         // this edit's reach and must not appear in the disconnect list.
-        const allCurrentIssueIds = new Set<number>();
-        casesData.forEach((c) => {
-          pickableIssueIds(c.issues).forEach((id) =>
-            allCurrentIssueIds.add(id)
-          );
-        });
-
-        const newIssueIds = Array.isArray(newValue) ? newValue.map(Number) : [];
-
-        // Connect new issues that aren't currently on any case
-        const issuesToConnect = newIssueIds
-          .filter((id) => !allCurrentIssueIds.has(id))
-          .map((id) => ({ id }));
-
-        // Disconnect issues that were removed (were on cases but not in new selection)
-        const issuesToDisconnect = Array.from(allCurrentIssueIds)
-          .filter((id) => !newIssueIds.includes(id))
-          .map((id) => ({ id }));
-
-        // Only update issues if there are actual changes
-        if (issuesToConnect.length > 0 || issuesToDisconnect.length > 0) {
-          payload.updates.issues = {};
-          if (issuesToConnect.length > 0) {
-            payload.updates.issues.connect = issuesToConnect;
-          }
-          if (issuesToDisconnect.length > 0) {
-            payload.updates.issues.disconnect = issuesToDisconnect;
-          }
+        const linkUpdate = buildLinkUpdate(
+          linkModes[fieldKey] ?? "add",
+          Array.isArray(newValue) ? newValue.map(Number) : [],
+          casesData.map((c) =>
+            fieldKey === "tags"
+              ? (c.tags ?? []).map((tag) => tag.id)
+              : pickableIssueIds(c.issues)
+          )
+        );
+        if (linkUpdate) {
+          payload.updates[fieldKey] = linkUpdate;
         }
       }
     }
@@ -2173,9 +2207,40 @@ export function BulkEditModal({
       );
     }
 
+    const linkMode = LINK_FIELD_KEYS.includes(fieldKey)
+      ? (linkModes[fieldKey] ?? "add")
+      : null;
+
     // Regular replace mode
     return (
       <div className="space-y-2">
+        {linkMode && (
+          <RadioGroup
+            value={linkMode}
+            onValueChange={(value) =>
+              handleLinkModeChange(fieldKey, value as LinkEditMode)
+            }
+            className="flex gap-4 mb-2"
+            data-testid={`${fieldKey}-link-mode`}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="add" id={`${fieldKey}-mode-add`} />
+              <Label htmlFor={`${fieldKey}-mode-add`}>{tCommon("add")}</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="remove" id={`${fieldKey}-mode-remove`} />
+              <Label htmlFor={`${fieldKey}-mode-remove`}>
+                {tCommon("actions.remove")}
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="replace" id={`${fieldKey}-mode-replace`} />
+              <Label htmlFor={`${fieldKey}-mode-replace`}>
+                {tBulkEdit("replaceAll")}
+              </Label>
+            </div>
+          </RadioGroup>
+        )}
         {supportsSearchReplace && !isStepsField && (
           <RadioGroup
             value={mode}
@@ -2213,7 +2278,33 @@ export function BulkEditModal({
           projectId={projectId}
           workflowsData={workflowsData}
           availableTagsData={availableTagsData}
-          canCreateTags={canCreateTagsPerm} // Pass the permission prop
+          canCreateTags={canCreateTagsPerm && linkMode !== "remove"}
+          // Remove can only act on links the selected cases have, so those
+          // are the only ones offered.
+          selectableTagIds={
+            linkMode === "remove" && fieldKey === "tags"
+              ? Array.from(
+                  new Set(
+                    casesData?.flatMap((c) => (c.tags ?? []).map((t) => t.id))
+                  )
+                )
+              : undefined
+          }
+          selectableIssues={
+            linkMode === "remove" && fieldKey === "issues"
+              ? Array.from(
+                  new Map(
+                    (casesData ?? [])
+                      .flatMap((c) => c.issues ?? [])
+                      .filter((issue) => !isRequirementRow(issue))
+                      .map((issue) => [
+                        issue.id,
+                        { id: issue.id, name: issue.name },
+                      ])
+                  ).values()
+                )
+              : undefined
+          }
           canEditRestricted={canEditRestrictedPerm} // Pass general permission
           fieldIsRestricted={isRestricted} // Pass specific field restriction
           // Pass any other necessary props like options for dropdowns

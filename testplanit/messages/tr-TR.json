@@ -8299,8 +8299,8 @@
       "state": "## Durum\nBu test durumlarının mevcut İş Akışı Durumunu belirtir.",
       "estimate": "## Tahmin\nBu test durumlarının her birinin tamamlanması için elle girilen tahmini süre.",
       "automated": "## Otomatikleştirilmiş\nBu test durumlarının otomatikleştirilip otomatikleştirilmediğini gösterir.",
-      "tags": "## Etiketler\nBu test durumlarını kategorize etmek ve filtrelemek için ilgili etiketleri uygulayın.",
-      "issues": "## Sorunlar\nBu test durumlarıyla ilgili tüm sorunları (hatalar, görevler vb.) bağlayın."
+      "tags": "## Etiketler\nBu test durumlarını kategorilere ayırmak ve filtrelemek için ilgili etiketleri uygulayın.\n\n- **Ekle** seçilen etiketleri her test durumuna ekler ve zaten sahip oldukları etiketleri korur.\n- **Kaldır** seçilen etiketleri sahip oldukları her test durumundan kaldırır.\n- **Tümünü Değiştir** her test durumunun tam olarak seçilen etiketlere sahip olmasını sağlar.",
+      "issues": "## Sorunlar\nBu test durumlarıyla ilgili sorunları (hatalar, görevler vb.) bağlayın.\n\n- **Ekle** seçilen sorunları her test durumuna bağlar ve zaten bağlı olan sorunları korur.\n- **Kaldır** seçilen sorunları sahip oldukları her test durumundan ayırır.\n- **Tümünü Değiştir** her test durumunun tam olarak seçilen sorunlara bağlı olmasını sağlar."
     },
     "caseField": {
       "displayName": "## Görüntü Adı\nBu, formlarda ve görünümlerde kullanıcılara gösterilecek alanın insan tarafından okunabilir adıdır. Açık ve açıklayıcı olsun.",
