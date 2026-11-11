@@ -23,7 +23,6 @@ const eslintConfig = [
     ignores: [
       "app/**/extensions/**",
       "components/tiptap/menus/**",
-      "components/tiptap/panels/**",
       "components/tiptap/ui/**",
       "lib/hooks/**",
       ".cursorrules",
