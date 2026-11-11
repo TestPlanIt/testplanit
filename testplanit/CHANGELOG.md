@@ -1,3 +1,11 @@
+## [1.2.0-beta.42](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.41...v1.2.0-beta.42) (2026-11-11)
+
+### Bug Fixes
+
+* **audit:** neutralise formula-like cells in audit log CSV exports ([a664fe8](https://github.com/TestPlanIt/testplanit/commit/a664fe81d750c6c6f8be1961f8c994679507909a))
+* **llm:** keep Gemini stream text when a line spans two network reads ([9108906](https://github.com/TestPlanIt/testplanit/commit/9108906ca4302a3e280056d97c9e5762a92a8f1b))
+* **repository:** keep the folder tree from taking focus when it loads ([9d416cd](https://github.com/TestPlanIt/testplanit/commit/9d416cda4d41e5d2f1bea35217a5bee5ed4681f8))
+
 ## [1.2.0-beta.41](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.40...v1.2.0-beta.41) (2026-11-10)
 
 ### Bug Fixes
