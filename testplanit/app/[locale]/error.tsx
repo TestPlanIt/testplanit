@@ -16,10 +16,10 @@ import { reportPossibleSkew } from "~/lib/deploymentSkew";
 
 export default function Error({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   const t = useTranslations();
 
@@ -46,7 +46,7 @@ export default function Error({
           </CardContent>
         )}
         <CardFooter>
-          <Button onClick={() => reset()}>{t("search.errors.tryAgain")}</Button>
+          <Button onClick={() => retry()}>{t("search.errors.tryAgain")}</Button>
         </CardFooter>
       </Card>
     </div>
