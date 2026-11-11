@@ -40,12 +40,6 @@ vi.mock("@/components/import/SavedImportMappings", () => ({
   SaveImportMappingPrompt: () => null,
 }));
 
-vi.mock("@/components/ui/use-toast", () => ({
-  useToast: () => ({
-    toast: vi.fn(),
-  }),
-}));
-
 vi.mock("papaparse", () => ({
   default: {
     parse: vi.fn((_text, options) => {

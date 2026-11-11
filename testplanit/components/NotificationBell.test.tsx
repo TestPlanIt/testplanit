@@ -73,11 +73,6 @@ vi.mock("next-intl", () => ({
 }));
 
 // Mock toast
-const mockToast = vi.fn();
-vi.mock("@/components/ui/use-toast", () => ({
-  useToast: () => ({ toast: mockToast }),
-}));
-
 describe("NotificationBell", () => {
   const mockSession = {
     user: {
