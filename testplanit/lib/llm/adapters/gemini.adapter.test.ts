@@ -322,6 +322,150 @@ describe("GeminiAdapter", () => {
     });
   });
 
+  describe("chatStream", () => {
+    const streamChunk = (text: string, finishReason?: string) =>
+      `data: ${JSON.stringify({
+        candidates: [{ content: { parts: [{ text }] }, finishReason }],
+      })}`;
+
+    const encoder = new TextEncoder();
+
+    const streamResponse = (reads: Array<string | Uint8Array>) => ({
+      ok: true,
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          for (const read of reads) {
+            controller.enqueue(
+              typeof read === "string" ? encoder.encode(read) : read
+            );
+          }
+          controller.close();
+        },
+      }),
+    });
+
+    const collect = async (reads: Array<string | Uint8Array>) => {
+      mockFetch.mockResolvedValueOnce(streamResponse(reads));
+      const adapter = new GeminiAdapter(createTestConfig());
+      const deltas: string[] = [];
+      let finishReason: string | undefined;
+      for await (const chunk of adapter.chatStream({
+        messages: [{ role: "user", content: "Hello" }],
+        userId: "user-123",
+        feature: "test",
+      })) {
+        deltas.push(chunk.delta);
+        finishReason = chunk.finishReason ?? finishReason;
+      }
+      return { text: deltas.join(""), finishReason };
+    };
+
+    it("keeps a line that is split across two network reads", async () => {
+      const line = streamChunk("split across reads");
+      const cut = Math.floor(line.length / 2);
+
+      const { text } = await collect([
+        `${streamChunk("Hello ")}\n\n${line.slice(0, cut)}`,
+        `${line.slice(cut)}\n\n${streamChunk("!")}\n\n`,
+      ]);
+
+      expect(text).toBe("Hello split across reads!");
+    });
+
+    it("parses a final line that has no trailing newline", async () => {
+      const { text, finishReason } = await collect([
+        `${streamChunk("Hello ")}\n\n`,
+        streamChunk("world", "STOP"),
+      ]);
+
+      expect(text).toBe("Hello world");
+      expect(finishReason).toBe("stop");
+    });
+
+    it("yields the same text wherever the network splits the stream", async () => {
+      const payload = encoder.encode(
+        [
+          streamChunk("Héllo "),
+          streamChunk("世界 "),
+          streamChunk("🎉 done", "STOP"),
+        ].join("\n\n") + "\n\n"
+      );
+      const expected = "Héllo 世界 🎉 done";
+
+      for (let cut = 1; cut < payload.length; cut++) {
+        const { text, finishReason } = await collect([
+          payload.slice(0, cut),
+          payload.slice(cut),
+        ]);
+        expect(text, `split at byte ${cut}`).toBe(expected);
+        expect(finishReason, `split at byte ${cut}`).toBe("stop");
+      }
+    });
+
+    it("yields the same text when the stream arrives one byte at a time", async () => {
+      const payload = encoder.encode(
+        `${streamChunk("Héllo ")}\n\n${streamChunk("世界", "STOP")}\n\n`
+      );
+
+      const { text, finishReason } = await collect(
+        Array.from(payload, (byte) => Uint8Array.of(byte))
+      );
+
+      expect(text).toBe("Héllo 世界");
+      expect(finishReason).toBe("stop");
+    });
+
+    it("handles CRLF line endings", async () => {
+      const { text } = await collect([
+        `${streamChunk("Hello ")}\r\n\r\n${streamChunk("world")}\r\n\r\n`,
+      ]);
+
+      expect(text).toBe("Hello world");
+    });
+
+    it("skips malformed and non-data lines without losing the rest", async () => {
+      const { text } = await collect([
+        [
+          ": keep-alive comment",
+          "event: message",
+          "data: {not json",
+          streamChunk("kept"),
+          "data: ",
+          streamChunk(" too"),
+        ].join("\n") + "\n",
+      ]);
+
+      expect(text).toBe("kept too");
+    });
+
+    it("leaves thought parts out of the streamed text", async () => {
+      const line = `data: ${JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: "internal reasoning", thought: true },
+                { text: "the answer" },
+              ],
+            },
+          },
+        ],
+      })}`;
+
+      const { text } = await collect([`${line}\n\n`]);
+
+      expect(text).toBe("the answer");
+    });
+
+    it("maps a truncated stream's finish reason", async () => {
+      const { finishReason } = await collect([
+        `${streamChunk("cut off", "MAX_TOKENS")}\n\n`,
+      ]);
+
+      expect(finishReason).toBe("length");
+    });
+  });
+
   describe("testConnection", () => {
     it("should return true on successful connection", async () => {
       const config = createTestConfig();

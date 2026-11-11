@@ -369,49 +369,62 @@ export class GeminiAdapter extends BaseLlmAdapter {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    // A network read can end mid-line, so the unfinished tail is carried into
+    // the next read instead of being parsed (and dropped) as a broken line.
+    let buffer = "";
 
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (line.trim() && !line.startsWith("data: ")) {
-            continue;
-          }
-
-          const jsonStr = line.replace("data: ", "").trim();
-          if (!jsonStr) continue;
-
-          try {
-            const data = JSON.parse(jsonStr) as GeminiStreamResponse;
-
-            if (data.candidates && data.candidates.length > 0) {
-              const candidate = data.candidates[0];
-              const content = candidate.content.parts
-                .filter((part) => !part.thought)
-                .map((part) => part.text)
-                .join("");
-
-              yield {
-                delta: content,
-                model,
-                finishReason: candidate.finishReason
-                  ? this.mapFinishReason(candidate.finishReason)
-                  : undefined,
-              };
-            }
-          } catch {
-            // Skip malformed chunks
-            continue;
-          }
+          const parsed = this.parseStreamLine(line, model);
+          if (parsed) yield parsed;
         }
       }
+
+      buffer += decoder.decode();
+      const parsed = this.parseStreamLine(buffer, model);
+      if (parsed) yield parsed;
     } finally {
       reader.releaseLock();
+    }
+  }
+
+  private parseStreamLine(
+    line: string,
+    model: string
+  ): LlmStreamResponse | null {
+    if (!line.startsWith("data: ")) return null;
+
+    const jsonStr = line.slice("data: ".length).trim();
+    if (!jsonStr) return null;
+
+    try {
+      const data = JSON.parse(jsonStr) as GeminiStreamResponse;
+      if (!data.candidates || data.candidates.length === 0) return null;
+
+      const candidate = data.candidates[0];
+      const content = candidate.content.parts
+        .filter((part) => !part.thought)
+        .map((part) => part.text)
+        .join("");
+
+      return {
+        delta: content,
+        model,
+        finishReason: candidate.finishReason
+          ? this.mapFinishReason(candidate.finishReason)
+          : undefined,
+      };
+    } catch {
+      // Skip malformed chunks
+      return null;
     }
   }
 
