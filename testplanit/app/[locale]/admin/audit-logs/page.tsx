@@ -28,6 +28,7 @@ import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import type { AuditLogUserOption } from "~/lib/services/auditLog/searchAuditLogUsers";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import { formatAuditAction } from "~/lib/audit/auditActions";
+import { buildAuditLogCsv } from "~/lib/audit/auditLogCsv";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
@@ -493,24 +494,10 @@ function AuditLogsContent({ session }: { session: Session }) {
         ];
       });
 
-      // Create CSV content
-      const escapeCsvValue = (value: string) => {
-        if (
-          value.includes(",") ||
-          value.includes('"') ||
-          value.includes("\n")
-        ) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      };
-
-      const csvContent = [
-        headers.map(escapeCsvValue).join(","),
-        ...csvRows.map((row) =>
-          row.map((cell) => escapeCsvValue(String(cell))).join(",")
-        ),
-      ].join("\n");
+      const csvContent = buildAuditLogCsv(
+        headers,
+        csvRows.map((row) => row.map(String))
+      );
 
       // Create and download file
       const blob = new Blob(["﻿" + csvContent], {

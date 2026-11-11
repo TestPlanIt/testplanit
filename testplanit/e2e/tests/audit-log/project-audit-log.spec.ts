@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import Papa from "papaparse";
 import { expect, test } from "../../fixtures";
 import type { Page } from "@playwright/test";
 
@@ -108,5 +110,51 @@ test.describe("Project Audit Log", () => {
         timeout: 10000,
       });
     });
+  });
+
+  test("exports the project's audit trail as CSV with formula-like names neutralised", async ({
+    api,
+    page,
+  }) => {
+    const stamp = `${Date.now()}`;
+    const caseName = `=E2E_FORMULA_CASE_${stamp}`;
+    const projectId = await api.createProject(`E2E Project Audit CSV ${stamp}`);
+    const folderId = await api.createFolder(projectId, `Folder ${stamp}`);
+    await api.createTestCase(projectId, folderId, caseName);
+
+    await page.goto(`/en-US/projects/audit-logs/${projectId}`);
+    await page.waitForLoadState("networkidle");
+
+    // The export only has something to write once the CDC worker has
+    // materialized this project's rows.
+    await expect(async () => {
+      const hasRows = await waitForRows(page, "project-audit-log-row-");
+      expect(hasRows).toBe(true);
+    }).toPass({ timeout: 60000 });
+
+    const exportButton = page.getByRole("button", { name: /export csv/i });
+    await expect(exportButton).toBeEnabled({ timeout: 10000 });
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      exportButton.click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/^audit-logs-export-.*\.csv$/);
+
+    const text = await readFile(await download.path(), "utf8");
+    expect(text.charCodeAt(0)).toBe(0xfeff);
+
+    const [header, ...dataLines] = Papa.parse<string[]>(
+      text.replace(/^\uFEFF/, ""),
+      { skipEmptyLines: true }
+    ).data;
+    expect(header).toHaveLength(11);
+    expect(dataLines.length).toBeGreaterThanOrEqual(1);
+    for (const line of dataLines) {
+      expect(line).toHaveLength(11);
+    }
+
+    const cells = dataLines.flat();
+    expect(cells.filter((cell) => /^[=+\-@\t\r]/.test(cell))).toEqual([]);
+    expect(cells).toContain(`'${caseName}`);
   });
 });
