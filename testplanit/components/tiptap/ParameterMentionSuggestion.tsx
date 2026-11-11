@@ -58,7 +58,7 @@ export const ParameterMentionSuggestion = forwardRef<
   if (items.length === 0) {
     return (
       <div
-        className="bg-popover border rounded-md shadow-md p-1 max-h-64 overflow-auto min-w-48"
+        className="max-h-64 min-w-48 overflow-auto rounded-md border bg-popover p-1 shadow-md"
         data-testid="parameter-mention-suggestion"
       >
         <div
@@ -73,7 +73,7 @@ export const ParameterMentionSuggestion = forwardRef<
 
   return (
     <div
-      className="bg-popover border rounded-md shadow-md p-1 max-h-64 overflow-auto min-w-48"
+      className="max-h-64 min-w-48 overflow-auto rounded-md border bg-popover p-1 shadow-md"
       data-testid="parameter-mention-suggestion"
     >
       {items.map((item, index) => (
@@ -81,7 +81,7 @@ export const ParameterMentionSuggestion = forwardRef<
           key={item.id}
           type="button"
           className={cn(
-            "w-full text-start px-2 py-1.5 text-sm rounded-sm flex items-center gap-2",
+            "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-start text-sm",
             index === selectedIndex && "bg-accent text-accent-foreground"
           )}
           onClick={() => command(item)}

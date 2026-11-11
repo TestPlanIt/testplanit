@@ -155,7 +155,7 @@ export const CaseDisplay: React.FC<CaseDisplayProps> = ({
     if (resolvedIsDeleted) {
       icon = (
         <Trash
-          className={cn("shrink-0 mt-0.5 text-muted-foreground", iconSize)}
+          className={cn("mt-0.5 shrink-0 text-muted-foreground", iconSize)}
         />
       );
     } else {
@@ -166,7 +166,7 @@ export const CaseDisplay: React.FC<CaseDisplayProps> = ({
           <ListChecks className={cn("shrink-0", iconSize)} />
         );
       icon = (
-        <span className="inline-flex items-center gap-1 shrink-0 mt-0.5">
+        <span className="mt-0.5 inline-flex shrink-0 items-center gap-1">
           {baseIcon}
           {resolvedHasParameters && (
             <span
@@ -191,7 +191,7 @@ export const CaseDisplay: React.FC<CaseDisplayProps> = ({
     (resolvedId ? `${fallbackPrefix} ${resolvedId}` : t("unknown"));
 
   const nameAndIcon = (
-    <div className="flex items-start gap-1 min-w-0">
+    <div className="flex min-w-0 items-start gap-1">
       {icon}
       <span
         className={cn(
@@ -222,12 +222,12 @@ export const CaseDisplay: React.FC<CaseDisplayProps> = ({
     return href ? (
       <Link
         href={href}
-        className="flex items-start gap-1 min-w-0 overflow-hidden hover:underline"
+        className="flex min-w-0 items-start gap-1 overflow-hidden hover:underline"
       >
         {nameAndIcon}
       </Link>
     ) : (
-      <span className="flex items-start gap-1 min-w-0 overflow-hidden">
+      <span className="flex min-w-0 items-start gap-1 overflow-hidden">
         {nameAndIcon}
       </span>
     );
@@ -236,7 +236,7 @@ export const CaseDisplay: React.FC<CaseDisplayProps> = ({
   // `overflow-hidden` is load-bearing: without it a long name escapes its
   // column instead of truncating inside a flex parent.
   const nameDisplay = (
-    <span className="flex items-start gap-1 min-w-0 overflow-hidden">
+    <span className="flex min-w-0 items-start gap-1 overflow-hidden">
       {nameAndIcon}
     </span>
   );
@@ -248,22 +248,22 @@ export const CaseDisplay: React.FC<CaseDisplayProps> = ({
     <Link
       href={href}
       target={linkTarget}
-      className={`flex items-center max-w-full w-full group`}
+      className={`group flex w-full max-w-full items-center`}
     >
       {nameDisplay}
       {linkTarget === "_blank" ? (
         <ExternalLink
-          className={`${iconSizeClass} inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
+          className={`${iconSizeClass} ms-1 inline shrink-0 opacity-0 transition-opacity group-hover:opacity-100`}
         />
       ) : isLargeOrXl ? (
         <LinkIcon
-          className={`${iconSizeClass} inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
+          className={`${iconSizeClass} ms-1 inline shrink-0 opacity-0 transition-opacity group-hover:opacity-100`}
         />
       ) : null}
     </Link>
   ) : (
     <div
-      className={`flex ${isLargeOrXl ? "items-start" : "items-center"} max-w-full w-full`}
+      className={`flex ${isLargeOrXl ? "items-start" : "items-center"} w-full max-w-full`}
     >
       {nameDisplay}
     </div>
@@ -283,7 +283,7 @@ export const CaseDisplay: React.FC<CaseDisplayProps> = ({
       <TooltipTrigger asChild>
         {/* min-w-0 so the trigger can shrink inside a flex parent — without it
             the name overflows its column and runs into whatever sits beside it. */}
-        <div className="text-start min-w-0">{content}</div>
+        <div className="min-w-0 text-start">{content}</div>
       </TooltipTrigger>
       <TooltipContent>
         <div>{name}</div>

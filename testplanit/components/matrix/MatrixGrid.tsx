@@ -181,7 +181,7 @@ export function MatrixGrid({
         {/* Top-left corner — sticky top + left so it always covers the
             intersection of the column-header strip and the left rail. */}
         <div
-          className="sticky top-0 start-0 z-30 flex items-center border-e border-b bg-background px-2 text-xs font-medium text-muted-foreground"
+          className="sticky start-0 top-0 z-30 flex items-center border-e border-b bg-background px-2 text-xs font-medium text-muted-foreground"
           style={{
             width: LEFT_RAIL_WIDTH,
             height: HEADER_HEIGHT,

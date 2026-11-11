@@ -400,14 +400,14 @@ function IssueList() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">
-            <div className="flex flex-col grow w-full min-w-[250px]">
-              <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap">
+            <div className="flex w-full min-w-[250px] grow flex-col">
+              <div className="flex w-full flex-wrap items-center gap-2 text-muted-foreground">
                 <Filter
                   key="issue-filter"
                   placeholder={t("filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
-                  className="grow shrink basis-[160px] min-w-[160px] max-w-lg"
+                  className="max-w-lg min-w-[160px] shrink grow basis-[160px]"
                 />
                 <IssueListFilters
                   statuses={statuses}
@@ -425,7 +425,7 @@ function IssueList() {
             </div>
 
             {mappedIssues.length > 0 && (
-              <p className="text-sm text-muted-foreground shrink-0">
+              <p className="shrink-0 text-sm text-muted-foreground">
                 {tGlobal("admin.auditLogs.showing", {
                   loaded: mappedIssues.length.toLocaleString(locale),
                   total: (issuesCount ?? mappedIssues.length).toLocaleString(

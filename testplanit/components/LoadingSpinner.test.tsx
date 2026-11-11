@@ -41,9 +41,7 @@ describe("LoadingSpinner", () => {
     });
 
     const spinnerSvg = screen.getByTitle("Loading...");
-    const wrapper = spinnerSvg.closest(
-      'div[class*="flex justify-center items-center"]'
-    );
+    const wrapper = spinnerSvg.closest('[data-testid="loading-spinner"]');
     expect(wrapper).toHaveClass(testClassName);
   });
 

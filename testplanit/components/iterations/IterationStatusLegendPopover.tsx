@@ -66,7 +66,7 @@ export function IterationStatusLegendPopover({
           data-testid="iteration-status-legend-trigger"
           aria-label={t("iterationStatusLegendAria")}
         >
-          <Info className="w-4 h-4" />
+          <Info className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent

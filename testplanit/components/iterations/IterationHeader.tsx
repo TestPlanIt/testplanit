@@ -64,7 +64,7 @@ export function IterationHeader({
 
   return (
     <header
-      className="flex items-center justify-between gap-4 ps-4 pe-12 py-3 border-b bg-muted/30"
+      className="flex items-center justify-between gap-4 border-b bg-muted/30 py-3 ps-4 pe-12"
       data-testid="iteration-header"
     >
       <TooltipProvider>
@@ -109,7 +109,7 @@ export function IterationHeader({
           </Tooltip>
         </div>
       </TooltipProvider>
-      <div className="flex items-center gap-3 ms-auto">
+      <div className="ms-auto flex items-center gap-3">
         {status && (
           <span
             className="inline-flex items-center gap-2 text-sm"

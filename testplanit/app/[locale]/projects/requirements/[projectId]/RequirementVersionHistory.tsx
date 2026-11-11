@@ -57,7 +57,7 @@ function noteText(note: unknown): string {
 function DiffText({ before, after }: { before: string; after: string }) {
   const parts = useMemo(() => diffWords(before, after), [before, after]);
   return (
-    <div className="whitespace-pre-wrap break-words rounded-md bg-muted/30 p-2 text-sm">
+    <div className="rounded-md bg-muted/30 p-2 text-sm break-words whitespace-pre-wrap">
       {parts.map((part, index) => (
         <Fragment key={index}>
           {part.added ? (
@@ -235,7 +235,7 @@ export function RequirementVersionHistory({
                             <div className="text-xs font-medium text-muted-foreground">
                               {tCommon("fields.title")}
                             </div>
-                            <div className="whitespace-pre-wrap break-words rounded-md bg-muted/30 p-2 text-sm">
+                            <div className="rounded-md bg-muted/30 p-2 text-sm break-words whitespace-pre-wrap">
                               {row.title}
                             </div>
                           </div>
@@ -244,7 +244,7 @@ export function RequirementVersionHistory({
                               <div className="text-xs font-medium text-muted-foreground">
                                 {tCommon("fields.documentation")}
                               </div>
-                              <div className="whitespace-pre-wrap break-words rounded-md bg-muted/30 p-2 text-sm">
+                              <div className="rounded-md bg-muted/30 p-2 text-sm break-words whitespace-pre-wrap">
                                 {row.description}
                               </div>
                             </div>
@@ -254,7 +254,7 @@ export function RequirementVersionHistory({
                               <div className="text-xs font-medium text-muted-foreground">
                                 {tCommon("fields.note")}
                               </div>
-                              <div className="whitespace-pre-wrap break-words rounded-md bg-muted/30 p-2 text-sm">
+                              <div className="rounded-md bg-muted/30 p-2 text-sm break-words whitespace-pre-wrap">
                                 {noteText(row.note)}
                               </div>
                             </div>

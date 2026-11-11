@@ -146,7 +146,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
       label: (
         <div className="flex items-center">
           <DynamicIcon
-            className="w-5 h-5"
+            className="h-5 w-5"
             name={milestoneType.icon?.name as IconName}
           />
           <span className="ms-1">{milestoneType.name}</span>
@@ -439,12 +439,12 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
               )}
             />
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-row items-start space-x-3 space-y-0">
+              <div className="flex flex-row items-start space-y-0 space-x-3">
                 <FormField
                   control={control}
                   name="isStarted"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -479,12 +479,12 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                   )}
                 />
               </div>
-              <div className="flex flex-row items-start space-x-3 space-y-0">
+              <div className="flex flex-row items-start space-y-0 space-x-3">
                 <FormField
                   control={control}
                   name="isCompleted"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -519,12 +519,12 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                   )}
                 />
               </div>
-              <div className="flex flex-row items-start space-x-3 space-y-0">
+              <div className="flex flex-row items-start space-y-0 space-x-3">
                 <FormField
                   control={control}
                   name="automaticCompletion"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -546,7 +546,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                   control={control}
                   name="enableNotifications"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -615,7 +615,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
             <DialogFooter>
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

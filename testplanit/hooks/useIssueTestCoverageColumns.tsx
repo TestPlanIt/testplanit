@@ -223,7 +223,7 @@ export function useIssueTestCoverageSummaryColumns(
           // When grouped by issue, show test case count
           const count = info.row.subRows.length;
           return (
-            <span className="text-muted-foreground text-sm">
+            <span className="text-sm text-muted-foreground">
               {count} {t("reports.ui.issueTestCoverage.testCases", { count })}
             </span>
           );
@@ -309,7 +309,7 @@ export function useIssueTestCoverageSummaryColumns(
 
           if (!statusName) {
             return (
-              <span className="text-muted-foreground italic text-sm">
+              <span className="text-sm text-muted-foreground italic">
                 {t("reports.ui.issueTestCoverage.notTested")}
               </span>
             );
@@ -318,7 +318,7 @@ export function useIssueTestCoverageSummaryColumns(
           return (
             <div className="flex items-center gap-2">
               <div
-                className="w-3 h-3 rounded-full"
+                className="h-3 w-3 rounded-full"
                 style={{ backgroundColor: statusColor || "#6b7280" }}
               />
               <span className="text-sm">{statusName}</span>
@@ -346,7 +346,7 @@ export function useIssueTestCoverageSummaryColumns(
 
           if (!lastExecuted) {
             return (
-              <span className="text-muted-foreground italic text-sm">
+              <span className="text-sm text-muted-foreground italic">
                 {tCommon("never")}
               </span>
             );
@@ -394,7 +394,7 @@ export function useIssueTestCoverageSummaryColumns(
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="text-success font-mono cursor-default">
+                    <span className="cursor-default font-mono text-success">
                       {firstRow.passedTestCases}
                     </span>
                   </TooltipTrigger>
@@ -407,7 +407,7 @@ export function useIssueTestCoverageSummaryColumns(
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="text-destructive font-mono cursor-default">
+                    <span className="cursor-default font-mono text-destructive">
                       {firstRow.failedTestCases}
                     </span>
                   </TooltipTrigger>
@@ -420,7 +420,7 @@ export function useIssueTestCoverageSummaryColumns(
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="text-muted-foreground font-mono cursor-default">
+                    <span className="cursor-default font-mono text-muted-foreground">
                       {firstRow.untestedTestCases}
                     </span>
                   </TooltipTrigger>

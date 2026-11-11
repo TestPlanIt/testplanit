@@ -298,8 +298,8 @@ export function TwoFactorSettings({
 
       {/* Notice when SSO bypasses personal 2FA */}
       {ssoBypassesPersonal2FA && (
-        <div className="flex items-center gap-2 mt-2 p-2 bg-muted/50 rounded-md">
-          <Info className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="mt-2 flex items-center gap-2 rounded-md bg-muted/50 p-2">
+          <Info className="h-4 w-4 shrink-0 text-muted-foreground" />
           <p className="text-xs text-muted-foreground">
             {t("users.profile.twoFactor.ssoBypassNotice")}
           </p>
@@ -323,7 +323,7 @@ export function TwoFactorSettings({
           </DialogHeader>
 
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+            <div className="rounded-md border border-destructive bg-destructive/10 p-3">
               <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
@@ -332,7 +332,7 @@ export function TwoFactorSettings({
             <div className="space-y-4 py-4">
               {setupData?.qrCode && (
                 <div className="flex flex-col items-center gap-4">
-                  <div className="bg-white p-2 rounded-lg">
+                  <div className="rounded-lg bg-white p-2">
                     <Image
                       src={setupData.qrCode}
                       alt="2FA QR Code"
@@ -341,10 +341,10 @@ export function TwoFactorSettings({
                     />
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">
+                    <p className="mb-1 text-xs text-muted-foreground">
                       {t("auth.twoFactorSetup.manualEntry")}
                     </p>
-                    <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
+                    <code className="rounded bg-muted px-2 py-1 font-mono text-sm">
                       {setupData.secret}
                     </code>
                   </div>
@@ -383,7 +383,7 @@ export function TwoFactorSettings({
                 {backupCodes.map((code, index) => (
                   <code
                     key={index}
-                    className="bg-muted px-3 py-2 rounded text-center font-mono text-sm"
+                    className="rounded bg-muted px-3 py-2 text-center font-mono text-sm"
                   >
                     {code}
                   </code>
@@ -448,7 +448,7 @@ export function TwoFactorSettings({
           </AlertDialogHeader>
 
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+            <div className="rounded-md border border-destructive bg-destructive/10 p-3">
               <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
@@ -462,7 +462,7 @@ export function TwoFactorSettings({
                 onChange={(e) =>
                   setDisableCode(e.target.value.toUpperCase().slice(0, 8))
                 }
-                className="text-center text-lg tracking-widest font-mono"
+                className="text-center font-mono text-lg tracking-widest"
                 autoComplete="one-time-code"
                 autoFocus
                 onKeyDown={(e) => {
@@ -497,7 +497,7 @@ export function TwoFactorSettings({
                 setDisableUseBackupCode(!disableUseBackupCode);
                 setDisableCode("");
               }}
-              className="text-xs text-primary hover:underline w-full text-center"
+              className="w-full text-center text-xs text-primary hover:underline"
             >
               {disableUseBackupCode
                 ? t("auth.twoFactorVerify.useAuthenticator")
@@ -517,7 +517,7 @@ export function TwoFactorSettings({
               }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isLoading && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
+              {isLoading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
               {t("users.profile.twoFactor.disable")}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -544,7 +544,7 @@ export function TwoFactorSettings({
           </DialogHeader>
 
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+            <div className="rounded-md border border-destructive bg-destructive/10 p-3">
               <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
@@ -576,7 +576,7 @@ export function TwoFactorSettings({
                 {newBackupCodes.map((code, index) => (
                   <code
                     key={index}
-                    className="bg-muted px-3 py-2 rounded text-center font-mono text-sm"
+                    className="rounded bg-muted px-3 py-2 text-center font-mono text-sm"
                   >
                     {code}
                   </code>

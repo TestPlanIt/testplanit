@@ -142,9 +142,9 @@ export const TestCaseDragPreview: React.FC<CustomDragLayerProps> = () => {
           <div
             style={getItemStyles(initialOffset, currentOffset)}
             // Apply Tailwind classes for background and appearance
-            className="bg-primary/20 border-primary border rounded-md shadow-md text-sm flex items-start gap-2 max-w-[400px]"
+            className="flex max-w-[400px] items-start gap-2 rounded-md border border-primary bg-primary/20 text-sm shadow-md"
           >
-            <ListChecks size={16} className="text-primary shrink-0" />
+            <ListChecks size={16} className="shrink-0 text-primary" />
             {/* Icon */}
             <span className="truncate">{displayName}</span>
           </div>

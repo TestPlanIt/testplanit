@@ -32,14 +32,14 @@ export function HelpPopover({
 
   const markdownComponents: Components = {
     h1: ({ node, ...props }) => (
-      <h1 className="text-xl font-semibold mt-2 mb-0 text-primary" {...props} />
+      <h1 className="mt-2 mb-0 text-xl font-semibold text-primary" {...props} />
     ),
     h2: ({ node, ...props }) => (
-      <h2 className="text-lg font-semibold mt-2 mb-0 text-primary" {...props} />
+      <h2 className="mt-2 mb-0 text-lg font-semibold text-primary" {...props} />
     ),
     h3: ({ node, ...props }) => (
       <h3
-        className="text-base font-semibold mt-1 mb-0 text-primary"
+        className="mt-1 mb-0 text-base font-semibold text-primary"
         {...props}
       />
     ),
@@ -47,10 +47,10 @@ export function HelpPopover({
       <p className="mb-3 text-sm text-foreground" {...props} />
     ),
     ul: ({ node, ...props }) => (
-      <ul className="list-disc ps-5 mb-3" {...props} />
+      <ul className="mb-3 list-disc ps-5" {...props} />
     ),
     ol: ({ node, ...props }) => (
-      <ol className="list-decimal ps-5 mb-3" {...props} />
+      <ol className="mb-3 list-decimal ps-5" {...props} />
     ),
     li: ({ node, ...props }) => <li className="mb-1 text-sm" {...props} />,
     a: ({ href, children }) => (
@@ -60,7 +60,7 @@ export function HelpPopover({
     ),
     pre: ({ node, children, ...props }) => (
       <pre
-        className="block bg-muted p-4 rounded text-sm font-mono overflow-x-auto my-3"
+        className="my-3 block overflow-x-auto rounded bg-muted p-4 font-mono text-sm"
         {...props}
       >
         {children}
@@ -68,7 +68,7 @@ export function HelpPopover({
     ),
     code: ({ node, className, children, ...props }: any) => (
       <code
-        className="bg-muted px-1 py-0.5 rounded text-sm font-mono"
+        className="rounded bg-muted px-1 py-0.5 font-mono text-sm"
         {...props}
       >
         {children}
@@ -76,13 +76,13 @@ export function HelpPopover({
     ),
     blockquote: ({ node, ...props }) => (
       <blockquote
-        className="border-s-4 border-border ps-4 italic my-3"
+        className="my-3 border-s-4 border-border ps-4 italic"
         {...props}
       />
     ),
-    hr: () => <hr className="border-t border-border my-4" />,
+    hr: () => <hr className="my-4 border-t border-border" />,
     table: ({ node, ...props }) => (
-      <table className="w-full border-collapse mb-4" {...props} />
+      <table className="mb-4 w-full border-collapse" {...props} />
     ),
     th: ({ node, ...props }) => (
       <th
@@ -118,7 +118,7 @@ export function HelpPopover({
         // side instead of running off the viewport. The wheel event stops
         // here: the content is portaled outside a dialog's tree, where the
         // dialog's scroll lock would otherwise swallow it (same as CommandList).
-        className="w-80 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
+        className="max-h-[var(--radix-popover-content-available-height)] w-80 overflow-y-auto"
         onWheel={(e) => e.stopPropagation()}
       >
         <div className="p-4">

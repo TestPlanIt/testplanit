@@ -116,7 +116,7 @@ export function RunCardinalityHardRefuseDialog({
           <p className="text-xs font-medium text-muted-foreground">
             {t("hardRefuseSuggestionsHeading")}
           </p>
-          <ul className="list-disc ps-6 text-sm space-y-1">
+          <ul className="list-disc space-y-1 ps-6 text-sm">
             <li>{t("hardRefuseSuggestion1")}</li>
             <li>{t("hardRefuseSuggestion2")}</li>
             <li>{t("hardRefuseSuggestion3")}</li>

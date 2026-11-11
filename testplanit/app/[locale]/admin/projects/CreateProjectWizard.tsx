@@ -1073,7 +1073,7 @@ export function CreateProjectWizard({
     switch (currentStep) {
       case WizardStep.PROJECT_DETAILS:
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
+          <div className="grid grid-cols-1 gap-4 p-1 md:grid-cols-2">
             {/* Left Column */}
             <div className="space-y-4">
               <FormField
@@ -1084,7 +1084,7 @@ export function CreateProjectWizard({
                     <FormLabel className="flex items-center">
                       {tCommon("name")}
                       <sup>
-                        <Asterisk className="w-3 h-3 text-destructive" />
+                        <Asterisk className="h-3 w-3 text-destructive" />
                       </sup>
                       <HelpPopover helpKey="project.name" />
                     </FormLabel>
@@ -1097,7 +1097,7 @@ export function CreateProjectWizard({
                       />
                     </FormControl>
                     {validationErrors.name && (
-                      <p className="text-destructive text-sm mt-1">
+                      <p className="mt-1 text-sm text-destructive">
                         {validationErrors.name}
                       </p>
                     )}
@@ -1122,7 +1122,7 @@ export function CreateProjectWizard({
                       />
                     </FormControl>
                     {validationErrors.iconUrl && (
-                      <p className="text-destructive text-sm mt-1">
+                      <p className="mt-1 text-sm text-destructive">
                         {validationErrors.iconUrl}
                       </p>
                     )}
@@ -1272,7 +1272,7 @@ export function CreateProjectWizard({
                           {t(getAccessHintKey() as any)}
                         </FormDescription>
                         {validationErrors.defaultRoleId && (
-                          <p className="text-destructive text-sm mt-1">
+                          <p className="mt-1 text-sm text-destructive">
                             {validationErrors.defaultRoleId}
                           </p>
                         )}
@@ -1287,14 +1287,14 @@ export function CreateProjectWizard({
                 control={control}
                 name="isCompleted"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 pt-4 border-t">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3 border-t pt-4">
                     <FormControl>
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="flex items-center mt-0!">
+                    <FormLabel className="mt-0! flex items-center">
                       {tCommon("fields.completed")}
                       <HelpPopover helpKey="project.completed" />
                     </FormLabel>
@@ -1318,7 +1318,7 @@ export function CreateProjectWizard({
 
       case WizardStep.TEMPLATES:
         return (
-          <div className="space-y-4 flex flex-col h-full">
+          <div className="flex h-full flex-col space-y-4">
             <Alert>
               <AlertDescription className="flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
@@ -1394,8 +1394,8 @@ export function CreateProjectWizard({
               </Select>
             </div>
 
-            <ScrollArea className="flex-1 border rounded-lg">
-              <div className="p-4 space-y-4">
+            <ScrollArea className="flex-1 rounded-lg border">
+              <div className="space-y-4 p-4">
                 {templates?.map((template) => {
                   const isSelected = localSelectedTemplates.includes(
                     template.id
@@ -1403,9 +1403,9 @@ export function CreateProjectWizard({
                   return (
                     <div
                       key={template.id}
-                      className={`border rounded-lg p-4 transition-colors ${
+                      className={`rounded-lg border p-4 transition-colors ${
                         template.isDefault
-                          ? "opacity-60 cursor-not-allowed"
+                          ? "cursor-not-allowed opacity-60"
                           : "cursor-pointer"
                       } ${
                         isSelected
@@ -1421,7 +1421,7 @@ export function CreateProjectWizard({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            className={`flex h-5 w-5 items-center justify-center rounded border-2 ${
                               isSelected
                                 ? template.isDefault
                                   ? "border-primary/50 bg-primary/50"
@@ -1430,7 +1430,7 @@ export function CreateProjectWizard({
                             }`}
                           >
                             {isSelected && (
-                              <Check className="w-3 h-3 text-primary-foreground" />
+                              <Check className="h-3 w-3 text-primary-foreground" />
                             )}
                           </div>
                           <div className="text-base font-semibold">
@@ -1451,7 +1451,7 @@ export function CreateProjectWizard({
                           </Badge>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-3">
+                      <div className="mt-3 flex flex-wrap gap-2">
                         {template.caseFields.slice(0, 5).map((cf) => (
                           <Badge key={cf.caseFieldId} variant="outline">
                             {cf.caseField.displayName}
@@ -1496,11 +1496,11 @@ export function CreateProjectWizard({
             <div className="space-y-4">
               {/* Workflows Section - Grouped by Scope */}
               <div className="space-y-4">
-                <Label className="text-base flex items-center gap-2">
+                <Label className="flex items-center gap-2 text-base">
                   <Workflow className="h-4 w-4" />
                   {t("common.labels.workflows")}
                   <sup>
-                    <Asterisk className="w-3 h-3 text-destructive" />
+                    <Asterisk className="h-3 w-3 text-destructive" />
                   </sup>
                 </Label>
 
@@ -1508,7 +1508,7 @@ export function CreateProjectWizard({
                 {workflows?.some((w) => w.scope === WorkflowScope.CASES) && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-sm flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-sm">
                         <ListChecks className="h-4 w-4" />
                         {tCommon("fields.testCases")}
                       </CardTitle>
@@ -1520,7 +1520,7 @@ export function CreateProjectWizard({
                           .map((workflow) => (
                             <div
                               key={workflow.id}
-                              className="flex items-center justify-between p-2 border rounded hover:bg-muted/50"
+                              className="flex items-center justify-between rounded border p-2 hover:bg-muted/50"
                             >
                               <div className="flex items-center gap-3">
                                 <Checkbox
@@ -1559,7 +1559,7 @@ export function CreateProjectWizard({
                 {workflows?.some((w) => w.scope === WorkflowScope.RUNS) && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-sm flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-sm">
                         <PlayCircle className="h-4 w-4" />
                         {tCommon("fields.testRuns")}
                       </CardTitle>
@@ -1571,7 +1571,7 @@ export function CreateProjectWizard({
                           .map((workflow) => (
                             <div
                               key={workflow.id}
-                              className="flex items-center justify-between p-2 border rounded hover:bg-muted/50"
+                              className="flex items-center justify-between rounded border p-2 hover:bg-muted/50"
                             >
                               <div className="flex items-center gap-3">
                                 <Checkbox
@@ -1610,7 +1610,7 @@ export function CreateProjectWizard({
                 {workflows?.some((w) => w.scope === WorkflowScope.SESSIONS) && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-sm flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-sm">
                         <Compass className="h-4 w-4" />
                         {t("common.fields.sessions")}
                       </CardTitle>
@@ -1622,7 +1622,7 @@ export function CreateProjectWizard({
                           .map((workflow) => (
                             <div
                               key={workflow.id}
-                              className="flex items-center justify-between p-2 border rounded hover:bg-muted/50"
+                              className="flex items-center justify-between rounded border p-2 hover:bg-muted/50"
                             >
                               <div className="flex items-center gap-3">
                                 <Checkbox
@@ -1660,11 +1660,11 @@ export function CreateProjectWizard({
 
               {/* Statuses Section */}
               <div className="space-y-2">
-                <Label className="text-base flex items-center gap-2">
+                <Label className="flex items-center gap-2 text-base">
                   <CircleCheckBig className="h-4 w-4" />
                   {t("admin.projects.wizard.labels.statuses")}
                   <sup>
-                    <Asterisk className="w-3 h-3 text-destructive" />
+                    <Asterisk className="h-3 w-3 text-destructive" />
                   </sup>
                 </Label>
                 <div className="space-y-2">
@@ -1692,7 +1692,7 @@ export function CreateProjectWizard({
 
               {/* Milestone Types Section */}
               <div className="space-y-2">
-                <Label className="text-base flex items-center gap-2">
+                <Label className="flex items-center gap-2 text-base">
                   <Milestone className="h-4 w-4" />
                   {t("common.fields.milestoneTypes")}
                 </Label>
@@ -1736,7 +1736,7 @@ export function CreateProjectWizard({
 
               {/* Configurations Section */}
               <div className="space-y-2">
-                <Label className="text-base flex items-center gap-2">
+                <Label className="flex items-center gap-2 text-base">
                   <Combine className="h-4 w-4" />
                   {tCommon("fields.configurations")}
                 </Label>
@@ -1784,7 +1784,7 @@ export function CreateProjectWizard({
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <Label className="text-sm font-medium flex items-center gap-2">
+                    <Label className="flex items-center gap-2 text-sm font-medium">
                       <ScrollText className="h-4 w-4" />
                       {t("projects.settings.quickScript.enableLabel")}
                     </Label>
@@ -1814,7 +1814,7 @@ export function CreateProjectWizard({
                 {integrations && integrations.length > 0 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-base">
                         <ExternalLink className="h-4 w-4" />
                         {t("admin.projects.wizard.labels.issueTrackers")}
                       </CardTitle>
@@ -1822,7 +1822,7 @@ export function CreateProjectWizard({
                     <CardContent>
                       <div className="space-y-2">
                         <div
-                          className={`flex items-center p-3 border rounded cursor-pointer transition-colors ${
+                          className={`flex cursor-pointer items-center rounded border p-3 transition-colors ${
                             selectedIntegration === null
                               ? "border-primary bg-primary/5"
                               : "hover:bg-muted/50"
@@ -1831,14 +1831,14 @@ export function CreateProjectWizard({
                         >
                           <div className="flex items-center gap-3">
                             <div
-                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                              className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
                                 selectedIntegration === null
                                   ? "border-primary"
                                   : "border-gray-300"
                               }`}
                             >
                               {selectedIntegration === null && (
-                                <div className="w-2 h-2 rounded-full bg-primary" />
+                                <div className="h-2 w-2 rounded-full bg-primary" />
                               )}
                             </div>
                             <Label className="text-muted-foreground">
@@ -1852,7 +1852,7 @@ export function CreateProjectWizard({
                           return (
                             <div
                               key={integration.id}
-                              className={`flex items-center justify-between p-3 border rounded cursor-pointer transition-colors ${
+                              className={`flex cursor-pointer items-center justify-between rounded border p-3 transition-colors ${
                                 isSelected
                                   ? "border-primary bg-primary/5"
                                   : "hover:bg-muted/50"
@@ -1861,14 +1861,14 @@ export function CreateProjectWizard({
                             >
                               <div className="flex items-center gap-3">
                                 <div
-                                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                  className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
                                     isSelected
                                       ? "border-primary"
                                       : "border-gray-300"
                                   }`}
                                 >
                                   {isSelected && (
-                                    <div className="w-2 h-2 rounded-full bg-primary" />
+                                    <div className="h-2 w-2 rounded-full bg-primary" />
                                   )}
                                 </div>
                                 <Label>{integration.name}</Label>
@@ -1889,7 +1889,7 @@ export function CreateProjectWizard({
                 {llmIntegrations && llmIntegrations.length > 0 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-base">
                         <Bot className="h-4 w-4" />
                         {tCommon("pageTitles.aiModels")}
                       </CardTitle>
@@ -1900,7 +1900,7 @@ export function CreateProjectWizard({
                     <CardContent>
                       <div className="space-y-2">
                         <div
-                          className={`flex items-center p-3 border rounded cursor-pointer transition-colors ${
+                          className={`flex cursor-pointer items-center rounded border p-3 transition-colors ${
                             selectedLlmIntegration === null
                               ? "border-primary bg-primary/5"
                               : "hover:bg-muted/50"
@@ -1911,14 +1911,14 @@ export function CreateProjectWizard({
                         >
                           <div className="flex items-center gap-3">
                             <div
-                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                              className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
                                 selectedLlmIntegration === null
                                   ? "border-primary"
                                   : "border-gray-300"
                               }`}
                             >
                               {selectedLlmIntegration === null && (
-                                <div className="w-2 h-2 rounded-full bg-primary" />
+                                <div className="h-2 w-2 rounded-full bg-primary" />
                               )}
                             </div>
                             <Label className="text-muted-foreground">
@@ -1932,7 +1932,7 @@ export function CreateProjectWizard({
                           return (
                             <div
                               key={llmIntegration.id}
-                              className={`flex items-center justify-between p-3 border rounded cursor-pointer transition-colors ${
+                              className={`flex cursor-pointer items-center justify-between rounded border p-3 transition-colors ${
                                 isSelected
                                   ? "border-primary bg-primary/5"
                                   : "hover:bg-muted/50"
@@ -1943,14 +1943,14 @@ export function CreateProjectWizard({
                             >
                               <div className="flex items-center gap-3">
                                 <div
-                                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                  className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
                                     isSelected
                                       ? "border-primary"
                                       : "border-gray-300"
                                   }`}
                                 >
                                   {isSelected && (
-                                    <div className="w-2 h-2 rounded-full bg-primary" />
+                                    <div className="h-2 w-2 rounded-full bg-primary" />
                                   )}
                                 </div>
                                 <div>
@@ -1988,7 +1988,7 @@ export function CreateProjectWizard({
             <div className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <Shield className="h-4 w-4" />
                     {tCommon("fields.users")}
                   </CardTitle>
@@ -2014,7 +2014,7 @@ export function CreateProjectWizard({
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <Building className="h-4 w-4" />
                     {tCommon("fields.groups")}
                   </CardTitle>
@@ -2056,7 +2056,7 @@ export function CreateProjectWizard({
       }}
     >
       <DialogContent
-        className="sm:max-w-[900px] lg:max-w-[1200px] h-[90vh] flex flex-col overflow-hidden"
+        className="flex h-[90vh] flex-col overflow-hidden sm:max-w-[900px] lg:max-w-[1200px]"
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           setFocus("name");
@@ -2080,7 +2080,7 @@ export function CreateProjectWizard({
                 e.preventDefault();
               }
             }}
-            className="flex flex-col flex-1 min-h-0 mt-4"
+            className="mt-4 flex min-h-0 flex-1 flex-col"
           >
             <DialogHeader className="mb-4">
               <DialogTitle className="flex items-center gap-2">
@@ -2093,7 +2093,7 @@ export function CreateProjectWizard({
             </DialogHeader>
 
             {/* Progress indicator */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="mb-4 flex items-center gap-2">
               {stepTitles.map((_, index) => {
                 const Icon = stepIcons[index];
                 const isClickable = index <= currentStep;
@@ -2103,23 +2103,23 @@ export function CreateProjectWizard({
                       type="button"
                       onClick={() => isClickable && setCurrentStep(index)}
                       disabled={!isClickable}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                      className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${
                         index < currentStep
-                          ? "bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90"
+                          ? "cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
                           : index === currentStep
-                            ? "bg-primary/10 text-primary border-2 border-primary cursor-pointer"
-                            : "bg-muted text-muted-foreground cursor-not-allowed"
+                            ? "cursor-pointer border-2 border-primary bg-primary/10 text-primary"
+                            : "cursor-not-allowed bg-muted text-muted-foreground"
                       }`}
                     >
                       {index < currentStep ? (
-                        <CheckCircle2 className="w-5 h-5" />
+                        <CheckCircle2 className="h-5 w-5" />
                       ) : (
-                        <Icon className="w-5 h-5" />
+                        <Icon className="h-5 w-5" />
                       )}
                     </button>
                     {index < stepTitles.length - 1 && (
                       <div
-                        className={`w-12 h-0.5 mx-2 ${
+                        className={`mx-2 h-0.5 w-12 ${
                           index < currentStep ? "bg-primary" : "bg-muted"
                         }`}
                       />
@@ -2129,15 +2129,15 @@ export function CreateProjectWizard({
               })}
             </div>
 
-            <div className="text-sm text-muted-foreground mb-2">
+            <div className="mb-2 text-sm text-muted-foreground">
               {t(stepTitles[currentStep] as any)}
             </div>
 
-            <ScrollArea className="flex-1 min-h-0 pe-4 *:data-radix-scroll-area-viewport:max-h-[calc(90vh-280px)]">
+            <ScrollArea className="min-h-0 flex-1 pe-4 *:data-radix-scroll-area-viewport:max-h-[calc(90vh-280px)]">
               {renderStepContent()}
             </ScrollArea>
 
-            <DialogFooter className="flex items-center justify-between shrink-0 pt-4">
+            <DialogFooter className="flex shrink-0 items-center justify-between pt-4">
               <div className="flex items-center gap-2">
                 {currentStep > WizardStep.PROJECT_DETAILS && (
                   <Button

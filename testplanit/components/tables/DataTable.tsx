@@ -321,7 +321,7 @@ function HeadCellContent({
       <ArrowDownUp className="h-4 w-4" aria-label={t("sortNone")} />
     );
   return (
-    <div className="flex gap-2 items-center justify-between relative h-full">
+    <div className="relative flex h-full items-center justify-between gap-2">
       <div className="flex items-center gap-1 whitespace-nowrap">
         {dragHandle}
         {header.column.getCanGroup() && onGroupingChange ? (
@@ -355,7 +355,7 @@ function HeadCellContent({
               <div
                 role="button"
                 tabIndex={0}
-                className="flex items-center gap-1 whitespace-nowrap cursor-pointer outline-none"
+                className="flex cursor-pointer items-center gap-1 whitespace-nowrap outline-none"
               >
                 {flexRender(
                   header.column.columnDef.header,
@@ -413,7 +413,7 @@ function HeadCellContent({
           // vertical padding so it spans the full row height; `z-20` lifts it
           // above adjacent (including pinned) cells; the visible 1px line stays
           // centred on the boundary and highlights on hover.
-          className="group/resize absolute end-[-15px] -top-2 z-20 flex h-[calc(100%+1rem)] w-3.5 cursor-col-resize touch-none select-none justify-center"
+          className="group/resize absolute end-[-15px] -top-2 z-20 flex h-[calc(100%+1rem)] w-3.5 cursor-col-resize touch-none justify-center select-none"
           aria-label={t("resize")}
         >
           <div
@@ -993,7 +993,7 @@ function PagedTable<TData extends DataRow, TValue>({
 
   const tableElement = (
     <div
-      className="flex flex-col overflow-x-auto rounded-lg border-2 border-primary/10 w-fit max-w-full"
+      className="flex w-fit max-w-full flex-col overflow-x-auto rounded-lg border-2 border-primary/10"
       style={{
         scrollPaddingInlineStart: leftPinnedWidth
           ? `${leftPinnedWidth}px`
@@ -1013,7 +1013,7 @@ function PagedTable<TData extends DataRow, TValue>({
         // getSize() and can't be dragged narrower — intermittently, since it
         // depends on reflow timing. Fixed layout makes widths deterministic and
         // lets the cell overflow-hidden wrappers truncate.
-        className="caption-bottom text-sm w-full table-fixed border-separate border-spacing-y-0"
+        className="w-full table-fixed caption-bottom border-separate border-spacing-y-0 text-sm"
         data-testid="case-table"
       >
         <TableHeader className="[&_tr]:border-b">
@@ -1201,7 +1201,7 @@ function PagedTable<TData extends DataRow, TValue>({
                     data-state={row.getIsSelected() ? "selected" : undefined}
                     className={`${onTestCaseClick ? "cursor-pointer" : "cursor-default"} ${tableStyles.rowDivider} ${
                       isSelected
-                        ? "bg-primary/20 hover:bg-primary/30 border-4 border-primary"
+                        ? "border-4 border-primary bg-primary/20 hover:bg-primary/30"
                         : isSubRow
                           ? tableStyles.rowSurfaceNested
                           : isGrouped
@@ -1239,7 +1239,7 @@ function PagedTable<TData extends DataRow, TValue>({
                           className={`${tableStyles.cell} px-2 ${
                             column.getIsPinned()
                               ? isSelected
-                                ? "shadow-md bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))]"
+                                ? "bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))] shadow-md"
                                 : `shadow-md ${isSubRow ? "table-row-surface-nested" : "table-row-surface"}`
                               : isSelected
                                 ? "bg-primary/20"

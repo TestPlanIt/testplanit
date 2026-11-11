@@ -49,7 +49,7 @@ function AuthCompleteContent() {
             {success ? t("successDescription") : t("errorDescription")}
           </p>
           {error && (
-            <p className="text-xs text-muted-foreground font-mono break-all">
+            <p className="font-mono text-xs break-all text-muted-foreground">
               {error}
             </p>
           )}

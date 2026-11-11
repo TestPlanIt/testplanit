@@ -157,7 +157,7 @@ export function WebhookDeliveryDrawer({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="max-w-3xl max-h-[80vh] overflow-hidden"
+          className="max-h-[80vh] max-w-3xl overflow-hidden"
           data-testid="webhook-delivery-drawer"
         >
           <DialogHeader>
@@ -176,13 +176,13 @@ export function WebhookDeliveryDrawer({
           ) : (
             <div className="max-h-[60vh] overflow-y-auto pe-4">
               <div className="space-y-4 py-2 text-sm">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="overflow-hidden">
                     <label className="text-sm font-medium text-muted-foreground">
                       {t("drawerLabelEvent")}
                     </label>
                     <p
-                      className="text-sm font-mono truncate"
+                      className="truncate font-mono text-sm"
                       data-testid="webhook-drawer-event-type"
                     >
                       {(() => {
@@ -198,7 +198,7 @@ export function WebhookDeliveryDrawer({
                       {t("drawerLabelSubjectRef")}
                     </label>
                     <p
-                      className="text-sm font-mono truncate"
+                      className="truncate font-mono text-sm"
                       data-testid="webhook-drawer-subject-ref"
                     >
                       {delivery.subjectRef ?? "—"}
@@ -288,7 +288,7 @@ export function WebhookDeliveryDrawer({
                     </label>
                     <code
                       data-testid="webhook-drawer-event-id"
-                      className="block break-all font-mono text-xs"
+                      className="block font-mono text-xs break-all"
                     >
                       {delivery.eventId ?? "—"}
                     </code>
@@ -303,7 +303,7 @@ export function WebhookDeliveryDrawer({
                       </label>
                       <code
                         data-testid="webhook-drawer-payload-digest"
-                        className="block break-all font-mono text-xs"
+                        className="block font-mono text-xs break-all"
                       >
                         {delivery.payloadDigest ?? "—"}
                       </code>

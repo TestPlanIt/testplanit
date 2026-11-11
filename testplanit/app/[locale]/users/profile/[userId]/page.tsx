@@ -540,7 +540,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
           <Card className="overflow-hidden">
             {/* Header Section with Avatar and Basic Info */}
             <CardHeader className="bg-linear-to-r from-muted/50 to-background">
-              <div className="flex flex-col sm:flex-row gap-6">
+              <div className="flex flex-col gap-6 sm:flex-row">
                 {/* Avatar Section */}
                 <div className="relative flex flex-col items-center space-y-4">
                   <div className="relative">
@@ -552,7 +552,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       height={160}
                     />
                     {user.image && user?.id === session?.user?.id && (
-                      <div className="absolute -top-2 -end-2">
+                      <div className="absolute -end-2 -top-2">
                         <RemoveAvatar user={user} />
                       </div>
                     )}
@@ -578,8 +578,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
                 {/* User Info and Actions */}
                 <div className="flex-1 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div className="space-y-2 flex-1">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex-1 space-y-2">
                       {!isEditing ? (
                         <>
                           <CardTitle className="text-2xl text-primary">
@@ -671,9 +671,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                     {user?.id === session?.user?.id && (
                       <div className="flex gap-2">
                         {!isEditing ? (
-                          <div className="flex flex-col gap-2 items-end">
+                          <div className="flex flex-col items-end gap-2">
                             <Button onClick={() => setIsEditing(true)}>
-                              <PenSquare className="w-4 h-4" />
+                              <PenSquare className="h-4 w-4" />
                               {tEdit("title")}
                             </Button>
                             {(user?.authMethod === "INTERNAL" ||
@@ -683,7 +683,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                   variant="destructive"
                                   onClick={() => setChangePasswordOpen(true)}
                                 >
-                                  <UserLock className="w-4 h-4" />
+                                  <UserLock className="h-4 w-4" />
                                   {tCommon("pageTitles.changePassword")}
                                 </Button>
                                 {changePasswordOpen && (
@@ -710,7 +710,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                               onClick={handleCancelEdit}
                               disabled={isSubmitting}
                             >
-                              <X className="w-4 h-4" />
+                              <X className="h-4 w-4" />
                               {tCommon("cancel")}
                             </Button>
                             <Button
@@ -718,7 +718,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                               onClick={form.handleSubmit(onSubmit)}
                               disabled={isSubmitting}
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="h-4 w-4" />
                               {isSubmitting
                                 ? tCommon("actions.submitting")
                                 : tCommon("actions.submit")}
@@ -750,7 +750,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         value="account"
                         data-testid="profile-section-account"
                       >
-                        <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                        <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                           {tCommon("fields.account")}
                         </AccordionTrigger>
                         <AccordionContent>
@@ -837,7 +837,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       value="assignments"
                       data-testid="profile-section-assignments"
                     >
-                      <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                      <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                         {t("assignments.title")}
                       </AccordionTrigger>
                       <AccordionContent>
@@ -855,11 +855,11 @@ const UserProfile: React.FC<UserProfileProps> = ({
                             value="directory"
                             data-testid="profile-section-directory"
                           >
-                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                            <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                               {tDirectory("title")}
                             </AccordionTrigger>
                             <AccordionContent>
-                              <div className="px-4 space-y-3">
+                              <div className="space-y-3 px-4">
                                 <p className="text-sm text-muted-foreground">
                                   {tDirectory("subtitle")}
                                 </p>
@@ -948,7 +948,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                         <span className="text-sm">
                                           {row.label}
                                         </span>
-                                        <span className="text-sm text-end break-all">
+                                        <span className="text-end text-sm break-all">
                                           {row.value}
                                         </span>
                                       </div>
@@ -962,13 +962,13 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
                         {/* Access — Projects + Groups */}
                         <AccordionItem value="access">
-                          <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                          <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                             {tCommon("fields.access")}
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="px-4 space-y-6">
+                            <div className="space-y-6 px-4">
                               <div>
-                                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
+                                <h4 className="mb-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">
                                   {tCommon("fields.projects")}
                                 </h4>
                                 <ProjectListDisplay
@@ -978,7 +978,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                 />
                               </div>
                               <div>
-                                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
+                                <h4 className="mb-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">
                                   {tCommon("fields.groups")}
                                 </h4>
                                 <GroupListDisplay
@@ -993,7 +993,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         {/* User Preferences - if viewing own profile */}
                         {user.userPreferences && (
                           <AccordionItem value="preferences">
-                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                            <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                               {t("preferences.title")}
                             </AccordionTrigger>
                             <AccordionContent>
@@ -1133,7 +1133,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                         </span>
                                         <Link
                                           href={`/users/profile/${user.id}/alerts`}
-                                          className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1"
+                                          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                                           data-testid="profile-preferences-alerts-link"
                                         >
                                           <BellRing className="h-3.5 w-3.5" />
@@ -1145,7 +1145,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                 </div>
                               ) : (
                                 <Form {...form}>
-                                  <div className="grid gap-4 sm:grid-cols-2 px-4">
+                                  <div className="grid gap-4 px-4 sm:grid-cols-2">
                                     <FormField
                                       control={form.control}
                                       name="theme"
@@ -1523,7 +1523,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         {/* API Tokens - Only for own profile and if user has API access */}
                         {user?.id === session?.user?.id && user.isApi && (
                           <AccordionItem value="api-tokens">
-                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                            <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                               {tGlobal("admin.menu.apiTokens")}
                             </AccordionTrigger>
                             <AccordionContent>
@@ -1540,7 +1540,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
                         {/* User Activity Statistics */}
                         <AccordionItem value="activity">
-                          <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                          <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                             {tCommon("fields.activity")}
                           </AccordionTrigger>
                           <AccordionContent>
@@ -1632,7 +1632,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                             data-testid="profile-section-trash"
                           >
                             <AccordionTrigger
-                              className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline"
+                              className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline"
                               data-testid="profile-trash-trigger"
                             >
                               {tGlobal("admin.menu.trash")}
@@ -1648,7 +1648,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         {/* Audit Log — own profile or admin only */}
                         {(isOwnProfile || isAdmin) && (
                           <AccordionItem value="auditLog">
-                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                            <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                               {t("auditLog.title")}
                             </AccordionTrigger>
                             <AccordionContent>
@@ -1661,7 +1661,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
                         {/* Account History */}
                         <AccordionItem value="history">
-                          <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                          <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                             {tCommon("fields.accountHistory")}
                           </AccordionTrigger>
                           <AccordionContent>
@@ -1751,7 +1751,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         {/* My Comments - Only for own profile */}
                         {user?.id === session?.user?.id && (
                           <AccordionItem value="mentions">
-                            <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                            <AccordionTrigger className="text-sm font-medium tracking-wide text-muted-foreground uppercase hover:no-underline">
                               {t("myComments.title")}
                             </AccordionTrigger>
                             <AccordionContent>

@@ -1882,7 +1882,7 @@ export default function TestRunPage() {
     if (!isValidProjectId || testRunData?.isDeleted) {
       router.push(`/projects/runs/${projectId}`);
       return (
-        <div className="text-muted-foreground text-center p-4">
+        <div className="p-4 text-center text-muted-foreground">
           {t("runs.notFound")}
         </div>
       );
@@ -1892,7 +1892,7 @@ export default function TestRunPage() {
     if (!testRunData) {
       router.push(`/projects/runs/${projectId}`);
       return (
-        <div className="text-muted-foreground text-center p-4">
+        <div className="p-4 text-center text-muted-foreground">
           {t("runs.notFound")}
         </div>
       );
@@ -1943,7 +1943,7 @@ export default function TestRunPage() {
                     />
                   </div>
                 ) : (
-                  <div className="h-[150px] flex items-center justify-center bg-muted rounded-md">
+                  <div className="flex h-[150px] items-center justify-center rounded-md bg-muted">
                     <Loading />
                   </div>
                 )}
@@ -1982,7 +1982,7 @@ export default function TestRunPage() {
                     />
                   </div>
                 ) : (
-                  <div className="h-[250px] flex items-center justify-center bg-muted rounded-md">
+                  <div className="flex h-[250px] items-center justify-center rounded-md bg-muted">
                     <Loading />
                   </div>
                 )}
@@ -2003,7 +2003,7 @@ export default function TestRunPage() {
 
   return (
     <Card
-      className={`group-hover:bg-accent/50 transition-colors ${testRunData?.isCompleted ? "bg-muted-foreground/20 border-muted-foreground" : ""}`}
+      className={`transition-colors group-hover:bg-accent/50 ${testRunData?.isCompleted ? "border-muted-foreground bg-muted-foreground/20" : ""}`}
     >
       {isSubmitting && <LoadingSpinnerAlert />}
       {isFormLoading && <LoadingSpinnerAlert />}
@@ -2031,7 +2031,7 @@ export default function TestRunPage() {
           <CardHeader>
             <div
               ref={headerRef}
-              className="flex justify-between items-center gap-2"
+              className="flex items-center justify-between gap-2"
             >
               {!isEditMode && (
                 <div className="me-2">
@@ -2042,7 +2042,7 @@ export default function TestRunPage() {
                   </Link>
                 </div>
               )}
-              <CardTitle className="flex-1 pe-4 text-xl md:text-2xl me-4">
+              <CardTitle className="me-4 flex-1 pe-4 text-xl md:text-2xl">
                 {isEditMode ? (
                   <FormField
                     control={form.control}
@@ -2052,7 +2052,7 @@ export default function TestRunPage() {
                         <FormControl>
                           <Textarea
                             {...field}
-                            className="text-xl md:text-2xl me-4"
+                            className="me-4 text-xl md:text-2xl"
                             readOnly={!canAddEditRun}
                           />
                         </FormControl>
@@ -2089,7 +2089,7 @@ export default function TestRunPage() {
                 )}
                 <ActionBar
                   compact={headerCompact}
-                  className="items-end gap-2 flex-wrap"
+                  className="flex-wrap items-end gap-2"
                 >
                   {testRunData?.isCompleted ? (
                     <div className="flex flex-col items-end gap-1">
@@ -2098,7 +2098,7 @@ export default function TestRunPage() {
                           header is narrow. */}
                       <Badge
                         variant="secondary"
-                        className="flex items-center whitespace-nowrap text-xs gap-1 p-2 px-4"
+                        className="flex items-center gap-1 p-2 px-4 text-xs whitespace-nowrap"
                       >
                         <CircleCheckBig className="h-4 w-4 shrink-0" />
                         <span>{t("common.fields.completed")}</span>
@@ -2340,7 +2340,7 @@ export default function TestRunPage() {
                                           <LockOpen className="h-4 w-4 shrink-0" />
                                         )}
                                         {!headerCompact && (
-                                          <span className="whitespace-nowrap text-sm">
+                                          <span className="text-sm whitespace-nowrap">
                                             {compositionLocked
                                               ? t("runs.composition.lock")
                                               : t("runs.composition.unlocked")}
@@ -2503,7 +2503,7 @@ export default function TestRunPage() {
                     : ""
                 }
               >
-                <div className="flex flex-col h-full p-4">
+                <div className="flex h-full flex-col p-4">
                   <div className="space-y-4">
                     {isJUnitRun ? (
                       <>
@@ -2634,7 +2634,7 @@ export default function TestRunPage() {
                         onClick={toggleCollapseRight}
                         variant="secondary"
                         size="sm"
-                        className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
+                        className={`transform p-0 ${isCollapsedRight ? "rounded-s-none" : "rotate-180 rounded-e-none"}`}
                       >
                         <ChevronLeft />
                       </Button>
@@ -2665,7 +2665,7 @@ export default function TestRunPage() {
                     : ""
                 }
               >
-                <div className="p-4 space-y-4">
+                <div className="space-y-4 p-4">
                   {isJUnitRun ? (
                     <JunitChartsPanel
                       t={t}
@@ -2723,7 +2723,7 @@ export default function TestRunPage() {
                           if (!open) setZoomedChart(null);
                         }}
                       >
-                        <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
+                        <DialogContent className="flex h-[80vh] max-w-[80vw] flex-col p-0 sm:p-6">
                           <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
                             <DialogTitle>
                               {tCommon("ui.charts.resultsDistribution")}
@@ -2731,10 +2731,10 @@ export default function TestRunPage() {
                           </DialogHeader>
                           <div className="flex-1 overflow-auto p-4 sm:p-0">
                             <div
-                              className="flex-1 w-full h-full"
+                              className="h-full w-full flex-1"
                               style={{ minHeight: 600 }}
                             >
-                              <div className="w-full h-full flex items-center justify-center">
+                              <div className="flex h-full w-full items-center justify-center">
                                 <TestRunResultsDonut
                                   data={donutChartData}
                                   isZoomed
@@ -2839,17 +2839,17 @@ export default function TestRunPage() {
         open={isRemoveCasesDialogOpen}
         onOpenChange={setIsRemoveCasesDialogOpen}
       >
-        <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
+        <AlertDialogContent className="border-destructive sm:max-w-[425px] lg:max-w-[400px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <TriangleAlert className="w-6 h-6 me-2" />
+              <TriangleAlert className="me-2 h-6 w-6" />
               {t("runs.removeCasesDialog.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t("runs.removeCasesDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="bg-destructive text-destructive-foreground p-2">
+          <div className="bg-destructive p-2 text-destructive-foreground">
             {t("runs.removeCasesDialog.warning")}
           </div>
           <AlertDialogFooter>
@@ -2875,7 +2875,7 @@ export default function TestRunPage() {
             the repository details view (plain background), so the
             primary-header styling is dropped to keep the X visible. */}
         <SheetContent
-          className={`sm:max-w-4xl w-full p-0 [&>button]:z-30 [&>button]:opacity-100 ${
+          className={`w-full p-0 sm:max-w-4xl [&>button]:z-30 [&>button]:opacity-100 ${
             editingSelectedCase
               ? ""
               : "test-run-details-sheet [&>button]:text-primary-foreground"

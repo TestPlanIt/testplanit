@@ -19,7 +19,7 @@ const Slider = React.forwardRef<
     <SliderPrimitive.Root
       ref={ref}
       className={cn(
-        "relative flex w-full touch-none select-none items-center",
+        "relative flex w-full touch-none items-center select-none",
         className
       )}
       {...props}
@@ -32,7 +32,7 @@ const Slider = React.forwardRef<
       <SliderPrimitive.Thumb
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledby}
-        className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+        className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
       />
     </SliderPrimitive.Root>
   )

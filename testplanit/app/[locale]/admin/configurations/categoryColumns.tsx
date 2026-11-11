@@ -187,7 +187,7 @@ export const useColumns = (
                   onCheckedChange={() =>
                     onToggleVariant(data.id, data.isEnabled)
                   }
-                  className="w-8 h-4"
+                  className="h-4 w-8"
                   aria-label={data.name}
                 />
                 <span className={data.isEnabled ? "" : "text-muted-foreground"}>
@@ -215,13 +215,13 @@ export const useColumns = (
             return (
               <Button
                 variant="link"
-                className="ps-6 h-auto p-0 text-sm"
+                className="h-auto p-0 text-sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   onAddVariantClick(data.categoryId);
                 }}
               >
-                <PlusCircle className="w-4 h-4" />
+                <PlusCircle className="h-4 w-4" />
                 {tCommon("fields.placeholders.addVariant")}
               </Button>
             );
@@ -259,7 +259,7 @@ export const useColumns = (
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Badge>
-                    <Component className="w-4 h-4 me-1" />
+                    <Component className="me-1 h-4 w-4" />
                     {data.variants.length}
                   </Badge>
                 </PopoverTrigger>
@@ -267,9 +267,9 @@ export const useColumns = (
                   {data.variants.map((variant) => (
                     <Badge key={variant.id}>
                       {variant.isEnabled ? (
-                        <CircleCheckBig className="w-4 h-4" />
+                        <CircleCheckBig className="h-4 w-4" />
                       ) : (
-                        <CircleSlash2 className="w-4 h-4 text-destructive" />
+                        <CircleSlash2 className="h-4 w-4 text-destructive" />
                       )}
                       <span className="ms-1">{variant.name}</span>
                     </Badge>
@@ -303,7 +303,7 @@ export const useColumns = (
 
           return (
             <div
-              className="whitespace-nowrap flex justify-center gap-1"
+              className="flex justify-center gap-1 whitespace-nowrap"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -311,7 +311,7 @@ export const useColumns = (
             >
               <Button
                 variant="ghost"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={onEdit}
                 aria-label={tCommon("actions.edit")}
               >
@@ -319,7 +319,7 @@ export const useColumns = (
               </Button>
               <Button
                 variant="destructive"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={onDelete}
                 aria-label={tCommon("actions.delete")}
               >

@@ -241,7 +241,7 @@ export function OverrideValuesDialog({
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent
-          className="sm:max-w-lg p-6"
+          className="p-6 sm:max-w-lg"
           data-testid="override-values-dialog"
         >
           <DialogHeader>
@@ -278,11 +278,11 @@ export function OverrideValuesDialog({
                     <div className="flex items-baseline justify-between">
                       <label
                         htmlFor={fieldId}
-                        className="text-xs font-medium font-mono"
+                        className="font-mono text-xs font-medium"
                       >
                         {`@${p.name}`}
                         {sensitive && (
-                          <span className="text-muted-foreground ms-1 font-sans">
+                          <span className="ms-1 font-sans text-muted-foreground">
                             {`(${t("formSensitive").toLowerCase()})`}
                           </span>
                         )}

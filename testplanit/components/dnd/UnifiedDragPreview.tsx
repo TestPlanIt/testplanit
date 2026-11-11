@@ -143,14 +143,14 @@ export const UnifiedDragPreview: React.FC = () => {
           <div
             ref={previewRef}
             style={getItemStyles(initialOffset, currentOffset)}
-            className="bg-primary/20 border-primary border rounded-md shadow-md text-sm flex items-start gap-2 max-w-[400px] relative"
+            className="relative flex max-w-[400px] items-start gap-2 rounded-md border border-primary bg-primary/20 text-sm shadow-md"
           >
-            <ListChecks size={16} className="text-primary shrink-0" />
+            <ListChecks size={16} className="shrink-0 text-primary" />
             <span className="truncate">{displayName}</span>
             {isOverReorderZone ? (
               <div
                 data-testid="drag-preview-reorder-badge"
-                className="absolute -top-2 -end-2 rounded-full bg-primary-foreground/70 text-primary p-1 ring-2 ring-primary/70"
+                className="absolute -end-2 -top-2 rounded-full bg-primary-foreground/70 p-1 text-primary ring-2 ring-primary/70"
               >
                 <ArrowUpDown size={16} />
               </div>
@@ -159,7 +159,7 @@ export const UnifiedDragPreview: React.FC = () => {
                 {copyHeld && (
                   <div
                     data-testid="drag-preview-copy-badge"
-                    className="absolute -top-2 -end-2 rounded-full bg-primary-foreground/70 text-primary p-1 ring-2 ring-primary/70"
+                    className="absolute -end-2 -top-2 rounded-full bg-primary-foreground/70 p-1 text-primary ring-2 ring-primary/70"
                   >
                     <CopyPlus size={16} />
                   </div>
@@ -167,7 +167,7 @@ export const UnifiedDragPreview: React.FC = () => {
                 {moveHeld && !copyHeld && (
                   <div
                     data-testid="drag-preview-move-badge"
-                    className="absolute -top-2 -end-2 rounded-full bg-primary-foreground/70 text-primary p-1 ring-2 ring-primary/70"
+                    className="absolute -end-2 -top-2 rounded-full bg-primary-foreground/70 p-1 text-primary ring-2 ring-primary/70"
                   >
                     <ArrowRightLeft size={16} />
                   </div>
@@ -187,9 +187,9 @@ export const UnifiedDragPreview: React.FC = () => {
             <div
               ref={previewRef}
               style={getItemStyles(initialOffset, currentOffset)}
-              className="bg-accent rounded-md shadow-md text-sm flex items-center gap-2 max-w-[400px] opacity-90"
+              className="flex max-w-[400px] items-center gap-2 rounded-md bg-accent text-sm opacity-90 shadow-md"
             >
-              <Folder className="w-4 h-4 shrink-0" />
+              <Folder className="h-4 w-4 shrink-0" />
               <span className="truncate font-medium">{displayName}</span>
             </div>
           );

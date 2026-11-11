@@ -156,7 +156,7 @@ export const FolderChevron = React.memo(function FolderChevron({
     <Button
       variant="ghost"
       size="sm"
-      className={`p-0 h-6 w-6 ${hasChildren ? "" : "invisible"}`}
+      className={`h-6 w-6 p-0 ${hasChildren ? "" : "invisible"}`}
       aria-label={
         hasChildren
           ? isOpen
@@ -176,7 +176,7 @@ export const FolderChevron = React.memo(function FolderChevron({
       onClick={onClick}
     >
       <ChevronRight
-        className={`w-4 h-4 transition-transform ${isOpen ? "rotate-90" : ""}`}
+        className={`h-4 w-4 transition-transform ${isOpen ? "rotate-90" : ""}`}
       />
     </Button>
   );
@@ -226,7 +226,7 @@ export const FolderChevron = React.memo(function FolderChevron({
         >
           <p className="text-xs">{action}</p>
           {!altHeld && (
-            <p className="text-xs text-primary-foreground/65 mt-1">{hint}</p>
+            <p className="mt-1 text-xs text-primary-foreground/65">{hint}</p>
           )}
         </TooltipContent>
       </Tooltip>
@@ -1478,7 +1478,7 @@ const TreeView: React.FC<{
       <div
         ref={setCombinedRef}
         style={style}
-        className={`group flex items-center rounded-md ${backgroundColor} ${textColor} hover:bg-secondary/80 hover:text-secondary-foreground [&:hover_.text-muted-foreground]:text-secondary-foreground cursor-pointer ps-2 pe-0 py-1`}
+        className={`group flex items-center rounded-md ${backgroundColor} ${textColor} cursor-pointer py-1 ps-2 pe-0 hover:bg-secondary/80 hover:text-secondary-foreground [&:hover_.text-muted-foreground]:text-secondary-foreground`}
         onClick={async () => {
           node.select();
           // Toggle expand/collapse when clicking anywhere on the folder row
@@ -1550,12 +1550,12 @@ const TreeView: React.FC<{
           }}
         />
         <IconComponent
-          className={`w-4 h-4 ms-1 shrink-0 ${
+          className={`ms-1 h-4 w-4 shrink-0 ${
             isSelected ? "text-secondary-foreground" : "text-muted-foreground"
           }`}
         />
         <span
-          className="ms-2 truncate flex-1 min-w-0 text-sm"
+          className="ms-2 min-w-0 flex-1 truncate text-sm"
           title={
             data && (data.directCaseCount > 0 || data.totalCaseCount > 0)
               ? `${node.data.name} (${data.directCaseCount}/${data.totalCaseCount})`
@@ -1571,7 +1571,7 @@ const TreeView: React.FC<{
 
         {pendingCopyTargets.has(data?.folderId ?? -1) && (
           <Loader2
-            className="ms-2 h-3 w-3 animate-spin text-primary shrink-0"
+            className="ms-2 h-3 w-3 shrink-0 animate-spin text-primary"
             data-testid={`folder-row-copy-progress-${data?.folderId}`}
             aria-label={t("repository.dragDrop.copying")}
           />
@@ -1579,14 +1579,14 @@ const TreeView: React.FC<{
 
         {data && (data.directCaseCount > 0 || data.totalCaseCount > 0) && (
           <span
-            className={`ms-2 pe-px text-xs shrink-0 ${isSelected ? "text-secondary-foreground" : "text-muted-foreground"}`}
+            className={`ms-2 shrink-0 pe-px text-xs ${isSelected ? "text-secondary-foreground" : "text-muted-foreground"}`}
           >
             {`(${data.directCaseCount}/${data.totalCaseCount})`}
           </span>
         )}
 
         {canAddEdit && !filteredFolders && data?.folderId !== 0 && (
-          <div className="ms-1 flex items-center h-7 invisible group-hover:visible shrink-0">
+          <div className="invisible ms-1 flex h-7 shrink-0 items-center group-hover:visible">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -1716,8 +1716,8 @@ const TreeView: React.FC<{
   return (
     <>
       {showFilterInput && (
-        <div className="relative mb-2 ms-1 me-2">
-          <Search className="absolute start-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+        <div className="relative ms-1 me-2 mb-2">
+          <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             value={filterQuery}
@@ -1740,7 +1740,7 @@ const TreeView: React.FC<{
             <Button
               variant="ghost"
               size="icon"
-              className="absolute end-0.5 top-1/2 -translate-y-1/2 h-6 w-6"
+              className="absolute end-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
               aria-label={t("common.aria.clearFilter")}
               data-testid="folder-filter-clear"
               onClick={() => setFilterQuery("")}
@@ -1816,12 +1816,12 @@ const TreeView: React.FC<{
             ref={(el) => {
               bottomDropRef(el);
             }}
-            className="h-16 w-full relative shrink-0"
+            className="relative h-16 w-full shrink-0"
             data-testid="folder-tree-end"
           >
             {/* Drop indicator line with circle - matches react-arborist cursor style */}
             {isOverBottom && (
-              <div className="absolute top-0 start-0 end-6 flex items-center z-10 pointer-events-none">
+              <div className="pointer-events-none absolute start-0 end-6 top-0 z-10 flex items-center">
                 <div
                   className="rounded-full"
                   style={{
@@ -1939,7 +1939,7 @@ const TreeView: React.FC<{
             <CopyPlus className="h-4 w-4" />
             {t("common.actions.copy")}
           </Button>
-          <p className="text-xs text-muted-foreground pt-1 border-t">
+          <p className="border-t pt-1 text-xs text-muted-foreground">
             {t(
               isMac
                 ? "repository.dragDrop.modifierHintMac"

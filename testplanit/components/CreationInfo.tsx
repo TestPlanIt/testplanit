@@ -71,9 +71,9 @@ export const CreationInfo: React.FC<CreationInfoProps> = ({
     (session?.user.preferences?.timeFormat || "HH:mm");
 
   return (
-    <div ref={setRootRef} className={cn("space-y-2 w-full", className)}>
+    <div ref={setRootRef} className={cn("w-full space-y-2", className)}>
       {userId && user?.name && (
-        <div className="flex items-center gap-2 text-sm min-w-0 w-full">
+        <div className="flex w-full min-w-0 items-center gap-2 text-sm">
           {narrow && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -95,7 +95,7 @@ export const CreationInfo: React.FC<CreationInfoProps> = ({
         </div>
       )}
       {createdAt && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 w-full">
+        <div className="flex w-full min-w-0 items-center gap-2 text-sm text-muted-foreground">
           {narrow ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -120,7 +120,7 @@ export const CreationInfo: React.FC<CreationInfoProps> = ({
       )}
       {stagedAt && (
         <div
-          className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 w-full"
+          className="flex w-full min-w-0 items-center gap-2 text-sm text-muted-foreground"
           data-testid="creation-info-staged-at"
         >
           {narrow ? (

@@ -101,8 +101,8 @@ function ProjectCell({
   iconUrl: string | null;
 }) {
   return (
-    <div className="flex items-center gap-2 min-w-0">
-      <div className="max-w-4 max-h-4 shrink-0">
+    <div className="flex min-w-0 items-center gap-2">
+      <div className="max-h-4 max-w-4 shrink-0">
         <ProjectIcon iconUrl={iconUrl} width={16} height={16} />
       </div>
       <ProjectNameCell value={name} projectId={projectId} size="sm" />
@@ -365,7 +365,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
         header: tGlobal("common.name"),
         size: 400,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1 min-w-0">
+          <div className="flex min-w-0 items-center gap-1">
             <TestRunNameDisplay
               testRun={{ id: row.original.runId, name: row.original.runName }}
               projectId={row.original.projectId}
@@ -427,10 +427,10 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
         header: tGlobal("common.name"),
         size: 400,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1 min-w-0">
+          <div className="flex min-w-0 items-center gap-1">
             <Link
               href={`/projects/sessions/${row.original.projectId}/${row.original.id}`}
-              className="flex items-center gap-1 min-w-0 hover:underline"
+              className="flex min-w-0 items-center gap-1 hover:underline"
             >
               <SessionNameDisplay session={row.original} className="truncate" />
             </Link>
@@ -501,7 +501,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
       {pendingReviews.length > 0 && (
         <div className="space-y-2" data-testid="profile-assignments-reviews">
           <h4 className="flex items-center gap-1.5 text-sm font-semibold">
-            <Inbox className="w-4 h-4 text-muted-foreground" />
+            <Inbox className="h-4 w-4 text-muted-foreground" />
             {t("reviews", { count: pendingReviews.length })}
           </h4>
           <DataTable
@@ -520,7 +520,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
       {pendingRuns.length > 0 && (
         <div className="space-y-2">
           <h4 className="flex items-center gap-1.5 text-sm font-semibold">
-            <CirclePlay className="w-4 h-4 text-muted-foreground" />
+            <CirclePlay className="h-4 w-4 text-muted-foreground" />
             {t("pendingRuns", {
               count: pendingRuns.length,
               cases: totalPendingCases,
@@ -542,7 +542,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
       {activeSessions.length > 0 && (
         <div className="space-y-2">
           <h4 className="flex items-center gap-1.5 text-sm font-semibold">
-            <Compass className="w-4 h-4 text-muted-foreground" />
+            <Compass className="h-4 w-4 text-muted-foreground" />
             {tDashboard("yourActiveSessions", {
               count: activeSessions.length,
             })}

@@ -91,7 +91,7 @@ export function SectionHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("text-primary text-xl md:text-2xl", className)}
+      className={cn("text-xl text-primary md:text-2xl", className)}
       {...props}
     />
   );

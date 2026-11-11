@@ -372,7 +372,7 @@ export function CustomFieldFilters({
             return (
               <div
                 key={index}
-                className="space-y-2 p-3 border rounded-lg bg-muted/30"
+                className="space-y-2 rounded-lg border bg-muted/30 p-3"
               >
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium">
@@ -453,7 +453,7 @@ export function CustomFieldFilters({
       )}
 
       {localFilters.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-4">
+        <p className="py-4 text-center text-sm text-muted-foreground">
           {t("search.noCustomFilters")}
         </p>
       )}

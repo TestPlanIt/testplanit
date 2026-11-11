@@ -33,13 +33,13 @@ export const AttachmentsListDisplay: React.FC<AttachmentsListProps> = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Badge className="cursor-pointer">
-          <Paperclip className="w-4 h-4 me-1" />
+          <Paperclip className="me-1 h-4 w-4" />
           {attachments.length}
         </Badge>
       </PopoverTrigger>
       <PopoverContent key={attachments.length}>
         <div
-          className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)]"
+          className="flex max-h-[calc(100vh-400px)] flex-wrap items-center overflow-auto"
           onWheel={(e) => e.stopPropagation()}
         >
           {attachments.map((attachment, index) => (
@@ -48,7 +48,7 @@ export const AttachmentsListDisplay: React.FC<AttachmentsListProps> = ({
               className="p-2"
               onClick={() => handleSelect(attachments, index)}
             >
-              <Badge className="border p-1 m-1 text-primary bg-accent rounded-sm items-center">
+              <Badge className="m-1 items-center rounded-sm border bg-accent p-1 text-primary">
                 <div className="flex grow gap-2">
                   <AttachmentPreview attachment={attachment} size="small" />
                 </div>

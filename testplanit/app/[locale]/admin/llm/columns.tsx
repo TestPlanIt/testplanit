@@ -47,8 +47,8 @@ export const useColumns = (
         meta: { isPinned: "left" },
         size: 190,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="flex items-center gap-2 bg-primary-foreground">
+            <Sparkles className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="font-medium">{row.original.name}</span>
           </div>
         ),
@@ -163,7 +163,7 @@ export const useColumns = (
               <div className="text-sm">
                 {`$${usage.toFixed(4)} / $${Number(budget).toFixed(2)}`}
               </div>
-              <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
                 <div
                   className={`h-full transition-all ${
                     isOverBudget
@@ -283,7 +283,7 @@ export const useColumns = (
         size: 150,
         meta: { isPinned: "right" },
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
+          <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
             <TestLlmIntegration
               key={`test-${row.original.id}`}
               integration={row.original}
@@ -292,7 +292,7 @@ export const useColumns = (
               variant="ghost"
               size="icon"
               onClick={() => onEditIntegration?.(row.original)}
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               data-testid="llm-edit-button"
               aria-label={tCommon("actions.edit")}
             >
@@ -302,7 +302,7 @@ export const useColumns = (
               variant="destructive"
               size="icon"
               onClick={() => onDeleteIntegration?.(row.original)}
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               disabled={
                 row.original.llmProviderConfig?.isDefault &&
                 totalIntegrations > 1

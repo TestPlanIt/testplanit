@@ -66,7 +66,7 @@ export function StatusBadge({
     <Badge
       variant="outline"
       className={cn(
-        "text-xs border-transparent",
+        "border-transparent text-xs",
         isCompleted
           ? "bg-success text-success-foreground hover:text-success-foreground"
           : "bg-warning text-warning-foreground hover:text-warning-foreground",
@@ -116,12 +116,12 @@ export function TagList({ tags, maxVisible = 3, className }: TagListProps) {
   const remainingCount = tags.length - maxVisible;
 
   return (
-    <div className={cn("flex gap-1 items-center", className)}>
+    <div className={cn("flex items-center gap-1", className)}>
       {visibleTags.map((tag) => (
         <Badge
           key={tag.id}
           variant="outline"
-          className="text-xs flex items-center gap-1"
+          className="flex items-center gap-1 text-xs"
         >
           <Tag className="h-3 w-3" />
           {tag.name}
@@ -146,7 +146,7 @@ export function BadgeList({ items, className }: BadgeListProps) {
   const filteredItems = items.filter(Boolean);
 
   return (
-    <div className={cn("flex items-center gap-2 mt-1", className)}>
+    <div className={cn("mt-1 flex items-center gap-2", className)}>
       {filteredItems.map((item, index) => (
         <React.Fragment key={index}>{item}</React.Fragment>
       ))}
@@ -198,7 +198,7 @@ export function SearchHighlight({
   if (!highlights?.[field]?.[0]) return null;
 
   return (
-    <div className={cn("text-sm text-muted-foreground mt-2", className)}>
+    <div className={cn("mt-2 text-sm text-muted-foreground", className)}>
       <p
         className="line-clamp-2"
         dangerouslySetInnerHTML={{

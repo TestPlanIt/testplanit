@@ -111,7 +111,7 @@ export function AutomationRunsCard({
 
   return (
     <Card data-testid="automation-runs-card">
-      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+      <CardHeader className="flex flex-row items-start justify-between pb-2">
         <div>
           <CardTitle className="font-medium">
             {t("runs.summary.automationRunsInProgress", { count: runs.length })}
@@ -122,7 +122,7 @@ export function AutomationRunsCard({
         </div>
       </CardHeader>
       <CardContent className="p-2">
-        <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto px-2 pb-2">
+        <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto px-2 pb-2">
           {runs.map((run) => {
             const summary = batchSummaries?.summaries[run.id];
             const lastActivityMs = summary?.lastActivityAt
@@ -166,11 +166,11 @@ export function AutomationRunsCard({
                         ))}
                       </div>
                     )}
-                    <span className="text-xs text-muted-foreground tabular-nums min-w-8 text-end">
+                    <span className="min-w-8 text-end text-xs text-muted-foreground tabular-nums">
                       {summary.totalCases}
                     </span>
                     {summary.workflowType === "IN_PROGRESS" && !isStale && (
-                      <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0" />
+                      <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground" />
                     )}
                   </>
                 ) : (

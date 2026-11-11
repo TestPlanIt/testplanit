@@ -81,11 +81,11 @@ const OverviewSection: React.FC<OverviewSectionProps> = ({
 }) => (
   <AccordionItem
     value={value}
-    className="border rounded-lg bg-card text-card-foreground shadow-sm"
+    className="rounded-lg border bg-card text-card-foreground shadow-sm"
   >
     {/* Wraps to its own line — left-justified under the title — when narrow. */}
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-6 py-4 bg-foreground/5 transition-colors hover:bg-foreground/10">
-      <AccordionTrigger className="flex-none gap-2 p-0 bg-transparent hover:bg-transparent hover:no-underline cursor-pointer">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 bg-foreground/5 px-6 py-4 transition-colors hover:bg-foreground/10">
+      <AccordionTrigger className="flex-none cursor-pointer gap-2 bg-transparent p-0 hover:bg-transparent hover:no-underline">
         <SectionHeader className="flex items-center gap-2 text-lg md:text-lg">
           <Icon className="h-5 w-5 shrink-0" />
           <CardTitle>{title}</CardTitle>
@@ -94,7 +94,7 @@ const OverviewSection: React.FC<OverviewSectionProps> = ({
       {seeAllHref && seeAllLabel ? (
         <Link className="group text-sm text-muted-foreground" href={seeAllHref}>
           {seeAllLabel}
-          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
         </Link>
       ) : null}
     </div>
@@ -264,8 +264,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
   // NOW check if project exists - only after loading is complete
   if (!project) {
     return (
-      <Card className="flex flex-col w-full min-w-[400px] h-full">
-        <CardContent className="flex flex-col items-center justify-center h-full">
+      <Card className="flex h-full w-full min-w-[400px] flex-col">
+        <CardContent className="flex h-full flex-col items-center justify-center">
           <PageTitle className="mb-2">
             {t("common.errors.projectNotFound")}
           </PageTitle>
@@ -278,7 +278,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
   }
 
   return (
-    <Card className="flex flex-col w-full min-w-[400px] h-full">
+    <Card className="flex h-full w-full min-w-[400px] flex-col">
       <CardHeader>
         <ProjectHeader
           project={project}
@@ -318,9 +318,9 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                     onClick={toggleLeftCollapse}
                     variant="secondary"
                     size="sm"
-                    className={`p-0 transform ${
+                    className={`transform p-0 ${
                       isLeftCollapsed
-                        ? "rounded-s-none rotate-180"
+                        ? "rotate-180 rounded-s-none"
                         : "rounded-e-none"
                     }`}
                   >
@@ -347,10 +347,10 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                     onClick={toggleRightCollapse}
                     variant="secondary"
                     size="sm"
-                    className={`p-0 transform ${
+                    className={`transform p-0 ${
                       isRightCollapsed
                         ? "rounded-s-none"
-                        : "rounded-e-none rotate-180"
+                        : "rotate-180 rounded-e-none"
                     }`}
                   >
                     <ChevronLeft />

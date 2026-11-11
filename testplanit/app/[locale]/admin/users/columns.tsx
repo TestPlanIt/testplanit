@@ -74,7 +74,7 @@ export const useColumns = (
           const isSystemUser =
             row.original.email === SYSTEM_AUTOMATION_USER_EMAIL;
           return (
-            <div className="bg-primary-foreground flex items-center gap-1">
+            <div className="flex items-center gap-1 bg-primary-foreground">
               <UserNameCell userId={row.original.id} />
               {isSystemUser && (
                 <Badge
@@ -273,7 +273,7 @@ export const useColumns = (
             isScimProvisioner || row.original.scimGivenName !== null;
           if (!isScimManaged) {
             return (
-              <span className="text-muted-foreground text-center block">
+              <span className="block text-center text-muted-foreground">
                 {"—"}
               </span>
             );
@@ -346,7 +346,7 @@ export const useColumns = (
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="px-2 py-1 h-auto"
+                    className="h-auto px-2 py-1"
                     aria-label={tCommon("actions.actionsLabel")}
                   >
                     <MoreVertical className="h-5 w-5" />

@@ -31,7 +31,7 @@ export function ReportFilterChips({
   if (activeFilters.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className="flex flex-wrap items-center gap-2">
       <span className="text-sm text-muted-foreground">
         {tReports("activeFilters")}
       </span>
@@ -39,13 +39,13 @@ export function ReportFilterChips({
         <Badge
           key={`${filter.filterType}-${filter.valueId}-${index}`}
           variant="secondary"
-          className="ps-2 pe-1 py-1 gap-1.5"
+          className="gap-1.5 py-1 ps-2 pe-1"
         >
           <div className="flex items-center gap-1.5">
             {filter.icon && (
               <DynamicIcon
                 name={filter.icon.name as IconName}
-                className="w-3 h-3"
+                className="h-3 w-3"
                 color={filter.iconColor?.value}
               />
             )}

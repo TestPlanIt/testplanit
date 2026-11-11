@@ -172,7 +172,7 @@ export function AsyncCombobox<T>({
           setOpen(false);
         }}
       >
-        <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
+        <div className="flex w-full items-center [&_a]:text-inherit [&_a]:no-underline [&_a:hover]:text-inherit">
           {renderOption(option, debouncedSearch)}
           {value && getOptionValue(option) === getOptionValue(value) && (
             <Check className="ms-auto h-4 w-4 text-muted-foreground" />
@@ -202,7 +202,7 @@ export function AsyncCombobox<T>({
         resolvedTriggerLabel === false
       ) {
         return (
-          <span className="text-muted-foreground group-hover:text-accent-foreground text-start transition-colors">
+          <span className="text-start text-muted-foreground transition-colors group-hover:text-accent-foreground">
             {fallbackPlaceholder}
           </span>
         );
@@ -213,7 +213,7 @@ export function AsyncCombobox<T>({
       }
 
       return (
-        <span className="text-muted-foreground group-hover:text-accent-foreground text-start transition-colors">
+        <span className="text-start text-muted-foreground transition-colors group-hover:text-accent-foreground">
           {resolvedTriggerLabel as React.ReactNode}
         </span>
       );
@@ -282,7 +282,7 @@ export function AsyncCombobox<T>({
               role="combobox"
               aria-expanded={open}
               aria-label={ariaLabel}
-              className={cn("justify-start text-start group", className)}
+              className={cn("group justify-start text-start", className)}
               disabled={disabled}
             >
               {defaultContent}
@@ -303,14 +303,14 @@ export function AsyncCombobox<T>({
           // The popover itself never scrolls, so it has to fit the room Radix
           // reports: anything past the window edge cannot be reached at all.
           "flex max-h-[var(--radix-popover-content-available-height)] flex-col overflow-hidden",
-          dropdownClassName || "p-0 max-w-[800px]"
+          dropdownClassName || "max-w-[800px] p-0"
         )}
         style={{
           width: Math.max(width, minDropdownWidth),
           minWidth: minDropdownWidth,
         }}
       >
-        <Command className="w-full min-h-0 flex-1" shouldFilter={false}>
+        <Command className="min-h-0 w-full flex-1" shouldFilter={false}>
           <CommandInput
             placeholder={fallbackPlaceholder}
             value={search}
@@ -326,7 +326,7 @@ export function AsyncCombobox<T>({
             )}
           >
             {loading && (
-              <div className="absolute inset-0 flex justify-center items-center bg-muted/60 z-10">
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/60">
                 <Spinner />
               </div>
             )}
@@ -334,7 +334,7 @@ export function AsyncCombobox<T>({
                 what gives way once the popover hits its cap. */}
             <CommandList
               ref={scrollRef}
-              className="min-h-0 flex-1 max-h-[70vh]"
+              className="max-h-[70vh] min-h-0 flex-1"
             >
               {/* Only once the fetch has settled — otherwise "no results"
                   renders under the loading overlay and contradicts it. */}
@@ -342,7 +342,7 @@ export function AsyncCombobox<T>({
                 <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
               )}
               <CommandGroup
-                className={cn(loading ? "opacity-50 pointer-events-none" : "")}
+                className={cn(loading ? "pointer-events-none opacity-50" : "")}
               >
                 {showUnassigned && (
                   <CommandItem
@@ -353,7 +353,7 @@ export function AsyncCombobox<T>({
                       setSearch("");
                     }}
                   >
-                    <div className="flex items-center w-full">
+                    <div className="flex w-full items-center">
                       {unassignedIcon ?? <UserX className="me-2 h-4 w-4" />}
                       <span>
                         {unassignedLabel || tCommon("labels.unassigned")}
@@ -378,7 +378,7 @@ export function AsyncCombobox<T>({
                           key={getOptionValue(option)}
                           ref={measureElement}
                           data-index={virtualRow.index}
-                          className="absolute top-0 start-0 w-full"
+                          className="absolute start-0 top-0 w-full"
                           style={{
                             transform: `translateY(${virtualRow.start}px)`,
                           }}
@@ -406,7 +406,7 @@ export function AsyncCombobox<T>({
             </CommandList>
             {showPagination && total != null && (
               <div
-                className="flex items-center justify-center border-t px-2 py-1 bg-muted"
+                className="flex items-center justify-center border-t bg-muted px-2 py-1"
                 data-testid="async-combobox-count-footer"
               >
                 <span className="text-xs text-muted-foreground">

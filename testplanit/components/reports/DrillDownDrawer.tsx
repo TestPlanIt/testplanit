@@ -154,7 +154,7 @@ export function DrillDownDrawer({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="h-[85vh] flex flex-col">
+      <DrawerContent className="flex h-[85vh] flex-col">
         <DrawerHeader className="border-b">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -187,7 +187,7 @@ export function DrillDownDrawer({
                       <span className="text-muted-foreground">
                         <Dot className="h-4 w-4" />
                       </span>
-                      <span className="flex items-center gap-6 flex-wrap">
+                      <span className="flex flex-wrap items-center gap-6">
                         {aggregates.statusCounts.map((sc) => (
                           <span
                             key={sc.statusId}
@@ -243,7 +243,7 @@ export function DrillDownDrawer({
           )}
 
           {isLoading && records.length === 0 && (
-            <div className="flex items-center justify-center h-64 w-full">
+            <div className="flex h-64 w-full items-center justify-center">
               <div className="flex items-center gap-2 whitespace-nowrap">
                 <LoadingSpinner delay={0} />
                 <p className="text-muted-foreground">{tReports("loading")}</p>
@@ -252,7 +252,7 @@ export function DrillDownDrawer({
           )}
 
           {!isLoading && records.length === 0 && (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex h-64 items-center justify-center">
               <p className="text-muted-foreground">{tReports("noRecords")}</p>
             </div>
           )}
@@ -286,7 +286,7 @@ export function DrillDownDrawer({
           )}
         </div>
 
-        <DrawerFooter className="border-t flex items-center justify-center">
+        <DrawerFooter className="flex items-center justify-center border-t">
           <DrawerClose asChild>
             <Button variant="outline" className="w-full md:w-lg">
               {t("common.actions.close")}

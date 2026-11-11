@@ -19,7 +19,7 @@ export function CodeBlock({
   return (
     <pre
       className={cn(
-        "bg-stone-800 rounded-md overflow-auto p-4 text-sm max-w-full",
+        "max-w-full overflow-auto rounded-md bg-stone-800 p-4 text-sm",
         className
       )}
     >

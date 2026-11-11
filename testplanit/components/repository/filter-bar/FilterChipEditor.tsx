@@ -151,7 +151,7 @@ export function FilterChipEditor({
           {dimension.operators.length > 1 && (
             <Select value={draft.operator} onValueChange={handleOperatorChange}>
               <SelectTrigger
-                className="w-full h-8 text-xs"
+                className="h-8 w-full text-xs"
                 data-testid="filter-operator-select"
                 aria-label={t("common.placeholders.selectOperator")}
               >

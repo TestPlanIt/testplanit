@@ -13,8 +13,8 @@ export function CalendarDisplay({
   dateOnly = false,
 }: CalendarDisplayProps) {
   return (
-    <div className="flex flex-col items-center justify-center w-20 border-4 border-primary rounded-lg bg-primary text-accent">
-      <span className="text-sm font-semibold bg-accent text-accent-foreground w-full text-center rounded-t-lg p-1">
+    <div className="flex w-20 flex-col items-center justify-center rounded-lg border-4 border-primary bg-primary text-accent">
+      <span className="w-full rounded-t-lg bg-accent p-1 text-center text-sm font-semibold text-accent-foreground">
         <DateFormatter
           date={date}
           formatString={showYear ? "MMM yyyy" : "MMM"}

@@ -78,7 +78,7 @@ export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
       <div
         ref={setNodeRef}
         style={style}
-        className="border rounded-md bg-card p-1 flex items-center gap-3"
+        className="flex items-center gap-3 rounded-md border bg-card p-1"
         data-testid={`parameter-row-${parameter.id}`}
       >
         <div
@@ -89,13 +89,13 @@ export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
           data-testid="parameter-row-drag-handle"
           aria-label="Drag to reorder"
         >
-          <GripVertical className="w-4 h-4" />
+          <GripVertical className="h-4 w-4" />
         </div>
 
         {renaming ? (
           <Input
             autoFocus
-            className="h-8 w-40 text-sm font-mono"
+            className="h-8 w-40 font-mono text-sm"
             value={draftName}
             onChange={(e) => setDraftName(e.target.value)}
             onBlur={commitNameChange}
@@ -114,7 +114,7 @@ export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
         ) : (
           <button
             type="button"
-            className="text-sm font-mono hover:underline cursor-pointer"
+            className="cursor-pointer font-mono text-sm hover:underline"
             onClick={() => {
               setDraftName(parameter.name);
               setRenaming(true);
@@ -145,7 +145,7 @@ export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
             className="flex items-center gap-1"
             title={t("formSensitiveHelp")}
           >
-            <Lock className="w-3 h-3" />
+            <Lock className="h-3 w-3" />
             {t("formSensitive")}
           </Badge>
         )}
@@ -161,7 +161,7 @@ export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
           onClick={() => setEditOpen(true)}
           data-testid="parameter-row-edit-button"
         >
-          <Pencil className="w-4 h-4" />
+          <Pencil className="h-4 w-4" />
         </Button>
 
         <Button
@@ -174,7 +174,7 @@ export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
           onClick={() => setDeleteOpen(true)}
           data-testid="parameter-row-delete-button"
         >
-          <Trash className="w-4 h-4" />
+          <Trash className="h-4 w-4" />
         </Button>
       </div>
 

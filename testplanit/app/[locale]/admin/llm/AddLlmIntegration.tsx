@@ -645,7 +645,7 @@ export function AddLlmIntegration({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl h-full overflow-y-auto flex flex-col">
+      <DialogContent className="flex h-full max-w-2xl flex-col overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
@@ -661,9 +661,9 @@ export function AddLlmIntegration({
               });
               setAccordionValue(Array.from(sectionsToOpen));
             })}
-            className="space-y-4 flex-1 flex flex-col px-1"
+            className="flex flex-1 flex-col space-y-4 px-1"
           >
-            <div className="pb-4 border-b space-y-4">
+            <div className="space-y-4 border-b pb-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -719,15 +719,15 @@ export function AddLlmIntegration({
             >
               <AccordionItem value="provider">
                 <AccordionTrigger>
-                  <div className="flex items-center gap-4 flex-1 min-w-0 me-2">
-                    <span className="shrink-0 flex items-center gap-2">
+                  <div className="me-2 flex min-w-0 flex-1 items-center gap-4">
+                    <span className="flex shrink-0 items-center gap-2">
                       {sectionsWithErrors.has("provider") && (
-                        <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                        <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
                       )}
                       {tCommon("fields.provider")}
                     </span>
                     {providerLabel && (
-                      <span className="text-xs text-muted-foreground font-normal truncate ms-auto">
+                      <span className="ms-auto truncate text-xs font-normal text-muted-foreground">
                         {watchedModel
                           ? `${providerLabel} / ${watchedModel}`
                           : providerLabel}
@@ -852,7 +852,7 @@ export function AddLlmIntegration({
                             {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
                               fetchingModels && (
                                 <div className="flex items-center text-sm text-muted-foreground">
-                                  <Loader2 className="h-4 w-4 animate-spin me-1" />
+                                  <Loader2 className="me-1 h-4 w-4 animate-spin" />
                                   {t("fetchingModels")}
                                 </div>
                               )}
@@ -891,7 +891,7 @@ export function AddLlmIntegration({
                           </FormControl>
                           {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
                             modelsError && (
-                              <div className="text-sm text-destructive mt-1">
+                              <div className="mt-1 text-sm text-destructive">
                                 {modelsError}
                               </div>
                             )}
@@ -1020,7 +1020,7 @@ export function AddLlmIntegration({
                 <AccordionTrigger>
                   <span className="flex items-center gap-2">
                     {sectionsWithErrors.has("cost-and-budget") && (
-                      <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                      <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
                     )}
                     {tLlm("sections.costAndBudget")}
                   </span>
@@ -1142,7 +1142,7 @@ export function AddLlmIntegration({
                 <AccordionTrigger>
                   <span className="flex items-center gap-2">
                     {sectionsWithErrors.has("advanced") && (
-                      <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                      <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
                     )}
                     {tCommon("pageTitles.advanced")}
                   </span>

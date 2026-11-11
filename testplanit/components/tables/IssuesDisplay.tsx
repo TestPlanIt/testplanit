@@ -275,9 +275,9 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   const badgeContent = (
     <Badge
       key={id}
-      className={`hover:bg-accent hover:text-accent-foreground hover:border-primary transition-colors max-w-full inline-flex ${size === "large" ? "text-base" : ""}`}
+      className={`inline-flex max-w-full transition-colors hover:border-primary hover:bg-accent hover:text-accent-foreground ${size === "large" ? "text-base" : ""}`}
     >
-      <div className="flex items-center gap-1 min-w-0 w-full">
+      <div className="flex w-full min-w-0 items-center gap-1">
         <IssueTypeIcon
           issueTypeName={issueTypeName}
           iconUrl={issueTypeIconUrl}
@@ -286,7 +286,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
         <div className="min-w-0 flex-1 overflow-hidden">
           {/* Text only — every branch that has a destination wraps this badge
               in its own anchor, and nesting one here would be invalid HTML. */}
-          <span className="truncate block" title={displayText}>
+          <span className="block truncate" title={displayText}>
             {displayText}
           </span>
         </div>
@@ -297,7 +297,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   if (isExternalIssue) {
     return (
       <div
-        className="flex items-center group max-w-full"
+        className="group flex max-w-full items-center"
         onMouseEnter={() => {
           triggerSyncIfNeeded();
 
@@ -324,7 +324,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                 href={safeHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center max-w-full no-underline"
+                className="inline-flex max-w-full items-center no-underline"
               >
                 {badgeContent}
               </a>
@@ -362,7 +362,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               </div>
             )}
             {details && !isLoading && !error && (
-              <div className="p-4 space-y-3">
+              <div className="space-y-3 p-4">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-1">
@@ -396,7 +396,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                 {/* Description */}
                 {details.description && (
                   <div
-                    className="text-sm text-muted-foreground line-clamp-3 [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
+                    className="line-clamp-3 text-sm text-muted-foreground [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
                     dangerouslySetInnerHTML={{
                       __html: DOMPurify.sanitize(details.description, {
                         ALLOWED_TAGS: [
@@ -417,16 +417,16 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                 )}
 
                 {/* Priority and Assignee */}
-                <div className="flex justify-between items-center gap-4 text-sm">
+                <div className="flex items-center justify-between gap-4 text-sm">
                   {details.priority && (
                     <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-xs text-muted-foreground">
                         {t("common.fields.priority")}:
                       </span>
                       <Badge
                         data-status-surface
                         variant="outline"
-                        className="text-xs gap-1"
+                        className="gap-1 text-xs"
                         style={getPriorityStyle(details.priority.name)}
                       >
                         {details.priority.iconUrl && (
@@ -460,7 +460,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                <div className="flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
                   <span>
                     {t("common.ui.issues.updated")}
                     {details.updated
@@ -484,7 +484,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           </PopoverContent>
         </Popover>
         {safeHref && (
-          <ExternalLink className="w-4 h-4 -ms-1 me-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ExternalLink className="-ms-1 me-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
         )}
       </div>
     );
@@ -515,7 +515,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
 
     return (
       <div
-        className="flex items-center group max-w-full"
+        className="group flex max-w-full items-center"
         onMouseEnter={() => {
           triggerSyncIfNeeded();
           if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
@@ -532,7 +532,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               href={safeHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center max-w-full no-underline"
+              className="inline-flex max-w-full items-center no-underline"
             >
               {badgeContent}
             </a>
@@ -554,7 +554,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               );
             }}
           >
-            <div className="p-4 space-y-3">
+            <div className="space-y-3 p-4">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-1">
@@ -585,7 +585,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               {/* Description */}
               {effectiveDescription && (
                 <div
-                  className="text-sm text-muted-foreground line-clamp-3 [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
+                  className="line-clamp-3 text-sm text-muted-foreground [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(effectiveDescription, {
                       ALLOWED_TAGS: [
@@ -609,7 +609,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               {priority &&
                 ["JIRA", "AZURE_DEVOPS"].includes(integrationProvider!) && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-xs text-muted-foreground">
                       {t("common.fields.priority")}:
                     </span>
                     <Badge
@@ -646,7 +646,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               )}
               {details && details.labels.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1 text-sm">
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-xs text-muted-foreground">
                     {t(
                       "projects.settings.integrations.integration.requirementsConfig.labelsLabel"
                     )}
@@ -670,7 +670,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               {details?.milestone && (
                 <div className="flex items-center gap-1 text-sm">
                   <Milestone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-xs text-muted-foreground">
                     {t("common.fields.milestone")}:
                   </span>
                   <span>{details.milestone.name}</span>
@@ -678,7 +678,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               )}
 
               {/* Footer */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+              <div className="flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
                 {lastSyncedAt ? (
                   <span>
                     {t("common.ui.issues.updated")}
@@ -702,7 +702,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
             </div>
           </PopoverContent>
         </Popover>
-        <ExternalLink className="w-4 h-4 -ms-1 me-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <ExternalLink className="-ms-1 me-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
       </div>
     );
   }
@@ -712,14 +712,14 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
-        <div className="flex items-center group max-w-full">
+        <div className="group flex max-w-full items-center">
           <TooltipTrigger asChild className="cursor-default">
             {safeHref ? (
               <a
                 href={safeHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center max-w-full no-underline"
+                className="inline-flex max-w-full items-center no-underline"
               >
                 {badgeContent}
               </a>
@@ -728,7 +728,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
             )}
           </TooltipTrigger>
         </div>
-        <TooltipContent className="max-w-sm bg-popover text-popover-foreground border">
+        <TooltipContent className="max-w-sm border bg-popover text-popover-foreground">
           <div className="space-y-1">
             <div className="font-semibold">{name}</div>
             {title && title !== name && (

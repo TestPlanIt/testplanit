@@ -675,7 +675,7 @@ export function ImpactRepositoryForm({
               control={form.control as any}
               name="cacheEnabled"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -1000,7 +1000,7 @@ export function ImpactRepositoryForm({
               control={form.control as any}
               name="issueScanEnabled"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -1025,7 +1025,7 @@ export function ImpactRepositoryForm({
               control={form.control as any}
               name="issueResultLinks"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                   <FormControl>
                     <Switch
                       checked={field.value}

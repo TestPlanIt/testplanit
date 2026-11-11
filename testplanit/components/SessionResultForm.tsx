@@ -730,7 +730,7 @@ export function SessionResultForm({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                 </FormLabel>
@@ -762,7 +762,7 @@ export function SessionResultForm({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                 </FormLabel>
@@ -801,7 +801,7 @@ export function SessionResultForm({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                 </FormLabel>
@@ -816,7 +816,7 @@ export function SessionResultForm({
                   >
                     <SelectTrigger className="w-full truncate">
                       <SelectValue
-                        className="truncate w-[85%]"
+                        className="w-[85%] truncate"
                         placeholder={tCommon("placeholders.selectStatus")}
                       />
                     </SelectTrigger>
@@ -827,9 +827,9 @@ export function SessionResultForm({
                           value={status.id.toString()}
                           className="truncate"
                         >
-                          <div className="flex items-center w-full truncate">
+                          <div className="flex w-full items-center truncate">
                             <div
-                              className="w-3 h-3 rounded-full me-2 shrink-0"
+                              className="me-2 h-3 w-3 shrink-0 rounded-full"
                               style={{
                                 backgroundColor:
                                   status.color?.value || "#B1B2B3",
@@ -866,7 +866,7 @@ export function SessionResultForm({
                     {displayName}
                     {isRequired && (
                       <sup>
-                        <Asterisk className="w-3 h-3 text-destructive" />
+                        <Asterisk className="h-3 w-3 text-destructive" />
                       </sup>
                     )}
                   </FormLabel>
@@ -906,7 +906,7 @@ export function SessionResultForm({
                   {`${displayName} (${fieldType})`}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                 </FormLabel>
@@ -933,7 +933,7 @@ export function SessionResultForm({
   return (
     <div className={`w-full ${className}`}>
       <Form {...form}>
-        <div className="space-y-4 w-full">
+        <div className="w-full space-y-4">
           <FormField
             control={form.control}
             name="resultData"
@@ -946,7 +946,7 @@ export function SessionResultForm({
                       content={field.value || emptyEditorContent}
                       onUpdate={(content) => field.onChange(content)}
                       projectId={projectId?.toString() ?? "0"}
-                      className="min-h-[100px] border rounded-md w-full"
+                      className="min-h-[100px] w-full rounded-md border"
                       placeholder={t("details")}
                     />
                   </div>
@@ -956,9 +956,9 @@ export function SessionResultForm({
             )}
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
             {/* --- Row 1: Status, Time Tracker, Elapsed --- */}
-            <div className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="grid grid-cols-1 gap-4 lg:col-span-12 lg:grid-cols-12">
               {/* Status Dropdown */}
               <div className="lg:col-span-4 xl:col-span-3">
                 <FormField
@@ -977,7 +977,7 @@ export function SessionResultForm({
                         >
                           <SelectTrigger className="w-full truncate">
                             <SelectValue
-                              className="truncate w-[85%]"
+                              className="w-[85%] truncate"
                               placeholder={tCommon("placeholders.selectStatus")}
                             />
                           </SelectTrigger>
@@ -988,9 +988,9 @@ export function SessionResultForm({
                                 value={status.id.toString()}
                                 className="truncate"
                               >
-                                <div className="flex items-center w-full truncate">
+                                <div className="flex w-full items-center truncate">
                                   <div
-                                    className="w-3 h-3 rounded-full me-2 shrink-0"
+                                    className="me-2 h-3 w-3 shrink-0 rounded-full"
                                     style={{
                                       backgroundColor:
                                         status.color?.value || "#B1B2B3",
@@ -1054,7 +1054,7 @@ export function SessionResultForm({
             </div>
 
             {/* --- Row 2: Attachments, Issues --- */}
-            <div className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="grid grid-cols-1 gap-4 lg:col-span-12 lg:grid-cols-12">
               {/* Attachments */}
               <div className="lg:col-span-6">
                 <FormField
@@ -1076,7 +1076,7 @@ export function SessionResultForm({
                             compact={true}
                           />
                           {selectedFiles.length > 0 && (
-                            <div className="text-sm text-muted-foreground mt-1">
+                            <div className="mt-1 text-sm text-muted-foreground">
                               {tCommon("upload.attachments.count", {
                                 count: selectedFiles.length,
                               })}
@@ -1112,9 +1112,9 @@ export function SessionResultForm({
 
             {/* --- Row 3: Dynamic Fields --- */}
             {templateFields.length > 0 && (
-              <div className="lg:col-span-12 space-y-4">
+              <div className="space-y-4 lg:col-span-12">
                 <Separator />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {templateFields.map((field) => {
                     const fieldComponent = renderDynamicField(field);
                     return (
@@ -1128,7 +1128,7 @@ export function SessionResultForm({
             )}
 
             {/* --- Row 4: Save Button --- */}
-            <div className="lg:col-span-12 flex justify-end">
+            <div className="flex justify-end lg:col-span-12">
               <Button
                 type="button"
                 onClick={handleSubmit}

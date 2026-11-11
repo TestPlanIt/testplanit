@@ -367,13 +367,13 @@ const UserWorkGanttChart: React.FC<UserWorkGanttChartProps> = ({
   }, [tasks, locale, onTaskClick, width, containerHeight, t]);
 
   if (!tasks || tasks.length === 0) {
-    return <div className="text-center p-4">{t("ganttTooltip.noTasks")}</div>;
+    return <div className="p-4 text-center">{t("ganttTooltip.noTasks")}</div>;
   }
 
   return (
     <div
       ref={chartRef}
-      className="gantt-chart-container p-4 border rounded-md min-h-[200px] w-full"
+      className="gantt-chart-container min-h-[200px] w-full rounded-md border p-4"
     >
       {/* Chart will be rendered here by Plot */}
     </div>

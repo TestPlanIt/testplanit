@@ -62,7 +62,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
         <Button
           id="remove-avatar"
           variant="destructive"
-          className="p-0 h-6 w-6"
+          className="h-6 w-6 p-0"
           disabled={isLoading}
         >
           <X className="h-4 w-4" />
@@ -72,8 +72,8 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
         {tGlobal("users.profile.edit.deleteAvatarConfirm", {
           name: tCommon("fields.avatar"),
         })}
-        <div className="flex items-start justify-between gap-4 mt-2">
-          <div className="flex items-center mb-2">
+        <div className="mt-2 flex items-start justify-between gap-4">
+          <div className="mb-2 flex items-center">
             <Button
               type="button"
               variant="secondary"

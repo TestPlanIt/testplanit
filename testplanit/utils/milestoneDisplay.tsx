@@ -212,8 +212,8 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
         key={`milestone-${milestone.id}`}
         className={
           depth > 0
-            ? "w-full ps-4 bg-muted rounded-lg mb-4"
-            : "w-full rounded-lg bg-muted mb-4"
+            ? "mb-4 w-full rounded-lg bg-muted ps-4"
+            : "mb-4 w-full rounded-lg bg-muted"
         }
       >
         <div
@@ -221,12 +221,12 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           style={{ borderColor: border, backgroundColor: bg }}
         >
           {/* Milestone Name */}
-          <div className="flex items-center gap-1 justify-start min-w-0">
-            <div className="flex items-center gap-1 justify-start min-w-0">
+          <div className="flex min-w-0 items-center justify-start gap-1">
+            <div className="flex min-w-0 items-center justify-start gap-1">
               {depth > 0 && (
                 <DynamicIcon
                   name="corner-down-right"
-                  className="w-6 h-6 text-primary shrink-0 bg-transparent"
+                  className="h-6 w-6 shrink-0 bg-transparent text-primary"
                 />
               )}
               <div className="truncate">
@@ -239,7 +239,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           </div>
 
           {/* Status */}
-          <div className="milestone-status flex gap-2 justify-center">
+          <div className="milestone-status flex justify-center gap-2">
             <Badge
               data-status-surface
               style={{
@@ -284,7 +284,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
 
         {/* Render items under this milestone FIRST */}
         {hasItemsUnderMilestone && (
-          <div className="sessions-container bg-muted pe-4 pb-2 mb-2">
+          <div className="sessions-container mb-2 bg-muted pe-4 pb-2">
             {itemGroup.items.map((item) => (
               <div
                 key={item.id}
@@ -332,18 +332,18 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
     const hasItemsUnderMilestone = itemGroup && itemGroup.items.length > 0;
 
     return (
-      <div key={`milestone-${milestone.id}`} className="w-full rounded-lg mb-4">
+      <div key={`milestone-${milestone.id}`} className="mb-4 w-full rounded-lg">
         <div
           className={`milestone-grid bg-primary/10 p-2 pe-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
           style={{ borderColor: border, backgroundColor: bg }}
         >
           {/* Milestone Name */}
-          <div className="flex items-center gap-1 justify-start min-w-0">
-            <div className="flex items-center gap-1 justify-start min-w-0">
+          <div className="flex min-w-0 items-center justify-start gap-1">
+            <div className="flex min-w-0 items-center justify-start gap-1">
               {depth > 0 && (
                 <DynamicIcon
                   name="corner-down-right"
-                  className="w-6 h-6 text-primary shrink-0 bg-transparent"
+                  className="h-6 w-6 shrink-0 bg-transparent text-primary"
                 />
               )}
               <div className="truncate">
@@ -356,7 +356,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           </div>
 
           {/* Status */}
-          <div className="milestone-status flex gap-2 justify-center">
+          <div className="milestone-status flex justify-center gap-2">
             <Badge
               data-status-surface
               style={{
@@ -401,7 +401,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
 
         {/* Render items under this milestone FIRST */}
         {hasItemsUnderMilestone && (
-          <div className="sessions-container bg-muted pe-4 pb-2 mb-2">
+          <div className="sessions-container mb-2 bg-muted pe-4 pb-2">
             {itemGroup.items.map((item) => (
               <div
                 key={item.id}
@@ -436,12 +436,12 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   if (grouped.unscheduled.length > 0) {
     result.push(
       <div
-        className="items-center w-full bg-muted rounded-lg p-0 pb-2"
+        className="w-full items-center rounded-lg bg-muted p-0 pb-2"
         key="unscheduled"
       >
-        <div className="flex justify-between w-full items-center mb-4 milestone-grid bg-primary/10 rounded-t-lg p-4">
+        <div className="milestone-grid mb-4 flex w-full items-center justify-between rounded-t-lg bg-primary/10 p-4">
           <div className="milestone-name flex items-center gap-1">
-            <DynamicIcon name="calendar-off" className="w-6 h-6 shrink-0" />
+            <DynamicIcon name="calendar-off" className="h-6 w-6 shrink-0" />
             <div className="truncate">
               {translationFunction("milestones.noMilestone")}
             </div>
@@ -483,7 +483,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
     );
   }
 
-  result.push(<div className="rounded-b-lg mb-4" key="spacer"></div>);
+  result.push(<div className="mb-4 rounded-b-lg" key="spacer"></div>);
 
   // Render milestones with their items
   const sortedMilestones = sortMilestones(milestones);

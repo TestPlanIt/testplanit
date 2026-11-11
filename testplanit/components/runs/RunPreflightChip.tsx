@@ -177,7 +177,7 @@ export function RunPreflightChip({
         extraClass
       )}
     >
-      <Icon className="w-3.5 h-3.5" aria-hidden />
+      <Icon className="h-3.5 w-3.5" aria-hidden />
       <span>{label}</span>
     </Badge>
   );

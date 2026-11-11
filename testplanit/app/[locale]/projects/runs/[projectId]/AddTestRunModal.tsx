@@ -342,13 +342,13 @@ const BasicInfoDialog = React.memo(
                             fetchOptions={fetchConfigurations}
                             renderOption={(config) => (
                               <div className="flex items-center gap-2">
-                                <Combine className="w-4 h-4" />
+                                <Combine className="h-4 w-4" />
                                 {config.name}
                               </div>
                             )}
                             renderSelectedOption={(config) => (
-                              <span className="flex items-center gap-1 min-w-0">
-                                <Combine className="w-3 h-3 shrink-0" />
+                              <span className="flex min-w-0 items-center gap-1">
+                                <Combine className="h-3 w-3 shrink-0" />
                                 <span className="truncate">{config.name}</span>
                               </span>
                             )}
@@ -491,7 +491,7 @@ const BasicInfoDialog = React.memo(
                   )}
                 />
                 <div>
-                  <FormLabel className="flex items-center mb-2">
+                  <FormLabel className="mb-2 flex items-center">
                     {tCommon("fields.tags")}
                     <HelpPopover helpKey="testRun.tags" />
                   </FormLabel>
@@ -501,7 +501,7 @@ const BasicInfoDialog = React.memo(
                     canCreateTags={canCreateTags}
                   />
                 </div>
-                <FormLabel className="flex items-center mb-2">
+                <FormLabel className="mb-2 flex items-center">
                   {tCommon("fields.issues")}
                   <HelpPopover helpKey="testRun.issues" />
                 </FormLabel>
@@ -736,12 +736,12 @@ const TestCasesDialog = React.memo(
 
     return (
       <>
-        <DialogHeader className="p-6 pb-0 pe-4">
+        <DialogHeader className="p-6 pe-4 pb-0">
           <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
           <DialogDescription asChild>
             <div
               ref={headerRef}
-              className="flex justify-between items-start text-muted-foreground"
+              className="flex items-start justify-between text-muted-foreground"
             >
               <div className="flex items-center gap-4">
                 <CaseSelectionActions
@@ -757,11 +757,11 @@ const TestCasesDialog = React.memo(
                   onSuggestionsAccepted={setSelectedTestCases}
                   onAnalysisAccepted={onImpactAccepted}
                 />
-                <div className="flex items-start text-sm divide-x divide-muted-foreground">
+                <div className="flex items-start divide-x divide-muted-foreground text-sm">
                   {(isLoadingForecast || isLoadingTestCasesForDrawer) &&
                   selectedTestCases.length > 0 ? (
                     <div className="px-2">
-                      <LoadingSpinner className="w-4 h-4" />
+                      <LoadingSpinner className="h-4 w-4" />
                     </div>
                   ) : forecastData ? (
                     <>
@@ -810,7 +810,7 @@ const TestCasesDialog = React.memo(
             </div>
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           <ProjectRepository
             isSelectionMode={true}
             selectedTestCases={selectedTestCases}
@@ -832,7 +832,7 @@ const TestCasesDialog = React.memo(
             skipDndProvider={true}
           />
         </div>
-        <div className="p-6 bg-background border-t flex justify-end items-center gap-2">
+        <div className="flex items-center justify-end gap-2 border-t bg-background p-6">
           {selectedTestCases.length > 0 && numericProjectId ? (
             <div className="me-auto">
               <RunPreflightChip

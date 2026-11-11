@@ -18,7 +18,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/80  data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -68,10 +68,10 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={setContentRef}
         className={cn(
-          "overflow-y-auto fixed z-50 grid sm:rounded-lg gap-4 border bg-background p-6 pt-8 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "fixed z-50 grid gap-4 overflow-y-auto border bg-background p-6 pt-8 shadow-lg duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:rounded-lg",
           isFullScreen
-            ? "min-w-full h-screen left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]"
-            : "max-h-[90vh] w-full max-w-lg left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]",
+            ? "top-[50%] left-[50%] h-screen min-w-full translate-x-[-50%] translate-y-[-50%]"
+            : "top-[50%] left-[50%] max-h-[90vh] w-full max-w-lg translate-x-[-50%] translate-y-[-50%]",
           className
         )}
         {...props}
@@ -92,7 +92,7 @@ const DialogContent = React.forwardRef<
             />
             <span className="sr-only">{t("toggleFullScreen")}</span>
           </button>
-          <DialogPrimitive.Close className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+          <DialogPrimitive.Close className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
             <X className="h-4 w-4" />
             <span className="sr-only">{tGlobal("common.actions.close")}</span>
           </DialogPrimitive.Close>
@@ -138,7 +138,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
+      "text-lg leading-none font-semibold tracking-tight",
       className
     )}
     {...props}

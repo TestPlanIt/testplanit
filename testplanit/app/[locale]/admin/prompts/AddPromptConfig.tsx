@@ -171,7 +171,7 @@ export function AddPromptConfig({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{tAdd("title")}</DialogTitle>
           <DialogDescription>{tAdd("description")}</DialogDescription>
@@ -266,8 +266,8 @@ export function AddPromptConfig({
             />
             {mustBeDefault && <FirstDefaultNotice />}
 
-            <div className="border rounded-lg p-4">
-              <h3 className="text-sm font-medium mb-3">{t("features")}</h3>
+            <div className="rounded-lg border p-4">
+              <h3 className="mb-3 text-sm font-medium">{t("features")}</h3>
               <Accordion type="single" collapsible className="w-full">
                 {featureKeys.map((feature) => (
                   <PromptFeatureSection

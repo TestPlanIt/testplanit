@@ -227,7 +227,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
             href={`/projects/overview/${project.id}`}
             className="flex items-center gap-2 text-sm hover:underline"
           >
-            <div className="max-w-4 max-h-4 shrink-0">
+            <div className="max-h-4 max-w-4 shrink-0">
               <ProjectIcon iconUrl={project.iconUrl} width={16} height={16} />
             </div>
             <span className="truncate">{project.name}</span>
@@ -247,7 +247,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
           href={`/projects/overview/${option.id}`}
           className="flex items-center gap-1"
         >
-          <div className="max-w-5 max-h-5">
+          <div className="max-h-5 max-w-5">
             <ProjectIcon iconUrl={option.iconUrl} height={20} width={20} />
           </div>
           <span className="truncate">{option.name}</span>
@@ -270,10 +270,10 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
             aria-label={searchPlaceholder}
             className={cn(
               badgeVariants({ variant: "default" }),
-              "gap-1 whitespace-nowrap text-xs"
+              "gap-1 text-xs whitespace-nowrap"
             )}
           >
-            <BoxesIcon className="w-4 h-4" />
+            <BoxesIcon className="h-4 w-4" />
             {displayLabel && <span>{displayLabel}</span>}
           </button>
         );

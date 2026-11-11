@@ -81,7 +81,7 @@ export function MatrixCell({
           // use the themed `text-foreground` (default) so they render
           // legibly on both light and dark themes without competing
           // with the primary brand color.
-          className="flex h-full w-full items-center justify-center gap-2 hover:bg-primary/20 text-foreground"
+          className="flex h-full w-full items-center justify-center gap-2 text-foreground hover:bg-primary/20"
           data-testid={`matrix-cell-${caseId}-${cell.configId}-${cell.rowIndex}`}
           aria-label={summary}
         >

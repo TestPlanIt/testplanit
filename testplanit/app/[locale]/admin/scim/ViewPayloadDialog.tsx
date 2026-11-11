@@ -52,7 +52,7 @@ export function ViewPayloadDialog({
 
         <pre
           data-testid="scim-conflict-payload"
-          className="max-h-[400px] overflow-auto rounded bg-muted px-3 py-2 text-xs font-mono"
+          className="max-h-[400px] overflow-auto rounded bg-muted px-3 py-2 font-mono text-xs"
         >
           <code>{rendered}</code>
         </pre>

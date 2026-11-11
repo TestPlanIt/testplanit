@@ -134,7 +134,7 @@ export function RequirementsFilterCombobox<
         placeholder={label}
         ariaLabel={label}
         disabled={disabled}
-        className="min-h-8 w-auto min-w-40 max-w-72 text-xs"
+        className="min-h-8 w-auto max-w-72 min-w-40 text-xs"
         dropdownClassName="p-0 min-w-[260px] max-w-[400px]"
       />
     </span>

@@ -213,8 +213,8 @@ export default function QuickScriptTemplates() {
             )}
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <div className="relative flex-1 min-w-50">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="relative min-w-50 flex-1">
                 <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder={t("filterPlaceholder")}
@@ -304,7 +304,7 @@ export default function QuickScriptTemplates() {
                 ))}
               </div>
             ) : groupedByCategory.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">
+              <p className="py-8 text-center text-sm text-muted-foreground">
                 {t("noResults")}
               </p>
             ) : (
@@ -389,7 +389,7 @@ export default function QuickScriptTemplates() {
                                   <div className="flex justify-end gap-1">
                                     <Button
                                       variant="outline"
-                                      className="px-2 py-1 h-auto"
+                                      className="h-auto px-2 py-1"
                                       data-testid="edit-export-template-button"
                                       onClick={() => setEditingTemplate(tmpl)}
                                     >
@@ -398,7 +398,7 @@ export default function QuickScriptTemplates() {
                                     {tmpl.isDefault ? (
                                       <Button
                                         variant="ghost"
-                                        className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
+                                        className="h-auto cursor-not-allowed px-2 py-1 text-muted-foreground"
                                         disabled
                                       >
                                         <Trash className="h-5 w-5" />
@@ -406,7 +406,7 @@ export default function QuickScriptTemplates() {
                                     ) : (
                                       <Button
                                         variant="destructive"
-                                        className="px-2 py-1 h-auto"
+                                        className="h-auto px-2 py-1"
                                         data-testid="delete-export-template-button"
                                         onClick={() =>
                                           setDeletingTemplate(tmpl)
@@ -433,7 +433,7 @@ export default function QuickScriptTemplates() {
           open={isAlertDialogOpen}
           onOpenChange={setIsAlertDialogOpen}
         >
-          <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
+          <AlertDialogContent className="border-destructive sm:max-w-[425px] lg:max-w-[400px]">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
                 {t("confirmSetAsDefault")}

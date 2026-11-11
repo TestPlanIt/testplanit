@@ -416,7 +416,7 @@ export default function RequirementsWorkspace({
                   collapsible
                   onCollapse={() => setIsTreeCollapsed(true)}
                   onExpand={() => setIsTreeCollapsed(false)}
-                  className="p-0 m-0"
+                  className="m-0 p-0"
                 >
                   <div
                     data-testid="requirements-tree-pane"
@@ -456,7 +456,7 @@ export default function RequirementsWorkspace({
                         type="button"
                         onClick={toggleTreeCollapse}
                         variant="secondary"
-                        className="p-0 -ms-1 rounded-s-none"
+                        className="-ms-1 rounded-s-none p-0"
                         data-testid="requirements-tree-collapse-toggle"
                         aria-label={
                           isTreeCollapsed
@@ -472,7 +472,7 @@ export default function RequirementsWorkspace({
                       order={2}
                       defaultSize={70}
                       minSize={0}
-                      className="p-0 m-0 min-w-[220px]"
+                      className="m-0 min-w-[220px] p-0"
                     >
                       {/* No `overflow-y-auto` here: the details panel is a
                         full-height flex column that scrolls its own body, so a

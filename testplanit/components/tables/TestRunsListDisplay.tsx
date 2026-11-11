@@ -111,16 +111,16 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
     const deletedContent = (
       <div
         className={cn(
-          "flex items-start gap-1 max-w-full",
-          "text-muted-foreground/50 cursor-default"
+          "flex max-w-full items-start gap-1",
+          "cursor-default text-muted-foreground/50"
         )}
       >
-        <Trash className="w-4 h-4 shrink-0 mt-0.5" />
+        <Trash className="mt-0.5 h-4 w-4 shrink-0" />
         <span className={textClass}>{name}</span>
         {configurationGroupId && (
-          <Combine className="w-3 h-3 shrink-0 mt-0.5" />
+          <Combine className="mt-0.5 h-3 w-3 shrink-0" />
         )}
-        {compositionLockedAt && <Lock className="w-3 h-3 shrink-0 mt-0.5" />}
+        {compositionLockedAt && <Lock className="mt-0.5 h-3 w-3 shrink-0" />}
       </div>
     );
 
@@ -133,18 +133,18 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
         <TooltipTrigger asChild>{deletedContent}</TooltipTrigger>
         <TooltipContent>
           <span className="line-through">{name}</span>
-          <p className="text-xs text-primary-foreground/40 mt-1">
+          <p className="mt-1 text-xs text-primary-foreground/40">
             {t("status.deleted")}
           </p>
           {configurationGroupId && configuration && (
-            <p className="flex text-xs mt-1">
-              <Combine className="w-3 h-3 shrink-0 me-1" />
+            <p className="mt-1 flex text-xs">
+              <Combine className="me-1 h-3 w-3 shrink-0" />
               {configuration.name}
             </p>
           )}
           {compositionLockedAt && (
-            <p className="flex text-xs mt-1">
-              <Lock className="w-3 h-3 shrink-0 me-1" />
+            <p className="mt-1 flex text-xs">
+              <Lock className="me-1 h-3 w-3 shrink-0" />
               {t("labels.compositionLocked")}
             </p>
           )}
@@ -166,18 +166,18 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
     <Link
       href={`/projects/runs/${projectId}/${id}${qs}`}
       className={cn(
-        "flex items-start gap-1 no-underline hover:underline group max-w-full",
+        "group flex max-w-full items-start gap-1 no-underline hover:underline",
         "text-inherit",
         isCompleted && "opacity-70"
       )}
     >
-      <PlayCircle className="w-4 h-4 shrink-0 mt-0.5" />
+      <PlayCircle className="mt-0.5 h-4 w-4 shrink-0" />
       <span className={textClass}>{name}</span>
       {configurationGroupId && (
-        <Combine className="w-3 h-3 shrink-0 mt-0.5 opacity-70" />
+        <Combine className="mt-0.5 h-3 w-3 shrink-0 opacity-70" />
       )}
       {compositionLockedAt && (
-        <Lock className="w-3 h-3 shrink-0 mt-0.5 opacity-70" />
+        <Lock className="mt-0.5 h-3 w-3 shrink-0 opacity-70" />
       )}
     </Link>
   );
@@ -192,14 +192,14 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
       <TooltipContent>
         <span>{name}</span>
         {configurationGroupId && configuration && (
-          <p className="flex text-xs mt-1">
-            <Combine className="w-3 h-3 shrink-0 me-1" />
+          <p className="mt-1 flex text-xs">
+            <Combine className="me-1 h-3 w-3 shrink-0" />
             {configuration.name}
           </p>
         )}
         {compositionLockedAt && (
-          <p className="flex text-xs mt-1">
-            <Lock className="w-3 h-3 shrink-0 me-1" />
+          <p className="mt-1 flex text-xs">
+            <Lock className="me-1 h-3 w-3 shrink-0" />
             {t("labels.compositionLocked")}
           </p>
         )}
@@ -400,10 +400,10 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
             aria-label={searchPlaceholder}
             className={cn(
               badgeVariants({ variant: "default" }),
-              "gap-1 whitespace-nowrap text-xs"
+              "gap-1 text-xs whitespace-nowrap"
             )}
           >
-            <PlayCircle className="w-4 h-4 shrink-0" />
+            <PlayCircle className="h-4 w-4 shrink-0" />
             {displayLabel && <span>{displayLabel}</span>}
           </button>
         );

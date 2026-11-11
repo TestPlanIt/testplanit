@@ -374,7 +374,7 @@ export function ElasticsearchAdmin({
                       >
                         <div className="flex items-center space-x-2">
                           <Activity className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-sm font-mono">
+                          <span className="font-mono text-sm">
                             {index.name}
                           </span>
                         </div>
@@ -543,12 +543,12 @@ export function ElasticsearchAdmin({
               <Progress value={progress.progress} className="w-full" />
 
               {jobLogs.length > 0 && progress.progress < 100 && (
-                <div className="rounded-md border bg-muted/50 p-3 max-h-64 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto rounded-md border bg-muted/50 p-3">
                   <div className="space-y-1">
                     {jobLogs.slice(-10).map((log, index) => (
                       <div
                         key={index}
-                        className="text-xs font-mono text-muted-foreground"
+                        className="font-mono text-xs text-muted-foreground"
                       >
                         {log}
                       </div>

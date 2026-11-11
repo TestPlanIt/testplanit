@@ -441,7 +441,7 @@ export function IntegrationConfigForm({
           <AlertDescription className="text-foreground">
             <div className="mt-2 space-y-2">
               <p>{t("config.apiKeyWarningDescription")}</p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
+              <ul className="list-inside list-disc space-y-1 text-sm">
                 <li>{t("config.apiKeyWarningPoint1")}</li>
                 <li>{t("config.apiKeyWarningPoint2")}</li>
                 <li>{t("config.apiKeyWarningPoint3")}</li>
@@ -469,7 +469,7 @@ export function IntegrationConfigForm({
               {getFieldLabel(field.label)}
               {field.required && (
                 <sup>
-                  <Asterisk className="w-3 h-3 text-destructive" />
+                  <Asterisk className="h-3 w-3 text-destructive" />
                 </sup>
               )}
               {field.help && (
@@ -521,7 +521,7 @@ export function IntegrationConfigForm({
       })}
 
       {isOAuth && (
-        <div className="border-t pt-4 mt-4">
+        <div className="mt-4 border-t pt-4">
           <FormItem>
             <FormLabel>{t("config.callbackUrlLabel")}</FormLabel>
             <FormDescription className="mb-2">
@@ -563,7 +563,7 @@ export function IntegrationConfigForm({
       )}
 
       {provider === IntegrationProvider.JIRA && (
-        <div className="border-t pt-4 mt-4">
+        <div className="mt-4 border-t pt-4">
           <FormItem>
             <FormLabel className="flex items-center">
               {t("config.forgeApiKeyLabel")}

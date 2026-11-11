@@ -377,7 +377,7 @@ function NotificationSettingsContent() {
               >
                 {tGlobal("common.actions.automated.message")}
               </Label>
-              <div className="border rounded-md">
+              <div className="rounded-md border">
                 <TipTapEditor
                   content={systemNotificationMessage}
                   onUpdate={(newContent) =>
@@ -413,7 +413,7 @@ function NotificationSettingsContent() {
           <Separator />
 
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <SectionHeader className="flex items-center gap-2">
                 <CardTitle data-testid="notification-history-title">
                   {t("systemNotification.history.title")}
@@ -421,7 +421,7 @@ function NotificationSettingsContent() {
                 <HelpPopover helpKey="notificationsHistory" />
               </SectionHeader>
               {tableData.length > 0 && (
-                <p className="text-sm text-muted-foreground shrink-0">
+                <p className="shrink-0 text-sm text-muted-foreground">
                   {tGlobal("admin.auditLogs.showing", {
                     loaded: tableData.length.toLocaleString(locale),
                     total: (totalCount || tableData.length).toLocaleString(

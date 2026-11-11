@@ -87,7 +87,7 @@ export default function LinkSSOPage() {
 
   if (linkedProvider) {
     return (
-      <div className="container max-w-2xl mx-auto py-8">
+      <div className="container mx-auto max-w-2xl py-8">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export default function LinkSSOPage() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto py-8">
+    <div className="container mx-auto max-w-2xl py-8">
       <Card>
         <CardHeader>
           <CardTitle>{t("common.pageTitles.linkSsoAccount")}</CardTitle>
@@ -168,7 +168,7 @@ export default function LinkSSOPage() {
           </div>
 
           {allProviders && ssoProviders?.length === 0 && (
-            <p className="text-center text-muted-foreground py-4">
+            <p className="py-4 text-center text-muted-foreground">
               {t("account.linkSso.noProvidersContactAdmin")}
             </p>
           )}

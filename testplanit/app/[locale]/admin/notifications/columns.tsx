@@ -60,7 +60,7 @@ export const useColumns = (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="font-medium truncate block"
+                  className="block truncate font-medium"
                   style={{ maxWidth: columnWidth - 20 }}
                 >
                   {title}
@@ -123,8 +123,8 @@ export const useColumns = (
                 <div
                   className={
                     isPreview
-                      ? "text-sm text-muted-foreground line-clamp-2"
-                      : "text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-strong:text-foreground prose-strong:font-semibold prose-a:text-primary prose-a:underline"
+                      ? "line-clamp-2 text-sm text-muted-foreground"
+                      : "prose prose-sm max-w-none text-sm text-muted-foreground dark:prose-invert prose-headings:text-foreground prose-a:text-primary prose-a:underline prose-strong:font-semibold prose-strong:text-foreground"
                   }
                   dangerouslySetInnerHTML={{ __html: htmlSource }}
                 />
@@ -133,7 +133,7 @@ export const useColumns = (
             // Plain text fallback
             return (
               <span
-                className={isPreview ? "truncate block" : "whitespace-pre-wrap"}
+                className={isPreview ? "block truncate" : "whitespace-pre-wrap"}
               >
                 {message}
               </span>
@@ -144,7 +144,7 @@ export const useColumns = (
             <Popover>
               <PopoverTrigger asChild>
                 <div
-                  className="max-h-16 overflow-hidden cursor-pointer hover:bg-muted/50 rounded p-1 -m-1"
+                  className="-m-1 max-h-16 cursor-pointer overflow-hidden rounded p-1 hover:bg-muted/50"
                   style={{ maxWidth: columnWidth - 20 }}
                 >
                   {renderContent(true)}
@@ -191,7 +191,7 @@ export const useColumns = (
           const timeFormat =
             userPreferences?.user?.preferences?.timeFormat || "HH_MM_24";
           return (
-            <div className="whitespace-nowrap text-sm cursor-default">
+            <div className="cursor-default text-sm whitespace-nowrap">
               <DateFormatter
                 date={date}
                 formatString={`${dateFormat} ${timeFormat}`}

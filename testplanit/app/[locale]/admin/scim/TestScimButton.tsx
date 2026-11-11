@@ -54,7 +54,7 @@ export function TestScimButton({ tokenId }: TestScimButtonProps) {
           variant="ghost"
           onClick={onClick}
           disabled={pending}
-          className="px-2 py-1 h-auto"
+          className="h-auto px-2 py-1"
           data-testid={`scim-test-button-${tokenId}`}
         >
           {pending ? (

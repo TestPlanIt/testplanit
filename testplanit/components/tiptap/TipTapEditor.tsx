@@ -788,16 +788,16 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
   return (
     <div
-      className={cn("overflow-auto flex flex-col w-full", className)}
+      className={cn("flex w-full flex-col overflow-auto", className)}
       style={style}
       ref={editorContainerRef}
     >
       {loading && <LoadingSpinnerAlert />}
       {!readOnly && (
-        <div className="flex items-center px-0.5 p-1.5 bg-muted border-t sticky bottom-0 z-10 overflow-x-auto whitespace-nowrap sm:relative sm:border-b gap-2 w-full">
+        <div className="sticky bottom-0 z-10 flex w-full items-center gap-2 overflow-x-auto border-t bg-muted p-1.5 px-0.5 whitespace-nowrap sm:relative sm:border-b">
           <input
             title={t("setColor")}
-            className="w-4 h-8 min-w-4"
+            className="h-8 w-4 min-w-4"
             type="color"
             value={color}
             onChange={(event) => {
@@ -818,7 +818,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               data-testid="tiptap-bold"
               aria-label={t("bold")}
             >
-              <Bold className="w-4 h-4" />
+              <Bold className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -829,7 +829,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               data-testid="tiptap-italic"
               aria-label={t("italic")}
             >
-              <Italic className="w-4 h-4" />
+              <Italic className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -840,7 +840,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               data-testid="tiptap-strikethrough"
               aria-label={t("strikethrough")}
             >
-              <StrikethroughIcon className="w-4 h-4" />
+              <StrikethroughIcon className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -851,7 +851,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               data-testid="tiptap-underline"
               aria-label={t("underline")}
             >
-              <UnderlineIcon className="w-4 h-4" />
+              <UnderlineIcon className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -862,7 +862,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               data-testid="tiptap-code"
               aria-label={t("code")}
             >
-              <CodeIcon className="w-4 h-4" />
+              <CodeIcon className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -873,7 +873,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               data-testid="tiptap-clear-formatting"
               aria-label={t("contentMenu.clearFormatting")}
             >
-              <RemoveFormatting className="w-4 h-4" />
+              <RemoveFormatting className="h-4 w-4" />
             </Button>
           </ButtonGroup>
 
@@ -902,7 +902,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full flex justify-between"
+                  className="flex w-full justify-between"
                   onClick={() => editor.chain().focus().setParagraph().run()}
                   data-testid="tiptap-paragraph"
                 >
@@ -912,7 +912,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full flex justify-between"
+                  className="flex w-full justify-between"
                   onClick={() =>
                     editor.chain().focus().toggleHeading({ level: 1 }).run()
                   }
@@ -924,7 +924,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full flex justify-between"
+                  className="flex w-full justify-between"
                   onClick={() =>
                     editor.chain().focus().toggleHeading({ level: 2 }).run()
                   }
@@ -936,7 +936,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full flex justify-between"
+                  className="flex w-full justify-between"
                   onClick={() =>
                     editor.chain().focus().toggleHeading({ level: 3 }).run()
                   }
@@ -948,7 +948,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full flex justify-between"
+                  className="flex w-full justify-between"
                   onClick={() => editor.chain().focus().setCodeBlock().run()}
                   data-testid="tiptap-code-block"
                 >
@@ -967,7 +967,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               data-testid="tiptap-bullet-list"
               aria-label={t("bulletList")}
             >
-              <List className="w-4 h-4" />
+              <List className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -978,7 +978,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               data-testid="tiptap-ordered-list"
               aria-label={t("orderedList")}
             >
-              <ListOrdered className="w-4 h-4" />
+              <ListOrdered className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -989,7 +989,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               data-testid="tiptap-blockquote"
               aria-label={t("blockquote")}
             >
-              <QuoteIcon className="w-4 h-4" />
+              <QuoteIcon className="h-4 w-4" />
             </Button>
             <Popover>
               <PopoverTrigger asChild>
@@ -1001,7 +1001,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                   data-testid="tiptap-table-trigger"
                   aria-label={t("table.insertTable")}
                 >
-                  <Table2 className="w-4 h-4" />
+                  <Table2 className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent
@@ -1011,7 +1011,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full flex gap-2 justify-start"
+                  className="flex w-full justify-start gap-2"
                   onClick={() =>
                     editor
                       .chain()
@@ -1030,13 +1030,13 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full flex gap-2 justify-between"
+                      className="flex w-full justify-between gap-2"
                       onClick={() =>
                         editor.chain().focus().toggleHeaderRow().run()
                       }
                       data-testid="tiptap-toggle-header-row"
                     >
-                      <span className="flex gap-2 items-center">
+                      <span className="flex items-center gap-2">
                         <PanelTop size={16} />
                         {t("table.headerRow")}
                       </span>
@@ -1046,7 +1046,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full flex gap-2 justify-start"
+                      className="flex w-full justify-start gap-2"
                       onClick={() =>
                         editor.chain().focus().addColumnBefore().run()
                       }
@@ -1058,7 +1058,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full flex gap-2 justify-start"
+                      className="flex w-full justify-start gap-2"
                       onClick={() =>
                         editor.chain().focus().addColumnAfter().run()
                       }
@@ -1070,7 +1070,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full flex gap-2 justify-start text-destructive"
+                      className="flex w-full justify-start gap-2 text-destructive"
                       onClick={() =>
                         editor.chain().focus().deleteColumn().run()
                       }
@@ -1083,7 +1083,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full flex gap-2 justify-start"
+                      className="flex w-full justify-start gap-2"
                       onClick={() =>
                         editor.chain().focus().addRowBefore().run()
                       }
@@ -1095,7 +1095,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full flex gap-2 justify-start"
+                      className="flex w-full justify-start gap-2"
                       onClick={() => editor.chain().focus().addRowAfter().run()}
                       data-testid="tiptap-add-row-after"
                     >
@@ -1105,7 +1105,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full flex gap-2 justify-start text-destructive"
+                      className="flex w-full justify-start gap-2 text-destructive"
                       onClick={() => editor.chain().focus().deleteRow().run()}
                       data-testid="tiptap-delete-row"
                     >
@@ -1116,7 +1116,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full flex gap-2 justify-start text-destructive"
+                      className="flex w-full justify-start gap-2 text-destructive"
                       onClick={() => editor.chain().focus().deleteTable().run()}
                       data-testid="tiptap-delete-table"
                     >
@@ -1155,7 +1155,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                       className="p-2"
                       title={tAi("title")}
                     >
-                      <Wand2 className="w-4 h-4" />
+                      <Wand2 className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56">
@@ -1251,10 +1251,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                   className="p-2"
                   onClick={handleLinkClick}
                 >
-                  <LinkIcon className="w-4 h-4" />
+                  <LinkIcon className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="p-2 w-60 flex flex-col gap-2">
+              <PopoverContent className="flex w-60 flex-col gap-2 p-2">
                 <Input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
@@ -1276,7 +1276,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     onClick={removeLink}
                     className="flex-1"
                   >
-                    <Trash className="w-4 h-4" />
+                    <Trash className="h-4 w-4" />
                   </Button>
                 </div>
               </PopoverContent>
@@ -1301,11 +1301,11 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                   size="sm"
                   onClick={() => setIsEmojiPopoverOpen(true)}
                 >
-                  <Smile className="w-4 h-4" />
+                  <Smile className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="p-2 w-60 max-h-80 flex flex-col gap-2 overflow-auto"
+                className="flex max-h-80 w-60 flex-col gap-2 overflow-auto p-2"
                 onWheel={(e) => e.stopPropagation()}
               >
                 <div className="grid grid-cols-8 gap-2">
@@ -1330,7 +1330,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               className="p-2"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="h-4 w-4" />
             </Button>
           </ButtonGroup>
 
@@ -1357,7 +1357,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!toolbar.canUndo}
             >
-              <Undo2 className="w-4 h-4" />
+              <Undo2 className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -1367,16 +1367,16 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               onClick={() => editor.chain().focus().redo().run()}
               disabled={!toolbar.canRedo}
             >
-              <Redo2 className="w-4 h-4" />
+              <Redo2 className="h-4 w-4" />
             </Button>
           </ButtonGroup>
         </div>
       )}
-      <div className="overflow-y-auto flex-1 w-full relative">
+      <div className="relative w-full flex-1 overflow-y-auto">
         <ContentItemMenu editor={editor} editable={!readOnly} />
         <EditorContent
           editor={editor}
-          className={`mt-0.5 ${!readOnly ? "ps-3 border-4 border-primary/20" : ""} border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full focus:outline-none ${styles.editorContent}`}
+          className={`mt-0.5 ${!readOnly ? "border-4 border-primary/20 ps-3" : ""} prose-xs prose w-full max-w-none rounded-lg border border-accent-foreground/10 focus:outline-none sm:prose-sm lg:prose xl:prose-lg ${styles.editorContent}`}
         />
       </div>
       {parameters && parameters.length > 0 && editor && (
@@ -1404,7 +1404,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           }
         }}
       >
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{tAi("title")}</DialogTitle>
             <DialogDescription className="sr-only">
@@ -1412,13 +1412,13 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <h4 className="font-medium mb-2">{tAi("originalText")}:</h4>
-              <div className="p-3 bg-muted rounded text-sm h-64 overflow-y-auto">
+              <h4 className="mb-2 font-medium">{tAi("originalText")}:</h4>
+              <div className="h-64 overflow-y-auto rounded bg-muted p-3 text-sm">
                 {originalTextContent && originalTextContent.includes("<") ? (
                   <div
-                    className="prose prose-sm dark:prose-invert max-w-none"
+                    className="prose prose-sm max-w-none dark:prose-invert"
                     dangerouslySetInnerHTML={{ __html: originalTextContent }}
                   />
                 ) : (
@@ -1430,16 +1430,16 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             </div>
 
             <div>
-              <h4 className="font-medium mb-2">{tAi("suggestion")}:</h4>
-              <div className="p-3 border rounded h-64 overflow-y-auto">
+              <h4 className="mb-2 font-medium">{tAi("suggestion")}:</h4>
+              <div className="h-64 overflow-y-auto rounded border p-3">
                 {isAiLoading ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin" />
                     <span className="ms-2">{tAi("generating")}</span>
                   </div>
                 ) : (
                   <div
-                    className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                    className="prose prose-sm max-w-none text-sm dark:prose-invert"
                     dangerouslySetInnerHTML={{
                       __html: aiResponse || tAi("noSuggestion"),
                     }}

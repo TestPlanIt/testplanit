@@ -276,7 +276,7 @@ function TestRunFormControls({
                 transitionCheck &&
                 !transitionCheck.allowed &&
                 transitionCheck.blockingGate && (
-                  <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                  <p className="mt-1 text-[0.8rem] font-medium text-destructive">
                     {t("reviews.transitionGate.blockedByGate", {
                       gateName: transitionCheck.blockingGate.name,
                     })}
@@ -354,7 +354,7 @@ function TestRunFormControls({
                         (testRun?.milestone?.milestoneType?.icon?.name ||
                           "milestone") as IconName
                       }
-                      className="h-4 w-4 shrink-0 mt-0.5"
+                      className="mt-0.5 h-4 w-4 shrink-0"
                     />
                     {testRun?.milestone?.name || t("common.access.none")}
                   </div>
@@ -400,7 +400,7 @@ function TestRunFormControls({
                 />
               ))
             ) : (
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 {t("common.access.none")}
               </span>
             )}
@@ -429,7 +429,7 @@ function TestRunFormControls({
                 />
               ))
             ) : (
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 {t("common.access.none")}
               </span>
             )}
@@ -470,7 +470,7 @@ function TestRunFormControls({
                   {!isEditMode &&
                     (!testRun.attachments ||
                       testRun.attachments.length === 0) && (
-                      <span className="text-muted-foreground text-sm">
+                      <span className="text-sm text-muted-foreground">
                         {t("common.access.none")}
                       </span>
                     )}

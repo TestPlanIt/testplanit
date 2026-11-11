@@ -45,14 +45,14 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
 
   if (isLoadingMilestones || isLoadingCount) {
     return (
-      <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
-        <div className="px-6 py-4 bg-foreground/5">
+      <div className="flex h-full flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
+        <div className="bg-foreground/5 px-6 py-4">
           <SectionHeader className="flex items-center gap-2 text-lg md:text-lg">
             <Milestone className="h-5 w-5 shrink-0" />
             <CardTitle>{t("projects.overview.currentMilestones")}</CardTitle>
           </SectionHeader>
         </div>
-        <div className="p-6 flex-1 flex justify-center items-center">
+        <div className="flex flex-1 items-center justify-center p-6">
           <LoadingSpinner />
         </div>
       </div>
@@ -60,11 +60,11 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
   }
 
   return (
-    <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
+    <div className="flex h-full flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
       {/* Matches the collapsible section headers in the right panel, minus
           the hover tint — that reads as "clickable", and this one isn't.
           Wraps to its own line — left-justified under the title — when narrow. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-6 py-4 bg-foreground/5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 bg-foreground/5 px-6 py-4">
         <SectionHeader className="flex items-center gap-2 text-lg md:text-lg">
           <Milestone className="h-5 w-5 shrink-0" />
           <CardTitle>{t("projects.overview.currentMilestones")}</CardTitle>
@@ -78,11 +78,11 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
             {t("projects.overview.seeAllMilestones", {
               count: milestonesCountResult?.length ?? 0,
             })}
-            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
           </Link>
         ) : null}
       </div>
-      <div className="p-6 flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto p-6">
         {milestones?.length ? (
           <MilestoneDisplay
             milestones={milestones as MilestonesWithTypes[]}
@@ -91,7 +91,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
         ) : (
           <Link
             href={`/projects/milestones/${projectId}`}
-            className="text-muted-foreground text-center"
+            className="text-center text-muted-foreground"
           >
             {t("milestones.empty.active")}
           </Link>

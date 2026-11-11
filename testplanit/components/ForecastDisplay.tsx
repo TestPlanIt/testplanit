@@ -35,7 +35,7 @@ export const ForecastDisplay: React.FC<ForecastDisplayProps> = ({
   return (
     <Tooltip>
       <TooltipTrigger
-        className={`cursor-default flex items-center gap-1 min-w-0 ${className || ""}`}
+        className={`flex min-w-0 cursor-default items-center gap-1 ${className || ""}`}
       >
         {type === "manual" && (
           <CloudSunRain className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -49,7 +49,7 @@ export const ForecastDisplay: React.FC<ForecastDisplayProps> = ({
             <Bot className="h-4 w-4 shrink-0 text-muted-foreground" />
           </>
         )}
-        <span className="truncate min-w-0">
+        <span className="min-w-0 truncate">
           <DurationDisplay seconds={seconds} round={round} />
         </span>
       </TooltipTrigger>

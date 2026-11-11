@@ -209,14 +209,14 @@ const ResizableImageComponent = (props: any) => {
   return (
     <NodeViewWrapper className="relative" style={wrapperStyles}>
       <div
-        className="relative group inline-block"
+        className="group relative inline-block"
         onMouseEnter={handleShowToolbar}
         onMouseLeave={handleHideToolbar}
       >
         {/* Toolbar - only show when editable */}
         {showToolbar && isEditable && (
           <div
-            className="absolute -top-11 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white rounded-lg shadow-lg p-1 flex gap-1 z-20"
+            className="absolute -top-11 left-1/2 z-20 flex -translate-x-1/2 transform gap-1 rounded-lg bg-gray-800 p-1 text-white shadow-lg"
             onMouseEnter={handleShowToolbar}
             onMouseLeave={handleHideToolbar}
           >
@@ -224,7 +224,7 @@ const ResizableImageComponent = (props: any) => {
             <button
               type="button"
               onClick={() => handleAlign("left")}
-              className={`p-1.5 rounded hover:bg-gray-700 ${imageAlign === "left" ? "bg-gray-700" : ""}`}
+              className={`rounded p-1.5 hover:bg-gray-700 ${imageAlign === "left" ? "bg-gray-700" : ""}`}
               title={t("alignLeft")}
             >
               <AlignLeft size={16} />
@@ -232,7 +232,7 @@ const ResizableImageComponent = (props: any) => {
             <button
               type="button"
               onClick={() => handleAlign("center")}
-              className={`p-1.5 rounded hover:bg-gray-700 ${imageAlign === "center" ? "bg-gray-700" : ""}`}
+              className={`rounded p-1.5 hover:bg-gray-700 ${imageAlign === "center" ? "bg-gray-700" : ""}`}
               title={t("alignCenter")}
             >
               <AlignCenter size={16} />
@@ -240,19 +240,19 @@ const ResizableImageComponent = (props: any) => {
             <button
               type="button"
               onClick={() => handleAlign("right")}
-              className={`p-1.5 rounded hover:bg-gray-700 ${imageAlign === "right" ? "bg-gray-700" : ""}`}
+              className={`rounded p-1.5 hover:bg-gray-700 ${imageAlign === "right" ? "bg-gray-700" : ""}`}
               title={t("alignRight")}
             >
               <AlignRight size={16} />
             </button>
 
-            <div className="w-px bg-gray-600 mx-1" />
+            <div className="mx-1 w-px bg-gray-600" />
 
             {/* Size presets */}
             <button
               type="button"
               onClick={() => handleSetSize("small")}
-              className="p-1.5 rounded hover:bg-gray-700"
+              className="rounded p-1.5 hover:bg-gray-700"
               title={t("sizeSmall")}
             >
               <Smartphone size={16} />
@@ -260,7 +260,7 @@ const ResizableImageComponent = (props: any) => {
             <button
               type="button"
               onClick={() => handleSetSize("medium")}
-              className="p-1.5 rounded hover:bg-gray-700"
+              className="rounded p-1.5 hover:bg-gray-700"
               title={t("sizeMedium")}
             >
               <Square size={16} />
@@ -268,7 +268,7 @@ const ResizableImageComponent = (props: any) => {
             <button
               type="button"
               onClick={() => handleSetSize("large")}
-              className="p-1.5 rounded hover:bg-gray-700"
+              className="rounded p-1.5 hover:bg-gray-700"
               title={t("sizeLarge")}
             >
               <RectangleHorizontal size={16} />
@@ -276,7 +276,7 @@ const ResizableImageComponent = (props: any) => {
             <button
               type="button"
               onClick={() => handleSetSize("full")}
-              className="p-1.5 rounded hover:bg-gray-700"
+              className="rounded p-1.5 hover:bg-gray-700"
               title={t("sizeFull")}
             >
               <Maximize size={16} />
@@ -284,19 +284,19 @@ const ResizableImageComponent = (props: any) => {
             <button
               type="button"
               onClick={handleResetSize}
-              className="p-1.5 rounded hover:bg-gray-700"
+              className="rounded p-1.5 hover:bg-gray-700"
               title={t("resetSize")}
             >
               <Minimize size={16} />
             </button>
 
-            <div className="w-px bg-gray-600 mx-1" />
+            <div className="mx-1 w-px bg-gray-600" />
 
             {/* Other controls */}
             <button
               type="button"
               onClick={handleRotate}
-              className="p-1.5 rounded hover:bg-gray-700"
+              className="rounded p-1.5 hover:bg-gray-700"
               title={t("rotate")}
             >
               <RotateCw size={16} />
@@ -304,7 +304,7 @@ const ResizableImageComponent = (props: any) => {
             <button
               type="button"
               onClick={deleteNode}
-              className="p-1.5 rounded hover:bg-destructive"
+              className="rounded p-1.5 hover:bg-destructive"
               title={t("delete")}
             >
               <Trash size={16} />
@@ -343,25 +343,25 @@ const ResizableImageComponent = (props: any) => {
             <>
               {/* Top-left */}
               <div
-                className="absolute -top-1 -start-1 w-3 h-3 bg-blue-500 border border-white cursor-nw-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute -start-1 -top-1 z-10 h-3 w-3 cursor-nw-resize border border-white bg-blue-500 opacity-0 transition-opacity group-hover:opacity-100"
                 onMouseDown={(e) => handleMouseDown(e, "top-left")}
                 style={{ pointerEvents: "auto" }}
               />
               {/* Top-right */}
               <div
-                className="absolute -top-1 -end-1 w-3 h-3 bg-blue-500 border border-white cursor-ne-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute -end-1 -top-1 z-10 h-3 w-3 cursor-ne-resize border border-white bg-blue-500 opacity-0 transition-opacity group-hover:opacity-100"
                 onMouseDown={(e) => handleMouseDown(e, "top-right")}
                 style={{ pointerEvents: "auto" }}
               />
               {/* Bottom-left */}
               <div
-                className="absolute -bottom-1 -start-1 w-3 h-3 bg-blue-500 border border-white cursor-sw-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute -start-1 -bottom-1 z-10 h-3 w-3 cursor-sw-resize border border-white bg-blue-500 opacity-0 transition-opacity group-hover:opacity-100"
                 onMouseDown={(e) => handleMouseDown(e, "bottom-left")}
                 style={{ pointerEvents: "auto" }}
               />
               {/* Bottom-right */}
               <div
-                className="absolute -bottom-1 -end-1 w-3 h-3 bg-blue-500 border border-white cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute -end-1 -bottom-1 z-10 h-3 w-3 cursor-se-resize border border-white bg-blue-500 opacity-0 transition-opacity group-hover:opacity-100"
                 onMouseDown={(e) => handleMouseDown(e, "bottom-right")}
                 style={{ pointerEvents: "auto" }}
               />

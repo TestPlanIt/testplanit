@@ -70,7 +70,7 @@ export function PromptVariableInserter({
 
   return (
     <Select key={selectKey} onValueChange={handleSelect}>
-      <SelectTrigger className="w-44 h-7 text-xs">
+      <SelectTrigger className="h-7 w-44 text-xs">
         <SelectValue placeholder={t("insertVariable")} />
       </SelectTrigger>
       <SelectContent>
@@ -79,7 +79,7 @@ export function PromptVariableInserter({
           {variables.map((v) => (
             <SelectItem key={v.name} value={v.name} className="ps-6">
               <span className="font-mono">{v.name}</span>
-              <span className="ms-3 text-muted-foreground text-xs">
+              <span className="ms-3 text-xs text-muted-foreground">
                 {v.description}
               </span>
             </SelectItem>

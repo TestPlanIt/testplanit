@@ -63,22 +63,22 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, projectId }) => {
   });
 
   return (
-    <div className="space-y-1 pb-3 border-b last:border-b-0 last:pb-0">
+    <div className="space-y-1 border-b pb-3 last:border-b-0 last:pb-0">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center">
           <UserNameCell
             userId={comment.creator.id}
             hideLink
             className="text-xs font-medium"
           />
         </div>
-        <span className="text-xs text-muted-foreground shrink-0">
+        <span className="shrink-0 text-xs text-muted-foreground">
           {formatDistanceToNow(new Date(comment.createdAt), {
             addSuffix: true,
           })}
         </span>
       </div>
-      <div className="text-xs text-muted-foreground line-clamp-2">
+      <div className="line-clamp-2 text-xs text-muted-foreground">
         <EditorContent editor={displayEditor} />
       </div>
     </div>
@@ -142,17 +142,17 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
           aria-label={tCommon("plural.comment", { count })}
           className={cn(
             badgeVariants({ variant: "default" }),
-            "gap-1 whitespace-nowrap text-xs"
+            "gap-1 text-xs whitespace-nowrap"
           )}
         >
-          <MessageCircle className="w-4 h-4 shrink-0" />
+          <MessageCircle className="h-4 w-4 shrink-0" />
           <span>{count}</span>
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="end">
-        <div className="p-4 space-y-3">
+        <div className="space-y-3 p-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-sm">
+            <h4 className="text-sm font-medium">
               {tComments("titleWithCount", { count })}
             </h4>
           </div>
@@ -165,7 +165,7 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
             </div>
           ) : comments && comments.length > 0 ? (
             <div
-              className="space-y-3 max-h-[300px] overflow-y-auto"
+              className="max-h-[300px] space-y-3 overflow-y-auto"
               onWheel={(e) => e.stopPropagation()}
             >
               {comments.map((comment) => (
@@ -177,12 +177,12 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
               ))}
             </div>
           ) : (
-            <div className="text-xs text-muted-foreground text-center py-4">
+            <div className="py-4 text-center text-xs text-muted-foreground">
               {tComments("noComments")}
             </div>
           )}
 
-          <div className="pt-2 border-t">
+          <div className="border-t pt-2">
             <Link
               href={`/projects/repository/${projectId}/${repositoryCaseId}#comments`}
               onClick={() => setOpen(false)}

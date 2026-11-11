@@ -893,9 +893,9 @@ export default function MilestoneDetailsPage() {
         }}
       >
         <Card
-          className={`group-hover:bg-accent/50 transition-colors ${
+          className={`transition-colors group-hover:bg-accent/50 ${
             milestone?.isCompleted
-              ? "bg-muted-foreground/20 border-muted-foreground"
+              ? "border-muted-foreground bg-muted-foreground/20"
               : ""
           }`}
         >
@@ -903,9 +903,9 @@ export default function MilestoneDetailsPage() {
           <CardHeader>
             <div
               ref={headerRef}
-              className="flex justify-between items-center gap-2"
+              className="flex items-center justify-between gap-2"
             >
-              <div className="flex items-start gap-2 grow">
+              <div className="flex grow items-start gap-2">
                 {!isEditMode && (
                   <Link href={`/projects/milestones/${projectId}`}>
                     <Button type="button" variant="outline" size="icon">
@@ -913,7 +913,7 @@ export default function MilestoneDetailsPage() {
                     </Button>
                   </Link>
                 )}
-                <CardTitle className="grow min-w-0 text-xl md:text-2xl">
+                <CardTitle className="min-w-0 grow text-xl md:text-2xl">
                   {isEditMode ? (
                     <FormField
                       control={methods.control}
@@ -924,7 +924,7 @@ export default function MilestoneDetailsPage() {
                             <Textarea
                               {...field}
                               disabled={milestone?.integrationId != null}
-                              className="text-xl md:text-2xl w-full"
+                              className="w-full text-xl md:text-2xl"
                             />
                           </FormControl>
                           {error && <FormMessage>{error.message}</FormMessage>}
@@ -932,7 +932,7 @@ export default function MilestoneDetailsPage() {
                       )}
                     />
                   ) : (
-                    <span className="flex items-center gap-2 min-w-0">
+                    <span className="flex min-w-0 items-center gap-2">
                       <DynamicIcon
                         name={
                           (milestone?.milestoneType?.icon?.name as IconName) ||
@@ -955,14 +955,14 @@ export default function MilestoneDetailsPage() {
               </div>
               <ActionBar
                 compact={headerCompact}
-                className="flex-col items-stretch gap-2 ms-4"
+                className="ms-4 flex-col items-stretch gap-2"
               >
                 {!isEditMode && milestone && (
                   <RecordId
                     type="MILESTONE"
                     id={milestone.id}
                     projectId={Number(projectId)}
-                    className="self-end shrink-0 whitespace-nowrap"
+                    className="shrink-0 self-end whitespace-nowrap"
                   />
                 )}
                 {isEditMode ? (
@@ -1113,7 +1113,7 @@ export default function MilestoneDetailsPage() {
                     : ""
                 }
               >
-                <div className="px-4 h-full space-y-4 pb-8">
+                <div className="h-full space-y-4 px-4 pb-8">
                   <FormField
                     name="docs"
                     render={({ field }) => (
@@ -1138,7 +1138,7 @@ export default function MilestoneDetailsPage() {
                             />
                           </FormControl>
                         ) : (
-                          <div className="text-muted-foreground text-sm">
+                          <div className="text-sm text-muted-foreground">
                             {t("empty.documentation")}
                           </div>
                         )}
@@ -1149,7 +1149,7 @@ export default function MilestoneDetailsPage() {
 
                   {!isEditMode && (
                     <div className="mt-6">
-                      <Label className="flex items-center gap-1 mb-2">
+                      <Label className="mb-2 flex items-center gap-1">
                         {tGlobal("common.fields.forecast")}
                       </Label>
                       {isLoadingForecast ? (
@@ -1191,7 +1191,7 @@ export default function MilestoneDetailsPage() {
 
                           if (forecastElements.length > 0) {
                             return (
-                              <div className="text-sm text-muted-foreground space-y-1">
+                              <div className="space-y-1 text-sm text-muted-foreground">
                                 {forecastElements}
                               </div>
                             );
@@ -1228,7 +1228,7 @@ export default function MilestoneDetailsPage() {
 
                             if (childMilestones.length === 0) {
                               return (
-                                <div className="text-muted-foreground text-sm">
+                                <div className="text-sm text-muted-foreground">
                                   {tGlobal("common.empty.childMilestones")}
                                 </div>
                               );
@@ -1318,7 +1318,7 @@ export default function MilestoneDetailsPage() {
                           }}
                         />
                       ) : (
-                        <div className="text-muted-foreground text-sm">
+                        <div className="text-sm text-muted-foreground">
                           {isAnyCardFilterActive(runsCardFilters)
                             ? t("empty.noMatchingTestRuns")
                             : t("empty.testRuns")}
@@ -1363,7 +1363,7 @@ export default function MilestoneDetailsPage() {
                           )}
                         />
                       ) : (
-                        <div className="text-muted-foreground text-sm">
+                        <div className="text-sm text-muted-foreground">
                           {isAnyCardFilterActive(sessionsCardFilters)
                             ? t("empty.noMatchingSessions")
                             : tGlobal("common.empty.sessions")}
@@ -1379,7 +1379,7 @@ export default function MilestoneDetailsPage() {
                   type="button"
                   onClick={toggleCollapseLeft}
                   variant="secondary"
-                  className="p-0 rounded-e-none"
+                  className="rounded-e-none p-0"
                 >
                   {isCollapsedLeft ? <ChevronRight /> : <ChevronLeft />}
                 </Button>
@@ -1392,7 +1392,7 @@ export default function MilestoneDetailsPage() {
                   type="button"
                   onClick={toggleCollapseRight}
                   variant="secondary"
-                  className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
+                  className={`transform p-0 ${isCollapsedRight ? "rounded-s-none" : "rotate-180 rounded-e-none"}`}
                 >
                   <ChevronLeft />
                 </Button>
@@ -1414,7 +1414,7 @@ export default function MilestoneDetailsPage() {
                     : ""
                 }
               >
-                <div className="ps-4 pe-1 pb-1 h-full">
+                <div className="h-full ps-4 pe-1 pb-1">
                   <div className="space-y-4">
                     <MilestoneFormControls
                       isEditMode={isEditMode}

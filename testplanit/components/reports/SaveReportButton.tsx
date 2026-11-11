@@ -58,7 +58,7 @@ export function SaveReportButton({
         variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
-        className="gap-0 group overflow-hidden transition-all hover:gap-2"
+        className="group gap-0 overflow-hidden transition-all hover:gap-2"
       >
         <BookmarkPlus className="h-4 w-4 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all group-hover:max-w-xs">

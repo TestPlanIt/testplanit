@@ -50,7 +50,7 @@ function Calendar({
         ),
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-8 w-8 p-0 font-medium text-sm aria-selected:opacity-100"
+          "h-8 w-8 p-0 text-sm font-medium aria-selected:opacity-100"
         ),
         range_start: "range-start",
         range_end: "range-end",

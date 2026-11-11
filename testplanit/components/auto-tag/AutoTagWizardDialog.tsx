@@ -1045,7 +1045,7 @@ export function AutoTagWizardDialog({
                     placeholder={t("review.filterEntities")}
                     value={reviewSearch}
                     onChange={(e) => setReviewSearch(e.target.value)}
-                    className="ps-8 h-8 text-sm"
+                    className="h-8 ps-8 text-sm"
                   />
                 </div>
                 {/* Only show toggles if results contain multiple entity types */}
@@ -1065,7 +1065,7 @@ export function AutoTagWizardDialog({
                       <ToggleGroupItem
                         value="repositoryCase"
                         size="sm"
-                        className="h-8 w-8 rounded-none first:rounded-s-md last:rounded-e-md border-e-0 last:border-e data-[state=on]:bg-muted-foreground/20"
+                        className="h-8 w-8 rounded-none border-e-0 first:rounded-s-md last:rounded-e-md last:border-e data-[state=on]:bg-muted-foreground/20"
                         aria-label={t("actions.entityTypes.repositoryCase", {
                           count: 2,
                         })}
@@ -1080,7 +1080,7 @@ export function AutoTagWizardDialog({
                       <ToggleGroupItem
                         value="testRun"
                         size="sm"
-                        className="h-8 w-8 rounded-none first:rounded-s-md last:rounded-e-md border-e-0 last:border-e data-[state=on]:bg-muted-foreground/20"
+                        className="h-8 w-8 rounded-none border-e-0 first:rounded-s-md last:rounded-e-md last:border-e data-[state=on]:bg-muted-foreground/20"
                         aria-label={t("actions.entityTypes.testRun", {
                           count: 2,
                         })}
@@ -1095,7 +1095,7 @@ export function AutoTagWizardDialog({
                       <ToggleGroupItem
                         value="session"
                         size="sm"
-                        className="h-8 w-8 rounded-none first:rounded-s-md last:rounded-e-md border-e-0 last:border-e data-[state=on]:bg-muted-foreground/20"
+                        className="h-8 w-8 rounded-none border-e-0 first:rounded-s-md last:rounded-e-md last:border-e data-[state=on]:bg-muted-foreground/20"
                         aria-label={t("actions.entityTypes.session", {
                           count: 2,
                         })}

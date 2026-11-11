@@ -20,7 +20,7 @@ export function DeleteIntegrationButton({
     <Button
       variant="destructive"
       onClick={() => onDelete(integration)}
-      className="px-2 py-1 h-auto"
+      className="h-auto px-2 py-1"
       title={tCommon("actions.delete")}
     >
       <Trash className="h-4 w-4" />

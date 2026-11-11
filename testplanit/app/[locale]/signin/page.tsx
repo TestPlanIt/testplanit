@@ -570,8 +570,8 @@ const Signin: NextPage = () => {
   const passwordlessCodeEntry = (
     <>
       {passwordlessError && (
-        <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
-          <p className="text-sm text-destructive text-center">
+        <div className="rounded-md border border-destructive bg-destructive/10 p-3">
+          <p className="text-center text-sm text-destructive">
             {passwordlessError}
           </p>
         </div>
@@ -632,7 +632,7 @@ const Signin: NextPage = () => {
   return (
     <div className="flex items-center justify-center">
       <Card className="w-3/4">
-        <CardHeader className="w-full flex flex-col items-center justify-center">
+        <CardHeader className="flex w-full flex-col items-center justify-center">
           <div className="flex items-center py-5">
             <Image
               alt="TestPlanIt Logo"
@@ -644,37 +644,37 @@ const Signin: NextPage = () => {
               priority={true}
             />
             <div className="ms-3 flex flex-col">
-              <span className="scroll-m-20 text-4xl font-semibold tracking-tight lg:text-5xl text-[rgb(133,89,233)]">
+              <span className="scroll-m-20 text-4xl font-semibold tracking-tight text-[rgb(133,89,233)] lg:text-5xl">
                 {tCommon("pageTitles.appName")}
               </span>
-              <span className="text-xs text-muted-foreground -mt-1 no-wrap">
+              <span className="no-wrap -mt-1 text-xs text-muted-foreground">
                 {tCommon("branding.tagline")}
               </span>
             </div>
           </div>
-          <CardTitle className="flex py-5 scroll-m-20 tracking-tight lg:text-3xl text-primary">
+          <CardTitle className="flex scroll-m-20 py-5 tracking-tight text-primary lg:text-3xl">
             {t("common.actions.signIn")}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center">
           {/* Show error message prominently at the top */}
           {submissionError && (
-            <div className="w-1/2 mb-4 p-3 bg-destructive/10 border border-destructive rounded-md">
-              <p className="text-sm text-destructive text-center">
+            <div className="mb-4 w-1/2 rounded-md border border-destructive bg-destructive/10 p-3">
+              <p className="text-center text-sm text-destructive">
                 {submissionError}
               </p>
             </div>
           )}
           {(!sessionCleared || isLoadingSsoProviders) && showDelayedLoader ? (
-            <div className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8">
+            <div className="flex w-1/2 flex-col items-center justify-center space-y-6 py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
-              <p className="text-muted-foreground text-center">
+              <p className="text-center text-muted-foreground">
                 {tCommon("loading")}
               </p>
             </div>
           ) : !sessionCleared || isLoadingSsoProviders ? (
             // Show nothing during the 500ms delay
-            <div className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8">
+            <div className="flex w-1/2 flex-col items-center justify-center space-y-6 py-8">
               {/* Invisible placeholder to prevent layout shift */}
             </div>
           ) : !forceSsoEnabled ? (
@@ -748,7 +748,7 @@ const Signin: NextPage = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-2 min-w-fit">
+                    <div className="min-w-fit space-y-2">
                       {configuredProviders.map((provider) => (
                         <Button
                           key={provider.id}
@@ -795,7 +795,7 @@ const Signin: NextPage = () => {
                     {t("common.or")}{" "}
                     <Link href="/signup" className="group underline">
                       {t("auth.signin.createAccount")}
-                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                     </Link>
                   </div>
                 )}
@@ -850,7 +850,7 @@ const Signin: NextPage = () => {
           {/* Trouble signing in message */}
           {sessionCleared && !isLoadingSsoProviders && showAdminContact && (
             <div
-              className="w-full mt-6 text-center text-sm text-muted-foreground"
+              className="mt-6 w-full text-center text-sm text-muted-foreground"
               data-testid="signin-admin-contact"
             >
               {t("auth.signin.troubleSigningIn")}{" "}
@@ -896,8 +896,8 @@ const Signin: NextPage = () => {
 
           {!magicLinkSent && showCodeEntry ? (
             <>
-              <div className="py-4 space-y-3">
-                <p className="text-sm text-muted-foreground text-center">
+              <div className="space-y-3 py-4">
+                <p className="text-center text-sm text-muted-foreground">
                   {t("auth.signin.passwordless.codeEntryDescription")}
                 </p>
                 {passwordlessCodeEntry}
@@ -908,7 +908,7 @@ const Signin: NextPage = () => {
                     setPasswordlessCode("");
                     setPasswordlessError("");
                   }}
-                  className="text-xs text-primary hover:underline w-full text-center"
+                  className="w-full text-center text-xs text-primary hover:underline"
                 >
                   {t("auth.signin.passwordless.backToRequest")}
                 </button>
@@ -938,8 +938,8 @@ const Signin: NextPage = () => {
                 className="space-y-4"
               >
                 {passwordlessError && (
-                  <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
-                    <p className="text-sm text-destructive text-center">
+                  <div className="rounded-md border border-destructive bg-destructive/10 p-3">
+                    <p className="text-center text-sm text-destructive">
                       {passwordlessError}
                     </p>
                   </div>
@@ -970,7 +970,7 @@ const Signin: NextPage = () => {
                     setShowCodeEntry(true);
                     setPasswordlessError("");
                   }}
-                  className="text-xs text-primary hover:underline w-full text-center"
+                  className="w-full text-center text-xs text-primary hover:underline"
                   data-testid="passwordless-have-code-button"
                 >
                   {t("auth.signin.passwordless.haveCode")}
@@ -1016,7 +1016,7 @@ const Signin: NextPage = () => {
                 </p>
                 {passwordlessPendingId && (
                   <div className="mt-6 space-y-3 text-start">
-                    <p className="text-sm text-muted-foreground text-center">
+                    <p className="text-center text-sm text-muted-foreground">
                       {t("auth.signin.passwordless.waitingInstructions")}
                     </p>
                     {passwordlessCodeEntry}
@@ -1061,8 +1061,8 @@ const Signin: NextPage = () => {
 
           <div className="space-y-4 py-4">
             {submissionError && (
-              <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
-                <p className="text-sm text-destructive text-center">
+              <div className="rounded-md border border-destructive bg-destructive/10 p-3">
+                <p className="text-center text-sm text-destructive">
                   {submissionError}
                 </p>
               </div>
@@ -1082,7 +1082,7 @@ const Signin: NextPage = () => {
                   onChange={(e) =>
                     setTwoFactorCode(e.target.value.toUpperCase().slice(0, 8))
                   }
-                  className="text-center text-lg tracking-widest font-mono"
+                  className="text-center font-mono text-lg tracking-widest"
                   autoComplete="one-time-code"
                   autoFocus
                   onKeyDown={(e) => {
@@ -1117,7 +1117,7 @@ const Signin: NextPage = () => {
                   setUseBackupCode(!useBackupCode);
                   setTwoFactorCode("");
                 }}
-                className="text-xs text-primary hover:underline w-full text-center"
+                className="w-full text-center text-xs text-primary hover:underline"
               >
                 {useBackupCode
                   ? t("auth.twoFactorVerify.useAuthenticator")

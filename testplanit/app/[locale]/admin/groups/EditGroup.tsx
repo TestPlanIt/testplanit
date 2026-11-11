@@ -350,9 +350,9 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
 
               <GroupProjectMappings groupId={group.id} />
 
-              <div className="space-y-2 pt-4 border-t">
+              <div className="space-y-2 border-t pt-4">
                 <FormLabel className="flex items-center">
-                  <Users className="w-4 h-4 me-1" />
+                  <Users className="me-1 h-4 w-4" />
                   {tCommon("labels.assignedUsersCount", {
                     count: assignedUsers.length,
                   })}
@@ -379,7 +379,7 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
               <DialogFooter>
                 {errors.root && (
                   <div
-                    className="bg-destructive text-destructive-foreground text-sm p-2 rounded"
+                    className="rounded bg-destructive p-2 text-sm text-destructive-foreground"
                     role="alert"
                   >
                     {errors.root.message}
@@ -414,14 +414,14 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
               })}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <ul className="text-sm space-y-1 max-h-48 overflow-y-auto">
+          <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
             {downgradedUsers.map((u) => (
               <li
                 key={u.userId}
                 className="flex items-center justify-between gap-3"
               >
                 <UserNameCell userId={u.userId} hideLink={true} />
-                <span className="text-muted-foreground whitespace-nowrap">
+                <span className="whitespace-nowrap text-muted-foreground">
                   {t("downgradeConfirmAccessChange", {
                     from: u.currentAccess,
                     to: u.newAccess,

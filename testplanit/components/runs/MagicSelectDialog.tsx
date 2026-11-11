@@ -401,7 +401,7 @@ export function MagicSelectDialog({
         <div className="space-y-4 py-4">
           {/* Counting State */}
           {state.status === "counting" && (
-            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <div className="flex flex-col items-center justify-center space-y-4 py-8">
               <LoadingSpinner className="h-8 w-8" />
               <p className="text-sm text-muted-foreground">{t("counting")}</p>
             </div>
@@ -471,7 +471,7 @@ export function MagicSelectDialog({
 
           {/* Loading State */}
           {state.status === "loading" && (
-            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <div className="flex flex-col items-center justify-center space-y-4 py-8">
               {state.progress?.phase === "ai" && state.progress.total > 0 ? (
                 <div className="w-full max-w-xs space-y-3">
                   {state.progress.analyzed > 0 ? (
@@ -483,7 +483,7 @@ export function MagicSelectDialog({
                   ) : (
                     <Progress className="animate-pulse" />
                   )}
-                  <div className="text-center space-y-1">
+                  <div className="space-y-1 text-center">
                     {state.progress.analyzed > 0 ? (
                       <p className="text-sm text-muted-foreground">
                         {t("loading.progress", {
@@ -508,7 +508,7 @@ export function MagicSelectDialog({
               ) : state.progress?.phase === "setup" ? (
                 <div className="w-full max-w-xs space-y-3">
                   <Progress className="animate-pulse" />
-                  <p className="text-sm text-muted-foreground text-center">
+                  <p className="text-center text-sm text-muted-foreground">
                     {state.progress.message === "resolving_integration"
                       ? t("loading.resolving_integration")
                       : state.progress.message === "fetching_cases"
@@ -519,7 +519,7 @@ export function MagicSelectDialog({
               ) : (
                 <div className="w-full max-w-xs space-y-3">
                   <Progress className="animate-pulse" />
-                  <p className="text-sm text-muted-foreground text-center">
+                  <p className="text-center text-sm text-muted-foreground">
                     {t("loading.analyzing")}
                   </p>
                 </div>
@@ -558,7 +558,7 @@ export function MagicSelectDialog({
                       })}
                       {state.metadata &&
                         state.metadata.linkedCasesAdded > 0 && (
-                          <span className="block mt-1 text-xs">
+                          <span className="mt-1 block text-xs">
                             {t("success.linkedCasesAdded", {
                               count: state.metadata.linkedCasesAdded,
                             })}
@@ -569,7 +569,7 @@ export function MagicSelectDialog({
 
                   {/* Reasoning */}
                   {state.reasoning && (
-                    <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-3 max-h-32 overflow-y-auto">
+                    <div className="max-h-32 overflow-y-auto rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
                       <Label className="text-xs font-medium">
                         {t("reasoning")}
                       </Label>
@@ -578,7 +578,7 @@ export function MagicSelectDialog({
                   )}
 
                   {/* Review Drawer - uses checkboxes so users can toggle selections */}
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <Label>{t("reviewSelection")}</Label>
                     <SelectedTestCasesDrawer
                       selectedTestCases={state.suggestedCaseIds}

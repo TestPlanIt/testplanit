@@ -550,7 +550,7 @@ function WizardBody({
           <div className="flex items-center gap-2">
             <code
               data-testid="webhook-url"
-              className="flex-1 break-all text-xs"
+              className="flex-1 text-xs break-all"
             >
               {rev.url}
             </code>
@@ -574,7 +574,7 @@ function WizardBody({
             <div className="flex items-center gap-2">
               <code
                 data-testid="webhook-secret"
-                className="flex-1 break-all text-xs"
+                className="flex-1 text-xs break-all"
               >
                 {rev.secret}
               </code>

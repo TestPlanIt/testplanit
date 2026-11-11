@@ -150,7 +150,7 @@ export function RoleMappingsCard() {
         </SectionHeader>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
+        <p className="mb-4 text-sm text-muted-foreground">
           {t("roleMappings.description")}
         </p>
 
@@ -161,7 +161,7 @@ export function RoleMappingsCard() {
               className="flex items-center gap-2"
               data-testid={`scim-role-mapping-row-${mapping.roleValue}`}
             >
-              <span className="flex-1 font-mono text-sm truncate">
+              <span className="flex-1 truncate font-mono text-sm">
                 {mapping.roleValue}
               </span>
               <Select
@@ -214,7 +214,7 @@ export function RoleMappingsCard() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 mt-4 border-t pt-4">
+        <div className="mt-4 flex items-center gap-2 border-t pt-4">
           <Input
             className="flex-1"
             value={newRoleValue}
@@ -270,14 +270,14 @@ export function RoleMappingsCard() {
               })}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <ul className="text-sm space-y-1 max-h-48 overflow-y-auto px-6">
+          <ul className="max-h-48 space-y-1 overflow-y-auto px-6 text-sm">
             {downgradedUsers.map((u) => (
               <li
                 key={u.userId}
                 className="flex items-center justify-between gap-3"
               >
                 <UserNameCell userId={u.userId} hideLink={true} />
-                <span className="text-muted-foreground whitespace-nowrap">
+                <span className="whitespace-nowrap text-muted-foreground">
                   {tGroups("downgradeConfirmAccessChange", {
                     from: u.currentAccess,
                     to: u.newAccess,

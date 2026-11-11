@@ -206,7 +206,7 @@ export function MultiAsyncCombobox<T>({
       value={String(getOptionValue(option))}
       onSelect={() => toggleOption(option)}
     >
-      <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
+      <div className="flex w-full items-center [&_a]:text-inherit [&_a]:no-underline [&_a:hover]:text-inherit">
         {renderOption(option, debouncedSearch)}
         {!hideSelected && isSelected(option) ? (
           <Check className="ms-auto h-4 w-4" />
@@ -237,13 +237,13 @@ export function MultiAsyncCombobox<T>({
           aria-expanded={open}
           aria-label={ariaLabel}
           className={cn(
-            "w-full justify-between text-start font-normal min-h-10 h-auto",
+            "h-auto min-h-10 w-full justify-between text-start font-normal",
             !value.length && "text-muted-foreground",
             className
           )}
           disabled={disabled}
         >
-          <div className="flex flex-wrap gap-1 flex-1 max-h-[72px] overflow-y-auto py-1">
+          <div className="flex max-h-[72px] flex-1 flex-wrap gap-1 overflow-y-auto py-1">
             {value.length === 0 ? (
               <span>
                 {placeholder || tCommon("placeholders.selectConfigurations")}
@@ -253,7 +253,7 @@ export function MultiAsyncCombobox<T>({
                 <Badge
                   key={getOptionValue(v)}
                   variant="secondary"
-                  className="me-1 shrink-0 min-w-[80px] max-w-[200px] overflow-hidden"
+                  className="me-1 max-w-[200px] min-w-[80px] shrink-0 overflow-hidden"
                   style={getSelectedOptionStyle?.(v)}
                   title={getOptionLabel(v)}
                 >
@@ -266,7 +266,7 @@ export function MultiAsyncCombobox<T>({
                     title={getOptionLabel(v)}
                     role="button"
                     tabIndex={0}
-                    className="ms-1 rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background cursor-pointer opacity-70 hover:opacity-100 hover:bg-destructive/20 flex items-center"
+                    className="ms-1 flex cursor-pointer items-center rounded-full opacity-70 ring-offset-background outline-none hover:bg-destructive/20 hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         removeOption(v, e as unknown as React.MouseEvent);
@@ -298,7 +298,7 @@ export function MultiAsyncCombobox<T>({
         align="start"
         collisionPadding={8}
         className={cn(
-          dropdownClassName || "p-0 min-w-[400px] max-w-[800px]",
+          dropdownClassName || "max-w-[800px] min-w-[400px] p-0",
           // Keep the whole panel inside the viewport. Radix flips above the
           // trigger when there is no room below, but flipping does not shrink
           // the panel, so the list scrolls inside a flex column while the
@@ -307,7 +307,7 @@ export function MultiAsyncCombobox<T>({
         )}
         style={{ width: Math.max(width, 400) }}
       >
-        <Command className="w-full min-h-0 flex-1" shouldFilter={false}>
+        <Command className="min-h-0 w-full flex-1" shouldFilter={false}>
           <CommandInput
             placeholder={placeholder || tCommon("search")}
             value={search}
@@ -365,13 +365,13 @@ export function MultiAsyncCombobox<T>({
             )}
           >
             {loading && (
-              <div className="absolute inset-0 flex justify-center items-center bg-muted/60 z-10">
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/60">
                 <Spinner />
               </div>
             )}
             <CommandList
               ref={scrollRef}
-              className="min-h-0 flex-1 max-h-[300px]"
+              className="max-h-[300px] min-h-0 flex-1"
             >
               {/* Only once the fetch has settled — otherwise "no results"
                   renders under the loading overlay and contradicts it. */}
@@ -379,7 +379,7 @@ export function MultiAsyncCombobox<T>({
                 <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
               )}
               <CommandGroup
-                className={cn(loading ? "opacity-50 pointer-events-none" : "")}
+                className={cn(loading ? "pointer-events-none opacity-50" : "")}
               >
                 {shouldVirtualize ? (
                   <div
@@ -395,7 +395,7 @@ export function MultiAsyncCombobox<T>({
                           key={getOptionValue(option)}
                           ref={measureElement}
                           data-index={virtualRow.index}
-                          className="absolute top-0 start-0 w-full"
+                          className="absolute start-0 top-0 w-full"
                           style={{
                             transform: `translateY(${virtualRow.start}px)`,
                           }}
@@ -423,7 +423,7 @@ export function MultiAsyncCombobox<T>({
             </CommandList>
             {total != null && (
               <div
-                className="flex items-center justify-center border-t px-2 py-1 bg-muted"
+                className="flex items-center justify-center border-t bg-muted px-2 py-1"
                 data-testid="multi-async-combobox-count-footer"
               >
                 <span className="text-xs text-muted-foreground">

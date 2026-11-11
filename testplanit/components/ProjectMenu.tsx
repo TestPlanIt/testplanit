@@ -115,7 +115,7 @@ function MenuLink({
           className={cn(
             buttonVariants({ variant: "ghost" }),
             menuButtonClass,
-            "flex items-center py-2 md:py-0 no-underline",
+            "flex items-center py-2 no-underline md:py-0",
             isActive
               ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
               : "hover:bg-primary/10 hover:text-primary"
@@ -125,7 +125,7 @@ function MenuLink({
           <span
             className={`hidden md:inline-block ${isActive ? "font-bold" : ""} ${
               isCollapsed
-                ? "md:max-w-0 md:opacity-0 md:overflow-hidden"
+                ? "md:max-w-0 md:overflow-hidden md:opacity-0"
                 : "md:max-w-[200px] md:opacity-100"
             } md:whitespace-nowrap md:transition-all md:duration-500`}
           >
@@ -493,11 +493,11 @@ export default function ProjectsMenu({
   return (
     <Card
       shadow="none"
-      className="sticky top-0 z-10 rounded-none border-none h-full shadow-none"
+      className="sticky top-0 z-10 h-full rounded-none border-none shadow-none"
     >
-      <CardContent className="bg-primary-foreground h-full p-0 flex flex-col">
+      <CardContent className="flex h-full flex-col bg-primary-foreground p-0">
         <CardHeader
-          className={`${isCollapsed ? "mb-0 -ms-6" : "mb-0 md:-mb-6"}`}
+          className={`${isCollapsed ? "-ms-6 mb-0" : "mb-0 md:-mb-6"}`}
         >
           <CardTitle>
             <ProjectDropdownMenu isCollapsed={isCollapsed} />
@@ -515,21 +515,21 @@ export default function ProjectsMenu({
                 <AccordionItem
                   key={group.key}
                   value={group.key}
-                  className="border-0 rounded-none overflow-visible mb-0"
+                  className="mb-0 overflow-visible rounded-none border-0"
                   data-testid={`project-menu-section-${group.key}`}
                 >
                   <AccordionTrigger
                     className={cn(
-                      "ms-3 py-2 mt-2 px-0 bg-transparent hover:bg-transparent uppercase text-xs hover:no-underline flex border-b-2 border-primary/40 md:border-b-0",
+                      "ms-3 mt-2 flex border-b-2 border-primary/40 bg-transparent px-0 py-2 text-xs uppercase hover:bg-transparent hover:no-underline md:border-b-0",
                       isCollapsed &&
-                        "md:max-h-0 md:opacity-0 md:overflow-hidden md:p-0 md:m-0"
+                        "md:m-0 md:max-h-0 md:overflow-hidden md:p-0 md:opacity-0"
                     )}
                   >
                     <span className="md:hidden">
                       {(() => {
                         const Icon = sectionIcons[group.key];
                         return (
-                          <Icon className="w-5 h-5 shrink-0 stroke-primary" />
+                          <Icon className="h-5 w-5 shrink-0 stroke-primary" />
                         );
                       })()}
                     </span>
@@ -537,7 +537,7 @@ export default function ProjectsMenu({
                       {sectionLabels[group.key]}
                     </span>
                   </AccordionTrigger>
-                  <AccordionContent className="pb-0 pt-0">
+                  <AccordionContent className="pt-0 pb-0">
                     {group.items.map((option) => {
                       const isActive = option.path.startsWith("settings/")
                         ? page === "settings" &&

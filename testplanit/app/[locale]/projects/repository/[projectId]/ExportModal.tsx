@@ -140,10 +140,10 @@ export function ExportModal({
         </DialogHeader>
         <div className="grid gap-6 py-4">
           {/* Export Scope */}
-          <div className="flex justify-between items-center gap-4 flex-wrap">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <Label
               htmlFor="scope"
-              className="text-end whitespace-nowrap shrink-0 flex items-center"
+              className="flex shrink-0 items-center text-end whitespace-nowrap"
             >
               {tGlobal("repository.cases.export")}
               <HelpPopover helpKey="exportModal.scope" />
@@ -154,7 +154,7 @@ export function ExportModal({
               onValueChange={(
                 value: "selected" | "allFiltered" | "allProject"
               ) => setScope(value)}
-              className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+              className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-1"
               data-testid="export-scope-radio-group"
             >
               <div className="flex items-center space-x-2">
@@ -168,7 +168,7 @@ export function ExportModal({
                   htmlFor="scope-selected"
                   className={
                     !canExportSelected
-                      ? "text-muted-foreground cursor-not-allowed"
+                      ? "cursor-not-allowed text-muted-foreground"
                       : "cursor-pointer"
                   }
                 >
@@ -202,10 +202,10 @@ export function ExportModal({
             </RadioGroup>
           </div>
           {/* Export Format */}
-          <div className="flex justify-between items-center gap-4 flex-wrap">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <Label
               htmlFor="format"
-              className="text-end whitespace-nowrap shrink-0 flex items-center"
+              className="flex shrink-0 items-center text-end whitespace-nowrap"
             >
               {tGlobal("repository.exportModal.format.label")}
               <HelpPopover helpKey="exportModal.format" />
@@ -214,7 +214,7 @@ export function ExportModal({
               id="format"
               value={format}
               onValueChange={(value: "csv" | "pdf") => setFormat(value)}
-              className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+              className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-1"
               data-testid="export-format-radio-group"
             >
               <div className="flex items-center space-x-2">
@@ -243,10 +243,10 @@ export function ExportModal({
           {format === "csv" && (
             <>
               {/* Export Columns */}
-              <div className="flex justify-between items-center gap-4 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <Label
                   htmlFor="columns"
-                  className="text-end whitespace-nowrap shrink-0 flex items-center"
+                  className="flex shrink-0 items-center text-end whitespace-nowrap"
                 >
                   {tGlobal("common.table.columns.columns")}
                   <HelpPopover helpKey="exportModal.columns" />
@@ -257,7 +257,7 @@ export function ExportModal({
                   onValueChange={(value: "visible" | "all") =>
                     setColumns(value)
                   }
-                  className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+                  className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-1"
                   data-testid="export-columns-radio-group"
                 >
                   <div className="flex items-center space-x-2">
@@ -284,10 +284,10 @@ export function ExportModal({
               </div>
 
               {/* Delimiter */}
-              <div className="flex justify-between items-center gap-4 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <Label
                   htmlFor="delimiter"
-                  className="text-end whitespace-nowrap shrink-0 flex items-center"
+                  className="flex shrink-0 items-center text-end whitespace-nowrap"
                 >
                   {tGlobal("repository.exportModal.delimiter.label")}
                   <HelpPopover helpKey="exportModal.delimiter" />
@@ -326,10 +326,10 @@ export function ExportModal({
               </div>
 
               {/* Text Long Format */}
-              <div className="flex justify-between items-center gap-4 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <Label
                   htmlFor="textLongFormat"
-                  className="text-end whitespace-nowrap shrink-0 flex items-center"
+                  className="flex shrink-0 items-center text-end whitespace-nowrap"
                 >
                   {t("textLongFormat.label")}
                   <HelpPopover helpKey="exportModal.textLongFormat" />
@@ -340,7 +340,7 @@ export function ExportModal({
                   onValueChange={(value: "json" | "plainText" | "markdown") =>
                     setTextLongFormat(value)
                   }
-                  className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+                  className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-1"
                   data-testid="export-textlong-format-radio-group"
                 >
                   <div className="flex items-center space-x-2">
@@ -386,10 +386,10 @@ export function ExportModal({
               </div>
 
               {/* Steps Format */}
-              <div className="flex justify-between items-center gap-4 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <Label
                   htmlFor="stepsFormat"
-                  className="text-end whitespace-nowrap shrink-0 flex items-center"
+                  className="flex shrink-0 items-center text-end whitespace-nowrap"
                 >
                   {tGlobal("repository.exportModal.stepsFormat.label")}
                   <HelpPopover helpKey="exportModal.stepsFormat" />
@@ -400,7 +400,7 @@ export function ExportModal({
                   onValueChange={(value: "json" | "plainText" | "markdown") =>
                     setStepsFormat(value)
                   }
-                  className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+                  className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-1"
                   data-testid="export-steps-format-radio-group"
                 >
                   <div className="flex items-center space-x-2">
@@ -446,10 +446,10 @@ export function ExportModal({
               </div>
 
               {/* Row Mode */}
-              <div className="flex justify-between items-center gap-4 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <Label
                   htmlFor="rowMode"
-                  className="text-end whitespace-nowrap shrink-0 flex items-center"
+                  className="flex shrink-0 items-center text-end whitespace-nowrap"
                 >
                   {t("rowMode.label")}
                   <HelpPopover helpKey="exportModal.rowMode" />
@@ -460,7 +460,7 @@ export function ExportModal({
                   onValueChange={(value: "single" | "multi") =>
                     setRowMode(value)
                   }
-                  className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+                  className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-1"
                   data-testid="export-row-mode-radio-group"
                 >
                   <div className="flex items-center space-x-2">
@@ -487,10 +487,10 @@ export function ExportModal({
               </div>
 
               {/* Attachment Format */}
-              <div className="flex justify-between items-center gap-4 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <Label
                   htmlFor="attachmentFormat"
-                  className="text-end whitespace-nowrap shrink-0 flex items-center"
+                  className="flex shrink-0 items-center text-end whitespace-nowrap"
                 >
                   {tGlobal("repository.exportModal.attachmentFormat.label")}
                   <HelpPopover helpKey="exportModal.attachmentFormat" />
@@ -501,7 +501,7 @@ export function ExportModal({
                   onValueChange={(value: "json" | "names") =>
                     setAttachmentFormat(value)
                   }
-                  className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+                  className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-1"
                   data-testid="export-attachment-format-radio-group"
                 >
                   <div className="flex items-center space-x-2">
@@ -538,10 +538,10 @@ export function ExportModal({
           {format === "pdf" && (
             <>
               {/* Export Columns for PDF */}
-              <div className="flex justify-between items-center gap-4 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <Label
                   htmlFor="columns-pdf"
-                  className="text-end whitespace-nowrap shrink-0 flex items-center"
+                  className="flex shrink-0 items-center text-end whitespace-nowrap"
                 >
                   {tGlobal("common.table.columns.columns")}
                   <HelpPopover helpKey="exportModal.columns" />
@@ -552,7 +552,7 @@ export function ExportModal({
                   onValueChange={(value: "visible" | "all") =>
                     setColumns(value)
                   }
-                  className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+                  className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-1"
                   data-testid="export-columns-pdf-radio-group"
                 >
                   <div className="flex items-center space-x-2">
@@ -582,10 +582,10 @@ export function ExportModal({
               </div>
 
               {/* Attachment Format for PDF */}
-              <div className="flex justify-between items-center gap-4 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <Label
                   htmlFor="attachmentFormat-pdf"
-                  className="text-end whitespace-nowrap shrink-0 flex items-center"
+                  className="flex shrink-0 items-center text-end whitespace-nowrap"
                 >
                   {tGlobal("repository.exportModal.attachmentFormat.label")}
                   <HelpPopover helpKey="exportModal.attachmentFormat" />
@@ -596,7 +596,7 @@ export function ExportModal({
                   onValueChange={(value: "json" | "names" | "embedded") =>
                     setAttachmentFormat(value)
                   }
-                  className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+                  className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-1"
                   data-testid="export-attachment-format-pdf-radio-group"
                 >
                   <div className="flex items-center space-x-2">

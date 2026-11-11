@@ -598,9 +598,9 @@ export function TestRunCaseDetails({
   };
 
   return (
-    <div className="h-full overflow-y-auto space-y-2 relative -ms-1">
+    <div className="relative -ms-1 h-full space-y-2 overflow-y-auto">
       {isTransitioning && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-2">
             <LoadingSpinner />
             <span className="text-sm text-muted-foreground">
@@ -612,7 +612,7 @@ export function TestRunCaseDetails({
       {dependencyState &&
         (isBlockedByDependency || dependencyState.notInRun.length > 0) && (
           <div
-            className="mx-4 mt-2 rounded-md border px-3 py-2 text-sm space-y-2"
+            className="mx-4 mt-2 space-y-2 rounded-md border px-3 py-2 text-sm"
             data-testid="run-case-dependency-notice"
           >
             {isBlockedByDependency && (
@@ -671,14 +671,14 @@ export function TestRunCaseDetails({
             )}
           </div>
         )}
-      <div className="sticky top-0 z-20 flex justify-between items-center gap-2 bg-primary p-4">
-        <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+      <div className="sticky top-0 z-20 flex items-center justify-between gap-2 bg-primary p-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
           {testRunId && canAddEditResults && (
             <>
               {/* Case-level result buttons hide in iteration mode — those
                   controls live in IterationResultPanel above. */}
               {!activeIterationId && (
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex shrink-0 items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -843,10 +843,10 @@ export function TestRunCaseDetails({
                                 setIsSubmitting(false);
                               }
                             }}
-                            className="flex items-center cursor-pointer"
+                            className="flex cursor-pointer items-center"
                           >
                             <div
-                              className="w-3 h-3 rounded-full me-2"
+                              className="me-2 h-3 w-3 rounded-full"
                               style={{
                                 backgroundColor:
                                   status.color?.value || "#B1B2B3",
@@ -854,7 +854,7 @@ export function TestRunCaseDetails({
                             />
                             <span className="flex-1">{status.name}</span>
                             {status.isSuccess && (
-                              <CheckCircle className="h-4 w-4 ms-2 text-muted-foreground" />
+                              <CheckCircle className="ms-2 h-4 w-4 text-muted-foreground" />
                             )}
                           </DropdownMenuItem>
                         ))}
@@ -863,7 +863,7 @@ export function TestRunCaseDetails({
                   </div>
                 </div>
               )}
-              <div className="min-w-[200px] max-w-[300px]">
+              <div className="max-w-[300px] min-w-[200px]">
                 <AsyncCombobox
                   value={
                     testcase?.testRunCases?.[0]?.assignedTo
@@ -894,7 +894,7 @@ export function TestRunCaseDetails({
         </div>
         {/* --- Previous/Next Buttons --- */}
         <TooltipProvider>
-          <div className="flex items-center gap-2 shrink-0 me-8">
+          <div className="me-8 flex shrink-0 items-center gap-2">
             {/* The repository case in a new tab, so the run keeps its place. */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -994,7 +994,7 @@ export function TestRunCaseDetails({
           </div>
         </TooltipProvider>
       </div>
-      <div className="flex justify-between items-center px-4">
+      <div className="flex items-center justify-between px-4">
         <div className="flex-1">
           <CaseDisplay
             id={testcase.id}
@@ -1007,20 +1007,20 @@ export function TestRunCaseDetails({
             hasParameters={testcase.hasParameters}
           />
           {testcase.testRunCases?.[0]?.testRun?.configuration && (
-            <Badge className="flex items-center gap-1 text-sm mt-1 w-fit">
-              <Combine className="w-4 h-4 shrink-0" />
+            <Badge className="mt-1 flex w-fit items-center gap-1 text-sm">
+              <Combine className="h-4 w-4 shrink-0" />
               <span>{testcase.testRunCases[0].testRun.configuration.name}</span>
             </Badge>
           )}
           {currentStatus && automatedStatus && (
             <div
-              className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1"
+              className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground"
               data-testid="latest-automated-result"
             >
               <Bot className="h-3.5 w-3.5 shrink-0" aria-hidden />
               <span>{tCommon("ui.latestAutomatedResult")}:</span>
               <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{
                   backgroundColor: automatedStatus.color?.value ?? "#B1B2B3",
                 }}
@@ -1036,12 +1036,12 @@ export function TestRunCaseDetails({
             // don't accidentally write a case-level result that the rollup
             // would overwrite on the next iteration submit.
             <div
-              className="inline-flex items-center gap-2 h-8 px-3 rounded-md border bg-muted/50 text-sm"
+              className="inline-flex h-8 items-center gap-2 rounded-md border bg-muted/50 px-3 text-sm"
               data-testid="case-status-readonly"
               title="Case status is computed from iteration results"
             >
               <div
-                className="w-3 h-3 rounded-full"
+                className="h-3 w-3 rounded-full"
                 style={{
                   backgroundColor: hasColor(displayStatus)
                     ? displayStatus.color.value
@@ -1061,11 +1061,11 @@ export function TestRunCaseDetails({
                   <Button
                     variant="outline"
                     disabled={isDisabled}
-                    className="h-8 bg-transparent hover:bg-muted justify-start"
+                    className="h-8 justify-start bg-transparent hover:bg-muted"
                   >
                     <div className="flex items-center space-x-1 whitespace-nowrap">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="h-3 w-3 rounded-full"
                         style={{
                           backgroundColor: hasColor(displayStatus)
                             ? displayStatus.color.value
@@ -1084,12 +1084,12 @@ export function TestRunCaseDetails({
                       onClick={() =>
                         handleStatusChange(statusOption.id.toString())
                       }
-                      className={`flex items-center cursor-pointer ${
+                      className={`flex cursor-pointer items-center ${
                         statusOption.id === displayStatus.id ? "bg-muted" : ""
                       }`}
                     >
                       <div
-                        className="w-3 h-3 rounded-full me-2"
+                        className="me-2 h-3 w-3 rounded-full"
                         style={{
                           backgroundColor:
                             statusOption.color?.value || "#B1B2B3",
@@ -1097,7 +1097,7 @@ export function TestRunCaseDetails({
                       />
                       <span className="flex-1">{statusOption.name}</span>
                       {statusOption.id === displayStatus.id && (
-                        <Check className="h-4 w-4 ms-2 text-muted-foreground" />
+                        <Check className="ms-2 h-4 w-4 text-muted-foreground" />
                       )}
                     </DropdownMenuItem>
                   ))}
@@ -1108,7 +1108,7 @@ export function TestRunCaseDetails({
         </div>
       </div>
       <Card
-        className="p-4 space-y-4 border-none rounded-none ms-1"
+        className="ms-1 space-y-4 rounded-none border-none p-4"
         shadow="none"
       >
         <div className="flex justify-between">
@@ -1117,7 +1117,7 @@ export function TestRunCaseDetails({
               <div className="flex items-center gap-2">
                 <DynamicIcon
                   name={testcase.state.icon?.name as IconName}
-                  className="w-6 h-6 shrink-0"
+                  className="h-6 w-6 shrink-0"
                   color={testcase.state.color?.value}
                 />
                 <span>{testcase.state.name}</span>
@@ -1128,7 +1128,7 @@ export function TestRunCaseDetails({
           <div className="space-y-4">
             {testcase.template && (
               <div className="flex items-center gap-2">
-                <LayoutTemplate className="w-6 h-6 shrink-0" />
+                <LayoutTemplate className="h-6 w-6 shrink-0" />
                 <span>{testcase.template.templateName}</span>
               </div>
             )}
@@ -1139,13 +1139,13 @@ export function TestRunCaseDetails({
             <div className="">
               {testcase.estimate && (
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm">
+                  <span className="text-sm font-semibold">
                     {tCommon("fields.estimate")}:
                   </span>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="text-muted-foreground text-sm flex items-center gap-1 cursor-default">
-                        <Clock className="w-4 h-4" />
+                      <span className="flex cursor-default items-center gap-1 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
                         <DurationDisplay seconds={testcase.estimate} />
                       </span>
                     </TooltipTrigger>
@@ -1166,10 +1166,10 @@ export function TestRunCaseDetails({
               {((testcase.forecastManual ?? 0) > 0 ||
                 (testcase.forecastAutomated ?? 0) > 0) && (
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm">
+                  <span className="text-sm font-semibold">
                     {tCommon("fields.forecast")}:
                   </span>
-                  <span className="text-muted-foreground text-sm flex items-center gap-1">
+                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
                     <ForecastDisplay
                       seconds={testcase.forecastManual}
                       type="manual"
@@ -1183,7 +1183,7 @@ export function TestRunCaseDetails({
                 </div>
               )}
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex items-center gap-2">
               {hasAttachments && (
                 <AttachmentsListDisplay
                   attachments={testcase.attachments}
@@ -1262,7 +1262,7 @@ export function TestRunCaseDetails({
                     key={field.caseField.id}
                     className={cn(isStepsField && stepLayoutClasses.container)}
                   >
-                    <div className="flex items-end justify-between font-medium text-sm text-primary border-b mb-1 border-muted-foreground/50">
+                    <div className="mb-1 flex items-end justify-between border-b border-muted-foreground/50 text-sm font-medium text-primary">
                       {field.caseField.displayName}
                       {isStepsField && <StepLayoutToggle className="mb-0.5" />}
                     </div>

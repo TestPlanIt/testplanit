@@ -103,7 +103,7 @@ export const MentionSuggestion = forwardRef<
             key={item.id}
             type="button"
             className={cn(
-              "flex w-full items-center gap-2 px-3 py-2 text-start text-sm group",
+              "group flex w-full items-center gap-2 px-3 py-2 text-start text-sm",
               "hover:bg-accent hover:text-accent-foreground",
               index === selectedIndex && "bg-accent text-accent-foreground"
             )}
@@ -117,11 +117,11 @@ export const MentionSuggestion = forwardRef<
               showTooltip={false}
             />
 
-            <div className="flex flex-1 flex-col min-w-0">
-              <div className="flex items- justify-between gap-2 min-w-0">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <div className="items- flex min-w-0 justify-between gap-2">
                 <span
                   className={cn(
-                    "font-medium truncate",
+                    "truncate font-medium",
                     !item.isProjectMember && "text-destructive"
                   )}
                 >
@@ -136,7 +136,7 @@ export const MentionSuggestion = forwardRef<
               {item.name && (
                 <span
                   className={cn(
-                    "text-xs truncate text-muted-foreground",
+                    "truncate text-xs text-muted-foreground",
                     "group-hover:text-accent-foreground/70",
                     index === selectedIndex && "text-accent-foreground/70"
                   )}

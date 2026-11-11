@@ -306,15 +306,15 @@ export function DatasetImportWizard({
         }}
       >
         <DialogContent
-          className="sm:max-w-4xl max-h-[80vh] overflow-hidden flex flex-col p-0"
+          className="flex max-h-[80vh] flex-col overflow-hidden p-0 sm:max-w-4xl"
           data-testid="dataset-import-wizard"
         >
-          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <DialogHeader className="border-b px-6 pt-6 pb-4">
             <DialogTitle>{t("datasetImportCsv")}</DialogTitle>
             <DialogDescription>{stepLabels[currentStep - 1]}</DialogDescription>
           </DialogHeader>
 
-          <div className="px-6 py-4 border-b bg-muted/30">
+          <div className="border-b bg-muted/30 px-6 py-4">
             <WizardStepIndicator
               currentStep={currentStep}
               totalSteps={4}
@@ -324,7 +324,7 @@ export function DatasetImportWizard({
 
           <div className="flex-1 overflow-auto">{renderStepBody()}</div>
 
-          <DialogFooter className="px-6 py-4 border-t flex sm:justify-end gap-2">
+          <DialogFooter className="flex gap-2 border-t px-6 py-4 sm:justify-end">
             {currentStep > 1 && (
               <Button
                 variant="ghost"

@@ -232,8 +232,8 @@ export default function JunitResultsPanel({
         retriedCaseCount={retriedCaseCount}
         quarantinedCaseCount={quarantinedCaseCount}
       />
-      <div className="flex flex-row items-start w-full gap-4 mb-2">
-        <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
+      <div className="mb-2 flex w-full flex-row items-start gap-4">
+        <div className="flex w-full min-w-[250px] grow flex-col sm:w-1/2">
           <Filter
             initialSearchString={junitFilter}
             onSearchChange={setJunitFilter}
@@ -249,7 +249,7 @@ export default function JunitResultsPanel({
             />
           </div>
         </div>
-        <div className="flex flex-col w-full sm:w-2/3 items-end">
+        <div className="flex w-full flex-col items-end sm:w-2/3">
           <div className="justify-end">
             <PaginationInfo
               startIndex={startIndex}
@@ -261,7 +261,7 @@ export default function JunitResultsPanel({
               handlePageSizeChange={setJunitPageSize}
             />
           </div>
-          <div className="justify-end -mx-4">
+          <div className="-mx-4 justify-end">
             <PaginationComponent
               currentPage={junitPage}
               totalPages={totalPages}

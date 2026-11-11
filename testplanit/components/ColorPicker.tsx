@@ -42,8 +42,8 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
 
   if (isColorsLoading || !colors || colors.length === 0) {
     return (
-      <div className="flex items-center justify-center w-full h-full">
-        <Ellipsis className="w-4 h-4" />
+      <div className="flex h-full w-full items-center justify-center">
+        <Ellipsis className="h-4 w-4" />
       </div>
     );
   }
@@ -71,7 +71,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         className={
           compact
             ? "h-9 w-14 shrink-0 gap-1 px-2"
-            : "p-0 m-0 aspect-square h-full w-full"
+            : "m-0 aspect-square h-full w-full p-0"
         }
         aria-label="color-picker"
       >
@@ -79,7 +79,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           className={
             compact
               ? "h-5 w-5 shrink-0 rounded-full"
-              : "aspect-square min-w-5 min-h-5 w-full rounded-full ms-2"
+              : "ms-2 aspect-square min-h-5 w-full min-w-5 rounded-full"
           }
           style={{
             backgroundColor:
@@ -92,16 +92,16 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           <div className="mt-4 w-full">
             {Object.entries(colorGroups).map(([familyName, colors]) => (
               <div key={familyName}>
-                <div className="grid grid-flow-col-dense flex-wrap justify-center items-center">
+                <div className="grid grid-flow-col-dense flex-wrap items-center justify-center">
                   {colors.map((color) => (
                     <SelectItem
                       key={color.id}
                       value={color.id.toString()}
-                      className={`grid justify-center items-center m-0 p-0 text-white`}
+                      className={`m-0 grid items-center justify-center p-0 text-white`}
                       onClick={() => handleColorSelect(color.id)} // Directly handle onClick
                     >
                       <span
-                        className={`grid justify-center items-center p-3 m-1 w-6 h-6 rounded-full`}
+                        className={`m-1 grid h-6 w-6 items-center justify-center rounded-full p-3`}
                         style={{ backgroundColor: color.value }}
                       />
                     </SelectItem>

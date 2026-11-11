@@ -436,7 +436,7 @@ function TagDetail() {
 
   return (
     <Card className="flex w-full min-w-[400px]">
-      <div className="flex-1 w-full relative">
+      <div className="relative w-full flex-1">
         <CardHeader>
           <CardTitle>
             <SectionHeader className="flex items-center justify-between">
@@ -453,9 +453,9 @@ function TagDetail() {
         </CardHeader>
         <CardContent>
           {/* Search and Filters */}
-          <div className="flex flex-col gap-4 mb-4">
+          <div className="mb-4 flex flex-col gap-4">
             <div className="flex flex-row items-start">
-              <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
+              <div className="flex w-full min-w-[250px] grow flex-col sm:w-1/2">
                 <Filter
                   key="tag-filter"
                   placeholder={t("tags.detail.filterPlaceholder")}
@@ -466,7 +466,7 @@ function TagDetail() {
             </div>
 
             {/* Filter controls */}
-            <div className="flex flex-wrap items-center gap-6 rounded-md border p-3 bg-muted/30">
+            <div className="flex flex-wrap items-center gap-6 rounded-md border bg-muted/30 p-3">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <FilterIcon className="h-4 w-4" />
                 {t("common.ui.search.filters")}
@@ -480,12 +480,12 @@ function TagDetail() {
                         caseType: "all",
                       })
                     }
-                    className="inline-flex items-center gap-1 cursor-pointer"
+                    className="inline-flex cursor-pointer items-center gap-1"
                     data-testid="clear-all-filters"
                   >
                     <Badge
                       variant="secondary"
-                      className="h-5 min-w-5 px-1.5 gap-1"
+                      className="h-5 min-w-5 gap-1 px-1.5"
                     >
                       {activeFilterCount}
                       <X className="h-3 w-3" />
@@ -506,7 +506,7 @@ function TagDetail() {
                 >
                   <SelectTrigger
                     id="case-type-filter"
-                    className="w-[140px] h-8"
+                    className="h-8 w-[140px]"
                     data-testid="case-type-filter-select"
                   >
                     <SelectValue />
@@ -536,7 +536,7 @@ function TagDetail() {
                 />
                 <Label
                   htmlFor="hide-completed-runs"
-                  className="text-sm cursor-pointer"
+                  className="cursor-pointer text-sm"
                 >
                   {t("tags.detail.filters.hideCompletedTestRuns")}
                 </Label>
@@ -553,7 +553,7 @@ function TagDetail() {
                 />
                 <Label
                   htmlFor="hide-completed-sessions"
-                  className="text-sm cursor-pointer"
+                  className="cursor-pointer text-sm"
                 >
                   {t("tags.detail.filters.hideCompletedSessions")}
                 </Label>

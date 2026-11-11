@@ -241,7 +241,7 @@ export function ReviewStatusBanner({
             header), so the cluster never crowds the prose.
           */}
           <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
-            <span className="flex flex-wrap gap-1 items-center flex-1 min-w-0">
+            <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
               {t.rich("reviews.banner.pendingMessage", {
                 assignee: () =>
                   latest.assigneeUser ? (
@@ -280,7 +280,7 @@ export function ReviewStatusBanner({
                 ago: () => <RelativeTimeTooltip date={latest.createdAt} />,
               })}
             </span>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               {canDecide && (
                 <>
                   <Button
@@ -415,7 +415,7 @@ export function ReviewStatusBanner({
              visual signal across all three outcomes. */}
           {decider && decidedAt && (
             <div
-              className="flex items-center gap-1 mb-2 text-xs"
+              className="mb-2 flex items-center gap-1 text-xs"
               data-testid="review-status-banner-attribution"
             >
               <span>{t("reviews.banner.decidedBy")}</span>
@@ -435,7 +435,7 @@ export function ReviewStatusBanner({
           */}
           {latest.decisionComment && (
             <p
-              className="line-clamp-6 break-words whitespace-pre-line border-s-2 border-current ps-2"
+              className="line-clamp-6 border-s-2 border-current ps-2 break-words whitespace-pre-line"
               data-testid="review-status-banner-decision-comment"
             >
               {latest.decisionComment}

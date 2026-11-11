@@ -46,11 +46,11 @@ export function UndeclaredParameterWarning({
 
   return (
     <div
-      className="flex items-center gap-2 text-xs text-warning-text bg-warning/10 border border-warning/20 rounded-md px-3 py-2"
+      className="flex items-center gap-2 rounded-md border border-warning/20 bg-warning/10 px-3 py-2 text-xs text-warning-text"
       data-testid="tiptap-undeclared-parameter-warning"
       role="alert"
     >
-      <AlertTriangle className="w-3 h-3 shrink-0" />
+      <AlertTriangle className="h-3 w-3 shrink-0" />
       <span>{t("editorUndeclaredWarning", { names })}</span>
     </div>
   );

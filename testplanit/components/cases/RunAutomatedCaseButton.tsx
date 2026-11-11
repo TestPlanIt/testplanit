@@ -114,7 +114,7 @@ export function RunAutomatedCaseMenuItem({
   const t = useTranslations("automation.adhoc");
   return (
     <DropdownMenuItem
-      className="flex items-center cursor-pointer"
+      className="flex cursor-pointer items-center"
       onSelect={onSelect}
       data-testid="run-automated-case-button"
     >
@@ -149,7 +149,7 @@ export function RunAutomatedCaseButton({
         variant="outline"
         onClick={() => setOpen(true)}
         data-testid="run-automated-case-button"
-        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+        className="group gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
       >
         <FilePlay className="h-4 w-4 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">

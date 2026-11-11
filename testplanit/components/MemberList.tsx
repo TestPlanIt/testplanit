@@ -65,7 +65,7 @@ export const MemberList: React.FC<MemberListProps> = ({
           <Link
             key={`${user.id}-${userEntry.prependText}-${index}`}
             href={`/users/profile/${user.id}`}
-            className="flex -mx-1 border-4 border-white/80 rounded-full"
+            className="-mx-1 flex rounded-full border-4 border-white/80"
             data-testid={`member-profile-link-${user.id}`}
           >
             {/* Named from its content so the link reads "Profile of <name>";
@@ -88,13 +88,13 @@ export const MemberList: React.FC<MemberListProps> = ({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="flex items-center justify-center ms-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer"
+              className="ms-2 flex cursor-pointer items-center justify-center text-sm text-gray-600 hover:text-gray-800"
             >
               {`+${overflowCount} more...`}
             </button>
           </PopoverTrigger>
-          <PopoverContent className="border-2 bg-background text-foreground max-h-[300px] overflow-y-auto w-auto">
-            <div className="flex flex-col gap-2 min-w-[200px]">
+          <PopoverContent className="max-h-[300px] w-auto overflow-y-auto border-2 bg-background text-foreground">
+            <div className="flex min-w-[200px] flex-col gap-2">
               {overflowUsers.map((userEntry, index) => {
                 const user = userMap.get(userEntry.userId);
                 if (!user) return null;

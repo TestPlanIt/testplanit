@@ -549,7 +549,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                     <FormLabel className="flex items-center">
                       {tCommon("fields.password")}
                       {!passwordRequired && (
-                        <span className="text-muted-foreground text-xs ms-2">
+                        <span className="ms-2 text-xs text-muted-foreground">
                           {"("}
                           {tCommon("fields.optional")}
                           {")"}
@@ -567,7 +567,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                       />
                     </FormControl>
                     {!passwordRequired && !field.value && (
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-xs text-muted-foreground">
                         {t("fields.passwordOptionalHelp")}
                       </p>
                     )}
@@ -587,7 +587,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                     <FormLabel className="flex items-center">
                       {tCommon("fields.confirmPassword")}
                       {!passwordRequired && (
-                        <span className="text-muted-foreground text-xs ms-2">
+                        <span className="ms-2 text-xs text-muted-foreground">
                           {"("}
                           {tCommon("fields.optional")}
                           {")"}
@@ -612,7 +612,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                 control={form.control}
                 name="isActive"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -631,8 +631,8 @@ export function AddUser({ open, onClose }: AddUserProps) {
                 control={form.control}
                 name="access"
                 render={({ field: _field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                    <FormLabel className="flex whitespace-nowrap items-center">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
+                    <FormLabel className="flex items-center whitespace-nowrap">
                       {tCommon("fields.access")}
                       <HelpPopover helpKey="user.access" />
                       <FormControl>
@@ -832,7 +832,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                 control={form.control}
                 name="isApi"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -843,7 +843,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                     <FormLabel className="flex items-center">
                       {tCommon("fields.apiAccess")}
                       {accessValue === "ADMIN" && (
-                        <span className="text-muted-foreground text-xs ms-2">
+                        <span className="ms-2 text-xs text-muted-foreground">
                           {"("}
                           {tCommon("fields.requiredForAdmin")}
                           {")"}
@@ -859,7 +859,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
               <DialogFooter>
                 {errors.root && (
                   <div
-                    className="bg-destructive text-destructive-foreground text-sm p-2"
+                    className="bg-destructive p-2 text-sm text-destructive-foreground"
                     role="alert"
                   >
                     {errors.root.message}

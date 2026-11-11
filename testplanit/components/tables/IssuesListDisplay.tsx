@@ -51,15 +51,15 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
         <Badge
           className={
             size === "small"
-              ? "cursor-pointer text-xs px-1.5 py-0"
+              ? "cursor-pointer px-1.5 py-0 text-xs"
               : "cursor-pointer"
           }
         >
           <Bug
             className={
               size === "small"
-                ? "w-3 h-3 me-0.5 shrink-0"
-                : "w-4 h-4 me-1 shrink-0"
+                ? "me-0.5 h-3 w-3 shrink-0"
+                : "me-1 h-4 w-4 shrink-0"
             }
           />
           {issues.length}
@@ -69,7 +69,7 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
         className="w-auto max-w-md p-2"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <div className="flex flex-wrap gap-1 max-w-full">
+        <div className="flex max-w-full flex-wrap gap-1">
           {issues.map((issue) => {
             return (
               <IssuesDisplay

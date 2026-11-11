@@ -43,11 +43,11 @@ export const ResultFieldListDisplay: React.FC<ResultFieldListProps> = ({
 
   const renderContent = () => (
     <>
-      <div className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)]">
+      <div className="flex max-h-[calc(100vh-400px)] flex-wrap items-center overflow-auto">
         {allResultFields.map((resultField: ResultFields) => (
           <Badge
             key={resultField.id}
-            className=" border p-1 m-1 text-primary-foreground bg-primary rounded-xl items-center"
+            className=" m-1 items-center rounded-xl border bg-primary p-1 text-primary-foreground"
           >
             <div className="flex items-center gap-2">
               <div>{resultField?.displayName}</div>
@@ -63,7 +63,7 @@ export const ResultFieldListDisplay: React.FC<ResultFieldListProps> = ({
       <Popover>
         <PopoverTrigger>
           <Badge>
-            <SquareCheck className="w-4 h-4 me-1" />
+            <SquareCheck className="me-1 h-4 w-4" />
             {allResultFields.length}
           </Badge>
         </PopoverTrigger>

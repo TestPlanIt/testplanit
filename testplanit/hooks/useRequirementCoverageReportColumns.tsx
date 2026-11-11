@@ -79,7 +79,7 @@ function RequirementResultCell({
         variant="outline"
         data-testid="requirement-report-uncovered"
         className={cn(
-          "whitespace-nowrap border-dashed border-warning bg-warning/15 text-foreground"
+          "border-dashed border-warning bg-warning/15 whitespace-nowrap text-foreground"
         )}
       >
         {t("uncovered")}
@@ -98,7 +98,7 @@ function RequirementResultCell({
 
   return (
     <span
-      className="text-muted-foreground italic text-sm"
+      className="text-sm text-muted-foreground italic"
       data-testid="requirement-report-not-run"
     >
       {t("notRun")}
@@ -423,7 +423,7 @@ function RequirementCoverageStateCell({
         variant="outline"
         data-testid="requirement-report-coverage-uncovered"
         className={cn(
-          "whitespace-nowrap border-dashed border-warning bg-warning/15 text-foreground"
+          "border-dashed border-warning bg-warning/15 whitespace-nowrap text-foreground"
         )}
       >
         {t("uncovered")}
@@ -435,7 +435,7 @@ function RequirementCoverageStateCell({
       <Badge
         variant="outline"
         data-testid="requirement-report-coverage-failed"
-        className="whitespace-nowrap border-destructive/40 bg-destructive/10 text-foreground"
+        className="border-destructive/40 bg-destructive/10 whitespace-nowrap text-foreground"
       >
         {t("statusFailed")}
       </Badge>
@@ -446,7 +446,7 @@ function RequirementCoverageStateCell({
       <Badge
         variant="outline"
         data-testid="requirement-report-coverage-passed"
-        className="whitespace-nowrap border-success/40 bg-success/10 text-foreground"
+        className="border-success/40 bg-success/10 whitespace-nowrap text-foreground"
       >
         {t("statusPassed")}
       </Badge>
@@ -454,7 +454,7 @@ function RequirementCoverageStateCell({
   }
   return (
     <span
-      className="text-muted-foreground italic text-sm"
+      className="text-sm text-muted-foreground italic"
       data-testid="requirement-report-coverage-not-run"
     >
       {t("statusNotRun")}
@@ -754,7 +754,7 @@ function RequirementChangeKindCell({
         <Badge
           variant="outline"
           data-testid="requirement-change-added"
-          className="whitespace-nowrap border-success/40 bg-success/10 text-foreground"
+          className="border-success/40 bg-success/10 whitespace-nowrap text-foreground"
         >
           {t("changeAdded")}
         </Badge>
@@ -764,7 +764,7 @@ function RequirementChangeKindCell({
         <Badge
           variant="outline"
           data-testid="requirement-change-removed"
-          className="whitespace-nowrap border-dashed border-destructive/40 bg-destructive/10 text-foreground"
+          className="border-dashed border-destructive/40 bg-destructive/10 whitespace-nowrap text-foreground"
         >
           {t("changeRemoved")}
         </Badge>
@@ -774,7 +774,7 @@ function RequirementChangeKindCell({
         <Badge
           variant="outline"
           data-testid="requirement-change-coverage"
-          className="whitespace-nowrap border-warning bg-warning/15 text-foreground"
+          className="border-warning bg-warning/15 whitespace-nowrap text-foreground"
         >
           {t("changeCoverage")}
         </Badge>
@@ -794,7 +794,7 @@ function RequirementChangeKindCell({
     default:
       return (
         <span
-          className="text-muted-foreground italic text-sm"
+          className="text-sm text-muted-foreground italic"
           data-testid="requirement-change-unchanged"
         >
           {t("changeUnchanged")}

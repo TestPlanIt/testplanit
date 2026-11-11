@@ -66,9 +66,9 @@ export const ProjectDropdownMenu = ({
         <div
           className={`${isCollapsed ? "w-[60px]" : "w-[60px] md:w-[175px]"}`}
         >
-          <div className="text-start me-4">
-            <div className="flex items-center gap-1 min-w-5 min-h-5">
-              <div className="max-w-5 max-h-5">
+          <div className="me-4 text-start">
+            <div className="flex min-h-5 min-w-5 items-center gap-1">
+              <div className="max-h-5 max-w-5">
                 <ProjectIcon
                   iconUrl={currentProject?.iconUrl}
                   height={20}
@@ -99,8 +99,8 @@ export const ProjectDropdownMenu = ({
               )}
               className={`${project.isCompleted ? "bg-muted-foreground/20" : ""}`}
             >
-              <div className="flex items-center gap-1 min-w-5 min-h-5">
-                <div className="max-w-5 max-h-5">
+              <div className="flex min-h-5 min-w-5 items-center gap-1">
+                <div className="max-h-5 max-w-5">
                   <ProjectIcon
                     iconUrl={project?.iconUrl}
                     height={20}

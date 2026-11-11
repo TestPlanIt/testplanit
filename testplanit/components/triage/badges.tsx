@@ -40,7 +40,7 @@ export function ClassificationBadge({
     <Badge
       variant="outline"
       className={cn(
-        "gap-1 whitespace-nowrap font-normal",
+        "gap-1 font-normal whitespace-nowrap",
         !live && "text-muted-foreground",
         className
       )}
@@ -121,7 +121,7 @@ export function FlakyCandidateBadge({ className }: { className?: string }) {
         <Badge
           variant="outline"
           className={cn(
-            "gap-1 whitespace-nowrap font-normal text-amber-700 dark:text-amber-400",
+            "gap-1 font-normal whitespace-nowrap text-amber-700 dark:text-amber-400",
             className
           )}
         >
@@ -146,7 +146,7 @@ export function KnownIssueBadge({
   return (
     <Badge
       variant="secondary"
-      className={cn("whitespace-nowrap font-normal", className)}
+      className={cn("font-normal whitespace-nowrap", className)}
       data-testid="triage-known-issue-badge"
     >
       {t("knownIssue")}

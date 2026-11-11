@@ -124,7 +124,7 @@ export function IterationSidebar({
 
   return (
     <aside
-      className="w-full md:w-72 bg-card border-b md:border-b-0 md:border-e flex flex-col h-full md:h-auto"
+      className="flex h-full w-full flex-col border-b bg-card md:h-auto md:w-72 md:border-e md:border-b-0"
       aria-label={tCommon("fields.iterations")}
       data-testid="iteration-sidebar"
       data-test-run-case-id={testRunCaseId}
@@ -132,9 +132,9 @@ export function IterationSidebar({
       <div
         ref={containerRef}
         onKeyDown={handleContainerKeyDown}
-        className="flex flex-col h-full"
+        className="flex h-full flex-col"
       >
-        <header className="sticky top-0 z-10 bg-card border-b px-4 pt-4 pb-2 flex items-center justify-between gap-2">
+        <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b bg-card px-4 pt-4 pb-2">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold">
               {tCommon("fields.iterations")}

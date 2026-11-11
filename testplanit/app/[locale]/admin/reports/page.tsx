@@ -39,7 +39,7 @@ export default function AdminReportsPage() {
             <SectionHeader className="flex items-center gap-2">
               <CardTitle
                 data-testid="adminreports-page-title"
-                className="items-center flex gap-1"
+                className="flex items-center gap-1"
               >
                 {tGlobal("navigation.admin.crossProjectReports")}
               </CardTitle>

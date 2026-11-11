@@ -108,16 +108,16 @@ export function DeleteCaseModal({
 
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[600px] border-destructive">
+      <AlertDialogContent className="border-destructive sm:max-w-[425px] lg:max-w-[600px]">
         <div className="space-y-4">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <TriangleAlert className="w-6 h-6 me-2" />
+              <TriangleAlert className="me-2 h-6 w-6" />
               {t("repository.deleteCase.title")}
             </AlertDialogTitle>
             <AlertDialogDescription className="overflow-hidden">
               {t("repository.deleteCase.confirmMessageStart")}
-              <span className="truncate font-bold max-w-[200px] inline-block align-bottom">
+              <span className="inline-block max-w-[200px] truncate align-bottom font-bold">
                 {testcase.name}
               </span>
               {t("repository.deleteCase.confirmMessageEnd")}
@@ -125,7 +125,7 @@ export function DeleteCaseModal({
           </AlertDialogHeader>
           {showActiveRunWarning && (
             <div
-              className="border border-destructive p-4 rounded-lg bg-destructive/10"
+              className="rounded-lg border border-destructive bg-destructive/10 p-4"
               role="alert"
             >
               <p className="font-bold">
@@ -138,7 +138,7 @@ export function DeleteCaseModal({
               </p>
             </div>
           )}
-          <div className="bg-destructive text-destructive-foreground p-2">
+          <div className="bg-destructive p-2 text-destructive-foreground">
             {t("repository.deleteCase.warning")}
           </div>
           <AlertDialogFooter>

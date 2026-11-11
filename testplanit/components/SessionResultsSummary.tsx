@@ -133,10 +133,10 @@ export function SessionResultsSummary({
 
   if (isLoading) {
     return (
-      <div className={cn("flex flex-col space-y-1 w-full", className)}>
+      <div className={cn("flex w-full flex-col space-y-1", className)}>
         <Skeleton className="h-2.5 w-full rounded-full" />
         <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-5 w-20 mt-1" />
+        <Skeleton className="mt-1 h-5 w-20" />
       </div>
     );
   }
@@ -144,17 +144,17 @@ export function SessionResultsSummary({
   // If there are no results, show default "No elapsed time" and a default status bar
   if (!summaryData || summaryData.results.length === 0) {
     return (
-      <div className={cn("flex flex-col space-y-1 w-full", className)}>
+      <div className={cn("flex w-full flex-col space-y-1", className)}>
         {/* Show a default status bar at the top */}
         <div
-          className="h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden"
+          className="h-2.5 w-full overflow-x-auto overflow-y-hidden rounded-full"
           data-status-bar
         >
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
                 href={`/projects/sessions/${projectId}/${sessionId}`}
-                className="h-full w-full transition-all hover:opacity-80 cursor-pointer border-x-[0.5px] rounded-sm"
+                className="h-full w-full cursor-pointer rounded-sm border-x-[0.5px] transition-all hover:opacity-80"
                 style={{
                   backgroundColor: firstStatus?.color?.value || "#B1B2B3",
                   display: "block",
@@ -174,7 +174,7 @@ export function SessionResultsSummary({
                 ),
               }}
             >
-              <div className="font-semibold text-sm">
+              <div className="text-sm font-semibold">
                 {firstStatus?.name || t("common.labels.untested")}
               </div>
               <div className="text-xs opacity-90">
@@ -192,7 +192,7 @@ export function SessionResultsSummary({
             "text-md": textSize === "md",
           })}
         >
-          <Timer className="w-4 h-4" />
+          <Timer className="h-4 w-4" />
           <span>{t("common.labels.noResults")}</span>
         </div>
       </div>
@@ -212,10 +212,10 @@ export function SessionResultsSummary({
   );
 
   return (
-    <div className={cn("flex flex-col space-y-1 w-full", className)}>
+    <div className={cn("flex w-full flex-col space-y-1", className)}>
       {/* Color bar for results at the top */}
       <div
-        className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden"
+        className="flex h-2.5 w-full overflow-x-auto overflow-y-hidden rounded-full"
         data-status-bar
       >
         {sortedResults.map((result, index) => {
@@ -232,7 +232,7 @@ export function SessionResultsSummary({
               <TooltipTrigger asChild>
                 <Link
                   href={`/projects/sessions/${projectId}/${sessionId}#result-${result.id}`}
-                  className="border-x border-primary-foreground rounded-sm h-full transition-all hover:opacity-80 cursor-pointer"
+                  className="h-full cursor-pointer rounded-sm border-x border-primary-foreground transition-all hover:opacity-80"
                   style={{
                     backgroundColor: color,
                     width: width,
@@ -251,12 +251,12 @@ export function SessionResultsSummary({
                   color: contrastingTextColor(color),
                 }}
               >
-                <div className="flex items-center gap-1 font-semibold text-sm">
-                  <div className="rounded-full bg-muted w-2 h-2" />
+                <div className="flex items-center gap-1 text-sm font-semibold">
+                  <div className="h-2 w-2 rounded-full bg-muted" />
                   {result.statusName || t("common.labels.untested")}
                 </div>
 
-                <div className="text-xs opacity-90 mt-1">
+                <div className="mt-1 text-xs opacity-90">
                   <div className="flex items-center gap-1">
                     <DateFormatter
                       date={result.createdAt}
@@ -265,7 +265,7 @@ export function SessionResultsSummary({
                     />
                   </div>
                   {result.elapsed && result.elapsed > 0 && (
-                    <div className="flex items-center gap-1 mt-0.5">
+                    <div className="mt-0.5 flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {toHumanReadable(result.elapsed, {
                         isSeconds: true,
@@ -293,11 +293,11 @@ export function SessionResultsSummary({
       </div>
 
       {/* Show different message based on whether there's elapsed time */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         {hasElapsed ? (
           <ElapsedTime
             sessionId={sessionId}
-            className={cn("text-muted-foreground -space-y-1")}
+            className={cn("-space-y-1 text-muted-foreground")}
             estimate={summaryData.estimate}
             textSize={textSize}
           />
@@ -309,11 +309,11 @@ export function SessionResultsSummary({
               "text-md": textSize === "md",
             })}
           >
-            <Timer className="w-4 h-4" />
+            <Timer className="h-4 w-4" />
             <span>{t("common.labels.resultsWithNoElapsedTime")}</span>
           </div>
         )}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <span
@@ -326,7 +326,7 @@ export function SessionResultsSummary({
                   e.key === "Enter" &&
                   setSortMode((m) => (m === "date" ? "status" : "date"))
                 }
-                className="inline-flex cursor-pointer items-center text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex cursor-pointer items-center text-muted-foreground transition-colors hover:text-foreground"
                 aria-label={
                   sortMode === "date"
                     ? t("common.labels.sortByStatus")
@@ -348,7 +348,7 @@ export function SessionResultsSummary({
             <Link
               href={`/projects/sessions/${projectId}/${sessionId}#comments`}
               className={cn(
-                "flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors",
+                "flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground",
                 {
                   "text-xs": textSize === "xs",
                   "text-sm": textSize === "sm",

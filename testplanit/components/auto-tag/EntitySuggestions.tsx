@@ -29,7 +29,7 @@ export function EntitySuggestions({
         <div className="space-y-6 pe-4">
           <h3 className="text-sm font-medium">{entity.entityName}</h3>
           <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-3">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <div className="text-sm text-foreground">
               <p className="font-medium text-destructive-text">
                 {t("analysisFailed")}
@@ -52,7 +52,7 @@ export function EntitySuggestions({
 
         {/* Suggested Tags */}
         <div className="space-y-2">
-          <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <h4 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {t("suggestedTags")}
           </h4>
           {entity.tags.length > 0 ? (
@@ -80,7 +80,7 @@ export function EntitySuggestions({
         {/* Current Tags */}
         {entity.currentTags.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <h4 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
               {t("alreadyApplied")}
             </h4>
             <div className="flex flex-wrap gap-2">

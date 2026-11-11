@@ -140,20 +140,20 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
     if (isDifferent) {
       return (
         <div>
-          <div className="relative p-1 rounded">
-            <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
-            <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
+          <div className="relative rounded p-1">
+            <div className="pointer-events-none absolute inset-0 rounded bg-red-500/20" />
+            <span className="relative flex items-center space-x-1 text-red-600 dark:text-red-400">
               <div>
-                <Minus className="w-4 h-4" />
+                <Minus className="h-4 w-4" />
               </div>
               {renderer(previous)}
             </span>
           </div>
-          <div className="relative p-1 rounded">
-            <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
-            <span className="relative text-green-700 dark:text-green-400 flex space-x-1 items-center">
+          <div className="relative rounded p-1">
+            <div className="pointer-events-none absolute inset-0 rounded bg-green-500/20" />
+            <span className="relative flex items-center space-x-1 text-green-700 dark:text-green-400">
               <div>
-                <Plus className="w-4 h-4" />
+                <Plus className="h-4 w-4" />
               </div>
               {renderer(current)}
             </span>
@@ -200,7 +200,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 return option ? (
                   <div key={val} className="flex items-center space-x-1">
                     <DynamicIcon
-                      className="w-5 h-5 min-w-5 min-h-5"
+                      className="h-5 min-h-5 w-5 min-w-5"
                       name={option.fieldOption.icon?.name as IconName}
                       color={option.fieldOption.iconColor?.value}
                     />
@@ -241,7 +241,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                       label: (
                         <div className="flex items-center">
                           <DynamicIcon
-                            className="h-4 w-4 me-1"
+                            className="me-1 h-4 w-4"
                             name={option.fieldOption.icon?.name as IconName}
                             color={option.fieldOption.iconColor?.value}
                           />
@@ -265,7 +265,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                       label: (
                         <div className="flex items-center">
                           <DynamicIcon
-                            className="h-4 w-4 me-1"
+                            className="me-1 h-4 w-4"
                             name={option.fieldOption.icon?.name as IconName}
                             color={option.fieldOption.iconColor?.value}
                           />
@@ -293,9 +293,9 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             (option: any) => option.fieldOption.id === value
           );
           return (
-            <div className="flex items-center space-x-1 ms-1 w-fit">
+            <div className="ms-1 flex w-fit items-center space-x-1">
               <DynamicIcon
-                className="w-5 h-5 min-w-5 min-h-5"
+                className="h-5 min-h-5 w-5 min-w-5"
                 name={option?.fieldOption.icon?.name as IconName}
                 color={option?.fieldOption.iconColor?.value}
               />
@@ -334,7 +334,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                       >
                         <div className="flex items-center">
                           <DynamicIcon
-                            className="shrink-0 me-1"
+                            className="me-1 shrink-0"
                             name={option.fieldOption.icon?.name as IconName}
                             color={option.fieldOption.iconColor?.value}
                           />
@@ -524,7 +524,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               const initialHeight = caseFieldDefinition?.initialHeight;
 
               return (
-                <div className="ring-2 ring-muted rounded-lg">
+                <div className="rounded-lg ring-2 ring-muted">
                   <TipTapEditor
                     key={fieldId}
                     content={initialEditorContent}

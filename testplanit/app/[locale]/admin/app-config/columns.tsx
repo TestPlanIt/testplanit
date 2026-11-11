@@ -69,7 +69,7 @@ export function getColumns(
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="font-mono truncate">
+              <div className="truncate font-mono">
                 {typeof value === "object"
                   ? JSON.stringify(value)
                   : String(value)}
@@ -93,10 +93,10 @@ export function getColumns(
       size: 96,
       minSize: 96,
       cell: ({ row }) => (
-        <div className="whitespace-nowrap flex justify-center gap-1">
+        <div className="flex justify-center gap-1 whitespace-nowrap">
           <Button
             variant="ghost"
-            className="px-2 py-1 h-auto"
+            className="h-auto px-2 py-1"
             data-testid="edit-config-button"
             aria-label={t("actions.edit")}
             onClick={() => onEditConfig?.(row.original)}
@@ -105,7 +105,7 @@ export function getColumns(
           </Button>
           <Button
             variant="destructive"
-            className="px-2 py-1 h-auto"
+            className="h-auto px-2 py-1"
             data-testid="delete-config"
             aria-label={t("actions.delete")}
             onClick={() => onDeleteConfig?.(row.original)}

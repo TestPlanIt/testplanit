@@ -2102,8 +2102,8 @@ export function BulkEditModal({
 
           {/* Preview */}
           {previews.length > 0 && (
-            <div className="border rounded-md p-3 bg-muted/30">
-              <div className="flex items-center justify-between mb-2">
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium">
                   {tBulkEdit("preview")} {"("}
                   {previews.length} {tBulkEdit("matches")}
@@ -2124,7 +2124,7 @@ export function BulkEditModal({
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <span className="text-sm px-2">
+                    <span className="px-2 text-sm">
                       {currentPreviewIndex + 1} / {previews.length}
                     </span>
                     <Button
@@ -2154,9 +2154,9 @@ export function BulkEditModal({
                       {currentPreview.stepsPreview.map((stepPreview) => (
                         <div
                           key={stepPreview.stepNumber}
-                          className="ps-2 border-s-2 border-muted"
+                          className="border-s-2 border-muted ps-2"
                         >
-                          <div className="font-medium text-xs text-muted-foreground">
+                          <div className="text-xs font-medium text-muted-foreground">
                             {t("common.fields.step") + " "}
                             {stepPreview.stepNumber}
                           </div>
@@ -2220,7 +2220,7 @@ export function BulkEditModal({
             onValueChange={(value) =>
               handleLinkModeChange(fieldKey, value as LinkEditMode)
             }
-            className="flex gap-4 mb-2"
+            className="mb-2 flex gap-4"
             data-testid={`${fieldKey}-link-mode`}
           >
             <div className="flex items-center space-x-2">
@@ -2250,7 +2250,7 @@ export function BulkEditModal({
                 [fieldKey]: value as FieldEditMode,
               }))
             }
-            className="flex gap-4 mb-2"
+            className="mb-2 flex gap-4"
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="replace" id={`${fieldKey}-replace`} />
@@ -2324,7 +2324,7 @@ export function BulkEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col">
+      <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>
             {tBulkEdit("title", { count: selectedCaseIds.length })}
@@ -2334,9 +2334,9 @@ export function BulkEditModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grow overflow-y-auto pe-6 ps-2 py-4 space-y-4">
+        <div className="grow space-y-4 overflow-y-auto py-4 ps-2 pe-6">
           {isLoading && (
-            <div className="flex justify-center items-center h-40">
+            <div className="flex h-40 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           )}
@@ -2387,7 +2387,7 @@ export function BulkEditModal({
                     className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1"
                   >
                     {/* Checkbox + Label */}
-                    <div className="flex items-center space-x-2 pt-1 justify-self-start">
+                    <div className="flex items-center space-x-2 justify-self-start pt-1">
                       <Checkbox
                         id={`edit-${fieldKey}`}
                         checked={isEditing}
@@ -2401,7 +2401,7 @@ export function BulkEditModal({
                       />
                       <Label
                         htmlFor={`edit-${fieldKey}`}
-                        className="font-semibold text-sm flex items-center"
+                        className="flex items-center text-sm font-semibold"
                       >
                         {field.label}
                         {!field.isCustom && (
@@ -2417,7 +2417,7 @@ export function BulkEditModal({
                             title={tCommon("aria.restrictedField")}
                             className="ms-1 text-muted-foreground"
                           >
-                            <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                            <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                           </span>
                         )}
                       </Label>
@@ -2435,7 +2435,7 @@ export function BulkEditModal({
                           {renderFieldInput(field, fieldKey)}
                           {/* Display inline error if exists */}
                           {inlineErrors[fieldKey] && (
-                            <p className="text-sm font-medium text-destructive mt-1">
+                            <p className="mt-1 text-sm font-medium text-destructive">
                               {inlineErrors[fieldKey][0]}{" "}
                               {/* Show first error */}
                             </p>
@@ -2543,9 +2543,9 @@ export function BulkEditModal({
                           )}
                         </>
                       ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap">
+                        <div className="flex h-10 w-full items-center overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-sm text-ellipsis whitespace-nowrap text-muted-foreground">
                           {displayValue === VARIOUS_PLACEHOLDER ? (
-                            <span className="italic text-muted-foreground/80">
+                            <span className="text-muted-foreground/80 italic">
                               {VARIOUS_PLACEHOLDER}
                             </span>
                           ) : (
@@ -2562,7 +2562,7 @@ export function BulkEditModal({
           )}
         </div>
 
-        <DialogFooter className="flex justify-between items-center w-full">
+        <DialogFooter className="flex w-full items-center justify-between">
           {/* Left: Delete button */}
           <div>
             <Popover
@@ -2589,7 +2589,7 @@ export function BulkEditModal({
                 {tBulkEdit("confirmDeleteCases", {
                   count: selectedCaseIds.length,
                 })}
-                <div className="flex items-start justify-end gap-4 mt-2">
+                <div className="mt-2 flex items-start justify-end gap-4">
                   <Button
                     type="button"
                     variant="secondary"

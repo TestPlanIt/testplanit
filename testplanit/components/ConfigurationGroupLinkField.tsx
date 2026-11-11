@@ -332,7 +332,7 @@ export function ConfigurationGroupLinkField({
               </Link>
               <ConfigurationNameDisplay
                 name={peerLabels.get(peer.id) ?? peer.name}
-                className="text-muted-foreground min-w-0"
+                className="min-w-0 text-muted-foreground"
                 truncate
               />
             </li>
@@ -340,7 +340,7 @@ export function ConfigurationGroupLinkField({
         </ul>
       ) : (
         <p
-          className="text-muted-foreground text-sm"
+          className="text-sm text-muted-foreground"
           data-testid="configuration-group-empty"
         >
           {isRuns
@@ -355,7 +355,7 @@ export function ConfigurationGroupLinkField({
               Only rendered with the actions — it is advice about an action
               the reader cannot take outside edit mode. */}
           <p
-            className="text-muted-foreground text-xs"
+            className="text-xs text-muted-foreground"
             data-testid="configuration-group-link-hint"
           >
             {isRuns
@@ -402,7 +402,7 @@ export function ConfigurationGroupLinkField({
                     <ConfigurationNameDisplay
                       name={option.configuration?.name}
                       fallback={t("labels.noConfiguration")}
-                      className="text-muted-foreground min-w-0 text-xs"
+                      className="min-w-0 text-xs text-muted-foreground"
                       truncate
                     />
                     {option.groupSize && option.groupSize > 1 ? (
@@ -474,7 +474,7 @@ export function ConfigurationGroupLinkField({
           </div>
           {hasUnsavedChange && (
             <p
-              className="text-muted-foreground text-xs"
+              className="text-xs text-muted-foreground"
               data-testid="configuration-group-pending"
             >
               {t("configurationGroup.pending")}

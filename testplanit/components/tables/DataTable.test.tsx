@@ -371,7 +371,7 @@ const DataTableTestDouble: React.FC<{
                 <td key={col.id as string}>
                   <div
                     data-testid="skeleton"
-                    className="animate-pulse h-4 bg-gray-200 rounded"
+                    className="h-4 animate-pulse rounded bg-gray-200"
                   />
                 </td>
               ))}

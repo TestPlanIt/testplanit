@@ -124,7 +124,7 @@ export function MemberIssuesOverflowPanel({
   return (
     <Card data-testid="member-issues-overflow-panel" className="border-warning">
       <CardHeader>
-        <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <AlertTriangle className="h-4 w-4 text-warning" />
             {t("overflowTitle")}
@@ -157,7 +157,7 @@ export function MemberIssuesOverflowPanel({
         </Alert>
 
         <ScrollArea className="max-h-[280px] rounded-md border">
-          <div className="p-3 space-y-2">
+          <div className="space-y-2 p-3">
             {members.map((member) => (
               <div
                 key={member.id}
@@ -165,15 +165,15 @@ export function MemberIssuesOverflowPanel({
                 className="flex items-center justify-between gap-2 rounded-md border p-2"
               >
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex min-w-0 items-center gap-2">
                     {member.key && (
-                      <span className="text-xs text-muted-foreground shrink-0">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         {"["}
                         {member.key}
                         {"]"}
                       </span>
                     )}
-                    <span className="text-sm font-medium truncate">
+                    <span className="truncate text-sm font-medium">
                       {member.title}
                     </span>
                   </div>

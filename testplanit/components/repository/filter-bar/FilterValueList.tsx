@@ -66,13 +66,13 @@ export function FilterValueList({
       <>
         {option.color ? (
           <div
-            className="w-3 h-3 rounded-full shrink-0"
+            className="h-3 w-3 shrink-0 rounded-full"
             style={{ backgroundColor: option.color.value }}
           />
         ) : option.icon ? (
           <DynamicIcon
             name={option.icon.name as IconName}
-            className="w-4 h-4 shrink-0"
+            className="h-4 w-4 shrink-0"
             color={option.iconColor?.value}
           />
         ) : null}
@@ -85,7 +85,7 @@ export function FilterValueList({
     const count = (
       <span
         className={cn(
-          "text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap",
+          "ms-2 shrink-0 text-xs whitespace-nowrap text-muted-foreground",
           countsMuted && "opacity-50"
         )}
       >
@@ -137,7 +137,7 @@ export function FilterValueList({
                     selected ? "opacity-100" : "opacity-0"
                   )}
                 />
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   {renderLabel(option)}
                 </div>
                 {renderCount(option)}
@@ -148,7 +148,7 @@ export function FilterValueList({
       </CommandList>
       {valueLimitReached && (
         <p
-          className="px-2 py-1.5 text-xs text-muted-foreground border-t"
+          className="border-t px-2 py-1.5 text-xs text-muted-foreground"
           data-testid="filter-value-limit"
         >
           {t("repository.filterBar.valueLimitReached", {

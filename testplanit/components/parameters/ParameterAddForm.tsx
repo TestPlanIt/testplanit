@@ -280,7 +280,7 @@ export function ParameterAddForm({
       </div>
 
       {type === "SELECT" && (
-        <div className="flex flex-col gap-2 border rounded-md p-3 bg-muted/30">
+        <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3">
           <Controller
             control={form.control}
             name="selectSource"

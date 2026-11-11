@@ -393,7 +393,7 @@ export function SharedDatasetEditor({
       <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 min-w-0 grow">
+            <div className="flex min-w-0 grow items-center gap-2">
               <Link href={`/projects/settings/${projectId}/datasets`}>
                 <Button
                   type="button"
@@ -405,7 +405,7 @@ export function SharedDatasetEditor({
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               </Link>
-              <CardTitle className="grow min-w-0 truncate text-xl md:text-2xl">
+              <CardTitle className="min-w-0 grow truncate text-xl md:text-2xl">
                 {dataset.name}
               </CardTitle>
             </div>
@@ -430,7 +430,7 @@ export function SharedDatasetEditor({
               </Button>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground pt-1">
+          <p className="pt-1 text-xs text-muted-foreground">
             {isDirty
               ? tEditor("unsavedHint")
               : tEditor("savedHint", { version: dataset.version })}
@@ -468,7 +468,7 @@ export function SharedDatasetEditor({
             </div>
           ) : (
             <div
-              className="border rounded-md overflow-hidden"
+              className="overflow-hidden rounded-md border"
               data-testid="shared-dataset-editor-grid"
             >
               <DatasetTab

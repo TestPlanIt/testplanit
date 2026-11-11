@@ -109,7 +109,7 @@ export function AbandonedRunPolicyCard() {
             <div className="flex items-center gap-2 text-sm">
               <Label
                 htmlFor="abandoned-run-policy-minutes"
-                className="whitespace-nowrap font-normal"
+                className="font-normal whitespace-nowrap"
               >
                 {t("minutesBefore")}
               </Label>

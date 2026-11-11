@@ -146,14 +146,14 @@ function LinkedIssueBadge({
       : issue.key;
 
   const badgeContent = (
-    <Badge className="hover:bg-accent hover:text-accent-foreground hover:border-primary transition-colors group w-full max-w-full inline-flex">
-      <div className="flex items-center gap-2 min-w-0 w-full">
-        <Bug className="w-4 h-4 shrink-0" />
+    <Badge className="group inline-flex w-full max-w-full transition-colors hover:border-primary hover:bg-accent hover:text-accent-foreground">
+      <div className="flex w-full min-w-0 items-center gap-2">
+        <Bug className="h-4 w-4 shrink-0" />
         <div className="min-w-0 flex-1 overflow-hidden">
           {issue.url ? (
             <a
               href={issue.url}
-              className="truncate block hover:text-inherit"
+              className="block truncate hover:text-inherit"
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
@@ -162,7 +162,7 @@ function LinkedIssueBadge({
               {displayText}
             </a>
           ) : (
-            <span className="truncate block" title={displayText}>
+            <span className="block truncate" title={displayText}>
               {displayText}
             </span>
           )}
@@ -173,7 +173,7 @@ function LinkedIssueBadge({
             e.stopPropagation();
             onUnlink(issue.id);
           }}
-          className="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
+          className="shrink-0 opacity-60 transition-opacity hover:opacity-100"
           aria-label={t("common.aria.removeIssue")}
         >
           <X className="h-3 w-3" />
@@ -235,7 +235,7 @@ function LinkedIssueBadge({
               </div>
             )}
             {details && !isLoading && !error && (
-              <div className="p-4 space-y-3">
+              <div className="space-y-3 p-4">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
@@ -250,7 +250,7 @@ function LinkedIssueBadge({
                     <span className="font-semibold">{details.key}</span>
                   </div>
                   <span
-                    className={`text-xs px-2 py-1 rounded-sm ${
+                    className={`rounded-sm px-2 py-1 text-xs ${
                       details.status.color === "green"
                         ? "bg-green-100 text-green-800"
                         : details.status.color === "yellow"
@@ -269,7 +269,7 @@ function LinkedIssueBadge({
 
                 {/* Description */}
                 {details.description && (
-                  <div className="text-sm text-muted-foreground line-clamp-3">
+                  <div className="line-clamp-3 text-sm text-muted-foreground">
                     {details.description}
                   </div>
                 )}
@@ -312,7 +312,7 @@ function LinkedIssueBadge({
 
                 {details.labels.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1 text-sm">
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-xs text-muted-foreground">
                       {t(
                         "projects.settings.integrations.integration.requirementsConfig.labelsLabel"
                       )}
@@ -337,7 +337,7 @@ function LinkedIssueBadge({
                 {details.milestone && (
                   <div className="flex items-center gap-1 text-sm">
                     <Milestone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-xs text-muted-foreground">
                       {t("common.fields.milestone")}:
                     </span>
                     <span>{details.milestone.name}</span>
@@ -345,7 +345,7 @@ function LinkedIssueBadge({
                 )}
 
                 {/* Footer */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                <div className="flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
                   <span>
                     {t("common.updated")}:{" "}
                     {details.updated
@@ -626,8 +626,8 @@ export function ManageExternalIssues({
   }
 
   return (
-    <div className="space-y-3 mb-1 w-full max-w-full overflow-hidden">
-      <div className="flex flex-col gap-2 w-full">
+    <div className="mb-1 w-full max-w-full space-y-3 overflow-hidden">
+      <div className="flex w-full flex-col gap-2">
         {linkedIssues.map((issue) => (
           <LinkedIssueBadge
             key={issue.id}

@@ -120,7 +120,7 @@ export function MilestoneSummary({
 
   if (isLoading) {
     return (
-      <div className={cn("flex flex-col space-y-1 w-full", className)}>
+      <div className={cn("flex w-full flex-col space-y-1", className)}>
         <Skeleton className="h-2.5 w-full rounded-full" />
         <Skeleton className="h-5 w-40" />
       </div>
@@ -129,9 +129,9 @@ export function MilestoneSummary({
 
   if (!summaryData) {
     return (
-      <div className={cn("flex flex-col space-y-1 w-full", className)}>
-        <div className="flex items-center gap-1 text-muted-foreground text-xs">
-          <HelpCircle className="w-4 h-4" />
+      <div className={cn("flex w-full flex-col space-y-1", className)}>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <HelpCircle className="h-4 w-4" />
           <span>{tCommon("labels.noResults")}</span>
         </div>
       </div>
@@ -142,12 +142,12 @@ export function MilestoneSummary({
   if (summaryData.totalItems === 0 || summaryData.segments.length === 0) {
     const emptyColor = firstStatus?.color?.value || "#B1B2B3";
     return (
-      <div className={cn("flex flex-col space-y-1 w-full", className)}>
-        <div className="flex h-2.5 w-full rounded-full overflow-hidden">
+      <div className={cn("flex w-full flex-col space-y-1", className)}>
+        <div className="flex h-2.5 w-full overflow-hidden rounded-full">
           <Tooltip>
             <TooltipTrigger asChild>
               <div
-                className="h-full w-full transition-all hover:opacity-80 cursor-default"
+                className="h-full w-full cursor-default transition-all hover:opacity-80"
                 style={{ backgroundColor: emptyColor }}
                 aria-label={tCommon("labels.noResults")}
               />
@@ -162,7 +162,7 @@ export function MilestoneSummary({
                 color: contrastingTextColor(emptyColor),
               }}
             >
-              <div className="font-semibold text-sm">
+              <div className="text-sm font-semibold">
                 {firstStatus?.name || tCommon("labels.untested")}
               </div>
               <div className="text-xs opacity-90">
@@ -172,8 +172,8 @@ export function MilestoneSummary({
           </Tooltip>
         </div>
 
-        <div className="flex items-center gap-1 text-muted-foreground text-xs">
-          <HelpCircle className="w-4 h-4" />
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <HelpCircle className="h-4 w-4" />
           <span>{tCommon("labels.noResults")}</span>
         </div>
       </div>
@@ -216,10 +216,10 @@ export function MilestoneSummary({
   );
 
   return (
-    <div className={cn("flex flex-col space-y-1 w-full", className)}>
+    <div className={cn("flex w-full flex-col space-y-1", className)}>
       {/* Color bar for milestone items */}
       <div
-        className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden bg-muted"
+        className="flex h-2.5 w-full overflow-x-auto overflow-y-hidden rounded-full bg-muted"
         data-status-bar
         data-testid="milestone-summary-bar"
       >
@@ -240,7 +240,7 @@ export function MilestoneSummary({
               <TooltipTrigger asChild>
                 <Link
                   href={targetUrl}
-                  className="h-full transition-all hover:opacity-80 cursor-pointer border-x-[0.5px] border-primary-foreground rounded-sm"
+                  className="h-full cursor-pointer rounded-sm border-x-[0.5px] border-primary-foreground transition-all hover:opacity-80"
                   style={{
                     backgroundColor: color,
                     width: `${segmentWidth}%`,
@@ -258,11 +258,11 @@ export function MilestoneSummary({
                   color: contrastingTextColor(color),
                 }}
               >
-                <div className="flex items-center gap-1 font-semibold text-sm">
-                  <div className="rounded-full bg-muted w-2 h-2" />
+                <div className="flex items-center gap-1 text-sm font-semibold">
+                  <div className="h-2 w-2 rounded-full bg-muted" />
                   {segment.statusName || tCommon("labels.untested")}
                 </div>
-                <div className="text-xs opacity-90 mt-1">
+                <div className="mt-1 text-xs opacity-90">
                   <div className="flex items-center gap-1">
                     {segment.type === "test-run" ? (
                       <SquarePlay className="h-3 w-3" />
@@ -272,7 +272,7 @@ export function MilestoneSummary({
                     {segment.sourceName}
                   </div>
                   {segment.itemCount && segment.itemCount > 1 && (
-                    <div className="flex items-center gap-1 mt-0.5">
+                    <div className="mt-0.5 flex items-center gap-1">
                       <ListChecks className="h-3 w-3" />
                       {`${segment.itemCount} ${tCommon("plural.case", {
                         count: segment.itemCount,
@@ -283,7 +283,7 @@ export function MilestoneSummary({
                 {!segment.isPending &&
                 segment.elapsed &&
                 segment.elapsed > 0 ? (
-                  <div className="text-xs opacity-90 mt-1">
+                  <div className="mt-1 text-xs opacity-90">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {toHumanReadable(segment.elapsed, {
@@ -295,7 +295,7 @@ export function MilestoneSummary({
                 ) : segment.isPending &&
                   segment.estimate &&
                   segment.estimate > 0 ? (
-                  <div className="text-xs opacity-90 mt-1">
+                  <div className="mt-1 text-xs opacity-90">
                     <div className="flex items-center gap-1">
                       <CalendarClock className="h-3 w-3" />
                       {tCommon("labels.estimateFromCases", {
@@ -314,22 +314,22 @@ export function MilestoneSummary({
       </div>
 
       {/* Container for Summary Text and Issues */}
-      <div className="flex flex-nowrap justify-between items-center gap-2">
+      <div className="flex flex-nowrap items-center justify-between gap-2">
         {/* Summary text below the bar */}
         <div
-          className="flex items-center min-w-0 grow text-foreground text-xs"
+          className="flex min-w-0 grow items-center text-xs text-foreground"
           title={`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
-          <span className="truncate shrink">{`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}</span>
+          <span className="shrink truncate">{`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}</span>
           {totalElapsedText ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ms-1 cursor-default shrink-[999] min-w-0 overflow-hidden whitespace-nowrap"
+                  className="ms-1 inline-flex min-w-0 shrink-[999] cursor-default items-center overflow-hidden whitespace-nowrap"
                   data-testid="total-elapsed-display"
                 >
                   {" • "}
-                  <Clock className="h-3 w-3 ms-1" />
+                  <Clock className="ms-1 h-3 w-3" />
                   {`${totalElapsedText}`}
                 </span>
               </TooltipTrigger>
@@ -344,11 +344,11 @@ export function MilestoneSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ms-1 cursor-default shrink-[9999] min-w-0 overflow-hidden whitespace-nowrap"
+                  className="ms-1 inline-flex min-w-0 shrink-[9999] cursor-default items-center overflow-hidden whitespace-nowrap"
                   data-testid="total-estimate-display"
                 >
                   {" • "}
-                  <CalendarClock className="h-3 w-3 ms-1" />
+                  <CalendarClock className="ms-1 h-3 w-3" />
                   {`${totalEstimateText}`}
                 </span>
               </TooltipTrigger>
@@ -363,7 +363,7 @@ export function MilestoneSummary({
           )}
           {meta && (
             <span
-              className="inline-flex items-center ms-1 shrink-[99999] min-w-0 overflow-hidden whitespace-nowrap empty:hidden before:content-['•'] before:me-1"
+              className="ms-1 inline-flex min-w-0 shrink-[99999] items-center overflow-hidden whitespace-nowrap before:me-1 before:content-['•'] empty:hidden"
               data-testid="milestone-summary-meta"
             >
               {meta}
@@ -371,7 +371,7 @@ export function MilestoneSummary({
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <span
@@ -384,7 +384,7 @@ export function MilestoneSummary({
                   e.key === "Enter" &&
                   setSortMode((m) => (m === "date" ? "status" : "date"))
                 }
-                className="inline-flex cursor-pointer items-center text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex cursor-pointer items-center text-muted-foreground transition-colors hover:text-foreground"
                 aria-label={
                   sortMode === "date"
                     ? tCommon("labels.sortByStatus")
@@ -423,7 +423,7 @@ export function MilestoneSummary({
           {summaryData.commentsCount > 0 && (
             <Link
               href={`/projects/milestones/${projectId}/${milestoneId}#comments`}
-              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors text-xs"
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -460,7 +460,7 @@ export function MilestoneSummary({
                       e.stopPropagation();
                       onScopeChipClick();
                     }}
-                    className="inline-flex items-center hover:text-foreground transition-colors"
+                    className="inline-flex items-center transition-colors hover:text-foreground"
                     title={tMilestones("summary.inScope", {
                       count: summaryData.scopeCount,
                     })}
@@ -469,8 +469,8 @@ export function MilestoneSummary({
                     })}
                     data-testid="milestone-summary-scope-chip"
                   >
-                    <Badge className="cursor-pointer text-xs px-1.5 py-0">
-                      <Target className="w-3 h-3 me-0.5 shrink-0" />
+                    <Badge className="cursor-pointer px-1.5 py-0 text-xs">
+                      <Target className="me-0.5 h-3 w-3 shrink-0" />
                       {summaryData.scopeCount}
                     </Badge>
                   </button>
@@ -492,8 +492,8 @@ export function MilestoneSummary({
                       onOpenChange={setScopeListOpen}
                     >
                       <PopoverTrigger asChild>
-                        <Badge className="cursor-pointer text-xs px-1.5 py-0">
-                          <Target className="w-3 h-3 me-0.5 shrink-0" />
+                        <Badge className="cursor-pointer px-1.5 py-0 text-xs">
+                          <Target className="me-0.5 h-3 w-3 shrink-0" />
                           {summaryData.scopeCount}
                         </Badge>
                       </PopoverTrigger>
@@ -504,7 +504,7 @@ export function MilestoneSummary({
                         {isLoadingScopeLinks ? (
                           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                         ) : (
-                          <div className="flex flex-wrap gap-1 max-w-full">
+                          <div className="flex max-w-full flex-wrap gap-1">
                             {(scopeLinks ?? []).map((link) => (
                               <IssuesDisplay
                                 key={link.issue.id}
@@ -545,7 +545,7 @@ export function MilestoneSummary({
                       e.stopPropagation();
                       onFoundInTestingChipClick();
                     }}
-                    className="inline-flex items-center hover:text-foreground transition-colors"
+                    className="inline-flex items-center transition-colors hover:text-foreground"
                     title={tMilestones("summary.foundInTesting", {
                       count: summaryData.issues.length,
                     })}
@@ -554,8 +554,8 @@ export function MilestoneSummary({
                     })}
                     data-testid="milestone-summary-found-chip"
                   >
-                    <Badge className="cursor-pointer text-xs px-1.5 py-0">
-                      <Bug className="w-3 h-3 me-0.5 shrink-0" />
+                    <Badge className="cursor-pointer px-1.5 py-0 text-xs">
+                      <Bug className="me-0.5 h-3 w-3 shrink-0" />
                       {summaryData.issues.length}
                     </Badge>
                   </button>

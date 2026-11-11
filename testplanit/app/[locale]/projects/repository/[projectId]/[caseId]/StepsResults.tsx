@@ -65,7 +65,7 @@ const RenderSharedGroupItemsForResults: React.FC<
 
   if (isLoading) {
     return (
-      <p className="ms-8 text-sm text-muted-foreground py-1">
+      <p className="ms-8 py-1 text-sm text-muted-foreground">
         {t("loadingSharedStepsItems")}
       </p>
     );
@@ -73,14 +73,14 @@ const RenderSharedGroupItemsForResults: React.FC<
 
   if (!items || items.length === 0) {
     return (
-      <p className="ms-8 text-sm text-muted-foreground py-1">
+      <p className="ms-8 py-1 text-sm text-muted-foreground">
         {t("noStepsInSharedGroup")}
       </p>
     );
   }
 
   return (
-    <div className="ms-8 mt-1 space-y-2 border-s-2 border-dashed border-primary/20 ps-3 py-1 w-full pe-8">
+    <div className="ms-8 mt-1 w-full space-y-2 border-s-2 border-dashed border-primary/20 py-1 ps-3 pe-8">
       {items.map((item, itemIndex) => (
         <div
           key={`shared-group-${sharedStepGroupId}-item-${item.id || itemIndex}`}
@@ -88,14 +88,14 @@ const RenderSharedGroupItemsForResults: React.FC<
         >
           <div className="flex min-w-0">
             <div className="shrink-0 pt-[0.4rem]">
-              <div className="text-sm font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary bg-primary p-2 text-sm font-bold text-primary-foreground">
                 {item.order + 1}
               </div>
             </div>
-            <div className="grow min-w-0 -mt-1">
+            <div className="-mt-1 min-w-0 grow">
               <ReadOnlyRichText
                 content={parseContent(item.step)}
-                className="bg-muted/30 p-1 rounded"
+                className="rounded bg-muted/30 p-1"
                 parameters={parameters}
               />
             </div>
@@ -105,14 +105,14 @@ const RenderSharedGroupItemsForResults: React.FC<
           />
           <div className="flex min-w-0">
             <div className="shrink-0 pt-0.5">
-              <div className="flex items-center justify-center text-primary rounded-full w-8 h-8 -mx-1">
-                <SearchCheck className="text-primary h-7 w-7 shrink-0" />
+              <div className="-mx-1 flex h-8 w-8 items-center justify-center rounded-full text-primary">
+                <SearchCheck className="h-7 w-7 shrink-0 text-primary" />
               </div>
             </div>
-            <div className="grow min-w-0 -mt-1">
+            <div className="-mt-1 min-w-0 grow">
               <ReadOnlyRichText
                 content={parseContent(item.expectedResult)}
-                className="bg-muted/30 p-1 rounded"
+                className="rounded bg-muted/30 p-1"
                 parameters={parameters}
               />
             </div>
@@ -143,7 +143,7 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
       data-step-layout={layout}
     >
       {!hideLayoutToggle && (
-        <div className="flex justify-end me-6 -mt-1 mb-1">
+        <div className="me-6 -mt-1 mb-1 flex justify-end">
           <StepLayoutToggle />
         </div>
       )}
@@ -156,16 +156,16 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
                 className="mb-4"
                 data-testid={`step-container-${index}`}
               >
-                <div className="flex flex-col items-start min-w-[200px] bg-muted/50 p-2 rounded-lg mb-1">
-                  <div className="flex items-center font-bold pb-1 w-full">
+                <div className="mb-1 flex min-w-[200px] flex-col items-start rounded-lg bg-muted/50 p-2">
+                  <div className="flex w-full items-center pb-1 font-bold">
                     <div
-                      className="mt-2 font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 text-sm"
+                      className="mt-2 flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary bg-primary p-1 text-sm font-bold text-primary-foreground"
                       data-testid={`step-badge-${index}`}
                     >
                       {index + 1}
                     </div>
-                    <div className="ms-4 flex items-center mt-2">
-                      <Layers className="h-5 w-5 me-2 text-primary shrink-0" />
+                    <div className="ms-4 mt-2 flex items-center">
+                      <Layers className="me-2 h-5 w-5 shrink-0 text-primary" />
                       <span className="text-sm">
                         {t_repo_steps("sharedStepGroupTitle", {
                           name:
@@ -195,17 +195,17 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
             >
               <div
                 className={cn(
-                  "flex gap-2 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                  "flex w-full min-w-0 gap-2 rounded-lg bg-primary-foreground p-2 ring-2 ring-primary/50",
                   stepLayoutClasses.stepBlock(isSideBySide)
                 )}
               >
                 <div
-                  className="mt-2 font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 text-sm"
+                  className="mt-2 flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary bg-primary p-1 text-sm font-bold text-primary-foreground"
                   data-testid={`step-badge-${index}`}
                 >
                   {index + 1}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <ReadOnlyRichText
                     content={parseContent(step.step)}
                     className="prose-sm"
@@ -215,13 +215,13 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
               </div>
               <div
                 className={cn(
-                  "flex gap-1 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                  "flex w-full min-w-0 gap-1 rounded-lg bg-primary-foreground p-2 ring-2 ring-primary/50",
                   stepLayoutClasses.expectedBlock(isSideBySide)
                 )}
                 data-testid={`expected-result-${index}`}
               >
-                <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
-                <div className="flex-1 min-w-0">
+                <SearchCheck className="mt-1 h-7 w-7 shrink-0 text-primary" />
+                <div className="min-w-0 flex-1">
                   <ReadOnlyRichText
                     content={parseContent(step.expectedResult)}
                     className="prose-sm"

@@ -835,7 +835,7 @@ export default function SignatureDetailPage() {
               </Button>
               <div className="min-w-0 grow">
                 <CardTitle
-                  className="min-w-0 break-words font-mono text-base md:text-lg"
+                  className="min-w-0 font-mono text-base break-words md:text-lg"
                   data-testid="triage-signature-title"
                 >
                   {signature.title}
@@ -970,7 +970,7 @@ export default function SignatureDetailPage() {
                             <Label className="text-xs text-muted-foreground">
                               {t("triage.detail.normalizedMessage")}
                             </Label>
-                            <p className="mt-1 whitespace-pre-wrap break-words font-mono text-xs">
+                            <p className="mt-1 font-mono text-xs break-words whitespace-pre-wrap">
                               {signature.normalizedMessage}
                             </p>
                           </div>
@@ -1274,7 +1274,7 @@ export default function SignatureDetailPage() {
                   </CardHeader>
                   <CardContent>
                     {sampleBody ? (
-                      <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted/50 p-3 font-mono text-xs text-destructive">
+                      <pre className="max-h-[420px] overflow-auto rounded-md bg-muted/50 p-3 font-mono text-xs break-words whitespace-pre-wrap text-destructive">
                         {sampleBody}
                       </pre>
                     ) : (
@@ -1287,7 +1287,7 @@ export default function SignatureDetailPage() {
                         <summary className="cursor-pointer text-sm text-muted-foreground">
                           {t("common.fields.systemError")}
                         </summary>
-                        <pre className="mt-2 max-h-[240px] overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted/50 p-3 font-mono text-xs">
+                        <pre className="mt-2 max-h-[240px] overflow-auto rounded-md bg-muted/50 p-3 font-mono text-xs break-words whitespace-pre-wrap">
                           {sample.systemErr}
                         </pre>
                       </details>

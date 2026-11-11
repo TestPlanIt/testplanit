@@ -96,7 +96,7 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
           isDragging
             ? "border-primary bg-primary/5"
             : "border-zinc-200 dark:border-zinc-800"
-        } rounded-lg p-10 space-y-6`}
+        } space-y-6 rounded-lg p-10`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -112,7 +112,7 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
         />
         <label
           htmlFor="file-upload"
-          className="flex flex-col items-center justify-center space-y-2 cursor-pointer"
+          className="flex cursor-pointer flex-col items-center justify-center space-y-2"
         >
           {previewUrl ? (
             <Image
@@ -121,10 +121,10 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
               alt="Preview"
               width={64}
               height={64}
-              className="w-16 h-16 rounded-full"
+              className="h-16 w-16 rounded-full"
             />
           ) : (
-            <UploadCloudIcon className="w-16 h-16 text-primary" />
+            <UploadCloudIcon className="h-16 w-16 text-primary" />
           )}
           <Button
             variant="outline"

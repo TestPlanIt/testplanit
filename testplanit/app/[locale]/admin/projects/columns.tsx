@@ -213,7 +213,7 @@ export const useColumns = (
           if (!hasActive) {
             return (
               <span
-                className="text-muted-foreground text-sm"
+                className="text-sm text-muted-foreground"
                 data-testid="ai-model-indicator"
                 data-active={false}
               >
@@ -312,12 +312,12 @@ export const useColumns = (
         meta: { isPinned: "right" },
         size: 80,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
+          <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => handleOpenEditModal(row.original)}
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               aria-label={tCommon("actions.edit")}
             >
               <SquarePen className="h-4 w-4" />
@@ -325,7 +325,7 @@ export const useColumns = (
             <Button
               variant="destructive"
               size="icon"
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               onClick={() => onDeleteProject?.(row.original)}
               aria-label={tCommon("actions.delete")}
             >

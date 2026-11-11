@@ -361,7 +361,7 @@ export default function JunitChartsPanel({
           </Carousel>
         </div>
         {/* Slide navigation dots */}
-        <div className="flex justify-center gap-2 mt-2">
+        <div className="mt-2 flex justify-center gap-2">
           {[0, 1, 2].map((idx) => (
             <button
               key={idx}
@@ -385,7 +385,7 @@ export default function JunitChartsPanel({
           if (!open) setZoomedChart(null);
         }}
       >
-        <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
+        <DialogContent className="flex h-[80vh] max-w-[80vw] flex-col p-0 sm:p-6">
           <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
             <DialogTitle>
               {zoomedChart === "donut"
@@ -407,8 +407,8 @@ export default function JunitChartsPanel({
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-auto p-4 sm:p-0">
-            <div className="flex-1 w-full h-full" style={{ minHeight: 600 }}>
-              <div className="w-full h-full flex items-center justify-center">
+            <div className="h-full w-full flex-1" style={{ minHeight: 600 }}>
+              <div className="flex h-full w-full items-center justify-center">
                 {zoomedChart === "donut" && (
                   <TestRunResultsDonut
                     data={donutChartData}

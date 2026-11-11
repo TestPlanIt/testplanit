@@ -202,7 +202,7 @@ const SessionItem = <T extends SessionItemData>({
           content: (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Flame className="h-4 w-4 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                <Flame className="h-4 w-4 shrink-0 animate-pulse fill-orange-500 text-orange-500" />
               </TooltipTrigger>
               <TooltipContent>{t("common.labels.new")}</TooltipContent>
             </Tooltip>
@@ -218,7 +218,7 @@ const SessionItem = <T extends SessionItemData>({
                   className="shrink-0"
                   data-testid={`session-multi-config-${testSession.id}`}
                 >
-                  <Combine className="w-4 h-4 text-muted-foreground" />
+                  <Combine className="h-4 w-4 text-muted-foreground" />
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -227,7 +227,7 @@ const SessionItem = <T extends SessionItemData>({
                 </p>
                 {testSession.configuration && (
                   <p className="flex text-xs text-background">
-                    <Combine className="w-4 h-4 shrink-0 me-1" />
+                    <Combine className="me-1 h-4 w-4 shrink-0" />
                     {testSession.configuration.name}
                   </p>
                 )}
@@ -239,7 +239,7 @@ const SessionItem = <T extends SessionItemData>({
           key: "open",
           tier: "lg",
           content: (
-            <LinkIcon className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <LinkIcon className="h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
           ),
         },
       ]}
@@ -253,7 +253,7 @@ const SessionItem = <T extends SessionItemData>({
           tier: "md",
           pinned: true,
           content: (
-            <span className="whitespace-nowrap text-sm">
+            <span className="text-sm whitespace-nowrap">
               <DateTextDisplay
                 responsive
                 startDate={startDate}
@@ -272,14 +272,14 @@ const SessionItem = <T extends SessionItemData>({
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="min-w-0 cursor-default">
-                  <ItemRowChip icon={<Combine className="w-4 h-4" />}>
+                  <ItemRowChip icon={<Combine className="h-4 w-4" />}>
                     {testSession.configuration.name}
                   </ItemRowChip>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="flex">
-                  <Combine className="w-4 h-4 shrink-0 me-1" />
+                  <Combine className="me-1 h-4 w-4 shrink-0" />
                   {testSession.configuration.name}
                 </p>
               </TooltipContent>

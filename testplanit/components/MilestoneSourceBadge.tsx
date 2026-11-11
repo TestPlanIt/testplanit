@@ -249,7 +249,7 @@ function RemovedOrMergedBadge({
       role={isLinkable ? "link" : undefined}
       title={label}
       aria-label={label}
-      className={`text-xs max-w-full gap-1 whitespace-nowrap text-muted-foreground cursor-default ${
+      className={`max-w-full cursor-default gap-1 text-xs whitespace-nowrap text-muted-foreground ${
         isLinkable ? "cursor-pointer hover:bg-secondary/40" : ""
       } ${className ?? ""}`}
       onClick={
@@ -577,7 +577,7 @@ export function MilestoneSourceBadge({
       {trackerUrl && (
         <ExternalLink
           data-testid="milestone-open-in-tracker"
-          className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100"
         />
       )}
     </>
@@ -590,7 +590,7 @@ export function MilestoneSourceBadge({
       role={trackerUrl ? "link" : undefined}
       title={trackerUrl ? tCommon("ui.issues.openInJira") : badgeLabel}
       aria-label={badgeLabel}
-      className={`text-xs max-w-full gap-1 whitespace-nowrap group ${
+      className={`group max-w-full gap-1 text-xs whitespace-nowrap ${
         asMenuTrigger || trackerUrl
           ? "cursor-pointer hover:bg-secondary/80"
           : "cursor-default"
@@ -618,7 +618,7 @@ export function MilestoneSourceBadge({
         aria-hidden="true"
         className="invisible h-0 overflow-hidden"
       >
-        <Badge variant="outline" className="text-xs gap-1 whitespace-nowrap">
+        <Badge variant="outline" className="gap-1 text-xs whitespace-nowrap">
           <span data-seg="icon" className="flex items-center">
             <TrackerGlyph provider={providerKey} />
           </span>

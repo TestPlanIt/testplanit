@@ -130,7 +130,7 @@ export function PasswordStrengthIndicator({
   const filledCount = score; // score 0=0 filled, 1=1, 2=2, 3=3, 4=4
 
   return (
-    <div className="space-y-2 mt-2">
+    <div className="mt-2 space-y-2">
       {/* Segmented strength bar (D-09) */}
       <div className="flex gap-1">
         {Array.from({ length: segmentCount }, (_, i) => (
@@ -157,9 +157,9 @@ export function PasswordStrengthIndicator({
           {requirements.map((req) => (
             <li key={req.key} className="flex items-center gap-2 text-sm">
               {req.met ? (
-                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
               ) : (
-                <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                <XCircle className="h-4 w-4 shrink-0 text-red-500" />
               )}
               <span
                 className={

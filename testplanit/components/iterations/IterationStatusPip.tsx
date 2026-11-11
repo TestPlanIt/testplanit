@@ -76,7 +76,7 @@ export function IterationStatusPip({
   return (
     <svg
       viewBox="0 0 10 10"
-      className={`w-2.5 h-2.5 shrink-0 ${className ?? ""}`.trim()}
+      className={`h-2.5 w-2.5 shrink-0 ${className ?? ""}`.trim()}
       style={{ color: resolvePipColor(glyph, statusColor) }}
       data-testid="iteration-status-pip"
       data-glyph={glyph}

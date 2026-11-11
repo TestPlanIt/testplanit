@@ -174,10 +174,10 @@ export const MilestonesCountDisplay: React.FC<MilestonesCountDisplayProps> = ({
             aria-label={searchPlaceholder}
             className={cn(
               badgeVariants({ variant: "default" }),
-              "gap-1 whitespace-nowrap text-xs"
+              "gap-1 text-xs whitespace-nowrap"
             )}
           >
-            <Milestone className="w-4 h-4 shrink-0" />
+            <Milestone className="h-4 w-4 shrink-0" />
             {displayLabel && <span>{displayLabel}</span>}
           </button>
         );

@@ -95,7 +95,7 @@ export const ResultsTrendHeatmap: React.FC<ResultsTrendHeatmapProps> = ({
             {periods.map((period) => (
               <th
                 key={period.periodStart}
-                className="px-1 py-1 text-center font-normal text-muted-foreground whitespace-nowrap"
+                className="px-1 py-1 text-center font-normal whitespace-nowrap text-muted-foreground"
                 title={
                   period.partial
                     ? t("chart.partialPeriod", {
@@ -113,10 +113,10 @@ export const ResultsTrendHeatmap: React.FC<ResultsTrendHeatmapProps> = ({
                 {period.partial ? "*" : ""}
               </th>
             ))}
-            <th className="px-2 py-1 text-end font-medium text-muted-foreground whitespace-nowrap">
+            <th className="px-2 py-1 text-end font-medium whitespace-nowrap text-muted-foreground">
               {t("heatmap.trend")}
             </th>
-            <th className="px-2 py-1 text-end font-medium text-muted-foreground whitespace-nowrap">
+            <th className="px-2 py-1 text-end font-medium whitespace-nowrap text-muted-foreground">
               {tCommon("results")}
             </th>
           </tr>
@@ -212,7 +212,7 @@ export const ResultsTrendHeatmap: React.FC<ResultsTrendHeatmapProps> = ({
                     </td>
                   );
                 })}
-                <td className="px-2 py-1 text-end tabular-nums whitespace-nowrap">
+                <td className="px-2 py-1 text-end whitespace-nowrap tabular-nums">
                   {data.trend ? (
                     <span
                       className={`inline-flex items-center gap-1 ${

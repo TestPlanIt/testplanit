@@ -315,7 +315,7 @@ export function CodeRepositoryModal({
                 control={form.control as any}
                 name="isActive"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}

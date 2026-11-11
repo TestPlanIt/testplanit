@@ -246,7 +246,7 @@ export function AddQuickScriptTemplate({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
-        className="sm:max-w-[800px] lg:max-w-[1200px] max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] overflow-y-auto sm:max-w-[800px] lg:max-w-[1200px]"
         data-testid="export-template-dialog"
       >
         <Form {...form}>
@@ -262,7 +262,7 @@ export function AddQuickScriptTemplate({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -339,7 +339,7 @@ export function AddQuickScriptTemplate({
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="fileExtension"
@@ -385,7 +385,7 @@ export function AddQuickScriptTemplate({
                   control={form.control}
                   name="isEnabled"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                    <FormItem className="flex flex-row items-center space-y-0 space-x-2">
                       <FormLabel>{tCommon("fields.enabled")}</FormLabel>
                       <FormControl>
                         <Switch
@@ -401,7 +401,7 @@ export function AddQuickScriptTemplate({
                   control={form.control}
                   name="isDefault"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                    <FormItem className="flex flex-row items-center space-y-0 space-x-2">
                       <FormLabel>{tCommon("fields.default")}</FormLabel>
                       <FormControl>
                         <Switch
@@ -418,7 +418,7 @@ export function AddQuickScriptTemplate({
             </div>
             {mustBeDefault && <FirstDefaultNotice />}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div className="space-y-4">
                 <FormField
                   control={form.control}
@@ -429,7 +429,7 @@ export function AddQuickScriptTemplate({
                       <FormControl>
                         <Textarea
                           placeholder={t("fields.placeholders.headerBody")}
-                          className="font-mono text-sm min-h-[100px] resize-y"
+                          className="min-h-[100px] resize-y font-mono text-sm"
                           data-testid="export-template-header-textarea"
                           {...field}
                         />
@@ -462,7 +462,7 @@ export function AddQuickScriptTemplate({
                             templateBodyRef.current = el;
                           }}
                           placeholder={t("fields.placeholders.templateBody")}
-                          className="font-mono text-sm min-h-[400px] resize-y"
+                          className="min-h-[400px] resize-y font-mono text-sm"
                           data-testid="export-template-body-textarea"
                           {...fieldProps}
                         />
@@ -480,7 +480,7 @@ export function AddQuickScriptTemplate({
                       <FormControl>
                         <Textarea
                           placeholder={t("fields.placeholders.footerBody")}
-                          className="font-mono text-sm min-h-[100px] resize-y"
+                          className="min-h-[100px] resize-y font-mono text-sm"
                           data-testid="export-template-footer-textarea"
                           {...field}
                         />
@@ -496,7 +496,7 @@ export function AddQuickScriptTemplate({
                 </label>
                 {highlightedPreview ? (
                   <pre
-                    className="mt-2 bg-stone-800 rounded-md overflow-auto p-4 text-sm max-h-[400px]"
+                    className="mt-2 max-h-[400px] overflow-auto rounded-md bg-stone-800 p-4 text-sm"
                     data-testid="export-template-preview"
                   >
                     <code
@@ -506,7 +506,7 @@ export function AddQuickScriptTemplate({
                   </pre>
                 ) : (
                   <pre
-                    className="mt-2 p-3 bg-muted rounded-md text-sm font-mono overflow-auto max-h-[400px] whitespace-pre-wrap"
+                    className="mt-2 max-h-[400px] overflow-auto rounded-md bg-muted p-3 font-mono text-sm whitespace-pre-wrap"
                     data-testid="export-template-preview"
                   >
                     {t("preview.empty")}
@@ -518,7 +518,7 @@ export function AddQuickScriptTemplate({
             <DialogFooter>
               {form.formState.errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {form.formState.errors.root.message}

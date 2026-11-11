@@ -901,7 +901,7 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                       // that line box and the whole header with it. The paged
                       // engine never had the problem because `TableHead`
                       // carries a fixed height of its own.
-                      "relative flex h-9 select-none items-center gap-1 border-e px-3 last:border-e-0",
+                      "relative flex h-9 items-center gap-1 border-e px-3 select-none last:border-e-0",
                       tableStyles.headerCell,
                       isFlex ? "min-w-0" : "shrink-0",
                       // Opaque fill so scrolled header cells don't bleed under a
@@ -1046,7 +1046,7 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                         aria-label={t("resize")}
                         title={t("resize")}
                         className={cn(
-                          "absolute end-0 top-0 z-10 h-full w-1.5 cursor-col-resize touch-none select-none transition-colors hover:bg-primary/40",
+                          "absolute end-0 top-0 z-10 h-full w-1.5 cursor-col-resize touch-none transition-colors select-none hover:bg-primary/40",
                           column.getIsResizing()
                             ? "bg-primary"
                             : "bg-transparent"
@@ -1113,7 +1113,7 @@ export function VirtualizedTableEngine<TData extends DataRow>({
             "relative min-h-0",
             enableColumnPinning
               ? "overflow-auto"
-              : "overflow-y-auto overflow-x-hidden",
+              : "overflow-x-hidden overflow-y-auto",
             !fillViewport && "flex-1"
           )}
           onScroll={

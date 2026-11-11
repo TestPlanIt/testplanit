@@ -117,7 +117,7 @@ export function EntityDetailPopover({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-105 max-h-100 overflow-y-auto p-0"
+        className="max-h-100 w-105 overflow-y-auto p-0"
         onWheel={(e) => e.stopPropagation()}
         side="right"
         align="start"
@@ -177,7 +177,7 @@ function EntityDetailContent({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <h4 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
       {children}
     </h4>
   );
@@ -343,14 +343,14 @@ function TestRunDetail({ entityId }: { entityId: number }) {
       {note && (
         <div className="space-y-1.5">
           <SectionLabel>{t("fields.note")}</SectionLabel>
-          <p className="whitespace-pre-wrap text-xs">{note}</p>
+          <p className="text-xs whitespace-pre-wrap">{note}</p>
         </div>
       )}
 
       {docs && (
         <div className="space-y-1.5">
           <SectionLabel>{t("fields.documentation")}</SectionLabel>
-          <p className="whitespace-pre-wrap text-xs">{docs}</p>
+          <p className="text-xs whitespace-pre-wrap">{docs}</p>
         </div>
       )}
 
@@ -407,14 +407,14 @@ function SessionDetail({ entityId }: { entityId: number }) {
       {note && (
         <div className="space-y-1.5">
           <SectionLabel>{t("fields.note")}</SectionLabel>
-          <p className="whitespace-pre-wrap text-xs">{note}</p>
+          <p className="text-xs whitespace-pre-wrap">{note}</p>
         </div>
       )}
 
       {mission && (
         <div className="space-y-1.5">
           <SectionLabel>{t("fields.mission")}</SectionLabel>
-          <p className="whitespace-pre-wrap text-xs">{mission}</p>
+          <p className="text-xs whitespace-pre-wrap">{mission}</p>
         </div>
       )}
 

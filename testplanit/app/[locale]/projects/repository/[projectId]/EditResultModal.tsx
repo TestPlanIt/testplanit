@@ -1181,7 +1181,7 @@ export function EditResultModal({
     const stepId = step.id;
 
     return (
-      <div key={stepId} className="space-y-4 border p-4 rounded-md">
+      <div key={stepId} className="space-y-4 rounded-md border p-4">
         <FormField
           control={form.control}
           name={`step_${stepId}_statusId`}
@@ -1206,7 +1206,7 @@ export function EditResultModal({
                       <SelectItem key={status.id} value={status.id.toString()}>
                         <div className="flex items-center">
                           <div
-                            className="w-3 h-3 rounded-full me-2"
+                            className="me-2 h-3 w-3 rounded-full"
                             style={{
                               backgroundColor: status.color?.value || "#B1B2B3",
                             }}
@@ -1252,7 +1252,7 @@ export function EditResultModal({
                 <HelpPopover helpKey="testResult.stepNotes" />
               </FormLabel>
               <FormControl>
-                <div className="w-full border rounded-lg">
+                <div className="w-full rounded-lg border">
                   <TipTapEditor
                     key={editorKey}
                     content={parseTipTapContent(field.value)}
@@ -1327,7 +1327,7 @@ export function EditResultModal({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                   {isRestricted && (
@@ -1335,7 +1335,7 @@ export function EditResultModal({
                       title={tCommon("aria.restrictedField")}
                       className="ms-1"
                     >
-                      <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                      <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
                 </FormLabel>
@@ -1367,7 +1367,7 @@ export function EditResultModal({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                   {isRestricted && (
@@ -1375,7 +1375,7 @@ export function EditResultModal({
                       title={tCommon("aria.restrictedField")}
                       className="ms-1"
                     >
-                      <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                      <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
                 </FormLabel>
@@ -1414,7 +1414,7 @@ export function EditResultModal({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                   {isRestricted && (
@@ -1422,7 +1422,7 @@ export function EditResultModal({
                       title={tCommon("aria.restrictedField")}
                       className="ms-1"
                     >
-                      <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                      <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
                 </FormLabel>
@@ -1476,7 +1476,7 @@ export function EditResultModal({
                       {displayName}
                       {isRequired && (
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                       )}
                       {isRestricted && (
@@ -1484,7 +1484,7 @@ export function EditResultModal({
                           title={tCommon("aria.restrictedField")}
                           className="ms-1"
                         >
-                          <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                          <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                         </span>
                       )}
                     </FormLabel>
@@ -1524,7 +1524,7 @@ export function EditResultModal({
                   {`${displayName} (${fieldType})`}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                   {isRestricted && (
@@ -1532,7 +1532,7 @@ export function EditResultModal({
                       title={tCommon("aria.restrictedField")}
                       className="ms-1"
                     >
-                      <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                      <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
                 </FormLabel>
@@ -1619,7 +1619,7 @@ export function EditResultModal({
         <DialogHeader>
           <DialogTitle>{tCommon("actions.editResult")}</DialogTitle>
           <DialogDescription>
-            <div className="text-sm text-muted-foreground flex items-center">
+            <div className="flex items-center text-sm text-muted-foreground">
               <div className="flex items-center">
                 <ListChecks className="me-1 h-4 w-4 shrink-0" />
                 {caseName}
@@ -1636,7 +1636,7 @@ export function EditResultModal({
             }}
             className="space-y-2"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="statusId"
@@ -1668,7 +1668,7 @@ export function EditResultModal({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full me-2"
+                                  className="me-2 h-3 w-3 rounded-full"
                                   style={{
                                     backgroundColor:
                                       status.color?.value || "#B1B2B3",
@@ -1726,7 +1726,7 @@ export function EditResultModal({
                     <HelpPopover helpKey="testResult.resultData" />
                   </FormLabel>
                   <FormControl>
-                    <div className="w-full border rounded-lg">
+                    <div className="w-full rounded-lg border">
                       <TipTapEditor
                         key={editorKey}
                         content={field.value as any}
@@ -1752,7 +1752,7 @@ export function EditResultModal({
             {/* Dynamic template fields */}
             {templateFields.length > 0 && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {templateFields.map((field) => renderDynamicField(field))}
                 </div>
               </div>
@@ -1764,7 +1764,7 @@ export function EditResultModal({
                 className={cn("space-y-4", stepLayoutClasses.container)}
                 data-step-layout={stepLayout}
               >
-                <div className="font-bold flex items-center justify-between">
+                <div className="flex items-center justify-between font-bold">
                   {tCommon("fields.steps")}
                   <StepLayoutToggle />
                 </div>
@@ -1809,11 +1809,11 @@ export function EditResultModal({
                         <div className={stepLayoutClasses.pair(isSideBySide)}>
                           <div
                             className={cn(
-                              "flex gap-2 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                              "flex w-full min-w-0 gap-2 rounded-lg bg-primary-foreground p-2 ring-2 ring-primary/50",
                               stepLayoutClasses.stepBlock(isSideBySide)
                             )}
                           >
-                            <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-primary p-2 font-bold text-primary-foreground">
                               {index + 1}
                             </div>
                             <div className="flex-1">
@@ -1826,12 +1826,12 @@ export function EditResultModal({
                           </div>
                           <div
                             className={cn(
-                              "flex gap-1 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                              "flex w-full min-w-0 gap-1 rounded-lg bg-primary-foreground p-2 ring-2 ring-primary/50",
                               stepLayoutClasses.expectedBlock(isSideBySide)
                             )}
                             data-testid={`expected-result-${index}`}
                           >
-                            <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
+                            <SearchCheck className="mt-1 h-7 w-7 shrink-0 text-primary" />
                             <div className="flex-1">
                               <ReadOnlyRichText
                                 content={expectedResultContent}
@@ -1841,7 +1841,7 @@ export function EditResultModal({
                             </div>
                           </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                           {renderStepFields(step)}
                         </div>
                       </li>
@@ -1864,7 +1864,7 @@ export function EditResultModal({
               />
             </div>
 
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               {!isLoadingPermissions && canDeleteResults && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

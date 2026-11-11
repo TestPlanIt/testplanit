@@ -52,8 +52,8 @@ export const useColumns = (
         meta: { isPinned: "left" },
         size: 500,
         cell: ({ row }) => (
-          <div className="relative flex items-center gap-1 group/row">
-            <GripVertical className="absolute -start-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-0 group-hover/row:opacity-100 transition-opacity cursor-grab" />
+          <div className="group/row relative flex items-center gap-1">
+            <GripVertical className="absolute -start-3.5 top-1/2 h-5 w-5 -translate-y-1/2 cursor-grab text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100" />
             <DynamicIcon
               name={(row.original.icon?.name ?? "circle") as IconName}
               color={row.original.color?.value}
@@ -190,10 +190,10 @@ export const useColumns = (
           const canDelete =
             !isLastWorkflowOfType(workflow, workflows) && !workflow.isDefault;
           return (
-            <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
+            <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
               <Button
                 variant="ghost"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={() => onEditWorkflow?.(workflow)}
                 aria-label={tCommon("actions.edit")}
               >
@@ -202,7 +202,7 @@ export const useColumns = (
               {canDelete ? (
                 <Button
                   variant="destructive"
-                  className="px-2 py-1 h-auto"
+                  className="h-auto px-2 py-1"
                   onClick={() => onDeleteWorkflow?.(workflow)}
                   aria-label={tCommon("actions.delete")}
                 >
@@ -211,7 +211,7 @@ export const useColumns = (
               ) : (
                 <Button
                   variant="ghost"
-                  className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
+                  className="h-auto cursor-not-allowed px-2 py-1 text-muted-foreground"
                   disabled
                   aria-label={tCommon("actions.delete")}
                 >

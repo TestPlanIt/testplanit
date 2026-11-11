@@ -241,10 +241,10 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
             aria-label={searchPlaceholder}
             className={cn(
               badgeVariants({ variant: triggerVariant }),
-              "gap-1 whitespace-nowrap text-xs"
+              "gap-1 text-xs whitespace-nowrap"
             )}
           >
-            <ListChecks className="w-4 h-4" />
+            <ListChecks className="h-4 w-4" />
             {displayLabel && (
               <span>
                 {triggerPrefix

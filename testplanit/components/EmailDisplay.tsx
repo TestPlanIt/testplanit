@@ -15,7 +15,7 @@ interface EmailCellProps {
 export const EmailCell: React.FC<EmailCellProps> = ({ email, fullWidth }) => {
   return (
     <span
-      className={`text-pretty overflow-hidden ${fullWidth ? "" : "w-[250px]"}`}
+      className={`overflow-hidden text-pretty ${fullWidth ? "" : "w-[250px]"}`}
     >
       {/* 2.5.8 Target Size: the link IS the tooltip trigger. A trigger button
           inside the link nested one target in another, obscuring the link. */}
@@ -23,13 +23,13 @@ export const EmailCell: React.FC<EmailCellProps> = ({ email, fullWidth }) => {
         <TooltipTrigger asChild>
           <Link
             href={`mailto:${email}`}
-            className="flex items-center truncate group"
+            className="group flex items-center truncate"
             aria-label={`Email ${email}`}
           >
-            <span className="flex items-center truncate gap-1">
-              <span className="text-start block truncate">{email}</span>
+            <span className="flex items-center gap-1 truncate">
+              <span className="block truncate text-start">{email}</span>
             </span>
-            <ExternalLink className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <ExternalLink className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
           </Link>
         </TooltipTrigger>
         <TooltipContent align="start">

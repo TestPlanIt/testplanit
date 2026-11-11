@@ -274,7 +274,7 @@ export const ReportSmallMultiplesGroupedBar: React.FC<
 
   return (
     <div
-      className="grid gap-8 w-full"
+      className="grid w-full gap-8"
       style={{
         gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
       }}
@@ -285,7 +285,7 @@ export const ReportSmallMultiplesGroupedBar: React.FC<
           ref={(el) => {
             refs.current[index] = el;
           }}
-          className="p-2 border rounded-lg shadow-sm bg-primary-foreground max-w-lg"
+          className="max-w-lg rounded-lg border bg-primary-foreground p-2 shadow-sm"
         />
       ))}
     </div>

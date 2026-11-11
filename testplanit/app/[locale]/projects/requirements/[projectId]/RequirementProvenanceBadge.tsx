@@ -268,7 +268,7 @@ export function RequirementProvenanceBadge({
       <Badge
         data-testid="requirement-provenance-native"
         variant="outline"
-        className={`text-xs gap-1 whitespace-nowrap text-muted-foreground cursor-default ${className ?? ""}`}
+        className={`cursor-default gap-1 text-xs whitespace-nowrap text-muted-foreground ${className ?? ""}`}
       >
         {tCommon("fields.manual")}
       </Badge>,
@@ -299,7 +299,7 @@ export function RequirementProvenanceBadge({
       // background showed through and the badge text lost contrast against
       // it. Painting the badge's own ground keeps it legible on selected,
       // hovered and plain rows alike.
-      className={`text-xs gap-1 whitespace-nowrap group min-w-0 max-w-full overflow-hidden bg-background text-foreground ${
+      className={`group max-w-full min-w-0 gap-1 overflow-hidden bg-background text-xs whitespace-nowrap text-foreground ${
         asMenuTrigger || trackerUrl
           ? // Pair the hover background with its own foreground token. With
             // only `hover:bg-secondary/80`, the base `text-foreground` stayed
@@ -362,7 +362,7 @@ export function RequirementProvenanceBadge({
         aria-hidden="true"
         className="invisible h-0 overflow-hidden"
       >
-        <Badge variant="outline" className="text-xs gap-1 whitespace-nowrap">
+        <Badge variant="outline" className="gap-1 text-xs whitespace-nowrap">
           <span data-seg="icon" className="flex items-center">
             <JiraGlyph />
           </span>

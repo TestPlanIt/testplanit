@@ -111,7 +111,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                     {option.fieldOption.icon &&
                       option.fieldOption.iconColor && (
                         <DynamicIcon
-                          className="h-4 w-4 me-1"
+                          className="me-1 h-4 w-4"
                           name={option.fieldOption.icon.name}
                           color={option.fieldOption.iconColor.value}
                         />
@@ -137,7 +137,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                     {option.fieldOption.icon &&
                       option.fieldOption.iconColor && (
                         <DynamicIcon
-                          className="h-4 w-4 me-1"
+                          className="me-1 h-4 w-4"
                           name={option.fieldOption.icon.name}
                           color={option.fieldOption.iconColor.value}
                         />
@@ -186,7 +186,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                         {option.fieldOption.icon &&
                           option.fieldOption.iconColor && (
                             <DynamicIcon
-                              className="h-4 w-4 me-1"
+                              className="me-1 h-4 w-4"
                               name={option.fieldOption.icon.name}
                               color={option.fieldOption.iconColor.value}
                             />
@@ -300,7 +300,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
         const initialHeight = field.caseField.initialHeight;
 
         return (
-          <div className="ring-2 ring-muted rounded-lg">
+          <div className="rounded-lg ring-2 ring-muted">
             <TipTapEditor
               key={field.caseField.id}
               content={initialContent} // Use determined initial content
@@ -342,7 +342,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
       name={field.caseField.id.toString()}
       render={({ field: { onChange, value } }) => (
         <FormItem
-          className="min-w-[300px] mx-1"
+          className="mx-1 min-w-[300px]"
           data-testid={`field-${field.caseField.systemName}`}
         >
           <FormLabel
@@ -352,7 +352,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
             {field.caseField.displayName}
             {field.caseField.isRequired && (
               <sup>
-                <Asterisk className="w-3 h-3 text-destructive" />
+                <Asterisk className="h-3 w-3 text-destructive" />
               </sup>
             )}
             {isFieldRestricted && (
@@ -360,7 +360,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                 title={tCommon("aria.restrictedField")}
                 className="ms-1 text-muted-foreground"
               >
-                <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
               </span>
             )}
             {field.caseField.hint && (

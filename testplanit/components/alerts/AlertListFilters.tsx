@@ -144,7 +144,7 @@ export function AlertListFilters({
             )}
             placeholder={tAudit("allUsers")}
             ariaLabel={tCommon("fields.createdBy")}
-            className="w-auto min-w-40 max-w-72"
+            className="w-auto max-w-72 min-w-40"
             dropdownClassName="p-0 min-w-[240px] max-w-[400px]"
             pageSize={10}
           />

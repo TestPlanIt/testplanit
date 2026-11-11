@@ -339,15 +339,15 @@ function UserList() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-              <div className="text-muted-foreground w-full text-nowrap">
+            <div className="flex w-full min-w-[250px] grow flex-col sm:w-1/2">
+              <div className="w-full text-nowrap text-muted-foreground">
                 <Filter
                   key="users-filter"
                   placeholder={tGlobal("users.filter")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
                 />
-                <div className="flex flex-row items-center gap-2 mt-2">
+                <div className="mt-2 flex flex-row items-center gap-2">
                   <div className="m-2">
                     <ColumnSelection
                       key="project-column-selection"
@@ -377,7 +377,7 @@ function UserList() {
             </div>
 
             {userRows.length > 0 && (
-              <p className="text-sm text-muted-foreground shrink-0">
+              <p className="shrink-0 text-sm text-muted-foreground">
                 {tGlobal("admin.auditLogs.showing", {
                   loaded: userRows.length.toLocaleString(locale),
                   total: (totalCount ?? userRows.length).toLocaleString(locale),

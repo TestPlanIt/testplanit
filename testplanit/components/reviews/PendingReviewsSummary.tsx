@@ -154,18 +154,18 @@ export function PendingReviewsSummary({
         className="flex items-center gap-1 font-semibold"
         data-testid="dashboard-pending-reviews-count"
       >
-        <Inbox className="w-5 h-5 text-muted-foreground" />
+        <Inbox className="h-5 w-5 text-muted-foreground" />
         {t("users.profile.assignments.reviews", { count: total })}
       </h3>
       <div className="space-y-4 ps-6">
         {visibleRequests.map((request) => (
           <div
             key={request.id}
-            className="border p-3 rounded-md"
+            className="rounded-md border p-3"
             data-testid={`dashboard-pending-review-${request.id}`}
           >
             <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="font-medium min-w-0 max-w-[75%]">
+              <div className="max-w-[75%] min-w-0 font-medium">
                 <PendingReviewEntity
                   request={request}
                   caseById={caseById}
@@ -173,7 +173,7 @@ export function PendingReviewsSummary({
                   sessionById={sessionById}
                 />
               </div>
-              <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">
+              <span className="ms-2 max-w-[25%] truncate text-xs text-muted-foreground">
                 {request.project?.name}
               </span>
             </div>
@@ -183,7 +183,7 @@ export function PendingReviewsSummary({
                   state={request.fromState as any}
                   size="sm"
                 />
-                <ArrowRight className="w-3 h-3 shrink-0" aria-hidden="true" />
+                <ArrowRight className="h-3 w-3 shrink-0" aria-hidden="true" />
                 <WorkflowStateDisplay
                   state={request.toState as any}
                   size="sm"
@@ -261,7 +261,7 @@ export function PendingReviewEntity({
   return (
     <Link
       href={`/projects/sessions/${projectId}/${s.id}`}
-      className="flex items-center gap-1 min-w-0 hover:underline"
+      className="flex min-w-0 items-center gap-1 hover:underline"
     >
       <SessionNameDisplay session={s} showIcon />
     </Link>

@@ -47,7 +47,7 @@ export function FilterToggleChip({
         // filled chip has light text; cross-fading to the muted outline state
         // passes through pale-text-on-pale-background, which reads as the
         // label blinking out and back. Toggles snap.
-        "gap-1.5 py-1 cursor-pointer transition-none",
+        "cursor-pointer gap-1.5 py-1 transition-none",
         // Dashed + muted while off, so an inactive chip reads as an offer
         // rather than as an applied filter.
         !active &&

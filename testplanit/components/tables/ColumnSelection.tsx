@@ -640,16 +640,16 @@ export function ColumnSelection<TData extends RowData>({
   return (
     <Popover>
       <PopoverTrigger
-        className="text-sm whitespace-nowrap flex items-center"
+        className="flex items-center text-sm whitespace-nowrap"
         data-testid="column-selection-trigger"
       >
-        <Columns3 className="w-4 h-4 me-1" />
+        <Columns3 className="me-1 h-4 w-4" />
         {t("table.columns.columns")}
       </PopoverTrigger>
-      <PopoverContent className="w-fit grid max-w-[var(--radix-popover-content-available-width)]">
+      <PopoverContent className="grid w-fit max-w-[var(--radix-popover-content-available-width)]">
         <div className="space-y-1">
-          <div className="flex flex-row items-center justify-between mb-2">
-            <div className="flex flex-row items-center space-x-1 min-w-0">
+          <div className="mb-2 flex flex-row items-center justify-between">
+            <div className="flex min-w-0 flex-row items-center space-x-1">
               <Checkbox
                 id="column-selection-select-all"
                 checked={selectAllChecked}
@@ -663,7 +663,7 @@ export function ColumnSelection<TData extends RowData>({
               />
               <label
                 htmlFor="column-selection-select-all"
-                className="text-sm font-medium cursor-pointer"
+                className="cursor-pointer text-sm font-medium"
               >
                 {tGlobal("common.actions.selectAll")}
               </label>
@@ -677,11 +677,11 @@ export function ColumnSelection<TData extends RowData>({
               aria-label={t("table.columns.resetColumns")}
               title={t("table.columns.resetColumns")}
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
           <div
-            className={`max-h-[300px] grid ${gridColsClass} gap-x-2 gap-y-1 pe-4 overflow-y-auto`}
+            className={`grid max-h-[300px] ${gridColsClass} gap-x-2 gap-y-1 overflow-y-auto pe-4`}
           >
             {displayColumns.map((column) => {
               const columnId = column.id;
@@ -690,7 +690,7 @@ export function ColumnSelection<TData extends RowData>({
               return (
                 <div
                   key={columnId}
-                  className="flex flex-row items-center space-x-1 min-w-0"
+                  className="flex min-w-0 flex-row items-center space-x-1"
                 >
                   <Checkbox
                     id={columnId}
@@ -704,7 +704,7 @@ export function ColumnSelection<TData extends RowData>({
                   />
                   <label
                     htmlFor={columnId}
-                    className={`text-sm truncate cursor-pointer flex-1 max-w-[150px] overflow-hidden text-ellipsis${column.isRequired ? " text-muted-foreground" : ""}`}
+                    className={`max-w-[150px] flex-1 cursor-pointer truncate overflow-hidden text-sm text-ellipsis${column.isRequired ? " text-muted-foreground" : ""}`}
                   >
                     {column.label}{" "}
                     {column.isRequired && t("table.columns.required")}

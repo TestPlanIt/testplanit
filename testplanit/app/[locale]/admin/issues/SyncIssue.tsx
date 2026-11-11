@@ -80,7 +80,7 @@ export function SyncIssue({ issue }: SyncIssueProps) {
           size="sm"
           onClick={handleSync}
           disabled={isSyncing}
-          className="px-2 py-1 h-auto"
+          className="h-auto px-2 py-1"
         >
           <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
           <span className="sr-only">{t("syncIssue")}</span>

@@ -59,7 +59,7 @@ export function FeedbackSurveySheet({
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="sm:max-w-lg w-full p-0 flex flex-col"
+        className="flex w-full flex-col p-0 sm:max-w-lg"
       >
         <SheetHeader className="p-6 pb-2">
           <SheetTitle className="flex items-center gap-2">
@@ -68,10 +68,10 @@ export function FeedbackSurveySheet({
           </SheetTitle>
           <SheetDescription>{t("feedback.sheetDescription")}</SheetDescription>
         </SheetHeader>
-        <div className="flex-1 min-h-0">
+        <div className="min-h-0 flex-1">
           <iframe
             src={embedUrl}
-            className="w-full h-full border-0"
+            className="h-full w-full border-0"
             title={t("feedback.sheetTitle")}
             allow="clipboard-write"
           />
@@ -113,9 +113,9 @@ export function FeedbackBanner({
   if (isDismissed) return null;
 
   return (
-    <div className="flex items-center justify-center gap-2 bg-primary/10 border-b border-primary/20 px-4 py-2 text-sm">
-      <MessageSquareHeart className="h-4 w-4 text-primary shrink-0" />
-      <span className="text-foreground me-4">
+    <div className="flex items-center justify-center gap-2 border-b border-primary/20 bg-primary/10 px-4 py-2 text-sm">
+      <MessageSquareHeart className="h-4 w-4 shrink-0 text-primary" />
+      <span className="me-4 text-foreground">
         {t("feedback.bannerMessage")}
       </span>
       <Button variant="secondary" size="sm" onClick={handleOpenSurvey}>
@@ -124,7 +124,7 @@ export function FeedbackBanner({
       <button
         type="button"
         onClick={handleDismiss}
-        className="text-muted-foreground hover:text-foreground transition-colors ms-1"
+        className="ms-1 text-muted-foreground transition-colors hover:text-foreground"
         aria-label={t("common.actions.close")}
       >
         <X className="h-4 w-4" />

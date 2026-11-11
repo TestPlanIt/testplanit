@@ -90,7 +90,7 @@ export function EditAppConfig({ config, open, onClose }: EditAppConfigProps) {
               data-testid="app-config-value-input"
             />
           </div>
-          {error && <div className="text-destructive text-sm">{error}</div>}
+          {error && <div className="text-sm text-destructive">{error}</div>}
           <div className="flex justify-end gap-2">
             <Button
               type="button"

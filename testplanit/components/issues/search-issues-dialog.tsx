@@ -664,7 +664,7 @@ export function SearchIssuesDialog({
             </div>
           </DialogHeader>
 
-          <div className="space-y-4 max-w-[660px]">
+          <div className="max-w-[660px] space-y-4">
             <div className="relative">
               <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -699,7 +699,7 @@ export function SearchIssuesDialog({
                 </Badge>
                 <Badge
                   variant={searchExternal ? "default" : "outline"}
-                  className="cursor-pointer max-w-40 truncate"
+                  className="max-w-40 cursor-pointer truncate"
                   data-testid="issue-source-external"
                   onClick={() => setSearchExternal(true)}
                   title={activeIntegration.integration.name}
@@ -729,7 +729,7 @@ export function SearchIssuesDialog({
                       variant={
                         selectedProjectFilter === ip.id ? "default" : "outline"
                       }
-                      className="cursor-pointer max-w-40 truncate"
+                      className="max-w-40 cursor-pointer truncate"
                       onClick={() => setSelectedProjectFilter(ip.id)}
                       title={ip.externalProjectName || ip.externalProjectKey}
                     >
@@ -768,7 +768,7 @@ export function SearchIssuesDialog({
                         searchFailures.length,
                     })}
                   </p>
-                  <ul className="mt-2 list-disc ps-5 space-y-1 text-sm">
+                  <ul className="mt-2 list-disc space-y-1 ps-5 text-sm">
                     {searchFailures.map((f) => (
                       <li key={f.projectKey}>
                         <span className="font-medium">{f.projectKey}</span>:{" "}
@@ -801,15 +801,15 @@ export function SearchIssuesDialog({
               </Alert>
             )}
 
-            <div className="w-full max-w-full overflow-hidden flex flex-col">
-              <ScrollArea className="h-[400px] rounded-md border w-full shrink-0 [&_[data-radix-scroll-area-viewport]>div]:block! [&_[data-radix-scroll-area-viewport]>div]:max-w-full!">
+            <div className="flex w-full max-w-full flex-col overflow-hidden">
+              <ScrollArea className="h-[400px] w-full shrink-0 rounded-md border [&_[data-radix-scroll-area-viewport]>div]:block! [&_[data-radix-scroll-area-viewport]>div]:max-w-full!">
                 {isLoading ? (
                   <div className="flex items-center justify-center p-8">
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : allIssues.length === 0 ? (
                   <div className="flex flex-col items-center justify-center p-8 text-center">
-                    <Search className="h-12 w-12 text-muted-foreground mb-4" />
+                    <Search className="mb-4 h-12 w-12 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
                       {debouncedSearchQuery
                         ? t("issues.noIssuesFound")
@@ -817,7 +817,7 @@ export function SearchIssuesDialog({
                     </p>
                   </div>
                 ) : (
-                  <div className="p-4 space-y-2 w-full max-w-full overflow-hidden">
+                  <div className="w-full max-w-full space-y-2 overflow-hidden p-4">
                     {allIssues.map((issue) => {
                       const isSelected = selectedIssues.some((i) =>
                         i.isExternal && issue.isExternal
@@ -848,20 +848,20 @@ export function SearchIssuesDialog({
                       return (
                         <div
                           key={key}
-                          className={`rounded-lg border p-4 transition-colors overflow-hidden ${
+                          className={`overflow-hidden rounded-lg border p-4 transition-colors ${
                             isAlreadyLinked
-                              ? "border-muted bg-muted/50 opacity-40 cursor-not-allowed"
+                              ? "cursor-not-allowed border-muted bg-muted/50 opacity-40"
                               : isSelected
-                                ? "border-primary bg-primary/5 [&_.text-muted-foreground]:text-foreground cursor-pointer"
-                                : "hover:bg-accent hover:text-accent-foreground [&:hover_.text-muted-foreground]:text-accent-foreground cursor-pointer"
+                                ? "cursor-pointer border-primary bg-primary/5 [&_.text-muted-foreground]:text-foreground"
+                                : "cursor-pointer hover:bg-accent hover:text-accent-foreground [&:hover_.text-muted-foreground]:text-accent-foreground"
                           }`}
                           onClick={() =>
                             !isAlreadyLinked && handleIssueToggle(issue)
                           }
                         >
                           <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0 space-y-1">
-                              <div className="flex items-center gap-2 min-w-0">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="flex min-w-0 items-center gap-2">
                                 {multiSelect && (
                                   <Checkbox
                                     checked={isSelected}
@@ -873,11 +873,11 @@ export function SearchIssuesDialog({
                                     onClick={(e) => e.stopPropagation()}
                                   />
                                 )}
-                                <h4 className="text-sm font-medium flex items-center gap-2 min-w-0 flex-1">
+                                <h4 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium">
                                   {issue.isExternal &&
                                     ((issue as any).key ||
                                       issue.externalKey) && (
-                                      <span className="text-muted-foreground shrink-0">
+                                      <span className="shrink-0 text-muted-foreground">
                                         {"["}
                                         {(issue as any).key ||
                                           issue.externalKey}
@@ -889,7 +889,7 @@ export function SearchIssuesDialog({
                                       ? issue.title
                                       : issue.name}
                                   </span>
-                                  <span className="ms-auto flex items-center gap-2 shrink-0">
+                                  <span className="ms-auto flex shrink-0 items-center gap-2">
                                     {isAlreadyLinked && (
                                       <Badge
                                         variant="secondary"
@@ -903,7 +903,7 @@ export function SearchIssuesDialog({
                                       (issue as ExternalIssue)._projectKey && (
                                         <Badge
                                           variant="secondary"
-                                          className="text-xs max-w-24 inline-block overflow-hidden text-ellipsis whitespace-nowrap"
+                                          className="inline-block max-w-24 overflow-hidden text-xs text-ellipsis whitespace-nowrap"
                                           title={
                                             (issue as ExternalIssue)
                                               ._projectName ||
@@ -920,14 +920,14 @@ export function SearchIssuesDialog({
                                 </h4>
                               </div>
                               {issue.description && (
-                                <p className="text-sm text-muted-foreground line-clamp-4 wrap-break-word">
+                                <p className="line-clamp-4 text-sm wrap-break-word text-muted-foreground">
                                   {stripHtmlTags(issue.description).replace(
                                     /\s+/g,
                                     " "
                                   )}
                                 </p>
                               )}
-                              <div className="flex items-center gap-2 text-xs flex-wrap">
+                              <div className="flex flex-wrap items-center gap-2 text-xs">
                                 {issue.priority && (
                                   <IssuePriorityDisplay
                                     priority={issue.priority}
@@ -941,7 +941,7 @@ export function SearchIssuesDialog({
                                   />
                                 )}
                                 {issue.createdBy && (
-                                  <span className="text-muted-foreground truncate max-w-[200px]">
+                                  <span className="max-w-[200px] truncate text-muted-foreground">
                                     {issue.createdBy.name ||
                                       issue.createdBy.email}
                                   </span>
@@ -953,7 +953,7 @@ export function SearchIssuesDialog({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 shrink-0 text-muted-foreground hover:opacity-50 cursor-pointer"
+                                  className="h-8 w-8 shrink-0 cursor-pointer text-muted-foreground hover:opacity-50"
                                   title={t(
                                     "common.ui.issues.openInExternalSystem",
                                     {

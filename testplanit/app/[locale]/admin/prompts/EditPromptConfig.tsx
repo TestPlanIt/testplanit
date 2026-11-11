@@ -160,7 +160,7 @@ export function EditPromptConfig({
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{tEdit("title")}</DialogTitle>
             <DialogDescription>{tEdit("description")}</DialogDescription>
@@ -254,10 +254,10 @@ export function EditPromptConfig({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium leading-none mb-2">
+                <h3 className="mb-2 text-sm leading-none font-medium">
                   {t("features")}
                 </h3>
-                <div className="border rounded-lg px-4 pb-4 pt-1">
+                <div className="rounded-lg border px-4 pt-1 pb-4">
                   <Accordion type="single" collapsible className="w-full">
                     {featureKeys.map((feature) => (
                       <PromptFeatureSection

@@ -1087,11 +1087,11 @@ export function ImportCasesWizard({
         {children}
         {required && (
           <sup>
-            <Asterisk className="w-3 h-3 text-destructive" />
+            <Asterisk className="h-3 w-3 text-destructive" />
           </sup>
         )}
       </Label>
-      {error && <p className="text-destructive text-sm mt-1">{error}</p>}
+      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>
   );
 
@@ -1105,7 +1105,7 @@ export function ImportCasesWizard({
           <div
             className={
               validationErrors.selectedFile
-                ? "border border-destructive rounded-lg p-2"
+                ? "rounded-lg border border-destructive p-2"
                 : ""
             }
           >
@@ -1141,20 +1141,20 @@ export function ImportCasesWizard({
             <RadioGroupItem value="single_folder" id="single_folder" />
             <Label
               htmlFor="single_folder"
-              className="font-normal cursor-pointer"
+              className="cursor-pointer font-normal"
             >
               {t("importWizard.page1.importLocation.singleFolder")}
             </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="root_folder" id="root_folder" />
-            <Label htmlFor="root_folder" className="font-normal cursor-pointer">
+            <Label htmlFor="root_folder" className="cursor-pointer font-normal">
               {t("importWizard.page1.importLocation.rootFolder")}
             </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="top_level" id="top_level" />
-            <Label htmlFor="top_level" className="font-normal cursor-pointer">
+            <Label htmlFor="top_level" className="cursor-pointer font-normal">
               {t("importWizard.page1.importLocation.topLevel")}
             </Label>
           </div>
@@ -1171,7 +1171,7 @@ export function ImportCasesWizard({
             <div
               className={
                 validationErrors.selectedFolderId
-                  ? "border border-destructive rounded-lg"
+                  ? "rounded-lg border border-destructive"
                   : ""
               }
             >
@@ -1233,7 +1233,7 @@ export function ImportCasesWizard({
               checked={hasHeaders}
               onCheckedChange={(c) => setHasHeaders(!!c)}
             />
-            <Label htmlFor="hasHeaders" className="font-normal cursor-pointer">
+            <Label htmlFor="hasHeaders" className="cursor-pointer font-normal">
               {t("importWizard.page1.hasHeaders")}
             </Label>
           </div>
@@ -1267,7 +1267,7 @@ export function ImportCasesWizard({
             checked={useAiParsing}
             onCheckedChange={(c) => setUseAiParsing(!!c)}
           />
-          <Label htmlFor="useAiParsing" className="font-normal cursor-pointer">
+          <Label htmlFor="useAiParsing" className="cursor-pointer font-normal">
             {t("importWizard.page1.useAiParsing")}
           </Label>
         </div>
@@ -1326,14 +1326,14 @@ export function ImportCasesWizard({
               <RadioGroupItem value="single" id="row_single" />
               <Label
                 htmlFor="row_single"
-                className="font-normal cursor-pointer"
+                className="cursor-pointer font-normal"
               >
                 {t("importWizard.page1.rowMode.single")}
               </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="multi" id="row_multi" />
-              <Label htmlFor="row_multi" className="font-normal cursor-pointer">
+              <Label htmlFor="row_multi" className="cursor-pointer font-normal">
                 {t("importWizard.page1.rowMode.multi")}
               </Label>
             </div>
@@ -1385,7 +1385,7 @@ export function ImportCasesWizard({
                   <span className="flex items-center">
                     {field.displayName}
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   </span>
                 </li>
@@ -1395,12 +1395,12 @@ export function ImportCasesWizard({
         </Alert>
       )}
 
-      <ScrollArea className="h-[400px] border rounded-lg">
-        <div className="p-4 space-y-4">
+      <ScrollArea className="h-[400px] rounded-lg border">
+        <div className="space-y-4 p-4">
           {fieldMappings.map((mapping) => (
             <div
               key={mapping.csvColumn}
-              className="grid grid-cols-2 gap-4 items-center"
+              className="grid grid-cols-2 items-center gap-4"
             >
               <div className="font-medium">{mapping.csvColumn}</div>
               <div className="space-y-1">
@@ -1433,7 +1433,7 @@ export function ImportCasesWizard({
                             {field.displayName}
                             {field.isRequired && (
                               <sup>
-                                <Asterisk className="w-3 h-3 text-destructive" />
+                                <Asterisk className="h-3 w-3 text-destructive" />
                               </sup>
                             )}
                           </span>
@@ -1480,7 +1480,7 @@ export function ImportCasesWizard({
                 return (
                   <div
                     key={mapping.csvColumn}
-                    className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center"
+                    className="grid grid-cols-[1fr_auto_1fr] items-center gap-4"
                   >
                     <span className="font-medium">{mapping.csvColumn}</span>
                     <span className="text-muted-foreground">{"→"}</span>
@@ -1505,12 +1505,12 @@ export function ImportCasesWizard({
                   <RadioGroupItem value="plain" id="split_plain" />
                   <Label
                     htmlFor="split_plain"
-                    className="font-normal cursor-pointer"
+                    className="cursor-pointer font-normal"
                   >
                     {t("importWizard.page3.folderSplitMode.plain")}
                   </Label>
                 </div>
-                <p className="text-sm text-muted-foreground ms-6">
+                <p className="ms-6 text-sm text-muted-foreground">
                   {t("importWizard.page3.folderSplitMode.plainExample")}
                 </p>
               </div>
@@ -1520,12 +1520,12 @@ export function ImportCasesWizard({
                   <RadioGroupItem value="slash" id="split_slash" />
                   <Label
                     htmlFor="split_slash"
-                    className="font-normal cursor-pointer"
+                    className="cursor-pointer font-normal"
                   >
                     {t("importWizard.page3.folderSplitMode.slash")}
                   </Label>
                 </div>
-                <p className="text-sm text-muted-foreground ms-6">
+                <p className="ms-6 text-sm text-muted-foreground">
                   {t("importWizard.page3.folderSplitMode.slashExample")}
                 </p>
               </div>
@@ -1535,12 +1535,12 @@ export function ImportCasesWizard({
                   <RadioGroupItem value="dot" id="split_dot" />
                   <Label
                     htmlFor="split_dot"
-                    className="font-normal cursor-pointer"
+                    className="cursor-pointer font-normal"
                   >
                     {t("importWizard.page3.folderSplitMode.dot")}
                   </Label>
                 </div>
-                <p className="text-sm text-muted-foreground ms-6">
+                <p className="ms-6 text-sm text-muted-foreground">
                   {t("importWizard.page3.folderSplitMode.dotExample")}
                 </p>
               </div>
@@ -1550,12 +1550,12 @@ export function ImportCasesWizard({
                   <RadioGroupItem value="greater_than" id="split_greater" />
                   <Label
                     htmlFor="split_greater"
-                    className="font-normal cursor-pointer"
+                    className="cursor-pointer font-normal"
                   >
                     {t("importWizard.page3.folderSplitMode.greaterThan")}
                   </Label>
                 </div>
-                <p className="text-sm text-muted-foreground ms-6">
+                <p className="ms-6 text-sm text-muted-foreground">
                   {t("importWizard.page3.folderSplitMode.greaterThanExample")}
                 </p>
               </div>
@@ -1592,7 +1592,7 @@ export function ImportCasesWizard({
     return (
       <div className="space-y-2" data-testid="import-steps-preview">
         {steps.map((step, idx) => (
-          <div key={idx} className="border rounded p-2 bg-muted/30">
+          <div key={idx} className="rounded border bg-muted/30 p-2">
             <div className="flex gap-2">
               <Badge variant="outline" className="shrink-0">
                 {idx + 1}
@@ -1689,7 +1689,7 @@ export function ImportCasesWizard({
       const htmlOutput = generateHTMLFallback(json);
       return (
         <div
-          className="prose prose-sm dark:prose-invert max-w-none text-sm"
+          className="prose prose-sm max-w-none text-sm dark:prose-invert"
           dangerouslySetInnerHTML={{ __html: htmlOutput }}
         />
       );
@@ -1789,13 +1789,13 @@ export function ImportCasesWizard({
         </div>
 
         {isCheckingDuplicates && (
-          <p className="text-sm text-muted-foreground animate-pulse">
+          <p className="animate-pulse text-sm text-muted-foreground">
             {tGlobal("repository.duplicates.checkingDuplicates")}
           </p>
         )}
 
-        <ScrollArea className="h-[400px] border rounded-lg">
-          <div className="p-4 space-y-4">
+        <ScrollArea className="h-[400px] rounded-lg border">
+          <div className="space-y-4 p-4">
             {previewData.map((caseData, index) => (
               <Card key={index}>
                 <CardHeader>
@@ -1812,7 +1812,7 @@ export function ImportCasesWizard({
                       return (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
                           </TooltipTrigger>
                           <TooltipContent
                             side="right"
@@ -1870,7 +1870,7 @@ export function ImportCasesWizard({
                               : "grid grid-cols-[120px_1fr] gap-2 text-sm"
                           }
                         >
-                          <span className="font-medium text-sm shrink-0">
+                          <span className="shrink-0 text-sm font-medium">
                             {field?.displayName}:
                           </span>
                           <div className={isExpandedField ? "mt-1" : ""}>
@@ -1996,7 +1996,7 @@ export function ImportCasesWizard({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-3xl h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="flex h-[90vh] max-w-3xl flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("importWizard.title")}</DialogTitle>
           <DialogDescription>
@@ -2010,7 +2010,7 @@ export function ImportCasesWizard({
 
         <WizardStepIndicator currentStep={currentPage} totalSteps={4} />
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-0.5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-0.5">
           {isParsingMarkdown && (
             <LoadingSpinnerAlert
               message={t("importWizard.page1.parsingMarkdown")}

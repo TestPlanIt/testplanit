@@ -78,7 +78,7 @@ const StaticImage = ImageWithResize.extend({
         },
         [
           "div",
-          { class: "relative group inline-block" },
+          { class: "group relative inline-block" },
           [
             "div",
             { style: rotateStyle },

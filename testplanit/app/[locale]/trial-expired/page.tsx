@@ -26,11 +26,11 @@ export default function TrialExpiredPage() {
     process.env.NEXT_PUBLIC_WEBSITE_URL || "https://testplanit.com";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
-      <Card className="max-w-2xl w-full">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center">
-            <AlertCircle className="w-8 h-8 text-destructive animate-ping" />
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="space-y-4 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+            <AlertCircle className="h-8 w-8 animate-ping text-destructive" />
           </div>
           <CardTitle className="text-3xl">{t("title")}</CardTitle>
           <CardDescription className="text-lg">
@@ -41,7 +41,7 @@ export default function TrialExpiredPage() {
         <CardContent className="space-y-6">
           <p className="text-center text-muted-foreground">{t("nextSteps")}</p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Button asChild size="lg" variant="outline">
               <Link href={websiteUrl}>{t("pricingPlans")}</Link>
             </Button>

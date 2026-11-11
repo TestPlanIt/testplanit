@@ -27,7 +27,7 @@ export function TestIntegrationButton({
         <Button
           variant="ghost"
           onClick={() => onTest(integration)}
-          className="px-2 py-1 h-auto"
+          className="h-auto px-2 py-1"
         >
           <Activity className="h-4 w-4" />
           <span className="sr-only">{t("testConnection")}</span>

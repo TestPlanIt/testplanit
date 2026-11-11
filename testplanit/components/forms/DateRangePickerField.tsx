@@ -213,12 +213,12 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
                 align="center"
                 sideOffset={5}
               >
-                <div className="px-3 py-2 text-sm text-muted-foreground text-center border-b border-border">
+                <div className="border-b border-border px-3 py-2 text-center text-sm text-muted-foreground">
                   {!field.value?.from
                     ? tReports("dateRange.chooseStartDate")
                     : tReports("dateRange.chooseEndDate")}
                 </div>
-                <div className="p-2 border-b border-border grid gap-2">
+                <div className="grid gap-2 border-b border-border p-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -350,7 +350,7 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
                     numberOfMonths={2}
                   />
                 </div>
-                <div className="p-2 border-t border-border flex gap-2">
+                <div className="flex gap-2 border-t border-border p-2">
                   <Button
                     variant="ghost"
                     className="flex-1 justify-center text-sm"

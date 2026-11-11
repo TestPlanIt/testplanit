@@ -69,7 +69,7 @@ export function CaseDraftStatus({
         data-testid="case-draft-status"
         data-status="saving"
       >
-        <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
         {t("saving")}
       </span>
     );

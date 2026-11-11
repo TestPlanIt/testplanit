@@ -82,7 +82,7 @@ export function DeletePromptConfig({
             })}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-200 p-3 rounded border border-yellow-300 dark:border-yellow-700">
+        <div className="rounded border border-yellow-300 bg-yellow-100 p-3 text-yellow-900 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-200">
           <p className="text-sm">{t("warning")}</p>
         </div>
         <AlertDialogFooter>

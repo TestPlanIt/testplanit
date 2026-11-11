@@ -275,7 +275,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
         selectTestId={`testrun-select-${testRun.id}`}
         icon={
           isAutomatedRun ? (
-            <Bot className="w-5 h-5 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
+            <Bot className="h-5 w-5 shrink-0 rounded-full border-2 border-primary p-0.5 text-primary" />
           ) : (
             <DynamicIcon
               name="play-circle"
@@ -294,7 +294,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
             content: (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Flame className="h-4 w-4 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                  <Flame className="h-4 w-4 shrink-0 animate-pulse fill-orange-500 text-orange-500" />
                 </TooltipTrigger>
                 <TooltipContent>{tCommon("labels.new")}</TooltipContent>
               </Tooltip>
@@ -307,7 +307,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="shrink-0">
-                    <Combine className="w-4 h-4 text-muted-foreground" />
+                    <Combine className="h-4 w-4 text-muted-foreground" />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -316,7 +316,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                   </p>
                   {testRun.configuration && (
                     <p className="flex text-xs text-background">
-                      <Combine className="w-4 h-4 shrink-0 me-1" />
+                      <Combine className="me-1 h-4 w-4 shrink-0" />
                       {testRun.configuration.name}
                     </p>
                   )}
@@ -331,7 +331,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="shrink-0">
-                    <Lock className="w-4 h-4 text-muted-foreground" />
+                    <Lock className="h-4 w-4 text-muted-foreground" />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>{t("runs.composition.locked")}</TooltipContent>
@@ -342,7 +342,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
             key: "open",
             tier: "lg",
             content: (
-              <LinkIcon className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              <LinkIcon className="h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
             ),
           },
         ]}
@@ -356,7 +356,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
             tier: "md",
             pinned: true,
             content: (
-              <span className="whitespace-nowrap text-sm">
+              <span className="text-sm whitespace-nowrap">
                 <DateTextDisplay
                   responsive
                   startDate={startDate}
@@ -375,14 +375,14 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="min-w-0 cursor-default">
-                    <ItemRowChip icon={<Combine className="w-4 h-4" />}>
+                    <ItemRowChip icon={<Combine className="h-4 w-4" />}>
                       {testRun.configuration.name}
                     </ItemRowChip>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="flex">
-                    <Combine className="w-4 h-4 shrink-0 me-1" />
+                    <Combine className="me-1 h-4 w-4 shrink-0" />
                     {testRun.configuration.name}
                   </p>
                 </TooltipContent>

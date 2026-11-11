@@ -210,7 +210,7 @@ export function useTestCaseHealthColumns(
         cell: (info) => {
           const isStale = info.getValue();
           return isStale ? (
-            <span className="text-yellow-700 dark:text-yellow-400 font-medium">
+            <span className="font-medium text-yellow-700 dark:text-yellow-400">
               {t("common.yes")}
             </span>
           ) : (
@@ -331,7 +331,7 @@ export function useTestCaseHealthColumns(
                 <TooltipTrigger asChild>
                   <span
                     className={cn(
-                      "font-mono font-semibold cursor-default",
+                      "cursor-default font-mono font-semibold",
                       getPassRateColor(rate)
                     )}
                   >
@@ -340,7 +340,7 @@ export function useTestCaseHealthColumns(
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <div className="text-xs space-y-1">
+                  <div className="space-y-1 text-xs">
                     <div>
                       {t("reports.ui.testCaseHealth.passCount")}:{" "}
                       {info.row.original.passCount}

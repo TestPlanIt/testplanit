@@ -480,7 +480,7 @@ export function ImpactDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-[960px] max-h-[90vh] flex flex-col"
+        className="flex max-h-[90vh] flex-col sm:max-w-[960px]"
         data-testid="impact-dialog"
       >
         <DialogHeader>

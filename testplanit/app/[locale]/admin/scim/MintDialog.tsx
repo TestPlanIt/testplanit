@@ -293,7 +293,7 @@ export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
                 <code
                   id="scim-mint-dialog-reveal-token"
                   data-testid="scim-mint-dialog-reveal-token"
-                  className="grow break-all font-mono text-sm bg-muted px-2 py-1 rounded"
+                  className="grow rounded bg-muted px-2 py-1 font-mono text-sm break-all"
                 >
                   {mintedToken.plaintext}
                 </code>

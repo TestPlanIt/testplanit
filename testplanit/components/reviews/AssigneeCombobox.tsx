@@ -172,7 +172,7 @@ export function AssigneeCombobox({
 function AssigneeTriggerSummary({ option }: { option: AssigneeOption }) {
   if (option.kind === "user") {
     return (
-      <span className="flex items-center gap-2 min-w-0">
+      <span className="flex min-w-0 items-center gap-2">
         <Avatar
           image={option.image}
           alt={option.name}
@@ -185,7 +185,7 @@ function AssigneeTriggerSummary({ option }: { option: AssigneeOption }) {
     );
   }
   return (
-    <span className="flex items-center gap-2 min-w-0">
+    <span className="flex min-w-0 items-center gap-2">
       <Drama className="h-5 w-5 shrink-0" />
       <span className="truncate">{option.name}</span>
     </span>

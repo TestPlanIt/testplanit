@@ -1,6 +1,6 @@
 export const Placeholder = (props: any) => (
   <div
-    className="bg-primary h-0.5 absolute end-0 transform -translate-y-1/2 top-0"
+    className="absolute end-0 top-0 h-0.5 -translate-y-1/2 transform bg-primary"
     style={{ left: props.depth * 24 }}
     data-testid="placeholder"
   ></div>

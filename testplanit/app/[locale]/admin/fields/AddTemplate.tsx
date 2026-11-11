@@ -372,7 +372,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                 defaultValue={true}
                 name="isEnabled"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormLabel className="flex items-center">
                       {tCommon("fields.enabled")}
                       <HelpPopover helpKey="template.isEnabled" />
@@ -393,8 +393,8 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                 control={form.control}
                 name="isDefault"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                    <FormLabel className="flex items-center mt-0!">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
+                    <FormLabel className="mt-0! flex items-center">
                       {tCommon("fields.default")}
                       <HelpPopover helpKey="template.isDefault" />
                     </FormLabel>
@@ -407,7 +407,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                       />
                     </FormControl>
                     {isDefault && (
-                      <div className="flex items-center ms-2">
+                      <div className="ms-2 flex items-center">
                         <FormMessage>{t("defaultTemplateHint")}</FormMessage>
                       </div>
                     )}
@@ -546,7 +546,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
             <DialogFooter>
               {errors.root && (
                 <div
-                  className=" bg-destructive text-destructive-foreground text-sm p-2"
+                  className=" bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                   data-testid="template-form-error"
                 >

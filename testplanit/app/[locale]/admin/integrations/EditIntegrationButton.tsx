@@ -20,7 +20,7 @@ export function EditIntegrationButton({
     <Button
       variant="ghost"
       onClick={() => onEdit(integration)}
-      className="px-2 py-1 h-auto"
+      className="h-auto px-2 py-1"
       title={tCommon("actions.edit")}
     >
       <SquarePen className="h-4 w-4" />

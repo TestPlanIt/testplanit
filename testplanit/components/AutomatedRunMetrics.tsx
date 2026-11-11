@@ -69,7 +69,7 @@ function MetricTile({
 }) {
   const body = (
     <>
-      <div className="text-xs text-muted-foreground truncate" title={label}>
+      <div className="truncate text-xs text-muted-foreground" title={label}>
         {label}
       </div>
       <div
@@ -85,12 +85,12 @@ function MetricTile({
       type="button"
       onClick={onClick}
       data-testid={testId}
-      className="rounded-md border p-2 min-w-0 w-full text-start hover:bg-accent transition-colors"
+      className="w-full min-w-0 rounded-md border p-2 text-start transition-colors hover:bg-accent"
     >
       {body}
     </button>
   ) : (
-    <div className="rounded-md border p-2 min-w-0" data-testid={testId}>
+    <div className="min-w-0 rounded-md border p-2" data-testid={testId}>
       {body}
     </div>
   );
@@ -256,7 +256,7 @@ export function AutomatedRunMetrics({
           {tCommon("labels.executionMetrics")}
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-2 pt-0 space-y-3">
+      <CardContent className="space-y-3 p-2 pt-0">
         <div className="grid grid-cols-2 gap-2">
           {tiles.map((tile) => (
             <MetricTile key={tile.label} {...tile} />
@@ -264,7 +264,7 @@ export function AutomatedRunMetrics({
         </div>
         {slowestResults.length > 0 && (
           <div>
-            <div className="text-xs text-muted-foreground mb-1">
+            <div className="mb-1 text-xs text-muted-foreground">
               {tCommon("labels.slowestTests")}
             </div>
             <ul className="space-y-1">

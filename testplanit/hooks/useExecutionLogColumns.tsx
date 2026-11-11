@@ -87,16 +87,16 @@ export function useExecutionLogColumns(
             const row = info.row.original;
             if (isStepRow(row)) {
               return (
-                <div className="ps-6 text-sm space-y-1 py-1">
-                  <div className="flex gap-2 items-start">
-                    <span className="text-muted-foreground shrink-0 inline-flex items-center gap-1">
+                <div className="space-y-1 py-1 ps-6 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">
                       {row.sharedGroupName && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Layers
                                 size={14}
-                                className="text-primary shrink-0"
+                                className="shrink-0 text-primary"
                               />
                             </TooltipTrigger>
                             <TooltipContent>
@@ -133,7 +133,7 @@ export function useExecutionLogColumns(
                   </div>
                   {row.expectedResult && (
                     <div className="flex gap-2">
-                      <span className="text-muted-foreground shrink-0">
+                      <span className="shrink-0 text-muted-foreground">
                         {t("common.fields.expectedResult")}
                       </span>
                       <TooltipProvider>

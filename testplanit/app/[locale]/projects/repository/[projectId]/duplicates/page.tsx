@@ -180,7 +180,7 @@ export default function DuplicatesPage() {
                     ((scanProgress as any).phase === "ai" ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-xs whitespace-nowrap text-muted-foreground">
                           {t("aiAnalyzing")}
                         </span>
                       </>
@@ -190,9 +190,9 @@ export default function DuplicatesPage() {
                           value={Math.round(
                             (scanProgress.analyzed / scanProgress.total) * 100
                           )}
-                          className="w-32 h-2"
+                          className="h-2 w-32"
                         />
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-xs whitespace-nowrap text-muted-foreground">
                           {t("analyzing", {
                             analyzed: scanProgress.analyzed,
                             total: scanProgress.total,

@@ -68,7 +68,7 @@ export function UnifiedIssueManager({
   });
 
   if (isLoading) {
-    return <div className="animate-pulse h-20 bg-muted rounded" />;
+    return <div className="h-20 animate-pulse rounded bg-muted" />;
   }
 
   // Check for new integration system first

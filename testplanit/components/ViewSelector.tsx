@@ -178,14 +178,14 @@ function FilterRow({
       role="button"
       tabIndex={0}
       className={cn(
-        "w-full flex items-center justify-between text-start text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+        "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start text-sm font-normal hover:bg-accent hover:text-accent-foreground",
         selected && "bg-primary/20 hover:bg-primary/30"
       )}
       onClick={onClick}
     >
-      <div className="flex items-center gap-2 min-w-0 flex-1">{children}</div>
+      <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
       {count !== undefined && (
-        <span className="text-xs text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+        <span className="ms-2 shrink-0 text-xs whitespace-nowrap text-muted-foreground">
           {count}
         </span>
       )}
@@ -224,7 +224,7 @@ function FilterOptionList({
           {option.icon && (
             <DynamicIcon
               name={option.icon.name as IconName}
-              className="w-4 h-4 shrink-0"
+              className="h-4 w-4 shrink-0"
               color={option.iconColor?.value}
             />
           )}
@@ -292,11 +292,11 @@ function FilterOptionList({
         onValueChange={handleComboboxChange}
         fetchOptions={fetchOptions}
         renderOption={(option) => (
-          <div className="flex items-center justify-between w-full min-w-0 gap-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex w-full min-w-0 items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               {renderLabel(option)}
             </div>
-            <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
+            <span className="shrink-0 text-xs whitespace-nowrap text-muted-foreground">
               {renderCount(option.count)}
             </span>
           </div>
@@ -376,7 +376,7 @@ export function ViewSelector({
       return (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="opacity-50 cursor-help">{shown}</span>
+            <span className="cursor-help opacity-50">{shown}</span>
           </TooltipTrigger>
           <TooltipContent>{tFilterBar("countsUpdating")}</TooltipContent>
         </Tooltip>
@@ -466,20 +466,20 @@ export function ViewSelector({
   );
 
   return (
-    <div className="flex flex-col pt-0.5     w-full">
+    <div className="flex w-full flex-col     pt-0.5">
       <Select value={selectedItem} onValueChange={onValueChange}>
         <SelectTrigger
-          className="me-6 ms-1 text-primary text-lg md:text-xl font-extrabold"
+          className="ms-1 me-6 text-lg font-extrabold text-primary md:text-xl"
           data-testid="view-selector-trigger"
         >
           <SelectValue placeholder={tCommon("placeholders.selectOption")} />
         </SelectTrigger>
-        <SelectContent className="text-primary text-lg md:text-xl font-extrabold">
+        <SelectContent className="text-lg font-extrabold text-primary md:text-xl">
           <SelectGroup>
             {viewItems.map((item) => (
               <SelectItem key={item.id} value={item.id}>
                 <div className="flex items-center space-x-1">
-                  <item.icon className="w-5 h-5 min-w-5 min-h-5" />
+                  <item.icon className="h-5 min-h-5 w-5 min-w-5" />
                   <div>{item.name}</div>
                 </div>
               </SelectItem>
@@ -488,7 +488,7 @@ export function ViewSelector({
         </SelectContent>
       </Select>
 
-      <div className="px-4 space-y-1 pt-2">
+      <div className="space-y-1 px-4 pt-2">
         {selectedItem === "templates" && (
           <>
             <FilterRow
@@ -511,7 +511,7 @@ export function ViewSelector({
               options={templateOptions}
               renderOptionLabel={(option) => (
                 <>
-                  <LayoutTemplate className="w-4 h-4 shrink-0" />
+                  <LayoutTemplate className="h-4 w-4 shrink-0" />
                   <span className="truncate">{option.name}</span>
                 </>
               )}
@@ -555,7 +555,7 @@ export function ViewSelector({
                 )
               )}
             >
-              <Users className="w-4 h-4 shrink-0" />
+              <Users className="h-4 w-4 shrink-0" />
               <span className="truncate">{t("views.allCreators")}</span>
             </FilterRow>
             <FilterOptionList
@@ -586,9 +586,9 @@ export function ViewSelector({
                   count={renderCount(item.count)}
                 >
                   {item.value ? (
-                    <Bot className="w-4 h-4 shrink-0" />
+                    <Bot className="h-4 w-4 shrink-0" />
                   ) : (
-                    <User className="w-4 h-4 shrink-0" />
+                    <User className="h-4 w-4 shrink-0" />
                   )}
                   <span className="truncate">
                     {item.value
@@ -619,9 +619,9 @@ export function ViewSelector({
                   count={renderCount(item.count)}
                 >
                   {item.value ? (
-                    <SquareStack className="w-4 h-4 shrink-0 text-primary" />
+                    <SquareStack className="h-4 w-4 shrink-0 text-primary" />
                   ) : (
-                    <Square className="w-4 h-4 shrink-0" />
+                    <Square className="h-4 w-4 shrink-0" />
                   )}
                   <span className="truncate">
                     {item.value
@@ -652,9 +652,9 @@ export function ViewSelector({
                   count={renderCount(item.count)}
                 >
                   {item.value ? (
-                    <Paperclip className="w-4 h-4 shrink-0 text-primary" />
+                    <Paperclip className="h-4 w-4 shrink-0 text-primary" />
                   ) : (
-                    <FileX className="w-4 h-4 shrink-0 opacity-60" />
+                    <FileX className="h-4 w-4 shrink-0 opacity-60" />
                   )}
                   <span className="truncate">
                     {item.value
@@ -685,9 +685,9 @@ export function ViewSelector({
                   count={renderCount(item.count)}
                 >
                   {item.value ? (
-                    <Pin className="w-4 h-4 shrink-0 text-primary" />
+                    <Pin className="h-4 w-4 shrink-0 text-primary" />
                   ) : (
-                    <PinOff className="w-4 h-4 shrink-0 opacity-60" />
+                    <PinOff className="h-4 w-4 shrink-0 opacity-60" />
                   )}
                   <span className="truncate">
                     {item.value
@@ -718,9 +718,9 @@ export function ViewSelector({
                   count={renderCount(item.count)}
                 >
                   {item.value ? (
-                    <MessageSquareWarning className="w-4 h-4 shrink-0 text-primary" />
+                    <MessageSquareWarning className="h-4 w-4 shrink-0 text-primary" />
                   ) : (
-                    <CircleDashed className="w-4 h-4 shrink-0 opacity-60" />
+                    <CircleDashed className="h-4 w-4 shrink-0 opacity-60" />
                   )}
                   <span className="truncate">
                     {item.value
@@ -745,7 +745,7 @@ export function ViewSelector({
                 )
               )}
             >
-              <CircleCheckBig className="w-4 h-4 shrink-0" />
+              <CircleCheckBig className="h-4 w-4 shrink-0" />
               <span className="truncate">{tCommon("filters.allStatuses")}</span>
             </FilterRow>
             <FilterRow
@@ -756,7 +756,7 @@ export function ViewSelector({
               )}
             >
               <div
-                className="w-3 h-3 rounded-full shrink-0"
+                className="h-3 w-3 shrink-0 rounded-full"
                 style={{ backgroundColor: "#B1B2B3" }}
               />
               <span className="truncate">{tCommon("labels.untested")}</span>
@@ -767,7 +767,7 @@ export function ViewSelector({
               renderOptionLabel={(option) => (
                 <>
                   <div
-                    className="w-3 h-3 rounded-full shrink-0"
+                    className="h-3 w-3 shrink-0 rounded-full"
                     style={{
                       backgroundColor: option.color?.value || "#B1B2B3",
                     }}
@@ -791,7 +791,7 @@ export function ViewSelector({
                 )
               )}
             >
-              <Users className="w-4 h-4 shrink-0" />
+              <Users className="h-4 w-4 shrink-0" />
               <span className="truncate">{t("views.allAssignees")}</span>
             </FilterRow>
             <FilterRow
@@ -801,7 +801,7 @@ export function ViewSelector({
                 (viewOptions as any)?.testRunOptions?.unassignedCount || 0
               )}
             >
-              <UserX className="w-4 h-4 shrink-0" />
+              <UserX className="h-4 w-4 shrink-0" />
               <span className="truncate">{tCommon("labels.unassigned")}</span>
             </FilterRow>
             <FilterOptionList
@@ -1047,7 +1047,7 @@ export function ViewSelector({
                         onClick={() => handleFilterClick("none")}
                         count={renderCount(noneCount)}
                       >
-                        <CircleDashed className="w-4 h-4 shrink-0 opacity-40" />
+                        <CircleDashed className="h-4 w-4 shrink-0 opacity-40" />
                         <span className="truncate">
                           {tCommon("access.none")}
                         </span>

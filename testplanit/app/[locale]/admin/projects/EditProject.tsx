@@ -789,9 +789,9 @@ export function EditProjectModal({
         }
       }}
     >
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px] h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="flex h-[90vh] flex-col overflow-hidden sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -875,7 +875,7 @@ export function EditProjectModal({
                 />
 
                 {/* --- Combined Default Permissions Section --- */}
-                <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-4 border-t pt-4">
                   <FormLabel className="flex items-center">
                     {tGlobal("common.labels.defaultProjectAccess")}
                     <HelpPopover helpKey="project.defaultAccess" />
@@ -1010,7 +1010,7 @@ export function EditProjectModal({
                   control={control}
                   name="isCompleted"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -1080,7 +1080,7 @@ export function EditProjectModal({
 
             <DialogFooter>
               {errors.root && (
-                <div className="text-sm text-destructive p-2 rounded">
+                <div className="rounded p-2 text-sm text-destructive">
                   {errors.root.message}
                 </div>
               )}

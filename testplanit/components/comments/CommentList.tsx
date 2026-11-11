@@ -173,7 +173,7 @@ export function CommentList({
   };
 
   return (
-    <div ref={setRootRef} className="space-y-2 bg-primary/10 rounded-md p-2">
+    <div ref={setRootRef} className="space-y-2 rounded-md bg-primary/10 p-2">
       <div className="flex items-center gap-1 text-primary">
         <MessageSquare className="h-5 w-5 shrink-0" />
         <h3 className="text-md font-semibold">
@@ -196,7 +196,7 @@ export function CommentList({
         <div className="space-y-4 pt-4">
           {comments.map((comment) => (
             <div key={comment.id}>
-              <Separator className="bg-primary/60 mb-2" />
+              <Separator className="mb-2 bg-primary/60" />
               <CommentItem
                 key={comment.id}
                 comment={comment}

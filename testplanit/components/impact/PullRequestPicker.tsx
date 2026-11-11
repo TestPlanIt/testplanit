@@ -225,7 +225,7 @@ export function PullRequestPicker({
       />
       {errorDetail && (
         <p
-          className="break-words text-xs text-destructive"
+          className="text-xs break-words text-destructive"
           data-testid="impact-pull-request-error"
         >
           {errorDetail}

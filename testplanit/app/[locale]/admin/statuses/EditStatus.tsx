@@ -266,7 +266,7 @@ export function EditStatus({ status, open, onClose }: EditStatusProps) {
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="w-16 h-full">
+              <div className="h-full w-16">
                 <ColorPicker
                   initialColorId={selectedColorId}
                   onColorSelect={handleColorSelect}
@@ -555,7 +555,7 @@ export function EditStatus({ status, open, onClose }: EditStatusProps) {
             <DialogFooter>
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.type === "nameExists"

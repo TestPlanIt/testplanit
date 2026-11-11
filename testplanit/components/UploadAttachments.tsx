@@ -313,7 +313,7 @@ export default function UploadAttachments({
         <Image
           src={fileURL}
           alt={file.name}
-          className="w-full h-full object-cover rounded-full"
+          className="h-full w-full rounded-full object-cover"
           fill
         />
       );
@@ -321,13 +321,13 @@ export default function UploadAttachments({
       return (
         <iframe
           src={fileURL}
-          className="w-full h-full rounded-lg"
+          className="h-full w-full rounded-lg"
           title={file.name}
         />
       );
     } else if (file.type.startsWith("text/")) {
       return (
-        <pre className="w-full h-full overflow-auto rounded-lg p-2 bg-accent">
+        <pre className="h-full w-full overflow-auto rounded-lg bg-accent p-2">
           {file.name}
         </pre>
       );
@@ -337,25 +337,25 @@ export default function UploadAttachments({
           src={fileURL}
           preload="metadata"
           muted
-          className="w-full h-full object-cover rounded-lg"
+          className="h-full w-full rounded-lg object-cover"
         />
       );
     } else if (file.type.startsWith("audio/")) {
       return (
-        <audio src={fileURL} controls className="w-full h-full rounded-lg" />
+        <audio src={fileURL} controls className="h-full w-full rounded-lg" />
       );
     }
 
     const officeKind = getOfficeKind(file.type, file.name);
     if (officeKind === "word") {
-      return <FileText className="m-3 w-full h-full text-primary" />;
+      return <FileText className="m-3 h-full w-full text-primary" />;
     } else if (officeKind === "excel") {
-      return <FileSpreadsheet className="m-3 w-full h-full text-primary" />;
+      return <FileSpreadsheet className="m-3 h-full w-full text-primary" />;
     } else if (officeKind === "powerpoint") {
-      return <Presentation className="m-3 w-full h-full text-primary" />;
+      return <Presentation className="m-3 h-full w-full text-primary" />;
     }
 
-    return <CloudUpload className="m-3 w-full h-full text-primary" />;
+    return <CloudUpload className="m-3 h-full w-full text-primary" />;
   };
 
   const _truncateFileName = (fileName: string, maxLength = 24) => {
@@ -433,7 +433,7 @@ export default function UploadAttachments({
           disabled={disabled}
         />
       </div>
-      {linkError && <div className="text-destructive text-xs">{linkError}</div>}
+      {linkError && <div className="text-xs text-destructive">{linkError}</div>}
       <div className="flex items-center justify-end gap-2 pt-1">
         <Button
           type="button"
@@ -467,7 +467,7 @@ export default function UploadAttachments({
       }}
       disabled={disabled}
     >
-      <LinkIcon className={size === "sm" ? "w-4 h-4" : "w-5 h-5"} />
+      <LinkIcon className={size === "sm" ? "h-4 w-4" : "h-5 w-5"} />
       {tLink("addButton")}
     </Button>
   );
@@ -480,7 +480,7 @@ export default function UploadAttachments({
             isDragging && !disabled
               ? "border-primary bg-primary/5"
               : "border-muted"
-          } rounded-lg p-2 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          } rounded-lg p-2 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
           onDragOver={disabled ? undefined : handleDragOver}
           onDragLeave={disabled ? undefined : handleDragLeave}
           onDrop={disabled ? undefined : handleDrop}
@@ -489,7 +489,7 @@ export default function UploadAttachments({
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           )}
           {errorMessage && (
-            <div className="text-destructive text-xs">{errorMessage}</div>
+            <div className="text-xs text-destructive">{errorMessage}</div>
           )}
           <input
             type="file"
@@ -500,13 +500,13 @@ export default function UploadAttachments({
             style={{ display: "none" }}
             id={fileInputId}
           />
-          <div className="flex items-center w-full gap-2">
+          <div className="flex w-full items-center gap-2">
             <label
               htmlFor={fileInputId}
-              className={`flex items-center flex-1 min-w-0 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+              className={`flex min-w-0 flex-1 items-center ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
             >
-              <CloudUpload className="w-5 h-5 me-1" />
-              <span className="text-sm truncate inline-block">
+              <CloudUpload className="me-1 h-5 w-5" />
+              <span className="inline-block truncate text-sm">
                 {uploading
                   ? tGlobal("common.status.uploading")
                   : selectedFiles.length > 0
@@ -522,7 +522,7 @@ export default function UploadAttachments({
               </span>
               {selectedFiles.length > 1 && (
                 <span className="ms-auto flex items-center gap-0.5 text-sm text-muted-foreground">
-                  <FileStack className="w-4 h-4" />
+                  <FileStack className="h-4 w-4" />
                   {String(
                     filesize(selectedFiles.reduce((sum, f) => sum + f.size, 0))
                   )}
@@ -538,16 +538,16 @@ export default function UploadAttachments({
             {selectedFiles.map((file, index) => (
               <li
                 key={`file-${index}`}
-                className="flex items-center justify-between gap-1 text-sm px-1 py-0.5 rounded hover:bg-accent"
+                className="flex items-center justify-between gap-1 rounded px-1 py-0.5 text-sm hover:bg-accent"
               >
-                <span className="flex items-center gap-1 min-w-0">
-                  <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="flex min-w-0 items-center gap-1">
+                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="truncate text-muted-foreground">
                     {file.name}
                   </span>
                 </span>
                 <span className="flex items-center">
-                  <span className="text-xs text-muted-foreground pe-2">
+                  <span className="pe-2 text-xs text-muted-foreground">
                     {filesize(file.size)}
                   </span>
                   {!disabled && (
@@ -557,9 +557,9 @@ export default function UploadAttachments({
                       size="icon"
                       onClick={() => removeFile(index)}
                       aria-label={tGlobal("common.actions.remove")}
-                      className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive-text"
+                      className="h-6 w-6 shrink-0 p-0.5 text-foreground/70 hover:text-destructive-text"
                     >
-                      <XCircle className="w-4 h-4" />
+                      <XCircle className="h-4 w-4" />
                     </Button>
                   )}
                 </span>
@@ -568,11 +568,11 @@ export default function UploadAttachments({
             {selectedLinks.map((link, index) => (
               <li
                 key={`link-${index}`}
-                className="flex items-center justify-between gap-1 text-sm px-1 py-0.5 rounded hover:bg-accent"
+                className="flex items-center justify-between gap-1 rounded px-1 py-0.5 text-sm hover:bg-accent"
                 title={link.url}
               >
-                <span className="flex items-center gap-1 min-w-0">
-                  <LinkFavicon url={link.url} className="w-4 h-4" />
+                <span className="flex min-w-0 items-center gap-1">
+                  <LinkFavicon url={link.url} className="h-4 w-4" />
                   <span className="truncate text-muted-foreground">
                     {link.name}
                   </span>
@@ -584,9 +584,9 @@ export default function UploadAttachments({
                     size="icon"
                     onClick={() => removeLink(index)}
                     aria-label={tGlobal("common.actions.remove")}
-                    className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive-text"
+                    className="h-6 w-6 shrink-0 p-0.5 text-foreground/70 hover:text-destructive-text"
                   >
-                    <XCircle className="w-4 h-4" />
+                    <XCircle className="h-4 w-4" />
                   </Button>
                 )}
               </li>
@@ -599,7 +599,7 @@ export default function UploadAttachments({
 
   return (
     <Card
-      className={`min-w-min ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+      className={`min-w-min ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
     >
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
@@ -610,7 +610,7 @@ export default function UploadAttachments({
           isDragging && !disabled
             ? "border-primary bg-primary/5"
             : "border-muted"
-        } rounded-lg p-4 space-y-2`}
+        } space-y-2 rounded-lg p-4`}
         onDragOver={disabled ? undefined : handleDragOver}
         onDragLeave={disabled ? undefined : handleDragLeave}
         onDrop={disabled ? undefined : handleDrop}
@@ -640,7 +640,7 @@ export default function UploadAttachments({
               asChild
             >
               <span>
-                <CloudUpload className="w-5 h-5" />
+                <CloudUpload className="h-5 w-5" />
                 {uploading
                   ? tGlobal("common.status.uploading")
                   : tGlobal(
@@ -660,14 +660,14 @@ export default function UploadAttachments({
           <div className="w-full max-w-md">{renderLinkForm()}</div>
         )}
         {previews !== false ? (
-          <ScrollArea className="w-full max-h-60">
+          <ScrollArea className="max-h-60 w-full">
             <div className="flex flex-wrap justify-between">
               {selectedFiles.map((file, index) => (
                 <div
                   key={`file-${index}`}
-                  className="relative flex flex-col items-center m-2"
+                  className="relative m-2 flex flex-col items-center"
                 >
-                  <div className="mt-2 relative w-16 h-16 bg-accent rounded-full flex items-center justify-center">
+                  <div className="relative mt-2 flex h-16 w-16 items-center justify-center rounded-full bg-accent">
                     {getThumbnail(file)}
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -677,9 +677,9 @@ export default function UploadAttachments({
                           size="icon"
                           onClick={() => removeFile(index)}
                           aria-label={tGlobal("common.cancel")}
-                          className="absolute top-0 start-14 -translate-y-2 -translate-x-2 rtl:translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          className="absolute start-14 top-0 h-7 w-7 -translate-x-2 -translate-y-2 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground rtl:translate-x-2"
                         >
-                          <XCircle className="w-5 h-5" />
+                          <XCircle className="h-5 w-5" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -688,7 +688,7 @@ export default function UploadAttachments({
                     </Tooltip>
                   </div>
                   <div className="w-[100px] lg:w-[150px]">
-                    <div className="mb-2 mx-4 text-sm truncate text-center">
+                    <div className="mx-4 mb-2 truncate text-center text-sm">
                       {file.name}
                     </div>
                   </div>
@@ -697,11 +697,11 @@ export default function UploadAttachments({
               {selectedLinks.map((link, index) => (
                 <div
                   key={`link-${index}`}
-                  className="relative flex flex-col items-center m-2"
+                  className="relative m-2 flex flex-col items-center"
                   title={link.url}
                 >
-                  <div className="mt-2 relative w-16 h-16 bg-accent rounded-full flex items-center justify-center">
-                    <LinkFavicon url={link.url} className="w-8 h-8" />
+                  <div className="relative mt-2 flex h-16 w-16 items-center justify-center rounded-full bg-accent">
+                    <LinkFavicon url={link.url} className="h-8 w-8" />
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -710,9 +710,9 @@ export default function UploadAttachments({
                           size="icon"
                           onClick={() => removeLink(index)}
                           aria-label={tGlobal("common.cancel")}
-                          className="absolute top-0 start-14 -translate-y-2 -translate-x-2 rtl:translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          className="absolute start-14 top-0 h-7 w-7 -translate-x-2 -translate-y-2 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground rtl:translate-x-2"
                         >
-                          <XCircle className="w-5 h-5" />
+                          <XCircle className="h-5 w-5" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -721,7 +721,7 @@ export default function UploadAttachments({
                     </Tooltip>
                   </div>
                   <div className="w-[100px] lg:w-[150px]">
-                    <div className="mb-2 mx-4 text-sm truncate text-center">
+                    <div className="mx-4 mb-2 truncate text-center text-sm">
                       {link.name}
                     </div>
                   </div>
@@ -730,15 +730,15 @@ export default function UploadAttachments({
             </div>
           </ScrollArea>
         ) : (
-          <ScrollArea className="max-h-48 h-48 w-full">
+          <ScrollArea className="h-48 max-h-48 w-full">
             <ul className="flex flex-col gap-1">
               {selectedFiles.map((file, index) => (
                 <li
                   key={`file-${index}`}
-                  className="flex items-center justify-between gap-0.5 hover:bg-accent p-2"
+                  className="flex items-center justify-between gap-0.5 p-2 hover:bg-accent"
                 >
-                  <span className="flex items-center gap-1 truncate max-w-xs">
-                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="flex max-w-xs items-center gap-1 truncate">
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {file.name}
                   </span>
                   <Button
@@ -747,20 +747,20 @@ export default function UploadAttachments({
                     size="icon"
                     onClick={() => removeFile(index)}
                     aria-label={tGlobal("common.cancel")}
-                    className="shrink-0 h-7 w-7 p-0.5 text-destructive hover:bg-destructive/10"
+                    className="h-7 w-7 shrink-0 p-0.5 text-destructive hover:bg-destructive/10"
                   >
-                    <XCircle className="w-5 h-5" />
+                    <XCircle className="h-5 w-5" />
                   </Button>
                 </li>
               ))}
               {selectedLinks.map((link, index) => (
                 <li
                   key={`link-${index}`}
-                  className="flex items-center justify-between gap-0.5 hover:bg-accent p-2"
+                  className="flex items-center justify-between gap-0.5 p-2 hover:bg-accent"
                   title={link.url}
                 >
-                  <span className="flex items-center gap-1 truncate max-w-xs">
-                    <LinkFavicon url={link.url} className="w-4 h-4" />
+                  <span className="flex max-w-xs items-center gap-1 truncate">
+                    <LinkFavicon url={link.url} className="h-4 w-4" />
                     {link.name}
                   </span>
                   <Button
@@ -769,9 +769,9 @@ export default function UploadAttachments({
                     size="icon"
                     onClick={() => removeLink(index)}
                     aria-label={tGlobal("common.cancel")}
-                    className="shrink-0 h-7 w-7 p-0.5 text-destructive hover:bg-destructive/10"
+                    className="h-7 w-7 shrink-0 p-0.5 text-destructive hover:bg-destructive/10"
                   >
-                    <XCircle className="w-5 h-5" />
+                    <XCircle className="h-5 w-5" />
                   </Button>
                 </li>
               ))}

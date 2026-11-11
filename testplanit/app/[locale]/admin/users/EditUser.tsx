@@ -421,7 +421,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                           {tUserEdit("deleteAvatarConfirm", {
                             name: tCommon("fields.avatar"),
                           })}
-                          <div className="flex items-start justify-between gap-4 mt-2">
+                          <div className="mt-2 flex items-start justify-between gap-4">
                             <Button
                               type="button"
                               variant="secondary"
@@ -499,7 +499,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
               control={form.control}
               name="isActive"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -519,8 +519,8 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
               control={form.control}
               name="access"
               render={({ field: _field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormLabel className="flex whitespace-nowrap items-center">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
+                  <FormLabel className="flex items-center whitespace-nowrap">
                     {tCommon("fields.access")}
                     <HelpPopover helpKey="user.access" />
                     {user.accessSource === "GROUP_MAPPING" && (
@@ -585,8 +585,8 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
               control={form.control}
               name="roleId"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormLabel className="flex whitespace-nowrap items-center">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
+                  <FormLabel className="flex items-center whitespace-nowrap">
                     {tCommon("fields.role")}
                     <HelpPopover helpKey="user.role" />
                     <FormControl>
@@ -735,7 +735,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
               control={form.control}
               name="isApi"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -746,7 +746,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                   <FormLabel className="flex items-center">
                     {tCommon("fields.apiAccess")}
                     {accessValue === "ADMIN" && (
-                      <span className="text-muted-foreground text-xs ms-2">
+                      <span className="ms-2 text-xs text-muted-foreground">
                         {"("}
                         {tCommon("fields.requiredForAdmin")}
                         {")"}
@@ -762,7 +762,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
             <DialogFooter>
               {errors.root && (
                 <div
-                  className=" bg-destructive text-destructive-foreground text-sm p-2"
+                  className=" bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

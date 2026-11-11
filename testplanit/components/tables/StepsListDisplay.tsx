@@ -45,7 +45,7 @@ const RenderSharedGroupInList: React.FC<RenderSharedGroupInListProps> = ({
 
   if (isLoading) {
     return (
-      <li className="ms-4 text-sm text-muted-foreground py-1">
+      <li className="ms-4 py-1 text-sm text-muted-foreground">
         {t("loadingSharedStepsItems")}
       </li>
     );
@@ -53,14 +53,14 @@ const RenderSharedGroupInList: React.FC<RenderSharedGroupInListProps> = ({
 
   if (!items || items.length === 0) {
     return (
-      <li className="ms-4 text-sm text-muted-foreground py-1">
+      <li className="ms-4 py-1 text-sm text-muted-foreground">
         {t("noStepsInSharedGroup")}
       </li>
     );
   }
 
   return (
-    <ol className="list-decimal overflow-hidden w-full ps-4">
+    <ol className="w-full list-decimal overflow-hidden ps-4">
       {items.map((item, itemIndex) => {
         const stepContentString = item.step
           ? typeof item.step === "string"
@@ -82,7 +82,7 @@ const RenderSharedGroupInList: React.FC<RenderSharedGroupInListProps> = ({
                 room={`shared-list-${sharedStepGroupId}-item-${item.id || itemIndex}-step`}
               />
             </div>
-            <div className="text-sm flex items-center gap-1 truncate mt-1">
+            <div className="mt-1 flex items-center gap-1 truncate text-sm">
               <SearchCheck className="h-4 w-4 shrink-0 text-muted-foreground" />
               <TextFromJson
                 jsonString={expectedResultString}
@@ -109,27 +109,27 @@ export const StepsListDisplay: React.FC<StepsListProps> = ({ steps }) => {
     <Popover>
       <PopoverTrigger>
         <Badge>
-          <ListOrdered className="w-4 h-4 me-1" />
+          <ListOrdered className="me-1 h-4 w-4" />
           {sortedSteps.length}
         </Badge>
       </PopoverTrigger>
       <PopoverContent
-        className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)] lg:w-[400px]"
+        className="flex max-h-[calc(100vh-400px)] flex-wrap items-center overflow-auto lg:w-[400px]"
         onWheel={(e) => e.stopPropagation()}
       >
-        <ol className="ps-6 overflow-hidden w-full list-decimal">
+        <ol className="w-full list-decimal overflow-hidden ps-6">
           {sortedSteps.map((step, index) => {
             if (step.sharedStepGroupId) {
               return (
                 <li key={`shared-group-${step.id || index}`}>
-                  <div className="font-bold truncate flex items-center mb-1">
+                  <div className="mb-1 flex items-center truncate font-bold">
                     <div className="flex items-center">
                       <Layers
                         size={16}
-                        className="me-2 text-primary shrink-0"
+                        className="me-2 shrink-0 text-primary"
                       />
                       {step.sharedStepGroup?.name || t("common.fields.steps")}
-                      <span className="text-xs text-muted-foreground ms-1">
+                      <span className="ms-1 text-xs text-muted-foreground">
                         {t("repository.steps.sharedGroupSuffix")}
                       </span>
                     </div>
@@ -152,7 +152,7 @@ export const StepsListDisplay: React.FC<StepsListProps> = ({ steps }) => {
                 key={step.id || `step-${index}`}
                 className="mb-2 list-decimal"
               >
-                <div className="font-bold truncate">
+                <div className="truncate font-bold">
                   <TextFromJson
                     jsonString={
                       typeof step.step === "string"
@@ -162,7 +162,7 @@ export const StepsListDisplay: React.FC<StepsListProps> = ({ steps }) => {
                     room={(step.id || `step-${index}`).toString()}
                   />
                 </div>
-                <div className="text-sm flex items-center gap-1">
+                <div className="flex items-center gap-1 text-sm">
                   <SearchCheck className="h-4 w-4 shrink-0" />
                   <span className="truncate">
                     <TextFromJson

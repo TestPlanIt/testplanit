@@ -66,7 +66,7 @@ export const useColumns = (
           if (revokedAt) {
             return (
               <Badge variant="destructive">
-                <Ban className="size-3 me-1" aria-hidden="true" />
+                <Ban className="me-1 size-3" aria-hidden="true" />
                 {tApiTokens("status.revoked")}
               </Badge>
             );
@@ -74,7 +74,7 @@ export const useColumns = (
           if (expiresAt && new Date(expiresAt) < new Date()) {
             return (
               <Badge variant="outline">
-                <Clock className="size-3 me-1" aria-hidden="true" />
+                <Clock className="me-1 size-3" aria-hidden="true" />
                 {t("status.expired")}
               </Badge>
             );
@@ -82,14 +82,14 @@ export const useColumns = (
           if (!isActive) {
             return (
               <Badge variant="secondary">
-                <UserMinus className="size-3 me-1" aria-hidden="true" />
+                <UserMinus className="me-1 size-3" aria-hidden="true" />
                 {t("status.deactivated")}
               </Badge>
             );
           }
           return (
             <Badge variant="default">
-              <CheckCircle2 className="size-3 me-1" aria-hidden="true" />
+              <CheckCircle2 className="me-1 size-3" aria-hidden="true" />
               {t("status.active")}
             </Badge>
           );
@@ -103,7 +103,7 @@ export const useColumns = (
         enableResizing: true,
         size: 150,
         cell: ({ row }) => (
-          <div className="whitespace-nowrap text-sm text-muted-foreground">
+          <div className="text-sm whitespace-nowrap text-muted-foreground">
             {row.original.lastUsedAt ? (
               <DateFormatter
                 date={row.original.lastUsedAt}
@@ -127,13 +127,13 @@ export const useColumns = (
           const ip = row.original.lastUsedIp;
           if (!ip) {
             return (
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 {tCommon("never")}
               </span>
             );
           }
           return (
-            <code className="bg-muted px-2 py-1 rounded text-xs">{ip}</code>
+            <code className="rounded bg-muted px-2 py-1 text-xs">{ip}</code>
           );
         },
       },
@@ -145,7 +145,7 @@ export const useColumns = (
         enableResizing: true,
         size: 150,
         cell: ({ row }) => (
-          <div className="whitespace-nowrap text-sm text-muted-foreground">
+          <div className="text-sm whitespace-nowrap text-muted-foreground">
             {row.original.lastSyncAt ? (
               <DateFormatter
                 date={row.original.lastSyncAt}
@@ -205,12 +205,12 @@ export const useColumns = (
             return null;
           }
           return (
-            <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
+            <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
               <TestScimButton tokenId={token.id} />
               <Button
                 variant="outline"
                 onClick={() => onRotate(token)}
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 title={t("rotate.confirm")}
                 data-testid={`scim-rotate-button-${token.id}`}
               >

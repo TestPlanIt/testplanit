@@ -89,12 +89,12 @@ const EmojiList = forwardRef((props: EmojiListProps, ref) => {
   }
 
   return (
-    <Panel className="overflow-y-auto max-w-[18rem] max-h-[18rem]">
+    <Panel className="max-h-[18rem] max-w-[18rem] overflow-y-auto">
       {props.items.map((item: EmojiItem, index: number) => (
         <Button
           active={index === selectedIndex}
           variant="ghost"
-          className="justify-start w-full"
+          className="w-full justify-start"
           buttonSize="small"
           key={item.name}
           onClick={createClickHandler(index)}
@@ -102,7 +102,7 @@ const EmojiList = forwardRef((props: EmojiListProps, ref) => {
         >
           {item.fallbackImage ? (
             <picture>
-              <img src={item.fallbackImage} className="w-5 h-5" alt="emoji" />
+              <img src={item.fallbackImage} className="h-5 w-5" alt="emoji" />
             </picture>
           ) : (
             item.emoji

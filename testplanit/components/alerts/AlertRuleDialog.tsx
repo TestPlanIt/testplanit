@@ -550,7 +550,7 @@ export function AlertRuleDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[640px] lg:max-w-[880px] max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] overflow-y-auto sm:max-w-[640px] lg:max-w-[880px]"
         data-testid="alert-rule-dialog"
       >
         <DialogHeader>

@@ -234,7 +234,7 @@ export function StaticReportViewer({
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="mb-2 flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-muted-foreground" />
                 <Badge variant="outline">
                   {shareData.entityType === "SAVED_REPORT"
@@ -244,7 +244,7 @@ export function StaticReportViewer({
               </div>
               <h1
                 data-testid="shared-report-title"
-                className="text-2xl font-bold mb-1"
+                className="mb-1 text-2xl font-bold"
               >
                 {shareData.title || t("defaultTitle")}
               </h1>
@@ -364,7 +364,7 @@ export function StaticReportViewer({
           onExpandedChange={setExpanded}
           readOnly={true}
         />
-        <p className="text-center text-sm text-muted-foreground mt-6">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           {t("readOnlyNotice")}
         </p>
       </div>

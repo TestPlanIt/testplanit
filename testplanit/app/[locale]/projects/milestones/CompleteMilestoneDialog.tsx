@@ -295,9 +295,9 @@ export function CompleteMilestoneDialog({
               <DialogHeader>
                 <DialogTitle className="flex items-center">
                   {!showConfirmation ? (
-                    <CalendarDays className="w-6 h-6 me-2" />
+                    <CalendarDays className="me-2 h-6 w-6" />
                   ) : (
-                    <AlertTriangle className="w-6 h-6 me-2 text-destructive" />
+                    <AlertTriangle className="me-2 h-6 w-6 text-destructive" />
                   )}
                   {showConfirmation
                     ? t("milestones.completeDialog.confirmTitle")
@@ -313,7 +313,7 @@ export function CompleteMilestoneDialog({
                         <p>
                           {t("milestones.completeDialog.confirmDescription")}
                         </p>
-                        <ul className="list-disc ps-5 mt-2 text-sm">
+                        <ul className="mt-2 list-disc ps-5 text-sm">
                           {completeTestRuns &&
                             impactData.activeTestRuns > 0 && (
                               <li>
@@ -358,7 +358,7 @@ export function CompleteMilestoneDialog({
                         <p className="mt-4">
                           {t("milestones.completeDialog.itemsRemaining")}
                         </p>
-                        <ul className="list-disc ps-5 mt-2 text-sm">
+                        <ul className="mt-2 list-disc ps-5 text-sm">
                           {!completeTestRuns &&
                             impactData.activeTestRuns > 0 && (
                               <li>
@@ -389,7 +389,7 @@ export function CompleteMilestoneDialog({
               </DialogHeader>
 
               {!showConfirmation && (
-                <div className="space-y-4 my-4">
+                <div className="my-4 space-y-4">
                   <DatePickerField
                     control={form.control}
                     name="completionDate"
@@ -414,7 +414,7 @@ export function CompleteMilestoneDialog({
                             />
                             <label
                               htmlFor="complete-test-runs"
-                              className="text-sm font-medium leading-none cursor-pointer"
+                              className="cursor-pointer text-sm leading-none font-medium"
                             >
                               {t(
                                 "milestones.completeDialog.completeTestRunsLabel",
@@ -495,7 +495,7 @@ export function CompleteMilestoneDialog({
                             />
                             <label
                               htmlFor="complete-sessions"
-                              className="text-sm font-medium leading-none cursor-pointer"
+                              className="cursor-pointer text-sm leading-none font-medium"
                             >
                               {t(
                                 "milestones.completeDialog.completeSessionsLabel",

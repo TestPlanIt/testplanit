@@ -120,7 +120,7 @@ export const WorkflowDragPreview: React.FC<WorkflowDragLayerProps> = () => {
         return (
           <div
             style={getItemStyles(initialOffset, currentOffset)}
-            className="bg-primary/20 border-primary border rounded-md shadow-md text-sm flex items-start max-w-[400px]"
+            className="flex max-w-[400px] items-start rounded-md border border-primary bg-primary/20 text-sm shadow-md"
           >
             {iconName && (
               <DynamicIcon

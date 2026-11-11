@@ -81,17 +81,17 @@ export function FolderNameDisplay({
     <Link
       href={link}
       target={linkTarget}
-      className="group flex items-center gap-1 max-w-full hover:underline"
+      className="group flex max-w-full items-center gap-1 hover:underline"
     >
       {inner}
       {linkTarget === "_blank" ? (
-        <ExternalLink className="w-4 h-4 ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <ExternalLink className="ms-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
       ) : (
-        <LinkIcon className="w-4 h-4 ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <LinkIcon className="ms-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
       )}
     </Link>
   ) : (
-    <span className="flex items-center gap-1 max-w-full">{inner}</span>
+    <span className="flex max-w-full items-center gap-1">{inner}</span>
   );
 
   // No clamping requested: render the name as-is.
@@ -103,7 +103,7 @@ export function FolderNameDisplay({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="text-start max-w-full">{content}</div>
+        <div className="max-w-full text-start">{content}</div>
       </TooltipTrigger>
       <TooltipContent>
         <div>{displayName}</div>

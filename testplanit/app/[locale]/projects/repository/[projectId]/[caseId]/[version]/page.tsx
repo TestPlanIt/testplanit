@@ -404,9 +404,9 @@ export default function TestCaseVersions() {
           className="mx-auto flex max-w-xl flex-col items-center gap-3 text-center"
           data-testid={testId}
         >
-          <CircleAlert className="text-muted-foreground h-8 w-8" />
+          <CircleAlert className="h-8 w-8 text-muted-foreground" />
           <div className="text-lg font-bold">{title}</div>
-          <div className="text-muted-foreground text-sm">{description}</div>
+          <div className="text-sm text-muted-foreground">{description}</div>
           <Button asChild variant="secondary" className="mt-2">
             <Link href={action.href}>{action.label}</Link>
           </Button>
@@ -547,21 +547,21 @@ export default function TestCaseVersions() {
       return (
         <div>
           {previousFieldValue !== undefined && previousFieldValue !== null && (
-            <div className="relative p-1 rounded" data-testid="diff-removed">
-              <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
-              <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
+            <div className="relative rounded p-1" data-testid="diff-removed">
+              <div className="pointer-events-none absolute inset-0 rounded bg-red-500/20" />
+              <span className="relative flex items-center space-x-1 text-red-600 dark:text-red-400">
                 <div>
-                  <Minus className="w-4 h-4" />
+                  <Minus className="h-4 w-4" />
                 </div>
                 {previousFieldValue}
               </span>
             </div>
           )}
-          <div className="relative p-1 rounded" data-testid="diff-added">
-            <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
-            <span className="relative text-green-700 dark:text-green-400 flex space-x-1 items-center">
+          <div className="relative rounded p-1" data-testid="diff-added">
+            <div className="pointer-events-none absolute inset-0 rounded bg-green-500/20" />
+            <span className="relative flex items-center space-x-1 text-green-700 dark:text-green-400">
               <div>
-                <Plus className="w-4 h-4" />
+                <Plus className="h-4 w-4" />
               </div>
               {fieldValue}
             </span>
@@ -626,12 +626,12 @@ export default function TestCaseVersions() {
 
     switch (type) {
       case "added":
-        prefix = <Plus className="w-4 h-4" />;
+        prefix = <Plus className="h-4 w-4" />;
         bgColor = "relative text-green-700 dark:text-green-400";
         paddingClass = "px-2 py-2";
         break;
       case "removed":
-        prefix = <Minus className="w-4 h-4" />;
+        prefix = <Minus className="h-4 w-4" />;
         bgColor = "relative text-red-600 dark:text-red-400";
         paddingClass = "px-2 py-2";
         break;
@@ -643,12 +643,12 @@ export default function TestCaseVersions() {
 
     return (
       <div
-        className={`flex font-extrabold items-center m-1 rounded ${bgColor} ${paddingClass}`}
+        className={`m-1 flex items-center rounded font-extrabold ${bgColor} ${paddingClass}`}
         key={tag}
       >
         {type !== "common" && (
           <div
-            className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`}
+            className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} pointer-events-none rounded`}
           />
         )}
         {prefix && <span className="relative me-1">{prefix}</span>}
@@ -673,12 +673,12 @@ export default function TestCaseVersions() {
 
     switch (type) {
       case "added":
-        prefix = <Plus className="w-4 h-4" />;
+        prefix = <Plus className="h-4 w-4" />;
         bgColor = "relative text-green-700 dark:text-green-400";
         paddingClass = "px-2 py-2";
         break;
       case "removed":
-        prefix = <Minus className="w-4 h-4" />;
+        prefix = <Minus className="h-4 w-4" />;
         bgColor = "relative text-red-600 dark:text-red-400";
         paddingClass = "px-2 py-2";
         break;
@@ -695,12 +695,12 @@ export default function TestCaseVersions() {
 
     return (
       <div
-        className={`flex font-extrabold items-center m-1 rounded ${bgColor} ${paddingClass}`}
+        className={`m-1 flex items-center rounded font-extrabold ${bgColor} ${paddingClass}`}
         key={issue.id}
       >
         {type !== "common" && (
           <div
-            className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`}
+            className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} pointer-events-none rounded`}
           />
         )}
         {prefix && <span className="relative me-1">{prefix}</span>}
@@ -727,10 +727,10 @@ export default function TestCaseVersions() {
 
   return (
     <Card>
-      <div className="bg-linear-to-b from-primary/0 to-primary/10  rounded-xl">
+      <div className="rounded-xl bg-linear-to-b from-primary/0  to-primary/10">
         <PageCardHeader
           title={
-            <div className="flex items-center space-x-2 w-fit">
+            <div className="flex w-fit items-center space-x-2">
               {renderFieldValue(
                 "name",
                 <CaseDisplay
@@ -784,11 +784,11 @@ export default function TestCaseVersions() {
                         value={index.toString()}
                       >
                         <div className="flex items-center space-x-1 whitespace-nowrap">
-                          <Badge className="text-primary-foreground text-xs">
+                          <Badge className="text-xs text-primary-foreground">
                             {t("common.version.prefix")}
                             {v.version.toString()}{" "}
                           </Badge>
-                          <div className="text-xs flex">
+                          <div className="flex text-xs">
                             <DateFormatter
                               date={v.createdAt}
                               formatString={
@@ -876,7 +876,7 @@ export default function TestCaseVersions() {
               id="case-version-left"
               order={1}
               ref={panelLeftRef}
-              className={`p-0 m-0 min-w-6 ${
+              className={`m-0 min-w-6 p-0 ${
                 isTransitioning ? "transition-all duration-300 ease-in-out" : ""
               }`}
               collapsedSize={0}
@@ -911,7 +911,7 @@ export default function TestCaseVersions() {
                     }
 
                     return (
-                      <li key={field.caseField.id} className="mb-2 me-6">
+                      <li key={field.caseField.id} className="me-6 mb-2">
                         {field.caseField.type.type !== "Steps" && (
                           <div className="font-bold">
                             {field.caseField.displayName}
@@ -969,7 +969,7 @@ export default function TestCaseVersions() {
                   {testcase?.steps &&
                     (transformedSteps.length > 0 ||
                       transformedPreviousSteps.length > 0) && (
-                      <li className="mb-2 me-6">
+                      <li className="me-6 mb-2">
                         {previousTestcase ? (
                           <StepsDisplay
                             steps={transformedSteps}
@@ -998,9 +998,9 @@ export default function TestCaseVersions() {
                     onClick={toggleCollapseLeft}
                     variant="secondary"
                     size="sm"
-                    className={`p-0 transform ${
+                    className={`transform p-0 ${
                       isCollapsedLeft
-                        ? "rounded-s-none rotate-180"
+                        ? "rotate-180 rounded-s-none"
                         : "rounded-e-none"
                     }`}
                   >
@@ -1024,10 +1024,10 @@ export default function TestCaseVersions() {
                     onClick={toggleCollapseRight}
                     variant="secondary"
                     size="sm"
-                    className={`p-0 transform ${
+                    className={`transform p-0 ${
                       isCollapsedRight
                         ? "rounded-s-none"
-                        : "rounded-e-none rotate-180"
+                        : "rotate-180 rounded-e-none"
                     }`}
                   >
                     <ChevronLeft />
@@ -1065,9 +1065,9 @@ export default function TestCaseVersions() {
                 role="region"
                 aria-label={t("repository.version.metadataRegion")}
               >
-                <ul className="list-none ms-1" role="list">
+                <ul className="ms-1 list-none" role="list">
                   {testcase.estimate !== null && (
-                    <li className="mb-2 me-6">
+                    <li className="me-6 mb-2">
                       <div className="font-bold">
                         {t("common.fields.estimate")}
                       </div>
@@ -1088,7 +1088,7 @@ export default function TestCaseVersions() {
                     </li>
                   )}
 
-                  <li className="mb-2 me-6">
+                  <li className="me-6 mb-2">
                     <div className="font-bold">
                       {t("common.fields.automated")}
                     </div>
@@ -1133,10 +1133,10 @@ export default function TestCaseVersions() {
                     />
                   </li>
                   <li className="mt-2">
-                    <div className="font-bold mb-1">
+                    <div className="mb-1 font-bold">
                       {t("common.fields.tags")}
                     </div>
-                    <div className="flex flex-wrap w-fit mb-4">
+                    <div className="mb-4 flex w-fit flex-wrap">
                       {addedTags.map((tag) => renderTag(tag, "added"))}
                       {removedTags.map((tag) => renderTag(tag, "removed"))}
                       {tCommonTags.map((tag) => renderTag(tag, "common"))}
@@ -1147,10 +1147,10 @@ export default function TestCaseVersions() {
                     />
                   </li>
                   <li className="mt-2">
-                    <div className="font-bold mb-1">
+                    <div className="mb-1 font-bold">
                       {t("common.fields.issues")}
                     </div>
-                    <div className="flex flex-wrap w-fit mb-4">
+                    <div className="mb-4 flex w-fit flex-wrap">
                       {addedIssues.map((issue) => renderIssue(issue, "added"))}
                       {removedIssues.map((issue) =>
                         renderIssue(issue, "removed")
@@ -1180,12 +1180,12 @@ export default function TestCaseVersions() {
                     )}
                   </li>
 
-                  <div className="font-bold mt-2">
+                  <div className="mt-2 font-bold">
                     {t("repository.version.versionCreated", {
                       version: version?.toString() || "",
                     })}
                   </div>
-                  <li className="mb-2 me-6">
+                  <li className="me-6 mb-2">
                     <CreationInfo
                       userId={testcase.creatorId}
                       createdAt={testcase.createdAt}
@@ -1197,7 +1197,7 @@ export default function TestCaseVersions() {
                   />
                   {versions?.length && versions.length > 1 && (
                     <>
-                      <div className="font-bold mt-2">
+                      <div className="mt-2 font-bold">
                         <Link
                           href={`/projects/repository/${projectId}/${caseId}`}
                           className="group"
@@ -1206,10 +1206,10 @@ export default function TestCaseVersions() {
                           {t("repository.version.latestVersionUpdated", {
                             version: versions[0].version,
                           })}
-                          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                         </Link>
                       </div>
-                      <li className="mb-2 me-6">
+                      <li className="me-6 mb-2">
                         <CreationInfo
                           userId={versions[0].creatorId}
                           createdAt={versions[0].createdAt}

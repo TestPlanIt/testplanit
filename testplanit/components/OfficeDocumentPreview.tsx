@@ -200,11 +200,11 @@ export const OfficeDocumentPreview: React.FC<OfficeDocumentPreviewProps> = ({
   }, []);
 
   const iconFallback = (message?: string) => (
-    <div className="flex flex-col items-center gap-2 overflow-hidden max-h-fit p-3">
-      <File className="w-16 h-16 text-primary" />
-      <span className="text-center truncate max-w-full">{name}</span>
+    <div className="flex max-h-fit flex-col items-center gap-2 overflow-hidden p-3">
+      <File className="h-16 w-16 text-primary" />
+      <span className="max-w-full truncate text-center">{name}</span>
       {message ? (
-        <span className="text-sm text-muted-foreground text-center">
+        <span className="text-center text-sm text-muted-foreground">
           {message}
         </span>
       ) : null}
@@ -215,7 +215,7 @@ export const OfficeDocumentPreview: React.FC<OfficeDocumentPreviewProps> = ({
           onClick={(e) => e.stopPropagation()}
           className="inline-flex items-center gap-1.5 text-sm text-primary underline hover:opacity-80"
         >
-          <Download className="w-4 h-4" />
+          <Download className="h-4 w-4" />
           {t("download")}
         </a>
       ) : null}
@@ -247,9 +247,9 @@ export const OfficeDocumentPreview: React.FC<OfficeDocumentPreviewProps> = ({
                 onClick={() => goToSlide(slideIndex - 1)}
                 disabled={slideIndex <= 0}
                 aria-label={tCommon("ui.carousel.previousSlide")}
-                className="rounded-md p-1 hover:bg-background disabled:opacity-40 disabled:pointer-events-none"
+                className="rounded-md p-1 hover:bg-background disabled:pointer-events-none disabled:opacity-40"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="h-5 w-5" />
               </button>
               <span>
                 {t("slideCounter", {
@@ -262,9 +262,9 @@ export const OfficeDocumentPreview: React.FC<OfficeDocumentPreviewProps> = ({
                 onClick={() => goToSlide(slideIndex + 1)}
                 disabled={slideIndex >= slideCount - 1}
                 aria-label={tCommon("ui.carousel.nextSlide")}
-                className="rounded-md p-1 hover:bg-background disabled:opacity-40 disabled:pointer-events-none"
+                className="rounded-md p-1 hover:bg-background disabled:pointer-events-none disabled:opacity-40"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="h-5 w-5" />
               </button>
             </div>
           ) : null}

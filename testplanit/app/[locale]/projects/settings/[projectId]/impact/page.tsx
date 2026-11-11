@@ -282,8 +282,8 @@ export default function ImpactSettingsPage() {
 
   if (!project) {
     return (
-      <Card className="flex flex-col w-full min-w-100 h-full">
-        <CardContent className="flex flex-col items-center justify-center h-full">
+      <Card className="flex h-full w-full min-w-100 flex-col">
+        <CardContent className="flex h-full flex-col items-center justify-center">
           <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
           </PageTitle>
@@ -831,7 +831,7 @@ export default function ImpactSettingsPage() {
                   <p className="font-medium">
                     {tRepo("disconnectWarningTitle")}
                   </p>
-                  <ul className="list-disc ps-5 mt-1">
+                  <ul className="mt-1 list-disc ps-5">
                     <li>{t("disconnectWarning1", { count: pinCount ?? 0 })}</li>
                     <li>{tRepo("disconnectWarningCache")}</li>
                     <li>{tRepo("disconnectWarningPatterns")}</li>

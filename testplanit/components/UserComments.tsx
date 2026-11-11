@@ -242,14 +242,14 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
       <div className="space-y-3">
         {/* Header with entity info */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start gap-2 min-w-0 flex-1">
-            <MessageSquare className="h-8 w-8 text-muted-foreground shrink-0" />
+          <div className="flex min-w-0 flex-1 items-start gap-2">
+            <MessageSquare className="h-8 w-8 shrink-0 text-muted-foreground" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
                 {entityLink ? (
                   <Link
                     href={entityLink}
-                    className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
                   >
                     {entityNameDisplay}
                     <ExternalLink className="h-3 w-3" />
@@ -258,7 +258,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
                   entityNameDisplay
                 )}
               </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 flex-wrap">
+              <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                 <span>
                   {tGlobal("components.notifications.content.inProject")}
                 </span>
@@ -278,13 +278,13 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
 
         {/* Comment metadata */}
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="text-sm text-muted-foreground">
               {tGlobal("common.by")}
             </span>
             <UserNameCell userId={comment.creator.id} />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             <span className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(comment.createdAt), {
                 addSuffix: true,
@@ -462,7 +462,7 @@ export function UserComments({ userId }: UserCommentsProps) {
           </Select>
         </div>
         {loadedComments.length > 0 && (
-          <p className="ms-auto shrink-0 text-xs text-muted-foreground text-end flex items-center gap-1">
+          <p className="ms-auto flex shrink-0 items-center gap-1 text-end text-xs text-muted-foreground">
             {normalizedQuery
               ? t("matching", {
                   matched: visibleComments.length.toLocaleString(locale),
@@ -489,7 +489,7 @@ export function UserComments({ userId }: UserCommentsProps) {
         </div>
       ) : visibleComments.length === 0 && scanSettled ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <MessageSquare className="h-12 w-12 text-muted-foreground/50 mb-4" />
+          <MessageSquare className="mb-4 h-12 w-12 text-muted-foreground/50" />
           <p className="text-sm text-muted-foreground">
             {isFiltered ? t("noMatchingComments") : t("noComments")}
           </p>

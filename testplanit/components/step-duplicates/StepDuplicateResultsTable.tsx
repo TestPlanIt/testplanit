@@ -586,7 +586,7 @@ export function StepDuplicateResultsTable({
 
   if (!isLoading && liteMapped.length === 0 && !debouncedSearch) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="py-12 text-center text-muted-foreground">
         <p className="text-lg font-medium">{t("noResultsFound")}</p>
         <p className="text-sm">{t("noResultsDescription")}</p>
       </div>
@@ -596,7 +596,7 @@ export function StepDuplicateResultsTable({
   return (
     <div>
       <div className="flex flex-row items-start gap-4">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 grow min-w-[250px] text-muted-foreground">
+        <div className="flex min-w-[250px] grow flex-wrap items-center gap-x-3 gap-y-2 text-muted-foreground">
           <Filter
             className="w-56 max-w-full"
             placeholder={t("filterPlaceholder")}
@@ -660,7 +660,7 @@ export function StepDuplicateResultsTable({
         </div>
 
         {displayIds.length > 0 && (
-          <div className="ms-auto self-center text-sm text-muted-foreground text-nowrap">
+          <div className="ms-auto self-center text-sm text-nowrap text-muted-foreground">
             {tTotals("showing", {
               loaded: displayRows.length,
               total: displayIds.length,
@@ -671,8 +671,8 @@ export function StepDuplicateResultsTable({
 
       {/* Bulk action bar */}
       {selectedCount > 0 && (
-        <div className="flex items-center gap-2 mt-4 mb-2 p-2 bg-muted/50 rounded-lg border h-12">
-          <span className="text-sm text-muted-foreground me-2">
+        <div className="mt-4 mb-2 flex h-12 items-center gap-2 rounded-lg border bg-muted/50 p-2">
+          <span className="me-2 text-sm text-muted-foreground">
             {t("selected", { count: selectedCount })}
           </span>
           <Button
@@ -692,7 +692,7 @@ export function StepDuplicateResultsTable({
       )}
 
       {selectedCount === 0 && (
-        <div className="flex items-center gap-2 mt-4 mb-2 p-2 bg-muted/50 rounded-lg border h-12 text-sm">
+        <div className="mt-4 mb-2 flex h-12 items-center gap-2 rounded-lg border bg-muted/50 p-2 text-sm">
           {t("tableHint")}
         </div>
       )}

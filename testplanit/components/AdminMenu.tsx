@@ -315,7 +315,7 @@ function MenuLink({
       className={cn(
         buttonVariants({ variant: "ghost" }),
         menuButtonClass,
-        "flex items-center py-2 md:py-0 no-underline",
+        "flex items-center py-2 no-underline md:py-0",
         isActive
           ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
           : "hover:bg-primary/10 hover:text-primary"
@@ -422,8 +422,8 @@ export default function AdminMenu() {
   }, [page, router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <Card className="sticky top-0 z-10 rounded-none border-none h-full shadow-none">
-      <CardContent className="bg-primary-foreground h-full p-0 flex flex-col">
+    <Card className="sticky top-0 z-10 h-full rounded-none border-none shadow-none">
+      <CardContent className="flex h-full flex-col bg-primary-foreground p-0">
         <CardHeader className="hidden md:inline">
           <CardTitle data-testid="admin-page-title">
             {tGlobal("navigation.menu.admin")}
@@ -440,15 +440,15 @@ export default function AdminMenu() {
               <AccordionItem
                 key={group.key}
                 value={group.key}
-                className="border-0 rounded-none overflow-visible mb-0"
+                className="mb-0 overflow-visible rounded-none border-0"
                 data-testid={`admin-menu-section-${group.key}`}
               >
-                <AccordionTrigger className="ms-3 py-2 mt-2 px-0 bg-transparent hover:bg-transparent uppercase text-xs hover:no-underline flex border-b-2 border-primary/40 md:border-b-0">
+                <AccordionTrigger className="ms-3 mt-2 flex border-b-2 border-primary/40 bg-transparent px-0 py-2 text-xs uppercase hover:bg-transparent hover:no-underline md:border-b-0">
                   <span className="md:hidden">
                     {(() => {
                       const Icon = sectionIcons[group.key];
                       return (
-                        <Icon className="w-5 h-5 shrink-0 stroke-primary" />
+                        <Icon className="h-5 w-5 shrink-0 stroke-primary" />
                       );
                     })()}
                   </span>
@@ -456,7 +456,7 @@ export default function AdminMenu() {
                     {t(group.key as any)}
                   </span>
                 </AccordionTrigger>
-                <AccordionContent className="pb-0 pt-0">
+                <AccordionContent className="pt-0 pb-0">
                   {group.items.map((option) => (
                     <MenuLink
                       key={option.path}

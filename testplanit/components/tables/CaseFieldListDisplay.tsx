@@ -40,11 +40,11 @@ export const CaseFieldListDisplay: React.FC<CaseFieldListProps> = ({
 
   const renderContent = () => (
     <>
-      <div className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)]">
+      <div className="flex max-h-[calc(100vh-400px)] flex-wrap items-center overflow-auto">
         {allCaseFields.map((caseField: CaseFields) => (
           <Badge
             key={caseField.id}
-            className=" border p-1 m-1 text-primary-foreground bg-primary rounded-xl items-center"
+            className=" m-1 items-center rounded-xl border bg-primary p-1 text-primary-foreground"
           >
             <div className="flex items-center gap-2">
               <div>{caseField?.displayName}</div>
@@ -60,7 +60,7 @@ export const CaseFieldListDisplay: React.FC<CaseFieldListProps> = ({
       <Popover>
         <PopoverTrigger>
           <Badge>
-            <LayoutList className="w-4 h-4 me-1" />
+            <LayoutList className="me-1 h-4 w-4" />
             {allCaseFields.length}
           </Badge>
         </PopoverTrigger>

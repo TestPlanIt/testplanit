@@ -395,7 +395,7 @@ const ProjectOverviewSunburstChart: React.FC<
   }, [data, width, height, t, locale, getSegmentHref, onNavigate]); // transformDataForSunburst is defined inside the effect
 
   return (
-    <div ref={containerRef} className={cn("w-full h-64 relative", className)}>
+    <div ref={containerRef} className={cn("relative h-64 w-full", className)}>
       {" "}
       {/* Ensure container has dimensions */}
       <svg ref={svgRef} width={width} height={height}></svg>

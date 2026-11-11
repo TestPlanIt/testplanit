@@ -27,18 +27,18 @@ function ProgressToastBody({ job, onDismiss }: ProgressToastBodyProps) {
 
   return (
     <div
-      className="w-80 bg-popover text-popover-foreground border rounded-md shadow-lg p-3 flex flex-col gap-2"
+      className="flex w-80 flex-col gap-2 rounded-md border bg-popover p-3 text-popover-foreground shadow-lg"
       data-testid="run-generation-progress-toast"
       data-job-id={job.jobId}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="text-sm font-medium leading-tight">
+        <div className="text-sm leading-tight font-medium">
           {t("runProgressTitle", { runName: job.runName })}
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 -me-1 -mt-1"
+          className="-me-1 -mt-1 h-6 w-6"
           aria-label={t("runProgressDismissAria")}
           data-testid="run-generation-progress-dismiss"
           onClick={onDismiss}

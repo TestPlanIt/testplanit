@@ -36,9 +36,9 @@ export const UserDisplay: React.FC<UserDisplayProps> = ({
   const avatarSize = size === "large" ? 20 : 16;
 
   const content = (
-    <span className={`flex items-center gap-1 min-w-0 w-full ${className}`}>
+    <span className={`flex w-full min-w-0 items-center gap-1 ${className}`}>
       {prefix && (
-        <span className="text-muted-foreground shrink-0">{prefix}:</span>
+        <span className="shrink-0 text-muted-foreground">{prefix}:</span>
       )}
 
       <Avatar
@@ -50,15 +50,15 @@ export const UserDisplay: React.FC<UserDisplayProps> = ({
       <Tooltip>
         <TooltipTrigger
           type="button"
-          className="text-start min-w-0 flex-1 overflow-hidden"
+          className="min-w-0 flex-1 overflow-hidden text-start"
         >
           <span
             className={`flex items-center gap-1 ${isCurrentUser ? "font-semibold" : ""} ${size === "large" ? "text-base" : ""}`}
           >
             {isCurrentUser && (
-              <Star className="w-3 h-3 shrink-0 fill-primary text-primary" />
+              <Star className="h-3 w-3 shrink-0 fill-primary text-primary" />
             )}
-            <span className="truncate block">{userName}</span>
+            <span className="block truncate">{userName}</span>
           </span>
         </TooltipTrigger>
         <TooltipContent>

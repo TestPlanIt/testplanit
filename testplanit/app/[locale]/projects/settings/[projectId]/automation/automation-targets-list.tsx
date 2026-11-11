@@ -150,7 +150,7 @@ export function AutomationTargetsList({ projectId }: Props) {
     if (!result) return null;
     return (
       <div
-        className="rounded-md border p-3 text-xs space-y-1"
+        className="space-y-1 rounded-md border p-3 text-xs"
         data-testid={`automation-target-test-result-${target.id}`}
       >
         <div className="flex items-center gap-2 font-medium">
@@ -217,7 +217,7 @@ export function AutomationTargetsList({ projectId }: Props) {
             <div className="flex items-center gap-2">
               <code
                 data-testid="automation-target-revealed-secret"
-                className="flex-1 break-all text-xs"
+                className="flex-1 text-xs break-all"
               >
                 {revealedSecret.secret}
               </code>
@@ -293,7 +293,7 @@ export function AutomationTargetsList({ projectId }: Props) {
                       <code className="text-xs">{target.workflowRef}</code>
                     )}
                     {target.url && (
-                      <code className="break-all text-xs">{target.url}</code>
+                      <code className="text-xs break-all">{target.url}</code>
                     )}
                     <span className="text-xs">
                       {target.defaultRef ?? t("defaultRefDefault")}

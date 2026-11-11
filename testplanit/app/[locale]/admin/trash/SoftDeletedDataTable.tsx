@@ -340,7 +340,7 @@ export default function SoftDeletedDataTable({
             <div className="flex justify-end space-x-2">
               <Button
                 variant="outline"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={() => handleRestore(item.id)}
               >
                 <UndoDot className="h-5 w-5" />
@@ -348,7 +348,7 @@ export default function SoftDeletedDataTable({
               </Button>
               <Button
                 variant="destructive"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={() => handlePurge(item.id)}
               >
                 <AlertTriangle className="h-5 w-5" />
@@ -367,8 +367,8 @@ export default function SoftDeletedDataTable({
   return (
     <CardContent className="flex h-full min-h-0 flex-col gap-4 p-0">
       {/* Filter row */}
-      <div className="flex shrink-0 flex-col md:flex-row items-center justify-between gap-4">
-        <div className="w-full md:w-1/3 min-w-[250px]">
+      <div className="flex shrink-0 flex-col items-center justify-between gap-4 md:flex-row">
+        <div className="w-full min-w-[250px] md:w-1/3">
           <Filter
             key={`${itemType}-filter`}
             dataTestId="trash-item-filter"

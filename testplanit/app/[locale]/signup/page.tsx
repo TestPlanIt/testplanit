@@ -289,7 +289,7 @@ const Signup: NextPage = () => {
   return (
     <div className="flex items-center justify-center">
       <Card className="w-3/4">
-        <CardHeader className="w-full flex flex-col items-center justify-center">
+        <CardHeader className="flex w-full flex-col items-center justify-center">
           <div className="flex items-center py-5">
             <Image
               alt="TestPlanIt Logo"
@@ -301,15 +301,15 @@ const Signup: NextPage = () => {
               priority={true}
             />
             <div className="ms-3 flex flex-col">
-              <span className="scroll-m-20 text-4xl font-semibold tracking-tight lg:text-5xl text-[rgb(133,89,233)]">
+              <span className="scroll-m-20 text-4xl font-semibold tracking-tight text-[rgb(133,89,233)] lg:text-5xl">
                 {tCommon("pageTitles.appName")}
               </span>
-              <span className="text-xs text-muted-foreground -mt-1 no-wrap">
+              <span className="no-wrap -mt-1 text-xs text-muted-foreground">
                 {tCommon("branding.tagline")}
               </span>
             </div>
           </div>
-          <CardTitle className="flex py-5 scroll-m-20 tracking-tight lg:text-3xl text-primary">
+          <CardTitle className="flex scroll-m-20 py-5 tracking-tight text-primary lg:text-3xl">
             {t("common.actions.signUp")}
           </CardTitle>
           {!registrationDisabled && (
@@ -320,26 +320,26 @@ const Signup: NextPage = () => {
           {registrationDisabled ? (
             <div
               data-testid="registration-disabled-message"
-              className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8 text-center"
+              className="flex w-1/2 flex-col items-center justify-center space-y-6 py-8 text-center"
             >
               <p className="text-muted-foreground">
                 {t("auth.signup.registrationDisabled")}
               </p>
-              <Link href="/signin" className="group underline text-sm">
+              <Link href="/signin" className="group text-sm underline">
                 {t("auth.signup.signIn")}
-                <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
               </Link>
             </div>
           ) : isStillLoading && showDelayedLoader ? (
-            <div className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8">
+            <div className="flex w-1/2 flex-col items-center justify-center space-y-6 py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
-              <p className="text-muted-foreground text-center">
+              <p className="text-center text-muted-foreground">
                 {t("common.loading")}
               </p>
             </div>
           ) : isStillLoading ? (
             // Show nothing during the 500ms delay to prevent flash
-            <div className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8">
+            <div className="flex w-1/2 flex-col items-center justify-center space-y-6 py-8">
               {/* Invisible placeholder to prevent layout shift */}
             </div>
           ) : (
@@ -429,7 +429,7 @@ const Signup: NextPage = () => {
                   {t("common.or")}{" "}
                   <Link href="/signin" className="group">
                     {t("auth.signup.signIn")}
-                    <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                   </Link>
                 </div>
               </form>

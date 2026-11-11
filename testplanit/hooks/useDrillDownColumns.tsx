@@ -180,7 +180,7 @@ export function useDrillDownColumns({
               // Use a simple badge-like display
               return (
                 <span
-                  className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                  className={`inline-flex items-center rounded px-2 py-1 text-xs font-medium ${
                     row.isCompleted
                       ? "bg-success/10 text-success"
                       : row.isStarted
@@ -302,13 +302,13 @@ export function useDrillDownColumns({
             const value = info.getValue();
             if (value === true) {
               return (
-                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-success/10 text-success">
+                <span className="inline-flex items-center rounded bg-success/10 px-2 py-1 text-xs font-medium text-success">
                   {translations.yes}
                 </span>
               );
             }
             return (
-              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-muted text-muted-foreground">
+              <span className="inline-flex items-center rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
                 {translations.no}
               </span>
             );
@@ -1196,7 +1196,7 @@ export function useDrillDownColumns({
               return (
                 <span
                   className={
-                    value ? "text-success font-medium" : "text-muted-foreground"
+                    value ? "font-medium text-success" : "text-muted-foreground"
                   }
                 >
                   {value ? translations.automated : translations.manual}
@@ -1543,7 +1543,7 @@ export function useDrillDownColumns({
           header: () => translations.summary,
           cell: (info) => {
             const value = info.getValue();
-            return <span className="truncate block">{value || "-"}</span>;
+            return <span className="block truncate">{value || "-"}</span>;
           },
           enableSorting: false,
           size: 400,
@@ -1724,7 +1724,7 @@ export function useDrillDownColumns({
             return <span>{info.getValue()}</span>;
           }
           return (
-            <span className="text-muted-foreground text-xs">
+            <span className="text-xs text-muted-foreground">
               {info.getValue()}
             </span>
           );

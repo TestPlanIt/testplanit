@@ -20,7 +20,7 @@ export function RevokeScimTokenButton({
     <Button
       variant="destructive"
       onClick={onRevoke}
-      className="px-2 py-1 h-auto"
+      className="h-auto px-2 py-1"
       title={t("confirm")}
       data-testid={`scim-revoke-button-${tokenId}`}
     >

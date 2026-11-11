@@ -115,7 +115,7 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
   ) {
     return (
       <div>
-        <Ellipsis className="w-4 h-4" />
+        <Ellipsis className="h-4 w-4" />
       </div>
     );
   }
@@ -125,14 +125,14 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
     colors.find((color) => color.id === selectedColorId)?.value ?? undefined;
 
   return (
-    <div className="flex flex-row space-x-1 items-center">
+    <div className="flex flex-row items-center space-x-1">
       <div>
         <Select
           onOpenChange={(isOpen) => setIconPickerOpen(isOpen)}
           onValueChange={(value) => handleIconSelect(parseInt(value))}
         >
           <SelectTrigger
-            className="w-15 ps-2 pe-0 m-0"
+            className="m-0 w-15 ps-2 pe-0"
             aria-label="icon-picker"
           >
             {selectedIcon && (
@@ -155,13 +155,13 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
                   className="w-full p-2"
                 />
               </div>
-              <div className="grid grid-cols-6 gap-2 p-2 overflow-y-auto max-h-60">
+              <div className="grid max-h-60 grid-cols-6 gap-2 overflow-y-auto p-2">
                 {filteredIcons?.map((icon) => (
                   <SelectItem
                     title={icon.name}
                     key={icon.id}
                     value={icon.id.toString()}
-                    className={`flex justify-center items-center p-2 ${icon.id === selectedIconId ? "bg-primary/20" : "bg-background"}`}
+                    className={`flex items-center justify-center p-2 ${icon.id === selectedIconId ? "bg-primary/20" : "bg-background"}`}
                   >
                     <DynamicIcon
                       aria-label={icon.name}

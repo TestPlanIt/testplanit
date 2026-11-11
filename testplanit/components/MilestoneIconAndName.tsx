@@ -68,20 +68,20 @@ export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
 
   const linkEl = (
     <Link href={href} className="group max-w-full min-w-0 overflow-hidden">
-      <span className="flex items-center gap-1 min-w-0">
+      <span className="flex min-w-0 items-center gap-1">
         <DynamicIcon
           name={
             (milestone.milestoneType?.icon?.name as IconName) || "milestone"
           }
           className={
             collapsibleIcon
-              ? `${iconSize} shrink-0 hidden @xl:block`
+              ? `${iconSize} hidden shrink-0 @xl:block`
               : `${iconSize} shrink-0`
           }
         />
         <span className="truncate">{milestone.name}</span>
         {showSourceIcon && <MilestoneSourceIcon milestone={milestone} />}
-        <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
       </span>
     </Link>
   );

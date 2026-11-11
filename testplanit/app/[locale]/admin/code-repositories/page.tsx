@@ -278,15 +278,15 @@ function CodeRepositoryList() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-              <div className="text-muted-foreground w-full text-nowrap">
+            <div className="flex w-full min-w-[250px] grow flex-col sm:w-1/2">
+              <div className="w-full text-nowrap text-muted-foreground">
                 <Filter
                   key="code-repo-filter"
                   placeholder={tCommon("placeholders.filterByName")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
                 />
-                <div className="flex flex-row items-center gap-2 mt-2">
+                <div className="mt-2 flex flex-row items-center gap-2">
                   <div className="m-2">
                     <ColumnSelection
                       key="code-repo-column-selection"
@@ -301,7 +301,7 @@ function CodeRepositoryList() {
             </div>
 
             {repoRows.length > 0 && (
-              <p className="text-sm text-muted-foreground shrink-0">
+              <p className="shrink-0 text-sm text-muted-foreground">
                 {tGlobal("admin.auditLogs.showing", {
                   loaded: repoRows.length.toLocaleString(locale),
                   total: repoRows.length.toLocaleString(locale),
@@ -315,7 +315,7 @@ function CodeRepositoryList() {
               <GitBranch className="h-12 w-12 text-muted-foreground/40" />
               <div>
                 <p className="text-lg font-medium">{t("noRepos.title")}</p>
-                <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+                <p className="mt-1 max-w-sm text-sm text-muted-foreground">
                   {t("noRepos.description")}
                 </p>
               </div>

@@ -268,12 +268,12 @@ function TypeIconWithParamBadge({
 }) {
   const t = useTranslations("parameters");
   if (isSoftDeletedInRun) {
-    return <Trash className="w-4 h-4 me-1 text-muted-foreground shrink-0" />;
+    return <Trash className="me-1 h-4 w-4 shrink-0 text-muted-foreground" />;
   }
   const Base = automated || isAutomatedCaseSource(source) ? Bot : ListChecks;
   return (
-    <span className="inline-flex items-center gap-1 shrink-0 me-1">
-      <Base className={cn("w-4 h-4 shrink-0", colorClass)} />
+    <span className="me-1 inline-flex shrink-0 items-center gap-1">
+      <Base className={cn("h-4 w-4 shrink-0", colorClass)} />
       {hasParameters && (
         <span
           title={t("hasParametersBadgeTooltip")}
@@ -283,7 +283,7 @@ function TypeIconWithParamBadge({
           <SquareStack
             data-testid="has-parameters-badge"
             aria-hidden="true"
-            className="w-4 h-4 shrink-0 text-primary"
+            className="h-4 w-4 shrink-0 text-primary"
           />
         </span>
       )}
@@ -397,7 +397,7 @@ const NameCell = React.memo(function NameCell({
     };
 
     return (
-      <div className="flex items-center min-w-0">
+      <div className="flex min-w-0 items-center">
         <TypeIconWithParamBadge
           isSoftDeletedInRun={isSoftDeletedInRun}
           automated={automated}
@@ -411,14 +411,14 @@ const NameCell = React.memo(function NameCell({
         />
         <div
           className={cn(
-            "truncate whitespace-nowrap overflow-hidden group min-w-0 flex-auto",
+            "group min-w-0 flex-auto truncate overflow-hidden whitespace-nowrap",
             isSoftDeletedInRun ? "cursor-default" : "cursor-pointer",
-            isSoftDeletedInRun && "line-through text-muted-foreground"
+            isSoftDeletedInRun && "text-muted-foreground line-through"
           )}
           onClick={handleClick}
         >
           {name}
-          <ArrowRight className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <ArrowRight className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
         </div>
 
         {showFolderInfo && folder && (
@@ -427,7 +427,7 @@ const NameCell = React.memo(function NameCell({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center min-w-0 shrink-[9999] max-w-[150px] hover:bg-muted/80 transition-colors cursor-pointer"
+                  className="ms-2 flex max-w-[150px] min-w-0 shrink-[9999] cursor-pointer items-center rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted/80"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -440,8 +440,8 @@ const NameCell = React.memo(function NameCell({
                     );
                   }}
                 >
-                  <Folder className="w-3 h-3 me-1 shrink-0" />
-                  <span className="truncate min-w-0">{folder.name}</span>
+                  <Folder className="me-1 h-3 w-3 shrink-0" />
+                  <span className="min-w-0 truncate">{folder.name}</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-md">
@@ -455,7 +455,7 @@ const NameCell = React.memo(function NameCell({
   }
 
   return (
-    <div className="flex items-center min-w-0">
+    <div className="flex min-w-0 items-center">
       <TypeIconWithParamBadge
         isSoftDeletedInRun={isSoftDeletedInRun}
         automated={automated}
@@ -467,7 +467,7 @@ const NameCell = React.memo(function NameCell({
         href={`/projects/repository/${projectId}/${id}`}
         className={cn(
           "group min-w-0 flex-auto",
-          isSoftDeletedInRun && "line-through text-muted-foreground"
+          isSoftDeletedInRun && "text-muted-foreground line-through"
         )}
         target={
           isSelectionMode || opensFullPageInNewWindow ? "_blank" : undefined
@@ -494,14 +494,14 @@ const NameCell = React.memo(function NameCell({
           });
         }}
       >
-        <div className="truncate whitespace-nowrap overflow-hidden">
+        <div className="truncate overflow-hidden whitespace-nowrap">
           {name}
           {/* The link icon signals "opens a new page" — only true when the
               click navigates (selection mode → new tab, run mode → case page).
               In plain repository browsing the click opens the docked details
               panel, so hide it — unless the user prefers a new window. */}
           {(isRunMode || isSelectionMode || opensFullPageInNewWindow) && (
-            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
           )}
         </div>
       </Link>
@@ -512,7 +512,7 @@ const NameCell = React.memo(function NameCell({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center min-w-0 shrink-[9999] max-w-[150px] hover:bg-muted/80 transition-colors cursor-pointer"
+                className="ms-2 flex max-w-[150px] min-w-0 shrink-[9999] cursor-pointer items-center rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted/80"
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -525,8 +525,8 @@ const NameCell = React.memo(function NameCell({
                   );
                 }}
               >
-                <Folder className="w-3 h-3 me-1 shrink-0" />
-                <span className="truncate min-w-0">{folder.name}</span>
+                <Folder className="me-1 h-3 w-3 shrink-0" />
+                <span className="min-w-0 truncate">{folder.name}</span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-md">
@@ -798,7 +798,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
           <TooltipTrigger asChild>
             <div
               role="status"
-              className="flex-1 min-w-0 h-8 inline-flex items-center gap-1.5 rounded-md border border-dashed px-3 text-sm text-muted-foreground overflow-hidden"
+              className="inline-flex h-8 min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-md border border-dashed px-3 text-sm text-muted-foreground"
               data-testid={`testrun-status-cell-blocked-${caseId}`}
               aria-label={t("runs.dependencies.blocked")}
             >
@@ -810,7 +810,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                     ? displayStatus.color.value
                     : undefined
                 }
-                className="flex items-center space-x-1 min-w-0 overflow-hidden"
+                className="flex min-w-0 items-center space-x-1 overflow-hidden"
                 nameClassName="truncate"
               />
             </div>
@@ -835,13 +835,13 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
 
   return (
     <>
-      <div className="flex items-center justify-between w-full">
+      <div className="flex w-full items-center justify-between">
         {blockedControl ? (
           blockedControl
         ) : isParameterized ? (
           <Button
             variant="outline"
-            className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-between gap-1 overflow-hidden"
+            className="h-8 min-w-0 flex-1 justify-between gap-1 overflow-hidden bg-transparent hover:bg-muted hover:text-foreground"
             disabled={isSoftDeletedInRun}
             onClick={handleOpenParameterizedSheet}
             data-testid={`testrun-status-cell-parameterized-${caseId}`}
@@ -852,7 +852,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
               color={
                 hasColor(displayStatus) ? displayStatus.color.value : undefined
               }
-              className="flex items-center space-x-1 min-w-0 overflow-hidden"
+              className="flex min-w-0 items-center space-x-1 overflow-hidden"
               nameClassName="truncate"
             />
             <SquareStack className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -862,7 +862,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start overflow-hidden"
+                className="h-8 min-w-0 flex-1 justify-start overflow-hidden bg-transparent hover:bg-muted hover:text-foreground"
                 disabled={isResultDisabled}
               >
                 <StatusDisplay
@@ -872,7 +872,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                       ? displayStatus.color.value
                       : undefined
                   }
-                  className="flex items-center space-x-1 min-w-0 overflow-hidden"
+                  className="flex min-w-0 items-center space-x-1 overflow-hidden"
                   nameClassName="truncate"
                 />
               </Button>
@@ -882,7 +882,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                 <DropdownMenuItem
                   key={statusOption.id}
                   onClick={() => handleStatusChange(statusOption.id.toString())}
-                  className={`flex items-center cursor-pointer ${
+                  className={`flex cursor-pointer items-center ${
                     statusOption.id === displayStatus.id ? "bg-muted" : ""
                   }`}
                 >
@@ -893,7 +893,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                     nameClassName="flex-1"
                   />
                   {statusOption.id === displayStatus.id && (
-                    <Check className="h-4 w-4 ms-2 text-muted-foreground" />
+                    <Check className="ms-2 h-4 w-4 text-muted-foreground" />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -906,7 +906,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ms-1 ${isMenuDisabled || isDisabled ? "text-muted-foreground opacity-30 cursor-not-allowed" : ""}`}
+              className={`ms-1 h-8 w-8 ${isMenuDisabled || isDisabled ? "cursor-not-allowed text-muted-foreground opacity-30" : ""}`}
               disabled={isMenuDisabled || isDisabled}
             >
               <MoreVertical className="h-4 w-4" />
@@ -975,7 +975,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
               href={`/projects/repository/${projectId}/${caseId}`}
               target="_blank"
             >
-              <DropdownMenuItem className="flex items-center cursor-pointer">
+              <DropdownMenuItem className="flex cursor-pointer items-center">
                 <ExternalLink className="me-2 h-4 w-4" />
                 <span>{t("common.actions.viewInRepository")}</span>
               </DropdownMenuItem>
@@ -1109,7 +1109,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="ms-1 shrink-0">
-                  <Lock className="w-3 h-3 text-muted-foreground" />
+                  <Lock className="h-3 w-3 text-muted-foreground" />
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -1161,7 +1161,7 @@ const ActionsCell = React.memo(function ActionsCell({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   return (
-    <div className="flex justify-center w-full">
+    <div className="flex w-full justify-center">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -1481,7 +1481,7 @@ const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
         >
           <p className="text-xs">{tooltipContent}</p>
           {!isShiftPressed && (
-            <p className="text-xs text-primary-foreground/65 mt-1">
+            <p className="mt-1 text-xs text-primary-foreground/65">
               {t("repository.shiftClickHint")}
             </p>
           )}
@@ -1632,7 +1632,7 @@ export const getColumns = (
       return (
         <div
           // Use the calculated showHandle to set padding
-          className={`flex items-center justify-center w-full ${showHandle ? "ps-6" : "ps-3"}`}
+          className={`flex w-full items-center justify-center ${showHandle ? "ps-6" : "ps-3"}`}
           onClick={(e) => e.stopPropagation()}
         >
           <SelectAllCheckbox
@@ -1650,12 +1650,12 @@ export const getColumns = (
 
       return (
         <div
-          className="flex items-center justify-center gap-1 w-full"
+          className="flex w-full items-center justify-center gap-1"
           onClick={(e) => e.stopPropagation()}
         >
           {showHandle && (
             <GripVertical
-              className="h-5 w-5 min-w-5 min-h-5 text-muted-foreground shrink-0"
+              className="h-5 min-h-5 w-5 min-w-5 shrink-0 text-muted-foreground"
               aria-hidden="true"
             />
           )}
@@ -1741,7 +1741,7 @@ export const getColumns = (
                 fieldOption ? (
                   <div key={index} className="flex items-center space-x-1">
                     <DynamicIcon
-                      className="w-5 h-5 min-w-5 min-h-5"
+                      className="h-5 min-h-5 w-5 min-w-5"
                       name={fieldOption.fieldOption.icon?.name as IconName}
                       color={fieldOption.fieldOption.iconColor?.value}
                     />
@@ -1767,7 +1767,7 @@ export const getColumns = (
         if (fieldType === "Date") {
           return (
             <div
-              className="truncate whitespace-nowrap overflow-hidden"
+              className="truncate overflow-hidden whitespace-nowrap"
               style={{ maxWidth: column.getSize() }}
             >
               <DateFormatter
@@ -1782,7 +1782,7 @@ export const getColumns = (
         if (fieldType === "Link") {
           return (
             <div
-              className="truncate whitespace-nowrap overflow-hidden"
+              className="truncate overflow-hidden whitespace-nowrap"
               style={{ maxWidth: column.getSize() }}
             >
               <Link
@@ -1809,7 +1809,7 @@ export const getColumns = (
         if (fieldType === "Number" || fieldType === "Integer") {
           return (
             <div
-              className="truncate whitespace-nowrap overflow-hidden"
+              className="truncate overflow-hidden whitespace-nowrap"
               style={{ maxWidth: column.getSize() }}
             >
               {value === null || value === undefined
@@ -1829,11 +1829,11 @@ export const getColumns = (
                   <TooltipTrigger asChild>
                     <DialogTrigger asChild>
                       <div
-                        className="items-center flex w-fit cursor-pointer hover:bg-muted rounded px-2 py-1"
+                        className="flex w-fit cursor-pointer items-center rounded px-2 py-1 hover:bg-muted"
                         key={row.original.id.toString()}
                       >
                         <div
-                          className="truncate whitespace-nowrap overflow-hidden"
+                          className="truncate overflow-hidden whitespace-nowrap"
                           style={{ maxWidth: column.getSize() }}
                           key={row.original.id.toString()}
                         >
@@ -1859,7 +1859,7 @@ export const getColumns = (
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <DialogContent className="max-w-4xl h-[90vh] flex flex-col overflow-hidden">
+              <DialogContent className="flex h-[90vh] max-w-4xl flex-col overflow-hidden">
                 <DialogHeader>
                   <DialogTitle>{field.displayName}</DialogTitle>
                   <DialogDescription className="sr-only">
@@ -1893,7 +1893,7 @@ export const getColumns = (
             <Tooltip>
               <TooltipTrigger type="button">
                 <div
-                  className="truncate whitespace-nowrap overflow-hidden"
+                  className="truncate overflow-hidden whitespace-nowrap"
                   style={{ maxWidth: column.getSize() }}
                 >
                   {value === null || value === undefined
@@ -1937,12 +1937,12 @@ export const getColumns = (
           Date.now() - new Date(row.original.createdAt).getTime() <
             5 * 60 * 1000;
         return (
-          <div className="flex items-center min-w-0">
+          <div className="flex min-w-0 items-center">
             {isNew && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Flame className="h-4 w-4 me-1 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                    <Flame className="me-1 h-4 w-4 shrink-0 animate-pulse fill-orange-500 text-orange-500" />
                   </TooltipTrigger>
                   <TooltipContent>{columnTranslations.newBadge}</TooltipContent>
                 </Tooltip>
@@ -2198,7 +2198,7 @@ export const getColumns = (
       minSize: 100,
       cell: ({ row, column }) => (
         <div
-          className="truncate whitespace-nowrap overflow-hidden"
+          className="truncate overflow-hidden whitespace-nowrap"
           style={{ maxWidth: column.getSize() }}
         >
           <DurationDisplay seconds={row.original.estimate as number} />
@@ -2219,7 +2219,7 @@ export const getColumns = (
       minSize: 100,
       cell: ({ row, column }) => (
         <div
-          className="truncate whitespace-nowrap overflow-hidden"
+          className="truncate overflow-hidden whitespace-nowrap"
           style={{ maxWidth: column.getSize() }}
         >
           <ForecastDisplay
@@ -2264,7 +2264,7 @@ export const getColumns = (
       cell: ({ row }) => (
         <div className="flex items-center space-x-1 whitespace-nowrap">
           <DynamicIcon
-            className="w-5 h-5 min-w-5 min-h-5"
+            className="h-5 min-h-5 w-5 min-w-5"
             name={row.original.state?.icon?.name as IconName}
             color={row.original.state?.color?.value}
           />
@@ -2320,7 +2320,7 @@ export const getColumns = (
       minSize: 100,
       cell: ({ row, column }) => (
         <div
-          className="truncate whitespace-nowrap overflow-hidden"
+          className="truncate overflow-hidden whitespace-nowrap"
           style={{ maxWidth: column.getSize() }}
         >
           <DateFormatter

@@ -80,7 +80,7 @@ export function AuditLogDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-h-[80vh] max-w-3xl overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {t("detailTitle")}
@@ -108,7 +108,7 @@ export function AuditLogDetailModal({
           <div className="max-h-[60vh] overflow-y-auto pe-4">
             <div className="space-y-4">
               {/* Basic Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="overflow-hidden">
                   <label className="text-sm font-medium text-muted-foreground">
                     {t("columns.timestamp")}
@@ -127,13 +127,13 @@ export function AuditLogDetailModal({
                   <label className="text-sm font-medium text-muted-foreground">
                     {t("filterEntityType")}
                   </label>
-                  <p className="text-sm font-mono truncate">{log.entityType}</p>
+                  <p className="truncate font-mono text-sm">{log.entityType}</p>
                 </div>
                 <div className="overflow-hidden">
                   <label className="text-sm font-medium text-muted-foreground">
                     {t("columns.entityId")}
                   </label>
-                  <p className="text-sm font-mono break-all">{log.entityId}</p>
+                  <p className="font-mono text-sm break-all">{log.entityId}</p>
                 </div>
                 {displayKey && recordType && entityNumericId != null && (
                   <div className="overflow-hidden">
@@ -153,7 +153,7 @@ export function AuditLogDetailModal({
                   <label className="text-sm font-medium text-muted-foreground">
                     {t("columns.entityName")}
                   </label>
-                  <p className="text-sm truncate">{log.entityName || "-"}</p>
+                  <p className="truncate text-sm">{log.entityName || "-"}</p>
                 </div>
               </div>
 
@@ -161,25 +161,25 @@ export function AuditLogDetailModal({
 
               {/* User Info */}
               <div>
-                <h4 className="text-sm font-medium mb-2">{t("userInfo")}</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <h4 className="mb-2 text-sm font-medium">{t("userInfo")}</h4>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="overflow-hidden">
                     <label className="text-sm font-medium text-muted-foreground">
                       {tGlobal("common.access.user")}
                     </label>
-                    <p className="text-sm truncate">{log.userName || "-"}</p>
+                    <p className="truncate text-sm">{log.userName || "-"}</p>
                   </div>
                   <div className="overflow-hidden">
                     <label className="text-sm font-medium text-muted-foreground">
                       {tGlobal("common.fields.email")}
                     </label>
-                    <p className="text-sm truncate">{log.userEmail || "-"}</p>
+                    <p className="truncate text-sm">{log.userEmail || "-"}</p>
                   </div>
                   <div className="overflow-hidden">
                     <label className="text-sm font-medium text-muted-foreground">
                       {t("columns.userId")}
                     </label>
-                    <p className="text-sm font-mono break-all">
+                    <p className="font-mono text-sm break-all">
                       {log.userId || "-"}
                     </p>
                   </div>
@@ -188,7 +188,7 @@ export function AuditLogDetailModal({
                       <label className="text-sm font-medium text-muted-foreground">
                         {tGlobal("common.fields.project")}
                       </label>
-                      <p className="text-sm truncate">{log.project.name}</p>
+                      <p className="truncate text-sm">{log.project.name}</p>
                     </div>
                   )}
                 </div>
@@ -199,32 +199,32 @@ export function AuditLogDetailModal({
                 <>
                   <Separator />
                   <div>
-                    <h4 className="text-sm font-medium mb-2">{t("changes")}</h4>
+                    <h4 className="mb-2 text-sm font-medium">{t("changes")}</h4>
                     <div className="space-y-2">
                       {Object.entries(changes).map(([field, change]) => (
                         <div
                           key={field}
-                          className="bg-muted rounded-md p-3 text-sm"
+                          className="rounded-md bg-muted p-3 text-sm"
                         >
                           <div className="mb-2">
-                            <code className="text-xs font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                            <code className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
                               {field}
                             </code>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <div className="">
-                              <span className="text-muted-foreground text-xs">
+                              <span className="text-xs text-muted-foreground">
                                 {t("oldValue")}:
                               </span>
-                              <pre className="text-xs mt-1 bg-background p-2 rounded w-full whitespace-pre-wrap break-words">
+                              <pre className="mt-1 w-full rounded bg-background p-2 text-xs break-words whitespace-pre-wrap">
                                 {formatValue(change.oldName ?? change.old)}
                               </pre>
                             </div>
                             <div className="overflow-hidden">
-                              <span className="text-muted-foreground text-xs">
+                              <span className="text-xs text-muted-foreground">
                                 {tGlobal("common.labels.new")}:
                               </span>
-                              <pre className="text-xs mt-1 bg-background p-2 rounded w-full whitespace-pre-wrap break-words">
+                              <pre className="mt-1 w-full rounded bg-background p-2 text-xs break-words whitespace-pre-wrap">
                                 {formatValue(change.newName ?? change.new)}
                               </pre>
                             </div>
@@ -243,11 +243,11 @@ export function AuditLogDetailModal({
                   <>
                     <Separator />
                     <div className="min-w-0">
-                      <h4 className="text-sm font-medium mb-2">
+                      <h4 className="mb-2 text-sm font-medium">
                         {t("metadata")}
                       </h4>
                       <div>
-                        <pre className="text-xs bg-muted p-3 rounded-md whitespace-pre-wrap break-words">
+                        <pre className="rounded-md bg-muted p-3 text-xs break-words whitespace-pre-wrap">
                           {JSON.stringify(metadata, null, 2)}
                         </pre>
                       </div>

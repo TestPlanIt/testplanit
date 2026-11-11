@@ -211,12 +211,12 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center w-full">
-      <div className="w-full relative">
-        <div className="flex flex-col w-full">
+    <div className="flex w-full flex-col items-center">
+      <div className="relative w-full">
+        <div className="flex w-full flex-col">
           {renderIncompleteMilestones(sortedMilestones)}
         </div>
-        <div className="flex flex-col w-full mt-8">
+        <div className="mt-8 flex w-full flex-col">
           {renderCompletedMilestones(sortedMilestones)}
         </div>
       </div>

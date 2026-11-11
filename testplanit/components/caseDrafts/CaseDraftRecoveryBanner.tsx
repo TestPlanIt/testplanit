@@ -49,7 +49,7 @@ export function CaseDraftRecoveryBanner({
       data-testid="case-draft-recovery-banner"
     >
       <History className="h-4 w-4 shrink-0 text-primary" />
-      <span className="flex-1 min-w-0">{t("bannerText", { age })}</span>
+      <span className="min-w-0 flex-1">{t("bannerText", { age })}</span>
       <Button
         type="button"
         size="sm"

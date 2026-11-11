@@ -61,7 +61,7 @@ export const StepLayoutToggle: React.FC<{ className?: string }> = ({
             pressed={isSideBySide}
             onPressedChange={() => void toggleLayout()}
             aria-label={t("label")}
-            className={cn("hidden @2xl:inline-flex h-7 px-1.5", className)}
+            className={cn("hidden h-7 px-1.5 @2xl:inline-flex", className)}
             data-testid="step-layout-toggle"
           >
             <Icon className="h-4 w-4" />

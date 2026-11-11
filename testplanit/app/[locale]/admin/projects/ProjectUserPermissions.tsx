@@ -227,11 +227,11 @@ export function ProjectUserPermissions({
         <RoleNameCell roleId={user.roleId ? user.roleId.toString() : null} />
       );
     } else if (defaultProjectAccessType === ProjectAccessType.NO_ACCESS) {
-      return <span className="italic text-muted-foreground">-</span>;
+      return <span className="text-muted-foreground italic">-</span>;
     } else {
       // For DEFAULT or any other case
       return (
-        <span className="italic text-muted-foreground">
+        <span className="text-muted-foreground italic">
           {tGlobal("common.labels.access.projectDefault")}
         </span>
       );
@@ -241,9 +241,9 @@ export function ProjectUserPermissions({
   return (
     <div className="space-y-4">
       {/* Table/List of Assigned Users */}
-      <div className="rounded-md border max-h-[55vh] overflow-y-auto">
+      <div className="max-h-[55vh] overflow-y-auto rounded-md border">
         <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
+          <thead className="sticky top-0 z-10 bg-background [&_tr]:border-b">
             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
               <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {tGlobal("common.access.user")}
@@ -373,7 +373,7 @@ export function ProjectUserPermissions({
                             >
                               {effectiveAccessDisplay}
                             </span>
-                            <span className="ms-1 text-xs text-muted-foreground truncate flex items-center">
+                            <span className="ms-1 flex items-center truncate text-xs text-muted-foreground">
                               {/* Show the role based on current form state */}
                               {currentAccessType === "SPECIFIC_ROLE" &&
                               currentRoleId &&
@@ -395,11 +395,11 @@ export function ProjectUserPermissions({
                                   userEffectiveAccess
                                 )
                               ) : currentAccessType === "NO_ACCESS" ? (
-                                <span className="italic text-muted-foreground">
+                                <span className="text-muted-foreground italic">
                                   -
                                 </span>
                               ) : (
-                                <span className="italic text-muted-foreground">
+                                <span className="text-muted-foreground italic">
                                   {tGlobal("common.access.none")}
                                 </span>
                               )}
@@ -430,7 +430,7 @@ export function ProjectUserPermissions({
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="align-middle text-center">
+                  <td className="text-center align-middle">
                     <Button
                       variant="ghost"
                       size="icon"

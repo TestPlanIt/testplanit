@@ -1220,14 +1220,14 @@ export function DatasetTab({
               <span className="font-mono text-sm">{`@${p.name}`}</span>
               <Badge variant="secondary">{p.type}</Badge>
               {p.sensitive ? (
-                <Lock className="w-3 h-3 text-muted-foreground" />
+                <Lock className="h-3 w-3 text-muted-foreground" />
               ) : null}
               {showHeaderMenu && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="px-1 py-0 h-auto ms-auto"
+                      className="ms-auto h-auto px-1 py-0"
                       aria-label={t("datasetColumnMenuLabel", { name: p.name })}
                       data-testid={`dataset-column-menu-${p.name}`}
                     >
@@ -1443,9 +1443,9 @@ export function DatasetTab({
   const sharedFollowLatest = sharedSnapshot?.followLatest ?? false;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       <div
-        className="p-4 border-b bg-card flex flex-col gap-3"
+        className="flex flex-col gap-3 border-b bg-card p-4"
         data-testid="dataset-tab-toolbar"
       >
         {sourceToggleEnabled && (
@@ -1536,7 +1536,7 @@ export function DatasetTab({
         <div className="flex items-center justify-between">
           {hasSelection && !renderReadOnly ? (
             isShared ? (
-              <div className="flex items-center justify-between w-full">
+              <div className="flex w-full items-center justify-between">
                 <span className="text-sm">
                   {t("datasetSelectedCount", {
                     count: String(selectedRowIds.size),
@@ -1594,7 +1594,7 @@ export function DatasetTab({
                               onClick={() => setShowPasteDialog(true)}
                               data-testid="dataset-paste-csv-button"
                             >
-                              <ClipboardPaste className="w-4 h-4" />
+                              <ClipboardPaste className="h-4 w-4" />
                               {t("datasetPasteCsv")}
                             </Button>
                           </span>
@@ -1611,7 +1611,7 @@ export function DatasetTab({
                         onClick={() => onOpenImportWizard?.()}
                         data-testid="dataset-import-csv-button"
                       >
-                        <Upload className="w-4 h-4" />
+                        <Upload className="h-4 w-4" />
                         {t("datasetImportCsv")}
                       </Button>
                     </>
@@ -1625,7 +1625,7 @@ export function DatasetTab({
                         onClick={() => setShowAddColumnDialog(true)}
                         data-testid="dataset-add-column-button"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="h-4 w-4" />
                         {t("datasetAddColumn")}
                       </Button>
                     )}
@@ -1635,7 +1635,7 @@ export function DatasetTab({
                     onClick={handleAddRow}
                     data-testid="dataset-add-row-button"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="h-4 w-4" />
                     {t("datasetAddRow")}
                   </Button>
                 </div>
@@ -1676,18 +1676,18 @@ export function DatasetTab({
         <div className="flex-1" aria-hidden="true" />
       ) : isLoadingDataset ? (
         <div
-          className="flex-1 flex flex-col items-center justify-center gap-3 p-8"
+          className="flex flex-1 flex-col items-center justify-center gap-3 p-8"
           data-testid="dataset-tab-loading"
         >
-          <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
         </div>
       ) : rows.length === 0 ? (
         <div
-          className="flex-1 flex flex-col items-center justify-center gap-3 p-8"
+          className="flex flex-1 flex-col items-center justify-center gap-3 p-8"
           data-testid="dataset-tab-empty"
         >
-          <Table2 className="w-12 h-12 text-muted-foreground" />
+          <Table2 className="h-12 w-12 text-muted-foreground" />
           <h3 className="text-base font-semibold">
             {t("datasetEmptyHeading")}
           </h3>
@@ -1732,7 +1732,7 @@ export function DatasetTab({
               items={rows.map((r) => String(r.id))}
               strategy={verticalListSortingStrategy}
             >
-              <table className="w-full text-sm border-separate border-spacing-0">
+              <table className="w-full border-separate border-spacing-0 text-sm">
                 <thead className="sticky top-0 z-10">
                   {table.getHeaderGroups().map((hg) => (
                     <tr key={hg.id}>
@@ -1756,7 +1756,7 @@ export function DatasetTab({
                             // background in dark mode and pairs only with
                             // its own foreground token; we render plain
                             // muted text in the header.
-                            className="px-2 py-1 text-start bg-muted/50 border-b font-medium"
+                            className="border-b bg-muted/50 px-2 py-1 text-start font-medium"
                             style={
                               fixedWidth
                                 ? {
@@ -1803,7 +1803,7 @@ export function DatasetTab({
                           data-testid={`dataset-row-${row.original.id}`}
                         >
                           <td
-                            className="px-2 py-1 align-middle relative"
+                            className="relative px-2 py-1 align-middle"
                             style={{
                               width: "32px",
                               minWidth: "32px",
@@ -1812,14 +1812,14 @@ export function DatasetTab({
                           >
                             {dropIndicator === "top" && (
                               <div
-                                className="absolute top-0 start-0 end-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
+                                className="pointer-events-none absolute start-0 end-0 top-0 z-50 h-[3px] w-screen bg-primary"
                                 aria-hidden="true"
                                 data-testid={`dataset-row-drop-indicator-top-${row.original.id}`}
                               />
                             )}
                             {dropIndicator === "bottom" && (
                               <div
-                                className="absolute bottom-0 start-0 end-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
+                                className="pointer-events-none absolute start-0 end-0 bottom-0 z-50 h-[3px] w-screen bg-primary"
                                 aria-hidden="true"
                                 data-testid={`dataset-row-drop-indicator-bottom-${row.original.id}`}
                               />
@@ -1835,7 +1835,7 @@ export function DatasetTab({
                               data-testid={`dataset-row-drag-handle-${row.original.id}`}
                               aria-label="Drag to reorder"
                             >
-                              <GripVertical className="w-4 h-4" />
+                              <GripVertical className="h-4 w-4" />
                             </div>
                           </td>
                           {row
@@ -1883,7 +1883,7 @@ export function DatasetTab({
       )}
 
       <div
-        className="p-2 ps-4 pe-2 border-t flex items-center justify-end gap-3"
+        className="flex items-center justify-end gap-3 border-t p-2 ps-4 pe-2"
         data-testid="dataset-tab-footer"
       >
         {totalRows > 0 && (
@@ -1924,7 +1924,7 @@ export function DatasetTab({
                   const next = parseInt(e.target.value) || 1;
                   if (next >= 1 && next <= totalPages) setPage(next);
                 }}
-                className="w-16 h-9 text-center"
+                className="h-9 w-16 text-center"
                 data-testid="dataset-page-input"
               />
               <span className="text-sm">
@@ -2163,14 +2163,14 @@ export function DatasetTab({
             </AlertDialogHeader>
             {deleteColumnUsage && deleteColumnUsage.count > 0 && (
               <ul
-                className="text-sm text-muted-foreground space-y-1 max-h-48 overflow-auto"
+                className="max-h-48 space-y-1 overflow-auto text-sm text-muted-foreground"
                 data-testid="dataset-column-delete-cases"
               >
                 {deleteColumnUsage.sampleCases.map((c) => (
                   <li key={c.id}>
                     <Link
                       href={`/projects/repository/${projectId}/${c.id}`}
-                      className="hover:underline text-primary"
+                      className="text-primary hover:underline"
                       target="_blank"
                     >
                       {c.name}

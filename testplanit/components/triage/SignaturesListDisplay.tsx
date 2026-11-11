@@ -123,7 +123,7 @@ export const SignaturesListDisplay: React.FC<{
           aria-label={searchPlaceholder}
           className={cn(
             badgeVariants({ variant: triggerVariant ?? "default" }),
-            "gap-1 whitespace-nowrap text-xs"
+            "gap-1 text-xs whitespace-nowrap"
           )}
           data-testid="signatures-list-display"
         >

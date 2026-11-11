@@ -29,7 +29,7 @@ export function IterationBulkToolbar({
   return (
     <div
       data-testid="iteration-bulk-toolbar"
-      className={`sticky top-[56px] z-10 bg-card border-b px-2 py-2 h-12 flex items-center justify-between ${
+      className={`sticky top-[56px] z-10 flex h-12 items-center justify-between border-b bg-card px-2 py-2 ${
         visible ? "" : "hidden"
       }`}
       aria-hidden={visible ? undefined : true}
@@ -40,7 +40,7 @@ export function IterationBulkToolbar({
         onClick={onSkip}
         data-testid="iteration-bulk-skip"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="h-4 w-4" />
         {t("iterationBulkSkip", { count: selectedCount })}
       </Button>
       <Button

@@ -15,7 +15,7 @@ export const TemplateNameDisplay: React.FC<TemplateNameProps> = ({
   }
 
   return (
-    <span className="flex items-center space-x-1 shrink-0 overflow-hidden">
+    <span className="flex shrink-0 items-center space-x-1 overflow-hidden">
       <LayoutTemplate
         className={`shrink-0 ${size === "sm" ? "h-4 w-4" : ""}`}
       />

@@ -476,7 +476,7 @@ export function CopyMoveDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         data-testid="copy-move-dialog"
-        className="max-w-3xl h-[90vh] flex flex-col overflow-hidden"
+        className="flex h-[90vh] max-w-3xl flex-col overflow-hidden"
       >
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("title")}</DialogTitle>
@@ -492,23 +492,23 @@ export function CopyMoveDialog({
         </DialogHeader>
 
         {/* Progress indicator — matches ImportCasesWizard pattern */}
-        <div className="flex items-center gap-2 mb-4 shrink-0">
+        <div className="mb-4 flex shrink-0 items-center gap-2">
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
                   s < stepNumber
                     ? "bg-primary text-primary-foreground"
                     : s === stepNumber
-                      ? "bg-primary/10 text-primary border-2 border-primary"
+                      ? "border-2 border-primary bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground"
                 }`}
               >
-                {s < stepNumber ? <CheckCircle2 className="w-4 h-4" /> : s}
+                {s < stepNumber ? <CheckCircle2 className="h-4 w-4" /> : s}
               </div>
               {s < 3 && (
                 <div
-                  className={`w-12 h-0.5 mx-2 ${
+                  className={`mx-2 h-0.5 w-12 ${
                     s < stepNumber ? "bg-primary" : "bg-muted"
                   }`}
                 />
@@ -517,10 +517,10 @@ export function CopyMoveDialog({
           ))}
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-0.5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-0.5">
           {/* ── Step 1: Target Selection ─────────────────────────────────── */}
           {step === "target" && (
-            <div className="flex flex-col gap-4 mb-2">
+            <div className="mb-2 flex flex-col gap-4">
               <div
                 className="flex flex-col gap-1.5"
                 data-testid="copy-move-target-project-trigger"
@@ -612,12 +612,12 @@ export function CopyMoveDialog({
                       disabled={foldersLoading}
                       className="w-full"
                     />
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="mb-2 flex items-center gap-2">
                       <Input
                         value={newFolderName}
                         onChange={(e) => setNewFolderName(e.target.value)}
                         placeholder={t("newFolderPlaceholder")}
-                        className="flex-1 min-w-48"
+                        className="min-w-48 flex-1"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
@@ -650,7 +650,7 @@ export function CopyMoveDialog({
           {step === "configure" && (
             <div className="flex flex-col gap-4">
               {/* Destination summary */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground rounded-md bg-muted px-3 py-2">
+              <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
                 <FolderOpen className="h-4 w-4 shrink-0" />
                 <span>
                   {selectedProject?.name ?? ""} /{" "}
@@ -683,7 +683,7 @@ export function CopyMoveDialog({
                     <div className="flex flex-col gap-0.5">
                       <Label
                         htmlFor="op-copy"
-                        className="font-medium cursor-pointer"
+                        className="cursor-pointer font-medium"
                       >
                         {tCommon("actions.copy")}
                       </Label>
@@ -724,8 +724,8 @@ export function CopyMoveDialog({
                       <Label
                         htmlFor="op-move"
                         className={cn(
-                          "font-medium cursor-pointer",
-                          isSameFolderMove && "opacity-50 cursor-not-allowed"
+                          "cursor-pointer font-medium",
+                          isSameFolderMove && "cursor-not-allowed opacity-50"
                         )}
                       >
                         {t("operationMove")}
@@ -769,7 +769,7 @@ export function CopyMoveDialog({
                 <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
                   <AlertTitle>{t("templateMismatch")}</AlertTitle>
                   <AlertDescription>
-                    <ul className="list-disc ps-4 mt-1 space-y-0.5">
+                    <ul className="mt-1 list-disc space-y-0.5 ps-4">
                       {preflight.missingTemplates.map((tpl) => (
                         <li key={tpl.id} className="text-xs">
                           {tpl.name}
@@ -777,7 +777,7 @@ export function CopyMoveDialog({
                       ))}
                     </ul>
                     {preflight.canAutoAssignTemplates ? (
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="mt-2 flex items-center gap-2">
                         <Checkbox
                           id="auto-assign"
                           checked={autoAssignTemplates}
@@ -787,13 +787,13 @@ export function CopyMoveDialog({
                         />
                         <Label
                           htmlFor="auto-assign"
-                          className="text-xs cursor-pointer"
+                          className="cursor-pointer text-xs"
                         >
                           {t("autoAssignTemplates")}
                         </Label>
                       </div>
                     ) : (
-                      <p className="text-xs mt-2">
+                      <p className="mt-2 text-xs">
                         {t("templatesMayNotDisplay")}
                       </p>
                     )}
@@ -806,7 +806,7 @@ export function CopyMoveDialog({
                 <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
                   <AlertTitle>{t("workflowFallback")}</AlertTitle>
                   <AlertDescription>
-                    <ul className="list-disc ps-4 mt-1 space-y-0.5">
+                    <ul className="mt-1 list-disc space-y-0.5 ps-4">
                       {workflowFallbacks.map((m) => (
                         <li key={m.sourceStateId} className="text-xs">
                           {m.sourceStateName} {"->"} {m.targetStateName}{" "}
@@ -842,11 +842,11 @@ export function CopyMoveDialog({
                       </Label>
                     </div>
                   </RadioGroup>
-                  <div className="max-h-48 overflow-y-auto border rounded-md divide-y text-sm">
+                  <div className="max-h-48 divide-y overflow-y-auto rounded-md border text-sm">
                     {preflight.collisions.map((col) => (
                       <div
                         key={col.caseId}
-                        className="px-3 py-1.5 flex flex-col gap-0.5"
+                        className="flex flex-col gap-0.5 px-3 py-1.5"
                       >
                         <span className="font-medium">{col.caseName}</span>
                         {col.className && (
@@ -973,7 +973,7 @@ export function CopyMoveDialog({
                         {t("errorCount", { count: job.result.errors.length })}
                       </button>
                       {errorsExpanded && (
-                        <ul className="text-xs space-y-1 ps-5 list-disc">
+                        <ul className="list-disc space-y-1 ps-5 text-xs">
                           {job.result.errors.map((err) => (
                             <li key={err.caseId}>
                               <span className="font-medium">
@@ -1039,7 +1039,7 @@ export function CopyMoveDialog({
                 disabled={!canGo}
               >
                 {job.isPrefighting ? (
-                  <Loader2 className="h-4 w-4 animate-spin me-2" />
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 ) : null}
                 {t("go")}
               </Button>

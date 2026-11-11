@@ -166,7 +166,7 @@ function Users() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-row items-start justify-between gap-4">
-              <div className="flex flex-col grow w-full sm:w-1/3 min-w-[150px]">
+              <div className="flex w-full min-w-[150px] grow flex-col sm:w-1/3">
                 <Filter
                   key="user-filter"
                   placeholder={t("filter")}
@@ -185,7 +185,7 @@ function Users() {
               </div>
 
               {users.length > 0 && (
-                <p className="text-sm text-muted-foreground shrink-0">
+                <p className="shrink-0 text-sm text-muted-foreground">
                   {tGlobal("admin.auditLogs.showing", {
                     loaded: users.length.toLocaleString(locale),
                     total: (totalCount ?? users.length).toLocaleString(locale),

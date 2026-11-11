@@ -375,7 +375,7 @@ export function ImportMilestonesDialog({
               <Badge
                 key={sp.id}
                 variant={projectFilter === sp.id ? "default" : "outline"}
-                className="cursor-pointer max-w-40 truncate"
+                className="max-w-40 cursor-pointer truncate"
                 data-testid="import-milestones-project-chip"
                 title={sp.name}
                 onClick={() => setProjectFilter(sp.id)}
@@ -435,20 +435,20 @@ export function ImportMilestonesDialog({
           </Alert>
         )}
 
-        <ScrollArea className="h-[360px] rounded-md border w-full">
+        <ScrollArea className="h-[360px] w-full rounded-md border">
           {isLoading ? (
             <div className="flex items-center justify-center p-8">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           ) : visibleItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center">
-              <PackageOpen className="h-12 w-12 text-muted-foreground mb-4" />
+              <PackageOpen className="mb-4 h-12 w-12 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 {items.length === 0 ? t("empty") : t("emptyFiltered")}
               </p>
             </div>
           ) : (
-            <div className="p-4 space-y-2 w-full">
+            <div className="w-full space-y-2 p-4">
               {visibleItems.map((item) => {
                 const isAlreadyLinked = linkedExternalIds.has(item.id);
                 const isSelected = selectedIds.has(item.id);
@@ -458,14 +458,14 @@ export function ImportMilestonesDialog({
                     data-testid="import-milestone-row"
                     className={`rounded-lg border p-3 transition-colors ${
                       isAlreadyLinked
-                        ? "border-muted bg-muted/50 opacity-40 cursor-not-allowed"
+                        ? "cursor-not-allowed border-muted bg-muted/50 opacity-40"
                         : isSelected
-                          ? "border-primary bg-primary/5 cursor-pointer"
-                          : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                          ? "cursor-pointer border-primary bg-primary/5"
+                          : "cursor-pointer hover:bg-accent hover:text-accent-foreground"
                     }`}
                     onClick={() => !isAlreadyLinked && toggleSelected(item.id)}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
                       <Checkbox
                         checked={isSelected}
                         disabled={isAlreadyLinked}
@@ -474,12 +474,12 @@ export function ImportMilestonesDialog({
                         }
                         onClick={(e) => e.stopPropagation()}
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-sm font-medium truncate">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="truncate text-sm font-medium">
                             {item.name}
                           </span>
-                          <span className="ms-auto flex items-center gap-2 shrink-0">
+                          <span className="ms-auto flex shrink-0 items-center gap-2">
                             {isAlreadyLinked && (
                               <Badge variant="secondary" className="text-xs">
                                 {t("alreadyLinked")}

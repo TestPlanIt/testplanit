@@ -370,7 +370,7 @@ export function ImportIssuesDialog({
           </div>
 
           {!useTypedPath && preview && (
-            <div className="rounded-md bg-muted p-3 text-sm space-y-1">
+            <div className="space-y-1 rounded-md bg-muted p-3 text-sm">
               <p>
                 {t("importPreviewResult", {
                   count: preview.matched,
@@ -387,7 +387,7 @@ export function ImportIssuesDialog({
 
           {useTypedPath && typedPreview && (
             <div
-              className="rounded-md bg-muted p-3 text-sm space-y-1"
+              className="space-y-1 rounded-md bg-muted p-3 text-sm"
               data-testid="import-issues-typed-preview"
             >
               <p>
@@ -406,7 +406,7 @@ export function ImportIssuesDialog({
 
           {error && (
             <div className="flex items-start gap-2 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}

@@ -29,7 +29,7 @@ export const HighlightedMatch = React.memo(function HighlightedMatch({
     <>
       {text.slice(0, matchStart)}
       <span
-        className="bg-warning/30 dark:bg-warning/45 rounded-sm"
+        className="rounded-sm bg-warning/30 dark:bg-warning/45"
         data-testid={testId}
       >
         {text.slice(matchStart, matchEnd)}

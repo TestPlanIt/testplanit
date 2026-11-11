@@ -101,7 +101,7 @@ const StepNumberBadge: React.FC<{ number: number; testId?: string }> = ({
   testId,
 }) => (
   <div
-    className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2"
+    className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-primary p-2 font-bold text-primary-foreground"
     data-testid={testId}
   >
     {number}
@@ -131,22 +131,22 @@ const StepPair: React.FC<StepPairProps> = ({
   <div className={stepLayoutClasses.pair(sideBySide)}>
     <div
       className={cn(
-        "flex gap-2 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+        "flex w-full min-w-0 gap-2 rounded-lg bg-primary-foreground p-2 ring-2 ring-primary/50",
         stepLayoutClasses.stepBlock(sideBySide)
       )}
     >
       {badge}
-      <div className="flex-1 min-w-0">{step}</div>
+      <div className="min-w-0 flex-1">{step}</div>
     </div>
     <div
       className={cn(
-        "flex gap-1 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+        "flex w-full min-w-0 gap-1 rounded-lg bg-primary-foreground p-2 ring-2 ring-primary/50",
         stepLayoutClasses.expectedBlock(sideBySide)
       )}
       data-testid={expectedResultTestId}
     >
-      <SearchCheck className="text-primary h-6 w-6 shrink-0 mt-2" />
-      <div className="flex-1 min-w-0">{expectedResult}</div>
+      <SearchCheck className="mt-2 h-6 w-6 shrink-0 text-primary" />
+      <div className="min-w-0 flex-1">{expectedResult}</div>
     </div>
   </div>
 );
@@ -185,7 +185,7 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
 
   if (isLoading) {
     return (
-      <p className="ms-6 text-sm text-muted-foreground p-2">
+      <p className="ms-6 p-2 text-sm text-muted-foreground">
         {t_steps("loadingSharedStepsItems")}
       </p>
     );
@@ -193,26 +193,26 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
 
   if (!items || items.length === 0) {
     return (
-      <p className="ms-6 text-sm text-muted-foreground p-2">
+      <p className="ms-6 p-2 text-sm text-muted-foreground">
         {t_steps("noStepsInSharedGroup")}
       </p>
     );
   }
 
   return (
-    <div className="ms-6 mt-1 p-2 border-s-2 border-dashed border-primary/20 space-y-2 w-full pe-8">
+    <div className="ms-6 mt-1 w-full space-y-2 border-s-2 border-dashed border-primary/20 p-2 pe-8">
       {items.map((item, itemIndex) => {
         const itemKey = `shared-${sharedStepGroupId}-item-${item.id || itemIndex}`;
         return (
           <div
             key={`shared-group-${sharedStepGroupId}-item-${item.id || itemIndex}`}
             className={cn(
-              "border-2 border-primary/20 rounded-lg p-2",
+              "rounded-lg border-2 border-primary/20 p-2",
               stepLayoutClasses.pair(sideBySide)
             )}
           >
-            <div className="font-semibold mb-1 text-foreground/80 flex items-start w-full min-w-0">
-              <div className="me-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2">
+            <div className="mb-1 flex w-full min-w-0 items-start font-semibold text-foreground/80">
+              <div className="me-2 mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-primary p-2 font-bold text-primary-foreground">
                 {item.order + 1}
               </div>
               <div className="w-full min-w-0">
@@ -225,8 +225,8 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
                 )}
               </div>
             </div>
-            <div className="font-semibold mb-1 text-foreground/80 flex items-start min-w-0">
-              <SearchCheck className="me-2 text-primary h-6 w-6 shrink-0 mt-2" />
+            <div className="mb-1 flex min-w-0 items-start font-semibold text-foreground/80">
+              <SearchCheck className="me-2 mt-2 h-6 w-6 shrink-0 text-primary" />
               <div className="w-full min-w-0">
                 {renderFieldValue(
                   item.expectedResult,
@@ -270,11 +270,11 @@ const renderFieldValue = (
 
   if (previousFieldValue === undefined) {
     return (
-      <div className="relative p-1 rounded">
-        <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
-        <span className="relative text-green-700 dark:text-green-400 flex space-x-1 items-center">
+      <div className="relative rounded p-1">
+        <div className="pointer-events-none absolute inset-0 rounded bg-green-500/20" />
+        <span className="relative flex items-center space-x-1 text-green-700 dark:text-green-400">
           <div>
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
           </div>
           <TextFromJson
             key={key}
@@ -297,11 +297,11 @@ const renderFieldValue = (
   if (areValuesDifferent) {
     return (
       <div>
-        <div className="relative p-1 rounded">
-          <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
-          <span className="relative text-destructive flex space-x-1 items-center">
+        <div className="relative rounded p-1">
+          <div className="pointer-events-none absolute inset-0 rounded bg-red-500/20" />
+          <span className="relative flex items-center space-x-1 text-destructive">
             <div>
-              <Minus className="w-4 h-4" />
+              <Minus className="h-4 w-4" />
             </div>
             <TextFromJson
               key={"prev" + key}
@@ -312,11 +312,11 @@ const renderFieldValue = (
             />
           </span>
         </div>
-        <div className="relative p-1 rounded">
-          <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
-          <span className="relative text-green-700 dark:text-green-400 flex space-x-1 items-center">
+        <div className="relative rounded p-1">
+          <div className="pointer-events-none absolute inset-0 rounded bg-green-500/20" />
+          <span className="relative flex items-center space-x-1 text-green-700 dark:text-green-400">
             <div>
-              <Plus className="w-4 h-4" />
+              <Plus className="h-4 w-4" />
             </div>
             <TextFromJson
               key={key}
@@ -349,11 +349,11 @@ const renderDeletedValue = (
   key: string,
   parameters?: ParameterChipMeta[]
 ) => (
-  <div className="relative p-1 rounded">
-    <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
-    <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
+  <div className="relative rounded p-1">
+    <div className="pointer-events-none absolute inset-0 rounded bg-red-500/20" />
+    <span className="relative flex items-center space-x-1 text-red-600 dark:text-red-400">
       <div>
-        <Minus className="w-4 h-4" />
+        <Minus className="h-4 w-4" />
       </div>
       <TextFromJson
         key={key}
@@ -406,18 +406,18 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                   data-testid={`step-container-${index}`}
                 >
                   <div
-                    className="flex flex-col items-start min-w-[200px] bg-muted/60 p-2 rounded-lg mb-2 border-2 border-primary/20"
+                    className="mb-2 flex min-w-[200px] flex-col items-start rounded-lg border-2 border-primary/20 bg-muted/60 p-2"
                     data-testid="shared-step-group"
                   >
-                    <div className="flex items-center justify-between pb-2 space-x-2 cursor-default w-full">
+                    <div className="flex w-full cursor-default items-center justify-between space-x-2 pb-2">
                       <div className="flex items-center font-bold">
                         <div
-                          className="me-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2"
+                          className="me-2 mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-primary p-2 font-bold text-primary-foreground"
                           data-testid={`step-badge-${index}`}
                         >
                           {index + 1}
                         </div>
-                        <Layers className="h-5 w-5 ms-1 me-2 text-primary" />
+                        <Layers className="ms-1 me-2 h-5 w-5 text-primary" />
                         {t_repo_steps("sharedStepGroupTitle", {
                           name:
                             step.sharedStepGroup?.name ||

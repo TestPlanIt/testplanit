@@ -219,7 +219,7 @@ export function RepositoryWebhookCard({
           <div className="flex items-center gap-2">
             <code
               data-testid="webhook-url"
-              className="flex-1 break-all text-xs"
+              className="flex-1 text-xs break-all"
             >
               {rev.url}
             </code>
@@ -243,7 +243,7 @@ export function RepositoryWebhookCard({
             <div className="flex items-center gap-2">
               <code
                 data-testid="webhook-secret"
-                className="flex-1 break-all text-xs"
+                className="flex-1 text-xs break-all"
               >
                 {rev.secret}
               </code>
@@ -319,7 +319,7 @@ export function RepositoryWebhookCard({
                 </div>
                 <code
                   data-testid="webhook-url"
-                  className="block break-all text-xs"
+                  className="block text-xs break-all"
                 >
                   {redactWebhookUrl(`${origin}/api/webhooks/${hook.token}`)}
                 </code>

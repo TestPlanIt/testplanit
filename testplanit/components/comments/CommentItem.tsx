@@ -153,12 +153,12 @@ export function CommentItem({
 
   return (
     <div className={cn("flex gap-3", className)}>
-      <div className="flex-1 min-w-0 space-y-1">
+      <div className="min-w-0 flex-1 space-y-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 items-center">
             <UserNameCell userId={comment.creator.id} hideLink />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             {(() => {
               const timeAgo = formatDistanceToNow(new Date(comment.createdAt), {
                 addSuffix: true,
@@ -174,7 +174,7 @@ export function CommentItem({
                   <TooltipContent>{timeAgo}</TooltipContent>
                 </Tooltip>
               ) : (
-                <span className="text-xs text-muted-foreground line-clamp-1">
+                <span className="line-clamp-1 text-xs text-muted-foreground">
                   {timeAgo}
                 </span>
               );
@@ -242,7 +242,7 @@ export function CommentItem({
         ) : (
           <div
             className={cn(
-              "rounded-md border border-border bg-muted/30 p-3 wrap-break-word overflow-hidden",
+              "overflow-hidden rounded-md border border-border bg-muted/30 p-3 wrap-break-word",
               accentClasses
             )}
             style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}

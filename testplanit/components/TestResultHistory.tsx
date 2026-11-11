@@ -302,7 +302,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="ms-1 shrink-0">
-                  <Combine className="w-3 h-3 text-muted-foreground" />
+                  <Combine className="h-3 w-3 text-muted-foreground" />
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -311,7 +311,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
                 </p>
                 {testRun.configuration && (
                   <p className="flex text-xs text-background">
-                    <Combine className="w-3 h-3 shrink-0 me-1" />
+                    <Combine className="me-1 h-3 w-3 shrink-0" />
                     {testRun.configuration.name}
                   </p>
                 )}
@@ -322,7 +322,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="ms-1 shrink-0">
-                  <Lock className="w-3 h-3 text-muted-foreground" />
+                  <Lock className="h-3 w-3 text-muted-foreground" />
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -399,13 +399,13 @@ const ResultFieldValuesDisplay = ({
   }
 
   return (
-    <div className="px-4 py-2 space-y-4">
+    <div className="space-y-4 px-4 py-2">
       {fieldValues.map((fieldValue) => (
         <div key={fieldValue.id} className="flex flex-col">
           <span className="text-xs font-medium text-muted-foreground">
             {fieldValue.field.displayName}
           </span>
-          <div className="text-sm mt-1">
+          <div className="mt-1 text-sm">
             <FieldValueRenderer
               fieldValue={fieldValue.value}
               fieldType={fieldValue.field.type.type}
@@ -464,7 +464,7 @@ const StepResultsDisplay = ({
       className={cn("px-4 py-2", stepLayoutClasses.container)}
       data-step-layout={stepLayout}
     >
-      <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
         {tCommon("fields.steps")}
         <StepLayoutToggle />
       </div>
@@ -483,16 +483,16 @@ const StepResultsDisplay = ({
                 <div
                   key={`result-${resultId}-shared-group-${stepResult.step.sharedStepGroupId}`}
                 >
-                  <div className="font-bold truncate flex items-center mb-1">
+                  <div className="mb-1 flex items-center truncate font-bold">
                     <div className="flex items-center">
                       <Layers
                         size={16}
-                        className="me-2 text-primary shrink-0"
+                        className="me-2 shrink-0 text-primary"
                       />
                       {tCommon("fields.step")} {stepCounter} -{" "}
                       {stepResult.step.sharedStepGroup?.name ||
                         tCommon("fields.steps")}
-                      <span className="text-xs text-muted-foreground ms-1">
+                      <span className="ms-1 text-xs text-muted-foreground">
                         {tRepository("steps.sharedGroupSuffix")}
                       </span>
                     </div>
@@ -540,7 +540,7 @@ const StepResultsDisplay = ({
             return (
               <div
                 key={`result-${resultId}-step-${stepResult.id}-${index}`}
-                className="space-y-2 border rounded-lg p-4"
+                className="space-y-2 rounded-lg border p-4"
               >
                 <div
                   className={cn(
@@ -550,13 +550,13 @@ const StepResultsDisplay = ({
                     isSideBySide && "@2xl:grid @2xl:grid-cols-2 @2xl:gap-2"
                   )}
                 >
-                  <div className="font-bold text-sm flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm font-bold">
                     <ListOrdered className="h-4 w-4 shrink-0" />
                     {tCommon("fields.step")} {stepCounter}
                   </div>
-                  <div className="flex items-center justify-between min-w-0">
+                  <div className="flex min-w-0 items-center justify-between">
                     {isSideBySide && (
-                      <div className="hidden @2xl:block text-xs text-muted-foreground ps-2">
+                      <div className="hidden ps-2 text-xs text-muted-foreground @2xl:block">
                         {tCommon("fields.expectedResult")}
                       </div>
                     )}
@@ -564,7 +564,7 @@ const StepResultsDisplay = ({
                       variant="filled"
                       name={stepResult.status.name}
                       color={stepResult.status.color.value}
-                      className="shrink-0 ms-auto"
+                      className="ms-auto shrink-0"
                     />
                   </div>
                 </div>
@@ -575,16 +575,16 @@ const StepResultsDisplay = ({
                       stepLayoutClasses.pair(isSideBySide)
                     )}
                   >
-                    <div className="bg-muted/30 rounded-lg p-2 min-w-0">
+                    <div className="min-w-0 rounded-lg bg-muted/30 p-2">
                       <ReadOnlyRichText
                         content={stepContent as object}
                         className="prose-sm"
                       />
                     </div>
-                    <div className="bg-muted/30 rounded-lg p-2 min-w-0">
+                    <div className="min-w-0 rounded-lg bg-muted/30 p-2">
                       <div
                         className={cn(
-                          "text-xs text-muted-foreground mb-1",
+                          "mb-1 text-xs text-muted-foreground",
                           stepLayoutClasses.stackedOnly(isSideBySide)
                         )}
                       >
@@ -597,8 +597,8 @@ const StepResultsDisplay = ({
                     </div>
                   </div>
                   {stepResult.notes && !isTiptapEmpty(stepResult.notes) && (
-                    <div className="bg-muted/30 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground mb-1">
+                    <div className="rounded-lg bg-muted/30 p-2">
+                      <div className="mb-1 text-xs text-muted-foreground">
                         {tCommon("actions.resultDetails")}
                       </div>
                       <ReadOnlyRichText
@@ -608,7 +608,7 @@ const StepResultsDisplay = ({
                     </div>
                   )}
                   {stepResult.elapsed && stepResult.elapsed > 0 && (
-                    <div className="text-xs text-muted-foreground mt-2">
+                    <div className="mt-2 text-xs text-muted-foreground">
                       {tCommon("fields.elapsed")}:{" "}
                       {formatSeconds(stepResult.elapsed, locale)}
                     </div>
@@ -667,7 +667,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
 
   if (isLoading) {
     return (
-      <div className="ms-4 ps-4 py-4 border-s border-dashed">
+      <div className="ms-4 border-s border-dashed py-4 ps-4">
         <LoadingSpinner className="h-6" />
       </div>
     );
@@ -675,14 +675,14 @@ const RenderSharedGroupInHistoryList: React.FC<{
 
   if (!items || items.length === 0) {
     return (
-      <div className="ms-4 ps-4 text-sm text-muted-foreground py-1 border-s border-dashed">
+      <div className="ms-4 border-s border-dashed py-1 ps-4 text-sm text-muted-foreground">
         {tRepository("steps.noStepsInSharedGroup")}
       </div>
     );
   }
 
   return (
-    <ol className="list-decimal overflow-hidden w-full ps-8 border-s border-dashed ms-4 pe-4">
+    <ol className="ms-4 w-full list-decimal overflow-hidden border-s border-dashed ps-8 pe-4">
       {items.map((item, itemIndex) => {
         const stepContentString = item.step
           ? typeof item.step === "string"
@@ -707,9 +707,9 @@ const RenderSharedGroupInHistoryList: React.FC<{
         return (
           <li
             key={`result-${testRunResultId}-shared-${sharedStepGroupId}-item-${item.id || itemIndex}`}
-            className="mb-4 p-4 border rounded-md bg-muted/20"
+            className="mb-4 rounded-md border bg-muted/20 p-4"
           >
-            <div className="flex justify-between items-start">
+            <div className="flex items-start justify-between">
               <div>
                 <div className="truncate font-semibold">
                   <TextFromJson
@@ -717,7 +717,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
                     room={`shared-history-list-${sharedStepGroupId}-item-${item.id || itemIndex}-step`}
                   />
                 </div>
-                <div className="text-sm flex items-center gap-1 truncate mt-1 text-muted-foreground">
+                <div className="mt-1 flex items-center gap-1 truncate text-sm text-muted-foreground">
                   <SearchCheck className="h-4 w-4 shrink-0" />
                   <TextFromJson
                     jsonString={expectedResultString}
@@ -735,8 +735,8 @@ const RenderSharedGroupInHistoryList: React.FC<{
               )}
             </div>
             {itemResult?.notes && !isTiptapEmpty(itemResult.notes) && (
-              <div className="mt-2 p-2 bg-background rounded-md">
-                <div className="text-xs text-muted-foreground mb-1">
+              <div className="mt-2 rounded-md bg-background p-2">
+                <div className="mb-1 text-xs text-muted-foreground">
                   {tCommon("actions.resultDetails")}
                 </div>
                 <ReadOnlyRichText
@@ -746,7 +746,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
               </div>
             )}
             {itemResult?.elapsed && itemResult.elapsed > 0 && (
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="mt-1 text-xs text-muted-foreground">
                 {tCommon("fields.elapsed")}:{" "}
                 {formatSeconds(itemResult.elapsed, locale)}
               </div>
@@ -887,8 +887,8 @@ const ManualResultExpandedDetails = ({
           (defense-in-depth client gate; server audit boundary is the
           source of truth). */}
       {iteration && (
-        <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
-          <div className="font-semibold text-primary flex items-center gap-1">
+        <div className="mb-2 space-y-1 rounded-md border bg-muted/50 px-4 py-2 text-xs">
+          <div className="flex items-center gap-1 font-semibold text-primary">
             <SquareStack className="h-3 w-3" aria-hidden />
             {tParams("iterationResultLabelHeading") +
               ` ${iteration.rowIndex + 1}`}
@@ -900,13 +900,13 @@ const ManualResultExpandedDetails = ({
             )}
           </div>
           {iteration.parameterSchema.length > 0 && (
-            <table className="w-full text-start mt-1">
+            <table className="mt-1 w-full text-start">
               <thead>
                 <tr className="border-b">
-                  <th className="font-medium pe-4 py-1">
+                  <th className="py-1 pe-4 font-medium">
                     {tParams("iterationIssueTableHeaderParameter")}
                   </th>
-                  <th className="font-medium py-1">
+                  <th className="py-1 font-medium">
                     {tCommon("fields.value")}
                   </th>
                 </tr>
@@ -935,7 +935,7 @@ const ManualResultExpandedDetails = ({
                   }
                   return (
                     <tr key={p.name}>
-                      <td className="pe-4 py-1 font-mono">
+                      <td className="py-1 pe-4 font-mono">
                         {"@"}
                         {p.name}
                       </td>
@@ -1011,12 +1011,12 @@ const JUnitResultExpandedDetails = ({
           <div className="text-xs text-muted-foreground">
             {tCommon("fields.notes")}
           </div>
-          <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 text-sm">
+          <pre className="mt-1 rounded border bg-background p-2 text-sm wrap-break-word whitespace-pre-wrap">
             {details.content}
           </pre>
         </div>
       )}
-      <div className="px-4 py-2 mt-2 bg-muted/50 rounded-md border text-xs space-y-1">
+      <div className="mt-2 space-y-1 rounded-md border bg-muted/50 px-4 py-2 text-xs">
         <div className="font-semibold text-primary">
           {tCommon("actions.automated.details")}
         </div>
@@ -1069,7 +1069,7 @@ const JUnitResultExpandedDetails = ({
             <span className="font-medium">
               {tCommon("fields.systemOutput") + ":"}
             </span>
-            <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
+            <pre className="mt-1 max-h-40 overflow-auto rounded border bg-background p-2 wrap-break-word whitespace-pre-wrap">
               {details.systemOut}
             </pre>
           </div>
@@ -1079,7 +1079,7 @@ const JUnitResultExpandedDetails = ({
             <span className="font-medium">
               {tCommon("fields.systemError") + ":"}
             </span>
-            <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-40 overflow-auto">
+            <pre className="mt-1 max-h-40 overflow-auto rounded border bg-background p-2 wrap-break-word whitespace-pre-wrap">
               {details.systemErr}
             </pre>
           </div>
@@ -1118,7 +1118,7 @@ export default function TestResultHistory(props: TestResultHistoryProps) {
         <div>
           <CardTitle className="flex items-center gap-1">
             {collapseToggle}
-            <History className="w-5 h-5" />
+            <History className="h-5 w-5" />
             {tCases("testResultHistory")}
           </CardTitle>
           <CardDescription>
@@ -1585,7 +1585,7 @@ function TestResultHistoryContent({
         <CardHeader>
           <CardTitle className="flex items-center gap-1">
             {collapseToggle}
-            <History className="w-5 h-5" />
+            <History className="h-5 w-5" />
             {tCases("testResultHistory")}
           </CardTitle>
           <CardDescription>
@@ -1633,7 +1633,7 @@ function TestResultHistoryContent({
         <CardHeader>
           <CardTitle className="flex items-center gap-1">
             {collapseToggle}
-            <History className="w-5 h-5" />
+            <History className="h-5 w-5" />
             {tCases("testResultHistory")}
           </CardTitle>
           <CardDescription>
@@ -1687,7 +1687,7 @@ function TestResultHistoryContent({
             headerCompact && canShowAddToRun ? (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger
-                  className="flex items-center cursor-pointer"
+                  className="flex cursor-pointer items-center"
                   data-testid="result-history-add-to-run"
                 >
                   <PlusSquare className="me-2 h-4 w-4" />
@@ -1744,7 +1744,7 @@ function TestResultHistoryContent({
           <div>
             <CardTitle className="flex items-center gap-1">
               {collapseToggle}
-              <History className="w-5 h-5" />
+              <History className="h-5 w-5" />
               {tCases("testResultHistory")}
             </CardTitle>
             <CardDescription>{tCases("noTestResults")}</CardDescription>
@@ -1832,7 +1832,7 @@ function TestResultHistoryContent({
           }`}
           data-current-run={isCurrentRun || undefined}
         >
-          <TableCell className="px-2 w-8">
+          <TableCell className="w-8 px-2">
             {!result.isPending && (
               <Button
                 type="button"
@@ -1852,23 +1852,23 @@ function TestResultHistoryContent({
             )}
           </TableCell>
           <TableCell className="max-w-[200px]">
-            <div className="flex items-center group">
+            <div className="group flex items-center">
               {result.sourceType === "junit" ? (
                 result.associatedTestRun ? (
-                  <div className="font-medium truncate flex items-center">
+                  <div className="flex items-center truncate font-medium">
                     {result.associatedTestRun.isDeleted ? (
                       <>
-                        <Trash className="w-4 h-4 inline me-1 shrink-0 text-muted-foreground/50" />
+                        <Trash className="me-1 inline h-4 w-4 shrink-0 text-muted-foreground/50" />
                         <span className="truncate text-muted-foreground/50 line-through">
                           {result.associatedTestRun.name}
                         </span>
                       </>
                     ) : (
                       <>
-                        <Bot className="w-4 h-4 inline me-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
+                        <Bot className="me-1 inline h-4 w-4 shrink-0 rounded-full border border-primary p-0.5 text-primary" />
                         <Link
                           href={`/projects/runs/${activeProjectId}/${result.associatedTestRun.id}?selectedCase=${fetchedTestCase.id}&view=status`}
-                          className="hover:underline truncate"
+                          className="truncate hover:underline"
                         >
                           {result.associatedTestRun.name}
                         </Link>
@@ -1876,8 +1876,8 @@ function TestResultHistoryContent({
                     )}
                   </div>
                 ) : (
-                  <div className="font-medium truncate flex items-center">
-                    <Bot className="w-4 h-4 inline me-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
+                  <div className="flex items-center truncate font-medium">
+                    <Bot className="me-1 inline h-4 w-4 shrink-0 rounded-full border border-primary p-0.5 text-primary" />
                     <span className="truncate">
                       {result.testSuiteName || "JUnit Import"}
                     </span>
@@ -1891,8 +1891,8 @@ function TestResultHistoryContent({
                   linkSuffix={`?selectedCase=${fetchedTestCase.id}&view=status`}
                 />
               ) : (
-                <div className="font-medium truncate flex items-center">
-                  <PlayCircle className="w-4 h-4 inline me-1 shrink-0" />
+                <div className="flex items-center truncate font-medium">
+                  <PlayCircle className="me-1 inline h-4 w-4 shrink-0" />
                   <span className="truncate">{tCases("unknownRun")}</span>
                 </div>
               )}
@@ -1913,7 +1913,7 @@ function TestResultHistoryContent({
               {result.associatedTestRun &&
                 !result.associatedTestRun.isDeleted &&
                 result.sourceType !== "junit" && (
-                  <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                 )}
             </div>
           </TableCell>
@@ -2032,7 +2032,7 @@ function TestResultHistoryContent({
                   <TooltipTrigger asChild>
                     <span
                       tabIndex={0}
-                      className="text-muted-foreground inline-flex items-center gap-1"
+                      className="inline-flex items-center gap-1 text-muted-foreground"
                       data-testid="snapshot-unavailable"
                       aria-label={tVersion("snapshotUnavailable", {
                         version: result.testRunCaseVersion,
@@ -2088,11 +2088,11 @@ function TestResultHistoryContent({
               isCurrentRun ? "border-s-2 border-s-primary" : ""
             }`}
           >
-            <TableCell colSpan={12} className="py-0 px-2">
+            <TableCell colSpan={12} className="px-2 py-0">
               {" "}
               {/* ColSpan must match TableHeader column count (12 with iteration icon column) */}
               <Collapsible open={isExpanded}>
-                <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
+                <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
                   <div className="pb-2">
                     <Separator className="my-2" />
                     {/* Run details block — Configuration name (+
@@ -2102,7 +2102,7 @@ function TestResultHistoryContent({
                                   expanded panel so it reads like context
                                   metadata before the result content. */}
                     {result.associatedTestRun?.configuration && (
-                      <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
+                      <div className="mb-2 space-y-1 rounded-md border bg-muted/50 px-4 py-2 text-xs">
                         <div className="font-semibold text-primary">
                           {tParams("iterationResultRunDetails")}
                         </div>
@@ -2153,7 +2153,7 @@ function TestResultHistoryContent({
         <div>
           <CardTitle className="flex items-center gap-1">
             {collapseToggle}
-            <History className="w-5 h-5" />
+            <History className="h-5 w-5" />
             {tCases("testResultHistory")}
           </CardTitle>
           <CardDescription>

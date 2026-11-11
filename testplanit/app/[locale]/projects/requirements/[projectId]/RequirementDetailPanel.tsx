@@ -617,7 +617,7 @@ export default function RequirementDetailPanel({
     label: string
   ) => (
     <div className="flex items-center">
-      <Icon className="w-5 h-5 me-2" />
+      <Icon className="me-2 h-5 w-5" />
       <div>{label}</div>
     </div>
   );
@@ -835,7 +835,7 @@ export default function RequirementDetailPanel({
                     />
                   </FormControl>
                 ) : (
-                  <div className="text-muted-foreground text-sm">
+                  <div className="text-sm text-muted-foreground">
                     {t("documentationEmpty")}
                   </div>
                 )}
@@ -881,7 +881,7 @@ export default function RequirementDetailPanel({
           // not arrived (or failed): "uncovered" is a claim about the data,
           // and this surface must not make it on the strength of a pending
           // request. The list column takes the same position.
-          <span className="text-sm text-muted-foreground pl-2">
+          <span className="pl-2 text-sm text-muted-foreground">
             {coverageIsLoading ? tCommon("loading") : "—"}
           </span>
         )}

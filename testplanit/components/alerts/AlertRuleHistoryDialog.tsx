@@ -105,7 +105,7 @@ export function AlertRuleHistoryDialog({
         enableResizing: true,
         size: 180,
         cell: ({ row }) => (
-          <div className="whitespace-nowrap text-sm">
+          <div className="text-sm whitespace-nowrap">
             <DateFormatter
               date={row.original.firedAt}
               formatString={`${preferences?.dateFormat || "MM-dd-yyyy"} ${preferences?.timeFormat || "HH:mm"}`}

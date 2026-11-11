@@ -356,7 +356,7 @@ export function ShareLinkList({
           return (
             <Badge
               variant="secondary"
-              className="text-xs w-fit max-w-full min-w-0 whitespace-nowrap"
+              className="w-fit max-w-full min-w-0 text-xs whitespace-nowrap"
               title={mode}
             >
               <span className="truncate">{mode}</span>
@@ -381,7 +381,7 @@ export function ShareLinkList({
           return share.snapshot ? (
             <Badge
               variant="secondary"
-              className="gap-1 text-xs w-fit whitespace-nowrap"
+              className="w-fit gap-1 text-xs whitespace-nowrap"
               data-testid="share-data-frozen"
             >
               <Snowflake className="h-3 w-3 shrink-0" />
@@ -390,7 +390,7 @@ export function ShareLinkList({
           ) : (
             <Badge
               variant="outline"
-              className="gap-1 text-xs w-fit whitespace-nowrap"
+              className="w-fit gap-1 text-xs whitespace-nowrap"
               data-testid="share-data-live"
             >
               <ChartNoAxesColumnIcon className="h-3 w-3 shrink-0" />
@@ -457,7 +457,7 @@ export function ShareLinkList({
         enableSorting: true,
         size: 130,
         cell: ({ row }) => (
-          <div className="text-sm text-muted-foreground whitespace-nowrap">
+          <div className="text-sm whitespace-nowrap text-muted-foreground">
             <DateFormatter
               date={row.original.createdAt}
               formatString={dateFormat}
@@ -649,9 +649,9 @@ export function ShareLinkList({
 
   if (!shares || shares.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
+      <div className="py-8 text-center text-muted-foreground">
         <p>{t("empty.title")}</p>
-        <p className="text-sm mt-1">{t("empty.description")}</p>
+        <p className="mt-1 text-sm">{t("empty.description")}</p>
       </div>
     );
   }

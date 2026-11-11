@@ -265,7 +265,7 @@ export function useAlertRuleColumns({
         enableResizing: true,
         size: 380,
         cell: ({ row }) => (
-          <div className="min-w-0 whitespace-normal text-sm">
+          <div className="min-w-0 text-sm whitespace-normal">
             <div className="text-xs font-medium text-muted-foreground">
               {ctx.metricLabel(row.original)}
             </div>
@@ -344,7 +344,7 @@ export function useAlertRuleColumns({
         size: 170,
         cell: ({ row }) =>
           row.original.lastFiredAt ? (
-            <div className="whitespace-nowrap text-sm">
+            <div className="text-sm whitespace-nowrap">
               <DateFormatter
                 date={row.original.lastFiredAt}
                 formatString={`${preferences?.dateFormat || "MM-dd-yyyy"} ${preferences?.timeFormat || "HH:mm"}`}

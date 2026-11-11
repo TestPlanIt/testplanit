@@ -227,7 +227,7 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
             type="button"
             onClick={toggleCollapse}
             variant="secondary"
-            className="p-0 -ms-1 rounded-s-none"
+            className="-ms-1 rounded-s-none p-0"
             aria-label={
               isCollapsed
                 ? t("common.actions.expand")
@@ -239,7 +239,7 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
         </div>
         <ResizablePanel id="home-right" order={2} defaultSize={50} minSize={20}>
           {(session?.user.access != "NONE" || projectCount === 0) && (
-            <Card data-testid="dashboard-card" className="w-full h-full">
+            <Card data-testid="dashboard-card" className="h-full w-full">
               <CardHeader id="your-projects-header">
                 <CardTitle>
                   <SectionHeader className="items-center justify-between">
@@ -247,7 +247,7 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
                   </SectionHeader>
                 </CardTitle>
                 <div className="mb-2 flex items-center">
-                  <Boxes className="w-5 h-5 me-1" />
+                  <Boxes className="me-1 h-5 w-5" />
                   {t("home.dashboard.projects", { count: projectCount })}
                 </div>
               </CardHeader>

@@ -402,8 +402,8 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   // NOW check if project exists - only after loading is complete
   if (!project) {
     return (
-      <Card className="flex flex-col w-full min-w-[400px] h-full">
-        <CardContent className="flex flex-col items-center justify-center h-full">
+      <Card className="flex h-full w-full min-w-[400px] flex-col">
+        <CardContent className="flex h-full flex-col items-center justify-center">
           <PageTitle className="mb-2">
             {t("common.errors.projectNotFound")}
           </PageTitle>
@@ -493,7 +493,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
 
     return (
       <Card className="flex w-full min-w-[400px]">
-        <div className="flex-1 w-full">
+        <div className="w-full flex-1">
           <CardHeader id="milestones-page-header">
             <div className="flex items-center justify-between gap-2">
               <SectionHeader className="flex items-center gap-2">
@@ -609,11 +609,11 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full">
                 <TabsTrigger value="active" className="w-1/2">
-                  <CircleDot className="h-4 w-4 me-2" />
+                  <CircleDot className="me-2 h-4 w-4" />
                   {t("common.fields.isActive")}
                 </TabsTrigger>
                 <TabsTrigger value="completed" className="w-1/2">
-                  <CircleCheck className="h-4 w-4 me-2" />
+                  <CircleCheck className="me-2 h-4 w-4" />
                   {t("common.fields.completed")}
                 </TabsTrigger>
               </TabsList>

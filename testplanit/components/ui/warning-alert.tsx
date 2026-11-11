@@ -37,7 +37,7 @@ const WarningAlert = React.forwardRef<
   <Alert
     ref={ref}
     className={cn(
-      "border-warning/50 bg-warning/15 text-foreground [&>svg]:text-warning-text [&_h5]:text-warning-text",
+      "border-warning/50 bg-warning/15 text-foreground [&_h5]:text-warning-text [&>svg]:text-warning-text",
       className
     )}
     {...props}

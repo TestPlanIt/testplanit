@@ -817,7 +817,7 @@ export function UserDashboard() {
       <div
         data-testid="no-items-message"
         id="dashboard-header"
-        className="text-primary text-center py-8 flex flex-col items-center justify-start gap-3 h-full w-full"
+        className="flex h-full w-full flex-col items-center justify-start gap-3 py-8 text-center text-primary"
       >
         <Star className="h-12 w-12 animate-bounce fill-primary/20" />
         <span>{t("home.dashboard.noItems")}</span>
@@ -833,7 +833,7 @@ export function UserDashboard() {
           </SectionHeader>
         </CardTitle>
         {showCalendar && scheduleSummary && (
-          <CardDescription className="text-xs text-muted-foreground mt-1 flex flex-col gap-0.5">
+          <CardDescription className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
             <div>
               <span className="font-semibold">
                 {t("home.dashboard.totalWorkEffort")}
@@ -897,26 +897,26 @@ export function UserDashboard() {
         {hasRuns && (
           <div className="space-y-2">
             <h3 className="flex items-center gap-1 font-semibold">
-              <CirclePlay className="w-5 h-5 text-muted-foreground" />
+              <CirclePlay className="h-5 w-5 text-muted-foreground" />
               {t("home.dashboard.yourPendingRuns", {
                 count: runsRequiringAttention.length,
               })}
             </h3>
             <div className="space-y-4 ps-6">
               {runsRequiringAttention.map((run) => (
-                <div key={run.id} className="border p-3 rounded-md">
+                <div key={run.id} className="rounded-md border p-3">
                   <div className="mb-2 flex items-center justify-between gap-2">
                     {/* Access project directly as it's included */}
                     <Link
                       href={`/projects/runs/${run.project.id}/${run.id}`}
-                      className="font-medium hover:underline flex items-center gap-1 group max-w-[75%]"
+                      className="group flex max-w-[75%] items-center gap-1 font-medium hover:underline"
                     >
                       <span className="truncate">{run.name}</span>
                       {run.compositionLockedAt && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="ms-1 shrink-0">
-                              <Lock className="w-3 h-3 text-muted-foreground" />
+                              <Lock className="h-3 w-3 text-muted-foreground" />
                             </span>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -924,12 +924,12 @@ export function UserDashboard() {
                           </TooltipContent>
                         </Tooltip>
                       )}
-                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                     </Link>
                     <PendingReviewBadge
                       pendingRequest={pendingReviewsByRunId.get(run.id)}
                     />
-                    <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">
+                    <span className="ms-2 max-w-[25%] truncate text-xs text-muted-foreground">
                       {run.project.name}
                     </span>
                   </div>
@@ -947,27 +947,27 @@ export function UserDashboard() {
         {hasSessions && (
           <div className="space-y-2">
             <h3 className="flex items-center gap-1 font-semibold">
-              <Compass className="w-5 h-5 text-muted-foreground" />
+              <Compass className="h-5 w-5 text-muted-foreground" />
               {t("home.dashboard.yourActiveSessions", {
                 count: userActiveSessions.length,
               })}
             </h3>
             <div className="space-y-4 ps-6">
               {(userActiveSessions as SessionWithProject[])?.map((session) => (
-                <div key={session.id} className="border p-3 rounded-md">
+                <div key={session.id} className="rounded-md border p-3">
                   <div className="mb-2 flex items-center justify-between gap-2">
                     {/* Access project directly as it's included */}
                     <Link
                       href={`/projects/sessions/${session.project.id}/${session.id}`}
-                      className="font-medium hover:underline flex items-center gap-1 group max-w-[75%]"
+                      className="group flex max-w-[75%] items-center gap-1 font-medium hover:underline"
                     >
                       <span className="truncate">{session.name}</span>
-                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                     </Link>
                     <PendingReviewBadge
                       pendingRequest={pendingReviewsBySessionId.get(session.id)}
                     />
-                    <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">
+                    <span className="ms-2 max-w-[25%] truncate text-xs text-muted-foreground">
                       {session.project.name}
                     </span>
                   </div>

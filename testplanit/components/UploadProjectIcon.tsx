@@ -107,7 +107,7 @@ export default function UploadProjectIcon({
       <CardContent
         className={`flex flex-col items-center justify-center border-2 border-dashed ${
           isDragging ? "border-primary bg-primary/5" : "border-primary/40"
-        } rounded-lg space-y-6 m-6`}
+        } m-6 space-y-6 rounded-lg`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -123,7 +123,7 @@ export default function UploadProjectIcon({
         />
         <label
           htmlFor="project-icon-upload"
-          className="flex flex-col items-center justify-center space-y-2 cursor-pointer"
+          className="flex cursor-pointer flex-col items-center justify-center space-y-2"
         >
           {previewUrl ? (
             <Image
@@ -132,10 +132,10 @@ export default function UploadProjectIcon({
               alt="Project Icon Preview"
               width={64}
               height={64}
-              className="w-16 h-16 rounded"
+              className="h-16 w-16 rounded"
             />
           ) : (
-            <UploadCloudIcon className="w-16 h-16 text-primary" />
+            <UploadCloudIcon className="h-16 w-16 text-primary" />
           )}
           <Button
             variant="outline"

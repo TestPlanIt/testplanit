@@ -27,9 +27,9 @@ export const NoProjectsCard: React.FC<NoProjectsCardProps> = ({
       data-testid="no-projects-card"
     >
       <CardHeader>
-        <CardTitle className="text-primary font-semibold text-xl">
+        <CardTitle className="text-xl font-semibold text-primary">
           <div className="flex items-center gap-2">
-            <UserX className="w-6 h-6" />
+            <UserX className="h-6 w-6" />
             <div>{t("home.noAccess.title")}</div>
           </div>
         </CardTitle>
@@ -43,12 +43,12 @@ export const NoProjectsCard: React.FC<NoProjectsCardProps> = ({
             href="/admin/projects"
             className="flex items-start gap-2 hover:text-primary"
           >
-            <Boxes className="w-6 h-6 shrink-0" />
+            <Boxes className="h-6 w-6 shrink-0" />
             <span>{t("home.noAccess.adminAddProject")}</span>
           </Link>
         ) : (
           <div className="flex items-start gap-2">
-            <Mail className="w-6 h-6 shrink-0" />
+            <Mail className="h-6 w-6 shrink-0" />
             <span>{t("home.noAccess.contact")}</span>
           </div>
         )}

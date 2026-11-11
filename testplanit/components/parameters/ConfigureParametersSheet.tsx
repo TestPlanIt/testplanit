@@ -117,10 +117,10 @@ export function ConfigureParametersSheet({
       >
         <SheetContent
           side="right"
-          className="sm:max-w-3xl w-full p-0 flex flex-col"
+          className="flex w-full flex-col p-0 sm:max-w-3xl"
           data-testid="configure-parameters-sheet"
         >
-          <SheetHeader className="px-6 pt-6 pb-4 border-b">
+          <SheetHeader className="border-b px-6 pt-6 pb-4">
             <SheetTitle className="flex items-center gap-2">
               <SquareStack className="h-5 w-5" aria-hidden />
               {t("sheetTitle")}
@@ -130,7 +130,7 @@ export function ConfigureParametersSheet({
 
           <Tabs
             defaultValue="parameters"
-            className="flex-1 flex flex-col overflow-hidden"
+            className="flex flex-1 flex-col overflow-hidden"
           >
             <TabsList className="mx-6 mt-4 flex w-auto">
               <TabsTrigger
@@ -171,7 +171,7 @@ export function ConfigureParametersSheet({
 
             <TabsContent
               value="parameters"
-              className="flex-1 overflow-auto m-0"
+              className="m-0 flex-1 overflow-auto"
             >
               <ParametersTab
                 caseId={caseId}
@@ -180,7 +180,7 @@ export function ConfigureParametersSheet({
               />
             </TabsContent>
 
-            <TabsContent value="dataset" className="flex-1 overflow-auto m-0">
+            <TabsContent value="dataset" className="m-0 flex-1 overflow-auto">
               {datasetTabDisabled ? null : (
                 <DatasetTab
                   caseId={caseId}
@@ -195,7 +195,7 @@ export function ConfigureParametersSheet({
             </TabsContent>
           </Tabs>
 
-          <div className="px-6 py-4 border-t flex justify-end">
+          <div className="flex justify-end border-t px-6 py-4">
             <Button
               variant="ghost"
               size="sm"

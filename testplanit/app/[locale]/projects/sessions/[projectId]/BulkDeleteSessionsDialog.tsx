@@ -80,8 +80,8 @@ const BulkDeleteSessionsDialog: React.FC<BulkDeleteSessionsDialogProps> = ({
             {t("sessions.bulk.deleteDescription", { count: sessionIds.length })}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex items-start space-x-2 text-destructive-foreground bg-destructive p-2">
-          <TriangleAlert className="w-6 h-6 shrink-0" />
+        <div className="flex items-start space-x-2 bg-destructive p-2 text-destructive-foreground">
+          <TriangleAlert className="h-6 w-6 shrink-0" />
           <p>{t("sessions.delete.warning")}</p>
         </div>
         <AlertDialogFooter>

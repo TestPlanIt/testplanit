@@ -514,14 +514,14 @@ export function TestCaseDetailsView({
   ) =>
     headerCompact ? (
       <>
-        <Icon className="w-5 h-5 shrink-0" />
+        <Icon className="h-5 w-5 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
           {label}
         </span>
       </>
     ) : (
       <div className="flex items-center">
-        <Icon className="w-5 h-5 me-2" />
+        <Icon className="me-2 h-5 w-5" />
         <div>{label}</div>
       </div>
     );
@@ -2270,7 +2270,7 @@ export function TestCaseDetailsView({
       }, 100);
     }
     return (
-      <div className="text-muted-foreground text-center p-4">
+      <div className="p-4 text-center text-muted-foreground">
         {t("repository.cases.notFound")}
       </div>
     );
@@ -2281,11 +2281,11 @@ export function TestCaseDetailsView({
       <form
         ref={setRootRef}
         onSubmit={handleSubmit(handleSave)}
-        className="h-full flex flex-col"
+        className="flex h-full flex-col"
       >
         <div>
           {isSubmitting && (
-            <LoadingSpinnerAlert className="w-[120px] h-[120px] text-primary" />
+            <LoadingSpinnerAlert className="h-[120px] w-[120px] text-primary" />
           )}
           <div className="px-6">
             {!isEditMode && (
@@ -2366,9 +2366,9 @@ export function TestCaseDetailsView({
                   />
                 )}
               </div>
-              <div className="flex items-start justify-between text-primary text-lg md:text-xl max-w-full">
+              <div className="flex max-w-full items-start justify-between text-lg text-primary md:text-xl">
                 {isEditMode && !isSubmitting ? (
-                  <div className="w-full me-6 -mt-2">
+                  <div className="me-6 -mt-2 w-full">
                     <FormField
                       control={control}
                       name="name"
@@ -2387,12 +2387,12 @@ export function TestCaseDetailsView({
                         </FormItem>
                       )}
                     />
-                    <span className="absolute top-0 start-0 ms-[-18px] mt-2.5">
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                    <span className="absolute start-0 top-0 ms-[-18px] mt-2.5">
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-2 w-fit">
+                  <div className="flex w-fit items-center space-x-2">
                     {/* 2.5.8 Target Size: `asChild` renders one anchor with the
                         button's styles. Nesting the button inside the link put
                         a target inside a target, leaving the outer one all but
@@ -2426,7 +2426,7 @@ export function TestCaseDetailsView({
                     />
                   </div>
                 )}
-                <div className="flex items-center space-x-2 w-fit">
+                <div className="flex w-fit items-center space-x-2">
                   {!isEditMode && !headerCompact && (
                     <VersionSelect
                       versions={versions || []}
@@ -2437,7 +2437,7 @@ export function TestCaseDetailsView({
                     />
                   )}
                   {isEditMode && !isSubmitting ? (
-                    <div className="space-y-2 w-full">
+                    <div className="w-full space-y-2">
                       <div className="flex items-center space-x-2">
                         {(() => {
                           // Save-blocked detection: either the strict-
@@ -2515,7 +2515,7 @@ export function TestCaseDetailsView({
                       </div>
                       {errors.root && (
                         <div
-                          className="bg-destructive text-destructive-foreground text-sm p-2"
+                          className="bg-destructive p-2 text-sm text-destructive-foreground"
                           role="alert"
                         >
                           {errors.root.message}
@@ -2523,10 +2523,10 @@ export function TestCaseDetailsView({
                       )}
                       {/* Do not allow deletion of automated test cases */}
                       {!isAutomatedCaseSource(testcase.source) && (
-                        <div className="w-full flex justify-end">
+                        <div className="flex w-full justify-end">
                           <Button
                             variant="destructive"
-                            className={`px-2 py-1 h-auto ${compactActionClass || "w-full"}`}
+                            className={`h-auto px-2 py-1 ${compactActionClass || "w-full"}`}
                             type="button"
                             onClick={() => setIsDeleteCaseOpen(true)}
                           >
@@ -2547,7 +2547,7 @@ export function TestCaseDetailsView({
                       )}
                     </div>
                   ) : headerCompact ? (
-                    <div className="flex items-center space-x-2 justify-end">
+                    <div className="flex items-center justify-end space-x-2">
                       <RequestReviewButton
                         entityType="CASE"
                         entityId={testcase.id}
@@ -2571,7 +2571,7 @@ export function TestCaseDetailsView({
                         <DropdownMenuContent align="end">
                           {canAddEdit && (
                             <DropdownMenuItem
-                              className="flex items-center cursor-pointer"
+                              className="flex cursor-pointer items-center"
                               onClick={handleEditModeToggle}
                               disabled={isLoadingSharedStepGroups}
                               data-testid="edit-test-case-button"
@@ -2582,7 +2582,7 @@ export function TestCaseDetailsView({
                           )}
                           {quickScriptEnabled && canAddEdit && (
                             <DropdownMenuItem
-                              className="flex items-center cursor-pointer"
+                              className="flex cursor-pointer items-center"
                               onClick={() => setIsQuickScriptModalOpen(true)}
                               data-testid="quickscript-case-button"
                             >
@@ -2596,7 +2596,7 @@ export function TestCaseDetailsView({
                             />
                           )}
                           <DropdownMenuItem
-                            className="flex items-center cursor-pointer"
+                            className="flex cursor-pointer items-center"
                             onClick={() => setIsCaseAuditOpen(true)}
                             data-testid="case-actions-activity-log"
                           >
@@ -2606,12 +2606,12 @@ export function TestCaseDetailsView({
                           {versions && versions.length > 1 && (
                             <DropdownMenuSub>
                               <DropdownMenuSubTrigger
-                                className="flex items-center cursor-pointer"
+                                className="flex cursor-pointer items-center"
                                 data-testid="case-actions-version"
                               >
                                 <GitBranch className="me-2 h-4 w-4" />
                                 <span>{t("common.fields.version")}</span>
-                                <Badge className="text-primary-foreground text-xs ms-2">
+                                <Badge className="ms-2 text-xs text-primary-foreground">
                                   {t("common.version.prefix")}
                                   {testcase.currentVersion}
                                 </Badge>
@@ -2620,12 +2620,12 @@ export function TestCaseDetailsView({
                                 {versions.map((v, index) => (
                                   <DropdownMenuItem
                                     key={`kebab-version-${index}`}
-                                    className="flex items-center gap-2 cursor-pointer"
+                                    className="flex cursor-pointer items-center gap-2"
                                     onClick={() =>
                                       viewVersion(v.version.toString())
                                     }
                                   >
-                                    <Badge className="text-primary-foreground text-xs">
+                                    <Badge className="text-xs text-primary-foreground">
                                       {t("common.version.prefix")}
                                       {v.version}
                                     </Badge>
@@ -2671,7 +2671,7 @@ export function TestCaseDetailsView({
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center space-x-2 justify-end">
+                    <div className="flex items-center justify-end space-x-2">
                       <RepositoryCaseAuditLogSheet caseId={testcase.id} />
                       <RequestReviewButton
                         entityType="CASE"
@@ -2693,7 +2693,7 @@ export function TestCaseDetailsView({
                           variant="outline"
                           onClick={() => setIsQuickScriptModalOpen(true)}
                           data-testid="quickscript-case-button"
-                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                          className="group gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
                         >
                           <ScrollText className="h-4 w-4 shrink-0" />
                           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
@@ -2708,7 +2708,7 @@ export function TestCaseDetailsView({
                           onClick={handleEditModeToggle}
                           disabled={isLoadingSharedStepGroups}
                           data-testid="edit-test-case-button"
-                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                          className="group gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
                         >
                           <SquarePen className="h-4 w-4 shrink-0" />
                           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
@@ -2740,10 +2740,10 @@ export function TestCaseDetailsView({
                             section labels (Steps / Attachments / Properties
                             / custom-field display labels).
                           */}
-                          <div className="font-bold text-base text-foreground mb-1 flex items-center">
+                          <div className="mb-1 flex items-center text-base font-bold text-foreground">
                             {t("common.fields.state")}
                             <sup>
-                              <Asterisk className="w-3 h-3 text-destructive" />
+                              <Asterisk className="h-3 w-3 text-destructive" />
                             </sup>{" "}
                           </div>
                           <FormControl>
@@ -2785,7 +2785,7 @@ export function TestCaseDetailsView({
                              error has been picked up by the form context. */}
                           {!transitionCheck.allowed &&
                             transitionCheck.blockingGate && (
-                              <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                              <p className="mt-1 text-[0.8rem] font-medium text-destructive">
                                 {t("reviews.transitionGate.blockedByGate", {
                                   gateName: transitionCheck.blockingGate.name,
                                 })}
@@ -2891,7 +2891,7 @@ export function TestCaseDetailsView({
                 id="case-detail-left"
                 order={1}
                 ref={panelLeftRef}
-                className={`p-0 m-0 min-w-6 ${
+                className={`m-0 min-w-6 p-0 ${
                   isTransitioning
                     ? "transition-all duration-300 ease-in-out"
                     : ""
@@ -2954,14 +2954,14 @@ export function TestCaseDetailsView({
                             // the old text — the restore looks like it dropped
                             // every rich-text field.
                             key={`case-field-${field.caseField.id}-${fieldIndex}-${draftRestoreNonce}`}
-                            className="mb-2 me-6"
+                            className="me-6 mb-2"
                           >
                             {field.caseField.type.type !== "Steps" && (
-                              <div className="font-bold flex items-center">
+                              <div className="flex items-center font-bold">
                                 {field.caseField.displayName}
                                 {isEditMode && field.caseField.isRequired && (
                                   <sup>
-                                    <Asterisk className="w-3 h-3 text-destructive" />
+                                    <Asterisk className="h-3 w-3 text-destructive" />
                                   </sup>
                                 )}
                                 {field.caseField.isRestricted && (
@@ -2969,7 +2969,7 @@ export function TestCaseDetailsView({
                                     title={t("common.aria.restrictedField")}
                                     className="ms-1 text-muted-foreground"
                                   >
-                                    <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                                    <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                                   </span>
                                 )}
                               </div>
@@ -3046,8 +3046,8 @@ export function TestCaseDetailsView({
                     !displayedTemplate?.caseFields?.some(
                       (f) => f.caseField.type.type === "Steps"
                     ) && (
-                      <div className="mb-4 me-6">
-                        <Alert className="border-warning/50 bg-warning/10 mb-2">
+                      <div className="me-6 mb-4">
+                        <Alert className="mb-2 border-warning/50 bg-warning/10">
                           <AlertCircle className="h-4 w-4 text-warning" />
                           <AlertDescription className="text-sm text-warning-text">
                             {t("repository.orphanedStepsWarning", {
@@ -3086,8 +3086,8 @@ export function TestCaseDetailsView({
                     if (orphanedFieldValues.length === 0) return null;
 
                     return (
-                      <div className="mb-4 me-6">
-                        <Alert className="border-warning/50 bg-warning/10 mb-2">
+                      <div className="me-6 mb-4">
+                        <Alert className="mb-2 border-warning/50 bg-warning/10">
                           <AlertCircle className="h-4 w-4 text-warning" />
                           <AlertDescription className="text-sm text-warning-text">
                             {t("repository.orphanedFieldsWarning", {
@@ -3104,7 +3104,7 @@ export function TestCaseDetailsView({
                                 key={`orphaned-field-${cfv.id}-${index}`}
                                 className="mb-2"
                               >
-                                <div className="font-bold flex items-center">
+                                <div className="flex items-center font-bold">
                                   {cfv.field?.displayName || "Unknown Field"}
                                 </div>
                                 <FieldValueRenderer
@@ -3147,10 +3147,10 @@ export function TestCaseDetailsView({
                     <div className="space-y-4">
                       {junitSteps && junitSteps.length > 0 && (
                         <div>
-                          <div className="font-bold mb-1">
+                          <div className="mb-1 font-bold">
                             {t("common.fields.steps")}
                           </div>
-                          <ul className="list-disc ms-6">
+                          <ul className="ms-6 list-disc">
                             {junitSteps.map((step, index) => (
                               <li key={`junit-step-${step.id}-${index}`}>
                                 {step.name}
@@ -3162,10 +3162,10 @@ export function TestCaseDetailsView({
                       )}
                       {junitAttachments && junitAttachments.length > 0 && (
                         <div>
-                          <div className="font-bold mb-1">
+                          <div className="mb-1 font-bold">
                             {t("common.fields.attachments")}
                           </div>
-                          <ul className="list-disc ms-6">
+                          <ul className="ms-6 list-disc">
                             {junitAttachments.map((att, index) => (
                               <li key={`junit-att-${att.id}-${index}`}>
                                 {att.name} {"("}
@@ -3178,10 +3178,10 @@ export function TestCaseDetailsView({
                       )}
                       {junitProperties && junitProperties.length > 0 && (
                         <div>
-                          <div className="font-bold mb-1">
+                          <div className="mb-1 font-bold">
                             {t("common.fields.properties")}
                           </div>
-                          <ul className="list-disc ms-6">
+                          <ul className="ms-6 list-disc">
                             {junitProperties.map((prop, index) => (
                               <li key={`junit-prop-${prop.id}-${index}`}>
                                 {prop.name}
@@ -3206,9 +3206,9 @@ export function TestCaseDetailsView({
                         size="sm"
                         data-testid="toggle-left-panel-button"
                         aria-label={t("common.aria.togglePanel")}
-                        className={`p-0 transform ${
+                        className={`transform p-0 ${
                           isCollapsedLeft
-                            ? "rounded-s-none rotate-180"
+                            ? "rotate-180 rounded-s-none"
                             : "rounded-e-none"
                         }`}
                       >
@@ -3237,10 +3237,10 @@ export function TestCaseDetailsView({
                         size="sm"
                         data-testid="toggle-right-panel-button"
                         aria-label={t("common.aria.togglePanel")}
-                        className={`p-0 transform ${
+                        className={`transform p-0 ${
                           isCollapsedRight
                             ? "rounded-s-none"
-                            : "rounded-e-none rotate-180"
+                            : "rotate-180 rounded-e-none"
                         }`}
                       >
                         <ChevronLeft />

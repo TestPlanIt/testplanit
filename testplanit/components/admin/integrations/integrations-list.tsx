@@ -161,7 +161,7 @@ export function IntegrationsList({
         return (
           <Card
             key={integration.id}
-            className={`flex flex-col h-full ${
+            className={`flex h-full flex-col ${
               isActive
                 ? "border-primary ring-2 ring-primary/20"
                 : isDimmed
@@ -223,7 +223,7 @@ export function IntegrationsList({
                           key={lp.id}
                           className="flex items-center gap-2 text-sm"
                         >
-                          <Badge variant="outline" className="text-xs shrink-0">
+                          <Badge variant="outline" className="shrink-0 text-xs">
                             {lp.externalProjectKey}
                           </Badge>
                           <span className="truncate">
@@ -236,7 +236,7 @@ export function IntegrationsList({
                 )}
             </CardContent>
             <CardFooter>
-              <div className="flex gap-2 w-full">
+              <div className="flex w-full gap-2">
                 {isActive ? (
                   <Button
                     variant="destructive"
@@ -290,7 +290,7 @@ export function IntegrationsList({
                 <p className="font-medium">
                   {t("integration.removeWarningTitle")}
                 </p>
-                <ul className="list-disc ps-5 space-y-1">
+                <ul className="list-disc space-y-1 ps-5">
                   <li>{t("integration.removeWarning1")}</li>
                   <li>{t("integration.removeWarning2")}</li>
                   <li>{t("integration.removeWarning3")}</li>
@@ -333,7 +333,7 @@ export function IntegrationsList({
                 <p className="font-medium">
                   {t("integration.switchWarningTitle")}
                 </p>
-                <ul className="list-disc ps-5 space-y-1 text-destructive">
+                <ul className="list-disc space-y-1 ps-5 text-destructive">
                   <li>{t("integration.switchWarning1")}</li>
                   <li>{t("integration.switchWarning2")}</li>
                   <li>{t("integration.switchWarning3")}</li>

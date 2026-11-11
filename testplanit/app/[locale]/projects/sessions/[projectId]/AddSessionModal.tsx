@@ -883,7 +883,7 @@ export function AddSessionModal({
                       <FormLabel className="flex items-center">
                         {t("common.name")}
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                         <HelpPopover helpKey="session.name" />
                       </FormLabel>
@@ -980,13 +980,13 @@ export function AddSessionModal({
                             fetchOptions={fetchConfigurationOptions}
                             renderOption={(config) => (
                               <div className="flex items-center gap-2">
-                                <Combine className="w-4 h-4" />
+                                <Combine className="h-4 w-4" />
                                 {config.name}
                               </div>
                             )}
                             renderSelectedOption={(config) => (
-                              <span className="flex items-center gap-1 min-w-0">
-                                <Combine className="w-3 h-3 shrink-0" />
+                              <span className="flex min-w-0 items-center gap-1">
+                                <Combine className="h-3 w-3 shrink-0" />
                                 <span className="truncate">{config.name}</span>
                               </span>
                             )}
@@ -1036,7 +1036,7 @@ export function AddSessionModal({
               <div className="flex items-center justify-center">
                 <Separator orientation="vertical" className="h-full" />
               </div>
-              <div className="space-y-4 me-6 max-w-[265px]">
+              <div className="me-6 max-w-[265px] space-y-4">
                 <FormField
                   control={control}
                   name="templateId"
@@ -1045,7 +1045,7 @@ export function AddSessionModal({
                       <FormLabel className="flex items-center">
                         {t("common.fields.template")}
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                         <HelpPopover helpKey="session.template" />
                       </FormLabel>
@@ -1073,7 +1073,7 @@ export function AddSessionModal({
                                       value={template.value}
                                     >
                                       <div className="flex items-center gap-1">
-                                        <LayoutList className="w-4 h-4" />
+                                        <LayoutList className="h-4 w-4" />
                                         {template.label}
                                         {defaultTemplateSource &&
                                           template.value ===
@@ -1117,7 +1117,7 @@ export function AddSessionModal({
                       <FormLabel className="flex items-center">
                         {t("common.fields.state")}
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                         <HelpPopover helpKey="session.state" />
                       </FormLabel>
@@ -1284,7 +1284,7 @@ export function AddSessionModal({
                   )}
                 />
                 <div>
-                  <FormLabel className="flex items-center mb-2">
+                  <FormLabel className="mb-2 flex items-center">
                     {t("common.fields.tags")}
                     <HelpPopover helpKey="session.tags" />
                   </FormLabel>
@@ -1309,7 +1309,7 @@ export function AddSessionModal({
                     <FormMessage />
                   </FormItem>
                 ) : (
-                  <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <AlertTriangle className="h-4 w-4" />
                     {t("common.errors.issueTrackerNotConfigured")}
                   </div>
@@ -1320,7 +1320,7 @@ export function AddSessionModal({
             <DialogFooter>
               {errors.root && (
                 <div
-                  className="w-full text-center bg-destructive text-destructive-foreground text-sm p-2 rounded"
+                  className="w-full rounded bg-destructive p-2 text-center text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

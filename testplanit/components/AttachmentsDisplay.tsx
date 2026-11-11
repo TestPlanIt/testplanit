@@ -184,15 +184,15 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
       {label && <strong>{label}</strong>}
       {previousAttachments && previous !== undefined && current !== previous ? (
         <>
-          <div className="bg-green-500/20 text-green-700 dark:text-green-400 p-1 rounded">
+          <div className="rounded bg-green-500/20 p-1 text-green-700 dark:text-green-400">
             <strong>
-              <Plus className="w-4 h-4" />
+              <Plus className="h-4 w-4" />
             </strong>{" "}
             {current}
           </div>
-          <div className="bg-red-500/20 text-red-700 dark:text-red-400 p-1 rounded">
+          <div className="rounded bg-red-500/20 p-1 text-red-700 dark:text-red-400">
             <strong>
-              <Minus className="w-4 h-4" />
+              <Minus className="h-4 w-4" />
             </strong>{" "}
             {previous}
           </div>
@@ -201,7 +201,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
         <div
           className={
             label === "Description" && !previousAttachments
-              ? "whitespace-pre-wrap max-h-24 overflow-y-auto"
+              ? "max-h-24 overflow-y-auto whitespace-pre-wrap"
               : ""
           }
         >
@@ -212,7 +212,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
   );
 
   return (
-    <div className="h-fit w-full me-12">
+    <div className="me-12 h-fit w-full">
       {sortedAttachments.map((attachment, index) => {
         const previousAttachment = findPreviousAttachment(attachment);
         const isMarkedForDelete = isPendingDelete(attachment.id);
@@ -223,18 +223,18 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
         if (isMarkedForDelete && deferredMode) {
           return (
             <div
-              className="w-full min-w-sm border-2 mb-4 bg-destructive/10 rounded-sm border-destructive items-start opacity-60"
+              className="mb-4 w-full min-w-sm items-start rounded-sm border-2 border-destructive bg-destructive/10 opacity-60"
               key={attachment.id}
             >
-              <div className="p-2 w-full overflow-hidden">
+              <div className="w-full overflow-hidden p-2">
                 <div className="flex items-center gap-2 p-2">
-                  <Trash className="h-5 w-5 text-destructive shrink-0" />
-                  <span className="line-through text-muted-foreground truncate min-w-0 flex-1">
+                  <Trash className="h-5 w-5 shrink-0 text-destructive" />
+                  <span className="min-w-0 flex-1 truncate text-muted-foreground line-through">
                     {attachment.name}
                   </span>
                   <Badge
                     variant="destructive"
-                    className="text-xs text-nowrap shrink-0"
+                    className="shrink-0 text-xs text-nowrap"
                   >
                     {t("common.status.pendingDelete")}
                   </Badge>
@@ -244,7 +244,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="text-nowrap shrink-0"
+                        className="shrink-0 text-nowrap"
                         onClick={(e) => handleUndoDelete(attachment.id, e)}
                       >
                         <Undo2 className="h-4 w-4" />
@@ -263,17 +263,17 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
 
         return (
           <div
-            className="w-full border-2 mb-4 bg-card text-card-foreground rounded-sm items-start border-primary"
+            className="mb-4 w-full items-start rounded-sm border-2 border-primary bg-card text-card-foreground"
             key={attachment.id}
           >
-            <div className="p-2 w-full">
-              <div className="flex flex-col items-center p-2 w-full h-full mb-2">
+            <div className="w-full p-2">
+              <div className="mb-2 flex h-full w-full flex-col items-center p-2">
                 {/* Clickable title - always shows display value (which may include pending edits) */}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
                       onClick={() => handleSelect(sortedAttachments, index)}
-                      className="text-lg font-bold text-center mb-2 cursor-pointer w-full max-w-full truncate [&_div]:truncate"
+                      className="mb-2 w-full max-w-full cursor-pointer truncate text-center text-lg font-bold [&_div]:truncate"
                     >
                       {renderFieldWithDifferences(
                         displayValues.name,
@@ -284,7 +284,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                   <TooltipContent>{displayValues.name}</TooltipContent>
                 </Tooltip>
                 <div
-                  className={`flex w-full max-h-96 overflow-hidden ${
+                  className={`flex max-h-96 w-full overflow-hidden ${
                     attachment.mimeType === "text/uri-list"
                       ? "flex-col"
                       : "flex-col md:flex-row"
@@ -292,7 +292,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                 >
                   <div
                     onClick={() => handleSelect(sortedAttachments, index)}
-                    className={`w-full h-full flex justify-center cursor-pointer ${
+                    className={`flex h-full w-full cursor-pointer justify-center ${
                       attachment.mimeType === "text/uri-list"
                         ? "py-2"
                         : "md:w-2/3"
@@ -308,17 +308,17 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                     }
                     className={
                       attachment.mimeType === "text/uri-list"
-                        ? "w-full bg-primary/50 my-1"
-                        : "h-full bg-primary/50 m-1"
+                        ? "my-1 w-full bg-primary/50"
+                        : "m-1 h-full bg-primary/50"
                     }
                   />
                   <div
-                    className={`w-full flex flex-col justify-start items-start p-4 overflow-hidden ${
+                    className={`flex w-full flex-col items-start justify-start overflow-hidden p-4 ${
                       attachment.mimeType === "text/uri-list" ? "" : "md:w-1/3"
                     }`}
                   >
                     <div
-                      className={`text-start min-w-[50px] w-full ${
+                      className={`w-full min-w-[50px] text-start ${
                         attachment.mimeType === "text/uri-list"
                           ? "grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-x-6 gap-y-2"
                           : "space-y-2"
@@ -343,7 +343,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                 },
                               }));
                             }}
-                            className="w-full mt-1 px-2 py-1 text-sm border rounded-md bg-background text-foreground"
+                            className="mt-1 w-full rounded-md border bg-background px-2 py-1 text-sm text-foreground"
                             aria-label={t("common.name")}
                           />
                         ) : (
@@ -367,13 +367,13 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                 },
                               }));
                             }}
-                            className="w-full mt-1 text-sm min-h-[60px]"
+                            className="mt-1 min-h-[60px] w-full text-sm"
                             placeholder={t(
                               "common.fields.description_placeholder"
                             )}
                           />
                         ) : (
-                          <div className="w-full max-h-24 overflow-y-auto whitespace-pre-wrap">
+                          <div className="max-h-24 w-full overflow-y-auto whitespace-pre-wrap">
                             {displayValues.note || t("common.access.none")}
                           </div>
                         )}
@@ -381,11 +381,11 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                       {attachment.mimeType !== "text/uri-list" && (
                         <Separator className="w-full" />
                       )}
-                      <div className="text-sm truncate">
+                      <div className="truncate text-sm">
                         <strong>{t("common.fields.size")}</strong>{" "}
                         {filesize(Number(attachment.size))}
                       </div>
-                      <div className="text-sm truncate">
+                      <div className="truncate text-sm">
                         <strong>{t("common.fields.created")}</strong>
                         <div className="truncate">
                           <DateFormatter
@@ -399,16 +399,16 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                           />
                         </div>
                       </div>
-                      <div className="text-sm truncate">
+                      <div className="truncate text-sm">
                         <strong>{t("common.fields.createdBy")}</strong>
                         <UserNameCell userId={attachment.createdById} />
                       </div>
-                      <div className="flex space-x-2 items-end">
+                      <div className="flex items-end space-x-2">
                         {attachment.mimeType !== "text/uri-list" ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Link
-                                className="inline-flex h-9 items-center justify-center rounded-md px-3 bg-primary text-primary-foreground hover:bg-primary/90"
+                                className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-primary-foreground hover:bg-primary/90"
                                 href={
                                   getStorageUrlClient(attachment.url) ||
                                   attachment.url
@@ -442,7 +442,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                             </PopoverTrigger>
                             <PopoverContent className="w-fit" side="bottom">
                               {t("attachments.delete.deferredMessage")}
-                              <div className="flex items-start justify-between gap-4 mt-2">
+                              <div className="mt-2 flex items-start justify-between gap-4">
                                 <Button
                                   type="button"
                                   variant="secondary"
@@ -485,22 +485,22 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
           ) {
             return (
               <div
-                className="w-full border-2 mb-4 bg-red-500/10 dark:bg-red-500/20 rounded-sm border-primary items-start min-w-[260px]"
+                className="mb-4 w-full min-w-[260px] items-start rounded-sm border-2 border-primary bg-red-500/10 dark:bg-red-500/20"
                 key={prevAttachment.id}
               >
                 <div className="relative">
-                  <div className="absolute top-2 start-2 text-red-700 dark:text-red-400 text-xl">
-                    <Minus className="w-4 h-4" />
+                  <div className="absolute start-2 top-2 text-xl text-red-700 dark:text-red-400">
+                    <Minus className="h-4 w-4" />
                   </div>
                 </div>
-                <div className="p-2 w-full">
-                  <div className="flex flex-col items-center p-2 w-full h-full mb-2">
-                    <div className="text-lg font-bold text-center mb-2 cursor-pointer">
+                <div className="w-full p-2">
+                  <div className="mb-2 flex h-full w-full flex-col items-center p-2">
+                    <div className="mb-2 cursor-pointer text-center text-lg font-bold">
                       {prevAttachment.name}
                     </div>
-                    <div className="flex flex-col md:flex-row w-full h-80 overflow-hidden">
-                      <div className="md:w-2/3 flex flex-col h-full">
-                        <div className="w-full h-full flex justify-center cursor-pointer">
+                    <div className="flex h-80 w-full flex-col overflow-hidden md:flex-row">
+                      <div className="flex h-full flex-col md:w-2/3">
+                        <div className="flex h-full w-full cursor-pointer justify-center">
                           <AttachmentPreview
                             attachment={prevAttachment}
                             size="large"
@@ -509,24 +509,24 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                       </div>
                       <Separator
                         orientation="vertical"
-                        className="h-full bg-primary/50 m-1"
+                        className="m-1 h-full bg-primary/50"
                       />
-                      <div className="md:w-1/3 w-full flex flex-col justify-start items-start p-4 overflow-hidden h-fit">
-                        <div className="text-start space-y-2 min-w-[50px] w-full">
-                          <div className="text-sm truncate">
+                      <div className="flex h-fit w-full flex-col items-start justify-start overflow-hidden p-4 md:w-1/3">
+                        <div className="w-full min-w-[50px] space-y-2 text-start">
+                          <div className="truncate text-sm">
                             <strong>{t("common.fields.description")}</strong>
-                            <div className="w-full h-20 max-h-24 md:max-h-48 overflow-auto">
+                            <div className="h-20 max-h-24 w-full overflow-auto md:max-h-48">
                               {prevAttachment.note
                                 ? prevAttachment.note
                                 : t("common.access.none")}
                             </div>
                           </div>
                           <Separator className="w-full" />
-                          <div className="text-sm truncate">
+                          <div className="truncate text-sm">
                             <strong>{t("common.fields.size")}</strong>{" "}
                             {filesize(Number(prevAttachment.size))}
                           </div>
-                          <div className="text-sm truncate">
+                          <div className="truncate text-sm">
                             <strong>{t("common.fields.created")}</strong>
                             <div className="truncate">
                               <DateFormatter
@@ -540,11 +540,11 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                               />
                             </div>
                           </div>
-                          <div className="text-sm truncate">
+                          <div className="truncate text-sm">
                             <strong>{t("common.fields.createdBy")}</strong>
                             <UserNameCell userId={prevAttachment.createdById} />
                           </div>
-                          <div className="flex space-x-2 mt-4">
+                          <div className="mt-4 flex space-x-2">
                             <Tooltip>
                               <TooltipTrigger type="button">
                                 <Button type="button" className="mt-4">
@@ -556,7 +556,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                     download={prevAttachment.name}
                                     target="_blank"
                                   >
-                                    <Download className="inline w-5 h-5" />
+                                    <Download className="inline h-5 w-5" />
                                   </Link>
                                 </Button>
                               </TooltipTrigger>

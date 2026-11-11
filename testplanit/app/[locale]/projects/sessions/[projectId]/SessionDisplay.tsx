@@ -616,7 +616,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
     if (row.kind === "item") {
       const testSession = row.item;
       return (
-        <div className="pe-4 ps-4" style={indent}>
+        <div className="ps-4 pe-4" style={indent}>
           <SessionItem
             testSession={testSession}
             isCompleted={testSession.isCompleted}
@@ -642,7 +642,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
     if (row.kind === "unscheduled-header") {
       const isOpen = !collapsedGroups.has(UNSCHEDULED_GROUP_KEY);
       return (
-        <div className="@container milestone-grid bg-primary/10 p-4">
+        <div className="milestone-grid @container bg-primary/10 p-4">
           <div className="milestone-name flex items-center gap-1">
             <MilestoneGroupChevron
               isOpen={isOpen}
@@ -652,11 +652,11 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                 else setGroupOpen(UNSCHEDULED_GROUP_KEY, !isOpen);
               }}
             />
-            <DynamicIcon name="calendar-off" className="w-6 h-6 shrink-0" />
+            <DynamicIcon name="calendar-off" className="h-6 w-6 shrink-0" />
             <div className="truncate">{t("noMilestone")}</div>
             <Badge
               variant="outline"
-              className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-foreground"
+              className="hidden shrink-0 text-xs font-normal text-foreground @lg:inline-flex"
               data-testid="milestone-group-count-unscheduled"
             >
               {tCommon("configurationGroup.candidateInGroupSession", {
@@ -696,14 +696,14 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 
     return (
       <div
-        className="@container milestone-grid bg-primary/10 p-2 pe-4"
+        className="milestone-grid @container bg-primary/10 p-2 pe-4"
         style={indent}
       >
-        <div className="flex items-center gap-1 justify-start min-w-0">
+        <div className="flex min-w-0 items-center justify-start gap-1">
           {row.depth > 0 && (
             <DynamicIcon
               name="corner-down-right"
-              className="w-6 h-6 text-primary shrink-0 bg-transparent"
+              className="h-6 w-6 shrink-0 bg-transparent text-primary"
             />
           )}
           {/* Only the chevron toggles: the header also holds the milestone
@@ -717,12 +717,12 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
               else setGroupOpen(groupKey, !isOpen);
             }}
           />
-          <div className="truncate min-w-0">
+          <div className="min-w-0 truncate">
             <MilestoneIconAndName milestone={milestone} />
           </div>
           <Badge
             variant="outline"
-            className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-foreground"
+            className="hidden shrink-0 text-xs font-normal text-foreground @lg:inline-flex"
             data-testid={`milestone-group-count-${milestone.id}`}
           >
             {tCommon("configurationGroup.candidateInGroupSession", {
@@ -731,7 +731,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
           </Badge>
         </div>
 
-        <div className="milestone-status flex gap-2 justify-center">
+        <div className="milestone-status flex justify-center gap-2">
           <Badge
             data-status-surface
             style={{
@@ -853,12 +853,12 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   );
 
   return (
-    <div className="flex flex-col items-center w-full">
+    <div className="flex w-full flex-col items-center">
       <div className="w-full">
-        <div className="flex flex-col w-full">
+        <div className="flex w-full flex-col">
           {bulkBar}
           {displayMode === "active" ? (
-            <div className="w-full bg-muted rounded-lg pb-2">
+            <div className="w-full rounded-lg bg-muted pb-2">
               <WindowVirtualizedList
                 items={sessionListRows}
                 getKey={(row) => row.key}

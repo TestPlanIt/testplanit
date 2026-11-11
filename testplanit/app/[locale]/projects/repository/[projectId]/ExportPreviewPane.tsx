@@ -127,7 +127,7 @@ export function ExportPreviewPane({
     const totalCount = parallelProgress.length;
 
     return (
-      <div className="space-y-4 w-full min-h-0 flex flex-col">
+      <div className="flex min-h-0 w-full flex-col space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {t("generatingParallelProgress", {
@@ -142,33 +142,33 @@ export function ExportPreviewPane({
           )}
         </div>
 
-        <div className="space-y-1.5 min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="min-h-0 flex-1 space-y-1.5 overflow-x-hidden overflow-y-auto">
           {parallelProgress.map((file) => {
             const snippet = fileStreamingSnippets?.[file.caseId];
             return (
               <div
                 key={file.caseId}
-                className="rounded-md border overflow-hidden"
+                className="overflow-hidden rounded-md border"
               >
-                <div className="flex items-center gap-3 px-3 py-2 min-w-0">
+                <div className="flex min-w-0 items-center gap-3 px-3 py-2">
                   {file.status === "pending" && (
-                    <Circle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                    <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" />
                   )}
                   {file.status === "generating" && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
                   )}
                   {file.status === "done" && (
-                    <Check className="h-4 w-4 text-success shrink-0" />
+                    <Check className="h-4 w-4 shrink-0 text-success" />
                   )}
                   {file.status === "error" && (
-                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
                   )}
-                  <FileCode className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm truncate flex-1 min-w-0">
+                  <FileCode className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate text-sm">
                     {file.caseName}
                   </span>
                   {file.status === "error" && file.error && (
-                    <span className="text-xs text-destructive truncate max-w-40">
+                    <span className="max-w-40 truncate text-xs text-destructive">
                       {file.error}
                     </span>
                   )}
@@ -186,7 +186,7 @@ export function ExportPreviewPane({
                     )}
                 </div>
                 {file.status === "generating" && snippet && (
-                  <pre className="bg-stone-800 text-muted-foreground text-[11px] leading-tight px-3 py-1.5 max-h-14 overflow-hidden border-t">
+                  <pre className="max-h-14 overflow-hidden border-t bg-stone-800 px-3 py-1.5 text-[11px] leading-tight text-muted-foreground">
                     <code>{snippet.slice(-300)}</code>
                   </pre>
                 )}
@@ -196,7 +196,7 @@ export function ExportPreviewPane({
         </div>
 
         {/* Progress bar */}
-        <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-2 overflow-hidden rounded-full bg-muted">
           <div
             className="h-full bg-primary transition-all duration-300"
             style={{ width: `${(doneCount / totalCount) * 100}%` }}
@@ -209,7 +209,7 @@ export function ExportPreviewPane({
   // Spinner: generating but streaming hasn't produced any text yet
   if (isGenerating && results.length === 0 && !hasStreamingContent) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 space-y-3">
+      <div className="flex flex-col items-center justify-center space-y-3 py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           {batchCount != null
@@ -278,19 +278,19 @@ export function ExportPreviewPane({
             <div className="space-y-4">
               {results.map((result, index) => (
                 <div key={result.caseId}>
-                  <div className="flex items-center justify-between mb-2 min-w-0">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <FileCode className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm font-medium truncate">
+                  <div className="mb-2 flex min-w-0 items-center justify-between">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <FileCode className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate text-sm font-medium">
                         {result.caseName}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex shrink-0 items-center gap-2">
                       <Badge
                         variant={
                           result.generatedBy === "ai" ? "default" : "secondary"
                         }
-                        className="flex items-center gap-1 ms-2"
+                        className="ms-2 flex items-center gap-1"
                       >
                         {result.generatedBy === "ai"
                           ? t("aiGenerated")
@@ -350,7 +350,7 @@ export function ExportPreviewPane({
                   </div>
                   <CodeBlock code={result.code} language={prismLanguage} />
                   {result.truncated && (
-                    <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs">
+                    <div className="mt-2 flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                       {t("truncatedWarning")}
                     </div>
@@ -366,7 +366,7 @@ export function ExportPreviewPane({
               {/* Next case currently streaming */}
               {hasStreamingContent && (
                 <div>
-                  <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+                  <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     <span>{t("generating")}</span>
                   </div>
@@ -445,7 +445,7 @@ function SingleResultView({
   return (
     <div className="relative">
       {result.generatedBy === "template" && onRetry && (
-        <div className="flex items-center gap-2 mb-2">
+        <div className="mb-2 flex items-center gap-2">
           <Badge variant="secondary" className="flex items-center gap-1">
             {t("fallbackBadge")}
             {result.error && (
@@ -477,7 +477,7 @@ function SingleResultView({
         </div>
       )}
       {result.truncated && (
-        <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs">
+        <div className="mb-2 flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           {t("truncatedWarning")}
         </div>
@@ -501,7 +501,7 @@ function ContextFilesList({ files }: { files: string[] }) {
   if (files.length === 0) return null;
   return (
     <Collapsible className="mt-2">
-      <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+      <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
         <ChevronDown className="h-3 w-3 -rotate-90 transition-transform group-data-[state=open]:rotate-0" />
         {t("contextFiles", { count: files.length })}
       </CollapsibleTrigger>
@@ -510,7 +510,7 @@ function ContextFilesList({ files }: { files: string[] }) {
           {files.map((f) => (
             <li
               key={f}
-              className="text-xs text-muted-foreground font-mono truncate"
+              className="truncate font-mono text-xs text-muted-foreground"
             >
               {f}
             </li>

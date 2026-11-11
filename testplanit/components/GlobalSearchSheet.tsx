@@ -69,7 +69,7 @@ export function GlobalSearchSheet({ isOpen, onClose }: GlobalSearchSheetProps) {
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent
-        className="sm:max-w-3xl overflow-y-auto"
+        className="overflow-y-auto sm:max-w-3xl"
         data-testid="global-search-sheet"
       >
         <SheetHeader>
@@ -88,7 +88,7 @@ export function GlobalSearchSheet({ isOpen, onClose }: GlobalSearchSheetProps) {
               <PopoverContent
                 side="bottom"
                 align="start"
-                className="w-96 max-h-fit overflow-y-auto text-sm"
+                className="max-h-fit w-96 overflow-y-auto text-sm"
               >
                 <SearchHelpContent />
               </PopoverContent>

@@ -217,7 +217,7 @@ export default function SessionVersionPage() {
   if (!currentVersion) {
     router.push(`/projects/sessions/${projectId}/${sessionId}`);
     return (
-      <div className="text-muted-foreground text-center p-4">
+      <div className="p-4 text-center text-muted-foreground">
         <div>{t("sessions.version.notFound")}</div>
       </div>
     );
@@ -226,8 +226,8 @@ export default function SessionVersionPage() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle className="w-full pe-4 me-4">
+        <div className="flex items-start justify-between">
+          <CardTitle className="me-4 w-full pe-4">
             {(() => {
               const hasNameChanged =
                 currentVersion?.name !== previousVersion?.name;
@@ -236,20 +236,20 @@ export default function SessionVersionPage() {
               return (
                 <div className="space-y-2">
                   <div
-                    className={`text-xl md:text-2xl flex items-center gap-1 w-fit
-                    ${showNameDiff ? "text-green-600 bg-green-100 p-2 rounded" : ""}`}
+                    className={`flex w-fit items-center gap-1 text-xl md:text-2xl
+                    ${showNameDiff ? "rounded bg-green-100 p-2 text-green-600" : ""}`}
                   >
                     {showNameDiff && (
                       <span>
-                        <Plus className="w-4 h-4" />
+                        <Plus className="h-4 w-4" />
                       </span>
                     )}
                     {currentVersion?.name}
                   </div>
                   {showNameDiff && (
-                    <div className="text-xl md:text-2xl flex items-center gap-1 text-red-600 bg-red-100 p-2 rounded w-fit">
+                    <div className="flex w-fit items-center gap-1 rounded bg-red-100 p-2 text-xl text-red-600 md:text-2xl">
                       <span>
-                        <Minus className="w-4 h-4" />
+                        <Minus className="h-4 w-4" />
                       </span>
                       {previousVersion?.name}
                     </div>
@@ -258,7 +258,7 @@ export default function SessionVersionPage() {
               );
             })()}
           </CardTitle>
-          <div className="flex items-center space-x-2 w-fit">
+          <div className="flex w-fit items-center space-x-2">
             {versions?.length && versions.length > 1 && (
               <>
                 <Select
@@ -287,11 +287,11 @@ export default function SessionVersionPage() {
                         value={index.toString()}
                       >
                         <div className="flex items-center space-x-1 whitespace-nowrap">
-                          <Badge className="text-primary-foreground text-xs">
+                          <Badge className="text-xs text-primary-foreground">
                             {t("common.version.prefix")}
                             {v.version.toString()}{" "}
                           </Badge>
-                          <div className="text-xs flex">
+                          <div className="flex text-xs">
                             <DateFormatter
                               date={v.createdAt}
                               formatString={
@@ -376,9 +376,9 @@ export default function SessionVersionPage() {
                   onClick={toggleCollapseLeft}
                   variant="secondary"
                   size="sm"
-                  className={`p-0 transform ${
+                  className={`transform p-0 ${
                     isCollapsedLeft
-                      ? "rounded-s-none rotate-180"
+                      ? "rotate-180 rounded-s-none"
                       : "rounded-e-none"
                   }`}
                 >
@@ -403,10 +403,10 @@ export default function SessionVersionPage() {
                   onClick={toggleCollapseRight}
                   variant="secondary"
                   size="sm"
-                  className={`p-0 transform ${
+                  className={`transform p-0 ${
                     isCollapsedRight
                       ? "rounded-s-none"
-                      : "rounded-e-none rotate-180"
+                      : "rotate-180 rounded-e-none"
                   }`}
                 >
                   <ChevronLeft />
@@ -531,8 +531,8 @@ export default function SessionVersionPage() {
               />
               <Separator className="my-4" />
 
-              <div className="mb-1 me-6">
-                <div className="font-bold mt-2">
+              <div className="me-6 mb-1">
+                <div className="mt-2 font-bold">
                   {t("sessions.version.versionInfo.created", {
                     number: typeof version === "number" ? version : 0,
                   })}
@@ -559,8 +559,8 @@ export default function SessionVersionPage() {
               />
               {versions?.length && versions.length > 1 && (
                 <>
-                  <div className="mb-2 me-6">
-                    <div className="font-bold mt-2">
+                  <div className="me-6 mb-2">
+                    <div className="mt-2 font-bold">
                       <Link
                         href={`/projects/sessions/${projectId}/${sessionId}`}
                         className="group"
@@ -569,7 +569,7 @@ export default function SessionVersionPage() {
                         {t("sessions.version.versionInfo.latestUpdated", {
                           number: versions[0].version,
                         })}
-                        <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                       </Link>
                     </div>
                     <div className="flex space-x-1">

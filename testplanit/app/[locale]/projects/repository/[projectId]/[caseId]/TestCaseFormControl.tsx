@@ -99,7 +99,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             <FormField
               name="estimate"
               render={({ field }) => (
-                <li className="mb-2 me-6">
+                <li className="me-6 mb-2">
                   <label htmlFor="estimate" className="font-bold">
                     {t("common.fields.estimate")}
                   </label>
@@ -128,7 +128,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             <FormField
               name="automated"
               render={({ field }) => (
-                <li className="mb-2 me-6">
+                <li className="me-6 mb-2">
                   <div className="flex items-center gap-1">
                     <label htmlFor="automated" className="font-bold">
                       {t("common.fields.automated")}
@@ -161,7 +161,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               name="tags"
               render={({ field }) => (
                 <li className="mt-2">
-                  <div id="tags-label" className="font-bold mb-1">
+                  <div id="tags-label" className="mb-1 font-bold">
                     {t("common.fields.tags")}
                   </div>
                   <div aria-labelledby="tags-label">
@@ -185,7 +185,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               name="issues"
               render={({ field }) => (
                 <li className="mt-2">
-                  <div id="issues-label" className="font-bold mb-1">
+                  <div id="issues-label" className="mb-1 font-bold">
                     {t("common.fields.issues")}
                   </div>
                   <div aria-labelledby="issues-label">
@@ -213,7 +213,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               )}
             />
             <li className="mt-2">
-              <div id="attachments-label" className="font-bold mt-2">
+              <div id="attachments-label" className="mt-2 font-bold">
                 {t("common.fields.attachments")}
               </div>
               <div aria-labelledby="attachments-label">
@@ -241,7 +241,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
         ) : (
           <>
             {testcase.estimate != null && testcase.estimate > 0 && (
-              <li className="mb-2 me-6">
+              <li className="me-6 mb-2">
                 <div id="estimate-display" className="font-bold">
                   {t("common.fields.estimate")}
                 </div>
@@ -249,7 +249,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   <TooltipTrigger asChild>
                     <div
                       aria-labelledby="estimate-display"
-                      className="cursor-default w-fit"
+                      className="w-fit cursor-default"
                     >
                       <DurationDisplay seconds={testcase.estimate} />
                     </div>
@@ -274,7 +274,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               testcase.forecastManual > 0) ||
               (testcase.forecastAutomated != null &&
                 testcase.forecastAutomated > 0)) && (
-              <li className="mb-2 me-6">
+              <li className="me-6 mb-2">
                 <div id="forecast-display" className="font-bold">
                   {t("common.fields.forecast")}
                 </div>
@@ -302,7 +302,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             )}
 
             {riskScoringEnabled && testcase?.riskScore != null && (
-              <li className="mb-2 me-6">
+              <li className="me-6 mb-2">
                 <div id="risk-score-display" className="font-bold">
                   {t("risk.score")}
                 </div>
@@ -338,11 +338,11 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             />
             {testcaseTags.length > 0 && (
               <li className="mt-2">
-                <div id="tags-display" className="font-bold mb-1">
+                <div id="tags-display" className="mb-1 font-bold">
                   {t("common.fields.tags")}
                 </div>
                 <div
-                  className="flex flex-wrap w-fit mb-4"
+                  className="mb-4 flex w-fit flex-wrap"
                   aria-labelledby="tags-display"
                   role="list"
                 >
@@ -350,7 +350,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                     <div
                       key={tag.id}
                       className={
-                        isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                        isSubmitting ? "cursor-not-allowed opacity-50" : ""
                       }
                       role="listitem"
                     >
@@ -371,11 +371,11 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             )}
             {testcaseIssues.length > 0 && (
               <li className="mt-2">
-                <div id="issues-display" className="font-bold mb-1">
+                <div id="issues-display" className="mb-1 font-bold">
                   {t("common.fields.issues")}
                 </div>
                 <div
-                  className="flex flex-col gap-2 w-full max-w-full mb-4"
+                  className="mb-4 flex w-full max-w-full flex-col gap-2"
                   aria-labelledby="issues-display"
                   role="list"
                 >
@@ -384,7 +384,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                       key={issue.id}
                       className={
                         isSubmitting
-                          ? "opacity-50 cursor-not-allowed w-full"
+                          ? "w-full cursor-not-allowed opacity-50"
                           : "w-full"
                       }
                       role="listitem"
@@ -417,7 +417,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             )}
             {testcase.attachments.length > 0 && (
               <li className="mt-2">
-                <div id="attachments-display" className="font-bold mt-2">
+                <div id="attachments-display" className="mt-2 font-bold">
                   {t("common.fields.attachments")}
                 </div>
                 <div aria-labelledby="attachments-display">
@@ -460,7 +460,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                 </li>
               )}
             {!isEditMode && !isSubmitting && session?.user && (
-              <li id="comments" className="mt-2 me-1">
+              <li id="comments" className="me-1 mt-2">
                 <CommentsSection
                   projectId={testcase.projectId}
                   entityType="repositoryCase"

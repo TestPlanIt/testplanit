@@ -299,7 +299,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
               name="isDefault"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex flex-row items-center space-x-3 space-y-0">
+                  <div className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -307,7 +307,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                         disabled={role.isDefault}
                       />
                     </FormControl>
-                    <FormLabel className="flex items-center mt-0!">
+                    <FormLabel className="mt-0! flex items-center">
                       {t("common.fields.default")}
                       <HelpPopover helpKey="role.isDefault" />
                     </FormLabel>
@@ -339,7 +339,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
             />
 
             {/* Permissions Section */}
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-4 border-t pt-4">
               <SectionTitle>
                 {t("admin.roles.edit.permissionsTitle")}
               </SectionTitle>
@@ -349,7 +349,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                   {applicationAreaValues.map((area) => (
                     <div
                       key={area}
-                      className="flex justify-between items-center"
+                      className="flex items-center justify-between"
                     >
                       <Skeleton className="h-5 w-1/3" />
                       <div className="flex gap-4">
@@ -363,14 +363,14 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
               ) : (
                 // Actual Permissions Table
                 <table className="w-full border-collapse border-2">
-                  <thead className="bg-primary/10 border">
+                  <thead className="border bg-primary/10">
                     <tr className="border-b">
                       <th className="p-2 text-start text-sm font-medium">
                         {t("admin.roles.edit.areaHeader")}
                       </th>
                       {/* Add/Edit Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center gap-1 justify-center">
+                        <Label className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={
                               getHeaderCheckboxState("canAddEdit").checked
@@ -398,7 +398,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                       </th>
                       {/* Delete Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center gap-1 justify-center">
+                        <Label className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={
                               getHeaderCheckboxState("canDelete").checked
@@ -425,7 +425,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                       </th>
                       {/* Close Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center gap-1 justify-center">
+                        <Label className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={getHeaderCheckboxState("canClose").checked}
                             onCheckedChange={(checked) =>
@@ -448,7 +448,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                       </th>
                       {/* Approve Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center gap-1 justify-center">
+                        <Label className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={
                               getHeaderCheckboxState("canApprove").checked
@@ -475,7 +475,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                       </th>
                       {/* Read Sensitive Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center gap-1 justify-center">
+                        <Label className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={
                               getHeaderCheckboxState("canReadSensitive").checked
@@ -548,13 +548,13 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             <span className="font-medium">{tAreas(area)}</span>
                           </td>
                           {/* Add/Edit Switch */}
-                          <td className="p-2 align-middle text-center">
+                          <td className="p-2 text-center align-middle">
                             {showAddEdit ? (
                               <FormField
                                 control={control}
                                 name={`permissions.${area}.canAddEdit`}
                                 render={({ field }) => (
-                                  <FormItem className="flex justify-center items-center space-x-0 space-y-0">
+                                  <FormItem className="flex items-center justify-center space-y-0 space-x-0">
                                     <FormControl>
                                       <Switch
                                         checked={field.value}
@@ -570,13 +570,13 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             )}
                           </td>
                           {/* Delete Switch */}
-                          <td className="p-2 align-middle text-center">
+                          <td className="p-2 text-center align-middle">
                             {showDelete ? (
                               <FormField
                                 control={control}
                                 name={`permissions.${area}.canDelete`}
                                 render={({ field }) => (
-                                  <FormItem className="flex justify-center items-center space-x-0 space-y-0">
+                                  <FormItem className="flex items-center justify-center space-y-0 space-x-0">
                                     <FormControl>
                                       <Switch
                                         checked={field.value}
@@ -592,13 +592,13 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             )}
                           </td>
                           {/* Close Switch */}
-                          <td className="p-2 align-middle text-center">
+                          <td className="p-2 text-center align-middle">
                             {showClose ? (
                               <FormField
                                 control={control}
                                 name={`permissions.${area}.canClose`}
                                 render={({ field }) => (
-                                  <FormItem className="flex justify-center items-center space-x-0 space-y-0">
+                                  <FormItem className="flex items-center justify-center space-y-0 space-x-0">
                                     <FormControl>
                                       <Switch
                                         checked={field.value}
@@ -614,13 +614,13 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             )}
                           </td>
                           {/* Approve Switch */}
-                          <td className="p-2 align-middle text-center">
+                          <td className="p-2 text-center align-middle">
                             {showCanApprove ? (
                               <FormField
                                 control={control}
                                 name={`permissions.${area}.canApprove`}
                                 render={({ field }) => (
-                                  <FormItem className="flex justify-center items-center space-x-0 space-y-0">
+                                  <FormItem className="flex items-center justify-center space-y-0 space-x-0">
                                     <FormControl>
                                       <Switch
                                         checked={field.value}
@@ -636,13 +636,13 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             )}
                           </td>
                           {/* Read Sensitive Switch */}
-                          <td className="p-2 align-middle text-center">
+                          <td className="p-2 text-center align-middle">
                             {showCanReadSensitive ? (
                               <FormField
                                 control={control}
                                 name={`permissions.${area}.canReadSensitive`}
                                 render={({ field }) => (
-                                  <FormItem className="flex justify-center items-center space-x-0 space-y-0">
+                                  <FormItem className="flex items-center justify-center space-y-0 space-x-0">
                                     <FormControl>
                                       <Switch
                                         checked={field.value}
@@ -668,7 +668,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
             <DialogFooter>
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

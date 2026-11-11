@@ -338,7 +338,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
             onToggle={toggle}
             testId="linked-cases-collapse-toggle"
           />
-          <Link2 className="w-5 h-5" />
+          <Link2 className="h-5 w-5" />
           {tLinkedCases("title")}
         </CardTitle>
         {canManageLinks && (
@@ -349,7 +349,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
               size="sm"
               onClick={() => setIsModalOpen(true)}
             >
-              <Plus className="w-4 h-4" />{" "}
+              <Plus className="h-4 w-4" />{" "}
               {tGlobal("common.upload.attachments.link.addButton")}
             </Button>
             {isModalOpen && (
@@ -366,13 +366,13 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       {!collapsed && (
         <CardContent className="p-0">
           {!links || links.length === 0 ? (
-            <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm">
+            <div className="ms-4 -mt-6 mb-4 text-sm text-muted-foreground">
               {tLinkedCases("noLinkedCases")}
             </div>
           ) : (
             // Fixed layout, or a long header grows its own column and runs
             // off the card instead of truncating.
-            <Table className="table-fixed w-full">
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[34%] truncate">
@@ -438,14 +438,14 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex min-w-0 items-center gap-2">
                             <CaseResultStatus
                               caseId={otherCase.id}
                               statusName={latestResult?.statusName}
                               statusColor={latestResult?.statusColor}
                               testRunId={latestResult?.testRunId}
                               projectId={projectId ?? otherCase.projectId}
-                              className="flex items-center space-x-1 min-w-0"
+                              className="flex min-w-0 items-center space-x-1"
                               nameClassName="truncate text-xs"
                             />
                             {latestResult && (
@@ -456,11 +456,11 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span
-                                      className="text-muted-foreground shrink-0 inline-flex"
+                                      className="inline-flex shrink-0 text-muted-foreground"
                                       aria-label={tLinkedCases("at")}
                                       data-testid={`linked-case-executed-at-${link.id}`}
                                     >
-                                      <Calendar className="w-4 h-4" />
+                                      <Calendar className="h-4 w-4" />
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent side="top">
@@ -512,7 +512,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                                   aria-label={tGlobal("common.actions.remove")}
                                   onClick={() => setOpenPopoverLinkId(link.id)}
                                 >
-                                  <X className="w-4 h-4" />
+                                  <X className="h-4 w-4" />
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-fit" side="bottom">
@@ -525,7 +525,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                                     variant="secondary"
                                     onClick={() => setOpenPopoverLinkId(null)}
                                   >
-                                    <CircleSlash2 className="w-4 h-4" />
+                                    <CircleSlash2 className="h-4 w-4" />
                                     {tGlobal("common.cancel")}
                                   </Button>
                                   <Button
@@ -533,7 +533,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                                     variant="destructive"
                                     onClick={() => handleUnlink(link.id)}
                                   >
-                                    <Trash className="w-4 h-4" />
+                                    <Trash className="h-4 w-4" />
                                     {tGlobal("common.actions.remove")}
                                   </Button>
                                 </div>
@@ -617,7 +617,7 @@ function AddLinkDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="block mb-1 font-medium">
+            <label className="mb-1 block font-medium">
               {tLinkedCases("testCase")}
             </label>
             <AsyncCombobox
@@ -645,7 +645,7 @@ function AddLinkDialog({
                 <Button
                   type="button"
                   variant="outline"
-                  className="justify-start text-start w-full"
+                  className="w-full justify-start text-start"
                 >
                   {value ? (
                     <span className="flex items-center gap-1 overflow-hidden">
@@ -655,7 +655,7 @@ function AddLinkDialog({
                         <ListChecks className="h-4 w-4 shrink-0" />
                       )}
                       <span
-                        className="truncate whitespace-nowrap overflow-hidden"
+                        className="truncate overflow-hidden whitespace-nowrap"
                         style={{ maxWidth: 400 }}
                       >
                         {value.name}
@@ -669,7 +669,7 @@ function AddLinkDialog({
             />
           </div>
           <div>
-            <label className="block mb-1 font-medium">
+            <label className="mb-1 block font-medium">
               {tLinkedCases("linkType")}
             </label>
             <Select
@@ -694,7 +694,7 @@ function AddLinkDialog({
               </p>
             )}
           </div>
-          {error && <div className="text-destructive text-sm">{error}</div>}
+          {error && <div className="text-sm text-destructive">{error}</div>}
         </div>
         <DialogFooter>
           <Button onClick={handleSubmit}>

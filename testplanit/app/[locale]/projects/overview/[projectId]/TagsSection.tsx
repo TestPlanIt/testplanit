@@ -57,7 +57,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
 
   if (isLoadingTags) {
     return (
-      <div className="flex justify-center items-center py-8">
+      <div className="flex items-center justify-center py-8">
         <LoadingSpinner />
       </div>
     );
@@ -69,8 +69,8 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 min-h-[300px]">
+    <div className="flex h-full flex-col">
+      <div className="min-h-[300px] flex-1">
         <BubbleChart
           tags={filteredTags}
           onTagClick={handleTagClickNavigation}

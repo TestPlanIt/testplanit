@@ -315,7 +315,7 @@ export function QueueJobsView({
           <div className="flex justify-end gap-2">
             <Button
               variant="ghost"
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               onClick={() => setSelectedJob(job)}
               disabled={actionInProgress === job.id}
             >
@@ -324,7 +324,7 @@ export function QueueJobsView({
             {job.state === "failed" && (
               <Button
                 variant="ghost"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={() => performJobAction(job.id, "retry")}
                 disabled={actionInProgress === job.id}
               >
@@ -334,7 +334,7 @@ export function QueueJobsView({
             {job.state === "delayed" && (
               <Button
                 variant="ghost"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={() => performJobAction(job.id, "promote")}
                 disabled={actionInProgress === job.id}
               >
@@ -344,7 +344,7 @@ export function QueueJobsView({
             {job.state === "active" && job.cancellable === true && (
               <Button
                 variant="ghost"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={() => performJobAction(job.id, "cancel")}
                 disabled={actionInProgress === job.id}
                 aria-label={t("cancelJob.button")}
@@ -355,7 +355,7 @@ export function QueueJobsView({
             )}
             <Button
               variant="destructive"
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               onClick={() => performJobAction(job.id, "remove")}
               disabled={actionInProgress === job.id}
             >
@@ -424,7 +424,7 @@ export function QueueJobsView({
         </CardHeader>
         <CardContent>
           {jobs.length === 0 && !loading ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="py-8 text-center text-muted-foreground">
               {t("noJobs")}
             </div>
           ) : (
@@ -439,7 +439,7 @@ export function QueueJobsView({
 
               {/* Pagination */}
               {total > PAGE_SIZE && (
-                <div className="flex items-center justify-between mt-4">
+                <div className="mt-4 flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
                     {tGlobal("common.pagination.showing")} {startIndex}
                     {"-"} {endIndex} {tGlobal("common.of")} {total}
@@ -477,7 +477,7 @@ export function QueueJobsView({
       {/* Job Details Dialog */}
       {selectedJob && (
         <Dialog open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
-          <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogContent className="max-h-[80vh] max-w-3xl">
             <DialogHeader>
               <DialogTitle>
                 {t("details.title")} - {selectedJob.name}
@@ -490,7 +490,7 @@ export function QueueJobsView({
             <ScrollArea className="max-h-[60vh]">
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">
+                  <h4 className="mb-2 text-sm font-semibold">
                     {tGlobal("common.fields.state")}
                   </h4>
                   {getStateBadge(selectedJob.state)}
@@ -498,10 +498,10 @@ export function QueueJobsView({
 
                 {selectedJob.failedReason && (
                   <div>
-                    <h4 className="text-sm font-semibold mb-2 text-destructive">
+                    <h4 className="mb-2 text-sm font-semibold text-destructive">
                       {t("details.failedReason")}
                     </h4>
-                    <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
+                    <pre className="overflow-x-auto rounded bg-muted p-3 text-sm">
                       {selectedJob.failedReason}
                     </pre>
                   </div>
@@ -510,40 +510,40 @@ export function QueueJobsView({
                 {selectedJob.stacktrace &&
                   selectedJob.stacktrace.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold mb-2 text-destructive">
+                      <h4 className="mb-2 text-sm font-semibold text-destructive">
                         {t("details.stacktrace")}
                       </h4>
-                      <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
+                      <pre className="overflow-x-auto rounded bg-muted p-3 text-sm">
                         {selectedJob.stacktrace.join("\n")}
                       </pre>
                     </div>
                   )}
 
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">
+                  <h4 className="mb-2 text-sm font-semibold">
                     {t("details.data")}
                   </h4>
-                  <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
+                  <pre className="overflow-x-auto rounded bg-muted p-3 text-sm">
                     {JSON.stringify(selectedJob.data, null, 2)}
                   </pre>
                 </div>
 
                 {selectedJob.returnvalue && (
                   <div>
-                    <h4 className="text-sm font-semibold mb-2">
+                    <h4 className="mb-2 text-sm font-semibold">
                       {t("details.returnValue")}
                     </h4>
-                    <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
+                    <pre className="overflow-x-auto rounded bg-muted p-3 text-sm">
                       {JSON.stringify(selectedJob.returnvalue, null, 2)}
                     </pre>
                   </div>
                 )}
 
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">
+                  <h4 className="mb-2 text-sm font-semibold">
                     {t("details.options")}
                   </h4>
-                  <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
+                  <pre className="overflow-x-auto rounded bg-muted p-3 text-sm">
                     {JSON.stringify(selectedJob.opts, null, 2)}
                   </pre>
                 </div>
@@ -607,7 +607,7 @@ export function QueueJobsView({
               </div>
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="mt-4 flex justify-end gap-2">
             <Button
               variant="outline"
               onClick={() => {

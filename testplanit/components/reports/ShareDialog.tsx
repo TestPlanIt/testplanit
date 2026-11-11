@@ -273,7 +273,7 @@ export function ShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="flex h-[90vh] max-w-4xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>{t("dialogTitle")}</DialogTitle>
           <DialogDescription>{t("dialogDescription")}</DialogDescription>
@@ -282,9 +282,9 @@ export function ShareDialog({
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "create" | "list")}
-          className="flex-1 flex flex-col min-h-0"
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <TabsList className="grid w-full grid-cols-2 shrink-0">
+          <TabsList className="grid w-full shrink-0 grid-cols-2">
             <TabsTrigger data-testid="share-tab-create" value="create">
               {t("tabs.create")}
             </TabsTrigger>
@@ -295,7 +295,7 @@ export function ShareDialog({
 
           <TabsContent
             value="create"
-            className="space-y-4 mt-4 flex-1 min-h-0 overflow-y-auto px-0.5"
+            className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto px-0.5"
           >
             {error && (
               <Alert variant="destructive">
@@ -363,7 +363,7 @@ export function ShareDialog({
                   className={cn(
                     "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
                     mode === "AUTHENTICATED" &&
-                      "bg-primary/10 border-primary/40"
+                      "border-primary/40 bg-primary/10"
                   )}
                   onClick={() => {
                     setMode("AUTHENTICATED");
@@ -379,7 +379,7 @@ export function ShareDialog({
                   <div className="flex-1">
                     <Label
                       htmlFor="authenticated"
-                      className="font-medium cursor-pointer"
+                      className="cursor-pointer font-medium"
                     >
                       {t("shareMode.authenticated.title")}
                     </Label>
@@ -395,7 +395,7 @@ export function ShareDialog({
                   className={cn(
                     "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
                     mode === "PASSWORD_PROTECTED" &&
-                      "bg-primary/10 border-primary/40"
+                      "border-primary/40 bg-primary/10"
                   )}
                   onClick={() => {
                     setMode("PASSWORD_PROTECTED");
@@ -411,7 +411,7 @@ export function ShareDialog({
                   <div className="flex-1">
                     <Label
                       htmlFor="password"
-                      className="font-medium cursor-pointer"
+                      className="cursor-pointer font-medium"
                     >
                       {t("shareMode.passwordProtected.title")}
                     </Label>
@@ -428,7 +428,7 @@ export function ShareDialog({
                 <div
                   className={cn(
                     "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
-                    mode === "PUBLIC" && "bg-primary/10 border-primary/40"
+                    mode === "PUBLIC" && "border-primary/40 bg-primary/10"
                   )}
                   onClick={() => {
                     setMode("PUBLIC");
@@ -444,7 +444,7 @@ export function ShareDialog({
                   <div className="flex-1">
                     <Label
                       htmlFor="public"
-                      className="font-medium cursor-pointer"
+                      className="cursor-pointer font-medium"
                     >
                       {t("shareMode.public.title")}
                     </Label>
@@ -463,7 +463,7 @@ export function ShareDialog({
                   <Label htmlFor="password-input" className="flex items-center">
                     {tCommon("fields.password")}
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   </Label>
                   <Input
@@ -494,7 +494,7 @@ export function ShareDialog({
                   >
                     {tCommon("fields.confirmPassword")}
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   </Label>
                   <Input
@@ -541,7 +541,7 @@ export function ShareDialog({
                     autoFocus
                   />
                   {expiresAt && (
-                    <div className="p-3 border-t">
+                    <div className="border-t p-3">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -568,7 +568,7 @@ export function ShareDialog({
                 onCheckedChange={(checked) => setNotifyOnView(checked === true)}
               />
               <div className="-mt-1">
-                <Label htmlFor="notify" className="font-medium cursor-pointer">
+                <Label htmlFor="notify" className="cursor-pointer font-medium">
                   {t("notifyOnView.label")}
                 </Label>
                 <p className="text-sm text-muted-foreground">
@@ -611,7 +611,7 @@ export function ShareDialog({
 
           <TabsContent
             value="list"
-            className="mt-4 flex-1 min-h-0 overflow-y-auto"
+            className="mt-4 min-h-0 flex-1 overflow-y-auto"
           >
             {/* A user's own shares: everyone here is the same creator. */}
             <ShareLinkList

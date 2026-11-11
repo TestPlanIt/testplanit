@@ -65,7 +65,7 @@ export function getColumns({
       meta: { isPinned: "left" },
       size: 250,
       cell: ({ row }) => (
-        <div className="bg-primary-foreground flex items-center gap-2">
+        <div className="flex items-center gap-2 bg-primary-foreground">
           <CodeRepositoryName
             name={row.original.name}
             nameClassName="font-medium"
@@ -199,11 +199,11 @@ export function getColumns({
       size: 100,
       meta: { isPinned: "right" },
       cell: ({ row }) => (
-        <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
+        <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
           <Button
             variant="outline"
             size="icon"
-            className="px-2 py-1 h-auto"
+            className="h-auto px-2 py-1"
             onClick={() => onEdit(row.original)}
             aria-label={tCommon("actions.edit")}
           >
@@ -212,7 +212,7 @@ export function getColumns({
           <Button
             variant="destructive"
             size="icon"
-            className="px-2 py-1 h-auto"
+            className="h-auto px-2 py-1"
             onClick={() => onDelete(row.original)}
             aria-label={tCommon("actions.delete")}
           >

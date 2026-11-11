@@ -102,7 +102,7 @@ export const useColumns = (
           const access = row.original.mappedAccess;
           if (!access) {
             return (
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 {tGroups("mappedAccessNone")}
               </span>
             );
@@ -127,7 +127,7 @@ export const useColumns = (
           const deleteButton = (
             <Button
               variant="destructive"
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               onClick={() => onDeleteGroup?.(row.original)}
               disabled={isScimManaged}
               aria-label={t("actions.delete")}
@@ -136,10 +136,10 @@ export const useColumns = (
             </Button>
           );
           return (
-            <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
+            <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
               <Button
                 variant="ghost"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={() => onEditGroup?.(row.original)}
                 aria-label={t("actions.edit")}
                 data-testid={`admin-group-edit-${row.original.id}`}

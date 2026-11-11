@@ -19,7 +19,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   return (
     <div>
-      <SectionHeader className="flex items-center gap-2 pb-3 pt-1.5">
+      <SectionHeader className="flex items-center gap-2 pt-1.5 pb-3">
         <CardTitle>{t("projects.overview.title")}</CardTitle>
         <ProjectInfoPopover project={project} dateFormat={dateFormat} />
       </SectionHeader>

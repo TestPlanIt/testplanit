@@ -25,7 +25,7 @@ export function IterationOverrideBanner({
       className="mx-4 my-2 flex items-start gap-3"
       data-testid="iteration-override-banner"
     >
-      <Pencil className="h-4 w-4 mt-0.5 shrink-0" />
+      <Pencil className="mt-0.5 h-4 w-4 shrink-0" />
       <AlertDescription className="flex-1">
         {t("iterationOverrideBanner")}
         {onViewHistory && (

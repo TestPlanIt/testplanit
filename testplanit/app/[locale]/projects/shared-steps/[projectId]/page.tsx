@@ -87,7 +87,7 @@ function TestCaseCount({ groupId, t }: { groupId: number; t: any }) {
   });
   const count = steps?.length ?? 0;
   const label = isLoading ? (
-    <LoadingSpinner className="inline-block align-middle w-3 h-3" />
+    <LoadingSpinner className="inline-block h-3 w-3 align-middle" />
   ) : (
     t("testCasesUsing", { count })
   );
@@ -98,11 +98,11 @@ function TestCaseCount({ groupId, t }: { groupId: number; t: any }) {
           {label}
         </span>
       </PopoverTrigger>
-      <PopoverContent className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)] lg:w-[400px]">
+      <PopoverContent className="flex max-h-[calc(100vh-400px)] flex-wrap items-center overflow-auto lg:w-[400px]">
         <div>
           {steps && steps.length > 0 ? (
             steps.map((testcase: any) => (
-              <Badge key={testcase.id} className="mb-1 me-1">
+              <Badge key={testcase.id} className="me-1 mb-1">
                 <CaseDisplay
                   id={testcase.id}
                   name={testcase.name}
@@ -114,7 +114,7 @@ function TestCaseCount({ groupId, t }: { groupId: number; t: any }) {
               </Badge>
             ))
           ) : isLoading ? (
-            <LoadingSpinner className="inline-block align-middle w-4 h-4" />
+            <LoadingSpinner className="inline-block h-4 w-4 align-middle" />
           ) : (
             <span className="text-xs text-muted-foreground">
               {t("noTestCases")}
@@ -387,18 +387,18 @@ export default function SharedStepsPage() {
               minSize={15}
               maxSize={50}
             >
-              <div className="h-full bg-primary-foreground p-4 flex flex-col">
+              <div className="flex h-full flex-col bg-primary-foreground p-4">
                 {canEdit && (
-                  <div className="mb-4 flex justify-center gap-2 @container">
+                  <div className="@container mb-4 flex justify-center gap-2">
                     <Button
                       variant="outline"
                       data-testid="manual-shared-steps-btn"
                       onClick={() => setManualDialogOpen(true)}
                       aria-label={t("manualEntry.buttonLabel")}
-                      className="group gap-0 transition-all duration-200 @sm:gap-2 hover:gap-2"
+                      className="group gap-0 transition-all duration-200 hover:gap-2 @sm:gap-2"
                     >
                       <CirclePlus className="h-4 w-4 shrink-0" />
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 @sm:max-w-xs group-hover:max-w-xs">
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs @sm:max-w-xs">
                         {t("manualEntry.buttonLabel")}
                       </span>
                     </Button>
@@ -417,10 +417,10 @@ export default function SharedStepsPage() {
                       data-testid="import-shared-steps-btn"
                       onClick={() => setImportWizardOpen(true)}
                       aria-label={t("importWizard.title")}
-                      className="group gap-0 transition-all duration-200 @sm:gap-2 hover:gap-2"
+                      className="group gap-0 transition-all duration-200 hover:gap-2 @sm:gap-2"
                     >
                       <Upload className="h-4 w-4 shrink-0" />
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 @sm:max-w-xs group-hover:max-w-xs">
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs @sm:max-w-xs">
                         {t("importWizard.title")}
                       </span>
                     </Button>
@@ -441,7 +441,7 @@ export default function SharedStepsPage() {
                     <Link
                       href={`/projects/shared-steps/${projectId}/step-duplicates`}
                     >
-                      <Search className="w-4 h-4" />
+                      <Search className="h-4 w-4" />
                       {t("findStepDuplicates")}
                     </Link>
                   </Button>
@@ -466,7 +466,7 @@ export default function SharedStepsPage() {
                         <li
                           key={group.id}
                           id={`shared-step-group-${group.id}`}
-                          className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors min-h-10 h-10 ${selectedGroupId === group.id ? "bg-primary/10" : "hover:bg-muted"}`}
+                          className={`flex h-10 min-h-10 cursor-pointer items-center gap-2 rounded p-2 transition-colors ${selectedGroupId === group.id ? "bg-primary/10" : "hover:bg-muted"}`}
                           style={{ boxSizing: "border-box" }}
                           onClick={() => {
                             setSelectedGroupId(group.id);
@@ -475,7 +475,7 @@ export default function SharedStepsPage() {
                           }}
                           data-testid={`shared-step-group-${group.id}`}
                         >
-                          <Layers className="w-5 h-5 text-primary" />
+                          <Layers className="h-5 w-5 text-primary" />
                           <span
                             className="flex-1 truncate"
                             data-testid="group-name"
@@ -483,7 +483,7 @@ export default function SharedStepsPage() {
                             {group.name}
                           </span>
                           <span
-                            className="text-xs text-muted-foreground ms-2"
+                            className="ms-2 text-xs text-muted-foreground"
                             data-testid="group-steps-count"
                           >
                             {t("stepsCount", {
@@ -504,7 +504,7 @@ export default function SharedStepsPage() {
                                 }}
                                 data-testid="delete-group-btn"
                               >
-                                <Trash className="w-4 h-4 text-destructive" />
+                                <Trash className="h-4 w-4 text-destructive" />
                               </Button>
                             )}
                         </li>
@@ -517,20 +517,20 @@ export default function SharedStepsPage() {
             <ResizableHandle withHandle />
             {/* Right Pane: Steps Display/Edit */}
             <ResizablePanel id="shared-steps-right" defaultSize={70}>
-              <div className="h-full p-6 overflow-y-auto">
+              <div className="h-full overflow-y-auto p-6">
                 {!selectedGroup ? (
-                  <div className="text-muted-foreground text-center mt-20">
+                  <div className="mt-20 text-center text-muted-foreground">
                     {t("selectGroupPrompt")}
                   </div>
                 ) : (
                   <Card>
                     <CardContent className="p-6">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Layers className="w-6 h-6 text-primary" />
+                      <div className="mb-4 flex items-center gap-2">
+                        <Layers className="h-6 w-6 text-primary" />
                         {editMode ? (
                           <>
                             <Input
-                              className="border rounded px-2 py-1 text-lg flex-1"
+                              className="flex-1 rounded border px-2 py-1 text-lg"
                               value={editGroupName}
                               onChange={(e) => setEditGroupName(e.target.value)}
                               data-testid="edit-group-name-input-main"
@@ -547,7 +547,7 @@ export default function SharedStepsPage() {
                                   variant="outline"
                                   data-testid="cancel-edit-group-btn"
                                 >
-                                  <CircleSlash2 className="w-4 h-4" />
+                                  <CircleSlash2 className="h-4 w-4" />
                                   {tCommon("cancel")}
                                 </Button>
                                 <Button
@@ -556,7 +556,7 @@ export default function SharedStepsPage() {
                                   variant="default"
                                   data-testid="save-group-btn"
                                 >
-                                  <Save className="w-4 h-4" />
+                                  <Save className="h-4 w-4" />
                                   {saving
                                     ? tCommon("actions.saving")
                                     : tCommon("actions.save")}
@@ -570,7 +570,7 @@ export default function SharedStepsPage() {
                                 variant="destructive"
                                 data-testid="delete-group-btn-main"
                               >
-                                <Trash className="w-4 h-4" />
+                                <Trash className="h-4 w-4" />
                                 {tCommon("actions.delete")}
                               </Button>
                             )}
@@ -578,7 +578,7 @@ export default function SharedStepsPage() {
                         ) : (
                           <>
                             <span
-                              className="font-bold text-lg flex-1"
+                              className="flex-1 text-lg font-bold"
                               data-testid="selected-group-name"
                             >
                               {selectedGroup.name}
@@ -589,7 +589,7 @@ export default function SharedStepsPage() {
                                 onClick={() => setEditMode(true)}
                                 data-testid="edit-group-name-btn-main"
                               >
-                                <SquarePen className="w-4 h-4" />
+                                <SquarePen className="h-4 w-4" />
                                 {tCommon("actions.edit")}
                               </Button>
                             )}

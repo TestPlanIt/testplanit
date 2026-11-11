@@ -122,7 +122,7 @@ export function DiffView({
     <div
       data-testid="diff-view"
       className={cn(
-        "bg-stone-800 rounded-md overflow-x-auto text-sm max-w-full",
+        "max-w-full overflow-x-auto rounded-md bg-stone-800 text-sm",
         className
       )}
     >
@@ -136,13 +136,13 @@ export function DiffView({
             >
               <td
                 aria-label={t("oldLine")}
-                className="select-none w-[1%] whitespace-nowrap pl-3 pr-2 text-right align-top text-stone-500"
+                className="w-[1%] pr-2 pl-3 text-right align-top whitespace-nowrap text-stone-500 select-none"
               >
                 {line.oldNumber ?? ""}
               </td>
               <td
                 aria-label={t("newLine")}
-                className="select-none w-[1%] whitespace-nowrap pr-2 text-right align-top text-stone-500"
+                className="w-[1%] pr-2 text-right align-top whitespace-nowrap text-stone-500 select-none"
               >
                 {line.newNumber ?? ""}
               </td>
@@ -159,7 +159,7 @@ export function DiffView({
                     )}
                     <span
                       aria-hidden="true"
-                      className="select-none w-4 shrink-0 whitespace-pre text-stone-500"
+                      className="w-4 shrink-0 whitespace-pre text-stone-500 select-none"
                     >
                       {MARKERS[line.type]}
                     </span>

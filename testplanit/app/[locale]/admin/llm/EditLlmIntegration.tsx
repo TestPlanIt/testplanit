@@ -693,7 +693,7 @@ export function EditLlmIntegration({
         }}
       >
         <DialogContent
-          className="max-w-2xl h-full overflow-y-auto flex flex-col"
+          className="flex h-full max-w-2xl flex-col overflow-y-auto"
           onInteractOutside={(e) => {
             if (resettingSpend) e.preventDefault();
           }}
@@ -715,9 +715,9 @@ export function EditLlmIntegration({
                 });
                 setAccordionValue(Array.from(sectionsToOpen));
               })}
-              className="space-y-4 flex-1 flex flex-col px-2"
+              className="flex flex-1 flex-col space-y-4 px-2"
             >
-              <div className="pb-4 border-b space-y-4">
+              <div className="space-y-4 border-b pb-4">
                 <FormField
                   control={form.control}
                   name="name"
@@ -788,15 +788,15 @@ export function EditLlmIntegration({
                 >
                   <AccordionItem value="provider">
                     <AccordionTrigger>
-                      <div className="flex items-center gap-4 flex-1 min-w-0 me-2">
-                        <span className="shrink-0 flex items-center gap-2">
+                      <div className="me-2 flex min-w-0 flex-1 items-center gap-4">
+                        <span className="flex shrink-0 items-center gap-2">
                           {sectionsWithErrors.has("provider") && (
-                            <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                            <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
                           )}
                           {tCommon("fields.provider")}
                         </span>
                         {providerLabel && (
-                          <span className="text-xs text-muted-foreground font-normal truncate ms-auto">
+                          <span className="ms-auto truncate text-xs font-normal text-muted-foreground">
                             {watchedModel
                               ? `${providerLabel} / ${watchedModel}`
                               : providerLabel}
@@ -926,7 +926,7 @@ export function EditLlmIntegration({
                                 ) &&
                                   fetchingModels && (
                                     <div className="flex items-center text-sm text-muted-foreground">
-                                      <Loader2 className="h-4 w-4 animate-spin me-1" />
+                                      <Loader2 className="me-1 h-4 w-4 animate-spin" />
                                       {tAdd("fetchingModels")}
                                     </div>
                                   )}
@@ -965,7 +965,7 @@ export function EditLlmIntegration({
                                 provider
                               ) &&
                                 modelsError && (
-                                  <div className="text-sm text-destructive mt-1">
+                                  <div className="mt-1 text-sm text-destructive">
                                     {modelsError}
                                   </div>
                                 )}
@@ -1084,10 +1084,10 @@ export function EditLlmIntegration({
 
                   <AccordionItem value="cost-and-budget">
                     <AccordionTrigger>
-                      <div className="flex items-center gap-4 flex-1 min-w-0 me-2">
-                        <span className="shrink-0 flex items-center gap-2">
+                      <div className="me-2 flex min-w-0 flex-1 items-center gap-4">
+                        <span className="flex shrink-0 items-center gap-2">
                           {sectionsWithErrors.has("cost-and-budget") && (
-                            <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                            <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
                           )}
                           {tLlm("sections.costAndBudget")}
                         </span>
@@ -1100,8 +1100,8 @@ export function EditLlmIntegration({
                                 ? (currentSpend / budgetNum) * 100
                                 : 0;
                             return (
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                              <div className="flex min-w-0 flex-1 items-center gap-2">
+                                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
                                   <div
                                     className={`h-full transition-all ${
                                       percentage > 100
@@ -1115,7 +1115,7 @@ export function EditLlmIntegration({
                                     }}
                                   />
                                 </div>
-                                <span className="text-xs text-muted-foreground shrink-0 font-normal">
+                                <span className="shrink-0 text-xs font-normal text-muted-foreground">
                                   {tBudgetAlert("budgetPercentage", {
                                     percentage: percentage.toFixed(0),
                                   })}
@@ -1253,7 +1253,7 @@ export function EditLlmIntegration({
                                 </AlertDescription>
                               </Alert>
 
-                              <div className="flex justify-between items-center text-sm">
+                              <div className="flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">
                                   {tBudgetAlert("spendLabel")}
                                 </span>
@@ -1261,7 +1261,7 @@ export function EditLlmIntegration({
                                   <span
                                     className={
                                       percentage > 100
-                                        ? "text-destructive font-medium"
+                                        ? "font-medium text-destructive"
                                         : ""
                                     }
                                   >
@@ -1303,7 +1303,7 @@ export function EditLlmIntegration({
                     <AccordionTrigger>
                       <span className="flex items-center gap-2">
                         {sectionsWithErrors.has("advanced") && (
-                          <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                          <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
                         )}
                         {tCommon("pageTitles.advanced")}
                       </span>

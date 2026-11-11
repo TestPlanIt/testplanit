@@ -51,24 +51,24 @@ const SystemErrorPopover: React.FC<SystemErrorPopoverProps> = ({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <div
-          className="cursor-pointer hover:underline truncate w-full whitespace-nowrap min-w-0 block align-bottom font-mono"
+          className="block w-full min-w-0 cursor-pointer truncate align-bottom font-mono whitespace-nowrap hover:underline"
           data-testid="system-error-trigger"
         >
           {isLazy ? t("actions.viewSystemError") : text}
         </div>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[500px] max-h-[400px] overflow-y-auto focus:outline-none"
+        className="max-h-[400px] w-[500px] overflow-y-auto focus:outline-none"
         onWheel={(e) => e.stopPropagation()}
       >
         {isLazy && lazyResult === undefined ? (
           <LoadingSpinner className="h-6" />
         ) : (
           <>
-            <div className="font-semibold text-destructive-foreground bg-destructive rounded-md rounded-b-none mb-2 p-2 -mx-4 -mt-4">
+            <div className="-mx-4 -mt-4 mb-2 rounded-md rounded-b-none bg-destructive p-2 font-semibold text-destructive-foreground">
               {message}
             </div>
-            <pre className="whitespace-pre-wrap break-words text-sm text-destructive">
+            <pre className="text-sm break-words whitespace-pre-wrap text-destructive">
               {stack.length > 0
                 ? stack
                     .map(

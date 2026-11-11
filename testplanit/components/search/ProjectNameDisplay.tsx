@@ -41,8 +41,8 @@ export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
       <Tooltip>
         <TooltipTrigger
           type="button"
-          className={`text-start truncate inline-block ${
-            fitContainer ? "min-w-0 max-w-full" : "max-w-[200px]"
+          className={`inline-block truncate text-start ${
+            fitContainer ? "max-w-full min-w-0" : "max-w-[200px]"
           }`}
         >
           {projectName}
@@ -57,7 +57,7 @@ export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
   if (showLink) {
     return (
       <Link
-        className={`hover:underline inline-flex items-center ${shrink} ${className}`}
+        className={`inline-flex items-center hover:underline ${shrink} ${className}`}
         href={`/projects/overview/${projectId}`}
       >
         {content}

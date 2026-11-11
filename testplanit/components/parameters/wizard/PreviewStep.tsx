@@ -89,7 +89,7 @@ export function PreviewStep({
 
   return (
     <div
-      className="p-6 space-y-4"
+      className="space-y-4 p-6"
       data-testid="dataset-import-wizard-step-preview"
     >
       <Alert
@@ -108,9 +108,9 @@ export function PreviewStep({
         {t("importStep3PreviewLimit", { limit: String(PREVIEW_LIMIT) })}
       </p>
 
-      <ScrollArea className="border rounded-md max-h-96">
+      <ScrollArea className="max-h-96 rounded-md border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/30 sticky top-0">
+          <thead className="sticky top-0 bg-muted/30">
             <tr>
               {mappedHeaders.map(({ paramName }) => (
                 <th key={paramName} className="px-2 py-1 text-start font-mono">
@@ -129,7 +129,7 @@ export function PreviewStep({
                     <td
                       key={paramName}
                       className={cn(
-                        "px-2 py-1 relative align-top",
+                        "relative px-2 py-1 align-top",
                         error && "border border-destructive"
                       )}
                       data-testid={
@@ -142,8 +142,8 @@ export function PreviewStep({
                       {error ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="absolute top-0 end-0 p-0.5">
-                              <AlertCircle className="text-destructive w-3 h-3" />
+                            <span className="absolute end-0 top-0 p-0.5">
+                              <AlertCircle className="h-3 w-3 text-destructive" />
                             </span>
                           </TooltipTrigger>
                           <TooltipContent>{error}</TooltipContent>

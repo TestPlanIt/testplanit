@@ -308,7 +308,7 @@ function Configurations(): React.ReactElement | null {
                   onValueChange={setProjectFilter}
                   fetchOptions={searchProjects}
                   renderOption={(project) => (
-                    <div className="flex items-center gap-1 min-w-0">
+                    <div className="flex min-w-0 items-center gap-1">
                       <ProjectIcon
                         iconUrl={project.iconUrl}
                         width={16}
@@ -333,7 +333,7 @@ function Configurations(): React.ReactElement | null {
                     data-testid="bulk-edit-configurations-button"
                     className="shrink-0"
                   >
-                    <PenSquare className="w-4 h-4" />
+                    <PenSquare className="h-4 w-4" />
                     {t("bulkEdit.button", {
                       count: selectedConfigurationIds.length,
                     })}

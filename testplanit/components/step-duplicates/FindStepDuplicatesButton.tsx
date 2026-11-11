@@ -126,7 +126,7 @@ export function FindStepDuplicatesButton({
   if (scanState === "active") {
     return (
       <div data-testid="step-scan-progress" className="flex items-center gap-2">
-        <Progress value={progressPercent} className="w-32 h-2" />
+        <Progress value={progressPercent} className="h-2 w-32" />
         <span className="text-xs text-muted-foreground">
           {`${progressPercent}%`}
         </span>
@@ -150,7 +150,7 @@ export function FindStepDuplicatesButton({
           data-testid="view-step-duplicates-button"
           variant={resultsCount > 0 ? "destructive" : "outline"}
           asChild
-          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+          className="group gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
         >
           <Link href={`/projects/shared-steps/${projectId}/step-duplicates`}>
             <GitCompare className="h-4 w-4 shrink-0" />
@@ -169,7 +169,7 @@ export function FindStepDuplicatesButton({
         data-testid="retry-step-scan-button"
         variant="outline"
         onClick={handleScan}
-        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
+        className="group gap-0 px-4 text-destructive transition-all duration-200 hover:gap-2 hover:px-4"
       >
         <GitCompare className="h-4 w-4 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
@@ -185,7 +185,7 @@ export function FindStepDuplicatesButton({
       data-testid="find-step-duplicates-button"
       variant="outline"
       onClick={handleScan}
-      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+      className="group gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
     >
       <GitCompare className="h-4 w-4 shrink-0" />
       <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">

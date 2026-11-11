@@ -217,10 +217,10 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
             aria-label={searchPlaceholder}
             className={cn(
               badgeVariants({ variant: "default" }),
-              "gap-1 whitespace-nowrap text-xs"
+              "gap-1 text-xs whitespace-nowrap"
             )}
           >
-            <Compass className="w-4 h-4 shrink-0" />
+            <Compass className="h-4 w-4 shrink-0" />
             {displayLabel && <span>{displayLabel}</span>}
           </button>
         );

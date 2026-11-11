@@ -125,7 +125,7 @@ export function DateTextDisplay({
         {tGlobal("common.fields.completed")}:{" "}
       </span>
       <CircleCheck
-        className="@xl:hidden inline-block w-4 h-4 me-1 align-text-bottom"
+        className="me-1 inline-block h-4 w-4 align-text-bottom @xl:hidden"
         aria-label={tGlobal("common.fields.completed")}
       />
     </>
@@ -134,7 +134,7 @@ export function DateTextDisplay({
   );
 
   const content = (
-    <div className="text-sm text-muted-foreground text-end">
+    <div className="text-end text-sm text-muted-foreground">
       {startDate && !isCompleted && (
         <span className="whitespace-nowrap">
           {startLabel && `${startLabel}: `}

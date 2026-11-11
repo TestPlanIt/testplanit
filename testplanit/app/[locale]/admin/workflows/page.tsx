@@ -350,7 +350,7 @@ function WorkflowComponent() {
             open={isAlertDialogOpen}
             onOpenChange={setIsAlertDialogOpen}
           >
-            <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
+            <AlertDialogContent className="border-destructive sm:max-w-[425px] lg:max-w-[400px]">
               <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center">
                   {t("setDefault.title")}

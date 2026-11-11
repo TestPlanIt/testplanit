@@ -189,9 +189,9 @@ export default function ProjectDocumentation({
   const canEdit = permissions?.canAddEdit ?? false;
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full flex-col">
       <Card id="documentation-content" className="flex w-full min-w-[400px]">
-        <div className="flex-1 w-3/4">
+        <div className="w-3/4 flex-1">
           <CardHeader>
             <div className="flex items-center justify-between gap-2">
               <SectionHeader className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export default function ProjectDocumentation({
           </CardHeader>
         </div>
       </Card>
-      <div className="flex-1 h-full ring-2 ring-muted rounded-lg mt-4 bg-primary-foreground overflow-hidden p-4">
+      <div className="mt-4 h-full flex-1 overflow-hidden rounded-lg bg-primary-foreground p-4 ring-2 ring-muted">
         <TipTapEditor
           key={isEditing ? "editing" : "readonly"}
           content={docs}
@@ -235,13 +235,13 @@ export default function ProjectDocumentation({
           <div className="flex gap-2 p-4">
             <Button variant="default" onClick={handleSaveDocs}>
               <div className="flex items-center">
-                <Save className="w-5 h-5 me-2" />
+                <Save className="me-2 h-5 w-5" />
                 <div>{t("common.actions.save")}</div>
               </div>
             </Button>
             <Button variant="outline" onClick={handleCancelEdit}>
               <div className="flex items-center">
-                <CircleSlash2 className="w-5 h-5 me-2" />
+                <CircleSlash2 className="me-2 h-5 w-5" />
                 <div>{t("common.cancel")}</div>
               </div>
             </Button>

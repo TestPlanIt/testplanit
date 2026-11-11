@@ -116,7 +116,7 @@ export const GroupListDisplay: React.FC<GroupListProps> = ({
           aria-label={tCommon("searchGroups")}
           className={cn(
             badgeVariants({ variant: "default" }),
-            "gap-1 whitespace-nowrap text-xs"
+            "gap-1 text-xs whitespace-nowrap"
           )}
         >
           <UsersRoundIcon className="h-4 w-4" />

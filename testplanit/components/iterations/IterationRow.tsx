@@ -130,7 +130,7 @@ export function IterationRow({
       data-row-index={iteration.rowIndex}
       onClick={handleRowClick}
       onKeyDown={handleKeyDown}
-      className={`group iteration-row flex items-center gap-2 px-3 py-2 min-h-11 w-full text-start border-b border-border/50 cursor-pointer ${rowBg} ${disabledCls} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1`}
+      className={`group iteration-row flex min-h-11 w-full cursor-pointer items-center gap-2 border-b border-border/50 px-3 py-2 text-start ${rowBg} ${disabledCls} focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none`}
       aria-current={isActive ? "true" : undefined}
     >
       <span
@@ -152,21 +152,21 @@ export function IterationRow({
 
       <IterationStatusPip glyph={glyph} statusColor={statusColor} />
 
-      <span className="tabular-nums text-sm font-medium w-6 shrink-0">
+      <span className="w-6 shrink-0 text-sm font-medium tabular-nums">
         {iteration.rowIndex + 1}
       </span>
 
       <TooltipProvider delayDuration={300}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">
+            <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
               {summary}
             </span>
           </TooltipTrigger>
           {fullValuesTooltip && (
             <TooltipContent
               side="right"
-              className="whitespace-pre-line max-w-xs"
+              className="max-w-xs whitespace-pre-line"
             >
               {fullValuesTooltip}
             </TooltipContent>
@@ -180,7 +180,7 @@ export function IterationRow({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 data-testid="iteration-row-menu-trigger"
                 onClick={(e) => e.stopPropagation()}
                 aria-label={t("iterationRowMenuAria", {

@@ -176,7 +176,7 @@ export function FindDuplicatesButton({
           </>
         ) : (
           <>
-            <Progress value={progressPercent} className="w-32 h-2" />
+            <Progress value={progressPercent} className="h-2 w-32" />
             <span className="text-xs text-muted-foreground">
               {t("analyzing", { analyzed, total })}
             </span>
@@ -209,7 +209,7 @@ export function FindDuplicatesButton({
         data-testid="retry-scan-button"
         variant="outline"
         onClick={handleScan}
-        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+        className="group gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
       >
         <CopyCheck className="h-4 w-4 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
@@ -230,7 +230,7 @@ export function FindDuplicatesButton({
       variant="outline"
       disabled={disabled}
       onClick={handleScan}
-      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+      className="group gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
     >
       <CopyCheck className="h-4 w-4 shrink-0" />
       <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
@@ -253,7 +253,7 @@ function ViewDuplicatesButton({ projectId, count }: ViewDuplicatesButtonProps) {
       data-testid="view-duplicates-button"
       variant="outline"
       asChild
-      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+      className="group gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
     >
       <Link href={`/projects/repository/${projectId}/duplicates`}>
         <span className="flex items-center gap-2">

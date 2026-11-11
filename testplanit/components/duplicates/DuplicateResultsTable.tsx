@@ -340,7 +340,7 @@ export function DuplicateResultsTable({
 
   if (isLoading) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="py-12 text-center text-muted-foreground">
         <p className="text-sm">{t("loading")}</p>
       </div>
     );
@@ -348,7 +348,7 @@ export function DuplicateResultsTable({
 
   if ((allItems ?? []).length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="py-12 text-center text-muted-foreground">
         <p className="text-lg font-medium">{t("noDuplicatesFound")}</p>
         <p className="text-sm">{t("noDuplicatesDescription")}</p>
       </div>
@@ -358,8 +358,8 @@ export function DuplicateResultsTable({
   return (
     <div>
       <div className="flex flex-row items-start">
-        <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-          <div className="text-muted-foreground w-full text-nowrap">
+        <div className="flex w-full min-w-[250px] grow flex-col sm:w-1/2">
+          <div className="w-full text-nowrap text-muted-foreground">
             <Filter
               placeholder={t("filterPlaceholder")}
               initialSearchString={searchString}
@@ -368,7 +368,7 @@ export function DuplicateResultsTable({
           </div>
         </div>
 
-        <div className="flex flex-col w-full sm:w-2/3 items-end">
+        <div className="flex w-full flex-col items-end sm:w-2/3">
           {totalItems > 0 && (
             <>
               <div className="justify-end">
@@ -382,7 +382,7 @@ export function DuplicateResultsTable({
                   handlePageSizeChange={handlePageSizeChange}
                 />
               </div>
-              <div className="justify-end -mx-4">
+              <div className="-mx-4 justify-end">
                 <PaginationComponent
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -396,8 +396,8 @@ export function DuplicateResultsTable({
 
       {/* Bulk action bar */}
       {selectedCount > 0 && (
-        <div className="flex items-center gap-2 mt-4 mb-2 p-2 bg-muted/50 rounded-lg border h-12">
-          <span className="text-sm text-muted-foreground me-2">
+        <div className="mt-4 mb-2 flex h-12 items-center gap-2 rounded-lg border bg-muted/50 p-2">
+          <span className="me-2 text-sm text-muted-foreground">
             {t("selected", { count: selectedCount })}
           </span>
           <Button
@@ -430,7 +430,7 @@ export function DuplicateResultsTable({
       )}
 
       {selectedCount === 0 && (
-        <div className="flex items-center gap-2 mt-4 mb-2 p-2 bg-muted/50 rounded-lg border h-12 text-sm">
+        <div className="mt-4 mb-2 flex h-12 items-center gap-2 rounded-lg border bg-muted/50 p-2 text-sm">
           {t("tableHint")}
         </div>
       )}

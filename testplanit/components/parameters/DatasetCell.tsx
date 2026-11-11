@@ -131,7 +131,7 @@ export function DatasetCell({
           <Tooltip>
             <TooltipTrigger asChild>
               <span
-                className="text-muted-foreground font-mono cursor-not-allowed"
+                className="cursor-not-allowed font-mono text-muted-foreground"
                 data-testid="dataset-cell-sensitive-masked"
               >
                 {"••••••"}
@@ -148,7 +148,7 @@ export function DatasetCell({
       // draftValue from the row's actual value).
       return (
         <span
-          className="text-muted-foreground font-mono cursor-pointer"
+          className="cursor-pointer font-mono text-muted-foreground"
           onClick={onEdit}
           data-testid="dataset-cell-sensitive-clickable"
         >
@@ -192,10 +192,10 @@ export function DatasetCell({
               onFocus={onEdit}
               tabIndex={0}
               className={cn(
-                "truncate border-transparent cursor-text hover:border-input shadow-none focus-visible:ring-0",
+                "cursor-text truncate border-transparent shadow-none hover:border-input focus-visible:ring-0",
                 isEmpty && "text-muted-foreground/50 italic",
                 parameter?.type === "INTEGER" &&
-                  "font-mono tabular-nums text-end"
+                  "text-end font-mono tabular-nums"
               )}
               data-testid="dataset-cell-display"
             />
@@ -294,9 +294,9 @@ function CellError({ message }: { message: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="absolute top-0 end-0 p-0.5">
+        <span className="absolute end-0 top-0 p-0.5">
           <AlertCircle
-            className="text-destructive w-3 h-3"
+            className="h-3 w-3 text-destructive"
             data-testid="dataset-cell-error"
           />
         </span>

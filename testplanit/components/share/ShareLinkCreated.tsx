@@ -55,7 +55,7 @@ export function ShareLinkCreated({
           <CheckCircle2 className="h-6 w-6 text-success" />
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-1">{t("title")}</h3>
+          <h3 className="mb-1 text-lg font-semibold">{t("title")}</h3>
           <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
       </div>
@@ -63,7 +63,7 @@ export function ShareLinkCreated({
       {/* Share details */}
       <div className="space-y-3">
         <div>
-          <label className="text-sm font-medium mb-2 block">
+          <label className="mb-2 block text-sm font-medium">
             {t("shareLink")}
           </label>
           <div className="flex gap-2">
@@ -105,9 +105,9 @@ export function ShareLinkCreated({
         </div>
 
         {/* Share metadata */}
-        <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+        <div className="grid grid-cols-2 gap-4 rounded-lg bg-muted/50 p-4">
           <div>
-            <p className="text-xs text-muted-foreground mb-1">
+            <p className="mb-1 text-xs text-muted-foreground">
               {t("metadata.mode")}
             </p>
             <Badge variant="secondary">
@@ -116,7 +116,7 @@ export function ShareLinkCreated({
           </div>
           {shareData.expiresAt && (
             <div>
-              <p className="text-xs text-muted-foreground mb-1">
+              <p className="mb-1 text-xs text-muted-foreground">
                 {t("metadata.expires")}
               </p>
               <p className="text-sm font-medium">
@@ -125,7 +125,7 @@ export function ShareLinkCreated({
             </div>
           )}
           <div>
-            <p className="text-xs text-muted-foreground mb-1">
+            <p className="mb-1 text-xs text-muted-foreground">
               {tCommon("fields.notificationMode")}
             </p>
             <p className="text-sm font-medium">
@@ -135,14 +135,14 @@ export function ShareLinkCreated({
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">
+            <p className="mb-1 text-xs text-muted-foreground">
               {t("metadata.views")}
             </p>
             <p className="text-sm font-medium">{shareData.viewCount}</p>
           </div>
           {shareData.entityType === "REPORT" && (
             <div>
-              <p className="text-xs text-muted-foreground mb-1">
+              <p className="mb-1 text-xs text-muted-foreground">
                 {tCommon("fields.data")}
               </p>
               <p
@@ -179,7 +179,7 @@ export function ShareLinkCreated({
       )}
 
       {/* Actions */}
-      <div className="flex justify-end gap-2 pt-4 border-t">
+      <div className="flex justify-end gap-2 border-t pt-4">
         <Button variant="outline" onClick={onCreateAnother}>
           {t("actions.createAnother")}
         </Button>

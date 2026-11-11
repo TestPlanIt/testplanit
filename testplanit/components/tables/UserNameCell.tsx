@@ -60,7 +60,7 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
 
   // Content to display (avatar + name)
   const content = (
-    <span className="flex items-center gap-1 min-w-0">
+    <span className="flex min-w-0 items-center gap-1">
       {/* Hidden from assistive tech so the link reads "Profile of <name>"
           without the initials. */}
       <span className="shrink-0" aria-hidden="true">
@@ -75,13 +75,13 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
         <TooltipTrigger asChild>
           <div
             className={cn(
-              "flex items-center truncate text-start min-w-0",
+              "flex min-w-0 items-center truncate text-start",
               isCurrentUser && "font-extrabold",
               className
             )}
           >
             {isCurrentUser && (
-              <Star className="w-4 h-4 min-w-4 me-1 fill-primary text-primary shrink-0" />
+              <Star className="me-1 h-4 w-4 min-w-4 shrink-0 fill-primary text-primary" />
             )}
             <span className="truncate">{user?.name}</span>
           </div>
@@ -99,12 +99,12 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
     <div className="min-w-0" data-testid="user-name-cell">
       {hideLink ? (
         // Render without the Link wrapper
-        <div className="flex items-center truncate min-w-0">{content}</div>
+        <div className="flex min-w-0 items-center truncate">{content}</div>
       ) : (
         // Render with the Link wrapper
         <Link
           href={`/users/profile/${userId}`}
-          className="flex items-center truncate group min-w-0"
+          className="group flex min-w-0 items-center truncate"
           data-testid={`user-profile-link-${userId}`}
         >
           {/* Named from its content, not aria-label, so the visible name is
@@ -112,7 +112,7 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
           <span className="sr-only">{"Profile of "}</span>
           {content}
           {!shrinkLink && (
-            <LinkIcon className="w-4 h-4 shrink-0 ms-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <LinkIcon className="ms-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
           )}
         </Link>
       )}

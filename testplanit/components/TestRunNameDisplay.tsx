@@ -84,14 +84,14 @@ export function TestRunNameDisplay({
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="ms-1 shrink-0">
-          <Combine className="w-3 h-3 text-muted-foreground" />
+          <Combine className="h-3 w-3 text-muted-foreground" />
         </span>
       </TooltipTrigger>
       <TooltipContent>
         <p className="text-background/50">{t("multiConfiguration")}</p>
         {configuration && (
           <p className="flex text-xs text-background">
-            <Combine className="w-3 h-3 shrink-0 me-1" />
+            <Combine className="me-1 h-3 w-3 shrink-0" />
             {configuration.name}
           </p>
         )}
@@ -104,7 +104,7 @@ export function TestRunNameDisplay({
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="ms-1 shrink-0">
-          <Lock className="w-3 h-3 text-muted-foreground" />
+          <Lock className="h-3 w-3 text-muted-foreground" />
         </span>
       </TooltipTrigger>
       <TooltipContent>{t("compositionLocked")}</TooltipContent>
@@ -130,7 +130,7 @@ export function TestRunNameDisplay({
   // If deleted, don't make it a link - show with line-through and dimmed styling
   if (isDeleted) {
     return (
-      <span className="flex items-center gap-1 min-w-0 text-muted-foreground/50 line-through">
+      <span className="flex min-w-0 items-center gap-1 text-muted-foreground/50 line-through">
         {content}
       </span>
     );
@@ -141,12 +141,12 @@ export function TestRunNameDisplay({
     return (
       <Link
         href={`/projects/runs/${projectId}/${id}${linkSuffix}`}
-        className="flex items-center gap-1 min-w-0 hover:underline"
+        className="flex min-w-0 items-center gap-1 hover:underline"
       >
         {content}
       </Link>
     );
   }
 
-  return <span className="flex items-center gap-1 min-w-0">{content}</span>;
+  return <span className="flex min-w-0 items-center gap-1">{content}</span>;
 }

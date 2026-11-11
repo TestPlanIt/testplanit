@@ -33,7 +33,7 @@ export function LinkFavicon({
   }
   if (!iconUrl) {
     return (
-      <LinkIcon className={`${className} text-muted-foreground shrink-0`} />
+      <LinkIcon className={`${className} shrink-0 text-muted-foreground`} />
     );
   }
   return (

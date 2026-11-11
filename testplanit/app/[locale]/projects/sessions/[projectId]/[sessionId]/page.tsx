@@ -385,7 +385,7 @@ function SessionFormControls({
                           <div className="flex items-start gap-1">
                             <DynamicIcon
                               name="layout-list"
-                              className="w-4 h-4 shrink-0 mt-0.5"
+                              className="mt-0.5 h-4 w-4 shrink-0"
                             />
                             {template.templateName}
                           </div>
@@ -397,7 +397,7 @@ function SessionFormControls({
                   <div className="flex items-start gap-1">
                     <DynamicIcon
                       name="layout-list"
-                      className="w-4 h-4 shrink-0 mt-1"
+                      className="mt-1 h-4 w-4 shrink-0"
                     />
                     {testSession?.template?.templateName}
                   </div>
@@ -482,7 +482,7 @@ function SessionFormControls({
                 transitionCheck &&
                 !transitionCheck.allowed &&
                 transitionCheck.blockingGate && (
-                  <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                  <p className="mt-1 text-[0.8rem] font-medium text-destructive">
                     {tGlobal("reviews.transitionGate.blockedByGate", {
                       gateName: transitionCheck.blockingGate.name,
                     })}
@@ -512,7 +512,7 @@ function SessionFormControls({
                 <div className="flex items-center gap-1">
                   <DynamicIcon
                     name="combine"
-                    className="h-4 w-4 shrink-0 mt-1"
+                    className="mt-1 h-4 w-4 shrink-0"
                   />
                   {testSession?.configuration?.name || tCommon("access.none")}
                 </div>
@@ -549,7 +549,7 @@ function SessionFormControls({
                         (testSession?.milestone?.milestoneType?.icon?.name ||
                           "milestone") as IconName
                       }
-                      className="h-4 w-4 shrink-0 mt-1"
+                      className="mt-1 h-4 w-4 shrink-0"
                     />
                     {testSession?.milestone?.name ||
                       tGlobal("common.access.none")}
@@ -1853,7 +1853,7 @@ export default function SessionPage() {
 
   if (!sessionData) {
     return (
-      <div className="text-muted-foreground text-center p-4">
+      <div className="p-4 text-center text-muted-foreground">
         {t("notFound")}
       </div>
     );
@@ -1879,7 +1879,7 @@ export default function SessionPage() {
   };
   return (
     <Card
-      className={`group-hover:bg-accent/50 transition-colors ${sessionData?.isCompleted ? "bg-muted-foreground/20 border-muted-foreground" : "border-primary"}`}
+      className={`transition-colors group-hover:bg-accent/50 ${sessionData?.isCompleted ? "border-muted-foreground bg-muted-foreground/20" : "border-primary"}`}
     >
       {isSubmitting && <LoadingSpinnerAlert />}
       {isFormLoading && <LoadingSpinnerAlert />}
@@ -1898,7 +1898,7 @@ export default function SessionPage() {
           <CardHeader>
             <div
               ref={headerRef}
-              className="flex justify-between items-center gap-2"
+              className="flex items-center justify-between gap-2"
             >
               {!isEditMode && (
                 <div className="me-2">
@@ -1909,7 +1909,7 @@ export default function SessionPage() {
                   </Link>
                 </div>
               )}
-              <CardTitle className="w-full pe-4 text-xl md:text-2xl me-4">
+              <CardTitle className="me-4 w-full pe-4 text-xl md:text-2xl">
                 {isEditMode ? (
                   <FormField
                     control={control}
@@ -1919,7 +1919,7 @@ export default function SessionPage() {
                         <FormControl>
                           <Textarea
                             {...field}
-                            className="text-xl md:text-2xl font-semibold border-0 focus-visible:ring-1 focus-visible:ring-ring p-0 h-auto min-h-8 resize-none overflow-hidden"
+                            className="h-auto min-h-8 resize-none overflow-hidden border-0 p-0 text-xl font-semibold focus-visible:ring-1 focus-visible:ring-ring md:text-2xl"
                             rows={1}
                             onInput={(e) => {
                               const target = e.target as HTMLTextAreaElement;
@@ -1965,7 +1965,7 @@ export default function SessionPage() {
                     <div className="flex items-center gap-1">
                       <Badge
                         variant="secondary"
-                        className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
+                        className="text-md flex items-center gap-1 p-2 px-4 text-sm whitespace-nowrap"
                       >
                         <CircleCheckBig className="h-6 w-6 shrink-0" />
                         <div className="hidden md:block">
@@ -2202,7 +2202,7 @@ export default function SessionPage() {
                     : ""
                 }
               >
-                <div className="flex flex-col h-full p-4">
+                <div className="flex h-full flex-col p-4">
                   {/* Left panel content */}
                   <div className="space-y-4">
                     {/* Description - hide completely if empty in view mode */}
@@ -2243,7 +2243,7 @@ export default function SessionPage() {
                                   />
                                 </div>
                               ) : (
-                                <div className="h-[150px] flex items-center justify-center bg-muted rounded-md">
+                                <div className="flex h-[150px] items-center justify-center rounded-md bg-muted">
                                   <Loading />
                                 </div>
                               )}
@@ -2292,7 +2292,7 @@ export default function SessionPage() {
                                   />
                                 </div>
                               ) : (
-                                <div className="h-[250px] flex items-center justify-center bg-muted rounded-md">
+                                <div className="flex h-[250px] items-center justify-center rounded-md bg-muted">
                                   <Loading />
                                 </div>
                               )}
@@ -2314,9 +2314,9 @@ export default function SessionPage() {
 
                       {/* Configuration selector for multi-config sessions */}
                       {isMultiConfigSession && (
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex items-center gap-1 shrink-0 font-semibold">
-                            <Combine className="w-4 h-4" />
+                        <div className="mb-2 flex items-center gap-2">
+                          <div className="flex shrink-0 items-center gap-1 font-semibold">
+                            <Combine className="h-4 w-4" />
                             <span>{tCommon("fields.configurations")}:</span>
                           </div>
                           <AsyncCombobox<SiblingSession>
@@ -2333,7 +2333,7 @@ export default function SessionPage() {
                             }}
                             fetchOptions={fetchSiblingConfigurations}
                             renderOption={(option) => (
-                              <div className="flex items-center gap-2 min-w-0">
+                              <div className="flex min-w-0 items-center gap-2">
                                 <ConfigurationNameDisplay
                                   configuration={option.configuration}
                                   name={siblingLabel(option)}
@@ -2350,7 +2350,7 @@ export default function SessionPage() {
                         </div>
                       )}
 
-                      <div className="flex items-end justify-end mb-2">
+                      <div className="mb-2 flex items-end justify-end">
                         <SessionResultsSummary
                           sessionId={sessionData.id}
                           className="mb-2"
@@ -2411,7 +2411,7 @@ export default function SessionPage() {
                   type="button"
                   onClick={toggleCollapseLeft}
                   variant="secondary"
-                  className="p-0 rounded-e-none"
+                  className="rounded-e-none p-0"
                 >
                   {isCollapsedLeft ? <ChevronRight /> : <ChevronLeft />}
                 </Button>
@@ -2424,7 +2424,7 @@ export default function SessionPage() {
                   type="button"
                   onClick={toggleCollapseRight}
                   variant="secondary"
-                  className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
+                  className={`transform p-0 ${isCollapsedRight ? "rounded-s-none" : "rotate-180 rounded-e-none"}`}
                 >
                   <ChevronLeft />
                 </Button>
@@ -2446,7 +2446,7 @@ export default function SessionPage() {
                     : ""
                 }
               >
-                <div className="p-4 space-y-4">
+                <div className="space-y-4 p-4">
                   <SessionFormControls
                     isEditMode={isEditMode}
                     isSubmitting={isSubmitting}

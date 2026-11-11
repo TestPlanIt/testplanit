@@ -34,7 +34,7 @@ export const WorkflowStateDisplay: React.FC<WorkflowStateProps> = ({
   }
 
   return (
-    <span className="flex items-center space-x-1 shrink-0 overflow-hidden">
+    <span className="flex shrink-0 items-center space-x-1 overflow-hidden">
       <DynamicIcon
         name={state.icon.name as IconName}
         className={`shrink-0 ${size === "sm" ? "h-4 w-4" : "h-6 w-6"}`}

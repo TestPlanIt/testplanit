@@ -89,7 +89,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
           }}
           aria-disabled={isFirstPage ? "true" : undefined}
           tabIndex={isFirstPage ? -1 : undefined}
-          className={`px-2 py-1 h-auto ${isFirstPage ? "pointer-events-none opacity-50" : ""} ${compact ? "[&>span]:hidden" : ""}`}
+          className={`h-auto px-2 py-1 ${isFirstPage ? "pointer-events-none opacity-50" : ""} ${compact ? "[&>span]:hidden" : ""}`}
           aria-label={t("goToPrevious")}
         />
       </PaginationItem>
@@ -110,8 +110,8 @@ const PaginationComponent: React.FC<PaginationProps> = ({
                 onPageChange(i);
               }}
               isActive={currentPage === i}
-              className={`px-2 py-1 h-auto ${
-                currentPage === i ? "no-underline pointer-events-none" : ""
+              className={`h-auto px-2 py-1 ${
+                currentPage === i ? "pointer-events-none no-underline" : ""
               }`}
             >
               {i}
@@ -151,7 +151,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
           }}
           aria-disabled={isLastPage ? "true" : undefined}
           tabIndex={isLastPage ? -1 : undefined}
-          className={`px-2 py-1 h-auto ${isLastPage ? "pointer-events-none opacity-50" : ""} ${compact ? "[&>span]:hidden" : ""}`}
+          className={`h-auto px-2 py-1 ${isLastPage ? "pointer-events-none opacity-50" : ""} ${compact ? "[&>span]:hidden" : ""}`}
           aria-label={t("goToNext")}
         />
       </PaginationItem>

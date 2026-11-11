@@ -68,14 +68,14 @@ export const SessionTableDisplay: React.FC<SessionDisplayProps> = ({
     <Link
       href={link}
       className={cn(
-        "flex items-start gap-1 hover:text-primary group min-w-0 overflow-hidden",
+        "group flex min-w-0 items-start gap-1 overflow-hidden hover:text-primary",
         isCompleted ? "text-muted-foreground/80" : undefined
       )}
     >
-      <DynamicIcon name="compass" className="h-4 w-4 shrink-0 mt-0.5" />
-      <span className={cn("flex-1 min-w-0", textClass)}>{name}</span>
+      <DynamicIcon name="compass" className="mt-0.5 h-4 w-4 shrink-0" />
+      <span className={cn("min-w-0 flex-1", textClass)}>{name}</span>
       {large && (
-        <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
       )}
     </Link>
   );

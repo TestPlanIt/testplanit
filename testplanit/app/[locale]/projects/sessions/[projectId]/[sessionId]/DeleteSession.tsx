@@ -117,12 +117,12 @@ export function DeleteSessionModal({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[600px] border-destructive">
+      <AlertDialogContent className="border-destructive sm:max-w-[425px] lg:max-w-[600px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 me-2" />
+                <TriangleAlert className="me-2 h-6 w-6" />
                 {t("sessions.actions.delete")}
               </AlertDialogTitle>
               <AlertDialogDescription className="overflow-hidden">
@@ -131,13 +131,13 @@ export function DeleteSessionModal({
                 })}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="bg-destructive text-destructive-foreground p-2">
+            <div className="bg-destructive p-2 text-destructive-foreground">
               {t("sessions.delete.warning")}
             </div>
             <AlertDialogFooter>
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

@@ -76,7 +76,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-24 w-24">
+      <div className="flex h-24 w-24 items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -109,7 +109,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
       attachment.name.toLowerCase().endsWith(".svg");
     if (isFull) {
       return (
-        <div className="relative w-full h-full">
+        <div className="relative h-full w-full">
           {isSvg ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -133,7 +133,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     const { height, width } = getSizeClasses(100);
     return (
       <div
-        className="flex justify-center items-center max-h-[350px]"
+        className="flex max-h-[350px] items-center justify-center"
         style={{ height, width }}
       >
         {isSvg ? (
@@ -195,20 +195,20 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}
         title={fileURL}
-        className={`inline-flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring max-w-full ${
+        className={`inline-flex max-w-full items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
           isLarge ? "text-base" : "text-sm"
         }`}
       >
         <LinkFavicon
           url={fileURL}
-          className={isLarge ? "w-5 h-5" : "w-4 h-4"}
+          className={isLarge ? "h-5 w-5" : "h-4 w-4"}
         />
         <span className="truncate underline underline-offset-2">
           {attachment.name}
         </span>
         <ExternalLink
           className={`shrink-0 text-muted-foreground ${
-            isLarge ? "w-4 h-4" : "w-3.5 h-3.5"
+            isLarge ? "h-4 w-4" : "h-3.5 w-3.5"
           }`}
         />
       </Link>
@@ -224,19 +224,19 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
       const markdownComponents: Components = {
         h1: ({ node, ...props }) => (
           <h1
-            className="text-xl font-semibold mt-4 mb-2 text-primary"
+            className="mt-4 mb-2 text-xl font-semibold text-primary"
             {...props}
           />
         ),
         h2: ({ node, ...props }) => (
           <h2
-            className="text-lg font-semibold mt-3 mb-2 text-primary"
+            className="mt-3 mb-2 text-lg font-semibold text-primary"
             {...props}
           />
         ),
         h3: ({ node, ...props }) => (
           <h3
-            className="text-base font-semibold mt-2 mb-1 text-primary"
+            className="mt-2 mb-1 text-base font-semibold text-primary"
             {...props}
           />
         ),
@@ -245,13 +245,13 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         ),
         ul: ({ node, ...props }) => (
           <ul
-            className="list-disc ps-5 mb-3 text-foreground marker:text-foreground"
+            className="mb-3 list-disc ps-5 text-foreground marker:text-foreground"
             {...props}
           />
         ),
         ol: ({ node, ...props }) => (
           <ol
-            className="list-decimal ps-5 mb-3 text-foreground marker:text-foreground"
+            className="mb-3 list-decimal ps-5 text-foreground marker:text-foreground"
             {...props}
           />
         ),
@@ -272,7 +272,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
           if (!isBlock) {
             return (
               <code
-                className="bg-muted text-foreground px-1 py-0.5 rounded text-sm font-mono"
+                className="rounded bg-muted px-1 py-0.5 font-mono text-sm text-foreground"
                 {...props}
               >
                 {children}
@@ -281,7 +281,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
           }
           const lang = match ? mapLanguageToPrism(match[1]) : null;
           return (
-            <pre className="bg-stone-800 rounded-md overflow-auto p-4 text-sm my-3 max-w-full">
+            <pre className="my-3 max-w-full overflow-auto rounded-md bg-stone-800 p-4 text-sm">
               {lang ? (
                 <code
                   className={`language-${lang}`}
@@ -300,13 +300,13 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         pre: ({ children }: any) => <>{children}</>,
         blockquote: ({ node, ...props }) => (
           <blockquote
-            className="border-s-4 border-border ps-4 italic my-3"
+            className="my-3 border-s-4 border-border ps-4 italic"
             {...props}
           />
         ),
-        hr: () => <hr className="border-t border-border my-4" />,
+        hr: () => <hr className="my-4 border-t border-border" />,
         table: ({ node, ...props }) => (
-          <table className="w-full border-collapse mb-4" {...props} />
+          <table className="mb-4 w-full border-collapse" {...props} />
         ),
         th: ({ node, ...props }) => (
           <th
@@ -321,14 +321,14 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
           <strong className="font-semibold text-foreground" {...props} />
         ),
         em: ({ node, ...props }) => (
-          <em className="italic text-foreground" {...props} />
+          <em className="text-foreground italic" {...props} />
         ),
       };
 
       return (
         <div
-          className={`border-2 border-primary/50 rounded-lg p-4 overflow-auto prose prose-sm dark:prose-invert bg-background ${
-            isFull ? "w-full h-full" : "w-fit max-h-[650px]"
+          className={`prose prose-sm overflow-auto rounded-lg border-2 border-primary/50 bg-background p-4 dark:prose-invert ${
+            isFull ? "h-full w-full" : "max-h-[650px] w-fit"
           }`}
           style={isFull ? undefined : { maxWidth: `${width}px` }}
         >
@@ -339,8 +339,8 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
 
     return (
       <pre
-        className={`border-2 border-primary/50 rounded-lg p-2 overflow-auto ${
-          isFull ? "w-full h-full" : "w-fit max-h-[650px]"
+        className={`overflow-auto rounded-lg border-2 border-primary/50 p-2 ${
+          isFull ? "h-full w-full" : "max-h-[650px] w-fit"
         }`}
         style={isFull ? undefined : { maxWidth: `${width}px` }}
       >
@@ -353,7 +353,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         <video
           src={fileURL}
           controls
-          className="w-full h-full object-contain rounded-lg"
+          className="h-full w-full rounded-lg object-contain"
         />
       );
     }
@@ -363,7 +363,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
       const { height, width } = getSizeClasses(100);
       return (
         <div
-          className="relative flex justify-center items-center"
+          className="relative flex items-center justify-center"
           style={{ height, width }}
           data-testid="attachment-video-thumbnail"
         >
@@ -371,11 +371,11 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
             src={fileURL}
             preload="metadata"
             muted
-            className="h-full w-full object-cover rounded-lg pointer-events-none"
+            className="pointer-events-none h-full w-full rounded-lg object-cover"
           />
-          <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <span className="rounded-full bg-black/60 p-1.5">
-              <Play className="w-4 h-4 text-white fill-white" />
+              <Play className="h-4 w-4 fill-white text-white" />
             </span>
           </span>
         </div>
@@ -387,7 +387,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         controls
         preload="metadata"
         onClick={(e) => e.stopPropagation()}
-        className={`w-full h-auto object-contain rounded-lg ${
+        className={`h-auto w-full rounded-lg object-contain ${
           size === "large" ? "max-h-96" : "max-h-48"
         }`}
       />
@@ -416,13 +416,13 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     const { height: _height, width } = getSizeClasses(100);
     return (
       <div
-        className="flex flex-col items-center overflow-hidden max-h-fit"
+        className="flex max-h-fit flex-col items-center overflow-hidden"
         style={{
           width: `${width}px`,
         }}
       >
-        <File className={`m-3 w-full h-fit text-primary`} />
-        <span className="text-center truncate">{attachment.name}</span>
+        <File className={`m-3 h-fit w-full text-primary`} />
+        <span className="truncate text-center">{attachment.name}</span>
       </div>
     );
   }

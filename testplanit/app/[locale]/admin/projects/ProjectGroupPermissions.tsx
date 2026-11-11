@@ -108,7 +108,7 @@ export function ProjectGroupPermissions({
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-1/4" />
-        <div className="rounded-md border p-4 space-y-3">
+        <div className="space-y-3 rounded-md border p-4">
           <Skeleton className="h-6 w-full" />
           <Skeleton className="h-6 w-full" />
           <Skeleton className="h-6 w-full" />
@@ -125,9 +125,9 @@ export function ProjectGroupPermissions({
     <div className="space-y-4">
       <Label>{t("labels.groupProjectAccess")}</Label>
       {/* List of Groups */}
-      <div className="rounded-md border max-h-[55vh] overflow-y-auto">
+      <div className="max-h-[55vh] overflow-y-auto rounded-md border">
         <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
+          <thead className="sticky top-0 z-10 bg-background [&_tr]:border-b">
             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
               <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {tCommon("aria.group")}
@@ -243,7 +243,7 @@ export function ProjectGroupPermissions({
                         </SelectContent>
                       </Select>
                       {/* Display the effective access based on selection */}
-                      <p className="text-xs text-muted-foreground flex items-center whitespace-nowrap">
+                      <p className="flex items-center text-xs whitespace-nowrap text-muted-foreground">
                         {" "}
                         {/* Removed pt-1, added whitespace-nowrap */}
                         <span className="me-1">
@@ -258,7 +258,7 @@ export function ProjectGroupPermissions({
                           )}
                         {currentAccessType ===
                           ProjectAccessType.GLOBAL_ROLE && (
-                          <span className="italic text-muted-foreground ms-1">
+                          <span className="ms-1 text-muted-foreground italic">
                             {tGlobal("common.labels.access.usersGlobalRole")}
                           </span>
                         )}
@@ -272,7 +272,7 @@ export function ProjectGroupPermissions({
                         {currentAccessType === "PROJECT_DEFAULT" &&
                           defaultProjectAccessType ===
                             ProjectAccessType.GLOBAL_ROLE && (
-                            <span className="italic text-muted-foreground ms-1">
+                            <span className="ms-1 text-muted-foreground italic">
                               {tGlobal("common.labels.access.usersGlobalRole")}
                             </span>
                           )}
@@ -286,7 +286,7 @@ export function ProjectGroupPermissions({
                           (currentAccessType ===
                             ProjectAccessType.SPECIFIC_ROLE &&
                             (!currentRoleId || currentRoleId === "NONE"))) && (
-                          <span className="italic text-muted-foreground ms-1">
+                          <span className="ms-1 text-muted-foreground italic">
                             {currentAccessType === ProjectAccessType.NO_ACCESS
                               ? "-"
                               : t("labels.noEffect")}

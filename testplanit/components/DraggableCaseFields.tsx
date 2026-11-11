@@ -91,7 +91,7 @@ const DraggableItem = ({
       {...listeners}
       className="cursor-ns-resize"
     >
-      <div className="flex justify-between items-center py-1 px-4 bg-muted-foreground/10 my-1 text-sm ">
+      <div className="my-1 flex items-center justify-between bg-muted-foreground/10 px-4 py-1 text-sm ">
         <div className="flex items-center">
           <GripVertical size={20} />
           {label}
@@ -105,7 +105,7 @@ const DraggableItem = ({
                   variant="link"
                   onClick={handleToggleJira}
                   aria-pressed={jiraOn}
-                  className={`p-0 -my-1 mr-2 ${
+                  className={`-my-1 mr-2 p-0 ${
                     jiraOn ? "text-primary" : "text-muted-foreground/40"
                   }`}
                   data-testid={`jira-panel-toggle-${id}`}
@@ -134,7 +134,7 @@ const DraggableItem = ({
                   variant="link"
                   onClick={handleToggleGenerate}
                   aria-pressed={generateOn}
-                  className={`p-0 -my-1 mr-2 ${
+                  className={`-my-1 mr-2 p-0 ${
                     generateOn ? "text-primary" : "text-muted-foreground/40"
                   }`}
                   data-testid={`generate-default-toggle-${id}`}
@@ -151,7 +151,7 @@ const DraggableItem = ({
             type="button"
             variant="link"
             onClick={handleClick}
-            className="text-destructive p-0 -my-1"
+            className="-my-1 p-0 text-destructive"
           >
             <Trash size={20} />
           </Button>

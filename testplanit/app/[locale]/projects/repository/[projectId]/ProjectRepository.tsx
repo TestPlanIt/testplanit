@@ -2150,7 +2150,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       <Card>
         <CardContent className="p-8">
           <div className="text-center">
-            <p className="text-lg font-semibold mb-2">
+            <p className="mb-2 text-lg font-semibold">
               {!project
                 ? "Project not found or no access"
                 : "Repository not accessible"}
@@ -2178,7 +2178,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           subtitle={tFileDropZone("supportedCsvFormats")}
         />
         <Card className="flex w-full min-w-[400px]">
-          <div className="flex-1 w-full">
+          <div className="w-full flex-1">
             {!hideHeader ? (
               <CardHeader>
                 <SectionHeader className="flex items-center gap-2">
@@ -2215,16 +2215,16 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     collapsible
                     onCollapse={() => setIsCollapsed(true)}
                     onExpand={() => setIsCollapsed(false)}
-                    className={`p-0 m-0 ${
+                    className={`m-0 p-0 ${
                       isTransitioning
                         ? "transition-all duration-300 ease-in-out"
                         : ""
                     }`}
                     data-testid="repository-left-panel"
                   >
-                    <div className="flex flex-col h-full">
+                    <div className="flex h-full flex-col">
                       <div
-                        className="flex items-start justify-between me-2 shrink-0"
+                        className="me-2 flex shrink-0 items-start justify-between"
                         data-testid="repository-left-panel-header"
                       >
                         <ViewSelector
@@ -2248,7 +2248,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             canAddEdit && (
                               <>
                                 <Button
-                                  className="mt-0.5 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                                  className="group mt-0.5 gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
                                   variant="secondary"
                                   data-testid="add-folder-button"
                                   title={`${t("repository.addFolder")} (Shift+N)`}
@@ -2298,7 +2298,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                       <DropZoneOverlay
                         kind="tree"
                         enabled={selectedItem === "folders"}
-                        className="flex-1 mt-4 min-h-10"
+                        className="mt-4 min-h-10 flex-1"
                         testId="tree-drop-zone"
                       >
                         {selectedItem === "folders" ? (
@@ -2339,7 +2339,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                       type="button"
                       onClick={toggleCollapse}
                       variant="secondary"
-                      className="p-0 -ms-1 rounded-s-none"
+                      className="-ms-1 rounded-s-none p-0"
                       aria-label={
                         isCollapsed
                           ? t("common.actions.expandLeftPanel")
@@ -2353,7 +2353,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     id="repository-right"
                     order={2}
                     defaultSize={80}
-                    className="p-0 m-0 min-w-[400px]"
+                    className="m-0 min-w-[400px] p-0"
                   >
                     {/* Empty state is now handled by TreeView component */}
                     <ResizablePanelGroup
@@ -2376,10 +2376,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           ref={listHeaderRef}
                           data-testid="repository-right-panel-header"
                         >
-                          <div className="flex items-center justify-between mx-2 pt-0.5 gap-2">
-                            <div className="text-primary text-lg md:text-xl font-extrabold shrink-0">
+                          <div className="mx-2 flex items-center justify-between gap-2 pt-0.5">
+                            <div className="shrink-0 text-lg font-extrabold text-primary md:text-xl">
                               <div className="flex items-center space-x-1">
-                                <ListChecks className="w-5 h-5 min-w-5 min-h-5" />
+                                <ListChecks className="h-5 min-h-5 w-5 min-w-5" />
                                 <div>{t("common.fields.testCases")}</div>
                               </div>
                             </div>
@@ -2388,8 +2388,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 Composes with folder scope and filter chips
                                 (spec §9) rather than bypassing them. */}
                             {isEsSearchAvailable && (
-                              <div className="relative flex-1 max-w-md min-w-0">
-                                <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                              <div className="relative max-w-md min-w-0 flex-1">
+                                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                                 <Input
                                   type="text"
                                   placeholder={t(
@@ -2399,14 +2399,14 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                   onChange={(e) =>
                                     setEsSearchQuery(e.target.value)
                                   }
-                                  className="ps-10 pe-10 h-8"
+                                  className="h-8 ps-10 pe-10"
                                   data-testid="es-search-input"
                                 />
                                 {esSearchQuery && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="absolute end-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
+                                    className="absolute end-1 top-1/2 h-6 w-6 -translate-y-1/2 transform"
                                     onClick={cancelEsSearch}
                                   >
                                     <X className="h-4 w-4" />
@@ -2415,7 +2415,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               </div>
                             )}
                             {!isSelectionMode && !isRunMode && canAddEdit && (
-                              <div className="flex gap-2 items-center">
+                              <div className="flex items-center gap-2">
                                 {importDialogOpen && (
                                   <ImportCasesWizard
                                     onImportComplete={refetchFolderStats}
@@ -2562,7 +2562,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               visible while searching (spec §9). */}
                           {selectedItem === "folders" && !isRunMode && (
                             <>
-                              <div className="@container flex items-center justify-between mt-2">
+                              <div className="@container mt-2 flex items-center justify-between">
                                 <BreadcrumbComponent
                                   breadcrumbItems={getBreadcrumbItems}
                                   projectId={projectIdParam}
@@ -2576,10 +2576,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     pressed={showDescendants}
                                     onPressedChange={setShowDescendants}
                                     aria-label={t("repository.showDescendants")}
-                                    className="group h-7 gap-0 hover:gap-1 focus-visible:gap-1 @lg:gap-1 text-xs me-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                    className="group me-2 h-7 shrink-0 gap-0 text-xs hover:gap-1 focus-visible:gap-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground @lg:gap-1"
                                   >
                                     <FolderDown className="h-3.5 w-3.5 shrink-0" />
-                                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-64 group-focus-visible:max-w-64 @lg:max-w-64 select-none">
+                                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 select-none group-hover:max-w-64 group-focus-visible:max-w-64 @lg:max-w-64">
                                       {t("repository.showDescendants")}
                                     </span>
                                   </Toggle>
@@ -2602,7 +2602,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
                                     if (!isEmpty) {
                                       return (
-                                        <div className="ms-4 bg-muted rounded-lg">
+                                        <div className="ms-4 rounded-lg bg-muted">
                                           <ReadOnlyRichText
                                             content={docsContent}
                                             className="prose prose-sm max-w-none dark:prose-invert"

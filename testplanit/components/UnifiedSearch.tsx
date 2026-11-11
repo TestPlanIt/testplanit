@@ -804,9 +804,9 @@ export function UnifiedSearch({
       // A resolved record-key jump is showing above; don't also say "no results".
       if (hasRecordKeyHits) return null;
       return (
-        <div className="py-12 space-y-12">
+        <div className="space-y-12 py-12">
           <div className="text-center">
-            <p className="text-muted-foreground mb-2">
+            <p className="mb-2 text-muted-foreground">
               {t("common.labels.noResults")}
             </p>
             <p className="text-sm text-muted-foreground">
@@ -843,7 +843,7 @@ export function UnifiedSearch({
             }}
             className="w-full"
           >
-            <TabsList className="w-full justify-start flex-wrap h-auto">
+            <TabsList className="h-auto w-full flex-wrap justify-start">
               {/* All tab */}
               <TabsTrigger value="all" className="gap-2">
                 <Search className="h-4 w-4" />
@@ -906,7 +906,7 @@ export function UnifiedSearch({
       <div className="space-y-2">
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
             <Input
               type="text"
               placeholder={searchPlaceholder}
@@ -919,7 +919,7 @@ export function UnifiedSearch({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute end-1 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                className="absolute end-1 top-1/2 h-7 w-7 -translate-y-1/2 transform"
                 onClick={clearSearch}
               >
                 <X className="h-4 w-4" />
@@ -984,7 +984,7 @@ export function UnifiedSearch({
                 {getActiveFilterCount() > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-1 -end-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                    className="absolute -end-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
                   >
                     {getActiveFilterCount()}
                   </Badge>
@@ -1068,8 +1068,8 @@ export function UnifiedSearch({
         )}
 
         {error && !loading && (
-          <div className="text-center py-12">
-            <p className="text-destructive mb-2">{error}</p>
+          <div className="py-12 text-center">
+            <p className="mb-2 text-destructive">{error}</p>
             <Button
               variant="outline"
               size="sm"
@@ -1133,14 +1133,14 @@ export function UnifiedSearch({
           !results &&
           !isFirstSearch &&
           !hasRecordKeyHits && (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="py-12 text-center text-muted-foreground">
               <p>{t("common.labels.noResults")}</p>
             </div>
           )}
 
         {!loading && !error && !results && isFirstSearch && query === "" && (
-          <div className="text-center py-12 text-muted-foreground">
-            <Search className="h-12 w-12 mx-auto mb-4 opacity-20" />
+          <div className="py-12 text-center text-muted-foreground">
+            <Search className="mx-auto mb-4 h-12 w-12 opacity-20" />
             <p>{t("search.startTyping")}</p>
           </div>
         )}
@@ -1148,7 +1148,7 @@ export function UnifiedSearch({
 
       {selectedCaseRows.size > 0 && (
         <div
-          className="fixed bottom-0 end-0 z-50 w-full border-t bg-background/95 shadow-lg backdrop-blur sm:max-w-3xl supports-[backdrop-filter]:bg-background/80"
+          className="fixed end-0 bottom-0 z-50 w-full border-t bg-background/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:max-w-3xl"
           data-testid="bulk-action-toolbar"
         >
           <div className="flex flex-wrap items-center justify-between gap-3 p-3">
@@ -1323,7 +1323,7 @@ function SearchResultCard({
                 hit.source.folderPath && hit.source.folderPath !== "/" && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <MetadataItem className="flex items-center gap-1 text-muted-foreground min-w-0">
+                      <MetadataItem className="flex min-w-0 items-center gap-1 text-muted-foreground">
                         <Folder className="h-3 w-3 shrink-0" />
                         <span className="truncate">
                           {hit.source.folderPath}
@@ -1336,7 +1336,7 @@ function SearchResultCard({
                   </Tooltip>
                 ),
                 hit.source.templateName && (
-                  <MetadataItem className="flex items-center gap-1 min-w-0">
+                  <MetadataItem className="flex min-w-0 items-center gap-1">
                     <DynamicIcon
                       name="layout-template"
                       className="h-3 w-3 shrink-0"
@@ -1398,7 +1398,7 @@ function SearchResultCard({
             )}
             {hit.source.steps && hit.source.steps.length > 0 && (
               <div className="mt-3">
-                <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                <div className="mb-1.5 text-xs font-medium text-muted-foreground">
                   {t("common.fields.steps")}
                   {":"}
                 </div>
@@ -1457,10 +1457,10 @@ function SearchResultCard({
                             className={cn(
                               "flex gap-2 rounded px-2 py-1",
                               hasHighlights &&
-                                "bg-yellow-50 dark:bg-yellow-900/20 border-s-2 border-yellow-400"
+                                "border-s-2 border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20"
                             )}
                           >
-                            <span className="font-medium shrink-0">
+                            <span className="shrink-0 font-medium">
                               {index + 1}
                               {"."}
                             </span>
@@ -1479,7 +1479,7 @@ function SearchResultCard({
                                 </div>
                               )}
                               {step.expectedResult && (
-                                <div className="text-xs italic truncate">
+                                <div className="truncate text-xs italic">
                                   {"→ "}
                                   {highlightedExpectedResult ? (
                                     <span
@@ -1605,7 +1605,7 @@ function SearchResultCard({
                   />
                 ),
                 hit.source.templateName && (
-                  <MetadataItem className="flex items-center gap-1 min-w-0">
+                  <MetadataItem className="flex min-w-0 items-center gap-1">
                     <DynamicIcon
                       name="layout-template"
                       className="h-3 w-3 shrink-0"
@@ -1715,7 +1715,7 @@ function SearchResultCard({
                   />
                 ),
                 hit.source.milestoneTypeName && (
-                  <MetadataItem className="flex items-center gap-1 min-w-0">
+                  <MetadataItem className="flex min-w-0 items-center gap-1">
                     <DynamicIcon
                       name="layout-template"
                       className="h-3 w-3 shrink-0"
@@ -1779,9 +1779,9 @@ function SearchResultCard({
   const card = (
     <Card
       className={cn(
-        "p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/50",
+        "cursor-pointer p-4 transition-all hover:border-primary/50 hover:shadow-md",
         hit.source.isDeleted &&
-          "bg-destructive/10 border-destructive/20 hover:border-destructive/50",
+          "border-destructive/20 bg-destructive/10 hover:border-destructive/50",
         isSelected && "border-primary/50 bg-primary/5"
       )}
       onClick={href ? undefined : onClick}
@@ -1813,9 +1813,9 @@ function SearchResultCard({
           />
         </div>
 
-        <div className="flex-1 min-w-0 space-y-1">
+        <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-start justify-between gap-2">
-            <h4 className="font-medium line-clamp-1 flex items-center gap-2">
+            <h4 className="line-clamp-1 flex items-center gap-2 font-medium">
               {hit.entityType === SearchableEntityType.PROJECT &&
                 hit.source.iconUrl && (
                   <ProjectIcon
@@ -1918,7 +1918,7 @@ function SearchResultCard({
   return (
     <Link
       href={href}
-      className="block rounded-xl no-underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+      className="block rounded-xl no-underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
       data-testid={`search-result-link-${hit.entityType}-${hit.id}`}
       onClick={(e) => {
         // A modified click opens a new tab or window; leave the search UI

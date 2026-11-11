@@ -474,7 +474,7 @@ export function EditCaseField({
                           data-testid="dropdown-option-input"
                         />
                         {error && (
-                          <div className="text-destructive text-sm">
+                          <div className="text-sm text-destructive">
                             {error}
                           </div>
                         )}
@@ -496,7 +496,7 @@ export function EditCaseField({
                       </div>
                     ) : option.key === "defaultValue" &&
                       selectedTypeName === "Text Long" ? (
-                      <div className="ring-2 ring-muted rounded-lg min-h-[200px]">
+                      <div className="min-h-[200px] rounded-lg ring-2 ring-muted">
                         <TipTapEditor
                           content={(() => {
                             try {
@@ -733,7 +733,7 @@ export function EditCaseField({
                     <span>{tCommon("fields.systemName")}</span>
                     <HelpPopover helpKey="caseField.systemName" />
                   </FormLabel>
-                  <div className="text-muted-foreground text-sm">
+                  <div className="text-sm text-muted-foreground">
                     {tCommon("fields.hints.systemName")}
                   </div>
                   <FormControl>
@@ -764,7 +764,7 @@ export function EditCaseField({
                 control={form.control}
                 name="isEnabled"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -783,7 +783,7 @@ export function EditCaseField({
                 control={form.control}
                 name="isRequired"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -802,7 +802,7 @@ export function EditCaseField({
                 control={form.control}
                 name="isRestricted"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -823,12 +823,12 @@ export function EditCaseField({
               name="typeId"
               render={({ field: _field }) => (
                 <FormItem>
-                  <FormLabel className="whitespace-nowrap items-center flex space-x-2">
+                  <FormLabel className="flex items-center space-x-2 whitespace-nowrap">
                     <div className="flex items-center">
                       <span>{tCommon("fields.fieldType")}</span>
                       <HelpPopover helpKey="caseField.fieldType" />
                     </div>
-                    <div className="text-muted-foreground text-sm">
+                    <div className="text-sm text-muted-foreground">
                       {tCommon("fields.hints.fieldType")}
                     </div>
                   </FormLabel>
@@ -854,7 +854,7 @@ export function EditCaseField({
             <DialogFooter>
               {errors.root && (
                 <div
-                  className=" bg-destructive text-destructive-foreground text-sm p-2"
+                  className=" bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

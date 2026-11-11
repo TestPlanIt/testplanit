@@ -202,7 +202,7 @@ export function IterationBulkConfirmDialog({
                 >
                   <span className="inline-flex items-center gap-2">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                       style={{
                         backgroundColor: s.color?.value || "#B1B2B3",
                       }}

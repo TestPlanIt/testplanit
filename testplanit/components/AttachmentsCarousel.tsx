@@ -213,7 +213,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent
-        className="w-full min-w-md max-w-6xl overflow-hidden flex flex-col"
+        className="flex w-full max-w-6xl min-w-md flex-col overflow-hidden"
         fullScreen={isFullScreen}
         onFullScreenChange={handleFullScreenChange}
         // While expanded, Escape steps back to the normal modal instead of
@@ -233,25 +233,25 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
             {current + 1} {t("common.of")} {attachments.length}
           </DialogDescription>
         </DialogHeader>
-        <div className="relative w-full flex-1 min-h-0 overflow-hidden">
+        <div className="relative min-h-0 w-full flex-1 overflow-hidden">
           <Carousel
             setApi={setApi}
-            className="w-full min-w-sm max-w-5xl mx-auto"
+            className="mx-auto w-full max-w-5xl min-w-sm"
           >
-            <CarouselContent className="w-full mx-4">
+            <CarouselContent className="mx-4 w-full">
               {attachments.map((attachment, index) => (
                 <CarouselItem key={attachment.id} className="w-full">
                   {isFullScreen ? (
                     // Expanded mode: nothing but the attachment, scaled to the
                     // modal viewport. Clicking a non-interactive preview
                     // (images) toggles back out, same as the expand button.
-                    <div className="w-full h-[calc(100vh-6rem)] flex items-center justify-center p-2">
+                    <div className="flex h-[calc(100vh-6rem)] w-full items-center justify-center p-2">
                       {attachment.mimeType.startsWith("image/") ? (
                         <button
                           type="button"
                           onClick={() => handleFullScreenChange(false)}
                           aria-label={t("common.ui.dialog.toggleFullScreen")}
-                          className="block w-full h-full cursor-zoom-out"
+                          className="block h-full w-full cursor-zoom-out"
                           data-testid="carousel-fullscreen-preview"
                         >
                           <AttachmentPreview
@@ -267,15 +267,15 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                       )}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center p-4 w-full h-full">
-                      <div className="flex items-center w-full">
+                    <div className="flex h-full w-full flex-col items-center p-4">
+                      <div className="flex w-full items-center">
                         {isEditing && index === current ? (
-                          <div className="flex items-start justify-between gap-4 w-full">
+                          <div className="flex w-full items-start justify-between gap-4">
                             <Input
                               type="text"
                               value={editedName}
                               onChange={(e) => setEditedName(e.target.value)}
-                              className="text-2xl font-bold text-center mb-4 w-full"
+                              className="mb-4 w-full text-center text-2xl font-bold"
                             />
                             <Popover
                               open={openPopovers[index]}
@@ -294,8 +294,8 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                               </PopoverTrigger>
                               <PopoverContent className="w-fit" side="bottom">
                                 {t("attachments.delete.confirmMessage")}
-                                <div className="flex items-start justify-between gap-4 mt-2">
-                                  <div className="flex items-center mb-2">
+                                <div className="mt-2 flex items-start justify-between gap-4">
+                                  <div className="mb-2 flex items-center">
                                     <Button
                                       type="button"
                                       variant="secondary"
@@ -324,13 +324,13 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                             </Popover>
                           </div>
                         ) : (
-                          <div className="text-2xl font-bold text-center mb-5 w-full">
+                          <div className="mb-5 w-full text-center text-2xl font-bold">
                             {attachment.name}
                           </div>
                         )}
                       </div>
                       <div
-                        className={`flex w-full h-full ${
+                        className={`flex h-full w-full ${
                           attachment.mimeType === "text/uri-list"
                             ? "flex-col"
                             : "flex-col md:flex-row"
@@ -343,7 +343,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                               : "md:w-2/3"
                           }`}
                         >
-                          <div className="w-full flex justify-center items-start">
+                          <div className="flex w-full items-start justify-center">
                             {attachment.mimeType.startsWith("image/") ? (
                               <button
                                 type="button"
@@ -368,14 +368,14 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                           </div>
                         </div>
                         <div
-                          className={`w-full flex flex-col justify-start items-start p-4 overflow-auto ${
+                          className={`flex w-full flex-col items-start justify-start overflow-auto p-4 ${
                             attachment.mimeType === "text/uri-list"
                               ? ""
                               : "md:w-1/3"
                           }`}
                         >
                           <div
-                            className={`text-start w-full ${
+                            className={`w-full text-start ${
                               attachment.mimeType === "text/uri-list"
                                 ? "grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-x-6 gap-y-2"
                                 : "space-y-2"
@@ -384,7 +384,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                             <div>
                               <strong>{t("common.fields.description")}</strong>
                               <div
-                                className={`flex items-center w-full overflow-auto ${
+                                className={`flex w-full items-center overflow-auto ${
                                   attachment.mimeType === "text/uri-list"
                                     ? "min-h-[1.5rem]"
                                     : "h-24 max-h-24 md:max-h-48"
@@ -403,7 +403,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                     className={
                                       attachment.mimeType === "text/uri-list"
                                         ? "w-full"
-                                        : "w-full h-24"
+                                        : "h-24 w-full"
                                     }
                                   >
                                     {attachment.note
@@ -448,18 +448,18 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
             </CarouselContent>
           </Carousel>
           <Button
-            className="absolute start-0 top-1/2 transform -translate-y-1/2 p-2"
+            className="absolute start-0 top-1/2 -translate-y-1/2 transform p-2"
             onClick={handlePrev}
             disabled={current === 0}
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="h-6 w-6" />
           </Button>
           <Button
-            className="absolute end-0 top-1/2 transform -translate-y-1/2 p-2"
+            className="absolute end-0 top-1/2 -translate-y-1/2 transform p-2"
             onClick={handleNext}
             disabled={current === attachments.length - 1}
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="h-6 w-6" />
           </Button>
         </div>
         {!isFullScreen && (
@@ -480,9 +480,9 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                   >
                     <Button variant="default" disabled={isEditing}>
                       {isLink ? (
-                        <ExternalLink className="inline w-5 h-5" />
+                        <ExternalLink className="inline h-5 w-5" />
                       ) : (
-                        <Download className="inline w-5 h-5" />
+                        <Download className="inline h-5 w-5" />
                       )}
                       {isLink
                         ? t("common.actions.openLink")
@@ -514,7 +514,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                       onClick={handleEditToggle}
                       disabled={isSubmitting}
                     >
-                      <SquarePen className="w-4 h-4" />
+                      <SquarePen className="h-4 w-4" />
                       {t("common.actions.edit")}
                     </Button>
                   )}

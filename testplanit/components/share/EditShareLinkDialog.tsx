@@ -167,13 +167,13 @@ export function EditShareLinkDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("editDialog.title")}</DialogTitle>
           <DialogDescription>{t("editDialog.description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
+        <div className="mt-4 space-y-4">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -225,7 +225,7 @@ export function EditShareLinkDialog({
                 <div className="flex-1">
                   <Label
                     htmlFor="edit-authenticated"
-                    className="font-medium cursor-pointer"
+                    className="cursor-pointer font-medium"
                   >
                     {t("shareMode.authenticated.title")}
                   </Label>
@@ -246,7 +246,7 @@ export function EditShareLinkDialog({
                 <div className="flex-1">
                   <Label
                     htmlFor="edit-password"
-                    className="font-medium cursor-pointer"
+                    className="cursor-pointer font-medium"
                   >
                     {t("shareMode.passwordProtected.title")}
                   </Label>
@@ -269,7 +269,7 @@ export function EditShareLinkDialog({
                 <div className="flex-1">
                   <Label
                     htmlFor="edit-public"
-                    className="font-medium cursor-pointer"
+                    className="cursor-pointer font-medium"
                   >
                     {t("shareMode.public.title")}
                   </Label>
@@ -301,7 +301,7 @@ export function EditShareLinkDialog({
                     : "New Password"}
                   {(modeChanged || !shareLink.passwordHash) && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                 </Label>
@@ -337,7 +337,7 @@ export function EditShareLinkDialog({
                   >
                     {tCommon("fields.confirmPassword")}
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   </Label>
                   <Input
@@ -384,7 +384,7 @@ export function EditShareLinkDialog({
                   autoFocus
                 />
                 {expiresAt && (
-                  <div className="p-3 border-t">
+                  <div className="border-t p-3">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -412,7 +412,7 @@ export function EditShareLinkDialog({
             <div className="-mt-1">
               <Label
                 htmlFor="edit-notify"
-                className="font-medium cursor-pointer"
+                className="cursor-pointer font-medium"
               >
                 {t("notifyOnView.label")}
               </Label>

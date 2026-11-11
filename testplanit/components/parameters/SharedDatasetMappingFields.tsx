@@ -106,7 +106,7 @@ export function SharedDatasetMappingFields({
           variant="destructive"
           data-testid="shared-mapping-required-alert"
         >
-          <AlertCircleIcon className="w-4 h-4" />
+          <AlertCircleIcon className="h-4 w-4" />
           <AlertDescription>
             {t("mappingRequiredAlert", {
               names: unmappedRequired.map((p) => p.name).join(", "),
@@ -147,15 +147,15 @@ export function SharedDatasetMappingFields({
               key={column}
               className={
                 showRedBorder
-                  ? "border border-destructive rounded-md p-3"
-                  : "border rounded-md p-3"
+                  ? "rounded-md border border-destructive p-3"
+                  : "rounded-md border p-3"
               }
               data-testid={`shared-mapping-row-${column}`}
             >
               {!expanded ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckIcon className="w-3 h-3 text-emerald-600" />
+                    <CheckIcon className="h-3 w-3 text-emerald-600" />
                     <span className="font-mono text-sm">{column}</span>
                   </div>
                   <Button
@@ -176,7 +176,7 @@ export function SharedDatasetMappingFields({
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm shrink-0 w-1/3">
+                  <span className="w-1/3 shrink-0 font-mono text-sm">
                     {column}
                   </span>
                   <div className="flex-1">
@@ -200,7 +200,7 @@ export function SharedDatasetMappingFields({
                             {p.name}
                             {p.required && (
                               <sup>
-                                <Asterisk className="w-3 h-3 text-destructive" />
+                                <Asterisk className="h-3 w-3 text-destructive" />
                               </sup>
                             )}
                           </SelectItem>
@@ -208,8 +208,8 @@ export function SharedDatasetMappingFields({
                       </SelectContent>
                     </Select>
                     {showRedBorder && (
-                      <div className="flex items-start gap-1 text-xs text-destructive mt-1">
-                        <AlertCircleIcon className="w-3 h-3 mt-0.5 shrink-0" />
+                      <div className="mt-1 flex items-start gap-1 text-xs text-destructive">
+                        <AlertCircleIcon className="mt-0.5 h-3 w-3 shrink-0" />
                         <span>
                           {t("mappingRequiredUnmapped", { name: column })}
                         </span>

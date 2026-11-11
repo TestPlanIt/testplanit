@@ -274,12 +274,12 @@ export function UserDropdownMenu() {
       <DropdownMenuItem onClick={updateTheme} className="flex items-center">
         {isActive && (
           <span className="me-2">
-            <Check className="w-4 h-4" />
+            <Check className="h-4 w-4" />
           </span>
         )}
         {!isActive && (
           <span className="me-2 opacity-0">
-            <Check className="w-4 h-4" />
+            <Check className="h-4 w-4" />
           </span>
         )}
         <span className={cn("me-2", color)}>{icon}</span>
@@ -321,7 +321,7 @@ export function UserDropdownMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={onViewProfile}>
-            <User className="h-4 w-4 me-2" />
+            <User className="me-2 h-4 w-4" />
             {t("viewProfile")}
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -330,12 +330,12 @@ export function UserDropdownMenu() {
             }
             data-testid="user-menu-alerts"
           >
-            <BellRing className="h-4 w-4 me-2" />
+            <BellRing className="me-2 h-4 w-4" />
             {t("myAlerts")}
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger data-testid="theme-submenu-trigger">
-              <Sun className="h-4 w-4 me-2" />
+              <Sun className="me-2 h-4 w-4" />
               {tCommon("fields.theme")}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -385,7 +385,7 @@ export function UserDropdownMenu() {
           </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Globe className="h-4 w-4 me-2" />
+              <Globe className="me-2 h-4 w-4" />
               {tCommon("fields.locale")}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -399,7 +399,7 @@ export function UserDropdownMenu() {
                     >
                       <Check
                         className={cn(
-                          "h-4 w-4 me-2",
+                          "me-2 h-4 w-4",
                           session?.user?.preferences?.locale === value
                             ? "opacity-100"
                             : "opacity-0"
@@ -416,7 +416,7 @@ export function UserDropdownMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={onSignout} disabled={isLoggingOut}>
-            <LogOut className="h-4 w-4 me-2" />
+            <LogOut className="me-2 h-4 w-4" />
             {tCommon("actions.signOut")}
           </DropdownMenuItem>
         </DropdownMenuGroup>

@@ -29,7 +29,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   return (
     <div
       className={cn(
-        "flex justify-center items-center w-full h-full",
+        "flex h-full w-full items-center justify-center",
         className
       )}
       data-testid="loading-spinner"

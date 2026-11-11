@@ -110,7 +110,7 @@ export function ReportDateRangeModeField({
             key={option}
             className={cn(
               "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
-              value === option && "bg-primary/10 border-primary/40"
+              value === option && "border-primary/40 bg-primary/10"
             )}
             onClick={() => onChange(option)}
           >
@@ -123,7 +123,7 @@ export function ReportDateRangeModeField({
             <div className="flex-1">
               <Label
                 htmlFor={`report-date-range-mode-${option}`}
-                className="font-medium cursor-pointer"
+                className="cursor-pointer font-medium"
               >
                 {option === "relative"
                   ? t("relative.title", { range: rangeName })

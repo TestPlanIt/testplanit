@@ -128,7 +128,7 @@ export function CoverageChip({
         className={cn(
           // Theme-adaptive warning tokens (see components/ui/warning-alert.tsx) —
           // hardcoded ambers were unreadable on several light themes.
-          "whitespace-nowrap border-dashed border-warning bg-warning/15 text-foreground",
+          "border-dashed border-warning bg-warning/15 whitespace-nowrap text-foreground",
           className
         )}
       >
@@ -163,7 +163,7 @@ export function CoverageChip({
 
   return (
     <div
-      className={cn("flex items-center gap-3 flex-wrap", className)}
+      className={cn("flex flex-wrap items-center gap-3", className)}
       title={tooltip}
       data-testid="coverage-pips"
     >

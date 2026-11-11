@@ -299,8 +299,8 @@ function SortableItem({
         ref={rowRef}
         style={style}
         className={`
-          relative
-          border-b table-row-divider
+          table-row-divider
+          relative border-b
           data-[state=selected]:bg-muted
           ${isDragging ? "cursor-grabbing" : ""}
           ${isSelected ? "bg-primary/20 hover:bg-primary/20" : "table-row-surface table-row-surface-hover"}
@@ -358,14 +358,14 @@ function SortableItem({
               {isFirstColumn && hoverPosition === "top" && (
                 <div
                   // Position relative to cell, stretch horizontally, place at top
-                  className="absolute top-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
+                  className="pointer-events-none absolute top-0 z-50 h-[3px] w-screen bg-primary"
                   aria-hidden="true"
                 />
               )}
               {/* Indicator for BOTTOM */}
               {isFirstColumn && hoverPosition === "bottom" && (
                 <div
-                  className="absolute bottom-0 h-[3px] bg-primary z-50 pointer-events-none w-screen -my-1"
+                  className="pointer-events-none absolute bottom-0 z-50 -my-1 h-[3px] w-screen bg-primary"
                   aria-hidden="true"
                 />
               )}

@@ -392,7 +392,7 @@ export default function TestResultsImportDialog({
           <form onSubmit={handleImport} className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               {/* Test Run Name */}
-              <div className="grid gap-2 col-span-2">
+              <div className="col-span-2 grid gap-2">
                 <FormField
                   control={control}
                   name="name"
@@ -401,7 +401,7 @@ export default function TestResultsImportDialog({
                       <FormLabel htmlFor="name" className="flex items-center">
                         {tCommon("labels.testRunName")}
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                       </FormLabel>
                       <FormControl>
@@ -423,7 +423,7 @@ export default function TestResultsImportDialog({
                 <Label htmlFor="format" className="flex items-center">
                   {tFormat("label")}
                   <sup>
-                    <Asterisk className="w-3 h-3 text-destructive" />
+                    <Asterisk className="h-3 w-3 text-destructive" />
                   </sup>
                 </Label>
                 <Select
@@ -520,7 +520,7 @@ export default function TestResultsImportDialog({
                       <FormLabel htmlFor="folder" className="flex items-center">
                         {tCommon("fields.parentFolder")}
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                       </FormLabel>
                       <FormControl>
@@ -588,7 +588,7 @@ export default function TestResultsImportDialog({
                       <FormLabel htmlFor="state" className="flex items-center">
                         {tCommon("fields.state")}
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                       </FormLabel>
                       <FormControl>
@@ -644,7 +644,7 @@ export default function TestResultsImportDialog({
                       >
                         {tCommon("fields.template")}
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                       </FormLabel>
                       <FormControl>
@@ -714,7 +714,7 @@ export default function TestResultsImportDialog({
               </div>
 
               {/* Tags */}
-              <div className="grid gap-2 col-span-2">
+              <div className="col-span-2 grid gap-2">
                 <Label>{tCommon("fields.tags")}</Label>
                 <ManageTags
                   selectedTags={selectedTags}
@@ -736,7 +736,7 @@ export default function TestResultsImportDialog({
                       <FormLabel className="flex items-center">
                         {t("file.label")}
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                         <span className="ms-2 text-xs text-muted-foreground">
                           {`(${acceptedExtensions})`}

@@ -98,8 +98,8 @@ export const Header = () => {
       "relative inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium no-underline transition-colors",
       "after:pointer-events-none after:absolute after:inset-x-2 after:bottom-1 after:h-[3px] after:rounded-full after:transition-colors",
       active
-        ? "text-foreground font-semibold after:bg-primary"
-        : "text-muted-foreground hover:text-foreground after:bg-transparent hover:after:bg-primary/40"
+        ? "font-semibold text-foreground after:bg-primary"
+        : "text-muted-foreground after:bg-transparent hover:text-foreground hover:after:bg-primary/40"
     );
 
   // Minimal query to check if current project is the Demo Project
@@ -300,19 +300,19 @@ export const Header = () => {
 
   return (
     <div className="flex flex-col">
-      <div className="shadow-md top-0 z-50">
+      <div className="top-0 z-50 shadow-md">
         <div
           ref={headerRef}
           id="header-container"
           data-testid="header-container"
-          className={`items-center p-2 rounded-sm ${path.includes("admin") ? "bg-linear-to-b from-transparent from-60% to-red-500" : ""}`}
+          className={`items-center rounded-sm p-2 ${path.includes("admin") ? "bg-linear-to-b from-transparent from-60% to-red-500" : ""}`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <span id="header-logo" className="px-1 inline-block">
+              <span id="header-logo" className="inline-block px-1">
                 <Link
                   href="/"
-                  className="flex font-semibold tracking-tight text-2xl cursor-pointer text-[rgb(133,89,233)] no-underline"
+                  className="flex cursor-pointer text-2xl font-semibold tracking-tight text-[rgb(133,89,233)] no-underline"
                 >
                   <Image
                     className="mx-2"
@@ -347,12 +347,12 @@ export const Header = () => {
 
               {session?.user?.access !== "NONE" && (
                 <div className="whitespace-nowrap">
-                  <span id="projects-link" className="py-2 px-1 inline-block">
+                  <span id="projects-link" className="inline-block px-1 py-2">
                     <ProjectQuickSelector />
                   </span>
                   <span
                     id="global-features"
-                    className="py-2 px-1 inline-flex items-center gap-1"
+                    className="inline-flex items-center gap-1 px-1 py-2"
                   >
                     <Link
                       id="tags-link"
@@ -380,7 +380,7 @@ export const Header = () => {
               )}
 
               {session?.user?.access === "ADMIN" && (
-                <span className="py-2 px-1 inline-flex items-center">
+                <span className="inline-flex items-center px-1 py-2">
                   <Link
                     className={navLinkClass(isNavActive("/admin"))}
                     href="/admin"
@@ -391,7 +391,7 @@ export const Header = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-4 shrink-0">
+            <div className="flex shrink-0 items-center gap-4">
               {path.includes("admin") && (
                 <Badge
                   variant="destructive"
@@ -449,13 +449,13 @@ export const Header = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => setIsSearchOpen(true)}
-                    className="relative group"
+                    className="group relative"
                     aria-label={tCommon("aria.search")}
                     title={`Search (${isMac ? "⌘" : "Ctrl"}+K)`}
                     data-testid="global-search-trigger"
                   >
                     <Search className="h-5 w-5" />
-                    <span className="absolute start-12 transform -translate-x-1/2 rtl:translate-x-1/2 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    <span className="pointer-events-none absolute start-12 -translate-x-1/2 transform text-xs whitespace-nowrap text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 rtl:translate-x-1/2">
                       {isMac ? "⌘K" : "Ctrl+K"}
                     </span>
                   </Button>
@@ -499,7 +499,7 @@ export const Header = () => {
                       {alertCount > 0 && (
                         <Badge
                           variant="destructive"
-                          className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                          className="absolute -end-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
                           data-testid="header-actions-count-badge"
                         >
                           {alertCount > 9 ? "9+" : alertCount}

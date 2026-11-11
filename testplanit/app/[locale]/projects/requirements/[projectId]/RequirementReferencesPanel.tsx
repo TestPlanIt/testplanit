@@ -226,7 +226,7 @@ export function RequirementReferencesPanel({
     <Card shadow="none" data-testid="requirement-references">
       <CardHeader className="flex flex-row items-center justify-between p-4">
         <CardTitle className="flex items-center gap-2">
-          <Link2 className="w-5 h-5" />
+          <Link2 className="h-5 w-5" />
           {t("title", { count: rows.length })}
         </CardTitle>
         <Button
@@ -236,18 +236,18 @@ export function RequirementReferencesPanel({
           data-testid="requirement-references-add"
           onClick={() => setIsAddOpen(true)}
         >
-          <Plus className="w-4 h-4" /> {t("addReference")}
+          <Plus className="h-4 w-4" /> {t("addReference")}
         </Button>
       </CardHeader>
       <CardContent className="p-0">
         {rows.length === 0 ? (
-          <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm">
+          <div className="ms-4 -mt-6 mb-4 text-sm text-muted-foreground">
             <div>{t("empty")}</div>
             <div>{t("emptyHint")}</div>
           </div>
         ) : (
           <div ref={scrollRef} className="max-h-[32rem] overflow-auto">
-            <Table className="table-fixed w-full">
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead className="truncate">
@@ -295,7 +295,7 @@ export function RequirementReferencesPanel({
                             href={issue.externalUrl!}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 min-w-0 font-medium hover:text-inherit"
+                            className="flex min-w-0 items-center gap-1 font-medium hover:text-inherit"
                             title={label}
                             data-testid={`requirement-reference-link-${row.referencedIssueId}`}
                           >
@@ -314,7 +314,7 @@ export function RequirementReferencesPanel({
                             // page can only resolve the id in its home
                             // project.
                             href={`/projects/issues/${issue.projectId}?issueId=${row.referencedIssueId}`}
-                            className="flex items-center gap-1 min-w-0 font-medium"
+                            className="flex min-w-0 items-center gap-1 font-medium"
                             title={label}
                             data-testid={`requirement-reference-link-${row.referencedIssueId}`}
                           >
@@ -348,7 +348,7 @@ export function RequirementReferencesPanel({
                                 setOpenRemoveId(row.referencedIssueId)
                               }
                             >
-                              <X className="w-4 h-4" />
+                              <X className="h-4 w-4" />
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-fit" side="bottom">

@@ -34,7 +34,7 @@ export function UpdateAvailableBanner() {
     >
       <div className="flex flex-wrap items-center justify-center gap-2 bg-primary/10 px-4 py-2 text-sm">
         <RefreshCw className="h-4 w-4 shrink-0 text-primary" />
-        <span className="text-foreground me-4">
+        <span className="me-4 text-foreground">
           {t("common.version.updateAvailable")}
         </span>
         <Button
@@ -48,7 +48,7 @@ export function UpdateAvailableBanner() {
         <button
           type="button"
           onClick={dismiss}
-          className="text-muted-foreground hover:text-foreground transition-colors ms-1"
+          className="ms-1 text-muted-foreground transition-colors hover:text-foreground"
           aria-label={t("common.dismiss")}
           data-testid="update-available-dismiss"
         >

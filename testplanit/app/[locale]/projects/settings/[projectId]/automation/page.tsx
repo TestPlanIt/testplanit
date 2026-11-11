@@ -61,8 +61,8 @@ export default function ProjectAutomationPage() {
 
   if (!project) {
     return (
-      <Card className="flex flex-col w-full min-w-[400px] h-full">
-        <CardContent className="flex flex-col items-center justify-center h-full">
+      <Card className="flex h-full w-full min-w-[400px] flex-col">
+        <CardContent className="flex h-full flex-col items-center justify-center">
           <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
           </PageTitle>

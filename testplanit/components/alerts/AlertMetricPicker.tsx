@@ -153,7 +153,7 @@ export function AlertMetricPicker({
                         {entry.path === "scheduled" && (
                           <Badge
                             variant="outline"
-                            className="shrink-0 whitespace-nowrap text-[10px]"
+                            className="shrink-0 text-[10px] whitespace-nowrap"
                           >
                             {entry.schedule === "hourly"
                               ? t("form.checkedHourly")

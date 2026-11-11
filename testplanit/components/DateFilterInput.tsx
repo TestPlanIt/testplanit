@@ -259,10 +259,10 @@ export function DateFilterInput({
   };
 
   return (
-    <div className="p-2 space-y-2 bg-muted/30 rounded-md">
+    <div className="space-y-2 rounded-md bg-muted/30 p-2">
       {hasActiveFilter && (
-        <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
-          <span className="text-primary font-medium">
+        <div className="flex items-center justify-between rounded bg-primary/10 p-1.5 text-xs">
+          <span className="font-medium text-primary">
             {t("search.filters.filterActive")}{" "}
             {formatFilterDisplay(currentFilter)}
           </span>
@@ -294,7 +294,7 @@ export function DateFilterInput({
         }}
       >
         <SelectTrigger
-          className="w-full h-8 text-xs"
+          className="h-8 w-full text-xs"
           aria-label={t("common.placeholders.selectOperator")}
         >
           <SelectValue placeholder={t("common.placeholders.selectOperator")} />
@@ -309,13 +309,13 @@ export function DateFilterInput({
       </Select>
 
       {needsDateInput && (
-        <div className="flex gap-2 items-center">
+        <div className="flex items-center gap-2">
           <Popover open={popover1Open} onOpenChange={setPopover1Open}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "h-8 text-xs flex-1 justify-start font-normal",
+                  "h-8 flex-1 justify-start text-xs font-normal",
                   !date1 && "text-muted-foreground"
                 )}
               >
@@ -353,7 +353,7 @@ export function DateFilterInput({
                   <Button
                     variant="outline"
                     className={cn(
-                      "h-8 text-xs flex-1 justify-start font-normal",
+                      "h-8 flex-1 justify-start text-xs font-normal",
                       !date2 && "text-muted-foreground"
                     )}
                   >
@@ -387,7 +387,7 @@ export function DateFilterInput({
             size="sm"
             onClick={handleApply}
             disabled={!isValid()}
-            className="h-8 w-8 p-0 shrink-0"
+            className="h-8 w-8 shrink-0 p-0"
           >
             <Check className="h-3 w-3" />
           </Button>

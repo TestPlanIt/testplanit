@@ -225,7 +225,7 @@ function CasePanel({
       {/* Case card */}
       <div
         data-testid={testId}
-        className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
+        className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${
           isSelected
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50"
@@ -259,7 +259,7 @@ function CasePanel({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="text-muted-foreground hover:text-foreground shrink-0"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
             title={t("viewCaseDetails")}
           >
             <ExternalLink className="h-3.5 w-3.5" />
@@ -267,7 +267,7 @@ function CasePanel({
         </div>
 
         {/* Source + Folder + Created */}
-        <div className="space-y-1 mb-3 text-sm">
+        <div className="mb-3 space-y-1 text-sm">
           {caseDetails.source && (
             <div>
               <span className="font-medium text-muted-foreground">
@@ -319,7 +319,7 @@ function CasePanel({
 
         {/* Tags */}
         <div className="mb-3">
-          <p className="font-medium text-muted-foreground text-sm mb-1">
+          <p className="mb-1 text-sm font-medium text-muted-foreground">
             <Highlight on={diff.tags}>{tCommon("fields.tags")}</Highlight>
           </p>
           {caseDetails.tags.length === 0 ? (
@@ -340,7 +340,7 @@ function CasePanel({
             if (fieldType === "Steps") {
               return (
                 <div key={`steps-${templateField.caseFieldId}`}>
-                  <p className="font-medium text-muted-foreground text-sm mb-1">
+                  <p className="mb-1 text-sm font-medium text-muted-foreground">
                     <Highlight on={diff.steps}>
                       {tCommon("fields.steps")}
                     </Highlight>
@@ -350,11 +350,11 @@ function CasePanel({
                       {tRepo("fields.noSteps")}
                     </p>
                   ) : (
-                    <div className="max-h-48 overflow-y-auto space-y-2">
+                    <div className="max-h-48 space-y-2 overflow-y-auto">
                       {caseDetails.steps.map((step, i) => (
                         <div
                           key={step.id ?? i}
-                          className="text-sm border-s-2 border-muted ps-2"
+                          className="border-s-2 border-muted ps-2 text-sm"
                         >
                           <div className="font-medium">
                             {`${i + 1}. `}
@@ -364,7 +364,7 @@ function CasePanel({
                             />
                           </div>
                           {step.expectedResult && (
-                            <div className="text-muted-foreground text-xs mt-0.5">
+                            <div className="mt-0.5 text-xs text-muted-foreground">
                               <TextFromJson
                                 jsonString={step.expectedResult}
                                 room={`compare-er-${caseDetails.id}-${step.id}`}
@@ -454,13 +454,13 @@ function CasePanel({
 
         {/* Last Run */}
         <div className="text-sm">
-          <p className="font-medium text-muted-foreground mb-1">
+          <p className="mb-1 font-medium text-muted-foreground">
             {t("lastRunLabel")}
           </p>
           {lastRun ? (
             <div>
               <span className="font-medium">{lastRun.testRun?.name ?? ""}</span>
-              <span className="text-muted-foreground ms-2">
+              <span className="ms-2 text-muted-foreground">
                 {lastRun.status?.name ?? ""}
                 {" — "}
                 <DateFormatter
@@ -582,10 +582,10 @@ export function DuplicateComparisonDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         data-testid="comparison-dialog"
-        className="max-w-5xl max-h-[85vh] overflow-y-auto"
+        className="max-h-[85vh] max-w-5xl overflow-y-auto"
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 flex-wrap">
+          <DialogTitle className="flex flex-wrap items-center gap-2">
             <span>
               {pair
                 ? t("comparisonTitle", {
@@ -610,7 +610,7 @@ export function DuplicateComparisonDialog({
           </DialogTitle>
           <DialogDescription>{t("comparisonDescription")}</DialogDescription>
           {pair && pair.matchedFields.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
+            <div className="mt-1 flex flex-wrap gap-1">
               {pair.matchedFields.map((field) => (
                 <Badge key={field} variant="outline" className="text-xs">
                   {field}
@@ -623,21 +623,21 @@ export function DuplicateComparisonDialog({
         {/* Content area */}
         <div className="flex-1">
           {isLoading && (
-            <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
+            <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />
               <span className="text-sm">{t("loadingDetails")}</span>
             </div>
           )}
 
           {isError && (
-            <div className="text-center py-12 text-destructive text-sm">
+            <div className="py-12 text-center text-sm text-destructive">
               {t("caseDetailsError")}
             </div>
           )}
 
           {!isLoading && !isError && data && (
             <>
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="mb-3 text-xs text-muted-foreground">
                 {t("selectPrimary")}
               </p>
               <div className="grid grid-cols-2 gap-4">
@@ -671,7 +671,7 @@ export function DuplicateComparisonDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between pt-4 border-t mt-4">
+        <div className="mt-4 flex justify-between border-t pt-4">
           <Button
             data-testid="dismiss-button"
             variant="outline"
@@ -680,7 +680,7 @@ export function DuplicateComparisonDialog({
           >
             {isSubmitting && activeAction === "dismiss" ? (
               <>
-                <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 {t("dismissing")}
               </>
             ) : (
@@ -697,7 +697,7 @@ export function DuplicateComparisonDialog({
             >
               {isSubmitting && activeAction === "link" ? (
                 <>
-                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   {t("linking")}
                 </>
               ) : (
@@ -712,7 +712,7 @@ export function DuplicateComparisonDialog({
             >
               {isSubmitting && activeAction === "merge" ? (
                 <>
-                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   {t("merging")}
                 </>
               ) : (

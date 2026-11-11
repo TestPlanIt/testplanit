@@ -65,7 +65,7 @@ export function WebhookAdapterIcon({
       );
     case "GITEA":
       return (
-        <div className={cn(baseClass, "bg-white dark:bg-gray-800 p-0.5")}>
+        <div className={cn(baseClass, "bg-white p-0.5 dark:bg-gray-800")}>
           <GiteaPlatformIcon platform={platform} className="h-full w-full" />
         </div>
       );

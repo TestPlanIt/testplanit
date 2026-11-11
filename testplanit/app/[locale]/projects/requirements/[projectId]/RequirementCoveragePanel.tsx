@@ -114,7 +114,7 @@ export function RequirementCoveragePanel({
     <Card shadow="none" data-testid="requirement-coverage">
       <CardHeader className="p-4">
         <CardTitle className="flex items-center gap-2">
-          <ListChecks className="w-5 h-5" />
+          <ListChecks className="h-5 w-5" />
           {/* Counts every row listed below, which is the whole covering set
               -- cases in other projects included, each naming its own
               project in the Project column. Nothing is summarized away, so
@@ -155,14 +155,14 @@ export function RequirementCoveragePanel({
           // rendered while `isLoading` or `isError` is true (the branches
           // above own those), so this can never be mistaken for a pending
           // or failed fetch.
-          <div className="text-muted-foreground ms-4 -mt-2 mb-4 text-sm">
+          <div className="ms-4 -mt-2 mb-4 text-sm text-muted-foreground">
             {t("panelEmpty")}
           </div>
         ) : (
           // The virtualizer's viewport. Without a bounded, scrollable
           // ancestor it would measure zero and mount nothing.
           <div ref={scrollRef} className="max-h-[32rem] overflow-auto">
-            <Table className="table-fixed w-full">
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead className="truncate">{t("columnCase")}</TableHead>
@@ -242,7 +242,7 @@ export function RequirementCoveragePanel({
                         <CaseDisplay
                           testCase={{ id: row.caseId, name: row.caseName }}
                           projectId={row.projectId}
-                          className="font-medium line-clamp-2"
+                          className="line-clamp-2 font-medium"
                         />
                       </TableCell>
                       <TableCell className="w-[120px] text-center">

@@ -378,7 +378,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex items-center gap-1 rounded-lg mt-1 border-2 border-muted">
+        <div className="mt-1 flex items-center gap-1 rounded-lg border-2 border-muted">
           <div className="m-1 mt-1 min-w-30">
             <FormField
               control={control}
@@ -421,7 +421,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
               )}
             />
           </div>
-          <div className="w-full m-1 -mt-1">
+          <div className="m-1 -mt-1 w-full">
             <FormField
               control={control}
               name="name"
@@ -454,13 +454,13 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
             type="submit"
             variant="secondary"
             disabled={isSubmitting}
-            className="-mt-2 group me-2 px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+            className="group me-2 -mt-2 gap-0 px-4 transition-all duration-200 hover:gap-2 hover:px-4"
             data-testid="inline-add-case-button"
           >
             {isSubmitting ? (
               <LoadingSpinner />
             ) : (
-              <PlusSquare className="w-4 h-4 shrink-0" />
+              <PlusSquare className="h-4 w-4 shrink-0" />
             )}
             <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
               {t("repository.cases.addCase")}
@@ -470,7 +470,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
       </form>
       {errors.root && (
         <div
-          className="bg-destructive text-destructive-foreground text-sm p-2"
+          className="bg-destructive p-2 text-sm text-destructive-foreground"
           role="alert"
         >
           {errors.root.message}

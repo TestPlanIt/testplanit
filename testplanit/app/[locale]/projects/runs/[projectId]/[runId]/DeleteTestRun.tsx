@@ -120,25 +120,25 @@ export function DeleteTestRunModal({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[600px] border-destructive">
+      <AlertDialogContent className="border-destructive sm:max-w-[425px] lg:max-w-[600px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 me-2" />
+                <TriangleAlert className="me-2 h-6 w-6" />
                 {t("title")}
               </AlertDialogTitle>
               <AlertDialogDescription className="overflow-hidden">
                 {t("description")}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="bg-destructive text-destructive-foreground p-2">
+            <div className="bg-destructive p-2 text-destructive-foreground">
               {t("warning")}
             </div>
             <AlertDialogFooter>
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}
@@ -149,7 +149,7 @@ export function DeleteTestRunModal({
               </AlertDialogCancel>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-4 py-2"
+                className="inline-flex h-10 items-center justify-center rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground ring-offset-background transition-colors hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
               >
                 {tCommon("actions.delete")}
               </button>

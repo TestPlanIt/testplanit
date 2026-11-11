@@ -111,7 +111,7 @@ export const MilestoneOptionContent = ({
   >
     {milestone.milestoneType?.icon?.name && (
       <DynamicIcon
-        className="w-4 h-4 shrink-0"
+        className="h-4 w-4 shrink-0"
         name={milestone.milestoneType.icon.name as IconName}
       />
     )}

@@ -45,7 +45,7 @@ export function getJunitColumns({
       cell: ({ row }: { row: { original: any } }) => {
         const isDeleted = row.original.isDeleted;
         return (
-          <span className="flex items-center group min-w-0">
+          <span className="group flex min-w-0 items-center">
             <CaseDisplay
               testCase={{
                 id: row.original.id,
@@ -62,7 +62,7 @@ export function getJunitColumns({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Zap
-                    className="w-3.5 h-3.5 inline ms-1 shrink-0 text-amber-500"
+                    className="ms-1 inline h-3.5 w-3.5 shrink-0 text-amber-500"
                     aria-label={t("common.labels.flakyTestHint")}
                     data-testid="flaky-test-badge"
                   />
@@ -90,7 +90,7 @@ export function getJunitColumns({
                 />
               )}
             {!isDeleted && (
-              <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
             )}
           </span>
         );
@@ -193,7 +193,7 @@ export function getJunitColumns({
       cell: ({ row }: { row: { original: any } }) =>
         Array.isArray(row.original.properties) &&
         row.original.properties.length > 0 ? (
-          <ul className="list-disc ms-2">
+          <ul className="ms-2 list-disc">
             {row.original.properties.map((prop: any) => (
               <li key={prop.id}>
                 <span>{prop.name}</span>: {prop.value}
@@ -316,7 +316,7 @@ export function getJunitColumns({
       enableSorting: true,
       meta: { isPinned: "right" },
       cell: ({ row }: { row: { original: any } }) => (
-        <div className="flex items-center justify-end h-full">
+        <div className="flex h-full items-center justify-end">
           <StatusDisplay
             variant="filled"
             name={row.original.resultStatus}

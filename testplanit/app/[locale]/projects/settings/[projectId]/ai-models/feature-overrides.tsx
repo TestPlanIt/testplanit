@@ -212,7 +212,7 @@ export function FeatureOverrides({
         return (
           <Badge
             variant="outline"
-            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800"
+            className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
           >
             {t("projectOverride")}
           </Badge>
@@ -221,7 +221,7 @@ export function FeatureOverrides({
         return (
           <Badge
             variant="outline"
-            className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800"
+            className="border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300"
           >
             {t("disabledOverride")}
           </Badge>
@@ -324,7 +324,7 @@ export function FeatureOverrides({
                         )}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground text-sm">
+                      <span className="text-sm text-muted-foreground">
                         {t("noLlmConfigured")}
                       </span>
                     )}

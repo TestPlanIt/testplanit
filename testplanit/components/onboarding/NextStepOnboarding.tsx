@@ -35,7 +35,7 @@ function TourCard({
 
   return (
     <div className="relative">
-      <Card className="w-80 shadow-lg border-border bg-card/70 text-card-foreground backdrop-blur-xs">
+      <Card className="w-80 border-border bg-card/70 text-card-foreground shadow-lg backdrop-blur-xs">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold text-primary">
@@ -58,7 +58,7 @@ function TourCard({
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <div className="text-sm text-muted-foreground leading-relaxed">
+          <div className="text-sm leading-relaxed text-muted-foreground">
             {step.content}
           </div>
 

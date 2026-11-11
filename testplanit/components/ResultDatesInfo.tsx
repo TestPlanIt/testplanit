@@ -39,7 +39,7 @@ export const ResultDatesInfo: React.FC<ResultDatesInfoProps> = ({
   const timezone = session?.user.preferences?.timezone;
 
   const row = (label: string, icon: React.ReactNode, date: Date) => (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 w-full">
+    <div className="flex w-full min-w-0 items-center gap-2 text-sm text-muted-foreground">
       {icon}
       <span className="shrink-0">{label}:</span>
       <span className="truncate">
@@ -53,7 +53,7 @@ export const ResultDatesInfo: React.FC<ResultDatesInfoProps> = ({
   );
 
   return (
-    <div className={cn("space-y-2 w-full", className)}>
+    <div className={cn("w-full space-y-2", className)}>
       {startDate &&
         row(
           t("started"),

@@ -19,7 +19,7 @@ export function Loading({ delay = 300 }: { delay?: number }) {
 
   return (
     <div
-      className="flex justify-center items-center min-h-screen -mt-12"
+      className="-mt-12 flex min-h-screen items-center justify-center"
       data-testid="loading-indicator"
     >
       <div className="flex items-center">

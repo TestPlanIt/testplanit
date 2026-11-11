@@ -38,7 +38,7 @@ export const TagsDisplay: React.FC<Tags> = ({
       : "overflow-hidden truncate max-w-xl flex items-center";
 
   const badge = (
-    <div className="flex items-center max-w-full">
+    <div className="flex max-w-full items-center">
       {/* A linked tag lightens on hover instead of taking the default badge's
           darker tint: the trigger is an anchor, and the global `body a:hover`
           rule greys anything that does not set its own hover colour, which is
@@ -57,7 +57,7 @@ export const TagsDisplay: React.FC<Tags> = ({
             <span className="truncate">{name}</span>
           </span>
         ) : (
-          <div className="flex items-center me-1">
+          <div className="me-1 flex items-center">
             <Tag className={tagClassName} />
             <span className={textClassName}>{name}</span>
           </div>

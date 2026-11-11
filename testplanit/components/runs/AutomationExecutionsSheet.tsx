@@ -41,7 +41,7 @@ export function AutomationExecutionsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-2xl overflow-y-auto"
+        className="w-full overflow-y-auto sm:max-w-2xl"
         data-testid="automation-executions-sheet"
       >
         <SheetHeader>

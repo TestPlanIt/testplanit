@@ -506,7 +506,7 @@ export function useRequirementsListColumns({
         maxSize: 200,
         cell: ({ row }) => (
           <div
-            className="whitespace-nowrap text-sm"
+            className="text-sm whitespace-nowrap"
             data-testid={`requirement-createdAt-cell-${row.original.id}`}
           >
             <DateFormatter
@@ -779,7 +779,7 @@ function RequirementCoveringCasesCell({
                 <span
                   className={cn(
                     badgeVariants({ variant: "outline" }),
-                    "gap-1 whitespace-nowrap text-xs"
+                    "gap-1 text-xs whitespace-nowrap"
                   )}
                 >
                   {`+${otherProjectCount}`}
@@ -848,7 +848,7 @@ function CoveringCasesPopover({
           data-testid={triggerTestId}
           className={cn(
             badgeVariants({ variant: triggerVariant }),
-            "gap-1 whitespace-nowrap text-xs"
+            "gap-1 text-xs whitespace-nowrap"
           )}
         >
           <ListChecks className="h-4 w-4" />
@@ -986,7 +986,7 @@ function RequirementNameCell({
         // cell's content in its own `flex-1 truncate` div, which sizes to the
         // content, so a full-bleed rule would need a second shared-component
         // change to earn ~20px of height it does not need.
-        "relative flex min-w-0 items-center gap-1 cursor-pointer",
+        "relative flex min-w-0 cursor-pointer items-center gap-1",
         isDragging && "opacity-30"
       )}
       style={{

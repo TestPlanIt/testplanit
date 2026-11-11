@@ -346,7 +346,7 @@ export function QueueManagement() {
             {queue.isPaused ? (
               <Button
                 variant="ghost"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={() => performQueueAction(queue.name, "resume")}
                 disabled={actionInProgress === queue.name}
               >
@@ -355,7 +355,7 @@ export function QueueManagement() {
             ) : (
               <Button
                 variant="ghost"
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 onClick={() => performQueueAction(queue.name, "pause")}
                 disabled={actionInProgress === queue.name}
               >
@@ -364,7 +364,7 @@ export function QueueManagement() {
             )}
             <Button
               variant="destructive"
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               onClick={() => performQueueAction(queue.name, "clean", true)}
               disabled={actionInProgress === queue.name}
             >

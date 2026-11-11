@@ -237,9 +237,9 @@ export function StepDuplicateConversionDialog({
 
         {/* Step editor section — reuses the existing StepsForm */}
         <div>
-          <h3 className="font-semibold text-sm mb-2">{t("previewTitle")}</h3>
+          <h3 className="mb-2 text-sm font-semibold">{t("previewTitle")}</h3>
           {stepsLoading ? (
-            <div className="flex items-center justify-center py-6 text-muted-foreground gap-2">
+            <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
           ) : matchedSteps && matchedSteps.length === 0 ? (
@@ -262,13 +262,13 @@ export function StepDuplicateConversionDialog({
 
         {/* Affected cases section */}
         <div>
-          <h3 className="font-semibold text-sm mb-1">{t("casesTitle")}</h3>
-          <p className="text-xs text-muted-foreground mb-2">
+          <h3 className="mb-1 text-sm font-semibold">{t("casesTitle")}</h3>
+          <p className="mb-2 text-xs text-muted-foreground">
             {t("casesDescription")}
           </p>
-          <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
+          <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-2">
             {match && match.members.length > 1 && (
-              <Label className="flex items-center gap-2 px-1 py-0.5 border-b pb-2 mb-1 cursor-pointer w-fit">
+              <Label className="mb-1 flex w-fit cursor-pointer items-center gap-2 border-b px-1 py-0.5 pb-2">
                 <Checkbox
                   id="select-all-cases"
                   checked={
@@ -296,7 +296,7 @@ export function StepDuplicateConversionDialog({
             {match?.members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center gap-2 hover:bg-muted/50 rounded px-1 py-0.5"
+                className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/50"
               >
                 <Checkbox
                   checked={checkedCaseIds.has(member.caseId)}
@@ -318,7 +318,7 @@ export function StepDuplicateConversionDialog({
             ))}
           </div>
           {checkedCaseIds.size === 0 && (
-            <div className="flex items-center gap-1 mt-1 text-xs text-amber-600">
+            <div className="mt-1 flex items-center gap-1 text-xs text-amber-600">
               <AlertTriangle className="h-3 w-3" />
               <span>{t("noCasesSelected")}</span>
             </div>
@@ -349,7 +349,7 @@ export function StepDuplicateConversionDialog({
           >
             {isDismissing ? (
               <>
-                <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 {t("dismissing")}
               </>
             ) : (
@@ -364,7 +364,7 @@ export function StepDuplicateConversionDialog({
           >
             {isConverting ? (
               <>
-                <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 {t("converting")}
               </>
             ) : (

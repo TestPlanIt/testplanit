@@ -590,11 +590,11 @@ export function ImportSharedStepsWizard({
         {children}
         {required && (
           <sup>
-            <Asterisk className="w-3 h-3 text-destructive" />
+            <Asterisk className="h-3 w-3 text-destructive" />
           </sup>
         )}
       </Label>
-      {error && <p className="text-destructive text-sm mt-1">{error}</p>}
+      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>
   );
 
@@ -608,7 +608,7 @@ export function ImportSharedStepsWizard({
           <div
             className={
               validationErrors.selectedFile
-                ? "border border-destructive rounded-lg p-2"
+                ? "rounded-lg border border-destructive p-2"
                 : ""
             }
           >
@@ -666,7 +666,7 @@ export function ImportSharedStepsWizard({
           checked={hasHeaders}
           onCheckedChange={(c) => setHasHeaders(!!c)}
         />
-        <Label htmlFor="hasHeaders" className="font-normal cursor-pointer">
+        <Label htmlFor="hasHeaders" className="cursor-pointer font-normal">
           {t("importWizard.page1.hasHeaders")}
         </Label>
       </div>
@@ -698,13 +698,13 @@ export function ImportSharedStepsWizard({
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="single" id="row_single" />
-            <Label htmlFor="row_single" className="font-normal cursor-pointer">
+            <Label htmlFor="row_single" className="cursor-pointer font-normal">
               {t("importWizard.page1.rowMode.single")}
             </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="multi" id="row_multi" />
-            <Label htmlFor="row_multi" className="font-normal cursor-pointer">
+            <Label htmlFor="row_multi" className="cursor-pointer font-normal">
               {t("importWizard.page1.rowMode.multi")}
             </Label>
           </div>
@@ -750,7 +750,7 @@ export function ImportSharedStepsWizard({
                   <span className="flex items-center">
                     {field.displayName}
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   </span>
                 </li>
@@ -760,12 +760,12 @@ export function ImportSharedStepsWizard({
         </Alert>
       )}
 
-      <ScrollArea className="h-[400px] border rounded-lg">
-        <div className="p-4 space-y-4">
+      <ScrollArea className="h-[400px] rounded-lg border">
+        <div className="space-y-4 p-4">
           {fieldMappings.map((mapping) => (
             <div
               key={mapping.csvColumn}
-              className="grid grid-cols-2 gap-4 items-center"
+              className="grid grid-cols-2 items-center gap-4"
             >
               <div className="font-medium">{mapping.csvColumn}</div>
               <Select
@@ -790,7 +790,7 @@ export function ImportSharedStepsWizard({
                       {field.displayName}
                       {field.isRequired && (
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                       )}
                     </SelectItem>
@@ -843,8 +843,8 @@ export function ImportSharedStepsWizard({
           </div>
         </div>
 
-        <ScrollArea className="h-[400px] border rounded-lg">
-          <div className="p-4 space-y-4">
+        <ScrollArea className="h-[400px] rounded-lg border">
+          <div className="space-y-4 p-4">
             {previewData.map((stepData, index) => (
               <Card key={index}>
                 <CardHeader>
@@ -907,7 +907,7 @@ export function ImportSharedStepsWizard({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="flex h-[90vh] max-w-3xl flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("importWizard.title")}</DialogTitle>
           <DialogDescription>
@@ -918,27 +918,27 @@ export function ImportSharedStepsWizard({
         </DialogHeader>
 
         {/* Progress indicator */}
-        <div className="flex items-center gap-2 mb-4 shrink-0">
+        <div className="mb-4 flex shrink-0 items-center gap-2">
           {[1, 2, 3].map((step) => (
             <div key={step} className="flex items-center">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
                   step < currentPage
                     ? "bg-primary text-primary-foreground"
                     : step === currentPage
-                      ? "bg-primary/10 text-primary border-2 border-primary"
+                      ? "border-2 border-primary bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground"
                 }`}
               >
                 {step < currentPage ? (
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="h-4 w-4" />
                 ) : (
                   step
                 )}
               </div>
               {step < 3 && (
                 <div
-                  className={`w-12 h-0.5 mx-2 ${
+                  className={`mx-2 h-0.5 w-12 ${
                     step < currentPage ? "bg-primary" : "bg-muted"
                   }`}
                 />
@@ -947,7 +947,7 @@ export function ImportSharedStepsWizard({
           ))}
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {currentPage === 1 && renderPage1()}
           {currentPage === 2 && renderPage2()}
           {currentPage === 3 && renderPage3()}

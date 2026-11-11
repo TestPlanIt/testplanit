@@ -37,9 +37,9 @@ export function SessionNameDisplay({
   let icon = null;
   if (showIcon) {
     if (isDeleted) {
-      icon = <Trash className="h-4 w-4 shrink-0 mt-1" />;
+      icon = <Trash className="mt-1 h-4 w-4 shrink-0" />;
     } else {
-      icon = <Compass className="h-4 w-4 shrink-0 mt-1" />;
+      icon = <Compass className="mt-1 h-4 w-4 shrink-0" />;
     }
   }
 
@@ -47,7 +47,7 @@ export function SessionNameDisplay({
   const displayName = name || (id ? `${fallbackPrefix} ${id}` : t("unknown"));
 
   return (
-    <span className="flex items-start gap-1 min-w-0">
+    <span className="flex min-w-0 items-start gap-1">
       {icon}
       <span className={cn("min-w-0", className)}>{displayName}</span>
     </span>

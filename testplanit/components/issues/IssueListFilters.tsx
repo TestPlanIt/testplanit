@@ -78,7 +78,7 @@ function IssueFacetCombobox({
           <span
             className={
               option.value === null
-                ? "min-w-0 flex-1 truncate italic text-muted-foreground"
+                ? "min-w-0 flex-1 truncate text-muted-foreground italic"
                 : "min-w-0 flex-1 truncate"
             }
           >
@@ -88,7 +88,7 @@ function IssueFacetCombobox({
         renderSelectedOption={(option) => option.label}
         placeholder={placeholder}
         ariaLabel={label}
-        className="w-auto min-w-40 max-w-72"
+        className="w-auto max-w-72 min-w-40"
         dropdownClassName="p-0 min-w-[240px] max-w-[400px]"
       />
     </div>

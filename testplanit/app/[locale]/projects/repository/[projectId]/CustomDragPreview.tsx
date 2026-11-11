@@ -4,12 +4,12 @@ export const CustomDragPreview = (props: any) => {
   const item = props.monitorProps.item;
 
   return (
-    <div className="flex items-center space-x-2 w-fit bg-accent rounded p-2 opacity-80">
+    <div className="flex w-fit items-center space-x-2 rounded bg-accent p-2 opacity-80">
       <div className="drag-handle cursor-move" data-testid={`drag-preview`}>
-        <Folder className="w-4 h-4" />
+        <Folder className="h-4 w-4" />
       </div>
       <div>
-        <p className="whitespace-nowrap -ms-1 font-medium">{item.text}</p>
+        <p className="-ms-1 font-medium whitespace-nowrap">{item.text}</p>
       </div>
     </div>
   );

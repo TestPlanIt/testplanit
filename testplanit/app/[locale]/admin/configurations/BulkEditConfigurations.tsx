@@ -193,7 +193,7 @@ export function BulkEditConfigurations({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8 flex flex-col min-h-[480px]"
+            className="flex min-h-[480px] flex-col space-y-8"
           >
             <DialogHeader>
               <DialogTitle>
@@ -205,7 +205,7 @@ export function BulkEditConfigurations({
             <div className="space-y-2">
               <Label
                 htmlFor="bulk-apply-enabled"
-                className="flex justify-between items-center"
+                className="flex items-center justify-between"
               >
                 <span className="flex items-center">
                   {t("bulkEdit.applyEnabledLabel")}
@@ -300,10 +300,10 @@ export function BulkEditConfigurations({
               )}
             />
 
-            <DialogFooter className="sm:justify-between mt-auto">
+            <DialogFooter className="mt-auto sm:justify-between">
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message || tCommon("errors.unknown")}
@@ -341,10 +341,10 @@ export function BulkEditConfigurations({
         open={isDeleteConfirmOpen}
         onOpenChange={setIsDeleteConfirmOpen}
       >
-        <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[450px] border-destructive">
+        <AlertDialogContent className="border-destructive sm:max-w-[425px] lg:max-w-[450px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <TriangleAlert className="w-6 h-6 me-2" />
+              <TriangleAlert className="me-2 h-6 w-6" />
               {t("bulkEdit.deleteConfirmTitle", {
                 count: configurationIds.length,
               })}

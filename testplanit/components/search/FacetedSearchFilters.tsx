@@ -143,7 +143,7 @@ function mergeSelectedIds<Id, T>(
 /** A facet count in parentheses, when the search returned one. */
 function FacetCount({ count }: { count?: number }) {
   if (count === undefined) return null;
-  return <span className="text-muted-foreground shrink-0">{`(${count})`}</span>;
+  return <span className="shrink-0 text-muted-foreground">{`(${count})`}</span>;
 }
 
 /** Option label plus its facet count, when the search returned one. */
@@ -155,7 +155,7 @@ function OptionLabel({
   count?: number;
 }) {
   return (
-    <span className="flex items-center gap-1 min-w-0">
+    <span className="flex min-w-0 items-center gap-1">
       <span className="truncate">{children}</span>
       <FacetCount count={count} />
     </span>
@@ -842,7 +842,7 @@ export function FacetedSearchFilters({
     const selected = states.filter((s) => stateIds?.includes(s.id));
     return (
       <div className="space-y-2" data-testid={testId}>
-        <Label className="text-sm font-medium flex items-center gap-1">
+        <Label className="flex items-center gap-1 text-sm font-medium">
           <Workflow className="h-4 w-4" />
           {t("search.filters.states")}
         </Label>
@@ -860,7 +860,7 @@ export function FacetedSearchFilters({
           }
           fetchOptions={fetchStates}
           renderOption={(state) => (
-            <span className="flex items-center gap-1 min-w-0">
+            <span className="flex min-w-0 items-center gap-1">
               {state.icon && (
                 <DynamicIcon
                   name={
@@ -877,7 +877,7 @@ export function FacetedSearchFilters({
             </span>
           )}
           renderSelectedOption={(state) => (
-            <span className="flex items-center gap-1 min-w-0">
+            <span className="flex min-w-0 items-center gap-1">
               {state.icon && (
                 <DynamicIcon
                   name={
@@ -931,7 +931,7 @@ export function FacetedSearchFilters({
         {/* Selected Entity Types */}
         {entityTypes.length > 0 && (
           <div className="mb-4">
-            <Label className="text-sm font-medium mb-2 block">
+            <Label className="mb-2 block text-sm font-medium">
               {t("search.filters.searchingIn")}
             </Label>
             <div className="flex flex-wrap gap-2">
@@ -940,7 +940,7 @@ export function FacetedSearchFilters({
                 return (
                   <div
                     key={entityType}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium"
+                    className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
                   >
                     <Icon className="h-3 w-3" />
                     {name}
@@ -964,11 +964,11 @@ export function FacetedSearchFilters({
                 {t("search.filters.common")}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 pl-2">
+            <AccordionContent className="min-w-0 space-y-4 overflow-x-hidden pl-2">
               {/* Projects */}
               {projects && projects.length > 0 && !projectId && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium flex items-center gap-1">
+                  <Label className="flex items-center gap-1 text-sm font-medium">
                     <Boxes className="h-4 w-4" />
                     {t("common.fields.projects")}
                   </Label>
@@ -988,7 +988,7 @@ export function FacetedSearchFilters({
                     renderOption={(project) => (
                       <span
                         className={cn(
-                          "flex items-center gap-1 min-w-0",
+                          "flex min-w-0 items-center gap-1",
                           project.isCompleted &&
                             "text-muted-foreground line-through"
                         )}
@@ -1014,7 +1014,7 @@ export function FacetedSearchFilters({
               {/* Tags */}
               {tags && tags.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium flex items-center gap-1">
+                  <Label className="flex items-center gap-1 text-sm font-medium">
                     <Tags className="h-4 w-4" />
                     {t("common.fields.tags")}
                   </Label>
@@ -1047,7 +1047,7 @@ export function FacetedSearchFilters({
               {/* Created By */}
               {users && users.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium flex items-center gap-1">
+                  <Label className="flex items-center gap-1 text-sm font-medium">
                     <User className="h-4 w-4" />
                     {t("common.fields.createdBy")}
                   </Label>
@@ -1079,7 +1079,7 @@ export function FacetedSearchFilters({
 
               {/* Date Range */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-1">
+                <Label className="flex items-center gap-1 text-sm font-medium">
                   <CalendarIcon className="h-4 w-4" />
                   {t("runs.summary.recentResultsDateRange")}
                 </Label>
@@ -1117,7 +1117,7 @@ export function FacetedSearchFilters({
                         <Button
                           variant="outline"
                           className={cn(
-                            "justify-start text-start font-normal min-w-0 w-full",
+                            "w-full min-w-0 justify-start text-start font-normal",
                             !baseFilters.dateRange?.from &&
                               "text-muted-foreground"
                           )}
@@ -1154,7 +1154,7 @@ export function FacetedSearchFilters({
                         <Button
                           variant="outline"
                           className={cn(
-                            "justify-start text-start font-normal min-w-0 w-full",
+                            "w-full min-w-0 justify-start text-start font-normal",
                             !baseFilters.dateRange?.to &&
                               "text-muted-foreground"
                           )}
@@ -1207,7 +1207,7 @@ export function FacetedSearchFilters({
                   />
                   <Label
                     htmlFor="include-deleted"
-                    className="text-sm font-medium flex items-center gap-1"
+                    className="flex items-center gap-1 text-sm font-medium"
                   >
                     <Trash className="h-4 w-4" />
                     {t("search.filters.includeDeleted")}
@@ -1225,11 +1225,11 @@ export function FacetedSearchFilters({
                 {t("search.filters.entitySpecific")}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 px-1">
+            <AccordionContent className="min-w-0 space-y-4 overflow-x-hidden px-1">
               {/* Repository Case Filters */}
               {entityTypes.includes(SearchableEntityType.REPOSITORY_CASE) && (
-                <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
-                  <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
+                <div className="max-w-full space-y-4 overflow-x-hidden rounded-lg border border-border/50 bg-muted p-4">
+                  <h4 className="text-sm font-medium tracking-wider text-muted-foreground uppercase">
                     {t("search.entityTypes.repositoryCase")}
                   </h4>
 
@@ -1244,7 +1244,7 @@ export function FacetedSearchFilters({
                   {/* Folders */}
                   {folders && folders.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-1">
+                      <Label className="flex items-center gap-1 text-sm font-medium">
                         <FolderTree className="h-4 w-4" />
                         {t("repository.folders")}
                       </Label>
@@ -1280,7 +1280,7 @@ export function FacetedSearchFilters({
                   {/* Templates */}
                   {templates && templates.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-1">
+                      <Label className="flex items-center gap-1 text-sm font-medium">
                         <LayoutTemplate className="h-4 w-4" />
                         {t("common.fields.templates")}
                       </Label>
@@ -1317,7 +1317,7 @@ export function FacetedSearchFilters({
 
                   {/* Automation Status */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1">
+                    <Label className="flex items-center gap-1 text-sm font-medium">
                       <Bot className="h-4 w-4" />
                       {t("common.ui.search.automationStatus")}
                     </Label>
@@ -1365,7 +1365,7 @@ export function FacetedSearchFilters({
 
                   {/* Estimate Range */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1">
+                    <Label className="flex items-center gap-1 text-sm font-medium">
                       <Timer className="h-4 w-4" />
                       {t("search.filters.estimateRange")}
                     </Label>
@@ -1428,7 +1428,7 @@ export function FacetedSearchFilters({
 
                   {/* Custom Fields */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1">
+                    <Label className="flex items-center gap-1 text-sm font-medium">
                       <LayoutList className="h-4 w-4" />
                       {t("search.customFields")}
                     </Label>
@@ -1451,8 +1451,8 @@ export function FacetedSearchFilters({
 
               {/* Test Run Filters */}
               {entityTypes.includes(SearchableEntityType.TEST_RUN) && (
-                <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
-                  <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
+                <div className="max-w-full space-y-4 overflow-x-hidden rounded-lg border border-border/50 bg-muted p-4">
+                  <h4 className="text-sm font-medium tracking-wider text-muted-foreground uppercase">
                     {t("common.fields.testRuns")}
                   </h4>
 
@@ -1466,7 +1466,7 @@ export function FacetedSearchFilters({
 
                   {/* Test Run Type */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1">
+                    <Label className="flex items-center gap-1 text-sm font-medium">
                       <GitBranch className="h-4 w-4" />
                       {t("search.filters.testRunType")}
                     </Label>
@@ -1504,7 +1504,7 @@ export function FacetedSearchFilters({
                   {/* Configurations */}
                   {configurations && configurations.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-1">
+                      <Label className="flex items-center gap-1 text-sm font-medium">
                         <Combine className="h-4 w-4" />
                         {t("common.fields.configurations")}
                       </Label>
@@ -1541,7 +1541,7 @@ export function FacetedSearchFilters({
                   {/* Milestones */}
                   {milestones && milestones.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-1">
+                      <Label className="flex items-center gap-1 text-sm font-medium">
                         <Milestone className="h-4 w-4" />
                         {t("common.fields.milestones")}
                       </Label>
@@ -1595,7 +1595,7 @@ export function FacetedSearchFilters({
 
                   {/* Elapsed Time Range */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1">
+                    <Label className="flex items-center gap-1 text-sm font-medium">
                       <Clock className="h-4 w-4" />
                       {t("search.filters.elapsedRange")}
                     </Label>
@@ -1654,8 +1654,8 @@ export function FacetedSearchFilters({
 
               {/* Session Filters */}
               {entityTypes.includes(SearchableEntityType.SESSION) && (
-                <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
-                  <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
+                <div className="max-w-full space-y-4 overflow-x-hidden rounded-lg border border-border/50 bg-muted p-4">
+                  <h4 className="text-sm font-medium tracking-wider text-muted-foreground uppercase">
                     {t("common.fields.sessions")}
                   </h4>
 
@@ -1670,7 +1670,7 @@ export function FacetedSearchFilters({
                   {/* Session Templates */}
                   {templates && templates.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-1">
+                      <Label className="flex items-center gap-1 text-sm font-medium">
                         <LayoutTemplate className="h-4 w-4" />
                         {t("common.fields.templates")}
                       </Label>
@@ -1705,7 +1705,7 @@ export function FacetedSearchFilters({
                   {/* Assigned To */}
                   {users && users.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-1">
+                      <Label className="flex items-center gap-1 text-sm font-medium">
                         <UserCheck className="h-4 w-4" />
                         {t("common.fields.assignedTo")}
                       </Label>
@@ -1759,7 +1759,7 @@ export function FacetedSearchFilters({
 
                   {/* Session Estimate Range */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1">
+                    <Label className="flex items-center gap-1 text-sm font-medium">
                       <Timer className="h-4 w-4" />
                       {t("search.filters.estimateRange")}
                     </Label>
@@ -1816,7 +1816,7 @@ export function FacetedSearchFilters({
 
                   {/* Session Elapsed Time Range */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1">
+                    <Label className="flex items-center gap-1 text-sm font-medium">
                       <Clock className="h-4 w-4" />
                       {t("search.filters.elapsedRange")}
                     </Label>
@@ -1875,14 +1875,14 @@ export function FacetedSearchFilters({
 
               {/* Issue Filters */}
               {entityTypes.includes(SearchableEntityType.ISSUE) && (
-                <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
-                  <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
+                <div className="max-w-full space-y-4 overflow-x-hidden rounded-lg border border-border/50 bg-muted p-4">
+                  <h4 className="text-sm font-medium tracking-wider text-muted-foreground uppercase">
                     {t("common.fields.issues")}
                   </h4>
 
                   {/* Issues */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
+                    <Label className="flex items-center gap-2 text-sm font-medium">
                       <Bug className="h-4 w-4" />
                       {t("common.fields.issues")}
                     </Label>
@@ -1896,7 +1896,7 @@ export function FacetedSearchFilters({
                       }}
                       fetchOptions={fetchIssues}
                       renderOption={(issue) => (
-                        <span className="flex items-center gap-1 min-w-0 font-medium">
+                        <span className="flex min-w-0 items-center gap-1 font-medium">
                           {issue.externalKey && (
                             <span className="shrink-0">
                               {issue.externalKey}
@@ -1921,8 +1921,8 @@ export function FacetedSearchFilters({
 
               {/* Milestone Filters */}
               {entityTypes.includes(SearchableEntityType.MILESTONE) && (
-                <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
-                  <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
+                <div className="max-w-full space-y-4 overflow-x-hidden rounded-lg border border-border/50 bg-muted p-4">
+                  <h4 className="text-sm font-medium tracking-wider text-muted-foreground uppercase">
                     {t("common.fields.milestones")}
                   </h4>
 
@@ -1954,7 +1954,7 @@ export function FacetedSearchFilters({
 
       {/* Clear All Button */}
       {activeFilterCount > 0 && (
-        <div className="pt-4 border-t">
+        <div className="border-t pt-4">
           <Button
             variant="outline"
             className="w-full"

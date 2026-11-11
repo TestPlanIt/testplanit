@@ -171,12 +171,12 @@ const Projects = () => {
           <CardHeader>
             <CardTitle data-testid="projects-page-title">
               <div className="flex items-center">
-                <Boxes className="w-5 h-5 me-1" />
+                <Boxes className="me-1 h-5 w-5" />
                 {t("home.dashboard.projects", { count: projectCount })}
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {projectsForCards?.map((project) => (
               <ProjectCard
                 key={project.id}

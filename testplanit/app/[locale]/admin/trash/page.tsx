@@ -98,7 +98,7 @@ export default function TrashPage() {
             height (rail list when it overflows, table body for infinite scroll). */}
         <div className="flex flex-col gap-4 md:h-[calc(100vh-19rem)] md:min-h-0 md:flex-row md:gap-6">
           {/* Left rail: filterable list of item types */}
-          <div className="flex w-full shrink-0 flex-col md:w-72 md:min-h-0 md:border-e md:pe-4">
+          <div className="flex w-full shrink-0 flex-col md:min-h-0 md:w-72 md:border-e md:pe-4">
             <Filter
               placeholder={t("filterTypesPlaceholder")}
               initialSearchString={typeFilter}

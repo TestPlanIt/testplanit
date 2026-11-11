@@ -125,17 +125,17 @@ export function AlertTriggeredNotification({
         <BellRing className="h-4 w-4 shrink-0 text-primary" />
         {data.ruleName ?? ""}
       </h4>
-      <div className="text-sm text-muted-foreground space-y-1">
+      <div className="space-y-1 text-sm text-muted-foreground">
         <p data-testid="notification-alert-detail">
           {t(message.key as never, message.params as never)}
         </p>
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex flex-wrap items-center gap-1">
           {subject &&
             (path ? (
               <Link
                 href={path}
                 data-testid="notification-alert-subject-link"
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 {subject}
                 <ExternalLink className="h-3 w-3" />

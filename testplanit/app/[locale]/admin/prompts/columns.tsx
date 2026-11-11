@@ -66,7 +66,7 @@ export const useColumns = (
         meta: { isPinned: "left" },
         size: 240,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-primary-foreground">
             <MessageSquareCode className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{row.original.name}</span>
             {row.original.isDefault && (
@@ -233,12 +233,12 @@ export const useColumns = (
         size: 100,
         meta: { isPinned: "right" },
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
+          <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onEditConfig?.(row.original)}
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               aria-label={tCommon("actions.edit")}
             >
               <Edit className="h-4 w-4" />
@@ -247,7 +247,7 @@ export const useColumns = (
               variant="destructive"
               size="icon"
               onClick={() => onDeleteConfig?.(row.original)}
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               disabled={row.original.isDefault}
               title={
                 row.original.isDefault ? t("cannotDeleteDefault") : undefined

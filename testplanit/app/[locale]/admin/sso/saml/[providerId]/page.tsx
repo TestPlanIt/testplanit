@@ -252,7 +252,7 @@ export default function SAMLConfigurationPage() {
         <h1 className="text-3xl font-bold">
           {t("admin.sso.samlConfiguration.title")}
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground">
           {t("admin.sso.samlConfiguration.description", {
             name: provider.name,
           })}
@@ -278,7 +278,7 @@ export default function SAMLConfigurationPage() {
                 onChange={(e) => setProviderName(e.target.value)}
                 placeholder="Okta"
               />
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {t(
                   "admin.sso.samlConfiguration.samlSettings.providerNameDescription"
                 )}
@@ -404,15 +404,15 @@ export default function SAMLConfigurationPage() {
               </p>
             </div>
 
-            <div className="text-sm text-muted-foreground border-t pt-4">
+            <div className="border-t pt-4 text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.saml.instructions.title")}</p>
-              <ol className="list-decimal ms-4 space-y-1">
+              <ol className="ms-4 list-decimal space-y-1">
                 <li>{t("admin.sso.dialogs.saml.instructions.step1")}</li>
                 <li>{t("admin.sso.dialogs.saml.instructions.step2")}</li>
                 <li>{t("admin.sso.dialogs.saml.instructions.step3")}</li>
                 <li>
                   {t("admin.sso.dialogs.saml.instructions.step4")}{" "}
-                  <code className="bg-muted px-1 rounded">
+                  <code className="rounded bg-muted px-1">
                     {formData.callbackUrl}
                   </code>
                 </li>
@@ -463,7 +463,7 @@ export default function SAMLConfigurationPage() {
                       defaultAccess: e.target.value as Access,
                     })
                   }
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 max-w-xs block"
+                  className="block w-full max-w-xs rounded-md border border-input bg-background px-3 py-2"
                 >
                   {AccessLevels.map(({ value, key }) => (
                     <option key={value} value={value}>
@@ -472,7 +472,7 @@ export default function SAMLConfigurationPage() {
                   ))}
                 </select>
               </Label>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {t(
                   "admin.sso.samlConfiguration.userProvisioning.accessDescription"
                 )}

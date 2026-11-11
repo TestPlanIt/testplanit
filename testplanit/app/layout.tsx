@@ -94,7 +94,7 @@ export default async function RootLayout({
           body. That keeps `document.body.getBoundingClientRect().top` at 0, which
           the onboarding tour's spotlight positioning relies on to align with its
           target elements. */}
-      <body className="flow-root text-foreground bg-background underline:text-link w-full">
+      <body className="underline:text-link flow-root w-full bg-background text-foreground">
         {children}
       </body>
     </html>

@@ -304,7 +304,7 @@ export function LinkedRequirementCasesPanel({
     <Card shadow="none" data-testid="requirement-linked-cases">
       <CardHeader className="flex flex-row items-center justify-between p-4">
         <CardTitle className="flex items-center gap-2">
-          <Link2 className="w-5 h-5" />
+          <Link2 className="h-5 w-5" />
           {/* Direct links only -- the same set the table below lists, which
               is deliberately narrower than the covering-case superset the
               panel above totals. The key's own `=0` branch falls back to
@@ -319,18 +319,18 @@ export function LinkedRequirementCasesPanel({
           data-testid="requirement-linked-cases-add"
           onClick={() => setIsAddOpen(true)}
         >
-          <Plus className="w-4 h-4" />{" "}
+          <Plus className="h-4 w-4" />{" "}
           {tGlobal("common.upload.attachments.link.addButton")}
         </Button>
       </CardHeader>
       <CardContent className="p-0">
         {rows.length === 0 ? (
-          <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm">
+          <div className="ms-4 -mt-6 mb-4 text-sm text-muted-foreground">
             {t("empty")}
           </div>
         ) : (
           <div ref={scrollRef} className="max-h-[32rem] overflow-auto">
-            <Table className="table-fixed w-full">
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead className="truncate">{t("columnCase")}</TableHead>
@@ -369,7 +369,7 @@ export function LinkedRequirementCasesPanel({
                       ref={rowVirtualizer.measureElement}
                     >
                       <TableCell>
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex min-w-0 items-center gap-2">
                           <CaseDisplay
                             testCase={{
                               id: row.id,
@@ -379,7 +379,7 @@ export function LinkedRequirementCasesPanel({
                               hasParameters: row.hasParameters ?? undefined,
                             }}
                             projectId={row.projectId}
-                            className="font-medium line-clamp-2"
+                            className="line-clamp-2 font-medium"
                           />
                           {isSuspect && (
                             // Gated on openDismissId, its own state -- never
@@ -397,7 +397,7 @@ export function LinkedRequirementCasesPanel({
                                     <Badge
                                       variant="outline"
                                       data-testid={`requirement-linked-case-suspect-${row.id}`}
-                                      className="gap-2 shrink-0 cursor-pointer border-dashed border-warning bg-warning/15 text-foreground"
+                                      className="shrink-0 cursor-pointer gap-2 border-dashed border-warning bg-warning/15 text-foreground"
                                       onClick={() => setOpenDismissId(row.id)}
                                     >
                                       <AlertTriangle className="h-3 w-3 text-warning" />
@@ -474,7 +474,7 @@ export function LinkedRequirementCasesPanel({
                               data-testid={`requirement-linked-case-remove-${row.id}`}
                               onClick={() => setOpenUnlinkId(row.id)}
                             >
-                              <X className="w-4 h-4" />
+                              <X className="h-4 w-4" />
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-fit" side="bottom">
@@ -589,7 +589,7 @@ function AddLinkedCaseDialog({
             <Button
               type="button"
               variant="outline"
-              className="justify-start text-start w-full"
+              className="w-full justify-start text-start"
             >
               {value ? (
                 <span className="flex items-center gap-1 overflow-hidden">
@@ -599,7 +599,7 @@ function AddLinkedCaseDialog({
                     <ListChecks className="h-4 w-4 shrink-0" />
                   )}
                   <span
-                    className="truncate whitespace-nowrap overflow-hidden"
+                    className="truncate overflow-hidden whitespace-nowrap"
                     style={{ maxWidth: 400 }}
                   >
                     {value.name}

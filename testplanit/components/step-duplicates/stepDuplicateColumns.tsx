@@ -67,7 +67,7 @@ export const getColumns = (
     enableResizing: true,
     size: 105,
     cell: ({ row }) => (
-      <span className="text-end block font-medium">
+      <span className="block text-end font-medium">
         {row.original.stepCount}
       </span>
     ),
@@ -83,7 +83,7 @@ export const getColumns = (
     maxSize: 1200,
     cell: ({ row, column }) => (
       <span
-        className="text-muted-foreground text-sm truncate block"
+        className="block truncate text-sm text-muted-foreground"
         style={{ maxWidth: column.getSize() }}
       >
         {row.original.matchedStepsPreview}

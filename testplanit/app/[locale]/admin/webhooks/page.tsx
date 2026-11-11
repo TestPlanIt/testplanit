@@ -65,7 +65,7 @@ export default function AdminWebhooksPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center gap-2 pb-2 pt-1">
+          <SectionHeader className="flex items-center gap-2 pt-1 pb-2">
             <CardTitle>{t("title")}</CardTitle>
             <HelpPopover helpKey="systemWebhooks" />
           </SectionHeader>

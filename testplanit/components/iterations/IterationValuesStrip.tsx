@@ -66,7 +66,7 @@ export function IterationValuesStrip({
   return (
     <div
       data-testid="iteration-values-strip"
-      className="flex flex-wrap items-center gap-2 px-4 py-2 border-b bg-card text-xs"
+      className="flex flex-wrap items-center gap-2 border-b bg-card px-4 py-2 text-xs"
     >
       <span
         className="text-xs font-medium text-muted-foreground"
@@ -86,7 +86,7 @@ export function IterationValuesStrip({
             <span
               data-testid={`iteration-values-chip-${p.name}`}
               data-overridden={isOverridden ? "true" : undefined}
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono text-[0.8125rem] leading-tight whitespace-nowrap"
+              className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[0.8125rem] leading-tight whitespace-nowrap text-primary"
             >
               <span>{`@${p.name}:`}</span>
               <span className={p.sensitive ? "font-mono" : ""}>
@@ -95,7 +95,7 @@ export function IterationValuesStrip({
               {isOverridden && (
                 <Badge
                   variant="outline"
-                  className="ms-1 h-4 px-1 text-[0.6875rem] gap-0.5"
+                  className="ms-1 h-4 gap-0.5 px-1 text-[0.6875rem]"
                   data-testid={`iteration-values-chip-${p.name}-overridden`}
                 >
                   <Pencil className="h-3 w-3" />

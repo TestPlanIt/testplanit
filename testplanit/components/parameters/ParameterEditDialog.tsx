@@ -188,7 +188,7 @@ export function ParameterEditDialog({
             <div>
               <label className="text-xs font-medium">{tCommon("name")}</label>
               <Input value={parameter.name} disabled className="font-mono" />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {t("editDialogRenameHint")}
               </p>
             </div>
@@ -288,7 +288,7 @@ export function ParameterEditDialog({
           </div>
 
           {type === "SELECT" && (
-            <div className="flex flex-col gap-2 border rounded-md p-3 bg-muted/30">
+            <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3">
               <Controller
                 control={form.control}
                 name="selectSource"

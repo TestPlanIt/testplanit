@@ -127,7 +127,7 @@ export const useColumns = (
         enableHiding: false,
         size: 180,
         cell: ({ row: _row, getValue }) => (
-          <div className="whitespace-nowrap text-sm">
+          <div className="text-sm whitespace-nowrap">
             <DateFormatter
               date={getValue() as Date | string}
               formatString="MM-dd-yyyy HH:mm:ss"
@@ -163,7 +163,7 @@ export const useColumns = (
           return (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="font-mono text-sm truncate max-w-[130px] block">
+                <span className="block max-w-[130px] truncate font-mono text-sm">
                   {entityType}
                 </span>
               </TooltipTrigger>
@@ -201,7 +201,7 @@ export const useColumns = (
               {name ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="truncate block w-full">{name}</span>
+                    <span className="block w-full truncate">{name}</span>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>{name}</p>
@@ -253,7 +253,7 @@ export const useColumns = (
           }
           return (
             <div className="flex flex-col">
-              {name && <span className="font-medium text-sm">{name}</span>}
+              {name && <span className="text-sm font-medium">{name}</span>}
               {email && (
                 <span className="text-xs text-muted-foreground">{email}</span>
               )}
@@ -262,7 +262,7 @@ export const useColumns = (
                 // (e.g. rows written before Bearer-auth carried identity).
                 // Show the raw id — never a label that reads as system
                 // attribution, which this is not.
-                <span className="font-mono text-xs text-muted-foreground break-all">
+                <span className="font-mono text-xs break-all text-muted-foreground">
                   {userId || "-"}
                 </span>
               )}
@@ -303,7 +303,7 @@ export const useColumns = (
           // write to the entity itself. Null for app-emitted semantic events.
           const sourceTable = row.original.sourceTable;
           return sourceTable ? (
-            <span className="font-mono text-xs truncate block">
+            <span className="block truncate font-mono text-xs">
               {sourceTable}
             </span>
           ) : (
@@ -321,7 +321,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <Button
             variant="ghost"
-            className="px-2 py-1 h-auto"
+            className="h-auto px-2 py-1"
             onClick={() => onViewDetails(row.original)}
             title={t("viewDetails")}
             data-testid="audit-log-view-details"

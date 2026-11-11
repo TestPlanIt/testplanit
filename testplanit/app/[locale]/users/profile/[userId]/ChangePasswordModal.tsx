@@ -148,13 +148,13 @@ export function ChangePasswordModal({
           <div className="grid gap-4 py-4">
             {errors.length > 0 && (
               <div
-                className="text-destructive text-sm bg-destructive/10 p-3 rounded-md"
+                className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
                 role="alert"
               >
                 {errors.length === 1 ? (
                   errors[0]
                 ) : (
-                  <ul className="list-disc list-inside space-y-1">
+                  <ul className="list-inside list-disc space-y-1">
                     {errors.map((msg, i) => (
                       <li key={i}>{msg}</li>
                     ))}
@@ -167,7 +167,7 @@ export function ChangePasswordModal({
                 <Label htmlFor="currentPassword" className="flex justify-end">
                   {t("currentPasswordLabel")}
                   <sup>
-                    <Asterisk className="w-3 h-3 text-destructive shrink-0" />
+                    <Asterisk className="h-3 w-3 shrink-0 text-destructive" />
                   </sup>
                 </Label>
                 <Input
@@ -184,7 +184,7 @@ export function ChangePasswordModal({
               <Label htmlFor="newPassword" className="flex justify-end">
                 {t("newPasswordLabel")}
                 <sup>
-                  <Asterisk className="w-3 h-3 text-destructive shrink-0" />
+                  <Asterisk className="h-3 w-3 shrink-0 text-destructive" />
                 </sup>
               </Label>
               <div className="col-span-3">
@@ -205,7 +205,7 @@ export function ChangePasswordModal({
               <Label htmlFor="confirmPassword" className="flex justify-end">
                 {t("confirmPasswordLabel")}{" "}
                 <sup>
-                  <Asterisk className="w-3 h-3 text-destructive shrink-0" />
+                  <Asterisk className="h-3 w-3 shrink-0 text-destructive" />
                 </sup>
               </Label>
               <Input

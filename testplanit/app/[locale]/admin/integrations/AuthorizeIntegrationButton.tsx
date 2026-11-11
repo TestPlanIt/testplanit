@@ -48,7 +48,7 @@ export function AuthorizeIntegrationButton({
     return (
       <Button
         variant="ghost"
-        className="px-2 py-1 h-auto invisible pointer-events-none"
+        className="pointer-events-none invisible h-auto px-2 py-1"
         aria-hidden="true"
         tabIndex={-1}
       >
@@ -63,7 +63,7 @@ export function AuthorizeIntegrationButton({
         <Button
           variant="ghost"
           onClick={handleAuthorize}
-          className="px-2 py-1 h-auto text-warning-text"
+          className="h-auto px-2 py-1 text-warning-text"
         >
           <ShieldCheck className="h-4 w-4" />
           <span className="sr-only">{t("authorize")}</span>

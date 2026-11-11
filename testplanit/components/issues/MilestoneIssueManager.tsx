@@ -305,7 +305,7 @@ export function MemberIssueRowActions({
                 onClick={onGenerate}
                 data-testid="member-issue-generate-cases"
               >
-                <Sparkles className="h-4 w-4 me-2" />
+                <Sparkles className="me-2 h-4 w-4" />
                 {tRepo("generateTestCases.buttonText")}
               </DropdownMenuItem>
             )}
@@ -316,7 +316,7 @@ export function MemberIssueRowActions({
                 onClick={() => setConfirmOpen(true)}
                 data-testid="member-issue-unlink"
               >
-                <X className="h-4 w-4 me-2" />
+                <X className="me-2 h-4 w-4" />
                 {tCommon("configurationGroup.unlink")}
               </DropdownMenuItem>
             )}

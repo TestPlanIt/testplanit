@@ -156,17 +156,17 @@ const DraggableItem = ({
       />
 
       {isEditing ? (
-        <div className="flex flex-col w-full me-12 pe-12">
+        <div className="me-12 flex w-full flex-col pe-12">
           <Input
             type="text"
             value={newName}
             onChange={handleNameChange}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            className="cursor-ns-resize w-full"
+            className="w-full cursor-ns-resize"
             autoFocus
           />
-          {error && <span className="text-destructive text-xs">{error}</span>}
+          {error && <span className="text-xs text-destructive">{error}</span>}
         </div>
       ) : (
         <div className="flex items-center">
@@ -175,7 +175,7 @@ const DraggableItem = ({
             type="button"
             variant="link"
             onClick={handleEditClick}
-            className="text-primary ms-2 p-0"
+            className="ms-2 p-0 text-primary"
           >
             <Edit3 size={16} />
           </Button>
@@ -211,7 +211,7 @@ const DraggableItem = ({
           e.stopPropagation();
           onRemove(id);
         }}
-        className="text-destructive p-0 -my-1"
+        className="-my-1 p-0 text-destructive"
       >
         <Trash size={20} />
       </Button>
@@ -336,7 +336,7 @@ const DraggableList: React.FC<DraggableListProps> = ({
         {/* Header */}
         {items.length > 0 && (
           <div
-            className={`${columns} shadow-xs text-muted-foreground font-medium sticky top-0 z-10 bg-background border border-foreground/10`}
+            className={`${columns} sticky top-0 z-10 border border-foreground/10 bg-background font-medium text-muted-foreground shadow-xs`}
           >
             <span />
             <span className="ms-2">{t("common.fields.icon")}</span>

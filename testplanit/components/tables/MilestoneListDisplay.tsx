@@ -86,12 +86,12 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
     <Popover>
       <PopoverTrigger>
         <Badge>
-          <Milestone className="w-4 h-4 me-1" />
+          <Milestone className="me-1 h-4 w-4" />
           {milestones.length}
         </Badge>
       </PopoverTrigger>
       <PopoverContent
-        className="flex flex-wrap items-center min-w-[400px] max-w-[600px] overflow-auto max-h-[calc(100vh-400px)]"
+        className="flex max-h-[calc(100vh-400px)] max-w-[600px] min-w-[400px] flex-wrap items-center overflow-auto"
         onWheel={(e) => e.stopPropagation()}
       >
         {milestones.map((milestone) => {
@@ -116,7 +116,7 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
                 <div className="flex items-center space-x-1 whitespace-nowrap">
                   <div>
                     <DynamicIcon
-                      className="w-5 h-5"
+                      className="h-5 w-5"
                       name={milestone.milestoneType.icon?.name as IconName}
                     />
                   </div>

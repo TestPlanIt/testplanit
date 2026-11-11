@@ -63,7 +63,7 @@ const PaginationInfo: React.FC<PaginationInfoProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
         {/* <Separator orientation="vertical" className="px-2" /> */}
-        <div className=" whitespace-nowrap gap-1" data-testid="pagination-info">
+        <div className=" gap-1 whitespace-nowrap" data-testid="pagination-info">
           {compact
             ? `${startIndex}-${endIndex} ${tCommon("of")} ${totalRows}`
             : `${t("showing")} ${startIndex}-${endIndex} ${tCommon("of")} ${t(

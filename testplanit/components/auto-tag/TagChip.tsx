@@ -111,7 +111,7 @@ export function TagChip({
         <Badge
           variant={isAccepted ? "default" : "outline"}
           className={cn(
-            "cursor-pointer select-none transition-all",
+            "cursor-pointer transition-all select-none",
             !isExisting && "outline-2 outline-offset-1 outline-primary/50",
             !isAccepted && "opacity-50"
           )}

@@ -120,7 +120,7 @@ export function ResultEditingPolicyCard() {
             <div className="flex items-center gap-2 text-sm">
               <Label
                 htmlFor="edit-policy-minutes"
-                className="whitespace-nowrap font-normal"
+                className="font-normal whitespace-nowrap"
               >
                 {t("minutesBefore")}
               </Label>

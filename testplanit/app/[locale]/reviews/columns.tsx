@@ -462,7 +462,7 @@ export const useColumns = ({
           // `[&>span]:!shrink [&>span]:!min-w-0` forces WorkflowStateDisplay's
           // outer `shrink-0` span to shrink so its inner `truncate` engages,
           // without forking that shared component.
-          <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden [&>span]:!shrink [&>span]:!min-w-0">
+          <div className="flex max-w-full min-w-0 items-center gap-1 overflow-hidden [&>span]:!min-w-0 [&>span]:!shrink">
             <WorkflowStateDisplay
               state={row.original.fromState as any}
               size="sm"
@@ -502,10 +502,10 @@ export const useColumns = ({
               // surfaces the absolute timestamp on hover, so the
               // ellipsis doesn't hide any actionable info.
               return (
-                <div className="text-sm text-muted-foreground truncate">
+                <div className="truncate text-sm text-muted-foreground">
                   <RelativeTimeTooltip
                     date={value}
-                    className="truncate block"
+                    className="block truncate"
                   />
                 </div>
               );
@@ -524,10 +524,10 @@ export const useColumns = ({
                 return <span className="text-muted-foreground">-</span>;
               }
               return (
-                <div className="text-sm text-muted-foreground truncate">
+                <div className="truncate text-sm text-muted-foreground">
                   <RelativeTimeTooltip
                     date={value}
-                    className="truncate block"
+                    className="block truncate"
                   />
                 </div>
               );
@@ -699,7 +699,7 @@ export const useColumns = ({
                   <div className="flex min-w-0 items-center">
                     <DecisionStatusBadge
                       status={row.original.status}
-                      className="min-w-0 max-w-full"
+                      className="max-w-full min-w-0"
                     />
                   </div>
                   {canRevert ? (
@@ -711,7 +711,7 @@ export const useColumns = ({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span
-                              className="text-muted-foreground text-xs tabular-nums"
+                              className="text-xs text-muted-foreground tabular-nums"
                               data-testid={`reviews-inbox-revert-count-${id}`}
                             >
                               {`×${revertCount}`}

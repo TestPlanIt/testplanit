@@ -193,7 +193,7 @@ export function ProjectReviewToggleList() {
   return (
     <div data-testid="project-review-toggle-list-card">
       <div className="flex flex-row items-start justify-between gap-4">
-        <div className="flex flex-col grow w-full sm:w-1/3 min-w-[150px]">
+        <div className="flex w-full min-w-[150px] grow flex-col sm:w-1/3">
           <Filter
             key="project-review-filter"
             placeholder={t("filterPlaceholder")}
@@ -203,7 +203,7 @@ export function ProjectReviewToggleList() {
           />
         </div>
         {projects.length > 0 && (
-          <p className="text-sm text-muted-foreground shrink-0">
+          <p className="shrink-0 text-sm text-muted-foreground">
             {tGlobal("admin.auditLogs.showing", {
               loaded: projects.length.toLocaleString(locale),
               total: (count ?? projects.length).toLocaleString(locale),

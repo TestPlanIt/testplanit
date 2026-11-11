@@ -22,13 +22,13 @@ export const CreateFirstProjectCard: React.FC = () => {
   return (
     <>
       <Card
-        className="border-primary border-4"
+        className="border-4 border-primary"
         data-testid="create-first-project-card"
       >
         <CardHeader>
-          <CardTitle className="text-primary font-semibold text-xl">
+          <CardTitle className="text-xl font-semibold text-primary">
             <div className="flex items-center gap-1">
-              <Rocket className="w-6 h-6" />
+              <Rocket className="h-6 w-6" />
               <div>{t("home.getStarted.title")}</div>
             </div>
           </CardTitle>
@@ -40,7 +40,7 @@ export const CreateFirstProjectCard: React.FC = () => {
           <Button
             type="button"
             onClick={() => setIsWizardOpen(true)}
-            className="flex items-center hover:ring-4 hover:ring-offset-2 hover:ring-primary transition-all duration-300 ease-in-out"
+            className="flex items-center transition-all duration-300 ease-in-out hover:ring-4 hover:ring-primary hover:ring-offset-2"
           >
             <Boxes className="shrink-0" />
             {t("home.getStarted.adminAddProject")}

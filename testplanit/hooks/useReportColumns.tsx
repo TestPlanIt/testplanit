@@ -1017,7 +1017,7 @@ export function useReportColumns(
                 .filter((v: unknown): v is number => typeof v === "number");
               if (rates.length === 0) {
                 return (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
+                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-bold">
                     {"\u2014"}
                   </span>
                 );
@@ -1026,7 +1026,7 @@ export function useReportColumns(
                 rates.reduce((sum: number, v: number) => sum + v, 0) /
                 rates.length;
               return (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
+                <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-bold">
                   {avg.toFixed(1)}
                   {"%"}
                 </span>
@@ -1047,7 +1047,7 @@ export function useReportColumns(
 
               if (total === 0) {
                 return (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-bold bg-primary/10 text-primary rounded-full">
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
                     -
                   </span>
                 );
@@ -1061,7 +1061,7 @@ export function useReportColumns(
               });
               if (!isAverage) {
                 return (
-                  <span className="inline-flex items-center px-2 py-1 text-xs bg-primary/10 text-primary rounded-full font-bold">
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
                     {humanReadableDuration}
                   </span>
                 );
@@ -1070,7 +1070,7 @@ export function useReportColumns(
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full font-bold"
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-bold text-primary"
                       data-testid="grouped-duration-total"
                     >
                       <span aria-hidden="true">{"Σ"}</span>
@@ -1093,7 +1093,7 @@ export function useReportColumns(
             ) {
               const avg = subRows.length > 0 ? total / subRows.length : 0;
               return (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
+                <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-bold">
                   {avg.toFixed(2)}
                 </span>
               );
@@ -1101,7 +1101,7 @@ export function useReportColumns(
 
             if (isCurrencyMetric) {
               return (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
+                <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-bold">
                   {formatCurrency(total)}
                 </span>
               );
@@ -1109,7 +1109,7 @@ export function useReportColumns(
 
             // Default numeric display - show sum
             return (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
+              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-bold">
                 {total}
               </span>
             );
@@ -1136,7 +1136,7 @@ export function useReportColumns(
               // can't be mistaken for an all-failed 0%.
               if (value === null || value === undefined) {
                 return (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full">
+                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium">
                     {"\u2014"}
                   </span>
                 );
@@ -1146,9 +1146,9 @@ export function useReportColumns(
 
               return (
                 <span
-                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                     isClickable
-                      ? "text-primary hover:underline cursor-pointer"
+                      ? "cursor-pointer text-primary hover:underline"
                       : ""
                   }`}
                   onClick={isClickable ? handleClick : undefined}
@@ -1165,7 +1165,7 @@ export function useReportColumns(
               // Display "-" for zero duration values
               if (timeValue === 0) {
                 return (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
                     -
                   </span>
                 );
@@ -1182,9 +1182,9 @@ export function useReportColumns(
 
               return (
                 <span
-                  className={`inline-flex items-center px-2 py-1 text-xs font-medium bg-primary/10 rounded-full ${
+                  className={`inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-medium ${
                     isClickable
-                      ? "text-primary hover:underline cursor-pointer"
+                      ? "cursor-pointer text-primary hover:underline"
                       : "text-primary"
                   }`}
                   onClick={isClickable ? handleClick : undefined}
@@ -1209,9 +1209,9 @@ export function useReportColumns(
               const isClickable = onMetricClick && numericValue > 0;
               return (
                 <span
-                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                     isClickable
-                      ? "text-primary hover:underline cursor-pointer"
+                      ? "cursor-pointer text-primary hover:underline"
                       : ""
                   }`}
                   onClick={isClickable ? handleClick : undefined}
@@ -1231,9 +1231,9 @@ export function useReportColumns(
               const isClickable = onMetricClick && numericValue > 0;
               return (
                 <span
-                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                     isClickable
-                      ? "text-primary hover:underline cursor-pointer"
+                      ? "cursor-pointer text-primary hover:underline"
                       : ""
                   }`}
                   onClick={isClickable ? handleClick : undefined}
@@ -1247,9 +1247,9 @@ export function useReportColumns(
             const isClickable = onMetricClick && numericValue > 0;
             return (
               <span
-                className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                   isClickable
-                    ? "text-primary hover:underline cursor-pointer"
+                    ? "cursor-pointer text-primary hover:underline"
                     : ""
                 }`}
                 onClick={isClickable ? handleClick : undefined}

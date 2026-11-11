@@ -98,7 +98,7 @@ function NotificationItem({
   return (
     <div
       className={cn(
-        "p-3 border-b last:border-0 hover:bg-muted/50 transition-colors",
+        "border-b p-3 transition-colors last:border-0 hover:bg-muted/50",
         !notification.isRead && "bg-primary/20",
         // An announcement has to read as louder than a plain unread row. cn is
         // twMerge, so this fill REPLACES the one above rather than stacking on
@@ -114,14 +114,14 @@ function NotificationItem({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="flex justify-between items-start gap-2">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <NotificationContent notification={notification} />
           <RelativeTimeTooltip
             date={notification.createdAt}
             dateFormat={userPreferences?.dateFormat}
             timezone={userPreferences?.timezone}
-            className="mt-1.5 ms-auto w-fit text-end text-xs text-muted-foreground"
+            className="ms-auto mt-1.5 w-fit text-end text-xs text-muted-foreground"
           />
         </div>
         <DropdownMenu>
@@ -308,9 +308,9 @@ export function NotificationBell({
   // Shared panel body — reused by the standalone popover and the kebab submenu.
   const panel = (
     <>
-      <div className="pt-4 px-4 pb-2 border-b-2">
+      <div className="border-b-2 px-4 pt-4 pb-2">
         <h3 className="font-semibold">
-          <Bell className="inline me-1 w-5 shrink-0" />
+          <Bell className="me-1 inline w-5 shrink-0" />
           {t("panelTitle", { count: unreadCount })}
         </h3>
         <div className="flex justify-between">
@@ -322,7 +322,7 @@ export function NotificationBell({
             className={cn(unreadCount === 0 && "text-muted-foreground")}
             data-testid="mark-all-read-button"
           >
-            <EyeIcon className="w-4 h-4 shrink-0" />
+            <EyeIcon className="h-4 w-4 shrink-0" />
             {t("actions.markAllRead")}
           </Button>
           <Button
@@ -340,7 +340,7 @@ export function NotificationBell({
             )}
             data-testid="delete-all-notifications-button"
           >
-            <Trash className="w-4 h-4 shrink-0" />
+            <Trash className="h-4 w-4 shrink-0" />
             {t("actions.deleteAll")}
           </Button>
         </div>
@@ -366,7 +366,7 @@ export function NotificationBell({
           </div>
         )}
       </ScrollArea>
-      <div className="border-t px-4 py-2 flex">
+      <div className="flex border-t px-4 py-2">
         <DropdownMenuItem
           asChild
           className="w-auto cursor-pointer gap-1 px-0 py-0 font-medium text-primary no-underline hover:underline focus:bg-transparent focus:text-primary focus:underline"
@@ -449,7 +449,7 @@ export function NotificationBell({
             {unreadCount > 0 && (
               <Badge
                 variant="destructive"
-                className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                className="absolute -end-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
                 data-testid="notification-count-badge"
               >
                 {unreadCount > 9 ? "9+" : unreadCount}

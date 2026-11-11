@@ -420,11 +420,11 @@ const AddConfigurationWizard = (): React.ReactElement => {
         open={open}
         onOpenChange={(o) => (o ? setOpen(true) : handleClose())}
       >
-        <DialogContent className="sm:max-w-[700px] lg:max-w-[900px] h-[80vh] flex flex-col overflow-hidden">
+        <DialogContent className="flex h-[80vh] flex-col overflow-hidden sm:max-w-[700px] lg:max-w-[900px]">
           <Form {...form}>
             <form
               onSubmit={(e) => e.preventDefault()}
-              className="flex flex-col flex-1 min-h-0 mt-4"
+              className="mt-4 flex min-h-0 flex-1 flex-col"
             >
               <DialogHeader className="mb-4">
                 <DialogTitle className="flex items-center gap-2">
@@ -437,7 +437,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
               </DialogHeader>
 
               {/* Step indicator */}
-              <div className="flex items-center gap-2 mb-4">
+              <div className="mb-4 flex items-center gap-2">
                 {stepTitles.map((_, index) => {
                   const Icon = stepIcons[index];
                   const isClickable = index < currentStep;
@@ -447,23 +447,23 @@ const AddConfigurationWizard = (): React.ReactElement => {
                         type="button"
                         onClick={() => isClickable && setCurrentStep(index)}
                         disabled={!isClickable && index !== currentStep}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${
                           index < currentStep
-                            ? "bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90"
+                            ? "cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
                             : index === currentStep
-                              ? "bg-primary/10 text-primary border-2 border-primary"
-                              : "bg-muted text-muted-foreground cursor-not-allowed"
+                              ? "border-2 border-primary bg-primary/10 text-primary"
+                              : "cursor-not-allowed bg-muted text-muted-foreground"
                         }`}
                       >
                         {index < currentStep ? (
-                          <CheckCircle2 className="w-5 h-5" />
+                          <CheckCircle2 className="h-5 w-5" />
                         ) : (
-                          <Icon className="w-5 h-5" />
+                          <Icon className="h-5 w-5" />
                         )}
                       </button>
                       {index < stepTitles.length - 1 && (
                         <div
-                          className={`w-12 h-0.5 mx-2 ${
+                          className={`mx-2 h-0.5 w-12 ${
                             index < currentStep ? "bg-primary" : "bg-muted"
                           }`}
                         />
@@ -473,11 +473,11 @@ const AddConfigurationWizard = (): React.ReactElement => {
                 })}
               </div>
 
-              <div className="text-sm text-muted-foreground mb-2">
+              <div className="mb-2 text-sm text-muted-foreground">
                 {stepTitles[currentStep]}
               </div>
 
-              <ScrollArea className="flex-1 min-h-0 pe-4">
+              <ScrollArea className="min-h-0 flex-1 pe-4">
                 {currentStep === WizardStep.VARIANTS && (
                   <div className="space-y-4">
                     {categories
@@ -486,7 +486,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
                         <FormItem key={category.id}>
                           <div className="flex items-center justify-between">
                             <FormLabel
-                              className="flex items-center cursor-pointer"
+                              className="flex cursor-pointer items-center"
                               onClick={() => toggleCategory(category.id)}
                             >
                               {expandedCategories.has(category.id) ? (
@@ -522,16 +522,16 @@ const AddConfigurationWizard = (): React.ReactElement => {
                             // column-2, then column-3 — same pattern as
                             // ColumnSelection. Keeps shift+click range
                             // selection visually intuitive.
-                            <div className="ps-6 flex gap-4">
+                            <div className="flex gap-4 ps-6">
                               {splitIntoColumns(category.variants, 3).map(
                                 (colVariants, colIdx) => (
                                   <div
                                     key={colIdx}
-                                    className="flex flex-col space-y-2 flex-1"
+                                    className="flex flex-1 flex-col space-y-2"
                                   >
                                     {colVariants.map((variant) => (
                                       <FormControl key={variant.id}>
-                                        <Label className="flex items-center space-x-2 cursor-pointer select-none">
+                                        <Label className="flex cursor-pointer items-center space-x-2 select-none">
                                           <Checkbox
                                             checked={selectedVariants.includes(
                                               variant.id
@@ -578,7 +578,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
                         ({ combination, selected, exists }, index) => (
                           <FormControl key={index}>
                             <Label
-                              className={`flex items-center space-x-2 space-y-0 ${
+                              className={`flex items-center space-y-0 space-x-2 ${
                                 exists
                                   ? "cursor-not-allowed opacity-60"
                                   : "cursor-pointer"
@@ -617,7 +617,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
                         {t("projectAssignment.description")}
                       </p>
                       {projects && projects.length > 0 && (
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex shrink-0 items-center gap-1">
                           <Button
                             type="button"
                             variant="ghost"
@@ -644,11 +644,11 @@ const AddConfigurationWizard = (): React.ReactElement => {
                           (colProjects, colIdx) => (
                             <div
                               key={colIdx}
-                              className="flex flex-col space-y-2 flex-1"
+                              className="flex flex-1 flex-col space-y-2"
                             >
                               {colProjects.map((project) => (
                                 <FormControl key={project.id}>
-                                  <Label className="flex items-center space-x-2 cursor-pointer select-none">
+                                  <Label className="flex cursor-pointer items-center space-x-2 select-none">
                                     <Checkbox
                                       checked={selectedProjectIds.includes(
                                         project.id
@@ -727,7 +727,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
                                   width={14}
                                   height={14}
                                 />
-                                <span className="truncate max-w-[200px]">
+                                <span className="max-w-[200px] truncate">
                                   {project.name}
                                 </span>
                               </span>
@@ -739,7 +739,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
                 )}
               </ScrollArea>
 
-              <DialogFooter className="flex items-center justify-between shrink-0 pt-4">
+              <DialogFooter className="flex shrink-0 items-center justify-between pt-4">
                 <div className="flex items-center gap-2">
                   {currentStep > WizardStep.VARIANTS && (
                     <Button

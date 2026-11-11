@@ -216,7 +216,7 @@ export function ManageSimpleUrlIssues({
           return (
             <div
               key={issue.id}
-              className="inline-flex items-center rounded-md bg-primary text-primary-foreground ps-0.5 pe-0.5 py-0 gap-0.5"
+              className="inline-flex items-center gap-0.5 rounded-md bg-primary py-0 ps-0.5 pe-0.5 text-primary-foreground"
             >
               <IssuesDisplay
                 id={issue.id}
@@ -285,7 +285,7 @@ export function ManageSimpleUrlIssues({
                     <FormLabel className="inline-flex items-center gap-0.5">
                       {t("common.fields.id")}
                       <sup>
-                        <Asterisk className="w-3 h-3 text-destructive" />
+                        <Asterisk className="h-3 w-3 text-destructive" />
                       </sup>
                     </FormLabel>
                     <FormControl>
@@ -307,7 +307,7 @@ export function ManageSimpleUrlIssues({
                     <FormLabel className="inline-flex items-center gap-0.5">
                       {t("common.name")}
                       <sup>
-                        <Asterisk className="w-3 h-3 text-destructive" />
+                        <Asterisk className="h-3 w-3 text-destructive" />
                       </sup>
                     </FormLabel>
                     <FormControl>
@@ -325,13 +325,13 @@ export function ManageSimpleUrlIssues({
                     watchedIssueId || "ISSUE-123"
                   );
                   return (
-                    <p className="text-sm text-muted-foreground break-all">
+                    <p className="text-sm break-all text-muted-foreground">
                       {t("common.ui.issues.url")}
                       <a
                         href={previewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:underline inline-flex items-center gap-1"
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
                       >
                         {previewUrl}
                         <ExternalLink className="h-3 w-3 shrink-0" />

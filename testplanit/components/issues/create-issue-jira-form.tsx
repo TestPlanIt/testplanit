@@ -508,7 +508,7 @@ export function CreateIssueJiraForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[90vh] overflow-y-auto">
+      <DialogContent className="h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("issues.createIssueInJira")}</DialogTitle>
           <DialogDescription>
@@ -555,7 +555,7 @@ export function CreateIssueJiraForm({
                   <FormLabel className="inline-flex items-center gap-0.5">
                     {t("issues.externalProject")}
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   </FormLabel>
                   <Select
@@ -592,7 +592,7 @@ export function CreateIssueJiraForm({
                   <FormLabel className="inline-flex items-center gap-0.5">
                     {t("issues.issueType")}
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   </FormLabel>
                   <Select

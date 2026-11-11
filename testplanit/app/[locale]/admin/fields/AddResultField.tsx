@@ -523,7 +523,7 @@ export function AddResultFieldModal({
                           data-testid="dropdown-option-input"
                         />
                         {error && (
-                          <div className="text-destructive text-sm">
+                          <div className="text-sm text-destructive">
                             {error}
                           </div>
                         )}
@@ -554,7 +554,7 @@ export function AddResultFieldModal({
                     ) : option.key === "defaultValue" &&
                       selectedTypeName === "Text Long" ? (
                       <div
-                        className="ring-2 ring-muted rounded-lg min-h-[200px]"
+                        className="min-h-[200px] rounded-lg ring-2 ring-muted"
                         data-testid={`result-field-${option.key}`}
                       >
                         <TipTapEditor
@@ -756,7 +756,7 @@ export function AddResultFieldModal({
                   <FormLabel className="flex items-center">
                     <span>{tCommon("fields.systemName")}</span>
                     <HelpPopover helpKey="resultField.systemName" />
-                    <div className="text-muted-foreground text-sm ms-2">
+                    <div className="ms-2 text-sm text-muted-foreground">
                       {tCommon("fields.hints.systemName")}
                     </div>
                   </FormLabel>
@@ -860,12 +860,12 @@ export function AddResultFieldModal({
               name="typeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="whitespace-nowrap items-center flex space-x-2">
+                  <FormLabel className="flex items-center space-x-2 whitespace-nowrap">
                     <div className="flex items-center">
                       <span>{tCommon("fields.fieldType")}</span>
                       <HelpPopover helpKey="resultField.fieldType" />
                     </div>
-                    <div className="text-muted-foreground text-sm">
+                    <div className="text-sm text-muted-foreground">
                       {tCommon("fields.hints.fieldType")}
                     </div>
                   </FormLabel>
@@ -905,7 +905,7 @@ export function AddResultFieldModal({
             <DialogFooter>
               {errors.root && (
                 <div
-                  className=" bg-destructive text-destructive-foreground text-sm p-2"
+                  className=" bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                   data-testid="result-field-form-error"
                 >

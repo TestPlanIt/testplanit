@@ -113,10 +113,10 @@ export default function ForceChangePasswordPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-4">
+          <div className="mb-4 flex items-center justify-center">
             <Image
               alt="TestPlanIt Logo"
               src={svgIcon}
@@ -138,7 +138,7 @@ export default function ForceChangePasswordPage() {
         <CardContent>
           {errors.length > 0 && (
             <div
-              className="p-3 mb-4 bg-destructive/10 border border-destructive rounded-md"
+              className="mb-4 rounded-md border border-destructive bg-destructive/10 p-3"
               role="alert"
             >
               {errors.map((err, i) => (

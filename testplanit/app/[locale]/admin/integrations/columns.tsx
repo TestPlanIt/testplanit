@@ -22,7 +22,7 @@ const providerIcons: Record<string, React.ReactNode> = {
     </svg>
   ),
   GITHUB: (
-    <div className="h-4 w-4 rounded bg-gray-900 dark:bg-gray-700 flex items-center justify-center">
+    <div className="flex h-4 w-4 items-center justify-center rounded bg-gray-900 dark:bg-gray-700">
       <svg viewBox="0 0 24 24" className="h-3 w-3" fill="white">
         <path d={siGithub.path} />
       </svg>
@@ -98,7 +98,7 @@ export const useColumns = (
               ? String((settings as Record<string, unknown>).platform)
               : undefined;
           return (
-            <div className="bg-primary-foreground flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-primary-foreground">
               {provider === "GITEA" ? (
                 <GiteaPlatformIcon platform={platform} className="h-4 w-4" />
               ) : (
@@ -257,7 +257,7 @@ export const useColumns = (
         size: 200,
         meta: { isPinned: "right" },
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
+          <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
             {/* Always render the Authorize slot. Rows that aren't an
                 unauthorized OAuth integration get an invisible, same-size
                 placeholder so the remaining action icons stay aligned. */}

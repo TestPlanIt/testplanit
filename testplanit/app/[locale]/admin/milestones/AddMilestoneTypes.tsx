@@ -149,8 +149,8 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
               </DialogDescription>
             </DialogHeader>
             <div>
-              <div className="w-16 h-full">
-                <FormLabel className="whitespace-nowrap flex items-center">
+              <div className="h-full w-16">
+                <FormLabel className="flex items-center whitespace-nowrap">
                   {tCommon("fields.icon")}
                   <HelpPopover helpKey="milestoneType.icon" />
                 </FormLabel>
@@ -180,7 +180,7 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
               name="isDefault"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex flex-row items-center space-x-3 space-y-0">
+                  <div className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -188,7 +188,7 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
                         disabled={mustBeDefault}
                       />
                     </FormControl>
-                    <FormLabel className="flex items-center mt-0!">
+                    <FormLabel className="mt-0! flex items-center">
                       {tCommon("fields.default")}
                       <HelpPopover helpKey="milestoneType.isDefault" />
                     </FormLabel>
@@ -203,7 +203,7 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
             <DialogFooter>
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

@@ -53,7 +53,7 @@ export const useColumns = (
         enableResizing: true,
         size: 130,
         cell: ({ row }) => (
-          <code className="bg-muted px-2 py-1 rounded text-xs">
+          <code className="rounded bg-muted px-2 py-1 text-xs">
             {row.original.tokenPrefix}
             {"••••••••"}
           </code>
@@ -67,7 +67,7 @@ export const useColumns = (
         enableResizing: true,
         size: 120,
         cell: ({ getValue }) => (
-          <div className="whitespace-nowrap text-sm text-muted-foreground">
+          <div className="text-sm whitespace-nowrap text-muted-foreground">
             <DateFormatter
               date={getValue() as Date | string}
               formatString={dateFormat}
@@ -84,7 +84,7 @@ export const useColumns = (
         enableResizing: true,
         size: 120,
         cell: ({ row }) => (
-          <div className="whitespace-nowrap text-sm text-muted-foreground">
+          <div className="text-sm whitespace-nowrap text-muted-foreground">
             {row.original.lastUsedAt ? (
               <DateFormatter
                 date={row.original.lastUsedAt}
@@ -162,7 +162,7 @@ export const useColumns = (
               <Button
                 variant="destructive"
                 onClick={() => onRevoke(token)}
-                className="px-2 py-1 h-auto"
+                className="h-auto px-2 py-1"
                 title={t("revokeToken")}
               >
                 <Ban className="h-4 w-4" />

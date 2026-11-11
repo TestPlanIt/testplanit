@@ -273,7 +273,7 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="w-16 h-full">
+              <div className="h-full w-16">
                 <ColorPicker onColorSelect={handleColorSelect} />
                 <FormField
                   control={form.control}
@@ -310,7 +310,7 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
                   <FormLabel className="flex items-center">
                     {tCommon("fields.systemName")}
                     <HelpPopover helpKey="status.systemName" />
-                    <div className="text-muted-foreground text-sm ms-1">
+                    <div className="ms-1 text-sm text-muted-foreground">
                       {t("systemNameHelp")}
                     </div>
                   </FormLabel>
@@ -546,7 +546,7 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
             <DialogFooter>
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.type === "nameExists"

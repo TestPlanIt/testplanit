@@ -300,8 +300,8 @@ export function CompleteSessionDialog({
             </Popover>
           </div>
 
-          <div className="flex items-start space-x-2 text-destructive-foreground bg-destructive p-2">
-            <TriangleAlert className="w-12 h-12 shrink-0" />
+          <div className="flex items-start space-x-2 bg-destructive p-2 text-destructive-foreground">
+            <TriangleAlert className="h-12 w-12 shrink-0" />
             <p>{t("sessions.complete.warning")}</p>
           </div>
         </div>

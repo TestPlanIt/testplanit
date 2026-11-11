@@ -57,7 +57,7 @@ export const getColumns = (
       cell: ({ row }) => (
         <div className="flex space-x-2">
           <div
-            className="w-5 h-5 rounded-full"
+            className="h-5 w-5 rounded-full"
             style={{
               backgroundColor: row.original.color
                 ? row.original.color.value
@@ -252,11 +252,11 @@ export const getColumns = (
       meta: { isPinned: "right" },
       size: 80,
       cell: ({ row }) => (
-        <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
+        <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
           {row.original.systemName === "untested" ? (
             <Button
               variant="ghost"
-              className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
+              className="h-auto cursor-not-allowed px-2 py-1 text-muted-foreground"
               disabled
               aria-label={tCommon("actions.edit")}
             >
@@ -265,7 +265,7 @@ export const getColumns = (
           ) : (
             <Button
               variant="ghost"
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               onClick={() => onEditStatus?.(row.original)}
               aria-label={tCommon("actions.edit")}
             >
@@ -275,7 +275,7 @@ export const getColumns = (
           {row.original.systemName !== "untested" ? (
             <Button
               variant="destructive"
-              className="px-2 py-1 h-auto"
+              className="h-auto px-2 py-1"
               onClick={() => onDeleteStatus?.(row.original)}
               aria-label={tCommon("actions.delete")}
             >
@@ -284,7 +284,7 @@ export const getColumns = (
           ) : (
             <Button
               variant="ghost"
-              className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
+              className="h-auto cursor-not-allowed px-2 py-1 text-muted-foreground"
               disabled
               aria-label={tCommon("actions.delete")}
             >

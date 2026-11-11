@@ -153,7 +153,7 @@ export const UserListDisplay: React.FC<UserListProps> = ({
           aria-label={searchPlaceholder}
           className={cn(
             badgeVariants({ variant: "default" }),
-            "gap-1 whitespace-nowrap text-xs"
+            "gap-1 text-xs whitespace-nowrap"
           )}
         >
           <UserRoundIcon className="h-4 w-4" />

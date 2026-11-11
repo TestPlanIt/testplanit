@@ -38,20 +38,20 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
   const tCommon = useTranslations("common");
   return (
     <Breadcrumb className="mb-2">
-      <BreadcrumbList className="flex overflow-hidden flex-wrap">
-        <Folders className="w-4 h-4 -me-1" />
+      <BreadcrumbList className="flex flex-wrap overflow-hidden">
+        <Folders className="-me-1 h-4 w-4" />
         {breadcrumbItems.map((folder, index) => (
           <React.Fragment key={folder.id}>
             {index !== 0 && <BreadcrumbSeparator />}
-            <BreadcrumbItem className="p-0 m-0">
+            <BreadcrumbItem className="m-0 p-0">
               {index === breadcrumbItems.length - 1 && !isLastClickable ? (
                 <BreadcrumbPage className="overflow-hidden">
                   <Tooltip>
                     <TooltipTrigger
                       type="button"
-                      className="text-muted-foreground font-bold"
+                      className="font-bold text-muted-foreground"
                     >
-                      <div className="cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button">
+                      <div className="compact-button m-0 inline-flex max-w-xs cursor-pointer items-center p-0">
                         <span className="truncate">{folder.text}</span>
                       </div>
                     </TooltipTrigger>
@@ -63,7 +63,7 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
               ) : (
                 <BreadcrumbLink
                   asChild
-                  className="p-0 m-0 overflow-hidden w-fit"
+                  className="m-0 w-fit overflow-hidden p-0"
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -74,7 +74,7 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
                         // accessible themes already force `text-primary/*` back
                         // to full opacity in globals.css for this reason. The
                         // underline carries the "ancestor link" cue instead.
-                        className="text-primary cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button hover:underline"
+                        className="compact-button m-0 inline-flex max-w-xs cursor-pointer items-center p-0 text-primary hover:underline"
                         onClick={() => onClick && onClick(folder.id)}
                         aria-label={
                           folder.text?.trim()

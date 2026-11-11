@@ -37,11 +37,11 @@ export function ConfigureParametersButton({
       data-testid="configure-parameters-button"
       className={
         compact
-          ? "group px-2 hover:px-2 transition-all duration-200 gap-0 hover:gap-2"
+          ? "group gap-0 px-2 transition-all duration-200 hover:gap-2 hover:px-2"
           : ""
       }
     >
-      <SquareStack className="w-4 h-4 shrink-0" />
+      <SquareStack className="h-4 w-4 shrink-0" />
       {compact ? (
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
           {label}

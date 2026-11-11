@@ -1369,7 +1369,7 @@ const RequirementsListView = forwardRef<
           data-testid="requirements-list-container"
         >
           <div className="my-1 ms-1 me-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="relative grow shrink basis-[120px] min-w-[120px] max-w-lg">
+            <div className="relative max-w-lg min-w-[120px] shrink grow basis-[120px]">
               <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
@@ -1504,7 +1504,7 @@ const RequirementsListView = forwardRef<
               picker on the left, the count on the right, and the count
               rendered unconditionally so the reader never has to wonder
               whether the list is showing everything. */}
-          <div className="flex items-center justify-between gap-2 py-2 px-1">
+          <div className="flex items-center justify-between gap-2 px-1 py-2">
             <ColumnSelection
               key="requirements-list-column-selection"
               storageKey={`requirements-list:${projectId}`}
@@ -1514,7 +1514,7 @@ const RequirementsListView = forwardRef<
               onVisibilityChange={handleColumnVisibilityChange}
             />
             <span
-              className="whitespace-nowrap text-xs text-muted-foreground"
+              className="text-xs whitespace-nowrap text-muted-foreground"
               data-testid="requirements-list-showing"
             >
               {t("common.pagination.showing")}{" "}
@@ -1625,7 +1625,7 @@ const RequirementsListView = forwardRef<
                 // page scrolled (operator UAT, twice). `hidden` while idle via
                 // the same drag attribute, so it never blocks clicks on the
                 // rows it overlays and appears only while a drag is active.
-                className={`absolute bottom-2 left-1/2 z-10 hidden h-11 w-auto min-w-[280px] max-w-[90%] -translate-x-1/2 [[data-req-drag=active]_&]:block ${isOverBottom ? ROOT_STRIP_OVER_CLASSNAME : ROOT_STRIP_DRAG_CLASSNAME}`}
+                className={`absolute bottom-2 left-1/2 z-10 hidden h-11 w-auto max-w-[90%] min-w-[280px] -translate-x-1/2 [[data-req-drag=active]_&]:block ${isOverBottom ? ROOT_STRIP_OVER_CLASSNAME : ROOT_STRIP_DRAG_CLASSNAME}`}
                 data-testid="requirement-tree-end"
               >
                 {/* Always mounted; `hidden` by default, shown by the same

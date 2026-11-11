@@ -92,7 +92,7 @@ export function NotificationTypePreferences({
             key={section.group}
             className="mb-5 break-inside-avoid space-y-2"
           >
-            <h5 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <h5 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
               {t(`groups.${section.group}`)}
             </h5>
             <div className="divide-y divide-border/50">

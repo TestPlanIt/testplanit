@@ -4003,21 +4003,21 @@ function ReportBuilderContent({
           collapsible
           onCollapse={() => setIsCollapsed(true)}
           onExpand={() => setIsCollapsed(false)}
-          className={`p-0 m-0 ${
+          className={`m-0 p-0 ${
             isTransitioning ? "transition-all duration-300 ease-in-out" : ""
           }`}
         >
           <Card
             shadow="none"
-            className="rounded-none border-y-0 border-s-0 flex flex-col"
+            className="flex flex-col rounded-none border-y-0 border-s-0"
           >
             <CardContent className="grow overflow-y-auto pb-6">
               <Tabs
                 value={activeTab}
                 onValueChange={handleTabChange}
-                className="h-full flex flex-col"
+                className="flex h-full flex-col"
               >
-                <TabsList className="grid w-full grid-cols-2 mb-4 min-w-60">
+                <TabsList className="mb-4 grid w-full min-w-60 grid-cols-2">
                   <TabsTrigger
                     value="reports"
                     data-testid="reports-tab"
@@ -4036,7 +4036,7 @@ function ReportBuilderContent({
 
                 <TabsContent
                   value="reports"
-                  className="flex-1 overflow-y-auto mt-0"
+                  className="mt-0 flex-1 overflow-y-auto"
                 >
                   <div className="mb-4">
                     <h2 className="text-lg font-semibold">
@@ -4047,7 +4047,7 @@ function ReportBuilderContent({
                     </p>
                   </div>
                   <Form {...form}>
-                    <form className="grid gap-4 relative px-0.5">
+                    <form className="relative grid gap-4 px-0.5">
                       {/* Pre-built Report Selection */}
                       <div className="grid gap-2">
                         <label className="text-sm font-medium">
@@ -4195,9 +4195,9 @@ function ReportBuilderContent({
                                     setFlipThreshold(value - 1);
                                   }
                                 }}
-                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                                className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
                               />
-                              <span className="w-8 text-sm font-mono text-center">
+                              <span className="w-8 text-center font-mono text-sm">
                                 {consecutiveRuns}
                               </span>
                             </div>
@@ -4223,9 +4223,9 @@ function ReportBuilderContent({
                                 onChange={(e) =>
                                   setFlipThreshold(Number(e.target.value))
                                 }
-                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                                className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
                               />
-                              <span className="w-8 text-sm font-mono text-center">
+                              <span className="w-8 text-center font-mono text-sm">
                                 {flipThreshold}
                               </span>
                             </div>
@@ -4394,9 +4394,9 @@ function ReportBuilderContent({
                                 onChange={(e) =>
                                   setStaleDaysThreshold(Number(e.target.value))
                                 }
-                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                                className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
                               />
-                              <span className="w-8 text-sm font-mono text-center">
+                              <span className="w-8 text-center font-mono text-sm">
                                 {staleDaysThreshold}
                               </span>
                             </div>
@@ -4424,9 +4424,9 @@ function ReportBuilderContent({
                                     Number(e.target.value)
                                   )
                                 }
-                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                                className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
                               />
-                              <span className="w-8 text-sm font-mono text-center">
+                              <span className="w-8 text-center font-mono text-sm">
                                 {minExecutionsForRate}
                               </span>
                             </div>
@@ -4774,9 +4774,9 @@ function ReportBuilderContent({
                                     Number(e.target.value)
                                   )
                                 }
-                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                                className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
                               />
-                              <span className="w-10 text-sm font-mono text-center">
+                              <span className="w-10 text-center font-mono text-sm">
                                 {automationCandidatesCount}
                               </span>
                             </div>
@@ -4874,7 +4874,7 @@ function ReportBuilderContent({
                       </Button>
 
                       {error && (
-                        <div className="rounded-md p-4 text-sm text-destructive bg-destructive/10 border border-destructive/40">
+                        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
                           {error}
                         </div>
                       )}
@@ -4884,7 +4884,7 @@ function ReportBuilderContent({
 
                 <TabsContent
                   value="builder"
-                  className="flex-1 overflow-y-auto mt-0 m-1"
+                  className="m-1 flex-1 overflow-y-auto"
                 >
                   <div className="mb-4">
                     <h2 className="text-lg font-semibold">
@@ -4897,7 +4897,7 @@ function ReportBuilderContent({
                     </p>
                   </div>
                   <Form {...form}>
-                    <form className="grid gap-4 relative px-0.5">
+                    <form className="relative grid gap-4 px-0.5">
                       {/* Custom Report Type Selection */}
                       <div className="grid gap-2">
                         <label className="text-sm font-medium">
@@ -4958,7 +4958,7 @@ function ReportBuilderContent({
                         {/* Dimension Order - shown when multiple dimensions selected */}
                         {dimensions.length > 1 && (
                           <div className="mb-2">
-                            <label className="text-xs text-muted-foreground mb-1 block">
+                            <label className="mb-1 block text-xs text-muted-foreground">
                               {tReports("dimensionOrder")}
                             </label>
                             <DraggableList
@@ -5238,7 +5238,7 @@ function ReportBuilderContent({
                             {/* Metric Order - shown when multiple metrics selected */}
                             {metrics.length > 1 && (
                               <div className="mb-2">
-                                <label className="text-xs text-muted-foreground mb-1 block">
+                                <label className="mb-1 block text-xs text-muted-foreground">
                                   {tReports("metricOrder")}
                                 </label>
                                 <DraggableList
@@ -5307,7 +5307,7 @@ function ReportBuilderContent({
                       </Button>
 
                       {error && (
-                        <div className="rounded-md p-4 text-sm text-destructive bg-destructive/10 border border-destructive/40">
+                        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
                           {error}
                         </div>
                       )}
@@ -5325,7 +5325,7 @@ function ReportBuilderContent({
             type="button"
             onClick={toggleCollapse}
             variant="secondary"
-            className="p-0 -ms-1 rounded-s-none"
+            className="-ms-1 rounded-s-none p-0"
             aria-label={
               isCollapsed
                 ? tCommon("actions.expand")

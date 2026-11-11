@@ -228,7 +228,7 @@ export function ApiTokenSettings({
                 <TableRow key={token.id}>
                   <TableCell className="font-medium">{token.name}</TableCell>
                   <TableCell>
-                    <code className="bg-muted px-2 py-1 rounded text-xs">
+                    <code className="rounded bg-muted px-2 py-1 text-xs">
                       {token.tokenPrefix}
                       {"••••••••"}
                     </code>
@@ -297,7 +297,7 @@ export function ApiTokenSettings({
             </TableBody>
           </Table>
         ) : (
-          <div className="text-center py-6 text-sm text-muted-foreground">
+          <div className="py-6 text-center text-sm text-muted-foreground">
             {t("noTokens")}
           </div>
         )}
@@ -319,7 +319,7 @@ export function ApiTokenSettings({
           </DialogHeader>
 
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+            <div className="rounded-md border border-destructive bg-destructive/10 p-3">
               <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
@@ -389,14 +389,14 @@ export function ApiTokenSettings({
             </div>
           ) : (
             <div className="space-y-4 py-4">
-              <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/50 text-destructive text-sm">
+              <div className="flex items-center gap-2 rounded-lg border border-destructive/50 p-3 text-sm text-destructive">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <span>{t("copyWarning")}</span>
               </div>
               <div className="space-y-2">
                 <Label>{t("yourToken")}</Label>
                 <div className="flex gap-2">
-                  <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono break-all">
+                  <code className="flex-1 rounded bg-muted px-3 py-2 font-mono text-sm break-all">
                     {newToken.token}
                   </code>
                   <Button variant="outline" size="icon" onClick={copyToken}>

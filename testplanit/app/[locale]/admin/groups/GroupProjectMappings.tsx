@@ -100,11 +100,11 @@ export function GroupProjectMappings({ groupId }: GroupProjectMappingsProps) {
 
   return (
     <div
-      className="space-y-2 pt-4 border-t"
+      className="space-y-2 border-t pt-4"
       data-testid="group-project-mappings"
     >
       <FormLabel className="flex items-center">
-        <FolderKanban className="w-4 h-4 me-1" />
+        <FolderKanban className="me-1 h-4 w-4" />
         {t("label")}
         <HelpPopover helpKey="group.projectMappedAccess" />
       </FormLabel>
@@ -117,7 +117,7 @@ export function GroupProjectMappings({ groupId }: GroupProjectMappingsProps) {
           className="flex items-center gap-2"
           data-testid={`group-project-mapping-row-${mapping.projectId}`}
         >
-          <span className="flex-1 text-sm truncate">{mapping.projectName}</span>
+          <span className="flex-1 truncate text-sm">{mapping.projectName}</span>
           <Select
             value={mapping.mappedAccess}
             disabled={isSaving}

@@ -112,7 +112,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
         variant="ghost"
         size="icon"
         onClick={() => setOpen(true)}
-        className="px-2 py-1 h-auto"
+        className="h-auto px-2 py-1"
         data-testid="llm-test-button"
       >
         <Activity className="h-4 w-4" />
@@ -128,7 +128,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <p className="font-medium">{t("connectionStatus")}</p>
                 <p className="text-sm text-muted-foreground">

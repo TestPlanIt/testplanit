@@ -1142,7 +1142,7 @@ export function CreateIssueDialog({
                     <FormLabel className="inline-flex items-center gap-0.5">
                       {t("common.fields.id")}
                       <sup>
-                        <Asterisk className="w-3 h-3 text-destructive" />
+                        <Asterisk className="h-3 w-3 text-destructive" />
                       </sup>
                     </FormLabel>
                     <FormControl>
@@ -1385,7 +1385,7 @@ export function CreateIssueDialog({
             {/* Dynamic fields based on issue type */}
             {loadingFields && (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin me-2" />
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 <span className="text-sm text-muted-foreground">
                   {t("common.loading")}
                 </span>
@@ -1403,7 +1403,7 @@ export function CreateIssueDialog({
                       {field.name}
                       {field.required && (
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                       )}
                     </Label>

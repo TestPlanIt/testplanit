@@ -138,16 +138,16 @@ export function useIssueColumns({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm text-start cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  className="-mx-1 line-clamp-2 cursor-pointer overflow-hidden rounded px-1 py-0.5 text-start text-sm text-ellipsis transition-colors hover:bg-accent/50"
                   style={{ maxWidth: column.getSize() }}
                   title={plainText}
                 >
                   {plainText}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
+              <PopoverContent className="max-h-[400px] w-[500px] overflow-auto">
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">{tTitle}</h4>
+                  <h4 className="text-sm font-semibold">{tTitle}</h4>
                   {hasHtml ? (
                     <div
                       className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
@@ -207,19 +207,19 @@ export function useIssueColumns({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm text-start cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  className="-mx-1 line-clamp-2 cursor-pointer overflow-hidden rounded px-1 py-0.5 text-start text-sm text-ellipsis transition-colors hover:bg-accent/50"
                   style={{ maxWidth: column.getSize() }}
                   title={plainText}
                 >
                   {plainText}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
+              <PopoverContent className="max-h-[400px] w-[500px] overflow-auto">
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">{tDescription}</h4>
+                  <h4 className="text-sm font-semibold">{tDescription}</h4>
                   {hasHtml ? (
                     <div
-                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ms-4 [&_ol]:list-decimal [&_ol]:ms-4"
+                      className="text-sm [&_a]:text-primary [&_a]:underline [&_ol]:ms-4 [&_ol]:list-decimal [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:ms-4 [&_ul]:list-disc"
                       dangerouslySetInnerHTML={{
                         __html: DOMPurify.sanitize(description, {
                           ALLOWED_TAGS: [
@@ -303,7 +303,7 @@ export function useIssueColumns({
             return <span className="text-muted-foreground">-</span>;
           return (
             <span
-              className="text-sm truncate overflow-hidden block"
+              className="block truncate overflow-hidden text-sm"
               style={{ maxWidth: column.getSize() }}
             >
               <DateFormatter date={lastSyncedAt} formatString="PPp" />
@@ -471,8 +471,8 @@ export function useIssueColumns({
         cell: ({ row }) => {
           return (
             <div className="flex items-center gap-1">
-              <Plug className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="font-medium truncate">
+              <Plug className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="truncate font-medium">
                 {row.original.integration?.name || "-"}
               </span>
             </div>

@@ -76,7 +76,7 @@ export function DatasetRowActions({
       >
         {t("datasetSelectedCount", { count: String(selectedRowIds.length) })}
       </span>
-      <div className="flex gap-2 ms-auto">
+      <div className="ms-auto flex gap-2">
         <Button
           variant="destructive"
           size="sm"

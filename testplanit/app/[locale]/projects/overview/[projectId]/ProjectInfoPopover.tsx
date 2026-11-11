@@ -43,12 +43,12 @@ export function ProjectInfoPopover({
       <PopoverContent side={side} className="w-auto">
         <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-6 gap-y-2 text-sm">
           <dt className="text-muted-foreground">{t("common.fields.id")}</dt>
-          <dd className="font-medium text-foreground text-end">{project.id}</dd>
+          <dd className="text-end font-medium text-foreground">{project.id}</dd>
 
           <dt className="text-muted-foreground">
             {t("common.actions.status")}
           </dt>
-          <dd className="font-medium text-foreground text-end">
+          <dd className="text-end font-medium text-foreground">
             {project.isCompleted
               ? t("common.fields.completed")
               : t("common.fields.isActive")}
@@ -57,7 +57,7 @@ export function ProjectInfoPopover({
           <dt className="text-muted-foreground">
             {t("common.fields.created")}
           </dt>
-          <dd className="font-medium text-foreground text-end">
+          <dd className="text-end font-medium text-foreground">
             <DateFormatter
               date={project.createdAt}
               formatString={dateFormat}
@@ -70,7 +70,7 @@ export function ProjectInfoPopover({
               <dt className="text-muted-foreground">
                 {t("common.fields.completedOn")}
               </dt>
-              <dd className="font-medium text-foreground text-end">
+              <dd className="text-end font-medium text-foreground">
                 <DateFormatter
                   date={project.completedAt}
                   formatString={dateFormat}

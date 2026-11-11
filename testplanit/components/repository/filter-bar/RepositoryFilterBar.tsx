@@ -400,7 +400,7 @@ export function RepositoryFilterBar({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-1.5 min-w-0"
+      className="flex min-w-0 flex-wrap items-center gap-1.5"
       data-testid="filter-bar"
     >
       <div
@@ -412,7 +412,7 @@ export function RepositoryFilterBar({
               })
             : t("repository.filterBar.noFilters")
         }
-        className="flex flex-wrap items-center gap-1.5 min-w-0"
+        className="flex min-w-0 flex-wrap items-center gap-1.5"
       >
         {chips.map((entry, index) => renderChip(entry, index))}
         {draft && renderChip(draft, null)}

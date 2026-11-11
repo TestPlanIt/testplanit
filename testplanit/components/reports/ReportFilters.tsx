@@ -147,7 +147,7 @@ export function ReportFilters({
   );
 
   return (
-    <div className="flex flex-col w-full space-y-4 overflow-hidden p-0.5">
+    <div className="flex w-full flex-col space-y-4 overflow-hidden p-0.5">
       <Select value={selectedFilter} onValueChange={onFilterChange}>
         <SelectTrigger id={triggerId} className="w-full">
           <SelectValue placeholder={tFilters("selectFilter")} />
@@ -157,11 +157,11 @@ export function ReportFilters({
             {filterItems.map((item) => (
               <SelectItem key={item.id} value={item.id}>
                 <div className="flex items-center space-x-2">
-                  <item.icon className="w-4 h-4" />
+                  <item.icon className="h-4 w-4" />
                   <div className="flex items-center gap-2">
                     {item.name}
                     {hasActiveFilter(item.id) && (
-                      <span className="text-xs bg-primary text-primary-foreground rounded-full px-1.5 py-0.5">
+                      <span className="rounded-full bg-primary px-1.5 py-0.5 text-xs text-primary-foreground">
                         {selectedValues[item.id].length}
                       </span>
                     )}
@@ -185,16 +185,16 @@ export function ReportFilters({
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                   isValueSelected("projects", null) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
                 onClick={() => toggleFilterValue("projects", null)}
               >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   <span className="truncate">{tFilters("allProjects")}</span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                   {selectedFilterItem.options?.reduce(
                     (sum, option) => sum + (option.count || 0),
                     0
@@ -207,17 +207,17 @@ export function ReportFilters({
                   tabIndex={0}
                   key={option.id}
                   className={cn(
-                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                     isValueSelected("projects", option.id) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
                   onClick={() => toggleFilterValue("projects", option.id)}
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-                    <FolderOpen className="w-4 h-4 shrink-0" />
+                  <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                    <FolderOpen className="h-4 w-4 shrink-0" />
                     <span className="truncate">{option.name}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                  <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                     {option.count || 0}
                   </span>
                 </div>
@@ -232,18 +232,18 @@ export function ReportFilters({
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                   isValueSelected("templates", null) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
                 onClick={() => toggleFilterValue("templates", null)}
               >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   <span className="truncate">
                     {tGlobal("repository.views.allTemplates")}
                   </span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                   {selectedFilterItem.options?.reduce(
                     (sum, option) => sum + (option.count || 0),
                     0
@@ -256,17 +256,17 @@ export function ReportFilters({
                   tabIndex={0}
                   key={option.id}
                   className={cn(
-                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                     isValueSelected("templates", option.id) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
                   onClick={() => toggleFilterValue("templates", option.id)}
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-                    <LayoutTemplate className="w-4 h-4 shrink-0" />
+                  <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                    <LayoutTemplate className="h-4 w-4 shrink-0" />
                     <span className="truncate">{option.name}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                  <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                     {option.count || 0}
                   </span>
                 </div>
@@ -281,18 +281,18 @@ export function ReportFilters({
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                   isValueSelected("states", null) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
                 onClick={() => toggleFilterValue("states", null)}
               >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   <span className="truncate">
                     {tGlobal("repository.views.allStates")}
                   </span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                   {selectedFilterItem.options?.reduce(
                     (sum, option) => sum + (option.count || 0),
                     0
@@ -305,21 +305,21 @@ export function ReportFilters({
                   tabIndex={0}
                   key={option.id}
                   className={cn(
-                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                     isValueSelected("states", option.id) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
                   onClick={() => toggleFilterValue("states", option.id)}
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                  <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                     <DynamicIcon
                       name={option.icon?.name as IconName}
-                      className="w-4 h-4 shrink-0"
+                      className="h-4 w-4 shrink-0"
                       color={option.iconColor?.value}
                     />
                     <span className="truncate">{option.name}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                  <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                     {option.count || 0}
                   </span>
                 </div>
@@ -337,18 +337,18 @@ export function ReportFilters({
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                     isValueSelected("automated", null) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
                   onClick={() => toggleFilterValue("automated", null)}
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
                     <span className="truncate">
                       {tGlobal("repository.views.allCases")}
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                  <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                     {totalCount}
                   </span>
                 </div>
@@ -362,22 +362,22 @@ export function ReportFilters({
                     tabIndex={0}
                     key={String(option.id)}
                     className={cn(
-                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                       isValueSelected("automated", option.id) &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={() => toggleFilterValue("automated", option.id)}
                   >
-                    <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                       {isAutomated ? (
-                        <Bot className="w-4 h-4 shrink-0" />
+                        <Bot className="h-4 w-4 shrink-0" />
                       ) : (
-                        <User className="w-4 h-4 shrink-0" />
+                        <User className="h-4 w-4 shrink-0" />
                       )}
                       <span className="truncate">{option.name}</span>
                     </div>
                     {option.count !== undefined && (
-                      <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                      <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                         {option.count}
                       </span>
                     )}
@@ -395,18 +395,18 @@ export function ReportFilters({
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                     isValueSelected(selectedFilter, null) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
                   onClick={() => toggleFilterValue(selectedFilter, null)}
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
                     <span className="truncate">
                       {tGlobal("common.fields.mixed")}
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                  <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                     {totalCount ?? 0}
                   </span>
                 </div>
@@ -419,14 +419,14 @@ export function ReportFilters({
                       tabIndex={0}
                       key="none-option"
                       className={cn(
-                        "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                        "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                         isValueSelected(selectedFilter, "none") &&
                           "bg-primary/20 hover:bg-primary/30"
                       )}
                       onClick={() => toggleFilterValue(selectedFilter, "none")}
                     >
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <CircleDashed className="w-4 h-4 shrink-0 opacity-40" />
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <CircleDashed className="h-4 w-4 shrink-0 opacity-40" />
                         <span className="truncate">
                           {tCommon("access.none")}
                         </span>
@@ -439,7 +439,7 @@ export function ReportFilters({
                         tabIndex={0}
                         key={`option-${option.id}`}
                         className={cn(
-                          "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                          "flex w-full cursor-pointer items-center justify-between rounded-md p-2 text-start font-normal hover:bg-accent hover:text-accent-foreground",
                           isValueSelected(selectedFilter, option.id) &&
                             "bg-primary/20 hover:bg-primary/30"
                         )}
@@ -447,17 +447,17 @@ export function ReportFilters({
                           toggleFilterValue(selectedFilter, option.id)
                         }
                       >
-                        <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                           {option.icon && (
                             <DynamicIcon
                               name={option.icon.name as IconName}
-                              className="w-4 h-4 shrink-0"
+                              className="h-4 w-4 shrink-0"
                               color={option.iconColor?.value}
                             />
                           )}
                           <span className="truncate">{option.name}</span>
                         </div>
-                        <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                        <span className="ms-2 shrink-0 text-sm whitespace-nowrap text-muted-foreground">
                           {option.count || 0}
                         </span>
                       </div>

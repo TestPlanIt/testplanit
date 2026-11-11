@@ -3198,7 +3198,7 @@ function TemplateMappingSection({
               }>
             ) => (
               <div className="grid grid-cols-[140px,1fr] items-start gap-3">
-                <span className="font-medium leading-5 whitespace-nowrap">
+                <span className="leading-5 font-medium whitespace-nowrap">
                   {label}
                 </span>
                 <div className="flex flex-col gap-2">
@@ -3223,7 +3223,7 @@ function TemplateMappingSection({
                           />
                           <div className="min-w-0 space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium truncate">
+                              <span className="truncate font-medium">
                                 {entry.displayName}
                               </span>
                               <span className="sr-only">{statusLabel}</span>
@@ -3246,7 +3246,7 @@ function TemplateMappingSection({
               <TableRow key={template.id} className={templateRowClassName}>
                 <TableCell className="align-top">
                   <div className="space-y-2">
-                    <span className="font-medium leading-5">
+                    <span className="leading-5 font-medium">
                       {template.name}
                     </span>
                     {templateFieldCounts}
@@ -3276,7 +3276,7 @@ function TemplateMappingSection({
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="align-top w-60">
+                <TableCell className="w-60 align-top">
                   <RadioGroup
                     value={current.action}
                     onValueChange={(value) => {
@@ -3331,7 +3331,7 @@ function TemplateMappingSection({
                     </div>
                   </RadioGroup>
                 </TableCell>
-                <TableCell className="align-top w-[280px] space-y-2">
+                <TableCell className="w-[280px] space-y-2 align-top">
                   {current.action === "map" ? (
                     selectOptions.length > 0 ? (
                       <Select
@@ -3361,7 +3361,7 @@ function TemplateMappingSection({
                               disabled={entry.disabled}
                             >
                               <div className="flex flex-col">
-                                <span className="truncate max-w-[220px]">
+                                <span className="max-w-[220px] truncate">
                                   {entry.option.label}
                                 </span>
                                 {entry.reason && (
@@ -3836,7 +3836,7 @@ function StatusMappingSection({
                         <p className="text-xs font-medium text-muted-foreground">
                           {tStatuses("fields.color")}
                         </p>
-                        <div className="flex items-center w-10 h-10">
+                        <div className="flex h-10 w-10 items-center">
                           <div style={{ backgroundColor: selectedColorHex }} />
                           <ColorPicker
                             initialColorId={resolvedColorId ?? undefined}
@@ -4186,7 +4186,7 @@ function GroupMappingSection({
                 <TableCell className="font-medium">{group.name}</TableCell>
                 <TableCell>
                   {group.note ? (
-                    <p className="text-xs text-muted-foreground whitespace-pre-line">
+                    <p className="text-xs whitespace-pre-line text-muted-foreground">
                       {group.note}
                     </p>
                   ) : (
@@ -4644,7 +4644,7 @@ function TemplateFieldMappingSection({
       <span className="inline-flex max-w-full items-center gap-1 truncate">
         <span className="max-w-[200px] truncate">{display}</span>
         {system ? (
-          <span className="text-muted-foreground max-w-[200px] truncate">
+          <span className="max-w-[200px] truncate text-muted-foreground">
             {"("}
             {system}
             {")"}
@@ -5170,14 +5170,14 @@ function TemplateFieldMappingSection({
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="align-top w-full">
+                <TableCell className="w-full align-top">
                   <div className="space-y-4 text-xs text-muted-foreground">
                     {detailRows.map((row, index) => (
                       <div
                         key={`${field.id}-detail-${index}`}
-                        className="flex gap-3 items-baseline"
+                        className="flex items-baseline gap-3"
                       >
-                        <span className="font-bold min-w-20 max-w-36">
+                        <span className="max-w-36 min-w-20 font-bold">
                           {row.label}
                         </span>
                         <div className="flex min-w-0 flex-1 flex-wrap gap-2">
@@ -5187,7 +5187,7 @@ function TemplateFieldMappingSection({
                     ))}
                   </div>
                 </TableCell>
-                <TableCell className="align-top w-[260px]">
+                <TableCell className="w-[260px] align-top">
                   <div className="space-y-3 text-xs">
                     <RadioGroup
                       value={current.action}
@@ -5396,7 +5396,7 @@ function TemplateFieldMappingSection({
                     </RadioGroup>
                   </div>
                 </TableCell>
-                <TableCell className="align-top space-y-3">
+                <TableCell className="space-y-3 align-top">
                   {current.action === "map" ? (
                     flatTargetOptions.length > 0 ? (
                       <div className="space-y-1">
@@ -5483,8 +5483,8 @@ function TemplateFieldMappingSection({
                             fieldTypeNormalized !== targetTypeNormalized
                           ) {
                             return (
-                              <p className="text-xs text-primary font-bold flex items-start">
-                                <AlertTriangle className="w-4 h-4 me-1 inline" />
+                              <p className="flex items-start text-xs font-bold text-primary">
+                                <AlertTriangle className="me-1 inline h-4 w-4" />
                                 {t("templateFieldTypeMismatchWarning", {
                                   source: field.fieldType,
                                   target: selected.typeName,
@@ -5495,14 +5495,14 @@ function TemplateFieldMappingSection({
                           return null;
                         })()}
                         {missingTarget && (
-                          <p className="text-xs text-destructive flex items-start">
-                            <AlertTriangle className="w-4 h-4 me-1 inline" />
+                          <p className="flex items-start text-xs text-destructive">
+                            <AlertTriangle className="me-1 inline h-4 w-4" />
                             {t("templateFieldIssueMissingTarget")}
                           </p>
                         )}
                         {isTargetInUse && (
-                          <p className="text-xs text-destructive flex items-start">
-                            <AlertTriangle className="w-4 h-4 me-1 inline" />
+                          <p className="flex items-start text-xs text-destructive">
+                            <AlertTriangle className="me-1 inline h-4 w-4" />
                             {t("templateFieldDuplicateTargetWarning")}
                           </p>
                         )}
@@ -5556,7 +5556,7 @@ function TemplateFieldMappingSection({
                               key={`${field.id}-create-row-${index}`}
                               className="flex items-baseline gap-3"
                             >
-                              <span className="font-bold min-w-28 max-w-40 text-muted-foreground">
+                              <span className="max-w-40 min-w-28 font-bold text-muted-foreground">
                                 {row.label}
                               </span>
                               <div className="flex min-w-0 flex-1 flex-wrap gap-2">
@@ -5593,8 +5593,8 @@ function TemplateFieldMappingSection({
                         </p>
                       )}
                       {missingCreateDetails && (
-                        <p className="text-xs text-destructive flex items-start">
-                          <AlertTriangle className="w-4 h-4 me-1 inline" />
+                        <p className="flex items-start text-xs text-destructive">
+                          <AlertTriangle className="me-1 inline h-4 w-4" />
                           {t("templateFieldIssueMissingDetails")}
                         </p>
                       )}

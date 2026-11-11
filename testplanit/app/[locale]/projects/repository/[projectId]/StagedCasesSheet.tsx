@@ -391,7 +391,7 @@ export function StagedCasesSheet({
                       <Button
                         type="button"
                         variant="ghost"
-                        className="h-auto min-w-0 flex-1 cursor-pointer flex-col items-start gap-1 whitespace-normal text-start font-normal"
+                        className="h-auto min-w-0 flex-1 cursor-pointer flex-col items-start gap-1 text-start font-normal whitespace-normal"
                         onClick={() => openDraft(draft)}
                         data-testid={`staged-cases-open-${draft.id}`}
                       >

@@ -2415,7 +2415,7 @@ export function TestmoImportPanel() {
                   {t("errors.analysisFailed")}
                 </p>
               ) : selectedDatasetDetail?.sampleRows?.length ? (
-                <pre className="whitespace-pre-wrap text-xs">
+                <pre className="text-xs whitespace-pre-wrap">
                   {JSON.stringify(selectedDatasetDetail.sampleRows, null, 2)}
                 </pre>
               ) : (
@@ -2505,7 +2505,7 @@ export function TestmoImportPanel() {
           className="w-full"
         >
           <div className="w-full overflow-x-auto">
-            <TabsList className="flex h-auto w-full gap-x-3 flex-wrap bg-primary/10">
+            <TabsList className="flex h-auto w-full flex-wrap gap-x-3 bg-primary/10">
               {datasetEntries.map(({ key, count }) => {
                 const outstanding = datasetOutstandingCounts[key] ?? 0;
                 return (
@@ -2993,7 +2993,7 @@ export function TestmoImportPanel() {
               </span>
             </div>
             {currentJob?.phase === "IMPORTING" && (
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                   {(() => {
                     const processed = currentJob.processedDatasets ?? 0;
@@ -3573,7 +3573,7 @@ function SummaryTile({ label, value, status, hint }: SummaryTileProps) {
 
   return (
     <div className={containerClasses}>
-      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {label}
       </div>
       <div className={valueClasses}>{value}</div>
@@ -3680,10 +3680,10 @@ function WizardProgress({
               variant="ghost"
               onClick={() => isEnabled && onStepSelect?.(step.id)}
               disabled={!isEnabled}
-              className={`flex items-center gap-2 border border-primary/60 shadow-md rounded-full py-6 text-sm font-medium transition ${
+              className={`flex items-center gap-2 rounded-full border border-primary/60 py-6 text-sm font-medium shadow-md transition ${
                 isEnabled
                   ? "cursor-pointer text-foreground hover:bg-muted "
-                  : "cursor-not-allowed text-muted-foreground border-muted-foreground/20"
+                  : "cursor-not-allowed border-muted-foreground/20 text-muted-foreground"
               }`}
             >
               <span
@@ -3709,7 +3709,7 @@ function WizardProgress({
               <div
                 className={`hidden h-px w-12 sm:block ${
                   step.id < maxUnlockedStep
-                    ? "bg-primary animate-pulse"
+                    ? "animate-pulse bg-primary"
                     : "bg-muted"
                 }`}
               />

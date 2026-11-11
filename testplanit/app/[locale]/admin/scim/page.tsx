@@ -114,7 +114,7 @@ function FallbackDefaultCard() {
         </SectionHeader>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3 max-w-md">
+        <div className="max-w-md space-y-3">
           <Select
             value={selectedAccess}
             onValueChange={setSelectedAccess}
@@ -158,14 +158,14 @@ function FallbackDefaultCard() {
               })}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <ul className="text-sm space-y-1 max-h-48 overflow-y-auto px-6">
+          <ul className="max-h-48 space-y-1 overflow-y-auto px-6 text-sm">
             {downgradedUsers.map((u) => (
               <li
                 key={u.userId}
                 className="flex items-center justify-between gap-3"
               >
                 <UserNameCell userId={u.userId} hideLink={true} />
-                <span className="text-muted-foreground whitespace-nowrap">
+                <span className="whitespace-nowrap text-muted-foreground">
                   {tGroups("downgradeConfirmAccessChange", {
                     from: u.currentAccess,
                     to: u.newAccess,
@@ -408,15 +408,15 @@ function ScimTokensList() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-              <div className="text-muted-foreground w-full text-nowrap">
+            <div className="flex w-full min-w-[250px] grow flex-col sm:w-1/2">
+              <div className="w-full text-nowrap text-muted-foreground">
                 <Filter
                   key="scim-tokens-filter"
                   placeholder={t("filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
                 />
-                <div className="flex flex-row items-center gap-2 mt-2">
+                <div className="mt-2 flex flex-row items-center gap-2">
                   <div className="m-2">
                     <ColumnSelection
                       key="scim-tokens-column-selection"
@@ -446,7 +446,7 @@ function ScimTokensList() {
             </div>
 
             {tokens && tokens.length > 0 && (
-              <p className="text-sm text-muted-foreground shrink-0">
+              <p className="shrink-0 text-sm text-muted-foreground">
                 {tGlobal("admin.auditLogs.showing", {
                   loaded: tokens.length.toLocaleString(locale),
                   total: tokens.length.toLocaleString(locale),

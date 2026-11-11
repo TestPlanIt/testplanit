@@ -75,17 +75,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <Card
       onClick={handleCardClick}
-      className={`group cursor-pointer transition-all duration-200 ease-in hover:ring-offset-2 hover:ring-4 hover:ring-primary ${project.isCompleted ? "bg-muted-foreground/20 border-muted-foreground" : "border-primary"}`}
+      className={`group cursor-pointer transition-all duration-200 ease-in hover:ring-4 hover:ring-primary hover:ring-offset-2 ${project.isCompleted ? "border-muted-foreground bg-muted-foreground/20" : "border-primary"}`}
     >
       <CardHeader>
-        <CardTitle className="text-primary text-xl">
+        <CardTitle className="text-xl text-primary">
           <Link
             href={`/projects/overview/${project.id}`}
-            className="flex items-center gap-1 hover:underline group/title"
+            className="group/title flex items-center gap-1 hover:underline"
           >
             <ProjectIcon iconUrl={project.iconUrl} height={25} width={25} />
             <div className="truncate">{project.name}</div>
-            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
+            <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover/title:opacity-100" />
           </Link>
         </CardTitle>
         {project.note && (
@@ -95,7 +95,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         )}
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
-        <div className="items-center gap-x-4 flex flex-wrap">
+        <div className="flex flex-wrap items-center gap-x-4">
           {/* Display counts - only show if count > 0 */}
           {testCaseCount > 0 && (
             <Link
@@ -105,7 +105,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: testCaseCount,
               })}
             >
-              <ListChecks className="w-4 h-4 text-muted-foreground mt-1" />
+              <ListChecks className="mt-1 h-4 w-4 text-muted-foreground" />
               <span>{testCaseCount.toLocaleString(locale)}</span>
             </Link>
           )}
@@ -117,7 +117,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: milestoneCount,
               })}
             >
-              <Milestone className="w-4 h-4 text-muted-foreground mt-1" />
+              <Milestone className="mt-1 h-4 w-4 text-muted-foreground" />
               <span>{milestoneCount.toLocaleString(locale)}</span>
             </Link>
           )}
@@ -129,7 +129,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: runCount,
               })}
             >
-              <CirclePlay className="w-4 h-4 text-muted-foreground mt-1" />
+              <CirclePlay className="mt-1 h-4 w-4 text-muted-foreground" />
               <span>{runCount.toLocaleString(locale)}</span>
             </Link>
           )}
@@ -141,7 +141,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: automationRunCount,
               })}
             >
-              <Bot className="w-4 h-4 text-muted-foreground mt-1" />
+              <Bot className="mt-1 h-4 w-4 text-muted-foreground" />
               <span>{automationRunCount.toLocaleString(locale)}</span>
             </Link>
           )}
@@ -153,14 +153,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: sessionCount,
               })}
             >
-              <Compass className="w-4 h-4 text-muted-foreground mt-1" />
+              <Compass className="mt-1 h-4 w-4 text-muted-foreground" />
               <span>{sessionCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {isLoadingIssueCounts ? (
             <div className="flex items-center gap-1">
-              <Bug className="w-4 h-4 text-muted-foreground mt-1" />
-              <LoadingSpinner className="ms-1 w-2 h-2 text-muted-foreground" />
+              <Bug className="mt-1 h-4 w-4 text-muted-foreground" />
+              <LoadingSpinner className="ms-1 h-2 w-2 text-muted-foreground" />
             </div>
           ) : (
             issueCount > 0 && (
@@ -171,7 +171,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   count: issueCount,
                 })}
               >
-                <Bug className="w-4 h-4 text-muted-foreground mt-1" />
+                <Bug className="mt-1 h-4 w-4 text-muted-foreground" />
                 <span>{issueCount.toLocaleString(locale)}</span>
               </Link>
             )
@@ -179,7 +179,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
         <MemberList users={users} maxUsers={10} />
       </CardContent>
-      <CardFooter className="text-xs text-muted-foreground grid grid-cols-1 items-end">
+      <CardFooter className="grid grid-cols-1 items-end text-xs text-muted-foreground">
         <div>
           {t("common.fields.created")}:{" "}
           {project.createdAt && (

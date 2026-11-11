@@ -412,7 +412,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
         <Form {...form}>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4 w-fit"
+            className="w-fit space-y-4"
             data-testid="template-form"
           >
             <DialogHeader>
@@ -442,7 +442,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
                 control={form.control}
                 name="isEnabled"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -463,7 +463,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
                 control={form.control}
                 name="isDefault"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -472,7 +472,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
                         data-testid="template-default-switch"
                       />
                     </FormControl>
-                    <FormLabel className="flex items-center mt-0!">
+                    <FormLabel className="mt-0! flex items-center">
                       {tCommon("fields.default")}
                       <HelpPopover helpKey="template.isDefault" />
                     </FormLabel>

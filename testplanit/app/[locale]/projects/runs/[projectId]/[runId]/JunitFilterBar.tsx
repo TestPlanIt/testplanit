@@ -106,7 +106,7 @@ function FacetCombobox({
       renderSelectedOption={(option) => option.value}
       placeholder={label}
       ariaLabel={label}
-      className="min-h-8 w-auto min-w-40 max-w-96"
+      className="min-h-8 w-auto max-w-96 min-w-40"
       dropdownClassName="p-0 min-w-[280px] max-w-[400px]"
     />
   );

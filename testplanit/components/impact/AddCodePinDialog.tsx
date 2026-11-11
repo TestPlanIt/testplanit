@@ -523,7 +523,7 @@ export function AddCodePinDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto px-1">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1">
           {caseId === undefined && (
             <div className="space-y-1">
               <Label>{t("caseLabel")}</Label>
@@ -544,7 +544,7 @@ export function AddCodePinDialog({
                   <Button
                     type="button"
                     variant="outline"
-                    className="justify-start text-start w-full"
+                    className="w-full justify-start text-start"
                     data-testid="code-pin-case-combobox"
                   >
                     {value ? (
@@ -597,7 +597,7 @@ export function AddCodePinDialog({
               }}
               variant="outline"
               size="sm"
-              className="justify-start flex-wrap"
+              className="flex-wrap justify-start"
               aria-label={t("kindLabel")}
               disabled={editing !== undefined}
             >
@@ -625,7 +625,7 @@ export function AddCodePinDialog({
                 }}
                 fetchOptions={fetchFileOptions}
                 renderOption={(option) => (
-                  <span className="font-mono text-xs truncate">
+                  <span className="truncate font-mono text-xs">
                     {option.path}
                   </span>
                 )}
@@ -640,12 +640,12 @@ export function AddCodePinDialog({
                   <Button
                     type="button"
                     variant="outline"
-                    className="justify-start text-start w-full"
+                    className="w-full justify-start text-start"
                     disabled={editing !== undefined}
                     data-testid="code-pin-file-combobox"
                   >
                     {value ? (
-                      <span className="font-mono text-xs truncate">
+                      <span className="truncate font-mono text-xs">
                         {value.path}
                       </span>
                     ) : (
@@ -666,7 +666,7 @@ export function AddCodePinDialog({
           )}
 
           {kind === "RANGE" && file && (
-            <div className="flex flex-1 min-h-0 flex-col gap-2">
+            <div className="flex min-h-0 flex-1 flex-col gap-2">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="code-pin-start-line">{t("startLine")}</Label>
@@ -706,7 +706,7 @@ export function AddCodePinDialog({
                   {viewerStatus}
                 </p>
               ) : fileQuery.data ? (
-                <div className="flex-1 min-h-40 overflow-hidden rounded-md border">
+                <div className="min-h-40 flex-1 overflow-hidden rounded-md border">
                   <CodeViewer
                     code={fileQuery.data.content}
                     language={codeLanguageFromPath(file.path)}
@@ -727,7 +727,7 @@ export function AddCodePinDialog({
                 onValueChange={(option) => setSymbol(option?.name ?? "")}
                 fetchOptions={fetchSymbolOptions}
                 renderOption={(option) => (
-                  <span className="font-mono text-xs truncate">
+                  <span className="truncate font-mono text-xs">
                     {option.typed
                       ? t("symbolUseTyped", { symbol: option.name })
                       : option.name}
@@ -746,11 +746,11 @@ export function AddCodePinDialog({
                   <Button
                     type="button"
                     variant="outline"
-                    className="justify-start text-start w-full"
+                    className="w-full justify-start text-start"
                     data-testid="code-pin-symbol"
                   >
                     {value ? (
-                      <span className="font-mono text-xs truncate">
+                      <span className="truncate font-mono text-xs">
                         {value.name}
                       </span>
                     ) : (

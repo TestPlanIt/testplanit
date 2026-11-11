@@ -240,7 +240,7 @@ export function CodePinsPanel({
         : "";
       return (
         <div className="min-w-0">
-          <div className="font-mono text-sm truncate" title={pin.filePath}>
+          <div className="truncate font-mono text-sm" title={pin.filePath}>
             {pin.filePath}
           </div>
           {/* A ticket pin's note is the issue keys; when they resolve to
@@ -273,7 +273,7 @@ export function CodePinsPanel({
           ) : (
             pin.note && (
               <div
-                className="text-xs text-muted-foreground truncate"
+                className="truncate text-xs text-muted-foreground"
                 title={pin.note}
               >
                 {pin.note}
@@ -289,7 +289,7 @@ export function CodePinsPanel({
                   <Badge
                     variant="outline"
                     data-testid={`case-code-pin-stale-${pin.id}`}
-                    className="gap-2 shrink-0 border-dashed border-warning bg-warning/15 text-foreground"
+                    className="shrink-0 gap-2 border-dashed border-warning bg-warning/15 text-foreground"
                   >
                     <AlertTriangle className="h-3 w-3 text-warning" />
                     {tImpact("stale.badge")}
@@ -356,7 +356,7 @@ export function CodePinsPanel({
             data-testid={`case-code-pin-edit-${pin.id}`}
             onClick={() => setEditingPin(pin)}
           >
-            <SquarePen className="w-4 h-4" />
+            <SquarePen className="h-4 w-4" />
           </Button>
           <Popover
             open={openRemoveId === pin.id}
@@ -372,7 +372,7 @@ export function CodePinsPanel({
                 data-testid={`case-code-pin-remove-${pin.id}`}
                 onClick={() => setOpenRemoveId(pin.id)}
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-fit" side="bottom">
@@ -512,13 +512,13 @@ export function CodePinsPanel({
   return (
     <Card shadow="none" data-testid="case-code-pins">
       <CardHeader className="flex flex-row items-center justify-between p-4">
-        <CardTitle className="flex items-center gap-2 min-w-0">
+        <CardTitle className="flex min-w-0 items-center gap-2">
           <PanelCollapseToggle
             collapsed={collapsed}
             onToggle={toggle}
             testId="case-code-pins-collapse-toggle"
           />
-          <Pin className="w-5 h-5 shrink-0" />
+          <Pin className="h-5 w-5 shrink-0" />
           <span className="shrink-0">{t("title")}</span>
           {/* Badged so the repository reads as the connected source, not as
               a subtitle of the card. With several repositories each row
@@ -528,7 +528,7 @@ export function CodePinsPanel({
               <TooltipTrigger asChild>
                 <Badge
                   variant="outline"
-                  className="flex items-center gap-1 min-w-0 font-normal"
+                  className="flex min-w-0 items-center gap-1 font-normal"
                   data-testid="case-code-pins-repository"
                 >
                   <GitBranch className="h-3 w-3 shrink-0" />
@@ -557,7 +557,7 @@ export function CodePinsPanel({
           ) : (
             <Badge
               variant="outline"
-              className="flex items-center gap-1 min-w-0 font-normal"
+              className="flex min-w-0 items-center gap-1 font-normal"
               data-testid="case-code-pins-repository"
             >
               <CodeRepositoryName
@@ -576,7 +576,7 @@ export function CodePinsPanel({
             data-testid="case-code-pins-add"
             onClick={() => setIsAddOpen(true)}
           >
-            <Plus className="w-4 h-4" /> {t("add")}
+            <Plus className="h-4 w-4" /> {t("add")}
           </Button>
         )}
       </CardHeader>
@@ -593,7 +593,7 @@ export function CodePinsPanel({
               <span className="sr-only">{tCommon("loading")}</span>
             </div>
           ) : pins.length === 0 ? (
-            <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm space-y-1">
+            <div className="ms-4 -mt-6 mb-4 space-y-1 text-sm text-muted-foreground">
               <div>{t("empty")}</div>
               <div className="text-xs">{t("description")}</div>
             </div>
@@ -612,7 +612,7 @@ export function CodePinsPanel({
           )}
           {stalenessError && (
             <div
-              className="px-4 pb-3 pt-2 text-xs text-muted-foreground"
+              className="px-4 pt-2 pb-3 text-xs text-muted-foreground"
               data-testid="case-code-pins-staleness-error"
             >
               {stalenessError}

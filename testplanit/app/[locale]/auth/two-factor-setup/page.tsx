@@ -151,10 +151,10 @@ export default function TwoFactorSetupPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-4">
+          <div className="mb-4 flex items-center justify-center">
             <Image
               alt="TestPlanIt Logo"
               src={svgIcon}
@@ -178,22 +178,22 @@ export default function TwoFactorSetupPage() {
           {step !== "backup" && (
             <Alert
               variant="destructive"
-              className="flex items-start gap-3 p-3 mb-4 border rounded-lg"
+              className="mb-4 flex items-start gap-3 rounded-lg border p-3"
             >
-              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
               <p className="text-sm">{t("auth.twoFactorSetup.required")}</p>
             </Alert>
           )}
 
           {error && (
-            <div className="p-3 mb-4 bg-destructive/10 border border-destructive rounded-md">
+            <div className="mb-4 rounded-md border border-destructive bg-destructive/10 p-3">
               <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
           {step === "setup" && (
             <div className="flex flex-col items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin mb-4" />
+              <Loader2 className="mb-4 h-8 w-8 animate-spin" />
               <p className="text-muted-foreground">
                 {t("auth.twoFactorSetup.loading")}
               </p>
@@ -203,7 +203,7 @@ export default function TwoFactorSetupPage() {
           {step === "verify" && setupData && (
             <div className="space-y-4">
               <div className="flex flex-col items-center gap-4">
-                <div className="bg-white p-2 rounded-lg">
+                <div className="rounded-lg bg-white p-2">
                   <Image
                     src={setupData.qrCode}
                     alt="2FA QR Code"
@@ -212,10 +212,10 @@ export default function TwoFactorSetupPage() {
                   />
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">
+                  <p className="mb-1 text-xs text-muted-foreground">
                     {t("auth.twoFactorSetup.manualEntry")}
                   </p>
-                  <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
+                  <code className="rounded bg-muted px-2 py-1 font-mono text-sm">
                     {setupData.secret}
                   </code>
                 </div>
@@ -260,7 +260,7 @@ export default function TwoFactorSetupPage() {
 
           {step === "backup" && backupCodes && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-center text-sm text-muted-foreground">
                 {t("auth.twoFactorSetup.backupCodesInfo")}
               </p>
 
@@ -268,7 +268,7 @@ export default function TwoFactorSetupPage() {
                 {backupCodes.map((code, index) => (
                   <code
                     key={index}
-                    className="bg-muted px-3 py-2 rounded text-center font-mono text-sm"
+                    className="rounded bg-muted px-3 py-2 text-center font-mono text-sm"
                   >
                     {code}
                   </code>

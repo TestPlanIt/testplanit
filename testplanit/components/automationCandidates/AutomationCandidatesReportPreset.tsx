@@ -569,15 +569,15 @@ export function AutomationCandidatesReportPreset({
 
         {genError && (
           <Card className="border-destructive/40">
-            <CardContent className="pt-6 flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-              <div className="space-y-1 flex-1 min-w-0">
+            <CardContent className="flex items-start gap-3 pt-6">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+              <div className="min-w-0 flex-1 space-y-1">
                 <p className="font-medium">{t("errors.title")}</p>
                 <p className="text-sm text-muted-foreground">
                   {genError.message}
                 </p>
                 {genError.rawOutputPreview && (
-                  <pre className="mt-2 max-h-64 overflow-auto rounded border bg-muted/50 p-2 text-xs whitespace-pre-wrap break-all">
+                  <pre className="mt-2 max-h-64 overflow-auto rounded border bg-muted/50 p-2 text-xs break-all whitespace-pre-wrap">
                     {genError.rawOutputPreview}
                   </pre>
                 )}
@@ -588,11 +588,11 @@ export function AutomationCandidatesReportPreset({
 
         {isInitialEmpty && (
           <Card>
-            <CardContent className="pt-6 text-center space-y-4">
-              <Bot className="h-10 w-10 mx-auto text-muted-foreground/60" />
+            <CardContent className="space-y-4 pt-6 text-center">
+              <Bot className="mx-auto h-10 w-10 text-muted-foreground/60" />
               <div>
                 <p className="font-medium">{t("emptyState.title")}</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {canAddEdit
                     ? t("emptyState.canGenerate")
                     : t("emptyState.noPermission")}
@@ -648,7 +648,7 @@ export function AutomationCandidatesReportPreset({
 
         {selectedSnapshot?.status === "failed" && !generating && (
           <Card className="border-destructive/40">
-            <CardContent className="pt-6 space-y-2">
+            <CardContent className="space-y-2 pt-6">
               <p className="font-medium">{t("errors.snapshotFailed")}</p>
               <p className="text-sm text-muted-foreground">
                 {selectedSnapshot.errorMessage ?? t("errors.generateFailed")}
@@ -818,10 +818,10 @@ function ReportHeader({
       ? (snapshot.output as unknown as SnapshotOutput)
       : null;
   return (
-    <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
       {snapshot && (
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
           {/* Complete is the expected steady state — surfacing a chip
               for it just adds visual noise. Only the non-default
               statuses get a badge. */}
@@ -982,8 +982,8 @@ function SnapshotMetaBar({
         })
     : null;
   return (
-    <div className="flex items-center justify-between gap-3 flex-wrap text-sm text-muted-foreground">
-      <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
+    <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span>
           {t("generatedAt")}{" "}
           <DateFormatter
@@ -1113,7 +1113,7 @@ function RankedList({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center justify-between gap-2">
+        <CardTitle className="flex items-center justify-between gap-2 text-base">
           <span>{t("rankedList.heading")}</span>
           {generating && (
             <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
@@ -1140,10 +1140,10 @@ function RankedList({
               return (
                 <li
                   key={c.caseId}
-                  className="grid grid-cols-[auto_1fr_auto] gap-3 items-start border rounded-md p-3"
+                  className="grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-md border p-3"
                   data-testid={`automation-candidate-${c.caseId}`}
                 >
-                  <div className="text-sm font-mono text-muted-foreground w-8 text-end shrink-0 pt-0.5">
+                  <div className="w-8 shrink-0 pt-0.5 text-end font-mono text-sm text-muted-foreground">
                     {`#${c.rank}`}
                   </div>
                   <div className="min-w-0 space-y-1">
@@ -1175,7 +1175,7 @@ function RankedList({
                       {c.rationale}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1 max-w-[140px] text-xs text-end pt-0.5 break-words [&_*]:whitespace-normal">
+                  <div className="flex max-w-[140px] flex-col items-end gap-1 pt-0.5 text-end text-xs break-words [&_*]:whitespace-normal">
                     <Badge variant="default">
                       {t("rankedList.score", {
                         score: String(Math.round(c.score)),

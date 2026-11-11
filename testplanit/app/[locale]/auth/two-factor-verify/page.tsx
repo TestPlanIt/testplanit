@@ -76,10 +76,10 @@ export default function TwoFactorVerifyPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-4">
+          <div className="mb-4 flex items-center justify-center">
             <Image
               alt="TestPlanIt Logo"
               src={svgIcon}
@@ -98,7 +98,7 @@ export default function TwoFactorVerifyPage() {
 
         <CardContent>
           {error && (
-            <div className="p-3 mb-4 bg-destructive/10 border border-destructive rounded-md">
+            <div className="mb-4 rounded-md border border-destructive bg-destructive/10 p-3">
               <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
@@ -120,7 +120,7 @@ export default function TwoFactorVerifyPage() {
                       e.target.value.toUpperCase().slice(0, 8)
                     )
                   }
-                  className="text-center text-lg tracking-widest font-mono"
+                  className="text-center font-mono text-lg tracking-widest"
                   autoComplete="one-time-code"
                   autoFocus
                   onKeyDown={(e) => {
@@ -155,7 +155,7 @@ export default function TwoFactorVerifyPage() {
                   setUseBackupCode(!useBackupCode);
                   setVerificationCode("");
                 }}
-                className="text-xs text-primary hover:underline w-full text-center"
+                className="w-full text-center text-xs text-primary hover:underline"
               >
                 {useBackupCode
                   ? t("auth.twoFactorVerify.useAuthenticator")

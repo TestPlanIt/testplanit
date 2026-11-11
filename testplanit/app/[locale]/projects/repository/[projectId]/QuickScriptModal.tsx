@@ -759,8 +759,8 @@ export function QuickScriptModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         className={cn(
-          showPreview ? "sm:max-w-225 max-h-[95vh]" : "sm:max-w-125",
-          "transition-all overflow-hidden flex flex-col"
+          showPreview ? "max-h-[95vh] sm:max-w-225" : "sm:max-w-125",
+          "flex flex-col overflow-hidden transition-all"
         )}
         data-testid="quickscript-dialog"
       >
@@ -801,7 +801,7 @@ export function QuickScriptModal({
               <div className="space-y-2">
                 <Label>{tCommon("fields.template")}</Label>
                 {assignmentsExistButEmpty ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">
+                  <p className="py-4 text-center text-sm text-muted-foreground">
                     {t("noAvailableTemplates")}
                   </p>
                 ) : (

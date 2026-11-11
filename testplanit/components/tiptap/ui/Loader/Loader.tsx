@@ -4,7 +4,7 @@ import { LoaderProps, LoadingWrapperProps } from "./types";
 
 const LoadingWrapper = ({ label }: LoadingWrapperProps) => {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 p-4 text-white bg-black rounded-lg shadow-2xl dark:text-black dark:bg-white">
+    <div className="flex flex-col items-center justify-center gap-2 rounded-lg bg-black p-4 text-white shadow-2xl dark:bg-white dark:text-black">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -13,12 +13,12 @@ const LoadingWrapper = ({ label }: LoadingWrapperProps) => {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="w-8 h-8 animate-spin"
+        className="h-8 w-8 animate-spin"
       >
         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
       </svg>
       {label && (
-        <p className="text-sm font-semibold leading-tight text-white dark:text-black">
+        <p className="text-sm leading-tight font-semibold text-white dark:text-black">
           {label}
         </p>
       )}
@@ -29,7 +29,7 @@ const LoadingWrapper = ({ label }: LoadingWrapperProps) => {
 export const Loader = ({ hasOverlay = true, label }: LoaderProps) => {
   return hasOverlay ? (
     createPortal(
-      <div className="items-center justify-center bg-black/60 flex h-full w-full fixed top-0 start-0 select-none z-9999">
+      <div className="fixed start-0 top-0 z-9999 flex h-full w-full items-center justify-center bg-black/60 select-none">
         <LoadingWrapper label={label} />
       </div>,
       document.body

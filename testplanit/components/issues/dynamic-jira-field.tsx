@@ -79,7 +79,7 @@ function DescriptionField({
           {field.name}
           {field.required && (
             <sup>
-              <Asterisk className="w-3 h-3 text-destructive" />
+              <Asterisk className="h-3 w-3 text-destructive" />
             </sup>
           )}
         </FormLabel>
@@ -169,7 +169,7 @@ function UserPickerField({
           {field.name}
           {field.required && (
             <sup>
-              <Asterisk className="w-3 h-3 text-destructive" />
+              <Asterisk className="h-3 w-3 text-destructive" />
             </sup>
           )}
         </FormLabel>
@@ -230,7 +230,7 @@ function LabelsInput({
         {field.name}
         {field.required && (
           <sup>
-            <Asterisk className="w-3 h-3 text-destructive" />
+            <Asterisk className="h-3 w-3 text-destructive" />
           </sup>
         )}
       </FormLabel>
@@ -366,7 +366,7 @@ export function DynamicJiraField({
               {field.name}
               {field.required && (
                 <sup>
-                  <Asterisk className="w-3 h-3 text-destructive" />
+                  <Asterisk className="h-3 w-3 text-destructive" />
                 </sup>
               )}
             </FormLabel>
@@ -417,7 +417,7 @@ export function DynamicJiraField({
                 {field.name}
                 {field.required && (
                   <sup>
-                    <Asterisk className="w-3 h-3 text-destructive" />
+                    <Asterisk className="h-3 w-3 text-destructive" />
                   </sup>
                 )}
               </FormLabel>
@@ -463,7 +463,7 @@ export function DynamicJiraField({
                   {field.name}
                   {field.required && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                 </FormLabel>
@@ -509,7 +509,7 @@ export function DynamicJiraField({
                 currentValue[0]?.id === field.allowedValues![0]?.id;
 
               return (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox
                       checked={isChecked}
@@ -531,7 +531,7 @@ export function DynamicJiraField({
                       {field.name}
                       {field.required && (
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                       )}
                     </FormLabel>
@@ -588,7 +588,7 @@ export function DynamicJiraField({
                 {field.name}
                 {field.required && (
                   <sup>
-                    <Asterisk className="w-3 h-3 text-destructive" />
+                    <Asterisk className="h-3 w-3 text-destructive" />
                   </sup>
                 )}
               </FormLabel>
@@ -632,7 +632,7 @@ export function DynamicJiraField({
                     {field.name}
                     {field.required && (
                       <sup>
-                        <Asterisk className="w-3 h-3 text-destructive" />
+                        <Asterisk className="h-3 w-3 text-destructive" />
                       </sup>
                     )}
                   </FormLabel>
@@ -685,7 +685,7 @@ export function DynamicJiraField({
               {field.name}
               {field.required && (
                 <sup>
-                  <Asterisk className="w-3 h-3 text-destructive" />
+                  <Asterisk className="h-3 w-3 text-destructive" />
                 </sup>
               )}
             </FormLabel>

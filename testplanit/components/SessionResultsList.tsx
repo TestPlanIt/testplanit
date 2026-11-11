@@ -1134,7 +1134,7 @@ export function SessionResultsList({
               {displayName}
               {isRequired && (
                 <sup>
-                  <Asterisk className="w-3 h-3 text-destructive" />
+                  <Asterisk className="h-3 w-3 text-destructive" />
                 </sup>
               )}
             </FormLabel>
@@ -1158,7 +1158,7 @@ export function SessionResultsList({
               {displayName}
               {isRequired && (
                 <sup>
-                  <Asterisk className="w-3 h-3 text-destructive" />
+                  <Asterisk className="h-3 w-3 text-destructive" />
                 </sup>
               )}
             </FormLabel>
@@ -1184,7 +1184,7 @@ export function SessionResultsList({
               {displayName}
               {isRequired && (
                 <sup>
-                  <Asterisk className="w-3 h-3 text-destructive" />
+                  <Asterisk className="h-3 w-3 text-destructive" />
                 </sup>
               )}
             </FormLabel>
@@ -1227,7 +1227,7 @@ export function SessionResultsList({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                 </FormLabel>
@@ -1255,7 +1255,7 @@ export function SessionResultsList({
               {`${displayName} (${fieldType})`}
               {isRequired && (
                 <sup>
-                  <Asterisk className="w-3 h-3 text-destructive" />
+                  <Asterisk className="h-3 w-3 text-destructive" />
                 </sup>
               )}
             </FormLabel>
@@ -1303,17 +1303,17 @@ export function SessionResultsList({
         }
 
         return (
-          <div className="border rounded-md">
+          <div className="rounded-md border">
             <ReadOnlyRichText
               content={content}
-              className="min-h-[50px] max-h-[200px] overflow-y-auto"
+              className="max-h-[200px] min-h-[50px] overflow-y-auto"
             />
           </div>
         );
       } else if (fieldType === "RichText") {
         // For rich text, just show a placeholder
         return (
-          <span className="italic text-muted-foreground">
+          <span className="text-muted-foreground italic">
             {tCommon("ui.issues.richTextContent")}
           </span>
         );
@@ -1331,7 +1331,7 @@ export function SessionResultsList({
     } catch {
       // If any error occurs during parsing/rendering
       return (
-        <span className="italic text-muted-foreground">
+        <span className="text-muted-foreground italic">
           {tCommon("errors.invalidContent")}
         </span>
       );
@@ -1423,7 +1423,7 @@ export function SessionResultsList({
           >
             <CardHeader className="p-0">
               <div
-                className="flex justify-between items-center p-2 rounded-t-md"
+                className="flex items-center justify-between rounded-t-md p-2"
                 data-status-surface
                 style={{
                   ...statusSurfaceVars(getColorValue(result.status.color)),
@@ -1449,15 +1449,15 @@ export function SessionResultsList({
                     )}
                   </Button>
 
-                  <div className="w-[100px] bg-transparent text-lg font-extrabold py-0 overflow-hidden">
+                  <div className="w-[100px] overflow-hidden bg-transparent py-0 text-lg font-extrabold">
                     <span className="truncate">{result.status.name}</span>
                   </div>
-                  <span className="text-sm flex items-center gap-1">
+                  <span className="flex items-center gap-1 text-sm">
                     <UserNameCell userId={result.createdBy.id} />
                   </span>
                   {result.elapsed && (
-                    <div className="text-sm flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
+                    <div className="flex items-center gap-1 text-sm">
+                      <Clock className="h-4 w-4" />
                       {toHumanReadable(result.elapsed, {
                         isSeconds: true,
                         locale,
@@ -1465,8 +1465,8 @@ export function SessionResultsList({
                     </div>
                   )}
                   {result.attachments && result.attachments.length > 0 && (
-                    <div className="text-sm flex items-center gap-1">
-                      <FileText className="w-4 h-4" />
+                    <div className="flex items-center gap-1 text-sm">
+                      <FileText className="h-4 w-4" />
                       {result.attachments.length}
                     </div>
                   )}
@@ -1528,7 +1528,7 @@ export function SessionResultsList({
                   <ReadOnlyRichText
                     key={`display-${result.id}-${refreshResults}`}
                     content={getResultData(result)}
-                    className="p-4 rounded-md"
+                    className="rounded-md p-4"
                   />
                 ) : (
                   <div className="p-4 text-muted-foreground italic">
@@ -1539,8 +1539,8 @@ export function SessionResultsList({
                 {/* Display dynamic field values if they exist */}
                 {result.resultFieldValues &&
                   result.resultFieldValues.length > 0 && (
-                    <div className="p-4 border-t">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="border-t p-4">
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                         {editTemplateFields?.map((templateField) => {
                           // Find the corresponding field value
                           const fieldValue = result.resultFieldValues?.find(
@@ -1575,7 +1575,7 @@ export function SessionResultsList({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="flex items-center gap-1 group"
+                          className="group flex items-center gap-1"
                         >
                           <FileText className="h-4 w-4" />
                           {tCommon("upload.attachments.count", {
@@ -1598,7 +1598,7 @@ export function SessionResultsList({
 
                 {/* Display Issues */}
                 {result.issues && result.issues.length > 0 && (
-                  <div className="p-4 border-t">
+                  <div className="border-t p-4">
                     <IssuesListDisplay
                       issues={
                         result.issues?.map((issue) => ({
@@ -1758,7 +1758,7 @@ export function SessionResultsList({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full me-2"
+                                  className="me-2 h-3 w-3 rounded-full"
                                   style={{
                                     backgroundColor: getColorValue(
                                       status.color
@@ -1791,7 +1791,7 @@ export function SessionResultsList({
                             field.onChange(content);
                           }}
                           projectId={projectId.toString()}
-                          className="min-h-[100px] border rounded-md w-full"
+                          className="min-h-[100px] w-full rounded-md border"
                           placeholder={t("details")}
                         />
                       </FormControl>
@@ -1879,7 +1879,7 @@ export function SessionResultsList({
                         compact={true}
                       />
                       {selectedFiles.length > 0 && (
-                        <div className="text-sm text-muted-foreground mt-1">
+                        <div className="mt-1 text-sm text-muted-foreground">
                           {tCommon("upload.attachments.count", {
                             count: selectedFiles.length,
                           })}
@@ -1890,7 +1890,7 @@ export function SessionResultsList({
                       {resultToEdit?.attachments &&
                         resultToEdit.attachments.length > 0 && (
                           <div className="mt-4">
-                            <div className="text-sm font-medium mb-2">
+                            <div className="mb-2 text-sm font-medium">
                               {tCommon("fields.attachments")}:
                             </div>
                             <div className="max-w-[550px]">

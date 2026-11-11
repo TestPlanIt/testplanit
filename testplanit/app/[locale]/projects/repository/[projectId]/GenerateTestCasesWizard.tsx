@@ -188,10 +188,10 @@ function ContextImagesPicker({
   const checkedCount = options.filter((o) => o.checked).length;
   return (
     <div data-testid="context-images-picker">
-      <Label className="text-xs font-medium text-muted-foreground mb-1">
+      <Label className="mb-1 text-xs font-medium text-muted-foreground">
         {labels.heading}
       </Label>
-      <div className="text-sm text-foreground space-y-1">
+      <div className="space-y-1 text-sm text-foreground">
         {options.map((opt) => {
           const disabled =
             opt.tooLarge || (!opt.checked && checkedCount >= max);
@@ -941,7 +941,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
     : null;
 
   const renderFieldList = (isEdit: boolean) => (
-    <div className="mt-3 border-t pt-3 space-y-4">
+    <div className="mt-3 space-y-4 border-t pt-3">
       {selectedTemplateFields
         .filter((field: any) => {
           // In read-only mode, skip fields with no value
@@ -986,7 +986,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
 
           return (
             <div key={`field-${field.caseField.id}`} className="space-y-2">
-              <div className="font-medium text-sm text-primary border-b border-muted-foreground/50 pb-1">
+              <div className="border-b border-muted-foreground/50 pb-1 text-sm font-medium text-primary">
                 {displayName}
               </div>
               <FieldValueRenderer
@@ -1006,12 +1006,12 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
     return (
       <div
         ref={cardRef}
-        className="border rounded-lg p-4 transition-colors border-primary/60 bg-primary/5"
+        className="rounded-lg border border-primary/60 bg-primary/5 p-4 transition-colors"
       >
         <FormProvider {...formMethods}>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="flex items-start gap-3">
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="flex cursor-pointer items-start gap-3">
                 <Checkbox
                   checked={isSelected}
                   onCheckedChange={onSelectionChange}
@@ -1055,18 +1055,18 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                             ? field.value
                             : [];
                           return (
-                            <div className="flex flex-wrap items-center gap-2 rounded-md border p-2 min-h-[2.5rem]">
+                            <div className="flex min-h-[2.5rem] flex-wrap items-center gap-2 rounded-md border p-2">
                               {tags.map((tag, idx) => (
                                 <Badge
                                   key={`edit-tag-${idx}`}
                                   variant="outline"
-                                  className="text-xs text-primary flex items-center gap-1"
+                                  className="flex items-center gap-1 text-xs text-primary"
                                 >
                                   <Tag className="h-3 w-3 shrink-0" />
                                   {tag}
                                   <button
                                     type="button"
-                                    className="ms-0.5 rounded-full hover:bg-muted p-0.5"
+                                    className="ms-0.5 rounded-full p-0.5 hover:bg-muted"
                                     onClick={() => {
                                       field.onChange(
                                         tags.filter((_, i) => i !== idx)
@@ -1156,17 +1156,17 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
     return (
       <div
         ref={cardRef}
-        className="border rounded-lg p-4 border-primary/30 bg-primary/5 animate-pulse"
+        className="animate-pulse rounded-lg border border-primary/30 bg-primary/5 p-4"
       >
         <div className="flex items-start gap-3">
-          <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-sm font-medium text-primary">
-            <Loader2 className="w-4 h-4 animate-spin" />
+          <div className="-mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-sm font-medium text-primary">
+            <Loader2 className="h-4 w-4 animate-spin" />
           </div>
           <div className="flex-1 space-y-2">
             <h4 className="font-medium">{testCase.name}</h4>
             {folderLabel && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <FolderOpen className="w-3 h-3 shrink-0" />
+                <FolderOpen className="h-3 w-3 shrink-0" />
                 <span>{folderLabel}</span>
               </div>
             )}
@@ -1189,7 +1189,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
               </div>
             )}
             {testCase.tags && testCase.tags.length > 0 && (
-              <div className="flex gap-1 flex-wrap">
+              <div className="flex flex-wrap gap-1">
                 {testCase.tags.map((tag, i) => (
                   <Badge key={i} variant="secondary" className="text-xs">
                     {tag}
@@ -1199,13 +1199,13 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
             )}
             {testCase.steps && testCase.steps.length > 0 && (
               <div className="space-y-1 text-sm">
-                <span className="font-medium text-foreground/70 text-xs">
+                <span className="text-xs font-medium text-foreground/70">
                   {"Steps:"}
                 </span>
                 {testCase.steps.map((step, si) => (
                   <div
                     key={si}
-                    className="ps-2 border-s-2 border-muted text-xs text-muted-foreground"
+                    className="border-s-2 border-muted ps-2 text-xs text-muted-foreground"
                   >
                     <div>
                       <span className="font-medium">
@@ -1234,13 +1234,13 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
   return (
     <Collapsible ref={cardRef}>
       <div
-        className={`border rounded-lg transition-colors ${
+        className={`rounded-lg border transition-colors ${
           isSelected ? "border-primary bg-primary/5" : "hover:bg-muted/50"
         }`}
       >
         <div className="flex items-start gap-3 p-4">
           <label
-            className="flex items-start gap-3 cursor-pointer"
+            className="flex cursor-pointer items-start gap-3"
             onClick={(e) => e.stopPropagation()}
           >
             <Checkbox
@@ -1248,34 +1248,34 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
               onCheckedChange={onSelectionChange}
               className="mt-1"
             />
-            <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-sm font-medium text-primary">
+            <div className="-mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-sm font-medium text-primary">
               {index + 1}
             </div>
           </label>
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1 min-w-0">
-                <CollapsibleTrigger className="flex items-center gap-1.5 text-start group">
-                  <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              <div className="min-w-0 space-y-1">
+                <CollapsibleTrigger className="group flex items-center gap-1.5 text-start">
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   <h4 className="font-medium wrap-break-word">
                     {testCase.name}
                   </h4>
                 </CollapsibleTrigger>
                 {folderLabel && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground ms-5.5">
-                    <FolderOpen className="w-3 h-3 shrink-0" />
+                  <div className="ms-5.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <FolderOpen className="h-3 w-3 shrink-0" />
                     <span>{folderLabel}</span>
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex shrink-0 items-center gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onStartEdit}
                   disabled={disabled}
                 >
-                  <SquarePen className="w-4 h-4 me-1" />
+                  <SquarePen className="me-1 h-4 w-4" />
                   {tCommon("actions.edit")}
                 </Button>
               </div>
@@ -1283,7 +1283,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
           </div>
         </div>
         <CollapsibleContent>
-          <div className="px-4 pb-4 ps-[4.25rem] space-y-3">
+          <div className="space-y-3 px-4 ps-[4.25rem] pb-4">
             {renderFieldList(false)}
 
             <div className="flex flex-wrap items-center gap-2">
@@ -1294,7 +1294,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                     variant="outline"
                     className="text-xs text-primary"
                   >
-                    <Tag className="h-3 w-3 shrink-0 me-1" />
+                    <Tag className="me-1 h-3 w-3 shrink-0" />
                     {tag}
                   </Badge>
                 ))}
@@ -1306,7 +1306,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                 className="space-y-2"
                 data-testid="wizard-preview-parameters-section"
               >
-                <Label className="text-primary text-sm">
+                <Label className="text-sm text-primary">
                   {_t("generateTestCases.parametersSection")}
                 </Label>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1359,7 +1359,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                 className="space-y-2"
                 data-testid="wizard-preview-dataset-section"
               >
-                <Label className="text-primary text-sm">
+                <Label className="text-sm text-primary">
                   {_t("generateTestCases.starterDatasetSection")}
                 </Label>
                 <div className="overflow-x-auto rounded-md border">
@@ -4265,10 +4265,10 @@ export function GenerateTestCasesWizard({
           }
         }}
       >
-        <DialogContent className="sm:max-w-[900px] lg:max-w-[1200px] h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="flex h-[90vh] flex-col overflow-hidden sm:max-w-[900px] lg:max-w-[1200px]">
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
-              <Bot className="w-5 h-5" />
+              <Bot className="h-5 w-5" />
               {t("generateTestCases.title")}
             </DialogTitle>
             <DialogDescription>
@@ -4296,10 +4296,10 @@ export function GenerateTestCasesWizard({
                   </AlertDescription>
                 </Alert>
               ) : (
-                <Alert className="mt-2 bg-primary/10 border-primary/50">
+                <Alert className="mt-2 border-primary/50 bg-primary/10">
                   <AlertDescription>
-                    <div className="flex items-center gap-2 text-xs text-start">
-                      <Info className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <div className="flex items-center gap-2 text-start text-xs">
+                      <Info className="h-4 w-4 shrink-0 text-muted-foreground" />
                       {folderContextCaseCount === null
                         ? t("generateTestCases.selectSource.folderContextTip", {
                             folderName:
@@ -4324,7 +4324,7 @@ export function GenerateTestCasesWizard({
           </DialogHeader>
 
           {!isNotificationReopen && (
-            <div className="px-6 py-4 shrink-0">
+            <div className="shrink-0 px-6 py-4">
               <WizardProgress
                 steps={wizardSteps}
                 activeStep={currentStep}
@@ -4340,10 +4340,10 @@ export function GenerateTestCasesWizard({
             crawledPagesResult.length > 1 &&
             (currentStep === WizardStep.REVIEW_GENERATED ||
               (urlJobId && isGenerating && generatedTestCases.length > 0)) && (
-              <div className="px-6 pb-2 pt-1 border-b shrink-0">
+              <div className="shrink-0 border-b px-6 pt-1 pb-2">
                 <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium text-muted-foreground shrink-0">
+                  <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="shrink-0 text-sm font-medium text-muted-foreground">
                     {t("generateTestCases.review.filterByPage")}
                   </span>
                   <Select
@@ -4352,7 +4352,7 @@ export function GenerateTestCasesWizard({
                       setReviewPageFilter(val === "__all__" ? null : val)
                     }
                   >
-                    <SelectTrigger className="w-full max-w-md h-9 text-sm">
+                    <SelectTrigger className="h-9 w-full max-w-md text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -4372,9 +4372,9 @@ export function GenerateTestCasesWizard({
                               {page.title || page.url}
                             </span>
                             {page.spaWarning && (
-                              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ms-1" />
+                              <AlertTriangle className="ms-1 inline h-3 w-3 shrink-0 text-amber-500" />
                             )}
-                            <span className="text-muted-foreground ms-1">
+                            <span className="ms-1 text-muted-foreground">
                               {"("}
                               {pageTestCount}
                               {")"}
@@ -4388,10 +4388,10 @@ export function GenerateTestCasesWizard({
               </div>
             )}
 
-          <div className="flex-1 min-h-0 px-4 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4">
             {isNotificationReopen ? (
-              <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <div className="flex flex-col items-center justify-center space-y-4 py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">
                   {t("generateTestCases.loadingResults")}
                 </p>
@@ -4415,11 +4415,11 @@ export function GenerateTestCasesWizard({
                             <p className="text-sm font-semibold text-destructive">
                               {llmError.title}
                             </p>
-                            <p className="whitespace-pre-line text-sm text-muted-foreground">
+                            <p className="text-sm whitespace-pre-line text-muted-foreground">
                               {llmError.message}
                             </p>
                             {llmError.detail && (
-                              <p className="whitespace-pre-line text-sm text-foreground">
+                              <p className="text-sm whitespace-pre-line text-foreground">
                                 {llmError.detail}
                               </p>
                             )}
@@ -4452,7 +4452,7 @@ export function GenerateTestCasesWizard({
 
                       {llmError.suggestions.length > 0 && (
                         <div className="rounded-md bg-destructive/10 px-3 py-2">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                          <p className="text-xs font-semibold tracking-wide text-destructive uppercase">
                             {t(
                               `${llmErrorTranslationKey}.suggestionsHeading` as any
                             )}
@@ -4501,7 +4501,7 @@ export function GenerateTestCasesWizard({
                       </div>
 
                       {showErrorDetails && llmError.raw && (
-                        <pre className="max-h-48 overflow-auto rounded-md border border-destructive/20 bg-background/80 p-3 text-xs text-muted-foreground whitespace-pre-wrap">
+                        <pre className="max-h-48 overflow-auto rounded-md border border-destructive/20 bg-background/80 p-3 text-xs whitespace-pre-wrap text-muted-foreground">
                           {llmError.raw}
                         </pre>
                       )}
@@ -4518,7 +4518,7 @@ export function GenerateTestCasesWizard({
                     <Card shadow="none">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          <Sparkles className="w-5 h-5 animate-pulse" />
+                          <Sparkles className="h-5 w-5 animate-pulse" />
                           {t("generateTestCases.selectSource.generatingSetup")}
                         </CardTitle>
                         <CardDescription>
@@ -4588,7 +4588,7 @@ export function GenerateTestCasesWizard({
                     <Card shadow="none">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          <Search className="w-5 h-5" />
+                          <Search className="h-5 w-5" />
                           {t("generateTestCases.selectSource.title")}
                         </CardTitle>
                         <CardDescription>
@@ -4632,17 +4632,17 @@ export function GenerateTestCasesWizard({
                           {hasActiveIntegrations && (
                             <TabsContent
                               value="issue"
-                              className="mt-4 flex-1 flex flex-col min-h-0"
+                              className="mt-4 flex min-h-0 flex-1 flex-col"
                             >
                               {selectedIssue ? (
-                                <div className="border rounded-lg p-4 flex-1 min-h-0 overflow-y-auto">
-                                  <div className="flex items-start justify-between mb-3">
-                                    <div className="space-y-3 flex-1">
+                                <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border p-4">
+                                  <div className="mb-3 flex items-start justify-between">
+                                    <div className="flex-1 space-y-3">
                                       {/* Header with issue key and external link */}
                                       <div className="flex items-center gap-2">
                                         <Badge
                                           variant="default"
-                                          className="font-bold text-sm"
+                                          className="text-sm font-bold"
                                         >
                                           {selectedIssue.key ||
                                             selectedIssue.externalKey}
@@ -4666,7 +4666,7 @@ export function GenerateTestCasesWizard({
                                               }
                                             }}
                                           >
-                                            <ExternalLink className="w-3 h-3" />
+                                            <ExternalLink className="h-3 w-3" />
                                             {tCommon(
                                               "ui.issues.openInExternalSystem",
                                               {
@@ -4695,7 +4695,7 @@ export function GenerateTestCasesWizard({
 
                                       {/* Issue title */}
                                       <div>
-                                        <h4 className="font-medium text-base leading-tight">
+                                        <h4 className="text-base leading-tight font-medium">
                                           {selectedIssue.title}
                                         </h4>
                                       </div>
@@ -4703,7 +4703,7 @@ export function GenerateTestCasesWizard({
                                       {/* Issue description */}
                                       {selectedIssue.description && (
                                         <div>
-                                          <Label className="text-xs font-medium text-muted-foreground mb-1">
+                                          <Label className="mb-1 text-xs font-medium text-muted-foreground">
                                             {tCommon("fields.description")}
                                           </Label>
                                           <div className="text-sm text-foreground">
@@ -4719,12 +4719,12 @@ export function GenerateTestCasesWizard({
                                       {/* Linked issues that will be included in the LLM context */}
                                       {linkedIssueRefs.length > 0 && (
                                         <div>
-                                          <Label className="text-xs font-medium text-muted-foreground mb-1">
+                                          <Label className="mb-1 text-xs font-medium text-muted-foreground">
                                             {t(
                                               "generateTestCases.linkedIssuesPreviewHeading"
                                             )}
                                           </Label>
-                                          <div className="text-sm text-foreground space-y-1">
+                                          <div className="space-y-1 text-sm text-foreground">
                                             {linkedIssueRefs.map((ref, i) => (
                                               <div
                                                 key={`${ref.id}-${ref.linkType}-${ref.direction}-${i}`}
@@ -4772,7 +4772,7 @@ export function GenerateTestCasesWizard({
                                   className="w-full"
                                   data-testid="search-issues-button"
                                 >
-                                  <Search className="w-4 h-4 " />
+                                  <Search className="h-4 w-4 " />
                                   {t(
                                     "generateTestCases.selectIssue.searchButton"
                                   )}
@@ -4807,7 +4807,7 @@ export function GenerateTestCasesWizard({
                                         >
                                           <button
                                             type="button"
-                                            className="flex items-center gap-3 flex-1 min-w-0 text-start"
+                                            className="flex min-w-0 flex-1 items-center gap-3 text-start"
                                             onClick={() => {
                                               if (isInProgress) {
                                                 setUrlJobId(job.jobId);
@@ -4821,11 +4821,11 @@ export function GenerateTestCasesWizard({
                                             }}
                                           >
                                             {isInProgress ? (
-                                              <Loader2 className="w-4 h-4 text-primary shrink-0 animate-spin" />
+                                              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
                                             ) : (
-                                              <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+                                              <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
                                             )}
-                                            <div className="flex-1 min-w-0">
+                                            <div className="min-w-0 flex-1">
                                               <div className="truncate font-medium">
                                                 {job.url}
                                               </div>
@@ -4892,7 +4892,7 @@ export function GenerateTestCasesWizard({
                                                 )}
                                               </div>
                                             </div>
-                                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                                           </button>
                                           <Button
                                             type="button"
@@ -4903,7 +4903,7 @@ export function GenerateTestCasesWizard({
                                               setJobToRemove(job.jobId)
                                             }
                                           >
-                                            <X className="w-3.5 h-3.5" />
+                                            <X className="h-3.5 w-3.5" />
                                           </Button>
                                         </div>
                                       );
@@ -4913,8 +4913,8 @@ export function GenerateTestCasesWizard({
                               )}
                               {recentUrlJobsLoading &&
                                 recentUrlJobs.length === 0 && (
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
-                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
                                     {t(
                                       "generateTestCases.selectSource.loadingRecentJobs"
                                     )}
@@ -4939,7 +4939,7 @@ export function GenerateTestCasesWizard({
                                     onClick={() => setUrlMode("application")}
                                     className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
                                       urlMode === "application"
-                                        ? "border-primary bg-primary/10 text-primary font-medium"
+                                        ? "border-primary bg-primary/10 font-medium text-primary"
                                         : "border-border text-muted-foreground hover:border-primary/50"
                                     }`}
                                   >
@@ -4948,7 +4948,7 @@ export function GenerateTestCasesWizard({
                                         "generateTestCases.selectSource.urlModeApplication"
                                       )}
                                     </div>
-                                    <div className="text-xs mt-0.5 opacity-80">
+                                    <div className="mt-0.5 text-xs opacity-80">
                                       {t(
                                         "generateTestCases.selectSource.urlModeApplicationHint"
                                       )}
@@ -4959,14 +4959,14 @@ export function GenerateTestCasesWizard({
                                     onClick={() => setUrlMode("requirements")}
                                     className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
                                       urlMode === "requirements"
-                                        ? "border-primary bg-primary/10 text-primary font-medium"
+                                        ? "border-primary bg-primary/10 font-medium text-primary"
                                         : "border-border text-muted-foreground hover:border-primary/50"
                                     }`}
                                   >
                                     <div className="font-medium">
                                       {tCommon("fields.requirements")}
                                     </div>
-                                    <div className="text-xs mt-0.5 opacity-80">
+                                    <div className="mt-0.5 text-xs opacity-80">
                                       {t(
                                         "generateTestCases.selectSource.urlModeRequirementsHint"
                                       )}
@@ -5149,13 +5149,13 @@ export function GenerateTestCasesWizard({
 
                           <TabsContent value="document" className="mt-4">
                             {documentRequirements ? (
-                              <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
+                              <div className="max-h-64 overflow-y-auto rounded-lg border p-4">
                                 <div className="flex items-start justify-between">
-                                  <div className="space-y-2 min-w-0">
+                                  <div className="min-w-0 space-y-2">
                                     <h4 className="font-medium">
                                       {documentRequirements.title}
                                     </h4>
-                                    <p className="text-sm text-muted-foreground line-clamp-3">
+                                    <p className="line-clamp-3 text-sm text-muted-foreground">
                                       {documentRequirements.description}
                                     </p>
                                     <ContextImagesPicker
@@ -5256,7 +5256,7 @@ export function GenerateTestCasesWizard({
                     <Card shadow="none">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          <FileText className="w-5 h-5" />
+                          <FileText className="h-5 w-5" />
                           {t("generateTestCases.selectTemplate.title")}
                         </CardTitle>
                         <CardDescription>
@@ -5283,7 +5283,7 @@ export function GenerateTestCasesWizard({
                                 key={template.id}
                                 value={template.id.toString()}
                               >
-                                <div className="flex items-center justify-between w-full gap-2">
+                                <div className="flex w-full items-center justify-between gap-2">
                                   <span>{template.templateName}</span>
                                   {defaultTemplateSource &&
                                     template.id === defaultTemplate?.id && (
@@ -5298,13 +5298,13 @@ export function GenerateTestCasesWizard({
                         </Select>
 
                         {selectedTemplateId && (
-                          <div className="mt-4 p-4 bg-muted rounded-lg">
-                            <h5 className="font-medium mb-2">
+                          <div className="mt-4 rounded-lg bg-muted p-4">
+                            <h5 className="mb-2 font-medium">
                               {tGlobal(
                                 "admin.imports.testmo.mapping.templateColumnFields"
                               )}
                             </h5>
-                            <div className="flex items-center justify-between mb-3">
+                            <div className="mb-3 flex items-center justify-between">
                               <p className="text-sm text-muted-foreground">
                                 {t(
                                   "generateTestCases.selectTemplate.fieldsDescription"
@@ -5331,7 +5331,7 @@ export function GenerateTestCasesWizard({
                                 </Button>
                               </div>
                             </div>
-                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                            <div className="max-h-64 space-y-2 overflow-y-auto">
                               {templates
                                 ?.find((t) => t.id === selectedTemplateId)
                                 ?.caseFields.slice()
@@ -5340,7 +5340,7 @@ export function GenerateTestCasesWizard({
                                 .map((field) => (
                                   <div
                                     key={field.caseFieldId}
-                                    className="flex items-center justify-between p-2 rounded border bg-background"
+                                    className="flex items-center justify-between rounded border bg-background p-2"
                                   >
                                     <div className="flex items-center gap-3">
                                       <Checkbox
@@ -5358,7 +5358,7 @@ export function GenerateTestCasesWizard({
                                       />
                                       <Label
                                         htmlFor={`field-${field.caseFieldId}`}
-                                        className={`text-sm cursor-pointer ${
+                                        className={`cursor-pointer text-sm ${
                                           field.caseField.isRequired
                                             ? "text-muted-foreground"
                                             : ""
@@ -5398,7 +5398,7 @@ export function GenerateTestCasesWizard({
                     <Card shadow="none">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          <Settings className="w-5 h-5" />
+                          <Settings className="h-5 w-5" />
                           {t("generateTestCases.addNotes.title")}
                         </CardTitle>
                         <CardDescription>
@@ -5407,7 +5407,7 @@ export function GenerateTestCasesWizard({
                       </CardHeader>
                       <CardContent className=" overflow-y-auto">
                         <div className="mb-4">
-                          <Label className="text-sm font-medium mb-2 block">
+                          <Label className="mb-2 block text-sm font-medium">
                             {t("generateTestCases.addNotes.quantity")}
                           </Label>
                           <Select value={quantity} onValueChange={setQuantity}>
@@ -5479,7 +5479,7 @@ export function GenerateTestCasesWizard({
                         )}
 
                         {/* Auto-generate tags option */}
-                        <div className="flex items-center space-x-2 mb-4">
+                        <div className="mb-4 flex items-center space-x-2">
                           <Checkbox
                             id="auto-generate-tags"
                             checked={autoGenerateTags}
@@ -5489,7 +5489,7 @@ export function GenerateTestCasesWizard({
                           />
                           <Label
                             htmlFor="auto-generate-tags"
-                            className="text-sm font-medium cursor-pointer"
+                            className="cursor-pointer text-sm font-medium"
                           >
                             {t("generateTestCases.autoGenerateTags")}
                           </Label>
@@ -5500,7 +5500,7 @@ export function GenerateTestCasesWizard({
                             admin gate). */}
                         {isAdmin && (
                           <div
-                            className="flex items-start space-x-2 mb-4"
+                            className="mb-4 flex items-start space-x-2"
                             data-testid="include-parameters-toggle-row"
                           >
                             <Checkbox
@@ -5514,7 +5514,7 @@ export function GenerateTestCasesWizard({
                             <div className="space-y-1">
                               <Label
                                 htmlFor="include-parameters"
-                                className="text-sm font-medium cursor-pointer"
+                                className="cursor-pointer text-sm font-medium"
                               >
                                 {t("generateTestCases.includeParametersLabel")}
                               </Label>
@@ -5613,7 +5613,7 @@ export function GenerateTestCasesWizard({
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Eye className="w-5 h-5" />
+                          <Eye className="h-5 w-5" />
                           {t("generateTestCases.review.title")}
                         </div>
                         {generatedTestCases.length > 0 && (
@@ -5659,11 +5659,11 @@ export function GenerateTestCasesWizard({
                       generatedTestCases.length === 0 &&
                       caseOutlines.length === 0 ? (
                         // No cards yet — show stage indicator / spinner
-                        <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                          <Sparkles className="w-8 h-8 text-primary shrink-0" />
+                        <div className="flex flex-col items-center justify-center space-y-4 py-12">
+                          <Sparkles className="h-8 w-8 shrink-0 text-primary" />
                           <div className="w-full max-w-md space-y-3">
                             <Progress className="animate-pulse" />
-                            <p className="text-sm text-muted-foreground text-center">
+                            <p className="text-center text-sm text-muted-foreground">
                               {generatingStatus === "preparing"
                                 ? t("generateTestCases.generatingPreparing")
                                 : generatingStatus === "calling_ai"
@@ -5696,7 +5696,7 @@ export function GenerateTestCasesWizard({
                                         )
                                       : t("generateTestCases.buttonText")}
                             </p>
-                            <p className="text-xs text-muted-foreground text-center">
+                            <p className="text-center text-xs text-muted-foreground">
                               {t("generateTestCases.generatingHint")}
                             </p>
                             <div className="flex justify-center pt-2">
@@ -5879,12 +5879,12 @@ export function GenerateTestCasesWizard({
                                   return (
                                     <div
                                       key={`outline-${i}`}
-                                      className="rounded-lg border bg-card p-4 flex items-center justify-between gap-3"
+                                      className="flex items-center justify-between gap-3 rounded-lg border bg-card p-4"
                                     >
-                                      <div className="flex items-center gap-3 min-w-0">
-                                        <Loader2 className="h-4 w-4 animate-spin shrink-0 text-muted-foreground" />
+                                      <div className="flex min-w-0 items-center gap-3">
+                                        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
                                         <div className="min-w-0">
-                                          <p className="text-sm font-medium truncate">
+                                          <p className="truncate text-sm font-medium">
                                             {outline.title}
                                           </p>
                                           <p className="text-xs text-muted-foreground">
@@ -5895,7 +5895,7 @@ export function GenerateTestCasesWizard({
                                       <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="shrink-0 h-7 w-7"
+                                        className="h-7 w-7 shrink-0"
                                         onClick={() => handleCancelExpand(i)}
                                       >
                                         <X className="h-3.5 w-3.5" />
@@ -5908,12 +5908,12 @@ export function GenerateTestCasesWizard({
                                   return (
                                     <div
                                       key={`outline-${i}`}
-                                      className="rounded-lg border bg-card p-4 animate-pulse"
+                                      className="animate-pulse rounded-lg border bg-card p-4"
                                     >
                                       <p className="text-sm font-medium text-muted-foreground">
                                         {outline.title}
                                       </p>
-                                      <p className="text-xs text-muted-foreground mt-1">
+                                      <p className="mt-1 text-xs text-muted-foreground">
                                         {outline.summary}
                                       </p>
                                     </div>
@@ -5924,13 +5924,13 @@ export function GenerateTestCasesWizard({
                                   return (
                                     <div
                                       key={`outline-${i}`}
-                                      className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 flex items-start justify-between gap-3"
+                                      className="flex items-start justify-between gap-3 rounded-lg border border-destructive/50 bg-destructive/5 p-4"
                                     >
                                       <div className="min-w-0">
                                         <p className="text-sm font-medium">
                                           {outline.title}
                                         </p>
-                                        <p className="text-xs text-destructive mt-1">
+                                        <p className="mt-1 text-xs text-destructive">
                                           {outline.errorMessage ||
                                             t(
                                               "generateTestCases.errors.generateFailed"
@@ -5957,9 +5957,9 @@ export function GenerateTestCasesWizard({
                                 return (
                                   <div
                                     key={`outline-${i}`}
-                                    className="rounded-lg border bg-muted/30 p-4 flex items-center justify-between gap-3"
+                                    className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-4"
                                   >
-                                    <p className="text-sm font-medium line-through text-muted-foreground opacity-50 min-w-0 truncate">
+                                    <p className="min-w-0 truncate text-sm font-medium text-muted-foreground line-through opacity-50">
                                       {outline.title}
                                     </p>
                                     <Button
@@ -6050,7 +6050,7 @@ export function GenerateTestCasesWizard({
           </div>
 
           {/* Dialog Footer */}
-          <div className="flex items-center justify-between mt-6 pt-4 border-t shrink-0">
+          <div className="mt-6 flex shrink-0 items-center justify-between border-t pt-4">
             <div className="flex items-center gap-2">
               {currentStep > WizardStep.SELECT_ISSUE &&
                 !isNotificationReopen && (
@@ -6059,7 +6059,7 @@ export function GenerateTestCasesWizard({
                     onClick={handleBack}
                     disabled={isFinishing}
                   >
-                    <ChevronLeft className="w-4 h-4 " />
+                    <ChevronLeft className="h-4 w-4 " />
                     {tCommon("actions.back")}
                   </Button>
                 )}
@@ -6067,8 +6067,8 @@ export function GenerateTestCasesWizard({
 
             {/* Streaming progress — shown in footer while generating */}
             {isGenerating && generatedTestCases.length > 0 && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 flex-1 px-4">
-                <Sparkles className="w-4 h-4 animate-pulse text-primary shrink-0" />
+              <div className="flex min-w-0 flex-1 items-center gap-2 px-4 text-sm text-muted-foreground">
+                <Sparkles className="h-4 w-4 shrink-0 animate-pulse text-primary" />
                 <span className="truncate">
                   {urlStreamingPageInfo
                     ? t("generateTestCases.generatingStreamingPage", {
@@ -6118,9 +6118,9 @@ export function GenerateTestCasesWizard({
                       data-testid="generate-stage-button"
                     >
                       {isStaging ? (
-                        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                       ) : (
-                        <NotebookPen className="w-4 h-4" />
+                        <NotebookPen className="h-4 w-4" />
                       )}
                       {t("generateTestCases.stage", {
                         count: selectedTestCases.size,
@@ -6141,9 +6141,9 @@ export function GenerateTestCasesWizard({
                   }
                 >
                   {isImporting ? (
-                    <Sparkles className="w-4 h-4 animate-spin shrink-0" />
+                    <Sparkles className="h-4 w-4 shrink-0 animate-spin" />
                   ) : (
-                    <Download className="w-4 h-4 " />
+                    <Download className="h-4 w-4 " />
                   )}
                   {isImporting
                     ? t("generateTestCases.import", {
@@ -6160,20 +6160,20 @@ export function GenerateTestCasesWizard({
                 >
                   {isGenerating ? (
                     <>
-                      <Sparkles className="w-4 h-4 animate-spin shrink-0" />
+                      <Sparkles className="h-4 w-4 shrink-0 animate-spin" />
                       {t("generateTestCases.buttonText")}
                     </>
                   ) : (
                     <>
                       {currentStep === WizardStep.ADD_NOTES ? (
                         <>
-                          <Sparkles className="w-4 h-4" />
+                          <Sparkles className="h-4 w-4" />
                           {tGlobal("repository.generateTestCases.buttonText")}
                         </>
                       ) : (
                         <>
                           {tCommon("actions.next")}
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="h-4 w-4" />
                         </>
                       )}
                     </>
@@ -6223,7 +6223,7 @@ export function GenerateTestCasesWizard({
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
+              <AlertTriangle className="h-5 w-5 text-warning" />
               {t("generateTestCases.unsavedEdits.title")}
             </DialogTitle>
             <DialogDescription>
@@ -6239,7 +6239,7 @@ export function GenerateTestCasesWizard({
             </p>
           </div>
 
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               onClick={() => setShowUnsavedEditsDialog(false)}
@@ -6341,10 +6341,10 @@ function WizardProgress({
               variant="ghost"
               onClick={() => isEnabled && onStepSelect?.(step.id)}
               disabled={!isEnabled}
-              className={`flex items-center gap-2 border border-primary/60 shadow-md rounded-full py-6 text-sm font-medium transition ${
+              className={`flex items-center gap-2 rounded-full border border-primary/60 py-6 text-sm font-medium shadow-md transition ${
                 isEnabled
                   ? "cursor-pointer text-foreground hover:bg-muted "
-                  : "cursor-not-allowed text-muted-foreground border-muted-foreground/20"
+                  : "cursor-not-allowed border-muted-foreground/20 text-muted-foreground"
               }`}
             >
               <span
@@ -6370,7 +6370,7 @@ function WizardProgress({
               <div
                 className={`hidden h-px w-12 sm:block ${
                   step.id < maxUnlockedStep
-                    ? "bg-primary animate-pulse"
+                    ? "animate-pulse bg-primary"
                     : "bg-muted"
                 }`}
               />
@@ -6394,7 +6394,7 @@ function IssueDescriptionText({ description }: { description: string }) {
 
     return (
       <div
-        className="prose prose-sm dark:prose-invert max-w-none text-foreground [&_*]:!text-inherit"
+        className="prose prose-sm max-w-none text-foreground dark:prose-invert [&_*]:!text-inherit"
         dangerouslySetInnerHTML={{ __html: htmlOutput }}
       />
     );

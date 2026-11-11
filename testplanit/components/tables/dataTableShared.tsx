@@ -519,7 +519,7 @@ export function resolveGroupableCellContent<TData extends RowData>(
               an expandable parent row are the same gesture and must not look
               like two different ones. */}
           <span
-            className="inline-flex items-center justify-center w-4 transition-transform duration-200"
+            className="inline-flex w-4 items-center justify-center transition-transform duration-200"
             style={{
               transform: row.getIsExpanded() ? "rotate(90deg)" : "rotate(0deg)",
             }}

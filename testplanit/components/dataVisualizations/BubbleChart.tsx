@@ -303,7 +303,7 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
   return (
     <div
       ref={containerRef}
-      className="w-full h-full flex items-center justify-center"
+      className="flex h-full w-full items-center justify-center"
     >
       <svg ref={svgRef} />
     </div>

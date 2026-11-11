@@ -52,7 +52,7 @@ export function VersionSelect({
       }}
     >
       <SelectTrigger className="w-fit" data-testid="version-select-trigger">
-        <Badge className="text-primary-foreground text-xs">
+        <Badge className="text-xs text-primary-foreground">
           {tGlobal("common.version.prefix")}
           {versions[selectedIndex].version.toString()}
         </Badge>
@@ -61,11 +61,11 @@ export function VersionSelect({
         {versions.map((v, index) => (
           <SelectItem key={`version-select-${index}`} value={index.toString()}>
             <div className="flex items-center space-x-1 whitespace-nowrap">
-              <Badge className="text-primary-foreground text-xs">
+              <Badge className="text-xs text-primary-foreground">
                 {tGlobal("common.version.prefix")}
                 {v.version.toString()}
               </Badge>
-              <div className="text-xs flex">
+              <div className="flex text-xs">
                 <DateFormatter
                   date={v.createdAt}
                   formatString={

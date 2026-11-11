@@ -277,8 +277,8 @@ function TagList() {
   // NOW check if project exists - only after loading is complete
   if (!project) {
     return (
-      <Card className="flex flex-col w-full min-w-[400px] h-full">
-        <CardContent className="flex flex-col items-center justify-center h-full">
+      <Card className="flex h-full w-full min-w-[400px] flex-col">
+        <CardContent className="flex h-full flex-col items-center justify-center">
           <PageTitle className="mb-2">
             {t("common.errors.projectNotFound")}
           </PageTitle>
@@ -322,8 +322,8 @@ function TagList() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-              <div className="text-muted-foreground w-full text-nowrap">
+            <div className="flex w-full min-w-[250px] grow flex-col sm:w-1/2">
+              <div className="w-full text-nowrap text-muted-foreground">
                 <Filter
                   key="tag-filter"
                   placeholder={t("tags.filterPlaceholder")}
@@ -334,7 +334,7 @@ function TagList() {
             </div>
 
             {mappedTags.length > 0 && (
-              <p className="text-sm text-muted-foreground shrink-0">
+              <p className="shrink-0 text-sm text-muted-foreground">
                 {t("admin.auditLogs.showing", {
                   loaded: mappedTags.length.toLocaleString(locale),
                   total: (allTags?.length ?? mappedTags.length).toLocaleString(

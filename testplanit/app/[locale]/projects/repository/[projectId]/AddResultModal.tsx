@@ -1735,7 +1735,7 @@ export function AddResultModal({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                   {isRestricted && ( // Add LockIcon
@@ -1743,7 +1743,7 @@ export function AddResultModal({
                       title={tCommon("aria.restrictedField")}
                       className="ms-1"
                     >
-                      <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                      <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
                 </FormLabel>
@@ -1776,7 +1776,7 @@ export function AddResultModal({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                   {isRestricted && ( // Add LockIcon
@@ -1784,7 +1784,7 @@ export function AddResultModal({
                       title={tCommon("aria.restrictedField")}
                       className="ms-1"
                     >
-                      <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                      <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
                 </FormLabel>
@@ -1823,7 +1823,7 @@ export function AddResultModal({
                   {displayName}
                   {isRequired && (
                     <sup>
-                      <Asterisk className="w-3 h-3 text-destructive" />
+                      <Asterisk className="h-3 w-3 text-destructive" />
                     </sup>
                   )}
                   {isRestricted && ( // Add LockIcon
@@ -1831,7 +1831,7 @@ export function AddResultModal({
                       title={tCommon("aria.restrictedField")}
                       className="ms-1"
                     >
-                      <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                      <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
                 </FormLabel>
@@ -1914,7 +1914,7 @@ export function AddResultModal({
                       {displayName}
                       {isRequired && (
                         <sup>
-                          <Asterisk className="w-3 h-3 text-destructive" />
+                          <Asterisk className="h-3 w-3 text-destructive" />
                         </sup>
                       )}
                       {isRestricted && ( // Add LockIcon
@@ -1922,7 +1922,7 @@ export function AddResultModal({
                           title={tCommon("aria.restrictedField")}
                           className="ms-1"
                         >
-                          <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                          <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                         </span>
                       )}
                     </FormLabel>
@@ -1964,7 +1964,7 @@ export function AddResultModal({
                     {`${displayName} (${fieldType})`}
                     {isRequired && (
                       <sup>
-                        <Asterisk className="w-3 h-3 text-destructive" />
+                        <Asterisk className="h-3 w-3 text-destructive" />
                       </sup>
                     )}
                     {isRestricted && ( // Add LockIcon
@@ -1972,7 +1972,7 @@ export function AddResultModal({
                         title={tCommon("aria.restrictedField")}
                         className="ms-1"
                       >
-                        <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                        <LockIcon className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                       </span>
                     )}
                   </FormLabel>
@@ -2016,7 +2016,7 @@ export function AddResultModal({
             {iterationLabel ? ` — ${iterationLabel}` : ""}
           </DialogTitle>
           <DialogDescription asChild>
-            <div className="text-sm text-muted-foreground flex flex-col gap-1">
+            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
               {isBulkResult ? (
                 tCommon("actions.addingResultsToMultiple", {
                   count: selectedCases.length,
@@ -2028,8 +2028,8 @@ export function AddResultModal({
                 </div>
               )}
               {configuration && (
-                <Badge className="flex items-center gap-1 text-sm w-fit">
-                  <Combine className="w-4 h-4 shrink-0" />
+                <Badge className="flex w-fit items-center gap-1 text-sm">
+                  <Combine className="h-4 w-4 shrink-0" />
                   <span>{configuration.name}</span>
                 </Badge>
               )}
@@ -2045,7 +2045,7 @@ export function AddResultModal({
             }}
             className="space-y-2"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="statusId"
@@ -2073,7 +2073,7 @@ export function AddResultModal({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full me-2"
+                                  className="me-2 h-3 w-3 rounded-full"
                                   style={{
                                     backgroundColor:
                                       status.color?.value || "#B1B2B3",
@@ -2166,7 +2166,7 @@ export function AddResultModal({
                     <HelpPopover helpKey="testResult.resultData" />
                   </FormLabel>
                   <FormControl>
-                    <div className="w-full border rounded-lg">
+                    <div className="w-full rounded-lg border">
                       <TipTapEditor
                         key={editorKey}
                         content={field.value as any}
@@ -2192,7 +2192,7 @@ export function AddResultModal({
             {/* Dynamic template fields */}
             {templateFields.length > 0 && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {templateFields.map((field: any) => (
                     <React.Fragment key={field.resultField.id}>
                       {renderDynamicField(field)}
@@ -2208,7 +2208,7 @@ export function AddResultModal({
                 className={cn("space-y-4", stepLayoutClasses.container)}
                 data-step-layout={stepLayout}
               >
-                <div className="font-bold -mb-2 flex items-center justify-between">
+                <div className="-mb-2 flex items-center justify-between font-bold">
                   {tCommon("fields.steps")}
                   <StepLayoutToggle />
                 </div>
@@ -2219,9 +2219,9 @@ export function AddResultModal({
                       return (
                         <li
                           key={`shared-group-${step.sharedStepGroupId}-${index}`}
-                          className="space-y-2 border-2 border-primary/20 rounded-lg bg-muted/60 p-2"
+                          className="space-y-2 rounded-lg border-2 border-primary/20 bg-muted/60 p-2"
                         >
-                          <div className="flex items-center font-bold text-primary mb-2">
+                          <div className="mb-2 flex items-center font-bold text-primary">
                             <Layers className="me-2 h-5 w-5 shrink-0" />
                             {step.sharedStepGroup.name ||
                               t("repository.steps.unnamedSharedGroup")}
@@ -2362,15 +2362,15 @@ const StepResultRow = React.memo(function StepResultRow({
 
   return (
     <Form {...form}>
-      <li className="space-y-2 border-2 border-primary/20 rounded-lg p-2">
+      <li className="space-y-2 rounded-lg border-2 border-primary/20 p-2">
         <div className={stepLayoutClasses.pair(isSideBySide)}>
           <div
             className={cn(
-              "flex gap-2 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+              "flex w-full min-w-0 gap-2 rounded-lg bg-primary-foreground p-2 ring-2 ring-primary/50",
               stepLayoutClasses.stepBlock(isSideBySide)
             )}
           >
-            <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-primary p-2 font-bold text-primary-foreground">
               {index + 1}
             </div>
             <div className="flex-1">
@@ -2383,12 +2383,12 @@ const StepResultRow = React.memo(function StepResultRow({
           </div>
           <div
             className={cn(
-              "flex gap-1 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+              "flex w-full min-w-0 gap-1 rounded-lg bg-primary-foreground p-2 ring-2 ring-primary/50",
               stepLayoutClasses.expectedBlock(isSideBySide)
             )}
             data-testid={`expected-result-${index}`}
           >
-            <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
+            <SearchCheck className="mt-1 h-7 w-7 shrink-0 text-primary" />
             <div className="flex-1">
               <ReadOnlyRichText
                 content={step.expectedResult}
@@ -2398,7 +2398,7 @@ const StepResultRow = React.memo(function StepResultRow({
             </div>
           </div>
         </div>
-        <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-2">
           <FormField
             control={form.control}
             name={`step_${stepId}_statusId`}
@@ -2429,7 +2429,7 @@ const StepResultRow = React.memo(function StepResultRow({
                         >
                           <div className="flex items-center">
                             <div
-                              className="w-3 h-3 rounded-full me-2"
+                              className="me-2 h-3 w-3 rounded-full"
                               style={{
                                 backgroundColor:
                                   status.color?.value || "#B1B2B3",
@@ -2478,7 +2478,7 @@ const StepResultRow = React.memo(function StepResultRow({
                 <HelpPopover helpKey="testResult.stepNotes" />
               </FormLabel>
               <FormControl>
-                <div className="w-full border rounded-lg">
+                <div className="w-full rounded-lg border">
                   <TipTapEditor
                     content={field.value || emptyEditorContent}
                     onUpdate={field.onChange}
@@ -2639,23 +2639,23 @@ const SharedStepGroupInputs = React.memo(function SharedStepGroupInputs({
 
   return (
     <Form {...form}>
-      <div className="space-y-4 ms-4 ps-4 border-s-2 border-dashed">
+      <div className="ms-4 space-y-4 border-s-2 border-dashed ps-4">
         {items.map((item, index) => {
           const itemIdStr = item.id.toString();
 
           return (
             <div
               key={item.id}
-              className="space-y-2 border rounded-md p-3 bg-muted/30"
+              className="space-y-2 rounded-md border bg-muted/30 p-3"
             >
               <div className={stepLayoutClasses.pair(isSideBySide)}>
                 <div
                   className={cn(
-                    "flex gap-2 w-full min-w-0 ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground",
+                    "flex w-full min-w-0 gap-2 rounded-lg bg-primary-foreground p-2 ring-1 ring-primary/30",
                     stepLayoutClasses.stepBlock(isSideBySide)
                   )}
                 >
-                  <div className="font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border border-primary rounded-full w-6 h-6 text-xs">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full border border-primary bg-primary p-1 text-xs font-bold text-primary-foreground">
                     {index + 1}
                   </div>
                   <div className="flex-1">
@@ -2668,11 +2668,11 @@ const SharedStepGroupInputs = React.memo(function SharedStepGroupInputs({
                 </div>
                 <div
                   className={cn(
-                    "flex gap-1 w-full min-w-0 ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground",
+                    "flex w-full min-w-0 gap-1 rounded-lg bg-primary-foreground p-2 ring-1 ring-primary/30",
                     stepLayoutClasses.expectedBlock(isSideBySide)
                   )}
                 >
-                  <SearchCheck className="text-primary h-6 w-6 shrink-0 mt-0.5" />
+                  <SearchCheck className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
                   <div className="flex-1">
                     <ReadOnlyRichText
                       content={item.expectedResult}
@@ -2683,7 +2683,7 @@ const SharedStepGroupInputs = React.memo(function SharedStepGroupInputs({
                 </div>
               </div>
 
-              <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-2">
                 <FormField
                   control={control}
                   name={`shared_item_${itemIdStr}_statusId`}
@@ -2726,7 +2726,7 @@ const SharedStepGroupInputs = React.memo(function SharedStepGroupInputs({
                               >
                                 <div className="flex items-center">
                                   <div
-                                    className="w-3 h-3 rounded-full me-2"
+                                    className="me-2 h-3 w-3 rounded-full"
                                     style={{
                                       backgroundColor:
                                         status.color?.value || "#B1B2B3",
@@ -2775,7 +2775,7 @@ const SharedStepGroupInputs = React.memo(function SharedStepGroupInputs({
                       <HelpPopover helpKey="testResult.stepNotes" />
                     </FormLabel>
                     <FormControl>
-                      <div className="w-full border rounded-lg">
+                      <div className="w-full rounded-lg border">
                         <TipTapEditor
                           content={field.value || emptyEditorContent}
                           onUpdate={field.onChange}

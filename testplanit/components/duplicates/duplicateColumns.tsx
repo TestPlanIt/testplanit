@@ -112,7 +112,7 @@ export const getColumns = (
     maxSize: 800,
     cell: ({ row, column }) => (
       <div
-        className="overflow-hidden min-w-0 [&_*]:min-w-0 [&_span]:truncate [&_span]:whitespace-nowrap [&_span]:overflow-hidden [&_span]:block"
+        className="min-w-0 overflow-hidden [&_*]:min-w-0 [&_span]:block [&_span]:truncate [&_span]:overflow-hidden [&_span]:whitespace-nowrap"
         style={{ maxWidth: column.getSize() }}
       >
         <CaseDisplay
@@ -136,7 +136,7 @@ export const getColumns = (
     maxSize: 800,
     cell: ({ row, column }) => (
       <div
-        className="overflow-hidden min-w-0 [&_*]:min-w-0 [&_span]:truncate [&_span]:whitespace-nowrap [&_span]:overflow-hidden [&_span]:block"
+        className="min-w-0 overflow-hidden [&_*]:min-w-0 [&_span]:block [&_span]:truncate [&_span]:overflow-hidden [&_span]:whitespace-nowrap"
         style={{ maxWidth: column.getSize() }}
       >
         <CaseDisplay
@@ -167,7 +167,7 @@ export const getColumns = (
     enableResizing: true,
     size: 100,
     cell: ({ row }) => (
-      <span className="text-end block">
+      <span className="block text-end">
         {(row.original.score * 100).toFixed(2)}
         {"%"}
       </span>
@@ -182,7 +182,7 @@ export const getColumns = (
     size: 100,
     maxSize: 120,
     cell: () => (
-      <span className="shrink-0 flex items-center gap-1">
+      <span className="flex shrink-0 items-center gap-1">
         <ArrowRightLeft className="h-4 w-4" />
         <span className="text-xs">{t("compareButton")}</span>
       </span>

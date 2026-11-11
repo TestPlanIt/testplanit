@@ -190,9 +190,9 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
               )}
             />
 
-            <div className="space-y-2 pt-4 border-t">
+            <div className="space-y-2 border-t pt-4">
               <FormLabel className="flex items-center">
-                <Users className="w-4 h-4 me-1" />
+                <Users className="me-1 h-4 w-4" />
                 {tCommon("labels.assignedUsersCount", {
                   count: assignedUsers.length,
                 })}
@@ -218,7 +218,7 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
             <DialogFooter>
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2 rounded"
+                  className="rounded bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

@@ -109,7 +109,7 @@ export function CodeViewer({
       ref={containerRef}
       data-testid="code-viewer"
       className={cn(
-        "max-h-[60vh] overflow-auto rounded-md bg-stone-800 text-sm max-w-full",
+        "max-h-[60vh] max-w-full overflow-auto rounded-md bg-stone-800 text-sm",
         className
       )}
     >
@@ -135,7 +135,7 @@ export function CodeViewer({
                   onClick={handleClick(lineNumber)}
                   onKeyDown={handleKeyDown(lineNumber)}
                   className={cn(
-                    "select-none w-[1%] cursor-pointer whitespace-nowrap pl-3 pr-3 text-right align-top text-stone-500 hover:text-stone-200 focus-visible:text-stone-200 focus-visible:outline-none",
+                    "w-[1%] cursor-pointer pr-3 pl-3 text-right align-top whitespace-nowrap text-stone-500 select-none hover:text-stone-200 focus-visible:text-stone-200 focus-visible:outline-none",
                     selected && "text-stone-100"
                   )}
                 >

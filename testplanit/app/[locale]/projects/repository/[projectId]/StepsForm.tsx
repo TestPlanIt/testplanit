@@ -230,21 +230,21 @@ const StepItem: React.FC<StepItemProps> = ({
         {({ attributes, listeners, setNodeRef }) => (
           <div
             ref={setNodeRef}
-            className="flex flex-col items-start w-full bg-muted/75 p-2 rounded-lg mb-2 border-2 border-primary/30"
+            className="mb-2 flex w-full flex-col items-start rounded-lg border-2 border-primary/30 bg-muted/75 p-2"
           >
-            <div className="flex items-center justify-between pb-2 space-x-2 cursor-default w-full">
+            <div className="flex w-full cursor-default items-center justify-between space-x-2 pb-2">
               <div className="flex items-center">
                 {!readOnly && (
                   <div
                     {...attributes}
                     {...listeners}
-                    className="cursor-ns-resize me-2"
+                    className="me-2 cursor-ns-resize"
                   >
                     <MoveVertical className="h-4 w-4" />
                   </div>
                 )}
-                <FormLabel className="font-bold flex items-center">
-                  <Layers className="h-5 w-5 ms-2 me-1" />
+                <FormLabel className="flex items-center font-bold">
+                  <Layers className="ms-2 me-1 h-5 w-5" />
                   {t("sharedStepGroupTitle", {
                     name: field.sharedStepGroupName || "",
                   })}
@@ -275,7 +275,7 @@ const StepItem: React.FC<StepItemProps> = ({
                     {t("confirmDeleteSharedStepBlock", {
                       name: field.sharedStepGroupName || "this block",
                     })}
-                    <div className="flex items-start justify-between gap-4 mt-2">
+                    <div className="mt-2 flex items-start justify-between gap-4">
                       <Button
                         type="button"
                         variant="secondary"
@@ -308,7 +308,7 @@ const StepItem: React.FC<StepItemProps> = ({
             )}
             {/* TODO: Handle sharedItemsError display */}
             {sharedItemsData && sharedItemsData.length > 0 && (
-              <div className="w-full mt-1">
+              <div className="mt-1 w-full">
                 {sharedItemsData.map((item, itemIndex) => {
                   let stepContentToRender: object = emptyEditorContent;
                   try {
@@ -352,7 +352,7 @@ const StepItem: React.FC<StepItemProps> = ({
                   return (
                     <div
                       key={item.id || itemIndex}
-                      className="ms-6 mt-1 p-2 border-s-2 border-dashed border-primary/20"
+                      className="ms-6 mt-1 border-s-2 border-dashed border-primary/20 p-2"
                     >
                       <div
                         className={cn(
@@ -367,7 +367,7 @@ const StepItem: React.FC<StepItemProps> = ({
                           </Label>
                           <ReadOnlyRichText
                             content={stepContentToRender}
-                            className="min-h-10 bg-background/50 p-1 rounded text-sm"
+                            className="min-h-10 rounded bg-background/50 p-1 text-sm"
                           />
                         </div>
                         <div className="min-w-0">
@@ -382,11 +382,11 @@ const StepItem: React.FC<StepItemProps> = ({
                           </Label>
                           <ReadOnlyRichText
                             content={expectedResultContentToRender}
-                            className="min-h-10 bg-background/50 p-1 rounded text-sm"
+                            className="min-h-10 rounded bg-background/50 p-1 text-sm"
                           />
                         </div>
                       </div>
-                      <Separator className="my-2 bg-primary/30 w-full" />
+                      <Separator className="my-2 w-full bg-primary/30" />
                     </div>
                   );
                 })}
@@ -410,11 +410,11 @@ const StepItem: React.FC<StepItemProps> = ({
       {({ attributes, listeners, setNodeRef }) => (
         <div
           ref={setNodeRef}
-          className="flex flex-col items-start w-full bg-muted p-2 pb-1 rounded-lg mb-2"
+          className="mb-2 flex w-full flex-col items-start rounded-lg bg-muted p-2 pb-1"
         >
           <div
             className={cn(
-              "flex items-center justify-between pb-2 space-x-2 cursor-default w-full",
+              "flex w-full cursor-default items-center justify-between space-x-2 pb-2",
               // Side by side, the header mirrors the two columns below it so
               // the expected result label sits over its own editor.
               sideBySide && "@2xl:grid @2xl:grid-cols-2 @2xl:space-x-0"
@@ -426,7 +426,7 @@ const StepItem: React.FC<StepItemProps> = ({
                   id={`select-step-${index}`}
                   checked={isSelected}
                   onCheckedChange={() => onToggleSelection(index)}
-                  className="me-2 ms-1"
+                  className="ms-1 me-2"
                   aria-label={`Select step ${index + 1}`}
                 />
               )}
@@ -439,17 +439,17 @@ const StepItem: React.FC<StepItemProps> = ({
                   <MoveVertical className="h-4 w-4" />
                 </div>
               )}
-              <FormLabel className="font-bold flex items-center">
+              <FormLabel className="flex items-center font-bold">
                 <ListOrdered
                   className={`h-5 w-5 ml-${readOnly ? "2" : "6"} me-1`}
                 />
                 {tCommon("fields.step")} {index + 1}
               </FormLabel>
             </div>
-            <div className="flex items-center justify-between min-w-0">
+            <div className="flex min-w-0 items-center justify-between">
               {sideBySide && (
-                <FormLabel className="hidden @2xl:flex font-bold items-center ps-1">
-                  <SearchCheck className="h-5 w-5 me-1" />
+                <FormLabel className="hidden items-center ps-1 font-bold @2xl:flex">
+                  <SearchCheck className="me-1 h-5 w-5" />
                   {tCommon("fields.expectedResult")}
                 </FormLabel>
               )}
@@ -476,8 +476,8 @@ const StepItem: React.FC<StepItemProps> = ({
                   </PopoverTrigger>
                   <PopoverContent className="w-fit" side="bottom">
                     {t("confirmDelete", { number: index + 1 })}
-                    <div className="flex items-start justify-between gap-4 mt-2">
-                      <div className="flex items-center mb-2">
+                    <div className="mt-2 flex items-start justify-between gap-4">
+                      <div className="mb-2 flex items-center">
                         <Button
                           type="button"
                           variant="secondary"
@@ -508,11 +508,11 @@ const StepItem: React.FC<StepItemProps> = ({
             </div>
           </div>
           <div
-            className={cn("w-full mb-2", stepLayoutClasses.pair(sideBySide))}
+            className={cn("mb-2 w-full", stepLayoutClasses.pair(sideBySide))}
           >
             <div
               className={cn(
-                "w-full min-w-0 ring-2 ring-primary/50 p-1 rounded-lg bg-primary-foreground",
+                "w-full min-w-0 rounded-lg bg-primary-foreground p-1 ring-2 ring-primary/50",
                 stepLayoutClasses.stepBlock(sideBySide)
               )}
             >
@@ -529,17 +529,17 @@ const StepItem: React.FC<StepItemProps> = ({
             </div>
             <div
               className={cn(
-                "w-full min-w-0 ring-2 ring-primary/50 p-1 rounded-lg bg-primary-foreground",
+                "w-full min-w-0 rounded-lg bg-primary-foreground p-1 ring-2 ring-primary/50",
                 stepLayoutClasses.expectedBlock(sideBySide)
               )}
             >
               <FormLabel
                 className={cn(
-                  "font-bold flex items-center",
+                  "flex items-center font-bold",
                   stepLayoutClasses.stackedOnly(sideBySide)
                 )}
               >
-                <SearchCheck className="h-5 w-5 me-1" />
+                <SearchCheck className="me-1 h-5 w-5" />
                 {tCommon("fields.expectedResult")}
               </FormLabel>
               <FormControl>
@@ -943,7 +943,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
         strategy={verticalListSortingStrategy}
       >
         <div
-          className={cn("space-y-3 mb-4", stepLayoutClasses.container)}
+          className={cn("mb-4 space-y-3", stepLayoutClasses.container)}
           data-testid="steps-form"
           data-step-layout={layout}
         >
@@ -978,7 +978,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
         </div>
       </SortableContext>
       {!readOnly && (
-        <div className="flex items-center space-x-2 mt-4">
+        <div className="mt-4 flex items-center space-x-2">
           <div className="flex w-full justify-between">
             <div className="flex space-x-2">
               <Button
@@ -1036,7 +1036,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <Layers className="h-5 w-5 me-1" />
+              <Layers className="me-1 h-5 w-5" />
               {tRepoSteps("createSharedSteps", {
                 number: selectedStepIndices.length || 0,
               })}
@@ -1080,7 +1080,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <Layers className="h-5 w-5 me-1" />
+              <Layers className="me-1 h-5 w-5" />
               {tRepoSteps("selectSharedStepsTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -1095,9 +1095,9 @@ function StepsForm<T extends FieldValues = FieldValues>({
               fetchOptions={fetchSharedStepGroupsForCombobox}
               // Use renderOption for displaying the option
               renderOption={(group: SharedStepGroupWithCount) => (
-                <div className="flex items-center justify-between w-full">
+                <div className="flex w-full items-center justify-between">
                   {group.name}
-                  <span className="text-xs text-muted-foreground ms-1">
+                  <span className="ms-1 text-xs text-muted-foreground">
                     {tRepoSteps("stepsCountLabel", {
                       count: group._count?.items || 0,
                     })}
@@ -1114,8 +1114,8 @@ function StepsForm<T extends FieldValues = FieldValues>({
 
           {/* Display items of the selected shared group for review */}
           {selectedSharedGroupInDialog && (
-            <div className="mt-4 max-h-[300px] overflow-y-auto p-2 border rounded-md bg-muted/50">
-              <h4 className="font-semibold mb-2 text-sm">
+            <div className="mt-4 max-h-[300px] overflow-y-auto rounded-md border bg-muted/50 p-2">
+              <h4 className="mb-2 text-sm font-semibold">
                 {tRepoSteps("reviewSelectedStepsTitle")}
               </h4>
               {isLoadingItemsOfSelectedSharedGroup && (
@@ -1167,21 +1167,21 @@ function StepsForm<T extends FieldValues = FieldValues>({
                       return (
                         <div
                           key={item.id || itemIndex}
-                          className="p-2 border-s-2 border-dashed border-primary/20 bg-background/70 rounded-e-md"
+                          className="rounded-e-md border-s-2 border-dashed border-primary/20 bg-background/70 p-2"
                         >
-                          <div className="font-semibold text-xs mb-1 text-foreground/80">
+                          <div className="mb-1 text-xs font-semibold text-foreground/80">
                             {tCommon("fields.step")} {item.order + 1}
                           </div>
                           <ReadOnlyRichText
                             content={stepContentToRender}
-                            className="min-h-[30px] bg-background/50 p-1 rounded text-xs"
+                            className="min-h-[30px] rounded bg-background/50 p-1 text-xs"
                           />
-                          <div className="font-semibold text-xs mt-1 mb-1 text-foreground/80">
+                          <div className="mt-1 mb-1 text-xs font-semibold text-foreground/80">
                             {tCommon("fields.expectedResult")}
                           </div>
                           <ReadOnlyRichText
                             content={expectedResultContentToRender}
-                            className="min-h-[30px] bg-background/50 p-1 rounded text-xs"
+                            className="min-h-[30px] rounded bg-background/50 p-1 text-xs"
                           />
                         </div>
                       );

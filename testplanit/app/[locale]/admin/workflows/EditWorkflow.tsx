@@ -337,8 +337,8 @@ export function EditWorkflows({
               )}
             />
             <div>
-              <div className=" w-16 h-full">
-                <FormLabel className="whitespace-nowrap flex items-center">
+              <div className=" h-full w-16">
+                <FormLabel className="flex items-center whitespace-nowrap">
                   {tCommon("fields.iconColor")}
                   <HelpPopover helpKey="workflow.iconColor" />
                 </FormLabel>
@@ -557,7 +557,7 @@ export function EditWorkflows({
             <DialogFooter>
               {errors.root && (
                 <div
-                  className=" bg-destructive text-destructive-foreground text-sm p-2"
+                  className=" bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.type === "nameExists"

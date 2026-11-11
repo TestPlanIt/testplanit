@@ -83,21 +83,21 @@ export function FilterChip({
   return (
     <Badge
       variant="outline"
-      className="ps-2 pe-1 py-1 gap-1.5 max-w-full"
+      className="max-w-full gap-1.5 py-1 ps-2 pe-1"
       data-testid={`filter-chip-${predicate.dimension}-${predicate.operator}`}
     >
       <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="flex items-center min-w-0"
+            className="flex min-w-0 items-center"
             aria-label={t("repository.filterBar.editFilter", {
               name: chipText,
             })}
           >
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Icon className="w-3 h-3 shrink-0" />
-              <span className="text-xs truncate max-w-60">{chipText}</span>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Icon className="h-3 w-3 shrink-0" />
+              <span className="max-w-60 truncate text-xs">{chipText}</span>
             </div>
           </button>
         </PopoverTrigger>

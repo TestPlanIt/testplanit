@@ -105,13 +105,13 @@ export function DeleteRequirementModal({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent
-        className="sm:max-w-[425px] lg:max-w-[600px] border-destructive"
+        className="border-destructive sm:max-w-[425px] lg:max-w-[600px]"
         data-testid="delete-requirement-dialog"
       >
         <div className="space-y-4">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <TriangleAlert className="w-6 h-6 me-2" />
+              <TriangleAlert className="me-2 h-6 w-6" />
               {t("requirements.delete.dialogTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription className="overflow-hidden">

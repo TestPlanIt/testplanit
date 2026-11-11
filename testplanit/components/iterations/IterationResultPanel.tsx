@@ -249,7 +249,7 @@ export function IterationResultPanel({
     <>
       <div
         data-testid="iteration-result-panel"
-        className="flex items-center justify-between gap-2 px-4 py-2 border-b bg-primary/5"
+        className="flex items-center justify-between gap-2 border-b bg-primary/5 px-4 py-2"
       >
         <span className="text-xs font-medium text-muted-foreground">
           {t("iterationResultPanelHeading", {
@@ -311,18 +311,18 @@ export function IterationResultPanel({
                     onClick={() =>
                       submitWithStatus(status.id, !!status.isSuccess)
                     }
-                    className="flex items-center cursor-pointer"
+                    className="flex cursor-pointer items-center"
                     data-testid={`iteration-status-${status.id}`}
                   >
                     <div
-                      className="w-3 h-3 rounded-full me-2 shrink-0"
+                      className="me-2 h-3 w-3 shrink-0 rounded-full"
                       style={{
                         backgroundColor: status.color?.value || "#B1B2B3",
                       }}
                     />
                     <span className="flex-1 text-sm">{status.name}</span>
                     {status.isSuccess && (
-                      <CheckCircle className="h-4 w-4 ms-2 text-muted-foreground" />
+                      <CheckCircle className="ms-2 h-4 w-4 text-muted-foreground" />
                     )}
                   </DropdownMenuItem>
                 ))}

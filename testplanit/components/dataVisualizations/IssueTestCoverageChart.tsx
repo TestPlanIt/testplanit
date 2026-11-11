@@ -300,19 +300,19 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
 
   if (summaryStats.totalIssues === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div className="flex h-full items-center justify-center text-muted-foreground">
         {t("noData")}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full gap-4">
+    <div className="flex h-full flex-col gap-4">
       {/* Summary Stats Cards */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-3 px-2">
         {/* Total Issues */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
-          <div className="p-2 rounded-md bg-primary/10">
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
+          <div className="rounded-md bg-primary/10 p-2">
             <Bug className="h-4 w-4 text-primary" />
           </div>
           <div className="min-w-0">
@@ -326,8 +326,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
         </div>
 
         {/* Issues with Failures */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-          <div className="p-2 rounded-md bg-destructive/10">
+        <div className="flex items-center gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+          <div className="rounded-md bg-destructive/10 p-2">
             <XCircle className="h-4 w-4 text-destructive" />
           </div>
           <div className="min-w-0">
@@ -353,8 +353,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
         </div>
 
         {/* Issues with Untested */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
-          <div className="p-2 rounded-md bg-yellow-500/10">
+        <div className="flex items-center gap-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3">
+          <div className="rounded-md bg-yellow-500/10 p-2">
             <FileQuestion className="h-4 w-4 text-yellow-700 dark:text-yellow-400" />
           </div>
           <div className="min-w-0">
@@ -380,8 +380,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
         </div>
 
         {/* Issues All Passing */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
-          <div className="p-2 rounded-md bg-success/10">
+        <div className="flex items-center gap-3 rounded-lg border border-success/20 bg-success/5 p-3">
+          <div className="rounded-md bg-success/10 p-2">
             <CheckCircle2 className="h-4 w-4 text-success" />
           </div>
           <div className="min-w-0">
@@ -395,8 +395,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
         </div>
 
         {/* Overall Pass Rate */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
-          <div className="p-2 rounded-md bg-blue-500/10">
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
+          <div className="rounded-md bg-blue-500/10 p-2">
             <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="min-w-0">
@@ -415,21 +415,21 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       <div className="flex items-center justify-center gap-6 text-sm">
         <div className="flex items-center gap-2">
           <div
-            className="w-3 h-3 rounded"
+            className="h-3 w-3 rounded"
             style={{ backgroundColor: statusColors.passed }}
           />
           <span className="text-muted-foreground">{t("passed")}</span>
         </div>
         <div className="flex items-center gap-2">
           <div
-            className="w-3 h-3 rounded"
+            className="h-3 w-3 rounded"
             style={{ backgroundColor: statusColors.failed }}
           />
           <span className="text-muted-foreground">{t("failed")}</span>
         </div>
         <div className="flex items-center gap-2">
           <div
-            className="w-3 h-3 rounded"
+            className="h-3 w-3 rounded"
             style={{ backgroundColor: statusColors.untested }}
           />
           <span className="text-muted-foreground">
@@ -441,7 +441,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       {/* Chart Area */}
       <div
         ref={containerRef}
-        className="flex-1 min-h-0"
+        className="min-h-0 flex-1"
         style={{ minHeight: "200px" }}
       >
         <svg ref={svgRef} width={width} height={height} />

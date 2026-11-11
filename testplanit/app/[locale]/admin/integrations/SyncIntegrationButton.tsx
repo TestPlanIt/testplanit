@@ -26,7 +26,7 @@ export function SyncIntegrationButton({
   // SIMPLE_URL integrations have no API to pull from, so sync is not supported.
   if (integration.provider === "SIMPLE_URL") {
     return (
-      <Button variant="ghost" disabled className="px-2 py-1 h-auto">
+      <Button variant="ghost" disabled className="h-auto px-2 py-1">
         <RefreshCw className="h-4 w-4" />
         <span className="sr-only">{t("syncIntegration")}</span>
       </Button>
@@ -74,7 +74,7 @@ export function SyncIntegrationButton({
           variant="ghost"
           onClick={handleSync}
           disabled={isSyncing}
-          className="px-2 py-1 h-auto"
+          className="h-auto px-2 py-1"
         >
           <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
           <span className="sr-only">{t("syncIntegration")}</span>

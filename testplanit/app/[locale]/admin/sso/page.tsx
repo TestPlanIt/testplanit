@@ -1114,7 +1114,7 @@ export default function SSOAdminPage() {
           </div>
 
           {/* Default Access Level Setting */}
-          <div className="ps-11 space-y-2">
+          <div className="space-y-2 ps-11">
             <div className="flex items-center gap-2">
               <Label>{t("admin.sso.registration.defaultAccess.title")}</Label>
               <HelpPopover helpKey="ssoDefaultAccess" />
@@ -1170,7 +1170,7 @@ export default function SSOAdminPage() {
                 <HelpPopover helpKey="ssoRequireEmailVerification" />
               </div>
               {!isEmailServerConfigured && (
-                <p className="text-sm text-destructive mt-2">
+                <p className="mt-2 text-sm text-destructive">
                   {t(
                     "admin.sso.registration.requireEmailVerification.noEmailServerWarning"
                   )}
@@ -1196,13 +1196,13 @@ export default function SSOAdminPage() {
 
           {registrationSettings?.restrictEmailDomains && (
             <div className="space-y-4">
-              <div className="border rounded-lg p-4">
+              <div className="rounded-lg border p-4">
                 <Label className="mb-4 block">
                   {t("admin.sso.registration.allowedDomains.title")}
                 </Label>
 
                 {/* Add new domain */}
-                <div className="flex gap-2 mb-4">
+                <div className="mb-4 flex gap-2">
                   <Input
                     placeholder={t("common.placeholders.domainExample")}
                     value={newDomain}
@@ -1230,14 +1230,14 @@ export default function SSOAdminPage() {
                     {allowedDomains.map((domain) => (
                       <div
                         key={domain.id}
-                        className="flex items-center justify-between p-2 border rounded"
+                        className="flex items-center justify-between rounded border p-2"
                       >
                         <div className="flex items-center gap-2">
                           <span
                             className={
                               domain.enabled
                                 ? ""
-                                : "line-through text-muted-foreground"
+                                : "text-muted-foreground line-through"
                             }
                           >
                             {domain.domain}
@@ -1320,14 +1320,14 @@ export default function SSOAdminPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.googleOAuth.instructions.title")}</p>
-              <ol className="list-decimal ms-4 space-y-1">
+              <ol className="ms-4 list-decimal space-y-1">
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step1")}</li>
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step2")}</li>
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step3")}</li>
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step4")}</li>
                 <li>
                   {t("admin.sso.dialogs.googleOAuth.instructions.step5")}{" "}
-                  <code className="bg-muted px-1 rounded">
+                  <code className="rounded bg-muted px-1">
                     {typeof window !== "undefined"
                       ? `${window.location.origin}${BASE_PATH}`
                       : ""}
@@ -1422,7 +1422,7 @@ export default function SSOAdminPage() {
               </Label>
               <textarea
                 id="applePrivateKey"
-                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 value={applePrivateKey}
                 onChange={(e) => setApplePrivateKey(e.target.value)}
                 placeholder={
@@ -1434,14 +1434,14 @@ export default function SSOAdminPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>{t("common.dialogs.complete.apple.instructions.title")}</p>
-              <ol className="list-decimal ms-4 space-y-1">
+              <ol className="ms-4 list-decimal space-y-1">
                 <li>{t("common.dialogs.complete.apple.instructions.step1")}</li>
                 <li>{t("common.dialogs.complete.apple.instructions.step2")}</li>
                 <li>{t("common.dialogs.complete.apple.instructions.step3")}</li>
                 <li>{t("common.dialogs.complete.apple.instructions.step4")}</li>
                 <li>
                   {t("common.dialogs.complete.apple.instructions.step5")}{" "}
-                  <code className="bg-muted px-1 rounded">
+                  <code className="rounded bg-muted px-1">
                     {typeof window !== "undefined"
                       ? `${window.location.origin}${BASE_PATH}`
                       : ""}
@@ -1541,14 +1541,14 @@ export default function SSOAdminPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.microsoft.instructions.title")}</p>
-              <ol className="list-decimal ms-4 space-y-1">
+              <ol className="ms-4 list-decimal space-y-1">
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step1")}</li>
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step2")}</li>
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step3")}</li>
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step4")}</li>
                 <li>
                   {t("admin.sso.dialogs.microsoft.instructions.step5")}{" "}
-                  <code className="bg-muted px-1 rounded">
+                  <code className="rounded bg-muted px-1">
                     {typeof window !== "undefined"
                       ? `${window.location.origin}${BASE_PATH}`
                       : ""}
@@ -1648,11 +1648,11 @@ export default function SSOAdminPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-muted border border-border rounded-lg p-4">
-              <p className="text-sm text-destructive font-semibold mb-2">
+            <div className="rounded-lg border border-border bg-muted p-4">
+              <p className="mb-2 text-sm font-semibold text-destructive">
                 {t("admin.sso.dialogs.disableEmailVerification.warning")}
               </p>
-              <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+              <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                 <li>
                   {t(
                     "admin.sso.dialogs.disableEmailVerification.warningPoint1"

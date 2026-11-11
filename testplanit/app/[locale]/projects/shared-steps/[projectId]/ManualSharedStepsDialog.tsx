@@ -129,7 +129,7 @@ export function ManualSharedStepsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {tGlobal("repository.steps.addSharedSteps")}

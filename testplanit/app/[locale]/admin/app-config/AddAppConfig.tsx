@@ -95,7 +95,7 @@ export function AddAppConfig({ open, onClose }: AddAppConfigProps) {
               data-testid="app-config-key-input"
             />
             {form.formState.errors.key && (
-              <div className="text-destructive text-sm">
+              <div className="text-sm text-destructive">
                 {form.formState.errors.key.message}
               </div>
             )}
@@ -114,7 +114,7 @@ export function AddAppConfig({ open, onClose }: AddAppConfigProps) {
               data-testid="app-config-value-input"
             />
             {form.formState.errors.value && (
-              <div className="text-destructive text-sm">
+              <div className="text-sm text-destructive">
                 {form.formState.errors.value.message}
               </div>
             )}

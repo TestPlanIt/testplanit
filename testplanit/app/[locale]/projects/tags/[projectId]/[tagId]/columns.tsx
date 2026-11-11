@@ -166,13 +166,13 @@ const TestRunLinkDisplay: React.FC<{
     <Link
       href={`/projects/runs/${projectId}/${id}`}
       className={cn(
-        "flex items-start gap-1 hover:text-primary group min-w-0 overflow-hidden",
+        "group flex min-w-0 items-start gap-1 overflow-hidden hover:text-primary",
         isCompleted ? "text-muted-foreground/80" : undefined
       )}
     >
-      <PlayCircle className="w-4 h-4 shrink-0 mt-0.5" />
+      <PlayCircle className="mt-0.5 h-4 w-4 shrink-0" />
       <span className={cn(textClass, "min-w-0")}>{name}</span>
-      {compositionLockedAt && <Lock className="w-3 h-3 shrink-0 mt-0.5" />}
+      {compositionLockedAt && <Lock className="mt-0.5 h-3 w-3 shrink-0" />}
     </Link>
   );
 
@@ -186,8 +186,8 @@ const TestRunLinkDisplay: React.FC<{
       <TooltipContent>
         <span>{name}</span>
         {compositionLockedAt && (
-          <p className="flex text-xs mt-1">
-            <Lock className="w-3 h-3 shrink-0 me-1" />
+          <p className="mt-1 flex text-xs">
+            <Lock className="me-1 h-3 w-3 shrink-0" />
             {t("compositionLocked")}
           </p>
         )}

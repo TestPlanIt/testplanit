@@ -123,7 +123,7 @@ export function CaseDetailsPanel({
       data-testid="case-details-panel"
     >
       {/* Header toolbar */}
-      <div className="flex items-center justify-between rounded-lg bg-primary text-primary-foreground [&_button:hover]:bg-primary-foreground/15 [&_button:hover]:text-primary-foreground px-3 h-9 mt-0.5 shrink-0 gap-2 shadow-md">
+      <div className="mt-0.5 flex h-9 shrink-0 items-center justify-between gap-2 rounded-lg bg-primary px-3 text-primary-foreground shadow-md [&_button:hover]:bg-primary-foreground/15 [&_button:hover]:text-primary-foreground">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -149,7 +149,7 @@ export function CaseDetailsPanel({
             selected case isn't part of the current list (e.g. after switching
             folders) — there's no position, so the whole stepper goes away. */}
         {position != null && (
-          <div className="flex items-center gap-1 min-w-0">
+          <div className="flex min-w-0 items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -170,7 +170,7 @@ export function CaseDetailsPanel({
               </TooltipContent>
             </Tooltip>
             <span
-              className="text-primary-foreground text-sm tabular-nums whitespace-nowrap"
+              className="text-sm whitespace-nowrap text-primary-foreground tabular-nums"
               data-testid="case-details-position"
             >
               {t("repository.cases.caseNavPosition", {
@@ -198,7 +198,7 @@ export function CaseDetailsPanel({
           </div>
         )}
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
               <Link

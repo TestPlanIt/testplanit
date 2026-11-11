@@ -24,7 +24,7 @@ export function TagDiffDisplay({
     case "added":
       prefix = (
         <span>
-          <Plus className="w-4 h-4" />
+          <Plus className="h-4 w-4" />
         </span>
       );
       bgColor = "relative text-green-700 dark:text-green-400";
@@ -33,7 +33,7 @@ export function TagDiffDisplay({
     case "removed":
       prefix = (
         <span>
-          <Minus className="w-4 h-4" />
+          <Minus className="h-4 w-4" />
         </span>
       );
       bgColor = "relative text-red-600 dark:text-red-400";
@@ -47,11 +47,11 @@ export function TagDiffDisplay({
 
   return (
     <div
-      className={`flex font-extrabold items-center m-1 rounded ${bgColor} ${paddingClass}`}
+      className={`m-1 flex items-center rounded font-extrabold ${bgColor} ${paddingClass}`}
     >
       {type !== "common" && (
         <div
-          className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`}
+          className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} pointer-events-none rounded`}
         />
       )}
       {prefix && <span className="relative me-1">{prefix}</span>}

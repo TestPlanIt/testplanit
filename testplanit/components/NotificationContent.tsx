@@ -35,18 +35,18 @@ export function NotificationContent({
 
       return (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">
+          <h4 className="text-sm font-medium">
             {t("testCaseAssignmentTitle")}
           </h4>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <div className="flex items-center gap-1 flex-wrap">
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1">
               <UserNameCell userId={data.assignedById} hideLink />
               <span>{t("assignedTestCase")}</span>
             </div>
             <div className="flex items-center gap-1">
               <Link
                 href={testRunLink}
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 <CaseDisplay
                   testCase={{
@@ -58,7 +58,7 @@ export function NotificationContent({
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1">
               <span>{t("inProject")}</span>
               <ProjectNameCell
                 projectId={data.projectId}
@@ -74,7 +74,7 @@ export function NotificationContent({
     // Fallback for old notifications without full data
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -84,11 +84,11 @@ export function NotificationContent({
   if (notification.type === "WORK_ASSIGNED" && data.isBulkAssignment) {
     return (
       <div className="space-y-2">
-        <h4 className="font-medium text-sm">
+        <h4 className="text-sm font-medium">
           {t("multipleTestCaseAssignmentTitle")}
         </h4>
-        <div className="text-sm text-muted-foreground space-y-1">
-          <div className="flex items-center gap-1 flex-wrap">
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-1">
             <UserNameCell userId={data.assignedById} hideLink />
             <span>{t("assignedMultipleTestCases", { count: data.count })}</span>
           </div>
@@ -96,13 +96,13 @@ export function NotificationContent({
             data.testRunGroups.map((group: any) => (
               <div
                 key={group.testRunId}
-                className="mt-2 ps-2 border-s-2 border-muted"
+                className="mt-2 border-s-2 border-muted ps-2"
               >
-                <div className="flex items-center gap-1 flex-wrap">
+                <div className="flex flex-wrap items-center gap-1">
                   <span className="text-xs">{t("testRun")}</span>
                   <Link
                     href={`/projects/runs/${group.projectId}/${group.testRunId}`}
-                    className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                   >
                     <TestRunNameDisplay
                       testRun={{
@@ -114,7 +114,7 @@ export function NotificationContent({
                     <ExternalLink className="h-3 w-3" />
                   </Link>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="mt-1 text-xs text-muted-foreground">
                   {t("casesInProject", { count: group.testCases.length })}
                   <ProjectNameCell
                     projectId={group.projectId}
@@ -137,16 +137,16 @@ export function NotificationContent({
 
       return (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">{t("sessionAssignmentTitle")}</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <div className="flex items-center gap-1 flex-wrap">
+          <h4 className="text-sm font-medium">{t("sessionAssignmentTitle")}</h4>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1">
               <UserNameCell userId={data.assignedById} hideLink />
               <span>{t("assignedSession")}</span>
             </div>
             <div className="flex items-center gap-1">
               <Link
                 href={sessionLink}
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 <SessionNameDisplay
                   session={{
@@ -158,7 +158,7 @@ export function NotificationContent({
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1">
               <span>{t("inProject")}</span>
               <ProjectNameCell
                 projectId={data.projectId}
@@ -174,7 +174,7 @@ export function NotificationContent({
     // Fallback for old notifications without full data
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -237,9 +237,9 @@ export function NotificationContent({
 
       return (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">{t("commentMentionTitle")}</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <div className="flex items-center gap-1 flex-wrap">
+          <h4 className="text-sm font-medium">{t("commentMentionTitle")}</h4>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1">
               <UserNameCell userId={data.creatorId} hideLink />
               <span>{t("mentionedYouInComment")}</span>
             </div>
@@ -247,14 +247,14 @@ export function NotificationContent({
               <div className="flex items-center gap-1">
                 <Link
                   href={entityLink}
-                  className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                  className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
                 >
                   {entityNameDisplay}
                   <ExternalLink className="h-3 w-3" />
                 </Link>
               </div>
             )}
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1">
               <span>{t("inProject")}</span>
               <ProjectNameCell
                 projectId={data.projectId}
@@ -270,7 +270,7 @@ export function NotificationContent({
     // Fallback for notifications without access or old format
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -288,16 +288,16 @@ export function NotificationContent({
 
       return (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">
+          <h4 className="text-sm font-medium">
             {isOverdue
               ? t("milestoneOverdueTitle")
               : t("milestoneDueSoonTitle")}
           </h4>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <div className="flex items-center gap-1 flex-wrap">
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1">
               <Link
                 href={milestoneLink}
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 <MilestoneNameDisplay
                   milestone={{
@@ -329,7 +329,7 @@ export function NotificationContent({
     // Fallback for old notifications without full data
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -353,8 +353,8 @@ export function NotificationContent({
 
       return (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">{t("shareLinkAccessedTitle")}</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
+          <h4 className="text-sm font-medium">{t("shareLinkAccessedTitle")}</h4>
+          <div className="space-y-1 text-sm text-muted-foreground">
             <p>
               {t("shareLinkAccessedMessage", {
                 viewer,
@@ -367,7 +367,7 @@ export function NotificationContent({
               </p>
             )}
             {data.projectId && (
-              <div className="flex items-center gap-1 flex-wrap">
+              <div className="flex flex-wrap items-center gap-1">
                 <span>{t("inProject")}:</span>
                 <ProjectNameCell
                   projectId={data.projectId}
@@ -384,7 +384,7 @@ export function NotificationContent({
     // Fallback for notifications without complete data
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -402,15 +402,15 @@ export function NotificationContent({
 
     return (
       <div className="space-y-2">
-        <h4 className="font-medium text-sm">
+        <h4 className="text-sm font-medium">
           {t("integrationAuthExpiredTitle")}
         </h4>
-        <div className="text-sm text-muted-foreground space-y-1">
+        <div className="space-y-1 text-sm text-muted-foreground">
           <p>{t("integrationAuthExpiredMessage", { integrationName })}</p>
           {reconnectUrl && (
             <a
               href={reconnectUrl}
-              className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
             >
               {t("integrationAuthExpiredReconnect")}
               <ExternalLink className="h-3 w-3" />
@@ -430,8 +430,8 @@ export function NotificationContent({
           : "userRegisteredMessageForm";
       return (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">{t("userRegisteredTitle")}</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
+          <h4 className="text-sm font-medium">{t("userRegisteredTitle")}</h4>
+          <div className="space-y-1 text-sm text-muted-foreground">
             <p>
               {t(messageKey, {
                 userName: data.newUserName,
@@ -441,7 +441,7 @@ export function NotificationContent({
             <div className="flex items-center gap-1">
               <Link
                 href="/admin/users"
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 {t("viewUserList")}
                 <ExternalLink className="h-3 w-3" />
@@ -454,7 +454,7 @@ export function NotificationContent({
     // Fallback for older notifications without complete data.
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -577,22 +577,22 @@ export function NotificationContent({
 
       return (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">{title}</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <div className="flex items-center gap-1 flex-wrap">
+          <h4 className="text-sm font-medium">{title}</h4>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1">
               {actorUserId && <UserNameCell userId={actorUserId} hideLink />}
               <span>{action}</span>
             </div>
             <div className="flex items-center gap-1">
               <Link
                 href={bulkCount !== null ? "/reviews" : entityLink}
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 {bulkCount !== null ? bulkSummary : entityNameDisplay}
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1">
               <span>{t("inProject")}</span>
               <ProjectNameCell
                 projectId={data.projectId}
@@ -630,7 +630,7 @@ export function NotificationContent({
                 </div>
               )}
             {typeof commentText === "string" && commentText.length > 0 && (
-              <div className="text-xs italic line-clamp-2">
+              <div className="line-clamp-2 text-xs italic">
                 {t("reviewCommentPreview", { comment: commentText })}
               </div>
             )}
@@ -642,7 +642,7 @@ export function NotificationContent({
     // Fallback for notifications without complete data.
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -658,14 +658,14 @@ export function NotificationContent({
 
     return (
       <div className="space-y-2">
-        <div className="flex items-start -mt-1 gap-2">
-          <Megaphone className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-          <h4 className="font-medium text-sm">{notification.title}</h4>
+        <div className="-mt-1 flex items-start gap-2">
+          <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <h4 className="text-sm font-medium">{notification.title}</h4>
         </div>
         <div className="space-y-1">
           {hasHtmlContent ? (
             <div
-              className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-strong:text-foreground prose-strong:font-semibold prose-a:text-primary prose-a:underline"
+              className="prose prose-sm max-w-none text-sm text-muted-foreground dark:prose-invert prose-headings:text-foreground prose-a:text-primary prose-a:underline prose-strong:font-semibold prose-strong:text-foreground"
               dangerouslySetInnerHTML={{
                 __html: notification.data.htmlContent,
               }}
@@ -684,7 +684,7 @@ export function NotificationContent({
             </p>
           )}
           {notification.data?.sentByName && (
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="mt-2 text-xs text-muted-foreground">
               {t("sentBy", { name: notification.data.sentByName })}
             </p>
           )}
@@ -700,8 +700,8 @@ export function NotificationContent({
         : null;
     return (
       <div className="space-y-2">
-        <h4 className="font-medium text-sm">{t("casesDraftedTitle")}</h4>
-        <div className="text-sm text-muted-foreground space-y-1">
+        <h4 className="text-sm font-medium">{t("casesDraftedTitle")}</h4>
+        <div className="space-y-1 text-sm text-muted-foreground">
           <p>
             {t("casesDraftedMessage", {
               count: data.caseCount ?? 0,
@@ -712,7 +712,7 @@ export function NotificationContent({
             <div className="flex items-center gap-1">
               <Link
                 href={folderLink}
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 {t("casesDraftedReviewLink", {
                   folderName: data.folderName ?? "",
@@ -722,7 +722,7 @@ export function NotificationContent({
             </div>
           )}
           {data.issueTitle && (
-            <p className="text-xs truncate">{data.issueTitle}</p>
+            <p className="truncate text-xs">{data.issueTitle}</p>
           )}
         </div>
       </div>
@@ -734,8 +734,8 @@ export function NotificationContent({
       const runLink = `/projects/runs/${data.projectId}/${data.testRunId}`;
       return (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">{t("aiStepsDerivedTitle")}</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
+          <h4 className="text-sm font-medium">{t("aiStepsDerivedTitle")}</h4>
+          <div className="space-y-1 text-sm text-muted-foreground">
             <p>
               {t("aiStepsDerivedMessage", {
                 count: data.derivedCount ?? 0,
@@ -744,14 +744,14 @@ export function NotificationContent({
             <div className="flex items-center gap-1">
               <Link
                 href={runLink}
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 {t("aiStepsDerivedReviewLink")}
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
             {data.testRunName && (
-              <p className="text-xs truncate">{data.testRunName}</p>
+              <p className="truncate text-xs">{data.testRunName}</p>
             )}
           </div>
         </div>
@@ -761,7 +761,7 @@ export function NotificationContent({
     // Fallback for notifications without complete data
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -775,8 +775,8 @@ export function NotificationContent({
           className="space-y-2"
           data-testid="notification-run-case-unblocked"
         >
-          <h4 className="font-medium text-sm">{t("runCaseUnblockedTitle")}</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
+          <h4 className="text-sm font-medium">{t("runCaseUnblockedTitle")}</h4>
+          <div className="space-y-1 text-sm text-muted-foreground">
             <p>
               {t("runCaseUnblockedPrerequisitePassed", {
                 prerequisiteName: data.prerequisiteCaseName ?? "",
@@ -786,7 +786,7 @@ export function NotificationContent({
               <Link
                 href={caseLink}
                 data-testid="notification-run-case-unblocked-link"
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 <CaseDisplay
                   testCase={{
@@ -798,14 +798,14 @@ export function NotificationContent({
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1">
               <span>{t("inTestRun")}</span>
               <TestRunNameDisplay
                 testRun={{ id: data.testRunId, name: data.testRunName }}
                 showIcon={true}
               />
             </div>
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1">
               <span>{t("inProject")}</span>
               <ProjectNameCell
                 projectId={data.projectId}
@@ -820,7 +820,7 @@ export function NotificationContent({
 
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -838,10 +838,10 @@ export function NotificationContent({
           className="space-y-2"
           data-testid="notification-run-ready-to-complete"
         >
-          <h4 className="font-medium text-sm">
+          <h4 className="text-sm font-medium">
             {t("runReadyToCompleteTitle")}
           </h4>
-          <div className="text-sm text-muted-foreground space-y-1">
+          <div className="space-y-1 text-sm text-muted-foreground">
             <p>
               {t("runReadyToCompleteExecuted", {
                 count: data.caseCount ?? 0,
@@ -854,7 +854,7 @@ export function NotificationContent({
               <Link
                 href={runLink}
                 data-testid="notification-run-ready-link"
-                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 <TestRunNameDisplay
                   testRun={{
@@ -866,7 +866,7 @@ export function NotificationContent({
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1">
               <span>{t("inProject")}</span>
               <ProjectNameCell
                 projectId={data.projectId}
@@ -882,7 +882,7 @@ export function NotificationContent({
     // Fallback for notifications without complete data
     return (
       <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="text-sm font-medium">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
@@ -891,7 +891,7 @@ export function NotificationContent({
   // Fallback for other notification types
   return (
     <div className="space-y-1">
-      <h4 className="font-medium text-sm">{notification.title}</h4>
+      <h4 className="text-sm font-medium">{notification.title}</h4>
       <p className="text-sm text-muted-foreground">{notification.message}</p>
     </div>
   );

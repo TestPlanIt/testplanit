@@ -178,8 +178,8 @@ function GroupList() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-row items-start justify-between gap-4">
-              <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-                <div className="text-muted-foreground w-full text-nowrap">
+              <div className="flex w-full min-w-[250px] grow flex-col sm:w-1/2">
+                <div className="w-full text-nowrap text-muted-foreground">
                   <Filter
                     key="group-filter"
                     placeholder={t("filterPlaceholder")}
@@ -190,7 +190,7 @@ function GroupList() {
               </div>
 
               {groups.length > 0 && (
-                <p className="text-sm text-muted-foreground shrink-0">
+                <p className="shrink-0 text-sm text-muted-foreground">
                   {tGlobal("admin.auditLogs.showing", {
                     loaded: groups.length.toLocaleString(locale),
                     total: groups.length.toLocaleString(locale),

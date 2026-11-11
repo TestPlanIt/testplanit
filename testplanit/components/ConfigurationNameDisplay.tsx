@@ -57,7 +57,7 @@ export function ConfigurationNameDisplay({
       )}
     >
       {showIcon && (
-        <Combine className={cn("h-4 w-4 shrink-0 mt-0.5", iconClassName)} />
+        <Combine className={cn("mt-0.5 h-4 w-4 shrink-0", iconClassName)} />
       )}
       <span className={cn(truncate && "truncate")}>{displayName}</span>
     </span>

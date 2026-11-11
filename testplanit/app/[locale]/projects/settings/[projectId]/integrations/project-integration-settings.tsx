@@ -612,14 +612,14 @@ export function ProjectIntegrationSettings({
                   {integrationProjects?.map((ip) => (
                     <div
                       key={ip.id}
-                      className="group rounded-md border px-3 py-2 space-y-2"
+                      className="group space-y-2 rounded-md border px-3 py-2"
                       data-testid={`requirements-import-row-${ip.id}`}
                     >
-                      <div className="flex items-center gap-2 min-h-[36px]">
+                      <div className="flex min-h-[36px] items-center gap-2">
                         <span className="flex-1 text-sm font-medium">
                           {ip.externalProjectName}
                         </span>
-                        <Badge variant="outline" className="text-xs shrink-0">
+                        <Badge variant="outline" className="shrink-0 text-xs">
                           {ip.externalProjectKey}
                         </Badge>
 
@@ -663,7 +663,7 @@ export function ProjectIntegrationSettings({
                         {ip.isDefault ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Star className="h-4 w-4 fill-primary text-primary shrink-0" />
+                              <Star className="h-4 w-4 shrink-0 fill-primary text-primary" />
                             </TooltipTrigger>
                             <TooltipContent>
                               {tGlobal("common.fields.default")}
@@ -675,7 +675,7 @@ export function ProjectIntegrationSettings({
                               <button
                                 type="button"
                                 onClick={() => handleSetDefault(ip.id)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                                 aria-label={t("integration.setAsDefault")}
                               >
                                 <Star className="h-4 w-4 text-muted-foreground" />
@@ -764,7 +764,7 @@ export function ProjectIntegrationSettings({
                       {/* Per-project default issue type (Jira only) */}
                       {integration.provider === "JIRA" && (
                         <div className="flex items-center gap-2">
-                          <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                          <Label className="text-xs whitespace-nowrap text-muted-foreground">
                             {t("integration.defaultIssueType")}
                           </Label>
                           <AsyncCombobox<IssueType>
@@ -793,7 +793,7 @@ export function ProjectIntegrationSettings({
                             placeholder={t(
                               "integration.selectDefaultIssueType"
                             )}
-                            className="flex-1 max-w-xs h-8 text-xs"
+                            className="h-8 max-w-xs flex-1 text-xs"
                             dropdownClassName="p-0 min-w-[250px] max-w-[350px]"
                           />
                         </div>
@@ -801,7 +801,7 @@ export function ProjectIntegrationSettings({
 
                       {/* Inline remove confirmation */}
                       {confirmingRemoveId === ip.id && (
-                        <div className="p-3 bg-muted rounded-md text-sm space-y-2">
+                        <div className="space-y-2 rounded-md bg-muted p-3 text-sm">
                           <p>{t("integration.removeProjectConfirmation")}</p>
                           {isLastActiveMapping && hasInboundWebhook && (
                             <ul className="list-disc ps-5 text-muted-foreground">
@@ -858,7 +858,7 @@ export function ProjectIntegrationSettings({
               {/* Add Projects inline panel */}
               {showAddPanel && (
                 <div
-                  className="border rounded-md p-3 space-y-3"
+                  className="space-y-3 rounded-md border p-3"
                   data-testid="add-projects-panel"
                 >
                   <MultiAsyncCombobox<ExternalProject>

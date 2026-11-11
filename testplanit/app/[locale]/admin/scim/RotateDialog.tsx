@@ -160,7 +160,7 @@ export function RotateDialog({
                 <code
                   id="scim-rotate-reveal-token"
                   data-testid="scim-rotate-dialog-reveal-token"
-                  className="grow break-all font-mono text-sm bg-muted px-2 py-1 rounded"
+                  className="grow rounded bg-muted px-2 py-1 font-mono text-sm break-all"
                 >
                   {rotated.plaintext}
                 </code>

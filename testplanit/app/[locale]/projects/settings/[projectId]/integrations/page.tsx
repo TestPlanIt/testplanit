@@ -157,8 +157,8 @@ export default function ProjectIntegrationsPage() {
   // NOW check if project exists - only after loading is complete
   if (!project) {
     return (
-      <Card className="flex flex-col w-full min-w-[400px] h-full">
-        <CardContent className="flex flex-col items-center justify-center h-full">
+      <Card className="flex h-full w-full min-w-[400px] flex-col">
+        <CardContent className="flex h-full flex-col items-center justify-center">
           <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
           </PageTitle>
@@ -199,7 +199,7 @@ export default function ProjectIntegrationsPage() {
                   currentIntegration={currentIntegration}
                 />
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="py-8 text-center text-muted-foreground">
                   {t("noIntegrationAssigned")}
                 </div>
               )}

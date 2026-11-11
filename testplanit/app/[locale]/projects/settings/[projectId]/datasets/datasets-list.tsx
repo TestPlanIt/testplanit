@@ -194,8 +194,8 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
       id: "actions",
       header: () => tCommon("actions.actionsLabel"),
       cell: ({ row }) => (
-        <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
-          <Button variant="ghost" className="px-2 py-1 h-auto" asChild>
+        <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
+          <Button variant="ghost" className="h-auto px-2 py-1" asChild>
             <Link
               href={`/projects/settings/${projectId}/datasets/${row.original.id}`}
               aria-label={t("actionOpen")}
@@ -206,7 +206,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
           </Button>
           <Button
             variant="destructive"
-            className="px-2 py-1 h-auto"
+            className="h-auto px-2 py-1"
             onClick={() =>
               setPendingDelete({
                 id: row.original.id,
@@ -256,7 +256,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
       >
         <Database className="h-10 w-10 text-muted-foreground/40" />
         <h3 className="text-base font-semibold">{t("emptyHeading")}</h3>
-        <p className="text-sm text-muted-foreground max-w-md">
+        <p className="max-w-md text-sm text-muted-foreground">
           {t("emptyBody")}
         </p>
       </div>

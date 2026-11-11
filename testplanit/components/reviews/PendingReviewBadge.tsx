@@ -63,7 +63,7 @@ export function PendingReviewBadge({
       <Tooltip>
         <TooltipTrigger asChild>
           <Badge
-            className="inline-flex h-5 w-5 items-center justify-center p-0 bg-warning text-warning-foreground border-warning hover:bg-warning/90 hover:text-warning-foreground"
+            className="inline-flex h-5 w-5 items-center justify-center border-warning bg-warning p-0 text-warning-foreground hover:bg-warning/90 hover:text-warning-foreground"
             data-testid="pending-review-badge"
             data-assignee={assigneeName}
             aria-label={tooltipText}

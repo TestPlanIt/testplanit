@@ -48,7 +48,7 @@ export function UserMention({
   if (user?.isDeleted) {
     return (
       <span
-        className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 italic"
+        className="inline-flex items-center rounded-md border border-muted-foreground/50 bg-secondary px-1.5 py-0.5 text-secondary-foreground italic"
         data-testid="user-mention-deleted"
       >
         {tCommon("aria.deletedUser")}
@@ -59,8 +59,8 @@ export function UserMention({
   if (!user) return null;
 
   const pillClass = cn(
-    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 transition-colors align-middle max-w-[16rem] no-underline",
-    hideLink ? "" : "hover:bg-secondary/80 cursor-pointer",
+    "inline-flex max-w-[16rem] items-center gap-1 rounded-md border border-muted-foreground/50 bg-secondary px-1.5 py-0.5 align-middle text-secondary-foreground no-underline transition-colors",
+    hideLink ? "" : "cursor-pointer hover:bg-secondary/80",
     className
   );
 
@@ -78,7 +78,7 @@ export function UserMention({
         />
       </span>
       {isCurrentUser && (
-        <Star className="w-3 h-3 min-w-3 fill-current shrink-0" />
+        <Star className="h-3 w-3 min-w-3 shrink-0 fill-current" />
       )}
       {/*
         Native `title` (not Radix `<Tooltip>`) so the full name surfaces
@@ -87,7 +87,7 @@ export function UserMention({
         flashes "Brad DerManouelian" on every reject/approve dialog open
         regardless of cursor position.
       */}
-      <span className="truncate max-w-[14rem]" title={user.name ?? ""}>
+      <span className="max-w-[14rem] truncate" title={user.name ?? ""}>
         {user.name}
       </span>
     </>

@@ -31,12 +31,12 @@ export function MilestoneNameDisplay({
   let icon = null;
   if (showIcon) {
     if (isDeleted) {
-      icon = <Trash className="h-4 w-4 shrink-0 mt-1" />;
+      icon = <Trash className="mt-1 h-4 w-4 shrink-0" />;
     } else {
       icon = (
         <DynamicIcon
           name={(iconName as IconName) || "milestone"}
-          className="h-4 w-4 shrink-0 mt-1"
+          className="mt-1 h-4 w-4 shrink-0"
         />
       );
     }

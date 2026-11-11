@@ -68,7 +68,7 @@ export function InsertParameterToolbarButton({
       placeholder={t("toolbarInsertParameterPlaceholder")}
       pageSize={parameters.length || 10}
       renderOption={(p) => (
-        <div className="flex items-center gap-2 w-full">
+        <div className="flex w-full items-center gap-2">
           <span className="font-mono text-sm">{`@${p.name}`}</span>
           <Badge variant="secondary" className="ms-auto">
             {p.type}
@@ -85,7 +85,7 @@ export function InsertParameterToolbarButton({
           aria-label={t("toolbarInsertParameter")}
           data-testid="tiptap-insert-parameter-button"
         >
-          <SquareStack className="w-4 h-4" />
+          <SquareStack className="h-4 w-4" />
         </Button>
       )}
     />

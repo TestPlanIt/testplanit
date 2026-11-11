@@ -206,7 +206,7 @@ export function FieldValueInput({
 
   if (fieldKey === "automated") {
     return (
-      <div className="flex items-center space-x-2 h-10">
+      <div className="flex h-10 items-center space-x-2">
         <Switch
           id={`switch-${fieldKey}`}
           checked={value === null ? false : Boolean(value)}
@@ -310,7 +310,7 @@ export function FieldValueInput({
                 <SelectItem key={option.id} value={option.id.toString()}>
                   <div className="flex items-center">
                     <DynamicIcon
-                      className="shrink-0 me-1 h-4 w-4"
+                      className="me-1 h-4 w-4 shrink-0"
                       name={option.icon as IconName}
                       color={option.iconColor}
                     />
@@ -330,7 +330,7 @@ export function FieldValueInput({
           label: (
             <div className="flex items-center">
               <DynamicIcon
-                className="h-4 w-4 me-1"
+                className="me-1 h-4 w-4"
                 name={fo.fieldOption.icon?.name as IconName}
                 color={fo.fieldOption.iconColor?.value}
               />
@@ -361,7 +361,7 @@ export function FieldValueInput({
 
     case "Checkbox":
       return (
-        <div className="flex items-center space-x-2 h-10">
+        <div className="flex h-10 items-center space-x-2">
           <Switch
             id={`switch-${fieldKey}`}
             checked={value === null ? false : Boolean(value)}
@@ -488,7 +488,7 @@ export function FieldValueInput({
       const initialHeight = fieldDefinition?.initialHeight;
 
       return (
-        <div className="ring-2 ring-muted rounded-lg">
+        <div className="rounded-lg ring-2 ring-muted">
           <TipTapEditor
             key={fieldKey}
             content={initialTextContent}
@@ -516,7 +516,7 @@ export function FieldValueInput({
 
       return (
         <div className="flex items-center space-x-2">
-          <div className="grow p-2 border rounded-md text-sm text-muted-foreground min-h-10">
+          <div className="min-h-10 grow rounded-md border p-2 text-sm text-muted-foreground">
             {newStepsDefined
               ? t("repository.bulkEdit.newStepsDefined", {
                   count: value.length,

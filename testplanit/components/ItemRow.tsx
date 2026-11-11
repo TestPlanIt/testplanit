@@ -163,7 +163,7 @@ const renderSlots = (slots: ItemRowProps["chips"], className?: string) =>
           className={cn(
             TIER_CLASS[slot.tier ?? "base"],
             slot.maxTier && TIER_HIDE_ABOVE[slot.maxTier],
-            "items-center min-w-0",
+            "min-w-0 items-center",
             className
           )}
         >
@@ -226,7 +226,7 @@ export const ItemRow: React.FC<ItemRowProps> = ({
     TIER_CLASS_BLOCK[noteTier],
     // One line, ellipsis. `truncate` rather than `line-clamp-1`, whose
     // display:-webkit-box would fight the tier's display value.
-    "text-sm text-muted-foreground truncate"
+    "truncate text-sm text-muted-foreground"
   );
   // Always tooltipped rather than measured: detecting truncation would cost a
   // ResizeObserver per row, and the note is worth reading in full either way.
@@ -245,8 +245,8 @@ export const ItemRow: React.FC<ItemRowProps> = ({
     <div
       id={id}
       className={cn(
-        "@container overflow-hidden relative w-full my-2 p-2 border-4 rounded-lg shadow-xs",
-        isNew && "border-primary animate-pulse"
+        "@container relative my-2 w-full overflow-hidden rounded-lg border-4 p-2 shadow-xs",
+        isNew && "animate-pulse border-primary"
       )}
       style={{
         backgroundColor:
@@ -262,9 +262,9 @@ export const ItemRow: React.FC<ItemRowProps> = ({
     >
       <div className="flex items-center">
         {leading}
-        <div className="flex flex-col gap-1 min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           {/* Identity line */}
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
             {selectable && (
               <Checkbox
                 checked={selected}
@@ -281,19 +281,19 @@ export const ItemRow: React.FC<ItemRowProps> = ({
               would push the adornments below away from the name and give them
               slack so they never start collapsing. The spacer takes the free
               space instead, and shrink weights decide who gives way. */}
-            <div className="group flex items-center gap-1 min-w-0 flex-initial">
+            <div className="group flex min-w-0 flex-initial items-center gap-1">
               <Link
                 href={href}
                 prefetch={prefetch}
-                className="inline-flex items-center gap-1 min-w-0 max-w-full"
+                className="inline-flex max-w-full min-w-0 items-center gap-1"
               >
-                <h3 className="text-sm font-semibold flex items-center gap-1 hover:text-primary min-w-0">
-                  <span className="shrink-0 flex items-center">{icon}</span>
+                <h3 className="flex min-w-0 items-center gap-1 text-sm font-semibold hover:text-primary">
+                  <span className="flex shrink-0 items-center">{icon}</span>
                   {/* The name is the one thing that never collapses, so it
                     truncates instead — the tooltip carries the rest. */}
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="truncate inline-block">{name}</span>
+                      <span className="inline-block truncate">{name}</span>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="text-sm">{name}</p>
@@ -312,7 +312,7 @@ export const ItemRow: React.FC<ItemRowProps> = ({
             {/* Absorbs free space so the name and its adornments stay together on
               the leading edge while the state and actions stay on the trailing
               one. Zero basis, so it contributes nothing when space is short. */}
-            <div className="flex-1 min-w-0" aria-hidden="true" />
+            <div className="min-w-0 flex-1" aria-hidden="true" />
             {/* Outweighs the name's shrink factor, so these give up their width
               first and the name is the last thing to truncate. The weight is
               modest so a self-sizing adornment (shrink-[999]) sheds its parts
@@ -321,14 +321,14 @@ export const ItemRow: React.FC<ItemRowProps> = ({
               shorter (a start date with no end date, say), leaving dead space
               beside the name instead of handing it back. */}
             {shrinkingIdentity.length > 0 && (
-              <div className="flex items-center gap-3 shrink-[99] min-w-0 max-w-[45%] overflow-hidden">
+              <div className="flex max-w-[45%] min-w-0 shrink-[99] items-center gap-3 overflow-hidden">
                 {renderSlots(shrinkingIdentity)}
               </div>
             )}
             {renderSlots(pinnedIdentity, "shrink-0 whitespace-nowrap")}
-            {state && <div className="shrink-0 flex items-center">{state}</div>}
+            {state && <div className="flex shrink-0 items-center">{state}</div>}
             {actions && (
-              <div className="shrink-0 flex items-center">{actions}</div>
+              <div className="flex shrink-0 items-center">{actions}</div>
             )}
           </div>
 
@@ -338,19 +338,19 @@ export const ItemRow: React.FC<ItemRowProps> = ({
           {(chips?.some(Boolean) ||
             progress ||
             metaTrailing?.some(Boolean)) && (
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex min-w-0 items-center gap-3">
               {/* Chips take only what they need; the progress bar absorbs the
                 rest of the line rather than leaving a void beside it. With no
                 chips the box is left out, or the line's gap would still
                 indent the bar by one step. */}
               {chips?.some(Boolean) && (
-                <div className="flex items-center gap-3 min-w-0 shrink overflow-hidden">
+                <div className="flex min-w-0 shrink items-center gap-3 overflow-hidden">
                   {renderSlots(chips)}
                 </div>
               )}
-              {progress && <div className="flex-1 min-w-36">{progress}</div>}
+              {progress && <div className="min-w-36 flex-1">{progress}</div>}
               {metaTrailing?.some(Boolean) && (
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex shrink-0 items-center gap-3">
                   {renderSlots(metaTrailing, "shrink-0")}
                 </div>
               )}
@@ -370,8 +370,8 @@ export const ItemRowChip: React.FC<{
   icon?: React.ReactNode;
   children: React.ReactNode;
 }> = ({ icon, children }) => (
-  <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-    {icon && <span className="shrink-0 flex items-center">{icon}</span>}
+  <div className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
+    {icon && <span className="flex shrink-0 items-center">{icon}</span>}
     <span className="truncate">{children}</span>
   </div>
 );

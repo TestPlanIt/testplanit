@@ -123,13 +123,13 @@ export function SessionVersionRenderer({
         return (
           <div className="space-y-2">
             <div
-              className={`text-sm flex items-start gap-1 ${
-                showTextDiff ? "text-green-600 bg-green-100 p-2 rounded" : ""
+              className={`flex items-start gap-1 text-sm ${
+                showTextDiff ? "rounded bg-green-100 p-2 text-green-600" : ""
               }`}
             >
               {showTextDiff && (
                 <span>
-                  <Plus className="w-4 h-4" />
+                  <Plus className="h-4 w-4" />
                 </span>
               )}
               {(field === "Template" ||
@@ -139,9 +139,9 @@ export function SessionVersionRenderer({
               {value || tCommon("access.none")}
             </div>
             {showTextDiff && (
-              <div className="text-sm flex items-start gap-1 text-red-600 bg-red-100 p-2 rounded">
+              <div className="flex items-start gap-1 rounded bg-red-100 p-2 text-sm text-red-600">
                 <span>
-                  <Minus className="w-4 h-4" />
+                  <Minus className="h-4 w-4" />
                 </span>
                 {(field === "Template" ||
                   field === "Configuration" ||
@@ -174,13 +174,13 @@ export function SessionVersionRenderer({
         return (
           <div className="space-y-2">
             <div
-              className={`text-sm flex items-start gap-1 ${
-                showStateDiff ? "text-green-600 bg-green-100 p-2 rounded" : ""
+              className={`flex items-start gap-1 text-sm ${
+                showStateDiff ? "rounded bg-green-100 p-2 text-green-600" : ""
               }`}
             >
               {showStateDiff && (
                 <span>
-                  <Plus className="w-4 h-4" />
+                  <Plus className="h-4 w-4" />
                 </span>
               )}
               <div className="flex items-center gap-1 truncate">
@@ -193,9 +193,9 @@ export function SessionVersionRenderer({
               </div>
             </div>
             {showStateDiff && (
-              <div className="text-sm flex items-start gap-1 text-red-600 bg-red-100 p-2 rounded">
+              <div className="flex items-start gap-1 rounded bg-red-100 p-2 text-sm text-red-600">
                 <span>
-                  <Minus className="w-4 h-4" />
+                  <Minus className="h-4 w-4" />
                 </span>
                 <div className="flex items-center gap-1 truncate">
                   <DynamicIcon
@@ -216,11 +216,11 @@ export function SessionVersionRenderer({
         return (
           <div className="space-y-2">
             <div
-              className={`text-sm flex items-start gap-1 ${showUserDiff ? "text-green-600 bg-green-100 p-2 rounded" : ""}`}
+              className={`flex items-start gap-1 text-sm ${showUserDiff ? "rounded bg-green-100 p-2 text-green-600" : ""}`}
             >
               {showUserDiff && (
                 <span>
-                  <Plus className="w-4 h-4" />
+                  <Plus className="h-4 w-4" />
                 </span>
               )}
               {value ? (
@@ -233,9 +233,9 @@ export function SessionVersionRenderer({
               )}
             </div>
             {showUserDiff && (
-              <div className="text-sm flex items-start gap-1 text-red-600 bg-red-100 p-2 rounded">
+              <div className="flex items-start gap-1 rounded bg-red-100 p-2 text-sm text-red-600">
                 <span>
-                  <Minus className="w-4 h-4" />
+                  <Minus className="h-4 w-4" />
                 </span>
                 {previousValue ? (
                   <UserNameCell userId={previousValue} />
@@ -302,12 +302,12 @@ export function SessionVersionRenderer({
           >
             <div>
               {showPreviousVersion && (
-                <div className="font-medium text-sm mb-2 text-green-600">
+                <div className="mb-2 text-sm font-medium text-green-600">
                   {t("sessions.version.renderer.currentVersion")}
                 </div>
               )}
               <div
-                className={`min-h-fit max-h-[400px] overflow-y-auto border rounded-md p-2
+                className={`max-h-[400px] min-h-fit overflow-y-auto rounded-md border p-2
                 ${showPreviousVersion ? "bg-green-100" : ""}`}
               >
                 <ReadOnlyRichText
@@ -321,11 +321,11 @@ export function SessionVersionRenderer({
             </div>
             {showPreviousVersion && (
               <div>
-                <div className="font-medium text-sm mb-2 text-red-600">
-                  <Minus className="w-4 h-4" />{" "}
+                <div className="mb-2 text-sm font-medium text-red-600">
+                  <Minus className="h-4 w-4" />{" "}
                   {t("sessions.version.renderer.previousVersion")}
                 </div>
-                <div className="min-h-fit max-h-[400px] overflow-y-auto border rounded-md p-2 bg-red-100">
+                <div className="max-h-[400px] min-h-fit overflow-y-auto rounded-md border bg-red-100 p-2">
                   <ReadOnlyRichText
                     key={`previous-${fieldType}-${testSession.id}`}
                     content={
@@ -365,7 +365,7 @@ export function SessionVersionRenderer({
         );
 
         return (
-          <div className="flex flex-wrap max-w-full gap-1 mb-4">
+          <div className="mb-4 flex max-w-full flex-wrap gap-1">
             {!isFirstVersion &&
               addedTags.length > 0 &&
               addedTags.map((tag: string) => (
@@ -413,10 +413,10 @@ export function SessionVersionRenderer({
         return (
           <Badge
             variant="secondary"
-            className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4 bg-green-100 text-green-600"
+            className="text-md flex items-center gap-1 bg-green-100 p-2 px-4 text-sm whitespace-nowrap text-green-600"
           >
             <span>
-              <Plus className="w-4 h-4" />
+              <Plus className="h-4 w-4" />
             </span>
             <DynamicIcon name="check-circle" className="h-6 w-6 shrink-0" />
             <div className="flex items-center truncate">
@@ -450,7 +450,7 @@ export function SessionVersionRenderer({
   return (
     <div className="space-y-2">
       {renderFieldLabel() && (
-        <div className="font-medium text-sm">{renderFieldLabel()}</div>
+        <div className="text-sm font-medium">{renderFieldLabel()}</div>
       )}
       <div>{renderValue(currentValue, fieldType)}</div>
     </div>

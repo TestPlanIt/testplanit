@@ -59,7 +59,7 @@ export function ElapsedTime({
       <div
         className={`flex items-center gap-1 text-sm text-muted-foreground ${className}`}
       >
-        <Clock className="w-4 h-4 shrink-0" />
+        <Clock className="h-4 w-4 shrink-0" />
         {t("common.loading")}
       </div>
     );
@@ -78,7 +78,7 @@ export function ElapsedTime({
           className
         )}
       >
-        <Clock className="w-4 h-4 shrink-0" />
+        <Clock className="h-4 w-4 shrink-0" />
         {t("common.labels.noElapsedTime")}
       </div>
     );
@@ -113,7 +113,7 @@ export function ElapsedTime({
       )}
     >
       <div className="flex items-center gap-1">
-        <Timer className="w-4 h-4 shrink-0" />
+        <Timer className="h-4 w-4 shrink-0" />
         <span>
           {t("sessions.labels.totalElapsed")}: {humanReadableTime}
         </span>
@@ -123,9 +123,9 @@ export function ElapsedTime({
           className={`flex items-center gap-1 ${isOvertime ? "text-destructive" : "text-muted-foreground"}`}
         >
           {isOvertime ? (
-            <ClockAlert className="w-4 h-4 shrink-0" />
+            <ClockAlert className="h-4 w-4 shrink-0" />
           ) : (
-            <AlarmClockPlus className="w-4 h-4 shrink-0" />
+            <AlarmClockPlus className="h-4 w-4 shrink-0" />
           )}
           <span>
             {isOvertime

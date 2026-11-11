@@ -82,19 +82,19 @@ const ReadOnlyRichText: React.FC<ReadOnlyRichTextProps> = ({
 
   return (
     <div
-      className={cn("overflow-auto flex flex-col w-full", className)}
+      className={cn("flex w-full flex-col overflow-auto", className)}
       style={style}
       data-testid={testId}
     >
-      <div className="overflow-y-auto flex-1 w-full relative">
+      <div className="relative w-full flex-1 overflow-y-auto">
         <div
           className={cn(
-            "mt-0.5 border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full",
+            "prose-xs prose mt-0.5 w-full max-w-none rounded-lg border border-accent-foreground/10 sm:prose-sm lg:prose xl:prose-lg",
             styles.editorContent
           )}
         >
           <div
-            className="tiptap ProseMirror prose dark:prose-invert prose-xs sm:prose-sm lg:prose max-w-none w-full p-1"
+            className="tiptap ProseMirror prose-xs prose w-full max-w-none p-1 sm:prose-sm lg:prose dark:prose-invert"
             style={{ width: "100%", maxWidth: "none" }}
             data-read-only-rich-text=""
             dangerouslySetInnerHTML={{ __html: html }}

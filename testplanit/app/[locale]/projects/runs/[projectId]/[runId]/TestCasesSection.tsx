@@ -520,8 +520,8 @@ export function TestCasesSection({
 
   return (
     <div className="space-y-4">
-      <div ref={headerRef} className="flex justify-between items-center">
-        <div className="flex items-center justify-between w-full gap-2">
+      <div ref={headerRef} className="flex items-center justify-between">
+        <div className="flex w-full items-center justify-between gap-2">
           <span className="text-md font-semibold">
             {isMultiConfigRun && selectedConfigurations.length > 1
               ? t("common.labels.casesInRunMultiConfig", {
@@ -546,7 +546,7 @@ export function TestCasesSection({
               />
             )}
         </div>
-        <ActionBar compact={headerCompact} className="gap-2 shrink-0">
+        <ActionBar compact={headerCompact} className="shrink-0 gap-2">
           {!isEditMode && headerActions}
           {!isEditMode &&
             !testRunData.isCompleted &&
@@ -581,8 +581,8 @@ export function TestCasesSection({
       {/* Configuration selector for multi-config test runs */}
       {isMultiConfigRun && !isEditMode && (
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 shrink-0 font-semibold">
-            <Combine className="w-4 h-4" />
+          <div className="flex shrink-0 items-center gap-1 font-semibold">
+            <Combine className="h-4 w-4" />
             <span>{t("common.fields.configurations")}:</span>
           </div>
           <MultiAsyncCombobox<SiblingTestRun>
@@ -590,13 +590,13 @@ export function TestCasesSection({
             onValueChange={setSelectedConfigurations}
             fetchOptions={fetchConfigurations}
             renderOption={(option) => (
-              <div className="flex items-center w-11/12 gap-2 justify-between">
+              <div className="flex w-11/12 items-center justify-between gap-2">
                 <ConfigurationNameDisplay
                   configuration={option.configuration}
                   name={memberLabel(option)}
                   truncate
                 />
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                <span className="text-xs whitespace-nowrap text-muted-foreground">
                   {"("}
                   {t("charts.testCases", { count: option.testCases.length })}
                   {")"}
@@ -649,7 +649,7 @@ export function TestCasesSection({
           />
         )}
         {!isEditMode && testRunData.testCases.length === 0 && (
-          <div className="text-center text-sm text-muted-foreground py-8">
+          <div className="py-8 text-center text-sm text-muted-foreground">
             <p>{t("common.labels.noTestCasesSelected")}</p>
             <p className="mt-2">{t("common.labels.editToSelectTestCases")}</p>
           </div>

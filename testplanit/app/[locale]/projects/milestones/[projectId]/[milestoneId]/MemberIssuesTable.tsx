@@ -685,8 +685,8 @@ export function MemberIssuesTable({
     <div data-testid="member-issues-section">
       <Collapsible open={!isCollapsed} onOpenChange={handleCollapsedChange}>
         <div className="flex flex-col space-y-1.5 px-6 py-4">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2 font-semibold leading-none tracking-tight">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 leading-none font-semibold tracking-tight">
               <CollapsibleTrigger asChild>
                 <Button
                   type="button"
@@ -704,7 +704,7 @@ export function MemberIssuesTable({
                   />
                 </Button>
               </CollapsibleTrigger>
-              <Target className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Target className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="flex items-center gap-1.5">
                 {!isLoadingMembers && (
                   <span data-testid="member-issues-count">{rows.length}</span>
@@ -783,7 +783,7 @@ export function MemberIssuesTable({
               coverageTotals.untested > 0 ||
               coverageTotals.uncoveredIssues > 0) && (
               <div
-                className="flex items-center justify-end gap-3 flex-wrap text-xs font-medium pt-1"
+                className="flex flex-wrap items-center justify-end gap-3 pt-1 text-xs font-medium"
                 data-testid="member-issues-coverage-totals"
               >
                 {coverageTotals.statuses.map((entry) => (
@@ -828,17 +828,17 @@ export function MemberIssuesTable({
               </div>
             )}
         </div>
-        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
+        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
           <CardContent className="pt-1">
             {rows.length > 0 && (
-              <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap mb-4">
+              <div className="mb-4 flex w-full flex-wrap items-center gap-2 text-muted-foreground">
                 <Filter
                   key="member-issues-filter"
                   placeholder={tGlobal("admin.issues.filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
                   dataTestId="member-issues-search"
-                  className="grow shrink basis-[120px] min-w-[120px] max-w-lg"
+                  className="max-w-lg min-w-[120px] shrink grow basis-[120px]"
                 />
                 <Select
                   value={issueTypeFilter || "all"}
@@ -922,7 +922,7 @@ export function MemberIssuesTable({
 
             {!isLoading && sortedRows.length === 0 ? (
               <div
-                className="text-sm text-muted-foreground py-8 text-center"
+                className="py-8 text-center text-sm text-muted-foreground"
                 data-testid="member-issues-empty"
               >
                 {rows.length === 0 ? (

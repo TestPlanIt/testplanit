@@ -319,7 +319,7 @@ export function LinkedRequirementsPanel({
             onToggle={toggle}
             testId="case-linked-requirements-collapse-toggle"
           />
-          <Link2 className="w-5 h-5" />
+          <Link2 className="h-5 w-5" />
           {t("title")}
         </CardTitle>
         {!readOnly && (
@@ -330,7 +330,7 @@ export function LinkedRequirementsPanel({
             data-testid="case-linked-requirements-add"
             onClick={() => setIsAddOpen(true)}
           >
-            <Plus className="w-4 h-4" />{" "}
+            <Plus className="h-4 w-4" />{" "}
             {tGlobal("common.upload.attachments.link.addButton")}
           </Button>
         )}
@@ -338,13 +338,13 @@ export function LinkedRequirementsPanel({
       {!collapsed && (
         <CardContent className="p-0">
           {rows.length === 0 ? (
-            <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm">
+            <div className="ms-4 -mt-6 mb-4 text-sm text-muted-foreground">
               {t("empty")}
             </div>
           ) : (
             // Fixed layout, or the name cell grows to its content and the
             // truncate below never engages.
-            <Table className="table-fixed w-full">
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead className="truncate">
@@ -377,7 +377,7 @@ export function LinkedRequirementsPanel({
                     // LinkedRequirementCasesPanel.tsx's identical convention.
                     <TableRow key={`${caseId}-${row.id}`}>
                       <TableCell>
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex min-w-0 items-center gap-2">
                           <IssueTypeIcon
                             fallbackIcon={ClipboardCheck}
                             issueTypeName={row.issueTypeName}
@@ -404,7 +404,7 @@ export function LinkedRequirementsPanel({
                                 <Badge
                                   variant="outline"
                                   data-testid={`case-linked-requirement-suspect-${row.id}`}
-                                  className="gap-2 shrink-0 border-dashed border-warning bg-warning/15 text-foreground"
+                                  className="shrink-0 gap-2 border-dashed border-warning bg-warning/15 text-foreground"
                                 >
                                   <AlertTriangle className="h-3 w-3 text-warning" />
                                   {tSuspect("badgeLabel")}
@@ -431,7 +431,7 @@ export function LinkedRequirementsPanel({
                                     <Badge
                                       variant="outline"
                                       data-testid={`case-linked-requirement-suspect-${row.id}`}
-                                      className="gap-2 shrink-0 cursor-pointer border-dashed border-warning bg-warning/15 text-foreground"
+                                      className="shrink-0 cursor-pointer gap-2 border-dashed border-warning bg-warning/15 text-foreground"
                                       onClick={() => setOpenDismissId(row.id)}
                                     >
                                       <AlertTriangle className="h-3 w-3 text-warning" />
@@ -492,7 +492,7 @@ export function LinkedRequirementsPanel({
                                 data-testid={`case-linked-requirement-remove-${row.id}`}
                                 onClick={() => setOpenUnlinkId(row.id)}
                               >
-                                <X className="w-4 h-4" />
+                                <X className="h-4 w-4" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-fit" side="bottom">
@@ -608,7 +608,7 @@ function AddLinkedRequirementDialog({
             <Button
               type="button"
               variant="outline"
-              className="justify-start text-start w-full"
+              className="w-full justify-start text-start"
             >
               {value ? (
                 <span className="flex items-center gap-1 overflow-hidden">
@@ -619,7 +619,7 @@ function AddLinkedRequirementDialog({
                     className="h-4 w-4 shrink-0"
                   />
                   <span
-                    className="truncate whitespace-nowrap overflow-hidden"
+                    className="truncate overflow-hidden whitespace-nowrap"
                     style={{ maxWidth: 400 }}
                   >
                     {formatIssueDisplayText(value)}

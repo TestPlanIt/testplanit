@@ -254,7 +254,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
 
   if (isLoading || isFetching || repositoryCasesLatestFive === undefined) {
     return (
-      <div className="flex justify-center items-center py-8">
+      <div className="flex items-center justify-center py-8">
         <LoadingSpinner />
       </div>
     );
@@ -262,7 +262,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
 
   if (!repositoryCasesLatestFive?.length) {
     return (
-      <div className="flex justify-center items-center py-8">
+      <div className="flex items-center justify-center py-8">
         <div className="text-muted-foreground">
           {t("noTestCasesPrefix")}{" "}
           <Link
@@ -282,7 +282,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
     // below that, so a narrow panel still leaves the case names room to read.
     <div className="@container flex flex-col">
       <div className="flex flex-col @2xl:flex-row">
-        <div className="w-full @2xl:w-1/2 @2xl:pe-6 @2xl:me-2 overflow-hidden">
+        <div className="w-full overflow-hidden @2xl:me-2 @2xl:w-1/2 @2xl:pe-6">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h2 className="text-primary">{t("testCaseBreakdown")}</h2>
             <Button
@@ -303,11 +303,11 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
         </div>
         <Separator className="my-4 @2xl:hidden" orientation="horizontal" />
         <Separator
-          className="h-auto hidden @2xl:block"
+          className="hidden h-auto @2xl:block"
           orientation="vertical"
         />
-        <div className="flex flex-col w-full @2xl:w-1/2 @2xl:ps-6 overflow-hidden">
-          <h2 className="text-primary mb-2">{t("latestTestCases")}</h2>
+        <div className="flex w-full flex-col overflow-hidden @2xl:w-1/2 @2xl:ps-6">
+          <h2 className="mb-2 text-primary">{t("latestTestCases")}</h2>
           <ul className="flex flex-col space-y-1">
             {repositoryCasesLatestFive.map((caseItem) => {
               const caseIssues = caseItem.caseIssues.map((ci) => ci.issue);
@@ -318,13 +318,13 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
                 // none.
                 <li
                   key={caseItem.id}
-                  className="ms-6 flex items-start gap-3 group"
+                  className="group ms-6 flex items-start gap-3"
                 >
                   <Link
-                    className="flex items-start flex-1 min-w-0"
+                    className="flex min-w-0 flex-1 items-start"
                     href={`/projects/repository/${projectId}/${caseItem.id}`}
                   >
-                    <div className="flex items-center flex-1 min-w-0">
+                    <div className="flex min-w-0 flex-1 items-center">
                       <CaseDisplay
                         id={caseItem.id}
                         name={caseItem.name}
@@ -334,7 +334,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
                         hasParameters={caseItem.hasParameters}
                         className="line-clamp-2"
                       />
-                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                     </div>
                   </Link>
                   {caseIssues.length > 0 && (
@@ -354,7 +354,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
         </div>
       </div>
       <Dialog open={isChartZoomed} onOpenChange={setIsChartZoomed}>
-        <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
+        <DialogContent className="flex h-[80vh] max-w-[80vw] flex-col p-0 sm:p-6">
           <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
             <DialogTitle>{t("testCaseBreakdown")}</DialogTitle>
             <DialogDescription className="sr-only">

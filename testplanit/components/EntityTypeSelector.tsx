@@ -65,7 +65,7 @@ export function EntityTypeSelector({
           />
           <Label
             htmlFor="all-types"
-            className="text-sm font-medium cursor-pointer"
+            className="cursor-pointer text-sm font-medium"
           >
             {t("search.allTypes")}
           </Label>
@@ -85,7 +85,7 @@ export function EntityTypeSelector({
               />
               <Label
                 htmlFor={`entity-${entityType}`}
-                className="text-sm cursor-pointer flex items-center gap-2"
+                className="flex cursor-pointer items-center gap-2 text-sm"
               >
                 <DynamicIcon
                   name={

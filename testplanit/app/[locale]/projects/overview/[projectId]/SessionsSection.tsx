@@ -58,7 +58,7 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
 
   if (isLoadingSessions) {
     return (
-      <div className="flex justify-center items-center py-8">
+      <div className="flex items-center justify-center py-8">
         <LoadingSpinner />
       </div>
     );
@@ -68,7 +68,7 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
 
   return (
     <div className="flex flex-col">
-      <h2 className="text-primary mb-2">
+      <h2 className="mb-2 text-primary">
         {t("projects.overview.latestSessions")}
       </h2>
       {sessions.map((testSession) => (

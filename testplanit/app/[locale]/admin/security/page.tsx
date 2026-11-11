@@ -270,7 +270,7 @@ export default function SecurityAdminPage() {
               <HelpPopover helpKey="securityPasswordPolicy" />
             </SectionHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
               {/* Left column: sliders */}
               <div className="space-y-6">
                 {/* Min Password Length */}
@@ -405,7 +405,7 @@ export default function SecurityAdminPage() {
               <HelpPopover helpKey="securityLockoutPolicy" />
             </SectionHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
               {/* Lockout Threshold */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -492,7 +492,7 @@ export default function SecurityAdminPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-destructive font-semibold">
+            <p className="text-sm font-semibold text-destructive">
               {t("forceAllUsersDialogWarning")}
             </p>
           </div>

@@ -202,7 +202,7 @@ export function ApproveDialog({
                   // case names wrap mid-string so a 200-char title
                   // without a breakable character can't blow the dialog
                   // out horizontally. `font-medium` flags it visually.
-                  <span className="font-medium text-foreground [overflow-wrap:anywhere]">
+                  <span className="font-medium [overflow-wrap:anywhere] text-foreground">
                     {entityName}
                   </span>
                 ),
@@ -439,7 +439,7 @@ export function RejectDialog({
                   // case names wrap mid-string so a 200-char title
                   // without a breakable character can't blow the dialog
                   // out horizontally. `font-medium` flags it visually.
-                  <span className="font-medium text-foreground [overflow-wrap:anywhere]">
+                  <span className="font-medium [overflow-wrap:anywhere] text-foreground">
                     {entityName}
                   </span>
                 ),

@@ -40,7 +40,7 @@ export default function ProjectsLayout(props: any) {
           type="button"
           onClick={handleToggleCollapse}
           variant="secondary"
-          className="hidden md:flex absolute -end-4 top-12 z-20 p-0 rounded-s-none"
+          className="absolute -end-4 top-12 z-20 hidden rounded-s-none p-0 md:flex"
           aria-label={t("togglePanel")}
         >
           {isCollapsed ? <ChevronRight /> : <ChevronLeft />}

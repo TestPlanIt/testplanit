@@ -32,7 +32,7 @@ export function ConfirmStep({
 
   return (
     <div
-      className="p-6 space-y-4"
+      className="space-y-4 p-6"
       data-testid="dataset-import-wizard-step-confirm"
     >
       <h3 className="text-base font-semibold">{t("importStep4Heading")}</h3>
@@ -47,7 +47,7 @@ export function ConfirmStep({
       )}
 
       <Card className="p-4 shadow-none">
-        <div className="text-sm space-y-1">
+        <div className="space-y-1 text-sm">
           <div data-testid="dataset-import-wizard-confirm-valid-count">
             {t("confirmSummaryValid", { count: String(validRowCount) })}
           </div>
@@ -73,7 +73,7 @@ export function ConfirmStep({
           <div>
             <label
               htmlFor="dataset-import-wizard-mode-replace"
-              className="font-medium text-sm"
+              className="text-sm font-medium"
             >
               {t("importStep4Replace")}
             </label>
@@ -93,7 +93,7 @@ export function ConfirmStep({
           <div>
             <label
               htmlFor="dataset-import-wizard-mode-append"
-              className="font-medium text-sm"
+              className="text-sm font-medium"
             >
               {t("importStep4Append")}
             </label>

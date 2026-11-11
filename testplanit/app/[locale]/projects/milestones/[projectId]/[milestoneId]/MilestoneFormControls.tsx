@@ -158,7 +158,7 @@ export default function MilestoneFormControls({
         <div className="flex items-center">
           <DynamicIcon
             name={(type.icon?.name as IconName) || "milestone"}
-            className="w-4 h-4 me-2 shrink-0"
+            className="me-2 h-4 w-4 shrink-0"
           />
           <span>{type.name}</span>
         </div>
@@ -185,7 +185,7 @@ export default function MilestoneFormControls({
       {isSynced && (
         <Alert
           data-testid="milestone-sync-locked-alert"
-          className="bg-inherit border-muted-foreground w-fit"
+          className="w-fit border-muted-foreground bg-inherit"
         >
           {/* Title only, with the explanatory copy tucked behind a help popover
               so the locked-sync notice stays a single compact line. The icon +
@@ -196,7 +196,7 @@ export default function MilestoneFormControls({
             <span className="flex shrink-0 items-center">
               <TrackerGlyph provider={provider} className="h-4 w-4" />
             </span>
-            <AlertTitle className="mb-0 ms-2 flex items-center">
+            <AlertTitle className="ms-2 mb-0 flex items-center">
               {jiraUrl ? (
                 <a
                   href={jiraUrl}
@@ -225,7 +225,7 @@ export default function MilestoneFormControls({
               control={control}
               name="isStarted"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -253,7 +253,7 @@ export default function MilestoneFormControls({
               control={control}
               name="isCompleted"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -279,7 +279,7 @@ export default function MilestoneFormControls({
                 control={control}
                 name="automaticCompletion"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -300,7 +300,7 @@ export default function MilestoneFormControls({
               control={control}
               name="enableNotifications"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -431,7 +431,7 @@ export default function MilestoneFormControls({
                 />
               </FormControl>
             ) : (
-              <div className="text-muted-foreground text-sm">
+              <div className="text-sm text-muted-foreground">
                 {t("empty.description")}
               </div>
             )}

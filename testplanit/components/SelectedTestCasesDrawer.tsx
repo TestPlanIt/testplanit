@@ -165,14 +165,14 @@ export function SelectedTestCasesDrawer({
       <div
         key={testCase.id}
         className={cn(
-          "px-3 py-1 border-b border-border/60 last:border-b-0 text-sm hover:bg-muted/40",
+          "border-b border-border/60 px-3 py-1 text-sm last:border-b-0 hover:bg-muted/40",
           useCheckboxes && !isSelected && "opacity-50"
         )}
       >
-        <div className="flex items-center gap-2 min-h-8 min-w-0">
+        <div className="flex min-h-8 min-w-0 items-center gap-2">
           {/* Checkbox column (when using checkboxes) */}
           {isEditMode && useCheckboxes ? (
-            <div className="shrink-0 w-6 flex items-center justify-center">
+            <div className="flex w-6 shrink-0 items-center justify-center">
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={handleToggle}
@@ -181,12 +181,12 @@ export function SelectedTestCasesDrawer({
             </div>
           ) : (
             /* Index column (when not using checkboxes) */
-            <div className="shrink-0 w-6 text-end text-muted-foreground text-xs">
+            <div className="w-6 shrink-0 text-end text-xs text-muted-foreground">
               {globalIndex}
             </div>
           )}
           {/* Name column */}
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <CaseDisplay
               id={testCase.id}
               name={testCase.name}
@@ -200,7 +200,7 @@ export function SelectedTestCasesDrawer({
             />
           </div>
           {/* Workflow state column */}
-          <div className="shrink-0 w-24 flex items-center justify-end">
+          <div className="flex w-24 shrink-0 items-center justify-end">
             {testCase.state.icon &&
             testCase.state.icon.name &&
             testCase.state.color &&
@@ -218,7 +218,7 @@ export function SelectedTestCasesDrawer({
                 }}
               />
             ) : (
-              <span className="text-xs text-muted-foreground truncate">
+              <span className="truncate text-xs text-muted-foreground">
                 {testCase.state.name}
               </span>
             )}
@@ -243,7 +243,7 @@ export function SelectedTestCasesDrawer({
         </div>
         {/* Estimate / forecast sub-line, indented to align under the name */}
         {hasEstimates && (
-          <div className="ps-8 pb-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 ps-8 pb-0.5 text-xs text-muted-foreground">
             {typeof testCase.estimate === "number" && (
               <span>
                 <span className="me-1">{t("common.fields.estimate")}:</span>
@@ -282,7 +282,7 @@ export function SelectedTestCasesDrawer({
           <Button size="lg">
             <Badge
               variant="outline"
-              className="text-primary-foreground hover:text-primary-foreground border-primary-foreground/40"
+              className="border-primary-foreground/40 text-primary-foreground hover:text-primary-foreground"
             >
               {selectedTestCases.length}
             </Badge>
@@ -347,7 +347,7 @@ export function SelectedTestCasesDrawer({
           {/* Test cases list */}
           <div className="flex-1 overflow-y-auto">
             {casesToDisplay.length === 0 ? (
-              <div className="text-center text-sm text-muted-foreground py-8">
+              <div className="py-8 text-center text-sm text-muted-foreground">
                 {t("common.labels.noTestCasesSelected")}
               </div>
             ) : isLoading ? (
@@ -367,7 +367,7 @@ export function SelectedTestCasesDrawer({
 
           {/* Pagination controls */}
           {totalPages > 1 && (
-            <div className="border-t p-3 flex justify-center">
+            <div className="flex justify-center border-t p-3">
               <PaginationComponent
                 currentPage={currentPage}
                 totalPages={totalPages}

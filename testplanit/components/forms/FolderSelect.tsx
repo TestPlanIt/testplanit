@@ -125,7 +125,7 @@ function renderFolderOption(
 ) {
   return (
     <div
-      className="flex items-center gap-1 min-w-0"
+      className="flex min-w-0 items-center gap-1"
       data-testid={`folder-select-option-${option.value}`}
       style={{
         paddingInlineStart: option.level * INDENT_PER_LEVEL + INDENT_BASE,
@@ -133,11 +133,11 @@ function renderFolderOption(
     >
       {option.icon?.name ? (
         <DynamicIcon
-          className="w-4 h-4 shrink-0"
+          className="h-4 w-4 shrink-0"
           name={option.icon.name as IconName}
         />
       ) : (
-        <FolderOpen className="w-4 h-4 shrink-0 text-muted-foreground" />
+        <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
       <span className="truncate">
         <HighlightedMatch
@@ -225,7 +225,7 @@ export const FolderSelect: React.FC<FolderSelectProps> = ({
         <button
           type="button"
           className={cn(
-            "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs ring-offset-background focus:outline-hidden focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs ring-offset-background focus:ring-1 focus:ring-ring focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
             className
           )}
         >

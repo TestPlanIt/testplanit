@@ -1153,7 +1153,7 @@ export default function Cases({
   const filterComponent = useMemo(
     () => {
       return (
-        <div className="text-muted-foreground w-full text-nowrap">
+        <div className="w-full text-nowrap text-muted-foreground">
           <Filter
             placeholder={t("repository.cases.filter")}
             // Pass current searchString from parent for Filter's initialization/reset needs
@@ -3251,7 +3251,7 @@ export default function Cases({
   // Render invalid project ID message if needed
   if (!isValidProjectId) {
     return (
-      <div className="text-muted-foreground text-pretty m-2">
+      <div className="m-2 text-pretty text-muted-foreground">
         {t("repository.cases.invalidProject")}
       </div>
     );
@@ -3262,7 +3262,7 @@ export default function Cases({
     <Card className="border-0">
       <CardHeader>
         <div ref={casesHeaderRef} className="flex flex-row items-start">
-          <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
+          <div className="flex w-full min-w-[250px] grow flex-col sm:w-1/2">
             {/* filterComponent should always be rendered if we've reached this point */}
             {filterComponent}
             {/* Which order the rows are in is otherwise invisible: a remembered
@@ -3291,7 +3291,7 @@ export default function Cases({
 
           <div
             ref={setPaginationFooterRef}
-            className="flex flex-col w-full sm:w-2/3 items-end"
+            className="flex w-full flex-col items-end sm:w-2/3"
           >
             {isSelectionMode && onSelectionChange && !hideHeader && (
               <div className="mb-4">
@@ -3315,7 +3315,7 @@ export default function Cases({
                 compact={paginationCompact}
               />
             </div>
-            <div className="justify-end -mx-4">
+            <div className="-mx-4 justify-end">
               <PaginationComponent
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -3323,7 +3323,7 @@ export default function Cases({
                 compact={paginationCompact}
               />
             </div>
-            <div className="flex gap-2 pt-2 items-center -mb-2">
+            <div className="-mb-2 flex items-center gap-2 pt-2">
               <ActionOverflow
                 compact={casesToolbarCompact}
                 menuLabel={t("common.actions.actionsLabel")}
@@ -3423,7 +3423,7 @@ export default function Cases({
           if (searchFailed) {
             return (
               <div
-                className="text-muted-foreground text-pretty m-2"
+                className="m-2 text-pretty text-muted-foreground"
                 data-testid="search-failed-message"
               >
                 {t("search.errors.searchFailed")}
@@ -3442,7 +3442,7 @@ export default function Cases({
             predicates.length === 0
           ) {
             return (
-              <div className="text-muted-foreground text-pretty m-2">
+              <div className="m-2 text-pretty text-muted-foreground">
                 {t("repository.cases.selectFolder")}
               </div>
             );
@@ -3482,7 +3482,7 @@ export default function Cases({
             if (predicates.length > 0) {
               return (
                 <div className="m-2 flex flex-col items-start space-y-2">
-                  <div className="text-muted-foreground text-pretty">
+                  <div className="text-pretty text-muted-foreground">
                     {t("repository.filterBar.noMatchingCases")}
                   </div>
                   {onClearFilters && (
@@ -3497,13 +3497,13 @@ export default function Cases({
               if (viewType === "folders" && folderId) {
                 // Case: In a folder in run mode, no cases
                 return (
-                  <div className="text-muted-foreground text-pretty m-2">
+                  <div className="m-2 text-pretty text-muted-foreground">
                     {t("repository.cases.noTestCases")}
                   </div>
                 );
               } // Case: Run mode, no specific folder (e.g. "all selected"), no cases
               return (
-                <div className="text-muted-foreground text-pretty m-2">
+                <div className="m-2 text-pretty text-muted-foreground">
                   {t("common.labels.noTestCasesSelected")}
                 </div>
               );

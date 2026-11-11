@@ -204,10 +204,10 @@ export function NumericFilterInput({
   };
 
   return (
-    <div className="p-2 space-y-2 bg-muted/30 rounded-md">
+    <div className="space-y-2 rounded-md bg-muted/30 p-2">
       {hasActiveFilter && (
-        <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
-          <span className="text-primary font-medium">
+        <div className="flex items-center justify-between rounded bg-primary/10 p-1.5 text-xs">
+          <span className="font-medium text-primary">
             {t("search.filters.filterActive")}{" "}
             {formatFilterDisplay(currentFilter)}
           </span>
@@ -237,7 +237,7 @@ export function NumericFilterInput({
         }}
       >
         <SelectTrigger
-          className="w-full h-8 text-xs"
+          className="h-8 w-full text-xs"
           aria-label={t("common.placeholders.selectOperator")}
         >
           <SelectValue placeholder={t("common.placeholders.selectOperator")} />
@@ -252,7 +252,7 @@ export function NumericFilterInput({
       </Select>
 
       {!isValueless && (
-        <div className="flex gap-2 items-center">
+        <div className="flex items-center gap-2">
           <Input
             type="number"
             step={fieldType === "Integer" ? "1" : "any"}
@@ -290,7 +290,7 @@ export function NumericFilterInput({
             size="sm"
             onClick={handleApply}
             disabled={!isValid()}
-            className="h-8 w-8 p-0 shrink-0"
+            className="h-8 w-8 shrink-0 p-0"
             aria-label={t("common.actions.apply")}
             data-testid="filter-input-apply"
           >

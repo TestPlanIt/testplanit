@@ -261,7 +261,7 @@ export function AddFolder({
                     <HelpPopover helpKey="folder.documentation" />
                   </FormLabel>
                   <FormControl>
-                    <div className="w-full border rounded-lg">
+                    <div className="w-full rounded-lg border">
                       <TipTapEditor
                         content={field.value}
                         onUpdate={(newContent) => field.onChange(newContent)}
@@ -277,7 +277,7 @@ export function AddFolder({
             <DialogFooter>
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

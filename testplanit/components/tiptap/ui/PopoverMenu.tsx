@@ -47,14 +47,14 @@ export const Menu = ({
       {withPortal ? (
         <Popover.Portal>
           <Popover.Content asChild sideOffset={8}>
-            <Surface className="min-w-[15rem] p-2 flex flex-col gap-0.5 max-h-80 overflow-auto z-9999">
+            <Surface className="z-9999 flex max-h-80 min-w-[15rem] flex-col gap-0.5 overflow-auto p-2">
               {children}
             </Surface>
           </Popover.Content>
         </Popover.Portal>
       ) : (
         <Popover.Content asChild sideOffset={8}>
-          <Surface className="min-w-[15rem] p-2 flex flex-col gap-0.5 max-h-80 overflow-auto z-9999">
+          <Surface className="z-9999 flex max-h-80 min-w-[15rem] flex-col gap-0.5 overflow-auto p-2">
             {children}
           </Surface>
         </Popover.Content>
@@ -85,13 +85,13 @@ export const Item = ({
   className?: string;
 }) => {
   const className = cn(
-    "flex items-center gap-2 p-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 text-start bg-transparent w-full rounded",
+    "flex w-full items-center gap-2 rounded bg-transparent p-1.5 text-start text-sm font-medium text-neutral-700 dark:text-neutral-300",
     !isActive && !disabled,
     "hover:bg-neutral-100 hover:text-neutral-800 dark:hover:bg-neutral-900 dark:hover:text-neutral-200",
     isActive &&
       !disabled &&
       "bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200",
-    disabled && "text-neutral-400 cursor-not-allowed dark:text-neutral-500",
+    disabled && "cursor-not-allowed text-neutral-400 dark:text-neutral-500",
     itemClassName
   );
 
@@ -102,7 +102,7 @@ export const Item = ({
 
   return (
     <ItemComponent className={className} onClick={onClick} disabled={disabled}>
-      {IconComponent && <IconComponent className="w-4 h-4" />}
+      {IconComponent && <IconComponent className="h-4 w-4" />}
       {IconCustomComponent}
       {label}
     </ItemComponent>
@@ -115,7 +115,7 @@ export type CategoryTitle = {
 
 export const CategoryTitle = ({ children }: CategoryTitle) => {
   return (
-    <div className="mt-4 first:mt-1.5 mb-1.5 text-[0.625rem] font-medium text-neutral-600 dark:text-neutral-400 uppercase select-none px-1">
+    <div className="mt-4 mb-1.5 px-1 text-[0.625rem] font-medium text-neutral-600 uppercase select-none first:mt-1.5 dark:text-neutral-400">
       {children}
     </div>
   );

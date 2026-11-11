@@ -39,7 +39,7 @@ export default async function AdminSharesPage({ params: _params }: PageProps) {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center gap-2 pb-2 pt-1">
+          <SectionHeader className="flex items-center gap-2 pt-1 pb-2">
             <CardTitle>{t("adminTitle")}</CardTitle>
           </SectionHeader>
           <CardDescription>{t("adminDescription")}</CardDescription>

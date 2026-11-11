@@ -47,24 +47,24 @@ const SystemOutputPopover: React.FC<SystemOutputPopoverProps> = ({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <div
-          className="cursor-pointer hover:underline truncate w-full whitespace-nowrap min-w-0 block align-bottom font-mono"
+          className="block w-full min-w-0 cursor-pointer truncate align-bottom font-mono whitespace-nowrap hover:underline"
           data-testid="system-output-trigger"
         >
           {isLazy ? t("actions.viewSystemOutput") : text}
         </div>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[700px] max-h-[500px] overflow-y-auto"
+        className="max-h-[500px] w-[700px] overflow-y-auto"
         onWheel={(e) => e.stopPropagation()}
       >
         {isLazy && lazyResult === undefined ? (
           <LoadingSpinner className="h-6" />
         ) : (
-          <pre className="whitespace-pre-wrap wrap-break-word text-sm">
+          <pre className="text-sm wrap-break-word whitespace-pre-wrap">
             {lines.map((line, idx) => {
               if (line.startsWith("COMMAND:")) {
                 return (
-                  <span key={idx} className="text-primary font-semibold">
+                  <span key={idx} className="font-semibold text-primary">
                     {line + "\n"}
                   </span>
                 );
@@ -73,7 +73,7 @@ const SystemOutputPopover: React.FC<SystemOutputPopoverProps> = ({
                 return (
                   <span
                     key={idx}
-                    className="text-muted-foreground font-semibold"
+                    className="font-semibold text-muted-foreground"
                   >
                     {line + "\n"}
                   </span>

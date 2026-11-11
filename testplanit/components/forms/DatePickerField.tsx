@@ -113,7 +113,7 @@ export function DatePickerField<T extends FieldValues = FieldValues>({
                 disabled={(date) => date > maxDate || date < minDate}
                 autoFocus
               />
-              <div className="p-2 border-t border-border">
+              <div className="border-t border-border p-2">
                 <Button
                   variant="ghost"
                   className="w-full justify-center text-sm"

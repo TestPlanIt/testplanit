@@ -56,7 +56,7 @@ export const MilestoneTypeListDisplay: React.FC<MilestoneTypeListProps> = ({
     <Popover>
       <PopoverTrigger>
         <Badge>
-          <Milestone className="w-4 h-4 me-1" />
+          <Milestone className="me-1 h-4 w-4" />
           {allMilestoneTypes.length}
         </Badge>
       </PopoverTrigger>
@@ -67,7 +67,7 @@ export const MilestoneTypeListDisplay: React.FC<MilestoneTypeListProps> = ({
               <div className="flex items-center space-x-1">
                 <div>
                   <DynamicIcon
-                    className="w-5 h-5"
+                    className="h-5 w-5"
                     name={milestoneType.icon?.name as IconName}
                   />
                 </div>

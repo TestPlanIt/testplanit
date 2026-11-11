@@ -396,7 +396,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           <div className="flex items-center gap-2">
             <code
               data-testid="webhook-url"
-              className="flex-1 break-all text-xs"
+              className="flex-1 text-xs break-all"
             >
               {rev.url}
             </code>
@@ -421,7 +421,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             <div className="flex items-center gap-2">
               <code
                 data-testid="webhook-secret"
-                className="flex-1 break-all text-xs"
+                className="flex-1 text-xs break-all"
               >
                 {rev.secret}
               </code>
@@ -441,7 +441,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             <p className="text-xs text-muted-foreground">{t("secretHelp")}</p>
           </div>
         )}
-        <p className="text-xs text-muted-foreground border-t border-primary/20 pt-2">
+        <p className="border-t border-primary/20 pt-2 text-xs text-muted-foreground">
           {t("nextSteps")}
         </p>
       </div>
@@ -463,7 +463,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     return (
       <div
         data-testid="webhook-test-result"
-        className="text-sm rounded-md border px-3 py-2"
+        className="rounded-md border px-3 py-2 text-sm"
       >
         {message}
       </div>
@@ -583,7 +583,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                   </div>
                   <code
                     data-testid="webhook-url"
-                    className="block break-all text-xs"
+                    className="block text-xs break-all"
                   >
                     {redactWebhookUrl(url)}
                   </code>

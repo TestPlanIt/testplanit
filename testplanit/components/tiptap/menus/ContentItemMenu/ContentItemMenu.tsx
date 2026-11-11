@@ -57,7 +57,7 @@ export const ContentItemMenu = ({ editor, editable }: ContentItemMenuProps) => {
         <Popover.Root open={menuOpen} onOpenChange={setMenuOpen}>
           <Popover.Trigger asChild>
             <Toolbar.Button
-              className="cursor-grab active:cursor-grabbing p-0 min-w-0!"
+              className="min-w-0! cursor-grab p-0 active:cursor-grabbing"
               data-drag-handle
             >
               <Icon name="GripVertical" />
@@ -73,7 +73,7 @@ export const ContentItemMenu = ({ editor, editable }: ContentItemMenuProps) => {
               className="radix-side-bottom:animate-slide-down radix-side-top:animate-slide-up"
               style={{ pointerEvents: "auto", zIndex: 9999 }}
             >
-              <Surface className="p-2 flex flex-col min-w-[16rem]">
+              <Surface className="flex min-w-[16rem] flex-col p-2">
                 <Popover.Close>
                   <DropdownButton onClick={actions.handleAdd}>
                     <Icon name="Plus" />

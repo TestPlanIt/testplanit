@@ -22,25 +22,25 @@ export const ProjectNameCell: React.FC<ProjectNameCellProps> = ({
 }) => {
   return (
     <div
-      className={`text-pretty font-semibold ${size === "md" ? "text-lg" : "text-sm"} overflow-hidden`}
+      className={`font-semibold text-pretty ${size === "md" ? "text-lg" : "text-sm"} overflow-hidden`}
     >
       <Link
-        className="flex items-center truncate group"
+        className="group flex items-center truncate"
         href={`/projects/overview/${projectId}`}
       >
         <Tooltip>
-          <TooltipTrigger type="button" className="text-start block truncate">
+          <TooltipTrigger type="button" className="block truncate text-start">
             <span className="truncate">{value}</span>
           </TooltipTrigger>
           <TooltipContent align="start">
             <div>{value}</div>
           </TooltipContent>
         </Tooltip>
-        <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
       </Link>
       {note && (
         <div
-          className={`${size === "md" ? "text-sm" : "text-xs"} text-foreground font-extralight truncate`}
+          className={`${size === "md" ? "text-sm" : "text-xs"} truncate font-extralight text-foreground`}
         >
           {note}
         </div>

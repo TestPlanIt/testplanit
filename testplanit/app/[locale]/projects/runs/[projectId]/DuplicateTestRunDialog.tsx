@@ -371,7 +371,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
           </DialogHeader>
-          <div className="flex justify-center items-center p-4">
+          <div className="flex items-center justify-center p-4">
             <LoadingSpinner />
           </div>
         </DialogContent>
@@ -413,7 +413,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
               render={() => (
                 <FormItem>
                   <div className="mb-4">
-                    <FormLabel className="text-base flex items-center">
+                    <FormLabel className="flex items-center text-base">
                       {t("fields.statusesToInclude.label")}
                       <HelpPopover helpKey="testRun.duplicate.statusesToInclude" />
                     </FormLabel>
@@ -424,7 +424,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                   {isLoadingCasesForStatusList ? (
                     <LoadingSpinnerAlert />
                   ) : availableStatuses.length > 0 ? (
-                    <div className="max-h-40 overflow-y-auto space-y-2 pe-2 border rounded-md p-2">
+                    <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-2 pe-2">
                       {availableStatuses.map((status) => (
                         <FormField
                           key={status.id}
@@ -434,7 +434,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                             return (
                               <FormItem
                                 key={status.id}
-                                className="flex flex-row items-center space-x-2 space-y-0"
+                                className="flex flex-row items-center space-y-0 space-x-2"
                               >
                                 <FormControl>
                                   <Checkbox
@@ -456,7 +456,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                                     disabled={isSubmittingThisDialog}
                                   />
                                 </FormControl>
-                                <FormLabel className="font-normal flex items-center">
+                                <FormLabel className="flex items-center font-normal">
                                   <StatusDisplay
                                     name={status.name}
                                     color={
@@ -491,7 +491,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base flex items-center">
+                    <FormLabel className="flex items-center text-base">
                       {t("fields.copyAssignments.label")}
                       <HelpPopover helpKey="testRun.duplicate.copyAssignments" />
                     </FormLabel>
@@ -521,7 +521,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base flex items-center">
+                    <FormLabel className="flex items-center text-base">
                       {tCommon("configurationGroup.title")}
                       <HelpPopover helpKey="testRun.duplicate.configurationGroup" />
                     </FormLabel>

@@ -94,7 +94,7 @@ export function MapColumnsStep({
   }, [unmappedRequired, onValidityChange]);
 
   return (
-    <div className="p-6 space-y-4" data-testid="dataset-import-wizard-step-map">
+    <div className="space-y-4 p-6" data-testid="dataset-import-wizard-step-map">
       <h3 className="text-base font-semibold">{t("importStep2Heading")}</h3>
 
       {toolbar}
@@ -102,10 +102,10 @@ export function MapColumnsStep({
       {unmappedRequired.length > 0 && (
         <div
           role="alert"
-          className="flex items-start gap-2 text-xs rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2"
+          className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs"
           data-testid="dataset-import-wizard-map-warning"
         >
-          <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <div className="space-y-1">
             {unmappedRequired.map((p) => (
               <div key={p.name}>
@@ -149,7 +149,7 @@ export function MapColumnsStep({
                         {p.name}
                         {p.required && (
                           <sup>
-                            <Asterisk className="w-3 h-3 text-destructive" />
+                            <Asterisk className="h-3 w-3 text-destructive" />
                           </sup>
                         )}
                       </SelectItem>

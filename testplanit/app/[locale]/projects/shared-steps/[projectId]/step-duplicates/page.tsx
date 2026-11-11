@@ -201,16 +201,16 @@ export default function StepDuplicatesPage() {
                         value={Math.round(
                           (scanProgress.analyzed / scanProgress.total) * 100
                         )}
-                        className="w-32 h-2"
+                        className="h-2 w-32"
                       />
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      <span className="text-xs whitespace-nowrap text-muted-foreground">
                         {`${Math.round((scanProgress.analyzed / scanProgress.total) * 100)}%`}
                       </span>
                     </>
                   ) : (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      <span className="text-xs whitespace-nowrap text-muted-foreground">
                         {t("scanning")}
                       </span>
                     </>

@@ -626,7 +626,7 @@ export function ReportRenderer({
     }
     if (emptyPrompt) {
       return (
-        <div className="flex items-center justify-center h-full">
+        <div className="flex h-full items-center justify-center">
           <Card className="max-w-md" data-testid="report-empty-prompt">
             <CardHeader>
               <CardTitle>
@@ -641,7 +641,7 @@ export function ReportRenderer({
       );
     }
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex h-full items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>{tReports("noResultsFound")}</CardTitle>
@@ -697,7 +697,7 @@ export function ReportRenderer({
         collapsedSize={0}
         collapsible
       >
-        <Card className="h-full rounded-none border-0 overflow-hidden">
+        <Card className="h-full overflow-hidden rounded-none border-0">
           <CardHeader className="pt-2 pb-2">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -716,7 +716,7 @@ export function ReportRenderer({
                   </p>
                 )}
                 {memoizedChart.isTruncated && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {tReports("chartDataTruncated.message", {
                       shown: MAX_CHART_DATA_POINTS.toLocaleString(locale),
                       total:
@@ -728,10 +728,10 @@ export function ReportRenderer({
               {headerActions}
             </div>
           </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
+          <CardContent className="flex h-[calc(100%-4rem)] flex-col p-6">
             {/* Focusable so keyboard users can scroll a report whose content
                 has nothing else to focus (WCAG 2.1.1). */}
-            <div className="flex-1 min-h-0 w-full overflow-auto" tabIndex={0}>
+            <div className="min-h-0 w-full flex-1 overflow-auto" tabIndex={0}>
               {/* The traceability report's visualization: coverage donut
                   + stat tiles (its legend) + a coverage-by-hierarchy
                   breakdown, all computed from the same rows the table
@@ -775,7 +775,7 @@ export function ReportRenderer({
         collapsedSize={0}
         collapsible
       >
-        <Card className="h-full rounded-none border-0 overflow-hidden">
+        <Card className="h-full overflow-hidden rounded-none border-0">
           <CardHeader className="pt-2 pb-2">
             <div className="flex flex-row items-end justify-between gap-4">
               <CardTitle>{tCommon("results")}</CardTitle>

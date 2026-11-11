@@ -1130,8 +1130,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   // NOW we can check if project exists - after everything is loaded
   if (!project) {
     return (
-      <Card className="flex flex-col w-full min-w-[400px] h-full">
-        <CardContent className="flex flex-col items-center justify-center h-full">
+      <Card className="flex h-full w-full min-w-[400px] flex-col">
+        <CardContent className="flex h-full flex-col items-center justify-center">
           <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
           </PageTitle>
@@ -1155,7 +1155,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
           subtitle={tFileDropZone("supportedResultFormats")}
         />
         <Card className="flex w-full min-w-[400px]">
-          <div className="flex-1 w-full">
+          <div className="w-full flex-1">
             <CardHeader id="test-runs-page-header">
               <div className="flex items-center justify-between gap-2">
                 <SectionHeader className="flex items-center gap-2">
@@ -1235,7 +1235,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                     (sunburstChartData.children &&
                       sunburstChartData.children.length > 0)) && (
                     <Card>
-                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                      <CardHeader className="flex flex-row items-start justify-between pb-2">
                         <div>
                           <CardTitle className="font-medium">
                             {tGlobal("runs.summary.workDistributionTitle")}
@@ -1296,7 +1296,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                             onTestRunClick={handleTestRunSunburstClick}
                           />
                         ) : (
-                          <p className="text-sm text-muted-foreground text-center w-full h-[210px] flex items-center justify-center">
+                          <p className="flex h-[210px] w-full items-center justify-center text-center text-sm text-muted-foreground">
                             {tGlobal("milestones.empty.forecasts")}
                           </p>
                         )}
@@ -1308,7 +1308,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                   {(isLoadingRecentResults ||
                     recentResultsChartData.length > 0) && (
                     <Card>
-                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                      <CardHeader className="flex flex-row items-start justify-between pb-2">
                         <div className="w-full">
                           <CardTitle className="font-medium">
                             {t("summary.recentResultsTitle")}
@@ -1363,13 +1363,13 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                           </span>
                         </Button>
                       </CardHeader>
-                      <CardContent className="flex justify-center items-center p-2">
+                      <CardContent className="flex items-center justify-center p-2">
                         {isLoadingRecentResults ? (
                           <LoadingSpinner />
                         ) : recentResultsChartData.length > 0 ? (
                           <RecentResultsDonut data={recentResultsChartData} />
                         ) : (
-                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                          <p className="flex h-[210px] items-center justify-center px-4 text-center text-sm text-muted-foreground">
                             {t("summary.noRecentResults")}
                           </p>
                         )}
@@ -1387,7 +1387,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                   {(isLoadingAutomatedResults ||
                     automatedResultsChartData.length > 0) && (
                     <Card>
-                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                      <CardHeader className="flex flex-row items-start justify-between pb-2">
                         <div className="w-full">
                           <CardTitle className="font-medium">
                             {t("summary.recentAutomatedResultsTitle")}
@@ -1442,7 +1442,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                           </span>
                         </Button>
                       </CardHeader>
-                      <CardContent className="flex justify-center items-center p-2">
+                      <CardContent className="flex items-center justify-center p-2">
                         {isLoadingAutomatedResults ? (
                           <LoadingSpinner />
                         ) : automatedResultsChartData.length > 0 ? (
@@ -1450,7 +1450,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                             data={automatedResultsChartData}
                           />
                         ) : (
-                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                          <p className="flex h-[210px] items-center justify-center px-4 text-center text-sm text-muted-foreground">
                             {t("summary.noRecentAutomatedResults")}
                           </p>
                         )}
@@ -1470,7 +1470,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                       (monthData) => monthData.count > 0
                     )) && (
                     <Card className="flex flex-col">
-                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                      <CardHeader className="flex flex-row items-start justify-between pb-2">
                         <div>
                           <CardTitle className="font-medium">
                             {t("summary.completionTrendTitle")}
@@ -1494,7 +1494,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                           </span>
                         </Button>
                       </CardHeader>
-                      <CardContent className="p-2 flex-1">
+                      <CardContent className="flex-1 p-2">
                         {isLoadingCompletedRunsData ? (
                           <LoadingSpinner />
                         ) : completedRunsMonthlyData.some(
@@ -1504,7 +1504,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                             data={completedRunsMonthlyData}
                           />
                         ) : (
-                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                          <p className="flex h-[210px] items-center justify-center px-4 text-center text-sm text-muted-foreground">
                             {tGlobal("sessions.summary.noCompletedRuns")}
                           </p>
                         )}
@@ -1522,11 +1522,11 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
-                    <CircleDot className="h-4 w-4 me-2" />
+                    <CircleDot className="me-2 h-4 w-4" />
                     {tCommon("fields.isActive")}
                   </TabsTrigger>
                   <TabsTrigger value="completed" className="w-1/2">
-                    <CircleCheck className="h-4 w-4 me-2" />
+                    <CircleCheck className="me-2 h-4 w-4" />
                     {tCommon("fields.completed")}
                   </TabsTrigger>
                 </TabsList>
@@ -1571,8 +1571,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                 <TabsContent value="completed">
                   <div className="flex flex-col">
                     {/* Filter and Pagination Controls */}
-                    <div className="flex flex-row items-start mb-4">
-                      <div className="flex flex-col grow w-full sm:w-1/3 min-w-[150px]">
+                    <div className="mb-4 flex flex-row items-start">
+                      <div className="flex w-full min-w-[150px] grow flex-col sm:w-1/3">
                         <Filter
                           key="completed-runs-filter"
                           placeholder={t("filter.placeholder")}
@@ -1580,7 +1580,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                           onSearchChange={setCompletedRunsSearchString}
                         />
                       </div>
-                      <div className="flex flex-col w-full sm:w-2/3 items-end">
+                      <div className="flex w-full flex-col items-end sm:w-2/3">
                         {totalCompletedRunsCount > 0 && (
                           <>
                             <div className="justify-end">
@@ -1601,7 +1601,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                                 }
                               />
                             </div>
-                            <div className="justify-end -mx-4">
+                            <div className="-mx-4 justify-end">
                               <PaginationComponent
                                 currentPage={completedRunsPage}
                                 totalPages={totalCompletedRunsPages}
@@ -1637,7 +1637,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
           open={isChartDialogOpen}
           onOpenChange={handleDialogCloseOrOpenChange}
         >
-          <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
+          <DialogContent className="flex h-[80vh] max-w-[80vw] flex-col p-0 sm:p-6">
             <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
               <DialogTitle>
                 {zoomedChartDetails
@@ -1653,7 +1653,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
             {zoomedChartDetails && (
               <>
                 <div className="flex-1 overflow-hidden p-4 sm:p-0">
-                  <div className="w-full h-full">
+                  <div className="h-full w-full">
                     {zoomedChartDetails.type === "sunburst" && (
                       <SummarySunburstChart
                         data={zoomedChartDetails.data}

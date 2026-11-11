@@ -188,18 +188,18 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
 
     return (
       <div
-        className={`overflow-auto flex items-center justify-center p-2 border-2 border-primary/30 rounded-md ${isRunning ? "border-destructive" : ""}`}
+        className={`flex items-center justify-center overflow-auto rounded-md border-2 border-primary/30 p-2 ${isRunning ? "border-destructive" : ""}`}
       >
         <Tooltip>
           <TooltipTrigger asChild>
             <Clock
-              className={`h-4 w-4 shrink-0 me-1 ${
+              className={`me-1 h-4 w-4 shrink-0 ${
                 isRunning
-                  ? "text-destructive animate-spin"
+                  ? "animate-spin text-destructive"
                   : seconds > 0 ||
                       displayMinutes !== "00" ||
                       displaySeconds !== "00"
-                    ? "text-muted-foreground cursor-pointer hover:text-primary"
+                    ? "cursor-pointer text-muted-foreground hover:text-primary"
                     : "text-muted-foreground"
               }`}
               onClick={handleClockClick}
@@ -221,7 +221,7 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
             value={displayMinutes}
             onChange={handleMinutesChange}
             onBlur={handleMinutesBlur}
-            className="w-12 text-center p-1"
+            className="w-12 p-1 text-center"
             disabled={isRunning}
             maxLength={2}
           />
@@ -231,7 +231,7 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
             value={displaySeconds}
             onChange={handleSecondsChange}
             onBlur={handleSecondsBlur}
-            className="w-12 text-center p-1"
+            className="w-12 p-1 text-center"
             disabled={isRunning}
             maxLength={2}
           />

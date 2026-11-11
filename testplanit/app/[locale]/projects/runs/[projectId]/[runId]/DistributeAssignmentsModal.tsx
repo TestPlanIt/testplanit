@@ -289,7 +289,7 @@ export function DistributeAssignmentsModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-5 py-2 min-w-0">
+        <div className="grid min-w-0 gap-5 py-2">
           {/* Team members */}
           <div className="grid gap-2">
             <Label>{t("runs.distribute.selectUsers")}</Label>
@@ -328,7 +328,7 @@ export function DistributeAssignmentsModal({
                   />
                   <Label
                     htmlFor="distribute-scope-all"
-                    className="font-normal cursor-pointer"
+                    className="cursor-pointer font-normal"
                   >
                     {t("runs.distribute.scopeAllConfigs")}
                   </Label>
@@ -337,7 +337,7 @@ export function DistributeAssignmentsModal({
                   <RadioGroupItem value="THIS_RUN" id="distribute-scope-this" />
                   <Label
                     htmlFor="distribute-scope-this"
-                    className="font-normal cursor-pointer"
+                    className="cursor-pointer font-normal"
                   >
                     {t("runs.distribute.scopeThisRun")}
                   </Label>
@@ -365,7 +365,7 @@ export function DistributeAssignmentsModal({
                   <div className="flex-1">
                     <Label
                       htmlFor="distribute-strategy-split"
-                      className="font-normal cursor-pointer block"
+                      className="block cursor-pointer font-normal"
                     >
                       {t("runs.distribute.strategySplitByConfig")}
                     </Label>
@@ -383,7 +383,7 @@ export function DistributeAssignmentsModal({
                   <div className="flex-1">
                     <Label
                       htmlFor="distribute-strategy-keep"
-                      className="font-normal cursor-pointer block"
+                      className="block cursor-pointer font-normal"
                     >
                       {t("runs.distribute.strategyKeepTogether")}
                     </Label>
@@ -430,7 +430,7 @@ export function DistributeAssignmentsModal({
                 />
                 <Label
                   htmlFor="distribute-weight-effort"
-                  className="font-normal cursor-pointer"
+                  className="cursor-pointer font-normal"
                 >
                   {t("runs.distribute.balancingEffort")}
                 </Label>
@@ -439,7 +439,7 @@ export function DistributeAssignmentsModal({
                 <RadioGroupItem value="COUNT" id="distribute-weight-count" />
                 <Label
                   htmlFor="distribute-weight-count"
-                  className="font-normal cursor-pointer"
+                  className="cursor-pointer font-normal"
                 >
                   {t("runs.distribute.balancingCount")}
                 </Label>
@@ -468,7 +468,7 @@ export function DistributeAssignmentsModal({
                 />
                 <Label
                   htmlFor="distribute-existing-unassigned"
-                  className="font-normal cursor-pointer"
+                  className="cursor-pointer font-normal"
                 >
                   {t("runs.distribute.existingOnlyUnassigned")}
                 </Label>
@@ -480,7 +480,7 @@ export function DistributeAssignmentsModal({
                 />
                 <Label
                   htmlFor="distribute-existing-reassign"
-                  className="font-normal cursor-pointer"
+                  className="cursor-pointer font-normal"
                 >
                   {t("runs.distribute.existingReassignAll")}
                 </Label>
@@ -489,7 +489,7 @@ export function DistributeAssignmentsModal({
           </div>
 
           {/* Preview */}
-          <div className="grid gap-2 min-w-0">
+          <div className="grid min-w-0 gap-2">
             <Label>{t("runs.distribute.previewTitle")}</Label>
             {selectedUsers.length === 0 ? (
               <span className="text-sm text-muted-foreground">
@@ -500,7 +500,7 @@ export function DistributeAssignmentsModal({
                 {errorMessage(previewError)}
               </span>
             ) : (
-              <div className="rounded-md border min-w-0">
+              <div className="min-w-0 rounded-md border">
                 <div className="w-full overflow-x-auto">
                   {/* Header row — flex cells with explicit px widths so the two
                       pinned columns' sticky offsets stay exact (auto table layout

@@ -764,7 +764,7 @@ export function WebhookOutboundForm({
                   <button
                     type="button"
                     data-testid={`webhook-outbound-subs-select-all-${key}`}
-                    className="whitespace-nowrap text-xs underline"
+                    className="text-xs whitespace-nowrap underline"
                     onClick={() => toggleSection(key)}
                   >
                     {tActions("selectAll")}
@@ -841,7 +841,7 @@ export function WebhookOutboundForm({
         <div className="flex items-center gap-2">
           <code
             data-testid="webhook-outbound-revealed-secret"
-            className="flex-1 break-all text-xs"
+            className="flex-1 text-xs break-all"
           >
             {secret}
           </code>
@@ -992,7 +992,7 @@ export function WebhookOutboundForm({
               <h4 className="text-sm font-semibold">{t("outboundUrlLabel")}</h4>
               <code
                 data-testid={`webhook-outbound-url-${config.id}`}
-                className="block break-all text-xs"
+                className="block text-xs break-all"
               >
                 {urlHints[config.id] ?? ""}
               </code>
@@ -1108,7 +1108,7 @@ export function WebhookOutboundForm({
                       <button
                         type="button"
                         data-testid={`webhook-outbound-config-${config.id}-subs-select-all-${key}`}
-                        className="whitespace-nowrap text-xs underline"
+                        className="text-xs whitespace-nowrap underline"
                         onClick={() => {
                           const next = allSelected
                             ? config.subscribedEvents.filter(
@@ -1229,7 +1229,7 @@ export function WebhookOutboundForm({
           {testResult && (
             <div
               data-testid={`webhook-outbound-test-result-${config.id}`}
-              className="text-xs rounded-md border px-2 py-1"
+              className="rounded-md border px-2 py-1 text-xs"
             >
               {testResult.ok
                 ? t("outboundSendTestQueued")

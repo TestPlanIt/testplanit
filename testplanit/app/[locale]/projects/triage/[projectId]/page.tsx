@@ -315,7 +315,7 @@ export default function TriagePage() {
                   placeholder={t("triage.filters.searchPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
-                  className="grow shrink basis-[160px] min-w-[160px] max-w-lg"
+                  className="max-w-lg min-w-[160px] shrink grow basis-[160px]"
                 />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger

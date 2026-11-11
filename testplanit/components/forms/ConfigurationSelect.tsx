@@ -62,8 +62,8 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
       onValueChange={(opt) => onChange(opt ? opt.id : null)}
       fetchOptions={fetchOptions}
       renderOption={(opt) => (
-        <div className="flex items-center gap-1 min-w-0">
-          <Combine className="w-4 h-4 shrink-0" />
+        <div className="flex min-w-0 items-center gap-1">
+          <Combine className="h-4 w-4 shrink-0" />
           <span className="truncate">{opt.name}</span>
         </div>
       )}

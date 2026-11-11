@@ -545,7 +545,7 @@ export function ProjectAuditLog({
       </div>
 
       {/* Controls Row */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <ColumnSelection
           key="project-audit-logs-column-selection"
           storageKey="project-audit-logs"

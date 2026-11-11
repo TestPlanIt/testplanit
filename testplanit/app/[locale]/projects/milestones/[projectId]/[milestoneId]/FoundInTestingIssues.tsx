@@ -190,21 +190,21 @@ export function FoundInTestingIssues({
             <Popover>
               <PopoverTrigger asChild>
                 <div
-                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  className="-mx-1 line-clamp-2 cursor-pointer overflow-hidden rounded px-1 py-0.5 text-sm text-ellipsis transition-colors hover:bg-accent/50"
                   style={{ maxWidth: column.getSize() }}
                   title={plainText}
                 >
                   {plainText}
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
+              <PopoverContent className="max-h-[400px] w-[500px] overflow-auto">
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">
+                  <h4 className="text-sm font-semibold">
                     {tCommon("fields.description")}
                   </h4>
                   {hasHtml ? (
                     <div
-                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ms-4 [&_ol]:list-decimal [&_ol]:ms-4"
+                      className="text-sm [&_a]:text-primary [&_a]:underline [&_ol]:ms-4 [&_ol]:list-decimal [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:ms-4 [&_ul]:list-disc"
                       dangerouslySetInnerHTML={{
                         __html: DOMPurify.sanitize(description!, {
                           ALLOWED_TAGS: [
@@ -308,8 +308,8 @@ export function FoundInTestingIssues({
     <div data-testid="found-in-testing-section">
       <Collapsible open={!isCollapsed} onOpenChange={handleCollapsedChange}>
         <div className="flex flex-col space-y-1.5 px-6 py-4">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2 font-semibold leading-none tracking-tight">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 leading-none font-semibold tracking-tight">
               <CollapsibleTrigger asChild>
                 <Button
                   type="button"
@@ -327,7 +327,7 @@ export function FoundInTestingIssues({
                   />
                 </Button>
               </CollapsibleTrigger>
-              <Bug className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Bug className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="flex items-center gap-1.5">
                 {!isLoading && (
                   <span data-testid="found-in-testing-count">
@@ -347,11 +347,11 @@ export function FoundInTestingIssues({
             </div>
           </div>
         </div>
-        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
+        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-slide-up data-[state=open]:animate-slide-down">
           <div className="px-6 pb-6">
             {!isLoading && issues.length === 0 ? (
               <div
-                className="text-sm text-muted-foreground py-8 text-center"
+                className="py-8 text-center text-sm text-muted-foreground"
                 data-testid="found-in-testing-empty"
               >
                 {t("foundInTestingEmpty")}

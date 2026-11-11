@@ -126,7 +126,7 @@ const VerifyEmail = () => {
     <div className="flex items-center justify-center">
       <Suspense fallback={<div>{t("loading")}</div>}>
         <Card className="w-3/4">
-          <CardHeader className="w-full flex flex-col items-center justify-center">
+          <CardHeader className="flex w-full flex-col items-center justify-center">
             {}
             <div className="flex items-center py-5">
               <Image
@@ -139,17 +139,17 @@ const VerifyEmail = () => {
                 priority={true}
               />
               <div className="ms-3 flex flex-col">
-                <span className="scroll-m-20 text-4xl font-semibold tracking-tight lg:text-5xl text-[rgb(133,89,233)]">
+                <span className="scroll-m-20 text-4xl font-semibold tracking-tight text-[rgb(133,89,233)] lg:text-5xl">
                   {tCommon("pageTitles.appName")}
                 </span>
-                <span className="text-xs text-muted-foreground -mt-1 no-wrap">
+                <span className="no-wrap -mt-1 text-xs text-muted-foreground">
                   {tCommon("branding.tagline")}
                 </span>
               </div>
             </div>
             <CardTitle
               data-testid="verify-email-page-title"
-              className="flex py-5 scroll-m-20 tracking-tight lg:text-3xl text-primary"
+              className="flex scroll-m-20 py-5 tracking-tight text-primary lg:text-3xl"
             >
               {tCommon("pageTitles.verifyEmail")}
             </CardTitle>
@@ -198,7 +198,7 @@ const VerifyEmail = () => {
                   )}
                 />
                 <Button type="submit">{tCommon("actions.verify")}</Button>
-                <div className="flex gap-2 items-baseline">
+                <div className="flex items-baseline gap-2">
                   <Button type="button" onClick={onSignout}>
                     {tCommon("actions.signOut")}
                   </Button>
@@ -216,7 +216,7 @@ const VerifyEmail = () => {
                 <div>
                   <Link
                     href="/signin"
-                    className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
+                    className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
                   >
                     {tGlobal("auth.signin.magicLink.backToSignIn")}
                   </Link>

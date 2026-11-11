@@ -1410,7 +1410,7 @@ export function AddCase({
           BulkEditModal; `overflow-y-hidden` and `flex` override DialogContent's
           own `overflow-y-auto grid` through tailwind-merge. */}
       <DialogContent
-        className="sm:max-w-[600px] lg:max-w-[1400px] max-h-[90vh] flex flex-col overflow-y-hidden"
+        className="flex max-h-[90vh] flex-col overflow-y-hidden sm:max-w-[600px] lg:max-w-[1400px]"
         data-testid="add-case-dialog"
       >
         <Form {...form}>
@@ -1430,7 +1430,7 @@ export function AddCase({
                         <FormLabel className="flex items-center">
                           {t("common.fields.template")}
                           <sup>
-                            <Asterisk className="w-3 h-3 text-destructive" />
+                            <Asterisk className="h-3 w-3 text-destructive" />
                           </sup>
                           <HelpPopover helpKey="case.template" />
                         </FormLabel>
@@ -1508,13 +1508,13 @@ export function AddCase({
                     collapsedSize={0}
                     minSize={0}
                     collapsible
-                    className={`p-0 m-0 me-4 ${
+                    className={`m-0 me-4 p-0 ${
                       isTransitioning
                         ? "transition-all duration-300 ease-in-out"
                         : ""
                     }`}
                   >
-                    <div className="mb-4 min-w-[300px] mx-1">
+                    <div className="mx-1 mb-4 min-w-[300px]">
                       <FormField
                         control={control}
                         name="name"
@@ -1523,7 +1523,7 @@ export function AddCase({
                             <FormLabel className="flex items-center">
                               {t("repository.addCase.name")}
                               <sup>
-                                <Asterisk className="w-3 h-3 text-destructive" />
+                                <Asterisk className="h-3 w-3 text-destructive" />
                               </sup>
                               <HelpPopover helpKey="case.name" />
                             </FormLabel>
@@ -1542,7 +1542,7 @@ export function AddCase({
                         )}
                       />
                     </div>
-                    <div className="my-4 mx-1 min-w-[100px] w-fit">
+                    <div className="mx-1 my-4 w-fit min-w-[100px]">
                       <FormField
                         control={control}
                         name="workflowId"
@@ -1551,7 +1551,7 @@ export function AddCase({
                             <FormLabel className="flex items-center">
                               {t("common.fields.state")}
                               <sup>
-                                <Asterisk className="w-3 h-3 text-destructive" />
+                                <Asterisk className="h-3 w-3 text-destructive" />
                               </sup>
                               <HelpPopover helpKey="case.state" />
                             </FormLabel>
@@ -1657,7 +1657,7 @@ export function AddCase({
                     <Button
                       onClick={toggleCollapse}
                       variant="secondary"
-                      className="p-0 -ms-1 rounded-s-none"
+                      className="-ms-1 rounded-s-none p-0"
                       type="button"
                     >
                       {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
@@ -1669,13 +1669,13 @@ export function AddCase({
                     collapsedSize={0}
                     minSize={0}
                     collapsible
-                    className="p-0 m-0 min-w-0 ms-4"
+                    className="m-0 ms-4 min-w-0 p-0"
                   >
                     <FormField
                       control={control}
                       name="estimate"
                       render={({ field }) => (
-                        <div className="min-w-[50px] mx-1">
+                        <div className="mx-1 min-w-[50px]">
                           <FormItem>
                             <FormLabel className="flex items-center">
                               {t("common.fields.estimate")}
@@ -1765,7 +1765,7 @@ export function AddCase({
               >
                 <SheetContent
                   side="right"
-                  className="sm:max-w-2xl overflow-y-auto"
+                  className="overflow-y-auto sm:max-w-2xl"
                   data-testid="addcase-inline-params-sheet"
                 >
                   <SheetHeader>
@@ -1791,7 +1791,7 @@ export function AddCase({
             <DialogFooter className="shrink-0 border-t border-primary/20 pt-4">
               {errors.root && (
                 <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
+                  className="bg-destructive p-2 text-sm text-destructive-foreground"
                   role="alert"
                 >
                   {errors.root.message}

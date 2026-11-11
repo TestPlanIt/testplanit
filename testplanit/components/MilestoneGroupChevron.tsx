@@ -69,7 +69,7 @@ export const MilestoneGroupChevron: React.FC<{
         </TooltipTrigger>
         <TooltipContent side="bottom">
           <p className="text-xs">{label}</p>
-          <p className="text-xs text-primary-foreground/65 mt-1">
+          <p className="mt-1 text-xs text-primary-foreground/65">
             {tRuns(
               isMacPlatform()
                 ? "milestoneGroup.altHintMac"

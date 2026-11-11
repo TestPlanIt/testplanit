@@ -335,7 +335,7 @@ export function AssignSharedDatasetDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
         data-testid="assign-shared-dataset-dialog"
       >
         <DialogHeader>
@@ -360,7 +360,7 @@ export function AssignSharedDatasetDialog({
                 {tCommon("loading")}
               </div>
             ) : datasets.length === 0 ? (
-              <div className="rounded-md border p-4 space-y-2">
+              <div className="space-y-2 rounded-md border p-4">
                 <p className="text-sm text-muted-foreground">
                   {t("assignSharedNoDatasets")}
                 </p>
@@ -417,7 +417,7 @@ export function AssignSharedDatasetDialog({
                   />
                   <label
                     htmlFor="assign-shared-pin-current"
-                    className="text-sm cursor-pointer"
+                    className="cursor-pointer text-sm"
                   >
                     {latestVersionNumber !== null
                       ? t("assignSharedPinCurrent", {
@@ -434,7 +434,7 @@ export function AssignSharedDatasetDialog({
                   />
                   <label
                     htmlFor="assign-shared-pin-follow-latest"
-                    className="text-sm cursor-pointer"
+                    className="cursor-pointer text-sm"
                   >
                     {t("assignSharedPinFollowLatest")}
                   </label>
@@ -449,7 +449,7 @@ export function AssignSharedDatasetDialog({
                   <div className="flex-1 space-y-2">
                     <label
                       htmlFor="assign-shared-pin-specific"
-                      className="text-sm cursor-pointer"
+                      className="cursor-pointer text-sm"
                     >
                       {t("assignSharedPinSpecific")}
                     </label>

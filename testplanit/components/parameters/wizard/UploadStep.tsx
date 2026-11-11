@@ -41,7 +41,7 @@ export function UploadStep({ onFileSelected }: UploadStepProps) {
 
   return (
     <div
-      className="p-6 space-y-4"
+      className="space-y-4 p-6"
       data-testid="dataset-import-wizard-step-upload"
     >
       <h3 className="text-base font-semibold">{t("importStep1Heading")}</h3>

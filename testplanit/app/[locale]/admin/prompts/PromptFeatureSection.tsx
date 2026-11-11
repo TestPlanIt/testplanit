@@ -91,7 +91,7 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
       <AccordionTrigger className="text-sm">
         <span className="flex items-center gap-2">
           {hasErrors && (
-            <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
           )}
           {t(`featureLabels.${feature}` as any) || LLM_FEATURE_LABELS[feature]}
           <span className="text-xs font-normal text-muted-foreground">
