@@ -1,4 +1,4 @@
-import { Job, Worker } from "bullmq";
+import { Job, UnrecoverableError, Worker } from "bullmq";
 import { isEmailServerConfigured } from "../lib/email/emailConfig";
 import {
   sendDigestEmail,
@@ -44,6 +44,20 @@ interface SendDigestEmailJobData extends MultiTenantJobData {
     createdAt: Date;
     url?: string;
   }>;
+}
+
+/**
+ * A permanent SMTP rejection (a 5xx reply, such as an unknown recipient) gets
+ * the same answer on every attempt, so the job fails once instead of retrying.
+ */
+function asJobError(error: unknown): unknown {
+  if (
+    error instanceof Error &&
+    (error as { permanent?: boolean }).permanent === true
+  ) {
+    return new UnrecoverableError(error.message);
+  }
+  return error;
 }
 
 const processor = async (job: Job) => {
@@ -533,7 +547,7 @@ const processor = async (job: Job) => {
         console.log(`Sent notification email to ${notification.user.email}`);
       } catch (error) {
         console.error(`Failed to send notification email:`, error);
-        throw error;
+        throw asJobError(error);
       }
       break;
 
@@ -914,7 +928,7 @@ const processor = async (job: Job) => {
         );
       } catch (error) {
         console.error(`Failed to send digest email:`, error);
-        throw error;
+        throw asJobError(error);
       }
       break;
 

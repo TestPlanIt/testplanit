@@ -789,6 +789,78 @@ describe("EmailWorker", () => {
     });
   });
 
+  describe("send failures", () => {
+    const smtpError = (message: string, permanent?: boolean) =>
+      Object.assign(new Error(message), { permanent });
+
+    const notificationJob = {
+      id: "job-smtp",
+      name: "send-notification-email",
+      data: { notificationId: "notif-1", userId: "user-1", immediate: true },
+    } as Job;
+
+    const digestJob = {
+      id: "job-smtp-digest",
+      name: "send-digest-email",
+      data: {
+        userId: "user-1",
+        notifications: [{ id: "notif-1", title: "t", message: "m" }],
+      },
+    } as Job;
+
+    beforeEach(() => {
+      mockDb.notification.findUnique.mockResolvedValue(baseNotification);
+      mockDb.notification.findMany.mockResolvedValue([baseNotification]);
+      mockDb.user.findUnique.mockResolvedValue(baseNotification.user);
+    });
+
+    it("fails a notification email without retrying when the SMTP rejection is permanent", async () => {
+      mockSendNotificationEmail.mockRejectedValue(
+        smtpError("550 5.1.1 No such user", true)
+      );
+      const { UnrecoverableError } = await import("bullmq");
+      const { processor } = await import("./emailWorker");
+
+      const failure = await processor(notificationJob).catch((error) => error);
+
+      expect(failure).toBeInstanceOf(UnrecoverableError);
+      expect(failure.message).toBe("550 5.1.1 No such user");
+    });
+
+    it("leaves a transient SMTP failure retryable", async () => {
+      const transient = smtpError("421 4.7.0 Try again later", false);
+      mockSendNotificationEmail.mockRejectedValue(transient);
+      const { UnrecoverableError } = await import("bullmq");
+      const { processor } = await import("./emailWorker");
+
+      const failure = await processor(notificationJob).catch((error) => error);
+
+      expect(failure).toBe(transient);
+      expect(failure).not.toBeInstanceOf(UnrecoverableError);
+    });
+
+    it("leaves a non-SMTP failure retryable", async () => {
+      const network = new Error("connect ECONNREFUSED");
+      mockSendNotificationEmail.mockRejectedValue(network);
+      const { processor } = await import("./emailWorker");
+
+      await expect(processor(notificationJob)).rejects.toBe(network);
+    });
+
+    it("fails a digest email without retrying when the SMTP rejection is permanent", async () => {
+      mockSendDigestEmail.mockRejectedValue(
+        smtpError("550 5.1.1 No such user", true)
+      );
+      const { UnrecoverableError } = await import("bullmq");
+      const { processor } = await import("./emailWorker");
+
+      const failure = await processor(digestJob).catch((error) => error);
+
+      expect(failure).toBeInstanceOf(UnrecoverableError);
+      expect(mockDb.notification.updateMany).not.toHaveBeenCalled();
+    });
+  });
+
   describe("unknown job type", () => {
     it("should throw an error for unknown job types", async () => {
       const { processor } = await import("./emailWorker");
