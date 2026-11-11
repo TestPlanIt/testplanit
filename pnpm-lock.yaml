@@ -268,10 +268,10 @@ importers:
         version: 3.0.3
       prettier:
         specifier: ^3.9.10
-        version: 3.9.10
+        version: 3.10.0
       vite:
         specifier: ^8.1.0
-        version: 8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
+        version: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
 
   cli:
     dependencies:
@@ -323,7 +323,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^5.1.0
-        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
   docs:
     dependencies:
@@ -338,7 +338,7 @@ importers:
         version: 3.10.2(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
       '@docusaurus/preset-classic':
         specifier: 3.10.2
-        version: 3.10.2(@algolia/client-search@5.63.0)(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(@types/react@19.3.0)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
+        version: 3.10.2(@algolia/client-search@5.64.0)(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(@types/react@19.3.0)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
       '@mdx-js/react':
         specifier: ^3.1.1
         version: 3.1.1(@types/react@19.3.0)(react@19.3.1)
@@ -353,7 +353,7 @@ importers:
         version: 8.6.0(react@19.3.1)
       lucide-react:
         specifier: ^1.70.0
-        version: 1.71.0(@types/react@19.3.0)(react@19.3.1)
+        version: 1.72.0(@types/react@19.3.0)(react@19.3.1)
       prism-react-renderer:
         specifier: ^2.4.1
         version: 2.4.1(react@19.3.1)
@@ -396,7 +396,7 @@ importers:
         version: 6.10.2(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))
       eslint-plugin-prettier:
         specifier: ^5.5.7
-        version: 5.5.7(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2)))(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prettier@3.9.10)
+        version: 5.5.7(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2)))(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prettier@3.10.0)
       eslint-plugin-react:
         specifier: ^7.37.5
         version: 7.37.5(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))
@@ -411,7 +411,7 @@ importers:
         version: 0.49.1(supports-color@10.2.2)
       prettier:
         specifier: ^3.9.10
-        version: 3.9.10
+        version: 3.10.0
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -441,7 +441,7 @@ importers:
         version: 4.4.0
       lucide-react:
         specifier: ^1.70.0
-        version: 1.71.0(@types/react@18.3.31)(react@19.3.1)
+        version: 1.72.0(@types/react@18.3.31)(react@19.3.1)
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -511,7 +511,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^5.1.0
-        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/mcp-server:
     dependencies:
@@ -539,7 +539,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^5.1.0
-        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/playwright-testplanit-reporter:
     dependencies:
@@ -564,7 +564,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^5.1.0
-        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/wdio-testplanit-reporter:
     dependencies:
@@ -592,16 +592,16 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^5.1.0
-        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
   testplanit:
     dependencies:
       '@aws-sdk/client-s3':
-        specifier: ^3.1165.0
-        version: 3.1165.0
+        specifier: ^3.1166.0
+        version: 3.1166.0
       '@aws-sdk/s3-request-presigner':
-        specifier: ^3.1165.0
-        version: 3.1165.0
+        specifier: ^3.1166.0
+        version: 3.1166.0
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -628,7 +628,7 @@ importers:
         version: 5.3.0
       '@hookform/resolvers':
         specifier: ^7.0.5
-        version: 7.0.5(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(fp-ts@2.16.11)(io-ts@2.2.22(fp-ts@2.16.11))(joi@17.13.9)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
+        version: 7.0.5(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(fp-ts@2.16.11)(io-ts@2.2.22(fp-ts@2.16.11))(joi@17.13.9)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
       '@mozilla/readability':
         specifier: ^0.6.0
         version: 0.6.0
@@ -922,7 +922,7 @@ importers:
         version: 3.10.1
       '@zenstackhq/server':
         specifier: ^3.10.1
-        version: 3.10.1(express@5.3.0(supports-color@10.2.2))(hono@4.13.17)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
+        version: 3.10.1(express@5.3.0(supports-color@10.2.2))(hono@4.13.18)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
       '@zenstackhq/tanstack-query':
         specifier: ^3.10.1
         version: 3.10.1(patch_hash=9de5f759e2459d278ba9023cf6c25c31127a30b3a1ea82d65d911c51611a1164)(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
@@ -933,14 +933,14 @@ importers:
         specifier: ^4.1.1
         version: 4.1.1
       ai:
-        specifier: ^7.0.168
-        version: 7.0.168(zod@4.6.7)
+        specifier: ^7.0.169
+        version: 7.0.169(zod@4.6.7)
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
       bullmq:
-        specifier: ^6.7.3
-        version: 6.7.3(ioredis@6.0.0(supports-color@10.2.2))(pg@8.23.1)
+        specifier: ^6.7.4
+        version: 6.7.4(ioredis@6.0.0(supports-color@10.2.2))(pg@8.23.1)
       busboy:
         specifier: ^1.6.0
         version: 1.6.0
@@ -1012,7 +1012,7 @@ importers:
         version: 21.0.4
       hono:
         specifier: '>=4.12.18'
-        version: 4.13.17
+        version: 4.13.18
       html-to-adf-converter:
         specifier: ^1.0.2
         version: 1.0.2
@@ -1060,7 +1060,7 @@ importers:
         version: 2.5.0
       multer-s3:
         specifier: ^3.0.1
-        version: 3.0.1(@aws-sdk/client-s3@3.1165.0)
+        version: 3.0.1(@aws-sdk/client-s3@3.1166.0)
       mustache:
         specifier: ^4.2.0
         version: 4.2.0
@@ -1071,8 +1071,8 @@ importers:
         specifier: ^4.24.15
         version: 4.24.15(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(nodemailer@10.5.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       next-intl:
-        specifier: ^4.14.10
-        version: 4.14.10(@swc/helpers@0.5.23)(@types/react@19.3.0)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
+        specifier: ^4.15.0
+        version: 4.15.0(@swc/helpers@0.5.23)(@types/react@19.3.0)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -1134,8 +1134,8 @@ importers:
         specifier: ^4.7.2
         version: 4.7.2(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react-hook-form:
-        specifier: ^7.91.0
-        version: 7.91.0(@types/react@19.3.0)(react@19.3.1)
+        specifier: ^7.92.0
+        version: 7.92.0(@types/react@19.3.0)(react@19.3.1)
       react-hot-toast:
         specifier: ^2.6.1
         version: 2.6.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -1385,7 +1385,7 @@ importers:
         version: 52.3.4(@types/react@19.3.0)(class-variance-authority@0.7.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwind-merge@3.7.0)
       '@vitejs/plugin-react':
         specifier: ^6.3.0
-        version: 6.3.0(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+        version: 6.3.0(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
       '@vitest/coverage-v8':
         specifier: ^5.1.0
         version: 5.1.0(vitest@5.1.0)
@@ -1424,7 +1424,7 @@ importers:
         version: 10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))
       eslint-plugin-prettier:
         specifier: ^5.5.7
-        version: 5.5.7(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2)))(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prettier@3.9.10)
+        version: 5.5.7(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2)))(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prettier@3.10.0)
       eslint-plugin-react:
         specifier: ^7.37.5
         version: 7.37.5(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))
@@ -1438,8 +1438,8 @@ importers:
         specifier: ^14.0.4
         version: 14.0.4
       lucide-react:
-        specifier: ^1.71.0
-        version: 1.71.0(@types/react@19.3.0)(react@19.3.1)
+        specifier: ^1.72.0
+        version: 1.72.0(@types/react@19.3.0)(react@19.3.1)
       pdf-parse:
         specifier: ^2.4.5
         version: 2.4.5
@@ -1450,11 +1450,11 @@ importers:
         specifier: ^8.5.10
         version: 8.5.32
       prettier:
-        specifier: ^3.9.10
-        version: 3.9.10
+        specifier: ^3.10.0
+        version: 3.10.0
       prettier-plugin-tailwindcss:
         specifier: ^0.8.1
-        version: 0.8.1(prettier@3.9.10)
+        version: 0.8.1(prettier@3.10.0)
       resize-observer-polyfill:
         specifier: ^1.5.1
         version: 1.5.1
@@ -1481,13 +1481,13 @@ importers:
         version: 6.0.3
       vite:
         specifier: ^8.1.0
-        version: 8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
+        version: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
       vite-tsconfig-paths:
         specifier: ^6.1.1
-        version: 6.1.1(supports-color@10.2.2)(typescript@6.0.3)(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+        version: 6.1.1(supports-color@10.2.2)(typescript@6.0.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
       vitest:
         specifier: ^5.1.0
-        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
 packages:
 
@@ -1514,14 +1514,14 @@ packages:
   '@adobe/css-tools@4.5.0':
     resolution: {integrity: sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q==}
 
-  '@ai-sdk/gateway@4.0.141':
-    resolution: {integrity: sha512-WWJgwE6+FPSp2y2wPmsaGYjoNqhsMI0PP8bfRcfuB70dPCCdEBDuH8yFXWxaqpv0C9jJ1UZJ5lYjXmt+ChVGmQ==}
+  '@ai-sdk/gateway@4.0.142':
+    resolution: {integrity: sha512-X5UpG2dMLT29OkHLOEknZ0/4/iEyPTuVEiNypiUc3ltuNz2k9ixssgBc/XcV4PylpBpz3RAdGQB4qDmVbUMX8A==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider-utils@5.0.78':
-    resolution: {integrity: sha512-MTob5fTOCPUPCjOCMaarvpEaSqtDWqVZrKBYa3H0KIUtP/AyxoNvhLkf3LHCXagNlyld7qs4Z6IhgOr3L0y8Ag==}
+  '@ai-sdk/provider-utils@5.0.79':
+    resolution: {integrity: sha512-IYu6MT0NDE3JFWBWEJWAXjhskHTSj6NfRp9FuEAOcyS2Jrj3qBePu7OEoXVmoCWT3pYPgrF4DBKzjjjOMRyw9Q==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -1530,8 +1530,8 @@ packages:
     resolution: {integrity: sha512-4uPgZ3qiX/JaQFr0dQoibUzHImZit9u05ro2BxGUnJwU4fV28BOAbKUa2OjQvqtM1tMac3bTKkaXdyzGovQXqg==}
     engines: {node: '>=22'}
 
-  '@algolia/abtesting@1.29.0':
-    resolution: {integrity: sha512-Js5cO6fnbGHQh4JflfLvIk6V7KgAsUSqUl0rgJhJoqn2JGuz+WuW4PGPoGKkJP8XmQxJs9BQghLRFSSGowZfdQ==}
+  '@algolia/abtesting@1.30.0':
+    resolution: {integrity: sha512-F8StfpD4keeV3Ks4D1pUcH20V7EJ1Rl4lA2dMgEbA9VgaYuotgf2DEdtC5by37TW9YA5HLRfg7EzR9vTxIP1bA==}
     engines: {node: '>= 14.0.0'}
 
   '@algolia/autocomplete-core@1.19.12':
@@ -1562,59 +1562,59 @@ packages:
       '@algolia/client-search': '>= 4.9.1 < 6'
       algoliasearch: '>= 4.9.1 < 6'
 
-  '@algolia/client-abtesting@5.63.0':
-    resolution: {integrity: sha512-hbV+y9u25KWZDADrG9ao2tXGLEKSxPN74kr4KJRwmRNQEmZqYZvUP/27T0IHqHfFTuw9yTsF+ZhFv3pR/SPV6w==}
+  '@algolia/client-abtesting@5.64.0':
+    resolution: {integrity: sha512-ZJXAl21SgzpTkG0FeQMmHwdIRbYigqmYGlcur4SLac0NEhOcc1zMH8MSOkPv/SWE+WoHzn3WyL6sKp4WItgiQQ==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/client-analytics@5.63.0':
-    resolution: {integrity: sha512-0DhnUl9a+3tDe5km19vAcv3OL2a9wXQmUzUSRDYcLmU4cwr+j3TjwXQKm9rMHm9vtEu+8c8Oq0MEkrjPnxCB2Q==}
+  '@algolia/client-analytics@5.64.0':
+    resolution: {integrity: sha512-NFqDJFP0MYUJtzwotGTIN4CwvPV5Pv/g9ruSXfjIqgIlHuQo4yAf6E2TVPpnNkcZYM4cupHHcxIt7/3UK9abVQ==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/client-common@5.63.0':
-    resolution: {integrity: sha512-iXBd+drYQ/7U/I30E/9/6nDOnBZGvpsYw/K2T+IiJtsjm1MwKaWj+mqGFtpNNbEDu23vit/KMAoyY7mceO03ng==}
+  '@algolia/client-common@5.64.0':
+    resolution: {integrity: sha512-h6jaIxLC5EbrI5LGI3AU8+2BwUolSvV/AXX9qk4gl1G0ZHNoAe0PEPAdmYvFdzHhgUmgOF7jVdOq39Y5wcyJOA==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/client-insights@5.63.0':
-    resolution: {integrity: sha512-mFOiUyV/nJn1ui2yWQTRUfkwuSjVJYCq1GWHxn97xZA+eUTDm+PzDkP5XDpNEi5fykA2MDN60Z6eg/Tqa01tXg==}
+  '@algolia/client-insights@5.64.0':
+    resolution: {integrity: sha512-lzzCCTxMWfYT4y0LUMmSsycPMmA15jnUxisc64R2ikQ3ksNgLqYWWM32yaoFPzjpr/TuLjHbpmi/ksajxBFwfA==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/client-personalization@5.63.0':
-    resolution: {integrity: sha512-dkZ+EU0iD5WHlZ09U36+uXuC0EIeH3W/S3zZouCIJF2mc1SA1PnMlYkot3zCd2YabKJMSQNKbhD87yVhqJ9jdw==}
+  '@algolia/client-personalization@5.64.0':
+    resolution: {integrity: sha512-B2o0sJVS0BFyOtx5cHIbg6vsU7LgTdubEOyH8jal8NEPo3IWJOSyI5ekUreJOICxpzs08eY98M4D4j2W+3oO9A==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/client-query-suggestions@5.63.0':
-    resolution: {integrity: sha512-Of/UcDIZzgHf8vzAUumhIP4dZ25VUvUeWZP+EOSykry97kw5Dz5T+cb5g/ri5zgp0u9HMRY9IH43aJlsrkokSA==}
+  '@algolia/client-query-suggestions@5.64.0':
+    resolution: {integrity: sha512-zEfHCOpI11ze0lsm3ZOitC1Nv7FpzkjdYaP8rTYHINOq4MID5jhf3FPbDdTKi6PKhJsclltzJj3yeIcR/Kxx2Q==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/client-search@5.63.0':
-    resolution: {integrity: sha512-rnwddEKha6/j0gV9rxrTT537EBf8ig1725lrl/Rxw/XwMQf+wVht2OanhjGKUDd3AlbI8i3QPHUs58NsqKdZmA==}
+  '@algolia/client-search@5.64.0':
+    resolution: {integrity: sha512-o+hiUkoRIxVbA/BDBL9ybZDZ9oiFuA4O6j/kUMYkW/q6CECFzQPX9GiAVDCsRN/YHMnMnUHS2C1YBTYgZmBp3Q==}
     engines: {node: '>= 14.0.0'}
 
   '@algolia/events@4.0.1':
     resolution: {integrity: sha512-FQzvOCgoFXAbf5Y6mYozw2aj5KCJoA3m4heImceldzPSMbdyS4atVjJzXKMsfX3wnZTFYwkkt8/z8UesLHlSBQ==}
 
-  '@algolia/ingestion@1.63.0':
-    resolution: {integrity: sha512-8oyIfEcEN00MaZv1/4aOBTvnhHpbiowtJbjXZfFrHTaYb9L8C2Lbw9jS7a091bZH3tqEPqst2Dtmb1aYTYkVFw==}
+  '@algolia/ingestion@1.64.0':
+    resolution: {integrity: sha512-ImYMHua4OneBCEUj5edE/NTlSZX/h8Oh2rDd8syzo90baAK/llxdX21/MLbadv/IEGhJjgQ5kQVhEHveWBAUIw==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/monitoring@1.63.0':
-    resolution: {integrity: sha512-UK5/+2233tJpTlLz0FyQfCrkvUElPKtk9kPVdOTn+tOeUVAdijVLgWvAuOiikYN/Lnd39Hm/s6yQPhr+NK9SSQ==}
+  '@algolia/monitoring@1.64.0':
+    resolution: {integrity: sha512-dDC55daKvyavHN3ZFJiEBVBHzUP3klAU9fsoKXeepxEUV04CZsPgNxHxbXWU8/OzuYA522yYRtUo5cpLgZHDAw==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/recommend@5.63.0':
-    resolution: {integrity: sha512-BKhhu9xnteiwA7ZrVc8MK9uu9R2QV1RwqgDowoArFybcAUWw0wfXzoDU0/FCTtDR2ItDfHP3LB3m/8+jSgsxvg==}
+  '@algolia/recommend@5.64.0':
+    resolution: {integrity: sha512-v9nuLKufudPiEHkuwmJdK/FxrX5mHGfFboUG/VUlYcDVYy2uyHsmPnf3a9KX8S5xPLwMRCnS1qEfyIf8PSHVTA==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/requester-browser-xhr@5.63.0':
-    resolution: {integrity: sha512-VbGDJxpQN0ga/bkwVtWqHTWgMNOmF73jHrMBKxVjalamMwK0lAu82oavFTryKh9T9lY3n/+iNfU82a99m6/cAg==}
+  '@algolia/requester-browser-xhr@5.64.0':
+    resolution: {integrity: sha512-jZA5fzF0UYrDQZ4W58DFrc+dBLkXL0d+jkFXrxwO+o1JoOtaxYYYtDxlYyWtrYl8R0FzDlVW4CgLRiqhsKsdHw==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/requester-fetch@5.63.0':
-    resolution: {integrity: sha512-JZtYq/0flmgMwxv9VQnSNCQBCfOscb0ngTlYcbmizkf2ZyThvl/WZrHGHqAnaEqhi1npuBF3F1saXMeWcu7VPg==}
+  '@algolia/requester-fetch@5.64.0':
+    resolution: {integrity: sha512-pnNZ+qWhRnJy4IhLjZe0ENEXYiwP93d939/qbNdl4X8Zo38Y2FEP3BYtwpF7BB9k0SKyUVuS0NkNS+/vcyRZ8A==}
     engines: {node: '>= 14.0.0'}
 
-  '@algolia/requester-node-http@5.63.0':
-    resolution: {integrity: sha512-erkF27oqaAguUhjgAsQ6UtWWfrZEX1OohVAHf6c2Km+keL/kfAUplq4Qhn39zlSIuk5nnW2mbGlV90KRWTsdEg==}
+  '@algolia/requester-node-http@5.64.0':
+    resolution: {integrity: sha512-pUOulw3Np129Sc/PqAPVw9gyO5hpEM9AdlAdG/YNhO69plNS3RK3YLuTv9rBHQmxO8DMmEze6qTppKJ1ihEQoQ==}
     engines: {node: '>= 14.0.0'}
 
   '@alloc/quick-lru@5.3.0':
@@ -1627,8 +1627,8 @@ packages:
   '@atlaskit/adf-schema@56.7.3':
     resolution: {integrity: sha512-2G82HHnQT/uSnk1cydfHrT/+S6ds+Oz7pkYKUBjdJjdhUFzNDeBR9MdpxusOQSDI0vrvtmkyR2IcY5xmv8p5dA==}
 
-  '@atlaskit/adf-schema@57.7.39':
-    resolution: {integrity: sha512-ueDMkn+Ocx2sr3V0Cuyv9vgorky4Wqiyt9zW6GRUKGPiE04iGybNRO1gBcBt7gk89wivumymQaDE1z/6nmlk1g==}
+  '@atlaskit/adf-schema@57.7.40':
+    resolution: {integrity: sha512-qVkSKh27FfFrBux8darAc27qkrAX9kpGeqD8oVuJCDl0/NBZ/1GxN2wISXQ3UBT6Z57aJT2Y3c/z1BH9jt6nIg==}
 
   '@atlaskit/adf-utils@20.9.83':
     resolution: {integrity: sha512-JIcnCXavDuoQnNflQXylJvyJ+Rp8i5i4KDZ+0x4I/YdkkgAShJPkKTLonx1h3EcXp2eiQBtcT2F8YIFisPzLhw==}
@@ -1690,8 +1690,8 @@ packages:
     peerDependencies:
       react: ^18.2.0
 
-  '@atlaskit/button@25.7.1':
-    resolution: {integrity: sha512-zYcCEJwkz13MMrzIIejrC+ZneVsLjTgqOkzc+ism6eFvZtD8LeM/9Dmo8LmC56iOh61ZdBOH4GJa/HT/C2jlUg==}
+  '@atlaskit/button@25.8.1':
+    resolution: {integrity: sha512-mojOKLGJbTSOpvuZPuwWiMVOQGW2efdQ18MaRGILOBc90ka1NP63Yxn88brdlZEwYxBu01mOYuEvT517ItZpvA==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
@@ -1757,13 +1757,13 @@ packages:
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/forge-react-types@2.13.0':
-    resolution: {integrity: sha512-Xq6qzXtDryjgz6kmMtsTNU5vVf+O7ukHIs4u9Y5iZTxc34FXJa9RYz1njjuuklRswp/ep4Arw4cI+dCeNaj8Kg==}
+  '@atlaskit/forge-react-types@2.14.0':
+    resolution: {integrity: sha512-rOMoVspgps1NVolaXkjKhymcWEiW9q68nCBneZv/iQPMa+dcq5P94WwCF/RWLjz4kOvILAx9mCtbOQeuMkJoZA==}
     peerDependencies:
       react: ^18.2.0
 
-  '@atlaskit/form@18.3.2':
-    resolution: {integrity: sha512-5fD7Eq0KcCS2PWFPpq58AfqeVvQCu3HDN8KutX5xCxCvML3gdpGIXvGZZk5F6WS2/spu1DqHg8B1oo5W8gvbtQ==}
+  '@atlaskit/form@18.3.3':
+    resolution: {integrity: sha512-uzhO3JamOLbhYMjGADgy7DvGJtxSgt2USer3Hv9E+kgzWtO3nGd8QcGgZ3O10bGqQYK3/I+rTLV8WU06yMNinw==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
@@ -1812,13 +1812,13 @@ packages:
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/logo@23.3.1':
-    resolution: {integrity: sha512-wncsBzNBKdw4IDwu4eS7ouOlyn3qUenKAny+NHNbz3hJYlrIgacea384F/Z9r9iuNwSbHzSYWuktiwhl9vyQwA==}
+  '@atlaskit/logo@23.3.2':
+    resolution: {integrity: sha512-wnioR8XT+YXZihiNkA46z6VAFMClBS/xiwQxvB5vivt8qNovxXBR4Qsr1yCWN5I2j6Mg53rpgmzh3QUBTNYIKA==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/lozenge@17.0.7':
-    resolution: {integrity: sha512-6z3fWgOqXrqyaNCGpMP5aialbqisPtxEacPqKLHHkKUlxZ3bsuGCULaFZAuDzGW+CQ99wjXMEUMEnvGouPmGog==}
+  '@atlaskit/lozenge@17.0.8':
+    resolution: {integrity: sha512-Kb5Ptkn1puDVdSf76LIso2s6Sngwn7FIpNL2G/DQTLO4xx6218D85Vq05WHVk0oRQ0Y0pC+nn4HO6Ep9P/rIyQ==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
@@ -1833,8 +1833,8 @@ packages:
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/motion@10.0.0':
-    resolution: {integrity: sha512-vZG8M/7OF+kRHBpJt5HfkAmVDGsYusFq07k1Ei0q4AnCiZ9OZUOiRFZHh2akvp3678lnD5cBhx4RRKI3tNShQA==}
+  '@atlaskit/motion@10.0.1':
+    resolution: {integrity: sha512-bi5OeQceFeM5iQQdn8v9B0zM/yaUIT0WZ4MuEKQyo1Vz52VIyocZxZw59F6MYDnA+YejJ9yZ6dxwgdcQtSBwLA==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
@@ -1928,11 +1928,11 @@ packages:
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/react-compiler-gating@0.2.6':
-    resolution: {integrity: sha512-DHmvwUn/HZXx+k3Nrbr5lt7CWQsCG/cBeZCfm7IZVEDfFAujxibMCrECGmVaDdAZAPKSPDVJMFcUBTVLjuBGQA==}
+  '@atlaskit/react-compiler-gating@0.2.7':
+    resolution: {integrity: sha512-aOcVwX7le2FX92NmSfvvyMEierigp9O/rYNy/M+1ablnRRq1osP/drquGBPuDRHjnq0dddNWYVR4VxhF54Dtqg==}
 
-  '@atlaskit/react-select@4.12.12':
-    resolution: {integrity: sha512-qlpY5s0tFzcJlaKiteUhKbOClxkfWgCs1LVdsB28sRwbyfNZfwqnCiFltvMFXm5A9trzZ1gGr1emXS7yUvUqwQ==}
+  '@atlaskit/react-select@4.12.13':
+    resolution: {integrity: sha512-NAFrVVK+NaO+syk088PUT0TDmjoavALoZdGtBFWZ7+dKLvqC6f2P9XhvOdXDg5CpOGyp9nu36iME1D6xF+gBtg==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
       react-dom: ^18.2.0 || ^19.0.0
@@ -1942,8 +1942,8 @@ packages:
     peerDependencies:
       react: ^18.2.0
 
-  '@atlaskit/react-ufo@8.4.1':
-    resolution: {integrity: sha512-aoNbygZguSu7nHA4LuOnC0U5LmRuw4Qi6Ap/3GiBmOAh5yjdcOgEOYbon30Amr827zJxdzpZN2/GsRo+6iWjVQ==}
+  '@atlaskit/react-ufo@8.4.2':
+    resolution: {integrity: sha512-7pKiOTRl5NglCxPRVVu7KAO72ch7D4gm7uXkPRVmqECdGE1UmjBrhTn3sAod3j9vV4l99HT8QnWGzce7/qwGKQ==}
     peerDependencies:
       react: ^18.2.0
 
@@ -2020,8 +2020,8 @@ packages:
     peerDependencies:
       react: ^18.2.0 || ^19.2.0
 
-  '@atlaskit/tmp-editor-statsig@260.0.0':
-    resolution: {integrity: sha512-FdmVzpyXbWH57/3N6Nf2be8gdz3mJygUeESdRLvWFRLVRP7Y7tzMjdLkCU/9b9SmBEe8pqADv60kN/duNWCsag==}
+  '@atlaskit/tmp-editor-statsig@261.0.0':
+    resolution: {integrity: sha512-j1DZ+iymeu1Mta7WCY2sJtKphOb+viTIad8MjV6oFqfv9CNox6dfG/aM/PjSaJ1O/zEJ7wRjPz43IxocUEW9Kw==}
     peerDependencies:
       react: ^18.2.0 || ^19.2.0
 
@@ -2046,8 +2046,8 @@ packages:
       react: ^18.2.0 || ^19.0.0
       react-dom: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/top-layer@7.1.6':
-    resolution: {integrity: sha512-q6Gviw/OV6df453Z8DT9yKCXYU2SLrKRdazYzwSCoOTi/RrX8wm6MZzkR396ptoydWeowPNtOdI05r2zS4WrGQ==}
+  '@atlaskit/top-layer@7.2.1':
+    resolution: {integrity: sha512-xenSQl2r3Kwdoi923OMVZPSQroBE0eZ2Ic/zNQbVq6Sc9vPJWsNL8DDzX/0YZ1rpZrs4hD96OT7kgR8UbOj5cw==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
       react-dom: ^18.2.0 || ^19.0.0
@@ -2060,74 +2060,74 @@ packages:
   '@atlassian/atlassian-openapi@1.0.6':
     resolution: {integrity: sha512-yy0aoEL9eQNGHYO6seBGnvY6jb9LlAm2y+vngO9Gy/B0OkmBr9GYrRM8ng0SgQz1IFGFQFhvZDcIEklBlD52rQ==}
 
-  '@aws-sdk/checksums@3.1002.4':
-    resolution: {integrity: sha512-C3EkQ34SUaVFhALeGrxCJQx0DM0r6NLxUVoYtt9jh/SSK5CqyYvhLn2kgUxW+XoLYxeytpmxk809H7ay4YyMFw==}
+  '@aws-sdk/checksums@3.1002.5':
+    resolution: {integrity: sha512-OHlfkNzDFjYnwNPABhwAkDTUi0HPjfsKUHJDR0bSMORpCXNzRpInPCNCIT08xKDhjaPlcLJ+2Av+Sk7hHnuC8A==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/client-s3@3.1165.0':
-    resolution: {integrity: sha512-6wcKobhqnJ89AEyHwvUAa8YTB2sLA4ISsSG6Ysn38XG8mHwtGfcMUrXKekshf2xKGCCA+88uoe3TXf9/BLshUg==}
+  '@aws-sdk/client-s3@3.1166.0':
+    resolution: {integrity: sha512-kc7U+1sysOT8fcFk75JnrH1YMIFHOPzGL8mG5QdpiK7QCYb36ES7GmPxCvoaXa79OEmdvHmL21B/preVdl8D+w==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/core@3.980.2':
-    resolution: {integrity: sha512-Q0hqjfLf1zvwB6aY6fi8pYrtgxHs8sqymhXH/iWBZM/wkokjT869Ws4F12nCD2KX3hiAvKku2cZplxM0cydX8A==}
+  '@aws-sdk/core@3.981.0':
+    resolution: {integrity: sha512-Mnu7gaDrC5UCdyH8uLxLfB2eWbjE/HbjKX1U1J2VQxG3TTATUDObW2wU3I8iH3e9YH5NN2CY6w1mlAIe2XJ3jg==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/credential-provider-env@3.972.83':
-    resolution: {integrity: sha512-6+hlZC2mCIX9XnjO+x3MwJuR9U7whWiiP0CVq3SLrCluueze0Elce40ivWPuH0TArqHBNyF4y62V5clNDCjtVw==}
+  '@aws-sdk/credential-provider-env@3.972.84':
+    resolution: {integrity: sha512-akZJetiMVeLRHsKzYh3LamDCo74ZUCeo0XoyRKMEMZT5qP7ReM6LhpioBCyuqKP5Vav5gEOeCmaQV0VVQr1Meg==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/credential-provider-http@3.972.85':
-    resolution: {integrity: sha512-Rm6vdrzm3eUoG+9frOhS9Q93WdqKq/5h+971aeazkTftwbz3AfYlATd7avn9aMkg2AHlafkbewm0yq/3Sc7GYA==}
+  '@aws-sdk/credential-provider-http@3.972.86':
+    resolution: {integrity: sha512-U4mHaDRPWAn63yhl7FXIzbppNmW1F+4dSLeuiUpej2v3Xb6rGwvayEJ8SdlrdMV+/mZtd+GStTEP2HqurEzXtw==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/credential-provider-ini@3.973.28':
-    resolution: {integrity: sha512-hSXbMSuPeUY1/RjBC9vahy3ADVULVLU/wyGEXeoelVFYEs7Pki3RF37wROlHOmT8c4XARhJhvLLs+65sczEsoA==}
+  '@aws-sdk/credential-provider-ini@3.973.29':
+    resolution: {integrity: sha512-/idO4bVjw34b1OiNxDqFNr3BsPg9dRm1iS6XM/rTqA33RfUgTuwBCFFCz/TwxNHkrQ45tp+RpKE8P609Ino8XQ==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/credential-provider-login@3.972.90':
-    resolution: {integrity: sha512-Hzpp8qvA1qcpAB3xX1+VUwmuTJBPh9h5Ju6CdzzESXTym2JvsTR1NmlhmrufkLr5y+Bj5rj/xjtK4gYu1wA6KA==}
+  '@aws-sdk/credential-provider-login@3.972.91':
+    resolution: {integrity: sha512-MujcVZc7mnodrsp85NX0QpnQrt7kY6zbVUl+TcvzJEZzgEQkRj4iopj0kNs3uXJUArpkA64Rxa0ga86qdx0gag==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/credential-provider-node@3.972.95':
-    resolution: {integrity: sha512-3IIZ78pwRVLy+d2xn1yRAyEXRc2eCYQ9r5zO4QqDQuVHbOHe01nTWGqLkEM5JAp/vA0pmQTjPojg8JZ10C668Q==}
+  '@aws-sdk/credential-provider-node@3.972.96':
+    resolution: {integrity: sha512-tBunyyRnxMvKsCn/pu1QrIxUYZ4Z25LkV8zGkFGpSE/YmI2W4m8SLQzloG/hZlelGP2vLRGtIQc5w1+DoXCK1A==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/credential-provider-process@3.972.83':
-    resolution: {integrity: sha512-XejCj4/jfZuXmH6P3HCP4eW/7rfrxG70RhurqAvyoo8hevgDwLDW8xR79ww8ad+T/ZD7ERK6jV7CCFBLLBhiLQ==}
+  '@aws-sdk/credential-provider-process@3.972.84':
+    resolution: {integrity: sha512-199C6OpNejd0nq9GFAkEFIKids1FL0R6LJtL9c1OTiDOXki7S1OduuPxW4+hE0LwndcYJ7YHOuYTlqScfpCocA==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/credential-provider-sso@3.973.27':
-    resolution: {integrity: sha512-lM9xX3+0PCW3H4QfIDk0PRlcJCeF7kV2Cv93MhWQgKRhxzdis5m9inBa801X0w+nq+ckzlYYxa4674etFTikvw==}
+  '@aws-sdk/credential-provider-sso@3.973.28':
+    resolution: {integrity: sha512-bGg7wH8wVDJQIcJggO9lg1ZYbG7l+PbLwHuM3Bi/e1TlCZhU712JS1W3tdRpyptdJD1UGyhBNGO/YrhrQCHKbg==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/credential-provider-web-identity@3.972.89':
-    resolution: {integrity: sha512-4uJ8gF2huGZ6QisO/AeQm7H2+4HXtEJTw0e6lsbc+Qu3YohUErkYGfJlKJWx3ociM6zlxVObiC6etoAKmnafKg==}
+  '@aws-sdk/credential-provider-web-identity@3.972.90':
+    resolution: {integrity: sha512-duLeE3xlf0viHeH+1RM4z5duR3b32BCZTWVMu+MbxFPjQBxy7hmIGEqt5hekuFPRuXoyhMovjNl+PNNsb5oiGQ==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/lib-storage@3.1165.0':
-    resolution: {integrity: sha512-tcHyqpJtRwcvAE0jqkt8kwmp8Bw595X/MUwrYVuPfZXgleHFgA+JGOgV7dt2MmydGzmwC58gD74+Rtn0RMirSQ==}
+  '@aws-sdk/lib-storage@3.1166.0':
+    resolution: {integrity: sha512-B4kZu48nr3inhz/274ZnREoJlo1KvyXTropMfyTFIKvkeQwLiBrPO7w4j8VvPgopPMu3XImmbjORVYID6d3GPg==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@aws-sdk/client-s3': ^3.1165.0
+      '@aws-sdk/client-s3': ^3.1166.0
 
-  '@aws-sdk/middleware-sdk-s3@3.972.88':
-    resolution: {integrity: sha512-Bx5FZr1vhqPSnrJWwJjeO4dYFJ3SNrjaQbw76A1rIKWIxhGXct4dlQLCkgtS52Xh6RNip5ObEIQyEsGAd4fcPw==}
+  '@aws-sdk/middleware-sdk-s3@3.972.89':
+    resolution: {integrity: sha512-Lem2/ZT1eOicVATBukPRPm2S4JAmrTEkP3/dnJE9iTeyqIKqsJF2j04f5L0o+rrZIrwR13swiQMdzcE5jXRzNA==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/nested-clients@3.998.2':
-    resolution: {integrity: sha512-T1vNOfMdvdjXU4Nq267iTFoxZ2Bj0vEatkp66j8wBtrpDoX1mBWmxy7RL8O93S2oXo+BFEiXH3nWtLMd0svLnA==}
+  '@aws-sdk/nested-clients@3.998.3':
+    resolution: {integrity: sha512-acHTTzMB13CU6dU4sxABYExMI3PQM2zStWH2MiUwJp/7QKTrLg2f7mbzSXoegW2kYOk2tdqQYagsZrWB8Xv7eA==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/s3-request-presigner@3.1165.0':
-    resolution: {integrity: sha512-UxiU48TtdqtpwouOYBCfkZ0T5XEggwnrSvzSAkFt57TmnW2Z5NJsmenjDopKl0jub742g90U1Ih6si8IogAv5Q==}
+  '@aws-sdk/s3-request-presigner@3.1166.0':
+    resolution: {integrity: sha512-Xyv+qVWYJeiMrsRhrbfWgP2nMJyDBd3XNW4M2O/5MfJLqH3L01p/wdh/QtbVdJlFZBh3n9JO2wwhoEWUVPwbaw==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/signature-v4-multi-region@3.996.52':
     resolution: {integrity: sha512-6W6SjGc8OXUhMzNxU1X922ghD+PP1XvzmCk5Scui0jaYsLezycMYR1RaLp5xTIOUrhTXyb4DnAbPr3fBgmdnzg==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/token-providers@3.1165.0':
-    resolution: {integrity: sha512-xYE0nhi3LLacRnoSuUzEv6riWczXXeOOoXeMVw97KBHMLmHKqxmc94leV4RMzEK/BNbZfCKmL5FQoOiuIBkp/g==}
+  '@aws-sdk/token-providers@3.1166.0':
+    resolution: {integrity: sha512-ngJ8mxXqtQ9mnp7QV6TWKJCxkpjVfPWxKQSc2FYhCyCfOVFIGdFv7P+/RqVffFrJAorwBPpktnv32gNlcEgF4g==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/types@3.975.1':
@@ -3991,8 +3991,17 @@ packages:
   '@eloqnt/format-po@0.1.1':
     resolution: {integrity: sha512-aLtmIoqXGEaeTT0RcsLN8sZ3aIrsT/c/dVs28zrLhDjO3+vA3KNP+r98N0xq8w/k36+/GIUt4uZNbqcA71GVWw==}
 
+  '@emnapi/core@2.0.0-beta.2':
+    resolution: {integrity: sha512-MzCVoWtcg4Pm2B3je5mMvYMvj3MmBKw+fU7vbsJc9/iT8ip6/eYIHo/Dsm/mr+wsHB6SEyJDuxB09Yy6r/8+4A==}
+
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
+
+  '@emnapi/runtime@2.0.0-beta.2':
+    resolution: {integrity: sha512-JcrSPzPvZuNZvJqPTF9Fw25LbOJ8avzFVlaf2grmH4Cku0oGP47tRgqPZadcfj3YoZMHkFVnCYFbQM8I+i5QEw==}
+
+  '@emnapi/wasi-threads@2.2.0':
+    resolution: {integrity: sha512-JP7OYH38Q7+pyTAe14raZHLQIK7BDKbdwji+Xi3pcd/6QkJYQH3SX4wu6EplGrGJWRepoNzedfm0G3B9Z4e9Rw==}
 
   '@emotion/babel-plugin@11.13.5':
     resolution: {integrity: sha512-pxHCpT2ex+0q+HH91/zsdHkw/lXd468DIN2zvfvLtPKLLMo6gQj7oLObq8PhkrxOZb/gGCq03S3Z7PDhS8pduQ==}
@@ -4395,14 +4404,8 @@ packages:
   '@formatjs/fast-memoize@3.1.7':
     resolution: {integrity: sha512-zXfhLpvA6T7+efdt9JLbBwZ00tT7NsBMDVnDu8rpHeNNv8KfRZAMo2gkG0k9lK/Nzc//3kJ9pImsfuJxk3KhUA==}
 
-  '@formatjs/icu-messageformat-parser@3.5.18':
-    resolution: {integrity: sha512-wX1efcL8d7K5QapOTRsP/OLTA/kpwe4LwqWyNxDNg5iRs8i9jJbCyxB5P8jc4KOW5oiLzz2DJr+BRY5xMV9+bA==}
-
   '@formatjs/icu-messageformat-parser@3.5.23':
     resolution: {integrity: sha512-iB1fYfhtSGd8uH9A8b1m01Ujcv6QtQnJasefP3jPApmz72L/zNipzf3BdoinTMd1xuviVChjUJWL60iTwjUQ+w==}
-
-  '@formatjs/icu-skeleton-parser@2.1.11':
-    resolution: {integrity: sha512-j8cUmOJzVgkHuS0QiQ6ga76UIoLOFSAMWhs7aZJztH3aAdCOAE6vpC8KVvFB4cU10ON0y2/5oOVmPJ43s2lTwA==}
 
   '@formatjs/icu-skeleton-parser@2.1.13':
     resolution: {integrity: sha512-IdAJ9NrHn7AF0zqncD9UpxQozTYyJtbwwrZnJMEKVxTcOOXtVkUb2XYTpNOGTAv58NCsk0rjRB9G+i2SvBmGAQ==}
@@ -4421,8 +4424,8 @@ packages:
   '@hapi/topo@5.1.0':
     resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
 
-  '@hono/node-server@1.19.18':
-    resolution: {integrity: sha512-609kppIP9GITS+EwPyB6Kiq8z2yXONaYD1VHpo7MMP9celRJYbkFr9KakJncHwK0EK/XYtlogqmrLchDv5HX5w==}
+  '@hono/node-server@1.19.19':
+    resolution: {integrity: sha512-Fy9R7PACOzHU9LDpfnuzVyuVYevKQRcEG2mZhmfc+DRdmayEd3RVfa2XOt2IgGcPNgA77Yk63KBszepcMFK5Ng==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: '>=4.12.18'
@@ -5050,6 +5053,13 @@ packages:
   '@napi-rs/canvas@0.1.80':
     resolution: {integrity: sha512-DxuT1ClnIPts1kQx8FBmkk4BQDTfI5kIzywAaMjQSXfNnra5UFU9PwurXrl+Je3bJ6BGsp/zmshVVFbCmyI+ww==}
     engines: {node: '>= 10'}
+
+  '@napi-rs/wasm-runtime@1.2.6':
+    resolution: {integrity: sha512-mRyDmEw9/fCDXCGfL1sbgIw/GUK0PVxRW4YwgPN61F3LQ+fSyoBFarJVzgGyhF6kRzEQZ0FejDqm4WLXSeqQmw==}
+    engines: {node: ^20.19.0 || ^22.13.0 || >=23.5.0}
+    peerDependencies:
+      '@emnapi/core': ^1.7.1 || 2.0.0-beta.2
+      '@emnapi/runtime': ^1.7.1 || 2.0.0-beta.2
 
   '@next/env@16.4.6':
     resolution: {integrity: sha512-SunBjJ6t+oBtecS3dTjdVuMhUogP5wD/vrGL5EVuQYM1iS4O5ilL51HkiJ3sPjMzRHiCChvr4dbaSJbR7F3lxA==}
@@ -6024,98 +6034,103 @@ packages:
       react-redux:
         optional: true
 
-  '@rolldown/binding-android-arm-eabi@1.2.18':
-    resolution: {integrity: sha512-ubTG+4KlidvioxjOFdsdEa2F6JVGZb8m2ByJUqQ7fYzUeT1cEn194POcsQ10PKH4p//q0YQn4SB3YpSuzcA1Yg==}
+  '@rolldown/binding-android-arm-eabi@1.2.19':
+    resolution: {integrity: sha512-e+Ebe0WT+9tbXmNKPIiC8YrWAHYwug3m6i4p3rZGGulfZri1jtI4HslT+OZnFf/OIHowWF71DTlHwXBP2SiA7A==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm]
     os: [android]
 
-  '@rolldown/binding-android-arm64@1.2.18':
-    resolution: {integrity: sha512-2Xa1t/JeFGTZn5TbzgPppcCftF8sCVnTNvrIvoSdcZhoFzAuVy1L3xxQUQ4sfWDtwVzg1u6Yi1R3SlJugRNV2Q==}
+  '@rolldown/binding-android-arm64@1.2.19':
+    resolution: {integrity: sha512-hOombrTJ+szt2ciEzS7oCA78lMPBgF5UMQWCJIyNfnrI7GLl8HYoFqCnpL2gcPOaXMqryGCU5ExdQKyDDcC+yA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [android]
 
-  '@rolldown/binding-darwin-arm64@1.2.18':
-    resolution: {integrity: sha512-iUzw9HshVvrWci9gVXjxWS7/M/IcLvNo67vu2c/w9zKBz4hIvPRixdUpIW/iCfhldLaq9ER2hecsI9UY5z0/yA==}
+  '@rolldown/binding-darwin-arm64@1.2.19':
+    resolution: {integrity: sha512-XoMA2pwCKGTQzUjPgtRwkedH4WmXhdIPKT6l6oOxd1PUbNodGI6DcBekgN7EC//+x3pfBYX/qL1gNmZAqivw5g==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [darwin]
 
-  '@rolldown/binding-darwin-x64@1.2.18':
-    resolution: {integrity: sha512-XuDHFzbFEtZl0QGJi92+fmG67tfnp1iZ9VOeDkwasGyTq2VG3/5PnJnvAr+MTzFh/rNScJ3VhN+XpZyyGsN7Jw==}
+  '@rolldown/binding-darwin-x64@1.2.19':
+    resolution: {integrity: sha512-zo8EsSSwMZCY/e+fRnGaX02YGgvJD0yvhNi/9hpGPA2MJ9ZF8dPCw75UGfpI6OpQ/myR/dIYmogRvqiZD0TrXg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [darwin]
 
-  '@rolldown/binding-freebsd-x64@1.2.18':
-    resolution: {integrity: sha512-MM8opLfsLK15oEXDz6iBc0t3ahu+ew9jsAmha+ovZ33hSwYgqo7YmpRITqFTfW7xA71BLEQ3jJdTsaCmhB1c9w==}
+  '@rolldown/binding-freebsd-x64@1.2.19':
+    resolution: {integrity: sha512-O8ISAOfI1nj7AuBPd30FSF47z7f7lzlk5poQVGgiikvQuGEBFYvW8ki+UEnT+YJPnNGjQzn304klt4O9FUE7mA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [freebsd]
 
-  '@rolldown/binding-linux-arm-gnueabihf@1.2.18':
-    resolution: {integrity: sha512-J6EoCWiy5RnFQzHrKyHXXevZ9lukQfGpnchX/zG/k/WC2nc9O9XyS1JgA8kI9VxMFggMbCPjpv7LcikriXfehw==}
+  '@rolldown/binding-linux-arm-gnueabihf@1.2.19':
+    resolution: {integrity: sha512-/lYCba5NO0yq4S0jGMH8QTBtkvQxoXjoQWzF5BcWp9MjB9jxVRD1GQDNofkVjcOj30DWyhLIN/4Oe60JKzaONw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm]
     os: [linux]
 
-  '@rolldown/binding-linux-arm64-gnu@1.2.18':
-    resolution: {integrity: sha512-HIkFuLF7CdDeki+1aCZLLbLq0hk/PHntb+z4/YCTo47JbksTD6jJEELIz92tYROmDmvMrNqUMqBi71BkJLDR+A==}
+  '@rolldown/binding-linux-arm64-gnu@1.2.19':
+    resolution: {integrity: sha512-pm/apFMBnSbFb3O6nG5pHO1iqHhZrjGDFEjSm+ot9J17XXPvH9L90y5h+jgfHCE+Qdlsvy8qKEcU4VKxgjD+vA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@rolldown/binding-linux-arm64-musl@1.2.18':
-    resolution: {integrity: sha512-4oqWItLLYt7IceOnElCct8T2ek5p7PmD7LN04TRJRXGo5f3HtKTgGH6PhYRFK4C2ICkq/LMUU0BVPvvlAKhm8g==}
+  '@rolldown/binding-linux-arm64-musl@1.2.19':
+    resolution: {integrity: sha512-K1SmQp3FFichn8oqrNIwvFoZ5wcvjC7goBzpaMNvLf9FZc+QB/QvLmnpJZgAAGHiD980tP8FZZnXk2K94rvlxg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@rolldown/binding-linux-ppc64-gnu@1.2.18':
-    resolution: {integrity: sha512-+AkRly5SrCEgnPhGRfub7pucASYEC2fTsxZg7VCcnozpA2+Wn/gCYy1t7LuJS67/xyJu/7noYBJncDUkbwgw2A==}
+  '@rolldown/binding-linux-ppc64-gnu@1.2.19':
+    resolution: {integrity: sha512-I0xwD57jP/3A7+5UPZin2w8Y7XHEmEM5zqpYZOcQ45MlNW6tUJUziymV3yRr7rL4vwyfEcRsRksC4a7Kc08p5Q==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [ppc64]
     os: [linux]
     libc: [glibc]
 
-  '@rolldown/binding-linux-s390x-gnu@1.2.18':
-    resolution: {integrity: sha512-Ttg1r9vVykMnQrE/GwYO9icKtXiuiMfRe/w74xJkeoVuvhRG+WtT6LEMOf58Yl63yd77lhHzO8Y55R8CC3XALA==}
+  '@rolldown/binding-linux-s390x-gnu@1.2.19':
+    resolution: {integrity: sha512-BrtEHT24SNXj9HiXqy+s/kXiSiQGt6EKCPUlRirAoIioVxKGnbXBUEkbZASAei7iZJB0/Ynm+0JP00Ipx7AnSw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [s390x]
     os: [linux]
     libc: [glibc]
 
-  '@rolldown/binding-linux-x64-gnu@1.2.18':
-    resolution: {integrity: sha512-xX1Tt4o5jUMma0vJsXp5eRZA9nOuyigb2dKJMMzZRmzMxLYGE9PaKKSqHPzPvSQgM8ZOEacSTQwDQcwWfh0xmQ==}
+  '@rolldown/binding-linux-x64-gnu@1.2.19':
+    resolution: {integrity: sha512-rm75/9DkHKeU2WnA8w4X94WGYgLlDCFCfkQC+4bguVJmC/jvDRv2B+2wLOYhyE0fVuv7//Ckk39OoOufyCu76Q==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@rolldown/binding-linux-x64-musl@1.2.18':
-    resolution: {integrity: sha512-4VVlGI5K2kociZlW3lSN8VjG3TW5yQIlAcfCdBXMgGjJxZll15Fa4ocRHXHvIVVnwlibCw/NQajJrNDiqqpiiw==}
+  '@rolldown/binding-linux-x64-musl@1.2.19':
+    resolution: {integrity: sha512-irh/4+iYFM4GAzpluDErgjz89bj6NDtqqMAG/6O1LG38Ed3NpyebzCpcVNkFW8uhy+/3/BocUvnXDR33CXWe9A==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@rolldown/binding-openharmony-arm64@1.2.18':
-    resolution: {integrity: sha512-PApTsgH1jLYuyy3tSCz9De82Gq5qXwi7vImVZhEzTgX1C4150Cp5M2ZfL3pLvbCvbEHL0oJeC6pd6podtv8Y5w==}
+  '@rolldown/binding-openharmony-arm64@1.2.19':
+    resolution: {integrity: sha512-+KWTWNoPt+CfSq94CiceWu3yPE+QzkaG+phPyz9G60tmZLwfQkcA4AeksafzvJAw4pvg1mcd5a1TkUqVv0s4JA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [openharmony]
 
-  '@rolldown/binding-win32-arm64-msvc@1.2.18':
-    resolution: {integrity: sha512-J2XjWjx/SP+4x0H4r6dz3Vzb5WVkg7re40Do9K7HJ3sK2/xcmZrWwakXlSwaMvOkvruLJCD4CL/3wqsIR/thgg==}
+  '@rolldown/binding-wasm32-wasi@1.2.19':
+    resolution: {integrity: sha512-7EH+skOsl5qpWnK0vzamgJFhOv1cwxQpsxm8tI883K9fur5c27p8q87fzEO6BbBPabA2/+s/zR63/pLc137iOg==}
+    engines: {node: ^20.19.0 || ^22.13.0 || >=23.5.0}
+    cpu: [wasm32]
+
+  '@rolldown/binding-win32-arm64-msvc@1.2.19':
+    resolution: {integrity: sha512-3Q1Yg1Q7tEvBWoZf5rFvG/GKZQPgwfru+p4wBajDfJFBs0SHCpL++dfTjW9gyAKd1T7ZpIYvdaUax7Pa/IhFVQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [win32]
 
-  '@rolldown/binding-win32-x64-msvc@1.2.18':
-    resolution: {integrity: sha512-XwRJxRQvkuEtS0hIIt29QrqPJ+JzMJSNYHJw4ae/mc6uEarfRG1ceyg4HmmWiBdL/YCb6g7N5BLbSvmRJRYZHw==}
+  '@rolldown/binding-win32-x64-msvc@1.2.19':
+    resolution: {integrity: sha512-y/sqRRc6d7hECzOFc5n3LSeqctmIp9mMjY1Kq4s14uLPd/LZ4z7i1zrW6fMtp2mPeuQIC4e6ULMcwQzMomqQag==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [win32]
@@ -7375,6 +7390,9 @@ packages:
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
 
+  '@tybys/wasm-util@0.10.4':
+    resolution: {integrity: sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A==}
+
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
 
@@ -8300,8 +8318,8 @@ packages:
     resolution: {integrity: sha512-1m4/ydbOGBbHTtBYa4/ISQcqfPdZAxQLzj71wM71T8lP4ktez8lcsVolvscrujQW4CJr/LJSzoZ6mcfnqzYQ3A==}
     engines: {node: '>=18'}
 
-  ai@7.0.168:
-    resolution: {integrity: sha512-splDioC01ZxX9HjpPURppssRuMymmniVDfPihbzSPk1dj6E95cvIkjTl7VC5jojVKkd/6xscE1x0816KBmFA3w==}
+  ai@7.0.169:
+    resolution: {integrity: sha512-p2GHNRXnIP7EE5/pV8pq2RrFDtXrSMSAZB6/CQHYXCaFXrKqspzDyXn89wSg5bv61V3KukjQQtguSOVkN5KI9w==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -8338,8 +8356,8 @@ packages:
     peerDependencies:
       algoliasearch: '>= 3.1 < 6'
 
-  algoliasearch@5.63.0:
-    resolution: {integrity: sha512-Mo4d4u6mQ9f48DrxKzdsO1y6dUaxoG5d+4VhYriYxRiqWfJYGk/0npoDiAa237zuAkQS3EVilD0q+7W+7cGH/g==}
+  algoliasearch@5.64.0:
+    resolution: {integrity: sha512-18v+iAJErDZZKuOXLd9RHcd2m0THXpqtH5pSvOYCMCpDcXkdoVc+yj6H6dGTYOLJyB02lvEJNzYCSWeq0BPrTg==}
     engines: {node: '>= 14.0.0'}
 
   amp-message@0.1.2:
@@ -8759,11 +8777,11 @@ packages:
     resolution: {integrity: sha512-2hCgjEmP8YLWQ130n2FerGv7rYpfBmnmp9Uy2Le1vge6X3gZIfSmEzP5QTDElFxcvVcXlEn8Aq6MU/PZygIOog==}
     engines: {node: '>=14.16'}
 
-  brace-expansion@1.1.21:
-    resolution: {integrity: sha512-9zeA+KLZNNzglF2TPKRQEDyx6Yby7daAkuy8MiPzpXPsYDWi/DRM8jmwUDxokQjYqBpv5DgPiwD4h4ZZSy1Ujw==}
+  brace-expansion@1.1.22:
+    resolution: {integrity: sha512-CKLDTuSsN0+r1ThM0WkzzBI7dnPI6xEGfa/JnVYIK9JNBA1N1NyPwXVHor//NKD/y3sDxp764sZdLhFK7pH8XQ==}
 
-  brace-expansion@5.0.12:
-    resolution: {integrity: sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==}
+  brace-expansion@5.0.13:
+    resolution: {integrity: sha512-Vh3dmFbc4wZeox7M9I/0L9GfFd83Su4+yCck/OF9Gi/P/dAHn0RT7X4K9R7gMNMhDck3DvhR6QXsnQdjjgwNvQ==}
     engines: {node: 20 || >=22}
 
   braces@3.0.3:
@@ -8798,8 +8816,8 @@ packages:
   buffer@6.0.3:
     resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
-  bullmq@6.7.3:
-    resolution: {integrity: sha512-0ROchqVhgJw2ajv62GrN1cGMpDabxpTJAp5ZDlm/qL7f+B+CdFJAcu70U3zbD/D3hc6NZxbdHvRMPTC0aEl77A==}
+  bullmq@6.7.4:
+    resolution: {integrity: sha512-wSNRD2kUE+sqNV42MQLiwtOPgwJmhiZlZ0X5zYBYXRkmok6YKJMf9IXfYLCu7DI4/txNTBlT2g2NHfRW/PxCvw==}
     engines: {node: '>=14.18.0'}
     peerDependencies:
       bullmq-otel: '>=2.0.0'
@@ -8902,8 +8920,8 @@ packages:
   caniuse-api@3.0.0:
     resolution: {integrity: sha512-bsTwuIg/BZZK/vreVTYYbSWoe2F+71P7K5QGEX+pT250DZbfU1MQ5prOKpPR+LL6uWKK3KMwMCAS74QB3Um1uw==}
 
-  caniuse-lite@1.0.30001823:
-    resolution: {integrity: sha512-TQ5s/djDjNk1axreUW+4rULH+BmdCMLiJkhaXnO5wqivG7tITkSUj4ItIdzqdZHKaXcHAV8dhH3JxOM7/7bwqw==}
+  caniuse-lite@1.0.30001826:
+    resolution: {integrity: sha512-wTB+9tIbLro/BCXwLuNV1meHE4L9dS6dArMDwgYfNBPMYScqClHyGunhkCSDtHhe/69Xl0sHlKgBVZ+fNsYtWA==}
 
   canvg@3.0.11:
     resolution: {integrity: sha512-5ON+q7jCTgMp9cjpu4Jo6XbvfYwSB2Ow3kzHKfIyJfaCAOHLbdKPQqGKgfED/R5B+3TFFfe8pegYA+b423SRyA==}
@@ -9127,8 +9145,8 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
-  colord@2.11.0:
-    resolution: {integrity: sha512-R7EZD9e+sWpUQFr3F6v747NAazZCD+OhsM0VnPkHGxSaQvw4ZvJoCVz51gemztBBoZaFvMP0qdKgFyBdBurfgA==}
+  colord@2.12.0:
+    resolution: {integrity: sha512-SpiONmQPZDqe50ivOTgkVikYsnp6l1HTFYqPRLNBCJJdA2Qympw2yYUzX99XlSbbKZswjiG6r+xsUpPPOHqY+Q==}
 
   colorette@2.0.20:
     resolution: {integrity: sha512-IfEDxwoWIjkeXL1eXcDiow4UbKjhLdq6/EuSVR9GMN7KVH3r9gQ83e73hsz1Nd1T3ijd5xv1wcWRYO+D6kCI2w==}
@@ -10056,8 +10074,8 @@ packages:
   effect@3.21.0:
     resolution: {integrity: sha512-PPN80qRokCd1f015IANNhrwOnLO7GrrMQfk4/lnZRE/8j7UPWrNNjPV0uBrZutI/nHzernbW+J0hdqQysHiSnQ==}
 
-  electron-to-chromium@1.5.479:
-    resolution: {integrity: sha512-uAJdJQ7vHa4TvPfzt1TOqoRgHmav5gwmqHMPLxBH6m8Cbj5R9/z/rygTOQiZ8pe5g0ZAEogga1bP6HoKcOzx/Q==}
+  electron-to-chromium@1.5.481:
+    resolution: {integrity: sha512-dNUsbAP6E2S1dHIYEuN3cQ0dViThjMtpVRheGdvv5HgHFtzLi4Cu4Mbzms85YggP3Eh2VVZTl5+XxEN8ofCbmQ==}
 
   embla-carousel-autoplay@8.6.0:
     resolution: {integrity: sha512-OBu5G3nwaSXkZCo1A6LTaFMZ8EpkYbwIaH+bPqdBnDGQ2fh4+NbzjXjs2SktoPNKCtflfVMc75njaDHOYXcrsA==}
@@ -11095,8 +11113,8 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.13.17:
-    resolution: {integrity: sha512-vZIcbkvjOR5hHRWERbGkr8fGfF0GGM1ooYkuH448iO3b2AdVEr3AXZSw4Z3Kn+1L5z0CVoVeyV29VGYmFh05kQ==}
+  hono@4.13.18:
+    resolution: {integrity: sha512-H9q/E1XizaWstJxUW881dmLxEj+t/TrGGnyxINkm4+sK0qUwsMtFdo2BWI9Vs3cIS19MU6b6iCijoUoEf4f3DA==}
     engines: {node: '>=16.9.0'}
 
   hook-std@4.0.0:
@@ -11270,8 +11288,8 @@ packages:
     peerDependencies:
       postcss: ^8.5.10
 
-  icu-minify@4.14.10:
-    resolution: {integrity: sha512-ZdEuL+EB5dnv9GL9fQYSt8zLoVEzly8V1PPu5YIZfO0eQ2MW1PZwB2cFiYI06EeuYUa0USZ1+t+m3aVUF/SaMQ==}
+  icu-minify@4.15.0:
+    resolution: {integrity: sha512-sXWXhMtb08DDkxxiU0EyiNmTJ8GTXkVygFdyGChTJ3nQ7kqyq+TtE99QH+owJonTbLjx7GtPKHkvuSnG3dGJNQ==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -11388,8 +11406,8 @@ packages:
   interval-tree-1d@1.0.4:
     resolution: {integrity: sha512-wY8QJH+6wNI0uh4pDQzMvl+478Qh7Rl4qLmqiluxALlNvl+I+o5x38Pw3/z7mDPTPS1dQalZJXsmbvxx5gclhQ==}
 
-  intl-messageformat@11.2.15:
-    resolution: {integrity: sha512-W4VNytsXyWgW5lvVchmsb9xgA5rSKqoflu3/IQ9UCtB0z4R+Bx9MoEkwFT/+30RCl/KzUoH0QGGe9lppF5SuvQ==}
+  intl-messageformat@12.1.5:
+    resolution: {integrity: sha512-quhcDFAxy4wr/GrgWgmMjuegoedNUIxGNLORfXgDgdjuv8cBM88ClLTLXmfYC1roMSR1PPc55yUEkpJ5m67W2g==}
 
   invariant@2.2.4:
     resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
@@ -12143,8 +12161,8 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
-  lucide-react@1.71.0:
-    resolution: {integrity: sha512-8YtvF+bqT/EMqAXU7kWvYdRu+TV9j4kS1eIS7IbN1j1Z1DgupbrTL0nDIygdqgBDTD7AJPP607VdVgzDTar4zA==}
+  lucide-react@1.72.0:
+    resolution: {integrity: sha512-fbF5i1GU8GODETa3Q7rXqrJrcx3iPYrQtxthom103zGx+Z0BGwKYAW9s+9435ohYJ7hQm0av0PoZcqI1CRwNrg==}
     peerDependencies:
       '@types/react': '*'
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -12559,8 +12577,8 @@ packages:
   minimalistic-assert@1.0.1:
     resolution: {integrity: sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==}
 
-  minimatch@11.0.6:
-    resolution: {integrity: sha512-6NZbDPQIRnsJFjJ9wbd5659OKaTHCqpPHdldE3WwArjxr5wLxHIwnx4eTGcPebpVBZZQbITvQQIx8K0VGXoT3Q==}
+  minimatch@11.0.8:
+    resolution: {integrity: sha512-nFQuYSTVrGvysVBps5Ih+0BdnYFN/Cj3C816r6+p7yK+FHrVLGE4O4N9AFwykrlNlvM2HYt+Rad1Uiro6h88Ig==}
     engines: {node: 20 || >=22}
 
   minimatch@3.1.5:
@@ -12756,11 +12774,11 @@ packages:
       nodemailer:
         optional: true
 
-  next-intl-swc-plugin-extractor@4.14.10:
-    resolution: {integrity: sha512-e89472WWtdFJkm2XEmbeIU6YhPfGvZGErJ6Lm2KnSOQubcT2f/sAm2nrAmd1DIeqzy5LIAALN2QnnYrqrqmvWw==}
+  next-intl-swc-plugin-extractor@4.15.0:
+    resolution: {integrity: sha512-/xQd6wFQOSmTwdXYSQ+2MXXuhDlNxV9hdfl/4lFio88QeM0SU1mh6MhoZmm/gwYPhmyJqqVm66rGVmEA8LMPPw==}
 
-  next-intl@4.14.10:
-    resolution: {integrity: sha512-Kx8kW1cazFisd3iofy6wVnsSfYq2DVUTw/B/FE+xZ2FOY31GX1Y6JoQ6dr7oDnf64qaQ74CXw6uuaAZE3JhYNw==}
+  next-intl@4.15.0:
+    resolution: {integrity: sha512-TrRxUufZMe5s9JX8I2Hc5ZvgaPiFnBz6vcqpsMBxDr9eJ2FHc1sROGy+lfWNCfLq+m8eSia6m8qsTNJeDTkB/w==}
     peerDependencies:
       '@types/react': ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       next: ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
@@ -14053,8 +14071,8 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier@3.9.10:
-    resolution: {integrity: sha512-skGHTH1Yb9QvaTC4hWnRTzEYtCpApF0UMBPz+t/0ZPzP8ihefo/btKd+QA7pUE0fEwA1SbS/NmhyEcstdXOIdA==}
+  prettier@3.10.0:
+    resolution: {integrity: sha512-mBi4765LgjO1PFjlEs7pUeK0nb1bw71c+N4/ItfeUWNdY5cV2pRKaFpbbFRYmDJMO+5ZwzGxHRqHxFZna7iv5w==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -14392,8 +14410,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
 
-  react-hook-form@7.91.0:
-    resolution: {integrity: sha512-5BEBUnCBwa28AFXYTYmOaB/+CSpJ/+CWVASHEvIGUzFdHyUiPHeRhG7r5hOZ8nZi0yP7pbHdFNXO/p31EKTJFQ==}
+  react-hook-form@7.92.0:
+    resolution: {integrity: sha512-O5ILyY5fYHN7N13Pfxpe55KboyNFsJdM03BHpshQkClJd8raugiAUGY7VjifITrfhVxyx81ko25azXCoayhf1w==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       '@types/react': '*'
@@ -14896,8 +14914,8 @@ packages:
   robust-predicates@3.0.3:
     resolution: {integrity: sha512-NS3levdsRIUOmiJ8FZWCP7LG3QpJyrs/TE0Zpf1yvZu8cAJJ6QMW92H1c7kWpdIHo8RvmLxN/o2JXTKHp74lUA==}
 
-  rolldown@1.2.18:
-    resolution: {integrity: sha512-C1uuT3UR60SShuCaPQFAAZyefJCWZlAKB02BV3BuPE2Rs4fevRQltEKoFO2tV5W9/eJhU5RieV6vJj3euulfNQ==}
+  rolldown@1.2.19:
+    resolution: {integrity: sha512-QIiV1J9d0pzN4jeeTH4sjPy0AZ6cAy2cG0ExeoE1+U8Rvj+hR3gYkokx0YbeUNGlZqiQJJ2utcETe0oKXwzsuA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
@@ -15771,11 +15789,11 @@ packages:
       '@tiptap/extension-image': ^2.0.0 || ^3.0.0
       '@tiptap/pm': ^2.0.0 || ^3.0.0
 
-  tldts-core@7.4.20:
-    resolution: {integrity: sha512-C630TWXZCZmLq0F2bW4QqwnaaxCQ/svpAqvJwnC4JvgEM5ohhBnGsEzTLSOXcN+xjz+kEaHS5uoWIw2klnqd0A==}
+  tldts-core@7.4.22:
+    resolution: {integrity: sha512-NRyhrlvJcTwvoRibE0dEZvp6C5RwV4RxpsX1zbkI1k7Fk2pzIhmQ+MvswJEd5KKl3VRFRMDTipXse/ejh/ld/w==}
 
-  tldts@7.4.19:
-    resolution: {integrity: sha512-48dH6aSpQnpbzDUc4vIQZ1VjB8tkK+e8c1yx05/SZK+rkssgjEOlxDd/yU8/a4vGYQ9vRgJr9dwMq9TJ0b3X2Q==}
+  tldts@7.4.22:
+    resolution: {integrity: sha512-TmLwkCZ1GFMxGkKfg2ooQhPF8rDMuuXvJHSxFiOU1fofh27L6NaO5T9KSlQXCJX2eoSt14I8F4saSMILOmXmaQ==}
     hasBin: true
 
   tmp@0.2.7:
@@ -16238,8 +16256,8 @@ packages:
     peerDependencies:
       react: '*'
 
-  use-intl@4.14.10:
-    resolution: {integrity: sha512-ellxICC8Uow3ADcZZaqW/3YtaIY5VFKw1nfvu6/JVuMO2VIjFrbzNxkotnrEW7O30lI7udJN/PoR7hoJr3cBIQ==}
+  use-intl@4.15.0:
+    resolution: {integrity: sha512-9kkbb2eGTdY6Yp5ql2eOdvMLXKCpvkWhuw5OI60wcV3NPSKuzEtBFtL/D4EWA+B4C1P95XwpHfgG2BhBEvAPhg==}
     peerDependencies:
       '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
       react: ^17.0.0 || ^18.0.0 || >=19.0.0-rc <19.0.0 || ^19.0.0
@@ -16344,8 +16362,8 @@ packages:
     peerDependencies:
       vite: ^8.1.0
 
-  vite@8.3.7:
-    resolution: {integrity: sha512-oxh0dMxrayBr33ScJvvBJ2HBQ2jc1TBrXKR2NyL/MJ9WPuX19mN2DXWUmywKdyw5RFVQBo8hmtb2FMC0LHrnng==}
+  vite@8.3.8:
+    resolution: {integrity: sha512-LzOn3h9rG/0vhLdXrV4yJ4QFA9eEoqCl+Yx+kGJd7aB9w6nfNgVHKSYwLPZUHrz4ZGa+t+kXjV9itvcHDLQouA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -16958,14 +16976,14 @@ snapshots:
 
   '@adobe/css-tools@4.5.0': {}
 
-  '@ai-sdk/gateway@4.0.141(zod@4.6.7)':
+  '@ai-sdk/gateway@4.0.142(zod@4.6.7)':
     dependencies:
       '@ai-sdk/provider': 4.0.37
-      '@ai-sdk/provider-utils': 5.0.78(zod@4.6.7)
+      '@ai-sdk/provider-utils': 5.0.79(zod@4.6.7)
       '@vercel/oidc': 3.2.0
       zod: 4.6.7
 
-  '@ai-sdk/provider-utils@5.0.78(zod@4.6.7)':
+  '@ai-sdk/provider-utils@5.0.79(zod@4.6.7)':
     dependencies:
       '@ai-sdk/provider': 4.0.37
       '@standard-schema/spec': 1.1.0
@@ -16978,135 +16996,135 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@algolia/abtesting@1.29.0':
+  '@algolia/abtesting@1.30.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
-  '@algolia/autocomplete-core@1.19.12(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)(search-insights@2.17.3)':
+  '@algolia/autocomplete-core@1.19.12(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)(search-insights@2.17.3)':
     dependencies:
-      '@algolia/autocomplete-plugin-algolia-insights': 1.19.12(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)(search-insights@2.17.3)
-      '@algolia/autocomplete-shared': 1.19.12(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)
+      '@algolia/autocomplete-plugin-algolia-insights': 1.19.12(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)(search-insights@2.17.3)
+      '@algolia/autocomplete-shared': 1.19.12(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)
     transitivePeerDependencies:
       - '@algolia/client-search'
       - algoliasearch
       - search-insights
 
-  '@algolia/autocomplete-core@1.19.2(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)(search-insights@2.17.3)':
+  '@algolia/autocomplete-core@1.19.2(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)(search-insights@2.17.3)':
     dependencies:
-      '@algolia/autocomplete-plugin-algolia-insights': 1.19.2(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)(search-insights@2.17.3)
-      '@algolia/autocomplete-shared': 1.19.2(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)
+      '@algolia/autocomplete-plugin-algolia-insights': 1.19.2(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)(search-insights@2.17.3)
+      '@algolia/autocomplete-shared': 1.19.2(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)
     transitivePeerDependencies:
       - '@algolia/client-search'
       - algoliasearch
       - search-insights
 
-  '@algolia/autocomplete-plugin-algolia-insights@1.19.12(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)(search-insights@2.17.3)':
+  '@algolia/autocomplete-plugin-algolia-insights@1.19.12(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)(search-insights@2.17.3)':
     dependencies:
-      '@algolia/autocomplete-shared': 1.19.12(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)
+      '@algolia/autocomplete-shared': 1.19.12(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)
       search-insights: 2.17.3
     transitivePeerDependencies:
       - '@algolia/client-search'
       - algoliasearch
 
-  '@algolia/autocomplete-plugin-algolia-insights@1.19.2(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)(search-insights@2.17.3)':
+  '@algolia/autocomplete-plugin-algolia-insights@1.19.2(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)(search-insights@2.17.3)':
     dependencies:
-      '@algolia/autocomplete-shared': 1.19.2(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)
+      '@algolia/autocomplete-shared': 1.19.2(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)
       search-insights: 2.17.3
     transitivePeerDependencies:
       - '@algolia/client-search'
       - algoliasearch
 
-  '@algolia/autocomplete-shared@1.19.12(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)':
+  '@algolia/autocomplete-shared@1.19.12(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)':
     dependencies:
-      '@algolia/client-search': 5.63.0
-      algoliasearch: 5.63.0
+      '@algolia/client-search': 5.64.0
+      algoliasearch: 5.64.0
 
-  '@algolia/autocomplete-shared@1.19.2(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)':
+  '@algolia/autocomplete-shared@1.19.2(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)':
     dependencies:
-      '@algolia/client-search': 5.63.0
-      algoliasearch: 5.63.0
+      '@algolia/client-search': 5.64.0
+      algoliasearch: 5.64.0
 
-  '@algolia/client-abtesting@5.63.0':
+  '@algolia/client-abtesting@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
-  '@algolia/client-analytics@5.63.0':
+  '@algolia/client-analytics@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
-  '@algolia/client-common@5.63.0': {}
+  '@algolia/client-common@5.64.0': {}
 
-  '@algolia/client-insights@5.63.0':
+  '@algolia/client-insights@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
-  '@algolia/client-personalization@5.63.0':
+  '@algolia/client-personalization@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
-  '@algolia/client-query-suggestions@5.63.0':
+  '@algolia/client-query-suggestions@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
-  '@algolia/client-search@5.63.0':
+  '@algolia/client-search@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
   '@algolia/events@4.0.1': {}
 
-  '@algolia/ingestion@1.63.0':
+  '@algolia/ingestion@1.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
-  '@algolia/monitoring@1.63.0':
+  '@algolia/monitoring@1.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
-  '@algolia/recommend@5.63.0':
+  '@algolia/recommend@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
-  '@algolia/requester-browser-xhr@5.63.0':
+  '@algolia/requester-browser-xhr@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
+      '@algolia/client-common': 5.64.0
 
-  '@algolia/requester-fetch@5.63.0':
+  '@algolia/requester-fetch@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
+      '@algolia/client-common': 5.64.0
 
-  '@algolia/requester-node-http@5.63.0':
+  '@algolia/requester-node-http@5.64.0':
     dependencies:
-      '@algolia/client-common': 5.63.0
+      '@algolia/client-common': 5.64.0
 
   '@alloc/quick-lru@5.3.0': {}
 
@@ -17142,13 +17160,13 @@ snapshots:
     transitivePeerDependencies:
       - react
 
-  '@atlaskit/adf-schema@57.7.39(react@18.3.1)':
+  '@atlaskit/adf-schema@57.7.40(react@18.3.1)':
     dependencies:
       '@atlaskit/adf-schema-generator': 4.0.4
       '@atlaskit/editor-prosemirror': 9.0.0
       '@atlaskit/platform-feature-experiments': 0.3.2(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/tmp-editor-statsig': 260.0.0(react@18.3.1)
+      '@atlaskit/tmp-editor-statsig': 261.0.0(react@18.3.1)
       '@babel/runtime': 7.29.13
       css-color-names: 0.0.4
       linkify-it: 5.0.2
@@ -17158,7 +17176,7 @@ snapshots:
 
   '@atlaskit/adf-utils@20.9.83(react@18.3.1)':
     dependencies:
-      '@atlaskit/adf-schema': 57.7.39(react@18.3.1)
+      '@atlaskit/adf-schema': 57.7.40(react@18.3.1)
       '@atlaskit/editor-prosemirror': 9.0.0
       '@atlaskit/platform-feature-experiments': 0.3.2(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
@@ -17175,7 +17193,7 @@ snapshots:
     dependencies:
       '@atlaskit/analytics-next-stable-react-context': 1.0.1(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@babel/runtime': 7.29.13
       prop-types: 15.8.1
       react: 18.3.1
@@ -17187,7 +17205,7 @@ snapshots:
       '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       bind-event-listener: 3.0.0
@@ -17224,7 +17242,7 @@ snapshots:
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/popup': 10.2.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17237,7 +17255,7 @@ snapshots:
   '@atlaskit/badge@22.0.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17251,7 +17269,7 @@ snapshots:
     dependencies:
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17266,7 +17284,7 @@ snapshots:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
@@ -17280,14 +17298,14 @@ snapshots:
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/dropdown-menu': 21.3.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/skeleton': 4.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tooltip': 24.4.5(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
@@ -17309,7 +17327,7 @@ snapshots:
       '@babel/runtime': 7.29.13
       react: 19.3.1
 
-  '@atlaskit/button@25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
+  '@atlaskit/button@25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
@@ -17319,7 +17337,7 @@ snapshots:
       '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/spinner': 20.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
@@ -17337,7 +17355,7 @@ snapshots:
   '@atlaskit/calendar@19.6.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/heading': 8.0.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
@@ -17345,7 +17363,7 @@ snapshots:
       '@atlaskit/locale': 5.5.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17359,10 +17377,10 @@ snapshots:
   '@atlaskit/comment@14.2.6(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/lozenge': 17.0.7(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/lozenge': 17.0.8(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
@@ -17386,7 +17404,7 @@ snapshots:
   '@atlaskit/datetime-picker@19.4.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/calendar': 19.6.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
@@ -17396,11 +17414,11 @@ snapshots:
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/popper': 9.4.8(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
-      '@atlaskit/react-select': 4.12.12(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
+      '@atlaskit/react-select': 4.12.13(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/select': 23.2.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       date-fns: 2.30.0
@@ -17412,7 +17430,7 @@ snapshots:
 
   '@atlaskit/dropdown-menu@21.3.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
@@ -17421,11 +17439,11 @@ snapshots:
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/popup': 10.2.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/spinner': 20.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17472,7 +17490,7 @@ snapshots:
       '@atlaskit/pagination': 17.3.4(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-migration': 3.4.5(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/spinner': 20.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tooltip': 24.4.5(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
@@ -17560,7 +17578,7 @@ snapshots:
 
   '@atlaskit/focus-ring@6.0.0(@types/react@18.3.31)(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@10.2.2)
@@ -17569,17 +17587,17 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@atlaskit/forge-react-types@2.13.0(@types/react@18.3.31)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prop-types@15.8.1)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
+  '@atlaskit/forge-react-types@2.14.0(@types/react@18.3.31)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prop-types@15.8.1)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
-      '@atlaskit/adf-schema': 57.7.39(react@18.3.1)
+      '@atlaskit/adf-schema': 57.7.40(react@18.3.1)
       '@atlaskit/banner': 15.3.4(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/blanket': 16.4.4(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/breadcrumbs': 17.8.7(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/comment': 14.2.6(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/datetime-picker': 19.4.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/dynamic-table': 19.3.8(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/form': 18.3.2(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/form': 18.3.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/inline-edit': 16.5.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/modal-dialog': 17.2.4(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/navigation-system': 11.7.6(@types/react@18.3.31)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prop-types@15.8.1)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
@@ -17614,16 +17632,16 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/form@18.3.2(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
+  '@atlaskit/form@18.3.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/heading': 8.0.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.13
@@ -17640,7 +17658,7 @@ snapshots:
   '@atlaskit/heading@8.0.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17653,7 +17671,7 @@ snapshots:
   '@atlaskit/icon-lab@7.11.0(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@babel/runtime': 7.29.13
       react: 18.3.1
     transitivePeerDependencies:
@@ -17661,7 +17679,7 @@ snapshots:
 
   '@atlaskit/icon@38.0.2(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tile': 5.0.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
@@ -17677,9 +17695,9 @@ snapshots:
       '@atlaskit/layering': 6.1.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/popper': 9.4.8(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
@@ -17691,15 +17709,15 @@ snapshots:
   '@atlaskit/inline-edit@16.5.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/form': 18.3.2(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/form': 18.3.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/inline-dialog': 20.3.8(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/popup': 10.2.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/textfield': 10.3.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
@@ -17723,7 +17741,7 @@ snapshots:
 
   '@atlaskit/layering@6.1.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@babel/runtime': 7.29.13
       bind-event-listener: 3.0.0
       react: 18.3.1
@@ -17734,7 +17752,7 @@ snapshots:
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17747,7 +17765,7 @@ snapshots:
   '@atlaskit/locale@5.5.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-select': 4.12.12(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/react-select': 4.12.13(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/select': 23.2.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       react: 18.3.1
@@ -17756,12 +17774,12 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/logo@23.3.1(react@18.3.1)(supports-color@10.2.2)':
+  '@atlaskit/logo@23.3.2(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
@@ -17770,18 +17788,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/lozenge@17.0.7(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
+  '@atlaskit/lozenge@17.0.8(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/badge': 22.0.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/popup': 10.2.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/spinner': 20.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
@@ -17799,7 +17817,7 @@ snapshots:
       '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17813,20 +17831,20 @@ snapshots:
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/blanket': 16.4.4(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/layering': 6.1.0(react@18.3.1)
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/portal': 7.1.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/pragmatic-drag-and-drop': 4.0.0
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
@@ -17839,13 +17857,13 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/motion@10.0.0(react@18.3.1)(supports-color@10.2.2)':
+  '@atlaskit/motion@10.0.1(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17859,23 +17877,23 @@ snapshots:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/app-provider': 8.3.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/avatar': 30.1.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/layering': 6.1.0(react@18.3.1)
-      '@atlaskit/logo': 23.3.1(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/logo': 23.3.2(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/platform-feature-flags-react': 1.2.0(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prop-types@15.8.1)(react@18.3.1)
       '@atlaskit/popup': 10.2.3(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/pragmatic-drag-and-drop': 4.0.0
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/side-nav-items': 2.6.1(@types/react@18.3.31)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prop-types@15.8.1)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tooltip': 24.4.5(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -17896,7 +17914,7 @@ snapshots:
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/icon-lab': 7.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tile': 5.0.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
@@ -17911,12 +17929,12 @@ snapshots:
   '@atlaskit/pagination@17.3.4(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.13
@@ -17930,14 +17948,14 @@ snapshots:
   '@atlaskit/platform-feature-experiments@0.3.2(react@18.3.1)':
     dependencies:
       '@atlaskit/feature-gate-js-client': 8.0.0(react@18.3.1)
-      '@atlaskit/react-ufo': 8.4.1(react@18.3.1)
+      '@atlaskit/react-ufo': 8.4.2(react@18.3.1)
       '@babel/runtime': 7.29.13
       react: 18.3.1
 
   '@atlaskit/platform-feature-flags-react@1.2.0(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prop-types@15.8.1)(react@18.3.1)':
     dependencies:
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -17969,9 +17987,9 @@ snapshots:
       '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       '@popperjs/core': 2.11.8
@@ -17987,14 +18005,14 @@ snapshots:
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/layering': 6.1.0(react@18.3.1)
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/popper': 9.4.8(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/portal': 7.1.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
@@ -18011,7 +18029,7 @@ snapshots:
     dependencies:
       '@atlaskit/app-provider': 8.3.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       react: 18.3.1
@@ -18035,7 +18053,7 @@ snapshots:
       '@atlaskit/pragmatic-drag-and-drop': 4.0.0
       '@atlaskit/pragmatic-drag-and-drop-hitbox': 3.0.0
       '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-autoscroll': 3.2.1
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@10.2.2)
@@ -18051,7 +18069,7 @@ snapshots:
     dependencies:
       '@atlaskit/pragmatic-drag-and-drop': 4.0.0
       '@atlaskit/pragmatic-drag-and-drop-hitbox': 3.0.0
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18072,7 +18090,7 @@ snapshots:
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.13
@@ -18090,7 +18108,7 @@ snapshots:
   '@atlaskit/progress-bar@5.3.7(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18102,7 +18120,7 @@ snapshots:
     dependencies:
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18118,7 +18136,7 @@ snapshots:
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
@@ -18128,34 +18146,34 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/react-compiler-gating@0.2.6(react@18.3.1)':
+  '@atlaskit/react-compiler-gating@0.2.7(react@18.3.1)':
     dependencies:
       '@atlaskit/feature-gate-js-client': 8.0.0(react@18.3.1)
       '@babel/runtime': 7.29.13
     transitivePeerDependencies:
       - react
 
-  '@atlaskit/react-compiler-gating@0.2.6(react@19.3.1)':
+  '@atlaskit/react-compiler-gating@0.2.7(react@19.3.1)':
     dependencies:
       '@atlaskit/feature-gate-js-client': 8.0.0(react@19.3.1)
       '@babel/runtime': 7.29.13
     transitivePeerDependencies:
       - react
 
-  '@atlaskit/react-select@4.12.12(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
+  '@atlaskit/react-select@4.12.13(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/layering': 6.1.0(react@18.3.1)
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/spinner': 20.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tag': 17.1.2(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       '@floating-ui/dom': 1.8.0
@@ -18175,7 +18193,7 @@ snapshots:
       '@atlaskit/feature-gate-js-client': 6.0.2(react@18.3.1)
       '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@babel/runtime': 7.29.13
       '@opentelemetry/api': 1.10.0
       bind-event-listener: 3.0.0
@@ -18191,7 +18209,7 @@ snapshots:
       '@atlaskit/feature-gate-js-client': 6.0.2(react@19.3.1)
       '@atlaskit/interaction-context': 4.1.0(react@19.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@19.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@19.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@19.3.1)
       '@babel/runtime': 7.29.13
       '@opentelemetry/api': 1.10.0
       bind-event-listener: 3.0.0
@@ -18200,14 +18218,14 @@ snapshots:
       scheduler: 0.23.2
       uuid: 14.0.3
 
-  '@atlaskit/react-ufo@8.4.1(react@18.3.1)':
+  '@atlaskit/react-ufo@8.4.2(react@18.3.1)':
     dependencies:
       '@atlaskit/atlassian-context': 2.0.0(react@18.3.1)
       '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
       '@atlaskit/feature-gate-js-client': 8.0.0(react@18.3.1)
       '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@babel/runtime': 7.29.13
       '@opentelemetry/api': 1.10.0
       bind-event-listener: 3.0.0
@@ -18218,14 +18236,14 @@ snapshots:
 
   '@atlaskit/section-message@10.2.6(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/heading': 8.0.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/link': 5.1.7(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       react: 18.3.1
@@ -18243,11 +18261,11 @@ snapshots:
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/popper': 9.4.8(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
-      '@atlaskit/react-select': 4.12.12(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
+      '@atlaskit/react-select': 4.12.13(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18265,7 +18283,7 @@ snapshots:
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/avatar': 30.1.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/button': 25.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/button': 25.8.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/heading': 8.0.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
@@ -18277,7 +18295,7 @@ snapshots:
       '@atlaskit/pragmatic-drag-and-drop-hitbox': 3.0.0
       '@atlaskit/pragmatic-drag-and-drop-react-drop-indicator': 4.2.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/skeleton': 4.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tooltip': 24.4.5(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
@@ -18296,7 +18314,7 @@ snapshots:
     dependencies:
       '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18307,7 +18325,7 @@ snapshots:
   '@atlaskit/spinner@20.4.4(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18318,10 +18336,10 @@ snapshots:
   '@atlaskit/tabs@21.3.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18333,9 +18351,9 @@ snapshots:
 
   '@atlaskit/tag-group@13.4.3(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -18350,12 +18368,12 @@ snapshots:
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/link': 5.1.7(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/lozenge': 17.0.7(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/lozenge': 17.0.8(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-experiments': 0.3.2(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/spinner': 20.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/teams-avatar': 4.2.0(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
@@ -18373,7 +18391,7 @@ snapshots:
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18388,7 +18406,7 @@ snapshots:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
@@ -18403,7 +18421,7 @@ snapshots:
     dependencies:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18415,7 +18433,7 @@ snapshots:
   '@atlaskit/theme@28.2.5(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       react: 18.3.1
@@ -18424,7 +18442,7 @@ snapshots:
 
   '@atlaskit/tile@5.0.0(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/skeleton': 4.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
@@ -18450,11 +18468,11 @@ snapshots:
       '@babel/runtime': 7.29.13
       react: 19.3.1
 
-  '@atlaskit/tmp-editor-statsig@260.0.0(react@18.3.1)':
+  '@atlaskit/tmp-editor-statsig@261.0.0(react@18.3.1)':
     dependencies:
       '@atlaskit/feature-gate-js-client': 8.0.0(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-ufo': 8.4.1(react@18.3.1)
+      '@atlaskit/react-ufo': 8.4.2(react@18.3.1)
       '@babel/runtime': 7.29.13
       react: 18.3.1
 
@@ -18466,7 +18484,7 @@ snapshots:
       '@atlaskit/icon': 38.0.2(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/primitives': 22.7.1(@types/react@18.3.31)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/spinner': 20.4.4(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
@@ -18509,7 +18527,7 @@ snapshots:
     dependencies:
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@babel/runtime': 7.29.13
       '@babel/traverse': 7.29.13(supports-color@10.2.2)
       '@babel/types': 7.29.11
@@ -18523,14 +18541,14 @@ snapshots:
       '@atlaskit/analytics-next': 12.6.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
       '@atlaskit/layering': 6.1.0(react@18.3.1)
-      '@atlaskit/motion': 10.0.0(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/motion': 10.0.1(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/platform-feature-flags': 2.2.2(react@18.3.1)
       '@atlaskit/popper': 9.4.8(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/portal': 7.1.0(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/theme': 28.2.5(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
-      '@atlaskit/top-layer': 7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/top-layer': 7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
@@ -18539,12 +18557,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/top-layer@7.1.6(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
+  '@atlaskit/top-layer@7.2.1(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
       '@atlaskit/css': 1.1.8(react@18.3.1)(supports-color@10.2.2)
       '@atlaskit/ds-lib': 8.0.1(react@18.3.1)
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@atlaskit/tokens': 20.11.0(react@18.3.1)(supports-color@10.2.2)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
@@ -18558,7 +18576,7 @@ snapshots:
 
   '@atlaskit/visually-hidden@4.4.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/react-compiler-gating': 0.2.6(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.7(react@18.3.1)
       '@babel/runtime': 7.29.13
       '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
@@ -18568,20 +18586,20 @@ snapshots:
       jsonpointer: 5.0.1
       urijs: 1.19.11
 
-  '@aws-sdk/checksums@3.1002.4':
+  '@aws-sdk/checksums@3.1002.5':
     dependencies:
-      '@aws-sdk/core': 3.980.2
+      '@aws-sdk/core': 3.981.0
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/client-s3@3.1165.0':
+  '@aws-sdk/client-s3@3.1166.0':
     dependencies:
-      '@aws-sdk/checksums': 3.1002.4
-      '@aws-sdk/core': 3.980.2
-      '@aws-sdk/credential-provider-node': 3.972.95
-      '@aws-sdk/middleware-sdk-s3': 3.972.88
+      '@aws-sdk/checksums': 3.1002.5
+      '@aws-sdk/core': 3.981.0
+      '@aws-sdk/credential-provider-node': 3.972.96
+      '@aws-sdk/middleware-sdk-s3': 3.972.89
       '@aws-sdk/signature-v4-multi-region': 3.996.52
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
@@ -18590,7 +18608,7 @@ snapshots:
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/core@3.980.2':
+  '@aws-sdk/core@3.981.0':
     dependencies:
       '@aws-sdk/types': 3.975.1
       '@aws-sdk/xml-builder': 3.972.43
@@ -18601,17 +18619,17 @@ snapshots:
       bowser: 2.15.0
       tslib: 2.9.1
 
-  '@aws-sdk/credential-provider-env@3.972.83':
+  '@aws-sdk/credential-provider-env@3.972.84':
     dependencies:
-      '@aws-sdk/core': 3.980.2
+      '@aws-sdk/core': 3.981.0
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/credential-provider-http@3.972.85':
+  '@aws-sdk/credential-provider-http@3.972.86':
     dependencies:
-      '@aws-sdk/core': 3.980.2
+      '@aws-sdk/core': 3.981.0
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/fetch-http-handler': 5.8.1
@@ -18619,75 +18637,75 @@ snapshots:
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/credential-provider-ini@3.973.28':
+  '@aws-sdk/credential-provider-ini@3.973.29':
     dependencies:
-      '@aws-sdk/core': 3.980.2
-      '@aws-sdk/credential-provider-env': 3.972.83
-      '@aws-sdk/credential-provider-http': 3.972.85
-      '@aws-sdk/credential-provider-login': 3.972.90
-      '@aws-sdk/credential-provider-process': 3.972.83
-      '@aws-sdk/credential-provider-sso': 3.973.27
-      '@aws-sdk/credential-provider-web-identity': 3.972.89
-      '@aws-sdk/nested-clients': 3.998.2
+      '@aws-sdk/core': 3.981.0
+      '@aws-sdk/credential-provider-env': 3.972.84
+      '@aws-sdk/credential-provider-http': 3.972.86
+      '@aws-sdk/credential-provider-login': 3.972.91
+      '@aws-sdk/credential-provider-process': 3.972.84
+      '@aws-sdk/credential-provider-sso': 3.973.28
+      '@aws-sdk/credential-provider-web-identity': 3.972.90
+      '@aws-sdk/nested-clients': 3.998.3
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/credential-provider-imds': 4.5.2
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/credential-provider-login@3.972.90':
+  '@aws-sdk/credential-provider-login@3.972.91':
     dependencies:
-      '@aws-sdk/core': 3.980.2
-      '@aws-sdk/nested-clients': 3.998.2
+      '@aws-sdk/core': 3.981.0
+      '@aws-sdk/nested-clients': 3.998.3
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/credential-provider-node@3.972.95':
+  '@aws-sdk/credential-provider-node@3.972.96':
     dependencies:
-      '@aws-sdk/credential-provider-env': 3.972.83
-      '@aws-sdk/credential-provider-http': 3.972.85
-      '@aws-sdk/credential-provider-ini': 3.973.28
-      '@aws-sdk/credential-provider-process': 3.972.83
-      '@aws-sdk/credential-provider-sso': 3.973.27
-      '@aws-sdk/credential-provider-web-identity': 3.972.89
+      '@aws-sdk/credential-provider-env': 3.972.84
+      '@aws-sdk/credential-provider-http': 3.972.86
+      '@aws-sdk/credential-provider-ini': 3.973.29
+      '@aws-sdk/credential-provider-process': 3.972.84
+      '@aws-sdk/credential-provider-sso': 3.973.28
+      '@aws-sdk/credential-provider-web-identity': 3.972.90
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/credential-provider-imds': 4.5.2
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/credential-provider-process@3.972.83':
+  '@aws-sdk/credential-provider-process@3.972.84':
     dependencies:
-      '@aws-sdk/core': 3.980.2
+      '@aws-sdk/core': 3.981.0
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/credential-provider-sso@3.973.27':
+  '@aws-sdk/credential-provider-sso@3.973.28':
     dependencies:
-      '@aws-sdk/core': 3.980.2
-      '@aws-sdk/nested-clients': 3.998.2
-      '@aws-sdk/token-providers': 3.1165.0
+      '@aws-sdk/core': 3.981.0
+      '@aws-sdk/nested-clients': 3.998.3
+      '@aws-sdk/token-providers': 3.1166.0
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/credential-provider-web-identity@3.972.89':
+  '@aws-sdk/credential-provider-web-identity@3.972.90':
     dependencies:
-      '@aws-sdk/core': 3.980.2
-      '@aws-sdk/nested-clients': 3.998.2
+      '@aws-sdk/core': 3.981.0
+      '@aws-sdk/nested-clients': 3.998.3
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/lib-storage@3.1165.0(@aws-sdk/client-s3@3.1165.0)':
+  '@aws-sdk/lib-storage@3.1166.0(@aws-sdk/client-s3@3.1166.0)':
     dependencies:
-      '@aws-sdk/client-s3': 3.1165.0
+      '@aws-sdk/client-s3': 3.1166.0
       '@smithy/core': 3.40.0
       '@smithy/types': 4.20.0
       buffer: 5.6.0
@@ -18695,18 +18713,18 @@ snapshots:
       stream-browserify: 3.0.0
       tslib: 2.9.1
 
-  '@aws-sdk/middleware-sdk-s3@3.972.88':
+  '@aws-sdk/middleware-sdk-s3@3.972.89':
     dependencies:
-      '@aws-sdk/core': 3.980.2
+      '@aws-sdk/core': 3.981.0
       '@aws-sdk/signature-v4-multi-region': 3.996.52
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/nested-clients@3.998.2':
+  '@aws-sdk/nested-clients@3.998.3':
     dependencies:
-      '@aws-sdk/core': 3.980.2
+      '@aws-sdk/core': 3.981.0
       '@aws-sdk/signature-v4-multi-region': 3.996.52
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
@@ -18715,9 +18733,9 @@ snapshots:
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/s3-request-presigner@3.1165.0':
+  '@aws-sdk/s3-request-presigner@3.1166.0':
     dependencies:
-      '@aws-sdk/core': 3.980.2
+      '@aws-sdk/core': 3.981.0
       '@aws-sdk/signature-v4-multi-region': 3.996.52
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
@@ -18731,10 +18749,10 @@ snapshots:
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
-  '@aws-sdk/token-providers@3.1165.0':
+  '@aws-sdk/token-providers@3.1166.0':
     dependencies:
-      '@aws-sdk/core': 3.980.2
-      '@aws-sdk/nested-clients': 3.998.2
+      '@aws-sdk/core': 3.981.0
+      '@aws-sdk/nested-clients': 3.998.3
       '@aws-sdk/types': 3.975.1
       '@smithy/core': 3.40.0
       '@smithy/types': 4.20.0
@@ -20642,9 +20660,9 @@ snapshots:
 
   '@docsearch/css@4.7.1': {}
 
-  '@docsearch/react@4.7.1(@algolia/client-search@5.63.0)(@types/react@19.3.0)(algoliasearch@5.63.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)':
+  '@docsearch/react@4.7.1(@algolia/client-search@5.64.0)(@types/react@19.3.0)(algoliasearch@5.64.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)':
     dependencies:
-      '@algolia/autocomplete-core': 1.19.2(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)(search-insights@2.17.3)
+      '@algolia/autocomplete-core': 1.19.2(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)(search-insights@2.17.3)
       '@docsearch/core': 4.7.1(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@docsearch/css': 4.7.1
     optionalDependencies:
@@ -21590,7 +21608,7 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@docusaurus/preset-classic@3.10.2(@algolia/client-search@5.63.0)(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(@types/react@19.3.0)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)':
+  '@docusaurus/preset-classic@3.10.2(@algolia/client-search@5.64.0)(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(@types/react@19.3.0)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)':
     dependencies:
       '@docusaurus/core': 3.10.2(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
       '@docusaurus/plugin-content-blog': 3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1))(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
@@ -21605,7 +21623,7 @@ snapshots:
       '@docusaurus/plugin-svgr': 3.10.2(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
       '@docusaurus/theme-classic': 3.10.2(@swc/core@1.16.22(@swc/helpers@0.5.23))(@types/react@19.3.0)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
       '@docusaurus/theme-common': 3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)
-      '@docusaurus/theme-search-algolia': 3.10.2(@algolia/client-search@5.63.0)(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(@types/react@19.3.0)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
+      '@docusaurus/theme-search-algolia': 3.10.2(@algolia/client-search@5.64.0)(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(@types/react@19.3.0)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
       '@docusaurus/types': 3.10.2(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
@@ -21737,10 +21755,10 @@ snapshots:
       - uglify-js
       - webpack-cli
 
-  '@docusaurus/theme-search-algolia@3.10.2(@algolia/client-search@5.63.0)(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(@types/react@19.3.0)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)':
+  '@docusaurus/theme-search-algolia@3.10.2(@algolia/client-search@5.64.0)(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(@types/react@19.3.0)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)':
     dependencies:
-      '@algolia/autocomplete-core': 1.19.12(@algolia/client-search@5.63.0)(algoliasearch@5.63.0)(search-insights@2.17.3)
-      '@docsearch/react': 4.7.1(@algolia/client-search@5.63.0)(@types/react@19.3.0)(algoliasearch@5.63.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)
+      '@algolia/autocomplete-core': 1.19.12(@algolia/client-search@5.64.0)(algoliasearch@5.64.0)(search-insights@2.17.3)
+      '@docsearch/react': 4.7.1(@algolia/client-search@5.64.0)(@types/react@19.3.0)(algoliasearch@5.64.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)
       '@docusaurus/core': 3.10.2(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
       '@docusaurus/logger': 3.10.2
       '@docusaurus/plugin-content-docs': 3.10.2(@mdx-js/react@3.1.1(@types/react@19.3.0)(react@19.3.1))(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.3.1)
@@ -21748,8 +21766,8 @@ snapshots:
       '@docusaurus/theme-translations': 3.10.2
       '@docusaurus/utils': 3.10.2(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)
       '@docusaurus/utils-validation': 3.10.2(@swc/core@1.16.22(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sharp@0.35.5(@types/node@26.6.6))(supports-color@10.2.2)(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)
-      algoliasearch: 5.63.0
-      algoliasearch-helper: 3.30.2(algoliasearch@5.63.0)
+      algoliasearch: 5.64.0
+      algoliasearch-helper: 3.30.2(algoliasearch@5.64.0)
       clsx: 2.1.1
       eta: 2.2.0
       fs-extra: 11.4.1
@@ -22122,7 +22140,23 @@ snapshots:
       '@eloqnt/config': 0.1.1
       po-parser: 2.2.0
 
+  '@emnapi/core@2.0.0-beta.2':
+    dependencies:
+      '@emnapi/wasi-threads': 2.2.0
+      tslib: 2.9.1
+    optional: true
+
   '@emnapi/runtime@1.11.3':
+    dependencies:
+      tslib: 2.9.1
+    optional: true
+
+  '@emnapi/runtime@2.0.0-beta.2':
+    dependencies:
+      tslib: 2.9.1
+    optional: true
+
+  '@emnapi/wasi-threads@2.2.0':
     dependencies:
       tslib: 2.9.1
     optional: true
@@ -22657,7 +22691,7 @@ snapshots:
     dependencies:
       '@atlaskit/adf-schema': 56.7.3(react@18.3.1)
       '@atlaskit/adf-utils': 20.9.83(react@18.3.1)
-      '@atlaskit/forge-react-types': 2.13.0(@types/react@18.3.31)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prop-types@15.8.1)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
+      '@atlaskit/forge-react-types': 2.14.0(@types/react@18.3.31)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prop-types@15.8.1)(react-dom@19.3.1(react@19.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@forge/bridge': 7.3.0(@types/react@18.3.31)(react@18.3.1)(supports-color@10.2.2)(typescript@5.9.2)
       '@forge/egress': 3.0.1(typescript@5.9.2)
       '@forge/i18n': 1.0.1(typescript@5.9.2)
@@ -22743,15 +22777,9 @@ snapshots:
 
   '@formatjs/fast-memoize@3.1.7': {}
 
-  '@formatjs/icu-messageformat-parser@3.5.18':
-    dependencies:
-      '@formatjs/icu-skeleton-parser': 2.1.11
-
   '@formatjs/icu-messageformat-parser@3.5.23':
     dependencies:
       '@formatjs/icu-skeleton-parser': 2.1.13
-
-  '@formatjs/icu-skeleton-parser@2.1.11': {}
 
   '@formatjs/icu-skeleton-parser@2.1.13': {}
 
@@ -22769,14 +22797,14 @@ snapshots:
     dependencies:
       '@hapi/hoek': 9.3.0
 
-  '@hono/node-server@1.19.18(hono@4.13.17)':
+  '@hono/node-server@1.19.19(hono@4.13.18)':
     dependencies:
-      hono: 4.13.17
+      hono: 4.13.18
 
-  '@hookform/resolvers@7.0.5(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(fp-ts@2.16.11)(io-ts@2.2.22(fp-ts@2.16.11))(joi@17.13.9)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)':
+  '@hookform/resolvers@7.0.5(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(fp-ts@2.16.11)(io-ts@2.2.22(fp-ts@2.16.11))(joi@17.13.9)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)':
     dependencies:
       '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.91.0(@types/react@19.3.0)(react@19.3.1)
+      react-hook-form: 7.92.0(@types/react@19.3.0)(react@19.3.1)
     optionalDependencies:
       '@standard-schema/spec': 1.1.0
       ajv: 8.20.0
@@ -23213,7 +23241,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.32.2(supports-color@10.2.2)(zod@4.6.7)':
     dependencies:
-      '@hono/node-server': 1.19.18(hono@4.13.17)
+      '@hono/node-server': 1.19.19(hono@4.13.18)
       ajv: 8.20.0
       ajv-formats: 3.0.1
       content-type: 1.0.5
@@ -23223,7 +23251,7 @@ snapshots:
       eventsource-parser: 3.1.1
       express: 5.3.0(supports-color@10.2.2)
       express-rate-limit: 8.7.4(express@5.3.0(supports-color@10.2.2))(supports-color@10.2.2)
-      hono: 4.13.17
+      hono: 4.13.18
       jose: 6.2.17
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -23300,6 +23328,13 @@ snapshots:
       '@napi-rs/canvas-linux-x64-gnu': 0.1.80
       '@napi-rs/canvas-linux-x64-musl': 0.1.80
       '@napi-rs/canvas-win32-x64-msvc': 0.1.80
+
+  '@napi-rs/wasm-runtime@1.2.6(@emnapi/core@2.0.0-beta.2)(@emnapi/runtime@2.0.0-beta.2)':
+    dependencies:
+      '@emnapi/core': 2.0.0-beta.2
+      '@emnapi/runtime': 2.0.0-beta.2
+      '@tybys/wasm-util': 0.10.4
+    optional: true
 
   '@next/env@16.4.6': {}
 
@@ -24354,49 +24389,56 @@ snapshots:
       react: 19.3.1
       react-redux: 9.3.1(@types/react@19.3.0)(react@19.3.1)(redux@5.0.1)
 
-  '@rolldown/binding-android-arm-eabi@1.2.18':
+  '@rolldown/binding-android-arm-eabi@1.2.19':
     optional: true
 
-  '@rolldown/binding-android-arm64@1.2.18':
+  '@rolldown/binding-android-arm64@1.2.19':
     optional: true
 
-  '@rolldown/binding-darwin-arm64@1.2.18':
+  '@rolldown/binding-darwin-arm64@1.2.19':
     optional: true
 
-  '@rolldown/binding-darwin-x64@1.2.18':
+  '@rolldown/binding-darwin-x64@1.2.19':
     optional: true
 
-  '@rolldown/binding-freebsd-x64@1.2.18':
+  '@rolldown/binding-freebsd-x64@1.2.19':
     optional: true
 
-  '@rolldown/binding-linux-arm-gnueabihf@1.2.18':
+  '@rolldown/binding-linux-arm-gnueabihf@1.2.19':
     optional: true
 
-  '@rolldown/binding-linux-arm64-gnu@1.2.18':
+  '@rolldown/binding-linux-arm64-gnu@1.2.19':
     optional: true
 
-  '@rolldown/binding-linux-arm64-musl@1.2.18':
+  '@rolldown/binding-linux-arm64-musl@1.2.19':
     optional: true
 
-  '@rolldown/binding-linux-ppc64-gnu@1.2.18':
+  '@rolldown/binding-linux-ppc64-gnu@1.2.19':
     optional: true
 
-  '@rolldown/binding-linux-s390x-gnu@1.2.18':
+  '@rolldown/binding-linux-s390x-gnu@1.2.19':
     optional: true
 
-  '@rolldown/binding-linux-x64-gnu@1.2.18':
+  '@rolldown/binding-linux-x64-gnu@1.2.19':
     optional: true
 
-  '@rolldown/binding-linux-x64-musl@1.2.18':
+  '@rolldown/binding-linux-x64-musl@1.2.19':
     optional: true
 
-  '@rolldown/binding-openharmony-arm64@1.2.18':
+  '@rolldown/binding-openharmony-arm64@1.2.19':
     optional: true
 
-  '@rolldown/binding-win32-arm64-msvc@1.2.18':
+  '@rolldown/binding-wasm32-wasi@1.2.19':
+    dependencies:
+      '@emnapi/core': 2.0.0-beta.2
+      '@emnapi/runtime': 2.0.0-beta.2
+      '@napi-rs/wasm-runtime': 1.2.6(@emnapi/core@2.0.0-beta.2)(@emnapi/runtime@2.0.0-beta.2)
     optional: true
 
-  '@rolldown/binding-win32-x64-msvc@1.2.18':
+  '@rolldown/binding-win32-arm64-msvc@1.2.19':
+    optional: true
+
+  '@rolldown/binding-win32-x64-msvc@1.2.19':
     optional: true
 
   '@rolldown/pluginutils@1.1.0': {}
@@ -25256,7 +25298,7 @@ snapshots:
       '@swagger-api/apidom-error': 1.14.0
       '@types/ramda': 0.30.2
       axios: 1.21.1(debug@4.3.7(supports-color@10.2.2))(supports-color@10.2.2)
-      minimatch: 11.0.6
+      minimatch: 11.0.8
       ramda: 0.30.1
       ramda-adjunct: 5.1.0(ramda@0.30.1)
     optionalDependencies:
@@ -25574,7 +25616,7 @@ snapshots:
       picocolors: 1.1.1
       redent: 3.0.0
     optionalDependencies:
-      vitest: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      vitest: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
   '@testing-library/react@16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -25954,7 +25996,7 @@ snapshots:
   '@ts-morph/common@0.27.0':
     dependencies:
       fast-glob: 3.3.3
-      minimatch: 11.0.6
+      minimatch: 11.0.8
       path-browserify: 1.0.1
 
   '@tsconfig/node10@1.0.13': {}
@@ -25964,6 +26006,11 @@ snapshots:
   '@tsconfig/node14@1.0.3': {}
 
   '@tsconfig/node16@1.0.4': {}
+
+  '@tybys/wasm-util@0.10.4':
+    dependencies:
+      tslib: 2.9.1
+    optional: true
 
   '@types/aria-query@5.0.4': {}
 
@@ -26530,7 +26577,7 @@ snapshots:
       '@typescript-eslint/types': 8.72.2
       '@typescript-eslint/visitor-keys': 8.72.2
       debug: 4.4.3(supports-color@10.2.2)
-      minimatch: 11.0.6
+      minimatch: 11.0.8
       semver: 7.8.6
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@6.0.3)
@@ -26652,10 +26699,10 @@ snapshots:
 
   '@vercel/oidc@3.2.0': {}
 
-  '@vitejs/plugin-react@6.3.0(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
+  '@vitejs/plugin-react@6.3.0(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
       '@rolldown/pluginutils': 1.1.0
-      vite: 8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
 
   '@vitest/coverage-v8@5.1.0(vitest@5.1.0)':
     dependencies:
@@ -26667,7 +26714,7 @@ snapshots:
       obug: 3.0.0
       std-env: 4.3.0
       tinyrainbow: 3.2.0
-      vitest: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      vitest: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
   '@vitest/istanbul-lib-coverage@2.1.0': {}
 
@@ -26675,14 +26722,14 @@ snapshots:
     dependencies:
       '@vitest/istanbul-lib-coverage': 2.1.0
 
-  '@vitest/mocker@5.1.0(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
+  '@vitest/mocker@5.1.0(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@vitest/spy': 5.1.0
       estree-walker: 3.0.3
       magic-string: 1.4.5
     optionalDependencies:
-      vite: 8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
 
   '@vitest/spy@5.1.0': {}
 
@@ -26785,21 +26832,21 @@ snapshots:
 
   '@zenstackhq/cli@3.10.1(express@5.3.0(supports-color@10.2.2))(kysely@0.29.8)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(supports-color@10.2.2)(typescript@6.0.3)':
     dependencies:
-      '@hono/node-server': 1.19.18(hono@4.13.17)
+      '@hono/node-server': 1.19.19(hono@4.13.18)
       '@zenstackhq/common-helpers': 3.10.1
       '@zenstackhq/language': 3.10.1
       '@zenstackhq/orm': 3.10.1(pg@8.23.1)(zod@4.6.7)
       '@zenstackhq/plugin-policy': 3.10.1(kysely@0.29.8)(pg@8.23.1)(zod@4.6.7)
       '@zenstackhq/schema': 3.10.1
       '@zenstackhq/sdk': 3.10.1
-      '@zenstackhq/server': 3.10.1(express@5.3.0(supports-color@10.2.2))(hono@4.13.17)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
+      '@zenstackhq/server': 3.10.1(express@5.3.0(supports-color@10.2.2))(hono@4.13.18)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)
       chokidar: 5.0.0
       colors: 1.4.0
       commander: 8.3.0
       cors: 2.8.6
       dotenv: 17.4.2
       execa: 9.6.1
-      hono: 4.13.17
+      hono: 4.13.18
       jiti: 2.7.0
       langium: 4.2.4
       mixpanel: 0.18.1(supports-color@10.2.2)
@@ -26897,7 +26944,7 @@ snapshots:
       ts-pattern: 5.9.2
       typescript: 6.0.3
 
-  '@zenstackhq/server@3.10.1(express@5.3.0(supports-color@10.2.2))(hono@4.13.17)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)':
+  '@zenstackhq/server@3.10.1(express@5.3.0(supports-color@10.2.2))(hono@4.13.18)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(zod@4.6.7)':
     dependencies:
       '@zenstackhq/common-helpers': 3.10.1
       '@zenstackhq/orm': 3.10.1(pg@8.23.1)(zod@4.6.7)
@@ -26911,7 +26958,7 @@ snapshots:
       zod-validation-error: 4.0.2(zod@4.6.7)
     optionalDependencies:
       express: 5.3.0(supports-color@10.2.2)
-      hono: 4.13.17
+      hono: 4.13.18
       next: 16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
     transitivePeerDependencies:
       - better-sqlite3
@@ -27001,11 +27048,11 @@ snapshots:
       clean-stack: 5.3.0
       indent-string: 5.0.0
 
-  ai@7.0.168(zod@4.6.7):
+  ai@7.0.169(zod@4.6.7):
     dependencies:
-      '@ai-sdk/gateway': 4.0.141(zod@4.6.7)
+      '@ai-sdk/gateway': 4.0.142(zod@4.6.7)
       '@ai-sdk/provider': 4.0.37
-      '@ai-sdk/provider-utils': 5.0.78(zod@4.6.7)
+      '@ai-sdk/provider-utils': 5.0.79(zod@4.6.7)
       zod: 4.6.7
 
   ajv-formats@2.1.1(ajv@8.20.0):
@@ -27039,27 +27086,27 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  algoliasearch-helper@3.30.2(algoliasearch@5.63.0):
+  algoliasearch-helper@3.30.2(algoliasearch@5.64.0):
     dependencies:
       '@algolia/events': 4.0.1
-      algoliasearch: 5.63.0
+      algoliasearch: 5.64.0
 
-  algoliasearch@5.63.0:
+  algoliasearch@5.64.0:
     dependencies:
-      '@algolia/abtesting': 1.29.0
-      '@algolia/client-abtesting': 5.63.0
-      '@algolia/client-analytics': 5.63.0
-      '@algolia/client-common': 5.63.0
-      '@algolia/client-insights': 5.63.0
-      '@algolia/client-personalization': 5.63.0
-      '@algolia/client-query-suggestions': 5.63.0
-      '@algolia/client-search': 5.63.0
-      '@algolia/ingestion': 1.63.0
-      '@algolia/monitoring': 1.63.0
-      '@algolia/recommend': 5.63.0
-      '@algolia/requester-browser-xhr': 5.63.0
-      '@algolia/requester-fetch': 5.63.0
-      '@algolia/requester-node-http': 5.63.0
+      '@algolia/abtesting': 1.30.0
+      '@algolia/client-abtesting': 5.64.0
+      '@algolia/client-analytics': 5.64.0
+      '@algolia/client-common': 5.64.0
+      '@algolia/client-insights': 5.64.0
+      '@algolia/client-personalization': 5.64.0
+      '@algolia/client-query-suggestions': 5.64.0
+      '@algolia/client-search': 5.64.0
+      '@algolia/ingestion': 1.64.0
+      '@algolia/monitoring': 1.64.0
+      '@algolia/recommend': 5.64.0
+      '@algolia/requester-browser-xhr': 5.64.0
+      '@algolia/requester-fetch': 5.64.0
+      '@algolia/requester-node-http': 5.64.0
 
   amp-message@0.1.2:
     dependencies:
@@ -27277,7 +27324,7 @@ snapshots:
   autoprefixer@10.6.2(postcss@8.5.32):
     dependencies:
       browserslist: 4.29.5
-      caniuse-lite: 1.0.30001823
+      caniuse-lite: 1.0.30001826
       fraction.js: 5.3.4
       picocolors: 1.1.1
       postcss: 8.5.32
@@ -27521,12 +27568,12 @@ snapshots:
       widest-line: 4.0.1
       wrap-ansi: 8.1.0
 
-  brace-expansion@1.1.21:
+  brace-expansion@1.1.22:
     dependencies:
       balanced-match: 1.0.2
       concat-map: 0.0.1
 
-  brace-expansion@5.0.12:
+  brace-expansion@5.0.13:
     dependencies:
       balanced-match: 4.0.4
 
@@ -27537,8 +27584,8 @@ snapshots:
   browserslist@4.29.5:
     dependencies:
       baseline-browser-mapping: 2.11.35
-      caniuse-lite: 1.0.30001823
-      electron-to-chromium: 1.5.479
+      caniuse-lite: 1.0.30001826
+      electron-to-chromium: 1.5.481
       node-releases: 2.0.63
       update-browserslist-db: 1.3.4(browserslist@4.29.5)
 
@@ -27567,7 +27614,7 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  bullmq@6.7.3(ioredis@6.0.0(supports-color@10.2.2))(pg@8.23.1):
+  bullmq@6.7.4(ioredis@6.0.0(supports-color@10.2.2))(pg@8.23.1):
     dependencies:
       cron-parser: 5.10.4
       msgpackr: 2.1.4
@@ -27666,11 +27713,11 @@ snapshots:
   caniuse-api@3.0.0:
     dependencies:
       browserslist: 4.29.5
-      caniuse-lite: 1.0.30001823
+      caniuse-lite: 1.0.30001826
       lodash.memoize: 4.1.2
       lodash.uniq: 4.5.0
 
-  caniuse-lite@1.0.30001823: {}
+  caniuse-lite@1.0.30001826: {}
 
   canvg@3.0.11:
     dependencies:
@@ -27909,7 +27956,7 @@ snapshots:
 
   color-name@1.1.4: {}
 
-  colord@2.11.0: {}
+  colord@2.12.0: {}
 
   colorette@2.0.20: {}
 
@@ -28859,7 +28906,7 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       fast-check: 3.23.2
 
-  electron-to-chromium@1.5.479: {}
+  electron-to-chromium@1.5.481: {}
 
   embla-carousel-autoplay@8.6.0(embla-carousel@8.6.0):
     dependencies:
@@ -29223,10 +29270,10 @@ snapshots:
       safe-regex-test: 1.1.0
       string.prototype.includes: 2.0.1
 
-  eslint-plugin-prettier@5.5.7(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2)))(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prettier@3.9.10):
+  eslint-plugin-prettier@5.5.7(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2)))(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(prettier@3.10.0):
     dependencies:
       eslint: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
-      prettier: 3.9.10
+      prettier: 3.10.0
       prettier-linter-helpers: 1.0.1
       synckit: 0.12.3
     optionalDependencies:
@@ -29961,13 +30008,13 @@ snapshots:
 
   glob@13.0.7:
     dependencies:
-      minimatch: 11.0.6
+      minimatch: 11.0.8
       minipass: 7.1.3
       path-scurry: 2.0.2
 
   glob@14.0.4:
     dependencies:
-      minimatch: 11.0.6
+      minimatch: 11.0.8
       minipass: 7.1.3
       path-scurry: 3.0.0
 
@@ -30228,7 +30275,7 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.13.17: {}
+  hono@4.13.18: {}
 
   hook-std@4.0.0: {}
 
@@ -30439,7 +30486,7 @@ snapshots:
     dependencies:
       postcss: 8.5.32
 
-  icu-minify@4.14.10:
+  icu-minify@4.15.0:
     dependencies:
       '@formatjs/icu-messageformat-parser': 3.5.23
 
@@ -30545,10 +30592,10 @@ snapshots:
     dependencies:
       binary-search-bounds: 2.0.5
 
-  intl-messageformat@11.2.15:
+  intl-messageformat@12.1.5:
     dependencies:
       '@formatjs/fast-memoize': 3.1.7
-      '@formatjs/icu-messageformat-parser': 3.5.18
+      '@formatjs/icu-messageformat-parser': 3.5.23
 
   invariant@2.2.4:
     dependencies:
@@ -31256,13 +31303,13 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
-  lucide-react@1.71.0(@types/react@18.3.31)(react@19.3.1):
+  lucide-react@1.72.0(@types/react@18.3.31)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
       '@types/react': 18.3.31
 
-  lucide-react@1.71.0(@types/react@19.3.0)(react@19.3.1):
+  lucide-react@1.72.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
@@ -31321,7 +31368,7 @@ snapshots:
       jsonpointer: 5.0.1
       markdown-it: 14.3.3
       markdownlint: 0.41.1(supports-color@10.2.2)
-      minimatch: 11.0.6
+      minimatch: 11.0.8
       run-con: 1.3.3
       smol-toml: 1.9.1
       tinyglobby: 0.2.17
@@ -32040,14 +32087,14 @@ snapshots:
 
   minimalistic-assert@1.0.1: {}
 
-  minimatch@11.0.6:
+  minimatch@11.0.8:
     dependencies:
       '@isaacs/nonrecursive-glob-match': 1.1.0
-      brace-expansion: 5.0.12
+      brace-expansion: 5.0.13
 
   minimatch@3.1.5:
     dependencies:
-      brace-expansion: 1.1.21
+      brace-expansion: 1.1.22
 
   minimist@1.2.8: {}
 
@@ -32123,10 +32170,10 @@ snapshots:
     optionalDependencies:
       msgpackr-extract: 3.0.7
 
-  multer-s3@3.0.1(@aws-sdk/client-s3@3.1165.0):
+  multer-s3@3.0.1(@aws-sdk/client-s3@3.1166.0):
     dependencies:
-      '@aws-sdk/client-s3': 3.1165.0
-      '@aws-sdk/lib-storage': 3.1165.0(@aws-sdk/client-s3@3.1165.0)
+      '@aws-sdk/client-s3': 3.1166.0
+      '@aws-sdk/lib-storage': 3.1166.0(@aws-sdk/client-s3@3.1166.0)
       file-type: 3.9.0
       html-comment-regex: 1.1.2
       run-parallel: 1.2.0
@@ -32193,9 +32240,9 @@ snapshots:
     optionalDependencies:
       nodemailer: 10.5.0
 
-  next-intl-swc-plugin-extractor@4.14.10: {}
+  next-intl-swc-plugin-extractor@4.15.0: {}
 
-  next-intl@4.14.10(@swc/helpers@0.5.23)(@types/react@19.3.0)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1):
+  next-intl@4.15.0(@swc/helpers@0.5.23)(@types/react@19.3.0)(next@16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1):
     dependencies:
       '@eloqnt/config': 0.1.1
       '@eloqnt/format-json': 0.1.0
@@ -32203,12 +32250,12 @@ snapshots:
       '@formatjs/intl-localematcher': 0.8.14
       '@parcel/watcher': 2.6.0
       '@swc/core': 1.16.22(@swc/helpers@0.5.23)
-      icu-minify: 4.14.10
+      icu-minify: 4.15.0
       negotiator: 1.1.0
       next: 16.4.6(@babel/core@8.1.0)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      next-intl-swc-plugin-extractor: 4.14.10
+      next-intl-swc-plugin-extractor: 4.15.0
       react: 19.3.1
-      use-intl: 4.14.10(@types/react@19.3.0)(react@19.3.1)
+      use-intl: 4.15.0(@types/react@19.3.0)(react@19.3.1)
     optionalDependencies:
       '@types/react': 19.3.0
     transitivePeerDependencies:
@@ -32224,7 +32271,7 @@ snapshots:
       '@next/env': 16.4.6
       '@swc/helpers': 0.5.23
       baseline-browser-mapping: 2.11.35
-      caniuse-lite: 1.0.30001823
+      caniuse-lite: 1.0.30001826
       postcss: 8.5.32
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
@@ -32979,7 +33026,7 @@ snapshots:
     dependencies:
       browserslist: 4.29.5
       caniuse-api: 3.0.0
-      colord: 2.11.0
+      colord: 2.12.0
       postcss: 8.5.32
       postcss-value-parser: 4.2.0
 
@@ -33142,7 +33189,7 @@ snapshots:
 
   postcss-minify-gradients@6.0.3(postcss@8.5.32):
     dependencies:
-      colord: 2.11.0
+      colord: 2.12.0
       cssnano-utils: 4.0.2(postcss@8.5.32)
       postcss: 8.5.32
       postcss-value-parser: 4.2.0
@@ -33446,11 +33493,11 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
-  prettier-plugin-tailwindcss@0.8.1(prettier@3.9.10):
+  prettier-plugin-tailwindcss@0.8.1(prettier@3.10.0):
     dependencies:
-      prettier: 3.9.10
+      prettier: 3.10.0
 
-  prettier@3.9.10: {}
+  prettier@3.10.0: {}
 
   pretty-error@4.0.0:
     dependencies:
@@ -33819,7 +33866,7 @@ snapshots:
     dependencies:
       react: 18.3.1
 
-  react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.1):
+  react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
@@ -34133,7 +34180,7 @@ snapshots:
 
   readdir-glob@3.0.0:
     dependencies:
-      minimatch: 11.0.6
+      minimatch: 11.0.8
 
   readdirp@3.6.0:
     dependencies:
@@ -34429,26 +34476,27 @@ snapshots:
 
   robust-predicates@3.0.3: {}
 
-  rolldown@1.2.18:
+  rolldown@1.2.19:
     dependencies:
       '@oxc-project/types': 0.156.0
       '@rolldown/pluginutils': 1.1.0
     optionalDependencies:
-      '@rolldown/binding-android-arm-eabi': 1.2.18
-      '@rolldown/binding-android-arm64': 1.2.18
-      '@rolldown/binding-darwin-arm64': 1.2.18
-      '@rolldown/binding-darwin-x64': 1.2.18
-      '@rolldown/binding-freebsd-x64': 1.2.18
-      '@rolldown/binding-linux-arm-gnueabihf': 1.2.18
-      '@rolldown/binding-linux-arm64-gnu': 1.2.18
-      '@rolldown/binding-linux-arm64-musl': 1.2.18
-      '@rolldown/binding-linux-ppc64-gnu': 1.2.18
-      '@rolldown/binding-linux-s390x-gnu': 1.2.18
-      '@rolldown/binding-linux-x64-gnu': 1.2.18
-      '@rolldown/binding-linux-x64-musl': 1.2.18
-      '@rolldown/binding-openharmony-arm64': 1.2.18
-      '@rolldown/binding-win32-arm64-msvc': 1.2.18
-      '@rolldown/binding-win32-x64-msvc': 1.2.18
+      '@rolldown/binding-android-arm-eabi': 1.2.19
+      '@rolldown/binding-android-arm64': 1.2.19
+      '@rolldown/binding-darwin-arm64': 1.2.19
+      '@rolldown/binding-darwin-x64': 1.2.19
+      '@rolldown/binding-freebsd-x64': 1.2.19
+      '@rolldown/binding-linux-arm-gnueabihf': 1.2.19
+      '@rolldown/binding-linux-arm64-gnu': 1.2.19
+      '@rolldown/binding-linux-arm64-musl': 1.2.19
+      '@rolldown/binding-linux-ppc64-gnu': 1.2.19
+      '@rolldown/binding-linux-s390x-gnu': 1.2.19
+      '@rolldown/binding-linux-x64-gnu': 1.2.19
+      '@rolldown/binding-linux-x64-musl': 1.2.19
+      '@rolldown/binding-openharmony-arm64': 1.2.19
+      '@rolldown/binding-wasm32-wasi': 1.2.19
+      '@rolldown/binding-win32-arm64-msvc': 1.2.19
+      '@rolldown/binding-win32-x64-msvc': 1.2.19
 
   rollup@4.68.2:
     dependencies:
@@ -35601,11 +35649,11 @@ snapshots:
       '@tiptap/extension-image': 3.33.1(@tiptap/core@3.33.1(@tiptap/pm@3.33.1))
       '@tiptap/pm': 3.33.1
 
-  tldts-core@7.4.20: {}
+  tldts-core@7.4.22: {}
 
-  tldts@7.4.19:
+  tldts@7.4.22:
     dependencies:
-      tldts-core: 7.4.20
+      tldts-core: 7.4.22
 
   tmp@0.2.7: {}
 
@@ -35633,7 +35681,7 @@ snapshots:
 
   tough-cookie@6.1.0:
     dependencies:
-      tldts: 7.4.19
+      tldts: 7.4.22
 
   tr46@7.0.0:
     dependencies:
@@ -36088,12 +36136,12 @@ snapshots:
     dependencies:
       react: 19.3.1
 
-  use-intl@4.14.10(@types/react@19.3.0)(react@19.3.1):
+  use-intl@4.15.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       '@formatjs/fast-memoize': 3.1.7
       '@schummar/icu-type-parser': 1.21.5
-      icu-minify: 4.14.10
-      intl-messageformat: 11.2.15
+      icu-minify: 4.15.0
+      intl-messageformat: 12.1.5
       react: 19.3.1
     optionalDependencies:
       '@types/react': 19.3.0
@@ -36192,22 +36240,22 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.4
 
-  vite-tsconfig-paths@6.1.1(supports-color@10.2.2)(typescript@6.0.3)(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)):
+  vite-tsconfig-paths@6.1.1(supports-color@10.2.2)(typescript@6.0.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
       globrex: 0.1.2
       tsconfck: 3.1.6(typescript@6.0.3)
-      vite: 8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1):
+  vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
       postcss: 8.5.32
-      rolldown: 1.2.18
+      rolldown: 1.2.19
       tinyglobby: 0.2.17
     optionalDependencies:
       '@types/node': 26.6.6
@@ -36218,10 +36266,10 @@ snapshots:
       tsx: 4.23.15
       yaml: 2.9.1
 
-  vitest@5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)):
+  vitest@5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.0(@noble/hashes@2.4.0))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.1.0(vite@8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      '@vitest/mocker': 5.1.0(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
       chai: 6.3.0
       es-module-lexer: 2.3.2
       expect-type: 1.4.0
@@ -36232,7 +36280,7 @@ snapshots:
       tinybench: 6.2.3
       tinyexec: 1.3.1
       tinyglobby: 0.2.17
-      vite: 8.3.7(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
       why-is-node-running: 3.2.1
     optionalDependencies:
       '@opentelemetry/api': 1.10.0
