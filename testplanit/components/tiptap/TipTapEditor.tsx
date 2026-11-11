@@ -31,7 +31,6 @@ import styles from "~/styles/TipTapEditor.module.css";
 import { ContentItemMenu } from "./menus/ContentItemMenu";
 import { Video } from "./video";
 // import { Image } from "@tiptap/extension-image";
-// import ImageResize from "tiptap-extension-resize-image";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { Markdown } from "@tiptap/markdown";
 import { Slice } from "@tiptap/pm/model";

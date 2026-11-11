@@ -125,10 +125,8 @@ RUN cd /app/deploy/node_modules/.pnpm && \
            lucide-react@* \
            @atlaskit+* \
            @radix-ui+* \
-           @reduxjs+* \
-           redux@* \
            framer-motion@* motion@* \
-           @tanstack+react-table* @tanstack+react-virtual* @tanstack+react-form* \
+           @tanstack+react-table* @tanstack+react-virtual* \
            @dnd-kit+* \
            cmdk@* \
            embla-carousel* \
@@ -136,7 +134,6 @@ RUN cd /app/deploy/node_modules/.pnpm && \
            playwright* @playwright+* \
            faker@* \
            openai@* \
-           ai@* \
            effect@* \
            d3@* d3-* @observablehq+* \
            2>/dev/null || true
