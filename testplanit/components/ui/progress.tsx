@@ -1,5 +1,5 @@
-import { useDirection } from "@radix-ui/react-direction";
-import * as ProgressPrimitive from "@radix-ui/react-progress";
+import { Direction, Progress as ProgressPrimitive } from "radix-ui";
+
 import * as React from "react";
 
 import { cn } from "~/utils";
@@ -8,7 +8,7 @@ const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
 >(({ className, value, ...props }, ref) => {
-  const dir = useDirection();
+  const dir = Direction.useDirection();
   const remaining = 100 - (value || 0);
   return (
     <ProgressPrimitive.Root

@@ -41,7 +41,7 @@ import { Switch } from "@/components/ui/switch";
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { WarningAlert } from "@/components/ui/warning-alert";
 import { TriangleAlert } from "lucide-react";
-import { Label } from "@radix-ui/react-label";
+import { Label } from "radix-ui";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 // Helper to get enum values safely
@@ -370,7 +370,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                       </th>
                       {/* Add/Edit Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center justify-center gap-1">
+                        <Label.Root className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={
                               getHeaderCheckboxState("canAddEdit").checked
@@ -394,11 +394,11 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
 
                             <HelpPopover helpKey="role.permissions.canAddEdit" />
                           </span>
-                        </Label>
+                        </Label.Root>
                       </th>
                       {/* Delete Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center justify-center gap-1">
+                        <Label.Root className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={
                               getHeaderCheckboxState("canDelete").checked
@@ -421,11 +421,11 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             {t("common.actions.delete")}
                             <HelpPopover helpKey="role.permissions.canDelete" />
                           </span>
-                        </Label>
+                        </Label.Root>
                       </th>
                       {/* Close Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center justify-center gap-1">
+                        <Label.Root className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={getHeaderCheckboxState("canClose").checked}
                             onCheckedChange={(checked) =>
@@ -444,11 +444,11 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             {t("common.actions.complete")}
                             <HelpPopover helpKey="role.permissions.canClose" />
                           </span>
-                        </Label>
+                        </Label.Root>
                       </th>
                       {/* Approve Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center justify-center gap-1">
+                        <Label.Root className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={
                               getHeaderCheckboxState("canApprove").checked
@@ -471,11 +471,11 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             {t("common.permissions.approve")}
                             <HelpPopover helpKey="role.permissions.canApprove" />
                           </span>
-                        </Label>
+                        </Label.Root>
                       </th>
                       {/* Read Sensitive Header Checkbox */}
                       <th className="p-2 text-center text-sm font-medium">
-                        <Label className="flex items-center justify-center gap-1">
+                        <Label.Root className="flex items-center justify-center gap-1">
                           <Checkbox
                             checked={
                               getHeaderCheckboxState("canReadSensitive").checked
@@ -500,7 +500,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             {t("common.permissions.readSensitive")}
                             <HelpPopover helpKey="role.permissions.canReadSensitive" />
                           </span>
-                        </Label>
+                        </Label.Root>
                       </th>
                     </tr>
                   </thead>

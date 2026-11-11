@@ -1,4 +1,4 @@
-import { useDirection } from "@radix-ui/react-direction";
+import { Direction } from "radix-ui";
 import { ArrowLeftIcon, ArrowRightIcon } from "@radix-ui/react-icons";
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
@@ -58,7 +58,7 @@ const Carousel = React.forwardRef<
     },
     ref
   ) => {
-    const dir = useDirection();
+    const dir = Direction.useDirection();
     const [carouselRef, api] = useEmblaCarousel(
       {
         direction: dir,

@@ -4,7 +4,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { type DialogProps } from "@radix-ui/react-dialog";
+import { type Dialog as DialogPrimitive } from "radix-ui";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { Command as CommandPrimitive } from "cmdk";
 import { useTranslations } from "next-intl";
@@ -26,7 +26,7 @@ const Command = React.forwardRef<
 ));
 Command.displayName = CommandPrimitive.displayName;
 
-const CommandDialog = ({ children, ...props }: DialogProps) => {
+const CommandDialog = ({ children, ...props }: DialogPrimitive.DialogProps) => {
   const t = useTranslations("common.ui.command");
   return (
     <Dialog {...props}>

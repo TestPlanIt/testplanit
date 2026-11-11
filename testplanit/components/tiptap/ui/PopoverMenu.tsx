@@ -1,4 +1,4 @@
-import * as Popover from "@radix-ui/react-popover";
+import { Popover } from "radix-ui";
 import { icons } from "lucide-react";
 import { forwardRef } from "react";
 import { cn } from "~/utils";

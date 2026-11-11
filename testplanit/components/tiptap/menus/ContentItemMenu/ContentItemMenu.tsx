@@ -5,7 +5,7 @@ import { Editor } from "@tiptap/react";
 
 import { DropdownButton } from "@/components/tiptap/ui/Dropdown";
 import { Surface } from "@/components/tiptap/ui/Surface";
-import * as Popover from "@radix-ui/react-popover";
+import { Popover } from "radix-ui";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import useContentItemActions from "./hooks/useContentItemActions";

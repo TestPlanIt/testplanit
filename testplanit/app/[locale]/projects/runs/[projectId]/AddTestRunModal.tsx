@@ -52,7 +52,7 @@ import UploadAttachments, {
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea, TestRunType } from "~/zenstack/models";
 import type { Attachments } from "~/zenstack/models";
-import { DialogDescription } from "@radix-ui/react-dialog";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import { Combine } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -738,7 +738,7 @@ const TestCasesDialog = React.memo(
       <>
         <DialogHeader className="p-6 pe-4 pb-0">
           <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
-          <DialogDescription asChild>
+          <DialogPrimitive.Description asChild>
             <div
               ref={headerRef}
               className="flex items-start justify-between text-muted-foreground"
@@ -808,7 +808,7 @@ const TestCasesDialog = React.memo(
                 projectId={Number(projectId)}
               />
             </div>
-          </DialogDescription>
+          </DialogPrimitive.Description>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto">
           <ProjectRepository

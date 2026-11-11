@@ -4,7 +4,7 @@ import { SessionEndedGuard } from "@/components/SessionEndedGuard";
 import { RunGenerationProgressMount } from "@/components/runs/RunGenerationProgressToast";
 import { UpdateAvailableBanner } from "@/components/UpdateAvailableBanner";
 import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
-import { DirectionProvider } from "@radix-ui/react-direction";
+import { Direction } from "radix-ui";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
@@ -55,7 +55,7 @@ export default async function RootLayout(props: any) {
   return (
     <Providers nonce={nonce}>
       <NextIntlClientProvider messages={messages} locale={locale}>
-        <DirectionProvider dir={dir}>
+        <Direction.Provider dir={dir}>
           <NextStepOnboarding>
             <SessionEndedGuard />
             <UpgradeNotificationChecker />
@@ -70,7 +70,7 @@ export default async function RootLayout(props: any) {
               <RunGenerationProgressMount />
             </div>
           </NextStepOnboarding>
-        </DirectionProvider>
+        </Direction.Provider>
       </NextIntlClientProvider>
     </Providers>
   );

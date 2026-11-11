@@ -1,4 +1,4 @@
-import { useDirection } from "@radix-ui/react-direction";
+import { Direction } from "radix-ui";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
@@ -54,7 +54,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
 }) => {
   const { data: session } = useSession();
   const t = useTranslations();
-  const dir = useDirection();
+  const dir = Direction.useDirection();
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(initialIndex);
   const { mutateAsync: updateAttachments } =
