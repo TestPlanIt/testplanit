@@ -22,7 +22,7 @@ const POPUP_CLASS_NAME = "z-[9999] pointer-events-auto";
  * keeps anchored to the cursor.
  */
 export function suggestionPopupRenderer<TRef extends SuggestionListRef>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each list component declares its own props
+  // Each list component declares its own props.
   ListComponent: ComponentType<any>
 ): NonNullable<SuggestionOptions["render"]> {
   return () => {
