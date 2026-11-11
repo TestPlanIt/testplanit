@@ -100,7 +100,7 @@ async function build() {
       entryPoints,
       bundle: true, // Bundle to resolve all imports
       platform: "node",
-      target: "node18",
+      target: "node24",
       format: "cjs", // Use CommonJS to avoid ESM import resolution issues
       outdir: distDir,
       sourcemap: true,

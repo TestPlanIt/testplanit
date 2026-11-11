@@ -184,7 +184,6 @@ const nextConfig: NextConfig = {
     "@zenstackhq/plugin-policy",
     "@zenstackhq/server",
     "kysely",
-    "pg",
     "test-results-parser",
     "jspdf",
     "fflate",
