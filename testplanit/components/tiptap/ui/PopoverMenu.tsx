@@ -13,10 +13,8 @@ export type MenuProps = {
   trigger: React.ReactNode;
   triggerClassName?: string;
   customTrigger?: boolean;
-  isOpen?: boolean;
   onOpenChange?: (state: boolean) => void;
   withPortal?: boolean;
-  tooltip?: string;
   isActive?: boolean;
 };
 
@@ -25,9 +23,7 @@ export const Menu = ({
   trigger,
   triggerClassName,
   children,
-  isOpen,
   withPortal,
-  tooltip,
   onOpenChange,
 }: MenuProps) => {
   return (
@@ -36,10 +32,7 @@ export const Menu = ({
         <Trigger asChild>{trigger}</Trigger>
       ) : (
         <Trigger asChild>
-          <Toolbar.Button
-            className={triggerClassName}
-            tooltip={!isOpen ? tooltip : ""}
-          >
+          <Toolbar.Button className={triggerClassName}>
             {trigger}
           </Toolbar.Button>
         </Trigger>

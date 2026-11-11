@@ -1,13 +1,12 @@
 import Mention from "@tiptap/extension-mention";
-import { ReactRenderer } from "@tiptap/react";
 import type { SuggestionOptions } from "@tiptap/suggestion";
 import { toast } from "sonner";
-import tippy, { type Instance as TippyInstance } from "tippy.js";
 
 import {
   ParameterMentionSuggestion,
   type ParameterMentionSuggestionRef,
 } from "~/components/tiptap/ParameterMentionSuggestion";
+import { suggestionPopupRenderer } from "./suggestionPopup";
 
 export interface ParameterChipMeta {
   id: number;
@@ -366,60 +365,9 @@ export function createParameterMentionExtension(
                 ] as Array<unknown>)
                 .run();
             },
-            render: () => {
-              let component:
-                ReactRenderer<ParameterMentionSuggestionRef> | undefined;
-              let popup: TippyInstance[] | undefined;
-
-              return {
-                onStart: (props: {
-                  editor: unknown;
-                  clientRect?: (() => DOMRect | null) | null;
-                }) => {
-                  component = new ReactRenderer(ParameterMentionSuggestion, {
-                    props: props as unknown as Record<string, unknown>,
-                    editor: props.editor as never,
-                  });
-
-                  if (!props.clientRect) return;
-
-                  popup = tippy("body", {
-                    getReferenceClientRect: props.clientRect as () => DOMRect,
-                    appendTo: () => document.body,
-                    content: component.element,
-                    showOnCreate: true,
-                    interactive: true,
-                    trigger: "manual",
-                    placement: "bottom-start",
-                  });
-                },
-
-                onUpdate(props: {
-                  clientRect?: (() => DOMRect | null) | null;
-                }) {
-                  component?.updateProps(
-                    props as unknown as Record<string, unknown>
-                  );
-                  if (!props.clientRect) return;
-                  popup?.[0]?.setProps({
-                    getReferenceClientRect: props.clientRect as () => DOMRect,
-                  });
-                },
-
-                onKeyDown(props: { event: KeyboardEvent }) {
-                  if (props.event.key === "Escape") {
-                    popup?.[0]?.hide();
-                    return true;
-                  }
-                  return component?.ref?.onKeyDown(props) ?? false;
-                },
-
-                onExit() {
-                  popup?.[0]?.destroy();
-                  component?.destroy();
-                },
-              };
-            },
+            render: suggestionPopupRenderer<ParameterMentionSuggestionRef>(
+              ParameterMentionSuggestion
+            ),
           } as Partial<SuggestionOptions>,
         }
       : {}),

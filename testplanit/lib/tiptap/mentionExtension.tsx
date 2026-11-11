@@ -1,8 +1,6 @@
 import Mention from "@tiptap/extension-mention";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { ReactRenderer } from "@tiptap/react";
 import { SuggestionOptions } from "@tiptap/suggestion";
-import tippy, { Instance as TippyInstance } from "tippy.js";
 import { contrastingTextColor } from "~/utils/contrastingTextColor";
 import { stringToColorCode } from "~/utils/stringToColorCode";
 import {
@@ -11,6 +9,9 @@ import {
   MentionUser,
 } from "~/components/comments/MentionSuggestion";
 import { apiFetch, stripBasePath, withBasePath } from "~/lib/basePath";
+import { suggestionPopupRenderer } from "./suggestionPopup";
+
+const MENTION_LOOKUP_DEBOUNCE_MS = 200;
 
 /**
  * Fetch users for mention suggestions
@@ -20,11 +21,13 @@ import { apiFetch, stripBasePath, withBasePath } from "~/lib/basePath";
  */
 async function fetchMentionUsers(
   query: string,
-  projectId: number
+  projectId: number,
+  signal?: AbortSignal
 ): Promise<MentionUser[]> {
   try {
     const response = await apiFetch(
-      `/api/users/search-for-mentions?q=${encodeURIComponent(query)}&projectId=${projectId}`
+      `/api/users/search-for-mentions?q=${encodeURIComponent(query)}&projectId=${projectId}`,
+      { signal }
     );
 
     if (!response.ok) {
@@ -52,6 +55,8 @@ async function fetchMentionUsers(
       return nameA.localeCompare(nameB);
     });
   } catch (error) {
+    // A newer keystroke superseded this lookup.
+    if (signal?.aborted) return [];
     console.error("Error fetching mention users:", error);
     return [];
   }
@@ -178,8 +183,9 @@ export function createMentionExtension(projectId: number) {
       class: "mention",
     },
     suggestion: {
-      items: async ({ query }) => {
-        return fetchMentionUsers(query, projectId);
+      debounce: MENTION_LOOKUP_DEBOUNCE_MS,
+      items: async ({ query, signal }) => {
+        return fetchMentionUsers(query, projectId, signal);
       },
       command: ({ editor, range, props }) => {
         // Delete the mention trigger character and insert the mention node with all attributes
@@ -197,59 +203,7 @@ export function createMentionExtension(projectId: number) {
           })
           .run();
       },
-      render: () => {
-        let component: ReactRenderer<MentionSuggestionRef> | undefined;
-        let popup: TippyInstance[] | undefined;
-
-        return {
-          onStart: (props) => {
-            component = new ReactRenderer(MentionSuggestion, {
-              props,
-              editor: props.editor,
-            });
-
-            if (!props.clientRect) {
-              return;
-            }
-
-            popup = tippy("body", {
-              getReferenceClientRect: props.clientRect as () => DOMRect,
-              appendTo: () => document.body,
-              content: component.element,
-              showOnCreate: true,
-              interactive: true,
-              trigger: "manual",
-              placement: "bottom-start",
-            });
-          },
-
-          onUpdate(props) {
-            component?.updateProps(props);
-
-            if (!props.clientRect) {
-              return;
-            }
-
-            popup?.[0]?.setProps({
-              getReferenceClientRect: props.clientRect as () => DOMRect,
-            });
-          },
-
-          onKeyDown(props) {
-            if (props.event.key === "Escape") {
-              popup?.[0]?.hide();
-              return true;
-            }
-
-            return component?.ref?.onKeyDown(props) ?? false;
-          },
-
-          onExit() {
-            popup?.[0]?.destroy();
-            component?.destroy();
-          },
-        };
-      },
+      render: suggestionPopupRenderer<MentionSuggestionRef>(MentionSuggestion),
     } as Partial<SuggestionOptions>,
   });
 }

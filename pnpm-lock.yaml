@@ -712,9 +712,6 @@ importers:
       '@testplanit/api':
         specifier: workspace:*
         version: link:../packages/api
-      '@tippyjs/react':
-        specifier: ^4.2.6
-        version: 4.2.6(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@tiptap/core':
         specifier: ^3.33.1
         version: 3.33.1(@tiptap/pm@3.33.1)
@@ -1030,9 +1027,6 @@ importers:
       test-results-parser:
         specifier: ^0.4.7
         version: 0.4.7
-      tippy.js:
-        specifier: ^6.3.7
-        version: 6.3.7
       turndown:
         specifier: ^7.2.5
         version: 7.2.5
@@ -6654,12 +6648,6 @@ packages:
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
-
-  '@tippyjs/react@4.2.6':
-    resolution: {integrity: sha512-91RicDR+H7oDSyPycI13q3b7o4O60wa2oRbjlz2fyRLmHImc4vyDwuUP8NtZaN0VARJY5hybvDYrFzhY9+Lbyw==}
-    peerDependencies:
-      react: '>=16.8'
-      react-dom: '>=16.8'
 
   '@tiptap/core@3.33.1':
     resolution: {integrity: sha512-cWSLHe0Bp44SqEsNMpfSpJeeWenG9/g4pAMRjcEpm0IZN9cmY5fq7LEYZCpjBbVqpzjaT1q7HnkvbBOPTdhbrQ==}
@@ -15098,9 +15086,6 @@ packages:
   tinyrainbow@3.2.0:
     resolution: {integrity: sha512-LgO3D9yZJjApUiuUfl9iFAwrtaX4+lok3wJIqttGoKCHlWUqHqbQpnxCf82L8FjgKsh4iGo78hqJwgL8F6To2A==}
     engines: {node: '>=14.0.0'}
-
-  tippy.js@6.3.7:
-    resolution: {integrity: sha512-E1d3oP2emgJ9dRQZdf3Kkn0qJgI6ZLpyS5z6ZkY1DF3kaQaBsGZsndEpHwx+eC+tYM41HaSNvNtLx8tU57FzTQ==}
 
   tldts-core@7.4.22:
     resolution: {integrity: sha512-NRyhrlvJcTwvoRibE0dEZvp6C5RwV4RxpsX1zbkI1k7Fk2pzIhmQ+MvswJEd5KKl3VRFRMDTipXse/ejh/ld/w==}
@@ -24776,12 +24761,6 @@ snapshots:
   '@testing-library/user-event@14.6.9(@testing-library/dom@10.4.2)':
     dependencies:
       '@testing-library/dom': 10.4.2
-
-  '@tippyjs/react@4.2.6(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
-    dependencies:
-      react: 19.3.1
-      react-dom: 19.3.1(react@19.3.1)
-      tippy.js: 6.3.7
 
   '@tiptap/core@3.33.1(@tiptap/pm@3.33.1)':
     dependencies:
@@ -34485,10 +34464,6 @@ snapshots:
   tinypool@2.2.0: {}
 
   tinyrainbow@3.2.0: {}
-
-  tippy.js@6.3.7:
-    dependencies:
-      '@popperjs/core': 2.11.8
 
   tldts-core@7.4.22: {}
 

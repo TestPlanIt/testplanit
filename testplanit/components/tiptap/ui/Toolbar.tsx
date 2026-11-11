@@ -3,7 +3,6 @@ import { ButtonHTMLAttributes, forwardRef, HTMLProps } from "react";
 import { cn } from "~/utils";
 import { Button, ButtonProps } from "./Button";
 import { Surface } from "./Surface";
-import Tooltip from "./Tooltip";
 
 export type ToolbarWrapperProps = {
   shouldShowContent?: boolean;
@@ -62,8 +61,6 @@ ToolbarDivider.displayName = "Toolbar.Divider";
 export type ToolbarButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   active?: boolean;
   activeClassname?: string;
-  tooltip?: string;
-  tooltipShortcut?: string[];
   buttonSize?: ButtonProps["buttonSize"];
   variant?: ButtonProps["variant"];
 };
@@ -75,8 +72,6 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       buttonSize = "icon",
       variant = "ghost",
       className,
-      tooltip,
-      tooltipShortcut,
       activeClassname,
       ...rest
     },
@@ -84,7 +79,7 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   ) => {
     const buttonClass = cn("w-auto min-w-[2rem] gap-1 px-2", className);
 
-    const content = (
+    return (
       <Button
         activeClassname={activeClassname}
         className={buttonClass}
@@ -96,16 +91,6 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         {children}
       </Button>
     );
-
-    if (tooltip) {
-      return (
-        <Tooltip title={tooltip} shortcut={tooltipShortcut}>
-          {content}
-        </Tooltip>
-      );
-    }
-
-    return content;
   }
 );
 
