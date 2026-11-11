@@ -1,4 +1,5 @@
 import nextConfig from "eslint-config-next";
+import pluginQuery from "@tanstack/eslint-plugin-query";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 
@@ -30,6 +31,15 @@ const eslintConfig = [
     ],
   },
   ...nextConfig,
+  ...pluginQuery.configs["flat/recommended"],
+  {
+    rules: {
+      // Query keys here carry a stable stand-in (a joined id string, a
+      // canonical filter key) for objects the query function reads, which this
+      // rule reports as a missing dependency.
+      "@tanstack/query/exhaustive-deps": "off",
+    },
+  },
   {
     files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
     rules: {

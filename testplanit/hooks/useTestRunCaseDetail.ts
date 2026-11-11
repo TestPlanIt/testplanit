@@ -49,5 +49,5 @@ export function useTestRunCaseDetail(
     return filterOrphanedFieldValues(query.data);
   }, [query.data]);
 
-  return { ...query, data };
+  return { data, isLoading: query.isLoading };
 }

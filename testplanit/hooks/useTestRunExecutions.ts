@@ -82,7 +82,8 @@ export function useTestRunExecutions(
   const latest = executions[0] ?? null;
   const active = latest && isActiveExecution(latest) ? latest : null;
 
-  const refetch = useCallback(() => void query.refetch(), [query]);
+  const { refetch: refetchQuery } = query;
+  const refetch = useCallback(() => void refetchQuery(), [refetchQuery]);
 
   return {
     executions,
