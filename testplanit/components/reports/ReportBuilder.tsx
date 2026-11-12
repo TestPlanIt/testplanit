@@ -179,6 +179,7 @@ import {
   applyLegacyReportUrlParams,
   buildCleanReportUrlParams,
   buildReportBuilderStateConfig,
+  hasNavigatedAwayFromRun,
   hasReportSelectionInUrl,
   isUrlInSyncWithReportType,
   parseLegacyReportUrlParams,
@@ -1007,6 +1008,11 @@ function ReportBuilderContent({
   // reportType counterpart to pendingTabRef — guards the reportType-sync effect
   // against the same stale-URL window so an optimistic report switch isn't reverted.
   const pendingReportTypeRef = useRef<string | null>(null);
+  // The report type on screen now, readable from a run that started earlier.
+  const liveReportTypeRef = useRef(reportType);
+  useEffect(() => {
+    liveReportTypeRef.current = reportType;
+  }, [reportType]);
 
   // Track if we're on the client side (for SSR compatibility)
   const [isClient, setIsClient] = useState(false);
@@ -3186,6 +3192,10 @@ function ReportBuilderContent({
           body: JSON.stringify(body),
         });
 
+        // The user switched to another report while this one was running;
+        // its rows and errors no longer belong on screen.
+        if (liveReportTypeRef.current !== reportType) return;
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to run report");
@@ -3404,11 +3414,14 @@ function ReportBuilderContent({
             // in flight, the live URL already belongs to that navigation;
             // writing this run's params over it would bounce them back.
             const liveParams = new URLSearchParams(window.location.search);
-            const liveTab = liveParams.get("tab");
-            const liveReportType = liveParams.get("reportType");
-            const navigatedAway =
-              (liveTab !== null && liveTab !== newParams.get("tab")) ||
-              (liveReportType !== null && liveReportType !== safeReportType);
+            const navigatedAway = hasNavigatedAwayFromRun({
+              runTab: newParams.get("tab"),
+              runReportType: safeReportType,
+              liveTab: liveParams.get("tab"),
+              liveReportType: liveParams.get("reportType"),
+              pendingTab: pendingTabRef.current,
+              pendingReportType: pendingReportTypeRef.current,
+            });
             if (!navigatedAway) {
               router.replace(`${pathname}?${newParams.toString()}`);
             }
