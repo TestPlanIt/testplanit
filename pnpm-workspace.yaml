@@ -120,11 +120,19 @@ overrides:
   'prosemirror-model': '^1.25.12'
   'prosemirror-view': '^1.42.6'
   'prosemirror-transform': '^1.12.2'
+  # @acid-info/docusaurus-og lists Docusaurus 3.8.1 as its own dependency,
+  # which installed a second copy of Docusaurus for the docs site. It only uses
+  # the types, so point them at the version the site runs.
+  '@acid-info/docusaurus-og>@docusaurus/core': '3.10.2'
+  '@acid-info/docusaurus-og>@docusaurus/module-type-aliases': '3.10.2'
+  '@acid-info/docusaurus-og>@docusaurus/types': '3.10.2'
+  '@acid-info/docusaurus-og>@docusaurus/utils': '3.10.2'
+  '@acid-info/docusaurus-og>@docusaurus/utils-common': '3.10.2'
+  '@acid-info/docusaurus-og>@docusaurus/utils-validation': '3.10.2'
 
 patchedDependencies:
   '@acid-info/docusaurus-og@1.0.3-beta.2': patches/@acid-info__docusaurus-og@1.0.3-beta.2.patch
   '@zenstackhq/tanstack-query@3.10.1': patches/@zenstackhq__tanstack-query@3.10.1.patch
-  gray-matter@4.0.3: patches/gray-matter@4.0.3.patch
 
 permissions:
   '@tanstack/react-table':
