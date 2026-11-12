@@ -192,6 +192,7 @@ import type {
   LlmRequest,
   LlmResponse,
   LlmStreamResponse,
+  LlmStreamUsage,
 } from "../types";
 
 export class LlmManager {
@@ -358,26 +359,37 @@ export class LlmManager {
     const adapter = await this.getAdapter(llmIntegrationId);
 
     const chunks: string[] = [];
+    let reportedUsage: LlmStreamUsage | undefined;
 
     try {
       for await (const chunk of adapter.chatStream(request)) {
-        chunks.push(chunk.delta);
-        yield chunk;
+        // Usage is accounting for this method; callers get the chunk without
+        // it, and a chunk that carried nothing else is not passed on at all.
+        const { usage, ...content } = chunk;
+        if (usage) {
+          reportedUsage = usage;
+          if (!content.delta && !content.finishReason) {
+            continue;
+          }
+        }
+        chunks.push(content.delta);
+        yield content;
       }
 
-      const fullContent = chunks.join("");
-      const estimatedCompletionTokens = Math.ceil(fullContent.length / 4);
-      // Streaming responses aren't parsed for provider usage blocks, so the
-      // prompt side is estimated too (chars/4 + flat per-image charge) —
-      // previously recorded as 0, which hid the entire input cost of every
-      // streaming feature from the usage report.
-      const estimatedPromptTokens = estimatePromptTokens(request.messages);
+      // Providers that report usage on the stream are recorded exactly. The
+      // rest are estimated (chars/4, plus a flat per-image charge on the
+      // prompt side) so their cost still reaches the usage report.
+      const completionTokens =
+        reportedUsage?.completionTokens ??
+        Math.ceil(chunks.join("").length / 4);
+      const promptTokens =
+        reportedUsage?.promptTokens ?? estimatePromptTokens(request.messages);
 
       await this.trackStreamUsage(
         llmIntegrationId,
         request,
-        estimatedCompletionTokens,
-        estimatedPromptTokens
+        completionTokens,
+        promptTokens
       );
     } catch (error) {
       await this.trackError(llmIntegrationId, request, error);
@@ -618,8 +630,8 @@ export class LlmManager {
   private async trackStreamUsage(
     llmIntegrationId: number,
     request: LlmRequest,
-    estimatedCompletionTokens: number,
-    estimatedPromptTokens: number
+    completionTokens: number,
+    promptTokens: number
   ): Promise<void> {
     const config = await this.db.llmProviderConfig.findUnique({
       where: { llmIntegrationId },
@@ -628,10 +640,9 @@ export class LlmManager {
     if (!config) return;
 
     const outputCost =
-      (estimatedCompletionTokens / 1_000_000) *
-      Number(config.costPerOutputToken);
+      (completionTokens / 1_000_000) * Number(config.costPerOutputToken);
     const inputCost =
-      (estimatedPromptTokens / 1_000_000) * Number(config.costPerInputToken);
+      (promptTokens / 1_000_000) * Number(config.costPerInputToken);
 
     await this.db.llmUsage.create({
       data: {
@@ -640,9 +651,9 @@ export class LlmManager {
         ...usageProjectConnect(request),
         feature: request.feature,
         model: request.model || config.defaultModel,
-        promptTokens: estimatedPromptTokens,
-        completionTokens: estimatedCompletionTokens,
-        totalTokens: estimatedPromptTokens + estimatedCompletionTokens,
+        promptTokens,
+        completionTokens,
+        totalTokens: promptTokens + completionTokens,
         inputCost: asDecimal(inputCost),
         outputCost: asDecimal(outputCost),
         totalCost: asDecimal(inputCost + outputCost),

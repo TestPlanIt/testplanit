@@ -200,6 +200,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     const decoder = new TextDecoder();
     let buffer = "";
     let currentModel = "";
+    let inputTokens: number | undefined;
 
     try {
       while (true) {
@@ -219,6 +220,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
 
               if (event.type === "message_start" && event.message) {
                 currentModel = event.message.model;
+                inputTokens = event.message.usage?.input_tokens;
               } else if (
                 event.type === "content_block_delta" &&
                 event.delta?.type === "text_delta" &&
@@ -239,6 +241,13 @@ export class AnthropicAdapter extends BaseLlmAdapter {
                   delta: "",
                   model: currentModel,
                   finishReason: this.mapStopReason(event.delta.stop_reason),
+                  usage:
+                    inputTokens != null && event.usage?.output_tokens != null
+                      ? {
+                          promptTokens: inputTokens,
+                          completionTokens: event.usage.output_tokens,
+                        }
+                      : undefined,
                 };
               } else if (event.type === "message_stop") {
                 return;

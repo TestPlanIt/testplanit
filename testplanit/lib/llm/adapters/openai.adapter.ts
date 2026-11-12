@@ -24,6 +24,7 @@ export interface OpenAIChatRequest {
   temperature?: number;
   max_completion_tokens?: number;
   stream?: boolean;
+  stream_options?: { include_usage: boolean };
   top_p?: number;
   frequency_penalty?: number;
   presence_penalty?: number;
@@ -64,7 +65,18 @@ interface OpenAIStreamChunk {
     };
     finish_reason: string | null;
   }>;
+  /** Sent on a final, choice-less chunk when `stream_options.include_usage` is set. */
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+  } | null;
 }
+
+/**
+ * Hosts known to accept `stream_options`. A proxy or an older API version may
+ * reject the field, so it is only sent to these.
+ */
+const STREAM_USAGE_HOSTS = new Set(["api.openai.com", "api.deepseek.com"]);
 
 export class OpenAIAdapter extends BaseLlmAdapter {
   private apiKey: string;
@@ -138,6 +150,9 @@ export class OpenAIAdapter extends BaseLlmAdapter {
         request.maxTokens ?? this.config.config.defaultMaxTokens,
       stream,
     };
+    if (stream && this.requestsStreamUsage()) {
+      body.stream_options = { include_usage: true };
+    }
     // Consulted on every build so a retry after a temperature rejection
     // (e.g. a LiteLLM proxy fronting a model that only accepts 1) omits it.
     if (this.modelSupportsTemperature(model)) {
@@ -145,6 +160,16 @@ export class OpenAIAdapter extends BaseLlmAdapter {
         request.temperature ?? this.config.config.defaultTemperature;
     }
     return body;
+  }
+
+  private requestsStreamUsage(): boolean {
+    try {
+      return STREAM_USAGE_HOSTS.has(
+        new URL(this.getChatCompletionsUrl()).hostname
+      );
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -281,7 +306,18 @@ export class OpenAIAdapter extends BaseLlmAdapter {
 
             try {
               const chunk = JSON.parse(data) as OpenAIStreamChunk;
-              const choice = chunk.choices[0];
+              if (chunk.usage) {
+                yield {
+                  delta: "",
+                  model: chunk.model,
+                  usage: {
+                    promptTokens: chunk.usage.prompt_tokens,
+                    completionTokens: chunk.usage.completion_tokens,
+                  },
+                };
+              }
+              const choice = chunk.choices?.[0];
+              if (!choice) continue;
               const mappedFinishReason = choice.finish_reason
                 ? this.mapFinishReason(choice.finish_reason)
                 : undefined;

@@ -527,6 +527,118 @@ describe("LlmManager", () => {
       });
     });
 
+    describe("provider-reported usage", () => {
+      const request: LlmRequest = {
+        messages: [{ role: "user", content: "a".repeat(400) }],
+        userId: "user-123",
+        feature: "test",
+      };
+
+      const streamWith = async (
+        providerChunks: Array<Record<string, unknown>>
+      ) => {
+        mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+        mockDb.llmProviderConfig.findUnique.mockResolvedValue(
+          mockLlmIntegration.llmProviderConfig
+        );
+        mockDb.llmUsage.create.mockResolvedValue({});
+        const adapter = (await manager.getAdapter(1)) as unknown as {
+          chatStream: ReturnType<typeof vi.fn>;
+        };
+        adapter.chatStream.mockImplementation(async function* () {
+          yield* providerChunks;
+        });
+
+        const chunks: LlmStreamResponse[] = [];
+        for await (const chunk of manager.chatStream(1, request)) {
+          chunks.push(chunk);
+        }
+        return {
+          chunks,
+          recorded: mockDb.llmUsage.create.mock.calls.at(-1)?.[0].data,
+        };
+      };
+
+      it("records the provider's token counts, not the estimate", async () => {
+        const { recorded } = await streamWith([
+          { delta: "Hello", model: "gpt-4" },
+          { delta: " world", model: "gpt-4", finishReason: "stop" },
+          {
+            delta: "",
+            model: "gpt-4",
+            usage: { promptTokens: 1234, completionTokens: 56 },
+          },
+        ]);
+
+        expect(recorded.promptTokens).toBe(1234);
+        expect(recorded.completionTokens).toBe(56);
+        expect(recorded.totalTokens).toBe(1290);
+        expect(Number(recorded.totalCost)).toBeCloseTo(
+          Number(recorded.inputCost) + Number(recorded.outputCost),
+          10
+        );
+      });
+
+      it("uses the last usage reported when a provider repeats it", async () => {
+        const { recorded } = await streamWith([
+          {
+            delta: "Hello",
+            model: "gemini",
+            usage: { promptTokens: 9, completionTokens: 1 },
+          },
+          {
+            delta: " world",
+            model: "gemini",
+            usage: { promptTokens: 9, completionTokens: 6 },
+          },
+        ]);
+
+        expect(recorded.promptTokens).toBe(9);
+        expect(recorded.completionTokens).toBe(6);
+      });
+
+      it("falls back to the estimate when the provider reports nothing", async () => {
+        const { recorded } = await streamWith([
+          { delta: "a".repeat(40), model: "gpt-4" },
+        ]);
+
+        expect(recorded.promptTokens).toBe(100);
+        expect(recorded.completionTokens).toBe(10);
+      });
+
+      it("does not pass a usage-only chunk on to the caller", async () => {
+        const { chunks } = await streamWith([
+          { delta: "Hello", model: "gpt-4" },
+          {
+            delta: "",
+            model: "gpt-4",
+            usage: { promptTokens: 5, completionTokens: 1 },
+          },
+        ]);
+
+        expect(chunks).toEqual([{ delta: "Hello", model: "gpt-4" }]);
+      });
+
+      it("passes a final chunk on without its usage", async () => {
+        const { chunks, recorded } = await streamWith([
+          { delta: "Hello", model: "claude" },
+          {
+            delta: "",
+            model: "claude",
+            finishReason: "length",
+            usage: { promptTokens: 5, completionTokens: 2 },
+          },
+        ]);
+
+        expect(chunks.at(-1)).toEqual({
+          delta: "",
+          model: "claude",
+          finishReason: "length",
+        });
+        expect(recorded.completionTokens).toBe(2);
+      });
+    });
+
     it("records estimated PROMPT tokens and input cost (not 0)", async () => {
       mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(

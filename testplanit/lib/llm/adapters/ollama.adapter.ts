@@ -223,11 +223,23 @@ export class OllamaAdapter extends BaseLlmAdapter {
             try {
               const chunk = JSON.parse(line) as OllamaStreamChunk;
 
-              if (chunk.message?.content || chunk.response) {
+              const delta = chunk.message?.content || chunk.response || "";
+              const usage =
+                chunk.done &&
+                chunk.prompt_eval_count != null &&
+                chunk.eval_count != null
+                  ? {
+                      promptTokens: chunk.prompt_eval_count,
+                      completionTokens: chunk.eval_count,
+                    }
+                  : undefined;
+
+              if (delta || usage) {
                 yield {
-                  delta: chunk.message?.content || chunk.response || "",
+                  delta,
                   model: chunk.model,
                   finishReason: chunk.done ? "stop" : undefined,
+                  usage,
                 };
               }
 

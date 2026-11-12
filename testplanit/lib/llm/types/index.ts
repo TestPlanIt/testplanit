@@ -80,10 +80,18 @@ export interface LlmResponse {
   finishReason?: "stop" | "length" | "content_filter" | "error";
 }
 
+/** Token counts a provider reports for a whole streamed response. */
+export interface LlmStreamUsage {
+  promptTokens: number;
+  completionTokens: number;
+}
+
 export interface LlmStreamResponse {
   delta: string;
   model: string;
   finishReason?: "stop" | "length" | "content_filter" | "error";
+  /** Present on the chunk(s) where the provider reports usage. */
+  usage?: LlmStreamUsage;
 }
 
 export interface LlmError extends Error {
