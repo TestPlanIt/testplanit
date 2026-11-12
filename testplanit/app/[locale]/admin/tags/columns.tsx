@@ -8,6 +8,7 @@ import { ColumnDef } from "@/components/tables/tableFeatures";
 import { SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
+import { CountsLoading } from "@/components/tables/CountsLoading";
 
 export interface ExtendedTags extends Tags {
   repositoryCases: { id: number }[];
@@ -21,7 +22,6 @@ export interface ExtendedTags extends Tags {
 
 export const useColumns = (
   tCommon: ReturnType<typeof useTranslations<"common">>,
-  isLoadingCounts: boolean = false,
   onEditTag?: (tag: ExtendedTags) => void,
   onDeleteTag?: (tag: ExtendedTags) => void
 ): ColumnDef<ExtendedTags>[] =>
@@ -52,19 +52,23 @@ export const useColumns = (
           const count = row.original.repositoryCasesCount;
           return (
             <div className="text-center">
-              <CasesListDisplay
-                count={count}
-                filter={{
-                  caseTags: {
-                    some: {
-                      tag: {
-                        id: row.original.id,
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <CasesListDisplay
+                    count={count}
+                    filter={{
+                      caseTags: {
+                        some: {
+                          tag: {
+                            id: row.original.id,
+                          },
+                        },
                       },
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -81,17 +85,21 @@ export const useColumns = (
           const count = row.original.testRunsCount;
           return (
             <div className="text-center">
-              <TestRunsListDisplay
-                count={count}
-                filter={{
-                  tags: {
-                    some: {
-                      id: row.original.id,
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <TestRunsListDisplay
+                    count={count}
+                    filter={{
+                      tags: {
+                        some: {
+                          id: row.original.id,
+                        },
+                      },
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -108,17 +116,21 @@ export const useColumns = (
           const count = row.original.sessionsCount;
           return (
             <div className="text-center">
-              <SessionsListDisplay
-                count={count}
-                filter={{
-                  tags: {
-                    some: {
-                      id: row.original.id,
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <SessionsListDisplay
+                    count={count}
+                    filter={{
+                      tags: {
+                        some: {
+                          id: row.original.id,
+                        },
+                      },
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -134,10 +146,14 @@ export const useColumns = (
           const projects = row.original.projects || [];
           return (
             <div className="text-center">
-              <ProjectListDisplay
-                projects={projects}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <ProjectListDisplay
+                    projects={projects}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -172,5 +188,5 @@ export const useColumns = (
         ),
       },
     ],
-    [tCommon, onEditTag, onDeleteTag, isLoadingCounts]
+    [tCommon, onEditTag, onDeleteTag]
   );

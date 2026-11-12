@@ -21,6 +21,7 @@ import { ExtendedTags, useColumns } from "./columns";
 import { DeleteTag } from "./DeleteTag";
 import { EditTag } from "./EditTag";
 import { apiFetch } from "~/lib/basePath";
+import { CountsLoadingProvider } from "@/components/tables/CountsLoading";
 
 const PAGE_SIZE = 50;
 
@@ -235,12 +236,7 @@ function TagList() {
     }
   }, [status, session, router]);
 
-  const columns = useColumns(
-    tCommon,
-    isLoadingCounts,
-    setEditingTag,
-    setDeletingTag
-  );
+  const columns = useColumns(tCommon, setEditingTag, setDeletingTag);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -338,24 +334,26 @@ function TagList() {
             />
           </div>
           <div className="mt-4 w-full">
-            <DataTable
-              virtualized
-              fillViewport
-              columns={columns as any}
-              data={mappedTags}
-              onSortChange={handleSortChange}
-              onSortColumn={handleSortColumn}
-              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
-              sortConfig={sortConfig}
-              columnVisibility={columnVisibility}
-              onColumnVisibilityChange={setColumnVisibility}
-              isLoading={isLoadingTags || isFetchingNextPage}
-              hasMore={!!hasNextPage}
-              onLoadMore={fetchNextPage}
-              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
-              testIdPrefix="admin-tags-table"
-              rowTestIdPrefix="admin-tag-row"
-            />
+            <CountsLoadingProvider value={isLoadingCounts}>
+              <DataTable
+                virtualized
+                fillViewport
+                columns={columns as any}
+                data={mappedTags}
+                onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
+                onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
+                sortConfig={sortConfig}
+                columnVisibility={columnVisibility}
+                onColumnVisibilityChange={setColumnVisibility}
+                isLoading={isLoadingTags || isFetchingNextPage}
+                hasMore={!!hasNextPage}
+                onLoadMore={fetchNextPage}
+                resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+                testIdPrefix="admin-tags-table"
+                rowTestIdPrefix="admin-tag-row"
+              />
+            </CountsLoadingProvider>
           </div>
         </CardContent>
       </Card>

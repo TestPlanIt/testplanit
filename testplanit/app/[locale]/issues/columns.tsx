@@ -18,6 +18,7 @@ import { ColumnDef } from "@/components/tables/tableFeatures";
 import DOMPurify from "dompurify";
 import { Plug } from "lucide-react";
 import { useMemo } from "react";
+import { CountsLoading } from "@/components/tables/CountsLoading";
 
 export interface ExtendedIssues extends Issue {
   repositoryCases: { id: number }[];
@@ -38,7 +39,6 @@ export interface ExtendedIssues extends Issue {
  */
 export function useIssueColumns({
   translations,
-  isLoadingCounts = false,
 }: {
   translations: {
     name: string;
@@ -54,7 +54,6 @@ export function useIssueColumns({
     projects: string;
     integration: string;
   };
-  isLoadingCounts?: boolean;
 }): ColumnDef<ExtendedIssues>[] {
   // Destructure to primitive deps so useMemo only re-runs when strings change (locale switch),
   // not on every parent render that creates a new translations object.
@@ -326,19 +325,23 @@ export function useIssueColumns({
           const count = row.original.repositoryCasesCount;
           return (
             <div className="text-center">
-              <CasesListDisplay
-                count={count}
-                filter={{
-                  caseIssues: {
-                    some: {
-                      issue: {
-                        id: row.original.id,
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <CasesListDisplay
+                    count={count}
+                    filter={{
+                      caseIssues: {
+                        some: {
+                          issue: {
+                            id: row.original.id,
+                          },
+                        },
                       },
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -358,18 +361,22 @@ export function useIssueColumns({
           const count = row.original.testRunsCount;
           return (
             <div className="text-center">
-              <TestRunsListDisplay
-                key={`tr-${row.original.id}`}
-                count={count}
-                filter={{
-                  issues: {
-                    some: {
-                      id: row.original.id,
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <TestRunsListDisplay
+                    key={`tr-${row.original.id}`}
+                    count={count}
+                    filter={{
+                      issues: {
+                        some: {
+                          id: row.original.id,
+                        },
+                      },
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -389,17 +396,21 @@ export function useIssueColumns({
           const count = row.original.sessionsCount;
           return (
             <div className="text-center">
-              <SessionsListDisplay
-                count={count}
-                filter={{
-                  issues: {
-                    some: {
-                      id: row.original.id,
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <SessionsListDisplay
+                    count={count}
+                    filter={{
+                      issues: {
+                        some: {
+                          id: row.original.id,
+                        },
+                      },
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -419,18 +430,22 @@ export function useIssueColumns({
           const count = row.original.milestonesCount;
           return (
             <div className="text-center">
-              <MilestonesCountDisplay
-                count={count}
-                filter={{
-                  milestoneIssues: {
-                    some: {
-                      issueId: row.original.id,
-                    },
-                  },
-                  isDeleted: false,
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <MilestonesCountDisplay
+                    count={count}
+                    filter={{
+                      milestoneIssues: {
+                        some: {
+                          issueId: row.original.id,
+                        },
+                      },
+                      isDeleted: false,
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -450,10 +465,14 @@ export function useIssueColumns({
           const projects = row.original.projects || [];
           return (
             <div className="text-center">
-              <ProjectListDisplay
-                projects={projects}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <ProjectListDisplay
+                    projects={projects}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -493,7 +512,6 @@ export function useIssueColumns({
       tMilestones,
       tProjects,
       tIntegration,
-      isLoadingCounts,
     ]
   );
 }

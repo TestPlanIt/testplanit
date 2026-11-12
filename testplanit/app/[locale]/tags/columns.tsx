@@ -6,6 +6,7 @@ import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import type { Tags } from "~/zenstack/models";
 import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useMemo } from "react";
+import { CountsLoading } from "@/components/tables/CountsLoading";
 
 export interface ExtendedTags extends Tags {
   repositoryCases: { id: number }[];
@@ -17,16 +18,13 @@ export interface ExtendedTags extends Tags {
   testRunsCount?: number;
 }
 
-export const useTagColumns = (
-  translations: {
-    name: string;
-    testCases: string;
-    sessions: string;
-    testRuns: string;
-    projects: string;
-  },
-  isLoadingCounts: boolean = false
-): ColumnDef<ExtendedTags>[] => {
+export const useTagColumns = (translations: {
+  name: string;
+  testCases: string;
+  sessions: string;
+  testRuns: string;
+  projects: string;
+}): ColumnDef<ExtendedTags>[] => {
   const { name, testCases, sessions, testRuns, projects } = translations;
   return useMemo(
     () => [
@@ -62,19 +60,23 @@ export const useTagColumns = (
           const count = row.original.repositoryCasesCount;
           return (
             <div className="text-center">
-              <CasesListDisplay
-                count={count}
-                filter={{
-                  caseTags: {
-                    some: {
-                      tag: {
-                        id: row.original.id,
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <CasesListDisplay
+                    count={count}
+                    filter={{
+                      caseTags: {
+                        some: {
+                          tag: {
+                            id: row.original.id,
+                          },
+                        },
                       },
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -92,17 +94,21 @@ export const useTagColumns = (
           const count = row.original.testRunsCount;
           return (
             <div className="text-center">
-              <TestRunsListDisplay
-                count={count}
-                filter={{
-                  tags: {
-                    some: {
-                      id: row.original.id,
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <TestRunsListDisplay
+                    count={count}
+                    filter={{
+                      tags: {
+                        some: {
+                          id: row.original.id,
+                        },
+                      },
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -120,17 +126,21 @@ export const useTagColumns = (
           const count = row.original.sessionsCount;
           return (
             <div className="text-center">
-              <SessionsListDisplay
-                count={count}
-                filter={{
-                  tags: {
-                    some: {
-                      id: row.original.id,
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <SessionsListDisplay
+                    count={count}
+                    filter={{
+                      tags: {
+                        some: {
+                          id: row.original.id,
+                        },
+                      },
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -148,15 +158,19 @@ export const useTagColumns = (
           const projects = row.original.projects || [];
           return (
             <div className="text-center">
-              <ProjectListDisplay
-                projects={projects}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <ProjectListDisplay
+                    projects={projects}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
       },
     ],
-    [name, testCases, sessions, testRuns, projects, isLoadingCounts]
+    [name, testCases, sessions, testRuns, projects]
   );
 };

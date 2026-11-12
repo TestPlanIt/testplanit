@@ -30,6 +30,7 @@ import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { useTagColumns } from "./columns";
 import { apiFetch } from "~/lib/basePath";
+import { CountsLoadingProvider } from "@/components/tables/CountsLoading";
 
 const PAGE_SIZE = 50;
 
@@ -306,16 +307,13 @@ function Tags() {
     }
   }, [status, session, router]);
 
-  const columns = useTagColumns(
-    {
-      name: t("common.name"),
-      testCases: t("common.fields.testCases"),
-      sessions: t("common.fields.sessions"),
-      testRuns: t("common.fields.testRuns"),
-      projects: t("common.fields.projects"),
-    },
-    isLoadingCounts
-  );
+  const columns = useTagColumns({
+    name: t("common.name"),
+    testCases: t("common.fields.testCases"),
+    sessions: t("common.fields.sessions"),
+    testRuns: t("common.fields.testRuns"),
+    projects: t("common.fields.projects"),
+  });
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -454,23 +452,25 @@ function Tags() {
             )}
           </div>
           <div className="mt-4 w-full">
-            <DataTable
-              virtualized
-              fillViewport
-              columns={columns as any}
-              data={mappedTags as any}
-              onSortChange={handleSortChange}
-              onSortColumn={handleSortColumn}
-              sortConfig={sortConfig}
-              columnVisibility={columnVisibility}
-              onColumnVisibilityChange={setColumnVisibility}
-              isLoading={isLoadingTags || isFetchingNextPage || !tagsWhere}
-              hasMore={isCountSort ? false : !!hasNextPage}
-              onLoadMore={fetchNextPage}
-              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
-              testIdPrefix="tags-table"
-              rowTestIdPrefix="tag-row"
-            />
+            <CountsLoadingProvider value={isLoadingCounts}>
+              <DataTable
+                virtualized
+                fillViewport
+                columns={columns as any}
+                data={mappedTags as any}
+                onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
+                sortConfig={sortConfig}
+                columnVisibility={columnVisibility}
+                onColumnVisibilityChange={setColumnVisibility}
+                isLoading={isLoadingTags || isFetchingNextPage || !tagsWhere}
+                hasMore={isCountSort ? false : !!hasNextPage}
+                onLoadMore={fetchNextPage}
+                resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+                testIdPrefix="tags-table"
+                rowTestIdPrefix="tag-row"
+              />
+            </CountsLoadingProvider>
           </div>
         </CardContent>
       </Card>

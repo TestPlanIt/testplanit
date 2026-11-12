@@ -25,6 +25,7 @@ import { ExtendedIssue, useIssueColumns } from "./columns";
 import { DeleteIssue } from "./DeleteIssue";
 import { EditIssue } from "./EditIssue";
 import { apiFetch } from "~/lib/basePath";
+import { CountsLoadingProvider } from "@/components/tables/CountsLoading";
 
 const PAGE_SIZE = 50;
 
@@ -346,7 +347,6 @@ function IssueList() {
   );
   const columns = useIssueColumns({
     tCommon,
-    isLoadingCounts,
     onEditIssue: setEditingIssue,
     onDeleteIssue: setDeletingIssue,
   });
@@ -445,25 +445,27 @@ function IssueList() {
             />
           </div>
           <div className="mt-4 w-full">
-            <DataTable
-              virtualized
-              fillViewport
-              columns={columns as any}
-              data={mappedIssues}
-              onSortChange={handleSortChange}
-              onSortColumn={handleSortColumn}
-              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
-              sortConfig={sortConfig}
-              columnVisibility={columnVisibility}
-              onColumnVisibilityChange={setColumnVisibility}
-              isLoading={isLoadingIssues || isFetchingNextPage}
-              hasMore={!!hasNextPage}
-              onLoadMore={fetchNextPage}
-              estimateSize={60}
-              resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
-              testIdPrefix="admin-issues-table"
-              rowTestIdPrefix="admin-issue-row"
-            />
+            <CountsLoadingProvider value={isLoadingCounts}>
+              <DataTable
+                virtualized
+                fillViewport
+                columns={columns as any}
+                data={mappedIssues}
+                onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
+                onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
+                sortConfig={sortConfig}
+                columnVisibility={columnVisibility}
+                onColumnVisibilityChange={setColumnVisibility}
+                isLoading={isLoadingIssues || isFetchingNextPage}
+                hasMore={!!hasNextPage}
+                onLoadMore={fetchNextPage}
+                estimateSize={60}
+                resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
+                testIdPrefix="admin-issues-table"
+                rowTestIdPrefix="admin-issue-row"
+              />
+            </CountsLoadingProvider>
           </div>
         </CardContent>
       </Card>

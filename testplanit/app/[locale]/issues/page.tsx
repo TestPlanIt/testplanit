@@ -22,6 +22,7 @@ import {
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 import { apiFetch } from "~/lib/basePath";
+import { CountsLoadingProvider } from "@/components/tables/CountsLoading";
 
 const PAGE_SIZE = 50;
 
@@ -347,7 +348,6 @@ function Issues() {
       projects: t("common.fields.projects"),
       integration: t("common.fields.integration"),
     },
-    isLoadingCounts,
   });
 
   if (status === "loading" || !accessFilterReady) return null;
@@ -424,24 +424,26 @@ function Issues() {
             )}
           </div>
           <div className="mt-4 w-full">
-            <DataTable
-              virtualized
-              fillViewport
-              columns={columns as any}
-              data={mappedIssues as any}
-              onSortChange={handleSortChange}
-              onSortColumn={handleSortColumn}
-              sortConfig={sortConfig}
-              isLoading={isLoadingIssues || isFetchingNextPage}
-              columnVisibility={columnVisibility}
-              onColumnVisibilityChange={setColumnVisibility}
-              hasMore={isCountSort ? false : !!hasNextPage}
-              onLoadMore={fetchNextPage}
-              estimateSize={60}
-              resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
-              testIdPrefix="issues-table"
-              rowTestIdPrefix="issue-row"
-            />
+            <CountsLoadingProvider value={isLoadingCounts}>
+              <DataTable
+                virtualized
+                fillViewport
+                columns={columns as any}
+                data={mappedIssues as any}
+                onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
+                sortConfig={sortConfig}
+                isLoading={isLoadingIssues || isFetchingNextPage}
+                columnVisibility={columnVisibility}
+                onColumnVisibilityChange={setColumnVisibility}
+                hasMore={isCountSort ? false : !!hasNextPage}
+                onLoadMore={fetchNextPage}
+                estimateSize={60}
+                resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
+                testIdPrefix="issues-table"
+                rowTestIdPrefix="issue-row"
+              />
+            </CountsLoadingProvider>
           </div>
         </CardContent>
       </Card>
