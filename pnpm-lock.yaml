@@ -971,8 +971,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       undici:
-        specifier: ^8.12.4
-        version: 8.12.4
+        specifier: ^7.28.0
+        version: 7.30.2
       uuid:
         specifier: '>=14.0.0'
         version: 14.0.3
