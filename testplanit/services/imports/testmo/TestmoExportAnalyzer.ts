@@ -46,6 +46,8 @@ const DEFAULT_PRESERVE_DATASETS = new Set([
 ]);
 
 const DATASET_CONTAINER_KEYS = new Set(["datasets", "entities"]);
+type JsonToken = Parameters<Assembler["consume"]>[0];
+
 const DATASET_DATA_KEYS = new Set(["data", "rows", "records", "items"]);
 const DATASET_SCHEMA_KEYS = new Set(["schema", "columns", "fields"]);
 const _DATASET_NAME_KEYS = new Set(["name", "dataset"]);
@@ -460,7 +462,7 @@ export class TestmoExportAnalyzer {
       capture.completed = true;
     };
 
-    const handleChunk = async (chunk: any) => {
+    const handleChunk = async (chunk: JsonToken) => {
       try {
         if (abortSignal?.aborted) {
           throw createAbortError("Testmo export analysis aborted");
@@ -471,14 +473,7 @@ export class TestmoExportAnalyzer {
         }
 
         for (const capture of activeCaptures) {
-          const assemblerAny = capture.assembler as unknown as Record<
-            string,
-            (value: unknown) => void
-          >;
-          const handler = assemblerAny[chunk.name];
-          if (typeof handler === "function") {
-            handler.call(capture.assembler, chunk.value);
-          }
+          capture.assembler.consume(chunk);
         }
 
         if (activeCaptures.length > 0) {
