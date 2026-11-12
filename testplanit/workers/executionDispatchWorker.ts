@@ -11,6 +11,8 @@ import {
   dispatchExecution,
   pollActiveExecutions,
 } from "../lib/execution/dispatch";
+import { retireIdleExecutionPollScheduler } from "../lib/execution/pollScheduler";
+import { getExecutionDispatchQueue } from "../lib/queues";
 import {
   EXECUTION_DISPATCH_QUEUE_NAME,
   JOB_DISPATCH_EXECUTION,
@@ -27,9 +29,10 @@ import valkeyConnection from "../lib/valkey";
  *     one PENDING TestRunExecution. Never retried by BullMQ: starting a job
  *     twice is worse than recording DISPATCH_FAILED and letting a person
  *     retry from the run page.
- *   - poll-active-executions `{ tenantId? }` — scheduler cron (every minute)
- *     that asks each provider for the state of in-flight executions and
- *     times out the ones that never reported back.
+ *   - poll-active-executions `{ tenantId? }` — scheduler cron (every minute
+ *     while an execution is in flight) that asks each provider for the state
+ *     of in-flight executions and times out the ones that never reported
+ *     back. It removes its own scheduler once nothing is in flight.
  *
  * Both run inside tenant context: dispatch and polling decrypt target
  * credentials, which needs the tenant's ENCRYPTION_KEY.
@@ -55,6 +58,15 @@ const processor = async (
       console.log(
         `[ExecutionDispatchWorker] Poll: ${summary.polled} polled, ${summary.finished} finished, ${summary.timedOut} timed out, ${summary.stalled} stalled`
       );
+    }
+    const queue = getExecutionDispatchQueue();
+    if (queue) {
+      const tenantId = (job.data as { tenantId?: string }).tenantId;
+      if (await retireIdleExecutionPollScheduler(db, queue, tenantId)) {
+        console.log(
+          `[ExecutionDispatchWorker] No executions in flight${tenantId ? ` for tenant ${tenantId}` : ""}; status poll stopped until the next request`
+        );
+      }
     }
     return summary;
   }

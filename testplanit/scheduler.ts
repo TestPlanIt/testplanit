@@ -1,3 +1,7 @@
+import {
+  ensureExecutionPollScheduler,
+  EXECUTION_POLL_PATTERN,
+} from "./lib/execution/pollScheduler";
 import { getAllTenantIds, isMultiTenantMode } from "./lib/multiTenantDb";
 import {
   FORECAST_QUEUE_NAME,
@@ -41,7 +45,6 @@ const CRON_SCHEDULE_DAILY_330AM = "30 3 * * *"; // Nightly risk-score sweep, off
 const CRON_SCHEDULE_DAILY_2AM = "0 2 * * *"; // Plan 02-06 / D-04 — auto-retire expired WebhookConfigSecret rows
 const CRON_SCHEDULE_HOURLY = "0 * * * *"; // Top of every hour — review-reminder scan
 const CRON_SCHEDULE_EVERY_15_MIN = "*/15 * * * *"; // Abandoned automated-run sweep
-const CRON_SCHEDULE_EVERY_MINUTE = "* * * * *"; // In-flight execution status poll (per-row backoff inside)
 const JOB_RETIRE_EXPIRED_SECRETS = "retire-expired-secrets";
 
 /**
@@ -372,24 +375,16 @@ async function scheduleJobs() {
     }
 
     // In-flight automated executions: ask each CI provider for job status
-    // and time out the ones that never report. Runs every minute; the worker
-    // applies an exponential per-row backoff so provider calls stay sparse.
+    // and time out the ones that never report. Registered here so executions
+    // that were in flight across a restart keep being watched; the first poll
+    // that finds none removes its own scheduler, and requesting an execution
+    // registers it again.
     const executionDispatchQueue = getExecutionDispatchQueue();
     if (executionDispatchQueue) {
       for (const tenantId of tenantIds) {
-        const jobId = tenantId
-          ? `${JOB_POLL_ACTIVE_EXECUTIONS}-${tenantId}`
-          : JOB_POLL_ACTIVE_EXECUTIONS;
-        await executionDispatchQueue.upsertJobScheduler(
-          jobId,
-          { pattern: CRON_SCHEDULE_EVERY_MINUTE },
-          {
-            name: JOB_POLL_ACTIVE_EXECUTIONS,
-            data: { tenantId },
-          }
-        );
+        await ensureExecutionPollScheduler(executionDispatchQueue, tenantId);
         console.log(
-          `Upserted job scheduler "${JOB_POLL_ACTIVE_EXECUTIONS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_EVERY_MINUTE}" on queue "${EXECUTION_DISPATCH_QUEUE_NAME}".`
+          `Upserted job scheduler "${JOB_POLL_ACTIVE_EXECUTIONS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${EXECUTION_POLL_PATTERN}" on queue "${EXECUTION_DISPATCH_QUEUE_NAME}".`
         );
       }
     } else {

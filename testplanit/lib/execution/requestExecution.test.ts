@@ -133,8 +133,73 @@ describe("requestExecution with a worker env", () => {
     });
   });
 
+  it("registers the status poll after the row exists and before the dispatch is queued", async () => {
+    const upsertJobScheduler = vi.fn().mockResolvedValue(undefined);
+    mockGetQueue.mockReturnValue({ add: mockQueueAdd, upsertJobScheduler });
+    mockQueueAdd.mockResolvedValue({ id: "job-1" });
+    const { db } = makeEnvDb();
+
+    await requestExecution({
+      runId: 300,
+      projectId: 3,
+      requestedById: "owner-1",
+      targetId: 4,
+      env: {
+        db: db as never,
+        tenantId: "t-1",
+        guc,
+        systemReason: "webhook:auto-execute",
+      },
+    });
+
+    expect(upsertJobScheduler).toHaveBeenCalledWith(
+      "poll-active-executions-t-1",
+      { pattern: "* * * * *" },
+      expect.objectContaining({
+        name: "poll-active-executions",
+        data: { tenantId: "t-1" },
+      })
+    );
+    expect(db.$transaction.mock.invocationCallOrder[0]).toBeLessThan(
+      upsertJobScheduler.mock.invocationCallOrder[0]
+    );
+    expect(upsertJobScheduler.mock.invocationCallOrder[0]).toBeLessThan(
+      mockQueueAdd.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("still queues the dispatch when the status poll cannot be registered", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const upsertJobScheduler = vi
+      .fn()
+      .mockRejectedValue(new Error("valkey unavailable"));
+    mockGetQueue.mockReturnValue({ add: mockQueueAdd, upsertJobScheduler });
+    mockQueueAdd.mockResolvedValue({ id: "job-1" });
+    const { db } = makeEnvDb();
+
+    const result = await requestExecution({
+      runId: 300,
+      projectId: 3,
+      requestedById: "owner-1",
+      targetId: 4,
+      env: {
+        db: db as never,
+        tenantId: "t-1",
+        guc,
+        systemReason: "webhook:auto-execute",
+      },
+    });
+
+    expect(result).toMatchObject({ ok: true, queued: true });
+    expect(mockQueueAdd).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
   it("enqueues the dispatch as the system actor without a request audit frame", async () => {
-    mockGetQueue.mockReturnValue({ add: mockQueueAdd });
+    mockGetQueue.mockReturnValue({
+      add: mockQueueAdd,
+      upsertJobScheduler: vi.fn().mockResolvedValue(undefined),
+    });
     mockQueueAdd.mockResolvedValue({ id: "job-1" });
     const { db, tx } = makeEnvDb();
 
