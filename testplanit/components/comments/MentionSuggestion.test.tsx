@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -190,6 +190,43 @@ describe("MentionSuggestion", () => {
       event: new KeyboardEvent("keydown", { key: "ArrowUp" }),
     });
     expect(result).toBe(true);
+  });
+
+  it("caps the list's height and lets it scroll", () => {
+    const items = Array.from({ length: 40 }, (_, i) =>
+      makeMockUser(`u${i}`, `User ${i}`, `user${i}@example.com`)
+    );
+    render(<MentionSuggestion items={items} command={mockCommand} />);
+
+    const list = screen.getByTestId("mention-suggestion-list");
+    expect(list.className).toContain("max-h-80");
+    expect(list.className).toContain("overflow-y-auto");
+    expect(screen.getAllByRole("button")).toHaveLength(40);
+  });
+
+  it("scrolls the highlighted user into view as the selection moves", () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const items = [
+      makeMockUser("u1", "Alice Smith", "alice@example.com"),
+      makeMockUser("u2", "Bob Jones", "bob@example.com"),
+      makeMockUser("u3", "Cy Young", "cy@example.com"),
+    ];
+    const ref = createRef<MentionSuggestionRef>();
+    render(<MentionSuggestion ref={ref} items={items} command={mockCommand} />);
+    scrollIntoView.mockClear();
+
+    act(() => {
+      ref.current!.onKeyDown({
+        event: new KeyboardEvent("keydown", { key: "ArrowDown" }),
+      });
+    });
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView.mock.instances[0]).toBe(
+      screen.getByText("Bob Jones").closest("button")
+    );
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" });
   });
 
   it("returns false for unhandled key events", () => {

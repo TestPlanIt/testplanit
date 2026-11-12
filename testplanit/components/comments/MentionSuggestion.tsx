@@ -1,7 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/ui/badge";
 import { cn } from "~/utils";
@@ -35,6 +41,7 @@ export const MentionSuggestion = forwardRef<
 >((props, ref) => {
   const t = useTranslations("comments.mentions");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const selectItem = (index: number) => {
     const item = props.items[index];
@@ -63,6 +70,12 @@ export const MentionSuggestion = forwardRef<
   };
 
   useEffect(() => setSelectedIndex(0), [props.items]);
+
+  // The list scrolls once it is taller than its maximum height, so arrowing
+  // past the visible rows has to bring the highlighted one back into view.
+  useEffect(() => {
+    itemRefs.current[selectedIndex]?.scrollIntoView?.({ block: "nearest" });
+  }, [selectedIndex]);
 
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }) => {
@@ -94,13 +107,19 @@ export const MentionSuggestion = forwardRef<
   }
 
   return (
-    <div className="rounded-md border bg-popover shadow-md">
+    <div
+      className="max-h-80 overflow-y-auto rounded-md border bg-popover shadow-md"
+      data-testid="mention-suggestion-list"
+    >
       {props.items.map((item, index) => {
         const displayName = item.name || item.email;
 
         return (
           <button
             key={item.id}
+            ref={(element) => {
+              itemRefs.current[index] = element;
+            }}
             type="button"
             className={cn(
               "group flex w-full items-center gap-2 px-3 py-2 text-start text-sm",
