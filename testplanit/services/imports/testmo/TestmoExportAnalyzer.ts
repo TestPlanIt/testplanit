@@ -57,6 +57,11 @@ type StackEntry = {
   type: "object" | "array";
   key: string | null;
   datasetName?: string | null;
+  /**
+   * True inside a dataset row or schema, where nested objects and arrays are
+   * data and never a dataset of their own.
+   */
+  inValue: boolean;
 };
 
 interface ActiveCapture {
@@ -492,15 +497,27 @@ export class TestmoExportAnalyzer {
         switch (chunk.name) {
           case "startObject": {
             const parent = stack[stack.length - 1];
+            const isRow =
+              parent?.type === "array" &&
+              !parent.inValue &&
+              Boolean(parent.datasetName) &&
+              Boolean(parent.key) &&
+              DATASET_DATA_KEYS.has(parent.key as string);
             const entry: StackEntry = {
               type: "object",
-              key: lastKey,
+              // An array element has no key of its own; `lastKey` still holds
+              // the last key of the element before it.
+              key: parent?.type === "array" ? null : lastKey,
               datasetName: parent?.datasetName ?? null,
+              inValue: isRow || Boolean(parent?.inValue),
             };
             stack.push(entry);
 
             const parentDataset = parent?.datasetName ?? null;
+            // Only objects outside a row can name a dataset: inside one, an
+            // object is a column value.
             if (
+              !entry.inValue &&
               typeof entry.key === "string" &&
               (!DATASET_SCHEMA_KEYS.has(entry.key) || parentDataset === null) &&
               !DATASET_DATA_KEYS.has(entry.key) &&
@@ -516,7 +533,14 @@ export class TestmoExportAnalyzer {
               ensureSummary(datasetNameForEntry);
             }
 
-            if (entry.key && DATASET_SCHEMA_KEYS.has(entry.key)) {
+            // A schema belongs to the dataset above it. A top-level object
+            // with a schema-like name ("fields") is a dataset, not a schema.
+            if (
+              !entry.inValue &&
+              parentDataset !== null &&
+              entry.key &&
+              DATASET_SCHEMA_KEYS.has(entry.key)
+            ) {
               const datasetName = currentDatasetName(stack);
               if (datasetName) {
                 const summary = ensureSummary(datasetName);
@@ -535,13 +559,9 @@ export class TestmoExportAnalyzer {
                   },
                 };
                 activeCaptures.push(capture);
+                entry.inValue = true;
               }
-            } else if (
-              parent?.type === "array" &&
-              parent.datasetName &&
-              parent.key &&
-              DATASET_DATA_KEYS.has(parent.key)
-            ) {
+            } else if (isRow && parent?.datasetName) {
               const summary = ensureSummary(parent.datasetName);
               const currentIndex =
                 currentRowIndexes.get(parent.datasetName) ?? 0;
@@ -570,12 +590,18 @@ export class TestmoExportAnalyzer {
             stack.pop();
             break;
           case "startArray": {
+            const parent = stack[stack.length - 1];
             const entry: StackEntry = {
               type: "array",
-              key: lastKey,
+              key: parent?.type === "array" ? null : lastKey,
               datasetName: null,
+              inValue: Boolean(parent?.inValue),
             };
-            if (lastKey && DATASET_DATA_KEYS.has(lastKey)) {
+            if (
+              !entry.inValue &&
+              entry.key &&
+              DATASET_DATA_KEYS.has(entry.key)
+            ) {
               const datasetName = currentDatasetName(stack);
               if (datasetName) {
                 entry.datasetName = datasetName;
