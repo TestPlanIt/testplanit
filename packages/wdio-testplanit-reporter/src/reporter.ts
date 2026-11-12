@@ -47,6 +47,8 @@ export default class TestPlanItReporter extends WDIOReporter {
   private reportedResultCount = 0;
   private detectedFramework: string | null = null;
   private currentTestUid: string | null = null;
+  /** This reporter's uid for each started test, keyed by WebdriverIO's uid for it. */
+  private testUidByStatsUid = new Map<string, string>();
   private currentCid: string | null = null;
   private pendingScreenshots: Map<string, Buffer[]> = new Map();
   /**
@@ -1090,9 +1092,25 @@ export default class TestPlanItReporter extends WDIOReporter {
     const fullTitle = suiteName ? `${suiteName} > ${cleanTitle}` : cleanTitle;
     this.currentTestUid = `${test.cid}_${fullTitle}`;
     this.currentCid = test.cid;
+    this.testUidByStatsUid.set(test.uid, this.currentTestUid);
     if (!this.testCommands.has(this.currentTestUid)) {
       this.testCommands.set(this.currentTestUid, []);
     }
+  }
+
+  /**
+   * The test a browser command belongs to. With parallel tests several are
+   * running at once, so the last one started is not necessarily the one that
+   * issued the command; WebdriverIO 10.2 and later can name the test of the
+   * command's own context. Earlier versions run tests one at a time, where
+   * the last one started is the answer.
+   */
+  private commandTestUid(): string | null {
+    const contextTest = (
+      this as unknown as { getContextTest?: () => TestStats | undefined }
+    ).getContextTest?.();
+    const uid = contextTest ? this.testUidByStatsUid.get(contextTest.uid) : undefined;
+    return uid ?? this.currentTestUid;
   }
 
   /**
@@ -1101,7 +1119,7 @@ export default class TestPlanItReporter extends WDIOReporter {
    * did. Cheap no-op outside a test / when nothing is being captured.
    */
   onBeforeCommand(commandArgs: BeforeCommandArgs): void {
-    const uid = this.currentTestUid;
+    const uid = this.commandTestUid();
     if (!uid) return;
     const list = this.testCommands.get(uid);
     if (!list || list.length >= TestPlanItReporter.MAX_COMMANDS_PER_TEST) return;
@@ -1183,13 +1201,14 @@ export default class TestPlanItReporter extends WDIOReporter {
       return;
     }
 
-    // Store the screenshot associated with the current test
-    if (this.currentTestUid) {
+    // Store the screenshot with the test that took it
+    const testUid = this.commandTestUid();
+    if (testUid) {
       const buffer = Buffer.from(screenshotData, 'base64');
-      const existing = this.pendingScreenshots.get(this.currentTestUid) || [];
+      const existing = this.pendingScreenshots.get(testUid) || [];
       existing.push(buffer);
-      this.pendingScreenshots.set(this.currentTestUid, existing);
-      this.log('Captured screenshot for test:', this.currentTestUid, `(${buffer.length} bytes)`);
+      this.pendingScreenshots.set(testUid, existing);
+      this.log('Captured screenshot for test:', testUid, `(${buffer.length} bytes)`);
     } else {
       this.log('No current test UID to associate screenshot with');
     }

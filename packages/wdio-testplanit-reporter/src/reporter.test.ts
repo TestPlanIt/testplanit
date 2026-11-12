@@ -1809,3 +1809,112 @@ describe("externally managed test run", () => {
     });
   });
 });
+
+describe("attributing browser commands to tests", () => {
+  type Internals = {
+    getContextTest?: () => TestStats | undefined;
+    testCommands: Map<string, string[]>;
+    pendingScreenshots: Map<string, Buffer[]>;
+  };
+
+  const options = {
+    domain: "https://testplanit.example.com",
+    apiToken: "tpi_test_token",
+    projectId: 1,
+    uploadScreenshots: true,
+  };
+
+  const stats = (uid: string, title: string): TestStats =>
+    ({ type: "test", uid, title, cid: "0-0" }) as TestStats;
+
+  const command = (name: string) => ({
+    sessionId: "s",
+    command: name,
+    body: { text: name },
+  });
+
+  const screenshot = (pixels: string) => ({
+    sessionId: "s",
+    command: "takeScreenshot",
+    result: { value: Buffer.from(pixels).toString("base64") },
+  });
+
+  const start = () => {
+    const reporter = new TestPlanItReporter(options);
+    const internals = reporter as unknown as Internals;
+    const first = stats("uid-1", "first test");
+    const second = stats("uid-2", "second test");
+    reporter.onTestStart(first);
+    reporter.onTestStart(second);
+    return { reporter, internals, first, second };
+  };
+
+  it("gives a command to the test of its own context when tests run in parallel", () => {
+    const { reporter, internals, first, second } = start();
+
+    internals.getContextTest = () => first;
+    reporter.onBeforeCommand(command("clickFirst"));
+    internals.getContextTest = () => second;
+    reporter.onBeforeCommand(command("clickSecond"));
+    internals.getContextTest = () => first;
+    reporter.onBeforeCommand(command("typeFirst"));
+
+    expect(internals.testCommands.get("0-0_first test")).toEqual([
+      'clickFirst {"text":"clickFirst"}',
+      'typeFirst {"text":"typeFirst"}',
+    ]);
+    expect(internals.testCommands.get("0-0_second test")).toEqual([
+      'clickSecond {"text":"clickSecond"}',
+    ]);
+  });
+
+  it("gives a screenshot to the test that took it when tests run in parallel", () => {
+    const { reporter, internals, first } = start();
+
+    internals.getContextTest = () => first;
+    reporter.onAfterCommand(screenshot("first-pixels"));
+
+    expect(
+      internals.pendingScreenshots.get("0-0_first test")?.map(String)
+    ).toEqual(["first-pixels"]);
+    expect(internals.pendingScreenshots.has("0-0_second test")).toBe(false);
+  });
+
+  it("uses the last test started on WebdriverIO versions without context tracking", () => {
+    const { reporter, internals } = start();
+    expect(internals.getContextTest).toBeUndefined();
+
+    reporter.onBeforeCommand(command("click"));
+    reporter.onAfterCommand(screenshot("pixels"));
+
+    expect(internals.testCommands.get("0-0_second test")).toEqual([
+      'click {"text":"click"}',
+    ]);
+    expect(internals.testCommands.get("0-0_first test")).toEqual([]);
+    expect(
+      internals.pendingScreenshots.get("0-0_second test")?.map(String)
+    ).toEqual(["pixels"]);
+  });
+
+  it("uses the last test started when the context has no test, as in a hook", () => {
+    const { reporter, internals } = start();
+
+    internals.getContextTest = () => undefined;
+    reporter.onBeforeCommand(command("click"));
+
+    expect(internals.testCommands.get("0-0_second test")).toEqual([
+      'click {"text":"click"}',
+    ]);
+  });
+
+  it("uses the last test started when the context names a test this reporter never saw", () => {
+    const { reporter, internals } = start();
+
+    internals.getContextTest = () => stats("uid-unknown", "elsewhere");
+    reporter.onBeforeCommand(command("click"));
+
+    expect(internals.testCommands.get("0-0_second test")).toEqual([
+      'click {"text":"click"}',
+    ]);
+  });
+});
