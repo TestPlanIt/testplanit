@@ -2410,6 +2410,7 @@ const App = () => {
   const ConfigurationUI = () => {
     const [configUrl, setConfigUrl] = useState('');
     const [configApiKey, setConfigApiKey] = useState('');
+    const [configHasApiKey, setConfigHasApiKey] = useState(false);
     const [configSaving, setConfigSaving] = useState(false);
     const [configError, setConfigError] = useState(null);
     const [configTesting, setConfigTesting] = useState(false);
@@ -2425,14 +2426,11 @@ const App = () => {
     const loadCurrentSettings = async () => {
       try {
         const response = await invoke('getSettings');
-        console.log('Current settings:', response);
         if (response.instanceUrl) {
           setCurrentUrl(response.instanceUrl);
           setConfigUrl(response.instanceUrl);
         }
-        if (response.apiKey) {
-          setConfigApiKey(response.apiKey);
-        }
+        setConfigHasApiKey(Boolean(response.hasApiKey));
       } catch (err) {
         console.error('Error loading current settings:', err);
       } finally {
@@ -2446,6 +2444,7 @@ const App = () => {
         setCurrentUrl(null);
         setConfigUrl('');
         setConfigApiKey('');
+        setConfigHasApiKey(false);
         setTestResult(null);
         setConfigError(null);
       } catch (err) {
@@ -2458,7 +2457,7 @@ const App = () => {
         setConfigError('Please enter a URL');
         return;
       }
-      if (!configApiKey) {
+      if (!configApiKey && !configHasApiKey) {
         setConfigError('Please enter an API key');
         return;
       }
@@ -2482,7 +2481,7 @@ const App = () => {
         setConfigError('Please enter a URL');
         return;
       }
-      if (!configApiKey) {
+      if (!configApiKey && !configHasApiKey) {
         setConfigError('Please enter an API key');
         return;
       }
@@ -2577,7 +2576,11 @@ const App = () => {
                 setConfigError(null);
                 setTestResult(null);
               }}
-              placeholder="Enter your Forge integration API key"
+              placeholder={
+                configHasApiKey
+                  ? 'A key is saved. Enter a new one to replace it.'
+                  : 'Enter your Forge integration API key'
+              }
               disabled={configLoading}
               className="w-full px-3 py-2 border border-border rounded text-xs focus:outline-hidden focus:ring-2 focus:ring-primary bg-background text-foreground disabled:opacity-50"
             />
@@ -2589,7 +2592,7 @@ const App = () => {
           <div className="flex gap-2 mb-3">
             <button
               onClick={handleTestConnection}
-              disabled={configTesting || !configUrl || !configApiKey}
+              disabled={configTesting || !configUrl || (!configApiKey && !configHasApiKey)}
               className="flex items-center gap-1 px-3 py-2 border border-border rounded text-xs font-medium hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {configTesting ? (
@@ -2607,7 +2610,7 @@ const App = () => {
 
             <button
               onClick={handleSave}
-              disabled={configSaving || !configUrl || !configApiKey}
+              disabled={configSaving || !configUrl || (!configApiKey && !configHasApiKey)}
               className="flex items-center gap-1 px-3 py-2 bg-primary text-primary-foreground rounded text-xs font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {configSaving ? (

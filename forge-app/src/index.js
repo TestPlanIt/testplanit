@@ -2,6 +2,11 @@ import Resolver from '@forge/resolver';
 import api, { route } from '@forge/api';
 import { kvs } from '@forge/kvs';
 import { createApiKeyStore } from './apiKeyStore.js';
+import {
+  apiKeyToTest,
+  publicSettings,
+  typedApiKey,
+} from './connectionSettings.js';
 
 const resolver = new Resolver();
 
@@ -159,8 +164,7 @@ resolver.define('openUrl', async ({ payload }) => {
 // Settings management resolvers
 resolver.define('getSettings', async () => {
   try {
-    const { instanceUrl, apiKey } = await getConnection();
-    return { instanceUrl: instanceUrl || '', apiKey: apiKey || '' };
+    return publicSettings(await getConnection());
   } catch (error) {
     return { error: error.message };
   }
@@ -168,7 +172,10 @@ resolver.define('getSettings', async () => {
 
 resolver.define('saveSettings', async ({ payload }) => {
   try {
-    const { instanceUrl, apiKey } = payload;
+    const { instanceUrl } = payload;
+    // A blank key field means "keep the saved key"; the form no longer has
+    // the saved key to send back.
+    const apiKey = typedApiKey(payload.apiKey);
 
     if (!instanceUrl) {
       return { success: false, error: 'Instance URL is required' };
@@ -184,12 +191,8 @@ resolver.define('saveSettings', async ({ payload }) => {
 
     await kvs.set(INSTANCE_URL_KEY, cleanUrl);
 
-    if (apiKey !== undefined) {
-      if (apiKey) {
-        await apiKeyStore.save(apiKey);
-      } else {
-        await apiKeyStore.clear();
-      }
+    if (apiKey) {
+      await apiKeyStore.save(apiKey);
     }
 
     return { success: true };
@@ -200,7 +203,8 @@ resolver.define('saveSettings', async ({ payload }) => {
 
 resolver.define('testConnection', async ({ payload }) => {
   try {
-    const { instanceUrl, apiKey } = payload;
+    const { instanceUrl } = payload;
+    const apiKey = apiKeyToTest(payload.apiKey, await getApiKey());
 
     if (!instanceUrl) {
       return { success: false, message: 'Instance URL is required' };

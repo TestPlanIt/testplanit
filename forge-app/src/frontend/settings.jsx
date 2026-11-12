@@ -16,6 +16,7 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [instanceUrl, setInstanceUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [hasApiKey, setHasApiKey] = useState(false);
   const [testStatus, setTestStatus] = useState(null);
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState(null);
@@ -31,9 +32,7 @@ const Settings = () => {
       if (response.instanceUrl) {
         setInstanceUrl(response.instanceUrl);
       }
-      if (response.apiKey) {
-        setApiKey(response.apiKey);
-      }
+      setHasApiKey(Boolean(response.hasApiKey));
     } catch (err) {
       console.error('Error loading settings:', err);
       setError('Failed to load settings');
@@ -97,6 +96,10 @@ const Settings = () => {
       });
 
       if (response.success) {
+        if (apiKey.trim()) {
+          setHasApiKey(true);
+          setApiKey('');
+        }
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       } else {
@@ -163,7 +166,11 @@ const Settings = () => {
                 setApiKey(e.target.value);
                 setError(null);
               }}
-              placeholder="Enter your Forge integration API key"
+              placeholder={
+                hasApiKey
+                  ? 'A key is saved. Enter a new one to replace it.'
+                  : 'Enter your Forge integration API key'
+              }
               className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-hidden focus:ring-2 focus:ring-primary bg-background text-foreground"
             />
             <p className="text-xs text-muted-foreground mt-2">
@@ -174,7 +181,7 @@ const Settings = () => {
           <div className="flex gap-3 mb-4">
             <button
               onClick={testConnection}
-              disabled={testing || !instanceUrl || !apiKey}
+              disabled={testing || !instanceUrl || (!apiKey && !hasApiKey)}
               className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm font-medium hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {testing ? (
