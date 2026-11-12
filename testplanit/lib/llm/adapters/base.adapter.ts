@@ -14,6 +14,7 @@ import type {
   SettingsWithCapabilities,
 } from "../types";
 import { isCloudMetadataHostname } from "~/lib/utils/ssrf";
+import { fetchLongRunning } from "../longRunningFetch";
 
 /**
  * Validates an adapter base URL at construction time: http(s) only and no
@@ -349,12 +350,11 @@ export abstract class BaseLlmAdapter {
   /**
    * Fetch for LLM chat calls, with the same URL checks as safeFetch.
    *
-   * It does not lift the runtime's own limits. Node's fetch gives up when a
-   * response sends no headers, or no further body data, for 5 minutes, and an
-   * AbortSignal can shorten that but not extend it. So a stream that goes
-   * silent is cut off after 5 minutes, and so is a non-streamed reply that
-   * takes longer than that to arrive, such as a large prompt on a slow local
-   * model.
+   * Node's fetch gives up when a response sends no headers, or no further
+   * body data, for 5 minutes. This raises that to 30 minutes, so a large
+   * prompt on a slow local model can finish. The caller's AbortSignal still
+   * sets the overall limit, and a stream that goes silent is still cut off,
+   * after 30 minutes.
    */
   protected async safeFetchLongRunning(
     url: string,
@@ -371,11 +371,7 @@ export abstract class BaseLlmAdapter {
       throw new Error(`Requests to ${h} are not allowed`);
     }
 
-    // The global fetch, with no custom dispatcher: Node bundles its own
-    // undici, and an Agent from the project's undici package only works with
-    // it when the two versions are compatible. Raising the 5-minute limits
-    // needs a dispatcher the runtime's fetch accepts.
-    return fetch(parsed.href, init);
+    return fetchLongRunning(parsed.href, init);
   }
 
   /**
