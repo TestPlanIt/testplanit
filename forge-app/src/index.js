@@ -1,12 +1,14 @@
 import Resolver from '@forge/resolver';
 import api, { route } from '@forge/api';
 import { kvs } from '@forge/kvs';
+import { createApiKeyStore } from './apiKeyStore.js';
 
 const resolver = new Resolver();
 
 // Storage keys
 const INSTANCE_URL_KEY = 'testplanit_instance_url';
-const API_KEY_KEY = 'testplanit_api_key';
+
+const apiKeyStore = createApiKeyStore(kvs);
 
 async function getInstanceUrl() {
   const url = await kvs.get(INSTANCE_URL_KEY);
@@ -14,8 +16,7 @@ async function getInstanceUrl() {
 }
 
 async function getApiKey() {
-  const key = await kvs.get(API_KEY_KEY);
-  return key || null;
+  return apiKeyStore.read();
 }
 
 // Instance URL + API key, read together rather than one after the other.
@@ -185,9 +186,9 @@ resolver.define('saveSettings', async ({ payload }) => {
 
     if (apiKey !== undefined) {
       if (apiKey) {
-        await kvs.set(API_KEY_KEY, apiKey);
+        await apiKeyStore.save(apiKey);
       } else {
-        await kvs.delete(API_KEY_KEY);
+        await apiKeyStore.clear();
       }
     }
 
@@ -267,7 +268,7 @@ resolver.define('testConnection', async ({ payload }) => {
 resolver.define('clearSettings', async () => {
   try {
     await kvs.delete(INSTANCE_URL_KEY);
-    await kvs.delete(API_KEY_KEY);
+    await apiKeyStore.clear();
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };

@@ -8,6 +8,7 @@
     "build": "webpack",
     "build-webpack": "webpack",
     "deploy": "./deploy.sh",
+    "test": "node --test \"src/**/*.test.mjs\"",
     "tunnel": "forge tunnel"
   },
   "author": "TestPlanIt",
