@@ -190,4 +190,63 @@ describe("PaginationProvider URL sync", () => {
     expect(result.current.pageSize).toBe(25);
     expect(search.get("pageSize")).toBe("25");
   });
+
+  describe("when the session arrives after the first render", () => {
+    const settle = (rerender: Rerender) => {
+      while (commitUrl([rerender])) {
+        // settle
+      }
+    };
+    const signIn = (itemsPerPage: string, rerender: Rerender) => {
+      sessionData = { user: { preferences: { itemsPerPage } } };
+      act(() => rerender());
+      settle(rerender);
+    };
+
+    it("still applies the saved page size over the default it already wrote", () => {
+      const { result, rerender } = renderPagination();
+      settle(rerender);
+      expect(search.get("pageSize")).toBe("10");
+
+      signIn("P25", rerender);
+
+      expect(result.current.pageSize).toBe(25);
+      expect(search.get("pageSize")).toBe("25");
+    });
+
+    it("keeps a page size the URL arrived with", () => {
+      search = new URLSearchParams("page=1&pageSize=50");
+      const { result, rerender } = renderPagination();
+      settle(rerender);
+
+      signIn("P25", rerender);
+
+      expect(result.current.pageSize).toBe(50);
+      expect(search.get("pageSize")).toBe("50");
+    });
+
+    it("keeps a page size picked before the session arrived", () => {
+      const { result, rerender } = renderPagination();
+      settle(rerender);
+      act(() => result.current.setPageSize(100));
+      settle(rerender);
+
+      signIn("P25", rerender);
+
+      expect(result.current.pageSize).toBe(100);
+      expect(search.get("pageSize")).toBe("100");
+    });
+
+    it("applies the saved page size only once", () => {
+      const { result, rerender } = renderPagination();
+      settle(rerender);
+      signIn("P25", rerender);
+      act(() => result.current.setPageSize(10));
+      settle(rerender);
+
+      signIn("P50", rerender);
+
+      expect(result.current.pageSize).toBe(10);
+    });
+  });
 });

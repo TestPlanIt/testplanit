@@ -2,7 +2,13 @@
 
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 
 export type PageSizeOption = number | "All";
@@ -70,9 +76,20 @@ export function PaginationProvider({
     return parseUrlPage(searchParams.get(pageParam)) ?? 1;
   });
 
-  const [pageSize, setPageSize] = useState<PageSizeOption>(() => {
+  const [pageSize, setPageSizeState] = useState<PageSizeOption>(() => {
     return parseUrlSize(searchParams.get(pageSizeParam)) ?? defaultPageSize;
   });
+
+  // The saved preference only fills in for a size nobody chose: not one the
+  // URL arrived with, and not one picked on this page. The size this provider
+  // writes to the URL itself on mount is neither.
+  const sizeWasChosen = React.useRef(
+    parseUrlSize(searchParams.get(pageSizeParam)) !== null
+  );
+  const setPageSize = useCallback((size: PageSizeOption) => {
+    sizeWasChosen.current = true;
+    setPageSizeState(size);
+  }, []);
 
   const [totalItems, setTotalItems] = useState(0);
 
@@ -111,9 +128,12 @@ export function PaginationProvider({
       setPageSize(urlSize);
     }
 
-    // Priority 2: User preferences (only if no URL params, haven't applied yet, and session has preference)
+    // Priority 2: the user's saved preference, once the session has it. The
+    // session can arrive after this provider has written its default size to
+    // the URL, so the test is whether a size was chosen, not whether the URL
+    // has one.
     if (
-      urlSize === null &&
+      !sizeWasChosen.current &&
       !hasAppliedPreferences.current &&
       session?.user?.preferences?.itemsPerPage
     ) {
@@ -123,7 +143,7 @@ export function PaginationProvider({
       );
       if (!isNaN(preferredSize) && preferredSize > 0) {
         hasAppliedPreferences.current = true;
-        setPageSize(preferredSize);
+        setPageSizeState(preferredSize);
       }
     }
   }, [
@@ -131,6 +151,7 @@ export function PaginationProvider({
     session?.user?.preferences?.itemsPerPage,
     pageParam,
     pageSizeParam,
+    setPageSize,
   ]);
 
   // Update URL when pagination state changes
