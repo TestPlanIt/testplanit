@@ -682,6 +682,8 @@ declare class TestPlanItReporter extends WDIOReporter {
     private reportedResultCount;
     private detectedFramework;
     private currentTestUid;
+    /** This reporter's uid for each started test, keyed by WebdriverIO's uid for it. */
+    private testUidByStatsUid;
     private currentCid;
     private pendingScreenshots;
     /**
@@ -876,6 +878,14 @@ declare class TestPlanItReporter extends WDIOReporter {
     onSuiteStart(suite: SuiteStats): void;
     onSuiteEnd(suite: SuiteStats): void;
     onTestStart(test: TestStats): void;
+    /**
+     * The test a browser command belongs to. With parallel tests several are
+     * running at once, so the last one started is not necessarily the one that
+     * issued the command; WebdriverIO 10.2 and later can name the test of the
+     * command's own context. Earlier versions run tests one at a time, where
+     * the last one started is the answer.
+     */
+    private commandTestUid;
     /**
      * Capture the ordered low-level automation commands a test runs. Fed to AI
      * step derivation (non-Cucumber) so the steps mirror what the test actually
@@ -1088,4 +1098,5 @@ declare class TestPlanItService {
     private restoreRunIdEnv;
 }
 
-export { RUN_ID_ENV_VAR, type ReporterState, type RunAttachmentInput, type RunLinkInput, TestPlanItReporter, type TestPlanItReporterOptions, type TestPlanItRuntimeApi, TestPlanItService, type TestPlanItServiceOptions, type TrackedTestResult, TestPlanItReporter as default };
+export { RUN_ID_ENV_VAR, TestPlanItReporter, TestPlanItService, TestPlanItReporter as default };
+export type { ReporterState, RunAttachmentInput, RunLinkInput, TestPlanItReporterOptions, TestPlanItRuntimeApi, TestPlanItServiceOptions, TrackedTestResult };

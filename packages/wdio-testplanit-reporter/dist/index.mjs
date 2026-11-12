@@ -190,6 +190,8 @@ var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter {
   reportedResultCount = 0;
   detectedFramework = null;
   currentTestUid = null;
+  /** This reporter's uid for each started test, keyed by WebdriverIO's uid for it. */
+  testUidByStatsUid = /* @__PURE__ */ new Map();
   currentCid = null;
   pendingScreenshots = /* @__PURE__ */ new Map();
   /**
@@ -1021,9 +1023,22 @@ ${error.stack}` : "";
     const fullTitle = suiteName ? `${suiteName} > ${cleanTitle}` : cleanTitle;
     this.currentTestUid = `${test.cid}_${fullTitle}`;
     this.currentCid = test.cid;
+    this.testUidByStatsUid.set(test.uid, this.currentTestUid);
     if (!this.testCommands.has(this.currentTestUid)) {
       this.testCommands.set(this.currentTestUid, []);
     }
+  }
+  /**
+   * The test a browser command belongs to. With parallel tests several are
+   * running at once, so the last one started is not necessarily the one that
+   * issued the command; WebdriverIO 10.2 and later can name the test of the
+   * command's own context. Earlier versions run tests one at a time, where
+   * the last one started is the answer.
+   */
+  commandTestUid() {
+    const contextTest = this.getContextTest?.();
+    const uid = contextTest ? this.testUidByStatsUid.get(contextTest.uid) : void 0;
+    return uid ?? this.currentTestUid;
   }
   /**
    * Capture the ordered low-level automation commands a test runs. Fed to AI
@@ -1031,7 +1046,7 @@ ${error.stack}` : "";
    * did. Cheap no-op outside a test / when nothing is being captured.
    */
   onBeforeCommand(commandArgs) {
-    const uid = this.currentTestUid;
+    const uid = this.commandTestUid();
     if (!uid) return;
     const list = this.testCommands.get(uid);
     if (!list || list.length >= _TestPlanItReporter.MAX_COMMANDS_PER_TEST) return;
@@ -1086,12 +1101,13 @@ ${error.stack}` : "";
       this.log(`Screenshot result appears to be a file path: ${screenshotData.substring(0, 100)}`);
       return;
     }
-    if (this.currentTestUid) {
+    const testUid = this.commandTestUid();
+    if (testUid) {
       const buffer = Buffer.from(screenshotData, "base64");
-      const existing = this.pendingScreenshots.get(this.currentTestUid) || [];
+      const existing = this.pendingScreenshots.get(testUid) || [];
       existing.push(buffer);
-      this.pendingScreenshots.set(this.currentTestUid, existing);
-      this.log("Captured screenshot for test:", this.currentTestUid, `(${buffer.length} bytes)`);
+      this.pendingScreenshots.set(testUid, existing);
+      this.log("Captured screenshot for test:", testUid, `(${buffer.length} bytes)`);
     } else {
       this.log("No current test UID to associate screenshot with");
     }
