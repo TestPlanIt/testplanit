@@ -4,6 +4,7 @@ import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
+import { READS } from "../annotations.js";
 
 export interface RunCaseIterationsListDeps {
   env: EnvConfig;
@@ -46,6 +47,7 @@ export function registerRunCaseIterationsList(
   server.registerTool(
     "testplanit_test_run_case_iterations_list",
     {
+      annotations: READS,
       description:
         "List the iterations of a data-driven (parameterized) case in a run: one per data row, each with its id, rowIndex, label, parameter values (sensitive values redacted), status and completion. Record a result against one iteration by passing its id as `iterationId` to testplanit_test_run_results_create; a case with iterations takes results per iteration. Returns an empty list for a case without iterations.",
       inputSchema: {

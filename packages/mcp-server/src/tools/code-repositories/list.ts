@@ -11,6 +11,7 @@ import {
   mapCodeRepoConfig,
   type RawCodeRepoConfigRow,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface CodeRepositoriesListDeps {
   env: EnvConfig;
@@ -26,6 +27,7 @@ export function registerCodeRepositoriesList(
   server.registerTool(
     "testplanit_code_repositories_list",
     {
+      annotations: READS,
       description:
         "List the code repositories bound to a project. Each row is one binding (ProjectCodeRepositoryConfig) and carries its `purpose`: QUICKSCRIPT bindings point at the repository that holds the project's automated tests (QuickScript generation and test-case links read it); IMPACT bindings point at the application code that impact analysis and Code Pins read. A project holds up to one binding per purpose and repository, so expect several rows; filter by `purpose` to pick one side. The repository is denormalized inline: id, name, provider, status, lastTestedAt, settings reduced to the provider's public keys (owner/repo, projectPath, workspace/repoSlug, organizationUrl/project/repositoryId, baseUrl), and a derived web url. Credentials are never returned.",
       inputSchema: {

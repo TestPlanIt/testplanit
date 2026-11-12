@@ -6,6 +6,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { DELETES } from "../annotations.js";
 
 export interface CasesDeleteDeps {
   env: EnvConfig;
@@ -33,6 +34,7 @@ export function registerCasesDelete(
   server.registerTool(
     "testplanit_cases_delete",
     {
+      annotations: DELETES,
       description:
         "Soft-delete a test case by id. Sets isDeleted=true so the case is hidden from subsequent list/get queries. Returns { id, isDeleted: true }.",
       inputSchema: {

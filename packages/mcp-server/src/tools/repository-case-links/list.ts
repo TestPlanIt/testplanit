@@ -13,6 +13,7 @@ import {
   mapLinkRowOtherCase,
   type RawLinkRow,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface RepositoryCaseLinksListDeps {
   env: EnvConfig;
@@ -50,6 +51,7 @@ export function registerRepositoryCaseLinksList(
   server.registerTool(
     "testplanit_repository_case_links_list",
     {
+      annotations: READS,
       description:
         "List RepositoryCaseLink rows for traversing the manual-↔-imported case linkage graph. Provide exactly one of caseId (bidirectional — matches both caseA.id and caseB.id), caseAId (one-way originating side), or caseBId (one-way destination side). Optional linkType narrows to one kind: SAME_TEST_DIFFERENT_SOURCE (the same test in two sources, e.g. manual and imported), DEPENDS_ON (caseA depends on caseB), or DUPLICATED_FROM (provenance: caseB was duplicated from caseA by a copy). In caseId mode each row carries an inline `otherCase` (the side opposite the queried id); in caseAId/caseBId mode each row carries both caseA and caseB. Project scope is enforced via the underlying access policy on caseA.project — the link row itself is not project-scoped.",
       inputSchema: {

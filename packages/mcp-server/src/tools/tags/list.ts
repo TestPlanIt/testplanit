@@ -4,6 +4,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { READS } from "../annotations.js";
 
 type TagsCountOutputTypeSelect = Extract<
   NonNullable<TagsInclude["_count"]>,
@@ -39,6 +40,7 @@ export function registerTagsList(server: McpServer, deps: TagsListDeps): void {
   server.registerTool(
     "testplanit_tags_list",
     {
+      annotations: READS,
       description:
         "List tags with usage counts per repository case / test run / session. Optionally pass projectId to scope counts to that project; without it, counts are global. Tags are global; this tool is read-only.",
       inputSchema: {

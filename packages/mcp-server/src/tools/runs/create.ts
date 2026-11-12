@@ -21,6 +21,7 @@ import {
   type RawRunDetailTestCase,
   generateRunIterations,
 } from "./shared.js";
+import { ADDS } from "../annotations.js";
 
 export interface RunsCreateDeps {
   env: EnvConfig;
@@ -70,6 +71,7 @@ export function registerRunsCreate(
   server.registerTool(
     "testplanit_runs_create",
     {
+      annotations: ADDS,
       description:
         "Create a new test run in a project. Optionally add test cases, link to a milestone or configuration, set tags, and pick a workflow state by name. Returns the full denormalized run detail (same shape as testplanit_test_runs_get). State defaults to the first RUNS-scope state by order when omitted. testRunType is always REGULAR.",
       inputSchema: {

@@ -8,6 +8,7 @@ import {
   mapSessionDetail,
   type RawSessionDetail,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface SessionsGetDeps {
   env: EnvConfig;
@@ -22,6 +23,7 @@ export function registerSessionsGet(
   server.registerTool(
     "testplanit_sessions_get",
     {
+      annotations: READS,
       description:
         "Fetch a single session by id with denormalized header (state/createdBy/assignedTo/template/configuration/milestone/tags), session-level linked issues, mission and note (as Markdown), customFields (flat name-keyed dict from sessionFieldValues), and sessionResults inline up to 100 (when more exist, `truncated: true` is set; call testplanit_session_results_list({sessionId}) with cursor pagination for the full set).",
       inputSchema: {

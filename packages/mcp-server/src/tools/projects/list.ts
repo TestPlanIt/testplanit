@@ -5,6 +5,7 @@ import type {
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { READS } from "../annotations.js";
 
 export interface ProjectsListDeps {
   env: EnvConfig;
@@ -34,6 +35,7 @@ export function registerProjectsList(
   server.registerTool(
     "testplanit_projects_list",
     {
+      annotations: READS,
       description:
         "List projects accessible to the authenticated token. Returns { id, name } pairs only — minimal context-disambiguation surface for agents.",
       inputSchema: {},

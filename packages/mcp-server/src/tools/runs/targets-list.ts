@@ -3,6 +3,7 @@ import * as z from "zod/v4";
 import { getHostJson } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { READS } from "../annotations.js";
 
 export interface AutomationTargetsListDeps {
   env: EnvConfig;
@@ -25,6 +26,7 @@ export function registerAutomationTargetsList(
   server.registerTool(
     "testplanit_automation_targets_list",
     {
+      annotations: READS,
       description:
         "List a project's execution targets (where automated cases can be dispatched): id, name, provider (GITHUB_ACTIONS | GITLAB_CI | GENERIC_WEBHOOK), default ref and whether the target is enabled. Credentials and URLs are never returned. Use a target id with testplanit_runs_execute.",
       inputSchema: {

@@ -8,6 +8,7 @@ import { TestPlanItHttpError } from "../../http.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { proseMirrorToMarkdown } from "../../richText.js";
+import { CHANGES } from "../annotations.js";
 
 export interface MilestonesUpdateDeps {
   env: EnvConfig;
@@ -66,6 +67,7 @@ export function registerMilestonesUpdate(
   server.registerTool(
     "testplanit_milestones_update",
     {
+      annotations: CHANGES,
       description:
         "Update an existing milestone. All fields except milestoneId are optional — only supplied fields are changed. startedAt and completedAt are calendar days (YYYY-MM-DD): completedAt is the planned due date until the milestone completes. isStarted: true keeps an existing start date or records today; isCompleted: true completes the milestone the way the app does — its completion date is the planned due date (or completedAt / today), every child milestone completes with it, and its active test runs and sessions complete too only when completeTestRuns / completeSessions are true (each needs the matching close permission). isCompleted: false reopens it, which is refused while the parent milestone is completed. Milestones synced from an external tracker cannot have their name, note, dates or state changed here. Returns the updated milestone header.",
       inputSchema: {

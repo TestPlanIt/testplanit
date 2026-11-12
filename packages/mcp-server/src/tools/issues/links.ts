@@ -8,6 +8,7 @@ import {
   mapIssueRow,
   type RawIssueRow,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface IssuesListLinksDeps {
   env: EnvConfig;
@@ -162,6 +163,7 @@ export function registerIssuesListLinks(
   server.registerTool(
     "testplanit_issues_list_links",
     {
+      annotations: READS,
       description:
         "Walk the issue ↔ X graph in either direction. Outbound mode: provide issueId + target (one of: cases, sessions, sessionResults, testRuns, testRunResults, testRunStepResults) to get the linked counterpart rows. Inbound mode: provide exactly one of caseId, sessionId, sessionResultId, runId, runResultId, runStepResultId to get the issues linked to that row. Cursor pagination, deterministic orderBy.",
       inputSchema: {

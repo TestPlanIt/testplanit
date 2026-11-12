@@ -8,6 +8,7 @@ import {
   mapSessionResultDetail,
   type RawSessionResultDetail,
 } from "../shared.js";
+import { READS } from "../../annotations.js";
 
 export interface SessionResultsGetDeps {
   env: EnvConfig;
@@ -20,6 +21,7 @@ export function registerSessionResultsGet(
   server.registerTool(
     "testplanit_session_results_get",
     {
+      annotations: READS,
       description:
         "Fetch a single session result by id. Returns the result with denormalized status, createdBy (the executor — sessions don't have a separate executor field), session summary, attachments, linked issues, and customFields (resultFieldValues denormalized to a flat name-keyed dict — same shape as caseFieldValues for read). NOTE: no step-level results — sessions are exploratory and don't have ordered steps. resultData is surfaced as Markdown (resultDataText).",
       inputSchema: {

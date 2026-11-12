@@ -21,6 +21,7 @@ import {
   type FolderIndex,
 } from "../folders/tree.js";
 import { buildCasesWhere, CASES_FILTER_SHAPE } from "./where.js";
+import { READS } from "../annotations.js";
 
 export interface CasesCountDeps {
   env: EnvConfig;
@@ -82,6 +83,7 @@ export function registerCasesCount(
   server.registerTool(
     "testplanit_cases_count",
     {
+      annotations: READS,
       description:
         "Count test cases server-side — the aggregation companion to testplanit_cases_list. Accepts the same filters (folderId + includeDescendants for whole-subtree scope, tagIds, name, stateId, customField, issueId, automated, source, repositoryId, hasNeverExecuted, hasAutomatedResults, automatedResultSince, noAutomatedResultSince, updatedAfter/updatedBefore, creatorIds, from/to) and returns {total} — never paginate cases_list just to count. " +
         "Optional groupBy returns {total, groups: [{key, count}]} sorted by count desc: 'folder' (key: {id, name, path, rootId, rootName} — leaf-folder detail with the area rollup key inline), 'folderRoot' (key: {id, name} — top-level area totals), 'tag' (key: {id, name}; a case carries any number of tags, so tag counts do NOT sum to total), 'state' (key: {id, name}), 'source' (key/name = RepositoryCaseSource value), 'creator' (key: {id, name, email}). Only non-empty groups are returned. " +

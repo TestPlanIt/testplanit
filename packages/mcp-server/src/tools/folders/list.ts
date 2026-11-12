@@ -10,6 +10,7 @@ import {
   type FlatFolder,
   type FolderIndex,
 } from "./tree.js";
+import { READS } from "../annotations.js";
 
 export interface FoldersListDeps {
   env: EnvConfig;
@@ -80,6 +81,7 @@ export function registerFoldersList(server: McpServer, deps: FoldersListDeps): v
   server.registerTool(
     "testplanit_folders_list",
     {
+      annotations: READS,
       description:
         "List the folder tree for a project. Every serialized node carries its accurate direct caseCount (soft-deleted excluded) and hasChildren. `depth` controls how many levels below the roots are inlined (default 2; pass 'all' for the entire tree) — nodes at the cut with children beyond it get children:null + truncated:true, so an empty leaf (children:[], hasChildren:false) is never confusable with an unfetched subtree. " +
         "Pass includeRecursiveCounts:true to add caseCountRecursive, automatedCaseCount, and automatedCaseCountRecursive to every node — one call answers 'total and automated cases per area at any depth' (recursive totals on each root sum to the project total). For rollups filtered beyond the automated flag, use testplanit_cases_count.",

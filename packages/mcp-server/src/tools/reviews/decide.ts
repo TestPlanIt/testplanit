@@ -9,6 +9,7 @@ import {
   decideReview,
   type DecideInput,
 } from "./shared.js";
+import { CHANGES } from "../annotations.js";
 
 export interface ReviewsDecideDeps {
   env: EnvConfig;
@@ -46,6 +47,7 @@ export function registerReviewsDecide(
   server.registerTool(
     "testplanit_reviews_decide",
     {
+      annotations: CHANGES,
       description:
         "Record a review decision on behalf of the authenticated user, for a review request assigned to them (find ids with testplanit_reviews_list). IRREVERSIBLE AND VISIBLE TO OTHERS: decisions are append-only — they cannot be changed or retracted, they notify the requester, and APPROVING APPLIES THE WORKFLOW TRANSITION, moving the test case / run / session into the requested state; `transitionApplied` and `currentStateId` report whether it is now there. Confirm the decision with your user before calling; do not approve on your own initiative. `decision` is APPROVED, CHANGES_REQUESTED, or REJECTED. `comment` is required for CHANGES_REQUESTED and REJECTED (the reviewer must say what is wrong) and optional for APPROVED; it is posted as a comment on the entity's thread, addressed to the requester. Fails with INELIGIBLE_REVIEWER if the caller is not the assignee (directly or through an assigned role) with approve permission for the entity's area, and with ALREADY_DECIDED if someone else got there first. Read-only (`mode:read`) tokens are refused.",
       inputSchema: {

@@ -11,6 +11,7 @@ import {
   mapRunDetailTestCase,
   type RawRunDetailTestCase,
 } from "./shared.js";
+import { CHANGES } from "../annotations.js";
 
 export interface RunsCasesUpdateDeps {
   env: EnvConfig;
@@ -23,6 +24,7 @@ export function registerRunsCasesUpdate(
   server.registerTool(
     "testplanit_runs_cases_update",
     {
+      annotations: CHANGES,
       description:
         "Edit a test case's row WITHIN a run: assign/unassign a tester (assignedToId) or move it to a new position (order). Identify the row by testRunCaseId — the `id` on rows from testplanit_test_runs_cases_list / testplanit_test_runs_get testCases (NOT repositoryCase.id). All fields except testRunCaseId are optional — only supplied fields change. To change the case's execution status, submit a result via testplanit_test_run_results_create instead; to edit the case's CONTENT (name, steps, tags, custom fields), use testplanit_cases_update with the row's repositoryCase.id. Fails when the parent run is completed (row is frozen); `order` is additionally frozen while the run is composition-locked (execution started). Returns the updated row in the same shape as testplanit_test_runs_cases_list.",
       inputSchema: {

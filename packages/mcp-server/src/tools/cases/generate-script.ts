@@ -3,6 +3,7 @@ import * as z from "zod/v4";
 import { generateQuickScript } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { ADDS_EXTERNAL } from "../annotations.js";
 
 export interface CasesGenerateScriptDeps {
   env: EnvConfig;
@@ -15,6 +16,7 @@ export function registerCasesGenerateScript(
   server.registerTool(
     "testplanit_cases_generate_script",
     {
+      annotations: ADDS_EXTERNAL,
       description:
         "Generate a QuickScript — an AI-authored automation test script — from one or more stored test cases. The server resolves the project's export template and, when a code repository is connected to the project, pulls repository context so the script follows the repo's existing framework, fixtures, and page objects (this takes precedence over the template's framework — intended behavior). When no LLM integration is configured or generation fails, each file falls back to the deterministic template render (generatedBy=\"template\"). Requires QuickScript to be enabled for the project. Returns the generated file(s) plus the resolved framework/language/fileExtension for naming.",
       inputSchema: {
