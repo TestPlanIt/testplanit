@@ -4,6 +4,7 @@ import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { fetchFolderDetail, nextFolderOrder } from "./shared.js";
+import { CHANGES } from "../annotations.js";
 
 export interface FoldersUpdateDeps {
   env: EnvConfig;
@@ -13,6 +14,7 @@ export function registerFoldersUpdate(server: McpServer, deps: FoldersUpdateDeps
   server.registerTool(
     "testplanit_folders_update",
     {
+      annotations: CHANGES,
       description:
         "Update a folder (partial). Provide name to rename; provide parentId to reparent (use null to move to root). Returns the updated folder with breadcrumb + case count.",
       inputSchema: {

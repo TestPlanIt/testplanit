@@ -6,6 +6,7 @@ import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
 import type { BulkCreateResponse } from "./createMany.js";
 import { fetchCaseDetail } from "./fetchDetail.js";
+import { ADDS } from "../annotations.js";
 
 export interface CasesCreateDeps {
   env: EnvConfig;
@@ -20,6 +21,7 @@ export function registerCasesCreate(
   server.registerTool(
     "testplanit_cases_create",
     {
+      annotations: ADDS,
       description:
         "Create a new test case in a project + folder, stored exactly as the web UI stores it: Markdown in steps and Text Long fields is formatted, custom field values are checked against the template (options by name or id, numbers, dates, true/false), the template's default values fill fields you leave out, and required fields must end up with a value. Resolves the active repository, template and CASES workflow state automatically. Returns the full case detail.",
       inputSchema: {

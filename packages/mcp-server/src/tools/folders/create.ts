@@ -4,6 +4,7 @@ import { zenstack, resolveActiveRepository } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { fetchFolderDetail, nextFolderOrder } from "./shared.js";
+import { ADDS } from "../annotations.js";
 
 export interface FoldersCreateDeps {
   env: EnvConfig;
@@ -13,6 +14,7 @@ export function registerFoldersCreate(server: McpServer, deps: FoldersCreateDeps
   server.registerTool(
     "testplanit_folders_create",
     {
+      annotations: ADDS,
       description:
         "Create a folder under a parent (omit parentId for root). Resolves the active repository automatically. Returns the created folder with breadcrumb + case count.",
       inputSchema: {

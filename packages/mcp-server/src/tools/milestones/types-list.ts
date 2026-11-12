@@ -6,6 +6,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { READS } from "../annotations.js";
 
 export interface MilestoneTypesListDeps {
   env: EnvConfig;
@@ -32,6 +33,7 @@ export function registerMilestoneTypesList(
   server.registerTool(
     "testplanit_milestone_types_list",
     {
+      annotations: READS,
       description:
         "List the milestone types a project can use: those assigned to it, plus the type marked Default, which every project can use. Returns {items:[{id, name, isDefault}]} sorted by name asc. No cursor pagination — types-per-project is small (~10 typical). Every milestones_list row + milestones_get response also denormalizes milestoneType:{id,name} inline; this tool exists for full-catalog or filter-picker use cases. No icon field — schema only carries an icon class identifier, deliberately dropped for v1.",
       inputSchema: { projectId: z.number().int().positive() },

@@ -15,6 +15,7 @@ import {
 } from "../folders/tree.js";
 import { mapCaseRow } from "./shared.js";
 import { buildCasesWhere, CASES_FILTER_SHAPE } from "./where.js";
+import { READS } from "../annotations.js";
 
 export interface CasesListDeps {
   env: EnvConfig;
@@ -83,6 +84,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
   server.registerTool(
     "testplanit_cases_list",
     {
+      annotations: READS,
       description:
         "List test cases scoped to a project. Filters: folderId (exact folder; add includeDescendants:true to cover the folder's entire subtree), tagIds, name (case-insensitive substring), stateId, customField, issueId (linked Issue numeric id — see issues_list for resolution from external keys). customField takes {name} to match cases that have the field set, or {name, value} to match by value (Dropdown/Multi-Select accept the option name or id; an unknown field name or option returns a validation error rather than unfiltered results). Cursor pagination via the `cursor` returned in `nextCursor`. " +
         "Maintenance filters: automated (user-controlled intent flag), source (single or array of RepositoryCaseSource), repositoryId, hasNeverExecuted (no junitResults AND no TestRunResults via TestRunCases), staleSinceUpdate (handler-side post-filter — bounded scan of POST_FILTER_SCAN_CAP=400; surfaces truncated:true when scan cap hit), updatedAfter/updatedBefore (filter via the repositoryCaseVersions relation since RepositoryCases has no updatedAt column; YYYY-MM-DD or ISO 8601 — a date-only updatedBefore covers that whole UTC day). Each row carries lastUpdatedAt, latestResult (union of latest junitResults / TestRunResults), plus the automation-reality pair hasAutomatedResults / lastAutomatedResultAt (JUnit result rows — execution evidence, distinct from the user-set `automated` flag). " +

@@ -9,6 +9,7 @@ import {
   mapIssueDetail,
   type RawIssueDetail,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface IssuesGetDeps {
   env: EnvConfig;
@@ -21,6 +22,7 @@ export function registerIssuesGet(
   server.registerTool(
     "testplanit_issues_get",
     {
+      annotations: READS,
       description:
         "Fetch a single Issue by id with its full denormalized header (including note rendered as Markdown, integration, createdBy) and three inlined linked arrays — linkedCases, linkedSessions, linkedTestRuns — each capped at 100. When an array is over-capacity the response carries truncated.<key>: true and the rest are reachable via testplanit_cases_list({ issueId }) or testplanit_issues_list_links with the appropriate target.",
       inputSchema: {

@@ -14,6 +14,7 @@ import {
   resolveViewerScope,
   type RawReviewRow,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface ReviewsListDeps {
   env: EnvConfig;
@@ -55,6 +56,7 @@ export function registerReviewsList(
   server.registerTool(
     "testplanit_reviews_list",
     {
+      annotations: READS,
       description:
         "List the review requests assigned to the authenticated user — the work the Review inbox in the app shows as waiting on them (the inbox also lists requests they made themselves; this tool does not). There is no user filter: rows are scoped to the token owner, covering direct assignment and assignment to the role the caller holds in each project, limited to the entity types that role may approve — exactly the rows the caller can decide. `view` selects the tab: 'pending' (default) = PENDING requests awaiting the caller's decision, oldest first; 'decided' = requests the caller has already approved / requested changes on / rejected, most recently decided first. Filters: projectId, entityType (CASE | RUN | SESSION). Each row carries the polymorphic subject resolved to entityName (plus entityDeleted — a request can outlive its subject), the workflow transition being requested as transition:{from,to}, the requester, assignedTo:{via:'USER'|'ROLE',...}, requestNote (the requester's submit-time prose, as Markdown), and — on the decided view — decision:{status,comment,decidedBy,decidedAt}. Use entityType+entityId with testplanit_cases_get / testplanit_test_runs_get / testplanit_sessions_get to inspect what is being reviewed. Requests from projects with the review workflow turned off are excluded, and `reviewFeatureEnabled:false` distinguishes 'the feature is off system-wide' from 'nothing is assigned to you'. Cursor pagination via the `cursor` returned in `nextCursor`. Pass a row's `id` to testplanit_reviews_decide to record a decision.",
       inputSchema: {

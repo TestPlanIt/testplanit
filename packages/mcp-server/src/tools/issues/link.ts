@@ -4,6 +4,7 @@ import { resolveIssueKeys, zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
+import { ADDS_EXTERNAL, CHANGES } from "../annotations.js";
 
 export interface IssuesLinkDeps {
   env: EnvConfig;
@@ -297,6 +298,7 @@ export function registerIssuesLink(
   server.registerTool(
     "testplanit_issues_link",
     {
+      annotations: ADDS_EXTERNAL,
       description:
         "Link one or more entities (test cases, sessions, test runs, etc.) to an issue. Supports batch linking: pass up to 100 entity IDs in a single call. Use entityType='testCase' to link test cases created with testplanit_cases_create. Identify the issue EITHER by issueId, OR by externalKey + projectId — the key form resolves the ticket through the project's integration and creates the Issue row when TestPlanIt has never seen it, so no one has to open the ticket in the web UI first. Resolution shares the row the web UI would write, so a key linked here is never a duplicate. Returns a count of linked entities.",
       inputSchema: LINK_INPUT_SCHEMA,
@@ -347,6 +349,7 @@ export function registerIssuesUnlink(
   server.registerTool(
     "testplanit_issues_unlink",
     {
+      annotations: CHANGES,
       description:
         "Remove links between one or more entities and an issue. Supports batch: pass up to 100 entity IDs in a single call. Returns a count of unlinked entities.",
       inputSchema: UNLINK_INPUT_SCHEMA,

@@ -8,6 +8,7 @@ import {
   mapIssueRow,
   type RawIssueRow,
 } from "./shared.js";
+import { ADDS_EXTERNAL } from "../annotations.js";
 
 export interface IssuesResolveDeps {
   env: EnvConfig;
@@ -22,6 +23,7 @@ export function registerIssuesResolve(
   server.registerTool(
     "testplanit_issues_resolve",
     {
+      annotations: ADDS_EXTERNAL,
       description:
         "Resolve tracker issue keys (e.g. 'PROJ-123') to TestPlanIt Issue rows, creating any row that does not exist here yet by reading the ticket through the project's own integration credentials. Use this instead of testplanit_issues_find_by_key when the key may never have been opened in the TestPlanIt web UI — find_by_key only searches rows that already exist and returns not-found otherwise. Resolution upserts on (externalId, integrationId), the same key the web UI writes, so a key resolved here and later linked in the UI is one row, never two. integrationId is optional when the project has exactly one active issue-tracker integration. Per-key failures are reported in `results` and never fail the whole call. GitHub issues need the compound 'owner/repo#N' form, not a bare number. Costs one tracker round trip per key not already present locally.",
       inputSchema: {

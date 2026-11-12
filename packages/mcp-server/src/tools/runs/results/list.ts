@@ -18,6 +18,7 @@ import {
   type RawJunitResultRow,
   type RawRunResultRow,
 } from "../shared.js";
+import { READS } from "../../annotations.js";
 
 export interface RunResultsListDeps {
   env: EnvConfig;
@@ -34,6 +35,7 @@ export function registerRunResultsList(
   server.registerTool(
     "testplanit_test_run_results_list",
     {
+      annotations: READS,
       description:
         "List test run results across runs — BOTH manual results (TestRunResults, source \"TestRun\") AND automated results ingested from JUnit/TestNG/xUnit/NUnit/MSTest/Mocha/Cucumber reports (JUnitTestResult, source \"JUnit\"; automated runs — testRunType != REGULAR — store results ONLY there). Filters: runId, caseIds (RepositoryCases ids — pair with testplanit_cases_list({issueId}) to get the results for an issue's cases), executedById (user id, string; for JUnit rows this is the importer), statusId, from/to (executedAt range; YYYY-MM-DD or an ISO 8601 timestamp — a date-only `to` covers that whole UTC day), source (\"TestRun\" | \"JUnit\" to restrict to one kind). Merged ordering: executedAt DESC then id DESC per source (latest first). Cursor is OPAQUE — pass back `nextCursor` verbatim (compound `tr:<id>|ju:<id>` string; bare numbers are accepted as legacy TestRunResults cursors). Each row carries `source`, denormalized status/executedBy, top-level repositoryCase + testRun, and (TestRun rows only) testRunCase. For detail call testplanit_test_run_results_get with the row id AND its `source`.",
       inputSchema: {

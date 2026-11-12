@@ -7,6 +7,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { READS } from "../annotations.js";
 
 export interface TemplatesListDeps {
   env: EnvConfig;
@@ -66,6 +67,7 @@ export function registerTemplatesList(
   server.registerTool(
     "testplanit_templates_list",
     {
+      annotations: READS,
       description:
         "List a project's enabled templates, each with the case fields it defines (displayName, systemName, type, required). isDefault marks the system default template and isProjectDefault the project's own default; cases created without a templateId use the project default, else the system default. Use this to pick a templateId for testplanit_cases_create / testplanit_cases_create_many and to learn which customFields a template accepts. Read-only.",
       inputSchema: {

@@ -11,6 +11,7 @@ import {
   type RawJunitResultDetail,
   type RawRunResultDetail,
 } from "../shared.js";
+import { READS } from "../../annotations.js";
 
 export interface RunResultsGetDeps {
   env: EnvConfig;
@@ -23,6 +24,7 @@ export function registerRunResultsGet(
   server.registerTool(
     "testplanit_test_run_results_get",
     {
+      annotations: READS,
       description:
         "Fetch a single test run result. Pass the `source` from the results_list row: \"TestRun\" (default — manual TestRunResults) or \"JUnit\" (automated results ingested from JUnit/TestNG/xUnit/… reports; automated runs store results ONLY there — the two id spaces are independent). TestRun detail inlines step-level results: stepText / expectedResultText (Markdown), status, notes, evidence (JSON as stored), attachments, linked issues, plus customFields (resultFieldValues denormalized) and the parent testRunCase summary. JUnit detail carries junitType (PASSED/FAILURE/ERROR/SKIPPED), message, content (stack trace), systemOut/systemErr, time/assertions/file/line, suite + repositoryCase + testRun, and attachments; JUnit steps are stored per-CASE (no per-result FK) so they are not inlined.",
       inputSchema: {

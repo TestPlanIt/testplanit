@@ -10,6 +10,7 @@ import { splitNotStartedCases } from "./notStartedCases.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { generateRunIterations } from "./shared.js";
+import { ADDS } from "../annotations.js";
 
 export interface RunsCasesAddDeps {
   env: EnvConfig;
@@ -24,6 +25,7 @@ export function registerRunsCasesAdd(
   server.registerTool(
     "testplanit_runs_cases_add",
     {
+      annotations: ADDS,
       description:
         "Add repository test cases to an existing test run. Cases are appended after any existing run cases (order preserved). Case IDs already in the run are silently skipped; a case previously removed from the run is restored at its former position, untested (its earlier results stay removed). Data-driven cases get their iterations, as in the web UI. Returns the number of cases requested and restored, the updated total, and `iterations` (whether they were generated, and how many).",
       inputSchema: {

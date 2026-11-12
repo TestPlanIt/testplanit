@@ -3,6 +3,7 @@ import * as z from "zod/v4";
 import { postHostJson } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { ADDS_EXTERNAL } from "../annotations.js";
 
 export interface RunsExecuteDeps {
   env: EnvConfig;
@@ -22,6 +23,7 @@ export function registerRunsExecute(
   server.registerTool(
     "testplanit_runs_execute",
     {
+      annotations: ADDS_EXTERNAL,
       description:
         "Ask TestPlanIt to execute a run's automated cases on one of the project's execution targets (a GitHub Actions workflow, a GitLab CI pipeline, or a signed webhook — list them with testplanit_automation_targets_list). TestPlanIt starts the job with TESTPLANIT_RUN_ID and a plan URL; the job reads the plan (testplanit_runs_automation_plan) and reports results back into the run. Optional `caseIds` limits the request to those automated cases; `ref` overrides the target's default branch. Refused (409) when the run is completed, has no automated cases, or already has an execution in flight; the run becomes HYBRID once executed. Returns the new execution's id and status (PENDING until the worker dispatches it).",
       inputSchema: {

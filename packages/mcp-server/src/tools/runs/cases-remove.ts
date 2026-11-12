@@ -11,6 +11,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { CHANGES } from "../annotations.js";
 
 export interface RunsCasesRemoveDeps {
   env: EnvConfig;
@@ -25,6 +26,7 @@ export function registerRunsCasesRemove(
   server.registerTool(
     "testplanit_runs_cases_remove",
     {
+      annotations: CHANGES,
       description:
         "Remove test cases from a run (the counterpart of testplanit_runs_cases_add — takes the same repository case IDs, not TestRunCase row IDs). Soft-deletes the run's junction rows AND their recorded results, step results, and iterations, matching the web UI's remove-cases flow; the repository cases themselves are untouched. Re-adding a removed case via testplanit_runs_cases_add restores it. Fails when the run is completed or composition-locked (execution started) — the case set is frozen. Returns the number of cases removed and the run's remaining case count.",
       inputSchema: {

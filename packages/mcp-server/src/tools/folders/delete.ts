@@ -10,6 +10,7 @@ import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
+import { DELETES } from "../annotations.js";
 
 export interface FoldersDeleteDeps {
   env: EnvConfig;
@@ -37,6 +38,7 @@ export function registerFoldersDelete(server: McpServer, deps: FoldersDeleteDeps
   server.registerTool(
     "testplanit_folders_delete",
     {
+      annotations: DELETES,
       description:
         "Soft-delete a folder by id. Folders with cases or sub-folders cannot be deleted; the tool returns a structured error in that case. Returns { id, isDeleted: true } on success.",
       inputSchema: {

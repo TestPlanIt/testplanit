@@ -21,6 +21,7 @@ import {
   type RawMilestoneRow,
   type StatusGroup,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface MilestonesListDeps {
   env: EnvConfig;
@@ -53,6 +54,7 @@ export function registerMilestonesList(
   server.registerTool(
     "testplanit_milestones_list",
     {
+      annotations: READS,
       description:
         "List milestones scoped to a project, with POOLED statusCounts rollup inline on every row (merged across linked test runs AND linked sessions). Filters: isCompleted, isStarted, milestoneTypeId, createdById (single string), from/to (createdAt range; YYYY-MM-DD or an ISO 8601 timestamp — a date-only `to` covers that whole UTC day), parentId (null = root-only, number = direct children of, omitted = all). Cursor pagination via the `cursor` returned in `nextCursor`. Each row carries denormalized milestoneType {id,name}, creator, parentId, directChildrenCount, totalDescendants (recursive CTE), commentCount inline, plus statusCounts:[{id,name,count}] + untested + total (counts SUM to total). Two batched groupBy calls per page (testRunCases + sessionResults), never per-row. No icon field — schema only carries an icon class identifier, deliberately dropped for v1.",
       inputSchema: {

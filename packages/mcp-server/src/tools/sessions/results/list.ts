@@ -11,6 +11,7 @@ import {
   mapSessionResultRow,
   type RawSessionResultRow,
 } from "../shared.js";
+import { READS } from "../../annotations.js";
 
 export interface SessionResultsListDeps {
   env: EnvConfig;
@@ -26,6 +27,7 @@ export function registerSessionResultsList(
   server.registerTool(
     "testplanit_session_results_list",
     {
+      annotations: READS,
       description:
         "List session results with cursor pagination. Filters: sessionId, createdById (executor user id, string), statusId. NOTE: there is NO testCase filter — `SessionResults` has no `testCaseId` column (sessions are exploratory and not case-linked). Each row carries denormalized status / createdBy (the executor) / session summary, plus resultData as Markdown (resultDataText). Ordered by createdAt DESC then id DESC. isDeleted:false defense-in-depth.",
       inputSchema: {
