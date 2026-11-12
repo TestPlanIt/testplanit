@@ -78,7 +78,7 @@ export function WindowVirtualizedList<T>({
             key={getKey(item, virtualRow.index)}
             data-index={virtualRow.index}
             ref={virtualizer.measureElement}
-            className="absolute start-0 top-0 flex w-full flex-col"
+            className="absolute inset-s-0 top-0 flex w-full flex-col"
             style={{
               transform: `translateY(${virtualRow.start - scrollMargin}px)`,
             }}

@@ -103,7 +103,7 @@ export function VirtualizedCardList<T>({
               key={getKey(item, vItem.index)}
               data-index={vItem.index}
               ref={measureElement}
-              className="absolute start-0 top-0 flex w-full flex-col"
+              className="absolute inset-s-0 top-0 flex w-full flex-col"
               style={{ transform: `translateY(${vItem.start}px)` }}
             >
               {renderItem(item, vItem.index)}

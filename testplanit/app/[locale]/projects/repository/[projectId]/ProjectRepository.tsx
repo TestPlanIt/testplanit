@@ -2389,7 +2389,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 (spec §9) rather than bypassing them. */}
                             {isEsSearchAvailable && (
                               <div className="relative max-w-md min-w-0 flex-1">
-                                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
+                                <Search className="absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                                 <Input
                                   type="text"
                                   placeholder={t(
@@ -2406,7 +2406,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="absolute end-1 top-1/2 h-6 w-6 -translate-y-1/2 transform"
+                                    className="absolute inset-e-1 top-1/2 h-6 w-6 -translate-y-1/2 transform"
                                     onClick={cancelEsSearch}
                                   >
                                     <X className="h-4 w-4" />

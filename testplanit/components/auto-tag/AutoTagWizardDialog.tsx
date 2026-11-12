@@ -1040,7 +1040,7 @@ export function AutoTagWizardDialog({
             {reviewRows.length > 0 && (
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
-                  <Search className="absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute inset-s-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     placeholder={t("review.filterEntities")}
                     value={reviewSearch}

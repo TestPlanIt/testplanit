@@ -745,7 +745,7 @@ export function UnifiedSearch({
               key={vItem.key}
               data-index={vItem.index}
               ref={measureElement}
-              className="absolute start-0 top-0 w-full pb-2"
+              className="absolute inset-s-0 top-0 w-full pb-2"
               style={{ transform: `translateY(${vItem.start}px)` }}
             >
               <SearchResultCard
@@ -906,7 +906,7 @@ export function UnifiedSearch({
       <div className="space-y-2">
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
+            <Search className="absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
             <Input
               type="text"
               placeholder={searchPlaceholder}
@@ -919,7 +919,7 @@ export function UnifiedSearch({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute end-1 top-1/2 h-7 w-7 -translate-y-1/2 transform"
+                className="absolute inset-e-1 top-1/2 h-7 w-7 -translate-y-1/2 transform"
                 onClick={clearSearch}
               >
                 <X className="h-4 w-4" />
@@ -984,7 +984,7 @@ export function UnifiedSearch({
                 {getActiveFilterCount() > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -end-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
+                    className="absolute -inset-e-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
                   >
                     {getActiveFilterCount()}
                   </Badge>
@@ -1148,7 +1148,7 @@ export function UnifiedSearch({
 
       {selectedCaseRows.size > 0 && (
         <div
-          className="fixed end-0 bottom-0 z-50 w-full border-t bg-background/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:max-w-3xl"
+          className="fixed inset-e-0 bottom-0 z-50 w-full border-t bg-background/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:max-w-3xl"
           data-testid="bulk-action-toolbar"
         >
           <div className="flex flex-wrap items-center justify-between gap-3 p-3">

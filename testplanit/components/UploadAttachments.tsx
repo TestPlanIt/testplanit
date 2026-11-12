@@ -677,7 +677,7 @@ export default function UploadAttachments({
                           size="icon"
                           onClick={() => removeFile(index)}
                           aria-label={tGlobal("common.cancel")}
-                          className="absolute start-14 top-0 h-7 w-7 -translate-x-2 -translate-y-2 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground rtl:translate-x-2"
+                          className="absolute inset-s-14 top-0 h-7 w-7 -translate-x-2 -translate-y-2 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground rtl:translate-x-2"
                         >
                           <XCircle className="h-5 w-5" />
                         </Button>
@@ -710,7 +710,7 @@ export default function UploadAttachments({
                           size="icon"
                           onClick={() => removeLink(index)}
                           aria-label={tGlobal("common.cancel")}
-                          className="absolute start-14 top-0 h-7 w-7 -translate-x-2 -translate-y-2 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground rtl:translate-x-2"
+                          className="absolute inset-s-14 top-0 h-7 w-7 -translate-x-2 -translate-y-2 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground rtl:translate-x-2"
                         >
                           <XCircle className="h-5 w-5" />
                         </Button>

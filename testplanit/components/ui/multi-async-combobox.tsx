@@ -395,7 +395,7 @@ export function MultiAsyncCombobox<T>({
                           key={getOptionValue(option)}
                           ref={measureElement}
                           data-index={virtualRow.index}
-                          className="absolute start-0 top-0 w-full"
+                          className="absolute inset-s-0 top-0 w-full"
                           style={{
                             transform: `translateY(${virtualRow.start}px)`,
                           }}

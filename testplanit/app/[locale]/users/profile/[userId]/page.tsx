@@ -552,7 +552,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       height={160}
                     />
                     {user.image && user?.id === session?.user?.id && (
-                      <div className="absolute -end-2 -top-2">
+                      <div className="absolute -inset-e-2 -top-2">
                         <RemoveAvatar user={user} />
                       </div>
                     )}

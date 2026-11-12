@@ -1717,7 +1717,7 @@ const TreeView: React.FC<{
     <>
       {showFilterInput && (
         <div className="relative ms-1 me-2 mb-2">
-          <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute inset-s-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             value={filterQuery}
@@ -1740,7 +1740,7 @@ const TreeView: React.FC<{
             <Button
               variant="ghost"
               size="icon"
-              className="absolute end-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
+              className="absolute inset-e-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
               aria-label={t("common.aria.clearFilter")}
               data-testid="folder-filter-clear"
               onClick={() => setFilterQuery("")}
@@ -1821,7 +1821,7 @@ const TreeView: React.FC<{
           >
             {/* Drop indicator line with circle - matches react-arborist cursor style */}
             {isOverBottom && (
-              <div className="pointer-events-none absolute start-0 end-6 top-0 z-10 flex items-center">
+              <div className="pointer-events-none absolute inset-s-0 inset-e-6 top-0 z-10 flex items-center">
                 <div
                   className="rounded-full"
                   style={{

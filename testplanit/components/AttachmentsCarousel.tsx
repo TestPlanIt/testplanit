@@ -448,14 +448,14 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
             </CarouselContent>
           </Carousel>
           <Button
-            className="absolute start-0 top-1/2 -translate-y-1/2 transform p-2"
+            className="absolute inset-s-0 top-1/2 -translate-y-1/2 transform p-2"
             onClick={handlePrev}
             disabled={current === 0}
           >
             <ChevronLeft className="h-6 w-6" />
           </Button>
           <Button
-            className="absolute end-0 top-1/2 -translate-y-1/2 transform p-2"
+            className="absolute inset-e-0 top-1/2 -translate-y-1/2 transform p-2"
             onClick={handleNext}
             disabled={current === attachments.length - 1}
           >

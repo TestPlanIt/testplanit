@@ -9,7 +9,7 @@ const alertVariants = cva(
   // h-4 icon's center on the text-sm line-box center (py-3 + half of the 20px
   // line). The legacy -3px description nudge is dropped so the lone-description
   // case stays aligned rather than shifting up off the icon.
-  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg]:absolute [&>svg]:start-4 [&>svg]:top-3.5 [&>svg]:text-foreground [&>svg~*]:ps-7",
+  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg]:absolute [&>svg]:inset-s-4 [&>svg]:top-3.5 [&>svg]:text-foreground [&>svg~*]:ps-7",
   {
     variants: {
       variant: {

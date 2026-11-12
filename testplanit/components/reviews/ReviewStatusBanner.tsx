@@ -452,7 +452,7 @@ export function ReviewStatusBanner({
           // its icon — including this absolute-positioned button. Reset
           // back to size="sm"'s normal x-padding so the text isn't
           // shoved off-center.
-          className="absolute end-3 top-3 !ps-3"
+          className="absolute inset-e-3 top-3 !ps-3"
         >
           {t("reviews.banner.requestAgain")}
         </Button>

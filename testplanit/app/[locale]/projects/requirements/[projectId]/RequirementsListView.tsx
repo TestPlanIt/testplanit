@@ -1370,7 +1370,7 @@ const RequirementsListView = forwardRef<
         >
           <div className="my-1 ms-1 me-2 flex flex-wrap items-center justify-between gap-2">
             <div className="relative max-w-lg min-w-[120px] shrink grow basis-[120px]">
-              <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute inset-s-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
                 value={filterQuery}
@@ -1390,7 +1390,7 @@ const RequirementsListView = forwardRef<
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute end-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
+                  className="absolute inset-e-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
                   aria-label={t("common.aria.clearFilter")}
                   data-testid="requirements-filter-clear"
                   onClick={() => setFilterQuery("")}

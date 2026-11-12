@@ -181,7 +181,7 @@ export function MatrixGrid({
         {/* Top-left corner — sticky top + left so it always covers the
             intersection of the column-header strip and the left rail. */}
         <div
-          className="sticky start-0 top-0 z-30 flex items-center border-e border-b bg-background px-2 text-xs font-medium text-muted-foreground"
+          className="sticky inset-s-0 top-0 z-30 flex items-center border-e border-b bg-background px-2 text-xs font-medium text-muted-foreground"
           style={{
             width: LEFT_RAIL_WIDTH,
             height: HEADER_HEIGHT,
@@ -224,7 +224,7 @@ export function MatrixGrid({
             row-virtualizer total height. The leading sub-row of each case
             renders the case name + a top border to imply the row-span. */}
         <div
-          className="sticky start-0 z-10 bg-background"
+          className="sticky inset-s-0 z-10 bg-background"
           style={{
             width: LEFT_RAIL_WIDTH,
             height: totalGridHeight,

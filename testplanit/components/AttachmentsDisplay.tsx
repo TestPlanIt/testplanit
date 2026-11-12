@@ -489,7 +489,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                 key={prevAttachment.id}
               >
                 <div className="relative">
-                  <div className="absolute start-2 top-2 text-xl text-red-700 dark:text-red-400">
+                  <div className="absolute inset-s-2 top-2 text-xl text-red-700 dark:text-red-400">
                     <Minus className="h-4 w-4" />
                   </div>
                 </div>

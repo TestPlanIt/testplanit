@@ -1046,7 +1046,7 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                         aria-label={t("resize")}
                         title={t("resize")}
                         className={cn(
-                          "absolute end-0 top-0 z-10 h-full w-1.5 cursor-col-resize touch-none transition-colors select-none hover:bg-primary/40",
+                          "absolute inset-e-0 top-0 z-10 h-full w-1.5 cursor-col-resize touch-none transition-colors select-none hover:bg-primary/40",
                           column.getIsResizing()
                             ? "bg-primary"
                             : "bg-transparent"
@@ -1230,7 +1230,7 @@ export function VirtualizedTableEngine<TData extends DataRow>({
                     onDragOver={rowExtra?.onDragOver}
                     onDragLeave={rowExtra?.onDragLeave}
                     className={cn(
-                      "absolute start-0 top-0 flex border-b",
+                      "absolute inset-s-0 top-0 flex border-b",
                       onRowClick && !isGrouped && "cursor-pointer",
                       tableStyles.rowDivider,
                       isGrouped

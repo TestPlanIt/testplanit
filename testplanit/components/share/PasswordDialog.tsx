@@ -146,7 +146,7 @@ export function PasswordDialog({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute end-0 top-0 h-full px-3 hover:bg-transparent"
+                  className="absolute inset-e-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                 >

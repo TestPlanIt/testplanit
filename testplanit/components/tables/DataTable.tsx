@@ -413,7 +413,7 @@ function HeadCellContent({
           // vertical padding so it spans the full row height; `z-20` lifts it
           // above adjacent (including pinned) cells; the visible 1px line stays
           // centred on the boundary and highlights on hover.
-          className="group/resize absolute end-[-15px] -top-2 z-20 flex h-[calc(100%+1rem)] w-3.5 cursor-col-resize touch-none justify-center select-none"
+          className="group/resize absolute inset-e-[-15px] -top-2 z-20 flex h-[calc(100%+1rem)] w-3.5 cursor-col-resize touch-none justify-center select-none"
           aria-label={t("resize")}
         >
           <div

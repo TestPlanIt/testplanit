@@ -1812,14 +1812,14 @@ export function DatasetTab({
                           >
                             {dropIndicator === "top" && (
                               <div
-                                className="pointer-events-none absolute start-0 end-0 top-0 z-50 h-[3px] w-screen bg-primary"
+                                className="pointer-events-none absolute inset-s-0 inset-e-0 top-0 z-50 h-[3px] w-screen bg-primary"
                                 aria-hidden="true"
                                 data-testid={`dataset-row-drop-indicator-top-${row.original.id}`}
                               />
                             )}
                             {dropIndicator === "bottom" && (
                               <div
-                                className="pointer-events-none absolute start-0 end-0 bottom-0 z-50 h-[3px] w-screen bg-primary"
+                                className="pointer-events-none absolute inset-s-0 inset-e-0 bottom-0 z-50 h-[3px] w-screen bg-primary"
                                 aria-hidden="true"
                                 data-testid={`dataset-row-drop-indicator-bottom-${row.original.id}`}
                               />

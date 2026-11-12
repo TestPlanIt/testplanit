@@ -2387,7 +2387,7 @@ export function TestCaseDetailsView({
                         </FormItem>
                       )}
                     />
-                    <span className="absolute start-0 top-0 ms-[-18px] mt-2.5">
+                    <span className="absolute inset-s-0 top-0 ms-[-18px] mt-2.5">
                       <Asterisk className="h-3 w-3 text-destructive" />
                     </span>
                   </div>

@@ -294,7 +294,7 @@ function CellError({ message }: { message: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="absolute end-0 top-0 p-0.5">
+        <span className="absolute inset-e-0 top-0 p-0.5">
           <AlertCircle
             className="h-3 w-3 text-destructive"
             data-testid="dataset-cell-error"

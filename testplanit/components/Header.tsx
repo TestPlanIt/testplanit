@@ -455,7 +455,7 @@ export const Header = () => {
                     data-testid="global-search-trigger"
                   >
                     <Search className="h-5 w-5" />
-                    <span className="pointer-events-none absolute start-12 -translate-x-1/2 transform text-xs whitespace-nowrap text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 rtl:translate-x-1/2">
+                    <span className="pointer-events-none absolute inset-s-12 -translate-x-1/2 transform text-xs whitespace-nowrap text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 rtl:translate-x-1/2">
                       {isMac ? "⌘K" : "Ctrl+K"}
                     </span>
                   </Button>
@@ -499,7 +499,7 @@ export const Header = () => {
                       {alertCount > 0 && (
                         <Badge
                           variant="destructive"
-                          className="absolute -end-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
+                          className="absolute -inset-e-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
                           data-testid="header-actions-count-badge"
                         >
                           {alertCount > 9 ? "9+" : alertCount}

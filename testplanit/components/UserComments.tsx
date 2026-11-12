@@ -509,7 +509,7 @@ export function UserComments({ userId }: UserCommentsProps) {
                   key={comment.id}
                   data-index={vItem.index}
                   ref={measureElement}
-                  className="absolute start-0 top-0 w-full pb-4"
+                  className="absolute inset-s-0 top-0 w-full pb-4"
                   style={{ transform: `translateY(${vItem.start}px)` }}
                 >
                   <CommentDisplay comment={comment} />
