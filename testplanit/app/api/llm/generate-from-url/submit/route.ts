@@ -7,7 +7,7 @@ import { authOptions } from "~/server/auth";
 
 const submitSchema = z.object({
   projectId: z.number(),
-  url: z.string().url(),
+  url: z.url(),
   mode: z.enum(["requirements", "application"]).default("requirements"),
   templateId: z.number().optional(),
   selectedFieldIds: z.array(z.number()).optional(),
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid request", details: parsed.error.flatten() },
+        { error: "Invalid request", details: z.flattenError(parsed.error) },
         { status: 400 }
       );
     }

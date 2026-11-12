@@ -43,7 +43,7 @@ import {
 const MAX_FILTER_LENGTH = 1024;
 
 /**
- * Inbound SCIM Group body shape for POST. `.passthrough()` on the top-level
+ * Inbound SCIM Group body shape for POST. `.loose()` on the top-level
  * object preserves URN-keyed enterprise extension blobs so the service
  * mapper can round-trip them.
  */
@@ -61,12 +61,12 @@ const scimGroupBodySchema = z
             type: z.string().optional(),
             $ref: z.string().optional(),
           })
-          .passthrough()
+          .loose()
       )
       .max(1000)
       .optional(),
   })
-  .passthrough();
+  .loose();
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   let ctx;

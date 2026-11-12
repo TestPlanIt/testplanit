@@ -126,7 +126,10 @@ export async function GET(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid query parameters", details: parsed.error.flatten() },
+        {
+          error: "Invalid query parameters",
+          details: z.flattenError(parsed.error),
+        },
         { status: 400 }
       );
     }

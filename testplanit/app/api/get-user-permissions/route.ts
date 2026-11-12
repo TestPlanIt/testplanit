@@ -15,7 +15,7 @@ import { getServerAuthSession } from "~/server/auth";
 const PermissionCheckSchema = z.object({
   userId: z.string().min(1),
   projectId: z.int().positive(),
-  area: z.nativeEnum(ApplicationArea).optional(),
+  area: z.enum(ApplicationArea).optional(),
   checkAccessOnly: z.boolean().optional(), // New flag to only check if user has project access
 });
 

@@ -11,9 +11,9 @@ import { RISK_COMPONENT_KEYS } from "./riskWeights";
 
 const componentSchema = z.object({
   key: z.enum(RISK_COMPONENT_KEYS),
-  raw: z.number().finite().catch(0),
-  weight: z.number().finite().catch(0),
-  points: z.number().finite().catch(0),
+  raw: z.number().catch(0),
+  weight: z.number().catch(0),
+  points: z.number().catch(0),
 });
 
 const factsSchema = z.object({

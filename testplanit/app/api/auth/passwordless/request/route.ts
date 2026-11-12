@@ -19,7 +19,7 @@ import { auditAuthEvent } from "~/lib/services/auditLog";
 import { db } from "~/server/db";
 
 const RequestSchema = z.object({
-  email: z.string().email().max(320),
+  email: z.email().max(320),
   callbackUrl: z.string().max(2000).optional(),
   csrfToken: z.string().min(1),
 });

@@ -141,7 +141,7 @@ const createStep1Schema = (t: any) =>
     note: z.string().optional(),
     isCompleted: z.boolean(),
     completedAt: z.date().optional().nullable(),
-    defaultAccessType: z.nativeEnum(ProjectAccessType),
+    defaultAccessType: z.enum(ProjectAccessType),
     defaultRoleId: z.string().nullable(),
   });
 
@@ -173,7 +173,7 @@ const FormSchema = z.object({
   note: z.string().optional(),
   isCompleted: z.boolean(),
   completedAt: z.date().optional().nullable(),
-  defaultAccessType: z.nativeEnum(ProjectAccessType),
+  defaultAccessType: z.enum(ProjectAccessType),
   defaultRoleId: z.string().nullable(),
 
   // Step 2: Templates

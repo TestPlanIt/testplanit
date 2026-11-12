@@ -68,7 +68,7 @@ export const parameterCreateSchema = z
       // XOR: exactly one of the two source fields must be set.
       if (hasInline === hasLookup) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message:
             "SELECT parameters require exactly one of allowedValuesJson or lookupDataSetId",
           path: ["allowedValuesJson"],
@@ -78,7 +78,7 @@ export const parameterCreateSchema = z
       // Non-SELECT: both source fields must be null/undefined.
       if (hasInline || hasLookup) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message:
             "Non-SELECT parameters must not specify allowedValuesJson or lookupDataSetId",
           path: ["type"],

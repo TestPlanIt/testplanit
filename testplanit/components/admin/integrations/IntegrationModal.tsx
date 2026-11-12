@@ -41,8 +41,8 @@ interface IntegrationModalProps {
 
 const formSchema = z.object({
   name: z.string().min(1, "Integration name is required"),
-  provider: z.nativeEnum(IntegrationProvider),
-  authType: z.nativeEnum(IntegrationAuthType),
+  provider: z.enum(IntegrationProvider),
+  authType: z.enum(IntegrationAuthType),
   credentials: z.record(z.string(), z.string()).optional(),
   settings: z.record(z.string(), z.string()).optional(),
 });

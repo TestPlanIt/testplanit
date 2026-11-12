@@ -36,7 +36,7 @@ export interface ParameterShape {
   lookupAllowedValues?: string[];
 }
 
-function cellSchemaFor(p: ParameterShape): z.ZodTypeAny {
+function cellSchemaFor(p: ParameterShape): z.ZodType {
   switch (p.type) {
     case "STRING": {
       const base = p.required ? z.string().min(1) : z.string();
@@ -74,11 +74,7 @@ function cellSchemaFor(p: ParameterShape): z.ZodTypeAny {
         return literals[0];
       }
       return z.union(
-        literals as unknown as readonly [
-          z.ZodTypeAny,
-          z.ZodTypeAny,
-          ...z.ZodTypeAny[],
-        ]
+        literals as unknown as readonly [z.ZodType, z.ZodType, ...z.ZodType[]]
       );
     }
     default:
@@ -112,7 +108,7 @@ function inferAllowedValues(p: ParameterShape): string[] {
 export function buildRowSchemaFromParameters(
   parameters: ParameterShape[]
 ): z.ZodType {
-  const shape: Record<string, z.ZodTypeAny> = {};
+  const shape: Record<string, z.ZodType> = {};
   for (const p of parameters) {
     const cell = cellSchemaFor(p);
     if (p.required) {

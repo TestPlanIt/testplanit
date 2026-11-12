@@ -202,8 +202,8 @@ const mapFieldToZodType = (field: any, t: (key: any) => string) => {
       return isRequired ? numberBaseSchema : numberBaseSchema.optional();
     case "Link":
       return isRequired
-        ? z.string().url()
-        : z.union([z.string().url(), z.literal("")]).optional();
+        ? z.url()
+        : z.union([z.url(), z.literal("")]).optional();
     case "Text String":
       return isRequired ? z.string() : z.string().optional();
     case "Text Long":
@@ -291,7 +291,7 @@ export const createFormSchema = (fields: any[], t: (key: any) => string) => {
       schema[field.caseField.id.toString()] = mapFieldToZodType(field, t);
       return schema;
     },
-    {} as Record<string, z.ZodTypeAny>
+    {} as Record<string, z.ZodType>
   );
 
   return z.object({

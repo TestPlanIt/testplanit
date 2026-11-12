@@ -23,7 +23,7 @@ type SuccessResponse = {
 type ErrorResponse = {
   success: false;
   error: string;
-  issues?: z.ZodIssue[];
+  issues?: z.core.$ZodIssue[];
   data: []; // Ensure data is always an empty array on error for consistency
 };
 

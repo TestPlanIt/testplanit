@@ -57,14 +57,14 @@ type TimezoneOption = {
 };
 
 const FormSchema = z.object({
-  theme: z.nativeEnum(Theme),
-  locale: z.nativeEnum(Locale),
-  itemsPerPage: z.nativeEnum(ItemsPerPage),
-  dateFormat: z.nativeEnum(DateFormat),
-  timeFormat: z.nativeEnum(TimeFormat),
+  theme: z.enum(Theme),
+  locale: z.enum(Locale),
+  itemsPerPage: z.enum(ItemsPerPage),
+  dateFormat: z.enum(DateFormat),
+  timeFormat: z.enum(TimeFormat),
   timezone: z.string().min(1),
-  notificationMode: z.nativeEnum(NotificationMode),
-  detailsDisplayMode: z.nativeEnum(DetailsDisplayMode),
+  notificationMode: z.enum(NotificationMode),
+  detailsDisplayMode: z.enum(DetailsDisplayMode),
 });
 
 export function InitialPreferencesDialog() {

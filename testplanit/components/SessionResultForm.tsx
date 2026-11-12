@@ -155,7 +155,7 @@ const formSchema = (
       schema[fieldName] = mapFieldToZodType(field);
       return schema;
     },
-    {} as Record<string, z.ZodTypeAny>
+    {} as Record<string, z.ZodType>
   );
 
   return z.object({

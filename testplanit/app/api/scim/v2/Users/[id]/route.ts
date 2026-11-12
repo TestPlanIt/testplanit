@@ -39,7 +39,7 @@ import {
 
 /**
  * Inbound SCIM User body shape for PUT (and POST, on the collection sibling
- * route). `.passthrough()` keeps URN-keyed enterprise extension blobs intact
+ * route). `.loose()` keeps URN-keyed enterprise extension blobs intact
  * for the service mapper to round-trip.
  */
 const scimUserBodySchema = z
@@ -53,7 +53,7 @@ const scimUserBodySchema = z
         givenName: z.string().nullable().optional(),
         familyName: z.string().nullable().optional(),
       })
-      .passthrough()
+      .loose()
       .optional(),
     emails: z
       .array(
@@ -63,13 +63,13 @@ const scimUserBodySchema = z
             primary: z.boolean().optional(),
             type: z.string().optional(),
           })
-          .passthrough()
+          .loose()
       )
       .optional(),
     active: z.boolean().optional(),
     password: z.string().optional(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * SCIM PatchOp request body (RFC 7644 §3.5.2). The thin zod gate here only
@@ -89,11 +89,11 @@ const scimPatchSchema = z
             path: z.string().optional(),
             value: z.unknown().optional(),
           })
-          .passthrough()
+          .loose()
       )
       .min(1),
   })
-  .passthrough();
+  .loose();
 
 export async function GET(
   request: NextRequest,

@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     const parsed = convertSchema.safeParse(raw);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid request", details: parsed.error.flatten() },
+        { error: "Invalid request", details: z.flattenError(parsed.error) },
         { status: 400 }
       );
     }

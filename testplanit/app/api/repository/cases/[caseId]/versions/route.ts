@@ -61,7 +61,7 @@ const createVersionSchema = z.object({
   // Optional: override creator metadata (for imports)
   creatorId: z.string().optional(),
   creatorName: z.string().optional(),
-  createdAt: z.string().datetime().optional(),
+  createdAt: z.iso.datetime().optional(),
 
   // Optional: data to override in the version
   // If not provided, will copy from current test case

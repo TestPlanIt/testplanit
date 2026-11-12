@@ -1338,7 +1338,7 @@ export function BulkEditModal({
         continue; // Skip normal Zod validation for Date fields
       }
 
-      let schema: z.ZodTypeAny;
+      let schema: z.ZodType;
       const isRequired = fieldDef.isCustom
         ? (fieldDef.field?.isRequired ?? false)
         : false; // Standard fields aren't typically marked required here

@@ -51,7 +51,7 @@ const llmParameterSchema = z
       val.allowedValuesJson != null && val.allowedValuesJson.length > 0;
     if (isSelect && !hasInline) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "SELECT parameters require a non-empty allowedValuesJson array",
         path: ["allowedValuesJson"],
@@ -59,7 +59,7 @@ const llmParameterSchema = z
     }
     if (!isSelect && val.allowedValuesJson != null) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Non-SELECT parameters must not specify allowedValuesJson",
         path: ["allowedValuesJson"],
       });

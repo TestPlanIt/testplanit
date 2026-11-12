@@ -43,7 +43,7 @@ import {
 const MAX_FILTER_LENGTH = 1024;
 
 /**
- * SCIM User create / replace body. `.passthrough()` on the top-level object
+ * SCIM User create / replace body. `.loose()` on the top-level object
  * preserves URN-keyed enterprise extension blobs so the service mapper can
  * round-trip them. The nested `name` and `emails` shapes also passthrough so
  * IdPs sending extra attributes (e.g. `name.honorificPrefix`) do not get
@@ -60,7 +60,7 @@ const scimUserBodySchema = z
         givenName: z.string().optional(),
         familyName: z.string().optional(),
       })
-      .passthrough()
+      .loose()
       .optional(),
     emails: z
       .array(
@@ -70,13 +70,13 @@ const scimUserBodySchema = z
             primary: z.boolean().optional(),
             type: z.string().optional(),
           })
-          .passthrough()
+          .loose()
       )
       .optional(),
     active: z.boolean().optional(),
     password: z.string().optional(),
   })
-  .passthrough();
+  .loose();
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   let ctx;

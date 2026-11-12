@@ -36,7 +36,7 @@ import { getServerAuthSession } from "~/server/auth";
 
 const createSchema = z.object({
   name: z.string().min(1),
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(4),
   access: z.enum(["NONE", "USER", "PROJECTADMIN", "ADMIN"]).default("USER"),
   roleId: z.number().int(),
@@ -44,7 +44,7 @@ const createSchema = z.object({
   isApi: z.boolean().default(false),
   // ISO string OR null OR undefined. Null means "verified now"; undefined
   // means "leave the column unset and follow registration-settings rules".
-  emailVerified: z.string().datetime().nullable().optional(),
+  emailVerified: z.iso.datetime().nullable().optional(),
 });
 
 export const POST = withAuditContext(async (req: NextRequest) => {

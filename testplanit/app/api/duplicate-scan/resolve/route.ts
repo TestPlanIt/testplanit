@@ -86,7 +86,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid request body", details: parsed.error.flatten() },
+        {
+          error: "Invalid request body",
+          details: z.flattenError(parsed.error),
+        },
         { status: 400 }
       );
     }

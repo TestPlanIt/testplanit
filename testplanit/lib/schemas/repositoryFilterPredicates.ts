@@ -286,7 +286,7 @@ export function buildFilterPredicateSchema(registry: FilterDimensionRegistry) {
     .superRefine((input, ctx) => {
       if (coerceFilterPredicate(input, registry) === null) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Predicate is invalid for the active dimension registry",
         });
       }

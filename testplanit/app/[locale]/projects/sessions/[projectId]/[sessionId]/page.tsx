@@ -980,7 +980,7 @@ export default function SessionPage() {
       const estimateDuration = parseDuration(data.estimate);
       if (estimateDuration === null) {
         ctx.issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: tGlobal("common.validation.invalidDurationFormat"),
           path: ["estimate"],
           input: "",
@@ -993,7 +993,7 @@ export default function SessionPage() {
             locale,
           });
           ctx.issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: t("validation.maxDuration", {
               max: maxDurationReadable,
             }),

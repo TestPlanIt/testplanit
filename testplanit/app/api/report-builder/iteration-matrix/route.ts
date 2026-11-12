@@ -114,7 +114,7 @@ async function reportPost(request: NextRequest) {
     const parsed = reportBuilderMatrixBodySchema.safeParse(rawBody);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid body", details: parsed.error.flatten() },
+        { error: "Invalid body", details: z.flattenError(parsed.error) },
         { status: 422 }
       );
     }

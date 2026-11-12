@@ -39,11 +39,11 @@ export interface OverrideParameterSchemaEntry {
  */
 export function buildIterationOverrideSchema(
   parametersSchema: OverrideParameterSchemaEntry[]
-): z.ZodObject<Record<string, z.ZodTypeAny>> {
-  const shape: Record<string, z.ZodTypeAny> = {};
+): z.ZodObject<Record<string, z.ZodType>> {
+  const shape: Record<string, z.ZodType> = {};
 
   for (const p of parametersSchema) {
-    let validator: z.ZodTypeAny;
+    let validator: z.ZodType;
     const required = p.required !== false;
 
     switch (p.type) {

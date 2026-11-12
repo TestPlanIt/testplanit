@@ -205,7 +205,7 @@ export function AddResultFieldModal({
           existingSystemNames.includes(normalizedSystemName)
         ) {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             path: ["systemName"],
             message: tCommon("fields.options.validation.systemNameError"),
           });

@@ -200,7 +200,7 @@ const formSchema = (
       schema[fieldId] = mapFieldToZodType(field, tCommon);
       return schema;
     },
-    {} as Record<string, z.ZodTypeAny>
+    {} as Record<string, z.ZodType>
   );
 
   // Schema for step results
@@ -217,7 +217,7 @@ const formSchema = (
       }
       return schema;
     },
-    {} as Record<string, z.ZodTypeAny>
+    {} as Record<string, z.ZodType>
   );
 
   return z.object({

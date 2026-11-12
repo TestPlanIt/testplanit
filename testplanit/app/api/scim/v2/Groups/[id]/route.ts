@@ -36,7 +36,7 @@ import {
 } from "~/lib/scim/services/groups";
 
 /**
- * Inbound SCIM Group body shape for PUT. `.passthrough()` preserves
+ * Inbound SCIM Group body shape for PUT. `.loose()` preserves
  * URN-keyed enterprise extension blobs for the service mapper to
  * round-trip.
  */
@@ -54,12 +54,12 @@ const scimGroupBodySchema = z
             type: z.string().optional(),
             $ref: z.string().optional(),
           })
-          .passthrough()
+          .loose()
       )
       .max(1000)
       .optional(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * SCIM PatchOp request body (RFC 7644 §3.5.2). The thin zod gate enforces
@@ -78,11 +78,11 @@ const scimPatchSchema = z
             path: z.string().optional(),
             value: z.unknown().optional(),
           })
-          .passthrough()
+          .loose()
       )
       .min(1),
   })
-  .passthrough();
+  .loose();
 
 export async function GET(
   request: NextRequest,

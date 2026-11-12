@@ -249,13 +249,13 @@ const UserProfile: React.FC<UserProfileProps> = ({
       message: tCommon("errors.nameRequired"),
     }),
     email: z.email().min(1, { message: tCommon("errors.emailRequired") }),
-    theme: z.nativeEnum(Theme),
-    locale: z.nativeEnum(Locale),
-    itemsPerPage: z.nativeEnum(ItemsPerPage),
-    dateFormat: z.nativeEnum(DateFormat),
-    timeFormat: z.nativeEnum(TimeFormat),
+    theme: z.enum(Theme),
+    locale: z.enum(Locale),
+    itemsPerPage: z.enum(ItemsPerPage),
+    dateFormat: z.enum(DateFormat),
+    timeFormat: z.enum(TimeFormat),
     timezone: z.string().min(1, { message: tEdit("timezoneRequired") }),
-    detailsDisplayMode: z.nativeEnum(DetailsDisplayMode),
+    detailsDisplayMode: z.enum(DetailsDisplayMode),
   });
 
   const defaultFormValues = useMemo(

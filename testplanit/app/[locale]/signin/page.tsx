@@ -255,14 +255,13 @@ const Signin: NextPage = () => {
 
   const FormSchema = z.object({
     email: z
-      .string()
       .email({ message: t("common.errors.emailInvalid") })
       .min(1, { message: t("common.errors.emailRequired") }),
     password: z.string().min(4, t("common.errors.passwordRequired")),
   });
 
   const MagicLinkFormSchema = z.object({
-    email: z.string().email({ message: t("common.errors.emailInvalid") }),
+    email: z.email({ message: t("common.errors.emailInvalid") }),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({

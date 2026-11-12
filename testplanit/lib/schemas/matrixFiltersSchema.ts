@@ -25,8 +25,8 @@ export const matrixFiltersSchema = z.object({
   statusIds: z.array(z.number().int().positive()).optional(),
   configIds: z.array(z.number().int().nonnegative()).optional(),
   datasetIds: z.array(z.number().int().positive()).optional(),
-  dateFrom: z.string().datetime().optional(),
-  dateTo: z.string().datetime().optional(),
+  dateFrom: z.iso.datetime().optional(),
+  dateTo: z.iso.datetime().optional(),
 });
 
 /**

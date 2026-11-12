@@ -366,7 +366,7 @@ const createFormSchema = (fields: any[], t: (key: any) => string) => {
       }
       return schema;
     },
-    {} as Record<string, z.ZodTypeAny>
+    {} as Record<string, z.ZodType>
   );
 
   const fullSchema = z.object({

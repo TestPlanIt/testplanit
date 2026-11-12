@@ -36,8 +36,8 @@ import { invalidateSessionUserCache } from "~/lib/session-cache";
 
 const updateUserSchema = z.object({
   name: z.string().min(1).optional(),
-  email: z.string().email().optional(),
-  emailVerified: z.date().or(z.string().datetime()).optional(),
+  email: z.email().optional(),
+  emailVerified: z.date().or(z.iso.datetime()).optional(),
   isActive: z.boolean().optional(),
   isApi: z.boolean().optional(),
   isDeleted: z.boolean().optional(),
