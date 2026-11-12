@@ -17,6 +17,7 @@ import {
   validateCustomInputs,
 } from "./inputs";
 import { describeParamInputs, normalizeParamSchema } from "./params";
+import { ensureExecutionPollScheduler } from "./pollScheduler";
 import { mergeRunMetadataIntoDoc, runMetadataFromParams } from "./runMetadata";
 import { buildAutomationPlan } from "./plan";
 import { checkDispatchRateLimit } from "./rateLimit";
@@ -328,6 +329,16 @@ export async function requestExecution(params: {
 
   const queue = getExecutionDispatchQueue();
   if (queue) {
+    // After the row exists, never before: the poll that retires an idle
+    // scheduler relies on that order to notice this request.
+    try {
+      await ensureExecutionPollScheduler(queue, tenantId);
+    } catch (err) {
+      console.warn(
+        "[execution] could not register the status poll:",
+        err instanceof Error ? err.message : String(err)
+      );
+    }
     const jobData = { executionId: created.id, tenantId };
     const jobOptions = {
       // Unique per request: BullMQ returns an existing job for a repeated

@@ -48,6 +48,15 @@ vi.mock("../lib/queueNames", () => ({
 
 vi.mock("../lib/bullPrefix", () => ({ BULLMQ_PREFIX: "bull" }));
 
+const pollQueue = vi.hoisted(() => ({
+  upsertJobScheduler: vi.fn(),
+  removeJobScheduler: vi.fn(),
+}));
+const queueState = vi.hoisted(() => ({ available: true }));
+vi.mock("../lib/queues", () => ({
+  getExecutionDispatchQueue: () => (queueState.available ? pollQueue : null),
+}));
+
 vi.mock("bullmq", () => ({
   Worker: vi.fn().mockImplementation(() => ({ on: vi.fn(), close: vi.fn() })),
   Queue: vi.fn(),
@@ -73,7 +82,11 @@ const mockValidate = validateMultiTenantJobData as unknown as ReturnType<
   typeof vi.fn
 >;
 
-const DB = { __tenantScopedClient: true };
+const inFlightCount = vi.fn();
+const DB = {
+  __tenantScopedClient: true,
+  testRunExecution: { count: inFlightCount },
+};
 const EMPTY_SUMMARY = { polled: 0, finished: 0, timedOut: 0, stalled: 0 };
 
 /** Whether the mocked worker helpers observed tenant context when called. */
@@ -89,6 +102,8 @@ beforeEach(() => {
   state.inTenantContext = false;
   sawTenantContext = null;
   mockGetDb.mockReturnValue(DB);
+  queueState.available = true;
+  inFlightCount.mockResolvedValue(1);
   mockValidate.mockImplementation(() => undefined);
   mockPoll.mockImplementation(async () => {
     sawTenantContext = state.inTenantContext;
@@ -145,6 +160,54 @@ describe("job routing", () => {
     await expect(
       processor(job("dispatch-execution", { executionId: 7 }))
     ).rejects.toThrow("provider exploded");
+  });
+});
+
+describe("idle poll", () => {
+  it("stops its own scheduler when no execution is in flight", async () => {
+    inFlightCount.mockResolvedValue(0);
+
+    await processor(job("poll-active-executions", { tenantId: "acme" }));
+
+    expect(pollQueue.removeJobScheduler).toHaveBeenCalledWith(
+      "poll-active-executions-acme"
+    );
+  });
+
+  it("keeps polling while an execution is in flight", async () => {
+    inFlightCount.mockResolvedValue(2);
+
+    await processor(job("poll-active-executions", { tenantId: "acme" }));
+
+    expect(pollQueue.removeJobScheduler).not.toHaveBeenCalled();
+  });
+
+  it("checks for in-flight executions only after the poll has run", async () => {
+    inFlightCount.mockResolvedValue(0);
+
+    await processor(job("poll-active-executions", { tenantId: "acme" }));
+
+    expect(mockPoll.mock.invocationCallOrder[0]).toBeLessThan(
+      inFlightCount.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("still returns the poll summary when the queue is unavailable", async () => {
+    queueState.available = false;
+    inFlightCount.mockResolvedValue(0);
+
+    const result = await processor(job("poll-active-executions", {}));
+
+    expect(result).toBe(EMPTY_SUMMARY);
+    expect(pollQueue.removeJobScheduler).not.toHaveBeenCalled();
+  });
+
+  it("never retires the scheduler from a dispatch job", async () => {
+    inFlightCount.mockResolvedValue(0);
+
+    await processor(job("dispatch-execution", { executionId: 7 }));
+
+    expect(pollQueue.removeJobScheduler).not.toHaveBeenCalled();
   });
 });
 

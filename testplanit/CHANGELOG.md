@@ -1,3 +1,9 @@
+## [1.2.0-beta.45](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.44...v1.2.0-beta.45) (2026-11-12)
+
+### Bug Fixes
+
+* **reports:** keep a finishing run from undoing a tab switch ([de6fede](https://github.com/TestPlanIt/testplanit/commit/de6fede3ede73c23b5c0227567ee2cb4dc1ffc44))
+
 ## [1.2.0-beta.44](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.43...v1.2.0-beta.44) (2026-11-12)
 
 ### Bug Fixes
