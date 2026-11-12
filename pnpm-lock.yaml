@@ -1218,8 +1218,8 @@ importers:
         specifier: ^1.6.1
         version: 1.6.1
       undici:
-        specifier: ^8.12.4
-        version: 8.12.4
+        specifier: ^7.28.0
+        version: 7.30.2
       use-debounce:
         specifier: ^10.1.1
         version: 10.1.1(react@19.3.1)
