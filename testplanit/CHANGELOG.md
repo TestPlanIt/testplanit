@@ -1,3 +1,9 @@
+## [1.2.0-beta.46](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.45...v1.2.0-beta.46) (2026-11-12)
+
+### Bug Fixes
+
+* **execution:** poll for execution status only while one is in flight ([b7c0fbd](https://github.com/TestPlanIt/testplanit/commit/b7c0fbdf429528931c197ad5afc2ae30087e3d7e))
+
 ## [1.2.0-beta.45](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.44...v1.2.0-beta.45) (2026-11-12)
 
 ### Bug Fixes
