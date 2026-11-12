@@ -347,10 +347,14 @@ export abstract class BaseLlmAdapter {
   }
 
   /**
-   * Fetch wrapper that disables Node.js undici's default 5-minute body timeout.
-   * Use this for LLM chat calls that may take longer than 5 minutes (e.g., large
-   * prompts on slow local models). The AbortSignal timeout controls the actual
-   * timeout instead of undici's internal bodyTimeout.
+   * Fetch for LLM chat calls, with the same URL checks as safeFetch.
+   *
+   * It does not lift the runtime's own limits. Node's fetch gives up when a
+   * response sends no headers, or no further body data, for 5 minutes, and an
+   * AbortSignal can shorten that but not extend it. So a stream that goes
+   * silent is cut off after 5 minutes, and so is a non-streamed reply that
+   * takes longer than that to arrive, such as a large prompt on a slow local
+   * model.
    */
   protected async safeFetchLongRunning(
     url: string,
@@ -367,12 +371,10 @@ export abstract class BaseLlmAdapter {
       throw new Error(`Requests to ${h} are not allowed`);
     }
 
-    // Use the global fetch directly. Node.js 22+ bundles undici internally;
-    // creating a per-request undici.Agent causes dispatcher version-mismatch
-    // issues between the project's undici package and Node's built-in undici,
-    // which can cause requests to hang. The AbortSignal passed by the caller
-    // controls the actual timeout and takes precedence over undici's default
-    // 300s body timeout, so no custom dispatcher is needed.
+    // The global fetch, with no custom dispatcher: Node bundles its own
+    // undici, and an Agent from the project's undici package only works with
+    // it when the two versions are compatible. Raising the 5-minute limits
+    // needs a dispatcher the runtime's fetch accepts.
     return fetch(parsed.href, init);
   }
 
