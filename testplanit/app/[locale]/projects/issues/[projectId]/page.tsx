@@ -45,6 +45,7 @@ import {
   type IssueFacetValue,
 } from "~/lib/issues/issueFacetConditions";
 import { useRouter } from "~/lib/navigation";
+import { CountsLoadingProvider } from "@/components/tables/CountsLoading";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 import { apiFetch } from "~/lib/basePath";
 
@@ -584,7 +585,6 @@ function ProjectIssues() {
       integration: t("common.fields.integration"),
       actions: t("common.actions.actionsLabel"),
     },
-    isLoadingCounts,
     hideSyncedFields: onlySimpleUrl,
     renderRowActions: canOverrideClassification
       ? renderIssueRowActions
@@ -682,26 +682,28 @@ function ProjectIssues() {
             )}
           </div>
           <div className="mt-4 w-full">
-            <DataTable
-              virtualized
-              columns={columns as any}
-              data={mappedIssues as any}
-              onSortChange={handleSortChange}
-              onSortColumn={handleSortColumn}
-              sortConfig={sortConfig}
-              isLoading={isLoadingIssues || isFetchingNextPage}
-              columnVisibility={columnVisibility}
-              onColumnVisibilityChange={setColumnVisibility}
-              hasMore={isFullSet ? false : !!hasNextPage}
-              onLoadMore={fetchNextPage}
-              estimateSize={60}
-              fillViewport
-              scrollToRowId={targetIssueId}
-              highlightRowId={targetIssueId}
-              resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
-              testIdPrefix="issues-table"
-              rowTestIdPrefix="issue-row"
-            />
+            <CountsLoadingProvider value={isLoadingCounts}>
+              <DataTable
+                virtualized
+                columns={columns as any}
+                data={mappedIssues as any}
+                onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
+                sortConfig={sortConfig}
+                isLoading={isLoadingIssues || isFetchingNextPage}
+                columnVisibility={columnVisibility}
+                onColumnVisibilityChange={setColumnVisibility}
+                hasMore={isFullSet ? false : !!hasNextPage}
+                onLoadMore={fetchNextPage}
+                estimateSize={60}
+                fillViewport
+                scrollToRowId={targetIssueId}
+                highlightRowId={targetIssueId}
+                resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
+                testIdPrefix="issues-table"
+                rowTestIdPrefix="issue-row"
+              />
+            </CountsLoadingProvider>
             {pendingOverride && (
               <RequirementOverrideConfirmDialog
                 action={pendingOverride.action}

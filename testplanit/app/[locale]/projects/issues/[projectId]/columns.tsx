@@ -3,6 +3,7 @@ import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { CountsLoading } from "@/components/tables/CountsLoading";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { MilestonesCountDisplay } from "@/components/tables/MilestonesCountDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
@@ -55,7 +56,6 @@ export interface ExtendedIssues extends Issue {
  */
 export function useIssueColumns({
   translations,
-  isLoadingCounts = false,
   hideSyncedFields = false,
   renderRowActions,
 }: {
@@ -73,7 +73,6 @@ export function useIssueColumns({
     integration: string;
     actions?: string;
   };
-  isLoadingCounts?: boolean;
   /** Hide columns that come from external API sync (description, status, priority, lastSyncedAt)
    *  when the project only has SIMPLE_URL integrations — those columns never have values. */
   hideSyncedFields?: boolean;
@@ -368,19 +367,23 @@ export function useIssueColumns({
           const count = row.original.repositoryCasesCount;
           return (
             <div className="text-center">
-              <CasesListDisplay
-                count={count}
-                filter={{
-                  caseIssues: {
-                    some: {
-                      issue: {
-                        id: row.original.id,
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <CasesListDisplay
+                    count={count}
+                    filter={{
+                      caseIssues: {
+                        some: {
+                          issue: {
+                            id: row.original.id,
+                          },
+                        },
                       },
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -400,18 +403,22 @@ export function useIssueColumns({
           const count = row.original.testRunsCount;
           return (
             <div className="text-center">
-              <TestRunsListDisplay
-                key={`tr-${row.original.id}`}
-                count={count}
-                filter={{
-                  issues: {
-                    some: {
-                      id: row.original.id,
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <TestRunsListDisplay
+                    key={`tr-${row.original.id}`}
+                    count={count}
+                    filter={{
+                      issues: {
+                        some: {
+                          id: row.original.id,
+                        },
+                      },
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -431,17 +438,21 @@ export function useIssueColumns({
           const count = row.original.sessionsCount;
           return (
             <div className="text-center">
-              <SessionsListDisplay
-                count={count}
-                filter={{
-                  issues: {
-                    some: {
-                      id: row.original.id,
-                    },
-                  },
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <SessionsListDisplay
+                    count={count}
+                    filter={{
+                      issues: {
+                        some: {
+                          id: row.original.id,
+                        },
+                      },
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -461,18 +472,22 @@ export function useIssueColumns({
           const count = row.original.milestonesCount;
           return (
             <div className="text-center">
-              <MilestonesCountDisplay
-                count={count}
-                filter={{
-                  milestoneIssues: {
-                    some: {
-                      issueId: row.original.id,
-                    },
-                  },
-                  isDeleted: false,
-                }}
-                isLoading={isLoadingCounts}
-              />
+              <CountsLoading>
+                {(isLoadingCounts) => (
+                  <MilestonesCountDisplay
+                    count={count}
+                    filter={{
+                      milestoneIssues: {
+                        some: {
+                          issueId: row.original.id,
+                        },
+                      },
+                      isDeleted: false,
+                    }}
+                    isLoading={isLoadingCounts}
+                  />
+                )}
+              </CountsLoading>
             </div>
           );
         },
@@ -532,7 +547,6 @@ export function useIssueColumns({
     tTestRuns,
     tMilestones,
     hideSyncedFields,
-    isLoadingCounts,
     renderRowActions,
     tActions,
   ]);
