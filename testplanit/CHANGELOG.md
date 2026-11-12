@@ -1,3 +1,9 @@
+## [1.2.0-beta.43](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.42...v1.2.0-beta.43) (2026-11-12)
+
+### Bug Fixes
+
+* **integrations:** restore code repository fetches on Node 24 ([e6ca22a](https://github.com/TestPlanIt/testplanit/commit/e6ca22abdfcbea7c1b5c15d8aa89600b390642df))
+
 ## [1.2.0-beta.42](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.41...v1.2.0-beta.42) (2026-11-11)
 
 ### Bug Fixes
