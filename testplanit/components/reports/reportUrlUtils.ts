@@ -446,3 +446,42 @@ export function resolveSyncedReportType({
 
   return { nextReportType: null, clearPending: false };
 }
+
+export interface HasNavigatedAwayFromRunInput {
+  /** `tab` the run was started on. */
+  runTab: string | null;
+  /** Report type the run was started for. */
+  runReportType: string;
+  /** `tab` in the live address bar. */
+  liveTab: string | null;
+  /** `reportType` in the live address bar. */
+  liveReportType: string | null;
+  /** Tab a not-yet-landed navigation is heading toward, or null. */
+  pendingTab: string | null;
+  /** Report type a not-yet-landed navigation is heading toward, or null. */
+  pendingReportType: string | null;
+}
+
+/**
+ * True when the user has left the tab or report a run was started on, so the
+ * run must not write its params to the URL.
+ *
+ * The address bar alone is not enough: router.replace is asynchronous, so for
+ * a moment after a tab click the address bar still shows the tab the run
+ * belongs to. The pending markers cover that moment.
+ */
+export function hasNavigatedAwayFromRun({
+  runTab,
+  runReportType,
+  liveTab,
+  liveReportType,
+  pendingTab,
+  pendingReportType,
+}: HasNavigatedAwayFromRunInput): boolean {
+  if (pendingTab !== null && pendingTab !== runTab) return true;
+  if (pendingReportType !== null && pendingReportType !== runReportType) {
+    return true;
+  }
+  if (liveTab !== null && liveTab !== runTab) return true;
+  return liveReportType !== null && liveReportType !== runReportType;
+}

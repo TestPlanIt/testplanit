@@ -1,3 +1,9 @@
+## [1.2.0-beta.44](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.43...v1.2.0-beta.44) (2026-11-12)
+
+### Bug Fixes
+
+* **issues:** keep a row's action menu open while the counts load ([dc9db96](https://github.com/TestPlanIt/testplanit/commit/dc9db96950011e385dc988df82dfb03555545e67))
+
 ## [1.2.0-beta.43](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.42...v1.2.0-beta.43) (2026-11-12)
 
 ### Bug Fixes

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildCleanReportUrlParams,
+  hasNavigatedAwayFromRun,
   isUrlInSyncWithReportType,
   resolveSyncedActiveTab,
   resolveSyncedReportType,
@@ -300,5 +301,80 @@ describe("resolveSyncedReportType", () => {
         validReportTypeIds: valid,
       })
     ).toEqual({ nextReportType: null, clearPending: false });
+  });
+});
+
+describe("hasNavigatedAwayFromRun", () => {
+  const run = { runTab: "builder", runReportType: "test-execution" };
+  const sameUrl = { liveTab: "builder", liveReportType: "test-execution" };
+  const nothingPending = { pendingTab: null, pendingReportType: null };
+
+  it("lets the run write its URL when the user stayed put", () => {
+    expect(
+      hasNavigatedAwayFromRun({ ...run, ...sameUrl, ...nothingPending })
+    ).toBe(false);
+  });
+
+  it("blocks the write when a tab click has not reached the address bar yet", () => {
+    expect(
+      hasNavigatedAwayFromRun({
+        ...run,
+        ...sameUrl,
+        pendingTab: "reports",
+        pendingReportType: "automation-trends",
+      })
+    ).toBe(true);
+  });
+
+  it("blocks the write when a report switch on the same tab is still pending", () => {
+    expect(
+      hasNavigatedAwayFromRun({
+        ...run,
+        ...sameUrl,
+        pendingTab: "builder",
+        pendingReportType: "repository-stats",
+      })
+    ).toBe(true);
+  });
+
+  it("blocks the write once the address bar shows another tab or report", () => {
+    expect(
+      hasNavigatedAwayFromRun({
+        ...run,
+        ...nothingPending,
+        liveTab: "reports",
+        liveReportType: "automation-trends",
+      })
+    ).toBe(true);
+    expect(
+      hasNavigatedAwayFromRun({
+        ...run,
+        ...nothingPending,
+        liveTab: "builder",
+        liveReportType: "repository-stats",
+      })
+    ).toBe(true);
+  });
+
+  it("allows the write when a pending navigation targets the run's own tab and report", () => {
+    expect(
+      hasNavigatedAwayFromRun({
+        ...run,
+        ...sameUrl,
+        pendingTab: "builder",
+        pendingReportType: "test-execution",
+      })
+    ).toBe(false);
+  });
+
+  it("allows the write when the address bar carries no tab or report yet", () => {
+    expect(
+      hasNavigatedAwayFromRun({
+        ...run,
+        ...nothingPending,
+        liveTab: null,
+        liveReportType: null,
+      })
+    ).toBe(false);
   });
 });
