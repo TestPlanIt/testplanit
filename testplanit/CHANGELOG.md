@@ -1,3 +1,14 @@
+## [1.2.0-beta.47](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.46...v1.2.0-beta.47) (2026-11-13)
+
+### Features
+
+* **brand:** adopt the new TestPlanIt logo and brand palette ([074d24b](https://github.com/TestPlanIt/testplanit/commit/074d24b28e13b8fc05f289e679f8489aa37ba292))
+* **brand:** animated planet loader ([6bd4af0](https://github.com/TestPlanIt/testplanit/commit/6bd4af07191ce8a819d03f09da0fc9b65c14f5cb))
+
+### Bug Fixes
+
+* **jira:** harden the Jira integration for Server and Data Center ([d3038a6](https://github.com/TestPlanIt/testplanit/commit/d3038a638fd8d033c835d8fad11a6b7e0544af86))
+
 ## [1.2.0-beta.46](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.45...v1.2.0-beta.46) (2026-11-12)
 
 ### Bug Fixes
