@@ -19,7 +19,7 @@ export interface TestCaseHealthSummary {
   counts: Record<HealthStatus, number>;
   /** Rows flagged stale (a flag, orthogonal to status). */
   staleCount: number;
-  /** always_failing + never_executed + stale. */
+  /** Rows that are always failing, never executed or stale, each counted once. */
   needsAttention: number;
   /** healthy + always_passing. */
   healthy: number;
@@ -57,6 +57,7 @@ export function summarizeTestCaseHealth(
     always_failing: 0,
   };
   let staleCount = 0;
+  let needsAttention = 0;
   let scoreSum = 0;
   let scored = 0;
 
@@ -66,10 +67,18 @@ export function summarizeTestCaseHealth(
     if (status && counts[status] !== undefined) {
       counts[status]++;
     }
+    let stale = false;
     if (typeof row.healthScore === "number") {
       scored++;
       scoreSum += row.healthScore;
-      if (row.isStale) staleCount++;
+      if (row.isStale) {
+        staleCount++;
+        stale = true;
+      }
+    }
+    // Stale is orthogonal to status: count each case once.
+    if (status === "always_failing" || status === "never_executed" || stale) {
+      needsAttention++;
     }
   }
 
@@ -77,7 +86,7 @@ export function summarizeTestCaseHealth(
     total: rows.length,
     counts,
     staleCount,
-    needsAttention: counts.always_failing + counts.never_executed + staleCount,
+    needsAttention,
     healthy: counts.healthy + counts.always_passing,
     avgHealthScore: scored > 0 ? Math.round(scoreSum / scored) : 0,
   };
