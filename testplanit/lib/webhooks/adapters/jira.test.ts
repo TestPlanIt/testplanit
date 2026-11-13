@@ -35,6 +35,28 @@ describe("jiraAdapter", () => {
     expect(jiraAdapter.adapterType).toBe("JIRA");
   });
 
+  describe("a config that accepts unsigned deliveries", () => {
+    it("accepts a delivery with no signature header", () => {
+      const result = jiraAdapter.verify(
+        bodyOf(validJiraPayload),
+        new Headers(),
+        SECRET,
+        { allowUnsigned: true }
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("still rejects a delivery whose signature is wrong", () => {
+      const body = bodyOf(validJiraPayload);
+      const headers = new Headers({
+        "x-hub-signature-256": signBody(body, "another-secret"),
+      });
+      expect(
+        jiraAdapter.verify(body, headers, SECRET, { allowUnsigned: true })
+      ).toEqual({ valid: false, reason: "signature-mismatch" });
+    });
+  });
+
   it("Test 1 (missing-signature): no signature header → { valid: false, reason: 'missing-signature' }", () => {
     const body = bodyOf(validJiraPayload);
     const headers = new Headers();

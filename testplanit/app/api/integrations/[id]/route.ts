@@ -4,6 +4,11 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { resolveStoredCredentials } from "~/lib/integrations/credentials";
+import {
+  jiraConnectionChanged,
+  mergeJiraCredentials,
+  withoutJiraDetectedSettings,
+} from "~/lib/integrations/adapters/jiraDeployment";
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import { authOptions } from "~/server/auth";
 
@@ -103,6 +108,36 @@ export const PUT = withAuditContext(
 
       const { id } = await params;
 
+      const existing =
+        credentials !== undefined || settings !== undefined
+          ? await baseDb.integration.findUnique({
+              where: { id: parseInt(id) },
+              select: { credentials: true, provider: true, settings: true },
+            })
+          : null;
+      const isJira = existing?.provider === "JIRA";
+      const storedSettings =
+        existing?.settings &&
+        typeof existing.settings === "object" &&
+        !Array.isArray(existing.settings)
+          ? (existing.settings as Record<string, unknown>)
+          : {};
+
+      // Re-detect the deployment and auth scheme after the connection
+      // changes rather than keep the old answer.
+      if (
+        isJira &&
+        jiraConnectionChanged(
+          credentials,
+          settings?.baseUrl,
+          storedSettings.baseUrl
+        )
+      ) {
+        updateData.settings = withoutJiraDetectedSettings(
+          settings ?? storedSettings
+        );
+      }
+
       // Encrypt credentials if provided.
       //
       // The client sends only the fields the admin actually retyped — secrets
@@ -112,11 +147,6 @@ export const PUT = withAuditContext(
       // clientSecret would take clientId with it and break the integration.
       // Merge over what is already stored instead.
       if (credentials !== undefined) {
-        const existing = await baseDb.integration.findUnique({
-          where: { id: parseInt(id) },
-          select: { credentials: true, provider: true },
-        });
-
         let stored: Record<string, string> = {};
         try {
           stored = await resolveStoredCredentials(
@@ -129,7 +159,9 @@ export const PUT = withAuditContext(
           stored = {};
         }
 
-        const merged = { ...stored, ...credentials };
+        const merged = isJira
+          ? mergeJiraCredentials(stored, credentials)
+          : { ...stored, ...credentials };
         const encryptedCredentials = await encrypt(JSON.stringify(merged));
         updateData.credentials = { encrypted: encryptedCredentials };
       }

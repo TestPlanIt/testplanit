@@ -881,8 +881,7 @@
     "for": "vì",
     "and": "Và",
     "branding": {
-      "logoAlt": "Logo TestPlanIt",
-      "tagline": "Hãy thử mọi thứ có thể."
+      "logoAlt": "Logo TestPlanIt"
     },
     "table": {
       "columns": {
@@ -1612,6 +1611,7 @@
         "secretHelp": "Hãy dán mã bí mật này vào phần cấu hình webhook của trình theo dõi sự cố.",
         "revealedShownOnceWarning": "Hãy sao chép URL và mã bí mật bên dưới ngay bây giờ — chúng chỉ hiển thị một lần và không thể khôi phục lại sau này.",
         "secretMasked": "Ẩn — xoay để xem",
+        "allowUnsigned": "Chấp nhận các bản giao hàng không được ký",
         "rotateSecret": "Xoay bí mật",
         "rotateConfirmTitle": "Xoay vòng mã bí mật webhook?",
         "rotateConfirm": "Việc xoay vòng khóa bí mật sẽ làm vô hiệu hóa cấu hình hiện tại trên hệ thống theo dõi sự cố cho đến khi bạn cập nhật nó ở đó. Tiếp tục chứ?",
@@ -1763,7 +1763,7 @@
         "inboundAdoResourceDetailsHint": "Khi cấu hình Azure DevOps Service Hook, hãy đặt 'Chi tiết tài nguyên cần gửi' = 'Tất cả' để System.State được bao gồm trong tải trọng.",
         "setupStepsTitle": "Các bước thiết lập",
         "setupStepsJiraStep1": "Trong Jira, hãy vào Cài đặt → Hệ thống → WebHooks (hoặc trang cấu hình webhook của quản trị viên Jira).",
-        "setupStepsJiraStep2": "Nhấp vào \"Tạo WebHook\". Dán URL bên dưới vào trường URL và mã bí mật vào trường Mã bí mật.",
+        "setupStepsJiraStep2": "Nhấp vào \"Tạo một WebHook\". Dán URL bên dưới vào trường URL và bí mật vào trường Secret. Nếu Jira của bạn không có trường Secret (phiên bản Jira Server cũ hơn), hãy bật \"Chấp nhận các bản giao hàng không được ký\" trên webhook này thay vào đó.",
         "setupStepsJiraStep3": "Trong mục \"Các sự kiện liên quan đến vấn đề\", hãy chọn \"đã cập nhật\" để thông báo về các thay đổi trạng thái của vấn đề.",
         "setupStepsJiraStep4": "Lưu webhook. Sử dụng chức năng \"Gửi webhook thử nghiệm\" bên dưới để xác minh pipeline.",
         "setupStepsGithubStep1": "Trong kho lưu trữ GitHub của bạn, hãy vào Cài đặt → Webhooks → Thêm webhook.",
@@ -7990,6 +7990,7 @@
     "projectAuditLogs": "## Nhật ký kiểm toán\nNhật ký kiểm toán các hành động được thực hiện trong dự án này — ai đã thay đổi gì và khi nào — để theo dõi bảo mật và tuân thủ.",
     "projectIntegrations": "## Tích hợp theo dõi vấn đề\nKết nối dự án này với trình theo dõi vấn đề để các trường hợp kiểm thử, lần chạy và phiên của dự án có thể liên kết và đồng bộ với các vấn đề và mốc bên ngoài.",
     "projectWebhooks": "## Webhooks\nGửi và nhận thông báo sự kiện cho dự án này — các hook đến mang các thay đổi bên ngoài vào, các hook đi đẩy các sự kiện kiểm thử ra ngoài và các lượt gửi ghi lại những gì đã được gửi.",
+    "webhookAllowUnsigned": "## Chấp nhận các bản giao hàng không được ký\nBật tính năng này cho phiên bản Jira Server hoặc Data Center có webhook mà không có trường Secret. URL webhook khi đó là thông tin xác thực duy nhất, vì vậy hãy giữ nó ở chế độ riêng tư. Các bản giao hàng đã ký vẫn được xác minh.",
     "projectAiModels": "## Mô hình AI\nChọn mô hình AI và cấu hình prompt mà dự án này sử dụng cho các tính năng hỗ trợ AI, chẳng hạn như tạo trường hợp kiểm thử và tự động gắn thẻ.",
     "projectQuickScript": "## QuickScript\nKết nối một kho mã nguồn để dự án này có thể tạo trường hợp kiểm thử từ các tệp kiểm thử tự động của bạn, chọn nhánh và đường dẫn cần bao gồm.",
     "projectParameters": "## Tham số trường hợp kiểm thử\nCấu hình kiểm thử hướng dữ liệu của dự án này — tên thuộc tính lặp JUnit cho kết quả đã nhập và bộ dữ liệu có thể tái sử dụng cho các trường hợp tham số hóa.",
@@ -8189,9 +8190,9 @@
     "integration": {
       "name": "## Tên Tích hợp\nMột tên mô tả để xác định tích hợp này trên toàn hệ thống.\n\n- Phải là duy nhất để phân biệt với các tích hợp khác\n- Được sử dụng trong cài đặt và cấu hình dự án\n- Nên chỉ rõ dịch vụ và mục đích",
       "authType": "## Loại xác thực\nChọn cách xác thực với dịch vụ bên ngoài.\n\n- **Khóa API:** Xác thực đơn giản bằng email và mã thông báo API\n- **OAuth 2.0:** Xác thực an toàn bằng quy trình OAuth\n- **Mã thông báo truy cập cá nhân:** Xác thực trực tiếp dựa trên mã thông báo",
-      "email": "## Địa chỉ Email\nĐịa chỉ email tài khoản của bạn cho dịch vụ bên ngoài.\n\n- Được sử dụng để xác thực khóa API\n- Phải trùng khớp với tài khoản đã tạo mã thông báo API\n- Bắt buộc đối với Jira và các dịch vụ tương tự",
+      "email": "## Địa chỉ Email\nĐịa chỉ email tài khoản của bạn cho dịch vụ bên ngoài.\n\n- Được sử dụng để xác thực khóa API\n- Phải trùng khớp với tài khoản đã tạo mã thông báo API\n- Bắt buộc đối với Jira Cloud; để trống đối với Jira Server / Data Center",
       "apiToken": "## Mã thông báo API\nTạo mã thông báo API từ cài đặt tài khoản của bạn trong dịch vụ bên ngoài.\n\n- Thường được tìm thấy trong Cài đặt tài khoản → Bảo mật → Mã thông báo API\n- Cung cấp quyền truy cập an toàn mà không cần tiết lộ mật khẩu của bạn\n- Có thể bị thu hồi và tạo lại khi cần",
-      "jiraUrl": "## URL Jira\nURL cơ sở của phiên bản Jira của bạn.\n\n- Định dạng: https://your-site.atlassian.net\n- Không bao gồm /browse hoặc các đường dẫn khác\n- Phải có thể truy cập được từ máy chủ này",
+      "jiraUrl": "## URL Jira\nURL cơ sở của phiên bản Jira của bạn.\n\n- Jira Cloud: https://your-site.atlassian.net\n- Jira Server / Data Center: địa chỉ nó được phục vụ từ đó, bao gồm bất kỳ đường dẫn ngữ cảnh nào (ví dụ: https://jira.example.com/jira)\n- Không bao gồm /browse hoặc các đường dẫn trang khác\n- Phải có thể truy cập được từ máy chủ này",
       "clientId": "## ID máy khách OAuth\nID máy khách từ cấu hình ứng dụng OAuth của bạn.\n\n- Được tạo trong bảng điều khiển dành cho nhà phát triển của dịch vụ bên ngoài\n- Được sử dụng để xác định ứng dụng của bạn trong quá trình OAuth\n- An toàn để chia sẻ trong các tệp cấu hình",
       "clientSecret": "## Mã bí mật máy khách OAuth\nMã bí mật máy khách từ cấu hình ứng dụng OAuth của bạn.\n\n- Được tạo cùng với ID máy khách\n- Phải được giữ bí mật và an toàn\n- Được sử dụng để xác thực ứng dụng của bạn",
       "personalAccessToken": "## Mã truy cập cá nhân\nMã truy cập cá nhân với các quyền phù hợp cho dịch vụ bên ngoài.\n\n- Được tạo trong cài đặt tài khoản của bạn\n- Nên có quyền đọc và ghi\n- An toàn hơn xác thực bằng mật khẩu",

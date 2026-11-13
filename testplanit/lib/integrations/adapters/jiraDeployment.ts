@@ -128,21 +128,85 @@ export function resolveAuthScheme(
  * Build the `Authorization` header value for a Jira credential set.
  *
  * - `bearer` → `Bearer <apiToken>` (Data Center Personal Access Token).
- * - `basic`  → `Basic base64(email|username : apiToken|password)`. Cloud
- *   pairs an email with an API token; Data Center pairs a username with a
- *   password. We prefer `email` then `username` for the user half, and
- *   `apiToken` then `password` for the secret half.
+ * - `basic`  → Cloud pairs an email with an API token; Data Center pairs a
+ *   username with a password. Each deployment's own pair is preferred, and
+ *   blank values count as absent.
  */
 export function buildAuthHeader(
   creds: JiraAuthCredentials,
-  scheme: JiraAuthScheme
+  scheme: JiraAuthScheme,
+  deployment?: JiraDeploymentType
 ): string {
   if (scheme === "bearer") {
-    return `Bearer ${creds.apiToken ?? creds.password ?? ""}`;
+    return `Bearer ${creds.apiToken || creds.password || ""}`;
   }
-  const user = creds.email ?? creds.username ?? "";
-  const pass = creds.apiToken ?? creds.password ?? "";
+  const [user, pass] =
+    deployment === "server"
+      ? [
+          creds.username || creds.email || "",
+          creds.password || creds.apiToken || "",
+        ]
+      : [
+          creds.email || creds.username || "",
+          creds.apiToken || creds.password || "",
+        ];
   return `Basic ${Buffer.from(`${user}:${pass}`).toString("base64")}`;
+}
+
+const JIRA_USER_FIELDS = ["email", "username"];
+const JIRA_SECRET_FIELDS = ["apiToken", "password"];
+
+/** Settings Test Connection detects from the credentials and base URL. */
+export const JIRA_DETECTED_SETTINGS = ["deploymentType", "authScheme"];
+
+/**
+ * Merge the credentials an admin entered over the stored ones. Jira takes
+ * three shapes (email + API token, username + password, a bare PAT), so an
+ * entered user or secret replaces the stored one of either kind instead of
+ * sitting beside it and winning.
+ */
+export function mergeJiraCredentials(
+  stored: Record<string, string>,
+  submitted: Record<string, unknown>
+): Record<string, string> {
+  const entered = Object.fromEntries(
+    Object.entries(submitted).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && entry[1] !== ""
+    )
+  );
+  const merged = { ...stored };
+  for (const group of [JIRA_USER_FIELDS, JIRA_SECRET_FIELDS]) {
+    if (group.some((key) => key in entered)) {
+      for (const key of group) delete merged[key];
+    }
+  }
+  return { ...merged, ...entered };
+}
+
+/** Whether entering these credentials or base URL invalidates the stored
+ *  JIRA_DETECTED_SETTINGS. */
+export function jiraConnectionChanged(
+  submittedCredentials: Record<string, unknown> | undefined,
+  submittedBaseUrl: unknown,
+  storedBaseUrl: unknown
+): boolean {
+  const enteredCredential = Object.values(submittedCredentials ?? {}).some(
+    (value) => typeof value === "string" && value !== ""
+  );
+  const baseUrlChanged =
+    typeof submittedBaseUrl === "string" &&
+    submittedBaseUrl !== "" &&
+    submittedBaseUrl !== storedBaseUrl;
+  return enteredCredential || baseUrlChanged;
+}
+
+export function withoutJiraDetectedSettings<T extends Record<string, unknown>>(
+  settings: T
+): T {
+  const rest = { ...settings };
+  for (const key of JIRA_DETECTED_SETTINGS) delete rest[key];
+  return rest;
 }
 
 /**
@@ -205,7 +269,9 @@ export function mapCustomFieldUserRefs(
   for (const [key, value] of Object.entries(customFields)) {
     mapped[key] = isUserRefValue(value)
       ? userRefField(value, deployment)
-      : value;
+      : Array.isArray(value) && value.length > 0 && value.every(isUserRefValue)
+        ? value.map((user) => userRefField(user, deployment))
+        : value;
   }
   return mapped;
 }

@@ -881,8 +881,7 @@
     "for": "Do",
     "and": "I",
     "branding": {
-      "logoAlt": "Logo TestPlanIt",
-      "tagline": "Testuj wszystko pod słońcem"
+      "logoAlt": "Logo TestPlanIt"
     },
     "table": {
       "columns": {
@@ -1612,6 +1611,7 @@
         "secretHelp": "Wklej ten sekret do konfiguracji webhooka narzędzia do śledzenia problemów.",
         "revealedShownOnceWarning": "Skopiuj poniższy adres URL i klucz tajny — zostaną one wyświetlone tylko raz i nie będzie można ich później odzyskać.",
         "secretMasked": "Ukryte — obróć, aby zobaczyć",
+        "allowUnsigned": "Akceptuj niepodpisane dostawy",
         "rotateSecret": "Obróć sekret",
         "rotateConfirmTitle": "Obrócić tajny webhook?",
         "rotateConfirm": "Zmiana klucza tajnego spowoduje unieważnienie bieżącej konfiguracji w systemie śledzenia problemów do czasu jej aktualizacji. Kontynuować?",
@@ -1763,7 +1763,7 @@
         "inboundAdoResourceDetailsHint": "Podczas konfigurowania haka usługi Azure DevOps ustaw opcję „Szczegóły zasobu do wysłania” = „Wszystkie”, aby zmienna System.State została uwzględniona w ładunku.",
         "setupStepsTitle": "Kroki konfiguracji",
         "setupStepsJiraStep1": "W Jira przejdź do Ustawienia → System → Webhooki (lub na stronę konfiguracji webhooków administratora Jira).",
-        "setupStepsJiraStep2": "Kliknij „Utwórz webhook”. Wklej poniższy adres URL w polu „Adres URL”, a klucz tajny w polu „Sekret”.",
+        "setupStepsJiraStep2": "Kliknij \"Utwórz WebHook\". Wklej poniższy adres URL do pola URL i klucz tajny do pola Secret. Jeśli Twoja instalacja Jiry nie ma pola Secret (starsze wersje Jira Server), włącz zamiast tego \"Akceptuj niepodpisane dostawy\" dla tego webhooka.",
         "setupStepsJiraStep3": "W sekcji „Zdarzenia związane z problemem” zaznacz opcję „zaktualizowano”, aby wysyłać zmiany statusu problemu.",
         "setupStepsJiraStep4": "Zapisz webhook. Użyj poniższej opcji „Wyślij testowy webhook”, aby zweryfikować potok.",
         "setupStepsGithubStep1": "W repozytorium GitHub przejdź do Ustawienia → Webhooki → Dodaj webhook.",
@@ -7990,6 +7990,7 @@
     "projectAuditLogs": "## Dzienniki audytu\nŚcieżka audytu działań wykonanych w tym projekcie — kto, co i kiedy zmienił — do celów śledzenia bezpieczeństwa i zgodności.",
     "projectIntegrations": "## Integracje problemów\nPołącz ten projekt z systemem śledzenia problemów, aby jego przypadki testowe, przebiegi i sesje mogły łączyć się i synchronizować z zewnętrznymi problemami i kamieniami milowymi.",
     "projectWebhooks": "## Webhooki\nWysyłaj i odbieraj powiadomienia o zdarzeniach dla tego projektu — webhooki przychodzące wprowadzają zmiany zewnętrzne, webhooki wychodzące wysyłają zdarzenia testowe, a dostawy rejestrują, co zostało wysłane.",
+    "webhookAllowUnsigned": "## Akceptuj niepodpisane dostawy\nWłącz to dla wersji Jira Server lub Data Center, którego webhooki nie mają pola Secret. Adres URL webhooka jest wtedy jedynym poświadczeniem, więc trzymaj go w tajemnicy. Podpisane dostawy są nadal weryfikowane.",
     "projectAiModels": "## Modele AI\nWybierz model AI i konfigurację promptów, których ten projekt używa do funkcji wspomaganych przez AI, takich jak generowanie przypadków testowych i automatyczne tagowanie.",
     "projectQuickScript": "## QuickScript\nPołącz repozytorium kodu, aby ten projekt mógł generować przypadki testowe na podstawie plików testów automatycznych, wybierając, która gałąź i ścieżki mają zostać uwzględnione.",
     "projectParameters": "## Parametry przypadków testowych\nSkonfiguruj testowanie sterowane danymi dla tego projektu — nazwy właściwości iteracji JUnit dla importowanych wyników oraz wielokrotnego użytku zestawy danych dla przypadków parametryzowanych.",
@@ -8189,9 +8190,9 @@
     "integration": {
       "name": "## Nazwa integracji\nOpisowa nazwa identyfikująca tę integrację w systemie.\n\n— musi być unikatowa, aby odróżnić ją od innych integracji\n— używana w ustawieniach projektu i konfiguracji\n— powinna wyraźnie wskazywać usługę i cel",
       "authType": "## Typ uwierzytelniania\nWybierz sposób uwierzytelniania za pomocą usługi zewnętrznej.\n\n- **Klucz API:** Proste uwierzytelnianie przy użyciu adresu e-mail i tokenu API\n- **OAuth 2.0:** Bezpieczne uwierzytelnianie przy użyciu przepływu OAuth\n- **Token dostępu osobistego:** Bezpośrednie uwierzytelnianie na podstawie tokenu",
-      "email": "## Adres e-mail\nTwój adres e-mail konta dla usługi zewnętrznej.\n\n— używany do uwierzytelniania kluczem API\n— musi być zgodny z kontem, które wygenerowało token API\n— wymagany dla Jira i podobnych usług",
+      "email": "## Adres e-mail\nTwój adres e-mail konta dla usługi zewnętrznej.\n\n- Używany do uwierzytelniania kluczem API\n- Musi być zgodny z kontem, które wygenerowało token API\n- Wymagany dla Jira Cloud; pozostaw puste dla Jira Server / Data Center",
       "apiToken": "## Token API\nWygeneruj token API z ustawień konta w usłudze zewnętrznej.\n\n— Zwykle znajduje się w Ustawieniach konta → Bezpieczeństwo → Tokeny API\n— Zapewnia bezpieczny dostęp bez ujawniania hasła\n— Można go cofnąć i wygenerować ponownie w razie potrzeby",
-      "jiraUrl": "## Adres URL Jira\nPodstawowy adres URL Twojej instancji Jira.\n\n- Format: https://twoja-strona.atlassian.net\n- Nie uwzględniaj ścieżki /browse ani innych ścieżek\n- Musi być dostępny z tego serwera",
+      "jiraUrl": "## Adres URL Jiry\nAdres URL podstawowy Twojej instancji Jiry.\n\n- Jira Cloud: https://your-site.atlassian.net\n- Jira Server / Data Center: adres, z którego jest serwowana, uwzględniając ścieżkę kontekstu (np. https://jira.example.com/jira)\n- Nie uwzględniaj /browse ani innych ścieżek stron\n- Musi być dostępny z tego serwera",
       "clientId": "## Identyfikator klienta OAuth\nIdentyfikator klienta z konfiguracji aplikacji OAuth.\n\n— Utworzono w konsoli programisty usługi zewnętrznej\n— Służy do identyfikacji aplikacji podczas przepływu OAuth\n— Można go bezpiecznie udostępniać w plikach konfiguracyjnych",
       "clientSecret": "## Tajny klucz klienta OAuth\nTajny klucz klienta z konfiguracji aplikacji OAuth.\n\n— Tworzony wraz z identyfikatorem klienta\n— Musi być zachowany w tajemnicy i bezpieczny\n— Służy do uwierzytelniania aplikacji",
       "personalAccessToken": "## Osobisty token dostępu\nOsobisty token dostępu z odpowiednimi uprawnieniami do usługi zewnętrznej.\n\n— Generowany w ustawieniach konta\n— Powinien zawierać uprawnienia do odczytu i zapisu\n— Bezpieczniejszy niż uwierzytelnianie hasłem",

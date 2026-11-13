@@ -260,6 +260,9 @@ describe("JiraAdapter.getMilestoneIssues", () => {
         baseUrl: "https://jira.internal.example.com",
         deploymentType: "server",
       });
+      vi.spyOn(serverAdapter as any, "getEpicLinkFieldId").mockResolvedValue(
+        null
+      );
       mockFetch.mockResolvedValueOnce(jsonResponse({ name: "test-user" }));
       await serverAdapter.authenticate({
         type: "api_key",

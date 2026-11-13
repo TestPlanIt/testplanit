@@ -881,8 +881,7 @@
     "for": "para",
     "and": "e",
     "branding": {
-      "logoAlt": "Logotipo do TestPlanIt",
-      "tagline": "Teste tudo o que existe sob o sol."
+      "logoAlt": "Logotipo do TestPlanIt"
     },
     "table": {
       "columns": {
@@ -1612,6 +1611,7 @@
         "secretHelp": "Cole este segredo na configuração do webhook do rastreador de problemas.",
         "revealedShownOnceWarning": "Copie agora mesmo o URL e a chave secreta abaixo — eles serão exibidos apenas uma vez e não poderão ser recuperados posteriormente.",
         "secretMasked": "Oculto — gire para visualizar",
+        "allowUnsigned": "Aceitar entregas não assinadas",
         "rotateSecret": "Segredo de rotação",
         "rotateConfirmTitle": "Rotacionar o webhook secreto?",
         "rotateConfirm": "A rotação da chave secreta invalidará a configuração atual no sistema de rastreamento de problemas até que você a atualize lá. Deseja continuar?",
@@ -1763,7 +1763,7 @@
         "inboundAdoResourceDetailsHint": "Ao configurar o gancho de serviço do Azure DevOps, defina 'Detalhes do recurso a serem enviados' = 'Todos' para que System.State seja incluído na carga útil.",
         "setupStepsTitle": "Etapas de configuração",
         "setupStepsJiraStep1": "No Jira, acesse Configurações → Sistema → Webhooks (ou a página de configuração de webhooks do seu administrador do Jira).",
-        "setupStepsJiraStep2": "Clique em \"Criar um WebHook\". Cole o URL abaixo no campo URL e o segredo no campo Segredo.",
+        "setupStepsJiraStep2": "Clique em \"Criar um WebHook\". Cole a URL abaixo no campo URL e o segredo no campo Segredo. Se seu Jira não possui um campo Segredo (versões antigas do Jira Server), ative \"Aceitar entregas não assinadas\" neste webhook.",
         "setupStepsJiraStep3": "Em \"Eventos relacionados ao problema\", marque \"atualizado\" para que as alterações no status do problema sejam enviadas.",
         "setupStepsJiraStep4": "Salve o webhook. Use \"Enviar webhook de teste\" abaixo para verificar o pipeline.",
         "setupStepsGithubStep1": "No seu repositório do GitHub, acesse Configurações → Webhooks → Adicionar webhook.",
@@ -7990,6 +7990,7 @@
     "projectAuditLogs": "## Registros de Auditoria\nO registro de auditoria das ações realizadas neste projeto — quem alterou o quê e quando — para rastreamento de segurança e conformidade.",
     "projectIntegrations": "## Integrações de Problemas\nConecte este projeto a um rastreador de problemas para que seus casos de teste, execuções e sessões possam vincular-se e sincronizar com problemas e marcos externos.",
     "projectWebhooks": "## Webhooks\nEnvie e receba notificações de eventos para este projeto — hooks de entrada trazem alterações externas, hooks de saída enviam eventos de teste, e as entregas registram o que foi enviado.",
+    "webhookAllowUnsigned": "## Aceitar entregas não assinadas\nAtive isto para uma versão Jira Server ou Data Center cujos webhooks não possuem campo Segredo. A URL do webhook é então a única credencial, portanto mantenha-a privada. Entregas assinadas ainda são verificadas.",
     "projectAiModels": "## Modelos de IA\nEscolha o modelo de IA e a configuração de prompt que este projeto usa para seus recursos assistidos por IA, como geração de casos de teste e marcação automática.",
     "projectQuickScript": "## QuickScript\nConecte um repositório de código para que este projeto possa gerar casos de teste a partir de seus arquivos de teste automatizados, escolhendo quais branch e caminhos incluir.",
     "projectParameters": "## Parâmetros de Casos de Teste\nConfigure os testes baseados em dados deste projeto — nomes de propriedades de iteração do JUnit para resultados importados e conjuntos de dados reutilizáveis para casos parametrizados.",
@@ -8189,9 +8190,9 @@
     "integration": {
       "name": "## Nome da Integração\nUm nome descritivo para identificar esta integração em todo o sistema.\n\n- Deve ser único para diferenciá-lo de outras integrações\n- Usado nas configurações e definições do projeto\n- Deve indicar claramente o serviço e a finalidade",
       "authType": "## Tipo de Autenticação\nEscolha como autenticar com o serviço externo.\n\n- **Chave de API:** Autenticação simples usando e-mail e token de API\n- **OAuth 2.0:** Autenticação segura usando o fluxo OAuth\n- **Token de Acesso Pessoal:** Autenticação direta baseada em token",
-      "email": "## Endereço de e-mail\nSeu endereço de e-mail para o serviço externo.\n\n- Usado para autenticação da chave da API\n- Deve corresponder à conta que gerou o token da API\n- Obrigatório para o Jira e serviços similares",
+      "email": "## Endereço de E-mail\nSeu endereço de e-mail para o serviço externo.\n\n- Usado para autenticação da chave da API\n- Deve corresponder à conta que gerou o token da API\n- Obrigatório para Jira Cloud; deixe em branco para Jira Server / Data Center",
       "apiToken": "## Token de API\nGere um token de API nas configurações da sua conta no serviço externo.\n\n- Geralmente encontrado em Configurações da conta → Segurança → Tokens de API\n- Fornece acesso seguro sem expor sua senha\n- Pode ser revogado e regenerado conforme necessário",
-      "jiraUrl": "## URL do Jira\nA URL base da sua instância Jira.\n\n- Formato: https://your-site.atlassian.net\n- Não inclua /browse ou outros caminhos\n- Deve ser acessível a partir deste servidor",
+      "jiraUrl": "## URL do Jira\nA URL base da sua instância Jira.\n\n- Jira Cloud: https://seu-site.atlassian.net\n- Jira Server / Data Center: o endereço do qual é servido, incluindo qualquer caminho de contexto (p. ex. https://jira.example.com/jira)\n- Não inclua /browse ou outros caminhos de página\n- Deve ser acessível a partir deste servidor",
       "clientId": "## ID do Cliente OAuth\nO ID do cliente da configuração do seu aplicativo OAuth.\n\n- Criado no console do desenvolvedor do serviço externo\n- Usado para identificar seu aplicativo durante o fluxo OAuth\n- Pode ser compartilhado com segurança em arquivos de configuração",
       "clientSecret": "## Segredo do Cliente OAuth\nO Segredo do Cliente da configuração do seu aplicativo OAuth.\n\n- Criado junto com o ID do Cliente\n- Deve ser mantido em sigilo e segurança\n- Usado para autenticar seu aplicativo",
       "personalAccessToken": "## Token de Acesso Pessoal\nUm token de acesso pessoal com as permissões apropriadas para o serviço externo.\n\n- Gerado nas configurações da sua conta\n- Deve ter permissões de leitura e gravação\n- Mais seguro do que a autenticação por senha",

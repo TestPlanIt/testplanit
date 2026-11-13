@@ -52,6 +52,9 @@ const JIRA_BOARD_PROJECT_CACHE_TTL_SECONDS = 6 * 60 * 60; // 6 hours
  */
 const JIRA_BOARD_NO_SPRINTS_CACHE_TTL_SECONDS = 24 * 60 * 60; // 24 hours
 
+const EPIC_LINK_FIELD_TYPE = "com.pyxis.greenhopper.jira:gh-epic-link";
+const EPIC_LINK_FIELD_LOOKUP_TTL_MS = 60 * 60 * 1000; // 1 hour
+
 /**
  * Upstream error bodies surface in UI alerts (search fan-out, import
  * picker warnings). Proxies/CDNs answer with full HTML error pages (e.g.
@@ -121,6 +124,10 @@ export class JiraAdapter extends BaseAdapter {
   private apiKeyAuthActive = false;
   private deploymentResolved = false;
   private authSchemeOverride?: string;
+  private epicLinkFieldLookup?: {
+    fieldId: Promise<string | null>;
+    expiresAt: number;
+  };
 
   /**
    * Translate the priority value passed by the create-issue dialog to the
@@ -267,7 +274,11 @@ export class JiraAdapter extends BaseAdapter {
           this.authSchemeOverride,
           this.deployment
         );
-        authHeader = buildAuthHeader(this.authCreds, this.authScheme);
+        authHeader = buildAuthHeader(
+          this.authCreds,
+          this.authScheme,
+          this.deployment
+        );
         headers = { Authorization: authHeader, Accept: "application/json" };
       };
 
@@ -614,7 +625,11 @@ export class JiraAdapter extends BaseAdapter {
   protected buildAuthHeaders(): Record<string, string> {
     if (this.apiKeyAuthActive) {
       return {
-        Authorization: buildAuthHeader(this.authCreds, this.authScheme),
+        Authorization: buildAuthHeader(
+          this.authCreds,
+          this.authScheme,
+          this.deployment
+        ),
       };
     }
     return super.buildAuthHeaders();
@@ -636,7 +651,8 @@ export class JiraAdapter extends BaseAdapter {
       // Data Center Basic: Basic username:password.
       headers["Authorization"] = buildAuthHeader(
         this.authCreds,
-        this.authScheme
+        this.authScheme,
+        this.deployment
       );
 
       // A FormData body must let fetch set the multipart boundary itself — a
@@ -711,7 +727,9 @@ export class JiraAdapter extends BaseAdapter {
         reporter: reporter
           ? userRefField(reporter as any, this.deployment)
           : undefined,
-        labels: data.labels || [],
+        // Omitted when empty: a create screen without Labels rejects the
+        // field even as [].
+        ...(data.labels?.length ? { labels: data.labels } : {}),
         ...mapCustomFieldUserRefs(otherCustomFields, this.deployment),
       },
     };
@@ -890,10 +908,14 @@ export class JiraAdapter extends BaseAdapter {
   }
 
   async getIssue(issueId: string): Promise<IssueData> {
+    const epicLinkFieldId =
+      this.deployment === "server" ? await this.getEpicLinkFieldId() : null;
     // Explicitly request all fields we need, including issuetype with iconUrl
     const params = new URLSearchParams({
-      fields:
-        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated",
+      fields: [
+        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
+        ...(epicLinkFieldId ? [epicLinkFieldId] : []),
+      ].join(","),
       // Server/Data Center stores descriptions as Jira Wiki Markup strings;
       // ask Jira to also return its own rendered HTML (renderedFields) so the
       // read side can surface formatting instead of raw markup. Cloud returns
@@ -910,13 +932,20 @@ export class JiraAdapter extends BaseAdapter {
       )
     );
 
-    return this.mapJiraIssue(response);
+    return this.mapJiraIssue(response, epicLinkFieldId);
   }
 
   async getLinkedIssues(issueId: string): Promise<LinkedIssueRef[]> {
     try {
+      const epicLinkFieldId =
+        this.deployment === "server"
+          ? await this.getEpicLinkFieldId()
+          : "customfield_10014";
       const params = new URLSearchParams({
-        fields: "issuelinks,parent,subtasks,customfield_10014",
+        fields: [
+          "issuelinks,parent,subtasks",
+          ...(epicLinkFieldId ? [epicLinkFieldId] : []),
+        ].join(","),
       });
       const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
@@ -924,7 +953,7 @@ export class JiraAdapter extends BaseAdapter {
           `/rest/api/${this.apiVersion}/issue/${encodedId}?${params.toString()}`
         )
       );
-      return this.mapLinkedIssues(response);
+      return this.mapLinkedIssues(response, epicLinkFieldId);
     } catch (error) {
       const status = this.parseStatusFromError(error);
       const level = status === null || status >= 500 ? "error" : "warn";
@@ -1538,20 +1567,27 @@ export class JiraAdapter extends BaseAdapter {
    */
   private async runJqlSearch(
     jqlString: string,
-    options?: { pageToken?: string; limit?: number }
+    options?: { pageToken?: string; limit?: number; countOnly?: boolean }
   ): Promise<{
     issues: IssueData[];
     total: number;
     hasMore: boolean;
     nextPageToken?: string;
   }> {
+    const isServer = this.deployment === "server";
+    const epicLinkFieldId =
+      isServer && !options?.countOnly ? await this.getEpicLinkFieldId() : null;
     const params = new URLSearchParams({
       jql: jqlString,
       maxResults: (options?.limit || 50).toString(),
       // `parent` included (D-14) so every synced-issue path captures hierarchy
       // the same way for buildSyncedIssueData.
-      fields:
+      fields: [
         "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
+        ...(epicLinkFieldId ? [epicLinkFieldId] : []),
+      ].join(","),
+      // Same reason as getIssue: render Server's wiki markup to HTML.
+      ...(isServer ? { expand: "renderedFields" } : {}),
     });
     if (options?.pageToken) {
       if (this.deployment === "server") {
@@ -1569,7 +1605,7 @@ export class JiraAdapter extends BaseAdapter {
     const response = await this.makeRequest<any>(this.buildUrl(searchPath));
 
     const issues = (response.issues || []).map((issue: any) =>
-      this.mapJiraIssue(issue)
+      this.mapJiraIssue(issue, epicLinkFieldId)
     );
     // Prefer the cursor / isLast flag the enhanced endpoint provides; fall back
     // to the legacy total+startAt math (Server/DC), then to "a full page
@@ -1734,7 +1770,10 @@ export class JiraAdapter extends BaseAdapter {
       jqlParts.length > 0 ? jqlParts.join(" AND ") : "created >= -365d";
 
     if (this.deployment === "server") {
-      const result = await this.runJqlSearch(jql, { limit: 1 });
+      const result = await this.runJqlSearch(jql, {
+        limit: 1,
+        countOnly: true,
+      });
       return { count: result.total, exactness: "exact" };
     }
 
@@ -1830,7 +1869,10 @@ export class JiraAdapter extends BaseAdapter {
     );
   }
 
-  private mapJiraIssue(jiraIssue: any): IssueData {
+  private mapJiraIssue(
+    jiraIssue: any,
+    epicLinkFieldId?: string | null
+  ): IssueData {
     // Validate that we have the required data structure
     if (!jiraIssue) {
       throw new Error("Invalid Jira issue: issue object is null or undefined");
@@ -1902,7 +1944,7 @@ export class JiraAdapter extends BaseAdapter {
       parent:
         fields.parent && fields.parent.id
           ? { id: String(fields.parent.id), key: fields.parent.key }
-          : undefined,
+          : this.epicLinkRef(fields, epicLinkFieldId),
       createdAt: new Date(fields.created),
       updatedAt: new Date(fields.updated),
       // Prefer the canonical site base. Under OAuth, jiraIssue.self points at
@@ -1916,7 +1958,10 @@ export class JiraAdapter extends BaseAdapter {
     };
   }
 
-  private mapLinkedIssues(jiraIssue: any): LinkedIssueRef[] {
+  private mapLinkedIssues(
+    jiraIssue: any,
+    epicLinkFieldId: string | null
+  ): LinkedIssueRef[] {
     const refs: LinkedIssueRef[] = [];
     const fields = jiraIssue?.fields ?? {};
 
@@ -1963,17 +2008,53 @@ export class JiraAdapter extends BaseAdapter {
       });
     }
 
-    const epicLink = fields.customfield_10014;
-    if (typeof epicLink === "string" && epicLink.length > 0) {
-      refs.push({
-        id: epicLink,
-        key: epicLink,
-        linkType: "Epic-Link",
-        direction: "inward",
-      });
+    const epicLink = this.epicLinkRef(fields, epicLinkFieldId);
+    if (epicLink) {
+      refs.push({ ...epicLink, linkType: "Epic-Link", direction: "inward" });
     }
 
     return refs;
+  }
+
+  /** The epic an issue belongs to via the Epic Link field, which holds the
+   *  epic's key — no id — so the key stands in for both. */
+  private epicLinkRef(
+    fields: any,
+    epicLinkFieldId: string | null | undefined
+  ): { id: string; key: string } | undefined {
+    const epicKey = epicLinkFieldId ? fields?.[epicLinkFieldId] : undefined;
+    return typeof epicKey === "string" && epicKey.length > 0
+      ? { id: epicKey, key: epicKey }
+      : undefined;
+  }
+
+  /**
+   * Server/Data Center records an issue's epic in the Epic Link custom
+   * field (Cloud uses `parent`), and its id differs per instance.
+   */
+  private getEpicLinkFieldId(): Promise<string | null> {
+    const cached = this.epicLinkFieldLookup;
+    if (cached && cached.expiresAt > Date.now()) return cached.fieldId;
+
+    const fieldId = this.makeRequest<any[]>(
+      this.buildUrl(`/rest/api/${this.apiVersion}/field`)
+    )
+      .then((fields) => {
+        const match = (Array.isArray(fields) ? fields : []).find(
+          (field) => field?.schema?.custom === EPIC_LINK_FIELD_TYPE
+        );
+        return typeof match?.id === "string" ? match.id : null;
+      })
+      .catch((error) => {
+        this.epicLinkFieldLookup = undefined;
+        console.warn("[JiraAdapter] Epic Link field lookup failed:", error);
+        return null;
+      });
+    this.epicLinkFieldLookup = {
+      fieldId,
+      expiresAt: Date.now() + EPIC_LINK_FIELD_LOOKUP_TTL_MS,
+    };
+    return fieldId;
   }
 
   private mapJiraComments(response: any): IssueComment[] {
@@ -2014,8 +2095,9 @@ export class JiraAdapter extends BaseAdapter {
       return this.adfToHtml(description.content);
     }
 
-    // Handle plain text
-    return description.toString();
+    // Plain text (Server wiki markup without a rendered copy) — callers
+    // treat the result as HTML.
+    return this.escapeHtml(description.toString());
   }
 
   private adfToHtml(content: any[]): string {

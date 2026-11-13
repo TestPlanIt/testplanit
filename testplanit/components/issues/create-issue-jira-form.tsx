@@ -25,8 +25,13 @@ import { AlertCircle, Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
 import { DynamicJiraField } from "./dynamic-jira-field";
+import {
+  buildJiraFieldsSchema,
+  isJiraSprintField,
+  jiraDefaultFormValue,
+  jiraIdRef,
+} from "./jira-field-types";
 import { apiFetch } from "~/lib/basePath";
 
 interface JiraField {
@@ -37,6 +42,7 @@ interface JiraField {
     type: string;
     items?: string;
     system?: string;
+    custom?: string;
   };
   allowedValues?: Array<{
     id: string;
@@ -163,65 +169,6 @@ export function CreateIssueJiraForm({
       setIssueTypes([]);
     }
   }, [open]);
-
-  // Build dynamic schema based on fields
-  const buildSchema = (fields: JiraField[]) => {
-    const schemaObject: Record<string, any> = {};
-
-    fields.forEach((field) => {
-      let fieldSchema: any;
-
-      switch (field.schema.type) {
-        case "string":
-          fieldSchema = z.string();
-          if (field.required) {
-            fieldSchema = fieldSchema.min(1, `${field.name} is required`);
-          } else {
-            fieldSchema = fieldSchema.optional();
-          }
-          break;
-
-        case "number":
-          fieldSchema = z.number();
-          if (!field.required) {
-            fieldSchema = fieldSchema.optional();
-          }
-          break;
-
-        case "array":
-          if (field.schema.items === "string") {
-            fieldSchema = z.array(z.string());
-          } else {
-            fieldSchema = z.array(z.any());
-          }
-          if (!field.required) {
-            fieldSchema = fieldSchema.optional();
-          }
-          break;
-
-        case "user":
-        case "option":
-        case "priority":
-        case "version":
-        case "component":
-          fieldSchema = z.string();
-          if (!field.required) {
-            fieldSchema = fieldSchema.optional();
-          }
-          break;
-
-        default:
-          fieldSchema = z.any();
-          if (!field.required) {
-            fieldSchema = fieldSchema.optional();
-          }
-      }
-
-      schemaObject[field.key] = fieldSchema;
-    });
-
-    return z.object(schemaObject);
-  };
 
   // Fetch issue types when project changes
   useEffect(() => {
@@ -394,7 +341,7 @@ export function CreateIssueJiraForm({
   const form = useForm<any>({
     resolver:
       fields.length > 0
-        ? standardSchemaResolver(buildSchema(fields))
+        ? standardSchemaResolver(buildJiraFieldsSchema(fields))
         : undefined,
     defaultValues: {
       summary: defaultValues?.title || "",
@@ -413,7 +360,10 @@ export function CreateIssueJiraForm({
       // Set default values from field metadata
       fields.forEach((field) => {
         if (field.hasDefaultValue && field.defaultValue !== undefined) {
-          newDefaults[field.key] = field.defaultValue;
+          newDefaults[field.key] = jiraDefaultFormValue(
+            field,
+            field.defaultValue
+          );
         }
       });
 
@@ -442,13 +392,18 @@ export function CreateIssueJiraForm({
 
       // Add other fields
       fields.forEach((field) => {
+        const value = data[field.key];
         if (
           field.key !== "summary" &&
           field.key !== "description" &&
-          data[field.key]
+          value !== undefined &&
+          value !== null &&
+          value !== ""
         ) {
           // Handle special field types
-          if (
+          if (isJiraSprintField(field)) {
+            jiraData.customFields[field.key] = Number(data[field.key]);
+          } else if (
             field.schema.type === "priority" ||
             field.schema.type === "option"
           ) {
@@ -457,18 +412,18 @@ export function CreateIssueJiraForm({
             jiraData.customFields[field.key] = { accountId: data[field.key] };
           } else if (
             field.schema.type === "array" &&
-            field.schema.items === "component"
+            field.schema.items === "user"
           ) {
             jiraData.customFields[field.key] = data[field.key].map(
-              (id: string) => ({ id })
+              (accountId: string) => ({ accountId })
             );
           } else if (
             field.schema.type === "array" &&
-            field.schema.items === "version"
+            ["component", "version", "option"].includes(
+              field.schema.items ?? ""
+            )
           ) {
-            jiraData.customFields[field.key] = data[field.key].map(
-              (id: string) => ({ id })
-            );
+            jiraData.customFields[field.key] = data[field.key].map(jiraIdRef);
           } else {
             jiraData.customFields[field.key] = data[field.key];
           }

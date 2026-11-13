@@ -75,6 +75,7 @@ Full bi-directional integration with Atlassian Jira, supporting both Cloud and S
 - Images and videos embedded in the issue description are uploaded to the created Jira issue as attachments
 - Automatic user matching between TestPlanIt and Jira
 - Support for custom fields and issue types
+- The **Sprint** field lists the active and future sprints from the project's Jira Software boards
 - Real-time status synchronization
 - Both OAuth 2.0 and API Key authentication
 

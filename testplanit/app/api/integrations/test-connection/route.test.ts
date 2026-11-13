@@ -1023,4 +1023,69 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       });
     });
   });
+
+  describe("JIRA Server: changing a saved integration's credentials", () => {
+    it("switches a PAT integration to username + password and re-detects the scheme", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (baseDb.integration.findUnique as any).mockResolvedValue({
+        id: 12,
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { email: "alice@example.com", apiToken: "old-pat" },
+        settings: {
+          baseUrl: "https://jira.mycompany.domain",
+          deploymentType: "server",
+          authScheme: "bearer",
+        },
+      });
+      mockFetch.mockImplementation((url: string) =>
+        Promise.resolve(
+          url.includes("/rest/api/3/")
+            ? { ok: false, status: 404, statusText: "Not Found" }
+            : {
+                ok: true,
+                status: 200,
+                json: async () =>
+                  url.endsWith("/serverInfo")
+                    ? { deploymentType: "Server", version: "9.12.0" }
+                    : {},
+              }
+        )
+      );
+
+      const response = await POST(
+        createRequest({
+          integrationId: 12,
+          authType: "API_KEY",
+          credentials: { username: "alice", password: "secret" },
+          // The edit form echoes the stored settings back.
+          settings: {
+            baseUrl: "https://jira.mycompany.domain",
+            deploymentType: "server",
+            authScheme: "bearer",
+          },
+        })
+      );
+      const data = await response.json();
+
+      expect(data.success).toBe(true);
+      const myselfCall = mockFetch.mock.calls.find(
+        (c: any[]) => c[0] === "https://jira.mycompany.domain/rest/api/2/myself"
+      );
+      const auth = (myselfCall![1] as any).headers.Authorization;
+      expect(Buffer.from(auth.slice(6), "base64").toString("utf8")).toBe(
+        "alice:secret"
+      );
+      expect(baseDb.integration.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            settings: expect.objectContaining({
+              deploymentType: "server",
+              authScheme: "basic",
+            }),
+          }),
+        })
+      );
+    });
+  });
 });
