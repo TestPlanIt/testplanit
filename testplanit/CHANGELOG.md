@@ -1,3 +1,9 @@
+## [1.2.0-beta.48](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.47...v1.2.0-beta.48) (2026-11-13)
+
+### Bug Fixes
+
+* **reports:** count each case once in Test Case Health's Needs Attention ([4e1e00a](https://github.com/TestPlanIt/testplanit/commit/4e1e00ad406cee77ecbb1543998e40138beed0dd))
+
 ## [1.2.0-beta.47](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.46...v1.2.0-beta.47) (2026-11-13)
 
 ### Features
