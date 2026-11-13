@@ -881,8 +881,7 @@
     "for": "pro",
     "and": "a",
     "branding": {
-      "logoAlt": "Logo TestPlanIt",
-      "tagline": "Otestujte úplně vše"
+      "logoAlt": "Logo TestPlanIt"
     },
     "table": {
       "columns": {
@@ -1612,6 +1611,7 @@
         "secretHelp": "Vložte tento tajný klíč do konfigurace webhooku issue trackeru.",
         "revealedShownOnceWarning": "Nyní zkopírujte níže uvedenou URL a tajný klíč — jsou zobrazeny pouze jednou a nelze je později znovu získat.",
         "secretMasked": "Skryto — pro zobrazení otočte",
+        "allowUnsigned": "Přijmout nepodepsaná doručení",
         "rotateSecret": "Otočit tajný klíč",
         "rotateConfirmTitle": "Otočit tajný klíč webhooku?",
         "rotateConfirm": "Otočení tajného klíče znehodnotí aktuální konfiguraci na straně issue trackeru, dokud ji tam neaktualizujete. Pokračovat?",
@@ -1763,7 +1763,7 @@
         "inboundAdoResourceDetailsHint": "Při konfiguraci Azure DevOps Service Hook nastavte „Resource details to send“ = „All“, aby byl System.State zahrnut v payloadu.",
         "setupStepsTitle": "Kroky nastavení",
         "setupStepsJiraStep1": "V Jira přejděte do Settings → System → WebHooks (nebo na stránku konfigurace webhooků vašeho administrátora Jira).",
-        "setupStepsJiraStep2": "Klikněte na „Create a WebHook“. Vložte níže uvedenou URL do pole URL a tajný klíč do pole Secret.",
+        "setupStepsJiraStep2": "Klikněte na \"Vytvořit WebHook\". Vložte níže uvedenou URL do pole URL a tajemství do pole Secret. Pokud vaše Jira nemá pole Secret (starší verze Jira Server), namísto toho zapněte \"Přijmout nepodepsaná doručení\" u tohoto webhooku.",
         "setupStepsJiraStep3": "V sekci „Issue related events“ zaškrtněte „updated“, aby byly odesílány změny stavu problémů.",
         "setupStepsJiraStep4": "Uložte webhook. Pomocí „Odeslat testovací webhook“ níže ověřte pipeline.",
         "setupStepsGithubStep1": "Ve svém GitHub úložišti přejděte do Settings → Webhooks → Add webhook.",
@@ -7990,6 +7990,7 @@
     "projectAuditLogs": "## Protokoly auditu\nStopa auditu akcí provedených v tomto projektu — kdo co a kdy změnil — pro sledování bezpečnosti a souladu s předpisy.",
     "projectIntegrations": "## Integrace úkolů\nPropojte tento projekt s nástrojem pro sledování úkolů, aby se jeho testovací případy, běhy a relace mohly propojovat a synchronizovat s externími úkoly a milníky.",
     "projectWebhooks": "## Webhooky\nOdesílejte a přijímejte oznámení o událostech pro tento projekt — příchozí háčky přinášejí externí změny dovnitř, odchozí háčky odesílají testovací události ven a doručení zaznamenávají, co bylo odesláno.",
+    "webhookAllowUnsigned": "## Přijmout nepodepsaná doručení\nZapněte tuto možnost pro Jira Server nebo Data Center verzi, jejichž webhoky nemají pole Secret. URL webhooku je pak jedinou přihlašovací položkou, proto ji udržujte v soukromí. Podepsaná doručení jsou stále ověřena.",
     "projectAiModels": "## AI modely\nZvolte AI model a konfiguraci promptu, které tento projekt používá pro své funkce podporované AI, jako je generování testovacích případů a automatické štítkování.",
     "projectQuickScript": "## QuickScript\nPropojte úložiště kódu, aby tento projekt mohl generovat testovací případy z vašich automatizovaných testovacích souborů, s výběrem, kterou větev a cesty zahrnout.",
     "projectParameters": "## Parametry testovacích případů\nNakonfigurujte datově řízené testování tohoto projektu — názvy vlastností iterace JUnit pro importované výsledky a znovupoužitelné datové sady pro parametrizované případy.",
@@ -8189,9 +8190,9 @@
     "integration": {
       "name": "## Název integrace\nVýstižný název pro identifikaci této integrace v celém systému.\n\n- Musí být jedinečný, aby se odlišil od ostatních integrací\n- Používá se v nastavení a konfiguraci projektu\n- Měl by jasně naznačovat službu a účel",
       "authType": "## Typ ověření\nVyberte způsob ověření u externí služby.\n\n- **Klíč API:** Jednoduché ověření pomocí e-mailu a tokenu API\n- **OAuth 2.0:** Zabezpečené ověření pomocí procesu OAuth\n- **Osobní přístupový token:** Přímé ověření na základě tokenu",
-      "email": "## E-mailová adresa\nE-mailová adresa vašeho účtu pro externí službu.\n\n- Používá se pro ověření pomocí klíče API\n- Musí odpovídat účtu, který vygeneroval token API\n- Vyžadováno pro Jiru a podobné služby",
+      "email": "## E-mailová adresa\nVaše e-mailová adresa účtu pro externí službu.\n\n- Používá se pro autentizaci klíče API\n- Musí odpovídat účtu, který generoval token API\n- Vyžadováno pro Jiru Cloud; ponechte prázdné pro Jiru Server / Data Center",
       "apiToken": "## Token API\nVygenerujte token API v nastavení vašeho účtu v externí službě.\n\n- Obvykle se nachází v Nastavení účtu → Zabezpečení → Tokeny API\n- Poskytuje bezpečný přístup bez odhalení hesla\n- Lze podle potřeby zrušit a znovu vygenerovat",
-      "jiraUrl": "## URL adresa Jira\nZákladní URL adresa vaší instance Jira.\n\n- Formát: https://your-site.atlassian.net\n- Nezahrnujte /browse ani jiné cesty\n- Musí být přístupná z tohoto serveru",
+      "jiraUrl": "## URL Jiry\nZákladní URL vaší instance Jiry.\n\n- Jira Cloud: https://your-site.atlassian.net\n- Jira Server / Data Center: adresa, ze které je obsluhována, včetně jakékoli cesty kontextu (např. https://jira.example.com/jira)\n- Nezahrnujte /browse nebo další cesty stránek\n- Musí být přístupná z tohoto serveru",
       "clientId": "## ID klienta OAuth\nID klienta z konfigurace vaší aplikace OAuth.\n\n- Vytvořeno v konzoli pro vývojáře externí služby\n- Používá se k identifikaci vaší aplikace během procesu OAuth\n- Bezpečné pro sdílení v konfiguračních souborech",
       "clientSecret": "## Tajný klíč klienta OAuth\nTajný klíč klienta z konfigurace vaší aplikace OAuth.\n\n- Vytvořen společně s ID klienta\n- Musí zůstat důvěrný a zabezpečený\n- Používá se k ověření vaší aplikace",
       "personalAccessToken": "## Osobní přístupový token\nOsobní přístupový token s příslušnými oprávněními pro externí službu.\n\n- Vygenerován v nastavení vašeho účtu\n- Měl by mít oprávnění pro čtení a zápis problémů\n- Bezpečnější než ověření heslem",

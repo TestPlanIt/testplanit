@@ -3,6 +3,7 @@ import type { AdapterType } from "~/zenstack/models";
 import { isMilestoneEventType } from "./types";
 import type {
   ParsedWebhookPayload,
+  VerifyOptions,
   VerifyResult,
   WebhookAdapter,
 } from "./types";
@@ -162,19 +163,31 @@ function buildPayload(p: JiraWebhookPayload): ParsedWebhookPayload | null {
 export const jiraAdapter: WebhookAdapter = {
   adapterType: "JIRA" satisfies AdapterType,
 
-  verify(rawBody: Buffer, headers: Headers, secret: string): VerifyResult {
+  verify(
+    rawBody: Buffer,
+    headers: Headers,
+    secret: string,
+    options?: VerifyOptions
+  ): VerifyResult {
     const sig = readSignature(headers);
-    if (!sig) return { valid: false, reason: "missing-signature" };
-    if (!sig.startsWith(SIGNATURE_PREFIX)) {
-      return { valid: false, reason: "malformed-signature" };
-    }
-    const provided = sig.slice(SIGNATURE_PREFIX.length).toLowerCase();
-    if (!HEX_64_RE.test(provided)) {
-      return { valid: false, reason: "malformed-signature" };
-    }
-    const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
-    if (!constantTimeEqualHex(provided, expected)) {
-      return { valid: false, reason: "signature-mismatch" };
+    if (!sig) {
+      if (!options?.allowUnsigned) {
+        return { valid: false, reason: "missing-signature" };
+      }
+    } else {
+      if (!sig.startsWith(SIGNATURE_PREFIX)) {
+        return { valid: false, reason: "malformed-signature" };
+      }
+      const provided = sig.slice(SIGNATURE_PREFIX.length).toLowerCase();
+      if (!HEX_64_RE.test(provided)) {
+        return { valid: false, reason: "malformed-signature" };
+      }
+      const expected = createHmac("sha256", secret)
+        .update(rawBody)
+        .digest("hex");
+      if (!constantTimeEqualHex(provided, expected)) {
+        return { valid: false, reason: "signature-mismatch" };
+      }
     }
     const parsed = parsePayload(rawBody);
     if (!parsed) {

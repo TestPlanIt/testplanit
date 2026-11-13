@@ -21,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
@@ -52,6 +53,7 @@ import {
   reEnableWebhookConfig,
   sendTestWebhook,
   setWebhookActive,
+  setWebhookAllowUnsigned,
 } from "~/app/actions/webhook-config";
 import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import { inboundAdapterForCodeRepository } from "~/lib/webhooks/codeChangeEvents";
@@ -88,6 +90,7 @@ interface InboundConfig {
   direction: string;
   token: string;
   isActive: boolean;
+  allowUnsigned: boolean;
   lastReceivedAt: Date | null;
   endpointHealth: EndpointHealth;
   consecutiveFailureCount: number;
@@ -150,6 +153,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       direction: true,
       token: true,
       isActive: true,
+      allowUnsigned: true,
       lastReceivedAt: true,
       endpointHealth: true,
       consecutiveFailureCount: true,
@@ -317,6 +321,19 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   async function handleToggleActive(config: IssueConfig, next: boolean) {
     try {
       const result = await setWebhookActive(config.id, next);
+      if (!result.success) {
+        toast.error(result.error ?? t("saveError"));
+        return;
+      }
+      await refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("saveError"));
+    }
+  }
+
+  async function handleToggleAllowUnsigned(config: IssueConfig, next: boolean) {
+    try {
+      const result = await setWebhookAllowUnsigned(config.id, next);
       if (!result.success) {
         toast.error(result.error ?? t("saveError"));
         return;
@@ -629,6 +646,21 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 {renderActivityRow("activityLastSuccess", config.lastSuccessAt)}
                 {renderActivityRow("activityLastFailure", config.lastFailureAt)}
               </div>
+            </div>
+          )}
+
+          {config.adapterType === "JIRA" && (
+            <div className="flex items-center gap-2">
+              <Switch
+                data-testid="webhook-allow-unsigned-switch"
+                checked={config.allowUnsigned}
+                onCheckedChange={(next: boolean) =>
+                  void handleToggleAllowUnsigned(config, next)
+                }
+                aria-label={t("allowUnsigned")}
+              />
+              <span className="text-sm font-medium">{t("allowUnsigned")}</span>
+              <HelpPopover helpKey="webhookAllowUnsigned" />
             </div>
           )}
 

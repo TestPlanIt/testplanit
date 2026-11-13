@@ -1032,6 +1032,60 @@ export async function setWebhookActive(
   ); // end runWithAuditContext
 }
 
+/**
+ * Lets a Jira webhook accept deliveries with no signature — for a Jira
+ * Server that cannot sign. Other trackers either always sign or never do.
+ */
+export async function setWebhookAllowUnsigned(
+  configId: string,
+  allowUnsigned: boolean
+): Promise<SetActiveResult> {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      const failure = {
+        success: false,
+        error: "Failed to update webhook configuration",
+      };
+      try {
+        const config = await baseDb.webhookConfig.findUnique({
+          where: { id: configId },
+          select: { projectId: true, adapterType: true, direction: true },
+        });
+        if (!config) {
+          return { success: false, error: "Not found" };
+        }
+        if (!(await canManageWebhookConfig(session, config.projectId))) {
+          return { success: false, error: "Forbidden" };
+        }
+        if (config.adapterType !== "JIRA" || config.direction !== "INBOUND") {
+          return {
+            success: false,
+            error: "Only inbound Jira webhooks can accept unsigned deliveries",
+          };
+        }
+        await baseDb.webhookConfig.update({
+          where: { id: configId },
+          data: { allowUnsigned },
+        });
+        return { success: true };
+      } catch (err) {
+        console.error("[webhook-config] setAllowUnsigned failed", err);
+        return failure;
+      }
+    }
+  );
+}
+
 export interface SendTestWebhookResult {
   ok: boolean;
   statusCode: number;

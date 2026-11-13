@@ -114,3 +114,77 @@ describe("integration write routes invalidate the adapter cache", () => {
     expect(clearAdapterMock).not.toHaveBeenCalled();
   });
 });
+
+describe("PUT for a Jira integration whose credentials change", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getServerSessionMock.mockResolvedValue({ user: { id: "user-1" } });
+    userFindUniqueMock.mockResolvedValue({ access: "ADMIN" });
+    encryptMock.mockImplementation(async (value: string) => value);
+    integrationUpdateMock.mockResolvedValue({ id: 3 });
+    integrationFindUniqueMock.mockResolvedValue({
+      provider: "JIRA",
+      credentials: { email: "alice@example.com", apiToken: "old-token" },
+      settings: {
+        baseUrl: "https://jira.mycompany.domain",
+        deploymentType: "server",
+        authScheme: "bearer",
+      },
+    });
+  });
+
+  it("replaces the old credential shape and clears the detected settings", async () => {
+    const request = new NextRequest(
+      "http://localhost:3000/api/integrations/3",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          credentials: { username: "alice", password: "secret" },
+          settings: {
+            baseUrl: "https://jira.mycompany.domain",
+            deploymentType: "server",
+            authScheme: "bearer",
+          },
+        }),
+      }
+    );
+
+    const response = await PUT(request, params);
+
+    expect(response.status).toBe(200);
+    const { data } = integrationUpdateMock.mock.calls[0]![0];
+    expect(JSON.parse(data.credentials.encrypted)).toEqual({
+      username: "alice",
+      password: "secret",
+    });
+    expect(data.settings).toEqual({ baseUrl: "https://jira.mycompany.domain" });
+  });
+
+  it("keeps the detected settings when only the name changes", async () => {
+    const request = new NextRequest(
+      "http://localhost:3000/api/integrations/3",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: "Renamed",
+          settings: {
+            baseUrl: "https://jira.mycompany.domain",
+            deploymentType: "server",
+            authScheme: "bearer",
+          },
+        }),
+      }
+    );
+
+    await PUT(request, params);
+
+    const { data } = integrationUpdateMock.mock.calls[0]![0];
+    expect(data.settings).toEqual({
+      baseUrl: "https://jira.mycompany.domain",
+      deploymentType: "server",
+      authScheme: "bearer",
+    });
+  });
+});

@@ -881,8 +881,7 @@
     "for": "为了",
     "and": "和",
     "branding": {
-      "logoAlt": "TestPlanIt 标志",
-      "tagline": "尝试一切"
+      "logoAlt": "TestPlanIt 标志"
     },
     "table": {
       "columns": {
@@ -1612,6 +1611,7 @@
         "secretHelp": "将此密钥粘贴到问题跟踪器的 webhook 配置中。",
         "revealedShownOnceWarning": "立即复制下面的网址和密钥——它们只会显示一次，以后无法找回。",
         "secretMasked": "隐藏 — 旋转查看",
+        "allowUnsigned": "接受未签名的交付",
         "rotateSecret": "旋转秘密",
         "rotateConfirmTitle": "轮换 webhook 密钥？",
         "rotateConfirm": "轮换密钥将使问题跟踪器端的当前配置失效，直到您在那里更新配置为止。是否继续？",
@@ -1763,7 +1763,7 @@
         "inboundAdoResourceDetailsHint": "配置 Azure DevOps 服务钩子时，将“要发送的资源详细信息”设置为“全部”，以便将 System.State 包含在有效负载中。",
         "setupStepsTitle": "设置步骤",
         "setupStepsJiraStep1": "在 Jira 中，转到“设置”→“系统”→“WebHooks”（或您的 Jira 管理员的 webhook 配置页面）。",
-        "setupStepsJiraStep2": "点击“创建 Webhook”。将以下 URL 粘贴到 URL 字段中，将密钥粘贴到密钥字段中。",
+        "setupStepsJiraStep2": "单击",
         "setupStepsJiraStep3": "在“问题相关事件”下，选中“已更新”，以便发送问题状态更改。",
         "setupStepsJiraStep4": "保存 webhook。使用下面的“发送测试 webhook”来验证管道。",
         "setupStepsGithubStep1": "在您的 GitHub 存储库中，转到“设置”→“Webhooks”→“添加 webhook”。",
@@ -7990,6 +7990,7 @@
     "projectAuditLogs": "## 审计日志\n此项目中执行操作的审计跟踪——谁在何时更改了什么——用于安全性和合规性跟踪。",
     "projectIntegrations": "## 问题集成\n将此项目连接到问题跟踪系统，以便其测试用例、运行和会话可以与外部问题和里程碑关联并同步。",
     "projectWebhooks": "## Webhook\n发送和接收此项目的事件通知——入站钩子引入外部更改，出站钩子推送测试事件，交付记录已发送的内容。",
+    "webhookAllowUnsigned": "## 接受未签名的交付\n为没有密钥字段的 Jira Server 或 Data Center 版本打开此选项。然后，WebHook URL 是唯一的凭证，因此请将其保密。已签名的交付仍会进行验证。",
     "projectAiModels": "## AI 模型\n选择此项目用于其 AI 辅助功能——例如测试用例生成和自动标记——所使用的 AI 模型和提示配置。",
     "projectQuickScript": "## QuickScript\n连接代码库，以便此项目可以根据您的自动化测试文件生成测试用例，并选择要包含的分支和路径。",
     "projectParameters": "## 测试用例参数\n配置此项目的数据驱动测试——用于导入结果的 JUnit 迭代属性名称，以及用于参数化用例的可重用数据集。",
@@ -8189,9 +8190,9 @@
     "integration": {
       "name": "## 集成名称\n用于在整个系统中标识此集成的描述性名称。\n\n- 必须唯一，以便与其他集成区分开来。\n- 用于项目设置和配置。\n- 应清晰地表明服务和用途。",
       "authType": "## 身份验证类型\n选择如何与外部服务进行身份验证。\n\n- **API 密钥：** 使用电子邮件和 API 令牌进行简单身份验证\n- **OAuth 2.0：** 使用 OAuth 流程进行安全身份验证\n- **个人访问令牌：** 基于令牌的直接身份验证",
-      "email": "## 电子邮件地址\n您的外部服务帐户电子邮件地址。\n\n- 用于 API 密钥身份验证\n- 必须与生成 API 令牌的帐户匹配\n- Jira 和类似服务必需",
+      "email": "## 电子邮件地址\n您的外部服务帐户电子邮件地址。\n\n- 用于 API 密钥身份验证\n- 必须与生成 API 令牌的帐户匹配\n- Jira Cloud 必需；Jira Server / Data Center 留空",
       "apiToken": "## API 令牌\n在外部服务的帐户设置中生成 API 令牌。\n\n- 通常位于“帐户设置”→“安全”→“API 令牌”中。\n- 提供安全访问，无需暴露您的密码。\n- 可根据需要撤销和重新生成。",
-      "jiraUrl": "## Jira URL\n您的 Jira 实例的基本 URL。\n\n- 格式：https://your-site.atlassian.net\n- 请勿包含 /browse 或其他路径\n- 必须可从此服务器访问",
+      "jiraUrl": "## Jira URL\n您的 Jira 实例的基本 URL。\n\n- Jira Cloud：https://your-site.atlassian.net\n- Jira Server / Data Center：提供服务的地址，包括任何上下文路径（例如 https://jira.example.com/jira）\n- 不包括 /browse 或其他页面路径\n- 必须可从此服务器访问",
       "clientId": "## OAuth 客户端 ID\n来自您的 OAuth 应用程序配置的客户端 ID。\n\n- 在外部服务的开发者控制台中创建。\n- 用于在 OAuth 流程中识别您的应用程序。\n- 可以安全地在配置文件中共享。",
       "clientSecret": "## OAuth 客户端密钥\n来自您的 OAuth 应用程序配置的客户端密钥。\n\n- 与客户端 ID 一起创建\n- 必须保密且安全\n- 用于验证您的应用程序",
       "personalAccessToken": "## 个人访问令牌\n具有访问外部服务相应权限的个人访问令牌。\n\n- 在您的帐户设置中生成\n- 应具有读写权限\n- 比密码验证更安全",

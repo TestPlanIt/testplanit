@@ -84,13 +84,24 @@ export function isMilestoneEventType(eventType: string): boolean {
   );
 }
 
+export interface VerifyOptions {
+  /** The config opted in to deliveries that carry no signature at all. A
+   *  delivery that does carry one is still verified. */
+  allowUnsigned?: boolean;
+}
+
 export interface WebhookAdapter {
   readonly adapterType: AdapterType;
   /**
    * Pure function: verify HMAC signature against rawBody+secret, then parse.
    * MUST NOT do I/O (no DB, no fetch, no fs). All I/O happens in the route handler.
    */
-  verify(rawBody: Buffer, headers: Headers, secret: string): VerifyResult;
+  verify(
+    rawBody: Buffer,
+    headers: Headers,
+    secret: string,
+    options?: VerifyOptions
+  ): VerifyResult;
 
   extractLinkedIssueRef(payload: unknown): {
     externalKey: string;

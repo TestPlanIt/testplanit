@@ -2,6 +2,7 @@
 
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +20,7 @@ import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useCallback, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 /** Stable no-op fetcher for disabled comboboxes — module-level so its
  *  identity never changes and it can't trigger option refetches. */
@@ -27,6 +29,7 @@ import { Controller, UseFormReturn } from "react-hook-form";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { apiFetch } from "~/lib/basePath";
+import { isJiraSprintField, isJiraTeamField } from "./jira-field-types";
 
 interface JiraField {
   key: string;
@@ -37,6 +40,7 @@ interface JiraField {
     type: string;
     items?: string;
     system?: string;
+    custom?: string;
   };
   allowedValues?: Array<{
     id: string;
@@ -106,31 +110,11 @@ function DescriptionField({
   );
 }
 
-// Separate component for user picker to avoid hooks in render function
-function UserPickerField({
-  field,
-  formField,
-  t,
-  integrationId,
-  projectKey,
-}: {
-  field: JiraField;
-  formField: any;
-  t: any;
-  integrationId: number;
-  projectKey?: string;
-}) {
-  const [selectedUser, setSelectedUser] = useState<{
-    id: string;
-    name: string;
-  } | null>(
-    formField.value ? { id: formField.value, name: formField.value } : null
-  );
-
+function useJiraUserSearch(integrationId: number, projectKey?: string) {
   // AsyncCombobox refetches whenever `fetchOptions` changes identity, so it
   // must stay referentially stable across renders — an inline arrow resets
   // the dropdown to page 0 on every render and it can never load more.
-  const fetchJiraUsers = useCallback(
+  return useCallback(
     async (query: string, page: number, pageSize: number) => {
       try {
         const params = new URLSearchParams({
@@ -161,6 +145,30 @@ function UserPickerField({
     },
     [integrationId, projectKey]
   );
+}
+
+// Separate component for user picker to avoid hooks in render function
+function UserPickerField({
+  field,
+  formField,
+  t,
+  integrationId,
+  projectKey,
+}: {
+  field: JiraField;
+  formField: any;
+  t: any;
+  integrationId: number;
+  projectKey?: string;
+}) {
+  const [selectedUser, setSelectedUser] = useState<{
+    id: string;
+    name: string;
+  } | null>(
+    formField.value ? { id: formField.value, name: formField.value } : null
+  );
+
+  const fetchJiraUsers = useJiraUserSearch(integrationId, projectKey);
 
   return (
     <FormItem>
@@ -189,6 +197,166 @@ function UserPickerField({
           getOptionValue={(user) => user.id}
           placeholder={t("common.searchUsers")}
           showUnassigned={true}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  );
+}
+
+function MultiUserPickerField({
+  field,
+  formField,
+  t,
+  integrationId,
+  projectKey,
+}: {
+  field: JiraField;
+  formField: any;
+  t: any;
+  integrationId: number;
+  projectKey?: string;
+}) {
+  const [selectedUsers, setSelectedUsers] = useState<
+    Array<{ id: string; name: string }>
+  >(
+    Array.isArray(formField.value)
+      ? formField.value.map((id: string) => ({ id, name: id }))
+      : []
+  );
+  const fetchJiraUsers = useJiraUserSearch(integrationId, projectKey);
+
+  return (
+    <FormItem>
+      <div className="flex items-center gap-2">
+        <FormLabel className="flex items-center">
+          {field.name}
+          {field.required && (
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
+          )}
+        </FormLabel>
+        {field.description && (
+          <HelpPopover helpKey={`## ${field.description}`} />
+        )}
+      </div>
+      <FormControl>
+        <MultiAsyncCombobox
+          value={selectedUsers}
+          onValueChange={(users) => {
+            setSelectedUsers(users);
+            formField.onChange(users.map((user) => user.id));
+          }}
+          fetchOptions={fetchJiraUsers}
+          renderOption={(user) => user.name}
+          getOptionValue={(user) => user.id}
+          getOptionLabel={(user) => user.name}
+          placeholder={t("common.searchUsers")}
+          ariaLabel={field.name}
+          hideSelectAll
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  );
+}
+
+interface SprintOption {
+  id: string;
+  name: string;
+  state?: "ACTIVE" | "FUTURE";
+}
+
+function SprintPickerField({
+  field,
+  formField,
+  t,
+  integrationId,
+  projectKey,
+}: {
+  field: JiraField;
+  formField: any;
+  t: any;
+  integrationId: number;
+  projectKey?: string;
+}) {
+  const queryClient = useQueryClient();
+  const [selectedSprint, setSelectedSprint] = useState<SprintOption | null>(
+    formField.value ? { id: formField.value, name: formField.value } : null
+  );
+
+  const fetchSprints = useCallback(
+    async (query: string, page: number, pageSize: number) => {
+      if (!projectKey) return { results: [], total: 0 };
+      try {
+        const sprints = await queryClient.fetchQuery({
+          queryKey: ["jira-create-issue-sprints", integrationId, projectKey],
+          queryFn: async () => {
+            const response = await apiFetch(
+              `/api/integrations/${integrationId}/sprints?projectKey=${encodeURIComponent(projectKey)}`
+            );
+            if (!response.ok) throw new Error("Failed to fetch sprints");
+            const data = await response.json();
+            return (data.sprints ?? []) as SprintOption[];
+          },
+          staleTime: 60_000,
+        });
+        const needle = query.trim().toLowerCase();
+        const filtered = needle
+          ? sprints.filter((sprint) =>
+              sprint.name.toLowerCase().includes(needle)
+            )
+          : sprints;
+        const start = page * pageSize;
+        return {
+          results: filtered.slice(start, start + pageSize),
+          total: filtered.length,
+        };
+      } catch (error) {
+        console.error("Failed to fetch sprints:", error);
+        return { results: [], total: 0 };
+      }
+    },
+    [integrationId, projectKey, queryClient]
+  );
+
+  return (
+    <FormItem>
+      <div className="flex items-center gap-2">
+        <FormLabel className="flex items-center">
+          {field.name}
+          {field.required && (
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
+          )}
+        </FormLabel>
+        {field.description && (
+          <HelpPopover helpKey={`## ${field.description}`} />
+        )}
+      </div>
+      <FormControl>
+        <AsyncCombobox
+          value={selectedSprint}
+          onValueChange={(value) => {
+            setSelectedSprint(value);
+            formField.onChange(value?.id ?? "");
+          }}
+          fetchOptions={fetchSprints}
+          renderOption={(sprint) => (
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="truncate">{sprint.name}</span>
+              {sprint.state === "ACTIVE" && (
+                <Badge variant="secondary">{t("common.fields.isActive")}</Badge>
+              )}
+            </div>
+          )}
+          getOptionValue={(sprint) => sprint.id}
+          placeholder={t("common.select")}
+          ariaLabel={field.name}
+          className="w-full text-start"
+          showPagination={false}
         />
       </FormControl>
       <FormMessage />
@@ -494,6 +662,42 @@ export function DynamicJiraField({
       );
     }
 
+    if (isJiraSprintField(field)) {
+      return (
+        <FormField
+          control={form.control}
+          name={field.key}
+          render={({ field: formField }) => (
+            <SprintPickerField
+              field={field}
+              formField={formField}
+              t={t}
+              integrationId={integrationId}
+              projectKey={projectKey}
+            />
+          )}
+        />
+      );
+    }
+
+    if (field.schema.type === "array" && field.schema.items === "user") {
+      return (
+        <FormField
+          control={form.control}
+          name={field.key}
+          render={({ field: formField }) => (
+            <MultiUserPickerField
+              field={field}
+              formField={formField}
+              t={t}
+              integrationId={integrationId}
+              projectKey={projectKey}
+            />
+          )}
+        />
+      );
+    }
+
     // Select fields with allowed values (including Flagged field)
     if (field.allowedValues && field.allowedValues.length > 0) {
       // Special handling for Flagged field - it's an array field with typically one option
@@ -615,10 +819,7 @@ export function DynamicJiraField({
     }
 
     // Team field - should be a dropdown
-    if (
-      field.key === "customfield_10001" ||
-      field.name.toLowerCase().includes("team")
-    ) {
+    if (isJiraTeamField(field)) {
       // If no values available, show disabled combobox
       if (!field.allowedValues || field.allowedValues.length === 0) {
         return (
@@ -690,7 +891,22 @@ export function DynamicJiraField({
               )}
             </FormLabel>
             <FormControl>
-              <Input {...formField} />
+              {field.schema.type === "number" ? (
+                <Input
+                  type="number"
+                  name={formField.name}
+                  ref={formField.ref}
+                  onBlur={formField.onBlur}
+                  value={formField.value ?? ""}
+                  onChange={(e) =>
+                    formField.onChange(
+                      e.target.value === "" ? undefined : e.target.valueAsNumber
+                    )
+                  }
+                />
+              ) : (
+                <Input {...formField} />
+              )}
             </FormControl>
             {field.schema.type !== "string" && (
               <FormDescription>

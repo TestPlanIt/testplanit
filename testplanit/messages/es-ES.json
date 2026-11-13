@@ -881,8 +881,7 @@
     "for": "para",
     "and": "y",
     "branding": {
-      "logoAlt": "Logo de PrestPlanit",
-      "tagline": "Prueba todo lo que existe bajo el sol"
+      "logoAlt": "Logo de PrestPlanit"
     },
     "table": {
       "columns": {
@@ -1612,6 +1611,7 @@
         "secretHelp": "Pega esta clave secreta en la configuración del webhook del sistema de seguimiento de incidencias.",
         "revealedShownOnceWarning": "Copia ahora la URL y la clave secreta que aparecen a continuación; solo se muestran una vez y no se pueden recuperar posteriormente.",
         "secretMasked": "Oculto: gire para ver",
+        "allowUnsigned": "Aceptar entregas sin firmar",
         "rotateSecret": "Rotar secreto",
         "rotateConfirmTitle": "¿Secreto de rotación del webhook?",
         "rotateConfirm": "Al rotar la clave secreta, la configuración actual en el sistema de seguimiento de incidencias quedará invalidada hasta que la actualices allí. ¿Deseas continuar?",
@@ -1763,7 +1763,7 @@
         "inboundAdoResourceDetailsHint": "Al configurar el enlace de servicio de Azure DevOps, establezca 'Detalles del recurso a enviar' = 'Todos' para que System.State se incluya en la carga útil.",
         "setupStepsTitle": "Pasos de configuración",
         "setupStepsJiraStep1": "En Jira, ve a Configuración → Sistema → Webhooks (o a la página de configuración de webhooks de tu administrador de Jira).",
-        "setupStepsJiraStep2": "Haz clic en \"Crear un WebHook\". Pega la URL que aparece a continuación en el campo URL y la clave secreta en el campo Clave secreta.",
+        "setupStepsJiraStep2": "Haga clic en \"Crear un WebHook\". Pegue la URL a continuación en el campo URL y el secreto en el campo Secreto. Si su Jira no tiene campo Secreto (versiones anteriores de Jira Server), active \"Aceptar entregas sin firmar\" en este webhook en su lugar.",
         "setupStepsJiraStep3": "En \"Eventos relacionados con el problema\", marque \"actualizado\" para que se envíen los cambios de estado del problema.",
         "setupStepsJiraStep4": "Guarda el webhook. Usa la opción \"Enviar webhook de prueba\" que aparece a continuación para verificar la canalización.",
         "setupStepsGithubStep1": "En tu repositorio de GitHub, ve a Configuración → Webhooks → Agregar webhook.",
@@ -7990,6 +7990,7 @@
     "projectAuditLogs": "## Registros de auditoría\nEl registro de auditoría de las acciones realizadas en este proyecto —quién cambió qué y cuándo— para el seguimiento de la seguridad y el cumplimiento.",
     "projectIntegrations": "## Integraciones de problemas\nConecte este proyecto a un rastreador de problemas para que sus casos de prueba, ejecuciones y sesiones puedan vincularse y sincronizarse con problemas e hitos externos.",
     "projectWebhooks": "## Webhooks\nEnvíe y reciba notificaciones de eventos para este proyecto: los webhooks entrantes traen cambios externos, los webhooks salientes envían eventos de prueba, y las entregas registran lo que se envió.",
+    "webhookAllowUnsigned": "## Aceptar entregas sin firmar\nActive esto para una versión de Jira Server o Data Center cuyos webhooks no tienen campo Secreto. La URL del webhook es entonces la única credencial, así que manténgala privada. Las entregas firmadas se siguen verificando.",
     "projectAiModels": "## Modelos de IA\nElija el modelo de IA y la configuración de prompt que utiliza este proyecto para sus funciones asistidas por IA, como la generación de casos de prueba y el etiquetado automático.",
     "projectQuickScript": "## QuickScript\nConecte un repositorio de código para que este proyecto pueda generar casos de prueba a partir de sus archivos de prueba automatizados, eligiendo qué rama y rutas incluir.",
     "projectParameters": "## Parámetros de casos de prueba\nConfigure las pruebas basadas en datos de este proyecto: nombres de propiedades de iteración de JUnit para los resultados importados y conjuntos de datos reutilizables para casos parametrizados.",
@@ -8189,9 +8190,9 @@
     "integration": {
       "name": "## Nombre de integración\nUn nombre descriptivo para identificar esta integración en el sistema.\n\n- Debe ser único para distinguir de otras integraciones\n- Utilizado en la configuración y configuración del proyecto\n- Debe indicar claramente el servicio y propósito",
       "authType": "## Autenticación Tipo\nElija cómo autenticar con el servicio externo.\n\n- **Clave API:** Autenticación simple usando email y token API\n- **OAuth 2. :** Autenticación segura usando OAuth flow\n- **token de acceso personal:** Autenticación directa basada en token",
-      "email": "## Dirección de correo electrónico\nLa dirección de correo electrónico de su cuenta para el servicio externo.\n\n- Utilizado para autenticación de clave API\n- Debe coincidir con la cuenta que generó el token API\n- Requerido para Jira y servicios similares",
+      "email": "## Dirección de correo electrónico\nLa dirección de correo electrónico de su cuenta para el servicio externo.\n\n- Utilizado para autenticación de clave API\n- Debe coincidir con la cuenta que generó el token API\n- Requerido para Jira Cloud; deje en blanco para Jira Server / Data Center",
       "apiToken": "## Token de API\nGenera un token API desde la configuración de tu cuenta en el servicio externo.\n\n- Usualmente se encuentra en la configuración de la cuenta → Seguridad → Tokens API\n- Provee acceso seguro sin exponer su contraseña\n- Puede ser revocado y regenerado según sea necesario",
-      "jiraUrl": "## URL de Jira\nLa URL base de su instancia de Jira.\n\n- Formato: https://your-site.atlassian.net\n- No incluya /browse ni otras rutas\n- Debe ser accesible desde este servidor",
+      "jiraUrl": "## URL de Jira\nLa URL base de su instancia de Jira.\n\n- Jira Cloud: https://your-site.atlassian.net\n- Jira Server / Data Center: la dirección desde la que se sirve, incluida cualquier ruta de contexto (por ejemplo, https://jira.example.com/jira)\n- No incluya /browse u otras rutas de página\n- Debe ser accesible desde este servidor",
       "clientId": "## ID de cliente OAuth\nEl ID de cliente de la configuración de la aplicación OAuth.\n\n- Creado en la consola de desarrollo del servicio externo\n- Utilizado para identificar tu aplicación durante el flujo OAuth\n- Seguro para compartir en los archivos de configuración",
       "clientSecret": "## OAuth Client Secret\nThe Client Secret from your OAuth application configuration.\n\n- Creado junto a la ID de cliente\n- Debe mantenerse confidencial y seguro\n- Utilizado para autenticar tu aplicación",
       "personalAccessToken": "## Token de Acceso personal\nUn token de acceso personal con los permisos apropiados para el servicio externo.\n\n- Generado en la configuración de tu cuenta\n- Debería tener permisos para leer y escribir asuntos\n- Más seguro que la autenticación de contraseña",

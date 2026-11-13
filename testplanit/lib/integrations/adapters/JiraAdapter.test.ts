@@ -2849,6 +2849,9 @@ describe("JiraAdapter Data Center / Server", () => {
       deploymentType: "server",
       baseUrl: "https://jira.mycompany.domain",
     });
+    // The Epic Link lookup has its own tests below; stub it here so it
+    // doesn't consume the queued fetch responses.
+    vi.spyOn(adapter as any, "getEpicLinkFieldId").mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -3150,7 +3153,6 @@ describe("JiraAdapter Data Center / Server", () => {
         summary: "DC Issue",
         description: "",
         issuetype: { id: "10001" },
-        labels: [],
         customfield_10050: { name: "carol" },
       },
     });
@@ -3759,5 +3761,228 @@ describe("JiraAdapter Data Center / Server", () => {
     expect(getCall).toBeTruthy();
     expect(getCall![0] as string).toContain("expand=renderedBody");
     expect(comments[0]!.body).toBe("<p><b>bold</b> comment</p>");
+  });
+
+  describe("Epic Link (Server stores an issue's epic in a custom field)", () => {
+    const jsonOk = (body: unknown) => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(body),
+    });
+    const fieldList = [
+      { id: "summary", schema: { type: "string", system: "summary" } },
+      {
+        id: "customfield_10101",
+        name: "Epic Link",
+        schema: {
+          type: "any",
+          custom: "com.pyxis.greenhopper.jira:gh-epic-link",
+        },
+      },
+    ];
+
+    async function authenticateWithRoutes(
+      routes: (url: string) => unknown | undefined
+    ) {
+      (adapter as any).getEpicLinkFieldId.mockRestore();
+      mockFetch.mockResolvedValueOnce(jsonOk({ name: "alice" }));
+      await adapter.authenticate({
+        type: "api_key",
+        username: "alice",
+        password: "secret",
+        baseUrl: "https://jira.mycompany.domain",
+      });
+      mockFetch.mockImplementation((url: string) => {
+        if (url.endsWith("/rest/api/2/field")) {
+          return Promise.resolve(jsonOk(fieldList));
+        }
+        const body = routes(url);
+        return body === undefined
+          ? Promise.resolve({ ok: false, status: 404, text: async () => "" })
+          : Promise.resolve(jsonOk(body));
+      });
+    }
+
+    const fieldCalls = () =>
+      mockFetch.mock.calls.filter((c: any[]) =>
+        String(c[0]).endsWith("/rest/api/2/field")
+      );
+
+    it("getLinkedIssues reads the instance's own Epic Link field, not customfield_10014", async () => {
+      await authenticateWithRoutes((url) =>
+        url.includes("/rest/api/2/issue/DC-2?")
+          ? {
+              id: "20002",
+              key: "DC-2",
+              fields: {
+                issuelinks: [],
+                subtasks: [],
+                customfield_10101: "DC-EPIC",
+                customfield_10014: "WRONG-1",
+              },
+            }
+          : undefined
+      );
+
+      const refs = await adapter.getLinkedIssues!("DC-2");
+
+      const issueCall = mockFetch.mock.calls.find((c: any[]) =>
+        String(c[0]).includes("/rest/api/2/issue/DC-2?")
+      );
+      expect(decodeURIComponent(issueCall![0] as string)).toContain(
+        "fields=issuelinks,parent,subtasks,customfield_10101"
+      );
+      expect(refs).toEqual([
+        {
+          id: "DC-EPIC",
+          key: "DC-EPIC",
+          linkType: "Epic-Link",
+          direction: "inward",
+        },
+      ]);
+    });
+
+    it("search maps the Epic Link to the issue's parent and returns Jira's rendered description", async () => {
+      await authenticateWithRoutes((url) =>
+        url.includes("/rest/api/2/search?")
+          ? {
+              startAt: 0,
+              total: 1,
+              issues: [
+                {
+                  ...dcIssue,
+                  fields: {
+                    ...dcIssue.fields,
+                    description: "*bold*",
+                    customfield_10101: "DC-EPIC",
+                  },
+                  renderedFields: { description: "<p><b>bold</b></p>" },
+                },
+              ],
+            }
+          : undefined
+      );
+
+      const result = await adapter.searchIssues({ projectId: "DC" });
+
+      const searchCall = mockFetch.mock.calls.find((c: any[]) =>
+        String(c[0]).includes("/rest/api/2/search?")
+      );
+      const params = new URL(searchCall![0] as string).searchParams;
+      expect(params.get("expand")).toBe("renderedFields");
+      expect(params.get("fields")).toContain(",parent,customfield_10101");
+      expect(result.issues[0]!.parent).toEqual({
+        id: "DC-EPIC",
+        key: "DC-EPIC",
+      });
+      expect(result.issues[0]!.description).toBe("<p><b>bold</b></p>");
+    });
+
+    it("a sub-task's own parent wins over the Epic Link", async () => {
+      await authenticateWithRoutes((url) =>
+        url.includes("/rest/api/2/issue/DC-3?")
+          ? {
+              ...dcIssue,
+              key: "DC-3",
+              fields: {
+                ...dcIssue.fields,
+                parent: { id: "20001", key: "DC-1" },
+                customfield_10101: "DC-EPIC",
+              },
+            }
+          : undefined
+      );
+
+      const issue = await adapter.getIssue("DC-3");
+
+      expect(issue.parent).toEqual({ id: "20001", key: "DC-1" });
+    });
+
+    it("single-issue reads request parent so a refresh keeps the hierarchy", async () => {
+      await authenticateWithRoutes((url) =>
+        url.includes("/rest/api/2/issue/DC-1?")
+          ? {
+              ...dcIssue,
+              fields: { ...dcIssue.fields, customfield_10101: "DC-EPIC" },
+            }
+          : undefined
+      );
+
+      const issue = await adapter.getIssue("DC-1");
+
+      const getCall = mockFetch.mock.calls.find((c: any[]) =>
+        String(c[0]).includes("/rest/api/2/issue/DC-1?")
+      );
+      const fields = new URL(getCall![0] as string).searchParams.get("fields");
+      expect(fields).toContain(",parent,customfield_10101");
+      expect(issue.parent).toEqual({ id: "DC-EPIC", key: "DC-EPIC" });
+    });
+
+    it("looks the field up once and reuses it", async () => {
+      await authenticateWithRoutes((url) =>
+        url.includes("/rest/api/2/issue/")
+          ? { ...dcIssue, fields: { ...dcIssue.fields } }
+          : undefined
+      );
+
+      await adapter.getIssue("DC-1");
+      await adapter.getIssue("DC-1");
+
+      expect(fieldCalls()).toHaveLength(1);
+    });
+
+    it("retries the lookup after a failure instead of caching it", async () => {
+      (adapter as any).getEpicLinkFieldId.mockRestore();
+      mockFetch.mockResolvedValueOnce(jsonOk({ name: "alice" }));
+      await adapter.authenticate({
+        type: "api_key",
+        username: "alice",
+        password: "secret",
+        baseUrl: "https://jira.mycompany.domain",
+      });
+      let fieldListAvailable = false;
+      mockFetch.mockImplementation((url: string) => {
+        if (url.endsWith("/rest/api/2/field")) {
+          return Promise.resolve(
+            fieldListAvailable
+              ? jsonOk(fieldList)
+              : { ok: false, status: 503, text: async () => "" }
+          );
+        }
+        return Promise.resolve(jsonOk({ ...dcIssue }));
+      });
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      expect((await adapter.getIssue("DC-1")).parent).toBeUndefined();
+      fieldListAvailable = true;
+      await adapter.getIssue("DC-1");
+
+      expect(fieldCalls()).toHaveLength(2);
+    });
+  });
+
+  it("escapes a plain-text description when Jira sends no rendered copy", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          ...dcIssue,
+          fields: { ...dcIssue.fields, description: "a <b> & {code}" },
+        }),
+    });
+
+    const issue = await adapter.getIssue("DC-1");
+
+    expect(issue.description).toBe("a &lt;b&gt; &amp; {code}");
   });
 });
