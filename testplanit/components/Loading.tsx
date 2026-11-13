@@ -1,9 +1,8 @@
+import { TestPlanItMark } from "@/components/TestPlanItLogo";
 import { Separator } from "@/components/ui/separator";
 import { div as MotionDiv } from "motion/react-client";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import svgIcon from "~/public/tpi_logo.svg";
 
 export function Loading({ delay = 300 }: { delay?: number }) {
   const tGlobal = useTranslations();
@@ -34,12 +33,7 @@ export function Loading({ delay = 300 }: { delay?: number }) {
             repeat: Infinity,
           }}
         >
-          <Image
-            alt={tGlobal("common.branding.logoAlt")}
-            src={svgIcon}
-            width={25}
-            priority={true}
-          />
+          <TestPlanItMark className="w-[25px]" />
         </MotionDiv>
         <Separator orientation="vertical" className="px-1" />
         <MotionDiv

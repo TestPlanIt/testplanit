@@ -367,8 +367,8 @@ export function UserDropdownMenu() {
                 )}
                 {renderThemeOption(
                   "Purple",
-                  <Circle className="h-4 w-4 fill-purple-500" />,
-                  "text-purple-500"
+                  <Circle className="h-4 w-4 fill-[#8559E9]" />,
+                  "text-[#8559E9]"
                 )}
                 {renderThemeOption(
                   "Accessible",

@@ -11,22 +11,28 @@ const BRAND_950 = '#2d1d5e';
 const WIDTH = 1200;
 const HEIGHT = 630;
 
+const LOGO_ON_DARK = `data:image/svg+xml;base64,${readFileSync(
+  join(__dirname, '../../static/img/logo-on-dark.svg')
+).toString('base64')}`;
+const LOGO_ASPECT = 6729 / 1160;
+const LOGO_HEIGHT = 44;
+
 function loadFonts() {
   return [
     {
-      name: 'Noto Sans',
+      name: 'Poppins',
       data: readFileSync(
-        join(__dirname, '../../static/fonts/NotoSans-Regular.ttf')
+        join(__dirname, '../../static/fonts/Poppins-Regular.ttf')
       ),
       weight: 400 as const,
       style: 'normal' as const,
     },
     {
-      name: 'Noto Sans',
+      name: 'Poppins',
       data: readFileSync(
-        join(__dirname, '../../static/fonts/NotoSans-Bold.ttf')
+        join(__dirname, '../../static/fonts/Poppins-SemiBold.ttf')
       ),
-      weight: 700 as const,
+      weight: 600 as const,
       style: 'normal' as const,
     },
   ];
@@ -47,12 +53,12 @@ function createCard(
         width: '100%',
         height: '100%',
         background: `linear-gradient(135deg, ${BRAND_950} 0%, ${BRAND_900} 40%, ${BRAND_700} 100%)`,
-        fontFamily: 'Noto Sans',
+        fontFamily: 'Poppins',
         padding: '60px 80px',
         color: '#fff',
       },
     },
-    // Top bar: logo text + category badge
+    // Top bar: logo + category badge
     h(
       'div',
       {
@@ -63,57 +69,12 @@ function createCard(
           marginBottom: '40px',
         },
       },
-      // Logo area
-      h(
-        'div',
-        {
-          style: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-          },
-        },
-        // Planet icon (simplified)
-        h(
-          'svg',
-          {
-            width: '48',
-            height: '48',
-            viewBox: '0 0 48 48',
-            fill: 'none',
-          },
-          h('circle', {
-            cx: '24',
-            cy: '24',
-            r: '14',
-            stroke: '#c7a7f6',
-            strokeWidth: '3',
-            fill: 'none',
-          }),
-          h('ellipse', {
-            cx: '24',
-            cy: '24',
-            rx: '22',
-            ry: '8',
-            stroke: '#c7a7f6',
-            strokeWidth: '2.5',
-            fill: 'none',
-            transform: 'rotate(-20 24 24)',
-          })
-        ),
-        h(
-          'span',
-          {
-            style: {
-              fontSize: '28px',
-              fontWeight: 700,
-              color: '#e9e0ff',
-              letterSpacing: '-0.02em',
-            },
-          },
-          'TestPlanIt'
-        )
-      ),
+      h('img', {
+        src: LOGO_ON_DARK,
+        width: LOGO_HEIGHT * LOGO_ASPECT,
+        height: LOGO_HEIGHT,
+        alt: 'TestPlanIt',
+      }),
       // Category badge
       category
         ? h(
@@ -152,7 +113,7 @@ function createCard(
           style: {
             fontSize:
               title.length > 60 ? '42px' : title.length > 40 ? '48px' : '56px',
-            fontWeight: 700,
+            fontWeight: 600,
             lineHeight: 1.2,
             letterSpacing: '-0.03em',
             color: '#ffffff',

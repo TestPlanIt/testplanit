@@ -41,10 +41,9 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { LinkIcon, Loader2, Mail, Shield } from "lucide-react";
-import Image from "next/image";
 import { siApple, siGoogle } from "simple-icons";
 import { Link } from "~/lib/navigation";
-import svgIcon from "~/public/tpi_logo.svg";
+import { TestPlanItLogo } from "@/components/TestPlanItLogo";
 import { apiFetch, stripBasePath, withBasePath } from "~/lib/basePath";
 import { clientCookie } from "~/lib/auth/cookieScope";
 
@@ -633,23 +632,7 @@ const Signin: NextPage = () => {
       <Card className="w-3/4">
         <CardHeader className="flex w-full flex-col items-center justify-center">
           <div className="flex items-center py-5">
-            <Image
-              alt="TestPlanIt Logo"
-              src={svgIcon}
-              style={{
-                width: "50px",
-                height: "auto",
-              }}
-              priority={true}
-            />
-            <div className="ms-3 flex flex-col">
-              <span className="scroll-m-20 text-4xl font-semibold tracking-tight text-[rgb(133,89,233)] lg:text-5xl">
-                {tCommon("pageTitles.appName")}
-              </span>
-              <span className="no-wrap -mt-1 text-xs text-muted-foreground">
-                {tCommon("branding.tagline")}
-              </span>
-            </div>
+            <TestPlanItLogo className="h-10 lg:h-13" />
           </div>
           <CardTitle className="flex scroll-m-20 py-5 tracking-tight text-primary lg:text-3xl">
             {t("common.actions.signIn")}

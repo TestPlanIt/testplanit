@@ -114,7 +114,6 @@ vi.mock("next/image", () => ({
 }));
 
 // Mock SVG import
-vi.mock("~/public/tpi_logo.svg", () => ({ default: "/logo.svg" }));
 
 import { useSession } from "next-auth/react";
 import { Header } from "./Header";
