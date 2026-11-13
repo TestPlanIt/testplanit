@@ -1,5 +1,8 @@
 import { useTranslations } from "next-intl";
+import type { CSSProperties } from "react";
 import { useId } from "react";
+import loaderDark from "~/public/tpi_loading_dark.webp";
+import loaderLight from "~/public/tpi_loading_light.webp";
 import { cn } from "~/utils";
 
 // Geometry from assets/brand/*.svg. Light themes draw the primary logo
@@ -99,5 +102,33 @@ export function TestPlanItMark({ className }: { className?: string }) {
     >
       <MarkShapes maskId={maskId} />
     </svg>
+  );
+}
+
+// Background images rather than <img>s, so only the active theme's file loads.
+const animatedMarkImages = {
+  "--tpi-loader-light": `url(${loaderLight.src})`,
+  "--tpi-loader-dark": `url(${loaderDark.src})`,
+} as CSSProperties;
+
+/**
+ * The orbiting-planet animation, decorative. Size it with a width class.
+ * Users who prefer reduced motion get the static mark.
+ */
+export function TestPlanItAnimatedMark({ className }: { className?: string }) {
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        style={animatedMarkImages}
+        className={cn(
+          "aspect-[82/53] w-[41px] shrink-0 bg-contain bg-no-repeat bg-[image:var(--tpi-loader-light)] dark:bg-[image:var(--tpi-loader-dark)] motion-reduce:hidden",
+          className
+        )}
+      />
+      <div aria-hidden="true" className="hidden motion-reduce:block">
+        <TestPlanItMark className={cn("w-[40px]", className)} />
+      </div>
+    </>
   );
 }
