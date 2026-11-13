@@ -2,9 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildAuthHeader,
   detectJiraDeployment,
+  jiraConnectionChanged,
+  mapCustomFieldUserRefs,
+  mergeJiraCredentials,
   pickUserId,
   resolveAuthScheme,
   userRefField,
+  withoutJiraDetectedSettings,
 } from "./jiraDeployment";
 
 const mockFetch = vi.fn();
@@ -184,6 +188,126 @@ describe("jiraDeployment", () => {
       expect(Buffer.from(header.slice(6), "base64").toString("utf8")).toBe(
         "user:pass"
       );
+    });
+  });
+
+  describe("buildAuthHeader on Server/Data Center", () => {
+    const decode = (header: string) =>
+      Buffer.from(header.slice(6), "base64").toString("utf8");
+
+    it("prefers username + password over a stale email + API token", () => {
+      const header = buildAuthHeader(
+        {
+          email: "alice@example.com",
+          apiToken: "old-token",
+          username: "alice",
+          password: "secret",
+        },
+        "basic",
+        "server"
+      );
+      expect(decode(header)).toBe("alice:secret");
+    });
+
+    it("treats blank values as absent", () => {
+      expect(
+        decode(
+          buildAuthHeader(
+            { email: "", username: "alice", apiToken: "", password: "secret" },
+            "basic"
+          )
+        )
+      ).toBe("alice:secret");
+      expect(
+        buildAuthHeader({ apiToken: "", password: "pat-1" }, "bearer")
+      ).toBe("Bearer pat-1");
+    });
+
+    it("keeps Cloud's email + API token pairing", () => {
+      const header = buildAuthHeader(
+        {
+          email: "alice@example.com",
+          apiToken: "token",
+          username: "alice",
+          password: "secret",
+        },
+        "basic",
+        "cloud"
+      );
+      expect(decode(header)).toBe("alice@example.com:token");
+    });
+  });
+
+  describe("mapCustomFieldUserRefs", () => {
+    it("maps a multi-user field's refs to { name } on Server", () => {
+      expect(
+        mapCustomFieldUserRefs(
+          {
+            customfield_1: [{ accountId: "alice" }, { accountId: "bob" }],
+            customfield_2: [{ id: "10" }],
+            labels: [],
+          },
+          "server"
+        )
+      ).toEqual({
+        customfield_1: [{ name: "alice" }, { name: "bob" }],
+        customfield_2: [{ id: "10" }],
+        labels: [],
+      });
+    });
+  });
+
+  describe("mergeJiraCredentials", () => {
+    it("replaces a stored email + API token with an entered username + password", () => {
+      expect(
+        mergeJiraCredentials(
+          { email: "alice@example.com", apiToken: "old-token" },
+          { username: "alice", password: "secret" }
+        )
+      ).toEqual({ username: "alice", password: "secret" });
+    });
+
+    it("replaces a stored password with an entered PAT and keeps the user", () => {
+      expect(
+        mergeJiraCredentials(
+          { username: "alice", password: "secret" },
+          { apiToken: "pat-1" }
+        )
+      ).toEqual({ username: "alice", apiToken: "pat-1" });
+    });
+
+    it("keeps stored values for blank inputs and leaves other keys alone", () => {
+      expect(
+        mergeJiraCredentials(
+          { username: "alice", password: "secret", clientId: "abc" },
+          { username: "", password: "" }
+        )
+      ).toEqual({ username: "alice", password: "secret", clientId: "abc" });
+    });
+  });
+
+  describe("jiraConnectionChanged / withoutJiraDetectedSettings", () => {
+    it("reports a change for entered credentials or a new base URL only", () => {
+      expect(jiraConnectionChanged({ password: "x" }, undefined, "a")).toBe(
+        true
+      );
+      expect(jiraConnectionChanged({}, "https://b", "https://a")).toBe(true);
+      expect(
+        jiraConnectionChanged({ password: "" }, "https://a", "https://a")
+      ).toBe(false);
+      expect(jiraConnectionChanged(undefined, undefined, "https://a")).toBe(
+        false
+      );
+    });
+
+    it("drops only the detected settings", () => {
+      expect(
+        withoutJiraDetectedSettings({
+          baseUrl: "https://a",
+          deploymentType: "server",
+          authScheme: "bearer",
+        })
+      ).toEqual({ baseUrl: "https://a" });
     });
   });
 

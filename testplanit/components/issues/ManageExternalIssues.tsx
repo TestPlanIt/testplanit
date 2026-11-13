@@ -7,6 +7,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import DOMPurify from "dompurify";
 import { Bug, ExternalLink, Loader2, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
@@ -267,19 +269,10 @@ function LinkedIssueBadge({
                     )}
                     <span className="font-semibold">{jiraDetails.key}</span>
                   </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-sm ${
-                      jiraDetails.status.color === "green"
-                        ? "bg-green-100 text-green-800"
-                        : jiraDetails.status.color === "yellow"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : jiraDetails.status.color === "blue"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-muted"
-                    }`}
-                  >
-                    {jiraDetails.status.name}
-                  </span>
+                  <IssueStatusDisplay
+                    status={jiraDetails.status.name}
+                    className="text-xs"
+                  />
                 </div>
 
                 {/* Summary */}
@@ -287,9 +280,25 @@ function LinkedIssueBadge({
 
                 {/* Description */}
                 {jiraDetails.description && (
-                  <div className="text-sm text-muted-foreground line-clamp-3">
-                    {jiraDetails.description}
-                  </div>
+                  <div
+                    className="text-sm text-muted-foreground line-clamp-3 [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(jiraDetails.description, {
+                        ALLOWED_TAGS: [
+                          "p",
+                          "br",
+                          "a",
+                          "strong",
+                          "em",
+                          "u",
+                          "ul",
+                          "ol",
+                          "li",
+                        ],
+                        ALLOWED_ATTR: ["href", "target", "rel"],
+                      }),
+                    }}
+                  />
                 )}
 
                 {/* Priority and Assignee */}

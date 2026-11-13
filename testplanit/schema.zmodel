@@ -5801,6 +5801,9 @@ model WebhookConfig {
     token                   String                       @unique
     secret                  String
     isActive                Boolean                      @default(true)
+    // Accept inbound deliveries that carry no signature (a Jira Server that
+    // cannot sign); the URL token is then the only credential.
+    allowUnsigned           Boolean                      @default(false)
     subscribedEvents        String[]                     @default([])
     // Set on an inbound webhook that a code repository sends to: its pull
     // request and push events start Impact analyses for that connection.

@@ -1080596,6 +1080596,9 @@
           "isActive": {
             "type": "boolean"
           },
+          "allowUnsigned": {
+            "type": "boolean"
+          },
           "subscribedEvents": {
             "type": "array",
             "items": {
@@ -1080772,6 +1080775,7 @@
           "token",
           "secret",
           "isActive",
+          "allowUnsigned",
           "subscribedEvents",
           "autoExecuteEnabled",
           "autoExecuteInputs",
@@ -1080813,6 +1080817,9 @@
             "type": "boolean"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1081125,6 +1081132,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/BoolFilter"
@@ -1081455,6 +1081472,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/BoolFilter"
@@ -1081798,6 +1081825,16 @@
               }
             ]
           },
+          "allowUnsigned": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "subscribedEvents": {
             "$ref": "#/components/schemas/StringNullableListFilter"
           },
@@ -1082110,6 +1082147,16 @@
               }
             ]
           },
+          "allowUnsigned": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "subscribedEvents": {
             "$ref": "#/components/schemas/StringNullableListFilter"
           },
@@ -1082394,6 +1082441,9 @@
           "isActive": {
             "$ref": "#/components/schemas/SortOrder"
           },
+          "allowUnsigned": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
           "subscribedEvents": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -1082557,6 +1082607,7 @@
           "token",
           "secret",
           "isActive",
+          "allowUnsigned",
           "subscribedEvents",
           "codeRepositoryConfigId",
           "baseBranch",
@@ -1082637,6 +1082688,9 @@
             "type": "boolean"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1082722,6 +1082776,9 @@
           "isActive": {
             "type": "integer"
           },
+          "allowUnsigned": {
+            "type": "integer"
+          },
           "subscribedEvents": {
             "type": "integer"
           },
@@ -1082788,6 +1082845,7 @@
           "token",
           "secret",
           "isActive",
+          "allowUnsigned",
           "subscribedEvents",
           "codeRepositoryConfigId",
           "baseBranch",
@@ -1082831,6 +1082889,9 @@
             "type": "boolean"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "codeRepositoryConfigId": {
@@ -1082947,6 +1083008,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "null"
@@ -1083148,6 +1083219,9 @@
           "isActive": {
             "type": "boolean"
           },
+          "allowUnsigned": {
+            "type": "boolean"
+          },
           "codeRepositoryConfigId": {
             "type": "boolean"
           },
@@ -1083262,6 +1083336,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "null"
@@ -1083668,6 +1083752,9 @@
           "isActive": {
             "type": "boolean"
           },
+          "allowUnsigned": {
+            "type": "boolean"
+          },
           "subscribedEvents": {
             "type": "array",
             "items": {
@@ -1083872,6 +1083959,7 @@
           "token",
           "secret",
           "isActive",
+          "allowUnsigned",
           "autoExecuteEnabled",
           "autoExecuteInputs",
           "endpointHealth",
@@ -1083899,6 +1083987,9 @@
             "type": "string"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1084121,6 +1084212,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1084417,6 +1084518,16 @@
               }
             ]
           },
+          "allowUnsigned": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "subscribedEvents": {
             "oneOf": [
               {
@@ -1084650,6 +1084761,9 @@
           "isActive": {
             "type": "boolean"
           },
+          "allowUnsigned": {
+            "type": "boolean"
+          },
           "subscribedEvents": {
             "oneOf": [
               {
@@ -1084830,6 +1084944,9 @@
             "type": "string"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1085013,6 +1085130,9 @@
             "type": "string"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1085238,6 +1085358,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1085531,6 +1085661,16 @@
               }
             ]
           },
+          "allowUnsigned": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "subscribedEvents": {
             "oneOf": [
               {
@@ -1085803,6 +1085943,9 @@
             "type": "string"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1086232,6 +1086375,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1086778,6 +1086931,9 @@
           "isActive": {
             "type": "boolean"
           },
+          "allowUnsigned": {
+            "type": "boolean"
+          },
           "subscribedEvents": {
             "oneOf": [
               {
@@ -1086963,6 +1087119,9 @@
             "type": "string"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1087179,6 +1087338,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1087482,6 +1087651,16 @@
               }
             ]
           },
+          "allowUnsigned": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "subscribedEvents": {
             "oneOf": [
               {
@@ -1087744,6 +1087923,9 @@
             "type": "string"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1088174,6 +1088356,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1088707,6 +1088899,9 @@
           "isActive": {
             "type": "boolean"
           },
+          "allowUnsigned": {
+            "type": "boolean"
+          },
           "subscribedEvents": {
             "oneOf": [
               {
@@ -1088892,6 +1089087,9 @@
             "type": "string"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1089115,6 +1089313,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1089409,6 +1089617,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1089820,6 +1090038,9 @@
           "isActive": {
             "type": "boolean"
           },
+          "allowUnsigned": {
+            "type": "boolean"
+          },
           "subscribedEvents": {
             "oneOf": [
               {
@@ -1090005,6 +1090226,9 @@
             "type": "string"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1090228,6 +1090452,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1090522,6 +1090756,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1090913,6 +1091157,9 @@
           "isActive": {
             "type": "boolean"
           },
+          "allowUnsigned": {
+            "type": "boolean"
+          },
           "subscribedEvents": {
             "oneOf": [
               {
@@ -1091098,6 +1091345,9 @@
             "type": "string"
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "allowUnsigned": {
             "type": "boolean"
           },
           "subscribedEvents": {
@@ -1091321,6 +1091571,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -1091615,6 +1091875,16 @@
             ]
           },
           "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "allowUnsigned": {
             "oneOf": [
               {
                 "type": "boolean"
