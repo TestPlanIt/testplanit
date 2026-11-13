@@ -1,3 +1,9 @@
+## [1.2.0-beta.49](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.48...v1.2.0-beta.49) (2026-11-13)
+
+### Features
+
+* **dashboard:** show the animated brand mark when nothing needs attention ([7140812](https://github.com/TestPlanIt/testplanit/commit/7140812bbc77cee946841f0e75ef49c2aeb66fb1))
+
 ## [1.2.0-beta.48](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.47...v1.2.0-beta.48) (2026-11-13)
 
 ### Bug Fixes
