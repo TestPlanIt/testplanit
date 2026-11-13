@@ -114,10 +114,20 @@ vi.mock("@hookform/resolvers/standard-schema", () => ({
   standardSchemaResolver: () => async (values: any) => ({ values, errors: {} }),
 }));
 
+// What the stubbed field's pick button writes into the form.
+let pickedValue: unknown = "42";
+
 // Stub DynamicJiraField — it depends on TipTap and other heavy editors
 vi.mock("./dynamic-jira-field", () => ({
-  DynamicJiraField: ({ field }: any) => (
-    <div data-testid={`dynamic-field-${field.key}`}>{field.name}</div>
+  DynamicJiraField: ({ field, form }: any) => (
+    <div data-testid={`dynamic-field-${field.key}`}>
+      {field.name}
+      <button
+        type="button"
+        data-testid={`pick-${field.key}`}
+        onClick={() => form.setValue(field.key, pickedValue)}
+      />
+    </div>
   ),
 }));
 
@@ -152,6 +162,7 @@ const makeIntegrationProject = (
 describe("CreateIssueJiraForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    pickedValue = "42";
 
     // Default: two integration projects, ABT is default
     mockUseFindManyIntegrationProject.mockReturnValue({
@@ -426,6 +437,107 @@ describe("CreateIssueJiraForm", () => {
       expect(abtItem).toBeTruthy();
       expect(abtItem?.textContent).toContain("Allego Bug Tracking");
       expect(abtItem?.textContent).toContain("ABT");
+    });
+  });
+
+  it("sends the chosen sprint to Jira as a single sprint id", async () => {
+    const baseFetch = global.fetch as any;
+    global.fetch = vi.fn().mockImplementation((url: string, init?: any) => {
+      if (url.includes("issue-type-fields")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            fields: [
+              {
+                key: "summary",
+                name: "Summary",
+                required: true,
+                schema: { type: "string" },
+              },
+              {
+                key: "customfield_10101",
+                name: "Sprint",
+                required: false,
+                schema: {
+                  type: "array",
+                  items: "string",
+                  custom: "com.pyxis.greenhopper.jira:gh-sprint",
+                },
+              },
+            ],
+          }),
+        });
+      }
+      if (url.includes("create-issue")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ key: "ABT-1" }),
+        });
+      }
+      return baseFetch(url, init);
+    });
+
+    render(<CreateIssueJiraForm {...defaultProps} />);
+
+    fireEvent.click(await screen.findByTestId("pick-customfield_10101"));
+    fireEvent.click(screen.getByRole("button", { name: "create" }));
+
+    await waitFor(() => {
+      const createCall = (global.fetch as any).mock.calls.find((args: any[]) =>
+        (args[0] as string).includes("create-issue")
+      );
+      expect(createCall).toBeTruthy();
+      expect(JSON.parse(createCall[1].body).customFields).toEqual({
+        customfield_10101: 42,
+      });
+    });
+  });
+
+  it("sends a multi-user field as a list of user references", async () => {
+    const baseFetch = global.fetch as any;
+    global.fetch = vi.fn().mockImplementation((url: string, init?: any) => {
+      if (url.includes("issue-type-fields")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            fields: [
+              {
+                key: "customfield_10300",
+                name: "Reviewers",
+                required: false,
+                schema: { type: "array", items: "user" },
+              },
+            ],
+          }),
+        });
+      }
+      if (url.includes("create-issue")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ key: "ABT-1" }),
+        });
+      }
+      return baseFetch(url, init);
+    });
+    pickedValue = ["alice", "bob"];
+
+    render(<CreateIssueJiraForm {...defaultProps} />);
+
+    fireEvent.click(await screen.findByTestId("pick-customfield_10300"));
+    fireEvent.click(screen.getByRole("button", { name: "create" }));
+
+    await waitFor(() => {
+      const createCall = (global.fetch as any).mock.calls.find((args: any[]) =>
+        (args[0] as string).includes("create-issue")
+      );
+      expect(createCall).toBeTruthy();
+      expect(JSON.parse(createCall[1].body).customFields).toEqual({
+        customfield_10300: [{ accountId: "alice" }, { accountId: "bob" }],
+      });
     });
   });
 

@@ -12,7 +12,10 @@ import { authOptions } from "~/server/auth";
 import {
   buildAuthHeader,
   detectJiraDeployment,
+  jiraConnectionChanged,
+  mergeJiraCredentials,
   resolveAuthScheme,
+  withoutJiraDetectedSettings,
 } from "@/lib/integrations/adapters/jiraDeployment";
 
 interface TestConnectionRequest {
@@ -194,7 +197,7 @@ async function testJiraConnection(
     // an email; on Cloud an API token + email is Basic.
     const reapplyScheme = () => {
       scheme = resolveAuthScheme(creds, authScheme, deployment);
-      authHeaderValue = buildAuthHeader(creds, scheme);
+      authHeaderValue = buildAuthHeader(creds, scheme, deployment);
       headers = { Authorization: authHeaderValue, Accept: "application/json" };
     };
     if (deploymentType === "server" || deploymentType === "cloud") {
@@ -772,7 +775,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     const { integrationId, provider, credentials, settings } = body;
 
     let testProvider = provider;
-    const testCredentials = credentials || {};
+    let testCredentials = credentials || {};
     let testSettings = settings || {};
 
     let authType: string | undefined = body.authType;
@@ -828,18 +831,38 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         throw error;
       }
       // Fill only the credentials the form did not supply (request wins).
-      for (const [key, value] of Object.entries(storedCredentials)) {
-        if (testCredentials[key] === undefined || testCredentials[key] === "") {
-          testCredentials[key] = value;
+      if (integration.provider === "JIRA") {
+        testCredentials = mergeJiraCredentials(
+          storedCredentials,
+          testCredentials
+        );
+      } else {
+        for (const [key, value] of Object.entries(storedCredentials)) {
+          if (
+            testCredentials[key] === undefined ||
+            testCredentials[key] === ""
+          ) {
+            testCredentials[key] = value;
+          }
         }
       }
 
       if (integration.settings && typeof integration.settings === "object") {
+        const storedSettings = integration.settings as Record<string, string>;
         // Stored settings as a base; request-provided settings override them.
-        testSettings = {
-          ...(integration.settings as Record<string, string>),
-          ...testSettings,
-        };
+        testSettings = { ...storedSettings, ...testSettings };
+        // Detect the deployment and auth scheme afresh for a changed
+        // connection; a stale answer would pin the old credentials' scheme.
+        if (
+          integration.provider === "JIRA" &&
+          jiraConnectionChanged(
+            credentials,
+            settings?.baseUrl,
+            storedSettings.baseUrl
+          )
+        ) {
+          testSettings = withoutJiraDetectedSettings(testSettings);
+        }
       }
     }
 

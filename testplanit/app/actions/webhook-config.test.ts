@@ -587,6 +587,55 @@ describe("webhook-config server actions", () => {
     });
   });
 
+  describe("setWebhookAllowUnsigned", () => {
+    it("lets a project admin turn on unsigned deliveries for an inbound Jira webhook", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        adapterType: "JIRA",
+        direction: "INBOUND",
+      });
+      mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
+      const { setWebhookAllowUnsigned } = await import("./webhook-config");
+
+      const result = await setWebhookAllowUnsigned("cfg-1", true);
+
+      expect(result).toEqual({ success: true });
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledWith({
+        where: { id: "cfg-1" },
+        data: { allowUnsigned: true },
+      });
+    });
+
+    it("refuses a tracker that always signs", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        adapterType: "GITHUB",
+        direction: "INBOUND",
+      });
+      const { setWebhookAllowUnsigned } = await import("./webhook-config");
+
+      const result = await setWebhookAllowUnsigned("cfg-1", true);
+
+      expect(result.success).toBe(false);
+      expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
+    });
+
+    it("refuses a user who cannot manage the project's webhooks", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        adapterType: "JIRA",
+        direction: "INBOUND",
+      });
+      mockCanManageWebhookConfig.mockResolvedValueOnce(false);
+      const { setWebhookAllowUnsigned } = await import("./webhook-config");
+
+      const result = await setWebhookAllowUnsigned("cfg-1", true);
+
+      expect(result).toEqual({ success: false, error: "Forbidden" });
+      expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
+    });
+  });
+
   describe("setWebhookActive (CR-02 — replaces ZenStack RPC update)", () => {
     it("happy path: project admin toggles isActive=false, raw baseDb.update is invoked with the correct shape", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 42 });

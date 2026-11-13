@@ -89,6 +89,7 @@ async function handleWebhookReceive(
     adapterType: AdapterType;
     secret: string;
     isActive: boolean;
+    allowUnsigned: boolean;
     codeRepositoryConfigId: number | null;
     subscribedEvents: string[];
     baseBranch: string | null;
@@ -103,6 +104,7 @@ async function handleWebhookReceive(
         adapterType: true,
         secret: true,
         isActive: true,
+        allowUnsigned: true,
         codeRepositoryConfigId: true,
         subscribedEvents: true,
         baseBranch: true,
@@ -163,7 +165,8 @@ async function handleWebhookReceive(
   const verify: VerifyResult = adapter.verify(
     rawBody,
     req.headers,
-    plainSecret
+    plainSecret,
+    { allowUnsigned: webhookConfig.allowUnsigned }
   );
   if (!verify.valid) {
     console.warn(

@@ -65,12 +65,12 @@ const userMessageForStatus = (provider: string, status: number): string => {
   switch (status) {
     case 401:
       return provider.toUpperCase() === "JIRA"
-        ? `${label} rejected the credentials. Jira Cloud requires your account email plus an API token — an account password will not work for API access. Create a token at ${JIRA_API_TOKEN_URL} and re-enter it.`
+        ? `${label} rejected the credentials. Jira Cloud needs your account email plus an API token — an account password will not work for API access; create a token at ${JIRA_API_TOKEN_URL}. Jira Server and Data Center need a personal access token, or a username and password.`
         : `${label} rejected the credentials. Check the token or password and re-enter it.`;
     case 403:
       return `The credentials are valid, but the account does not have permission to access this project in ${label}. Grant that account access, or use credentials for an account that already has it.`;
     case 404:
-      return `${label} returned "not found" for that address. Check the site URL on the integration — it should be the base address of your instance, with no path.`;
+      return `${label} returned "not found" for that address. Check the site URL on the integration — it should be the address your instance is served from (including any context path, such as /jira), not a page within it.`;
     case 429:
       return `${label} is rate limiting requests. Wait a moment and try again.`;
     default:
