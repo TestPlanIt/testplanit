@@ -1,8 +1,15 @@
 import { TestPlanItMark } from "@/components/TestPlanItLogo";
-import { Separator } from "@/components/ui/separator";
-import { div as MotionDiv } from "motion/react-client";
 import { useTranslations } from "next-intl";
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
+import loaderDark from "~/public/tpi_loading_dark.webp";
+import loaderLight from "~/public/tpi_loading_light.webp";
+
+// Background images rather than <img>s, so only the active theme's file loads.
+const loaderImages = {
+  "--tpi-loader-light": `url(${loaderLight.src})`,
+  "--tpi-loader-dark": `url(${loaderDark.src})`,
+} as CSSProperties;
 
 export function Loading({ delay = 300 }: { delay?: number }) {
   const tGlobal = useTranslations();
@@ -18,39 +25,19 @@ export function Loading({ delay = 300 }: { delay?: number }) {
 
   return (
     <div
-      className="flex justify-center items-center min-h-screen -mt-12"
+      role="status"
+      className="flex justify-center items-center gap-2 min-h-screen -mt-12"
       data-testid="loading-indicator"
     >
-      <div className="flex items-center">
-        <MotionDiv
-          animate={{
-            x: [-20, 20, -20],
-            rotate: [0, 360, 0],
-          }}
-          transition={{
-            duration: 2,
-            ease: "easeInOut",
-            repeat: Infinity,
-          }}
-        >
-          <TestPlanItMark className="w-[25px]" />
-        </MotionDiv>
-        <Separator orientation="vertical" className="px-1" />
-        <MotionDiv
-          initial={{ x: 0 }}
-          animate={{
-            x: [0, 0, 0, 50, 0],
-          }}
-          transition={{
-            duration: 2,
-            ease: "easeInOut",
-            times: [0, 0.15, 0.35, 0.51, 1],
-            repeat: Infinity,
-          }}
-        >
-          {tGlobal("common.loading")}
-        </MotionDiv>
+      <div
+        aria-hidden="true"
+        style={loaderImages}
+        className="aspect-[82/53] w-[41px] bg-contain bg-no-repeat bg-[image:var(--tpi-loader-light)] dark:bg-[image:var(--tpi-loader-dark)] motion-reduce:hidden"
+      />
+      <div aria-hidden="true" className="hidden motion-reduce:block">
+        <TestPlanItMark className="w-[40px]" />
       </div>
+      <span>{tGlobal("common.loading")}</span>
     </div>
   );
 }
