@@ -1,3 +1,9 @@
+## [1.1.22](https://github.com/TestPlanIt/testplanit/compare/v1.1.21...v1.1.22) (2026-11-13)
+
+### Bug Fixes
+
+* **jira:** harden the Jira integration for Server and Data Center ([#737](https://github.com/TestPlanIt/testplanit/issues/737)) ([8e2fb99](https://github.com/TestPlanIt/testplanit/commit/8e2fb99fcb2c8b29656a4007ae100ded84a572c1))
+
 ## [1.1.21](https://github.com/TestPlanIt/testplanit/compare/v1.1.20...v1.1.21) (2026-11-09)
 
 ### Bug Fixes
