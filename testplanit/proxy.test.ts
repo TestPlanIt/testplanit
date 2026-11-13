@@ -1066,31 +1066,31 @@ describe("Content-Security-Policy", () => {
     delete process.env.CSP_MODE;
   });
 
-  it("reports by default: a page response carries the report-only header with a nonce", async () => {
+  it("enforces by default: a page response carries the policy with a nonce", async () => {
     const response = await middlewareWithPreferences(
       createMockRequest("/en-US/projects", pageHeaders)
     );
 
-    const policy = response.headers.get("Content-Security-Policy-Report-Only");
+    const policy = response.headers.get("Content-Security-Policy");
     expect(policy).toMatch(
       /script-src 'self' 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/
     );
     expect(policy).toContain("report-uri /api/csp-report");
-    expect(response.headers.get("Content-Security-Policy")).toBeNull();
+    expect(
+      response.headers.get("Content-Security-Policy-Report-Only")
+    ).toBeNull();
   });
 
-  it("enforces when CSP_MODE=enforce", async () => {
-    process.env.CSP_MODE = "enforce";
+  it("only reports when CSP_MODE=report-only", async () => {
+    process.env.CSP_MODE = "report-only";
     const response = await middlewareWithPreferences(
       createMockRequest("/en-US/projects", pageHeaders)
     );
 
-    expect(response.headers.get("Content-Security-Policy")).toContain(
-      "script-src 'self' 'nonce-"
-    );
     expect(
       response.headers.get("Content-Security-Policy-Report-Only")
-    ).toBeNull();
+    ).toContain("script-src 'self' 'nonce-");
+    expect(response.headers.get("Content-Security-Policy")).toBeNull();
   });
 
   it("sends no policy when CSP_MODE=off", async () => {
@@ -1110,7 +1110,7 @@ describe("Content-Security-Policy", () => {
       createMockRequest("/en-US/projects", pageHeaders)
     );
 
-    const policy = response.headers.get("Content-Security-Policy-Report-Only")!;
+    const policy = response.headers.get("Content-Security-Policy")!;
     const nonce = /'nonce-([^']+)'/.exec(policy)![1];
     // NextResponse.next({ request }) forwards request headers to the route
     // as x-middleware-request-* headers.
@@ -1127,8 +1127,8 @@ describe("Content-Security-Policy", () => {
     const second = await middlewareWithPreferences(
       createMockRequest("/en-US/projects", pageHeaders)
     );
-    expect(first.headers.get("Content-Security-Policy-Report-Only")).not.toBe(
-      second.headers.get("Content-Security-Policy-Report-Only")
+    expect(first.headers.get("Content-Security-Policy")).not.toBe(
+      second.headers.get("Content-Security-Policy")
     );
   });
 
@@ -1169,8 +1169,8 @@ describe("Content-Security-Policy", () => {
     expect(new URL(response.headers.get("location")!).pathname).toBe(
       "/testplanit/en-US/signin"
     );
-    expect(
-      response.headers.get("Content-Security-Policy-Report-Only")
-    ).toContain("'nonce-");
+    expect(response.headers.get("Content-Security-Policy")).toContain(
+      "'nonce-"
+    );
   });
 });

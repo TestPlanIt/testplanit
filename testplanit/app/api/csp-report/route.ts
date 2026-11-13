@@ -40,9 +40,9 @@ function summarize(payload: unknown): ViolationSummary[] {
 
 /**
  * Where browsers send Content-Security-Policy violation reports. Each distinct
- * violation becomes a log line (repeats are counted, not repeated), so an
- * instance running in report-only mode shows in its server log exactly what
- * an enforced policy would have blocked.
+ * violation becomes a log line (repeats are counted, not repeated), so the
+ * server log shows what the policy blocked, or in report-only mode what it
+ * would have blocked.
  */
 export async function POST(request: NextRequest) {
   if (getCspMode() === "off") {

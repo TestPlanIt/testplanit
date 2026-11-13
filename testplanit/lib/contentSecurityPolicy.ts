@@ -9,8 +9,8 @@ import { withBasePath } from "./basePath";
  * only: API routes return JSON and get no policy.
  *
  * CSP_MODE picks how the browser treats the policy:
- *   report-only  send violations to /api/csp-report, block nothing (default)
- *   enforce      block anything the policy does not allow
+ *   enforce      block anything the policy does not allow (default)
+ *   report-only  block nothing
  *   off          send no policy
  *
  * Operators whose pages load from hosts this file cannot know about (a CDN in
@@ -30,8 +30,8 @@ type Env = Record<string, string | undefined>;
 
 export function getCspMode(env: Env = process.env): CspMode {
   const raw = env.CSP_MODE?.trim().toLowerCase();
-  if (raw === "enforce" || raw === "off") return raw;
-  return "report-only";
+  if (raw === "report-only" || raw === "off") return raw;
+  return "enforce";
 }
 
 export function cspHeaderName(mode: Exclude<CspMode, "off">): string {

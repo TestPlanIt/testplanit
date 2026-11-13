@@ -15,15 +15,16 @@ const directive = (policy: string, name: string): string[] | undefined => {
 };
 
 describe("getCspMode", () => {
-  it("defaults to report-only", () => {
-    expect(getCspMode({})).toBe("report-only");
-    expect(getCspMode({ CSP_MODE: "" })).toBe("report-only");
-    expect(getCspMode({ CSP_MODE: "nonsense" })).toBe("report-only");
+  it("defaults to enforce", () => {
+    expect(getCspMode({})).toBe("enforce");
+    expect(getCspMode({ CSP_MODE: "" })).toBe("enforce");
+    expect(getCspMode({ CSP_MODE: "nonsense" })).toBe("enforce");
   });
 
-  it("reads enforce and off, ignoring case and whitespace", () => {
+  it("reads report-only and off, ignoring case and whitespace", () => {
+    expect(getCspMode({ CSP_MODE: "report-only" })).toBe("report-only");
+    expect(getCspMode({ CSP_MODE: " Report-Only " })).toBe("report-only");
     expect(getCspMode({ CSP_MODE: "enforce" })).toBe("enforce");
-    expect(getCspMode({ CSP_MODE: " Enforce " })).toBe("enforce");
     expect(getCspMode({ CSP_MODE: "OFF" })).toBe("off");
   });
 
