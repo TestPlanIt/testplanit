@@ -220,9 +220,12 @@ describe("TestCaseHealthChart", () => {
 
   it("computes the same tiles from the rows when no summary is given", () => {
     render(<TestCaseHealthChart data={mockHealthData} />);
-    // 3 rows: total 3, and needs attention 3 (1 always_failing, 1
-    // never_executed, 1 stale) — so "3" appears on more than one tile.
-    expect(screen.getAllByText("3").length).toBeGreaterThanOrEqual(2);
+    // 3 rows: needs attention is 2 (the never-executed row, and the
+    // always-failing row that is also stale, counted once), so 67%.
+    const needsAttention = screen.getByText((_, el) =>
+      Boolean(el?.matches("p") && el.textContent === "2(67%)")
+    );
+    expect(needsAttention).toBeInTheDocument();
     // avg of 85, 0, 10 = 32
     expect(screen.getByText("32")).toBeInTheDocument();
   });

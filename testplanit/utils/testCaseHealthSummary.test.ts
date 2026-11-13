@@ -26,12 +26,28 @@ describe("summarizeTestCaseHealth", () => {
       healthy: 2,
     });
     expect(summary.staleCount).toBe(2);
-    // always_failing + never_executed + stale
-    expect(summary.needsAttention).toBe(4);
+    // always failing, never executed, or stale; the stale always-failing
+    // row counts once
+    expect(summary.needsAttention).toBe(3);
     // healthy + always_passing
     expect(summary.healthy).toBe(3);
     // (20 + 50 + 95 + 70 + 100) / 5 = 67
     expect(summary.avgHealthScore).toBe(67);
+  });
+
+  it("never puts more cases in Needs Attention than there are cases", () => {
+    // Every executed case went stale, the shape that read as "102%".
+    const summary = summarizeTestCaseHealth([
+      { healthStatus: "always_failing", isStale: true, healthScore: 10 },
+      { healthStatus: "always_failing", isStale: true, healthScore: 10 },
+      { healthStatus: "always_passing", isStale: true, healthScore: 80 },
+      { healthStatus: "healthy", isStale: true, healthScore: 60 },
+      { healthStatus: "never_executed", isStale: false, healthScore: 0 },
+    ]);
+
+    expect(summary.staleCount).toBe(4);
+    expect(summary.needsAttention).toBe(5);
+    expect(summary.needsAttention).toBeLessThanOrEqual(summary.total);
   });
 
   it("ignores null rows and unknown statuses, and averages only numeric scores", () => {
