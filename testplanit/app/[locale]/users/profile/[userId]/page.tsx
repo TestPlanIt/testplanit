@@ -458,7 +458,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
       case "Orange":
         return <Circle className="h-4 w-4 fill-orange-500" />;
       case "Purple":
-        return <Circle className="h-4 w-4 fill-purple-500" />;
+        return <Circle className="h-4 w-4 fill-[#8559E9]" />;
       case "Accessible":
         return <Accessibility className="h-4 w-4 text-blue-700" />;
       default:
@@ -479,7 +479,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
       case "Orange":
         return "text-orange-500";
       case "Purple":
-        return "text-purple-500";
+        return "text-[#8559E9]";
       case "Accessible":
         return "text-blue-700";
       default:

@@ -4,6 +4,7 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
+import ThemedImage from '@theme/ThemedImage';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import {
@@ -48,32 +49,28 @@ function HomepageHeader() {
 
       <div className="container">
         <div className={styles.heroContent}>
-          <Heading
-            as="h1"
-            className={clsx(
-              styles.heroTitle,
-              'gradient-text',
-              'animate-gradient-x'
-            )}
-          >
+          <Heading as="h1" className={clsx(styles.heroTitle)}>
             <div className="">
               <Link
                 href="https://testplanit.com"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <img
-                  src="/img/logo-with-text.svg"
+                <ThemedImage
+                  sources={{
+                    light: '/img/logo-primary.svg',
+                    dark: '/img/logo-on-dark.svg',
+                  }}
                   alt="TestPlanIt"
                   className={styles.logoLinkImage}
                 />
               </Link>
-              Documentation
+              <span className="">Documentation</span>
             </div>
           </Heading>
 
           <p className={styles.heroSubtitle}>
-            Open Source Modern Test Management for Agile Teams
+            Open Source Test Management for Agile Teams
           </p>
 
           <div className={styles.buttons}>

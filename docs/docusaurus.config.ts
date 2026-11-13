@@ -41,7 +41,7 @@ function versionManifestPlugin(): Plugin {
 const config: Config = {
   title: 'TestPlanIt',
   tagline: 'Test everything under the sun',
-  favicon: 'img/logo.svg',
+  favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
   url: docsVersion.url,
@@ -164,10 +164,11 @@ const config: Config = {
       },
     }),
     navbar: {
-      title: 'TestPlanIt Docs',
+      title: 'Documentation',
       logo: {
-        alt: 'TestPlanIt Logo',
-        src: 'img/logo.svg',
+        alt: 'TestPlanIt',
+        src: 'img/logo-primary.svg',
+        srcDark: 'img/logo-on-dark.svg',
       },
       items: [
         {

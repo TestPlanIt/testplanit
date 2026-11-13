@@ -256,7 +256,7 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
         .style("justify-content", "center")
         .style("width", "100%")
         .style("height", "100%")
-        .style("font-family", "'Noto Sans', sans-serif")
+        .style("font-family", "var(--font-sans)")
         .style("color", foregroundColor)
         .style("text-align", "center")
         .style("overflow", "hidden")

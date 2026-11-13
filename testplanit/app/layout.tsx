@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     "Streamline your software testing with TestPlanIt's powerful test case management, execution tracking, and comprehensive reporting tools.",
   // Next does not prefix icon paths or absolute-URL metadata with basePath.
   icons: {
-    icon: withBasePath("/tpi_logo.svg"),
+    icon: { url: withBasePath("/tpi_app_icon.svg"), type: "image/svg+xml" },
     apple: withBasePath("/tpi_logo_square.png"),
   },
   metadataBase: new URL(

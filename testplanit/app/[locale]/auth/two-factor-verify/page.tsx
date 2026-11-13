@@ -17,11 +17,10 @@ import {
 import { Loader2, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { useState } from "react";
 import { translateServerError } from "~/lib/i18n/translateServerError";
 import { useRouter } from "~/lib/navigation";
-import svgIcon from "~/public/tpi_logo.svg";
+import { TestPlanItMark } from "@/components/TestPlanItLogo";
 import { apiFetch, withBasePath } from "~/lib/basePath";
 
 export default function TwoFactorVerifyPage() {
@@ -80,12 +79,7 @@ export default function TwoFactorVerifyPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <Image
-              alt="TestPlanIt Logo"
-              src={svgIcon}
-              style={{ width: "40px", height: "auto" }}
-              priority={true}
-            />
+            <TestPlanItMark className="w-10" />
           </div>
           <CardTitle className="flex items-center justify-center gap-2">
             <Shield className="h-5 w-5" />

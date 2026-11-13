@@ -25,9 +25,8 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
-import Image from "next/image";
 import { toast } from "sonner";
-import svgIcon from "~/public/tpi_logo.svg";
+import { TestPlanItLogo } from "@/components/TestPlanItLogo";
 import { withBasePath } from "~/lib/basePath";
 
 const VerifyEmail = () => {
@@ -129,23 +128,7 @@ const VerifyEmail = () => {
           <CardHeader className="w-full flex flex-col items-center justify-center">
             {}
             <div className="flex items-center py-5">
-              <Image
-                alt="TestPlanIt Logo"
-                src={svgIcon}
-                style={{
-                  width: "50px",
-                  height: "auto",
-                }}
-                priority={true}
-              />
-              <div className="ms-3 flex flex-col">
-                <span className="scroll-m-20 text-4xl font-semibold tracking-tight lg:text-5xl text-[rgb(133,89,233)]">
-                  {tCommon("pageTitles.appName")}
-                </span>
-                <span className="text-xs text-muted-foreground -mt-1 no-wrap">
-                  {tCommon("branding.tagline")}
-                </span>
-              </div>
+              <TestPlanItLogo className="h-10 lg:h-13" />
             </div>
             <CardTitle
               data-testid="verify-email-page-title"

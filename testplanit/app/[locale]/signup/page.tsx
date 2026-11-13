@@ -39,9 +39,8 @@ import { Input } from "@/components/ui/input";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { LinkIcon, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { Link } from "~/lib/navigation";
-import svgIcon from "~/public/tpi_logo.svg";
+import { TestPlanItLogo } from "@/components/TestPlanItLogo";
 import { apiFetch } from "~/lib/basePath";
 import { clientCookie } from "~/lib/auth/cookieScope";
 
@@ -77,7 +76,6 @@ const Signup: NextPage = () => {
   const [sessionCleared, setSessionCleared] = useState(false);
   const router = useRouter();
   const t = useTranslations();
-  const tCommon = useTranslations("common");
 
   // Clear any stale session cookies on page load to prevent 410 errors
   // We use direct cookie manipulation instead of signOut() because signOut()
@@ -291,23 +289,7 @@ const Signup: NextPage = () => {
       <Card className="w-3/4">
         <CardHeader className="w-full flex flex-col items-center justify-center">
           <div className="flex items-center py-5">
-            <Image
-              alt="TestPlanIt Logo"
-              src={svgIcon}
-              style={{
-                width: "50px",
-                height: "auto",
-              }}
-              priority={true}
-            />
-            <div className="ms-3 flex flex-col">
-              <span className="scroll-m-20 text-4xl font-semibold tracking-tight lg:text-5xl text-[rgb(133,89,233)]">
-                {tCommon("pageTitles.appName")}
-              </span>
-              <span className="text-xs text-muted-foreground -mt-1 no-wrap">
-                {tCommon("branding.tagline")}
-              </span>
-            </div>
+            <TestPlanItLogo className="h-10 lg:h-13" />
           </div>
           <CardTitle className="flex py-5 scroll-m-20 tracking-tight lg:text-3xl text-primary">
             {t("common.actions.signUp")}
