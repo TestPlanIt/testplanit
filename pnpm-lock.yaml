@@ -1001,9 +1001,6 @@ importers:
       formidable:
         specifier: ^3.5.4
         version: 3.5.4
-      framer-motion:
-        specifier: ^14.12.0
-        version: 14.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       handlebars:
         specifier: ^4.7.10
         version: 4.7.10
