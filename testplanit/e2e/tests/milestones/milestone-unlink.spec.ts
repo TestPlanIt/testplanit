@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { ApiHelper } from "../../fixtures/api.fixture";
@@ -64,6 +65,28 @@ test.describe("Milestone manual unlink", () => {
     return { projectId, milestoneId };
   }
 
+  /**
+   * Open the badge's menu and click its unlink item.
+   *
+   * The badge sits in a header that re-renders as page queries land, so a
+   * single click can be swallowed mid-re-render (dispatched between
+   * Playwright's hit-test and the mouse events) and the menu never opens.
+   * Only click the badge while the menu is closed: clicking it with the menu
+   * open would toggle it shut again.
+   */
+  async function clickUnlinkMenuItem(page: Page): Promise<void> {
+    const unlinkItem = page.getByTestId("milestone-source-menu-unlink");
+    await expect(async () => {
+      if (!(await unlinkItem.isVisible().catch(() => false))) {
+        await page
+          .getByTestId("milestone-source-badge")
+          .click({ timeout: 2000 });
+      }
+      await expect(unlinkItem).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 15000 });
+    await unlinkItem.click();
+  }
+
   test("unlinking a synced milestone converts it to local", async ({
     api,
     page,
@@ -81,21 +104,7 @@ test.describe("Milestone manual unlink", () => {
     });
 
     await test.step("Open the badge menu and start unlinking", async () => {
-      // The badge sits in a header that re-renders as page queries land, so
-      // a single click can be swallowed mid-re-render (dispatched between
-      // Playwright's hit-test and the mouse events) and the menu never
-      // opens. Only click the badge while the menu is closed — clicking it
-      // with the menu open would toggle it shut again.
-      const unlinkItem = page.getByTestId("milestone-source-menu-unlink");
-      await expect(async () => {
-        if (!(await unlinkItem.isVisible().catch(() => false))) {
-          await page
-            .getByTestId("milestone-source-badge")
-            .click({ timeout: 2000 });
-        }
-        await expect(unlinkItem).toBeVisible({ timeout: 3000 });
-      }).toPass({ timeout: 15000 });
-      await unlinkItem.click();
+      await clickUnlinkMenuItem(page);
 
       // The consequences-confirm AlertDialog appears.
       await expect(page.getByText("Unlink milestone?")).toBeVisible();
@@ -151,8 +160,7 @@ test.describe("Milestone manual unlink", () => {
     await test.step("Open the detail page and the unlink dialog", async () => {
       await page.goto(`/en-US/projects/milestones/${projectId}/${milestoneId}`);
       await page.waitForLoadState("load");
-      await page.getByTestId("milestone-source-badge").click();
-      await page.getByTestId("milestone-source-menu-unlink").click();
+      await clickUnlinkMenuItem(page);
       await expect(
         page.getByTestId("milestone-source-unlink-cancel")
       ).toBeVisible();
