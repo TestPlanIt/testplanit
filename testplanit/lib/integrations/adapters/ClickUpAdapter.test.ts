@@ -40,11 +40,13 @@ describe("ClickUpAdapter", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetch.mockReset();
     adapter = new ClickUpAdapter({
       provider: "CLICKUP",
       listId: "901234567",
       teamId: "9013456789",
     });
+    (adapter as any).rateLimitDelay = 0;
   });
 
   describe("getCapabilities", () => {
@@ -574,32 +576,33 @@ describe("ClickUpAdapter", () => {
     });
 
     it("walks Team -> Space -> Folder/List and flattens to id/key/name", async () => {
-      mockFetch
-        .mockResolvedValueOnce({
+      // The folder and list requests for a space run in parallel, so answer
+      // by URL rather than by call order.
+      const bodies: Record<string, unknown> = {
+        "/team/9013456789/space": {
+          spaces: [{ id: "space1", name: "Engineering" }],
+        },
+        "/space/space1/folder": {
+          folders: [
+            {
+              id: "folder1",
+              name: "Sprint 1",
+              lists: [{ id: "list1", name: "Backlog" }],
+            },
+          ],
+        },
+        "/space/space1/list": {
+          lists: [{ id: "list2", name: "Folderless" }],
+        },
+      };
+      mockFetch.mockImplementation((url: string) => {
+        const path = Object.keys(bodies).find((p) => url.endsWith(p));
+        if (!path) throw new Error(`Unexpected request: ${url}`);
+        return Promise.resolve({
           ok: true,
-          json: () =>
-            Promise.resolve({
-              spaces: [{ id: "space1", name: "Engineering" }],
-            }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              folders: [
-                {
-                  id: "folder1",
-                  name: "Sprint 1",
-                  lists: [{ id: "list1", name: "Backlog" }],
-                },
-              ],
-            }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () =>
-            Promise.resolve({ lists: [{ id: "list2", name: "Folderless" }] }),
+          json: () => Promise.resolve(bodies[path]),
         });
+      });
 
       const projects = await adapter.getProjects();
 
