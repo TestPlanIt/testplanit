@@ -66,3 +66,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Catch-all mail server. It accepts every message and delivers none, so
+  # signup and notification specs never wait on a real mail host. Caught
+  # messages are readable at http://localhost:8025.
+  mail:
+    image: axllent/mailpit:v1.27
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
