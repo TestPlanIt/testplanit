@@ -7,15 +7,16 @@ This directory contains Playwright end-to-end tests for TestPlanIt.
 ### 1. Start the E2E Services
 
 The E2E tests run against **separate services** from your development stack:
-PostgreSQL, Valkey, Elasticsearch and S3-compatible file storage (RustFS). Start them with
-Docker:
+PostgreSQL, Valkey, Elasticsearch, S3-compatible file storage (RustFS) and a
+catch-all mail server (Mailpit). Start them with Docker:
 
 ```bash
 docker compose -f docker-compose.e2e.yml up -d
 ```
 
-The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, storage 9100) don't
-clash with `docker-compose.dev.yml`, so both stacks can run at once.
+The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, storage 9100 and
+mail 1025) don't clash with `docker-compose.dev.yml`, so both stacks can run
+at once.
 
 ### 2. Configure Environment
 

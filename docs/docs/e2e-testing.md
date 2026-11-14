@@ -18,8 +18,9 @@ This guide covers how to run and write end-to-end (E2E) tests for TestPlanIt usi
 ### 1. Start the E2E Services
 
 E2E tests run against **separate services** from your development stack:
-PostgreSQL, Valkey, Elasticsearch and S3-compatible file storage
-([RustFS](https://github.com/rustfs/rustfs)). From the `testplanit/` directory,
+PostgreSQL, Valkey, Elasticsearch, S3-compatible file storage
+([RustFS](https://github.com/rustfs/rustfs)) and a catch-all mail server
+([Mailpit](https://mailpit.axllent.org)). From the `testplanit/` directory,
 start them with Docker:
 
 ```bash
@@ -27,8 +28,9 @@ cd testplanit
 docker compose -f docker-compose.e2e.yml up -d
 ```
 
-The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, storage 9100) don't
-clash with `docker-compose.dev.yml`, so both stacks can run at once.
+The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, storage 9100 and
+mail 1025) don't clash with `docker-compose.dev.yml`, so both stacks can run
+at once.
 
 ### 2. Configure Environment
 
@@ -46,27 +48,12 @@ Setup stops with an error if the storage bucket is not writable with the
 configured credentials. With the local storage service it also creates the
 bucket and sets its public-read and CORS rules.
 
-#### Optional: Email Server Configuration
+#### Email
 
-Some E2E tests (particularly signup tests) send verification emails. To prevent undeliverable email alerts, you can configure a test email server:
-
-```bash
-# Add to .env.e2e or create .env.test.local (gitignored)
-EMAIL_SERVER_HOST=your-smtp-server.com
-EMAIL_SERVER_PORT=587
-EMAIL_SERVER_USER=your-username
-EMAIL_SERVER_PASSWORD=your-password
-EMAIL_FROM=noreply@your-test-domain.com
-TEST_EMAIL_DOMAIN=your-test-domain.com
-```
-
-**Alternatives for email testing:**
-
-- **Ethereal Email**: Free fake SMTP service at [ethereal.email](https://ethereal.email) - catches emails without actually sending them
-- **MailHog**: Local SMTP test server (`docker run -p 1025:1025 -p 8025:8025 mailhog/mailhog`)
-- **Your own test server**: Configure `TEST_EMAIL_DOMAIN` to match your test email domain
-
-If not configured, tests will use `@example.com` addresses (which will fail delivery).
+Signup and notification tests send email. The `mail` service accepts every
+message and delivers none, and `.env.e2e.example` points the `EMAIL_SERVER_*`
+settings at it. No test reads a mailbox, so nothing needs to be delivered. To
+look at what the app sent, open [http://localhost:8025](http://localhost:8025).
 
 ### 3. Install Playwright Browsers
 
