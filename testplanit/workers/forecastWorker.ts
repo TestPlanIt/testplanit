@@ -12,6 +12,7 @@ import {
 import {
   FORECAST_QUEUE_NAME,
   JOB_AUTO_COMPLETE_MILESTONES,
+  JOB_CHECK_FOR_RELEASES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_PURGE_STALE_CASE_DRAFTS,
   JOB_REVIEW_REMINDERS,
@@ -29,6 +30,7 @@ import {
 import { CASE_DRAFT_RETENTION_DAYS } from "../lib/services/caseDraft";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
+import { runReleaseCheck } from "../lib/services/releaseCheck";
 import { sweepReportBuilderStates } from "../lib/services/reportBuilderState";
 import { getReviewReminderThresholdDays } from "../lib/services/reviewReminderConfig";
 import { withTenantContext } from "../lib/tenantContext";
@@ -69,6 +71,7 @@ interface ForecastJobDataBase extends MultiTenantJobData {
 
 export {
   JOB_AUTO_COMPLETE_MILESTONES,
+  JOB_CHECK_FOR_RELEASES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_REVIEW_REMINDERS,
   JOB_PURGE_STALE_CASE_DRAFTS,
@@ -1040,6 +1043,20 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           );
         } catch (error) {
           console.error(`Job ${job.id}: Error in abandoned-run sweep`, error);
+          throw error;
+        }
+        break;
+
+      case JOB_CHECK_FOR_RELEASES:
+        console.log(`Job ${job.id}: Checking for a newer release.`);
+        try {
+          const outcome = await runReleaseCheck(db, job.data.tenantId);
+          successCount = outcome.notified;
+          console.log(
+            `Job ${job.id}: Release check ${outcome.status}; notified ${outcome.notified} administrators.`
+          );
+        } catch (error) {
+          console.error(`Job ${job.id}: Failed to check for releases`, error);
           throw error;
         }
         break;

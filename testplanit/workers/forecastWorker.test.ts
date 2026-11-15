@@ -110,6 +110,11 @@ vi.mock("../lib/services/notificationService", () => ({
 // Threshold loader — default to 1 day; tests override via mockResolvedValueOnce.
 // Value of 0 means reminders are disabled and the worker short-circuits.
 const mockGetReviewReminderThresholdDays = vi.fn().mockResolvedValue(1);
+const mockRunReleaseCheck = vi.fn();
+vi.mock("../lib/services/releaseCheck", () => ({
+  runReleaseCheck: (...args: unknown[]) => mockRunReleaseCheck(...args),
+}));
+
 vi.mock("../lib/services/reviewReminderConfig", () => ({
   getReviewReminderThresholdDays: (...args: any[]) =>
     mockGetReviewReminderThresholdDays(...args),
@@ -795,6 +800,46 @@ describe("JOB_REVIEW_REMINDERS", () => {
       where: { id: "rr-empty" },
       data: { lastRemindedAt: FIXED_NOW },
     });
+  });
+});
+
+describe("JOB_CHECK_FOR_RELEASES", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const runProcessor = async () => {
+    const { processor, JOB_CHECK_FOR_RELEASES } =
+      await import("./forecastWorker");
+    const job = {
+      id: "job-rc-1",
+      name: JOB_CHECK_FOR_RELEASES,
+      data: { tenantId: undefined, actorContext: {} },
+    } as unknown as Job;
+    return processor(job);
+  };
+
+  it("runs the release check against the job's database", async () => {
+    mockRunReleaseCheck.mockResolvedValue({ status: "checked", notified: 2 });
+
+    const result = await runProcessor();
+
+    expect(mockRunReleaseCheck).toHaveBeenCalledWith(mockDb, undefined);
+    expect(result).toMatchObject({ status: "completed", successCount: 2 });
+  });
+
+  it("completes with nothing done when the check is disabled", async () => {
+    mockRunReleaseCheck.mockResolvedValue({ status: "disabled", notified: 0 });
+
+    const result = await runProcessor();
+
+    expect(result).toMatchObject({ status: "completed", successCount: 0 });
+  });
+
+  it("fails the job when the check throws", async () => {
+    mockRunReleaseCheck.mockRejectedValue(new Error("database is down"));
+
+    await expect(runProcessor()).rejects.toThrow("database is down");
   });
 });
 

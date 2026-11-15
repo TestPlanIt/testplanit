@@ -181,6 +181,10 @@ interface SsrfFetchOptions {
   /** Hostnames allowed to resolve to private/internal IPs.
    *  Defaults to parsing ALLOWED_PRIVATE_HOSTS env var. */
   allowedHosts?: Set<string>;
+  /** Request headers sent in place of the defaults of the same name. */
+  headers?: Record<string, string>;
+  /** Response media types to accept. Default: `["text/html"]`. */
+  contentTypes?: string[];
 }
 
 interface SsrfFetchResult {
@@ -274,7 +278,8 @@ async function fetchWithPinnedAgent(
   urlString: string,
   resolvedIp: string,
   protocol: "https:" | "http:",
-  timeoutMs: number
+  timeoutMs: number,
+  headers: Record<string, string> = {}
 ): Promise<Response> {
   const agent = createPinnedAgent(protocol, resolvedIp);
   const url = new URL(urlString);
@@ -290,6 +295,7 @@ async function fetchWithPinnedAgent(
         headers: {
           "User-Agent": "TestPlanIt/1.0",
           Accept: "text/html, */*",
+          ...headers,
         },
       },
       (res) => {
@@ -426,6 +432,8 @@ export async function ssrfSafeFetch(
     maxBytes = MAX_PAGE_BYTES,
     timeoutMs = FETCH_TIMEOUT_MS,
     allowedHosts = getAllowedPrivateHosts(),
+    headers,
+    contentTypes = ["text/html"],
   } = options;
 
   let currentUrl = urlString;
@@ -463,7 +471,8 @@ export async function ssrfSafeFetch(
       currentUrl,
       resolvedIp,
       protocol as "https:" | "http:",
-      timeoutMs
+      timeoutMs,
+      headers
     );
 
     // e. Handle redirects manually
@@ -494,11 +503,11 @@ export async function ssrfSafeFetch(
       continue;
     }
 
-    // f. Check Content-Type — must be text/html
+    // f. Check Content-Type — text/html unless the caller asked for another
     const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html")) {
+    if (!contentTypes.some((allowed) => contentType.includes(allowed))) {
       throw new SsrfError(
-        `Response Content-Type "${contentType}" is not allowed. Only text/html is accepted.`,
+        `Response Content-Type "${contentType}" is not allowed. Only ${contentTypes.join(", ")} is accepted.`,
         "INVALID_CONTENT_TYPE"
       );
     }

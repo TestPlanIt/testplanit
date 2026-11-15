@@ -553,6 +553,81 @@ describe("getAllowedPrivateHosts", () => {
   });
 });
 
+describe("ssrfSafeFetch - request headers", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDnsLookup.mockResolvedValue({
+      address: "93.184.216.34",
+      family: 4,
+    } as never);
+  });
+
+  const sentHeaders = () =>
+    (mockHttpsRequest.mock.calls[0][1] as { headers: Record<string, string> })
+      .headers;
+
+  it("sends its default headers when none are given", async () => {
+    setupMockRequest("https", {});
+
+    await ssrfSafeFetch("https://example.com/page");
+
+    expect(sentHeaders()).toEqual({
+      "User-Agent": "TestPlanIt/1.0",
+      Accept: "text/html, */*",
+    });
+  });
+
+  it("lets a caller replace a default header and add its own", async () => {
+    setupMockRequest("https", {});
+
+    await ssrfSafeFetch("https://example.com/releases", {
+      headers: { "User-Agent": "TestPlanIt/1.2.0", "X-Extra": "1" },
+    });
+
+    expect(sentHeaders()).toEqual({
+      "User-Agent": "TestPlanIt/1.2.0",
+      Accept: "text/html, */*",
+      "X-Extra": "1",
+    });
+  });
+});
+
+describe("ssrfSafeFetch - accepted content types", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDnsLookup.mockResolvedValue({
+      address: "93.184.216.34",
+      family: 4,
+    } as never);
+  });
+
+  it("accepts JSON when the caller asks for it", async () => {
+    setupMockRequest("https", {
+      headers: { "content-type": "application/json; charset=utf-8" },
+      body: "[]",
+    });
+
+    const result = await ssrfSafeFetch("https://example.com/releases", {
+      contentTypes: ["application/json"],
+    });
+
+    expect(result.body).toBe("[]");
+  });
+
+  it("refuses HTML when the caller asked for JSON only", async () => {
+    setupMockRequest("https", {
+      headers: { "content-type": "text/html" },
+      body: "<html></html>",
+    });
+
+    await expect(
+      ssrfSafeFetch("https://example.com/releases", {
+        contentTypes: ["application/json"],
+      })
+    ).rejects.toMatchObject({ code: "INVALID_CONTENT_TYPE" });
+  });
+});
+
 describe("ssrfSafeFetch - ALLOWED_PRIVATE_HOSTS allowlist", () => {
   beforeEach(() => {
     vi.clearAllMocks();

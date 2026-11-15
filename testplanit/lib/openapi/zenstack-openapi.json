@@ -169470,7 +169470,8 @@
           "WHATS_NEW",
           "RUN_CASE_UNBLOCKED",
           "ALERT_TRIGGERED",
-          "CASES_DRAFTED"
+          "CASES_DRAFTED",
+          "NEW_RELEASE_AVAILABLE"
         ]
       },
       "EnumNotificationTypeNullableListFilter": {

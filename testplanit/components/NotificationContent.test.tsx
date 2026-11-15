@@ -86,6 +86,12 @@ describe("NotificationContent", () => {
         userRegisteredMessageForm:
           "{userName} ({userEmail}) has registered via the registration form",
         viewUserList: "View user list",
+        newReleaseTitle: "TestPlanIt {version} is available",
+        newReleaseMessage:
+          "You are running {version}. See the release notes before upgrading.",
+        newReleaseOnLine:
+          "{version} is the newest release on your current line.",
+        newReleaseNotesLink: "Release notes",
         casesDraftedTitle: "AI-Drafted Test Cases Ready",
         casesDraftedMessage:
           "{count} test cases were drafted for {issueKey} — review for accuracy.",
@@ -274,6 +280,83 @@ describe("NotificationContent", () => {
       expect(screen.getByText("assigned you 5 test cases")).toBeInTheDocument();
       expect(screen.getByText("Sprint 1 Tests")).toBeInTheDocument();
       expect(screen.getByText("2 cases in")).toBeInTheDocument();
+    });
+  });
+
+  describe("New Release Available", () => {
+    const notification = (data: Record<string, unknown>) => ({
+      id: "nr-1",
+      type: "NEW_RELEASE_AVAILABLE",
+      title: "stored title",
+      message: "stored message",
+      data,
+    });
+
+    it("renders both versions and an external link to the release notes", () => {
+      render(
+        <NotificationContent
+          notification={notification({
+            currentVersion: "1.2.0",
+            latestVersion: "1.2.1",
+            releaseUrl:
+              "https://github.com/TestPlanIt/testplanit/releases/tag/v1.2.1",
+          })}
+        />
+      );
+
+      expect(
+        screen.getByText("TestPlanIt 1.2.1 is available")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "You are running 1.2.0. See the release notes before upgrading."
+        )
+      ).toBeInTheDocument();
+      const link = screen.getByRole("link", { name: /Release notes/ });
+      expect(link).toHaveAttribute(
+        "href",
+        "https://github.com/TestPlanIt/testplanit/releases/tag/v1.2.1"
+      );
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    });
+
+    it("adds the newest release on the running line", () => {
+      render(
+        <NotificationContent
+          notification={notification({
+            currentVersion: "1.1.20",
+            latestVersion: "1.2.0",
+            latestOnLineVersion: "1.1.22",
+            releaseUrl: "https://example.com/v1.2.0",
+          })}
+        />
+      );
+
+      expect(
+        screen.getByText("1.1.22 is the newest release on your current line.")
+      ).toBeInTheDocument();
+    });
+
+    it("renders no link for an address that is not https", () => {
+      render(
+        <NotificationContent
+          notification={notification({
+            currentVersion: "1.2.0",
+            latestVersion: "1.2.1",
+            releaseUrl: "javascript:alert(1)",
+          })}
+        />
+      );
+
+      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    });
+
+    it("falls back to the stored text when the versions are missing", () => {
+      render(<NotificationContent notification={notification({})} />);
+
+      expect(screen.getByText("stored title")).toBeInTheDocument();
+      expect(screen.getByText("stored message")).toBeInTheDocument();
     });
   });
 

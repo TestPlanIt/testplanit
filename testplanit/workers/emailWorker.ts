@@ -134,6 +134,14 @@ const processor = async (job: Job) => {
           // Surface the admin user list so the recipient can find the
           // newly-registered user without an extra search step.
           notificationUrl = `${baseUrl}/${urlLocale}/admin/users`;
+        } else if (notification.type === "NEW_RELEASE_AVAILABLE") {
+          // The release notes, on the release source rather than this instance.
+          if (
+            typeof data.releaseUrl === "string" &&
+            data.releaseUrl.startsWith("https://")
+          ) {
+            notificationUrl = data.releaseUrl;
+          }
         } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
           // OAuth re-auth kickoff is an API route — deliberately no locale prefix.
           if (data.provider && data.integrationId) {
@@ -278,6 +286,28 @@ const processor = async (job: Job) => {
               userEmail: data.newUserEmail ?? "",
             }
           );
+        } else if (
+          notification.type === "NEW_RELEASE_AVAILABLE" &&
+          data.latestVersion &&
+          data.currentVersion
+        ) {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.newReleaseTitle",
+            { version: data.latestVersion }
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.newReleaseMessage",
+            { version: data.currentVersion }
+          );
+          if (data.latestOnLineVersion) {
+            translatedMessage += ` ${await getServerTranslation(
+              userLocale,
+              "components.notifications.content.newReleaseOnLine",
+              { version: data.latestOnLineVersion }
+            )}`;
+          }
         } else if (notification.type === "SHARE_LINK_ACCESSED") {
           const viewer =
             data.viewerName ||

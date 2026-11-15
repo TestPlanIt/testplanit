@@ -693,6 +693,50 @@ export function NotificationContent({
     );
   }
 
+  if (notification.type === "NEW_RELEASE_AVAILABLE") {
+    const releaseUrl =
+      typeof data.releaseUrl === "string" &&
+      data.releaseUrl.startsWith("https://")
+        ? data.releaseUrl
+        : null;
+    if (data.latestVersion && data.currentVersion) {
+      return (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium">
+            {t("newReleaseTitle", { version: data.latestVersion })}
+          </h4>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>{t("newReleaseMessage", { version: data.currentVersion })}</p>
+            {data.latestOnLineVersion && (
+              <p>
+                {t("newReleaseOnLine", { version: data.latestOnLineVersion })}
+              </p>
+            )}
+            {releaseUrl && (
+              <div className="flex items-center gap-1">
+                <a
+                  href={releaseUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                >
+                  {t("newReleaseNotesLink")}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-1">
+        <h4 className="text-sm font-medium">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
   if (notification.type === "CASES_DRAFTED") {
     const folderLink =
       data.projectId && data.folderId

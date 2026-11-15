@@ -301,6 +301,8 @@ docker compose top
 docker system df
 ```
 
+A notice in the Administration area tells administrators when a newer release than the running one is published. See [Release Check](/docs/environment-variables#release-check).
+
 If you are updating from a release that bundled MinIO, migrate your files before starting the new version. See [Migrating from MinIO to RustFS](/docs/migrating-from-minio).
 
 ### File Storage Configuration

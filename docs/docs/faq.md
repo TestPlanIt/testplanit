@@ -49,6 +49,8 @@ You have several options:
 
 Pull the latest Docker image or code from the repository and run the database migrations. The application will automatically apply any necessary schema changes on startup.
 
+Administrators are told when a newer release is published: a notification, and a notice in the Administration area that stays until the instance is upgraded. Set `RELEASE_CHECK_ENABLED=false` to turn this off. See [Release Check](/docs/environment-variables#release-check).
+
 ### Why does TestPlanIt ask me to refresh the page?
 
 When TestPlanIt is updated while you have it open, a banner at the top of the page says so. Until you refresh, a page loaded before the update can show empty search results in pickers and fail to save some changes. Select **Refresh** to load the new version. Refreshing discards unsaved changes on the page, so finish or copy them first. If you dismiss the banner, it comes back the next time the page hits the update.

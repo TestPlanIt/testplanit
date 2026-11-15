@@ -76,6 +76,7 @@ export const JOB_REVIEW_REMINDERS = "review-reminders";
 export const JOB_SWEEP_ABANDONED_RUNS = "sweep-abandoned-runs";
 export const JOB_PURGE_STALE_CASE_DRAFTS = "purge-stale-case-drafts";
 export const JOB_SWEEP_REPORT_BUILDER_STATES = "sweep-report-builder-states";
+export const JOB_CHECK_FOR_RELEASES = "check-for-releases";
 
 /** Every queue the workers serve, for the queue alerts' scope picker. */
 export const ALL_QUEUE_NAMES = [

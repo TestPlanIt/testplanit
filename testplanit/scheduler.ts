@@ -23,6 +23,7 @@ import {
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_EVALUATE_SCHEDULED_ALERTS,
   JOB_EVALUATE_HOURLY_ALERTS,
+  JOB_CHECK_FOR_RELEASES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_POLL_ACTIVE_EXECUTIONS,
   JOB_PURGE_STALE_CASE_DRAFTS,
@@ -38,6 +39,7 @@ import {
 // Define the cron schedule (e.g., every day at 3:00 AM server time)
 // Uses standard cron syntax: min hour day(month) month day(week)
 const CRON_SCHEDULE_DAILY_3AM = "0 3 * * *";
+const CRON_SCHEDULE_DAILY_5AM = "0 5 * * *"; // New-release check
 const CRON_SCHEDULE_DAILY_6AM = "0 6 * * *"; // For milestone auto-completion and notifications
 const CRON_SCHEDULE_DAILY_8AM = "0 8 * * *"; // For daily digest emails
 const CRON_SCHEDULE_DAILY_4AM = "0 4 * * *"; // For code repository cache refresh
@@ -281,6 +283,21 @@ async function scheduleJobs() {
       );
     }
 
+    // Look for a newer TestPlanIt release. Instances on shared multi-tenant
+    // workers are upgraded by TestPlanIt, so there is nothing to schedule
+    // there; elsewhere the job itself decides whether the check is enabled.
+    if (!multiTenant) {
+      await forecastQueue.upsertJobScheduler(
+        JOB_CHECK_FOR_RELEASES,
+        { pattern: CRON_SCHEDULE_DAILY_5AM },
+        { name: JOB_CHECK_FOR_RELEASES, data: {} }
+      );
+
+      console.log(
+        `Upserted job scheduler "${JOB_CHECK_FOR_RELEASES}" with pattern "${CRON_SCHEDULE_DAILY_5AM}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+    }
+
     // Purge abandoned case drafts. Daily is ample — the retention window is 30
     // days, so the exact hour a draft ages out is immaterial.
     for (const tenantId of tenantIds) {
@@ -486,6 +503,7 @@ async function scheduleJobs() {
                 JOB_SWEEP_ABANDONED_RUNS,
                 JOB_SWEEP_REPORT_BUILDER_STATES,
                 JOB_PURGE_STALE_CASE_DRAFTS,
+                JOB_CHECK_FOR_RELEASES,
               ],
             },
             { queue: notificationQueue, jobNames: [JOB_SEND_DAILY_DIGEST] },

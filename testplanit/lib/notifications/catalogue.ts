@@ -184,6 +184,12 @@ export const NOTIFICATION_CATALOGUE: readonly NotificationCatalogueEntry[] = [
     audience: "admin",
     optional: true,
   },
+  {
+    type: NotificationType.NEW_RELEASE_AVAILABLE,
+    group: "administration",
+    audience: "admin",
+    optional: true,
+  },
   // Retired
   // AI budget alerts are raised by AI-budget alert rules (ALERT_TRIGGERED)
   // since the #651 follow-up; rows of this type only predate it.

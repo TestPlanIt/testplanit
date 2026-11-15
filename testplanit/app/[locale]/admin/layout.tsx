@@ -1,5 +1,6 @@
 "use client";
 
+import { NewReleaseNotice } from "@/components/admin/NewReleaseNotice";
 import AdminMenu from "@/components/AdminMenu";
 import { Loading } from "@/components/Loading";
 import { useSession } from "next-auth/react";
@@ -32,7 +33,10 @@ export default function AdminLayout(props: any) {
       <div className="sticky top-0 z-10 h-screen w-[53px] md:w-[221px]">
         <AdminMenu />
       </div>
-      <div className="ms-4 w-full overflow-x-hidden">{props.children}</div>
+      <div className="ms-4 w-full overflow-x-hidden">
+        <NewReleaseNotice />
+        {props.children}
+      </div>
     </div>
   );
 }

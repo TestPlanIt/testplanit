@@ -562,6 +562,7 @@ enum NotificationType {
     RUN_CASE_UNBLOCKED
     ALERT_TRIGGERED
     CASES_DRAFTED
+    NEW_RELEASE_AVAILABLE
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
