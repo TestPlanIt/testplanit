@@ -350,6 +350,7 @@
       "resultFields": "Resultaatvelden",
       "displayName": "Weergavenaam",
       "hint": "Tip",
+      "generationGuidance": "AI-generatierichtlijnen",
       "required": "Vereist",
       "restricted": "Beperkt",
       "fieldType": "Veldtype",
@@ -450,7 +451,8 @@
         "addCategory": "Categorie toevoegen",
         "displayName": "Voer de weergavenaam in",
         "systemName": "Voer de systeemnaam in",
-        "hint": "Voer hint in"
+        "hint": "Voer hint in",
+        "generationGuidance": "Vertel de AI wat dit veld betekent en hoe u een waarde kiest"
       },
       "hints": {
         "systemName": "De systeemnaam moet uniek zijn en alleen letters, cijfers en onderstrepingstekens bevatten",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# Actieve uitvoeringen} =1 {# Actieve uitvoeringen} other {# Actieve uitvoeringen}}",
       "automationRunsInProgress": "{count, plural, =0 {# Automatiseringsruns in uitvoering} =1 {# Automatiseringsrun in uitvoering} other {# Automatiseringsruns in uitvoering}}",
       "activeSessions": "{count, plural, =0 {# Actieve sessies} =1 {# Actieve sessie} other {# Actieve sessies}}",
-      "issues": "{count, plural, =0 {# Problemen} =1 {# Problemen} other {# Problemen}}"
-    }
+      "issues": "{count, plural, =0 {# Problemen} =1 {# Problemen} other {# Problemen}}",
+      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+    },
+    "lastActivity": "Laatst actief",
+    "noActivity": "Nog geen teststartactiviteit"
   },
   "users": {
     "description": "Beheer gebruikersaccounts, stel toegangsniveaus tot het systeem in en wijs algemene rollen toe.",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "Nieuwe gebruikersregistraties",
             "description": "Een nieuwe gebruiker meldt zich aan via het formulier, SSO of SAML."
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "Nieuwe TestPlanIt-releases",
+            "description": "Er is een nieuwere versie van TestPlanIt dan de versie die dit exemplaar uitvoert gepubliceerd."
           },
           "ALERT_TRIGGERED": {
             "label": "Waarschuwingen",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version} is beschikbaar. Dit exemplaar voert {currentVersion} uit.",
+      "onLine": "{version} is de nieuwste release op uw huidige lijn.",
+      "releaseNotes": "Releaseopmerkingen",
+      "howToUpgrade": "Hoe u een upgrade uitvoert"
+    },
     "menu": {
       "header": "Voornaamst",
       "fields": "Velden",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) heeft zich geregistreerd via SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) heeft zich geregistreerd via het registratieformulier",
         "viewUserList": "Gebruikerslijst bekijken",
+        "newReleaseTitle": "TestPlanIt {version} is beschikbaar",
+        "newReleaseMessage": "U voert {version} uit. Bekijk de opmerkingen bij de release voordat u een upgrade uitvoert.",
+        "newReleaseOnLine": "{version} is de nieuwste release op uw huidige lijn.",
+        "newReleaseNotesLink": "Releaseopmerkingen",
         "reviewRequestedTitle": "Beoordeling aangevraagd",
         "reviewApprovedTitle": "Beoordeling goedgekeurd",
         "reviewChangesRequestedTitle": "Gevraagde wijzigingen",
@@ -8307,6 +8326,7 @@
       "displayName": "## Weergavenaam\nDit is de voor mensen leesbare naam voor het veld dat aan gebruikers wordt getoond in formulieren en weergaven. Zorg dat deze duidelijk en beschrijvend is.",
       "systemName": "## Systeemnaam\nEen unieke identificatie voor dit veld die intern door het systeem wordt gebruikt (bijvoorbeeld in API-aanroepen en databasequery's). Deze wordt automatisch gegenereerd op basis van de weergavenaam, maar kan worden aangepast. Moet beginnen met een letter. Mag alleen letters, cijfers en onderstrepingstekens bevatten (geen spaties of speciale tekens).",
       "hint": "## Hinttekst (optioneel)\nGeef een korte instructie of voorbeeld dat onder het veld verschijnt om gebruikers te begeleiden. Dit kan de verwachte invoer of opmaak verduidelijken.",
+      "generationGuidance": "## AI-generatierichtlijnen (optioneel)\nInstructies voor de AI wanneer deze testgevallen genereert, verzonden met dit veld telkens wanneer. Zeg wat het veld betekent, welk uiteinde van een schaal het hoogst is en hoe u een waarde kiest. Bijvoorbeeld: \"Kritiek is het hoogst. Gebruik de prioriteit van de bronkwestie als uitgangspunt.\"\n\nIn tegenstelling tot de hint zien testers deze tekst nooit. Het verandert het type of de toegestane opties van het veld niet.",
       "enabled": "## Ingeschakeld\nBepaalt of dit veld actief is en beschikbaar is voor gebruik in sjablonen en testcases. Uitgeschakelde velden zijn verborgen en hun gegevens worden bewaard, maar niet gebruikt.",
       "required": "## Vereist\nAls dit is aangevinkt, moeten gebruikers een waarde voor dit veld opgeven bij het maken of bewerken van een testcase met behulp van een sjabloon die dit veld bevat.",
       "restricted": "## Beperkt\nIndien aangevinkt, kunnen alleen gebruikers met speciale rechten (bijvoorbeeld superadmins of gebruikers met de machtiging 'Case Restricted Fields') de waarde van dit veld bewerken nadat een case is aangemaakt. Andere gebruikers zien het als alleen-lezen. Dit is handig voor velden zoals 'Beoordeeld door' of 'Goedkeuringsdatum' die na een bepaalde fase niet meer door algemene gebruikers mogen worden gewijzigd.",

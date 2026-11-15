@@ -350,6 +350,7 @@
       "resultFields": "결과 필드",
       "displayName": "표시 이름",
       "hint": "힌트",
+      "generationGuidance": "AI 생성 지침",
       "required": "필수의",
       "restricted": "제한된",
       "fieldType": "필드 유형",
@@ -450,7 +451,8 @@
         "addCategory": "카테고리 추가",
         "displayName": "표시 이름을 입력하세요",
         "systemName": "시스템 이름을 입력하세요",
-        "hint": "힌트를 입력하세요"
+        "hint": "힌트를 입력하세요",
+        "generationGuidance": "이 필드의 의미와 값을 선택하는 방법을 AI에 알려주세요"
       },
       "hints": {
         "systemName": "시스템 이름은 고유해야 하며 문자, 숫자 및 밑줄만 포함해야 합니다.",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# 활성 실행} =1 {# 활성 실행} other {# 활성 실행}}",
       "automationRunsInProgress": "{count, plural, =0 {진행 중인 자동화 실행 #개} =1 {진행 중인 자동화 실행 #개} other {진행 중인 자동화 실행 #개}}",
       "activeSessions": "{count, plural, =0 {# 활성 세션} =1 {# 활성 세션} other {# 활성 세션}}",
-      "issues": "{count, plural, =0 {# 문제} =1 {# 문제} other {# 문제}}"
-    }
+      "issues": "{count, plural, =0 {# 문제} =1 {# 문제} other {# 문제}}",
+      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+    },
+    "lastActivity": "최근 활동",
+    "noActivity": "아직 테스트 활동이 없습니다"
   },
   "users": {
     "description": "사용자 계정을 관리하고, 시스템 접근 수준을 설정하고, 전역 역할을 할당할 수 있습니다.",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "신규 사용자 등록",
             "description": "새 사용자가 양식, SSO 또는 SAML을 통해 등록합니다."
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "새로운 TestPlanIt 릴리스",
+            "description": "이 인스턴스가 실행 중인 것보다 새로운 TestPlanIt 릴리스가 게시되었습니다."
           },
           "ALERT_TRIGGERED": {
             "label": "경고",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version}을 사용할 수 있습니다. 이 인스턴스는 {currentVersion}을 실행 중입니다.",
+      "onLine": "{version}은 현재 라인의 최신 릴리스입니다.",
+      "releaseNotes": "릴리스 노트",
+      "howToUpgrade": "업그레이드 방법"
+    },
     "menu": {
       "header": "기본",
       "fields": "전지",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) 님이 SSO를 통해 등록했습니다.",
         "userRegisteredMessageForm": "{userName} ({userEmail}) 님이 등록 양식을 통해 등록했습니다.",
         "viewUserList": "사용자 목록 보기",
+        "newReleaseTitle": "TestPlanIt {version}을 사용할 수 있습니다",
+        "newReleaseMessage": "{version}을 실행 중입니다. 업그레이드하기 전에 릴리스 노트를 참조하세요.",
+        "newReleaseOnLine": "{version}은 현재 라인의 최신 릴리스입니다.",
+        "newReleaseNotesLink": "릴리스 노트",
         "reviewRequestedTitle": "리뷰 요청됨",
         "reviewApprovedTitle": "검토 승인됨",
         "reviewChangesRequestedTitle": "요청된 변경 사항",
@@ -8307,6 +8326,7 @@
       "displayName": "## 표시 이름\n이 이름은 양식 및 보기에서 사용자에게 표시될 필드의 사람이 읽기 쉬운 이름입니다. 명확하고 설명적인 이름으로 지정하세요.",
       "systemName": "## 시스템 이름\n시스템 내부에서 사용되는 고유 식별자입니다(예: API 호출, 데이터베이스 쿼리). 표시 이름에서 자동으로 생성되지만 사용자 지정할 수 있습니다. 문자로 시작해야 하며, 문자, 숫자, 밑줄만 사용할 수 있습니다(공백이나 특수 문자는 사용할 수 없음).",
       "hint": "## 힌트 텍스트 (선택 사항)\n입력란 아래에 표시될 간단한 안내 또는 예시를 제공하여 사용자를 안내합니다. 이를 통해 예상 입력값이나 형식을 명확히 할 수 있습니다.",
+      "generationGuidance": "## AI 생성 지침(선택사항)\n테스트 케이스를 생성할 때 AI에 대한 지침으로, 매번 이 필드와 함께 전송됩니다. 필드의 의미, 척도의 어느 쪽 끝이 가장 높은지, 값을 선택하는 방법을 말합니다. 예: \"중요도(Critical)가 가장 높습니다. 소스 이슈의 우선순위를 기준선으로 사용하세요.\"\n\n힌트와 달리 테스터는 이 텍스트를 볼 수 없습니다. 필드의 유형이나 허용된 옵션을 변경하지 않습니다.",
       "enabled": "## 활성화 여부\n이 필드가 템플릿 및 테스트 케이스에서 사용 가능한지 여부를 결정합니다. 비활성화된 필드는 숨겨지고 데이터는 보존되지만 사용되지 않습니다.",
       "required": "## 필수 항목\n이 항목을 선택하면 사용자는 이 필드가 포함된 템플릿을 사용하여 테스트 케이스를 생성하거나 편집할 때 이 필드에 값을 입력해야 합니다.",
       "restricted": "## 제한됨\n이 옵션을 선택하면 특별 권한(예: 슈퍼 관리자 또는 '케이스 제한 필드' 권한 보유자)이 있는 사용자만 케이스 생성 후 이 필드 값을 편집할 수 있습니다. 다른 사용자는 읽기 전용으로 표시됩니다. 이는 '검토자' 또는 '승인일'과 같이 특정 단계 이후에는 일반 사용자가 변경해서는 안 되는 필드에 유용합니다.",

@@ -350,6 +350,7 @@
       "resultFields": "結果字段",
       "displayName": "顯示名稱",
       "hint": "暗示",
+      "generationGuidance": "AI 生成指引",
       "required": "必需的",
       "restricted": "受限制的",
       "fieldType": "字段類型",
@@ -450,7 +451,8 @@
         "addCategory": "新增類別",
         "displayName": "輸入顯示名稱",
         "systemName": "輸入系統名稱",
-        "hint": "輸入提示"
+        "hint": "輸入提示",
+        "generationGuidance": "告訴 AI 這個欄位的含義以及如何選擇值"
       },
       "hints": {
         "systemName": "系統名稱必須唯一，且只能包含字母、數字和底線。",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# 個活動測試執行} =1 {# 個活動測試執行} other {# 個活動測試執行}}",
       "automationRunsInProgress": "{count, plural, =0 {# 個自動化執行進行中} =1 {# 個自動化執行進行中} other {# 個自動化執行進行中}}",
       "activeSessions": "{count, plural, =0 {# 個活動工作階段} =1 {# 個活動工作階段} other {# 個活動工作階段}}",
-      "issues": "{count, plural, =0 {# 問題} =1 {# 問題} other {# 問題}}"
-    }
+      "issues": "{count, plural, =0 {# 問題} =1 {# 問題} other {# 問題}}",
+      "assignedToYou": "{count, plural, =1 {# 個指派給您的測試案例正在等待} other {# 個指派給您的測試案例正在等待}}"
+    },
+    "lastActivity": "最後活動",
+    "noActivity": "尚無測試活動"
   },
   "users": {
     "description": "管理使用者帳戶，設定係統存取級別，並指派全域角色。",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "新用戶註冊",
             "description": "新用戶透過表單、SSO 或 SAML 註冊。"
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "新的 TestPlanIt 版本發佈",
+            "description": "發佈的 TestPlanIt 版本比此執行個體所執行的版本更新。"
           },
           "ALERT_TRIGGERED": {
             "label": "警報",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version} 可用。此執行個體執行 {currentVersion}。",
+      "onLine": "{version} 是您目前分支上的最新版本。",
+      "releaseNotes": "版本說明",
+      "howToUpgrade": "如何升級"
+    },
     "menu": {
       "header": "主要的",
       "fields": "田野",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) 已透過 SSO 註冊",
         "userRegisteredMessageForm": "{userName} ({userEmail}) 已透過註冊表單註冊",
         "viewUserList": "查看使用者列表",
+        "newReleaseTitle": "TestPlanIt {version} 可用",
+        "newReleaseMessage": "您正在執行 {version}。升級前請查看版本說明。",
+        "newReleaseOnLine": "{version} 是您目前分支上的最新版本。",
+        "newReleaseNotesLink": "版本說明",
         "reviewRequestedTitle": "請求審查",
         "reviewApprovedTitle": "審核已獲批准",
         "reviewChangesRequestedTitle": "請求更改",
@@ -8307,6 +8326,7 @@
       "displayName": "## 顯示名稱\n這是將在表單和檢視中向使用者顯示的欄位的易讀名稱。請確保名稱清晰明了且具有描述性。",
       "systemName": "## 系統名稱\n此欄位的唯一標識符，供系統內部使用（例如，在 API 呼叫、資料庫查詢中）。它將根據顯示名稱自動生成，但可以自訂。必須以字母開頭。只能包含字母、數字和底線（不能包含空格或特殊字元）。",
       "hint": "## 提示文字（選用）\n提供簡短的說明或範例，顯示在欄位下方，以指導使用者。這可以闡明預期的輸入或格式。",
+      "generationGuidance": "## AI 生成指引（選用）\nAI 在生成測試案例時的說明，每次均隨此欄位一起傳送。說明欄位的含義、比例中較高的一端，以及如何選擇值。例如：「關鍵是最高等級。使用來源問題的優先順序作為基準。」\n\n與提示不同的是，測試人員永遠看不到此文字。它不會變更欄位的類型或允許的選項。",
       "enabled": "## 啟用\n決定此欄位是否處於活動狀態，並可在範本和測試案例中使用。禁用的欄位將被隱藏，其資料將被保留但不使用。",
       "required": "## 必填\n如果選中，則在使用包含此欄位的範本建立或編輯測試案例時，使用者必須為此欄位提供值。",
       "restricted": "## 受限\n如果選取此項，則只有擁有特殊權限的使用者（例如超級管理員或擁有「案例受限欄位」權限的使用者）才能在案例建立後編輯此欄位的值。其他用戶將只能讀取此欄位。這對於「審核者」或「批准日期」等欄位非常有用，這些欄位在特定階段之後不應由普通使用者變更。",

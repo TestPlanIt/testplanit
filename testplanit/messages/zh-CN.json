@@ -350,6 +350,7 @@
       "resultFields": "结果字段",
       "displayName": "显示名称",
       "hint": "暗示",
+      "generationGuidance": "AI生成指导",
       "required": "必需的",
       "restricted": "受限制的",
       "fieldType": "字段类型",
@@ -450,7 +451,8 @@
         "addCategory": "添加类别",
         "displayName": "输入显示名称",
         "systemName": "输入系统名称",
-        "hint": "输入提示"
+        "hint": "输入提示",
+        "generationGuidance": "告诉AI此字段的含义以及如何选择值"
       },
       "hints": {
         "systemName": "系统名称必须唯一，且只能包含字母、数字和下划线。",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# 当前运行} =1 {# 当前运行} other {# 当前运行}}",
       "automationRunsInProgress": "{count, plural, =0 {# 个自动化运行正在进行} =1 {# 个自动化运行正在进行} other {# 个自动化运行正在进行}}",
       "activeSessions": "{count, plural, =0 {# 当前会话} =1 {# 当前会话} other {# 当前会话}}",
-      "issues": "{count, plural, =0 {# 问题} =1 {# 问题} other {# 问题}}"
-    }
+      "issues": "{count, plural, =0 {# 问题} =1 {# 问题} other {# 问题}}",
+      "assignedToYou": "{count, plural, =1 {# 个分配给你的测试用例在等待} other {# 个分配给你的测试用例在等待}}"
+    },
+    "lastActivity": "最后活动",
+    "noActivity": "还没有测试活动"
   },
   "users": {
     "description": "管理用户帐户，设置系统访问级别，并分配全局角色。",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "新用户注册",
             "description": "新用户通过表单、SSO 或 SAML 注册。"
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "新的TestPlanIt版本",
+            "description": "此实例运行的TestPlanIt版本比发布的较新版本要旧。"
           },
           "ALERT_TRIGGERED": {
             "label": "警报",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version} 可用。此实例运行 {currentVersion}。",
+      "onLine": "{version} 是你当前分支上的最新版本。",
+      "releaseNotes": "发行说明",
+      "howToUpgrade": "如何升级"
+    },
     "menu": {
       "header": "主要的",
       "fields": "田野",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) 已通过 SSO 注册",
         "userRegisteredMessageForm": "{userName} ({userEmail}) 已通过注册表单注册",
         "viewUserList": "查看用户列表",
+        "newReleaseTitle": "TestPlanIt {version} 可用",
+        "newReleaseMessage": "你正在运行 {version}。升级前请查看发行说明。",
+        "newReleaseOnLine": "{version} 是你当前分支上的最新版本。",
+        "newReleaseNotesLink": "发行说明",
         "reviewRequestedTitle": "请求审查",
         "reviewApprovedTitle": "审核已获批准",
         "reviewChangesRequestedTitle": "请求更改",
@@ -8307,6 +8326,7 @@
       "displayName": "## 显示名称\n这是将在表单和视图中向用户显示的字段的易读名称。请确保名称清晰明了且具有描述性。",
       "systemName": "## 系统名称\n此字段在系统内部使用的唯一标识符（例如，在 API 调用、数据库查询中）。它将根据显示名称自动生成，但可以自定义。必须以字母开头。只能包含字母、数字和下划线（不能包含空格或特殊字符）。",
       "hint": "## 提示文本（可选）\n提供简短的说明或示例，显示在字段下方，以指导用户。这可以阐明预期的输入或格式。",
+      "generationGuidance": "## AI生成指导（可选）\nAI生成测试用例时的说明，随此字段每次发送。说明字段的含义、量表的哪一端最高以及如何选择值。例如：\"严重优先级最高。使用源问题的优先级作为基线。\"\n\n与提示不同，测试人员从不看到此文本。它不会改变字段的类型或允许的选项。",
       "enabled": "## 启用\n确定此字段是否处于活动状态，并可在模板和测试用例中使用。禁用的字段将被隐藏，其数据将被保留但不使用。",
       "required": "## 必填\n如果选中，则用户在使用包含此字段的模板创建或编辑测试用例时，必须为此字段提供值。",
       "restricted": "## 受限\n如果选中此项，则只有拥有特殊权限的用户（例如超级管理员或拥有“案例受限字段”权限的用户）才能在案例创建后编辑此字段的值。其他用户将只能看到此字段。这对于“审核人”或“批准日期”等字段非常有用，这些字段在特定阶段之后不应由普通用户更改。",

@@ -350,6 +350,7 @@
       "resultFields": "Campi risultato",
       "displayName": "Nome da visualizzare",
       "hint": "Suggerimento",
+      "generationGuidance": "Guida per la generazione dell'IA",
       "required": "Necessario",
       "restricted": "Limitato",
       "fieldType": "Tipo di campo",
@@ -450,7 +451,8 @@
         "addCategory": "Aggiungi categoria",
         "displayName": "Inserisci il nome visualizzato",
         "systemName": "Inserisci il nome del sistema",
-        "hint": "Inserisci suggerimento"
+        "hint": "Inserisci suggerimento",
+        "generationGuidance": "Descrivi all'IA cosa significa questo campo e come scegliere un valore"
       },
       "hints": {
         "systemName": "Il nome del sistema deve essere univoco e contenere solo lettere, numeri e caratteri di sottolineatura",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# Corse attive} =1 {# Corse attive} other {# Corse attive}}",
       "automationRunsInProgress": "{count, plural, =0 {# Esecuzioni Automatiche in Corso} =1 {# Esecuzione Automatica in Corso} other {# Esecuzioni Automatiche in Corso}}",
       "activeSessions": "{count, plural, =0 {# Sessioni attive} =1 {# Sessione attiva} other {# Sessioni attive}}",
-      "issues": "{count, plural, =0 {# Problemi} =1 {# Problema} other {# Problemi}}"
-    }
+      "issues": "{count, plural, =0 {# Problemi} =1 {# Problema} other {# Problemi}}",
+      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+    },
+    "lastActivity": "Ultima attività",
+    "noActivity": "Nessuna attività di test ancora"
   },
   "users": {
     "description": "Gestisci gli account utente, imposta i livelli di accesso al sistema e assegna i ruoli globali.",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "Nuove registrazioni di utenti",
             "description": "Un nuovo utente si iscrive tramite il modulo, SSO o SAML."
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "Nuove release di TestPlanIt",
+            "description": "Una release più recente di TestPlanIt rispetto a quella eseguita da questa istanza è stata pubblicata."
           },
           "ALERT_TRIGGERED": {
             "label": "Avvisi",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version} è disponibile. Questa istanza esegue {currentVersion}.",
+      "onLine": "{version} è la release più recente sulla tua linea attuale.",
+      "releaseNotes": "Note di rilascio",
+      "howToUpgrade": "Come eseguire l'upgrade"
+    },
     "menu": {
       "header": "Principale",
       "fields": "Campi",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) si è registrato tramite SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) si è registrato tramite il modulo di registrazione",
         "viewUserList": "Visualizza l'elenco degli utenti",
+        "newReleaseTitle": "TestPlanIt {version} è disponibile",
+        "newReleaseMessage": "Stai eseguendo {version}. Consulta le note di rilascio prima di eseguire l'upgrade.",
+        "newReleaseOnLine": "{version} è la release più recente sulla tua linea attuale.",
+        "newReleaseNotesLink": "Note di rilascio",
         "reviewRequestedTitle": "Revisione richiesta",
         "reviewApprovedTitle": "Revisione approvata",
         "reviewChangesRequestedTitle": "Modifiche richieste",
@@ -8307,6 +8326,7 @@
       "displayName": "## Nome visualizzato\nQuesto è il nome leggibile per il campo che verrà mostrato agli utenti nei moduli e nelle viste. Rendilo chiaro e descrittivo.",
       "systemName": "## Nome del sistema\nIdentificatore univoco per questo campo utilizzato internamente dal sistema (ad esempio, nelle chiamate API, nelle query del database). Verrà generato automaticamente dal Nome visualizzato, ma può essere personalizzato. Deve iniziare con una lettera. Può contenere solo lettere, numeri e caratteri di sottolineatura (nessuno spazio o carattere speciale).",
       "hint": "## Testo suggerimento (facoltativo)\nFornisci una breve istruzione o un esempio che apparirà sotto il campo per guidare gli utenti. Questo può chiarire l'input o la formattazione previsti.",
+      "generationGuidance": "## Guida per la generazione dell'IA (Facoltativo)\nIstruzioni per l'IA quando genera casi di test, inviate con questo campo ogni volta. Descrivi cosa significa il campo, quale estremità di una scala è la più alta e come scegliere un valore. Ad esempio: \"Critical è il più alto. Utilizza la priorità del problema di origine come base.\"\n\nA differenza del suggerimento, i tester non vedono mai questo testo. Non cambia il tipo di campo o le opzioni consentite.",
       "enabled": "## Abilitato\nDetermina se questo campo è attivo e disponibile per l'uso in modelli e casi di test. I campi disabilitati sono nascosti e i relativi dati vengono conservati ma non utilizzati.",
       "required": "## Obbligatorio\nSe selezionato, gli utenti devono fornire un valore per questo campo quando creano o modificano un caso di test utilizzando un modello che include questo campo.",
       "restricted": "## Limitato\nSe selezionato, solo gli utenti con autorizzazioni speciali (ad esempio, Super Admin o coloro che dispongono dell'autorizzazione \"Campi con restrizioni caso\") possono modificare il valore di questo campo una volta creato un caso. Gli altri utenti lo vedranno come di sola lettura. Questa opzione è utile per campi come \"Revisionato da\" o \"Data di approvazione\" che non devono essere modificati dagli utenti generici dopo una certa fase.",

@@ -350,6 +350,7 @@
       "resultFields": "Champs de résultats",
       "displayName": "Nom d'affichage",
       "hint": "Indice",
+      "generationGuidance": "Guidance pour la génération IA",
       "required": "Requis",
       "restricted": "Limité",
       "fieldType": "Type de champ",
@@ -450,7 +451,8 @@
         "addCategory": "Ajouter une catégorie",
         "displayName": "Saisissez le nom d'affichage",
         "systemName": "Saisissez le nom du système",
-        "hint": "Saisissez un indice"
+        "hint": "Saisissez un indice",
+        "generationGuidance": "Dites à l'IA ce que ce champ signifie et comment choisir une valeur"
       },
       "hints": {
         "systemName": "Le nom du système doit être unique et ne contenir que des lettres, des chiffres et des traits de soulignement.",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# Courses actives} =1 {# Course active} other {# Courses actives}}",
       "automationRunsInProgress": "{count, plural, =0 {# exécution automatisée en cours} =1 {# exécution automatisée en cours} other {# exécutions automatisées en cours}}",
       "activeSessions": "{count, plural, =0 {# Sessions actives} =1 {# Session active} other {# Sessions actives}}",
-      "issues": "{count, plural, =0 {# Problèmes} =1 {# Problème} other {# Problèmes}}"
-    }
+      "issues": "{count, plural, =0 {# Problèmes} =1 {# Problème} other {# Problèmes}}",
+      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+    },
+    "lastActivity": "Dernière activité",
+    "noActivity": "Aucune activité de test pour le moment"
   },
   "users": {
     "description": "Gérer les comptes utilisateurs, définir les niveaux d'accès au système et attribuer des rôles globaux.",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "Nouvelles inscriptions d'utilisateur",
             "description": "Un nouvel utilisateur s'inscrit via le formulaire, SSO ou SAML."
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "Nouvelles versions de TestPlanIt",
+            "description": "Une version plus récente de TestPlanIt que celle exécutée par cette instance est publiée."
           },
           "ALERT_TRIGGERED": {
             "label": "Alertes",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version} est disponible. Cette instance exécute {currentVersion}.",
+      "onLine": "{version} est la version la plus récente de votre ligne actuelle.",
+      "releaseNotes": "Notes de version",
+      "howToUpgrade": "Comment mettre à niveau"
+    },
     "menu": {
       "header": "Principal",
       "fields": "Champs",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) s'est enregistré via SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) s'est inscrit via le formulaire d'inscription",
         "viewUserList": "Afficher la liste des utilisateurs",
+        "newReleaseTitle": "TestPlanIt {version} est disponible",
+        "newReleaseMessage": "Vous exécutez {version}. Consultez les notes de version avant de mettre à niveau.",
+        "newReleaseOnLine": "{version} est la version la plus récente de votre ligne actuelle.",
+        "newReleaseNotesLink": "Notes de version",
         "reviewRequestedTitle": "Demande d'avis",
         "reviewApprovedTitle": "Avis approuvé",
         "reviewChangesRequestedTitle": "Modifications demandées",
@@ -8307,6 +8326,7 @@
       "displayName": "## Nom d'affichage\nIl s'agit du nom lisible par l'utilisateur du champ qui sera affiché dans les formulaires et les vues. Choisissez un nom clair et descriptif.",
       "systemName": "## Nom du système\nIdentifiant unique de ce champ utilisé en interne par le système (par exemple, dans les appels d'API et les requêtes de base de données). Il sera généré automatiquement à partir du nom d'affichage, mais peut être personnalisé. Doit commencer par une lettre. Ne peut contenir que des lettres, des chiffres et des traits de soulignement (pas d'espaces ni de caractères spéciaux).",
       "hint": "## Texte d'aide (facultatif)\nFournissez une brève instruction ou un exemple qui apparaîtra sous le champ pour guider les utilisateurs. Cela peut préciser la saisie ou la mise en forme attendue.",
+      "generationGuidance": "## Guidance pour la génération IA (Optionnel)\nInstructions pour l'IA lors de la génération de cas de test, envoyées avec ce champ chaque fois. Dites ce que le champ signifie, quelle extrémité d'une échelle est la plus élevée, et comment choisir une valeur. Par exemple : « Critique est la plus élevée. Utilisez la priorité du problème source comme base de référence. »\n\nContrairement à l'indice, les testeurs ne voient jamais ce texte. Il ne change pas le type du champ ou les options autorisées.",
       "enabled": "## Activé\nDétermine si ce champ est actif et disponible pour une utilisation dans les modèles et les cas de test. Les champs désactivés sont masqués et leurs données sont conservées mais non utilisées.",
       "required": "## Obligatoire\nSi cette option est cochée, les utilisateurs doivent fournir une valeur pour ce champ lors de la création ou de la modification d'un cas de test à l'aide d'un modèle qui inclut ce champ.",
       "restricted": "## Restreint\nSi cette option est activée, seuls les utilisateurs disposant d'autorisations spéciales (par exemple, les super administrateurs ou ceux ayant l'autorisation « Champs restreints des requêtes ») pourront modifier la valeur de ce champ une fois la requête créée. Les autres utilisateurs pourront le consulter en lecture seule. Ceci est utile pour les champs tels que « Révisé par » ou « Date d'approbation » qui ne doivent pas être modifiés par les utilisateurs non experts après une certaine étape.",

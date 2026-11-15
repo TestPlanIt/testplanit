@@ -350,6 +350,7 @@
       "resultFields": "結果フィールド",
       "displayName": "表示名",
       "hint": "ヒント",
+      "generationGuidance": "AI生成ガイダンス",
       "required": "必須",
       "restricted": "制限付き",
       "fieldType": "フィールドタイプ",
@@ -450,7 +451,8 @@
         "addCategory": "カテゴリを追加",
         "displayName": "表示名を入力",
         "systemName": "システム名を入力してください",
-        "hint": "ヒントを入力"
+        "hint": "ヒントを入力",
+        "generationGuidance": "このフィールドが何を意味するか、どのように値を選択するかをAIに指示してください"
       },
       "hints": {
         "systemName": "システム名は一意で、文字、数字、アンダースコアのみで構成されている必要があります",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {アクティブな実行#} =1 {アクティブな実行#} other {アクティブな実行#}}",
       "automationRunsInProgress": "{count, plural, =0 {#件の自動化実行が進行中} =1 {#件の自動化実行が進行中} other {#件の自動化実行が進行中}}",
       "activeSessions": "{count, plural, =0 {アクティブセッション#} =1 {アクティブセッション#} other {アクティブセッション#}}",
-      "issues": "{count, plural, =0 {# 問題} =1 {# 問題} other {# 問題}}"
-    }
+      "issues": "{count, plural, =0 {# 問題} =1 {# 問題} other {# 問題}}",
+      "assignedToYou": "{count, plural, =1 {# テストケースがあなたの割り当てを待機しています} other {# テストケースがあなたの割り当てを待機しています}}"
+    },
+    "lastActivity": "最後のアクティビティ",
+    "noActivity": "テストアクティビティがまだありません"
   },
   "users": {
     "description": "ユーザーアカウントの管理、システムアクセスレベルの設定、グローバルロールの割り当てを行います。",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "新規ユーザー登録",
             "description": "新しいユーザーがフォーム、SSO、またはSAMLを通じてサインアップします。"
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "新しいTestPlanItリリース",
+            "description": "このインスタンスが実行しているものより新しいTestPlanItのリリースが公開されています。"
           },
           "ALERT_TRIGGERED": {
             "label": "アラート",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version}が利用可能です。このインスタンスは{currentVersion}を実行しています。",
+      "onLine": "{version}は現在のラインの最新リリースです。",
+      "releaseNotes": "リリースノート",
+      "howToUpgrade": "アップグレード方法"
+    },
     "menu": {
       "header": "主要",
       "fields": "フィールド",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) は SSO 経由で登録されました",
         "userRegisteredMessageForm": "{userName} ({userEmail}) が登録フォームから登録しました",
         "viewUserList": "ユーザーリストを表示",
+        "newReleaseTitle": "TestPlanIt {version}が利用可能",
+        "newReleaseMessage": "{version}を実行しています。アップグレードする前にリリースノートを確認してください。",
+        "newReleaseOnLine": "{version}は現在のラインの最新リリースです。",
+        "newReleaseNotesLink": "リリースノート",
         "reviewRequestedTitle": "レビュー依頼",
         "reviewApprovedTitle": "レビュー承認済み",
         "reviewChangesRequestedTitle": "変更依頼",
@@ -8307,6 +8326,7 @@
       "displayName": "## 表示名\nこれは、フォームやビューでユーザーに表示されるフィールドの、人間が読める名前です。明確で説明的な名前にしてください。",
       "systemName": "## システム名\nシステム内部（API呼び出し、データベースクエリなど）で使用される、このフィールドの一意の識別子です。表示名から自動生成されますが、カスタマイズも可能です。先頭は文字でなければなりません。文字、数字、アンダースコアのみを使用できます（スペースや特殊文字は使用できません）。",
       "hint": "## ヒントテキスト（オプション）\nユーザーを誘導するために、フィールドの下に表示される短い説明または例を入力します。これにより、想定される入力内容や書式を明確にすることができます。",
+      "generationGuidance": "## AI生成ガイダンス（オプション）\nこのフィールドが生成されるたびに送信される、テストケースを生成するときのAIの指示。フィールドが何を意味するか、スケールのどちらが最も高いか、および値を選択する方法を説明します。例えば：「重大度は最も高い。ソースの問題の優先度をベースラインとして使用します。」\n\nヒントと異なり、テスターはこのテキストを表示することはありません。フィールドの種類または許可されたオプションは変更されません。",
       "enabled": "## 有効\nこのフィールドがアクティブで、テンプレートやテストケースで使用できるかどうかを決定します。無効なフィールドは非表示になり、データは保持されますが使用されません。",
       "required": "## 必須\nチェックされている場合、このフィールドを含むテンプレートを使用してテストケースを作成または編集するときに、ユーザーはこのフィールドに値を入力する必要があります。",
       "restricted": "## 制限\nチェックを入れると、ケース作成後、特別な権限を持つユーザー（例：スーパー管理者または「ケース制限フィールド」権限を持つユーザー）のみがこのフィールドの値を編集できます。他のユーザーには読み取り専用として表示されます。これは、「レビュー担当者」や「承認日」など、特定の段階以降は一般ユーザーが変更できないフィールドに役立ちます。",

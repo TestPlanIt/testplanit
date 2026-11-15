@@ -1,17 +1,11 @@
 "use client";
 
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useAutomationRunCounts } from "~/hooks/useAutomationRunCounts";
+import { useRef, useState } from "react";
+import { useProjectCards } from "~/hooks/useProjectCards";
 import { redirect } from "~/lib/navigation";
-import {
-  ProcessedProject,
-  processProjectsWithEffectiveMembers,
-} from "~/utils/projectUtils";
 
 import { CreateFirstProjectCard } from "@/components/CreateFirstProjectCard";
 import { Loading } from "@/components/Loading";
@@ -28,7 +22,6 @@ import {
 } from "@/components/ui/resizable";
 import { UserDashboard } from "@/components/UserDashboard";
 import { Boxes, ChevronLeft, ChevronRight } from "lucide-react";
-import { apiFetch } from "~/lib/basePath";
 
 type AuthUser = {
   id: string;
@@ -46,133 +39,23 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
   const t = useTranslations();
 
   const { data: session } = useSession();
-  const { data: allUsers, isLoading: isUsersLoading } = useClientQueries(
-    schema
-  ).user.useFindMany({
-    where: { isActive: true, isDeleted: false },
-    select: { id: true, access: true },
-  });
+  const {
+    projects: projectsForCards,
+    members,
+    stats,
+    automationRunCounts,
+    isFetched,
+  } = useProjectCards();
 
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const panelRef = useRef<React.ElementRef<typeof ResizablePanel>>(null);
-  const [projectIssueCounts, setProjectIssueCounts] = useState<
-    Record<number, number>
-  >({});
-  const [isLoadingIssueCounts, setIsLoadingIssueCounts] = useState(false);
 
-  // ZenStack will automatically filter projects based on access rules
-  // This includes explicit assignments AND projects with defaultAccessType: GLOBAL_ROLE
-  const { data: projectsRaw, isLoading: isLoadingProjects } = useClientQueries(
-    schema
-  ).projects.useFindMany(
-    {
-      where: {
-        isDeleted: false,
-      },
-      orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
-      include: {
-        _count: {
-          select: {
-            milestones: { where: { isCompleted: false, isDeleted: false } },
-            testRuns: { where: { isCompleted: false, isDeleted: false } },
-            sessions: { where: { isCompleted: false, isDeleted: false } },
-            repositoryCases: { where: { isDeleted: false } },
-          },
-        },
-        assignedUsers: {
-          where: { user: { isActive: true, isDeleted: false } },
-          select: { userId: true },
-        },
-        groupPermissions: {
-          select: {
-            accessType: true,
-            group: {
-              select: {
-                assignedUsers: {
-                  where: { user: { isActive: true, isDeleted: false } },
-                  select: { userId: true },
-                },
-              },
-            },
-          },
-        },
-        defaultRole: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  const processedProjectsData: ProcessedProject[] = useMemo(
-    () => processProjectsWithEffectiveMembers(projectsRaw as any, allUsers),
-    [projectsRaw, allUsers]
-  );
-
-  const { counts: automationRunCounts } = useAutomationRunCounts(
-    !!session?.user
-  );
-
-  // Fetch accurate issue counts for all projects
-  useEffect(() => {
-    if (!processedProjectsData || processedProjectsData.length === 0) {
-      setProjectIssueCounts({});
-      return;
-    }
-
-    const fetchIssueCounts = async () => {
-      setIsLoadingIssueCounts(true);
-      try {
-        const projectIds = processedProjectsData.map((p) => p.id);
-        const response = await apiFetch("/api/projects/issue-counts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectIds }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setProjectIssueCounts(data.counts || {});
-        }
-      } catch (error) {
-        console.error("Failed to fetch project issue counts:", error);
-      } finally {
-        setIsLoadingIssueCounts(false);
-      }
-    };
-
-    void fetchIssueCounts();
-  }, [processedProjectsData]);
-
-  const projectsForCards = useMemo(() => {
-    return processedProjectsData.map((project: any) => ({
-      ...project,
-      users: project.effectiveUserIds.map((id: string) => ({ userId: id })),
-      _count: {
-        ...project._count,
-        issues: projectIssueCounts[project.id] ?? project._count?.issues ?? 0,
-      },
-    }));
-  }, [processedProjectsData, projectIssueCounts]);
-
-  // Check if projects data has actually loaded (not just loading state)
-  // projectsRaw will be undefined while loading, array when loaded
-  const hasLoadedProjects = projectsRaw !== undefined;
-
-  if (!session || isUsersLoading || isLoadingProjects || !hasLoadedProjects) {
+  if (!session || !isFetched) {
     return <Loading />;
   }
 
-  const projectCount = Array.isArray(projectsForCards)
-    ? projectsForCards.length
-    : 0;
+  const projectCount = projectsForCards.length;
 
   const isAdmin = session.user.access === "ADMIN";
 
@@ -261,12 +144,13 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
                   ) : (
                     <>
                       {showGetStartedPrompt && <CreateFirstProjectCard />}
-                      {projectsForCards?.map((project) => (
+                      {projectsForCards.map((project) => (
                         <ProjectCard
                           key={project.id}
                           project={project}
                           users={project.users}
-                          isLoadingIssueCounts={isLoadingIssueCounts}
+                          members={members}
+                          stats={stats[project.id]}
                           automationRunCount={
                             automationRunCounts[project.id] ?? 0
                           }

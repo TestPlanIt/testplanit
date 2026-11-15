@@ -350,6 +350,7 @@
       "resultFields": "Các trường kết quả",
       "displayName": "Tên hiển thị",
       "hint": "Gợi ý",
+      "generationGuidance": "Hướng dẫn Tạo AI",
       "required": "Yêu cầu",
       "restricted": "Hạn chế",
       "fieldType": "Loại trường",
@@ -450,7 +451,8 @@
         "addCategory": "Thêm danh mục",
         "displayName": "Nhập tên hiển thị",
         "systemName": "Nhập tên hệ thống",
-        "hint": "Nhập gợi ý"
+        "hint": "Nhập gợi ý",
+        "generationGuidance": "Cho AI biết trường này có ý nghĩa gì và cách chọn giá trị"
       },
       "hints": {
         "systemName": "Tên hệ thống phải là duy nhất và chỉ chứa chữ cái, số và dấu gạch dưới.",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# Các lượt chạy đang hoạt động} =1 {# Lượt chạy đang hoạt động} other {# Các lượt chạy đang hoạt động}}",
       "automationRunsInProgress": "{count, plural, =0 {# Lượt chạy tự động đang tiến hành} =1 {# Lượt chạy tự động đang tiến hành} other {# Lượt chạy tự động đang tiến hành}}",
       "activeSessions": "{count, plural, =0 {# Phiên đang hoạt động} =1 {# Phiên đang hoạt động} other {# Phiên đang hoạt động}}",
-      "issues": "{count, plural, =0 {# Vấn đề} =1 {# Vấn đề} other {# Vấn đề}}"
-    }
+      "issues": "{count, plural, =0 {# Vấn đề} =1 {# Vấn đề} other {# Vấn đề}}",
+      "assignedToYou": "{count, plural, =1 {# trường hợp thử nghiệm được giao cho bạn đang chờ} other {# trường hợp thử nghiệm được giao cho bạn đang chờ}}"
+    },
+    "lastActivity": "Hoạt động cuối cùng",
+    "noActivity": "Chưa có hoạt động thử nghiệm nào"
   },
   "users": {
     "description": "Quản lý tài khoản người dùng, thiết lập cấp độ truy cập hệ thống và phân công vai trò toàn cầu.",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "Đăng ký người dùng mới",
             "description": "Một người dùng mới đăng ký thông qua biểu mẫu, SSO hoặc SAML."
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "Phiên bản TestPlanIt mới",
+            "description": "Một phiên bản TestPlanIt mới hơn phiên bản mà instance này chạy đã được xuất bản."
           },
           "ALERT_TRIGGERED": {
             "label": "Cảnh báo",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version} có sẵn. Instance này chạy {currentVersion}.",
+      "onLine": "{version} là phiên bản mới nhất trên dòng hiện tại của bạn.",
+      "releaseNotes": "Ghi chú phát hành",
+      "howToUpgrade": "Cách nâng cấp"
+    },
     "menu": {
       "header": "Chủ yếu",
       "fields": "Các cánh đồng",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) đã đăng ký qua SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) đã đăng ký thông qua mẫu đăng ký",
         "viewUserList": "Xem danh sách người dùng",
+        "newReleaseTitle": "TestPlanIt {version} có sẵn",
+        "newReleaseMessage": "Bạn đang chạy {version}. Xem ghi chú phát hành trước khi nâng cấp.",
+        "newReleaseOnLine": "{version} là phiên bản mới nhất trên dòng hiện tại của bạn.",
+        "newReleaseNotesLink": "Ghi chú phát hành",
         "reviewRequestedTitle": "Yêu cầu xem xét",
         "reviewApprovedTitle": "Đánh giá đã được phê duyệt",
         "reviewChangesRequestedTitle": "Những thay đổi được yêu cầu",
@@ -8307,6 +8326,7 @@
       "displayName": "## Tên hiển thị\nĐây là tên dễ đọc cho trường sẽ được hiển thị cho người dùng trong các biểu mẫu và chế độ xem. Hãy đặt tên rõ ràng và mô tả.",
       "systemName": "## Tên Hệ Thống\nMột mã định danh duy nhất cho trường này được hệ thống sử dụng nội bộ (ví dụ: trong các cuộc gọi API, truy vấn cơ sở dữ liệu). Mã này sẽ được tự động tạo từ Tên Hiển Thị nhưng có thể được tùy chỉnh. Phải bắt đầu bằng một chữ cái. Chỉ có thể chứa chữ cái, số và dấu gạch dưới (không có khoảng trắng hoặc ký tự đặc biệt).",
       "hint": "## Văn bản gợi ý (Tùy chọn)\nCung cấp hướng dẫn ngắn gọn hoặc ví dụ sẽ xuất hiện bên dưới trường để hướng dẫn người dùng. Điều này có thể làm rõ đầu vào hoặc định dạng dự kiến.",
+      "generationGuidance": "## Hướng dẫn Tạo AI (Tùy chọn)\nHướng dẫn cho AI khi nó tạo các trường hợp thử nghiệm, được gửi cùng với trường này mỗi lần. Nêu ý nghĩa của trường, đầu nào của thang đo là cao nhất và cách chọn giá trị. Ví dụ: \"Critical là cao nhất. Sử dụng ưu tiên của vấn đề nguồn làm điểm cơ sở.\"\n\nKhác với gợi ý, những người kiểm thử không bao giờ thấy văn bản này. Nó không thay đổi loại trường hoặc các tùy chọn được phép.",
       "enabled": "## Đã bật\nXác định xem trường này có hoạt động và có sẵn để sử dụng trong các mẫu và trường hợp kiểm thử hay không. Các trường bị vô hiệu hóa sẽ bị ẩn và dữ liệu của chúng được lưu giữ nhưng không được sử dụng.",
       "required": "## Bắt buộc\nNếu được chọn, người dùng phải cung cấp giá trị cho trường này khi tạo hoặc chỉnh sửa trường hợp kiểm thử bằng cách sử dụng mẫu có chứa trường này.",
       "restricted": "## Hạn chế\nNếu được chọn, chỉ những người dùng có quyền đặc biệt (ví dụ: Quản trị viên cấp cao hoặc những người có quyền 'Trường bị hạn chế của trường hợp') mới có thể chỉnh sửa giá trị của trường này sau khi trường hợp được tạo. Người dùng khác sẽ chỉ thấy trường này ở chế độ chỉ đọc. Điều này hữu ích cho các trường như 'Người xem xét' hoặc 'Ngày phê duyệt' mà người dùng thông thường không nên thay đổi sau một giai đoạn nhất định.",

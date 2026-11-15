@@ -104,23 +104,24 @@ Each project is represented by a card with comprehensive information:
 
 - **Visual Indicators**:
   - Project icon with chosen color
-  - Completed projects have a muted appearance
+  - Completed projects have a muted appearance and a **Completed** badge
   - Active projects have a distinct primary-colored border
   - Hover effect with link icon indicator
 
 - **Project Details**:
   - **Project Name**: Displayed prominently (truncated if too long)
-  - **Description**: Short note or description for the project
-  - **Assigned Users**: Visual list of team members assigned to the project
-  - **Created Date**: When the project was created, formatted per your preferences
-  - **Status**: Shows "Active" for ongoing projects or completion date for finished ones
+  - **Description**: Short note or description for the project, on one line (truncated if too long)
+  - **Assigned Users**: Avatars of the team members assigned to the project, on one row. When they do not all fit, a **+N more** button opens the rest of the list.
+  - **Last Activity**: How long ago the latest test result or session result was recorded in the project. Hover over it for the exact date and time in your preferred format. A project with no results shows "No test activity yet". A completed project shows its completion date instead.
 
-- **Project Statistics** (displayed on the card):
+- **Project Statistics** (displayed on the card; a figure is hidden when it is zero):
   - **Test Cases**: Total count of test cases in the repository
   - **Active Milestones**: Count of incomplete milestones
   - **Active Test Runs**: Count of ongoing test runs
+  - **Automation Runs in Progress**: Count of automated runs that are still running
   - **Active Sessions**: Count of active exploratory sessions
-  - **Open Issues**: Count of open issues tracked in the project
+  - **Issues**: Count of issues the project owns, imported, or linked to its test cases, runs, sessions, and results
+  - **Assigned to You**: Count of test cases in active test runs that are assigned to you and do not have a completed status yet. It links to the project's test runs.
 
 ### Interacting with Project Cards
 

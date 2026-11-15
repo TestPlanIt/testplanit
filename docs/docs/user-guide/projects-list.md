@@ -19,7 +19,7 @@ The page is divided into two main areas:
 ## Project Cards
 
 - **Ordering**: Projects are listed with active projects appearing before completed projects. Within these groups, they are sorted alphabetically by name.
-- **Content**: Each card shows the project's icon, name, note, assigned users, creation date, and status (Active or Completed date).
+- **Content**: Each card shows the project's icon, name, note, counts (test cases, milestones, runs, sessions, issues, and test cases assigned to you), assigned users, and its last test activity. A completed project shows a Completed badge and its completion date.
 - **Navigation**: Clicking on any Project Card will navigate you to that project's overview page (e.g., `/projects/overview/[projectId]`).
 
 For more details on the information shown within each card, see the [Dashboard](./dashboard.md#your-projects-right-panel) documentation.

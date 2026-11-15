@@ -350,6 +350,7 @@
       "resultFields": "Pola wyników",
       "displayName": "Nazwa wyświetlana",
       "hint": "Wskazówka",
+      "generationGuidance": "Wskazówki generowania AI",
       "required": "Wymagany",
       "restricted": "Ograniczony",
       "fieldType": "Typ pola",
@@ -450,7 +451,8 @@
         "addCategory": "Dodaj kategorię",
         "displayName": "Wprowadź nazwę wyświetlaną",
         "systemName": "Wprowadź nazwę systemu",
-        "hint": "Wprowadź wskazówkę"
+        "hint": "Wprowadź wskazówkę",
+        "generationGuidance": "Powiedz AI, co oznacza to pole i jak wybrać wartość"
       },
       "hints": {
         "systemName": "Nazwa systemu musi być unikatowa i zawierać wyłącznie litery, cyfry i znaki podkreślenia",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# Aktywne przebiegi} =1 {# Aktywne przebiegi} other {# Aktywne przebiegi}}",
       "automationRunsInProgress": "{count, plural, =0 {# Przebiegów automatyzacji w toku} =1 {# Przebieg automatyzacji w toku} few {# Przebiegi automatyzacji w toku} many {# Przebiegów automatyzacji w toku} other {# Przebiegów automatyzacji w toku}}",
       "activeSessions": "{count, plural, =0 {# Aktywne sesje} =1 {# Aktywna sesja} other {# Aktywne sesje}}",
-      "issues": "{count, plural, =0 {# Problemy} =1 {# Problemy} other {# Problemy}}"
-    }
+      "issues": "{count, plural, =0 {# Problemy} =1 {# Problemy} other {# Problemy}}",
+      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+    },
+    "lastActivity": "Ostatnia aktywność",
+    "noActivity": "Brak aktywności testów"
   },
   "users": {
     "description": "Zarządzaj kontami użytkowników, ustawiaj poziomy dostępu do systemu i przypisuj role globalne.",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "Nowe rejestracje użytkowników",
             "description": "Nowy użytkownik rejestruje się poprzez formularz, SSO lub SAML."
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "Nowe wydania TestPlanIt",
+            "description": "Opublikowano nowszą wersję TestPlanIt niż ta, którą uruchamia ta instancja."
           },
           "ALERT_TRIGGERED": {
             "label": "Alerty",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version} jest dostępny. Ta instancja uruchamia {currentVersion}.",
+      "onLine": "{version} jest najnowszym wydaniem w Twojej bieżącej linii.",
+      "releaseNotes": "Informacje o wydaniu",
+      "howToUpgrade": "Jak uaktualnić"
+    },
     "menu": {
       "header": "Główny",
       "fields": "Pola",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) zarejestrował się za pomocą SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) zarejestrował się poprzez formularz rejestracyjny",
         "viewUserList": "Wyświetl listę użytkowników",
+        "newReleaseTitle": "TestPlanIt {version} jest dostępny",
+        "newReleaseMessage": "Uruchamiasz {version}. Zapoznaj się z informacjami o wydaniu przed uaktualnieniem.",
+        "newReleaseOnLine": "{version} jest najnowszym wydaniem w Twojej bieżącej linii.",
+        "newReleaseNotesLink": "Informacje o wydaniu",
         "reviewRequestedTitle": "Poproszono o recenzję",
         "reviewApprovedTitle": "Recenzja zatwierdzona",
         "reviewChangesRequestedTitle": "Żądane zmiany",
@@ -8307,6 +8326,7 @@
       "displayName": "## Nazwa wyświetlana\nTo czytelna dla człowieka nazwa pola, która będzie wyświetlana użytkownikom w formularzach i widokach. Niech będzie jasna i opisowa.",
       "systemName": "## Nazwa systemu\nUnikalny identyfikator tego pola używany wewnętrznie przez system (np. w wywołaniach API, zapytaniach do bazy danych). Będzie generowany automatycznie z nazwy wyświetlanej, ale można go dostosować. Musi zaczynać się od litery. Może zawierać tylko litery, cyfry i podkreślenia (bez spacji i znaków specjalnych).",
       "hint": "## Tekst podpowiedzi (opcjonalnie)\nPodaj krótką instrukcję lub przykład, który pojawi się pod polem, aby pomóc użytkownikom. Może to wyjaśnić oczekiwane dane wejściowe lub formatowanie.",
+      "generationGuidance": "## Wskazówki generowania AI (opcjonalnie)\nInstrukcje dla AI podczas generowania przypadków testowych, wysyłane z tym polem za każdym razem. Powiedz, co oznacza pole, który koniec skali jest najwyższy i jak wybrać wartość. Na przykład: \"Krytyczne jest najwyższe. Użyj priorytetu źródłowego problemu jako linii bazowej.\"\n\nW przeciwieństwie do podpowiedzi, testery nigdy nie widzą tego tekstu. Nie zmienia typu pola ani dostępnych opcji.",
       "enabled": "## Włączone\nOkreśla, czy to pole jest aktywne i dostępne do użycia w szablonach i przypadkach testowych. Wyłączone pola są ukryte, a ich dane są zachowywane, ale nieużywane.",
       "required": "## Wymagane\nJeśli zaznaczone, użytkownicy muszą podać wartość tego pola podczas tworzenia lub edytowania przypadku testowego przy użyciu szablonu zawierającego to pole.",
       "restricted": "## Ograniczone\nJeśli zaznaczone, tylko użytkownicy ze specjalnymi uprawnieniami (np. superadministratorzy lub osoby z uprawnieniem „Pola ograniczone w sprawie”) mogą edytować wartość tego pola po utworzeniu sprawy. Inni użytkownicy zobaczą ją jako tylko do odczytu. Jest to przydatne w przypadku pól takich jak „Sprawdzone przez” lub „Data zatwierdzenia”, których zwykli użytkownicy nie powinni zmieniać po pewnym etapie.",

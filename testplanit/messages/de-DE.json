@@ -350,6 +350,7 @@
       "resultFields": "Ergebnisfelder",
       "displayName": "Anzeigename",
       "hint": "Hinweis",
+      "generationGuidance": "Anleitung zur KI-Generierung",
       "required": "Erforderlich",
       "restricted": "Eingeschränkt",
       "fieldType": "Feldtyp",
@@ -450,7 +451,8 @@
         "addCategory": "Kategorie hinzufügen",
         "displayName": "Geben Sie den Anzeigenamen ein",
         "systemName": "Systemnamen eingeben",
-        "hint": "Hinweis eingeben"
+        "hint": "Hinweis eingeben",
+        "generationGuidance": "Teilen Sie der KI mit, was dieses Feld bedeutet und wie Sie einen Wert wählen"
       },
       "hints": {
         "systemName": "Der Systemname muss eindeutig sein und darf nur Buchstaben, Zahlen und Unterstriche enthalten.",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# Aktive Läufe} =1 {# Aktiver Lauf} other {# Aktive Läufe}}",
       "automationRunsInProgress": "{count, plural, =0 {# Automatisierungsläufe in Bearbeitung} =1 {# Automatisierungslauf in Bearbeitung} other {# Automatisierungsläufe in Bearbeitung}}",
       "activeSessions": "{count, plural, =0 {# Aktive Sitzungen} =1 {# Aktive Sitzung} other {# Aktive Sitzungen}}",
-      "issues": "{count, plural, =0 {# Tickets} =1 {# Ticket} other {# Tickets}}"
-    }
+      "issues": "{count, plural, =0 {# Tickets} =1 {# Ticket} other {# Tickets}}",
+      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+    },
+    "lastActivity": "Letzte Aktivität",
+    "noActivity": "Noch keine Testaktivität"
   },
   "users": {
     "description": "Benutzerkonten verwalten, Systemzugriffsebenen festlegen und globale Rollen zuweisen.",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "Neue Benutzerregistrierungen",
             "description": "Ein neuer Benutzer meldet sich über das Formular, SSO oder SAML an."
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "Neue TestPlanIt-Versionen",
+            "description": "Eine neuere Version von TestPlanIt als die, unter der diese Instanz läuft, wurde veröffentlicht."
           },
           "ALERT_TRIGGERED": {
             "label": "Warnmeldungen",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version} ist verfügbar. Diese Instanz läuft {currentVersion}.",
+      "onLine": "{version} ist die neueste Version in Ihrer aktuellen Linie.",
+      "releaseNotes": "Versionshinweise",
+      "howToUpgrade": "So führen Sie ein Upgrade durch"
+    },
     "menu": {
       "header": "Hauptsächlich",
       "fields": "Felder",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) hat sich über SSO registriert",
         "userRegisteredMessageForm": "{userName} ({userEmail}) hat sich über das Anmeldeformular registriert",
         "viewUserList": "Benutzerliste anzeigen",
+        "newReleaseTitle": "TestPlanIt {version} ist verfügbar",
+        "newReleaseMessage": "Sie führen {version} aus. Lesen Sie die Versionshinweise vor dem Upgrade.",
+        "newReleaseOnLine": "{version} ist die neueste Version in Ihrer aktuellen Linie.",
+        "newReleaseNotesLink": "Versionshinweise",
         "reviewRequestedTitle": "Überprüfung angefordert",
         "reviewApprovedTitle": "Prüfung genehmigt",
         "reviewChangesRequestedTitle": "Änderungen angefordert",
@@ -8307,6 +8326,7 @@
       "displayName": "## Anzeigename\nDies ist der lesbare Name des Feldes, der Benutzern in Formularen und Ansichten angezeigt wird. Wählen Sie einen klaren und aussagekräftigen Namen.",
       "systemName": "## Systemname\nEin eindeutiger Bezeichner für dieses Feld, der intern vom System verwendet wird (z. B. bei API-Aufrufen und Datenbankabfragen). Er wird automatisch aus dem Anzeigenamen generiert, kann aber angepasst werden. Muss mit einem Buchstaben beginnen. Darf nur Buchstaben, Zahlen und Unterstriche enthalten (keine Leerzeichen oder Sonderzeichen).",
       "hint": "## Hinweistext (optional)\nGeben Sie eine kurze Anweisung oder ein Beispiel ein, das unterhalb des Feldes angezeigt wird, um die Benutzer zu unterstützen. Dies kann die erwartete Eingabe oder Formatierung verdeutlichen.",
+      "generationGuidance": "## Anleitung zur KI-Generierung (Optional)\nAnweisungen für die KI beim Generieren von Testfällen, die bei diesem Feld jedes Mal mitgesendet werden. Geben Sie an, was das Feld bedeutet, welches Ende einer Skala am höchsten ist und wie Sie einen Wert wählen. Beispiel: \"Kritisch ist das Höchste. Verwenden Sie die Priorität des Quellproblems als Grundlage.\"\n\nIm Gegensatz zum Hinweis sehen Tester diesen Text nie. Es ändert nicht den Feldtyp oder die zulässigen Optionen.",
       "enabled": "## Aktiviert\nLegt fest, ob dieses Feld aktiv und für die Verwendung in Vorlagen und Testfällen verfügbar ist. Deaktivierte Felder werden ausgeblendet, ihre Daten bleiben erhalten, werden aber nicht verwendet.",
       "required": "## Erforderlich\nWenn diese Option aktiviert ist, müssen Benutzer beim Erstellen oder Bearbeiten eines Testfalls mithilfe einer Vorlage, die dieses Feld enthält, einen Wert für dieses Feld angeben.",
       "restricted": "## Eingeschränkt\nWenn diese Option aktiviert ist, können nur Benutzer mit speziellen Berechtigungen (z. B. Super-Admins oder Benutzer mit der Berechtigung „Eingeschränkte Felder für Fälle“) den Wert dieses Feldes bearbeiten, sobald ein Fall erstellt wurde. Andere Benutzer sehen es schreibgeschützt. Dies ist nützlich für Felder wie „Geprüft von“ oder „Genehmigungsdatum“, die nach einem bestimmten Stadium nicht mehr von normalen Benutzern geändert werden sollen.",

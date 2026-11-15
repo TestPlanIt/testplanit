@@ -3,11 +3,13 @@ import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
 import { DateFormatter } from "@/components/DateFormatter";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { LastActiveDisplay } from "@/components/LastActiveDisplay";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import type { ProjectCardStats } from "~/lib/services/projectCardStats";
 import type { Projects } from "~/zenstack/models";
 
 import { MemberList } from "@/components/MemberList";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -25,6 +27,7 @@ import {
   LinkIcon,
   ListChecks,
   Milestone,
+  UserCheck,
 } from "lucide-react";
 
 // Define the expected shape of the _count object
@@ -33,14 +36,16 @@ interface ProjectCounts {
   testRuns: number;
   sessions: number;
   repositoryCases: number;
-  issues: number;
 }
 
 interface ProjectCardProps {
   // Include the _count object in the project type
   project: Projects & { _count?: ProjectCounts | null };
   users: { userId: string }[];
-  isLoadingIssueCounts?: boolean;
+  /** Live figures for the project; absent until they have loaded. */
+  stats?: ProjectCardStats;
+  /** People already loaded by the page, for the member avatars. */
+  members?: { id: string; name: string; image: string | null }[];
   /** In-progress automated runs — the same set the project runs page shows
    *  in its "Automation Runs in Progress" card. */
   automationRunCount?: number;
@@ -49,7 +54,8 @@ interface ProjectCardProps {
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   users,
-  isLoadingIssueCounts = false,
+  stats,
+  members,
   automationRunCount = 0,
 }) => {
   const { data: session } = useSession();
@@ -70,7 +76,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const runCount = project._count?.testRuns ?? 0;
   const sessionCount = project._count?.sessions ?? 0;
   const testCaseCount = project._count?.repositoryCases ?? 0;
-  const issueCount = project._count?.issues ?? 0;
+  const issueCount = stats?.issues ?? 0;
+  const pendingCount = stats?.myPending ?? 0;
 
   return (
     <Card
@@ -86,12 +93,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <ProjectIcon iconUrl={project.iconUrl} height={25} width={25} />
             <div className="truncate">{project.name}</div>
             <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover/title:opacity-100" />
+            {project.isCompleted && (
+              <Badge
+                variant="secondary"
+                className="ms-auto shrink-0"
+                data-testid="project-completed-badge"
+              >
+                {t("common.fields.completed")}
+              </Badge>
+            )}
           </Link>
         </CardTitle>
         {project.note && (
-          <CardDescription className="h-5 overflow-hidden text-ellipsis">
-            {project.note}
-          </CardDescription>
+          <CardDescription className="truncate">{project.note}</CardDescription>
         )}
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
@@ -105,7 +119,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: testCaseCount,
               })}
             >
-              <ListChecks className="mt-1 h-4 w-4 text-muted-foreground" />
+              <ListChecks className="h-4 w-4 text-muted-foreground" />
               <span>{testCaseCount.toLocaleString(locale)}</span>
             </Link>
           )}
@@ -117,7 +131,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: milestoneCount,
               })}
             >
-              <Milestone className="mt-1 h-4 w-4 text-muted-foreground" />
+              <Milestone className="h-4 w-4 text-muted-foreground" />
               <span>{milestoneCount.toLocaleString(locale)}</span>
             </Link>
           )}
@@ -129,7 +143,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: runCount,
               })}
             >
-              <CirclePlay className="mt-1 h-4 w-4 text-muted-foreground" />
+              <CirclePlay className="h-4 w-4 text-muted-foreground" />
               <span>{runCount.toLocaleString(locale)}</span>
             </Link>
           )}
@@ -141,7 +155,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: automationRunCount,
               })}
             >
-              <Bot className="mt-1 h-4 w-4 text-muted-foreground" />
+              <Bot className="h-4 w-4 text-muted-foreground" />
               <span>{automationRunCount.toLocaleString(locale)}</span>
             </Link>
           )}
@@ -153,45 +167,40 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 count: sessionCount,
               })}
             >
-              <Compass className="mt-1 h-4 w-4 text-muted-foreground" />
+              <Compass className="h-4 w-4 text-muted-foreground" />
               <span>{sessionCount.toLocaleString(locale)}</span>
             </Link>
           )}
-          {isLoadingIssueCounts ? (
-            <div className="flex items-center gap-1">
-              <Bug className="mt-1 h-4 w-4 text-muted-foreground" />
-              <LoadingSpinner className="ms-1 h-2 w-2 text-muted-foreground" />
-            </div>
-          ) : (
-            issueCount > 0 && (
-              <Link
-                href={`/projects/issues/${project.id}`}
-                className="flex items-center gap-1"
-                title={t("home.counts.issues", {
-                  count: issueCount,
-                })}
-              >
-                <Bug className="mt-1 h-4 w-4 text-muted-foreground" />
-                <span>{issueCount.toLocaleString(locale)}</span>
-              </Link>
-            )
+          {issueCount > 0 && (
+            <Link
+              href={`/projects/issues/${project.id}`}
+              className="flex items-center gap-1"
+              title={t("home.counts.issues", {
+                count: issueCount,
+              })}
+            >
+              <Bug className="h-4 w-4 text-muted-foreground" />
+              <span>{issueCount.toLocaleString(locale)}</span>
+            </Link>
+          )}
+          {pendingCount > 0 && (
+            <Link
+              href={`/projects/runs/${project.id}`}
+              className="flex items-center gap-1 font-medium text-primary"
+              title={t("home.counts.assignedToYou", {
+                count: pendingCount,
+              })}
+              data-testid="project-pending-count"
+            >
+              <UserCheck className="h-4 w-4" />
+              <span>{pendingCount.toLocaleString(locale)}</span>
+            </Link>
           )}
         </div>
-        <MemberList users={users} maxUsers={10} />
+        <MemberList users={users} maxUsers={10} directory={members} />
       </CardContent>
-      <CardFooter className="grid grid-cols-1 items-end text-xs text-muted-foreground">
-        <div>
-          {t("common.fields.created")}:{" "}
-          {project.createdAt && (
-            <DateFormatter
-              date={project.createdAt}
-              formatString={session?.user.preferences?.dateFormat}
-              timezone={session?.user.preferences?.timezone}
-            />
-          )}
-        </div>
-        <div>{project.isCompleted ? "" : t("projects.status.active")}</div>
-        {project.completedAt && (
+      <CardFooter className="text-xs text-muted-foreground">
+        {project.isCompleted && project.completedAt ? (
           <div>
             {t("common.fields.completed")}:{" "}
             <DateFormatter
@@ -200,6 +209,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               timezone={session?.user.preferences?.timezone}
             />
           </div>
+        ) : stats?.lastActivityAt ? (
+          <div
+            className="flex items-center gap-1"
+            data-testid="project-last-activity"
+          >
+            {t("home.lastActivity")}
+            <LastActiveDisplay date={stats.lastActivityAt} />
+          </div>
+        ) : (
+          stats && <div>{t("home.noActivity")}</div>
         )}
       </CardFooter>
     </Card>

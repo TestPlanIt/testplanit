@@ -1,28 +1,35 @@
-import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
-import { authOptions } from "~/server/auth";
 
-export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+export interface ProjectCardStats {
+  /** Issues the project owns, imported, or has linked to anything in it. */
+  issues: number;
+  /** When a test or session result was last recorded, as an ISO timestamp. */
+  lastActivityAt: string | null;
+  /** Unfinished run cases in active runs that are assigned to the viewer. */
+  myPending: number;
+}
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+function emptyStats(): ProjectCardStats {
+  return { issues: 0, lastActivityAt: null, myPending: 0 };
+}
 
-  try {
-    const body = await request.json();
-    const { projectIds } = body as { projectIds: number[] };
+/**
+ * Live figures for the project cards on the home and projects pages, for
+ * every project in `projectIds`.
+ *
+ * Reads past access policies, so the caller passes only projects the viewer
+ * is allowed to read.
+ */
+export async function getProjectCardStats(
+  projectIds: number[],
+  viewerId: string
+): Promise<Record<number, ProjectCardStats>> {
+  const stats: Record<number, ProjectCardStats> = {};
+  for (const id of projectIds) stats[id] = emptyStats();
+  if (projectIds.length === 0) return stats;
 
-    if (!Array.isArray(projectIds) || projectIds.length === 0) {
-      return NextResponse.json({ counts: {} });
-    }
-
-    // Use a single optimized query with UNION to find all issues related to projects
-    // This is much faster than N separate queries with complex OR conditions
-    const results = await baseDb.$queryRaw<
-      { projectId: number; issueCount: bigint }[]
-    >`
+  const [issueRows, activityRows, pendingRows] = await Promise.all([
+    baseDb.$queryRaw<{ projectId: number; issueCount: bigint }[]>`
       SELECT
         project_id as "projectId",
         COUNT(DISTINCT issue_id) as "issueCount"
@@ -118,30 +125,63 @@ export async function POST(request: Request) {
           AND tr."projectId" = ANY(${projectIds}::int[])
       ) AS all_issues
       GROUP BY project_id
-    `;
+    `,
+    baseDb.$queryRaw<{ projectId: number; lastActivityAt: Date | null }[]>`
+        SELECT activity."projectId", MAX(activity.at) AS "lastActivityAt"
+        FROM (
+          SELECT tr."projectId", MAX(r."executedAt") AS at
+          FROM "TestRunResults" r
+          INNER JOIN "TestRuns" tr ON tr.id = r."testRunId"
+          WHERE r."isDeleted" = false
+            AND tr."isDeleted" = false
+            AND tr."projectId" = ANY(${projectIds}::int[])
+          GROUP BY tr."projectId"
 
-    // Convert bigint to number and create the counts map
-    const countsMap = results.reduce(
-      (acc, item) => {
-        acc[item.projectId] = Number(item.issueCount);
-        return acc;
-      },
-      {} as Record<number, number>
-    );
+          UNION ALL
 
-    // Ensure all requested projectIds are in the result (with 0 if no issues)
-    projectIds.forEach((projectId) => {
-      if (!(projectId in countsMap)) {
-        countsMap[projectId] = 0;
-      }
-    });
+          SELECT s."projectId", MAX(sr."createdAt") AS at
+          FROM "SessionResults" sr
+          INNER JOIN "Sessions" s ON s.id = sr."sessionId"
+          WHERE sr."isDeleted" = false
+            AND s."isDeleted" = false
+            AND s."projectId" = ANY(${projectIds}::int[])
+          GROUP BY s."projectId"
+        ) AS activity
+        GROUP BY activity."projectId"
+      `,
+    baseDb.$queryRaw<{ projectId: number; pending: bigint }[]>`
+        SELECT tr."projectId", COUNT(*) AS pending
+        FROM "TestRunCases" trc
+        INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId"
+        INNER JOIN "EffectiveCaseStatus" ecs ON ecs."testRunCaseId" = trc.id
+        LEFT JOIN "Status" s ON s.id = ecs."statusId"
+        WHERE trc."isDeleted" = false
+          AND trc."assignedToId" = ${viewerId}
+          AND COALESCE(s."isCompleted", false) = false
+          AND tr."isDeleted" = false
+          AND tr."isCompleted" = false
+          AND tr."projectId" = ANY(${projectIds}::int[])
+        GROUP BY tr."projectId"
+      `,
+  ]);
 
-    return NextResponse.json({ counts: countsMap });
-  } catch (error) {
-    console.error("Error fetching project issue counts:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch project issue counts" },
-      { status: 500 }
-    );
+  for (const row of issueRows) {
+    if (stats[row.projectId])
+      stats[row.projectId].issues = Number(row.issueCount);
   }
+
+  for (const row of activityRows) {
+    if (stats[row.projectId] && row.lastActivityAt) {
+      stats[row.projectId].lastActivityAt = new Date(
+        row.lastActivityAt
+      ).toISOString();
+    }
+  }
+
+  for (const row of pendingRows) {
+    if (stats[row.projectId])
+      stats[row.projectId].myPending = Number(row.pending);
+  }
+
+  return stats;
 }

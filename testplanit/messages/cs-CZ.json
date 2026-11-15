@@ -350,6 +350,7 @@
       "resultFields": "Pole výsledku",
       "displayName": "Zobrazovaný název",
       "hint": "Nápověda",
+      "generationGuidance": "Pokyny pro generování AI",
       "required": "Povinné",
       "restricted": "Omezeno",
       "fieldType": "Typ pole",
@@ -450,7 +451,8 @@
         "addCategory": "Přidat kategorii",
         "displayName": "Zadejte zobrazovaný název",
         "systemName": "Zadejte systémový název",
-        "hint": "Zadejte nápovědu"
+        "hint": "Zadejte nápovědu",
+        "generationGuidance": "Řekněte AI, co toto pole znamená a jak vybrat hodnotu"
       },
       "hints": {
         "systemName": "Systémový název musí být jedinečný a obsahovat pouze písmena, čísla a podtržítka",
@@ -2931,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# aktivních běhů} =1 {# aktivní běh} other {# aktivních běhů}}",
       "automationRunsInProgress": "{count, plural, =0 {# probíhajících automatizovaných běhů} =1 {# probíhající automatizovaný běh} few {# probíhající automatizované běhy} many {# probíhajícího automatizovaného běhu} other {# probíhajících automatizovaných běhů}}",
       "activeSessions": "{count, plural, =0 {# aktivních relací} =1 {# aktivní relace} other {# aktivních relací}}",
-      "issues": "{count, plural, =0 {# problémů} =1 {# problém} other {# problémů}}"
-    }
+      "issues": "{count, plural, =0 {# problémů} =1 {# problém} other {# problémů}}",
+      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+    },
+    "lastActivity": "Poslední aktivita",
+    "noActivity": "Zatím žádná testovací aktivita"
   },
   "users": {
     "description": "Spravujte uživatelské účty, nastavujte úrovně systémového přístupu a přiřazujte globální role.",
@@ -3088,6 +3093,10 @@
           "USER_REGISTERED": {
             "label": "Nové registrace uživatelů",
             "description": "Nový uživatel se zaregistruje pomocí formuláře, SSO nebo SAML."
+          },
+          "NEW_RELEASE_AVAILABLE": {
+            "label": "Nové verze TestPlanItu",
+            "description": "Je publikována novější verze TestPlanItu, než je ta, kterou tato instance spouští."
           },
           "ALERT_TRIGGERED": {
             "label": "Upozornění",
@@ -4791,6 +4800,12 @@
     }
   },
   "admin": {
+    "newRelease": {
+      "available": "TestPlanIt {version} je dostupný. Tato instance spouští {currentVersion}.",
+      "onLine": "{version} je nejnovější verze na vaší aktuální linii.",
+      "releaseNotes": "Poznámky k verzi",
+      "howToUpgrade": "Jak upgradovat"
+    },
     "menu": {
       "header": "Hlavní",
       "fields": "Pole",
@@ -7215,6 +7230,10 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) se zaregistroval přes SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) se zaregistroval prostřednictvím registračního formuláře",
         "viewUserList": "Zobrazit seznam uživatelů",
+        "newReleaseTitle": "TestPlanIt {version} je dostupný",
+        "newReleaseMessage": "Spouštíte {version}. Před upgradem si prohlédněte poznámky k verzi.",
+        "newReleaseOnLine": "{version} je nejnovější verze na vaší aktuální linii.",
+        "newReleaseNotesLink": "Poznámky k verzi",
         "reviewRequestedTitle": "Vyžádána revize",
         "reviewApprovedTitle": "Revize schválena",
         "reviewChangesRequestedTitle": "Vyžádány změny",
@@ -8307,6 +8326,7 @@
       "displayName": "## Zobrazovaný název\nJedná se o srozumitelný název pole, který se zobrazí uživatelům ve formulářích a zobrazeních. Zvolte jej jasný a výstižný.",
       "systemName": "## Systémový název\nJedinečný identifikátor tohoto pole používaný interně systémem (např. ve voláních API, databázových dotazech). Bude automaticky vygenerován ze zobrazovaného názvu, ale lze jej upravit. Musí začínat písmenem. Může obsahovat pouze písmena, čísla a podtržítka (žádné mezery ani speciální znaky).",
       "hint": "## Nápovědný text (volitelné)\nUveďte krátkou instrukci nebo příklad, který se zobrazí pod polem a pomůže uživatelům. Může to objasnit očekávaný vstup nebo formátování.",
+      "generationGuidance": "## Pokyny pro generování AI (Nepovinné)\nPokyny pro AI při generování testovacích případů, které se odesílají s tímto polem pokaždé. Vysvětlete, co pole znamená, který konec stupnice je nejvyšší a jak vybrat hodnotu. Například: \"Kritické je nejvyšší. Jako základnu použijte prioritu zdrojového problému.\"\n\nNa rozdíl od nápovědy tento text testeři nikdy nevidí. Nemění typ pole ani povolené možnosti.",
       "enabled": "## Povoleno\nUrčuje, zda je toto pole aktivní a dostupné pro použití v šablonách a testovacích případech. Zakázaná pole jsou skrytá a jejich data jsou zachována, ale nepoužívají se.",
       "required": "## Povinné\nPokud je zaškrtnuto, musí uživatelé při vytváření nebo úpravě testovacího případu pomocí šablony obsahující toto pole zadat hodnotu.",
       "restricted": "## Omezené\nPokud je zaškrtnuto, mohou hodnotu tohoto pole po vytvoření případu upravovat pouze uživatelé se speciálními oprávněními (např. superadministrátoři nebo uživatelé s oprávněním 'Omezená pole případu'). Ostatní uživatelé jej uvidí jako pouze pro čtení. To je užitečné pro pole jako 'Zkontroloval' nebo 'Datum schválení', která by běžní uživatelé neměli po určité fázi měnit.",

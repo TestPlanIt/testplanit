@@ -1,142 +1,28 @@
 "use client";
 
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
-import { useAutomationRunCounts } from "~/hooks/useAutomationRunCounts";
+import { useEffect } from "react";
+import { useProjectCards } from "~/hooks/useProjectCards";
 import { useRouter } from "~/lib/navigation";
-import {
-  ProcessedProject,
-  processProjectsWithEffectiveMembers,
-} from "~/utils/projectUtils";
 
 import { Loading as LoadingComponent } from "@/components/Loading";
 import { NoProjectsCard } from "@/components/NoProjectsCard";
 import { ProjectCard } from "@/components/ProjectCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Boxes } from "lucide-react";
-import { apiFetch } from "~/lib/basePath";
 
 const Projects = () => {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const t = useTranslations();
-  const [projectIssueCounts, setProjectIssueCounts] = useState<
-    Record<number, number>
-  >({});
-  const [isLoadingIssueCounts, setIsLoadingIssueCounts] = useState(false);
-
-  const { data: allUsers } = useClientQueries(schema).user.useFindMany({
-    where: { isActive: true, isDeleted: false },
-    select: { id: true, access: true },
-  });
-
-  const { counts: automationRunCounts } = useAutomationRunCounts(
-    !!session?.user
-  );
-
-  const { data: projectsRaw, isFetched } = useClientQueries(
-    schema
-  ).projects.useFindMany(
-    {
-      where: {
-        isDeleted: false,
-      },
-      orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
-      include: {
-        _count: {
-          select: {
-            milestones: { where: { isCompleted: false, isDeleted: false } },
-            testRuns: { where: { isCompleted: false, isDeleted: false } },
-            sessions: { where: { isCompleted: false, isDeleted: false } },
-            repositoryCases: { where: { isDeleted: false } },
-          },
-        },
-        assignedUsers: {
-          where: { user: { isActive: true, isDeleted: false } },
-          select: { userId: true },
-        },
-        groupPermissions: {
-          select: {
-            accessType: true,
-            group: {
-              select: {
-                assignedUsers: {
-                  where: { user: { isActive: true, isDeleted: false } },
-                  select: { userId: true },
-                },
-              },
-            },
-          },
-        },
-        defaultRole: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  // Only process projects data if it's actually loaded
-  const processedProjectsData: ProcessedProject[] | undefined = useMemo(
-    () =>
-      projectsRaw
-        ? processProjectsWithEffectiveMembers(projectsRaw as any, allUsers)
-        : undefined,
-    [projectsRaw, allUsers]
-  );
-
-  // Fetch accurate issue counts for all projects
-  useEffect(() => {
-    if (!processedProjectsData || processedProjectsData.length === 0) {
-      setProjectIssueCounts({});
-      return;
-    }
-
-    const fetchIssueCounts = async () => {
-      setIsLoadingIssueCounts(true);
-      try {
-        const projectIds = processedProjectsData.map((p) => p.id);
-        const response = await apiFetch("/api/projects/issue-counts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectIds }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setProjectIssueCounts(data.counts || {});
-        }
-      } catch (error) {
-        console.error("Failed to fetch project issue counts:", error);
-      } finally {
-        setIsLoadingIssueCounts(false);
-      }
-    };
-
-    void fetchIssueCounts();
-  }, [processedProjectsData]);
-
-  const projectsForCards = useMemo(
-    () =>
-      processedProjectsData?.map((project) => ({
-        ...project,
-        users: project.effectiveUserIds.map((id) => ({ userId: id })),
-        _count: {
-          ...project._count,
-          issues: projectIssueCounts[project.id] ?? project._count?.issues ?? 0,
-        },
-      })) ?? undefined,
-    [processedProjectsData, projectIssueCounts]
-  );
+  const {
+    projects: projectsForCards,
+    members,
+    stats,
+    automationRunCounts,
+    isFetched,
+  } = useProjectCards();
 
   useEffect(() => {
     if (sessionStatus !== "loading" && !session?.user) {
@@ -151,7 +37,7 @@ const Projects = () => {
   }
 
   // Now we know the data has been fetched, check if we have projects
-  const projectCount = projectsForCards?.length ?? 0;
+  const projectCount = projectsForCards.length;
 
   // Show NoProjectsCard only after we know the fetch completed
   if (projectCount === 0) {
@@ -177,12 +63,13 @@ const Projects = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {projectsForCards?.map((project) => (
+            {projectsForCards.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
                 users={project.users}
-                isLoadingIssueCounts={isLoadingIssueCounts}
+                members={members}
+                stats={stats[project.id]}
                 automationRunCount={automationRunCounts[project.id] ?? 0}
               />
             ))}

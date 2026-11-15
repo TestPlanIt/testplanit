@@ -2933,8 +2933,11 @@
       "activeRuns": "{count, plural, =0 {# Active Runs} =1 {# Active Run} other {# Active Runs}}",
       "automationRunsInProgress": "{count, plural, =0 {# Automation Runs in Progress} =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
       "activeSessions": "{count, plural, =0 {# Active Sessions} =1 {# Active Session} other {# Active Sessions}}",
-      "issues": "{count, plural, =0 {# Issues} =1 {# Issue} other {# Issues}}"
-    }
+      "issues": "{count, plural, =0 {# Issues} =1 {# Issue} other {# Issues}}",
+      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+    },
+    "lastActivity": "Last activity",
+    "noActivity": "No test activity yet"
   },
   "users": {
     "description": "Manage user accounts, set system access levels, and assign global roles.",

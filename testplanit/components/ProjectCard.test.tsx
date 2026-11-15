@@ -41,9 +41,9 @@ vi.mock("@/components/DateFormatter", () => ({
   ),
 }));
 
-vi.mock("@/components/LoadingSpinner", () => ({
-  default: ({ className }: any) => (
-    <span data-testid="loading-spinner" className={className} />
+vi.mock("@/components/LastActiveDisplay", () => ({
+  LastActiveDisplay: ({ date }: any) => (
+    <span data-testid="last-active">{String(date)}</span>
   ),
 }));
 
@@ -55,11 +55,12 @@ vi.mock("@/components/ProjectIcon", () => ({
 
 // Mirrors the real MemberList: one profile link per displayed avatar.
 vi.mock("@/components/MemberList", () => ({
-  MemberList: ({ users, maxUsers }: any) => (
+  MemberList: ({ users, maxUsers, directory }: any) => (
     <div
       data-testid="member-list"
       data-users={users.length}
       data-max={maxUsers}
+      data-directory={directory ? directory.length : "none"}
     >
       {users.map((u: any) => (
         <a
@@ -106,6 +107,7 @@ vi.mock("@/components/ui/card", () => ({
   ),
 }));
 
+import type { ProjectCardStats } from "~/lib/services/projectCardStats";
 import { ProjectCard } from "./ProjectCard";
 
 const mockSession = {
@@ -126,6 +128,15 @@ const baseProject = {
 } as any;
 
 const mockUsers = [{ userId: "user-1" }, { userId: "user-2" }];
+
+function stats(overrides: Partial<ProjectCardStats> = {}): ProjectCardStats {
+  return {
+    issues: 0,
+    lastActivityAt: null,
+    myPending: 0,
+    ...overrides,
+  };
+}
 
 beforeEach(() => {
   mockPush.mockReset();
@@ -195,10 +206,15 @@ describe("ProjectCard", () => {
         testRuns: 5,
         sessions: 2,
         repositoryCases: 10,
-        issues: 1,
       },
     };
-    render(<ProjectCard project={project} users={mockUsers} />);
+    render(
+      <ProjectCard
+        project={project}
+        users={mockUsers}
+        stats={stats({ issues: 1 })}
+      />
+    );
 
     expect(screen.getByText("3")).toBeDefined(); // milestones
     expect(screen.getByText("5")).toBeDefined(); // testRuns
@@ -215,7 +231,6 @@ describe("ProjectCard", () => {
         testRuns: 0,
         sessions: 0,
         repositoryCases: 0,
-        issues: 0,
       },
     };
     // No members, so the only possible links are the title and the counts
@@ -245,53 +260,46 @@ describe("ProjectCard", () => {
     expect(links).toHaveLength(1);
   });
 
-  it("shows loading spinner for issues when isLoadingIssueCounts=true", () => {
-    const project = {
-      ...baseProject,
-      _count: {
-        milestones: 0,
-        testRuns: 0,
-        sessions: 0,
-        repositoryCases: 0,
-        issues: 5,
-      },
-    };
+  it("renders the issue count from the stats, linked to the issues page", () => {
     render(
       <ProjectCard
-        project={project}
-        users={mockUsers}
-        isLoadingIssueCounts={true}
+        project={baseProject}
+        users={[]}
+        stats={stats({ issues: 7 })}
       />
     );
 
-    // Loading spinner should be shown instead of the issue count link
-    expect(screen.getByTestId("loading-spinner")).toBeDefined();
-    // The issue count should not render as a link
-    const issueLink = screen.queryByRole("link", { name: /5/ });
-    expect(issueLink).toBeNull();
+    expect(screen.getByText("7").closest("a")).toHaveAttribute(
+      "href",
+      "/projects/issues/1"
+    );
   });
 
-  it("renders issue count link when isLoadingIssueCounts=false and issueCount > 0", () => {
-    const project = {
-      ...baseProject,
-      _count: {
-        milestones: 0,
-        testRuns: 0,
-        sessions: 0,
-        repositoryCases: 0,
-        issues: 7,
-      },
-    };
+  it("renders no issue count before the stats have loaded", () => {
+    render(<ProjectCard project={baseProject} users={[]} />);
+
+    expect(screen.queryAllByRole("link")).toHaveLength(1);
+  });
+
+  it("shows what is assigned to the viewer, linked to the runs page", () => {
     render(
       <ProjectCard
-        project={project}
-        users={mockUsers}
-        isLoadingIssueCounts={false}
+        project={baseProject}
+        users={[]}
+        stats={stats({ myPending: 12 })}
       />
     );
 
-    expect(screen.queryByTestId("loading-spinner")).toBeNull();
-    expect(screen.getByText("7")).toBeDefined();
+    const pending = screen.getByTestId("project-pending-count");
+    expect(pending).toHaveTextContent("12");
+    expect(pending).toHaveAttribute("href", "/projects/runs/1");
+    expect(pending).toHaveAttribute("title", "assignedToYou");
+  });
+
+  it("hides the assigned count when nothing is waiting on the viewer", () => {
+    render(<ProjectCard project={baseProject} users={[]} stats={stats()} />);
+
+    expect(screen.queryByTestId("project-pending-count")).toBeNull();
   });
 
   it("renders the automation run count after the test run count", () => {
@@ -302,7 +310,6 @@ describe("ProjectCard", () => {
         testRuns: 5,
         sessions: 0,
         repositoryCases: 0,
-        issues: 0,
       },
     };
     render(
@@ -335,7 +342,6 @@ describe("ProjectCard", () => {
         testRuns: 5,
         sessions: 0,
         repositoryCases: 0,
-        issues: 0,
       },
     };
     const { rerender } = render(
@@ -390,31 +396,94 @@ describe("ProjectCard", () => {
     expect(memberList.getAttribute("data-users")).toBe("0");
   });
 
-  it("renders createdAt date via DateFormatter", () => {
+  it("hands the page's people to MemberList when it has them", () => {
+    render(
+      <ProjectCard
+        project={baseProject}
+        users={mockUsers}
+        members={[{ id: "user-1", name: "Ada", image: null }]}
+      />
+    );
+
+    expect(
+      screen.getByTestId("member-list").getAttribute("data-directory")
+    ).toBe("1");
+  });
+
+  it("shows when the project last had test activity", () => {
+    render(
+      <ProjectCard
+        project={baseProject}
+        users={mockUsers}
+        stats={stats({ lastActivityAt: "2026-11-06T10:00:00.000Z" })}
+      />
+    );
+
+    expect(screen.getByTestId("project-last-activity")).toHaveTextContent(
+      "lastActivity"
+    );
+    expect(screen.getByTestId("last-active")).toHaveTextContent(
+      "2026-11-06T10:00:00.000Z"
+    );
+    expect(screen.queryByTestId("date-formatter")).toBeNull();
+  });
+
+  it("says so when a project has had no test activity", () => {
+    render(
+      <ProjectCard project={baseProject} users={mockUsers} stats={stats()} />
+    );
+
+    expect(screen.getByText("noActivity")).toBeInTheDocument();
+  });
+
+  it("leaves the footer empty until the stats have loaded", () => {
     render(<ProjectCard project={baseProject} users={mockUsers} />);
 
-    const dateEl = screen.getByTestId("date-formatter");
-    expect(dateEl).toBeDefined();
+    expect(screen.getByTestId("card-footer")).toBeEmptyDOMElement();
   });
 
-  it("shows active status label for non-completed project", () => {
-    const project = { ...baseProject, isCompleted: false };
-    render(<ProjectCard project={project} users={mockUsers} />);
+  it("marks only a completed project with a badge", () => {
+    const { unmount } = render(
+      <ProjectCard project={baseProject} users={mockUsers} />
+    );
+    expect(screen.queryByTestId("project-completed-badge")).toBeNull();
+    unmount();
 
-    // The translation mock returns last key: "active"
-    expect(screen.getByText("active")).toBeDefined();
+    render(
+      <ProjectCard
+        project={{ ...baseProject, isCompleted: true }}
+        users={mockUsers}
+      />
+    );
+    expect(screen.getByTestId("project-completed-badge")).toHaveTextContent(
+      "completed"
+    );
   });
 
-  it("shows completedAt date when project is completed", () => {
+  it("shows the completion date, not the last activity, on a completed project", () => {
     const project = {
       ...baseProject,
       isCompleted: true,
       completedAt: new Date("2024-06-01"),
     };
-    render(<ProjectCard project={project} users={mockUsers} />);
+    render(
+      <ProjectCard
+        project={project}
+        users={mockUsers}
+        stats={stats({ lastActivityAt: "2026-11-06T10:00:00.000Z" })}
+      />
+    );
 
-    const dateEls = screen.getAllByTestId("date-formatter");
-    expect(dateEls.length).toBeGreaterThanOrEqual(2); // createdAt + completedAt
+    expect(screen.getAllByTestId("date-formatter")).toHaveLength(1);
+    expect(screen.queryByTestId("project-last-activity")).toBeNull();
+  });
+
+  it("cuts a long note off on one line", () => {
+    render(<ProjectCard project={baseProject} users={mockUsers} />);
+
+    expect(screen.getByTestId("card-description").className).toContain(
+      "truncate"
+    );
   });
 
   it("renders repository link pointing to correct path", () => {
@@ -425,7 +494,6 @@ describe("ProjectCard", () => {
         testRuns: 0,
         sessions: 0,
         repositoryCases: 5,
-        issues: 0,
       },
     };
     render(<ProjectCard project={project} users={mockUsers} />);
