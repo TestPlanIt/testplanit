@@ -1,8 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { render, screen } from "~/test/test-utils";
+import { fireEvent, render, screen, waitFor } from "~/test/test-utils";
+import {
+  executionTimerKey,
+  readExecutionTimer,
+  resetExecutionTimersForTest,
+  setExecutionTimer,
+} from "~/hooks/useExecutionTimer";
+import { submitTestRunResult } from "~/lib/test-run-result-submit";
 
 import type { IterationDTO, IterationStatusDTO } from "./types";
 
@@ -178,5 +185,53 @@ describe("IterationResultPanel — issue-linking lives in Add Result, not here",
       />
     );
     expect(screen.queryByTestId("search-issues-dialog")).toBeNull();
+  });
+});
+
+describe("IterationResultPanel — execution time", () => {
+  const timerKey = executionTimerKey(42, 88, mkIteration(null).id);
+
+  beforeEach(() => {
+    window.sessionStorage.clear();
+    resetExecutionTimersForTest();
+    vi.mocked(submitTestRunResult).mockReset();
+  });
+
+  it("times the iteration while a result can be recorded on it", () => {
+    renderPanel(
+      <IterationResultPanel {...baseProps} iteration={mkIteration(null)} />
+    );
+    expect(screen.getByTestId("time-tracker")).toHaveAttribute(
+      "data-running",
+      "true"
+    );
+  });
+
+  it("times nothing while results are disabled", () => {
+    renderPanel(
+      <IterationResultPanel
+        {...baseProps}
+        isDisabled
+        iteration={mkIteration(null)}
+      />
+    );
+    expect(screen.queryByTestId("time-tracker")).toBeNull();
+  });
+
+  it("saves the iteration's tracked time with Pass & Next", async () => {
+    setExecutionTimer(timerKey, 61);
+    vi.mocked(submitTestRunResult).mockResolvedValue({} as never);
+    renderPanel(
+      <IterationResultPanel {...baseProps} iteration={mkIteration(null)} />
+    );
+
+    fireEvent.click(screen.getByTestId("iteration-pass-and-next-button"));
+
+    await waitFor(() =>
+      expect(submitTestRunResult).toHaveBeenCalledWith(
+        expect.objectContaining({ elapsed: 61 })
+      )
+    );
+    await waitFor(() => expect(readExecutionTimer(timerKey)).toBeLessThan(5));
   });
 });

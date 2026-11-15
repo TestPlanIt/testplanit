@@ -8292,7 +8292,7 @@
     },
     "testResult": {
       "status": "## Stav\nVyberte celkový stav provedení testu. Vybraný stav může ovlivnit metriky a sestavy projektu.",
-      "elapsedTime": "## Uplynulý čas\nZadejte celkový čas potřebný k provedení tohoto testovacího případu. Můžete použít jednotky jako **s** pro sekundy, **m** pro minuty, **h** pro hodiny (např. 30s, 5m, 1h 20m).",
+      "elapsedTime": "## Uplynulý čas\nCelkový čas potřebný k provedení tohoto testovacího případu.\n\nU jednoho testovacího případu se čas automaticky sleduje od okamžiku, kdy tento případ otevřete v testovacím běhu, a pokračuje v počítání, dokud pracujete v jiném okně. Zastavte stopky, když odejdete, nebo zadejte čas sami. Můžete použít jednotky jako **s** pro sekundy, **m** pro minuty, **h** pro hodiny (např. 30s, 5m, 1h 20m).\n\nKdyž najednou přidáte jeden výsledek k několika testovacím případům, nic se nesleduje: spusťte stopky nebo zadejte čas.",
       "resultData": "## Podrobnosti výsledku\nUveďte podrobné poznámky, pozorování nebo jakákoli jiná relevantní data o celkovém provedení testu. To může zahrnovat podrobnosti o nastavení, provedené kroky v případě odchýlení od plánu nebo obecné komentáře.",
       "evidence": "## Důkazy/přílohy\nNahrajte veškeré soubory (např. snímky obrazovky, protokoly, datové soubory), které slouží jako důkaz tohoto výsledku testu. Tyto přílohy budou propojeny s tímto konkrétním výsledkem.",
       "issues": "## Propojené úkoly\nPropojte veškeré úkoly z vašeho integrovaného nástroje pro sledování úkolů, které souvisejí s tímto výsledkem testu. To pomáhá sledovat chyby nebo úkoly spojené s výsledkem tohoto testu.\n\nPropojení úkolu nastaví celkový stav na první stav selhání, pokud jste jej již nezvolili. Před uložením jej stále můžete změnit.",

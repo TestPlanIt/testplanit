@@ -8292,7 +8292,7 @@
     },
     "testResult": {
       "status": "## Status\nWybierz ogólny status wykonania testu. Wybrany status może mieć wpływ na metryki i raporty projektu.",
-      "elapsedTime": "## Czas upłynięty\nWprowadź całkowity czas potrzebny na wykonanie tego przypadku testowego. Możesz użyć jednostek takich jak **s** dla sekund, **m** dla minut, **h** dla godzin (np. 30 s, 5 min, 1 godz. 20 min).",
+      "elapsedTime": "## Czas wykonania\nCałkowity czas potrzebny do wykonania tego przypadku testowego.\n\nDla pojedynczego przypadku testowego czas jest śledzony automatycznie od momentu otwarcia przypadku w przebiegu testów i ciągle się liczy, nawet gdy pracujesz w innym oknie. Wstrzymaj zegar, gdy się odsuniesz, lub wpisz czas samodzielnie. Możesz użyć jednostek takich jak **s** na sekundy, **m** na minuty, **h** na godziny (np. 30s, 5m, 1h 20m).\n\nGdy dodajesz jeden wynik do kilku przypadków testowych jednocześnie, nic nie jest śledzone: uruchom zegar lub wpisz czas.",
       "resultData": "## Szczegóły wyników\nPodaj szczegółowe notatki, obserwacje lub inne istotne dane dotyczące ogólnego wykonania testu. Mogą to być szczegóły konfiguracji, kroki podjęte w przypadku odchyleń od planu lub ogólne komentarze.",
       "evidence": "## Dowody/załączniki\nPrześlij wszystkie pliki (np. zrzuty ekranu, logi, pliki danych), które stanowią dowód na ten wynik testu. Załączniki te będą powiązane z tym konkretnym wynikiem.",
       "issues": "## Powiązane problemy\nPowiąż wszystkie problemy ze zintegrowanego systemu śledzenia problemów, które są powiązane z tym wynikiem testu. Ułatwia to śledzenie defektów lub zadań powiązanych z wynikiem tego testu.",

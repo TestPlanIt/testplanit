@@ -2934,7 +2934,7 @@
       "automationRunsInProgress": "{count, plural, =0 {# Automatiseringsruns in uitvoering} =1 {# Automatiseringsrun in uitvoering} other {# Automatiseringsruns in uitvoering}}",
       "activeSessions": "{count, plural, =0 {# Actieve sessies} =1 {# Actieve sessie} other {# Actieve sessies}}",
       "issues": "{count, plural, =0 {# Problemen} =1 {# Problemen} other {# Problemen}}",
-      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+      "assignedToYou": "{count, plural, =1 {# testgeval dat aan u is toegewezen wacht} other {# testgevallen die aan u zijn toegewezen wachten}}"
     },
     "lastActivity": "Laatst actief",
     "noActivity": "Nog geen teststartactiviteit"
@@ -8292,7 +8292,7 @@
     },
     "testResult": {
       "status": "## Status\nSelecteer de algemene status van de testuitvoering. De status die u kiest, kan van invloed zijn op projectstatistieken en -rapporten.",
-      "elapsedTime": "## Verstreken tijd\nVoer de totale tijd in die nodig is om deze testcase uit te voeren. U kunt eenheden gebruiken zoals **s** voor seconden, **m** voor minuten en **h** voor uren (bijv. 30s, 5m, 1u20m).",
+      "elapsedTime": "## Verstreken tijd\nDe totale tijd die nodig is voor het uitvoeren van dit testgeval.\n\nVoor een enkel testgeval wordt de tijd automatisch bijgehouden vanaf het moment dat u het geval in de testronde opent, en blijft het tellen terwijl u in een ander venster werkt. Pauzeer de klok wanneer u even weg bent, of typ zelf de tijd in. U kunt eenheden gebruiken zoals **s** voor seconden, **m** voor minuten, **h** voor uren (bijv. 30s, 5m, 1h 20m).\n\nWanneer u tegelijk één resultaat aan meerdere testgevallen toevoegt, wordt niets bijgehouden: start de klok of typ een tijd.",
       "resultData": "## Resultaatdetails\nGeef gedetailleerde aantekeningen, observaties of andere relevante gegevens over de algehele uitvoering van de test. Dit kan details over de configuratie, de gevolgde stappen bij afwijking van het plan of algemene opmerkingen omvatten.",
       "evidence": "## Bewijs/Bijlagen\nUpload alle bestanden (bijv. screenshots, logs, databestanden) die als bewijs voor dit testresultaat dienen. Deze bijlagen worden aan dit specifieke resultaat gekoppeld.",
       "issues": "## Gekoppelde problemen\nKoppel alle problemen uit uw geïntegreerde probleemtracker die gerelateerd zijn aan dit testresultaat. Dit helpt bij het volgen van defecten of taken die verband houden met de uitkomst van deze test.",

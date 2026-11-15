@@ -2103,6 +2103,43 @@ export class ApiHelper {
   }
 
   /**
+   * Get the results recorded in a test run, oldest first
+   */
+  async getTestRunResults(testRunId: number): Promise<
+    Array<{
+      id: number;
+      testRunCaseId: number;
+      statusId: number;
+      elapsed: number | null;
+    }>
+  > {
+    const response = await this.get(
+      `${this.baseURL}/api/model/testRunResults/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { testRunId, isDeleted: false },
+            orderBy: { id: "asc" },
+            select: {
+              id: true,
+              testRunCaseId: true,
+              statusId: true,
+              elapsed: true,
+            },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch test run results");
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
+  /**
    * Delete a test run via API (soft delete)
    * Silently ignores failures - item may already be deleted by the test
    */

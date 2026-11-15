@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -264,6 +264,12 @@ const defaultProps = {
 
 // --- Import Component Under Test (after mocks) ---
 import { TestRunCaseDetails } from "./TestRunCaseDetails";
+import {
+  executionTimerKey,
+  readExecutionTimer,
+  resetExecutionTimersForTest,
+  setExecutionTimer,
+} from "~/hooks/useExecutionTimer";
 
 // --- Test Setup ---
 
@@ -598,6 +604,91 @@ describe("TestRunCaseDetails", () => {
     await user.click(addResultBtn);
 
     expect(screen.getByTestId("add-result-modal")).toBeInTheDocument();
+  });
+
+  describe("execution time", () => {
+    const timerKey = executionTimerKey(10, 101);
+
+    beforeEach(() => {
+      window.sessionStorage.clear();
+      resetExecutionTimersForTest();
+    });
+
+    it("times the case while a result can be recorded on it", () => {
+      renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+      expect(screen.getByTestId("time-tracker")).toHaveAttribute(
+        "data-running",
+        "true"
+      );
+    });
+
+    it("times nothing on a completed run", () => {
+      renderWithQueryClient(
+        <TestRunCaseDetails {...defaultProps} isCompleted={true} />
+      );
+      expect(screen.queryByTestId("time-tracker")).not.toBeInTheDocument();
+    });
+
+    it("times nothing for a user who cannot add results", () => {
+      mockUseProjectPermissions.mockReturnValue({
+        permissions: { canAddEdit: false, canView: true, canDelete: false },
+        isLoading: false,
+      });
+      renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+      expect(screen.queryByTestId("time-tracker")).not.toBeInTheDocument();
+    });
+
+    it("leaves an iteration to its own result panel", () => {
+      renderWithQueryClient(
+        <TestRunCaseDetails {...defaultProps} activeIterationId={5} />
+      );
+      expect(screen.queryByTestId("time-tracker")).not.toBeInTheDocument();
+    });
+
+    it("saves the tracked time with Pass & Next and starts the clock over", async () => {
+      setExecutionTimer(timerKey, 95);
+      global.fetch = vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ result: { id: 1 } }),
+        })
+      ) as any;
+      const user = userEvent.setup();
+      renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+
+      await user.click(
+        screen.getByRole("button", { name: /actions\.passAndNext/i })
+      );
+
+      await waitFor(() => {
+        const submit = vi
+          .mocked(global.fetch)
+          .mock.calls.find(([url]) => String(url).includes("submit-result"));
+        expect(submit).toBeDefined();
+        expect(JSON.parse(submit![1]!.body as string).elapsed).toBe(95);
+      });
+      await waitFor(() => expect(readExecutionTimer(timerKey)).toBeLessThan(5));
+    });
+
+    it("keeps the tracked time when the result is not saved", async () => {
+      setExecutionTimer(timerKey, 95);
+      global.fetch = vi.fn(() =>
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.resolve({ error: "nope" }),
+        })
+      ) as any;
+      const user = userEvent.setup();
+      renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+
+      await user.click(
+        screen.getByRole("button", { name: /actions\.passAndNext/i })
+      );
+
+      await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+      expect(readExecutionTimer(timerKey)).toBe(95);
+    });
   });
 
   it("renders status dropdown with available statuses", () => {

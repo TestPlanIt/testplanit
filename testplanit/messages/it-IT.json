@@ -8292,7 +8292,7 @@
     },
     "testResult": {
       "status": "## Stato\nSeleziona lo stato generale dell'esecuzione del test. Lo stato scelto può influire sulle metriche e sui report del progetto.",
-      "elapsedTime": "## Tempo trascorso\nInserisci il tempo totale impiegato per eseguire questo caso di test. Puoi usare unità come **s** per secondi, **m** per minuti, **h** per ore (ad esempio, 30 s, 5 m, 1 ora e 20 minuti).",
+      "elapsedTime": "## Tempo Trascorso\nIl tempo totale impiegato per eseguire questo caso di test.\n\nPer un singolo caso di test, il tempo viene tracciato automaticamente da quando apri il caso nell'esecuzione del test e continua a contare mentre lavori in un'altra finestra. Metti in pausa l'orologio quando ti allontani o digita il tempo tu stesso. Puoi usare unità come **s** per i secondi, **m** per i minuti, **h** per le ore (ad es. 30s, 5m, 1h 20m).\n\nQuando aggiungi un risultato a più casi di test contemporaneamente, nulla viene tracciato: avvia l'orologio o digita un'ora.",
       "resultData": "## Dettagli del risultato\nFornire note dettagliate, osservazioni o altri dati rilevanti sull'esecuzione complessiva del test. Possono includere dettagli di configurazione, passaggi seguiti in caso di deviazione dal piano o commenti generali.",
       "evidence": "## Prove/Allegati\nCarica tutti i file (ad esempio, screenshot, log, file di dati) che servono come prova per questo risultato del test. Questi allegati saranno collegati a questo risultato specifico.",
       "issues": "## Problemi collegati\nCollega tutti i problemi presenti nel tuo sistema di tracciamento integrato correlati al risultato di questo test. Questo aiuta a monitorare difetti o attività associati al risultato di questo test.",

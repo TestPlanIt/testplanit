@@ -34,6 +34,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
+import { ExecutionTimeTracker } from "@/components/ExecutionTimeTracker";
+import {
+  consumeExecutionTimer,
+  executionTimerElapsed,
+  executionTimerKey,
+} from "~/hooks/useExecutionTimer";
 import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import type { Attachments, Status } from "~/zenstack/models";
@@ -202,6 +208,18 @@ export function TestRunCaseDetails({
     isLoading: isLoadingPermissions,
   } = useProjectPermissions(projectId, "TestRunResults");
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
+
+  // The case is timed while it is open and a result can be recorded on it.
+  // An iteration is timed by its own result panel.
+  const timerKey =
+    testRunId &&
+    testRunCaseId &&
+    !activeIterationId &&
+    canAddEditResults &&
+    !isCompleted &&
+    !isBlockedByDependencies(dependencyState)
+      ? executionTimerKey(testRunId, testRunCaseId)
+      : null;
 
   // Sort the incoming test cases by order memoized
   const sortedTestRunCasesData = React.useMemo(() => {
@@ -473,11 +491,13 @@ export function TestRunCaseDetails({
         statusId: successStatus.id,
         notes: emptyEditorContent,
         evidence: {},
+        elapsed: executionTimerElapsed(timerKey),
         attempt: 1,
         testRunCaseVersion: testcase.currentVersion,
         inProgressStateId: inProgressWorkflow?.id ?? null,
         iterationId: activeIterationId,
       });
+      consumeExecutionTimer(timerKey);
       await invalidateAfterSubmit();
 
       toast.success(tCommon("actions.resultAdded"), {
@@ -671,328 +691,325 @@ export function TestRunCaseDetails({
             )}
           </div>
         )}
-      <div className="sticky top-0 z-20 flex items-center justify-between gap-2 bg-primary p-4">
-        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-          {testRunId && canAddEditResults && (
-            <>
-              {/* Case-level result buttons hide in iteration mode — those
-                  controls live in IterationResultPanel above. */}
-              {!activeIterationId && (
-                <div className="flex shrink-0 items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setEscalatedForRequiredField(false);
-                      setFlipErrorOnOpen(false);
-                      setIssueErrorOnOpen(false);
-                      setShowAddResultModal(true);
-                    }}
+      <div className="sticky top-0 z-20">
+        <div className="flex items-center justify-between gap-2 bg-primary p-4">
+          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+            {testRunId && canAddEditResults && (
+              <>
+                <div className="max-w-[300px] min-w-[200px]">
+                  <AsyncCombobox
+                    value={
+                      testcase?.testRunCases?.[0]?.assignedTo
+                        ? {
+                            id: testcase.testRunCases[0].assignedTo.id,
+                            name: testcase.testRunCases[0].assignedTo.name,
+                            email: null,
+                            image: null,
+                          }
+                        : null
+                    }
+                    onValueChange={handleAssignmentChange}
+                    fetchOptions={fetchMemberOptions}
+                    renderOption={(user) => (
+                      <UserNameCell userId={user.id} hideLink />
+                    )}
+                    getOptionValue={(user) => user.id}
+                    placeholder={tGlobal("sessions.placeholders.selectUser")}
                     disabled={isDisabled}
-                    className="flex items-center"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {tCommon("actions.addResult")}
-                  </Button>
-                  <div className="flex">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleQuickPass}
-                      disabled={isDisabled}
-                      className="flex items-center rounded-e-none border-e-0"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      {tCommon("actions.passAndNext")}
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={isDisabled}
-                          className="flex items-center rounded-s-none border-s-0"
-                        >
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-[200px]">
-                        {statuses?.map((status) => (
-                          <DropdownMenuItem
-                            key={status.id}
-                            disabled={isDisabled}
-                            onClick={async () => {
-                              if (
-                                !session?.user?.id ||
-                                !testRunId ||
-                                !testRunCaseId ||
-                                !testcase?.currentVersion
-                              )
-                                return;
-
-                              // Quick-status can't capture a required result
-                              // field; escalate to the full Add Result modal
-                              // (pre-set to this status) when one exists.
-                              if (hasRequiredResultField) {
-                                setEscalatedForRequiredField(true);
-                                handleStatusChange(status.id.toString());
-                                return;
-                              }
-
-                              setIsSubmitting(true);
-
-                              try {
-                                await submitTestRunResult({
-                                  testRunId,
-                                  testRunCaseId,
-                                  statusId: status.id,
-                                  notes: emptyEditorContent,
-                                  evidence: {},
-                                  attempt: 1,
-                                  testRunCaseVersion: testcase.currentVersion,
-                                  inProgressStateId:
-                                    inProgressWorkflow?.id ?? null,
-                                  iterationId: activeIterationId,
-                                });
-                                await invalidateAfterSubmit();
-
-                                toast.success(tCommon("actions.resultAdded"), {
-                                  description: tCommon(
-                                    "actions.resultAddedDescription"
-                                  ),
-                                });
-
-                                // Move to next case if available
-                                if (onNextCase) {
-                                  const currentCase = testRunCasesData?.find(
-                                    (trc) => trc.repositoryCaseId === caseId
-                                  );
-
-                                  if (currentCase) {
-                                    const nextCases = testRunCasesData
-                                      ?.filter(
-                                        (trc) => trc.order > currentCase.order
-                                      )
-                                      .sort((a, b) => a.order - b.order);
-
-                                    const nextCase = nextCases?.[0];
-
-                                    if (nextCase) {
-                                      onNextCase(nextCase.repositoryCaseId);
-                                    }
-                                  }
-                                }
-                              } catch (error) {
-                                console.error(
-                                  "Error submitting result:",
-                                  error
-                                );
-                                if (
-                                  isPermissionDeniedSubmitResultError(error)
-                                ) {
-                                  toast.error(tCommon("errors.accessDenied"), {
-                                    description: tCommon(
-                                      "errors.resultSubmitPermissionDenied"
-                                    ),
-                                  });
-                                } else if (
-                                  isJustificationRequiredSubmitResultError(
-                                    error
-                                  )
-                                ) {
-                                  // Open the full modal pre-set to this status
-                                  // with the justification error shown inline.
-                                  setSelectedStatusId(status.id.toString());
-                                  setFlipErrorOnOpen(true);
-                                  setShowAddResultModal(true);
-                                } else if (
-                                  isIssueRequiredOnFailureSubmitResultError(
-                                    error
-                                  )
-                                ) {
-                                  // Failure status needs a linked issue: open
-                                  // the modal pre-set so the tester links one.
-                                  setSelectedStatusId(status.id.toString());
-                                  setIssueErrorOnOpen(true);
-                                  setShowAddResultModal(true);
-                                } else if (
-                                  isDependenciesNotPassedSubmitResultError(
-                                    error
-                                  )
-                                ) {
-                                  toast.error(
-                                    tCommon("errors.dependenciesNotPassed"),
-                                    {
-                                      description: tCommon(
-                                        "errors.dependenciesNotPassedDescription",
-                                        { count: error.blockedBy?.length ?? 0 }
-                                      ),
-                                    }
-                                  );
-                                } else {
-                                  toast.error(tCommon("errors.error"), {
-                                    description: tCommon(
-                                      "errors.somethingWentWrong"
-                                    ),
-                                  });
-                                }
-                              } finally {
-                                setIsSubmitting(false);
-                              }
-                            }}
-                            className="flex cursor-pointer items-center"
-                          >
-                            <div
-                              className="me-2 h-3 w-3 rounded-full"
-                              style={{
-                                backgroundColor:
-                                  status.color?.value || "#B1B2B3",
-                              }}
-                            />
-                            <span className="flex-1">{status.name}</span>
-                            {status.isSuccess && (
-                              <CheckCircle className="ms-2 h-4 w-4 text-muted-foreground" />
-                            )}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                    className="h-8 w-[200px] bg-background"
+                    pageSize={20}
+                    showTotal={true}
+                    showUnassigned={true}
+                  />
                 </div>
-              )}
-              <div className="max-w-[300px] min-w-[200px]">
-                <AsyncCombobox
-                  value={
-                    testcase?.testRunCases?.[0]?.assignedTo
-                      ? {
-                          id: testcase.testRunCases[0].assignedTo.id,
-                          name: testcase.testRunCases[0].assignedTo.name,
-                          email: null,
-                          image: null,
-                        }
-                      : null
-                  }
-                  onValueChange={handleAssignmentChange}
-                  fetchOptions={fetchMemberOptions}
-                  renderOption={(user) => (
-                    <UserNameCell userId={user.id} hideLink />
-                  )}
-                  getOptionValue={(user) => user.id}
-                  placeholder={tGlobal("sessions.placeholders.selectUser")}
-                  disabled={isDisabled}
-                  className="h-8 w-[200px] bg-background"
-                  pageSize={20}
-                  showTotal={true}
-                  showUnassigned={true}
-                />
-              </div>
-            </>
-          )}
-        </div>
-        {/* --- Previous/Next Buttons --- */}
-        <TooltipProvider>
-          <div className="me-8 flex shrink-0 items-center gap-2">
-            {/* The repository case in a new tab, so the run keeps its place. */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  data-testid="run-case-view-in-repository"
-                >
-                  <Link
-                    href={`/projects/repository/${projectId}/${testcase.id}`}
-                    target="_blank"
-                    aria-label={tCommon("actions.viewInRepository")}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {tCommon("actions.viewInRepository")}
-              </TooltipContent>
-            </Tooltip>
-            {onEditCase && (
+              </>
+            )}
+          </div>
+          {/* --- Previous/Next Buttons --- */}
+          <TooltipProvider>
+            <div className="me-8 flex shrink-0 items-center gap-2">
+              {/* The repository case in a new tab, so the run keeps its place. */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => startOpeningEditor(() => onEditCase())}
-                    disabled={isOpeningEditor}
-                    aria-busy={isOpeningEditor}
-                    aria-label={tCommon("actions.editTestCase")}
-                    data-testid="run-case-edit-case"
+                    asChild
+                    data-testid="run-case-view-in-repository"
                   >
-                    {isOpeningEditor ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <SquarePen className="h-4 w-4" />
-                    )}
+                    <Link
+                      href={`/projects/repository/${projectId}/${testcase.id}`}
+                      target="_blank"
+                      aria-label={tCommon("actions.viewInRepository")}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Link>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {tCommon("actions.editTestCase")}
+                  {tCommon("actions.viewInRepository")}
                 </TooltipContent>
               </Tooltip>
-            )}
-            {/* Prev Button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!previousCase || isNavigationDisabled}
-                  onClick={() =>
-                    previousCase && onNextCase(previousCase.repositoryCaseId)
-                  }
-                  aria-label={tCommon("actions.previousCase")}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{tCommon("actions.previousCase")}</TooltipContent>
-            </Tooltip>
-            {/* Index Indicator */}
-            {testRunCasesData &&
-              currentCaseIndex !== undefined &&
-              currentCaseIndex !== -1 && (
-                <span
-                  className="text-sm text-primary-foreground"
-                  title={`Index: ${currentCaseIndex}`}
-                >
-                  {currentCaseIndex + 1} {tCommon("of")}{" "}
-                  {testRunCasesData.length}
-                </span>
+              {onEditCase && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => startOpeningEditor(() => onEditCase())}
+                      disabled={isOpeningEditor}
+                      aria-busy={isOpeningEditor}
+                      aria-label={tCommon("actions.editTestCase")}
+                      data-testid="run-case-edit-case"
+                    >
+                      {isOpeningEditor ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <SquarePen className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {tCommon("actions.editTestCase")}
+                  </TooltipContent>
+                </Tooltip>
               )}
-            {/* Next Button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!nextCase || isNavigationDisabled}
-                  onClick={() =>
-                    nextCase && onNextCase(nextCase.repositoryCaseId)
-                  }
-                  aria-label={tCommon("actions.nextCase")}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{tCommon("actions.nextCase")}</TooltipContent>
-            </Tooltip>
+              {/* Prev Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!previousCase || isNavigationDisabled}
+                    onClick={() =>
+                      previousCase && onNextCase(previousCase.repositoryCaseId)
+                    }
+                    aria-label={tCommon("actions.previousCase")}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tCommon("actions.previousCase")}
+                </TooltipContent>
+              </Tooltip>
+              {/* Index Indicator */}
+              {testRunCasesData &&
+                currentCaseIndex !== undefined &&
+                currentCaseIndex !== -1 && (
+                  <span
+                    className="text-sm text-primary-foreground"
+                    title={`Index: ${currentCaseIndex}`}
+                  >
+                    {currentCaseIndex + 1} {tCommon("of")}{" "}
+                    {testRunCasesData.length}
+                  </span>
+                )}
+              {/* Next Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!nextCase || isNavigationDisabled}
+                    onClick={() =>
+                      nextCase && onNextCase(nextCase.repositoryCaseId)
+                    }
+                    aria-label={tCommon("actions.nextCase")}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{tCommon("actions.nextCase")}</TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+        </div>
+        {/* Recording a result gets its own row, as it does for an iteration
+            (IterationResultPanel), so the bar above stays short. */}
+        {testRunId && canAddEditResults && !activeIterationId && (
+          <div
+            className="flex items-center gap-2 border-b bg-muted px-4 py-2"
+            data-testid="case-result-bar"
+          >
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEscalatedForRequiredField(false);
+                setFlipErrorOnOpen(false);
+                setIssueErrorOnOpen(false);
+                setShowAddResultModal(true);
+              }}
+              disabled={isDisabled}
+              className="flex items-center"
+            >
+              <Plus className="h-4 w-4" />
+              {tCommon("actions.addResult")}
+            </Button>
+            <div className="flex">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleQuickPass}
+                disabled={isDisabled}
+                className="flex items-center rounded-e-none border-e-0"
+              >
+                <CheckCircle className="h-4 w-4" />
+                {tCommon("actions.passAndNext")}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isDisabled}
+                    className="flex items-center rounded-s-none border-s-0"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[200px]">
+                  {statuses?.map((status) => (
+                    <DropdownMenuItem
+                      key={status.id}
+                      disabled={isDisabled}
+                      onClick={async () => {
+                        if (
+                          !session?.user?.id ||
+                          !testRunId ||
+                          !testRunCaseId ||
+                          !testcase?.currentVersion
+                        )
+                          return;
+
+                        // Quick-status can't capture a required result
+                        // field; escalate to the full Add Result modal
+                        // (pre-set to this status) when one exists.
+                        if (hasRequiredResultField) {
+                          setEscalatedForRequiredField(true);
+                          handleStatusChange(status.id.toString());
+                          return;
+                        }
+
+                        setIsSubmitting(true);
+
+                        try {
+                          await submitTestRunResult({
+                            testRunId,
+                            testRunCaseId,
+                            statusId: status.id,
+                            notes: emptyEditorContent,
+                            evidence: {},
+                            elapsed: executionTimerElapsed(timerKey),
+                            attempt: 1,
+                            testRunCaseVersion: testcase.currentVersion,
+                            inProgressStateId: inProgressWorkflow?.id ?? null,
+                            iterationId: activeIterationId,
+                          });
+                          consumeExecutionTimer(timerKey);
+                          await invalidateAfterSubmit();
+
+                          toast.success(tCommon("actions.resultAdded"), {
+                            description: tCommon(
+                              "actions.resultAddedDescription"
+                            ),
+                          });
+
+                          // Move to next case if available
+                          if (onNextCase) {
+                            const currentCase = testRunCasesData?.find(
+                              (trc) => trc.repositoryCaseId === caseId
+                            );
+
+                            if (currentCase) {
+                              const nextCases = testRunCasesData
+                                ?.filter((trc) => trc.order > currentCase.order)
+                                .sort((a, b) => a.order - b.order);
+
+                              const nextCase = nextCases?.[0];
+
+                              if (nextCase) {
+                                onNextCase(nextCase.repositoryCaseId);
+                              }
+                            }
+                          }
+                        } catch (error) {
+                          console.error("Error submitting result:", error);
+                          if (isPermissionDeniedSubmitResultError(error)) {
+                            toast.error(tCommon("errors.accessDenied"), {
+                              description: tCommon(
+                                "errors.resultSubmitPermissionDenied"
+                              ),
+                            });
+                          } else if (
+                            isJustificationRequiredSubmitResultError(error)
+                          ) {
+                            // Open the full modal pre-set to this status
+                            // with the justification error shown inline.
+                            setSelectedStatusId(status.id.toString());
+                            setFlipErrorOnOpen(true);
+                            setShowAddResultModal(true);
+                          } else if (
+                            isIssueRequiredOnFailureSubmitResultError(error)
+                          ) {
+                            // Failure status needs a linked issue: open
+                            // the modal pre-set so the tester links one.
+                            setSelectedStatusId(status.id.toString());
+                            setIssueErrorOnOpen(true);
+                            setShowAddResultModal(true);
+                          } else if (
+                            isDependenciesNotPassedSubmitResultError(error)
+                          ) {
+                            toast.error(
+                              tCommon("errors.dependenciesNotPassed"),
+                              {
+                                description: tCommon(
+                                  "errors.dependenciesNotPassedDescription",
+                                  { count: error.blockedBy?.length ?? 0 }
+                                ),
+                              }
+                            );
+                          } else {
+                            toast.error(tCommon("errors.error"), {
+                              description: tCommon("errors.somethingWentWrong"),
+                            });
+                          }
+                        } finally {
+                          setIsSubmitting(false);
+                        }
+                      }}
+                      className="flex cursor-pointer items-center"
+                    >
+                      <div
+                        className="me-2 h-3 w-3 rounded-full"
+                        style={{
+                          backgroundColor: status.color?.value || "#B1B2B3",
+                        }}
+                      />
+                      <span className="flex-1">{status.name}</span>
+                      {status.isSuccess && (
+                        <CheckCircle className="ms-2 h-4 w-4 text-muted-foreground" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            {timerKey && (
+              <div className="ms-auto">
+                <ExecutionTimeTracker timerKey={timerKey} />
+              </div>
+            )}
           </div>
-        </TooltipProvider>
+        )}
       </div>
       <div className="flex items-center justify-between px-4">
         <div className="flex-1">

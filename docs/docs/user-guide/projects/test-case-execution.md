@@ -54,6 +54,18 @@ This view typically includes:
 8. **Add Overall Details (Optional)**: Add overall comments or attachments.
 9. **Navigate/Close**: Use the Previous/Next buttons or Close button to move to another case or return to the run overview.
 
+## Execution Time
+
+TestPlanIt times each test case for you, so you do not have to start a clock or guess afterwards.
+
+- **When it starts**: The clock starts when you open a test case you can record a result on. It appears next to the result buttons and counts up. A parameterized test case has one clock per iteration.
+- **Working in another window**: The clock keeps counting while the TestPlanIt tab is in the background, because that is where you are executing the test. Press pause when you step away, and play when you come back.
+- **Correcting the time**: While the clock is paused you can type the minutes and seconds. Click the clock icon on a paused clock to reset it to zero.
+- **Saving it**: The time is saved as the result's **Elapsed Time** when you record a result, whether through **Add Result**, **Pass & Next**, or the status menu. The **Add Result** dialog shows the same clock, still running, and you can type a duration such as `5m 30s` there instead.
+- **Leaving and coming back**: Closing the case or moving to another one stops its clock and keeps the time. Opening the case again continues from there, unless you had paused it. The time is kept for the browser tab you are working in and is dropped after a day.
+
+Nothing is timed on a completed test run, on a case blocked by its dependencies, or when you do not have permission to add results. When you add one result to several test cases at once, the dialog's clock starts stopped and you enter the time yourself.
+
 ## Editing the Test Case In Place
 
 If you hold the **Test Case Repository** add/edit permission, an **Edit Test Case** button (pencil icon) appears next to the Previous/Next navigation in the panel header. Clicking it replaces the execution view with the same edit form used on the [Test Case Details](./repository-case-details.mdx) page, so you can correct the name, steps, or fields before recording a result.

@@ -10,9 +10,24 @@ import {
 import { Clock, Pause, Play } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "~/utils";
 
 interface TimeTrackerProps {
-  onTimeUpdate: (seconds: number) => void;
+  /** Called with the tracker's own count. Unused when `value` is given. */
+  onTimeUpdate?: (seconds: number) => void;
+  /**
+   * Seconds to show. When given, the tracker keeps no time of its own: it
+   * draws `value` and `running` and reports what the user asks for through
+   * `onRunningChange` and `onValueChange`.
+   */
+  value?: number;
+  running?: boolean;
+  onRunningChange?: (running: boolean) => void;
+  /** The user typed a time, or reset it (0). */
+  onValueChange?: (seconds: number) => void;
+  /** "sm" is a one-line version for toolbars. */
+  size?: "default" | "sm";
+  className?: string;
 }
 
 export interface TimeTrackerRef {
@@ -20,9 +35,27 @@ export interface TimeTrackerRef {
 }
 
 export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
-  ({ onTimeUpdate }, ref) => {
-    const [isRunning, setIsRunning] = useState(false);
-    const [seconds, setSeconds] = useState(0);
+  (
+    {
+      onTimeUpdate: onTimeUpdateProp,
+      value,
+      running,
+      onRunningChange,
+      onValueChange,
+      size = "default",
+      className,
+    },
+    ref
+  ) => {
+    const controlled = value !== undefined;
+    const [ownRunning, setIsRunning] = useState(false);
+    const [ownSeconds, setSeconds] = useState(0);
+    const isRunning = controlled ? running === true : ownRunning;
+    const seconds = controlled ? value : ownSeconds;
+    const onTimeUpdate = useCallback(
+      (total: number) => onTimeUpdateProp?.(total),
+      [onTimeUpdateProp]
+    );
     const [displayMinutes, setDisplayMinutes] = useState("00");
     const [displaySeconds, setDisplaySeconds] = useState("00");
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,6 +88,10 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
 
     // Reset function
     const resetTimer = useCallback(() => {
+      if (controlled) {
+        onValueChange?.(0);
+        return;
+      }
       setIsRunning(false);
       setSeconds(0);
       setDisplayMinutes("00");
@@ -64,7 +101,7 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
         clearInterval(timerRef.current);
       }
       startTimeRef.current = null;
-    }, [onTimeUpdate]);
+    }, [controlled, onTimeUpdate, onValueChange]);
 
     // Expose reset function through ref
     React.useImperativeHandle(ref, () => ({
@@ -83,6 +120,7 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
 
     // Update the timer
     useEffect(() => {
+      if (controlled) return;
       if (isRunning) {
         // Only set the start time when the timer first starts or when seconds change
         if (startTimeRef.current === null) {
@@ -109,7 +147,13 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
           clearInterval(timerRef.current);
         }
       };
-    }, [isRunning, onTimeUpdate, seconds, updateTimeWithLocalization]);
+    }, [
+      controlled,
+      isRunning,
+      onTimeUpdate,
+      seconds,
+      updateTimeWithLocalization,
+    ]);
 
     useEffect(() => {
       const { minutes, seconds: secs } = formatTimeDisplay(seconds);
@@ -119,6 +163,10 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
 
     // Toggle timer
     const toggleTimer = () => {
+      if (controlled) {
+        onRunningChange?.(!isRunning);
+        return;
+      }
       isTimerClickRef.current = true;
       if (!isRunning) {
         startTimeRef.current = performance.now() - seconds * 1000;
@@ -142,6 +190,15 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
       setDisplaySeconds(e.target.value);
     };
 
+    const commitTypedTime = (totalSeconds: number) => {
+      if (controlled) {
+        onValueChange?.(totalSeconds);
+        return;
+      }
+      setSeconds(totalSeconds);
+      updateTimeWithLocalization(totalSeconds);
+    };
+
     // Handle blur events to format and update time
     const handleMinutesBlur = () => {
       const mins = parseInt(displayMinutes || "0", 10);
@@ -154,8 +211,7 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
       const totalSeconds = validMins * 60 + validSecs;
 
       setDisplayMinutes(validMins.toString().padStart(2, "0"));
-      setSeconds(totalSeconds);
-      updateTimeWithLocalization(totalSeconds);
+      commitTypedTime(totalSeconds);
     };
 
     const handleSecondsBlur = () => {
@@ -172,8 +228,7 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
 
       setDisplayMinutes(validMins.toString().padStart(2, "0"));
       setDisplaySeconds(validSecs.toString().padStart(2, "0"));
-      setSeconds(totalSeconds);
-      updateTimeWithLocalization(totalSeconds);
+      commitTypedTime(totalSeconds);
     };
 
     // Handle clock icon click to reset timer when not running
@@ -186,9 +241,21 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
       }
     };
 
+    const compact = size === "sm";
+    const inputClass = compact
+      ? "h-6 w-9 p-0.5 text-center text-xs"
+      : "w-12 p-1 text-center";
+
     return (
       <div
-        className={`flex items-center justify-center overflow-auto rounded-md border-2 border-primary/30 p-2 ${isRunning ? "border-destructive" : ""}`}
+        className={cn(
+          "flex items-center justify-center overflow-auto rounded-md border-2 border-primary/30",
+          compact ? "h-8 shrink-0 bg-background px-1.5" : "p-2",
+          isRunning && "border-destructive",
+          className
+        )}
+        data-testid="time-tracker"
+        data-running={isRunning ? "true" : "false"}
       >
         <Tooltip>
           <TooltipTrigger asChild>
@@ -221,19 +288,23 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
             value={displayMinutes}
             onChange={handleMinutesChange}
             onBlur={handleMinutesBlur}
-            className="w-12 p-1 text-center"
+            className={inputClass}
             disabled={isRunning}
-            maxLength={2}
+            maxLength={controlled ? 4 : 2}
+            aria-label={tCommon("time.minutes", { count: 2 })}
+            data-testid="time-tracker-minutes"
           />
-          <span className="mx-1">:</span>
+          <span className={compact ? "mx-0.5" : "mx-1"}>:</span>
           <Input
             type="text"
             value={displaySeconds}
             onChange={handleSecondsChange}
             onBlur={handleSecondsBlur}
-            className="w-12 p-1 text-center"
+            className={inputClass}
             disabled={isRunning}
             maxLength={2}
+            aria-label={tCommon("time.seconds", { count: 2 })}
+            data-testid="time-tracker-seconds"
           />
         </div>
         <Button
@@ -241,7 +312,11 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
           size="sm"
           variant="secondary"
           onClick={toggleTimer}
-          className="ms-2"
+          className={compact ? "ms-1 h-6 px-1.5" : "ms-2"}
+          data-testid="time-tracker-toggle"
+          aria-label={
+            isRunning ? tCommon("actions.pause") : tCommon("actions.start")
+          }
         >
           {isRunning ? (
             <Tooltip>

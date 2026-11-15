@@ -10,6 +10,12 @@ import { cn } from "~/utils";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
+import { TrackedElapsedField } from "@/components/TrackedElapsedField";
+import {
+  consumeExecutionTimer,
+  executionTimerElapsed,
+  executionTimerKey,
+} from "~/hooks/useExecutionTimer";
 import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -322,6 +328,12 @@ export function AddResultModal({
   const [uploadAttachmentsKey, setUploadAttachmentsKey] = useState<number>(0);
   const [, setTrackedSeconds] = useState(0);
   const timeTrackerRef = useRef<TimeTrackerRef>(null);
+  // A single case's time is tracked from when the tester first looks at it;
+  // a bulk result has no one case to time and keeps the manual tracker.
+  const timerKey =
+    !isBulkResult && testRunCaseId != null
+      ? executionTimerKey(testRunId, testRunCaseId, iterationId)
+      : null;
   // Ensures the validate-on-open pass runs once per escalation open.
   const validatedOnOpenRef = useRef(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -785,21 +797,25 @@ export function AddResultModal({
     }
   };
 
+  const formatElapsed = (seconds: number): string => {
+    if (seconds <= 0) return "";
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    let timeString = "";
+
+    if (minutes > 0) {
+      timeString += `${minutes} ${tCommon("time.minutes", { count: minutes })} `;
+    }
+    if (remainingSeconds > 0 || minutes === 0) {
+      timeString += `${remainingSeconds} ${tCommon("time.seconds", { count: remainingSeconds })}`;
+    }
+    return timeString.trim();
+  };
+
   const handleTimeUpdate = (seconds: number) => {
     setTrackedSeconds(seconds);
     if (seconds > 0) {
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      let timeString = "";
-
-      if (minutes > 0) {
-        timeString += `${minutes} ${tCommon("time.minutes", { count: minutes })} `;
-      }
-      if (remainingSeconds > 0 || minutes === 0) {
-        timeString += `${remainingSeconds} ${tCommon("time.seconds", { count: remainingSeconds })}`;
-      }
-
-      form.setValue("elapsed", timeString, {
+      form.setValue("elapsed", formatElapsed(seconds), {
         shouldValidate: true,
         shouldDirty: true,
       });
@@ -978,7 +994,9 @@ export function AddResultModal({
       // run's name/project from the result row.
       beginOperation();
       let elapsedInSeconds: number | null = null;
-      if (values.elapsed) {
+      if (timerKey) {
+        elapsedInSeconds = executionTimerElapsed(timerKey);
+      } else if (values.elapsed) {
         const durationInMilliseconds = parseDuration(values.elapsed as string);
         if (durationInMilliseconds !== null) {
           elapsedInSeconds = Math.round(durationInMilliseconds / 1000);
@@ -1562,7 +1580,8 @@ export function AddResultModal({
         }, {}),
       });
 
-      // Reset the TimeTracker
+      // The tracked time went into the result; the manual tracker starts over.
+      consumeExecutionTimer(timerKey);
       timeTrackerRef.current?.reset();
 
       // Reset selected files + staged external links
@@ -2100,21 +2119,35 @@ export function AddResultModal({
                       {tCommon("fields.elapsed")}
                       <HelpPopover helpKey="testResult.elapsedTime" />
                     </FormLabel>
-                    <div className="flex items-end space-x-2">
-                      <div className="time-tracker">
-                        <TimeTracker
-                          ref={timeTrackerRef}
-                          onTimeUpdate={handleTimeUpdate}
-                        />
+                    {timerKey ? (
+                      <TrackedElapsedField
+                        timerKey={timerKey}
+                        formatSeconds={formatElapsed}
+                        onTextChange={field.onChange}
+                        placeholder={tCommon("placeholders.duration")}
+                        inputProps={{
+                          name: field.name,
+                          onBlur: field.onBlur,
+                          "aria-label": tCommon("fields.elapsed"),
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-end space-x-2">
+                        <div className="time-tracker">
+                          <TimeTracker
+                            ref={timeTrackerRef}
+                            onTimeUpdate={handleTimeUpdate}
+                          />
+                        </div>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={(field.value as string) || ""}
+                            placeholder={tCommon("placeholders.duration")}
+                          />
+                        </FormControl>
                       </div>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={(field.value as string) || ""}
-                          placeholder={tCommon("placeholders.duration")}
-                        />
-                      </FormControl>
-                    </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

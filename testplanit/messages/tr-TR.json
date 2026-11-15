@@ -8292,7 +8292,7 @@
     },
     "testResult": {
       "status": "## Durum\nTest yürütmesinin genel durumunu seçin. Seçtiğiniz durum proje metriklerini ve raporlarını etkileyebilir.",
-      "elapsedTime": "## Geçen Süre\nBu test senaryosunun yürütülmesi için geçen toplam süreyi girin. Saniye için **s**, dakika için **m**, saat için **h** gibi birimler kullanabilirsiniz (örneğin, 30s, 5m, 1h 20m).",
+      "elapsedTime": "## Geçen Süre\nBu test senaryosunu yürütmek için harcanan toplam zaman.\n\nTek bir test senaryosu için, siz test çalışmasında senaryoyu açtığınız andan itibaren zaman otomatik olarak izlenir ve başka bir pencerede çalışırken saymaya devam eder. Uzaklaştığınızda saati duraklatın veya zamanı kendiniz yazın. Saniye için **s**, dakika için **m**, saat için **h** gibi birimler kullanabilirsiniz (örneğin, 30s, 5m, 1h 20m).\n\nBirden fazla test senaryosuna aynı anda bir sonuç eklediğinizde, hiçbir şey izlenmez: saati başlatın veya bir zaman yazın.",
       "resultData": "## Sonuç Ayrıntıları\nGenel test yürütmesi hakkında ayrıntılı notlar, gözlemler veya diğer ilgili verileri sağlayın. Bu, kurulum ayrıntılarını, plandan sapma durumunda izlenen adımları veya genel yorumları içerebilir.",
       "evidence": "## Kanıt/Ekler\nBu test sonucunu kanıtlayan tüm dosyaları (örneğin, ekran görüntüleri, günlükler, veri dosyaları) yükleyin. Bu ekler bu özel sonuca bağlanacaktır.",
       "issues": "## Bağlantılı Sorunlar\nBu test sonucuyla ilgili olan entegre sorun takip sisteminizdeki tüm sorunları bağlayın. Bu, bu testin sonucuyla ilişkili hataları veya görevleri izlemeye yardımcı olur.",

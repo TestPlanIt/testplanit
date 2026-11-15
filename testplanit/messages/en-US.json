@@ -8292,7 +8292,7 @@
     },
     "testResult": {
       "status": "## Status\nSelect the overall status of the test execution. The status you choose can affect project metrics and reports.",
-      "elapsedTime": "## Elapsed Time\nEnter the total time taken to execute this test case. You can use units like **s** for seconds, **m** for minutes, **h** for hours (e.g., 30s, 5m, 1h 20m).",
+      "elapsedTime": "## Elapsed Time\nThe total time taken to execute this test case.\n\nFor a single test case the time is tracked automatically from when you open the case in the test run, and it keeps counting while you work in another window. Pause the clock when you step away, or type the time yourself. You can use units like **s** for seconds, **m** for minutes, **h** for hours (e.g., 30s, 5m, 1h 20m).\n\nWhen you add one result to several test cases at once, nothing is tracked: start the clock or type a time.",
       "resultData": "## Result Details\nProvide detailed notes, observations, or any other relevant data about the overall test execution. This can include setup details, steps followed if deviating from the plan, or general comments.",
       "evidence": "## Evidence/Attachments\nUpload any files (e.g., screenshots, logs, data files) that serve as evidence for this test result. These attachments will be linked to this specific result.",
       "issues": "## Linked Issues\nLink any issues from your integrated issue tracker that are related to this test result. This helps in tracking defects or tasks associated with the outcome of this test.\n\nLinking an issue sets the overall status to the first failure status unless you have already chosen one. You can still change it before saving.",

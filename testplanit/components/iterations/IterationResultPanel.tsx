@@ -24,6 +24,12 @@ import {
 } from "~/lib/test-run-result-submit";
 
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
+import { ExecutionTimeTracker } from "@/components/ExecutionTimeTracker";
+import {
+  consumeExecutionTimer,
+  executionTimerElapsed,
+  executionTimerKey,
+} from "~/hooks/useExecutionTimer";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import type { IterationDTO } from "./types";
 import { invalidateAfterResultSubmit } from "~/lib/test-run-result-invalidation";
@@ -174,6 +180,12 @@ export function IterationResultPanel({
   // settles.
   const invalidateAfterSubmit = () => invalidateAfterResultSubmit(queryClient);
 
+  // Each iteration is timed on its own while a result can be recorded on it.
+  const timerKey =
+    canAddEditResults && !isDisabled
+      ? executionTimerKey(testRunId, testRunCaseId, iteration.id)
+      : null;
+
   const submitWithStatus = async (statusId: number, wasSuccess: boolean) => {
     if (!canAddEditResults || isDisabled) return;
     if (!testcase?.currentVersion) return;
@@ -192,11 +204,13 @@ export function IterationResultPanel({
         statusId,
         notes: { type: "doc", content: [{ type: "paragraph" }] },
         evidence: {},
+        elapsed: executionTimerElapsed(timerKey),
         attempt: 1,
         testRunCaseVersion: testcase.currentVersion,
         inProgressStateId: inProgressWorkflow?.id ?? null,
         iterationId: iteration.id,
       });
+      consumeExecutionTimer(timerKey);
       // The result is durably written — surface success and advance now, and
       // refresh consumers in the background. Deliberately NOT awaited: blocking
       // on the page-wide refetch would keep `isSubmitting` (and therefore the
@@ -258,6 +272,7 @@ export function IterationResultPanel({
           })}
         </span>
         <div className="flex items-center gap-2">
+          {timerKey && <ExecutionTimeTracker timerKey={timerKey} />}
           <Button
             type="button"
             variant="outline"
