@@ -74,10 +74,6 @@ const TEST_CASE_GENERATION_VARIABLES: PromptVariable[] = [
   },
   { name: "STEPS_INSTRUCTION", description: "Instructions for test steps" },
   {
-    name: "PRIORITY_INSTRUCTION",
-    description: "Instructions for priority field values",
-  },
-  {
     name: "TAG_INSTRUCTIONS",
     description: "Instructions for auto-generating tags",
   },
@@ -298,3 +294,9 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
   [LLM_FEATURES.IMPACT_ANALYSIS]: "Impact: Affected Test Selection",
   [LLM_FEATURES.FAILURE_TRIAGE]: "Failure Triage: Root Cause",
 };
+
+/**
+ * Longest generation guidance an administrator can save on a case field, and
+ * the most printed for one field in a prompt. Matches the column's limit.
+ */
+export const FIELD_GUIDANCE_MAX_LENGTH = 500;

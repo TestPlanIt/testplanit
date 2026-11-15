@@ -930,16 +930,6 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
     });
   }, [testCase, selectedTemplateFields]);
 
-  const priorityField = useMemo(() => {
-    return selectedTemplateFields.find((field: any) =>
-      field.caseField.displayName.toLowerCase().includes("priority")
-    );
-  }, [selectedTemplateFields]);
-
-  const _priorityValue = priorityField
-    ? testCase.fieldValues[priorityField.caseField.displayName]
-    : null;
-
   const renderFieldList = (isEdit: boolean) => (
     <div className="mt-3 space-y-4 border-t pt-3">
       {selectedTemplateFields

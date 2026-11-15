@@ -8,12 +8,14 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { FieldOptions } from "~/zenstack/models";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
+import { FIELD_GUIDANCE_MAX_LENGTH } from "~/lib/llm/constants";
 import { ExtendedCaseFields } from "./caseFieldColumns";
 
 import { DraggableList } from "@/components/DraggableFieldOptions";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { emptyEditorContent } from "~/app/constants";
 
 import {
@@ -62,6 +64,7 @@ export function EditCaseField({
       systemName: z.string().optional(),
       typeId: z.string().optional(),
       hint: z.string().optional(),
+      generationGuidance: z.string().max(FIELD_GUIDANCE_MAX_LENGTH).optional(),
       isEnabled: z.boolean(),
       isRequired: z.boolean(),
       isRestricted: z.boolean(),
@@ -201,6 +204,7 @@ export function EditCaseField({
       isRestricted: casefield.isRestricted,
       typeId: casefield.type?.id.toString(),
       hint: casefield.hint ? casefield.hint : "",
+      generationGuidance: casefield.generationGuidance ?? "",
       defaultValue: casefield.defaultValue ?? undefined,
       isChecked: casefield.isChecked || false,
       minValue: casefield.minValue,
@@ -216,6 +220,7 @@ export function EditCaseField({
     casefield.isRestricted,
     casefield.type?.id,
     casefield.hint,
+    casefield.generationGuidance,
     casefield.defaultValue,
     casefield.isChecked,
     casefield.minValue,
@@ -614,6 +619,7 @@ export function EditCaseField({
           displayName: data.displayName,
           systemName: data.systemName,
           hint: data.hint,
+          generationGuidance: data.generationGuidance?.trim() || null,
           isEnabled: data.isEnabled,
           isRequired: data.isRequired,
           isRestricted: data.isRestricted,
@@ -754,6 +760,30 @@ export function EditCaseField({
                   </FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="generationGuidance"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.generationGuidance")}
+                    <HelpPopover helpKey="caseField.generationGuidance" />
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      data-testid="case-field-generation-guidance"
+                      rows={3}
+                      maxLength={FIELD_GUIDANCE_MAX_LENGTH}
+                      placeholder={tCommon(
+                        "fields.placeholders.generationGuidance"
+                      )}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

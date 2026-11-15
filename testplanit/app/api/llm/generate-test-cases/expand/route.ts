@@ -18,6 +18,7 @@ import {
   type TemplateData,
   type TestCaseOutline,
 } from "../shared";
+import { withFieldGuidance } from "../fieldGuidance";
 import { makeRelatedCaseFinder } from "../related-cases";
 import {
   classifyLlmStreamError,
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
   const {
     projectId,
     issue,
-    template,
+    template: requestedTemplate,
     context,
     outline,
     autoGenerateTags,
@@ -83,12 +84,13 @@ export async function POST(req: NextRequest) {
     contextImagesId?: string;
   };
 
-  if (!projectId || !issue || !template || !outline) {
+  if (!projectId || !issue || !requestedTemplate || !outline) {
     return NextResponse.json(
       { error: "Missing required parameters", errorCode: "invalid_request" },
       { status: 400 }
     );
   }
+  const template = await withFieldGuidance(requestedTemplate);
 
   // Server-side admin gate on `includeParameters`. The wizard hides the
   // toggle for non-admins; a crafted request body must still be rejected

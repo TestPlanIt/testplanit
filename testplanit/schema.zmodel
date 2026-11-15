@@ -1146,6 +1146,7 @@ model CaseFields {
     displayName             String                   @length(1)
     systemName              String                   @unique @length(1)
     hint                    String?
+    generationGuidance      String?                  @length(max: 500) @deny('update', auth().access != 'ADMIN' && auth().access != 'PROJECTADMIN')
     typeId                  Int
     type                    CaseFieldTypes           @relation(name: "TypeToCaseFields", fields: [typeId], references: [id])
     isEnabled               Boolean                  @default(true)
@@ -1168,6 +1169,7 @@ model CaseFields {
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
     @@allow('all', auth().access != null) // This is needed in case user has add/edit access to test cases
+    @@deny('create', generationGuidance != null && auth().access != 'ADMIN' && auth().access != 'PROJECTADMIN')
 }
 
 model ResultFields {

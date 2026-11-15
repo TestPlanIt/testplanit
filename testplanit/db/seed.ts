@@ -1,5 +1,6 @@
 import { ApplicationArea, WorkflowScope } from "~/zenstack/models";
 import type { JsonValue } from "@zenstackhq/orm";
+import { DEFAULT_FIELD_GUIDANCE } from "~/lib/llm/fieldGuidanceDefaults";
 import { createRawDbClient } from "~/lib/rawDbClient";
 import { sql } from "kysely";
 
@@ -1140,11 +1141,22 @@ async function seedCaseFields(fieldTypeMap: any) {
   // the pool schedules them, so on a fresh database each field drew a
   // different autoincrement id from one seed run to the next. Seeding them in
   // order makes the ids follow the list above.
+  // Guidance is set only when the field is created: an administrator's own
+  // wording on an existing field is never replaced.
+  const seededGuidance: Record<string, string> = {
+    priority: DEFAULT_FIELD_GUIDANCE.priority,
+    description: DEFAULT_FIELD_GUIDANCE.description,
+  };
   for (const { displayName, systemName, typeName } of caseFieldsData) {
     await db.caseFields.upsert({
       where: { systemName },
       update: { typeId: fieldTypeMap[typeName] },
-      create: { displayName, systemName, typeId: fieldTypeMap[typeName] },
+      create: {
+        displayName,
+        systemName,
+        typeId: fieldTypeMap[typeName],
+        generationGuidance: seededGuidance[systemName] ?? null,
+      },
     });
   }
   console.log("Seeded case fields.");

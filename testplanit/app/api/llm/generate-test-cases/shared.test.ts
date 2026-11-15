@@ -6,6 +6,7 @@ import type {
   IssueData,
   LinkedIssueRef,
 } from "~/lib/integrations/adapters/IssueAdapter";
+import { FIELD_GUIDANCE_MAX_LENGTH } from "~/lib/llm/constants";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 
 import {
@@ -16,6 +17,7 @@ import {
   buildOutlineUserPrompt,
   buildSystemPrompt,
   buildUserPrompt,
+  describeField,
   fetchExistingCasesContext,
   fetchIssueLinkedCasesContext,
   fetchLinkedIssuesContext,
@@ -1217,6 +1219,90 @@ describe("Steps field — shape normalization", () => {
 
     expect(prompt).toContain("ARRAY of step objects");
     expect(prompt).toContain("one object per individual action");
+  });
+});
+
+describe("buildSystemPrompt — per-field guidance", () => {
+  const guided: TemplateData = {
+    ...sampleTemplate,
+    fields: sampleTemplate.fields.map((f) =>
+      f.name === "Priority"
+        ? { ...f, guidance: "High is the highest. Start from the issue." }
+        : f
+    ),
+  };
+  const build = (template: TemplateData, baseTemplate?: string) =>
+    buildSystemPrompt(
+      template,
+      { folderContext: 0 },
+      "few",
+      false,
+      baseTemplate,
+      false
+    );
+
+  it("prints guidance on the line under its own field and nowhere else", () => {
+    const prompt = build(guided);
+    expect(prompt).toContain(
+      "- Priority (Dropdown) - options: [High, Medium, Low]\n  guidance: High is the highest. Start from the issue."
+    );
+    expect(prompt.match(/\n {2}guidance: /g)).toHaveLength(1);
+  });
+
+  it("prints no guidance line for a field without any", () => {
+    expect(build(sampleTemplate)).not.toMatch(/\n {2}guidance: /);
+  });
+
+  it("reaches a customised prompt through the field list variables", () => {
+    const prompt = build(
+      guided,
+      "{{EXAMPLE_STRUCTURE}}\nREQUIRED:\n{{REQUIRED_FIELDS_LIST}}\nOPTIONAL:\n{{OPTIONAL_FIELDS_LIST}}"
+    );
+    expect(prompt).toContain("\n  guidance: High is the highest.");
+  });
+
+  it("keeps guidance on one line and within the length limit", () => {
+    const field = {
+      id: 1,
+      name: "Notes",
+      type: "Text Long",
+      required: false,
+      guidance: `first line\n\n  second line ${"x".repeat(600)}`,
+    };
+    const [line, guidance, ...rest] = describeField(field).split("\n");
+    expect(line).toBe("- Notes (Text Long)");
+    expect(rest).toHaveLength(0);
+    expect(guidance.startsWith("  guidance: first line second line x")).toBe(
+      true
+    );
+    expect(guidance.length).toBe(
+      "  guidance: ".length + FIELD_GUIDANCE_MAX_LENGTH
+    );
+  });
+
+  it("treats blank guidance as none", () => {
+    expect(
+      describeField({
+        id: 1,
+        name: "Notes",
+        type: "Text Long",
+        required: false,
+        guidance: "  \n ",
+      })
+    ).toBe("- Notes (Text Long)");
+  });
+
+  it("no longer restates a priority field's options as a separate rule", () => {
+    expect(build(sampleTemplate)).not.toContain("use ONLY these values");
+  });
+
+  it("blanks the retired priority variable in a prompt that still has it", () => {
+    const prompt = build(
+      sampleTemplate,
+      "{{EXAMPLE_STRUCTURE}}\n{{REQUIRED_FIELDS_LIST}}\n{{PRIORITY_INSTRUCTION}}\nEND"
+    );
+    expect(prompt).not.toContain("PRIORITY_INSTRUCTION");
+    expect(prompt).not.toContain("use ONLY these values");
   });
 });
 

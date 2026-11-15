@@ -28,6 +28,7 @@ import {
   type ParseWarning,
   type TemplateData,
 } from "./shared";
+import { withFieldGuidance } from "./fieldGuidance";
 import { makeRelatedCaseFinder } from "./related-cases";
 
 export interface GenerateTestCasesParams {
@@ -78,7 +79,7 @@ export async function generateTestCasesForProject(
   const {
     projectId,
     issue,
-    template,
+    template: requestedTemplate,
     context,
     quantity,
     autoGenerateTags,
@@ -87,6 +88,7 @@ export async function generateTestCasesForProject(
     userId,
     tenantId = getCurrentTenantId(),
   } = params;
+  const template = await withFieldGuidance(requestedTemplate);
 
   const manager = LlmManager.getInstance(baseDb);
 

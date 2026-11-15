@@ -134,3 +134,59 @@ describe("EditCaseField — numeric range round-trips zero", () => {
     expect(data.maxValue).toBeNull();
   });
 });
+
+describe("EditCaseField — AI generation guidance", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpdateCaseField.mockResolvedValue({ id: 11 });
+  });
+
+  const guidanceInput = () =>
+    screen.getByTestId("case-field-generation-guidance") as HTMLTextAreaElement;
+
+  it("shows the saved guidance and saves an edit to it", async () => {
+    render(
+      <EditCaseField
+        casefield={numberField({ generationGuidance: "Higher is riskier." })}
+        open={true}
+        onClose={() => {}}
+      />
+    );
+
+    expect(guidanceInput().value).toBe("Higher is riskier.");
+    fireEvent.change(guidanceInput(), {
+      target: { value: "  100 is the highest risk.  " },
+    });
+    submit();
+
+    await waitFor(() => expect(mockUpdateCaseField).toHaveBeenCalledTimes(1));
+    expect(mockUpdateCaseField.mock.calls[0][0].data.generationGuidance).toBe(
+      "100 is the highest risk."
+    );
+  });
+
+  it("saves cleared guidance as null, not an empty string", async () => {
+    render(
+      <EditCaseField
+        casefield={numberField({ generationGuidance: "Higher is riskier." })}
+        open={true}
+        onClose={() => {}}
+      />
+    );
+
+    fireEvent.change(guidanceInput(), { target: { value: "   " } });
+    submit();
+
+    await waitFor(() => expect(mockUpdateCaseField).toHaveBeenCalledTimes(1));
+    expect(
+      mockUpdateCaseField.mock.calls[0][0].data.generationGuidance
+    ).toBeNull();
+  });
+
+  it("limits guidance to the column's length", () => {
+    render(
+      <EditCaseField casefield={numberField()} open={true} onClose={() => {}} />
+    );
+    expect(guidanceInput().maxLength).toBe(500);
+  });
+});

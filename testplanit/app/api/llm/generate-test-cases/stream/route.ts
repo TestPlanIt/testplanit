@@ -31,6 +31,7 @@ import {
   type IssueData,
   type TemplateData,
 } from "../shared";
+import { withFieldGuidance } from "../fieldGuidance";
 import { makeRelatedCaseFinder } from "../related-cases";
 import {
   classifyLlmStreamError,
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
   const {
     projectId,
     issue,
-    template,
+    template: requestedTemplate,
     context,
     quantity,
     autoGenerateTags,
@@ -94,12 +95,13 @@ export async function POST(req: NextRequest) {
     includeScreenshot?: boolean;
   };
 
-  if (!projectId || !issue || !template) {
+  if (!projectId || !issue || !requestedTemplate) {
     return NextResponse.json(
       { error: "Missing required parameters", errorCode: "invalid_request" },
       { status: 400 }
     );
   }
+  const template = await withFieldGuidance(requestedTemplate);
 
   // CR-03 (T-06-04-01): server-side admin gate on the
   // `includeParameters` flag. Mirrors the sync route — the wizard

@@ -583190,6 +583190,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "typeId": {
             "type": "integer"
           },
@@ -583335,6 +583345,9 @@
             "type": "boolean"
           },
           "hint": {
+            "type": "boolean"
+          },
+          "generationGuidance": {
             "type": "boolean"
           },
           "typeId": {
@@ -583637,6 +583650,19 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "typeId": {
             "oneOf": [
               {
@@ -583858,6 +583884,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/StringNullableFilter"
@@ -584117,6 +584156,19 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "typeId": {
             "oneOf": [
               {
@@ -584327,6 +584379,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
@@ -584555,6 +584620,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
           "typeId": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -584675,6 +584750,7 @@
           "displayName",
           "systemName",
           "hint",
+          "generationGuidance",
           "typeId",
           "isEnabled",
           "isDeleted",
@@ -584702,6 +584778,9 @@
             "type": "boolean"
           },
           "hint": {
+            "type": "boolean"
+          },
+          "generationGuidance": {
             "type": "boolean"
           },
           "typeId": {
@@ -584760,6 +584839,9 @@
           "hint": {
             "type": "integer"
           },
+          "generationGuidance": {
+            "type": "integer"
+          },
           "typeId": {
             "type": "integer"
           },
@@ -584805,6 +584887,7 @@
           "displayName",
           "systemName",
           "hint",
+          "generationGuidance",
           "typeId",
           "isEnabled",
           "isDeleted",
@@ -584833,6 +584916,9 @@
             "type": "boolean"
           },
           "hint": {
+            "type": "boolean"
+          },
+          "generationGuidance": {
             "type": "boolean"
           },
           "typeId": {
@@ -584907,6 +584993,16 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -585054,6 +585150,9 @@
           "hint": {
             "type": "boolean"
           },
+          "generationGuidance": {
+            "type": "boolean"
+          },
           "typeId": {
             "type": "boolean"
           },
@@ -585126,6 +585225,16 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -585485,6 +585594,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "typeId": {
             "type": "integer"
           },
@@ -585652,6 +585771,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "isEnabled": {
             "type": "boolean"
           },
@@ -585784,6 +585913,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -585984,6 +586126,19 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "isEnabled": {
             "oneOf": [
               {
@@ -586140,6 +586295,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "typeId": {
             "type": "integer"
           },
@@ -586243,6 +586408,16 @@
             "type": "string"
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -586369,6 +586544,16 @@
             "type": "string"
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -586506,6 +586691,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -586713,6 +586911,19 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "isEnabled": {
             "oneOf": [
               {
@@ -586897,6 +587108,16 @@
             "type": "string"
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -587242,6 +587463,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -587701,6 +587935,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "isEnabled": {
             "type": "boolean"
           },
@@ -587819,6 +588063,16 @@
             "type": "string"
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -587957,6 +588211,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -588152,6 +588419,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -588472,6 +588752,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "isEnabled": {
             "type": "boolean"
           },
@@ -588590,6 +588880,16 @@
             "type": "string"
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -588728,6 +589028,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -588923,6 +589236,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -589243,6 +589569,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "isEnabled": {
             "type": "boolean"
           },
@@ -589361,6 +589697,16 @@
             "type": "string"
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -589499,6 +589845,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -589694,6 +590053,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -590014,6 +590386,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "isEnabled": {
             "type": "boolean"
           },
@@ -590132,6 +590514,16 @@
             "type": "string"
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -590270,6 +590662,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -590465,6 +590870,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -590785,6 +591203,16 @@
               }
             ]
           },
+          "generationGuidance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "isEnabled": {
             "type": "boolean"
           },
@@ -590903,6 +591331,16 @@
             "type": "string"
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "null"
@@ -591041,6 +591479,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"
@@ -591236,6 +591687,19 @@
             ]
           },
           "hint": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generationGuidance": {
             "oneOf": [
               {
                 "type": "string"

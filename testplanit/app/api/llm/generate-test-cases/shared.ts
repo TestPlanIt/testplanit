@@ -5,6 +5,7 @@
 
 import type { DbClient } from "~/lib/zenstack";
 import { z } from "zod/v4";
+import { FIELD_GUIDANCE_MAX_LENGTH } from "~/lib/llm/constants";
 import type {
   IssueAdapter,
   IssueComment,
@@ -128,6 +129,11 @@ export interface TemplateData {
     type: string;
     required: boolean;
     options?: string[];
+    /**
+     * What an administrator wrote about this field for the model. Set on the
+     * server by `withFieldGuidance`; a value sent by a client is discarded.
+     */
+    guidance?: string;
   }>;
   /**
    * Display names of fields the caller left out of `fields`, named in the
@@ -894,6 +900,28 @@ export async function fetchLinkedIssuesContext(
 // Prompt builders
 // ---------------------------------------------------------------------------
 
+/**
+ * One field's line in the prompt's field list, with the administrator's
+ * guidance for it on the line below. Guidance is advice about what to write:
+ * the format rules elsewhere in the prompt still decide the value's shape.
+ */
+export function describeField(field: TemplateData["fields"][number]): string {
+  const options = field.options
+    ? ` - options: [${field.options.join(", ")}]`
+    : "";
+  const multiSelect =
+    field.type.toLowerCase() === "multi-select"
+      ? " - provide array of selected options"
+      : "";
+  const guidance = (field.guidance ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, FIELD_GUIDANCE_MAX_LENGTH);
+  return `- ${field.name} (${field.type})${options}${multiSelect}${
+    guidance ? `\n  guidance: ${guidance}` : ""
+  }`;
+}
+
 export function buildSystemPrompt(
   template: TemplateData,
   _context: GenerationContext,
@@ -1024,26 +1052,10 @@ export function buildSystemPrompt(
   const exampleStructure = exampleStructureJson.substring(
     exampleStructureJson.indexOf("{")
   );
-  const requiredFieldsList = requiredFields
-    .map(
-      (f) =>
-        `- ${f.name} (${f.type})${f.options ? ` - options: [${f.options.join(", ")}]` : ""}${f.type.toLowerCase() === "multi-select" ? " - provide array of selected options" : ""}`
-    )
-    .join("\n");
-  const optionalFieldsList = optionalFields
-    .map(
-      (f) =>
-        `- ${f.name} (${f.type})${f.options ? ` - options: [${f.options.join(", ")}]` : ""}${f.type.toLowerCase() === "multi-select" ? " - provide array of selected options" : ""}`
-    )
-    .join("\n");
+  const requiredFieldsList = requiredFields.map(describeField).join("\n");
+  const optionalFieldsList = optionalFields.map(describeField).join("\n");
   const stepsInstruction = includeSteps
     ? "\n- For the Steps field in fieldValues, provide an ARRAY of step objects, each with a 'step' and an 'expectedResult' key. Emit one object per individual action — a test case normally needs several. Never return the steps as a string, and never pack a numbered list of actions into a single step object.\n- Start the steps in the application under test. Environment, account, and permission setup are prerequisites, not steps. Keep each case to one scenario, usually no more than about 8 steps; checks that belong to a different scenario (such as comparing with another user role) belong in their own test case."
-    : "";
-  const priorityField = template.fields.find((f) =>
-    f.name.toLowerCase().includes("priority")
-  );
-  const priorityInstruction = priorityField?.options
-    ? `\n- For the ${priorityField.name} field in fieldValues, use ONLY these values: [${priorityField.options.join(", ")}]`
     : "";
   const tagInstructions = autoGenerateTags
     ? '- TAGS: Include 2-4 relevant tags per test case that categorize the test (e.g., "UI", "API", "Security", "Performance", "Integration", "Smoke", "Regression", "Functional", "Edge Case", "Mobile", "Desktop", etc.)'
@@ -1097,7 +1109,9 @@ ${excludedFieldNames.map((name) => `- ${name}`).join("\n")}
       )
       .replace("{{QUANTITY_GUIDANCE}}", quantityGuidance)
       .replace("{{STEPS_INSTRUCTION}}", stepsInstruction)
-      .replace("{{PRIORITY_INSTRUCTION}}", priorityInstruction)
+      // Removed variable: prompts customised before field guidance existed
+      // may still contain it.
+      .replace("{{PRIORITY_INSTRUCTION}}", "")
       .replace("{{TAG_INSTRUCTIONS}}", tagInstructions);
     const languageTail = rendered.includes("LANGUAGE CONSISTENCY")
       ? ""
@@ -1123,7 +1137,7 @@ ADDITIONAL FIELDS (include ALL of these in fieldValues):
 ${optionalFieldsList || "- (none)"}
 
 - Each test case object must contain ONLY: id, name, fieldValues${autoGenerateTags ? ", tags" : ""}. Do NOT include description, priority, automated, steps, or any other top-level keys.
-- ALL data belongs inside fieldValues using the exact field names shown above${stepsInstruction}${priorityInstruction}
+- ALL data belongs inside fieldValues using the exact field names shown above${stepsInstruction}
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly${tagInstructions ? `\n${tagInstructions}` : ""}`;
@@ -1159,15 +1173,12 @@ REQUIREMENTS:
 - Generate ${quantityGuidance} that are SPECIFIC to the provided issue
 - Each test case object must contain ONLY: id, name, fieldValues${autoGenerateTags ? ", tags" : ""}. Do NOT include priority, automated, steps, or any other top-level keys.
 - ALL data belongs inside fieldValues using the exact field names shown above
-- Each test case name should reference the actual feature/functionality being tested${stepsInstruction}${priorityInstruction}
+- Each test case name should reference the actual feature/functionality being tested${stepsInstruction}
 ${languageConsistencyInstruction}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields in fieldValues
-- For every text/textarea field listed above (and ONLY those):
-  * Keep the content short and specific to the issue: write only what a tester needs, with no filler and no restating of the steps
-  * A description field should say in one or two sentences what the test validates
-  * A preconditions field should be a short list of the state, test data, and permissions needed before the first step, one item per line
-  * A post-conditions field should note only system state that matters after the test (such as data to clean up)
+- For every text/textarea field listed above (and ONLY those), keep the content short and specific to the issue: write only what a tester needs, with no filler and no restating of the steps
+- When a field listed above has a "guidance:" line, follow it for that field's content. Guidance never changes the field's type, format or allowed options.
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly

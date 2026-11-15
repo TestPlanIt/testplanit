@@ -350,6 +350,7 @@
       "resultFields": "Result Fields",
       "displayName": "Display Name",
       "hint": "Hint",
+      "generationGuidance": "AI Generation Guidance",
       "required": "Required",
       "restricted": "Restricted",
       "fieldType": "Field Type",
@@ -450,7 +451,8 @@
         "addCategory": "Add category",
         "displayName": "Enter display name",
         "systemName": "Enter system name",
-        "hint": "Enter hint"
+        "hint": "Enter hint",
+        "generationGuidance": "Tell the AI what this field means and how to choose a value"
       },
       "hints": {
         "systemName": "System name must be unique and contain only letters, numbers, and underscores",
@@ -8307,6 +8309,7 @@
       "displayName": "## Display Name\nThis is the human-readable name for the field that will be shown to users in forms and views. Make it clear and descriptive.",
       "systemName": "## System Name\nA unique identifier for this field used internally by the system (e.g., in API calls, database queries). It will be auto-generated from the Display Name but can be customized. Must start with a letter. Can only contain letters, numbers, and underscores (no spaces or special characters).",
       "hint": "## Hint Text (Optional)\nProvide a short instruction or example that will appear below the field to guide users. This can clarify expected input or formatting.",
+      "generationGuidance": "## AI Generation Guidance (Optional)\nInstructions for the AI when it generates test cases, sent with this field every time. Say what the field means, which end of a scale is highest, and how to choose a value. For example: \"Critical is highest. Use the source issue's priority as the baseline.\"\n\nUnlike the hint, testers never see this text. It does not change the field's type or allowed options.",
       "enabled": "## Enabled\nDetermines if this field is active and available for use in templates and test cases. Disabled fields are hidden and their data is preserved but not used.",
       "required": "## Required\nIf checked, users must provide a value for this field when creating or editing a test case using a template that includes this field.",
       "restricted": "## Restricted\nIf checked, only users with special permissions (e.g., Super Admins or those with 'Case Restricted Fields' permission) can edit this field's value once a case is created. Other users will see it as read-only. This is useful for fields like 'Reviewed By' or 'Approved Date' that should not be changed by general users after a certain stage.",

@@ -23,6 +23,7 @@ import {
   type GenerationContext,
   type IssueData,
 } from "@/api/llm/generate-test-cases/shared";
+import { withFieldGuidance } from "@/api/llm/generate-test-cases/fieldGuidance";
 import { makeRelatedCaseFinder } from "@/api/llm/generate-test-cases/related-cases";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
           send(controller, { type: "error", message: "Template not found" });
           return;
         }
-        const template = loaded.template;
+        const template = await withFieldGuidance(loaded.template);
 
         send(controller, { type: "stage", stage: "resolving" });
 

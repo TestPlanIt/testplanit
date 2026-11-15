@@ -77,14 +77,10 @@ REQUIREMENTS:
 - Each test case name should reference the actual feature/functionality being tested
 - LANGUAGE CONSISTENCY: Write the top-level \`name\` of every test case in the SAME language you use for the values inside \`fieldValues\`. The \`name\` is human-readable content — never leave it in English (or reuse the English wording from this prompt) when the field values are generated in another language.
 {{STEPS_INSTRUCTION}}
-{{PRIORITY_INSTRUCTION}}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields listed above in fieldValues, especially text fields
-- For every text/textarea field listed above (and ONLY those):
-  * Keep the content short and specific to the issue: write only what a tester needs, with no filler and no restating of the steps
-  * A description field should say in one or two sentences what the test validates
-  * A preconditions field should be a short list of the state, test data, and permissions needed before the first step, one item per line
-  * A post-conditions field should note only system state that matters after the test (such as data to clean up)
+- For every text/textarea field listed above (and ONLY those), keep the content short and specific to the issue: write only what a tester needs, with no filler and no restating of the steps
+- When a field listed above has a "guidance:" line, follow it for that field's content. Guidance never changes the field's type, format or allowed options.
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly
@@ -276,10 +272,10 @@ REQUIREMENTS:
 - ALL data belongs inside fieldValues using the exact field names shown above
 - Each test case name should reference the actual requirement being tested
 {{STEPS_INSTRUCTION}}
-{{PRIORITY_INSTRUCTION}}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields listed above in fieldValues, especially text fields
-- For every text/textarea field listed above (and ONLY those), keep the content short and specific: a description says in one or two sentences what the test validates; preconditions list the state, test data and permissions needed before the first step; post-conditions note only system state that matters after the test
+- For every text/textarea field listed above (and ONLY those), keep the content short and specific
+- When a field listed above has a "guidance:" line, follow it for that field's content. Guidance never changes the field's type, format or allowed options.
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly
@@ -331,10 +327,10 @@ REQUIREMENTS:
 - ALL data belongs inside fieldValues using the exact field names shown above
 - Each test case name should reference the actual page element or flow being tested
 {{STEPS_INSTRUCTION}}
-{{PRIORITY_INSTRUCTION}}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields listed above in fieldValues, especially text fields
-- For every text/textarea field listed above (and ONLY those), keep the content short and specific: a description says in one or two sentences what the test validates; preconditions list the state, test data and permissions needed before the first step; post-conditions note only system state that matters after the test
+- For every text/textarea field listed above (and ONLY those), keep the content short and specific
+- When a field listed above has a "guidance:" line, follow it for that field's content. Guidance never changes the field's type, format or allowed options.
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly

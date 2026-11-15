@@ -18,7 +18,9 @@ function readSource(relativePath: string): string {
 }
 
 const TEXT_FIELD_GUIDANCE =
-  "- For every text/textarea field listed above (and ONLY those):";
+  "- For every text/textarea field listed above (and ONLY those),";
+const FIELD_GUIDANCE_RULE =
+  '- When a field listed above has a "guidance:" line, follow it for that field\'s content.';
 
 describe("test-case-generation prompt — excluded-field compatibility", () => {
   const fallback = FALLBACK_PROMPTS[LLM_FEATURES.TEST_CASE_GENERATION];
@@ -41,6 +43,36 @@ describe("test-case-generation prompt — excluded-field compatibility", () => {
   it("keeps the inline default in step with the fallback", () => {
     const inline = readSource("app/api/llm/generate-test-cases/shared.ts");
     expect(inline).toContain(TEXT_FIELD_GUIDANCE);
+  });
+
+  it("tells the model to follow per-field guidance in every copy", () => {
+    for (const source of [
+      fallback.systemPrompt,
+      FALLBACK_PROMPTS[LLM_FEATURES.GENERATE_FROM_URL].systemPrompt,
+      FALLBACK_PROMPTS[LLM_FEATURES.GENERATE_FROM_URL_APP].systemPrompt,
+      readSource("db/seedPromptConfig.ts"),
+      readSource("app/api/llm/generate-test-cases/shared.ts"),
+    ]) {
+      expect(source).toContain(FIELD_GUIDANCE_RULE);
+    }
+  });
+
+  it("leaves what a named field should say to that field's guidance", () => {
+    for (const source of [
+      fallback.systemPrompt,
+      FALLBACK_PROMPTS[LLM_FEATURES.GENERATE_FROM_URL].systemPrompt,
+      FALLBACK_PROMPTS[LLM_FEATURES.GENERATE_FROM_URL_APP].systemPrompt,
+      readSource("db/seedPromptConfig.ts"),
+    ]) {
+      expect(source).not.toMatch(
+        /description (field should say|says in one or two)|preconditions (field should be|list the state)/i
+      );
+      expect(source).not.toContain("{{PRIORITY_INSTRUCTION}}");
+    }
+    const names = PROMPT_FEATURE_VARIABLES[
+      LLM_FEATURES.TEST_CASE_GENERATION
+    ].map((v) => v.name);
+    expect(names).not.toContain("PRIORITY_INSTRUCTION");
   });
 
   it("places linked issues in the seeded and fallback user prompts", () => {

@@ -9,11 +9,13 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { FieldOptions } from "~/zenstack/models";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
+import { FIELD_GUIDANCE_MAX_LENGTH } from "~/lib/llm/constants";
 
 import { DraggableList } from "@/components/DraggableFieldOptions";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { emptyEditorContent } from "~/app/constants";
 
 import { Ellipsis } from "lucide-react";
@@ -69,6 +71,7 @@ function buildFormSchema(t: (key: any) => string) {
         message: t("common.fields.options.validation.fieldTypeRequired"),
       }),
       hint: z.string().optional(),
+      generationGuidance: z.string().max(FIELD_GUIDANCE_MAX_LENGTH).optional(),
       isEnabled: z.boolean().default(true).optional(),
       isRequired: z.boolean().default(false).optional(),
       isRestricted: z.boolean().default(false).optional(),
@@ -298,6 +301,7 @@ export function AddCaseFieldModal({
       isEnabled: true,
       typeId: "",
       hint: "",
+      generationGuidance: "",
       dropdownOptions: [],
     },
   });
@@ -371,6 +375,7 @@ export function AddCaseFieldModal({
       isEnabled: true,
       typeId: "",
       hint: "",
+      generationGuidance: "",
       dropdownOptions: [],
       isRequired: false,
       isRestricted: false,
@@ -669,6 +674,7 @@ export function AddCaseFieldModal({
           displayName: data.displayName,
           systemName: data.systemName,
           hint: data.hint,
+          generationGuidance: data.generationGuidance?.trim() || null,
           typeId: data.typeId ? parseInt(data.typeId) : 1,
           isEnabled: data.isEnabled,
           isRequired: data.isRequired,
@@ -787,6 +793,30 @@ export function AddCaseFieldModal({
                   <FormControl>
                     <Input
                       placeholder={tCommon("fields.placeholders.hint")}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="generationGuidance"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.generationGuidance")}
+                    <HelpPopover helpKey="caseField.generationGuidance" />
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      data-testid="case-field-generation-guidance"
+                      rows={3}
+                      maxLength={FIELD_GUIDANCE_MAX_LENGTH}
+                      placeholder={tCommon(
+                        "fields.placeholders.generationGuidance"
+                      )}
                       {...field}
                     />
                   </FormControl>

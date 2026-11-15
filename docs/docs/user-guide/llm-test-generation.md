@@ -237,7 +237,7 @@ The AI populates the fields you selected in Step 2. Fields outside that selectio
 - **Name**: Descriptive, action-oriented test case names
 - **Description**: Detailed test objectives and scope
 - **Steps**: Detailed step/expected result pairs
-- **Priority**: Inferred from source context (when a Priority dropdown field exists)
+- **Priority**: Chosen from the field's options, following the field's [guidance](#field-guidance)
 - **Preconditions**: Required setup or system state
 - **Tags**: Contextually relevant tags (when auto-generate is enabled)
 
@@ -286,6 +286,16 @@ The AI considers:
   - **Number / Integer**: Numeric values
   - **Checkbox**: Boolean true/false values
   - **Date**: ISO date strings (e.g., `2024-01-01`)
+
+### Field Guidance
+
+An administrator can write guidance for the AI on each case field, in **Administration > Templates & Fields**. The guidance is sent with the field in every generation that includes it: the wizard, the Jira issue panel and webhook actions.
+
+Use it to say what a field means and how to choose a value. For example, on a Risk field: "5 is the highest risk. Use 4 or 5 only for cases that touch payments or sign-in."
+
+- Guidance shapes what the AI writes. It does not change the field's type or its allowed options: a dropdown still receives one of its configured options.
+- The built-in **Priority** and **Description** fields come with guidance. Edit or clear it like any other.
+- A field without guidance is filled from its name, type and options alone.
 
 ### Intelligent Tagging
 

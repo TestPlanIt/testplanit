@@ -78,6 +78,7 @@ The Case Fields table lists all defined fields with columns for:
     - **Display Name:** User-friendly label (required).
     - **System Name:** Internal ID, auto-generated from Display Name but can be edited (required, unique, specific format).
     - **Hint:** (Optional) Help text displayed to the user.
+    - **AI Generation Guidance:** (Optional) Instructions for the AI when it [generates test cases](./llm-test-generation.md#field-guidance), up to 500 characters. Say what the field means, which end of a scale is highest, and how to choose a value. Testers never see this text. Only system administrators and project administrators can set it.
     - **Enabled / Required / Restricted:** Toggle switches for these settings:
       - **Enabled:** If checked, the field is active and will appear on forms where its template is used. If unchecked, the field is hidden but retains its configuration.
       - **Required:** If checked, users must provide a value for this field when filling out the corresponding form (Test Case or Test Result).
@@ -107,7 +108,7 @@ The Case Fields table lists all defined fields with columns for:
 ### Editing an Existing Case Field
 
 1. Click the **Edit** button for the desired field.
-2. Modify the **Display Name**, **Hint**, **Enabled/Required/Restricted** status, and **Type-Specific Options** as needed. (Note: System Name and Field Type cannot be changed after creation).
+2. Modify the **Display Name**, **Hint**, **AI Generation Guidance**, **Enabled/Required/Restricted** status, and **Type-Specific Options** as needed. (Note: System Name and Field Type cannot be changed after creation).
 3. Click "Submit".
 
 ### Deleting a Case Field
