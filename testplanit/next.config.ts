@@ -176,6 +176,13 @@ const nextConfig: NextConfig = {
       // Fix Turbopack resolution for zod subpath exports (used by @hookform/resolvers)
       "zod/v3": "zod/v3",
       "zod/v4/core": "zod/v4/core",
+      // JSZip's source entry requires "readable-stream", which in the browser
+      // resolves to Next's `stream` and `util` polyfills. The `util` one runs
+      // an `eval` feature probe on load that the Content-Security-Policy
+      // blocks and reports. JSZip ships a self-contained browser bundle; its
+      // own `browser` field points at it, but Turbopack does not apply that
+      // mapping to the package entry.
+      jszip: { browser: "jszip/dist/jszip.min.js" },
     },
   },
   transpilePackages: ["lucide-react"],

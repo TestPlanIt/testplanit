@@ -4,7 +4,6 @@ import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
-import micromatch from "micromatch";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -39,8 +38,9 @@ import {
   type CodePinUpdateInput,
 } from "~/hooks/useCodePins";
 import { useImpactFiles, type ImpactFileEntry } from "~/hooks/useImpactFiles";
-import { symbolCandidates } from "~/lib/services/impact/pinMatcher";
+import { symbolCandidates } from "~/lib/services/impact/symbolScan";
 import { codeLanguageFromPath } from "~/lib/utils/codeLanguageFromPath";
+import { countGlobMatches } from "~/lib/utils/globMatch";
 import { cn } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
 import { mapDateTimeFormatString } from "~/utils/mapDateTimeFormat";
@@ -317,10 +317,10 @@ export function AddCodePinDialog({
   const globMatchCount = useMemo(() => {
     if (kind !== "GLOB" || !globPattern || files.length === 0) return null;
     try {
-      return micromatch(
+      return countGlobMatches(
         files.map((entry) => entry.path),
         globPattern
-      ).length;
+      );
     } catch {
       return 0;
     }
