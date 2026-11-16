@@ -1250,6 +1250,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                   size="sm"
                   className="p-2"
                   onClick={handleLinkClick}
+                  aria-label={t("textMenu.setLink")}
                 >
                   <LinkIcon className="h-4 w-4" />
                 </Button>
@@ -1300,6 +1301,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEmojiPopoverOpen(true)}
+                  aria-label={t("insertEmoji")}
                 >
                   <Smile className="h-4 w-4" />
                 </Button>
@@ -1329,6 +1331,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               size="sm"
               className="p-2"
               onClick={() => fileInputRef.current?.click()}
+              aria-label={t("uploadFile")}
             >
               <Upload className="h-4 w-4" />
             </Button>
@@ -1356,6 +1359,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               className="p-2"
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!toolbar.canUndo}
+              aria-label={tCommon("actions.undo")}
             >
               <Undo2 className="h-4 w-4" />
             </Button>
@@ -1366,6 +1370,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               className="p-2"
               onClick={() => editor.chain().focus().redo().run()}
               disabled={!toolbar.canRedo}
+              aria-label={t("redo")}
             >
               <Redo2 className="h-4 w-4" />
             </Button>

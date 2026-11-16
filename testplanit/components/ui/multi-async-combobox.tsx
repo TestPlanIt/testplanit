@@ -55,7 +55,8 @@ interface MultiAsyncComboboxProps<T> {
   placeholder?: string;
   /**
    * Accessible name for the trigger. The trigger is a button, so its selected
-   * values do not name it — pass the field's visible label.
+   * values do not name it — pass the field's visible label. Without one the
+   * placeholder names it.
    */
   ariaLabel?: string;
   disabled?: boolean;
@@ -235,7 +236,11 @@ export function MultiAsyncCombobox<T>({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          aria-label={ariaLabel}
+          aria-label={
+            ariaLabel ??
+            placeholder ??
+            tCommon("placeholders.selectConfigurations")
+          }
           className={cn(
             "h-auto min-h-10 w-full justify-between text-start font-normal",
             !value.length && "text-muted-foreground",

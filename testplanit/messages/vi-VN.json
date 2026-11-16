@@ -968,6 +968,8 @@
       "setColor": "Đặt màu",
       "enterUrl": "Nhập URL bao gồm https://",
       "uploadFile": "Tải lên tệp",
+      "insertEmoji": "Chèn emoji",
+      "redo": "Làm lại",
       "video": {
         "controls": "Điều khiển trình phát video"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "Lượt xem",
       "byAutomation": "Tự động hóa",
       "byParameterized": "Tham số hóa",
       "byReview": "Đánh giá",
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Hủy công việc"
         },
+        "promote": "Nâng cấp công việc",
         "activeJob": {
           "title": "Một worker đang xử lý công việc này",
           "cancelHint": "Hủy yêu cầu worker dừng lại ở lần kiểm tra tiếp theo; công việc sẽ rời khỏi hàng đợi sau khi nó dừng lại. Xóa bắt buộc chỉ hoạt động khi worker nắm giữ công việc đã biến mất và khóa của nó đã hết hạn."

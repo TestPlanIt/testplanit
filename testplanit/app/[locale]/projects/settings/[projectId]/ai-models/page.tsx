@@ -245,7 +245,10 @@ export default function ProjectAiModelsPage() {
                 onValueChange={handlePromptConfigChange}
                 disabled={updatingPromptConfig}
               >
-                <SelectTrigger className="w-full md:w-100">
+                <SelectTrigger
+                  className="w-full md:w-100"
+                  aria-label={t("promptConfig")}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

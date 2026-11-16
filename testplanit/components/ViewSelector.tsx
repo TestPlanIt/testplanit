@@ -471,6 +471,7 @@ export function ViewSelector({
         <SelectTrigger
           className="ms-1 me-6 text-lg font-extrabold text-primary md:text-xl"
           data-testid="view-selector-trigger"
+          aria-label={t("views.label")}
         >
           <SelectValue placeholder={tCommon("placeholders.selectOption")} />
         </SelectTrigger>

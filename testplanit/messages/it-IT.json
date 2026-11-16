@@ -968,6 +968,8 @@
       "setColor": "Imposta colore",
       "enterUrl": "Inserisci l'URL incluso https://",
       "uploadFile": "Carica file",
+      "insertEmoji": "Inserisci emoji",
+      "redo": "Ripeti",
       "video": {
         "controls": "Controlli del lettore video"
       },
@@ -2934,7 +2936,7 @@
       "automationRunsInProgress": "{count, plural, =0 {# Esecuzioni Automatiche in Corso} =1 {# Esecuzione Automatica in Corso} other {# Esecuzioni Automatiche in Corso}}",
       "activeSessions": "{count, plural, =0 {# Sessioni attive} =1 {# Sessione attiva} other {# Sessioni attive}}",
       "issues": "{count, plural, =0 {# Problemi} =1 {# Problema} other {# Problemi}}",
-      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+      "assignedToYou": "{count, plural, =1 {# caso di test assegnato a te è in attesa} other {# casi di test assegnati a te sono in attesa}}"
     },
     "lastActivity": "Ultima attività",
     "noActivity": "Nessuna attività di test ancora"
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "Visualizza",
       "byAutomation": "Automazione",
       "byParameterized": "Parametrizzazione",
       "byReview": "Revisione",
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Annulla processo"
         },
+        "promote": "Promuovi job",
         "activeJob": {
           "title": "Un worker sta elaborando questo processo",
           "cancelHint": "Annulla chiede al worker di fermarsi al prossimo controllo; il processo esce dalla coda una volta interrotto. Rimozione forzata funziona solo quando il worker che deteneva il processo è scomparso e il suo blocco è scaduto."

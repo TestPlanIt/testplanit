@@ -46,12 +46,13 @@ const SystemOutputPopover: React.FC<SystemOutputPopoverProps> = ({
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <div
-          className="block w-full min-w-0 cursor-pointer truncate align-bottom font-mono whitespace-nowrap hover:underline"
+        <button
+          type="button"
+          className="block w-full min-w-0 cursor-pointer truncate text-start align-bottom font-mono whitespace-nowrap hover:underline"
           data-testid="system-output-trigger"
         >
           {isLazy ? t("actions.viewSystemOutput") : text}
-        </div>
+        </button>
       </PopoverTrigger>
       <PopoverContent
         className="max-h-[500px] w-[700px] overflow-y-auto"

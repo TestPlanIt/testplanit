@@ -144,6 +144,14 @@ export const useColumns = (
             <Popover>
               <PopoverTrigger asChild>
                 <div
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      event.currentTarget.click();
+                    }
+                  }}
                   className="-m-1 max-h-16 cursor-pointer overflow-hidden rounded p-1 hover:bg-muted/50"
                   style={{ maxWidth: columnWidth - 20 }}
                 >

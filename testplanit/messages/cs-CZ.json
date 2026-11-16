@@ -968,6 +968,8 @@
       "setColor": "Nastavit barvu",
       "enterUrl": "Zadejte URL včetně https://",
       "uploadFile": "Nahrát soubor",
+      "insertEmoji": "Vložit emoji",
+      "redo": "Opakovat",
       "video": {
         "controls": "Ovládací prvky přehrávače videa"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "Zobrazení",
       "byAutomation": "Automatizace",
       "byParameterized": "Parametrizace",
       "byReview": "Kontrola",
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Zrušit úlohu"
         },
+        "promote": "Zvýšit prioritu úlohy",
         "activeJob": {
           "title": "Pracovník zpracovává tuto úlohu",
           "cancelHint": "Zrušení požádá pracovníka, aby zastavil při příštím ověření; úloha opustí frontu, jakmile se zastaví. Vynucené odebrání funguje pouze v případě, že pracovník, který úlohu držel, je pryč a jeho zámek vypršel."

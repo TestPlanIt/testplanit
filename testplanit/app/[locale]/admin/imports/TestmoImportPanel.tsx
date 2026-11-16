@@ -3403,7 +3403,9 @@ export function TestmoImportPanel() {
               onValueChange={handleExistingJobSelect}
               disabled={jobHistoryLoading || jobHistory.length === 0}
             >
-              <SelectTrigger>
+              <SelectTrigger
+                aria-label={t("testmo.previousImportsPlaceholder")}
+              >
                 <SelectValue
                   placeholder={t("testmo.previousImportsPlaceholder")}
                 />

@@ -2035,11 +2035,16 @@ export default function TestRunPage() {
             >
               {!isEditMode && (
                 <div className="me-2">
-                  <Link href={`/projects/runs/${projectId}`}>
-                    <Button type="button" variant="outline" size="icon">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="icon"
+                    aria-label={t("common.actions.back")}
+                  >
+                    <Link href={`/projects/runs/${projectId}`}>
                       <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               )}
               <CardTitle className="me-4 flex-1 pe-4 text-xl md:text-2xl">
@@ -2632,6 +2637,11 @@ export default function TestRunPage() {
                       <Button
                         type="button"
                         onClick={toggleCollapseRight}
+                        aria-label={
+                          isCollapsedRight
+                            ? t("common.actions.expandRightPanel")
+                            : t("common.actions.collapseRightPanel")
+                        }
                         variant="secondary"
                         size="sm"
                         className={`transform p-0 ${isCollapsedRight ? "rounded-s-none" : "rotate-180 rounded-e-none"}`}

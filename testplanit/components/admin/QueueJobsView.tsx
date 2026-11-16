@@ -318,6 +318,7 @@ export function QueueJobsView({
               className="h-auto px-2 py-1"
               onClick={() => setSelectedJob(job)}
               disabled={actionInProgress === job.id}
+              aria-label={t("details.title")}
             >
               <Eye className="h-4 w-4" />
             </Button>
@@ -327,6 +328,7 @@ export function QueueJobsView({
                 className="h-auto px-2 py-1"
                 onClick={() => performJobAction(job.id, "retry")}
                 disabled={actionInProgress === job.id}
+                aria-label={tGlobal("automation.execute.retry")}
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>
@@ -337,6 +339,7 @@ export function QueueJobsView({
                 className="h-auto px-2 py-1"
                 onClick={() => performJobAction(job.id, "promote")}
                 disabled={actionInProgress === job.id}
+                aria-label={t("promote")}
               >
                 <ChevronUp className="h-4 w-4" />
               </Button>
@@ -358,6 +361,7 @@ export function QueueJobsView({
               className="h-auto px-2 py-1"
               onClick={() => performJobAction(job.id, "remove")}
               disabled={actionInProgress === job.id}
+              aria-label={tGlobal("common.actions.remove")}
             >
               <Trash className="h-4 w-4" />
             </Button>

@@ -394,7 +394,10 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
                           onValueChange={(val) => onChange(Number(val))}
                           value={value ? value.toString() : ""}
                         >
-                          <SelectTrigger className="bg-primary-foreground">
+                          <SelectTrigger
+                            className="bg-primary-foreground"
+                            aria-label={t("repository.addCase.selectState")}
+                          >
                             <SelectValue
                               placeholder={t("repository.addCase.selectState")}
                             />

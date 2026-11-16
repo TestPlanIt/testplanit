@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { BadgeButton } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -48,7 +48,7 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
   return (
     <Popover modal={false}>
       <PopoverTrigger asChild>
-        <Badge
+        <BadgeButton
           className={
             size === "small"
               ? "cursor-pointer px-1.5 py-0 text-xs"
@@ -63,7 +63,7 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
             }
           />
           {issues.length}
-        </Badge>
+        </BadgeButton>
       </PopoverTrigger>
       <PopoverContent
         className="w-auto max-w-md p-2"

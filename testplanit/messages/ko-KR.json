@@ -968,6 +968,8 @@
       "setColor": "색상 설정",
       "enterUrl": "https://를 포함한 URL을 입력하세요.",
       "uploadFile": "파일 업로드",
+      "insertEmoji": "이모지 삽입",
+      "redo": "다시 실행",
       "video": {
         "controls": "비디오 플레이어 컨트롤"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "조회",
       "byAutomation": "오토메이션",
       "byParameterized": "매개변수화",
       "byReview": "검토",
@@ -6436,7 +6439,7 @@
       "storage": {
         "tab": "저장소",
         "neverScanned": "저장소가 아직 스캔되지 않았습니다. 스캔은 저장소의 파일과 데이터베이스를 비교하여 사용하지 않는 파일과 파일이 누락된 첨부파일을 찾습니다.",
-        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "summary": "{objects, plural, one {# 파일} other {# 파일}} 저장소에 ({size}). {orphans, plural, =0 {고아 파일이 없습니다.} one {# 개가 고아 파일입니다 ({orphanSize}).} other {# 개가 고아 파일입니다 ({orphanSize}).}}",
         "missingFiles": "{count, plural, one {# 개의 첨부파일에 구성된 저장소에 파일이 없습니다.} other {# 개의 첨부파일에 구성된 저장소에 파일이 없습니다.}}",
         "allFolders": "모든 폴더",
         "status": {
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "작업 취소"
         },
+        "promote": "작업 승격",
         "activeJob": {
           "title": "워커가 이 작업을 처리 중입니다",
           "cancelHint": "취소는 워커에게 다음 확인 시점에 중지하도록 요청합니다. 작업이 중지되면 대기열에서 제거됩니다. 강제 제거는 작업을 보유한 워커가 사라지고 잠금이 만료된 경우에만 작동합니다."

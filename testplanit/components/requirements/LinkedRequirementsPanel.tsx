@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeButton } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PanelCollapseToggle } from "@/components/PanelCollapseToggle";
@@ -428,7 +428,7 @@ export function LinkedRequirementsPanel({
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <PopoverTrigger asChild>
-                                    <Badge
+                                    <BadgeButton
                                       variant="outline"
                                       data-testid={`case-linked-requirement-suspect-${row.id}`}
                                       className="shrink-0 cursor-pointer gap-2 border-dashed border-warning bg-warning/15 text-foreground"
@@ -436,7 +436,7 @@ export function LinkedRequirementsPanel({
                                     >
                                       <AlertTriangle className="h-3 w-3 text-warning" />
                                       {tSuspect("badgeLabel")}
-                                    </Badge>
+                                    </BadgeButton>
                                   </PopoverTrigger>
                                 </TooltipTrigger>
                                 <TooltipContent>

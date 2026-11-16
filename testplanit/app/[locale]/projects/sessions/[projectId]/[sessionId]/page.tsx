@@ -1902,11 +1902,16 @@ export default function SessionPage() {
             >
               {!isEditMode && (
                 <div className="me-2">
-                  <Link href={`/projects/sessions/${projectId}`}>
-                    <Button type="button" variant="outline" size="icon">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="icon"
+                    aria-label={tCommon("actions.back")}
+                  >
+                    <Link href={`/projects/sessions/${projectId}`}>
                       <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               )}
               <CardTitle className="me-4 w-full pe-4 text-xl md:text-2xl">
@@ -2410,6 +2415,11 @@ export default function SessionPage() {
                 <Button
                   type="button"
                   onClick={toggleCollapseLeft}
+                  aria-label={
+                    isCollapsedLeft
+                      ? tCommon("actions.expandLeftPanel")
+                      : tCommon("actions.collapseLeftPanel")
+                  }
                   variant="secondary"
                   className="rounded-e-none p-0"
                 >
@@ -2423,6 +2433,11 @@ export default function SessionPage() {
                 <Button
                   type="button"
                   onClick={toggleCollapseRight}
+                  aria-label={
+                    isCollapsedRight
+                      ? tCommon("actions.expandRightPanel")
+                      : tCommon("actions.collapseRightPanel")
+                  }
                   variant="secondary"
                   className={`transform p-0 ${isCollapsedRight ? "rounded-s-none" : "rotate-180 rounded-e-none"}`}
                 >

@@ -24,20 +24,22 @@ export const ProjectNameCell: React.FC<ProjectNameCellProps> = ({
     <div
       className={`font-semibold text-pretty ${size === "md" ? "text-lg" : "text-sm"} overflow-hidden`}
     >
-      <Link
-        className="group flex items-center truncate"
-        href={`/projects/overview/${projectId}`}
-      >
-        <Tooltip>
-          <TooltipTrigger type="button" className="block truncate text-start">
+      {/* The link is the tooltip trigger: a trigger button inside it nested
+          two controls and covered most of the link. */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            className="group flex items-center truncate"
+            href={`/projects/overview/${projectId}`}
+          >
             <span className="truncate">{value}</span>
-          </TooltipTrigger>
-          <TooltipContent align="start">
-            <div>{value}</div>
-          </TooltipContent>
-        </Tooltip>
-        <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
-      </Link>
+            <LinkIcon className="ms-1 inline h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent align="start">
+          <div>{value}</div>
+        </TooltipContent>
+      </Tooltip>
       {note && (
         <div
           className={`${size === "md" ? "text-sm" : "text-xs"} truncate font-extralight text-foreground`}

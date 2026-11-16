@@ -968,6 +968,8 @@
       "setColor": "Kleur instellen",
       "enterUrl": "Voer de URL in, inclusief https://",
       "uploadFile": "Bestand uploaden",
+      "insertEmoji": "Emoji invoegen",
+      "redo": "Opnieuw",
       "video": {
         "controls": "Bedieningselementen voor de videospeler"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "Weergave",
       "byAutomation": "Automatisering",
       "byParameterized": "Parameterisering",
       "byReview": "Beoordeling",
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Taak annuleren"
         },
+        "promote": "Taak promoveren",
         "activeJob": {
           "title": "Een worker verwerkt deze taak",
           "cancelHint": "Annuleren vraagt de worker om te stoppen bij de volgende controle; de taak verlaat de wachtrij zodra deze is gestopt. Geforceerd verwijderen werkt alleen als de worker die de taak behield weg is en de vergrendeling is verlopen."

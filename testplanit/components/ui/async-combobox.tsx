@@ -52,7 +52,8 @@ interface AsyncComboboxProps<T> {
   triggerLabel?: React.ReactNode;
   /**
    * Accessible name for the trigger. The trigger is a button, so its selected
-   * value does not name it — pass the field's visible label.
+   * value does not name it — pass the field's visible label. Without one the
+   * placeholder names it.
    */
   ariaLabel?: string;
   disabled?: boolean;
@@ -269,7 +270,7 @@ export function AsyncCombobox<T>({
               // as an unnamed combobox (WCAG 4.1.2). The default-Button path
               // below already applies ariaLabel; this path silently dropped
               // it. An aria-label set on the custom element itself wins.
-              "aria-label": props["aria-label"] ?? ariaLabel,
+              "aria-label": props["aria-label"] ?? ariaLabel ?? placeholder,
               className: cn(className, props.className),
             } as any);
           }
@@ -281,7 +282,7 @@ export function AsyncCombobox<T>({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              aria-label={ariaLabel}
+              aria-label={ariaLabel ?? placeholder}
               className={cn("group justify-start text-start", className)}
               disabled={disabled}
             >

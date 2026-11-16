@@ -968,6 +968,8 @@
       "setColor": "设置颜色",
       "enterUrl": "请输入包含 https:// 的网址。",
       "uploadFile": "上传文件",
+      "insertEmoji": "插入表情符号",
+      "redo": "重做",
       "video": {
         "controls": "视频播放器控制"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "查看",
       "byAutomation": "自动化",
       "byParameterized": "参数化",
       "byReview": "审查",
@@ -6436,7 +6439,7 @@
       "storage": {
         "tab": "存储",
         "neverScanned": "存储尚未扫描。扫描会将存储中的文件与数据库进行比较，以查找未被使用的文件和缺少文件的附件。",
-        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "summary": "{objects, plural, one {# 个文件} other {# 个文件}}在存储中 ({size})。{orphans, plural, =0 {没有孤立文件。} one {# 个孤立 ({orphanSize})。} other {# 个孤立 ({orphanSize})。}}",
         "missingFiles": "{count, plural, one {# 个附件在已配置的存储中没有文件。} other {# 个附件在已配置的存储中没有文件。}}",
         "allFolders": "所有文件夹",
         "status": {
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "取消任务"
         },
+        "promote": "提升任务",
         "activeJob": {
           "title": "一个工作进程正在处理此任务",
           "cancelHint": "取消要求工作进程在下次检查时停止；任务停止后将离开队列。强制移除仅在持有该任务的工作进程已消失且其锁已过期时才有效。"

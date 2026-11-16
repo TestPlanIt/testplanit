@@ -50,12 +50,13 @@ const SystemErrorPopover: React.FC<SystemErrorPopoverProps> = ({
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <div
-          className="block w-full min-w-0 cursor-pointer truncate align-bottom font-mono whitespace-nowrap hover:underline"
+        <button
+          type="button"
+          className="block w-full min-w-0 cursor-pointer truncate text-start align-bottom font-mono whitespace-nowrap hover:underline"
           data-testid="system-error-trigger"
         >
           {isLazy ? t("actions.viewSystemError") : text}
-        </div>
+        </button>
       </PopoverTrigger>
       <PopoverContent
         className="max-h-[400px] w-[500px] overflow-y-auto focus:outline-none"

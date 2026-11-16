@@ -34,4 +34,24 @@ function Badge({ className, variant, ...props }: BadgeProps) {
   );
 }
 
-export { Badge, badgeVariants };
+/**
+ * A badge that opens something. It is a real button, so it takes focus, works
+ * from the keyboard and may carry aria-expanded — use it for a popover or
+ * dialog trigger instead of a Badge.
+ */
+function BadgeButton({
+  className,
+  variant,
+  type = "button",
+  ...props
+}: React.ComponentProps<"button"> & VariantProps<typeof badgeVariants>) {
+  return (
+    <button
+      type={type}
+      className={cn(badgeVariants({ variant }), "cursor-pointer", className)}
+      {...props}
+    />
+  );
+}
+
+export { Badge, BadgeButton, badgeVariants };

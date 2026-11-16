@@ -189,13 +189,14 @@ export function FoundInTestingIssues({
           return (
             <Popover>
               <PopoverTrigger asChild>
-                <div
-                  className="-mx-1 line-clamp-2 cursor-pointer overflow-hidden rounded px-1 py-0.5 text-sm text-ellipsis transition-colors hover:bg-accent/50"
+                <button
+                  type="button"
+                  className="-mx-1 block cursor-pointer rounded px-1 py-0.5 text-start text-sm transition-colors hover:bg-accent/50"
                   style={{ maxWidth: column.getSize() }}
                   title={plainText}
                 >
-                  {plainText}
-                </div>
+                  <span className="line-clamp-2">{plainText}</span>
+                </button>
               </PopoverTrigger>
               <PopoverContent className="max-h-[400px] w-[500px] overflow-auto">
                 <div className="space-y-2">

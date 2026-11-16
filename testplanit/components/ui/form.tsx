@@ -10,6 +10,7 @@ import {
   useFormContext,
 } from "react-hook-form";
 
+import { FormItemContext } from "@/components/ui/form-item-context";
 import { Label } from "@/components/ui/label";
 import { cn } from "~/utils";
 
@@ -61,14 +62,6 @@ const useFormField = () => {
     ...fieldState,
   };
 };
-
-type FormItemContextValue = {
-  id: string;
-};
-
-const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue
-);
 
 const FormItem = React.forwardRef<
   HTMLDivElement,

@@ -770,6 +770,7 @@ export function MemberIssuesTable({
                 disabled={isManualRefreshing}
                 className="text-muted-foreground"
                 data-testid="member-issues-refresh"
+                aria-label={t("refresh")}
               >
                 <RefreshCw
                   className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`}

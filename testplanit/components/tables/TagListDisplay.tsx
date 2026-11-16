@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeButton } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -28,10 +28,10 @@ export const TagsListDisplay: React.FC<TagsListProps> = ({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Badge className="cursor-pointer">
+        <BadgeButton>
           <TagIcon className="me-1 h-4 w-4 shrink-0" />
           {tags.length}
-        </Badge>
+        </BadgeButton>
       </PopoverTrigger>
       <PopoverContent className="flex flex-wrap">
         {tags.map((tag) => {

@@ -33,6 +33,17 @@ vi.mock("@/components/ui/badge", () => ({
       {children}
     </span>
   ),
+  BadgeButton: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <span data-testid="badge" className={className}>
+      {children}
+    </span>
+  ),
 }));
 
 vi.mock("@/components/ui/popover", () => ({

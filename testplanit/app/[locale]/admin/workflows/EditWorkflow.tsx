@@ -308,7 +308,7 @@ export function EditWorkflows({
                             onValueChange={onChange}
                             value={value}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger aria-label={tCommon("fields.scope")}>
                               <SelectValue
                                 placeholder={tCommon("fields.selectWorkflow")}
                               />
@@ -384,7 +384,7 @@ export function EditWorkflows({
                     value={field.value}
                     disabled={isLastWorkflowOfType(workflows, allWorkflows)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label={tCommon("fields.type")}>
                       <SelectValue
                         placeholder={tCommon("placeholders.selectWorkflowType")}
                       />

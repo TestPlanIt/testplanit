@@ -968,6 +968,8 @@
       "setColor": "Definir cor",
       "enterUrl": "Insira o URL incluindo https://",
       "uploadFile": "Carregar arquivo",
+      "insertEmoji": "Inserir emoji",
+      "redo": "Refazer",
       "video": {
         "controls": "controles do reprodutor de vídeo"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "Visualizar",
       "byAutomation": "Automação",
       "byParameterized": "Parametrização",
       "byReview": "Análise",
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Cancelar tarefa"
         },
+        "promote": "Promover trabalho",
         "activeJob": {
           "title": "Um trabalhador está processando essa tarefa",
           "cancelHint": "Cancelar pede ao trabalhador que pare na próxima verificação; a tarefa sai da fila uma vez interrompida. Forçar Remoção funciona apenas quando o trabalhador que mantinha a tarefa desapareceu e seu bloqueio expirou."

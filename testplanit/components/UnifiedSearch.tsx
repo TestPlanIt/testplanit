@@ -52,7 +52,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -826,68 +826,8 @@ export function UnifiedSearch({
       Object.keys(results.entityTypeCounts).length > 0;
     const hasMultipleTypes = selectedEntities.length > 1;
 
-    return (
-      <div>
-        {hasMultipleTypes && hasEntityTypeCounts && (
-          <Tabs
-            value={selectedTab}
-            onValueChange={(value) => {
-              const newTab = value as SearchableEntityType | "all";
-              setSelectedTab(newTab);
-              setCurrentPage(1);
-              setLoadMoreError(false);
-              setReachedEnd(false);
-              // Each tab loads its own page 1; the accumulated list resets as
-              // the new results arrive.
-              void performSearch(1, newTab, { append: false });
-            }}
-            className="w-full"
-          >
-            <TabsList className="h-auto w-full flex-wrap justify-start">
-              {/* All tab */}
-              <TabsTrigger value="all" className="gap-2">
-                <Search className="h-4 w-4" />
-                {t("search.allTypes")}
-                <Badge variant="secondary" className="ms-1">
-                  {results.entityTypeCounts
-                    ? Object.values(results.entityTypeCounts).reduce(
-                        (sum, count) => sum + count,
-                        0
-                      )
-                    : results.total}
-                </Badge>
-              </TabsTrigger>
-
-              {/* Entity type tabs */}
-              {selectedEntities.map((entityType) => {
-                const count = results.entityTypeCounts?.[entityType] || 0;
-                if (count === 0) return null;
-
-                return (
-                  <TabsTrigger
-                    key={entityType}
-                    value={entityType}
-                    className="gap-1"
-                  >
-                    <DynamicIcon
-                      name={
-                        getEntityIcon(
-                          entityType
-                        ) as keyof typeof import("lucide-react/dynamicIconImports").default
-                      }
-                      className="h-4 w-4"
-                    />
-                    {getEntityLabel(entityType)}
-                    <Badge variant="secondary" className="ms-1">
-                      {count}
-                    </Badge>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-          </Tabs>
-        )}
-
+    const hits = (
+      <>
         {visibleTotalForTab > 0 && (
           <div className="mt-4 text-end text-sm text-muted-foreground">
             {t("common.pagination.showing")} {visibleHits.length}{" "}
@@ -896,6 +836,76 @@ export function UnifiedSearch({
         )}
 
         <div className="mt-2">{renderVirtualizedHits()}</div>
+      </>
+    );
+
+    if (!(hasMultipleTypes && hasEntityTypeCounts)) {
+      return <div>{hits}</div>;
+    }
+
+    return (
+      <div>
+        <Tabs
+          value={selectedTab}
+          onValueChange={(value) => {
+            const newTab = value as SearchableEntityType | "all";
+            setSelectedTab(newTab);
+            setCurrentPage(1);
+            setLoadMoreError(false);
+            setReachedEnd(false);
+            // Each tab loads its own page 1; the accumulated list resets as
+            // the new results arrive.
+            void performSearch(1, newTab, { append: false });
+          }}
+          className="w-full"
+        >
+          <TabsList className="h-auto w-full flex-wrap justify-start">
+            {/* All tab */}
+            <TabsTrigger value="all" className="gap-2">
+              <Search className="h-4 w-4" />
+              {t("search.allTypes")}
+              <Badge variant="secondary" className="ms-1">
+                {results.entityTypeCounts
+                  ? Object.values(results.entityTypeCounts).reduce(
+                      (sum, count) => sum + count,
+                      0
+                    )
+                  : results.total}
+              </Badge>
+            </TabsTrigger>
+
+            {/* Entity type tabs */}
+            {selectedEntities.map((entityType) => {
+              const count = results.entityTypeCounts?.[entityType] || 0;
+              if (count === 0) return null;
+
+              return (
+                <TabsTrigger
+                  key={entityType}
+                  value={entityType}
+                  className="gap-1"
+                >
+                  <DynamicIcon
+                    name={
+                      getEntityIcon(
+                        entityType
+                      ) as keyof typeof import("lucide-react/dynamicIconImports").default
+                    }
+                    className="h-4 w-4"
+                  />
+                  {getEntityLabel(entityType)}
+                  <Badge variant="secondary" className="ms-1">
+                    {count}
+                  </Badge>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          {/* The hits are the panel each tab says it controls. */}
+          <TabsContent value={selectedTab} className="mt-0">
+            {hits}
+          </TabsContent>
+        </Tabs>
       </div>
     );
   };

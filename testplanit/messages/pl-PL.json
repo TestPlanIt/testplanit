@@ -968,6 +968,8 @@
       "setColor": "Ustaw kolor",
       "enterUrl": "Wprowadź adres URL zawierający https://",
       "uploadFile": "Prześlij plik",
+      "insertEmoji": "Wstaw emoji",
+      "redo": "Ponów",
       "video": {
         "controls": "Sterowanie odtwarzaczem wideo"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "Widok",
       "byAutomation": "Automatyzacja",
       "byParameterized": "Parametryzacja",
       "byReview": "Recenzja",
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Anuluj zadanie"
         },
+        "promote": "Promuj zadanie",
         "activeJob": {
           "title": "Worker przetwarza to zadanie",
           "cancelHint": "Anulowanie prosi workera o zatrzymanie się przy następnym sprawdzeniu; zadanie opuszcza kolejkę po zatrzymaniu się. Wymuszenie usunięcia działa tylko wtedy, gdy worker, który przechowywał zadanie, zniknął i jego blokada wygasła."

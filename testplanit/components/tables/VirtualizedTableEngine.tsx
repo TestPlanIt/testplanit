@@ -1134,8 +1134,14 @@ export function VirtualizedTableEngine<TData extends DataRow>({
           data-testid={`${testIdPrefix}-scroll`}
         >
           {rows.length === 0 && !isLoading ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              {emptyMessage ?? tLabels("noResults")}
+            // A row of one cell: a rowgroup may only hold rows.
+            <div role="row">
+              <div
+                role="cell"
+                className="py-12 text-center text-sm text-muted-foreground"
+              >
+                {emptyMessage ?? tLabels("noResults")}
+              </div>
             </div>
           ) : (
             <div

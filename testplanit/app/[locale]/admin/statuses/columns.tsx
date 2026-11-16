@@ -215,7 +215,11 @@ export const getColumns = (
           {row.original.scope.map((scope, index) => (
             <span key={index}>
               <Tooltip>
-                <TooltipTrigger type="button" className="cursor-default">
+                <TooltipTrigger
+                  type="button"
+                  className="cursor-default"
+                  aria-label={scope.scope.name}
+                >
                   <DynamicIcon name={scope.scope.icon as IconName} size={20} />
                 </TooltipTrigger>
                 <TooltipContent>

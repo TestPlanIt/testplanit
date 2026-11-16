@@ -481,7 +481,10 @@ export function ElasticsearchAdmin({
               onValueChange={setEntityType}
               disabled={reindexing}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger
+                className="w-[200px]"
+                aria-label={tGlobal("admin.auditLogs.filterEntityType")}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

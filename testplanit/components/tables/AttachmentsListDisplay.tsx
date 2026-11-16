@@ -1,5 +1,5 @@
 import { AttachmentPreview } from "@/components/AttachmentPreview";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeButton } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -32,10 +32,10 @@ export const AttachmentsListDisplay: React.FC<AttachmentsListProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Badge className="cursor-pointer">
+        <BadgeButton>
           <Paperclip className="me-1 h-4 w-4" />
           {attachments.length}
-        </Badge>
+        </BadgeButton>
       </PopoverTrigger>
       <PopoverContent key={attachments.length}>
         <div

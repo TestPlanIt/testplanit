@@ -50,7 +50,7 @@ export const useColumns = (
         enableResizing: true,
         enableHiding: false,
         meta: { isPinned: "left" },
-        size: 500,
+        size: 300,
         cell: ({ row }) => (
           <div className="group/row relative flex items-center gap-1">
             <GripVertical className="absolute -inset-s-3.5 top-1/2 h-5 w-5 -translate-y-1/2 cursor-grab text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100" />

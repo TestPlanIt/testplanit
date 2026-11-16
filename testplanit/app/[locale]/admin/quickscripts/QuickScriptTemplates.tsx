@@ -231,6 +231,7 @@ export default function QuickScriptTemplates() {
                 <SelectTrigger
                   className="w-40"
                   data-testid="quickscript-templates-filter-framework"
+                  aria-label={t("fields.framework")}
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -250,6 +251,7 @@ export default function QuickScriptTemplates() {
                 <SelectTrigger
                   className="w-40"
                   data-testid="quickscript-templates-filter-extension"
+                  aria-label={t("fields.fileExtension")}
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -268,6 +270,7 @@ export default function QuickScriptTemplates() {
                 <SelectTrigger
                   className="w-40"
                   data-testid="quickscript-templates-filter-language"
+                  aria-label={tCommon("fields.locale")}
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -369,6 +372,7 @@ export default function QuickScriptTemplates() {
                                 <td className="px-4 py-2">{tmpl.language}</td>
                                 <td className="px-4 py-2 text-center">
                                   <Switch
+                                    aria-label={tCommon("fields.enabled")}
                                     checked={tmpl.isEnabled}
                                     onCheckedChange={(checked) =>
                                       handleToggleEnabled(tmpl.id, checked)
@@ -378,6 +382,7 @@ export default function QuickScriptTemplates() {
                                 </td>
                                 <td className="px-4 py-2 text-center">
                                   <Switch
+                                    aria-label={tCommon("fields.default")}
                                     checked={tmpl.isDefault}
                                     disabled={tmpl.isDefault}
                                     onCheckedChange={(checked) =>
@@ -392,6 +397,7 @@ export default function QuickScriptTemplates() {
                                       className="h-auto px-2 py-1"
                                       data-testid="edit-export-template-button"
                                       onClick={() => setEditingTemplate(tmpl)}
+                                      aria-label={tCommon("actions.edit")}
                                     >
                                       <Edit className="h-5 w-5" />
                                     </Button>
@@ -400,6 +406,7 @@ export default function QuickScriptTemplates() {
                                         variant="ghost"
                                         className="h-auto cursor-not-allowed px-2 py-1 text-muted-foreground"
                                         disabled
+                                        aria-label={tCommon("actions.delete")}
                                       >
                                         <Trash className="h-5 w-5" />
                                       </Button>
@@ -411,6 +418,7 @@ export default function QuickScriptTemplates() {
                                         onClick={() =>
                                           setDeletingTemplate(tmpl)
                                         }
+                                        aria-label={tCommon("actions.delete")}
                                       >
                                         <Trash className="h-5 w-5" />
                                       </Button>

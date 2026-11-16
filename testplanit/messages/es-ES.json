@@ -968,6 +968,8 @@
       "setColor": "Establecer color",
       "enterUrl": "Introducir URL incluyendo https://",
       "uploadFile": "Subir archivo",
+      "insertEmoji": "Insertar emoji",
+      "redo": "Rehacer",
       "video": {
         "controls": "Controles del reproductor de vídeo"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "Ver",
       "byAutomation": "Automatización",
       "byParameterized": "Parametrización",
       "byReview": "Revisión",
@@ -6436,7 +6439,7 @@
       "storage": {
         "tab": "Almacenamiento",
         "neverScanned": "El almacenamiento aún no ha sido escaneado. Un escaneo compara los archivos en almacenamiento con la base de datos para encontrar archivos que nadie usa y adjuntos cuyo archivo falta.",
-        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "summary": "{objects, plural, one {# archivo} other {# archivos}} en almacenamiento ({size}). {orphans, plural, =0 {Ninguno está huérfano.} one {# está huérfano ({orphanSize}).} other {# están huérfanos ({orphanSize}).}}",
         "missingFiles": "{count, plural, one {# adjunto no tiene un archivo en el almacenamiento configurado.} other {# adjuntos no tienen un archivo en el almacenamiento configurado.}}",
         "allFolders": "Todas las carpetas",
         "status": {
@@ -6444,7 +6447,7 @@
           "REFERENCED": "En uso"
         },
         "loadedSelected": "{shown, plural, one {El archivo cargado está seleccionado} other {Todos los # archivos cargados están seleccionados}}.",
-        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} one {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
+        "confirmDelete": "{count, plural, =0 {Ninguno de los archivos seleccionados puede ser eliminado.} one {¿Eliminar este archivo ({size}) del almacenamiento? Esto no se puede deshacer.} other {¿Eliminar # archivos ({size}) del almacenamiento? Esto no se puede deshacer.}}",
         "skipped": "{count, plural, one {# archivo seleccionado se deja sin modificar porque está en uso.} other {# archivos seleccionados se dejan sin modificar porque están en uso.}}",
         "deleted": "{count, plural, one {# archivo eliminado del almacenamiento} other {# archivos eliminados del almacenamiento}}"
       },
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Cancelar trabajo"
         },
+        "promote": "Promover trabajo",
         "activeJob": {
           "title": "Un worker está procesando este trabajo",
           "cancelHint": "Cancelar le pide al worker que se detenga en su próxima verificación; el trabajo sale de la cola una vez que se ha detenido. Forzar eliminación solo funciona cuando el worker que tenía el trabajo se ha ido y su bloqueo ha expirado."

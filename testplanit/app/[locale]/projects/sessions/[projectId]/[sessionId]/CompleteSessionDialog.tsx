@@ -245,7 +245,7 @@ export function CompleteSessionDialog({
               value={selectedStateId.toString()}
               onValueChange={(value) => setSelectedStateId(Number(value))}
             >
-              <SelectTrigger>
+              <SelectTrigger aria-label={t("common.fields.state")}>
                 <SelectValue
                   placeholder={t("common.placeholders.selectState")}
                 />

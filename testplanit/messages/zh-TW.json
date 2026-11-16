@@ -968,6 +968,8 @@
       "setColor": "設定顏色",
       "enterUrl": "請輸入包含 https:// 的網址。",
       "uploadFile": "上傳文件",
+      "insertEmoji": "插入表情符號",
+      "redo": "重做",
       "video": {
         "controls": "視訊播放器控制"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "檢視",
       "byAutomation": "自動化",
       "byParameterized": "參數化",
       "byReview": "審查",
@@ -6436,7 +6439,7 @@
       "storage": {
         "tab": "儲存空間",
         "neverScanned": "儲存空間尚未掃描。掃描會比較儲存空間中的檔案與資料庫，以查找未使用的檔案和遺失檔案的附件。",
-        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "summary": "{objects, plural, one {# 個檔案} other {# 個檔案}}在儲存空間中 ({size})。{orphans, plural, =0 {沒有孤立檔案。} one {# 個孤立 ({orphanSize})。} other {# 個孤立 ({orphanSize})。}}",
         "missingFiles": "{count, plural, other {# 個附件在設定的儲存空間中沒有檔案。}}",
         "allFolders": "所有資料夾",
         "status": {
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "取消作業"
         },
+        "promote": "提升工作",
         "activeJob": {
           "title": "工作程序正在處理此作業",
           "cancelHint": "「取消」會要求工作程序在下次檢查時停止；作業停止後會離開佇列。「強制移除」僅在持有該作業的工作程序消失且其鎖定已過期時才有效。"

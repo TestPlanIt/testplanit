@@ -374,6 +374,11 @@ export default function SessionVersionPage() {
               <TooltipTrigger asChild>
                 <Button
                   onClick={toggleCollapseLeft}
+                  aria-label={
+                    isCollapsedLeft
+                      ? t("common.actions.expandLeftPanel")
+                      : t("common.actions.collapseLeftPanel")
+                  }
                   variant="secondary"
                   size="sm"
                   className={`transform p-0 ${
@@ -401,6 +406,11 @@ export default function SessionVersionPage() {
               <TooltipTrigger asChild>
                 <Button
                   onClick={toggleCollapseRight}
+                  aria-label={
+                    isCollapsedRight
+                      ? t("common.actions.expandRightPanel")
+                      : t("common.actions.collapseRightPanel")
+                  }
                   variant="secondary"
                   size="sm"
                   className={`transform p-0 ${

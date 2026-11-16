@@ -349,6 +349,7 @@ export function QueueManagement() {
                 className="h-auto px-2 py-1"
                 onClick={() => performQueueAction(queue.name, "resume")}
                 disabled={actionInProgress === queue.name}
+                aria-label={t("actions.resume.confirmTitle")}
               >
                 <Play className="h-4 w-4" />
               </Button>
@@ -358,6 +359,7 @@ export function QueueManagement() {
                 className="h-auto px-2 py-1"
                 onClick={() => performQueueAction(queue.name, "pause")}
                 disabled={actionInProgress === queue.name}
+                aria-label={t("actions.pause.confirmTitle")}
               >
                 <Pause className="h-4 w-4" />
               </Button>
@@ -367,6 +369,7 @@ export function QueueManagement() {
               className="h-auto px-2 py-1"
               onClick={() => performQueueAction(queue.name, "clean", true)}
               disabled={actionInProgress === queue.name}
+              aria-label={t("actions.clean.confirmTitle")}
             >
               <Trash className="h-4 w-4" />
             </Button>

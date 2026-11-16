@@ -1,22 +1,30 @@
 import { MinusIcon } from "@radix-ui/react-icons";
 import { OTPInput, OTPInputContext } from "input-otp";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { cn } from "~/utils";
 
 const InputOTP = React.forwardRef<
   React.ElementRef<typeof OTPInput>,
   React.ComponentPropsWithoutRef<typeof OTPInput>
->(({ className, containerClassName, ...props }, ref) => (
-  <OTPInput
-    ref={ref}
-    containerClassName={cn(
-      "flex items-center gap-2 has-[:disabled]:opacity-50",
-      containerClassName
-    )}
-    className={cn("disabled:cursor-not-allowed", className)}
-    {...props}
-  />
-));
+>(({ className, containerClassName, ...props }, ref) => {
+  const t = useTranslations("auth.twoFactorSetup");
+
+  return (
+    <OTPInput
+      ref={ref}
+      containerClassName={cn(
+        "flex items-center gap-2 has-[:disabled]:opacity-50",
+        containerClassName
+      )}
+      className={cn("disabled:cursor-not-allowed", className)}
+      // The slots are drawn boxes; the one real input has no visible label
+      // of its own, so it is named here unless the caller names it.
+      aria-label={t("verifyLabel")}
+      {...props}
+    />
+  );
+});
 InputOTP.displayName = "InputOTP";
 
 const InputOTPGroup = React.forwardRef<

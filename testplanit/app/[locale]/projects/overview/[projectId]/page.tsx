@@ -316,6 +316,11 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                     type="button"
                     data-testid="collapse-left-panel"
                     onClick={toggleLeftCollapse}
+                    aria-label={
+                      isLeftCollapsed
+                        ? t("common.actions.expandLeftPanel")
+                        : t("common.actions.collapseLeftPanel")
+                    }
                     variant="secondary"
                     size="sm"
                     className={`transform p-0 ${
@@ -345,6 +350,11 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   <Button
                     type="button"
                     onClick={toggleRightCollapse}
+                    aria-label={
+                      isRightCollapsed
+                        ? t("common.actions.expandRightPanel")
+                        : t("common.actions.collapseRightPanel")
+                    }
                     variant="secondary"
                     size="sm"
                     className={`transform p-0 ${

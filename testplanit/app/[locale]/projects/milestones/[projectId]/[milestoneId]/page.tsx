@@ -907,11 +907,16 @@ export default function MilestoneDetailsPage() {
             >
               <div className="flex grow items-start gap-2">
                 {!isEditMode && (
-                  <Link href={`/projects/milestones/${projectId}`}>
-                    <Button type="button" variant="outline" size="icon">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="icon"
+                    aria-label={tCommon("actions.back")}
+                  >
+                    <Link href={`/projects/milestones/${projectId}`}>
                       <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 )}
                 <CardTitle className="min-w-0 grow text-xl md:text-2xl">
                   {isEditMode ? (
@@ -1378,6 +1383,11 @@ export default function MilestoneDetailsPage() {
                 <Button
                   type="button"
                   onClick={toggleCollapseLeft}
+                  aria-label={
+                    isCollapsedLeft
+                      ? tCommon("actions.expandLeftPanel")
+                      : tCommon("actions.collapseLeftPanel")
+                  }
                   variant="secondary"
                   className="rounded-e-none p-0"
                 >
@@ -1391,6 +1401,11 @@ export default function MilestoneDetailsPage() {
                 <Button
                   type="button"
                   onClick={toggleCollapseRight}
+                  aria-label={
+                    isCollapsedRight
+                      ? tCommon("actions.expandRightPanel")
+                      : tCommon("actions.collapseRightPanel")
+                  }
                   variant="secondary"
                   className={`transform p-0 ${isCollapsedRight ? "rounded-s-none" : "rotate-180 rounded-e-none"}`}
                 >

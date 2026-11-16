@@ -20,7 +20,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   CheckCircle2,
@@ -1032,309 +1032,319 @@ function ReviewsInboxContent({
           helpKey="reviews"
         />
         <CardContent>
-          <div className="flex flex-col gap-4">
-            {/* Tab strip — Pending (queue) vs Decided (history). Each
-                trigger gets an icon and a min-width so the tab cluster
-                reads as navigation even with short labels. */}
-            <Tabs
-              value={view}
-              onValueChange={(next) => handleViewChange(next as InboxView)}
-            >
-              <TabsList>
-                <TabsTrigger
-                  value="pending"
-                  data-testid="reviews-inbox-tab-pending"
-                  className="min-w-[8rem] gap-2"
-                >
-                  <Inbox className="h-4 w-4" aria-hidden="true" />
-                  {t("common.status.pending")}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="decided"
-                  data-testid="reviews-inbox-tab-decided"
-                  className="min-w-[8rem] gap-2"
-                >
-                  <History className="h-4 w-4" aria-hidden="true" />
-                  {t("reviews.inbox.tabDecided")}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {/* Filters row — searchable multi-select comboboxes; an empty
+          {/* Tab strip — Pending (queue) vs Decided (history). Each trigger
+              gets an icon and a min-width so the tab cluster reads as
+              navigation even with short labels. The filters and table sit in
+              the tab panel, which is what each tab says it controls. */}
+          <Tabs
+            value={view}
+            onValueChange={(next) => handleViewChange(next as InboxView)}
+            className="flex flex-col gap-4"
+          >
+            <TabsList className="self-start">
+              <TabsTrigger
+                value="pending"
+                data-testid="reviews-inbox-tab-pending"
+                className="min-w-[8rem] gap-2"
+              >
+                <Inbox className="h-4 w-4" aria-hidden="true" />
+                {t("common.status.pending")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="decided"
+                data-testid="reviews-inbox-tab-decided"
+                className="min-w-[8rem] gap-2"
+              >
+                <History className="h-4 w-4" aria-hidden="true" />
+                {t("reviews.inbox.tabDecided")}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value={view} className="mt-0 flex flex-col gap-4">
+              {/* Filters row — searchable multi-select comboboxes; an empty
                 selection means "All". Option lists are derived from the
                 current tab's scope, so nothing offered can zero the table.
                 Wrapper divs carry the test ids because the combobox
                 trigger is an internal button. */}
-            <div className="flex flex-wrap items-end gap-4">
-              <div
-                className="w-[200px]"
-                data-testid="reviews-inbox-entity-type-filter"
-              >
-                <Label className="text-xs text-muted-foreground">
-                  {t("reviews.inbox.filterEntityType")}
-                </Label>
-                <MultiAsyncCombobox<EntityTypeOption>
-                  value={entityTypeFilter}
-                  onValueChange={setEntityTypeFilter}
-                  fetchOptions={fetchEntityTypeOptions}
-                  renderOption={(o) => {
-                    const Icon = ENTITY_TYPE_ICONS[o.value];
-                    return (
-                      <span className="flex min-w-0 items-center gap-2">
-                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{o.label}</span>
-                      </span>
-                    );
-                  }}
-                  getOptionValue={(o) => o.value}
-                  getOptionLabel={(o) => o.label}
-                  placeholder={t("reviews.inbox.filterAllEntityTypes")}
-                  ariaLabel={t("reviews.inbox.filterEntityType")}
-                  className="mt-1"
-                  pageSize={FILTER_PAGE_SIZE}
-                />
-              </div>
+              <div className="flex flex-wrap items-end gap-4">
+                <div
+                  className="w-[200px]"
+                  data-testid="reviews-inbox-entity-type-filter"
+                >
+                  <Label className="text-xs text-muted-foreground">
+                    {t("reviews.inbox.filterEntityType")}
+                  </Label>
+                  <MultiAsyncCombobox<EntityTypeOption>
+                    value={entityTypeFilter}
+                    onValueChange={setEntityTypeFilter}
+                    fetchOptions={fetchEntityTypeOptions}
+                    renderOption={(o) => {
+                      const Icon = ENTITY_TYPE_ICONS[o.value];
+                      return (
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{o.label}</span>
+                        </span>
+                      );
+                    }}
+                    getOptionValue={(o) => o.value}
+                    getOptionLabel={(o) => o.label}
+                    placeholder={t("reviews.inbox.filterAllEntityTypes")}
+                    ariaLabel={t("reviews.inbox.filterEntityType")}
+                    className="mt-1"
+                    pageSize={FILTER_PAGE_SIZE}
+                  />
+                </div>
 
-              <div
-                className="w-[240px]"
-                data-testid="reviews-inbox-project-filter"
-              >
-                <Label className="text-xs text-muted-foreground">
-                  {t("common.fields.project")}
-                </Label>
-                <MultiAsyncCombobox<ProjectOption>
-                  value={projectFilter}
-                  onValueChange={setProjectFilter}
-                  fetchOptions={fetchProjectOptions}
-                  renderOption={(p) => (
-                    <ProjectNameDisplay
-                      projectName={p.name}
-                      projectId={p.id}
-                      iconUrl={p.iconUrl}
-                      fitContainer
-                    />
-                  )}
-                  getOptionValue={(p) => p.id}
-                  getOptionLabel={(p) => p.name}
-                  placeholder={t("reviews.inbox.filterAllProjects")}
-                  ariaLabel={t("common.fields.project")}
-                  className="mt-1"
-                  pageSize={FILTER_PAGE_SIZE}
-                />
-              </div>
+                <div
+                  className="w-[240px]"
+                  data-testid="reviews-inbox-project-filter"
+                >
+                  <Label className="text-xs text-muted-foreground">
+                    {t("common.fields.project")}
+                  </Label>
+                  <MultiAsyncCombobox<ProjectOption>
+                    value={projectFilter}
+                    onValueChange={setProjectFilter}
+                    fetchOptions={fetchProjectOptions}
+                    renderOption={(p) => (
+                      <ProjectNameDisplay
+                        projectName={p.name}
+                        projectId={p.id}
+                        iconUrl={p.iconUrl}
+                        fitContainer
+                      />
+                    )}
+                    getOptionValue={(p) => p.id}
+                    getOptionLabel={(p) => p.name}
+                    placeholder={t("reviews.inbox.filterAllProjects")}
+                    ariaLabel={t("common.fields.project")}
+                    className="mt-1"
+                    pageSize={FILTER_PAGE_SIZE}
+                  />
+                </div>
 
-              <div
-                className="w-[240px]"
-                data-testid="reviews-inbox-requester-filter"
-              >
-                <Label className="text-xs text-muted-foreground">
-                  {t("reviews.inbox.filterRequester")}
-                </Label>
-                <MultiAsyncCombobox<UserOption>
-                  value={requesterFilter}
-                  onValueChange={setRequesterFilter}
-                  fetchOptions={fetchRequesterOptions}
-                  renderOption={(u) => <UserNameCell userId={u.id} hideLink />}
-                  renderSelectedOption={(u) => <span>{userLabel(u)}</span>}
-                  getOptionValue={(u) => u.id}
-                  getOptionLabel={userLabel}
-                  placeholder={t("reviews.inbox.filterAllRequesters")}
-                  ariaLabel={t("reviews.inbox.filterRequester")}
-                  className="mt-1"
-                  pageSize={FILTER_PAGE_SIZE}
-                />
-              </div>
+                <div
+                  className="w-[240px]"
+                  data-testid="reviews-inbox-requester-filter"
+                >
+                  <Label className="text-xs text-muted-foreground">
+                    {t("reviews.inbox.filterRequester")}
+                  </Label>
+                  <MultiAsyncCombobox<UserOption>
+                    value={requesterFilter}
+                    onValueChange={setRequesterFilter}
+                    fetchOptions={fetchRequesterOptions}
+                    renderOption={(u) => (
+                      <UserNameCell userId={u.id} hideLink />
+                    )}
+                    renderSelectedOption={(u) => <span>{userLabel(u)}</span>}
+                    getOptionValue={(u) => u.id}
+                    getOptionLabel={userLabel}
+                    placeholder={t("reviews.inbox.filterAllRequesters")}
+                    ariaLabel={t("reviews.inbox.filterRequester")}
+                    className="mt-1"
+                    pageSize={FILTER_PAGE_SIZE}
+                  />
+                </div>
 
-              {/* Decider + outcome filters — Decided tab only; the Pending
+                {/* Decider + outcome filters — Decided tab only; the Pending
                   queue is all PENDING and undecided, so neither applies.
                   Ordered to mirror the Decided tab's column order
                   (… Decided by → … → Status). */}
-              {view === "decided" && (
-                <>
-                  <div
-                    className="w-[240px]"
-                    data-testid="reviews-inbox-decided-by-filter"
-                  >
-                    <Label className="text-xs text-muted-foreground">
-                      {t("reviews.inbox.filterDecidedBy")}
-                    </Label>
-                    <MultiAsyncCombobox<UserOption>
-                      value={decidedByFilter}
-                      onValueChange={setDecidedByFilter}
-                      fetchOptions={fetchDeciderOptions}
-                      renderOption={(u) => (
-                        <UserNameCell userId={u.id} hideLink />
-                      )}
-                      renderSelectedOption={(u) => <span>{userLabel(u)}</span>}
-                      getOptionValue={(u) => u.id}
-                      getOptionLabel={userLabel}
-                      placeholder={t("reviews.inbox.filterAllDeciders")}
-                      ariaLabel={t("reviews.inbox.filterDecidedBy")}
-                      className="mt-1"
-                      pageSize={FILTER_PAGE_SIZE}
-                    />
-                  </div>
-
-                  <div
-                    className="w-[200px]"
-                    data-testid="reviews-inbox-status-filter"
-                  >
-                    <Label className="text-xs text-muted-foreground">
-                      {t("common.actions.status")}
-                    </Label>
-                    <MultiAsyncCombobox<StatusOption>
-                      value={decidedStatusFilter}
-                      onValueChange={setDecidedStatusFilter}
-                      fetchOptions={fetchStatusOptions}
-                      renderOption={(o) => {
-                        const { icon: Icon, className } = STATUS_ICONS[o.value];
-                        return (
-                          <span className="flex min-w-0 items-center gap-2">
-                            <Icon
-                              className={cn("h-4 w-4 shrink-0", className)}
-                            />
-                            <span className="truncate">{o.label}</span>
-                          </span>
-                        );
-                      }}
-                      getOptionValue={(o) => o.value}
-                      getOptionLabel={(o) => o.label}
-                      placeholder={t("reviews.inbox.filterAllStatuses")}
-                      ariaLabel={t("common.actions.status")}
-                      className="mt-1"
-                      pageSize={FILTER_PAGE_SIZE}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Row count, matching the other virtualized list pages. The
-                inbox loads its full result set, so loaded always equals
-                total. */}
-            {!featureDisabled && !isLoadingReviews && tableData.length > 0 && (
-              <p className="mt-1 text-end text-sm text-muted-foreground">
-                {t("admin.auditLogs.showing", {
-                  loaded: tableData.length.toLocaleString(locale),
-                  total: tableData.length.toLocaleString(locale),
-                })}
-              </p>
-            )}
-
-            {/* Feature-disabled empty state (D-20 silent disable). */}
-            {featureDisabled && (
-              <div
-                data-testid="reviews-inbox-feature-disabled"
-                className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground"
-              >
-                {t("reviews.inbox.featureDisabled")}
-              </div>
-            )}
-
-            {/* Queue on the left, docked case details on the right. The group
-                renders whether or not a case is open so opening one doesn't
-                remount the table (and lose its column sizing / scroll). */}
-            {!featureDisabled && (
-              <ResizablePanelGroup
-                direction="horizontal"
-                autoSaveId="reviews-details-split"
-                persistLayout={!effectiveFullWidth}
-                className="w-full min-w-0"
-                data-testid="reviews-inbox-layout"
-              >
-                <ResizablePanel
-                  order={1}
-                  ref={listPanelRef}
-                  collapsible
-                  collapsedSize={0}
-                  defaultSize={56}
-                  minSize={30}
-                  className="min-w-0"
-                  data-testid="reviews-list-pane"
-                >
-                  {/* Loading first — the empty copy must not flash while the
-                      query is still in flight. */}
-                  {isLoadingReviews ? (
-                    <Loading />
-                  ) : tableData.length === 0 ? (
-                    <div
-                      data-testid="reviews-inbox-empty"
-                      className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground"
-                    >
-                      {view === "pending"
-                        ? t("reviews.inbox.empty")
-                        : t("reviews.inbox.emptyDecided")}
-                    </div>
-                  ) : (
-                    <DataTable
-                      virtualized
-                      fillViewport
-                      // The engine seeds `meta.isPinned` once per mount, and the
-                      // tabs pin a different trailing column (Actions vs Status).
-                      // Returning to a tab with cached rows never unmounts it, so
-                      // without this key it keeps the other tab's pin.
-                      key={view}
-                      columns={columns as any}
-                      data={tableData as any}
-                      sortConfig={sortConfig}
-                      onSortChange={handleSortChange}
-                      onSortColumn={handleSortColumn}
-                      columnVisibility={columnVisibility}
-                      onColumnVisibilityChange={setColumnVisibility}
-                      estimateSize={48}
-                      // The result-set scope is exactly the where clause (tab +
-                      // every filter), so its serialization is the signal that
-                      // the list should scroll back to the top.
-                      resetKey={JSON.stringify(whereClause)}
-                      columnSizingStorageKey="reviews-inbox"
-                      testIdPrefix="reviews-inbox-table"
-                      rowTestIdPrefix="reviews-inbox-row"
-                      // Highlight (without scrolling) the row the details panel
-                      // is showing; the row id is the ReviewRequest id.
-                      highlightRowId={selectedRowId}
-                    />
-                  )}
-                </ResizablePanel>
-
-                {selectedCaseId && selectedCaseProjectId && (
+                {view === "decided" && (
                   <>
-                    <ResizableHandle
-                      withHandle
-                      id="reviews-details-resize-handle"
-                      className={cn("mx-1", effectiveFullWidth && "hidden")}
-                    />
-                    <ResizablePanel
-                      order={2}
-                      defaultSize={44}
-                      minSize={28}
-                      className="h-full min-w-0"
-                      data-testid="reviews-details-pane"
+                    <div
+                      className="w-[240px]"
+                      data-testid="reviews-inbox-decided-by-filter"
                     >
-                      <CaseDetailsPanel
-                        caseId={selectedCaseId}
-                        projectId={selectedCaseProjectId}
-                        fullWidth={effectiveFullWidth}
-                        onToggleFullWidth={() => setDetailsFullWidth((v) => !v)}
-                        onClose={closeDetails}
-                        onPrev={() =>
-                          prevNavItem &&
-                          goToCase(prevNavItem.caseId, prevNavItem.projectId)
-                        }
-                        onNext={() =>
-                          nextNavItem &&
-                          goToCase(nextNavItem.caseId, nextNavItem.projectId)
-                        }
-                        hasPrev={!!prevNavItem}
-                        hasNext={!!nextNavItem}
-                        position={navPosition}
-                        total={caseNavItems.length}
+                      <Label className="text-xs text-muted-foreground">
+                        {t("reviews.inbox.filterDecidedBy")}
+                      </Label>
+                      <MultiAsyncCombobox<UserOption>
+                        value={decidedByFilter}
+                        onValueChange={setDecidedByFilter}
+                        fetchOptions={fetchDeciderOptions}
+                        renderOption={(u) => (
+                          <UserNameCell userId={u.id} hideLink />
+                        )}
+                        renderSelectedOption={(u) => (
+                          <span>{userLabel(u)}</span>
+                        )}
+                        getOptionValue={(u) => u.id}
+                        getOptionLabel={userLabel}
+                        placeholder={t("reviews.inbox.filterAllDeciders")}
+                        ariaLabel={t("reviews.inbox.filterDecidedBy")}
+                        className="mt-1"
+                        pageSize={FILTER_PAGE_SIZE}
                       />
-                    </ResizablePanel>
+                    </div>
+
+                    <div
+                      className="w-[200px]"
+                      data-testid="reviews-inbox-status-filter"
+                    >
+                      <Label className="text-xs text-muted-foreground">
+                        {t("common.actions.status")}
+                      </Label>
+                      <MultiAsyncCombobox<StatusOption>
+                        value={decidedStatusFilter}
+                        onValueChange={setDecidedStatusFilter}
+                        fetchOptions={fetchStatusOptions}
+                        renderOption={(o) => {
+                          const { icon: Icon, className } =
+                            STATUS_ICONS[o.value];
+                          return (
+                            <span className="flex min-w-0 items-center gap-2">
+                              <Icon
+                                className={cn("h-4 w-4 shrink-0", className)}
+                              />
+                              <span className="truncate">{o.label}</span>
+                            </span>
+                          );
+                        }}
+                        getOptionValue={(o) => o.value}
+                        getOptionLabel={(o) => o.label}
+                        placeholder={t("reviews.inbox.filterAllStatuses")}
+                        ariaLabel={t("common.actions.status")}
+                        className="mt-1"
+                        pageSize={FILTER_PAGE_SIZE}
+                      />
+                    </div>
                   </>
                 )}
-              </ResizablePanelGroup>
-            )}
-          </div>
+              </div>
+
+              {/* Row count, matching the other virtualized list pages. The
+                inbox loads its full result set, so loaded always equals
+                total. */}
+              {!featureDisabled &&
+                !isLoadingReviews &&
+                tableData.length > 0 && (
+                  <p className="mt-1 text-end text-sm text-muted-foreground">
+                    {t("admin.auditLogs.showing", {
+                      loaded: tableData.length.toLocaleString(locale),
+                      total: tableData.length.toLocaleString(locale),
+                    })}
+                  </p>
+                )}
+
+              {/* Feature-disabled empty state (D-20 silent disable). */}
+              {featureDisabled && (
+                <div
+                  data-testid="reviews-inbox-feature-disabled"
+                  className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground"
+                >
+                  {t("reviews.inbox.featureDisabled")}
+                </div>
+              )}
+
+              {/* Queue on the left, docked case details on the right. The group
+                renders whether or not a case is open so opening one doesn't
+                remount the table (and lose its column sizing / scroll). */}
+              {!featureDisabled && (
+                <ResizablePanelGroup
+                  direction="horizontal"
+                  autoSaveId="reviews-details-split"
+                  persistLayout={!effectiveFullWidth}
+                  className="w-full min-w-0"
+                  data-testid="reviews-inbox-layout"
+                >
+                  <ResizablePanel
+                    order={1}
+                    ref={listPanelRef}
+                    collapsible
+                    collapsedSize={0}
+                    defaultSize={56}
+                    minSize={30}
+                    className="min-w-0"
+                    data-testid="reviews-list-pane"
+                  >
+                    {/* Loading first — the empty copy must not flash while the
+                      query is still in flight. */}
+                    {isLoadingReviews ? (
+                      <Loading />
+                    ) : tableData.length === 0 ? (
+                      <div
+                        data-testid="reviews-inbox-empty"
+                        className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground"
+                      >
+                        {view === "pending"
+                          ? t("reviews.inbox.empty")
+                          : t("reviews.inbox.emptyDecided")}
+                      </div>
+                    ) : (
+                      <DataTable
+                        virtualized
+                        fillViewport
+                        // The engine seeds `meta.isPinned` once per mount, and the
+                        // tabs pin a different trailing column (Actions vs Status).
+                        // Returning to a tab with cached rows never unmounts it, so
+                        // without this key it keeps the other tab's pin.
+                        key={view}
+                        columns={columns as any}
+                        data={tableData as any}
+                        sortConfig={sortConfig}
+                        onSortChange={handleSortChange}
+                        onSortColumn={handleSortColumn}
+                        columnVisibility={columnVisibility}
+                        onColumnVisibilityChange={setColumnVisibility}
+                        estimateSize={48}
+                        // The result-set scope is exactly the where clause (tab +
+                        // every filter), so its serialization is the signal that
+                        // the list should scroll back to the top.
+                        resetKey={JSON.stringify(whereClause)}
+                        columnSizingStorageKey="reviews-inbox"
+                        testIdPrefix="reviews-inbox-table"
+                        rowTestIdPrefix="reviews-inbox-row"
+                        // Highlight (without scrolling) the row the details panel
+                        // is showing; the row id is the ReviewRequest id.
+                        highlightRowId={selectedRowId}
+                      />
+                    )}
+                  </ResizablePanel>
+
+                  {selectedCaseId && selectedCaseProjectId && (
+                    <>
+                      <ResizableHandle
+                        withHandle
+                        id="reviews-details-resize-handle"
+                        className={cn("mx-1", effectiveFullWidth && "hidden")}
+                      />
+                      <ResizablePanel
+                        order={2}
+                        defaultSize={44}
+                        minSize={28}
+                        className="h-full min-w-0"
+                        data-testid="reviews-details-pane"
+                      >
+                        <CaseDetailsPanel
+                          caseId={selectedCaseId}
+                          projectId={selectedCaseProjectId}
+                          fullWidth={effectiveFullWidth}
+                          onToggleFullWidth={() =>
+                            setDetailsFullWidth((v) => !v)
+                          }
+                          onClose={closeDetails}
+                          onPrev={() =>
+                            prevNavItem &&
+                            goToCase(prevNavItem.caseId, prevNavItem.projectId)
+                          }
+                          onNext={() =>
+                            nextNavItem &&
+                            goToCase(nextNavItem.caseId, nextNavItem.projectId)
+                          }
+                          hasPrev={!!prevNavItem}
+                          hasNext={!!nextNavItem}
+                          position={navPosition}
+                          total={caseNavItems.length}
+                        />
+                      </ResizablePanel>
+                    </>
+                  )}
+                </ResizablePanelGroup>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 

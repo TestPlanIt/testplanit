@@ -968,6 +968,8 @@
       "setColor": "Farbe einstellen",
       "enterUrl": "Geben Sie die URL einschließlich https:// ein",
       "uploadFile": "Datei hochladen",
+      "insertEmoji": "Emoji einfügen",
+      "redo": "Wiederherstellen",
       "video": {
         "controls": "Videoplayer-Steuerelemente"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "Ansicht",
       "byAutomation": "Automatisierung",
       "byParameterized": "Parametrisierung",
       "byReview": "Überprüfung",
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Job abbrechen"
         },
+        "promote": "Auftrag hochstufen",
         "activeJob": {
           "title": "Ein Worker verarbeitet diesen Job",
           "cancelHint": "\"Abbrechen\" fordert den Worker auf, beim nächsten Check zu stoppen; der Job verlässt die Warteschlange, sobald er gestoppt hat. \"Erzwungenes Löschen\" funktioniert nur, wenn der Worker, der den Job hielt, weg ist und seine Sperre abgelaufen ist."

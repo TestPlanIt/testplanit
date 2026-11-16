@@ -244,7 +244,7 @@ export function ExportTemplateAssignmentSection({
                 onValueChange={handleDefaultChange}
                 disabled={selectedTemplates.length === 0}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label={t("exportTemplates.defaultLabel")}>
                   <SelectValue
                     placeholder={t("exportTemplates.defaultPlaceholder")}
                   />

@@ -1125,7 +1125,10 @@ export default function SSOAdminPage() {
                 handleDefaultAccessChange(value as Access)
               }
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger
+                className="w-[200px]"
+                aria-label={t("admin.sso.registration.defaultAccess.title")}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

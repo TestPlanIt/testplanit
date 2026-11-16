@@ -288,7 +288,10 @@ export function FeatureOverrides({
                           handleOverrideChange(feature, val)
                         }
                       >
-                        <SelectTrigger className="w-48">
+                        <SelectTrigger
+                          className="w-48"
+                          aria-label={LLM_FEATURE_LABELS[feature]}
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

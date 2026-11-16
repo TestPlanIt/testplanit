@@ -2,7 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeButton } from "@/components/ui/badge";
 import {
   contrastingTextColor,
   statusSurfaceVars,
@@ -492,10 +492,10 @@ export function MilestoneSummary({
                       onOpenChange={setScopeListOpen}
                     >
                       <PopoverTrigger asChild>
-                        <Badge className="cursor-pointer px-1.5 py-0 text-xs">
+                        <BadgeButton className="cursor-pointer px-1.5 py-0 text-xs">
                           <Target className="me-0.5 h-3 w-3 shrink-0" />
                           {summaryData.scopeCount}
-                        </Badge>
+                        </BadgeButton>
                       </PopoverTrigger>
                       <PopoverContent
                         className="w-auto max-w-md p-2"

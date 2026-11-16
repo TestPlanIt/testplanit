@@ -968,6 +968,8 @@
       "setColor": "Définir la couleur",
       "enterUrl": "Saisissez l'URL, y compris https://",
       "uploadFile": "Téléverser un fichier",
+      "insertEmoji": "Insérer un emoji",
+      "redo": "Refaire",
       "video": {
         "controls": "Commandes du lecteur vidéo"
       },
@@ -2934,7 +2936,7 @@
       "automationRunsInProgress": "{count, plural, =0 {# exécution automatisée en cours} =1 {# exécution automatisée en cours} other {# exécutions automatisées en cours}}",
       "activeSessions": "{count, plural, =0 {# Sessions actives} =1 {# Session active} other {# Sessions actives}}",
       "issues": "{count, plural, =0 {# Problèmes} =1 {# Problème} other {# Problèmes}}",
-      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+      "assignedToYou": "{count, plural, =1 {# cas de test assigné vous attend} other {# cas de test assignés vous attendent}}"
     },
     "lastActivity": "Dernière activité",
     "noActivity": "Aucune activité de test pour le moment"
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "Affichage",
       "byAutomation": "Automation",
       "byParameterized": "Paramétrisation",
       "byReview": "Révision",
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Annuler la tâche"
         },
+        "promote": "Promouvoir la tâche",
         "activeJob": {
           "title": "Un worker traite actuellement cette tâche",
           "cancelHint": "Cancel demande au worker de s'arrêter lors de sa prochaine vérification ; la tâche quitte la file d'attente une fois qu'elle s'est arrêtée. Force Remove fonctionne uniquement quand le worker qui détenait la tâche a disparu et son verrou a expiré."

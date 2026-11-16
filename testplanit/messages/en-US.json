@@ -968,6 +968,8 @@
       "setColor": "Set Color",
       "enterUrl": "Enter URL including https://",
       "uploadFile": "Upload File",
+      "insertEmoji": "Insert emoji",
+      "redo": "Redo",
       "video": {
         "controls": "Video player controls"
       },
@@ -3594,6 +3596,7 @@
       }
     },
     "views": {
+      "label": "View",
       "byAutomation": "Automation",
       "byParameterized": "Parameterization",
       "byReview": "Review",
@@ -7194,6 +7197,7 @@
         "cancelJob": {
           "button": "Cancel job"
         },
+        "promote": "Promote job",
         "activeJob": {
           "title": "A worker is processing this job",
           "cancelHint": "Cancel asks the worker to stop at its next check; the job leaves the queue once it has stopped. Force Remove only works when the worker that held the job is gone and its lock has expired."

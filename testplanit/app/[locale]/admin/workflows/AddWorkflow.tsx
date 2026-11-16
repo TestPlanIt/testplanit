@@ -290,7 +290,7 @@ export function AddWorkflows({
                         name="scope"
                         render={({ field: { onChange, value } }) => (
                           <Select onValueChange={onChange} value={value}>
-                            <SelectTrigger>
+                            <SelectTrigger aria-label={tCommon("fields.scope")}>
                               <SelectValue
                                 placeholder={tCommon("fields.selectWorkflow")}
                               />
@@ -362,7 +362,7 @@ export function AddWorkflows({
                     <HelpPopover helpKey="workflow.workflowType" />
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
+                    <SelectTrigger aria-label={tCommon("fields.type")}>
                       <SelectValue
                         placeholder={tCommon("placeholders.selectWorkflowType")}
                       />
