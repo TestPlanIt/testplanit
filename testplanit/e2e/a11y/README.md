@@ -46,6 +46,13 @@ already-running server; `reuseExistingServer` is on).
 - **Strict mode:** `A11Y_STRICT=on pnpm a11y:scan` (or `CI=strict`) fails any
   route with a serious/critical WCAG violation, and the aggregator exits non-zero.
 
+### Working a finding
+
+- `A11Y_NODE_LIMIT=400` records every offending element for a rule, not the
+  first five.
+- `A11Y_SCREENSHOT=/path/shot.png` with a single `--route=` saves a full-page
+  picture of what was scanned.
+
 ## Outputs (all gitignored)
 
 | Path                   | Contents                                         |

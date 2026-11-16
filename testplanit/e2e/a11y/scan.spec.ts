@@ -47,6 +47,8 @@ const SMOKE = process.env.A11Y_SMOKE === "on";
 // Optionally force a theme class before axe runs (e.g. A11Y_THEME=accessible),
 // so the scan measures a specific theme regardless of the seeded user preference.
 const FORCE_THEME = process.env.A11Y_THEME;
+// How many offending elements to record per rule; raise it to work a backlog.
+const NODE_LIMIT = Number(process.env.A11Y_NODE_LIMIT) || 5;
 
 const fixtures: A11yFixtures | null = fs.existsSync(FIXTURES_FILE)
   ? JSON.parse(fs.readFileSync(FIXTURES_FILE, "utf8"))
@@ -105,7 +107,7 @@ function serialize(violations: AxeViolation[]): Violation[] {
       criterion: sc.num === "—" ? sc.name : `${sc.num} ${sc.name}`,
       criterionKey: sc.key,
       nodeCount: v.nodes.length,
-      nodes: v.nodes.slice(0, 5).map((n) => ({
+      nodes: v.nodes.slice(0, NODE_LIMIT).map((n) => ({
         target: (n.target as string[]).map(String),
         html: (n.html || "").slice(0, 400),
         failureSummary: n.failureSummary || "",
@@ -511,6 +513,13 @@ for (const route of routes) {
         result.note = `Redirected to ${new URL(result.finalUrl).pathname}`;
       }
 
+      // A picture of what was scanned, for working out a finding on one route.
+      if (process.env.A11Y_SCREENSHOT) {
+        await scanPage.screenshot({
+          path: process.env.A11Y_SCREENSHOT,
+          fullPage: true,
+        });
+      }
       const initial = await runAxe(scanPage);
       result.states.push({
         state: "initial",
