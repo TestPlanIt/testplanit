@@ -9,6 +9,7 @@ import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RowSelectCheckbox } from "@/components/tables/RowSelectCheckbox";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -510,10 +511,10 @@ export function AffectedTestsStep({
             data-testid="impact-select-all"
           />
         ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(value === true)}
+        cell: ({ row, table }) => (
+          <RowSelectCheckbox
+            row={row}
+            table={table}
             aria-label={row.original.case.name}
             data-testid={`impact-recommendation-checkbox-${row.original.caseId}`}
           />

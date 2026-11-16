@@ -3,6 +3,7 @@
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { DataTable } from "@/components/tables/DataTable";
 import { Button } from "@/components/ui/button";
+import { RowSelectCheckbox } from "@/components/tables/RowSelectCheckbox";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -197,10 +198,10 @@ export function RiskDialog({
             data-testid="risk-select-all"
           />
         ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(value === true)}
+        cell: ({ row, table }) => (
+          <RowSelectCheckbox
+            row={row}
+            table={table}
             aria-label={row.original.name}
             data-testid={`risk-candidate-checkbox-${row.original.id}`}
           />

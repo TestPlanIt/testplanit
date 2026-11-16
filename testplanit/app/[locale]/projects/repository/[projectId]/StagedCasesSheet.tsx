@@ -50,6 +50,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useRangeSelect } from "~/hooks/useRangeSelect";
 import { notifyRepositoryCasesChanged } from "~/hooks/useRepositoryCasesQuery";
 import {
   useSavedCaseDrafts,
@@ -190,7 +191,12 @@ export function StagedCasesSheet({
   );
   const selectedCreatable = creatable.filter((d) => selected.has(d.id));
 
+  const rangeSelect = useRangeSelect(
+    useMemo(() => creatable.map((d) => d.id), [creatable]),
+    setSelected
+  );
   const toggleSelected = (id: string, next: boolean) => {
+    if (next) rangeSelect.anchor(id);
     setSelected((prev) => {
       const set = new Set(prev);
       if (next) set.add(id);
@@ -384,6 +390,9 @@ export function StagedCasesSheet({
                         disabled={!canCreate || creating}
                         onCheckedChange={(v) =>
                           toggleSelected(draft.id, v === true)
+                        }
+                        onClick={(event) =>
+                          rangeSelect.onClick(draft.id, event)
                         }
                         aria-label={draft.name}
                         data-testid={`staged-cases-select-${draft.id}`}

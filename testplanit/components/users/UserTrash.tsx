@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { RowSelectCheckbox } from "@/components/tables/RowSelectCheckbox";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -238,11 +239,10 @@ export function UserTrash({ userId }: { userId: string }) {
             data-testid="user-trash-select-all"
           />
         ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            onClick={(e) => e.stopPropagation()}
+        cell: ({ row, table }) => (
+          <RowSelectCheckbox
+            row={row}
+            table={table}
             aria-label={tGlobal("common.bulk.selectItem")}
             data-testid={`user-trash-select-${row.original.rowId}`}
           />

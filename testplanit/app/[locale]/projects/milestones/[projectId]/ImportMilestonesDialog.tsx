@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { AlertCircle, Loader2, PackageOpen, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { useRangeSelect } from "~/hooks/useRangeSelect";
 import { toast } from "sonner";
 import { apiFetch } from "~/lib/basePath";
 
@@ -263,7 +264,16 @@ export function ImportMilestonesDialog({
     setSelectedIds(allSelectableSelected ? new Set() : new Set(selectableIds));
   };
 
-  const toggleSelected = (id: string) => {
+  const rangeSelect = useRangeSelect(selectableIds, setSelectedIds);
+
+  // A shift-click selects everything between this row and the last one
+  // ticked; any other click ticks or clears the row.
+  const toggleSelected = (
+    id: string,
+    event?: { shiftKey: boolean; preventDefault: () => void }
+  ) => {
+    if (event && rangeSelect.onClick(id, event)) return;
+    if (!selectedIds.has(id)) rangeSelect.anchor(id);
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -463,7 +473,13 @@ export function ImportMilestonesDialog({
                           ? "cursor-pointer border-primary bg-primary/5"
                           : "cursor-pointer hover:bg-accent hover:text-accent-foreground"
                     }`}
-                    onClick={() => !isAlreadyLinked && toggleSelected(item.id)}
+                    onClick={(event) =>
+                      !isAlreadyLinked && toggleSelected(item.id, event)
+                    }
+                    // Shift-click would otherwise select the text in between.
+                    onMouseDown={(event) => {
+                      if (event.shiftKey) event.preventDefault();
+                    }}
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       <Checkbox
@@ -472,7 +488,10 @@ export function ImportMilestonesDialog({
                         onCheckedChange={() =>
                           !isAlreadyLinked && toggleSelected(item.id)
                         }
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          rangeSelect.onClick(item.id, event);
+                        }}
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 items-center gap-2">

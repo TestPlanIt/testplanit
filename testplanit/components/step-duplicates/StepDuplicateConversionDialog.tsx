@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
+import { useRangeSelect } from "~/hooks/useRangeSelect";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -130,7 +131,14 @@ export function StepDuplicateConversionDialog({
     }
   }, [open, matchId, matchedSteps]);
 
+  const memberCaseIds = useMemo(
+    () => match?.members.map((member) => member.caseId) ?? [],
+    [match]
+  );
+  const rangeSelect = useRangeSelect(memberCaseIds, setCheckedCaseIds);
+
   const handleCaseToggle = (caseId: number, checked: boolean) => {
+    if (checked) rangeSelect.anchor(caseId);
     setCheckedCaseIds((prev) => {
       const next = new Set(prev);
       if (checked) {
@@ -303,6 +311,7 @@ export function StepDuplicateConversionDialog({
                   onCheckedChange={(checked) =>
                     handleCaseToggle(member.caseId, !!checked)
                   }
+                  onClick={(event) => rangeSelect.onClick(member.caseId, event)}
                 />
                 <CaseDisplay
                   id={member.case.id}
