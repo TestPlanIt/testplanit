@@ -7,7 +7,7 @@ import type { ProjectsWhereInput } from "~/zenstack/input";
 import { BoxesIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
-import { Link } from "~/lib/navigation";
+import { Link, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { ProjectIcon } from "../ProjectIcon";
 import { apiFetch } from "~/lib/basePath";
@@ -189,9 +189,16 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
     [buildWhere, computedCount, prefetchedProjects]
   );
 
-  const handleValueChange = useCallback((_option: ProjectOption | null) => {
-    // Navigation handled inside rendered option link
-  }, []);
+  // Choosing a project opens it. The option is not itself a link: a link
+  // inside an option is a control within a control, which a keyboard or
+  // screen reader user cannot reach.
+  const router = useRouter();
+  const handleValueChange = useCallback(
+    (option: ProjectOption | null) => {
+      if (option) router.push(`/projects/overview/${option.id}`);
+    },
+    [router]
+  );
 
   if (isLoading) {
     return <Skeleton className="h-6 w-12" />;
@@ -243,15 +250,12 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
       onValueChange={handleValueChange}
       fetchOptions={fetchProjects}
       renderOption={(option) => (
-        <Link
-          href={`/projects/overview/${option.id}`}
-          className="flex items-center gap-1"
-        >
-          <div className="max-h-5 max-w-5">
+        <span className="flex items-center gap-1">
+          <span className="max-h-5 max-w-5">
             <ProjectIcon iconUrl={option.iconUrl} height={20} width={20} />
-          </div>
+          </span>
           <span className="truncate">{option.name}</span>
-        </Link>
+        </span>
       )}
       getOptionValue={(option) => option.id}
       placeholder={searchPlaceholder}

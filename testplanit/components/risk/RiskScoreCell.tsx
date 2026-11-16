@@ -68,9 +68,10 @@ export function RiskScoreCell({
             "inline-flex min-w-9 cursor-pointer items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold tabular-nums",
             scoreClasses(score)
           )}
-          aria-label={t("score")}
           data-testid="risk-score-badge"
         >
+          {/* Named from its content, so the name includes the number shown. */}
+          <span className="sr-only">{`${t("score")} `}</span>
           {Math.round(score)}
         </button>
       </PopoverTrigger>
