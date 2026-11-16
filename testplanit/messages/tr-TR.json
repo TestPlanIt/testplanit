@@ -4822,6 +4822,7 @@
       "codeRepositories": "Kod Depoları",
       "sso": "Kimlik doğrulama",
       "security": "Güvenlik",
+      "attachments": "Ekler",
       "trash": "Çöp",
       "shares": "Hisseleri Yönet",
       "elasticsearch": "Arama Motoru",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "\"{name}\" sayısı, harici sistemden gelen en son bilgilerle güncellendi.",
       "syncError": "Senkronizasyon sorunu başarısız oldu.",
       "syncErrorDescription": "Sorun senkronize edilemedi. Lütfen daha sonra tekrar deneyin."
+    },
+    "attachments": {
+      "description": "Bu örneğe attached olan tüm dosyalar ve bağlantılar, test senaryoları, çalıştırmaları, sonuçları, oturumları ve sorunlar.",
+      "filterPlaceholder": "Ada veya nota göre filtrele...",
+      "attachedTo": {
+        "label": "Bağlı olduğu",
+        "sessionResult": "Oturum sonucu",
+        "testRunResult": "Test sonucu",
+        "testRunStepResult": "Adım sonucu",
+        "junitTestResult": "Otomatikleştirilmiş sonuç",
+        "issue": "Sorun veya gereksinim"
+      },
+      "status": {
+        "parentDeleted": "Üst öğe silindi",
+        "noParent": "Bağlanmamış"
+      },
+      "columns": {
+        "sharedFile": "Paylaşılan dosya"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# diğer ek} other {# diğer ekler}}",
+        "hint": "Bu dosya ayrıca {count, plural, one {# diğer ek} other {# diğer ekler}} için depolanır; genellikle eki yapılan kayıt kopyalandığı için. Listelemek için seçin.",
+        "showing": "{name} dosyasını paylaşan ekler"
+      },
+      "detail": {
+        "storageKey": "Depolama anahtarı",
+        "notInStorage": "Bu örneğin depolamasında değil",
+        "attachedThrough": "Ek olarak bağlı"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {Yüklenen ek seçilidir} other {Tüm # yüklenen ekler seçilidir}}.",
+        "selectAllMatches": "{total, plural, one {Tek eşleşmeyi seçin} other {Tüm # eşleşmeleri seçin}}",
+        "allMatchesSelected": "{total, plural, one {Tek eşleşme seçilidir} other {Tüm # eşleşmeler seçilidir}}.",
+        "tooMany": "Aynı anda en fazla {max} seçilebilir. Her eşleşmeyi seçmek için filtreleri daraltın."
+      },
+      "actions": {
+        "detach": "Bağlantıyı Kes",
+        "confirm": {
+          "detach": "{count, plural, =0 {Bu eklerden hiçbiri hiçbir şeye bağlı değildir.} one {Bu eki ayırılsın mı? Bağlı olduğu öğeden kaldırılır ve bu listeyi bağlanmamış olarak kalır.} other {# eki ayırılsın mı? Bağlı oldukları öğelerden kaldırılırlar ve bu listeyi bağlanmamış olarak kalırlar.}}",
+          "softDelete": "{count, plural, =0 {Bu ekler zaten silinmiştir.} one {Bu ek silinsin mi? Bağlı olduğu öğeden gizlenir ve bu listeden geri yüklenebilir.} other {# ek silinsin mi? Bağlı oldukları öğelerden gizlenirler ve bu listeden geri yüklenebilirler.}}",
+          "restore": "{count, plural, =0 {Bu eklerden hiçbiri silinmemiştir.} one {Bu ek geri yüklensin mi?} other {# ek geri yüklensin mi?}}",
+          "purge": "{count, plural, =0 {Yalnızca silinen ekler temizlenebilir. Önce bunları silin.} one {Bu ek kalıcı olarak silinsin mi? Bu geri alınamaz.} other {# ek kalıcı olarak silinsin mi? Bu geri alınamaz.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {Depolanan dosyalar silinmemiştir.} one {# depolanan dosya ({size}) silindi.} other {# depolanan dosyalar ({size}) silindi.}}",
+        "purgeShared": "{count, plural, one {# dosya, başka bir ek tarafından kullanıldığı için depolamada kalır.} other {# dosya, diğer ekler tarafından kullanıldığı için depolamada kalır.}}",
+        "purgeInVersions": "{count, plural, one {# dosya kaydedilmiş bir sürümde gösterilir; artık açamayacaktır.} other {# dosya kaydedilmiş sürümlerde gösterilir; artık açamayacaktır.}}",
+        "skipped": "{count, plural, one {# seçili ek olduğu gibi bırakılır çünkü bu eylem ona uygulanmaz.} other {# seçili ek olduğu gibi bırakılırlar çünkü bu eylem onlara uygulanmaz.}}",
+        "done": "{count, plural, one {# ek güncellendi} other {# ekler güncellendi}}",
+        "filesFailed": "{count, plural, one {# depolanan dosya silinemedi.} other {# depolanan dosyalar silinemedi.}}"
+      }
     },
     "trash": {
       "itemTypes": {

@@ -358,6 +358,44 @@ An administrator can restore a deleted attachment from **Admin > Trash**, or pur
 Purged attachments cannot be recovered. Ensure you have backups if needed.
 :::
 
+### Managing All Attachments
+
+**Admin > Attachments** lists every file and external link attached anywhere on the instance: test cases, test runs, results, sessions, issues and requirements. It is available to administrators only.
+
+Each row shows the attachment's name, size, status, what it is attached to, the project, type, who created it and when, and its note. The **Shared file** column shows how many other attachments are stored as the same file, which happens when the item it was attached to has been copied; select the count to list them.
+
+#### Finding attachments
+
+- The search box matches the name and the note.
+- **Status**: Active, Deleted, Parent deleted (the item it is attached to is in the Trash) or Unattached (attached to nothing).
+- **Attached to**: the kind of item, such as test case, test run or session result.
+- **Project**, **Type** and **Created by**.
+
+Every filter accepts more than one value. External links appear in the Type filter as **Links**.
+
+The info button on a row opens its details, including the storage key of the file.
+
+#### Acting on attachments
+
+Tick one or more rows to act on them together, or use the buttons in a row's details. The header checkbox selects the rows loaded so far; once they are all selected, **Select all matches** selects every attachment that matches the current filters, up to 50,000 at a time.
+
+| Action | What it does |
+| --- | --- |
+| **Detach** | Removes the attachment from the item it is attached to. It stays in the list as Unattached. |
+| **Delete** | Moves the attachment to the Trash. It is hidden from the item it is attached to, and its file stays in storage. |
+| **Restore** | Brings a deleted attachment back. |
+| **Purge** | Permanently removes a deleted attachment and deletes its file from storage. |
+
+Only deleted attachments can be purged, so removing an attachment for good is two steps: Delete, then Purge.
+
+Before anything changes, a confirmation shows how many of the selected attachments the action applies to. For a purge it also shows:
+
+- how many stored files will be deleted, and their total size
+- how many files stay in storage because another attachment still uses them
+- how many files are still shown in a saved test case or session version; those versions will no longer be able to open the file
+
+Each action is recorded in the audit log. An action on several attachments is recorded as a single entry that lists them.
+
 ## Security Features
 
 ### Access Control

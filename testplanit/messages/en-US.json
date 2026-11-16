@@ -4822,6 +4822,7 @@
       "codeRepositories": "Code Repositories",
       "sso": "Authentication",
       "security": "Security",
+      "attachments": "Attachments",
       "trash": "Trash",
       "shares": "Manage Shares",
       "elasticsearch": "Search Engine",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "Issue \"{name}\" has been updated with the latest information from the external system.",
       "syncError": "Failed to sync issue",
       "syncErrorDescription": "Could not sync the issue. Please try again later."
+    },
+    "attachments": {
+      "description": "Every file and link attached to test cases, runs, results, sessions and issues on this instance.",
+      "filterPlaceholder": "Filter by name or note...",
+      "attachedTo": {
+        "label": "Attached to",
+        "sessionResult": "Session result",
+        "testRunResult": "Test result",
+        "testRunStepResult": "Step result",
+        "junitTestResult": "Automated result",
+        "issue": "Issue or requirement"
+      },
+      "status": {
+        "parentDeleted": "Parent deleted",
+        "noParent": "Unattached"
+      },
+      "columns": {
+        "sharedFile": "Shared file"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# other attachment} other {# other attachments}}",
+        "hint": "This file is also stored for {count, plural, one {# other attachment} other {# other attachments}}, usually because the record it was attached to was copied. Select to list them.",
+        "showing": "Attachments that share the file of {name}"
+      },
+      "detail": {
+        "storageKey": "Storage key",
+        "notInStorage": "Not in this instance's storage",
+        "attachedThrough": "Attached through"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {The loaded attachment is selected} other {All # loaded attachments are selected}}.",
+        "selectAllMatches": "{total, plural, one {Select the only match} other {Select all # matches}}",
+        "allMatchesSelected": "{total, plural, one {The only match is selected} other {All # matches are selected}}.",
+        "tooMany": "Up to {max} can be selected at once. Narrow the filters to select every match."
+      },
+      "actions": {
+        "detach": "Detach",
+        "confirm": {
+          "detach": "{count, plural, =0 {None of these attachments are attached to anything.} one {Detach this attachment? It is removed from the item it is attached to and stays in this list as unattached.} other {Detach # attachments? They are removed from the items they are attached to and stay in this list as unattached.}}",
+          "softDelete": "{count, plural, =0 {These attachments are already deleted.} one {Delete this attachment? It is hidden from the item it is attached to and can be restored from this list.} other {Delete # attachments? They are hidden from the items they are attached to and can be restored from this list.}}",
+          "restore": "{count, plural, =0 {None of these attachments are deleted.} one {Restore this attachment?} other {Restore # attachments?}}",
+          "purge": "{count, plural, =0 {Only deleted attachments can be purged. Delete them first.} one {Permanently delete this attachment? This cannot be undone.} other {Permanently delete # attachments? This cannot be undone.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {No stored files are deleted.} one {# stored file ({size}) is deleted.} other {# stored files ({size}) are deleted.}}",
+        "purgeShared": "{count, plural, one {# file stays in storage because another attachment uses it.} other {# files stay in storage because other attachments use them.}}",
+        "purgeInVersions": "{count, plural, one {# file is shown in a saved version, which will no longer be able to open it.} other {# files are shown in saved versions, which will no longer be able to open them.}}",
+        "skipped": "{count, plural, one {# selected attachment is left as it is because this action does not apply to it.} other {# selected attachments are left as they are because this action does not apply to them.}}",
+        "done": "{count, plural, one {# attachment updated} other {# attachments updated}}",
+        "filesFailed": "{count, plural, one {# stored file could not be deleted.} other {# stored files could not be deleted.}}"
+      }
     },
     "trash": {
       "itemTypes": {

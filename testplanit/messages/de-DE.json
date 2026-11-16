@@ -4822,6 +4822,7 @@
       "codeRepositories": "Code-Repositories",
       "sso": "Authentifizierung",
       "security": "Sicherheit",
+      "attachments": "Anhänge",
       "trash": "Papierkorb",
       "shares": "Freigaben verwalten",
       "elasticsearch": "Suchmaschine",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "Die Ausgabe \"{name}\" wurde mit den neuesten Informationen aus dem externen System aktualisiert.",
       "syncError": "Synchronisierungsproblem fehlgeschlagen",
       "syncErrorDescription": "Das Problem konnte nicht synchronisiert werden. Bitte versuchen Sie es später erneut."
+    },
+    "attachments": {
+      "description": "Alle Dateien und Links, die an Testfälle, Testläufe, Ergebnisse, Sitzungen und Probleme auf dieser Instanz angehängt sind.",
+      "filterPlaceholder": "Nach Name oder Notiz filtern...",
+      "attachedTo": {
+        "label": "Angehängt an",
+        "sessionResult": "Sitzungsergebnis",
+        "testRunResult": "Testergebnis",
+        "testRunStepResult": "Schrittergebnis",
+        "junitTestResult": "Automatisiertes Ergebnis",
+        "issue": "Problem oder Anforderung"
+      },
+      "status": {
+        "parentDeleted": "Übergeordneter Element gelöscht",
+        "noParent": "Nicht angehängt"
+      },
+      "columns": {
+        "sharedFile": "Gemeinsame Datei"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# andere Anlage} other {# andere Anlagen}}",
+        "hint": "Diese Datei wird auch für {count, plural, one {# andere Anlage} other {# andere Anlagen}} gespeichert, normalerweise weil der Datensatz, an den sie angehängt wurde, kopiert wurde. Wählen Sie aus, um sie aufzulisten.",
+        "showing": "Anhänge, die die Datei von {name} teilen"
+      },
+      "detail": {
+        "storageKey": "Speicherschlüssel",
+        "notInStorage": "Nicht im Speicher dieser Instanz",
+        "attachedThrough": "Angehängt durch"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {Der geladene Anhang ist ausgewählt} other {Alle # geladenen Anhänge sind ausgewählt}}.",
+        "selectAllMatches": "{total, plural, one {Wählen Sie die einzige Übereinstimmung aus} other {Wählen Sie alle # Übereinstimmungen aus}}",
+        "allMatchesSelected": "{total, plural, one {Die einzige Übereinstimmung ist ausgewählt} other {Alle # Übereinstimmungen sind ausgewählt}}.",
+        "tooMany": "Es können maximal {max} gleichzeitig ausgewählt werden. Grenzen Sie die Filter ein, um jede Übereinstimmung auszuwählen."
+      },
+      "actions": {
+        "detach": "Trennen",
+        "confirm": {
+          "detach": "{count, plural, =0 {Keiner dieser Anhänge ist an etwas angehängt.} one {Diesen Anhang trennen? Er wird aus dem Element entfernt, an das er angehängt ist, und bleibt als nicht angehängter Anhang in dieser Liste.} other {# Anhänge trennen? Sie werden aus den Elementen entfernt, an die sie angehängt sind, und bleiben als nicht angehängte Anhänge in dieser Liste.}}",
+          "softDelete": "{count, plural, =0 {Diese Anhänge sind bereits gelöscht.} one {Diesen Anhang löschen? Er wird aus dem Element ausgeblendet, an das er angehängt ist, und kann aus dieser Liste wiederhergestellt werden.} other {# Anhänge löschen? Sie werden aus den Elementen ausgeblendet, an die sie angehängt sind, und können aus dieser Liste wiederhergestellt werden.}}",
+          "restore": "{count, plural, =0 {Keiner dieser Anhänge ist gelöscht.} one {Diesen Anhang wiederherstellen?} other {# Anhänge wiederherstellen?}}",
+          "purge": "{count, plural, =0 {Nur gelöschte Anhänge können endgültig gelöscht werden. Löschen Sie diese zunächst.} one {Diesen Anhang endgültig löschen? Dies kann nicht rückgängig gemacht werden.} other {# Anhänge endgültig löschen? Dies kann nicht rückgängig gemacht werden.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {Keine gespeicherten Dateien werden gelöscht.} one {# gespeicherte Datei ({size}) wird gelöscht.} other {# gespeicherte Dateien ({size}) werden gelöscht.}}",
+        "purgeShared": "{count, plural, one {# Datei bleibt im Speicher, da ein anderer Anhang sie verwendet.} other {# Dateien bleiben im Speicher, da andere Anhänge sie verwenden.}}",
+        "purgeInVersions": "{count, plural, one {# Datei wird in einer gespeicherten Version angezeigt, die sie nicht mehr öffnen kann.} other {# Dateien werden in gespeicherten Versionen angezeigt, die sie nicht mehr öffnen können.}}",
+        "skipped": "{count, plural, one {# ausgewählter Anhang bleibt unverändert, da diese Aktion nicht auf ihn anwendbar ist.} other {# ausgewählte Anhänge bleiben unverändert, da diese Aktion nicht auf sie anwendbar ist.}}",
+        "done": "{count, plural, one {# Anhang aktualisiert} other {# Anhänge aktualisiert}}",
+        "filesFailed": "{count, plural, one {# gespeicherte Datei konnte nicht gelöscht werden.} other {# gespeicherte Dateien konnten nicht gelöscht werden.}}"
+      }
     },
     "trash": {
       "itemTypes": {

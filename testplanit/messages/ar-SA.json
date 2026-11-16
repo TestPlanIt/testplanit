@@ -4822,6 +4822,7 @@
       "codeRepositories": "مستودعات الكود",
       "sso": "المصادقة",
       "security": "الأمان",
+      "attachments": "المرفقات",
       "trash": "سلة المحذوفات",
       "shares": "إدارة المشاركات",
       "elasticsearch": "محرك البحث",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "تم تحديث المشكلة \"{name}\" بأحدث المعلومات من النظام الخارجي.",
       "syncError": "فشلت مزامنة المشكلة",
       "syncErrorDescription": "تعذرت مزامنة المشكلة. يرجى المحاولة مرة أخرى لاحقًا."
+    },
+    "attachments": {
+      "description": "كل ملف ورابط مرفق بحالات الاختبار والتشغيلات والنتائج والجلسات والمشكلات في هذه النسخة.",
+      "filterPlaceholder": "تصفية باسم أو ملاحظة...",
+      "attachedTo": {
+        "label": "مرفق بـ",
+        "sessionResult": "نتيجة الجلسة",
+        "testRunResult": "نتيجة الاختبار",
+        "testRunStepResult": "نتيجة الخطوة",
+        "junitTestResult": "نتيجة آلية",
+        "issue": "مشكلة أو متطلب"
+      },
+      "status": {
+        "parentDeleted": "العنصر الأصلي محذوف",
+        "noParent": "غير مرفق"
+      },
+      "columns": {
+        "sharedFile": "ملف مشترك"
+      },
+      "sharedFile": {
+        "count": "{count, plural, zero {# مرفقات أخرى} one {# مرفق آخر} two {# مرفقان آخران} few {# مرفقات أخرى} many {# مرفقاً آخر} other {# مرفق آخر}}",
+        "hint": "هذا الملف مخزن أيضاً لـ {count, plural, zero {# مرفقات أخرى} one {# مرفق آخر} two {# مرفقان آخران} few {# مرفقات أخرى} many {# مرفقاً آخر} other {# مرفق آخر}}، عادة لأن السجل الذي تم إرفاق الملف به تم نسخه. اختر لعرض قائمة بهم.",
+        "showing": "المرفقات التي تشارك الملف الخاص بـ {name}"
+      },
+      "detail": {
+        "storageKey": "مفتاح التخزين",
+        "notInStorage": "غير موجود في تخزين هذه النسخة",
+        "attachedThrough": "تم الإرفاق عبر"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, zero {المرفق المحمّل محدد} one {المرفق المحمّل محدد} two {كل # مرفقان محملان محددان} few {كل # مرفقات محملة محددة} many {كل # مرفقاً محملاً محدداً} other {كل # مرفق محمّل محدد}}.",
+        "selectAllMatches": "{total, plural, zero {حدد # المطابقات} one {حدد المطابقة الوحيدة} two {حدد كل # مطابقتين} few {حدد كل # مطابقات} many {حدد كل # مطابقة} other {حدد كل # مطابقة}}",
+        "allMatchesSelected": "{total, plural, zero {# مرفق محدد} one {المطابقة الوحيدة محددة} two {كل # مطابقتان محددتان} few {كل # مطابقات محددة} many {كل # مطابقة محددة} other {كل # مطابقة محددة}}.",
+        "tooMany": "يمكن تحديد حتى {max} في المرة الواحدة. قلل الفلاتر لتحديد كل مطابقة."
+      },
+      "actions": {
+        "detach": "فصل",
+        "confirm": {
+          "detach": "{count, plural, =0 {None of these attachments are attached to anything.} one {Detach this attachment? It is removed from the item it is attached to and stays in this list as unattached.} other {Detach # attachments? They are removed from the items they are attached to and stay in this list as unattached.}}",
+          "softDelete": "{count, plural, =0 {These attachments are already deleted.} one {Delete this attachment? It is hidden from the item it is attached to and can be restored from this list.} other {Delete # attachments? They are hidden from the items they are attached to and can be restored from this list.}}",
+          "restore": "{count, plural, =0 {None of these attachments are deleted.} one {Restore this attachment?} other {Restore # attachments?}}",
+          "purge": "{count, plural, =0 {Only deleted attachments can be purged. Delete them first.} one {Permanently delete this attachment? This cannot be undone.} other {Permanently delete # attachments? This cannot be undone.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {No stored files are deleted.} one {# stored file ({size}) is deleted.} other {# stored files ({size}) are deleted.}}",
+        "purgeShared": "{count, plural, zero {} one {# ملف يبقى في التخزين لأن مرفق آخر يستخدمه.} two {# ملفان يبقيان في التخزين لأن مرفقات أخرى تستخدمهما.} few {# ملفات تبقى في التخزين لأن مرفقات أخرى تستخدمها.} many {# ملفاً يبقى في التخزين لأن مرفقات أخرى تستخدمها.} other {# ملف يبقى في التخزين لأن مرفقات أخرى تستخدمها.}}",
+        "purgeInVersions": "{count, plural, zero {} one {# ملف يظهر في نسخة محفوظة لن تتمكن من فتحه.} two {# ملفان يظهران في نسخ محفوظة لن تتمكن من فتحهما.} few {# ملفات تظهر في نسخ محفوظة لن تتمكن من فتحها.} many {# ملفاً يظهر في نسخ محفوظة لن تتمكن من فتحها.} other {# ملف يظهر في نسخ محفوظة لن تتمكن من فتحه.}}",
+        "skipped": "{count, plural, zero {} one {# مرفق محدد يترك كما هو لأن هذا الإجراء لا ينطبق عليه.} two {# مرفقان محددان يتركان كما هما لأن هذا الإجراء لا ينطبق عليهما.} few {# مرفقات محددة تترك كما هي لأن هذا الإجراء لا ينطبق عليها.} many {# مرفقاً محدداً يترك كما هو لأن هذا الإجراء لا ينطبق عليه.} other {# مرفق محدد يترك كما هو لأن هذا الإجراء لا ينطبق عليه.}}",
+        "done": "{count, plural, zero {} one {# مرفق محدّث} two {# مرفقان محدّثان} few {# مرفقات محدّثة} many {# مرفقاً محدّثاً} other {# مرفق محدّث}}",
+        "filesFailed": "{count, plural, zero {} one {# ملف مخزن لم يتمكن من حذفه.} two {# ملفان مخزنان لم يتمكنا من حذفهما.} few {# ملفات مخزنة لم يتمكن من حذفها.} many {# ملفاً مخزناً لم يتمكن من حذفه.} other {# ملف مخزن لم يتمكن من حذفه.}}"
+      }
     },
     "trash": {
       "itemTypes": {

@@ -37,6 +37,7 @@ import {
   ShieldUser,
   Sparkles,
   Tags,
+  Paperclip,
   Trash,
   User,
   Users,
@@ -277,6 +278,12 @@ const menuOptions: MenuOption[] = [
     icon: ShieldCheck,
     translationKey: "auditLogs",
     path: "audit-logs",
+    section: "system",
+  },
+  {
+    icon: Paperclip,
+    translationKey: "attachments",
+    path: "attachments",
     section: "system",
   },
   {

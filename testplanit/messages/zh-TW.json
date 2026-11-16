@@ -4822,6 +4822,7 @@
       "codeRepositories": "程式碼庫",
       "sso": "驗證",
       "security": "安全",
+      "attachments": "附件",
       "trash": "垃圾",
       "shares": "管理股份",
       "elasticsearch": "搜尋引擎",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "問題「{name}」已使用外部系統的最新資訊進行更新。",
       "syncError": "同步問題失敗",
       "syncErrorDescription": "問題同步失敗，請稍後再試。"
+    },
+    "attachments": {
+      "description": "所有附加到此實例上的測試案例、測試運行、結果、會話和問題的檔案和連結。",
+      "filterPlaceholder": "按名稱或附註篩選……",
+      "attachedTo": {
+        "label": "附加到",
+        "sessionResult": "會議結果",
+        "testRunResult": "測試結果",
+        "testRunStepResult": "步驟結果",
+        "junitTestResult": "自動化結果",
+        "issue": "問題或需求"
+      },
+      "status": {
+        "parentDeleted": "父項已刪除",
+        "noParent": "未附加"
+      },
+      "columns": {
+        "sharedFile": "共享檔案"
+      },
+      "sharedFile": {
+        "count": "{count, plural, other {# 個其他附件}}",
+        "hint": "此檔案也儲存在 {count, plural, other {# 個其他附件}}，通常是因為附加到該檔案的記錄被複製了。選擇以列出它們。",
+        "showing": "共享 {name} 檔案的附件"
+      },
+      "detail": {
+        "storageKey": "儲存金鑰",
+        "notInStorage": "不在此實例的儲存中",
+        "attachedThrough": "附加透過"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, other {所有 # 個已加載的附件已選中}}。",
+        "selectAllMatches": "{total, plural, other {選擇全部 # 個符合項}}",
+        "allMatchesSelected": "{total, plural, other {所有 # 個符合項已選中}}。",
+        "tooMany": "最多可以一次選擇 {max} 個。縮小篩選範圍以選擇每個符合項。"
+      },
+      "actions": {
+        "detach": "解除連結",
+        "confirm": {
+          "detach": "{count, plural, =0 {這些附件都未附加到任何項目。} one {解除此附件的連結？該附件將從其附加的項目中移除，並在此列表中保留為未附加的附件。} other {解除 # 個附件的連結？它們將從其附加的項目中移除，並在此列表中保留為未附加的附件。}}",
+          "softDelete": "{count, plural, =0 {這些附件已被刪除。} one {刪除此附件？該附件將在其附加的項目中隱藏，並可從此列表還原。} other {刪除 # 個附件？它們將在其附加的項目中隱藏，並可從此列表還原。}}",
+          "restore": "{count, plural, =0 {這些附件都未被刪除。} one {還原此附件？} other {還原 # 個附件？}}",
+          "purge": "{count, plural, =0 {只有已刪除的附件才能被清除。請先將其刪除。} one {永久刪除此附件？此操作無法撤銷。} other {永久刪除 # 個附件？此操作無法撤銷。}}"
+        },
+        "purgeFiles": "{count, plural, =0 {No stored files are deleted.} one {# stored file ({size}) is deleted.} other {# stored files ({size}) are deleted.}}",
+        "purgeShared": "{count, plural, other {# 個檔案保留在儲存中，因為其他附件使用它們。}}",
+        "purgeInVersions": "{count, plural, other {# 個檔案顯示在已保存的版本中，這些版本將無法再打開它們。}}",
+        "skipped": "{count, plural, other {# 個已選中的附件保持不變，因為此操作不適用於它們。}}",
+        "done": "{count, plural, other {# 個附件已更新}}",
+        "filesFailed": "{count, plural, other {# 個儲存的檔案無法刪除。}}"
+      }
     },
     "trash": {
       "itemTypes": {

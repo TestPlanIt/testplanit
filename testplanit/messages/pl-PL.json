@@ -4822,6 +4822,7 @@
       "codeRepositories": "Repozytoria kodu",
       "sso": "Uwierzytelnianie",
       "security": "Bezpieczeństwo",
+      "attachments": "Załączniki",
       "trash": "Śmieci",
       "shares": "Zarządzaj udziałami",
       "elasticsearch": "Wyszukiwarka",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "Problem „{name}” został zaktualizowany o najnowsze informacje z systemu zewnętrznego.",
       "syncError": "Nie udało się zsynchronizować problemu",
       "syncErrorDescription": "Nie udało się zsynchronizować problemu. Spróbuj ponownie później."
+    },
+    "attachments": {
+      "description": "Każdy plik i link dołączony do przypadków testowych, przebiegów, wyników, sesji i problemów w tej instancji.",
+      "filterPlaceholder": "Filtruj według nazwy lub notatki...",
+      "attachedTo": {
+        "label": "Dołączone do",
+        "sessionResult": "Wynik sesji",
+        "testRunResult": "Wynik testu",
+        "testRunStepResult": "Wynik kroku",
+        "junitTestResult": "Wynik automatyczny",
+        "issue": "Problem lub wymaganie"
+      },
+      "status": {
+        "parentDeleted": "Nadrzędny element usunięty",
+        "noParent": "Nie dołączony"
+      },
+      "columns": {
+        "sharedFile": "Plik udostępniony"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# inny załącznik} few {# inne załączniki} many {# innych załączników} other {# innych załączników}}",
+        "hint": "Ten plik jest również przechowywany dla {count, plural, one {# innego załącznika} few {# innych załączników} many {# innych załączników} other {# innych załączników}}, zwykle ponieważ rekord, do którego został dołączony, został skopiowany. Wybierz, aby je wyświetlić.",
+        "showing": "Załączniki, które udostępniają plik {name}"
+      },
+      "detail": {
+        "storageKey": "Klucz magazynu",
+        "notInStorage": "Nie w magazynie tej instancji",
+        "attachedThrough": "Dołączone przez"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {Załadowany załącznik jest wybrany} few {Wszystkie # załadowane załączniki są wybrane} many {Wszystkich # załadowanych załączników jest wybranych} other {Wszystkich # załadowanych załączników jest wybranych}}.",
+        "selectAllMatches": "{total, plural, one {Wybierz jedynego dopasowanie} few {Wybierz wszystkie # dopasowania} many {Wybierz wszystkie # dopasowań} other {Wybierz wszystkie # dopasowań}}",
+        "allMatchesSelected": "{total, plural, one {Jedyne dopasowanie jest wybrane} few {Wszystkie # dopasowania są wybrane} many {Wszystkie # dopasowań są wybrane} other {Wszystkie # dopasowań są wybrane}}.",
+        "tooMany": "Maksymalnie {max} można wybrać jednocześnie. Zawęź filtry, aby wybrać każde dopasowanie."
+      },
+      "actions": {
+        "detach": "Odłącz",
+        "confirm": {
+          "detach": "{count, plural, =0 {Żaden z tych załączników nie jest do niczego dołączony.} one {Odłączyć ten załącznik? Zostaje usunięty z elementu, do którego jest dołączony i pozostaje na tej liście jako nie dołączony.} few {Odłączyć # załączniki? Zostają usunięte z elementów, do których są dołączone i pozostają na tej liście jako nie dołączone.} many {Odłączyć # załączników? Zostają usunięte z elementów, do których są dołączone i pozostają na tej liście jako nie dołączone.} other {Odłączyć # załączników? Zostają usunięte z elementów, do których są dołączone i pozostają na tej liście jako nie dołączone.}}",
+          "softDelete": "{count, plural, =0 {Te załączniki zostały już usunięte.} one {Usunąć ten załącznik? Zostaje ukryty z elementu, do którego jest dołączony i może być przywrócony z tej listy.} few {Usunąć # załączniki? Zostają ukryte z elementów, do których są dołączone i mogą być przywrócone z tej listy.} many {Usunąć # załączników? Zostają ukryte z elementów, do których są dołączone i mogą być przywrócone z tej listy.} other {Usunąć # załączników? Zostają ukryte z elementów, do których są dołączone i mogą być przywrócone z tej listy.}}",
+          "restore": "{count, plural, =0 {Żaden z tych załączników nie został usunięty.} one {Przywrócić ten załącznik?} few {Przywrócić # załączniki?} many {Przywrócić # załączników?} other {Przywrócić # załączników?}}",
+          "purge": "{count, plural, =0 {Tylko usunięte załączniki mogą być trwale usunięte. Najpierw je usuń.} one {Trwale usunąć ten załącznik? Tej czynności nie można cofnąć.} few {Trwale usunąć # załączniki? Tej czynności nie można cofnąć.} many {Trwale usunąć # załączników? Tej czynności nie można cofnąć.} other {Trwale usunąć # załączników? Tej czynności nie można cofnąć.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {Żaden przechowywany plik nie został usunięty.} one {# przechowywany plik ({size}) został usunięty.} few {# przechowywane pliki ({size}) zostały usunięte.} many {# przechowywanych plików ({size}) zostało usunięto.} other {# przechowywanych plików ({size}) zostało usunięto.}}",
+        "purgeShared": "{count, plural, one {# plik pozostaje w magazynie, ponieważ inny załącznik go wykorzystuje.} few {# pliki pozostają w magazynie, ponieważ inne załączniki je wykorzystują.} many {# plików pozostaje w magazynie, ponieważ inne załączniki je wykorzystują.} other {# plików pozostaje w magazynie, ponieważ inne załączniki je wykorzystują.}}",
+        "purgeInVersions": "{count, plural, one {# plik jest pokazany w zapisanej wersji, która nie będzie już w stanie go otworzyć.} few {# pliki są pokazane w zapisanych wersjach, które nie będą już w stanie je otworzyć.} many {# plików jest pokazanych w zapisanych wersjach, które nie będą już w stanie je otworzyć.} other {# plików jest pokazanych w zapisanych wersjach, które nie będą już w stanie je otworzyć.}}",
+        "skipped": "{count, plural, one {# wybrany załącznik jest pozostawiony bez zmian, ponieważ ta akcja do niego nie ma zastosowania.} few {# wybrane załączniki są pozostawione bez zmian, ponieważ ta akcja do nich nie ma zastosowania.} many {# wybranych załączników jest pozostawionych bez zmian, ponieważ ta akcja do nich nie ma zastosowania.} other {# wybranych załączników jest pozostawionych bez zmian, ponieważ ta akcja do nich nie ma zastosowania.}}",
+        "done": "{count, plural, one {# załącznik zaktualizowany} few {# załączniki zaktualizowane} many {# załączników zaktualizowanych} other {# załączników zaktualizowanych}}",
+        "filesFailed": "{count, plural, one {# przechowywany plik nie mógł być usunięty.} few {# przechowywane pliki nie mogły być usunięte.} many {# przechowywanych plików nie mogło być usunięto.} other {# przechowywanych plików nie mogło być usunięto.}}"
+      }
     },
     "trash": {
       "itemTypes": {

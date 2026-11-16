@@ -4822,6 +4822,7 @@
       "codeRepositories": "Dépôts de code",
       "sso": "Authentification",
       "security": "Sécurité",
+      "attachments": "Pièces jointes",
       "trash": "Poubelle",
       "shares": "Gérer les actions",
       "elasticsearch": "Moteur de recherche",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "Le problème «{name}» a été mis à jour avec les dernières informations provenant du système externe.",
       "syncError": "Échec de la synchronisation",
       "syncErrorDescription": "Impossible de synchroniser le problème. Veuillez réessayer plus tard."
+    },
+    "attachments": {
+      "description": "Tous les fichiers et liens joints aux cas de test, exécutions, résultats, sessions et problèmes de cette instance.",
+      "filterPlaceholder": "Filtrer par nom ou note...",
+      "attachedTo": {
+        "label": "Attaché à",
+        "sessionResult": "Résultat de session",
+        "testRunResult": "Résultat de test",
+        "testRunStepResult": "Résultat d'étape",
+        "junitTestResult": "Résultat automatisé",
+        "issue": "Problème ou exigence"
+      },
+      "status": {
+        "parentDeleted": "Parent supprimé",
+        "noParent": "Non attaché"
+      },
+      "columns": {
+        "sharedFile": "Fichier partagé"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# autre pièce jointe} other {# autres pièces jointes}}",
+        "hint": "Ce fichier est également stocké pour {count, plural, one {# autre pièce jointe} other {# autres pièces jointes}}, généralement parce que l'enregistrement auquel il était attaché a été copié. Sélectionnez pour les répertorier.",
+        "showing": "Pièces jointes qui partagent le fichier de {name}"
+      },
+      "detail": {
+        "storageKey": "Clé de stockage",
+        "notInStorage": "Pas dans le stockage de cette instance",
+        "attachedThrough": "Attaché via"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {La pièce jointe chargée est sélectionnée} other {Toutes les # pièces jointes chargées sont sélectionnées}}.",
+        "selectAllMatches": "{total, plural, one {Sélectionner la seule correspondance} other {Sélectionner toutes les # correspondances}}",
+        "allMatchesSelected": "{total, plural, one {La seule correspondance est sélectionnée} other {Toutes les # correspondances sont sélectionnées}}.",
+        "tooMany": "Jusqu'à {max} peuvent être sélectionnés à la fois. Réduisez les filtres pour sélectionner chaque correspondance."
+      },
+      "actions": {
+        "detach": "Détacher",
+        "confirm": {
+          "detach": "{count, plural, =0 {Aucune de ces pièces jointes n'est attachée à quoi que ce soit.} one {Détacher cette pièce jointe ? Elle est supprimée de l'élément auquel elle est attachée et reste dans cette liste comme non attachée.} other {Détacher # pièces jointes ? Elles sont supprimées des éléments auxquels elles sont attachées et restent dans cette liste comme non attachées.}}",
+          "softDelete": "{count, plural, =0 {Ces pièces jointes sont déjà supprimées.} one {Supprimer cette pièce jointe ? Elle est masquée de l'élément auquel elle est attachée et peut être restaurée à partir de cette liste.} other {Supprimer # pièces jointes ? Elles sont masquées des éléments auxquels elles sont attachées et peuvent être restaurées à partir de cette liste.}}",
+          "restore": "{count, plural, =0 {Aucune de ces pièces jointes n'est supprimée.} one {Restaurer cette pièce jointe ?} other {Restaurer # pièces jointes ?}}",
+          "purge": "{count, plural, =0 {Seules les pièces jointes supprimées peuvent être purgées. Supprimez-les d'abord.} one {Supprimer définitivement cette pièce jointe ? Cette action ne peut pas être annulée.} other {Supprimer définitivement # pièces jointes ? Cette action ne peut pas être annulée.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {Aucun fichier stocké n'est supprimé.} one {# fichier stocké ({size}) est supprimé.} other {# fichiers stockés ({size}) sont supprimés.}}",
+        "purgeShared": "{count, plural, one {# fichier reste dans le stockage car une autre pièce jointe l'utilise.} other {# fichiers restent dans le stockage car d'autres pièces jointes les utilisent.}}",
+        "purgeInVersions": "{count, plural, one {# fichier est affiché dans une version enregistrée, qui ne sera plus en mesure de l'ouvrir.} other {# fichiers sont affichés dans des versions enregistrées, qui ne seront plus en mesure de les ouvrir.}}",
+        "skipped": "{count, plural, one {# pièce jointe sélectionnée est laissée telle quelle car cette action ne s'y applique pas.} other {# pièces jointes sélectionnées sont laissées telles qu'elles car cette action ne s'y applique pas.}}",
+        "done": "{count, plural, one {# pièce jointe mise à jour} other {# pièces jointes mises à jour}}",
+        "filesFailed": "{count, plural, one {# fichier stocké n'a pas pu être supprimé.} other {# fichiers stockés n'ont pas pu être supprimés.}}"
+      }
     },
     "trash": {
       "itemTypes": {

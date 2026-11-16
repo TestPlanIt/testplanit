@@ -4822,6 +4822,7 @@
       "codeRepositories": "Kho lưu trữ mã nguồn",
       "sso": "Xác thực",
       "security": "Bảo vệ",
+      "attachments": "Tệp đính kèm",
       "trash": "Rác",
       "shares": "Quản lý cổ phần",
       "elasticsearch": "Công cụ tìm kiếm",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "Vấn đề \"{name}\" đã được cập nhật với thông tin mới nhất từ hệ thống bên ngoài.",
       "syncError": "Lỗi đồng bộ hóa",
       "syncErrorDescription": "Không thể đồng bộ hóa vấn đề. Vui lòng thử lại sau."
+    },
+    "attachments": {
+      "description": "Mọi tệp và liên kết được đính kèm với các trường hợp kiểm tra, lần chạy, kết quả, phiên và vấn đề trên phiên bản này.",
+      "filterPlaceholder": "Lọc theo tên hoặc ghi chú...",
+      "attachedTo": {
+        "label": "Đã đính kèm vào",
+        "sessionResult": "Kết quả phiên",
+        "testRunResult": "Kết quả kiểm tra",
+        "testRunStepResult": "Kết quả bước",
+        "junitTestResult": "Kết quả tự động",
+        "issue": "Vấn đề hoặc yêu cầu"
+      },
+      "status": {
+        "parentDeleted": "Cha bị xóa",
+        "noParent": "Không được đính kèm"
+      },
+      "columns": {
+        "sharedFile": "Tệp được chia sẻ"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# tệp đính kèm khác} other {# tệp đính kèm khác}}",
+        "hint": "Tệp này cũng được lưu trữ cho {count, plural, one {# tệp đính kèm khác} other {# tệp đính kèm khác}}, thường vì bản ghi mà nó được đính kèm đã bị sao chép. Chọn để liệt kê chúng.",
+        "showing": "Các tệp đính kèm chia sẻ tệp của {name}"
+      },
+      "detail": {
+        "storageKey": "Khóa lưu trữ",
+        "notInStorage": "Không có trong bộ lưu trữ của phiên bản này",
+        "attachedThrough": "Được đính kèm thông qua"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {Tệp đính kèm được tải được chọn} other {Tất cả # tệp đính kèm được tải được chọn}}.",
+        "selectAllMatches": "{total, plural, one {Chọn kết quả khớp duy nhất} other {Chọn tất cả # kết quả khớp}}",
+        "allMatchesSelected": "{total, plural, one {Kết quả khớp duy nhất được chọn} other {Tất cả # kết quả khớp được chọn}}.",
+        "tooMany": "Có thể chọn tối đa {max} cùng một lúc. Thu hẹp các bộ lọc để chọn mọi kết quả khớp."
+      },
+      "actions": {
+        "detach": "Tách rời",
+        "confirm": {
+          "detach": "{count, plural, =0 {Không có tệp đính kèm nào được đính kèm vào bất cứ thứ gì.} one {Tách rời tệp đính kèm này? Nó được xóa khỏi mục mà nó được đính kèm và ở lại trong danh sách này dưới dạng không được đính kèm.} other {Tách rời # tệp đính kèm? Chúng được xóa khỏi các mục mà chúng được đính kèm và ở lại trong danh sách này dưới dạng không được đính kèm.}}",
+          "softDelete": "{count, plural, =0 {Các tệp đính kèm này đã bị xóa.} one {Xóa tệp đính kèm này? Nó bị ẩn khỏi mục mà nó được đính kèm và có thể được khôi phục từ danh sách này.} other {Xóa # tệp đính kèm? Chúng bị ẩn khỏi các mục mà chúng được đính kèm và có thể được khôi phục từ danh sách này.}}",
+          "restore": "{count, plural, =0 {Không có tệp đính kèm nào bị xóa.} one {Khôi phục tệp đính kèm này?} other {Khôi phục # tệp đính kèm?}}",
+          "purge": "{count, plural, =0 {Chỉ các tệp đính kèm đã xóa mới có thể được xóa vĩnh viễn. Xóa chúng trước.} one {Xóa vĩnh viễn tệp đính kèm này? Điều này không thể được hoàn tác.} other {Xóa vĩnh viễn # tệp đính kèm? Điều này không thể được hoàn tác.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {Không có tệp được lưu trữ nào bị xóa.} one {# tệp được lưu trữ ({size}) bị xóa.} other {# tệp được lưu trữ ({size}) bị xóa.}}",
+        "purgeShared": "{count, plural, one {# tệp ở lại trong bộ lưu trữ vì một tệp đính kèm khác sử dụng nó.} other {# tệp ở lại trong bộ lưu trữ vì các tệp đính kèm khác sử dụng chúng.}}",
+        "purgeInVersions": "{count, plural, one {# tệp được hiển thị trong một phiên bản đã lưu, phiên bản sẽ không còn có thể mở nó.} other {# tệp được hiển thị trong các phiên bản đã lưu, phiên bản sẽ không còn có thể mở chúng.}}",
+        "skipped": "{count, plural, one {# tệp đính kèm được chọn ở lại như cũ vì hành động này không áp dụng cho nó.} other {# tệp đính kèm được chọn ở lại như cũ vì hành động này không áp dụng cho chúng.}}",
+        "done": "{count, plural, one {# tệp đính kèm được cập nhật} other {# tệp đính kèm được cập nhật}}",
+        "filesFailed": "{count, plural, one {# tệp được lưu trữ không thể bị xóa.} other {# tệp được lưu trữ không thể bị xóa.}}"
+      }
     },
     "trash": {
       "itemTypes": {

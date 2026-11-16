@@ -4822,6 +4822,7 @@
       "codeRepositories": "Repositorios de código",
       "sso": "Autenticación",
       "security": "Seguridad",
+      "attachments": "Adjuntos",
       "trash": "Basura",
       "shares": "Administrar acciones",
       "elasticsearch": "Motor de búsqueda",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "El problema \"{name}\" se ha actualizado con la última información del sistema externo.",
       "syncError": "Problema de sincronización fallida",
       "syncErrorDescription": "No se pudo sincronizar el problema. Inténtalo de nuevo más tarde."
+    },
+    "attachments": {
+      "description": "Todos los archivos y enlaces adjuntos a casos de prueba, ejecuciones, resultados, sesiones e incidencias en esta instancia.",
+      "filterPlaceholder": "Filtrar por nombre o nota...",
+      "attachedTo": {
+        "label": "Adjunto a",
+        "sessionResult": "Resultado de sesión",
+        "testRunResult": "Resultado de prueba",
+        "testRunStepResult": "Resultado del paso",
+        "junitTestResult": "Resultado automatizado",
+        "issue": "Incidencia o requisito"
+      },
+      "status": {
+        "parentDeleted": "Padre eliminado",
+        "noParent": "Sin adjuntar"
+      },
+      "columns": {
+        "sharedFile": "Archivo compartido"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# otro adjunto} other {# otros adjuntos}}",
+        "hint": "Este archivo también se almacena para {count, plural, one {# otro adjunto} other {# otros adjuntos}}, generalmente porque el registro al que se adjuntó fue copiado. Selecciona para enumerarlos.",
+        "showing": "Adjuntos que comparten el archivo de {name}"
+      },
+      "detail": {
+        "storageKey": "Clave de almacenamiento",
+        "notInStorage": "No en el almacenamiento de esta instancia",
+        "attachedThrough": "Adjunto a través de"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {El adjunto cargado está seleccionado} other {Todos los # adjuntos cargados están seleccionados}}.",
+        "selectAllMatches": "{total, plural, one {Selecciona la única coincidencia} other {Selecciona todas las # coincidencias}}",
+        "allMatchesSelected": "{total, plural, one {La única coincidencia está seleccionada} other {Todas las # coincidencias están seleccionadas}}.",
+        "tooMany": "Se puede seleccionar hasta {max} a la vez. Reduce los filtros para seleccionar todas las coincidencias."
+      },
+      "actions": {
+        "detach": "Desvincular",
+        "confirm": {
+          "detach": "{count, plural, =0 {Ninguno de estos adjuntos está vinculado a nada.} one {¿Desvincular este adjunto? Se quita del elemento al que está adjunto y permanece en esta lista como desvinculado.} other {¿Desvincular # adjuntos? Se quitan de los elementos a los que están adjuntos y permanecen en esta lista como desvinculados.}}",
+          "softDelete": "{count, plural, =0 {Estos adjuntos ya están eliminados.} one {¿Eliminar este adjunto? Se oculta del elemento al que está adjunto y se puede restaurar desde esta lista.} other {¿Eliminar # adjuntos? Se ocultan de los elementos a los que están adjuntos y se pueden restaurar desde esta lista.}}",
+          "restore": "{count, plural, =0 {Ninguno de estos adjuntos está eliminado.} one {¿Restaurar este adjunto?} other {¿Restaurar # adjuntos?}}",
+          "purge": "{count, plural, =0 {Solo se pueden purgar los adjuntos eliminados. Elimínalos primero.} one {¿Eliminar permanentemente este adjunto? Esto no se puede deshacer.} other {¿Eliminar permanentemente # adjuntos? Esto no se puede deshacer.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {No hay archivos almacenados eliminados.} one {# archivo almacenado ({size}) se elimina.} other {# archivos almacenados ({size}) se eliminan.}}",
+        "purgeShared": "{count, plural, one {# archivo permanece en el almacenamiento porque otro adjunto lo utiliza.} other {# archivos permanecen en el almacenamiento porque otros adjuntos los utilizan.}}",
+        "purgeInVersions": "{count, plural, one {# archivo se muestra en una versión guardada, que ya no podrá abrirlo.} other {# archivos se muestran en versiones guardadas, que ya no podrán abrirlos.}}",
+        "skipped": "{count, plural, one {# adjunto seleccionado se deja como está porque esta acción no se aplica a él.} other {# adjuntos seleccionados se dejan como están porque esta acción no se aplica a ellos.}}",
+        "done": "{count, plural, one {# adjunto actualizado} other {# adjuntos actualizados}}",
+        "filesFailed": "{count, plural, one {# archivo almacenado no se pudo eliminar.} other {# archivos almacenados no se pudieron eliminar.}}"
+      }
     },
     "trash": {
       "itemTypes": {

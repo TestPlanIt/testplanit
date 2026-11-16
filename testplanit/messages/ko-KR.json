@@ -4822,6 +4822,7 @@
       "codeRepositories": "코드 저장소",
       "sso": "입증",
       "security": "보안",
+      "attachments": "첨부파일",
       "trash": "쓰레기",
       "shares": "주식 관리",
       "elasticsearch": "검색 엔진",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "이슈 \"{name}\"가 외부 시스템의 최신 정보로 업데이트되었습니다.",
       "syncError": "동기화 실패 문제",
       "syncErrorDescription": "동기화에 실패했습니다. 나중에 다시 시도해 주세요."
+    },
+    "attachments": {
+      "description": "이 인스턴스의 테스트 케이스, 실행, 결과, 세션 및 문제에 첨부된 모든 파일 및 링크입니다.",
+      "filterPlaceholder": "이름 또는 메모로 필터링...",
+      "attachedTo": {
+        "label": "첨부 대상",
+        "sessionResult": "세션 결과",
+        "testRunResult": "테스트 결과",
+        "testRunStepResult": "단계 결과",
+        "junitTestResult": "자동화된 결과",
+        "issue": "문제 또는 요구 사항"
+      },
+      "status": {
+        "parentDeleted": "부모 삭제됨",
+        "noParent": "미첨부"
+      },
+      "columns": {
+        "sharedFile": "공유 파일"
+      },
+      "sharedFile": {
+        "count": "{count, plural, other {# 개 기타 첨부파일}}",
+        "hint": "이 파일은 {count, plural, other {# 개 기타 첨부파일}}에도 저장되어 있습니다. 일반적으로 첨부된 레코드가 복사되었기 때문입니다. 선택하여 나열하십시오.",
+        "showing": "{name}의 파일을 공유하는 첨부파일"
+      },
+      "detail": {
+        "storageKey": "스토리지 키",
+        "notInStorage": "이 인스턴스의 스토리지에 없음",
+        "attachedThrough": "첨부 경로"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, other {로드된 모든 #개의 첨부파일이 선택됨}}.",
+        "selectAllMatches": "{total, plural, other {모든 #개의 일치 항목 선택}}",
+        "allMatchesSelected": "{total, plural, other {모든 #개의 일치 항목이 선택됨}}.",
+        "tooMany": "최대 {max}개까지 한 번에 선택할 수 있습니다. 모든 일치 항목을 선택하려면 필터를 좁히십시오."
+      },
+      "actions": {
+        "detach": "분리",
+        "confirm": {
+          "detach": "{count, plural, =0 {이러한 첨부파일 중 어느 것도 첨부되지 않았습니다.} one {이 첨부파일을 분리하시겠습니까? 첨부된 항목에서 제거되고 이 목록에 미첨부로 유지됩니다.} other {#개의 첨부파일을 분리하시겠습니까? 첨부된 항목에서 제거되고 이 목록에 미첨부로 유지됩니다.}}",
+          "softDelete": "{count, plural, =0 {이러한 첨부파일은 이미 삭제되었습니다.} one {이 첨부파일을 삭제하시겠습니까? 첨부된 항목에서 숨겨지며 이 목록에서 복원할 수 있습니다.} other {#개의 첨부파일을 삭제하시겠습니까? 첨부된 항목에서 숨겨지며 이 목록에서 복원할 수 있습니다.}}",
+          "restore": "{count, plural, =0 {이러한 첨부파일 중 삭제된 것은 없습니다.} one {이 첨부파일을 복원하시겠습니까?} other {#개의 첨부파일을 복원하시겠습니까?}}",
+          "purge": "{count, plural, =0 {삭제된 첨부파일만 영구 삭제할 수 있습니다. 먼저 삭제하십시오.} one {이 첨부파일을 영구적으로 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.} other {#개의 첨부파일을 영구적으로 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {No stored files are deleted.} one {# stored file ({size}) is deleted.} other {# stored files ({size}) are deleted.}}",
+        "purgeShared": "{count, plural, other {#개의 파일은 다른 첨부파일에서 사용되므로 스토리지에 유지됩니다.}}",
+        "purgeInVersions": "{count, plural, other {#개의 파일이 저장된 버전에 표시되며, 더 이상 열 수 없습니다.}}",
+        "skipped": "{count, plural, other {#개의 선택된 첨부파일은 이 작업이 적용되지 않으므로 그대로 유지됩니다.}}",
+        "done": "{count, plural, other {#개의 첨부파일 업데이트됨}}",
+        "filesFailed": "{count, plural, other {#개의 저장된 파일을 삭제할 수 없습니다.}}"
+      }
     },
     "trash": {
       "itemTypes": {

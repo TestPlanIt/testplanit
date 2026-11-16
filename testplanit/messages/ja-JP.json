@@ -4822,6 +4822,7 @@
       "codeRepositories": "コードリポジトリ",
       "sso": "認証",
       "security": "安全",
+      "attachments": "添付ファイル",
       "trash": "ごみ",
       "shares": "株式の管理",
       "elasticsearch": "検索エンジン",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "問題「{name}」は外部システムからの最新情報で更新されました。",
       "syncError": "同期に失敗した問題",
       "syncErrorDescription": "問題を同期できませんでした。しばらくしてからもう一度お試しください。"
+    },
+    "attachments": {
+      "description": "このインスタンスのテストケース、実行、結果、セッション、および問題に添付されたすべてのファイルとリンク。",
+      "filterPlaceholder": "名前またはメモで絞り込む…",
+      "attachedTo": {
+        "label": "添付先",
+        "sessionResult": "セッション結果",
+        "testRunResult": "テスト結果",
+        "testRunStepResult": "ステップ結果",
+        "junitTestResult": "自動化された結果",
+        "issue": "問題または要件"
+      },
+      "status": {
+        "parentDeleted": "親が削除されました",
+        "noParent": "未添付"
+      },
+      "columns": {
+        "sharedFile": "共有ファイル"
+      },
+      "sharedFile": {
+        "count": "{count, plural, other {# 個の他の添付ファイル}}",
+        "hint": "このファイルは {count, plural, other {# 個の他の添付ファイル}} に対しても保存されています。通常、このファイルが添付されたレコードがコピーされたためです。選択するとそれらをリストアップできます。",
+        "showing": "{name} のファイルを共有している添付ファイル"
+      },
+      "detail": {
+        "storageKey": "ストレージキー",
+        "notInStorage": "このインスタンスのストレージに存在しません",
+        "attachedThrough": "以下を通じて添付"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, other {読み込まれた # 個の添付ファイルがすべて選択されています}}。",
+        "selectAllMatches": "{total, plural, other {# 個すべての一致を選択}}",
+        "allMatchesSelected": "{total, plural, other {# 個すべての一致が選択されています}}。",
+        "tooMany": "一度に最大 {max} 個を選択できます。すべての一致を選択するには、フィルターを絞り込んでください。"
+      },
+      "actions": {
+        "detach": "切断",
+        "confirm": {
+          "detach": "{count, plural, =0 {これらの添付ファイルはいずれも何にも添付されていません。} one {この添付ファイルを切断しますか？ それは添付されているアイテムから削除され、このリストに未添付として残ります。} other {# 個の添付ファイルを切断しますか？ それらは添付されているアイテムから削除され、このリストに未添付として残ります。}}",
+          "softDelete": "{count, plural, =0 {これらの添付ファイルは既に削除されています。} one {この添付ファイルを削除しますか？ それは添付されているアイテムから非表示になり、このリストから復元できます。} other {# 個の添付ファイルを削除しますか？ それらは添付されているアイテムから非表示になり、このリストから復元できます。}}",
+          "restore": "{count, plural, =0 {削除された添付ファイルはありません。} one {この添付ファイルを復元しますか？} other {# 個の添付ファイルを復元しますか？}}",
+          "purge": "{count, plural, =0 {削除された添付ファイルのみをパージできます。まず削除してください。} one {この添付ファイルを永続的に削除しますか？ この操作は取り消せません。} other {# 個の添付ファイルを永続的に削除しますか？ この操作は取り消せません。}}"
+        },
+        "purgeFiles": "{count, plural, =0 {削除されたストレージファイルはありません。} one {# 個のストレージファイル ({size}) が削除されました。} other {# 個のストレージファイル ({size}) が削除されました。}}",
+        "purgeShared": "{count, plural, other {別の添付ファイルがそれを使用しているため、# 個のファイルはストレージに残ります。}}",
+        "purgeInVersions": "{count, plural, other {# 個のファイルが保存されたバージョンに表示されており、それらを開くことができなくなります。}}",
+        "skipped": "{count, plural, other {選択された # 個の添付ファイルは、このアクションが適用されないため、そのままにされています。}}",
+        "done": "{count, plural, other {# 個の添付ファイルを更新}}",
+        "filesFailed": "{count, plural, other {# 個のストレージファイルを削除できませんでした。}}"
+      }
     },
     "trash": {
       "itemTypes": {

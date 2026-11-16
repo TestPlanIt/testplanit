@@ -4822,6 +4822,7 @@
       "codeRepositories": "Úložiště kódu",
       "sso": "Ověřování",
       "security": "Zabezpečení",
+      "attachments": "Přílohy",
       "trash": "Koš",
       "shares": "Spravovat sdílení",
       "elasticsearch": "Vyhledávací modul",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "Problém „{name}“ byl aktualizován nejnovějšími informacemi z externího systému.",
       "syncError": "Nepodařilo se synchronizovat problém",
       "syncErrorDescription": "Problém se nepodařilo synchronizovat. Zkuste to prosím později."
+    },
+    "attachments": {
+      "description": "Všechny soubory a odkazy připojené k testovacím případům, běhům, výsledkům, relacím a problémům na této instanci.",
+      "filterPlaceholder": "Filtrovat podle jména nebo poznámky...",
+      "attachedTo": {
+        "label": "Připojeno k",
+        "sessionResult": "Výsledek relace",
+        "testRunResult": "Výsledek testu",
+        "testRunStepResult": "Výsledek kroku",
+        "junitTestResult": "Automatizovaný výsledek",
+        "issue": "Problém nebo požadavek"
+      },
+      "status": {
+        "parentDeleted": "Nadřazený prvek smazán",
+        "noParent": "Nepřipojeno"
+      },
+      "columns": {
+        "sharedFile": "Sdílený soubor"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# další příloha} few {# další přílohy} many {# dalších příloh} other {# dalších příloh}}",
+        "hint": "Tento soubor je také uložen pro {count, plural, one {# další přílohu} few {# další přílohy} many {# dalších příloh} other {# dalších příloh}}, obvykle proto, že záznam, ke kterému byl připojen, byl zkopírován. Chcete-li je vypsat, vyberte.",
+        "showing": "Přílohy, které sdílejí soubor {name}"
+      },
+      "detail": {
+        "storageKey": "Klíč úložiště",
+        "notInStorage": "Není v úložišti této instance",
+        "attachedThrough": "Připojeno prostřednictvím"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {Načtená příloha je vybrána} few {Všechny # načtené přílohy jsou vybrány} many {Všech # načtených příloh je vybráno} other {Všech # načtených příloh je vybráno}}.",
+        "selectAllMatches": "{total, plural, one {Vyberte jedinou shodu} few {Vyberte všechny # shody} many {Vyberte všech # shod} other {Vyberte všech # shod}}",
+        "allMatchesSelected": "{total, plural, one {Jedinou shoda je vybrána} few {Všechny # shody jsou vybrány} many {Všech # shod je vybráno} other {Všech # shod je vybráno}}.",
+        "tooMany": "Najednou lze vybrat až {max}. Zúžením filtrů vyberete každou shodu."
+      },
+      "actions": {
+        "detach": "Odpojit",
+        "confirm": {
+          "detach": "{count, plural, =0 {Žádná z těchto příloh není připojena k ničemu.} one {Odpojit tuto přílohu? Je odstraněna z položky, ke které je připojena, a zůstává v tomto seznamu jako nepřipojená.} few {Odpojit # přílohy? Jsou odstraněny z položek, ke kterým jsou připojeny, a zůstávají v tomto seznamu jako nepřipojené.} many {Odpojit # příloh? Jsou odstraněny z položek, ke kterým jsou připojeny, a zůstávají v tomto seznamu jako nepřipojené.} other {Odpojit # příloh? Jsou odstraněny z položek, ke kterým jsou připojeny, a zůstávají v tomto seznamu jako nepřipojené.}}",
+          "softDelete": "{count, plural, =0 {Tyto přílohy jsou již smazány.} one {Smazat tuto přílohu? Je skryta z položky, ke které je připojena, a lze ji obnovit z tohoto seznamu.} few {Smazat # přílohy? Jsou skryty z položek, ke kterým jsou připojeny, a lze je obnovit z tohoto seznamu.} many {Smazat # příloh? Jsou skryty z položek, ke kterým jsou připojeny, a lze je obnovit z tohoto seznamu.} other {Smazat # příloh? Jsou skryty z položek, ke kterým jsou připojeny, a lze je obnovit z tohoto seznamu.}}",
+          "restore": "{count, plural, =0 {Žádná z těchto příloh není smazána.} one {Obnovit tuto přílohu?} few {Obnovit # přílohy?} many {Obnovit # příloh?} other {Obnovit # příloh?}}",
+          "purge": "{count, plural, =0 {Lze vymazat pouze smazané přílohy. Nejdříve je smažte.} one {Trvale smazat tuto přílohu? Toto nelze vrátit zpět.} few {Trvale smazat # přílohy? Toto nelze vrátit zpět.} many {Trvale smazat # příloh? Toto nelze vrátit zpět.} other {Trvale smazat # příloh? Toto nelze vrátit zpět.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {Žádné uložené soubory nejsou smazány.} one {# uložený soubor ({size}) je smazán.} few {# uložené soubory ({size}) jsou smazány.} many {# uložených souborů ({size}) je smazáno.} other {# uložených souborů ({size}) je smazáno.}}",
+        "purgeShared": "{count, plural, one {# soubor zůstává v úložišti, protože jej používá další příloha.} few {# soubory zůstávají v úložišti, protože je používají další přílohy.} many {# souborů zůstává v úložišti, protože je používají další přílohy.} other {# souborů zůstává v úložišti, protože je používají další přílohy.}}",
+        "purgeInVersions": "{count, plural, one {# soubor je zobrazen v uložené verzi, která jej již nebude moci otevřít.} few {# soubory jsou zobrazeny v uložených verzích, které je již nebudou moci otevřít.} many {# souborů je zobrazeno v uložených verzích, které je již nebudou moci otevřít.} other {# souborů je zobrazeno v uložených verzích, které je již nebudou moci otevřít.}}",
+        "skipped": "{count, plural, one {# vybraná příloha je ponechána tak, jak je, protože se na ni tato akce nevztahuje.} few {# vybrané přílohy jsou ponechány tak, jak jsou, protože se na ně tato akce nevztahuje.} many {# vybraných příloh je ponecháno tak, jak jsou, protože se na ně tato akce nevztahuje.} other {# vybraných příloh je ponecháno tak, jak jsou, protože se na ně tato akce nevztahuje.}}",
+        "done": "{count, plural, one {# příloha aktualizována} few {# přílohy aktualizovány} many {# příloh aktualizováno} other {# příloh aktualizováno}}",
+        "filesFailed": "{count, plural, one {# uložený soubor nelze smazat.} few {# uložené soubory nelze smazat.} many {# uložených souborů nelze smazat.} other {# uložených souborů nelze smazat.}}"
+      }
     },
     "trash": {
       "itemTypes": {

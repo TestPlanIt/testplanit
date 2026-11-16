@@ -4822,6 +4822,7 @@
       "codeRepositories": "Codeopslagplaatsen",
       "sso": "Authenticatie",
       "security": "Beveiliging",
+      "attachments": "Bijlagen",
       "trash": "Afval",
       "shares": "Aandelen beheren",
       "elasticsearch": "Zoekmachine",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "Probleem \"{name}\" is bijgewerkt met de nieuwste informatie van het externe systeem.",
       "syncError": "Probleem met synchronisatie mislukt",
       "syncErrorDescription": "Synchronisatie mislukt. Probeer het later opnieuw."
+    },
+    "attachments": {
+      "description": "Elk bestand en elke link die aan testcases, runs, resultaten, sessies en problemen op dit exemplaar zijn gekoppeld.",
+      "filterPlaceholder": "Filteren op naam of opmerking...",
+      "attachedTo": {
+        "label": "Gekoppeld aan",
+        "sessionResult": "Sessieresultaat",
+        "testRunResult": "Testresultaat",
+        "testRunStepResult": "Stapresultaat",
+        "junitTestResult": "Geautomatiseerd resultaat",
+        "issue": "Probleem of vereiste"
+      },
+      "status": {
+        "parentDeleted": "Bovenliggend item verwijderd",
+        "noParent": "Niet gekoppeld"
+      },
+      "columns": {
+        "sharedFile": "Gedeeld bestand"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# ander bijlage} other {# andere bijlagen}}",
+        "hint": "Dit bestand wordt ook opgeslagen voor {count, plural, one {# ander bijlage} other {# andere bijlagen}}, meestal omdat het record waaraan het was gekoppeld, is gekopieerd. Selecteer om deze weer te geven.",
+        "showing": "Bijlagen die het bestand van {name} delen"
+      },
+      "detail": {
+        "storageKey": "Opslagsleutel",
+        "notInStorage": "Niet in de opslag van dit exemplaar",
+        "attachedThrough": "Gekoppeld via"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {De geladen bijlage is geselecteerd} other {Alle # geladen bijlagen zijn geselecteerd}}.",
+        "selectAllMatches": "{total, plural, one {Selecteer de enige overeenkomst} other {Selecteer alle # overeenkomsten}}",
+        "allMatchesSelected": "{total, plural, one {De enige overeenkomst is geselecteerd} other {Alle # overeenkomsten zijn geselecteerd}}.",
+        "tooMany": "Tot {max} kunnen tegelijk worden geselecteerd. Verklein de filters om elke overeenkomst te selecteren."
+      },
+      "actions": {
+        "detach": "Ontkoppelen",
+        "confirm": {
+          "detach": "{count, plural, =0 {Geen van deze bijlagen is aan iets gekoppeld.} one {Deze bijlage ontkoppelen? Deze wordt verwijderd uit het item waaraan het is gekoppeld en blijft in deze lijst als niet-gekoppeld.} other {# bijlagen ontkoppelen? Deze worden verwijderd uit de items waaraan ze zijn gekoppeld en blijven in deze lijst als niet-gekoppeld.}}",
+          "softDelete": "{count, plural, =0 {Deze bijlagen zijn al verwijderd.} one {Deze bijlage verwijderen? Deze wordt verborgen uit het item waaraan het is gekoppeld en kan uit deze lijst worden hersteld.} other {# bijlagen verwijderen? Deze worden verborgen uit de items waaraan ze zijn gekoppeld en kunnen uit deze lijst worden hersteld.}}",
+          "restore": "{count, plural, =0 {Geen van deze bijlagen is verwijderd.} one {Deze bijlage herstellen?} other {# bijlagen herstellen?}}",
+          "purge": "{count, plural, =0 {Alleen verwijderde bijlagen kunnen definitief worden verwijderd. Verwijder ze eerst.} one {Deze bijlage definitief verwijderen? Dit kan niet ongedaan worden gemaakt.} other {# bijlagen definitief verwijderen? Dit kan niet ongedaan worden gemaakt.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {Er worden geen opgeslagen bestanden verwijderd.} one {# opgeslagen bestand ({size}) is verwijderd.} other {# opgeslagen bestanden ({size}) zijn verwijderd.}}",
+        "purgeShared": "{count, plural, one {# bestand blijft in opslag omdat een ander bijlage het gebruikt.} other {# bestanden blijven in opslag omdat andere bijlagen ze gebruiken.}}",
+        "purgeInVersions": "{count, plural, one {# bestand wordt weergegeven in een opgeslagen versie, die dit niet meer kan openen.} other {# bestanden worden weergegeven in opgeslagen versies, die deze niet meer kunnen openen.}}",
+        "skipped": "{count, plural, one {# geselecteerde bijlage blijft ongewijzigd omdat deze actie niet van toepassing is.} other {# geselecteerde bijlagen blijven ongewijzigd omdat deze actie niet van toepassing is op hen.}}",
+        "done": "{count, plural, one {# bijlage bijgewerkt} other {# bijlagen bijgewerkt}}",
+        "filesFailed": "{count, plural, one {# opgeslagen bestand kon niet worden verwijderd.} other {# opgeslagen bestanden konden niet worden verwijderd.}}"
+      }
     },
     "trash": {
       "itemTypes": {

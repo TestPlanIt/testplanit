@@ -4822,6 +4822,7 @@
       "codeRepositories": "Repository di codice",
       "sso": "Autenticazione",
       "security": "Sicurezza",
+      "attachments": "Allegati",
       "trash": "Spazzatura",
       "shares": "Gestisci le azioni",
       "elasticsearch": "Motore di ricerca",
@@ -6414,6 +6415,56 @@
       "syncSuccessDescription": "Il problema \"{name}\" è stato aggiornato con le ultime informazioni provenienti dal sistema esterno.",
       "syncError": "Problema di sincronizzazione non riuscito",
       "syncErrorDescription": "Impossibile sincronizzare il problema. Riprova più tardi."
+    },
+    "attachments": {
+      "description": "Ogni file e link allegato a casi di test, esecuzioni, risultati, sessioni e problemi in questa istanza.",
+      "filterPlaceholder": "Filtra per nome o nota...",
+      "attachedTo": {
+        "label": "Allegato a",
+        "sessionResult": "Risultato della sessione",
+        "testRunResult": "Risultato del test",
+        "testRunStepResult": "Risultato del passo",
+        "junitTestResult": "Risultato automatizzato",
+        "issue": "Problema o requisito"
+      },
+      "status": {
+        "parentDeleted": "Elemento padre eliminato",
+        "noParent": "Non allegato"
+      },
+      "columns": {
+        "sharedFile": "File condiviso"
+      },
+      "sharedFile": {
+        "count": "{count, plural, one {# altro allegato} other {# altri allegati}}",
+        "hint": "Questo file è anche archiviato per {count, plural, one {# altro allegato} other {# altri allegati}}, di solito perché il record a cui è stato allegato è stato copiato. Seleziona per elencarli.",
+        "showing": "Allegati che condividono il file di {name}"
+      },
+      "detail": {
+        "storageKey": "Chiave di archiviazione",
+        "notInStorage": "Non nell'archiviazione di questa istanza",
+        "attachedThrough": "Allegato tramite"
+      },
+      "selection": {
+        "loadedSelected": "{shown, plural, one {L'allegato caricato è selezionato} other {Tutti i # allegati caricati sono selezionati}}.",
+        "selectAllMatches": "{total, plural, one {Seleziona l'unica corrispondenza} other {Seleziona tutte le # corrispondenze}}",
+        "allMatchesSelected": "{total, plural, one {L'unica corrispondenza è selezionata} other {Tutte le # corrispondenze sono selezionate}}.",
+        "tooMany": "Fino a {max} possono essere selezionati contemporaneamente. Restringi i filtri per selezionare ogni corrispondenza."
+      },
+      "actions": {
+        "detach": "Scollega",
+        "confirm": {
+          "detach": "{count, plural, =0 {Nessuno di questi allegati è allegato a nulla.} one {Scollega questo allegato? Viene rimosso dall'elemento a cui è allegato e rimane in questo elenco come non allegato.} other {Scollega # allegati? Vengono rimossi dagli elementi a cui sono allegati e rimangono in questo elenco come non allegati.}}",
+          "softDelete": "{count, plural, =0 {Questi allegati sono già eliminati.} one {Eliminare questo allegato? È nascosto dall'elemento a cui è allegato e può essere ripristinato da questo elenco.} other {Eliminare # allegati? Sono nascosti dagli elementi a cui sono allegati e possono essere ripristinati da questo elenco.}}",
+          "restore": "{count, plural, =0 {Nessuno di questi allegati è eliminato.} one {Ripristinare questo allegato?} other {Ripristinare # allegati?}}",
+          "purge": "{count, plural, =0 {Solo gli allegati eliminati possono essere cancellati definitivamente. Eliminarli prima.} one {Eliminare definitivamente questo allegato? Questa azione non può essere annullata.} other {Eliminare definitivamente # allegati? Questa azione non può essere annullata.}}"
+        },
+        "purgeFiles": "{count, plural, =0 {Nessun file archiviato è eliminato.} one {# file archiviato ({size}) è eliminato.} other {# file archiviati ({size}) sono eliminati.}}",
+        "purgeShared": "{count, plural, one {# file rimane nell'archiviazione perché un altro allegato lo utilizza.} other {# file rimangono nell'archiviazione perché altri allegati li utilizzano.}}",
+        "purgeInVersions": "{count, plural, one {# file è mostrato in una versione salvata, che non sarà più in grado di aprirlo.} other {# file sono mostrati in versioni salvate, che non saranno più in grado di aprirli.}}",
+        "skipped": "{count, plural, one {# allegato selezionato viene lasciato così com'è perché questa azione non si applica a esso.} other {# allegati selezionati vengono lasciati così come sono perché questa azione non si applica a essi.}}",
+        "done": "{count, plural, one {# allegato aggiornato} other {# allegati aggiornati}}",
+        "filesFailed": "{count, plural, one {# file archiviato non potrebbe essere eliminato.} other {# file archiviati non potevano essere eliminati.}}"
+      }
     },
     "trash": {
       "itemTypes": {
