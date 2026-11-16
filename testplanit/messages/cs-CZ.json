@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Nadřazený prvek smazán",
-        "noParent": "Nepřipojeno"
+        "noParent": "Nepřipojeno",
+        "fileMissing": "Soubor chybí",
+        "otherHost": "Na jiném hostiteli"
+      },
+      "storage": {
+        "tab": "Úložiště",
+        "neverScanned": "Úložiště ještě nebylo prohledáno. Kontrola porovnává soubory v úložišti s databází, aby našla soubory, které nic nepoužívá, a přílohy, kterým chybí soubor.",
+        "summary": "{objects, plural, one {# soubor} few {# soubory} many {# souborů} other {# souborů}} v úložišti ({size}). {orphans, plural, =0 {Žádný není osiřelý.} one {# je osiřelý ({orphanSize}).} few {# jsou osiřelé ({orphanSize}).} many {# je osiřelých ({orphanSize}).} other {# je osiřelých ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# příloha nemá soubor v nakonfigurovaném úložišti.} few {# přílohy nemají soubor v nakonfigurovaném úložišti.} many {# příloh nemá soubor v nakonfigurovaném úložišti.} other {# příloh nemá soubor v nakonfigurovaném úložišti.}}",
+        "allFolders": "Všechny složky",
+        "status": {
+          "ORPHAN": "Osiřelý",
+          "REFERENCED": "Používáno"
+        },
+        "loadedSelected": "{shown, plural, one {Načtený soubor je vybrán} few {Všechny # načtené soubory jsou vybrány} many {Všechny # načtených souborů jsou vybrány} other {Všechny # načtených souborů jsou vybrány}}.",
+        "confirmDelete": "{count, plural, =0 {Žádný z vybraných souborů nelze smazat.} one {Smazat tento soubor ({size}) z úložiště? Tuto akci nelze vrátit zpět.} few {Smazat # soubory ({size}) z úložiště? Tuto akci nelze vrátit zpět.} many {Smazat # souborů ({size}) z úložiště? Tuto akci nelze vrátit zpět.} other {Smazat # souborů ({size}) z úložiště? Tuto akci nelze vrátit zpět.}}",
+        "skipped": "{count, plural, one {# vybraný soubor je ponechán, protože se používá.} few {# vybrané soubory jsou ponechány, protože se používají.} many {# vybraných souborů je ponecháno, protože se používají.} other {# vybraných souborů je ponecháno, protože se používají.}}",
+        "deleted": "{count, plural, one {# soubor smazán z úložiště} few {# soubory smazány z úložiště} many {# souborů smazáno z úložiště} other {# souborů smazáno z úložiště}}"
       },
       "columns": {
         "sharedFile": "Sdílený soubor"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Konfigurace Elasticsearch\nNakonfigurujte nastavení Elasticsearch pro vaše nasazení.",
     "elasticsearchReindex": "## Znovu indexovat data\nPřestavte vyhledávací indexy pro zlepšení výkonu vyhledávání.",
     "queues": "## Fronty úloh na pozadí\nSledujte a spravujte fronty pro zpracování úloh na pozadí.",
+    "attachments": "## Přílohy\nKaždý soubor a odkaz připojený k testovacím případům, spuštěním, výsledkům, relacím a problémům.\n\n- **Odpojit** odebere přílohu z položky, ke které je připojena\n- **Smazat** ji přesune do Koše a zachová její soubor v úložišti\n- **Vyprázdnit** trvale odstraní smazanou přílohu a smaže její soubor, pokud jej jiná příloha stále nepoužívá",
     "trash": "## Koš\nObnovte nebo trvale odstraňte měkce smazané záznamy napříč systémem.",
     "userTrashWindow": "## Okno samoobslužného obnovení\nPočet dní, během kterých mohou uživatelé obnovit položky, které sami smazali, ze sekce **Koš** v jejich profilu. Nastavte na **0** pro vypnutí samoobslužného obnovení. Položky mimo toto okno jednoduše zmizí z koše uživatele — nic se nevymaže a správci mohou stále obnovit nebo vymazat cokoli odsud.",
     "systemWebhooks": "## Systémové webhooky\nCíle odchozích webhooků pro systémové události, které nejsou vázány na jeden projekt — v současnosti jde o události životního cyklu uživatelů a skupin SCIM 2.0. Příchozí a projektově vázané odchozí webhooky nastavte místo toho na stránce nastavení projektu.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Spravujte globální nastavení aplikace a systémové předvolby. Nakonfigurujte výchozí hodnoty, přepínače funkcí a chování platné pro celý systém."
+        },
+        "attachments": {
+          "content": "Podívejte se na všechny soubory a odkazy připojené kdekoli v instanci, najděte, co není připojeno nebo smazáno, a odpojujte, mažte, obnovujte nebo vyprazdňujte přílohy."
         },
         "trash": {
           "title": "Systémový koš",

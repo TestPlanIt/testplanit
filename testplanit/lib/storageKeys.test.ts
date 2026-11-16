@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { storageKeyForSrc } from "./storageKeys";
+import { isOnAnotherHost, storageKeyForSrc } from "./storageKeys";
 
 describe("storageKeyForSrc", () => {
   beforeEach(() => {
@@ -54,5 +54,50 @@ describe("storageKeyForSrc", () => {
       storageKeyForSrc("https://other.s3.us-east-1.amazonaws.com/a.png")
     ).toBeNull();
     expect(storageKeyForSrc("/api/storage/")).toBeNull();
+  });
+});
+
+describe("isOnAnotherHost", () => {
+  beforeEach(() => {
+    vi.stubEnv("AWS_BUCKET_NAME", "b");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("is false for app URLs, the proxy route and the configured endpoints", () => {
+    vi.stubEnv("AWS_ENDPOINT_URL", "http://rustfs:9000");
+    vi.stubEnv("AWS_PUBLIC_ENDPOINT_URL", "https://files.example.com");
+    expect(isOnAnotherHost("/api/storage/uploads/a.png")).toBe(false);
+    expect(isOnAnotherHost("/images/a.png")).toBe(false);
+    expect(
+      isOnAnotherHost("https://app.example.com/api/storage/uploads/a.png")
+    ).toBe(false);
+    expect(isOnAnotherHost("https://files.example.com/b/uploads/a.png")).toBe(
+      false
+    );
+    expect(isOnAnotherHost("http://rustfs:9000/b/uploads/a.png")).toBe(false);
+  });
+
+  it("is true for an AWS URL once a custom endpoint is configured", () => {
+    vi.stubEnv("AWS_ENDPOINT_URL", "http://rustfs:9000");
+    expect(
+      isOnAnotherHost("https://b.s3.us-east-1.amazonaws.com/uploads/a.png")
+    ).toBe(true);
+  });
+
+  it("is false for the bucket's AWS URL when AWS is the storage", () => {
+    vi.stubEnv("AWS_ENDPOINT_URL", "");
+    expect(
+      isOnAnotherHost("https://b.s3.us-east-1.amazonaws.com/uploads/a.png")
+    ).toBe(false);
+    expect(
+      isOnAnotherHost("https://other.s3.us-east-1.amazonaws.com/a.png")
+    ).toBe(true);
+  });
+
+  it("is true for any other absolute URL", () => {
+    expect(isOnAnotherHost("https://placeholder.com/a.png")).toBe(true);
   });
 });

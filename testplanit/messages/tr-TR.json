@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Üst öğe silindi",
-        "noParent": "Bağlanmamış"
+        "noParent": "Bağlanmamış",
+        "fileMissing": "Dosya eksik",
+        "otherHost": "Başka bir konakta"
+      },
+      "storage": {
+        "tab": "Depolama",
+        "neverScanned": "Depolama henüz taranmamıştır. Bir tarama, depodaki dosyaları veritabanı ile karşılaştırarak hiçbir şey tarafından kullanılmayan dosyaları ve dosyası eksik olan ekleri bulur.",
+        "summary": "{objects, plural, one {# dosya} other {# dosya}} depoda ({size}). {orphans, plural, =0 {Hiçbiri yetim değildir.} one {# yetim ({orphanSize}).} other {# yetim ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# ekinin yapılandırılan depoda dosyası yok.} other {# ekinin yapılandırılan depoda dosyası yok.}}",
+        "allFolders": "Tüm klasörler",
+        "status": {
+          "ORPHAN": "Yetim",
+          "REFERENCED": "Kullanımda"
+        },
+        "loadedSelected": "{shown, plural, one {Yüklenen dosya seçildi} other {Yüklenen tüm # dosya seçildi}}.",
+        "confirmDelete": "{count, plural, =0 {Seçilen dosyalardan hiçbiri silinemez.} one {Bu dosya ({size}) depodan silinsin mi? Bu işlem geri alınamaz.} other {# dosya ({size}) depodan silinsin mi? Bu işlem geri alınamaz.}}",
+        "skipped": "{count, plural, one {# seçilen dosya kullanımda olduğu için yalnız bırakılmıştır.} other {# seçilen dosya kullanımda olduğu için yalnız bırakılmıştır.}}",
+        "deleted": "{count, plural, one {# dosya depodan silindi} other {# dosya depodan silindi}}"
       },
       "columns": {
         "sharedFile": "Paylaşılan dosya"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Elasticsearch Yapılandırması\nDağıtımınız için Elasticsearch ayarlarını yapılandırın.",
     "elasticsearchReindex": "## Verileri Yeniden Dizinle\nArama performansını iyileştirmek için arama dizinlerini yeniden oluşturun.",
     "queues": "## Arka Plan İş Kuyrukları\nArka plan işleme kuyruklarını izleyin ve yönetin.",
+    "attachments": "## Ekler\nTest senaryolarına, çalışmalara, sonuçlara, oturumlara ve sorunlara bağlanan her dosya ve bağlantı.\n\n- **Ayır** bir eki, bağlı olduğu öğeden kaldırır\n- **Sil** onu Çöpe taşır ve dosyasını depoda tutar\n- **Temizle** silinen bir eki kalıcı olarak kaldırır ve dosyasını siler, başka bir ek hala bu dosyayı kullanmadığı sürece",
     "trash": "## Çöp Kutusu\nSistem genelinde geçici olarak silinmiş kayıtları geri yükleyin veya kalıcı olarak temizleyin.",
     "userTrashWindow": "## Self-servis geri yükleme penceresi\nKullanıcıların kendi sildikleri öğeleri profillerinin **Çöp** bölümünden kaç gün içinde geri yükleyebilecekleri. Self-servis geri yüklemeyi kapatmak için **0** olarak ayarlayın. Pencereden çıkan öğeler kullanıcının Çöp bölümünde görünmeyi bırakmıştır — hiçbir şey silinmez ve yöneticiler burada her şeyi geri yükleyebilir veya silebilir.",
     "systemWebhooks": "## Sistem Web Kancaları\nTek bir projeye bağlı olmayan sistem düzeyindeki olaylar için giden web kancası hedefleri — şu anda SCIM 2.0 kullanıcı ve grup yaşam döngüsü olayları. Bunun yerine, proje ayarları sayfasından gelen ve proje kapsamlı giden web kancalarını yapılandırın.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Genel uygulama ayarlarını ve sistem tercihlerini yönetin. Varsayılan değerleri, özellik geçişlerini ve sistem genelindeki davranışları yapılandırın."
+        },
+        "attachments": {
+          "content": "Örnekteki herhangi bir yere bağlanan her dosya ve bağlantıyı görün, bağlanmamış veya silinmiş olanları bulun ve ekleri ayırın, silin, geri yükleyin veya temizleyin."
         },
         "trash": {
           "title": "Sistem Çöpü",

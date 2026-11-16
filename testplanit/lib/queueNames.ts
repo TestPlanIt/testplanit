@@ -21,6 +21,7 @@ export const JOB_CHECK_STALE_PINS = "check-stale-code-pins";
 export const COPY_MOVE_QUEUE_NAME = "copy-move";
 export const DUPLICATE_SCAN_QUEUE_NAME = "duplicate-scan";
 export const STEP_SCAN_QUEUE_NAME = "step-scan";
+export const STORAGE_SCAN_QUEUE_NAME = "storage-scan";
 export const MAGIC_SELECT_QUEUE_NAME = "magic-select";
 export const IMPACT_ANALYSIS_QUEUE_NAME = "impact-analysis";
 export const GENERATE_FROM_URL_QUEUE_NAME = "generate-from-url";
@@ -94,6 +95,7 @@ export const ALL_QUEUE_NAMES = [
   COPY_MOVE_QUEUE_NAME,
   DUPLICATE_SCAN_QUEUE_NAME,
   STEP_SCAN_QUEUE_NAME,
+  STORAGE_SCAN_QUEUE_NAME,
   MAGIC_SELECT_QUEUE_NAME,
   IMPACT_ANALYSIS_QUEUE_NAME,
   GENERATE_FROM_URL_QUEUE_NAME,

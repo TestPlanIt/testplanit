@@ -379,6 +379,20 @@ module.exports = {
       },
     },
     {
+      name: "storage-scan-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/storageScanWorker.ts"
+        : "dist/workers/storageScanWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("512M", { shared: true }),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
       name: "generate-from-url-worker",
       script: isDev ? "tsx" : "node",
       args: isDev

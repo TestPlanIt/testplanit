@@ -547,6 +547,16 @@ const createTourSteps = (
       },
       {
         icon: null,
+        title: t("admin.menu.attachments"),
+        content: t("help.tour.adminTour.attachments.content"),
+        selector: "#admin-menu-attachments",
+        side: "top-left",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+      },
+      {
+        icon: null,
         title: t("help.tour.adminTour.trash.title"),
         content: t("help.tour.adminTour.trash.content"),
         selector: "#admin-menu-trash",

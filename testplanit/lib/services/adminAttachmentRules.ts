@@ -31,6 +31,8 @@ export const ATTACHMENT_STATUSES = [
   "softDeleted",
   "parentDeleted",
   "noParent",
+  "fileMissing",
+  "otherHost",
 ] as const;
 export type AttachmentStatus = (typeof ATTACHMENT_STATUSES)[number];
 
@@ -47,3 +49,40 @@ export type AttachmentAction = (typeof ATTACHMENT_ACTIONS)[number];
  * The server works through them in batches.
  */
 export const MAX_ACTION_ATTACHMENTS = 50_000;
+
+/** Formats whose mime type says little about what the file is. */
+const FORMAT_NAMES: Record<string, string> = {
+  "application/msword": "DOC",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    "DOCX",
+  "application/vnd.ms-excel": "XLS",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "XLSX",
+  "application/vnd.ms-powerpoint": "PPT",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+    "PPTX",
+  "application/x-zip-compressed": "ZIP",
+  "application/octet-stream": "BIN",
+  "text/plain": "TXT",
+  "text/markdown": "MD",
+  "text/javascript": "JS",
+  "audio/mpeg": "MP3",
+  "video/quicktime": "MOV",
+};
+
+/**
+ * The short format name people know a file type by ("PNG", "DOCX"), from its
+ * mime type. These are format names, the same in every language. Returns an
+ * empty string when there is no mime type.
+ */
+export function fileFormatName(mimeType: string): string {
+  const type = mimeType.trim().toLowerCase();
+  if (!type) return "";
+  const known = FORMAT_NAMES[type];
+  if (known) return known;
+  const subtype = type.includes("/") ? type.slice(type.indexOf("/") + 1) : type;
+  const name = subtype
+    .replace(/^(x-|vnd\.)/, "")
+    .replace(/\+.*$/, "")
+    .replace(/;.*$/, "");
+  return (name || type).toUpperCase();
+}

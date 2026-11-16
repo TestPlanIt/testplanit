@@ -3,7 +3,7 @@ import { sql } from "kysely";
 import { z } from "zod";
 import { getS3Client } from "~/lib/s3Client";
 import { captureAuditEvent } from "~/lib/services/auditLog";
-import { storageKeyForSrc } from "~/lib/storageKeys";
+import { isOnAnotherHost, storageKeyForSrc } from "~/lib/storageKeys";
 import { db } from "~/server/db";
 
 import {
@@ -190,7 +190,9 @@ async function planFiles(rows: ActionRow[]): Promise<FilePlan> {
       shared += 1;
       continue;
     }
-    const key = storageKeyForSrc(url);
+    // A file another host serves is not this bucket's to delete, even when
+    // its address names a key here.
+    const key = isOnAnotherHost(url) ? null : storageKeyForSrc(url);
     if (key) remove.push({ url, key, bytes: Number(row.size) });
   }
   const versioned = await urlsInVersions(remove.map((file) => file.url));

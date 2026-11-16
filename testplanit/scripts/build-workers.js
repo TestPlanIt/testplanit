@@ -34,6 +34,7 @@ const entryPoints = [
   "workers/magicSelectWorker.ts",
   "workers/impactAnalysisWorker.ts",
   "workers/stepSequenceScanWorker.ts",
+  "workers/storageScanWorker.ts",
   "workers/generateFromUrlWorker.ts",
   "workers/iterationGenerationWorker.ts",
   "workers/scimAccessRecomputeWorker.ts",

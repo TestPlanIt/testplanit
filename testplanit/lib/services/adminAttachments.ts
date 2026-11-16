@@ -1,6 +1,10 @@
 import { type RawBuilder, sql } from "kysely";
 import { z } from "zod";
-import { storageKeyForSrc } from "~/lib/storageKeys";
+import {
+  configuredStorageOrigins,
+  isOnAnotherHost,
+  storageKeyForSrc,
+} from "~/lib/storageKeys";
 import { db } from "~/server/db";
 
 import {
@@ -144,12 +148,50 @@ const NO_PARENT = sql`COALESCE(
   a."issueId"
 ) IS NULL`;
 
-const STATUS_CONDITIONS: Record<AttachmentStatus, RawBuilder<unknown>> = {
+/**
+ * A file whose URL is served by a host other than the configured storage.
+ * The SQL twin of `isOnAnotherHost`.
+ */
+function otherHostCondition(): RawBuilder<unknown> {
+  const host = sql`lower(split_part(a."url", '/', 3))`;
+  const conditions = [
+    sql`a."mimeType" <> ${LINK_MIME_TYPE}`,
+    sql`a."url" ~* '^https?://'`,
+    sql`position('/api/storage/' in a."url") = 0`,
+    ...configuredStorageOrigins().map((origin) => {
+      const prefix = `${origin.toLowerCase()}/`;
+      return sql`lower(left(a."url", ${prefix.length})) <> ${prefix}`;
+    }),
+  ];
+  const bucket = process.env.AWS_BUCKET_NAME;
+  if (!process.env.AWS_ENDPOINT_URL && bucket) {
+    const prefix = `${bucket.toLowerCase()}.`;
+    conditions.push(
+      sql`NOT (left(${host}, ${prefix.length}) = ${prefix} AND ${host} LIKE '%.amazonaws.com')`
+    );
+  }
+  return sql`(${sql.join(conditions, sql` AND `)})`;
+}
+
+const STATUS_CONDITIONS: Record<
+  AttachmentStatus,
+  RawBuilder<unknown> | (() => RawBuilder<unknown>)
+> = {
   live: sql`a."isDeleted" = false`,
   softDeleted: sql`a."isDeleted" = true`,
   noParent: NO_PARENT,
   parentDeleted: PARENT_DELETED,
+  // As of the last storage scan.
+  fileMissing: sql`EXISTS (
+    SELECT 1 FROM "StorageMissingFile" gone WHERE gone."attachmentId" = a.id
+  )`,
+  otherHost: otherHostCondition,
 };
+
+function statusCondition(status: AttachmentStatus): RawBuilder<unknown> {
+  const condition = STATUS_CONDITIONS[status];
+  return typeof condition === "function" ? condition() : condition;
+}
 
 function anyOf(conditions: RawBuilder<unknown>[]): RawBuilder<unknown> {
   return conditions.length === 1
@@ -181,9 +223,7 @@ export function buildAttachmentFilter(query: AdminAttachmentQuery): {
     );
   }
   if (query.statuses.length > 0) {
-    conditions.push(
-      anyOf(query.statuses.map((status) => STATUS_CONDITIONS[status]))
-    );
+    conditions.push(anyOf(query.statuses.map(statusCondition)));
   }
 
   if (query.projectIds.length > 0) {
@@ -290,6 +330,13 @@ export interface AdminAttachment {
    * copies its attachment rows, not the files behind them.
    */
   sharedWith: number;
+  /** The last storage scan did not find this attachment's file. */
+  fileMissing: boolean;
+  /**
+   * The host serving this file when it is not the configured storage: an
+   * earlier storage host, or wherever an import pointed.
+   */
+  otherHost: string | null;
   parent: AttachmentParent | null;
 }
 
@@ -375,6 +422,7 @@ export async function listAdminAttachments(
     id: number;
     total: bigint;
     sharedWith: bigint;
+    fileMissing: boolean;
   }>`
     WITH page AS (
       SELECT
@@ -388,7 +436,14 @@ export async function listAdminAttachments(
       ORDER BY ${order}
       LIMIT ${query.take} OFFSET ${query.skip}
     )
-    SELECT page.id, page.total, COALESCE(uses.n, 1) - 1 AS "sharedWith"
+    SELECT
+      page.id,
+      page.total,
+      COALESCE(uses.n, 1) - 1 AS "sharedWith",
+      EXISTS (
+        SELECT 1 FROM "StorageMissingFile" gone
+        WHERE gone."attachmentId" = page.id
+      ) AS "fileMissing"
     FROM page
     LEFT JOIN (
       SELECT o."url", COUNT(*) AS n
@@ -404,6 +459,9 @@ export async function listAdminAttachments(
   const totalCount = Number(page[0]?.total ?? 0);
   const sharedWith = new Map(
     page.map((row) => [row.id, Number(row.sharedWith ?? 0)])
+  );
+  const fileMissing = new Set(
+    page.filter((row) => row.fileMissing).map((row) => row.id)
   );
   const found = ids.length
     ? await db.attachments.findMany({
@@ -447,6 +505,11 @@ export async function listAdminAttachments(
       deletedAt: row.deletedAt ? row.deletedAt.toISOString() : null,
       storageKey: kind === "file" ? storageKeyForSrc(row.url) : null,
       sharedWith: kind === "file" ? (sharedWith.get(row.id) ?? 0) : 0,
+      fileMissing: fileMissing.has(row.id),
+      otherHost:
+        kind === "file" && isOnAnotherHost(row.url)
+          ? new URL(row.url).host
+          : null,
       parent: parent
         ? {
             ...parent,

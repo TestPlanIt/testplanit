@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Cha bị xóa",
-        "noParent": "Không được đính kèm"
+        "noParent": "Không được đính kèm",
+        "fileMissing": "Tập tin bị thiếu",
+        "otherHost": "Trên máy chủ khác"
+      },
+      "storage": {
+        "tab": "Lưu trữ",
+        "neverScanned": "Bộ nhớ chưa được quét. Quét sẽ so sánh các tập tin trong bộ nhớ với cơ sở dữ liệu để tìm các tập tin không được sử dụng và các tệp đính kèm có tập tin bị thiếu.",
+        "summary": "{objects, plural, other {# tập tin}} trong lưu trữ ({size}). {orphans, plural, =0 {Không có tập tin nào bị mồ côi.} other {# tập tin bị mồ côi ({orphanSize}).}}",
+        "missingFiles": "{count, plural, other {# tệp đính kèm không có tập tin trong bộ nhớ được cấu hình.}}",
+        "allFolders": "Tất cả các thư mục",
+        "status": {
+          "ORPHAN": "Bị mồ côi",
+          "REFERENCED": "Đang được sử dụng"
+        },
+        "loadedSelected": "{shown, plural, other {Tất cả # tập tin đã tải được chọn}}.",
+        "confirmDelete": "{count, plural, =0 {Không thể xóa bất kỳ tập tin được chọn nào.} other {Xóa # tập tin ({size}) khỏi lưu trữ? Không thể hoàn tác.}}",
+        "skipped": "{count, plural, other {# tập tin được chọn bị bỏ qua vì chúng đang được sử dụng.}}",
+        "deleted": "{count, plural, other {# tập tin đã xóa khỏi lưu trữ}}"
       },
       "columns": {
         "sharedFile": "Tệp được chia sẻ"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Cấu hình Elasticsearch\nCấu hình các thiết lập Elasticsearch cho quá trình triển khai của bạn.",
     "elasticsearchReindex": "## Lập chỉ mục lại dữ liệu\nXây dựng lại chỉ mục tìm kiếm để cải thiện hiệu suất tìm kiếm.",
     "queues": "## Hàng đợi tác vụ nền\nTheo dõi và quản lý hàng đợi xử lý tác vụ nền.",
+    "attachments": "## Tệp đính kèm\nMọi tập tin và liên kết được đính kèm vào các trường hợp kiểm tra, lần chạy, kết quả, phiên và vấn đề.\n\n- **Tách rời** loại bỏ một tệp đính kèm khỏi mục nó được đính kèm vào\n- **Xóa** chuyển nó vào Thùng rác và giữ tập tin của nó trong lưu trữ\n- **Thanh lọc** xóa vĩnh viễn một tệp đính kèm đã xóa và xóa tập tin của nó, trừ khi tệp đính kèm khác vẫn sử dụng tập tin đó",
     "trash": "## Thùng rác\nKhôi phục hoặc xóa vĩnh viễn các bản ghi đã bị xóa mềm trên toàn hệ thống.",
     "userTrashWindow": "## Cửa sổ khôi phục tự phục vụ\nCó bao nhiêu ngày người dùng có thể khôi phục các mục họ tự xóa, từ phần **Thùng rác** của hồ sơ của họ. Đặt nó thành **0** để tắt khôi phục tự phục vụ. Các mục nằm ngoài cửa sổ sẽ ngừng xuất hiện trong Thùng rác của người dùng — không có gì bị xóa vĩnh viễn, và quản trị viên vẫn có thể khôi phục hoặc xóa vĩnh viễn bất cứ thứ gì tại đây.",
     "systemWebhooks": "## Webhook hệ thống\nCác đích đến webhook gửi đi dành cho các sự kiện cấp hệ thống không gắn liền với một dự án cụ thể — hiện tại là các sự kiện vòng đời người dùng và nhóm SCIM 2.0. Thay vào đó, hãy cấu hình webhook đến và webhook gửi đi có phạm vi dự án từ trang cài đặt dự án.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Quản lý cài đặt ứng dụng toàn cầu và tùy chọn hệ thống. Cấu hình giá trị mặc định, công tắc tính năng và hành vi trên toàn hệ thống."
+        },
+        "attachments": {
+          "content": "Xem mọi tập tin và liên kết được đính kèm ở bất kỳ nơi nào trên phiên bản, tìm những gì chưa được đính kèm hoặc đã xóa, và tách rời, xóa, khôi phục hoặc thanh lọc các tệp đính kèm."
         },
         "trash": {
           "title": "Thùng rác hệ thống",

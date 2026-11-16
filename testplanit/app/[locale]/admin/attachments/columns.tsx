@@ -8,12 +8,14 @@ import { ColumnDef } from "@/components/tables/tableFeatures";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RowSelectCheckbox } from "@/components/tables/RowSelectCheckbox";
 import { Checkbox } from "@/components/ui/checkbox";
 import { filesize } from "filesize";
 import { Copy, File, Info, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import {
+  fileFormatName,
   LINK_MIME_TYPE,
   type AttachmentParentType,
 } from "~/lib/services/adminAttachmentRules";
@@ -21,6 +23,11 @@ import type {
   AdminAttachment,
   AttachmentParent,
 } from "~/lib/services/adminAttachments";
+
+import {
+  AttachmentRowActions,
+  type AttachmentActionRequest,
+} from "./AttachmentActions";
 
 /** The record an attachment belongs to, drawn the way that record is drawn everywhere else. */
 export function AttachedTo({ parent }: { parent: AttachmentParent }) {
@@ -74,7 +81,12 @@ export function AttachedTo({ parent }: { parent: AttachmentParent }) {
 }
 
 export type AttachmentStatusKey =
-  "live" | "softDeleted" | "parentDeleted" | "noParent";
+  | "live"
+  | "softDeleted"
+  | "parentDeleted"
+  | "noParent"
+  | "fileMissing"
+  | "otherHost";
 
 /** The one status worth showing for a row, most actionable first. */
 export function attachmentStatus(row: AdminAttachment): AttachmentStatusKey {
@@ -119,7 +131,7 @@ export function useAttachmentLabels() {
       },
       mimeType: (mimeType: string): string => {
         if (mimeType === LINK_MIME_TYPE) return tGlobal("common.fields.links");
-        return mimeType || tGlobal("common.labels.unknown");
+        return fileFormatName(mimeType) || tGlobal("common.labels.unknown");
       },
     }),
     [t, tGlobal]
@@ -133,7 +145,8 @@ export const useColumns = (
   t: ReturnType<typeof useTranslations<"admin.attachments">>,
   tCommon: ReturnType<typeof useTranslations<"common">>,
   onShowSameFile: (attachment: AdminAttachment) => void,
-  onShowDetail: (attachment: AdminAttachment) => void
+  onShowDetail: (attachment: AdminAttachment) => void,
+  onAction: (request: AttachmentActionRequest) => void
 ): ColumnDef<AdminAttachment>[] => {
   const dateFormat =
     userPreferences.user.preferences?.dateFormat || "MM_DD_YYYY_DASH";
@@ -156,11 +169,10 @@ export const useColumns = (
             data-testid="attachments-select-all"
           />
         ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            onClick={(event) => event.stopPropagation()}
+        cell: ({ row, table }) => (
+          <RowSelectCheckbox
+            row={row}
+            table={table}
             aria-label={tCommon("actions.select")}
             data-testid={`attachment-select-${row.original.id}`}
           />
@@ -206,16 +218,35 @@ export const useColumns = (
         header: tCommon("actions.status"),
         enableSorting: false,
         enableResizing: true,
-        size: 140,
+        size: 200,
         cell: ({ row }) => {
           const status = attachmentStatus(row.original);
           return (
-            <Badge
-              variant={status === "live" ? "secondary" : "outline"}
-              data-testid={`attachment-status-${row.original.id}`}
-            >
-              {labels.status(status)}
-            </Badge>
+            <div className="flex min-w-0 items-center gap-1">
+              <Badge
+                variant={status === "live" ? "secondary" : "outline"}
+                data-testid={`attachment-status-${row.original.id}`}
+              >
+                {labels.status(status)}
+              </Badge>
+              {row.original.fileMissing && (
+                <Badge
+                  variant="destructive"
+                  data-testid={`attachment-file-missing-${row.original.id}`}
+                >
+                  {labels.status("fileMissing")}
+                </Badge>
+              )}
+              {row.original.otherHost && (
+                <Badge
+                  variant="outline"
+                  title={row.original.otherHost}
+                  data-testid={`attachment-other-host-${row.original.id}`}
+                >
+                  {labels.status("otherHost")}
+                </Badge>
+              )}
+            </div>
           );
         },
       },
@@ -298,7 +329,10 @@ export const useColumns = (
         enableResizing: true,
         size: 160,
         cell: ({ row }) => (
-          <span className="truncate text-muted-foreground">
+          <span
+            className="truncate text-muted-foreground"
+            title={row.original.mimeType || undefined}
+          >
             {labels.mimeType(row.original.mimeType)}
           </span>
         ),
@@ -353,20 +387,26 @@ export const useColumns = (
         enableSorting: false,
         enableResizing: false,
         enableHiding: false,
-        size: 80,
+        meta: { isPinned: "right" },
+        size: 140,
         cell: ({ row }) => (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            aria-label={tGlobal("admin.auditLogs.viewDetails")}
-            title={tGlobal("admin.auditLogs.viewDetails")}
-            data-testid={`attachment-detail-open-${row.original.id}`}
-            onClick={() => onShowDetail(row.original)}
-          >
-            <Info className="h-4 w-4" />
-          </Button>
+          <div className="flex justify-end gap-1 bg-primary-foreground whitespace-nowrap">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-auto px-2 py-1"
+              aria-label={tGlobal("admin.auditLogs.viewDetails")}
+              title={tGlobal("admin.auditLogs.viewDetails")}
+              data-testid={`attachment-detail-open-${row.original.id}`}
+              onClick={() => onShowDetail(row.original)}
+            >
+              <Info className="h-5 w-5" />
+            </Button>
+            <AttachmentRowActions
+              attachment={row.original}
+              onAction={onAction}
+            />
+          </div>
         ),
       },
     ],
@@ -379,6 +419,7 @@ export const useColumns = (
       timezone,
       onShowSameFile,
       onShowDetail,
+      onAction,
     ]
   );
 };

@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Parent deleted",
-        "noParent": "Unattached"
+        "noParent": "Unattached",
+        "fileMissing": "File missing",
+        "otherHost": "On another host"
+      },
+      "storage": {
+        "tab": "Storage",
+        "neverScanned": "Storage has not been scanned yet. A scan compares the files in storage with the database to find files nothing uses and attachments whose file is missing.",
+        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# attachment has no file in the configured storage.} other {# attachments have no file in the configured storage.}}",
+        "allFolders": "All folders",
+        "status": {
+          "ORPHAN": "Orphaned",
+          "REFERENCED": "In use"
+        },
+        "loadedSelected": "{shown, plural, one {The loaded file is selected} other {All # loaded files are selected}}.",
+        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} one {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
+        "skipped": "{count, plural, one {# selected file is left alone because it is in use.} other {# selected files are left alone because they are in use.}}",
+        "deleted": "{count, plural, one {# file deleted from storage} other {# files deleted from storage}}"
       },
       "columns": {
         "sharedFile": "Shared file"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Elasticsearch Configuration\nConfigure Elasticsearch settings for your deployment.",
     "elasticsearchReindex": "## Reindex Data\nRebuild search indices for improved search performance.",
     "queues": "## Background Job Queues\nMonitor and manage background job processing queues.",
+    "attachments": "## Attachments\nEvery file and link attached to test cases, runs, results, sessions and issues.\n\n- **Detach** removes an attachment from the item it is attached to\n- **Delete** moves it to the Trash and keeps its file in storage\n- **Purge** permanently removes a deleted attachment and deletes its file, unless another attachment still uses that file",
     "trash": "## Trash\nRestore or permanently purge soft-deleted records across the system.",
     "userTrashWindow": "## Self-service restore window\nHow many days users can restore items they deleted themselves, from the **Trash** section of their profile. Set it to **0** to turn self-service restore off. Items that fall outside the window simply stop appearing in the user's Trash — nothing is purged, and administrators can still restore or purge anything here.",
     "systemWebhooks": "## System Webhooks\nOutbound webhook destinations for system-level events that aren't tied to a single project — currently the SCIM 2.0 user and group lifecycle events. Configure inbound and project-scoped outbound webhooks from the project settings page instead.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Manage global application settings and system preferences. Configure default values, feature toggles, and system-wide behaviors."
+        },
+        "attachments": {
+          "content": "See every file and link attached anywhere on the instance, find what is unattached or deleted, and detach, delete, restore or purge attachments."
         },
         "trash": {
           "title": "System Trash",

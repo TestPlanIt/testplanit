@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Elemento padre eliminato",
-        "noParent": "Non allegato"
+        "noParent": "Non allegato",
+        "fileMissing": "File mancante",
+        "otherHost": "Su un altro host"
+      },
+      "storage": {
+        "tab": "Archiviazione",
+        "neverScanned": "L'archiviazione non è stata ancora scansionata. Una scansione confronta i file nell'archiviazione con il database per trovare i file inutilizzati e gli allegati il cui file è mancante.",
+        "summary": "{objects, plural, one {# file} other {# file}} in archiviazione ({size}). {orphans, plural, =0 {Nessuno è orfano.} one {# è orfano ({orphanSize}).} other {# sono orfani ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# allegato non ha un file nell'archiviazione configurata.} other {# allegati non hanno un file nell'archiviazione configurata.}}",
+        "allFolders": "Tutte le cartelle",
+        "status": {
+          "ORPHAN": "Orfano",
+          "REFERENCED": "In uso"
+        },
+        "loadedSelected": "{shown, plural, one {Il file caricato è selezionato} other {Tutti i # file caricati sono selezionati}}.",
+        "confirmDelete": "{count, plural, =0 {Nessuno dei file selezionati può essere eliminato.} one {Eliminare questo file ({size}) dall'archiviazione? Questa operazione non può essere annullata.} other {Eliminare # file ({size}) dall'archiviazione? Questa operazione non può essere annullata.}}",
+        "skipped": "{count, plural, one {# file selezionato viene lasciato da parte perché è in uso.} other {# file selezionati vengono lasciati da parte perché sono in uso.}}",
+        "deleted": "{count, plural, one {# file eliminato dall'archiviazione} other {# file eliminati dall'archiviazione}}"
       },
       "columns": {
         "sharedFile": "File condiviso"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Configurazione di Elasticsearch\nConfigura le impostazioni di Elasticsearch per la tua distribuzione.",
     "elasticsearchReindex": "## Reindicizza i dati\nRicostruisci gli indici di ricerca per migliorare le prestazioni di ricerca.",
     "queues": "## Code dei lavori in background\nMonitorare e gestire le code di elaborazione dei lavori in background.",
+    "attachments": "## Allegati\nOgni file e collegamento allegato a casi di test, esecuzioni, risultati, sessioni e problemi.\n\n- **Scollega** rimuove un allegato dall'elemento a cui è allegato\n- **Elimina** lo sposta nel Cestino e mantiene il suo file in archiviazione\n- **Elimina definitivamente** rimuove permanentemente un allegato eliminato ed elimina il suo file, a meno che un altro allegato non utilizzi ancora quel file",
     "trash": "## Cestino\nRipristina o elimina definitivamente i record eliminati temporaneamente in tutto il sistema.",
     "userTrashWindow": "## Finestra di ripristino self-service\nQuanti giorni gli utenti possono ripristinare gli elementi che hanno eliminato da soli, dalla sezione **Cestino** del loro profilo. Impostalo su **0** per disattivare il ripristino self-service. Gli elementi che rientrano al di fuori della finestra smettono semplicemente di apparire nel Cestino dell'utente — nulla viene eliminato e gli amministratori possono comunque ripristinare o eliminare qualsiasi cosa qui.",
     "systemWebhooks": "## Webhook di sistema\nDestinazioni webhook in uscita per eventi a livello di sistema non legati a un singolo progetto, attualmente gli eventi del ciclo di vita di utenti e gruppi SCIM 2.0. Configura i webhook in entrata e in uscita a livello di progetto dalla pagina delle impostazioni del progetto.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Gestisci le impostazioni globali delle applicazioni e le preferenze di sistema. Configura i valori predefiniti, le opzioni di attivazione/disattivazione delle funzionalità e i comportamenti a livello di sistema."
+        },
+        "attachments": {
+          "content": "Visualizza ogni file e collegamento allegato in qualsiasi punto dell'istanza, trova ciò che non è allegato o eliminato, e scollega, elimina, ripristina o elimina definitivamente gli allegati."
         },
         "trash": {
           "title": "Cestino di sistema",

@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { filesize } from "filesize";
-import { RotateCcw, Trash2, Unlink } from "lucide-react";
+import { Loader2, RotateCcw, Trash2, Unlink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -111,6 +111,44 @@ export function AttachmentActionButtons({
           </Button>
         );
       })}
+    </>
+  );
+}
+
+/**
+ * The actions that fit one attachment, as icon buttons for its row: detach
+ * and delete, or restore and purge once it is in the trash.
+ */
+export function AttachmentRowActions({
+  attachment,
+  onAction,
+}: {
+  attachment: AdminAttachment;
+  onAction: (request: AttachmentActionRequest) => void;
+}) {
+  const label = useActionLabels();
+  return (
+    <>
+      {ATTACHMENT_ACTIONS.filter((action) => applies(action, attachment)).map(
+        (action) => {
+          const Icon = ACTION_ICONS[action];
+          const destructive = action === "softDelete" || action === "purge";
+          return (
+            <Button
+              key={action}
+              type="button"
+              variant={destructive ? "destructive" : "ghost"}
+              className="h-auto px-2 py-1"
+              aria-label={label(action)}
+              title={label(action)}
+              data-testid={`attachment-row-${action}-${attachment.id}`}
+              onClick={() => onAction({ action, ids: [attachment.id] })}
+            >
+              <Icon className="h-5 w-5" />
+            </Button>
+          );
+        }
+      )}
     </>
   );
 }
@@ -247,6 +285,7 @@ export function AttachmentActionDialog({
               void run();
             }}
           >
+            {running && <Loader2 className="h-4 w-4 animate-spin" />}
             {label(action)}
           </AlertDialogAction>
         </AlertDialogFooter>

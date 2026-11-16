@@ -396,6 +396,25 @@ Before anything changes, a confirmation shows how many of the selected attachmen
 
 Each action is recorded in the audit log. An action on several attachments is recorded as a single entry that lists them.
 
+#### Finding what storage holds
+
+The **Storage** tab compares the files in the storage bucket with the database. Select **Scan** to start a scan; it runs in the background and the tab updates when it finishes. Scans are only started by hand.
+
+A scan looks at everything under `uploads/` and gives each file a status:
+
+| Status | Meaning |
+| --- | --- |
+| **In use** | Something refers to the file: an attachment, an image embedded in rich text, a saved version, a user avatar, a project icon or an import. |
+| **Orphaned** | Nothing refers to the file. |
+
+The tab shows how many files storage holds, how much of that is orphaned, and when the last scan ran. The list can be searched by key and filtered by status and folder, and opens on every file, largest first.
+
+Orphaned files can be deleted: tick them and select **Delete**. Before a file is deleted it is checked against the database again, so a file that came into use after the scan is kept. A file uploaded to a form that has not been saved yet is an orphan until it is, so deleting very recent orphans can remove an upload someone is still working with.
+
+A scan also finds attachments whose file is not in the configured storage. The tab shows how many there are, and **Show** lists them on the Attachments tab, where they carry a **File missing** status that can also be chosen in the Status filter.
+
+A file whose address points at a host other than the configured storage, such as the storage an instance used before it was moved, carries an **On another host** status. Hover over it to see the host. These files are outside the bucket a scan reads, so a scan neither lists them nor reports them missing, and purging the attachment does not remove them from that host.
+
 ## Security Features
 
 ### Access Control

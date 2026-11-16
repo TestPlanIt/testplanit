@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Padre eliminado",
-        "noParent": "Sin adjuntar"
+        "noParent": "Sin adjuntar",
+        "fileMissing": "Archivo faltante",
+        "otherHost": "En otro host"
+      },
+      "storage": {
+        "tab": "Almacenamiento",
+        "neverScanned": "El almacenamiento aún no ha sido escaneado. Un escaneo compara los archivos en almacenamiento con la base de datos para encontrar archivos que nadie usa y adjuntos cuyo archivo falta.",
+        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# adjunto no tiene un archivo en el almacenamiento configurado.} other {# adjuntos no tienen un archivo en el almacenamiento configurado.}}",
+        "allFolders": "Todas las carpetas",
+        "status": {
+          "ORPHAN": "Huérfano",
+          "REFERENCED": "En uso"
+        },
+        "loadedSelected": "{shown, plural, one {El archivo cargado está seleccionado} other {Todos los # archivos cargados están seleccionados}}.",
+        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} one {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
+        "skipped": "{count, plural, one {# archivo seleccionado se deja sin modificar porque está en uso.} other {# archivos seleccionados se dejan sin modificar porque están en uso.}}",
+        "deleted": "{count, plural, one {# archivo eliminado del almacenamiento} other {# archivos eliminados del almacenamiento}}"
       },
       "columns": {
         "sharedFile": "Archivo compartido"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Configuración de Elasticsearch\nConfigurar los ajustes de Elasticsearch para su implementación.",
     "elasticsearchReindex": "## Reindexar datos\nReconstruir índices de búsqueda para mejorar el rendimiento de búsqueda.",
     "queues": "## Colas de trabajos en segundo plano\nSupervisar y gestionar colas de procesamiento de trabajos en segundo plano.",
+    "attachments": "## Adjuntos\nCada archivo y enlace adjunto a casos de prueba, ejecuciones, resultados, sesiones e incidencias.\n\n- **Desadjuntar** elimina un adjunto del elemento al que está adjunto\n- **Eliminar** lo mueve a la Papelera y mantiene su archivo en almacenamiento\n- **Purgar** elimina permanentemente un adjunto eliminado y borra su archivo, a menos que otro adjunto siga utilizando ese archivo",
     "trash": "## Papelera\nRestaurar o eliminar permanentemente los registros eliminados temporalmente en todo el sistema.",
     "userTrashWindow": "## Ventana de restauración automática\nCuántos días los usuarios pueden restaurar elementos que eliminaron ellos mismos, desde la sección **Papelera** de su perfil. Establécela en **0** para desactivar la restauración automática. Los elementos que caen fuera de la ventana simplemente dejan de aparecer en la Papelera del usuario — nada se purga, y los administradores todavía pueden restaurar o purgar cualquier cosa aquí.",
     "systemWebhooks": "## Webhooks del sistema\nDestinos de webhook salientes para eventos a nivel de sistema que no están vinculados a un solo proyecto; actualmente, los eventos del ciclo de vida de usuarios y grupos de SCIM 2.0. Configure los webhooks entrantes y salientes con ámbito de proyecto desde la página de configuración del proyecto.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Administre la configuración global de la aplicación y las preferencias del sistema. Configure valores predeterminados, opciones de configuración y comportamientos del sistema."
+        },
+        "attachments": {
+          "content": "Ve todos los archivos y enlaces adjuntos en cualquier lugar de la instancia, encuentra lo que está sin adjuntar o eliminado, y desadjunta, elimina, restaura o purga adjuntos."
         },
         "trash": {
           "title": "Papelera del sistema",

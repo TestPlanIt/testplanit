@@ -54,6 +54,7 @@ const WORKERS = [
   "magicSelectWorker",
   "impactAnalysisWorker",
   "stepSequenceScanWorker",
+  "storageScanWorker",
   "generateFromUrlWorker",
   "iterationGenerationWorker",
   "scimAccessRecomputeWorker",

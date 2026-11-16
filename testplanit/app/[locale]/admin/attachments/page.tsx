@@ -3,7 +3,8 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { Copy, X } from "lucide-react";
+import { Copy, HardDrive, Paperclip, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -15,12 +16,13 @@ import { ProjectIcon } from "@/components/ProjectIcon";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -31,9 +33,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SectionHeader } from "@/components/ui/typography";
 import { apiFetch } from "~/lib/basePath";
-import { useRouter } from "~/lib/navigation";
+import { usePathname, useRouter } from "~/lib/navigation";
 import { schema } from "~/zenstack/schema";
 import {
   ATTACHMENT_PARENT_TYPES,
@@ -52,7 +55,8 @@ import {
   AttachmentActionDialog,
   type AttachmentActionRequest,
 } from "./AttachmentActions";
-import { useAttachmentLabels, useColumns } from "./columns";
+import { AttachedTo, useAttachmentLabels, useColumns } from "./columns";
+import { StorageObjects } from "./StorageObjects";
 
 interface UserOption {
   id: string;
@@ -93,6 +97,32 @@ async function getJson<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+/** A long value (a URL, a storage key) that wraps and can be copied. */
+function CopyableValue({ value }: { value: string }) {
+  const tCommon = useTranslations("common");
+  return (
+    <div className="flex items-start gap-2">
+      <code className="min-w-0 flex-1 rounded bg-muted px-1.5 py-0.5 text-xs break-all">
+        {value}
+      </code>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-6 shrink-0 px-1.5"
+        aria-label={tCommon("actions.copy")}
+        onClick={() => {
+          void navigator.clipboard
+            ?.writeText(value)
+            .then(() => toast.success(tCommon("actions.copied")));
+        }}
+      >
+        <Copy className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+}
+
 function AttachmentDetail({ attachment }: { attachment: AdminAttachment }) {
   const t = useTranslations("admin.attachments");
   const tCommon = useTranslations("common");
@@ -102,7 +132,7 @@ function AttachmentDetail({ attachment }: { attachment: AdminAttachment }) {
 
   return (
     <dl
-      className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 p-2 text-sm"
+      className="grid grid-cols-[max-content_minmax(0,1fr)] items-start gap-x-4 gap-y-2 p-2 text-sm"
       data-testid={`attachment-detail-${attachment.id}`}
     >
       {attachment.note && (
@@ -114,31 +144,15 @@ function AttachmentDetail({ attachment }: { attachment: AdminAttachment }) {
       <dt className="text-muted-foreground">
         {tCommon("upload.attachments.link.urlLabel")}
       </dt>
-      <dd className="break-all">{attachment.url}</dd>
+      <dd>
+        <CopyableValue value={attachment.url} />
+      </dd>
       {attachment.kind === "file" && (
         <>
           <dt className="text-muted-foreground">{t("detail.storageKey")}</dt>
-          <dd className="flex items-center gap-2 break-all">
+          <dd>
             {storageKey ? (
-              <>
-                <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                  {storageKey}
-                </code>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-1.5"
-                  aria-label={tCommon("actions.copy")}
-                  onClick={() => {
-                    void navigator.clipboard
-                      ?.writeText(storageKey)
-                      .then(() => toast.success(tCommon("actions.copied")));
-                  }}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-              </>
+              <CopyableValue value={storageKey} />
             ) : (
               <span className="text-muted-foreground">
                 {t("detail.notInStorage")}
@@ -152,10 +166,15 @@ function AttachmentDetail({ attachment }: { attachment: AdminAttachment }) {
           <dt className="text-muted-foreground">
             {t("detail.attachedThrough")}
           </dt>
-          <dd>
-            {labels.parent(attachment.parent.type)}
-            {" #"}
-            {attachment.parent.id}
+          <dd className="flex min-w-0 items-center gap-2">
+            <div className="min-w-0">
+              <AttachedTo parent={attachment.parent} />
+            </div>
+            {attachment.parent.type !== attachment.parent.entity && (
+              <Badge variant="outline" className="shrink-0">
+                {labels.parent(attachment.parent.type)}
+              </Badge>
+            )}
           </dd>
         </>
       )}
@@ -185,6 +204,18 @@ export default function AdminAttachmentsPage() {
 
   const [parentTypes, setParentTypes] = useState<AttachmentParentType[]>([]);
   const [statuses, setStatuses] = useState<AttachmentStatus[]>([]);
+  // The tab lives in the URL so the Storage view can be linked to.
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const tab: "attachments" | "storage" =
+    searchParams?.get("tab") === "storage" ? "storage" : "attachments";
+  const setTab = (value: "attachments" | "storage") => {
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    if (value === "storage") params.set("tab", value);
+    else params.delete("tab");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const { data: allProjects } = useClientQueries(schema).projects.useFindMany(
     {
@@ -253,8 +284,10 @@ export default function AdminAttachmentsPage() {
       const all = await mimeTypesRef.current;
       const term = query.trim().toLowerCase();
       const matching = term
-        ? all.filter((type) =>
-            labels.mimeType(type.mimeType).toLowerCase().includes(term)
+        ? all.filter(
+            (type) =>
+              labels.mimeType(type.mimeType).toLowerCase().includes(term) ||
+              type.mimeType.toLowerCase().includes(term)
           )
         : all;
       return {
@@ -350,12 +383,15 @@ export default function AdminAttachmentsPage() {
   const showSameFile = useCallback((attachment: AdminAttachment) => {
     setSameFileAs({ id: attachment.id, name: attachment.name });
   }, []);
+  const [actionRequest, setActionRequest] =
+    useState<AttachmentActionRequest | null>(null);
   const columns = useColumns(
     userPreferences,
     t,
     tCommon,
     showSameFile,
-    setDetail
+    setDetail,
+    setActionRequest
   );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -363,8 +399,6 @@ export default function AdminAttachmentsPage() {
   const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [actionRequest, setActionRequest] =
-    useState<AttachmentActionRequest | null>(null);
   // A selection belongs to the list it was made in.
   useEffect(() => setRowSelection({}), [params]);
   const selectedIds = useMemo(
@@ -413,257 +447,307 @@ export default function AdminAttachmentsPage() {
             <CardTitle data-testid="admin-attachments-title">
               {tGlobal("admin.menu.attachments")}
             </CardTitle>
+            <HelpPopover helpKey="attachments" />
           </SectionHeader>
           <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Filter
-            key="admin-attachments-filter"
-            placeholder={t("filterPlaceholder")}
-            initialSearchString={searchString}
-            onSearchChange={setSearchString}
-          />
-          <div
-            className="grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-5"
-            data-testid="attachments-filters"
+        <CardContent>
+          <Tabs
+            value={tab}
+            onValueChange={(value) =>
+              setTab(value as "attachments" | "storage")
+            }
           >
-            <div className="min-w-0" data-testid="attachments-status-filter">
-              <MultiAsyncCombobox<AttachmentStatus>
-                value={statuses}
-                onValueChange={setStatuses}
-                fetchOptions={fetchStatuses}
-                getOptionValue={(status) => status}
-                getOptionLabel={labels.status}
-                renderOption={(status) => (
-                  <span className="truncate">{labels.status(status)}</span>
-                )}
-                placeholder={tCommon("filters.allStatuses")}
-                ariaLabel={tCommon("actions.status")}
+            <TabsList className="w-full">
+              <TabsTrigger
+                value="attachments"
+                data-testid="attachments-tab"
+                className="w-1/2 gap-2"
+              >
+                <Paperclip className="h-4 w-4" />
+                {tCommon("fields.attachments")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="storage"
+                data-testid="storage-tab"
+                className="w-1/2 gap-2"
+              >
+                <HardDrive className="h-4 w-4" />
+                {t("storage.tab")}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="storage" className="mt-4">
+              <StorageObjects
+                onShowMissingFiles={() => {
+                  setStatuses(["fileMissing"]);
+                  setTab("attachments");
+                }}
               />
-            </div>
-            <div className="min-w-0" data-testid="attachments-parent-filter">
-              <MultiAsyncCombobox<AttachmentParentType>
-                value={parentTypes}
-                onValueChange={setParentTypes}
-                fetchOptions={fetchParentTypes}
-                getOptionValue={(type) => type}
-                getOptionLabel={labels.parent}
-                renderOption={(type) => (
-                  <span className="truncate">{labels.parent(type)}</span>
-                )}
-                placeholder={`${t("attachedTo.label")}: ${tCommon("filters.all")}`}
-                ariaLabel={t("attachedTo.label")}
+            </TabsContent>
+            <TabsContent value="attachments" className="mt-4 space-y-4">
+              <Filter
+                key="admin-attachments-filter"
+                placeholder={t("filterPlaceholder")}
+                initialSearchString={searchString}
+                onSearchChange={setSearchString}
               />
-            </div>
-            <div className="min-w-0" data-testid="attachments-project-filter">
-              <MultiAsyncCombobox<ProjectOption>
-                value={projects}
-                onValueChange={setProjects}
-                fetchOptions={fetchProjects}
-                getOptionValue={(project) => project.id}
-                getOptionLabel={(project) => project.name}
-                renderOption={(project) => (
-                  <span className="flex min-w-0 items-center gap-2">
-                    <ProjectIcon
-                      iconUrl={project.iconUrl}
-                      width={16}
-                      height={16}
-                    />
-                    <span className="truncate">{project.name}</span>
-                  </span>
-                )}
-                renderSelectedOption={(project) => <span>{project.name}</span>}
-                placeholder={tGlobal("admin.auditLogs.allProjects")}
-                ariaLabel={tCommon("fields.projects")}
-              />
-            </div>
-            <div className="min-w-0" data-testid="attachments-type-filter">
-              <MultiAsyncCombobox<AttachmentMimeType>
-                value={mimeTypes}
-                onValueChange={setMimeTypes}
-                fetchOptions={fetchMimeTypes}
-                getOptionValue={(type) => type.mimeType || NO_MIME_TYPE}
-                getOptionLabel={(type) => labels.mimeType(type.mimeType)}
-                renderOption={(type) => (
-                  <span className="flex w-full min-w-0 items-center justify-between gap-2">
-                    <span className="truncate">
-                      {labels.mimeType(type.mimeType)}
-                    </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {type.count.toLocaleString(locale)}
-                    </span>
-                  </span>
-                )}
-                placeholder={tGlobal("search.allTypes")}
-                ariaLabel={tCommon("fields.type")}
-              />
-            </div>
-            <div className="min-w-0" data-testid="attachments-creator-filter">
-              <MultiAsyncCombobox<UserOption>
-                value={creators}
-                onValueChange={setCreators}
-                fetchOptions={fetchCreators}
-                getOptionValue={(user) => user.id}
-                getOptionLabel={(user) => user.name}
-                renderOption={(user) => (
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium">
-                      {user.name}
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {user.email}
-                    </span>
-                  </span>
-                )}
-                placeholder={tGlobal("repository.views.allCreators")}
-                ariaLabel={tCommon("fields.createdBy")}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <ColumnSelection
-                key="admin-attachments-column-selection"
-                storageKey="admin-attachments"
-                columns={columns}
-                onVisibilityChange={setColumnVisibility}
-                hideColumnRef={hideColumnRef}
-              />
-              {selectedIds.length > 0 && (
+              <div
+                className="grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-5"
+                data-testid="attachments-filters"
+              >
                 <div
-                  className="flex flex-wrap items-center gap-2"
-                  data-testid="attachments-bulk-actions"
+                  className="min-w-0"
+                  data-testid="attachments-status-filter"
                 >
-                  <span className="text-sm text-muted-foreground">
-                    {tCommon("labels.selected", {
-                      count: selectedIds.length.toLocaleString(locale),
-                    })}
-                  </span>
-                  <AttachmentActionButtons
-                    ids={selectedIds}
-                    attachments={selected}
-                    onAction={setActionRequest}
-                    testIdPrefix="attachments-bulk"
+                  <MultiAsyncCombobox<AttachmentStatus>
+                    value={statuses}
+                    onValueChange={setStatuses}
+                    fetchOptions={fetchStatuses}
+                    getOptionValue={(status) => status}
+                    getOptionLabel={labels.status}
+                    renderOption={(status) => (
+                      <span className="truncate">{labels.status(status)}</span>
+                    )}
+                    placeholder={tCommon("filters.allStatuses")}
+                    ariaLabel={tCommon("actions.status")}
                   />
                 </div>
-              )}
-            </div>
-            {items.length > 0 && (
-              <p
-                className="text-sm text-muted-foreground"
-                data-testid="attachments-showing"
-              >
-                {tGlobal("admin.auditLogs.showing", {
-                  loaded: items.length.toLocaleString(locale),
-                  total: totalItems.toLocaleString(locale),
-                })}
-              </p>
-            )}
-          </div>
+                <div
+                  className="min-w-0"
+                  data-testid="attachments-parent-filter"
+                >
+                  <MultiAsyncCombobox<AttachmentParentType>
+                    value={parentTypes}
+                    onValueChange={setParentTypes}
+                    fetchOptions={fetchParentTypes}
+                    getOptionValue={(type) => type}
+                    getOptionLabel={labels.parent}
+                    renderOption={(type) => (
+                      <span className="truncate">{labels.parent(type)}</span>
+                    )}
+                    placeholder={`${t("attachedTo.label")}: ${tCommon("filters.all")}`}
+                    ariaLabel={t("attachedTo.label")}
+                  />
+                </div>
+                <div
+                  className="min-w-0"
+                  data-testid="attachments-project-filter"
+                >
+                  <MultiAsyncCombobox<ProjectOption>
+                    value={projects}
+                    onValueChange={setProjects}
+                    fetchOptions={fetchProjects}
+                    getOptionValue={(project) => project.id}
+                    getOptionLabel={(project) => project.name}
+                    renderOption={(project) => (
+                      <span className="flex min-w-0 items-center gap-2">
+                        <ProjectIcon
+                          iconUrl={project.iconUrl}
+                          width={16}
+                          height={16}
+                        />
+                        <span className="truncate">{project.name}</span>
+                      </span>
+                    )}
+                    renderSelectedOption={(project) => (
+                      <span>{project.name}</span>
+                    )}
+                    placeholder={tGlobal("admin.auditLogs.allProjects")}
+                    ariaLabel={tCommon("fields.projects")}
+                  />
+                </div>
+                <div className="min-w-0" data-testid="attachments-type-filter">
+                  <MultiAsyncCombobox<AttachmentMimeType>
+                    value={mimeTypes}
+                    onValueChange={setMimeTypes}
+                    fetchOptions={fetchMimeTypes}
+                    getOptionValue={(type) => type.mimeType || NO_MIME_TYPE}
+                    getOptionLabel={(type) => labels.mimeType(type.mimeType)}
+                    renderOption={(type) => (
+                      <span className="flex w-full min-w-0 items-center justify-between gap-2">
+                        <span className="truncate" title={type.mimeType}>
+                          {labels.mimeType(type.mimeType)}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {type.count.toLocaleString(locale)}
+                        </span>
+                      </span>
+                    )}
+                    placeholder={tGlobal("search.allTypes")}
+                    ariaLabel={tCommon("fields.type")}
+                  />
+                </div>
+                <div
+                  className="min-w-0"
+                  data-testid="attachments-creator-filter"
+                >
+                  <MultiAsyncCombobox<UserOption>
+                    value={creators}
+                    onValueChange={setCreators}
+                    fetchOptions={fetchCreators}
+                    getOptionValue={(user) => user.id}
+                    getOptionLabel={(user) => user.name}
+                    renderOption={(user) => (
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm font-medium">
+                          {user.name}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {user.email}
+                        </span>
+                      </span>
+                    )}
+                    placeholder={tGlobal("repository.views.allCreators")}
+                    ariaLabel={tCommon("fields.createdBy")}
+                  />
+                </div>
+              </div>
 
-          {allLoadedSelected &&
-            totalItems > items.length &&
-            !allMatchesSelected && (
-              <div
-                className="flex flex-wrap items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm"
-                data-testid="attachments-select-all-matches-prompt"
-              >
-                <span>
-                  {t("selection.loadedSelected", { shown: items.length })}
-                </span>
-                {totalItems <= MAX_ACTION_ATTACHMENTS ? (
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className="h-auto p-0"
-                    onClick={() => void selectAllMatches()}
-                    disabled={selectingAll}
-                    data-testid="attachments-select-all-matches"
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <ColumnSelection
+                    key="admin-attachments-column-selection"
+                    storageKey="admin-attachments"
+                    columns={columns}
+                    onVisibilityChange={setColumnVisibility}
+                    hideColumnRef={hideColumnRef}
+                  />
+                  {selectedIds.length > 0 && (
+                    <div
+                      className="flex flex-wrap items-center gap-2"
+                      data-testid="attachments-bulk-actions"
+                    >
+                      <span className="text-sm text-muted-foreground">
+                        {tCommon("labels.selected", {
+                          count: selectedIds.length.toLocaleString(locale),
+                        })}
+                      </span>
+                      <AttachmentActionButtons
+                        ids={selectedIds}
+                        attachments={selected}
+                        onAction={setActionRequest}
+                        testIdPrefix="attachments-bulk"
+                      />
+                    </div>
+                  )}
+                </div>
+                {items.length > 0 && (
+                  <p
+                    className="text-sm text-muted-foreground"
+                    data-testid="attachments-showing"
                   >
-                    {t("selection.selectAllMatches", { total: totalItems })}
-                  </Button>
-                ) : (
-                  <span className="text-muted-foreground">
-                    {t("selection.tooMany", {
-                      max: MAX_ACTION_ATTACHMENTS.toLocaleString(locale),
+                    {tGlobal("admin.auditLogs.showing", {
+                      loaded: items.length.toLocaleString(locale),
+                      total: totalItems.toLocaleString(locale),
                     })}
-                  </span>
+                  </p>
                 )}
               </div>
-            )}
-          {allMatchesSelected && totalItems > items.length && (
-            <p
-              className="rounded-md bg-muted px-3 py-2 text-sm"
-              data-testid="attachments-all-matches-selected"
-            >
-              {t("selection.allMatchesSelected", { total: totalItems })}
-            </p>
-          )}
 
-          {sameFileAs && (
-            <div
-              className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm"
-              data-testid="attachments-same-file-filter"
-            >
-              <span className="min-w-0 flex-1 truncate">
-                {t("sharedFile.showing", { name: sameFileAs.name })}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setSameFileAs(null)}
-              >
-                <X className="h-4 w-4" />
-                {tCommon("aria.clearFilter")}
-              </Button>
-            </div>
-          )}
+              {allLoadedSelected &&
+                totalItems > items.length &&
+                !allMatchesSelected && (
+                  <div
+                    className="flex flex-wrap items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm"
+                    data-testid="attachments-select-all-matches-prompt"
+                  >
+                    <span>
+                      {t("selection.loadedSelected", { shown: items.length })}
+                    </span>
+                    {totalItems <= MAX_ACTION_ATTACHMENTS ? (
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0"
+                        onClick={() => void selectAllMatches()}
+                        disabled={selectingAll}
+                        data-testid="attachments-select-all-matches"
+                      >
+                        {t("selection.selectAllMatches", { total: totalItems })}
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {t("selection.tooMany", {
+                          max: MAX_ACTION_ATTACHMENTS.toLocaleString(locale),
+                        })}
+                      </span>
+                    )}
+                  </div>
+                )}
+              {allMatchesSelected && totalItems > items.length && (
+                <p
+                  className="rounded-md bg-muted px-3 py-2 text-sm"
+                  data-testid="attachments-all-matches-selected"
+                >
+                  {t("selection.allMatchesSelected", { total: totalItems })}
+                </p>
+              )}
 
-          {isError ? (
-            <p className="text-sm text-destructive">
-              {tCommon("errors.fetchFailed")}
-            </p>
-          ) : (
-            <DataTable
-              virtualized
-              fillViewport
-              columns={columns as any}
-              data={items}
-              getRowId={(row: AdminAttachment) => String(row.id)}
-              rowSelection={rowSelection}
-              onRowSelectionChange={setRowSelection}
-              testIdPrefix="admin-attachments-table"
-              rowTestIdPrefix="attachment-row"
-              hasMore={!!hasNextPage}
-              onLoadMore={fetchNextPage}
-              resetKey={params}
-              onSortChange={(column) =>
-                setSortConfig({
-                  column,
-                  direction:
-                    sortConfig.column === column &&
-                    sortConfig.direction === "asc"
-                      ? "desc"
-                      : "asc",
-                })
-              }
-              onSortColumn={(column, direction) =>
-                setSortConfig(
-                  direction === null
-                    ? { column: "createdAt", direction: "desc" }
-                    : { column, direction }
-                )
-              }
-              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
-              sortConfig={sortConfig}
-              columnVisibility={columnVisibility}
-              onColumnVisibilityChange={setColumnVisibility}
-              isLoading={isLoading || isFetchingNextPage}
-            />
-          )}
+              {sameFileAs && (
+                <div
+                  className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm"
+                  data-testid="attachments-same-file-filter"
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    {t("sharedFile.showing", { name: sameFileAs.name })}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSameFileAs(null)}
+                  >
+                    <X className="h-4 w-4" />
+                    {tCommon("aria.clearFilter")}
+                  </Button>
+                </div>
+              )}
+
+              {isError ? (
+                <p className="text-sm text-destructive">
+                  {tCommon("errors.fetchFailed")}
+                </p>
+              ) : (
+                <DataTable
+                  virtualized
+                  fillViewport
+                  columns={columns as any}
+                  data={items}
+                  getRowId={(row: AdminAttachment) => String(row.id)}
+                  rowSelection={rowSelection}
+                  onRowSelectionChange={setRowSelection}
+                  testIdPrefix="admin-attachments-table"
+                  rowTestIdPrefix="attachment-row"
+                  hasMore={!!hasNextPage}
+                  onLoadMore={fetchNextPage}
+                  resetKey={params}
+                  onSortChange={(column) =>
+                    setSortConfig({
+                      column,
+                      direction:
+                        sortConfig.column === column &&
+                        sortConfig.direction === "asc"
+                          ? "desc"
+                          : "asc",
+                    })
+                  }
+                  onSortColumn={(column, direction) =>
+                    setSortConfig(
+                      direction === null
+                        ? { column: "createdAt", direction: "desc" }
+                        : { column, direction }
+                    )
+                  }
+                  onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
+                  sortConfig={sortConfig}
+                  columnVisibility={columnVisibility}
+                  onColumnVisibilityChange={setColumnVisibility}
+                  isLoading={isLoading || isFetchingNextPage}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
       <Dialog
@@ -677,16 +761,6 @@ export default function AdminAttachmentsPage() {
             <DialogTitle className="break-all">{detail?.name}</DialogTitle>
           </DialogHeader>
           {detail && <AttachmentDetail attachment={detail} />}
-          {detail && (
-            <DialogFooter data-testid="attachment-detail-actions">
-              <AttachmentActionButtons
-                ids={[detail.id]}
-                attachments={[detail]}
-                onAction={setActionRequest}
-                testIdPrefix="attachment-detail"
-              />
-            </DialogFooter>
-          )}
         </DialogContent>
       </Dialog>
       <AttachmentActionDialog

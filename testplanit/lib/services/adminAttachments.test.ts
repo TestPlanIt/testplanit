@@ -148,6 +148,24 @@ describe("listAdminAttachments", () => {
       );
     });
 
+    it("finds files served by a host other than the configured storage", async () => {
+      vi.stubEnv("AWS_BUCKET_NAME", "bucket");
+      vi.stubEnv("AWS_ENDPOINT_URL", "https://Files.example.com");
+      const custom = await pageQuery({ statuses: "otherHost" });
+      expect(custom.sql).toContain("a.\"url\" ~* '^https?://'");
+      expect(custom.sql).toContain(
+        "position('/api/storage/' in a.\"url\") = 0"
+      );
+      expect(custom.parameters).toContain("https://files.example.com/");
+      expect(custom.sql).not.toContain("amazonaws.com");
+
+      vi.stubEnv("AWS_ENDPOINT_URL", "");
+      const aws = await pageQuery({ statuses: "otherHost" });
+      expect(aws.sql).toContain("LIKE '%.amazonaws.com'");
+      expect(aws.parameters).toContain("bucket.");
+      vi.unstubAllEnvs();
+    });
+
     it("rejects a parent type or state it does not know", () => {
       expect(() => query({ parentTypes: "case,folder" })).toThrow();
       expect(() => query({ statuses: "gone" })).toThrow();

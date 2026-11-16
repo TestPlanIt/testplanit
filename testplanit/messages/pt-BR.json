@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Pai excluído",
-        "noParent": "Desanexado"
+        "noParent": "Desanexado",
+        "fileMissing": "Arquivo faltando",
+        "otherHost": "Em outro host"
+      },
+      "storage": {
+        "tab": "Armazenamento",
+        "neverScanned": "O armazenamento ainda não foi digitalizado. Uma verificação compara os arquivos no armazenamento com o banco de dados para localizar arquivos não utilizados e anexos cujo arquivo está faltando.",
+        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# anexo não possui arquivo no armazenamento configurado.} other {# anexos não possuem arquivo no armazenamento configurado.}}",
+        "allFolders": "Todas as pastas",
+        "status": {
+          "ORPHAN": "Órfão",
+          "REFERENCED": "Em uso"
+        },
+        "loadedSelected": "{shown, plural, one {O arquivo carregado está selecionado} other {Todos os # arquivos carregados estão selecionados}}.",
+        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} one {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
+        "skipped": "{count, plural, one {# arquivo selecionado é deixado intacto porque está em uso.} other {# arquivos selecionados são deixados intactos porque estão em uso.}}",
+        "deleted": "{count, plural, one {# arquivo excluído do armazenamento} other {# arquivos excluídos do armazenamento}}"
       },
       "columns": {
         "sharedFile": "Arquivo compartilhado"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Configuração do Elasticsearch\nConfigure as configurações do Elasticsearch para sua implantação.",
     "elasticsearchReindex": "## Reindexar Dados\nReconstrua os índices de busca para melhorar o desempenho da busca.",
     "queues": "## Filas de Tarefas em Segundo Plano\nMonitore e gerencie as filas de processamento de tarefas em segundo plano.",
+    "attachments": "## Anexos\nTodo arquivo e link anexado a casos de teste, execuções, resultados, sessões e problemas.\n\n- **Desanexar** remove um anexo do item ao qual está anexado\n- **Excluir** o move para a Lixeira e mantém seu arquivo no armazenamento\n- **Purgar** remove permanentemente um anexo excluído e deleta seu arquivo, a menos que outro anexo ainda use esse arquivo",
     "trash": "## Lixeira\nRestaure ou exclua permanentemente registros excluídos temporariamente em todo o sistema.",
     "userTrashWindow": "## Janela de restauração de autoatendimento\nQuantos dias os usuários podem restaurar itens que deletaram a si mesmos, da seção **Lixeira** de seu perfil. Defina como **0** para desativar a restauração de autoatendimento. Itens que caem fora da janela simplesmente deixam de aparecer na Lixeira do usuário — nada é removido, e administradores ainda podem restaurar ou remover qualquer coisa aqui.",
     "systemWebhooks": "## Webhooks do Sistema\nDestinos de webhook de saída para eventos de nível de sistema que não estão vinculados a um único projeto — atualmente os eventos de ciclo de vida de usuários e grupos do SCIM 2.0. Em vez disso, configure webhooks de entrada e de saída com escopo de projeto na página de configurações do projeto.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Gerencie as configurações globais do aplicativo e as preferências do sistema. Configure valores padrão, alternância de recursos e comportamentos de todo o sistema."
+        },
+        "attachments": {
+          "content": "Veja todos os arquivos e links anexados em qualquer lugar da instância, encontre o que está desanexado ou excluído, e desanexe, exclua, restaure ou limpe anexos."
         },
         "trash": {
           "title": "Lixo do sistema",

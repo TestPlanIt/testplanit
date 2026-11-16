@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Nadrzędny element usunięty",
-        "noParent": "Nie dołączony"
+        "noParent": "Nie dołączony",
+        "fileMissing": "Plik nie istnieje",
+        "otherHost": "Na innym hoście"
+      },
+      "storage": {
+        "tab": "Magazyn",
+        "neverScanned": "Magazyn nie został jeszcze przeskanowany. Skanowanie porównuje pliki w magazynie z bazą danych, aby znaleźć pliki, które nikogo nie używają, i załączniki, których plik nie istnieje.",
+        "summary": "{objects, plural, one {# plik} few {# pliki} many {# plików} other {# plików}} w magazynie ({size}). {orphans, plural, =0 {Żaden nie jest osierocony.} one {# jest osierocony ({orphanSize}).} few {# są osierocone ({orphanSize}).} many {# jest osieroconych ({orphanSize}).} other {# jest osieroconych ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# załącznik nie ma pliku w skonfigurowanym magazynie.} few {# załączniki nie mają pliku w skonfigurowanym magazynie.} many {# załączników nie ma pliku w skonfigurowanym magazynie.} other {# załączników nie ma pliku w skonfigurowanym magazynie.}}",
+        "allFolders": "Wszystkie foldery",
+        "status": {
+          "ORPHAN": "Osierocone",
+          "REFERENCED": "W użyciu"
+        },
+        "loadedSelected": "{shown, plural, one {Załadowany plik jest wybrany} few {Wszystkie # załadowane pliki są wybrane} many {Wszystkie # załadowanych plików jest wybranych} other {Wszystkie # załadowanych plików jest wybranych}}.",
+        "confirmDelete": "{count, plural, =0 {Żaden z wybranych plików nie może być usunięty.} one {Usunąć ten plik ({size}) z magazynu? Tej operacji nie można cofnąć.} few {Usunąć # pliki ({size}) z magazynu? Tej operacji nie można cofnąć.} many {Usunąć # plików ({size}) z magazynu? Tej operacji nie można cofnąć.} other {Usunąć # plików ({size}) z magazynu? Tej operacji nie można cofnąć.}}",
+        "skipped": "{count, plural, one {# wybrany plik jest pozostawiony, ponieważ jest w użyciu.} few {# wybrane pliki są pozostawione, ponieważ są w użyciu.} many {# wybranych plików jest pozostawionych, ponieważ są w użyciu.} other {# wybranych plików jest pozostawionych, ponieważ są w użyciu.}}",
+        "deleted": "{count, plural, one {# plik usunięty z magazynu} few {# pliki usunięte z magazynu} many {# plików usuniętych z magazynu} other {# plików usuniętych z magazynu}}"
       },
       "columns": {
         "sharedFile": "Plik udostępniony"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Konfiguracja Elasticsearch\nSkonfiguruj ustawienia Elasticsearch dla swojego wdrożenia.",
     "elasticsearchReindex": "## Ponowne indeksowanie danych\nPrzebudowa indeksów wyszukiwania w celu poprawy wydajności wyszukiwania.",
     "queues": "## Kolejki zadań w tle\nMonitoruj i zarządzaj kolejkami przetwarzania zadań w tle.",
+    "attachments": "## Załączniki\nKażdy plik i link dołączony do przypadków testowych, przebiegów, wyników, sesji i zagadnień.\n\n- **Odłącz** usuwa załącznik z elementu, do którego jest dołączony\n- **Usuń** przenosi go do Kosza i zachowuje jego plik w magazynie\n- **Wyczyść** trwale usuwa usunięty załącznik i usuwa jego plik, chyba że inny załącznik nadal używa tego pliku",
     "trash": "## Kosz\nPrzywracaj lub trwale usuwaj miękko usunięte rekordy w całym systemie.",
     "userTrashWindow": "## Okno samodzielnego przywracania\nIle dni użytkownicy mogą przywracać elementy, które sami usunęli, z sekcji **Kosz** w swoim profilu. Ustaw na **0**, aby wyłączyć samodzielne przywracanie. Elementy poza oknem po prostu przestają pojawiać się w koszu użytkownika — nic nie jest usuwane, a administratorzy mogą nadal przywracać lub czyścić cokolwiek tutaj.",
     "systemWebhooks": "## Webhooki systemowe\nMiejsca docelowe webhooków wychodzących dla zdarzeń na poziomie systemu, które nie są powiązane z pojedynczym projektem — obecnie są to zdarzenia cyklu życia użytkowników i grup SCIM 2.0. Zamiast tego skonfiguruj webhooki przychodzące i wychodzące o zasięgu projektu na stronie ustawień projektu.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Zarządzaj globalnymi ustawieniami aplikacji i preferencjami systemowymi. Konfiguruj wartości domyślne, przełączniki funkcji i zachowania w całym systemie."
+        },
+        "attachments": {
+          "content": "Pokaż każdy plik i link dołączony w dowolnym miejscu na instancji, znajdź to, co nie jest dołączone lub usunięte, i odłącz, usuń, przywróć lub wyczyść załączniki."
         },
         "trash": {
           "title": "Kosz systemowy",

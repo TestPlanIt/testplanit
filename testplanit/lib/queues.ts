@@ -16,6 +16,7 @@ import {
   NOTIFICATION_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
   STEP_SCAN_QUEUE_NAME,
+  STORAGE_SCAN_QUEUE_NAME,
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
@@ -45,6 +46,7 @@ export {
   COPY_MOVE_QUEUE_NAME,
   DUPLICATE_SCAN_QUEUE_NAME,
   STEP_SCAN_QUEUE_NAME,
+  STORAGE_SCAN_QUEUE_NAME,
   MAGIC_SELECT_QUEUE_NAME,
   IMPACT_ANALYSIS_QUEUE_NAME,
   GENERATE_FROM_URL_QUEUE_NAME,
@@ -94,6 +96,7 @@ let _repoCacheQueue: Queue | null = null;
 let _copyMoveQueue: Queue | null = null;
 let _duplicateScanQueue: Queue | null = null;
 let _stepScanQueue: Queue | null = null;
+let _storageScanQueue: Queue | null = null;
 let _magicSelectQueue: Queue | null = null;
 let _impactAnalysisQueue: Queue | null = null;
 let _generateFromUrlQueue: Queue | null = null;
@@ -528,6 +531,31 @@ export function getStepScanQueue(): Queue | null {
 }
 
 /**
+ * Get the storage-scan queue instance (lazy initialization)
+ * Used for the storage scan an administrator starts from Admin > Attachments.
+ * attempts: 1 — no retry; the administrator starts another scan.
+ */
+export function getStorageScanQueue(): Queue | null {
+  if (_storageScanQueue) return _storageScanQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${STORAGE_SCAN_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _storageScanQueue = new Queue(STORAGE_SCAN_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...NO_RETRY_MEDIUM_RETENTION },
+  });
+  console.log(`Queue "${STORAGE_SCAN_QUEUE_NAME}" initialized.`);
+  _storageScanQueue.on("error", (error) => {
+    console.error(`Queue ${STORAGE_SCAN_QUEUE_NAME} error:`, error);
+  });
+  return _storageScanQueue;
+}
+
+/**
  * Get the magic select queue instance (lazy initialization)
  * Used for background Magic Select LLM processing jobs
  */
@@ -855,6 +883,7 @@ export function getAllQueues() {
     copyMoveQueue: getCopyMoveQueue(),
     duplicateScanQueue: getDuplicateScanQueue(),
     stepScanQueue: getStepScanQueue(),
+    "storage-scan": getStorageScanQueue(),
     "magic-select": getMagicSelectQueue(),
     "impact-analysis": getImpactAnalysisQueue(),
     "generate-from-url": getGenerateFromUrlQueue(),

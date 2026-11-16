@@ -245,6 +245,24 @@ describe("applyAttachmentAction", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it("leaves a file another host serves where it is", async () => {
+    vi.stubEnv("AWS_BUCKET_NAME", "bucket");
+    vi.stubEnv("AWS_ENDPOINT_URL", "https://files.example.com");
+    stubRows([
+      file(1, {
+        isDeleted: true,
+        url: "https://bucket.s3.us-east-1.amazonaws.com/uploads/attachments/old.png",
+      }),
+    ]);
+
+    const result = await run("purge", [1]);
+    vi.unstubAllEnvs();
+
+    expect(result.applied).toEqual([1]);
+    expect(result.files).toMatchObject({ deleted: 0, bytes: 0 });
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it("counts the files a saved version still shows", async () => {
     const row = file(1, { isDeleted: true });
     stubRows([row]);

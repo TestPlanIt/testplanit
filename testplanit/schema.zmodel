@@ -7708,3 +7708,62 @@ model CaseQuarantine {
 
     @@allow('all', auth().access == 'ADMIN')
 }
+
+enum StorageScanStatus {
+    RUNNING
+    COMPLETED
+    FAILED
+}
+
+enum StorageObjectStatus {
+    REFERENCED
+    ORPHAN
+}
+
+// One run of the storage scan started from Admin > Attachments.
+model StorageScan {
+    id           Int               @id @default(autoincrement())
+    status       StorageScanStatus @default(RUNNING)
+    startedAt    DateTime          @default(now()) @db.Timestamptz(6)
+    finishedAt   DateTime?         @db.Timestamptz(6)
+    startedById  String?
+    objectCount  Int               @default(0)
+    objectBytes  BigInt            @default(0)
+    orphanCount  Int               @default(0)
+    orphanBytes  BigInt            @default(0)
+    missingCount Int               @default(0)
+    error        String?
+
+    @@index([startedAt])
+
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// An object the last storage scan found in the bucket.
+model StorageObject {
+    key          String              @id
+    size         BigInt
+    lastModified DateTime            @db.Timestamptz(6)
+    folder       String
+    status       StorageObjectStatus
+    scanId       Int
+
+    @@index([status, folder])
+    @@index([scanId])
+
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// An attachment whose file the last storage scan did not find in the bucket.
+model StorageMissingFile {
+    attachmentId Int    @id
+    key          String
+    scanId       Int
+
+    @@index([scanId])
+
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+}

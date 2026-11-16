@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "父項已刪除",
-        "noParent": "未附加"
+        "noParent": "未附加",
+        "fileMissing": "檔案遺失",
+        "otherHost": "在另一台主機上"
+      },
+      "storage": {
+        "tab": "儲存空間",
+        "neverScanned": "儲存空間尚未掃描。掃描會比較儲存空間中的檔案與資料庫，以查找未使用的檔案和遺失檔案的附件。",
+        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "missingFiles": "{count, plural, other {# 個附件在設定的儲存空間中沒有檔案。}}",
+        "allFolders": "所有資料夾",
+        "status": {
+          "ORPHAN": "孤立",
+          "REFERENCED": "正在使用"
+        },
+        "loadedSelected": "{shown, plural, other {已選取所有 # 個已載入的檔案}}。",
+        "confirmDelete": "{count, plural, =0 {選定的檔案都無法刪除。} one {從儲存空間中刪除此檔案（{size}）？此操作無法復原。} other {從儲存空間中刪除 # 個檔案（{size}）？此操作無法復原。}}",
+        "skipped": "{count, plural, other {# 個選定檔案因正在使用而保留。}}",
+        "deleted": "{count, plural, other {已從儲存空間中刪除 # 個檔案}}"
       },
       "columns": {
         "sharedFile": "共享檔案"
@@ -6458,7 +6475,7 @@
           "restore": "{count, plural, =0 {這些附件都未被刪除。} one {還原此附件？} other {還原 # 個附件？}}",
           "purge": "{count, plural, =0 {只有已刪除的附件才能被清除。請先將其刪除。} one {永久刪除此附件？此操作無法撤銷。} other {永久刪除 # 個附件？此操作無法撤銷。}}"
         },
-        "purgeFiles": "{count, plural, =0 {No stored files are deleted.} one {# stored file ({size}) is deleted.} other {# stored files ({size}) are deleted.}}",
+        "purgeFiles": "{count, plural, =0 {沒有儲存的檔案被刪除。} one {# 個儲存的檔案（{size}）已被刪除。} other {# 個儲存的檔案（{size}）已被刪除。}}",
         "purgeShared": "{count, plural, other {# 個檔案保留在儲存中，因為其他附件使用它們。}}",
         "purgeInVersions": "{count, plural, other {# 個檔案顯示在已保存的版本中，這些版本將無法再打開它們。}}",
         "skipped": "{count, plural, other {# 個已選中的附件保持不變，因為此操作不適用於它們。}}",
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Elasticsearch 設定\n為您的部署配置 Elasticsearch 設定。",
     "elasticsearchReindex": "## 重新建立索引資料\n重建搜尋索引以提升搜尋效能。",
     "queues": "## 背景工作佇列\n監控並管理背景作業處理佇列。",
+    "attachments": "## 附件\n附加到測試案例、執行、結果、工作階段和問題的每個檔案和連結。\n\n- **分離**會從其附加的項目中移除附件\n- **刪除**會將其移至垃圾桶並在儲存空間中保留其檔案\n- **清除**會永久移除已刪除的附件並刪除其檔案，除非另一個附件仍在使用該檔案",
     "trash": "## 垃圾桶\n還原或永久清除系統中已軟刪除的記錄。",
     "userTrashWindow": "## 自助還原窗口\n用戶可以從其個人資料的**垃圾桶**部分還原他們自己刪除的項目的天數。將其設置為 **0** 以關閉自助還原。超出窗口範圍的項目將簡單地停止出現在用戶的垃圾桶中 — 不會刪除任何內容，管理員仍然可以在此處還原或刪除任何內容。",
     "systemWebhooks": "## 系統 Webhooks\n用於處理不與單一專案關聯的系統級事件的出站 Webhook 目標－目前是 SCIM 2.0 使用者和群組生命週期事件。請改用專案設定頁面配置入站和專案範圍的出站 Webhook。",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "管理全域應用程式設定和系統偏好設定。配置預設值、功能開關和系統級行為。"
+        },
+        "attachments": {
+          "content": "查看在整個執行個體上附加的每個檔案和連結，找到未附加或已刪除的內容，並分離、刪除、還原或清除附件。"
         },
         "trash": {
           "title": "系統垃圾",

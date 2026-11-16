@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Übergeordneter Element gelöscht",
-        "noParent": "Nicht angehängt"
+        "noParent": "Nicht angehängt",
+        "fileMissing": "Datei fehlt",
+        "otherHost": "Auf einem anderen Host"
+      },
+      "storage": {
+        "tab": "Speicher",
+        "neverScanned": "Der Speicher wurde noch nicht gescannt. Ein Scan vergleicht die Dateien im Speicher mit der Datenbank, um nicht verwendete Dateien und Anhänge zu finden, deren Datei fehlt.",
+        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# Anhang hat keine Datei im konfigurierten Speicher.} other {# Anhänge haben keine Datei im konfigurierten Speicher.}}",
+        "allFolders": "Alle Ordner",
+        "status": {
+          "ORPHAN": "Verwaist",
+          "REFERENCED": "In Verwendung"
+        },
+        "loadedSelected": "{shown, plural, one {Die geladene Datei ist ausgewählt} other {Alle # geladenen Dateien sind ausgewählt}}.",
+        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} one {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
+        "skipped": "{count, plural, one {# ausgewählte Datei wird in Ruhe gelassen, da sie in Verwendung ist.} other {# ausgewählte Dateien werden in Ruhe gelassen, da sie in Verwendung sind.}}",
+        "deleted": "{count, plural, one {# Datei aus dem Speicher gelöscht} other {# Dateien aus dem Speicher gelöscht}}"
       },
       "columns": {
         "sharedFile": "Gemeinsame Datei"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Elasticsearch-Konfiguration\nKonfigurieren Sie die Elasticsearch-Einstellungen für Ihre Bereitstellung.",
     "elasticsearchReindex": "## Daten neu indizieren\nSuchindizes neu erstellen, um die Suchleistung zu verbessern.",
     "queues": "## Hintergrund-Job-Warteschlangen\nÜberwachung und Verwaltung der Warteschlangen für die Hintergrundverarbeitung.",
+    "attachments": "## Anhänge\nJede Datei und jeder Link, der an Testfälle, Ausführungen, Ergebnisse, Sitzungen und Probleme angehängt ist.\n\n- **Abhängen** entfernt einen Anhang von dem Element, an das er angehängt ist\n- **Löschen** verschiebt ihn in den Papierkorb und behält die Datei im Speicher\n- **Bereinigen** entfernt einen gelöschten Anhang dauerhaft und löscht seine Datei, es sei denn, ein anderer Anhang verwendet diese Datei noch",
     "trash": "## Papierkorb\nStellen Sie soft-gelöschte Datensätze systemweit wieder her oder löschen Sie sie endgültig.",
     "userTrashWindow": "## Self-Service-Wiederherstellungsfenster\nWie viele Tage Benutzer Elemente wiederherstellen können, die sie selbst gelöscht haben, aus dem Abschnitt **Papierkorb** ihres Profils. Setzen Sie es auf **0**, um Self-Service-Wiederherstellung zu deaktivieren. Elemente außerhalb des Fensters werden einfach nicht mehr im Papierkorb des Benutzers angezeigt – nichts wird gelöscht, und Administratoren können hier immer noch alles wiederherstellen oder endgültig löschen.",
     "systemWebhooks": "## System-Webhooks\nAusgehende Webhook-Ziele für Systemereignisse, die keinem einzelnen Projekt zugeordnet sind – aktuell die Lebenszyklusereignisse von SCIM 2.0-Benutzern und -Gruppen. Konfigurieren Sie eingehende und projektbezogene ausgehende Webhooks stattdessen auf der Projekteinstellungsseite.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Verwalten Sie globale Anwendungseinstellungen und Systempräferenzen. Konfigurieren Sie Standardwerte, Funktionsumschalter und systemweite Verhaltensweisen."
+        },
+        "attachments": {
+          "content": "Siehe jeden Datei- und Link-Anhang überall in der Instanz, finde nicht angehängte oder gelöschte Dateien und Anhänge, und hänge Anhänge ab, lösche, stelle sie wieder her oder bereinige sie."
         },
         "trash": {
           "title": "System-Papierkorb",

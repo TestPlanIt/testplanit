@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "Bovenliggend item verwijderd",
-        "noParent": "Niet gekoppeld"
+        "noParent": "Niet gekoppeld",
+        "fileMissing": "Bestand ontbreekt",
+        "otherHost": "Op een andere host"
+      },
+      "storage": {
+        "tab": "Opslag",
+        "neverScanned": "Opslag is nog niet gescand. Een scan vergelijkt de bestanden in de opslag met de database om bestanden te vinden die niet worden gebruikt en bijlagen waarvan het bestand ontbreekt.",
+        "summary": "{objects, plural, one {# bestand} other {# bestanden}} in opslag ({size}). {orphans, plural, =0 {Geen zijn verweest.} one {# is verweest ({orphanSize}).} other {# zijn verweest ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# bijlage heeft geen bestand in de geconfigureerde opslag.} other {# bijlagen hebben geen bestand in de geconfigureerde opslag.}}",
+        "allFolders": "Alle mappen",
+        "status": {
+          "ORPHAN": "Verweest",
+          "REFERENCED": "In gebruik"
+        },
+        "loadedSelected": "{shown, plural, one {Het geladen bestand is geselecteerd} other {Alle # geladen bestanden zijn geselecteerd}}.",
+        "confirmDelete": "{count, plural, =0 {Geen van de geselecteerde bestanden kan worden verwijderd.} one {Dit bestand ({size}) uit de opslag verwijderen? Dit kan niet ongedaan worden gemaakt.} other {# bestanden ({size}) uit de opslag verwijderen? Dit kan niet ongedaan worden gemaakt.}}",
+        "skipped": "{count, plural, one {# geselecteerd bestand wordt alleen gelaten omdat het in gebruik is.} other {# geselecteerde bestanden worden alleen gelaten omdat ze in gebruik zijn.}}",
+        "deleted": "{count, plural, one {# bestand verwijderd uit opslag} other {# bestanden verwijderd uit opslag}}"
       },
       "columns": {
         "sharedFile": "Gedeeld bestand"
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Elasticsearch-configuratie\nConfigureer Elasticsearch-instellingen voor uw implementatie.",
     "elasticsearchReindex": "## Gegevens opnieuw indexeren\nHerbouw zoekindexen voor verbeterde zoekprestaties.",
     "queues": "## Achtergrondtaakwachtrijen\nAchtergrondtaakverwerkingswachtrijen bewaken en beheren.",
+    "attachments": "## Bijlagen\nElk bestand en elke koppeling die aan testcases, runs, resultaten, sessies en problemen is gekoppeld.\n\n- **Loskoppelen** verwijdert een bijlage van het item waaraan deze is gekoppeld\n- **Verwijderen** verplaatst het naar de Prullenbak en behoudt het bestand in de opslag\n- **Leegmaken** verwijdert een verwijderde bijlage permanent en verwijdert het bestand, tenzij een ander bijlage dat bestand nog gebruikt",
     "trash": "## Prullenbak\nHerstel of verwijder permanent zacht-verwijderde records in het gehele systeem.",
     "userTrashWindow": "## Zelfservice herstelbereik\nHoeveel dagen gebruikers items kunnen herstellen die zij zelf hebben verwijderd, in de sectie **Prullenbak** van hun profiel. Stel het in op **0** om zelfservice herstellen uit te schakelen. Items buiten het bereik verdwijnen simpelweg uit de prullenbak van de gebruiker — niets wordt permanent verwijderd, en beheerders kunnen hier nog steeds alles herstellen of permanent verwijderen.",
     "systemWebhooks": "## Systeemwebhooks\nUitgaande webhookbestemmingen voor systeemgebeurtenissen die niet aan een specifiek project zijn gekoppeld — momenteel de SCIM 2.0-gebruikers- en groepslevenscyclusgebeurtenissen. Configureer in plaats daarvan inkomende en projectgebonden uitgaande webhooks via de projectinstellingenpagina.",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "Beheer globale applicatie-instellingen en systeemvoorkeuren. Configureer standaardwaarden, functie-instellingen en systeembreed gedrag."
+        },
+        "attachments": {
+          "content": "Bekijk elk bestand en elke koppeling die ergens op het exemplaar is gekoppeld, zoek wat niet is gekoppeld of verwijderd, en koppel los, verwijder, herstel of leeg bijlagen."
         },
         "trash": {
           "title": "Systeemprullenbak",

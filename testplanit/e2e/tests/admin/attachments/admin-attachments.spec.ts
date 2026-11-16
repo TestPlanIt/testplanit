@@ -164,12 +164,13 @@ test.describe("Admin attachments", () => {
       );
     });
 
-    await test.step("Detach one from its details", async () => {
+    await test.step("Open one's details, then detach it from its row", async () => {
       await page.getByTestId(`attachment-detail-open-${first}`).click();
       await expect(
         page.getByTestId(`attachment-detail-${first}`)
       ).toBeVisible();
-      await confirmAction(page, "attachment-detail-detach");
+      await page.keyboard.press("Escape");
+      await confirmAction(page, `attachment-row-detach-${first}`);
       await expect(page.getByTestId(`attachment-status-${first}`)).toHaveText(
         "Unattached",
         { timeout: 15000 }
@@ -258,5 +259,26 @@ test.describe("Admin attachments", () => {
         false
       );
     });
+  });
+
+  test("opens the Storage tab and puts it in the address", async ({ page }) => {
+    await page.goto("/en-US/admin/attachments");
+    await page.getByTestId("storage-tab").click();
+    await expect(page).toHaveURL(/[?&]tab=storage/);
+
+    const view = page.getByTestId("storage-view");
+    await expect(view).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("storage-scan-status")).toBeVisible();
+    await expect(page.getByTestId("storage-scan-start")).toBeEnabled();
+    await expect(page.getByTestId("storage-status-filter")).toContainText(
+      "All Statuses"
+    );
+    await expect(page.getByTestId("storage-folder-filter")).toContainText(
+      "All folders"
+    );
+
+    // Back on the first tab the attachment list is still there.
+    await page.getByTestId("attachments-tab").click();
+    await expect(page.getByTestId("attachments-status-filter")).toBeVisible();
   });
 });

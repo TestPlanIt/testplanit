@@ -6429,7 +6429,24 @@
       },
       "status": {
         "parentDeleted": "父项已删除",
-        "noParent": "未附加"
+        "noParent": "未附加",
+        "fileMissing": "文件丢失",
+        "otherHost": "在另一台主机上"
+      },
+      "storage": {
+        "tab": "存储",
+        "neverScanned": "存储尚未扫描。扫描会将存储中的文件与数据库进行比较，以查找未被使用的文件和缺少文件的附件。",
+        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "missingFiles": "{count, plural, one {# 个附件在已配置的存储中没有文件。} other {# 个附件在已配置的存储中没有文件。}}",
+        "allFolders": "所有文件夹",
+        "status": {
+          "ORPHAN": "孤立",
+          "REFERENCED": "正在使用"
+        },
+        "loadedSelected": "{shown, plural, one {已加载的文件已选中} other {所有 # 个已加载的文件已选中}}。",
+        "confirmDelete": "{count, plural, =0 {所有选定的文件都无法删除。} one {从存储中删除此文件（{size}）？此操作无法撤销。} other {从存储中删除 # 个文件（{size}）？此操作无法撤销。}}",
+        "skipped": "{count, plural, one {# 个选定的文件保持不变，因为它正在使用。} other {# 个选定的文件保持不变，因为它们正在使用。}}",
+        "deleted": "{count, plural, one {# 个文件已从存储中删除} other {# 个文件已从存储中删除}}"
       },
       "columns": {
         "sharedFile": "共享文件"
@@ -6458,7 +6475,7 @@
           "restore": "{count, plural, =0 {这些附件中没有一个被删除。} other {恢复 # 个附件？}}",
           "purge": "{count, plural, =0 {只有已删除的附件可以清除。请先删除它们。} other {永久删除 # 个附件？此操作无法撤销。}}"
         },
-        "purgeFiles": "{count, plural, =0 {No stored files are deleted.} one {# stored file ({size}) is deleted.} other {# stored files ({size}) are deleted.}}",
+        "purgeFiles": "{count, plural, =0 {没有存储文件被删除。} one {# 个存储文件（{size}）已删除。} other {# 个存储文件（{size}）已删除。}}",
         "purgeShared": "{count, plural, other {# 个文件保留在存储中，因为其他附件使用它们。}}",
         "purgeInVersions": "{count, plural, other {# 个文件显示在已保存的版本中，这些版本将不再能够打开它们。}}",
         "skipped": "{count, plural, other {# 个选定的附件保留原样，因为此操作不适用于它们。}}",
@@ -8104,6 +8121,7 @@
     "elasticsearchConfig": "## Elasticsearch 配置\n为您的部署配置 Elasticsearch 设置。",
     "elasticsearchReindex": "## 重建索引数据\n重建搜索索引以提高搜索性能。",
     "queues": "## 后台作业队列\n监控和管理后台作业处理队列。",
+    "attachments": "## 附件\n附加到测试用例、运行、结果、会话和问题的每个文件和链接。\n\n- **分离**从其附加的项中删除附件\n- **删除**将其移到垃圾箱并将其文件保留在存储中\n- **清除**永久删除已删除的附件并删除其文件，除非另一个附件仍使用该文件",
     "trash": "## 回收站\n恢复或永久清除系统中已软删除的记录。",
     "userTrashWindow": "## 自助恢复窗口\n用户可以从其个人资料的**垃圾箱**部分恢复自己删除的项目的天数。设置为**0**以关闭自助恢复。超出时间范围的项目将停止出现在用户的垃圾箱中——不会清除任何内容，管理员仍可在此处恢复或清除任何内容。",
     "systemWebhooks": "## 系统 Webhook\n用于处理不与单个项目关联的系统级事件的出站 Webhook 目标——目前是 SCIM 2.0 用户和组生命周期事件。请改用项目设置页面配置入站和项目范围的出站 Webhook。",
@@ -8688,6 +8706,9 @@
         },
         "appConfig": {
           "content": "管理全局应用程序设置和系统偏好设置。配置默认值、功能开关和系统级行为。"
+        },
+        "attachments": {
+          "content": "查看在整个实例中附加的每个文件和链接，查找未附加或已删除的内容，以及分离、删除、恢复或清除附件。"
         },
         "trash": {
           "title": "系统垃圾",
