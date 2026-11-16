@@ -1,3 +1,10 @@
+## [1.2.0-beta.50](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.49...v1.2.0-beta.50) (2026-11-16)
+
+### Bug Fixes
+
+* **notifications:** keep notification rows inside the panel width ([dd52244](https://github.com/TestPlanIt/testplanit/commit/dd52244675fcc3db3cff6f2a4fd15340da66766b))
+* **repository:** keep test case edits when the case refetches mid-edit ([d1ca4cd](https://github.com/TestPlanIt/testplanit/commit/d1ca4cdda4ae7a0ff074d4a0fdbd11492c6adc48))
+
 ## [1.2.0-beta.49](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.48...v1.2.0-beta.49) (2026-11-13)
 
 ### Features
