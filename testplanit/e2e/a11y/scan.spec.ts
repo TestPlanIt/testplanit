@@ -9,6 +9,7 @@ import {
   type A11yRoute,
   type A11yFixtures,
   type InteractiveState,
+  type ScriptedState,
 } from "./routes";
 import { primaryCriterion, isWcagViolation } from "./wcag";
 
@@ -69,8 +70,10 @@ interface Violation {
   nodes: ViolationNode[];
 }
 interface StateResult {
-  state: string; // "initial" | "dialog" | "menu"
+  state: string; // "initial", a generic kind, or a scripted state's label
   reached: boolean;
+  /** Why a scripted state was not reached: the step that found nothing. */
+  note?: string;
   url: string;
   wcagViolations: Violation[];
   bestPracticeViolations: Violation[];
@@ -132,10 +135,23 @@ type AxeViolation = {
 // there is nothing left to exclude.
 const AXE_EXCLUDE_SELECTORS: string[] = [];
 
+/**
+ * Rules switched off while a select is open. Radix marks the rest of the page
+ * `aria-hidden` for as long as its list is showing and keeps focus inside the
+ * list, so axe's "focusable content inside aria-hidden" fires on every
+ * control behind it even though none can be reached. It says nothing about
+ * the list, which is what this state is opened to check.
+ */
+const OPEN_SELECT_DISABLED_RULES = ["aria-hidden-focus"];
+
 async function runAxe(
-  page: Page
+  page: Page,
+  scope?: string,
+  disabledRules: string[] = []
 ): Promise<{ wcag: Violation[]; best: Violation[] }> {
   let builder = new AxeBuilder({ page }).withTags(AXE_TAGS);
+  if (scope) builder = builder.include(scope);
+  if (disabledRules.length > 0) builder = builder.disableRules(disabledRules);
   for (const sel of AXE_EXCLUDE_SELECTORS) builder = builder.exclude(sel);
   const results = await builder.analyze();
   const all = results.violations as unknown as AxeViolation[];
@@ -293,26 +309,125 @@ async function openMenu(page: Page): Promise<boolean> {
   return true;
 }
 
+/** Best-effort: open the first select or combobox. Returns whether one opened. */
+async function openSelect(page: Page): Promise<boolean> {
+  const trigger = page
+    .locator('main button[role="combobox"]:not([disabled])')
+    .first();
+  if (!(await trigger.isVisible({ timeout: 1500 }).catch(() => false)))
+    return false;
+  await trigger.click({ timeout: 2000 }).catch(() => {});
+  const list = page.locator('[role="listbox"]').first();
+  if (!(await list.isVisible({ timeout: 2500 }).catch(() => false)))
+    return false;
+  // The enter animation runs on the floating panel around the list, not on
+  // the list itself.
+  await settleAnimation(page, "[data-radix-popper-content-wrapper]");
+  return true;
+}
+
+/**
+ * Best-effort: open the confirmation behind the first delete button. Only
+ * ever opened, never confirmed; Escape cancels it afterwards.
+ */
+async function openConfirm(page: Page): Promise<boolean> {
+  const trigger = page
+    .locator(
+      "main button:has(svg.lucide-trash-2):not([disabled]), main button:has(svg.lucide-trash):not([disabled])"
+    )
+    .first();
+  if (!(await trigger.isVisible({ timeout: 1500 }).catch(() => false)))
+    return false;
+  await trigger.click({ timeout: 2000 }).catch(() => {});
+  const dialog = page.locator('[role="alertdialog"]').first();
+  if (!(await dialog.isVisible({ timeout: 3000 }).catch(() => false)))
+    return false;
+  await settleAnimation(page, '[role="alertdialog"]');
+  return true;
+}
+
+/**
+ * Walk a scripted state's steps. Returns null when what it opens appeared,
+ * otherwise what went wrong, so a broken selector is told apart from a
+ * surface that did not open.
+ */
+async function runScript(
+  page: Page,
+  script: ScriptedState
+): Promise<string | null> {
+  for (const step of script.steps) {
+    const selector = "click" in step ? step.click : step.hover;
+    const target = page.locator(selector).first();
+    if (!(await target.isVisible({ timeout: 2000 }).catch(() => false)))
+      return `nothing visible matches ${selector}`;
+    await target.scrollIntoViewIfNeeded({ timeout: 2000 }).catch(() => {});
+    if ("click" in step) await target.click({ timeout: 2000 }).catch(() => {});
+    else await target.hover({ timeout: 2000 }).catch(() => {});
+  }
+  const opened = page.locator(script.opens).first();
+  let visible = await opened.isVisible({ timeout: 1500 }).catch(() => false);
+  const last = script.steps.at(-1);
+  if (!visible && last && "hover" in last) {
+    // A tooltip that missed the pointer (the page scrolled under it, or the
+    // move landed before the trigger was listening) also opens on a second
+    // pass of the pointer, and on keyboard focus.
+    const target = page.locator(last.hover).first();
+    await page.mouse.move(0, 0).catch(() => {});
+    await target.hover({ timeout: 2000 }).catch(() => {});
+    visible = await opened.isVisible({ timeout: 1500 }).catch(() => false);
+    if (!visible) {
+      await target.focus({ timeout: 2000 }).catch(() => {});
+      visible = await opened.isVisible({ timeout: 1500 }).catch(() => false);
+    }
+  }
+  if (!visible) return `the steps ran but ${script.opens} did not appear`;
+  await settleAnimation(page, script.opens);
+  return null;
+}
+
+/** Close whatever a state opened, so the next one starts from the page. */
+async function closeOverlays(page: Page): Promise<void> {
+  await page.mouse.move(0, 0).catch(() => {});
+  for (let i = 0; i < 2; i++) {
+    await page.keyboard.press("Escape").catch(() => {});
+    await page.waitForTimeout(150);
+  }
+}
+
 async function scanInteraction(
   page: Page,
   kind: InteractiveState
 ): Promise<StateResult | null> {
-  const reached =
-    kind === "dialog" ? await openDialog(page) : await openMenu(page);
+  const scripted = typeof kind === "string" ? null : kind;
+  const state = scripted ? scripted.state : (kind as string);
+  let reached = false;
+  let note: string | undefined;
+  if (scripted) {
+    note = (await runScript(page, scripted)) ?? undefined;
+    reached = !note;
+  } else if (kind === "dialog") reached = await openDialog(page);
+  else if (kind === "menu") reached = await openMenu(page);
+  else if (kind === "select") reached = await openSelect(page);
+  else if (kind === "confirm") reached = await openConfirm(page);
   if (!reached) {
+    await closeOverlays(page);
     return {
-      state: kind,
+      state,
       reached: false,
+      note,
       url: page.url(),
       wcagViolations: [],
       bestPracticeViolations: [],
     };
   }
-  const { wcag, best } = await runAxe(page);
-  await page.keyboard.press("Escape").catch(() => {});
-  await page.waitForTimeout(200);
+  const { wcag, best } = await runAxe(
+    page,
+    scripted?.scope,
+    kind === "select" ? OPEN_SELECT_DISABLED_RULES : []
+  );
+  await closeOverlays(page);
   return {
-    state: kind,
+    state,
     reached: true,
     url: page.url(),
     wcagViolations: wcag,

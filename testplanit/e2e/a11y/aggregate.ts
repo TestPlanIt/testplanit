@@ -336,7 +336,7 @@ function build(): { md: string; json: unknown; blockingCount: number } {
   const unreached = interactionStates.filter((x) => !x.s.reached);
   if (interactionStates.length) {
     L.push(
-      `**Interactive-state scans:** ${interactionStates.length - unreached.length}/${interactionStates.length} reached (dialog/menu opened and re-scanned).`
+      `**Interactive-state scans:** ${interactionStates.length - unreached.length}/${interactionStates.length} reached (dialog, menu, select, confirmation or tooltip opened and re-scanned).`
     );
     L.push("");
   }

@@ -12,6 +12,7 @@
  * the Elasticsearch node so search-driven views are populated.
  */
 import { spawnSync } from "child_process";
+import fs from "fs";
 import path from "path";
 
 const cwd = path.resolve(__dirname, "..", ".."); // -> testplanit/
@@ -26,6 +27,18 @@ env.ELASTICSEARCH_NODE = env.ELASTICSEARCH_NODE || "http://192.168.1.8:9221";
 env.pnpm_config_verify_deps_before_run = "false";
 
 const playwrightArgs = ["test", "--config", "e2e/a11y/playwright.config.ts"];
+if (!route) {
+  // The report is built from every file in results/, so a full or smoke run
+  // starts from none. Left in place, an earlier run's files for routes this
+  // run does not scan are counted as if they were its findings. A single-route
+  // run keeps them: it refreshes one route inside an existing report.
+  const resultsDir = path.join(__dirname, "results");
+  if (fs.existsSync(resultsDir)) {
+    for (const file of fs.readdirSync(resultsDir)) {
+      if (file.endsWith(".json")) fs.rmSync(path.join(resultsDir, file));
+    }
+  }
+}
 if (route) {
   // Keep the setup project's test in the selection so fixtures still seed.
   playwrightArgs.push("-g", `(seed a11y fixture data|${route})`);

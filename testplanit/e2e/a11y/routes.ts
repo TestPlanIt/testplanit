@@ -26,7 +26,44 @@ export interface A11yFixtures {
  * Implemented defensively in scan.spec.ts — a state that can't be reached is
  * recorded as "not reachable", never a hard failure.
  */
-export type InteractiveState = "dialog" | "menu";
+export type InteractiveState =
+  "dialog" | "menu" | "select" | "confirm" | ScriptedState;
+
+/** One thing the scanner does to the page on the way to a state. */
+export type InteractionStep = { click: string } | { hover: string };
+
+/**
+ * A state reached by named steps rather than a best-effort guess: hover this
+ * bar, open that row's menu and pick an item. For surfaces the generic kinds
+ * cannot find, such as a tooltip or a dialog two clicks deep.
+ */
+export interface ScriptedState {
+  /** Label for the state in the results; unique within its route. */
+  state: string;
+  /** Selectors acted on in order; each takes the first visible match. */
+  steps: InteractionStep[];
+  /** Selector that must be visible afterwards, or the state was not reached. */
+  opens: string;
+  /** Limit axe to this selector, for a surface that floats over the page. */
+  scope?: string;
+}
+
+/** Radix renders every tooltip, popover and menu inside this wrapper. */
+const POPPER = "[data-radix-popper-content-wrapper]";
+
+/** The tooltip shown by hovering `hover`. Only the tooltip is scanned. */
+export function tooltip(state: string, hover: string): ScriptedState {
+  return { state, steps: [{ hover }], opens: POPPER, scope: POPPER };
+}
+
+/** The dialog opened by clicking through `clicks` in order. */
+export function dialogVia(state: string, ...clicks: string[]): ScriptedState {
+  return {
+    state,
+    steps: clicks.map((click) => ({ click })),
+    opens: '[role="dialog"], [role="alertdialog"]',
+  };
+}
 
 export interface A11yRoute {
   /** Unique kebab slug — also the per-route results filename. */
@@ -43,7 +80,13 @@ export interface A11yRoute {
   needs?: (keyof A11yFixtures)[];
   /** This page may redirect for a logged-in admin — record the landed URL. */
   mayRedirect?: boolean;
-  /** Cheap interactive states to additionally scan on this route. */
+  /**
+   * Interactive states to additionally scan on this route. The generic kinds
+   * find their own trigger: "dialog" (the primary add/new button), "menu" (a
+   * row or action menu), "select" (the first select or combobox) and
+   * "confirm" (the first delete button's confirmation). They only ever open
+   * things and close them again with Escape.
+   */
   interactions?: InteractiveState[];
   /** Optional extra wait (ms) for chart/editor-heavy pages to settle. */
   settleMs?: number;
@@ -282,7 +325,15 @@ export const routes: A11yRoute[] = [
     authRequired: true,
     needs: ["projectId"],
     sanity: APP_SHELL,
-    interactions: ["dialog"],
+    interactions: [
+      "dialog",
+      tooltip("status-bar-tooltip", "[data-status-bar] > *"),
+      dialogVia(
+        "duplicate-dialog",
+        "button:has(svg.lucide-ellipsis-vertical)",
+        '[data-testid^="testrun-duplicate-"]'
+      ),
+    ],
   },
   {
     name: "run-detail",
@@ -292,7 +343,7 @@ export const routes: A11yRoute[] = [
     needs: ["projectId", "runId"],
     sanity: APP_SHELL,
     settleMs: 1000,
-    interactions: ["menu"],
+    interactions: ["menu", "select"],
   },
 
   // ----- Sessions -----
@@ -303,7 +354,7 @@ export const routes: A11yRoute[] = [
     authRequired: true,
     needs: ["projectId"],
     sanity: APP_SHELL,
-    interactions: ["dialog"],
+    interactions: ["dialog", "select"],
   },
   {
     name: "session-detail",
@@ -333,7 +384,10 @@ export const routes: A11yRoute[] = [
     authRequired: true,
     needs: ["projectId"],
     sanity: APP_SHELL,
-    interactions: ["dialog"],
+    interactions: [
+      "dialog",
+      tooltip("summary-bar-tooltip", "[data-status-bar] > *"),
+    ],
   },
   {
     name: "milestone-detail",
@@ -342,6 +396,7 @@ export const routes: A11yRoute[] = [
     authRequired: true,
     needs: ["projectId", "milestoneId"],
     sanity: APP_SHELL,
+    interactions: [tooltip("summary-bar-tooltip", "[data-status-bar] > *")],
   },
   {
     name: "milestone-global",
@@ -480,6 +535,7 @@ export const routes: A11yRoute[] = [
     needs: ["projectId"],
     sanity: APP_SHELL,
     settleMs: 1500,
+    interactions: ["select"],
   },
 
   // ----- Admin -----
@@ -497,7 +553,7 @@ export const routes: A11yRoute[] = [
     path: () => "/admin/users",
     authRequired: true,
     sanity: APP_SHELL,
-    interactions: ["dialog", "menu"],
+    interactions: ["dialog", "menu", "select"],
   },
   {
     name: "admin-groups",
@@ -505,6 +561,7 @@ export const routes: A11yRoute[] = [
     path: () => "/admin/groups",
     authRequired: true,
     sanity: APP_SHELL,
+    interactions: ["dialog", "confirm"],
   },
   {
     name: "admin-roles",
@@ -512,6 +569,7 @@ export const routes: A11yRoute[] = [
     path: () => "/admin/roles",
     authRequired: true,
     sanity: APP_SHELL,
+    interactions: ["dialog", "confirm"],
   },
   {
     name: "admin-sso",
@@ -583,7 +641,7 @@ export const routes: A11yRoute[] = [
     path: () => "/admin/fields",
     authRequired: true,
     sanity: APP_SHELL,
-    interactions: ["dialog"],
+    interactions: ["dialog", "select", "confirm"],
   },
   {
     name: "admin-configurations",
@@ -591,6 +649,7 @@ export const routes: A11yRoute[] = [
     path: () => "/admin/configurations",
     authRequired: true,
     sanity: APP_SHELL,
+    interactions: ["dialog", "confirm"],
   },
   {
     name: "admin-security",
@@ -612,6 +671,7 @@ export const routes: A11yRoute[] = [
     path: () => "/admin/statuses",
     authRequired: true,
     sanity: APP_SHELL,
+    interactions: ["dialog", "confirm"],
   },
   {
     name: "admin-tags",
@@ -619,6 +679,7 @@ export const routes: A11yRoute[] = [
     path: () => "/admin/tags",
     authRequired: true,
     sanity: APP_SHELL,
+    interactions: ["dialog", "confirm"],
   },
   {
     name: "admin-shares",
@@ -640,6 +701,7 @@ export const routes: A11yRoute[] = [
     path: () => "/admin/workflows",
     authRequired: true,
     sanity: APP_SHELL,
+    interactions: ["dialog", "confirm"],
   },
   {
     name: "admin-audit-logs",
@@ -675,6 +737,7 @@ export const routes: A11yRoute[] = [
     path: () => "/admin/milestones",
     authRequired: true,
     sanity: APP_SHELL,
+    interactions: ["dialog", "confirm"],
   },
   {
     name: "admin-root-causes",
