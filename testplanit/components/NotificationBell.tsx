@@ -345,7 +345,7 @@ export function NotificationBell({
           </Button>
         </div>
       </div>
-      <ScrollArea className="h-[400px]">
+      <ScrollArea className="h-[400px] [&_[data-radix-scroll-area-viewport]>div]:block! [&_[data-radix-scroll-area-viewport]>div]:max-w-full!">
         {notifications && notifications.length > 0 ? (
           notifications.map((notification) => (
             <NotificationItem
