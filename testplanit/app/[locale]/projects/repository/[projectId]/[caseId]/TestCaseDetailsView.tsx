@@ -146,6 +146,7 @@ import {
   pickerOwnedIssueIds,
   planCaseIssueLinkWrite,
 } from "~/utils/caseIssueLinkWrite";
+import { shouldResetCaseForm } from "~/utils/caseFormReset";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { ExtendedCases } from "../columns";
@@ -1117,9 +1118,25 @@ export function TestCaseDetailsView({
     }
   }, [testcase, templates, setSelectedTemplateId]);
 
+  // The template the form was last reset for; undefined until the first reset.
+  const lastResetTemplateIdRef = useRef<number | null | undefined>(undefined);
+
   // Effect 2: React to selectedTemplateId changes to update schema and form defaults
   useEffect(() => {
     if (!isFormInitialized.current || !testcase || !templates) return;
+
+    // A background refetch mid-edit must not reset the form — see
+    // shouldResetCaseForm for why those runs happen so often.
+    if (
+      !shouldResetCaseForm({
+        isEditMode,
+        selectedTemplateId,
+        lastResetTemplateId: lastResetTemplateIdRef.current,
+        hasCarriedValues: carriedValuesRef.current !== null,
+      })
+    ) {
+      return;
+    }
 
     const selectedTemplate = templates.find(
       (template) => template.id === selectedTemplateId
@@ -1201,6 +1218,7 @@ export function TestCaseDetailsView({
         }
       }
       reset(nextValues);
+      lastResetTemplateIdRef.current = selectedTemplateId;
       // The carried values already hold the restored draft, so they are what
       // a later run has to bring back.
       if (restoredDraftValuesRef.current) {
@@ -1210,14 +1228,18 @@ export function TestCaseDetailsView({
     }
 
     reset(defaultValues);
+    lastResetTemplateIdRef.current = selectedTemplateId;
     // Re-apply a restored draft on the far side of the reset above, every time
     // this effect runs. The baseline stays the case's own values, so the
     // restored content reads as unsaved work and keeps auto-saving.
     if (restoredDraftValuesRef.current) {
       reset(restoredDraftValuesRef.current);
     }
+    // isEditMode: leaving edit mode (Cancel, Save) resets to the saved case
+    // even when the template did not change.
   }, [
     selectedTemplateId,
+    isEditMode,
     testcase,
     templates,
     reset,
