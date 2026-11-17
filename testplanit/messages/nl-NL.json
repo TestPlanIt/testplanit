@@ -722,6 +722,7 @@
       "twoFactorSetup": "Tweefactorauthenticatie-instelling",
       "verifyEmail": "E-mailadres verifiëren",
       "trialExpired": "Proefperiode verlopen",
+      "instanceSuspended": "Instantie onderbroken",
       "linkSsoAccount": "SSO-account koppelen",
       "userProfile": "Gebruikersprofiel",
       "tagDetails": "Labeldetails",
@@ -10197,6 +10198,14 @@
     "nextSteps": "Upgrade om TestPlanIt te blijven gebruiken en toegang tot uw testgegevens te krijgen.",
     "pricingPlans": "Prijsplannen",
     "dataRetention": "Je testgegevens worden veilig opgeslagen en zijn beschikbaar wanneer je je account upgradet."
+  },
+  "InstanceSuspended": {
+    "title": "Deze instantie is gepauzeerd",
+    "description": "Toegang is onderbroken omdat het abonnement voor deze TestPlanIt-instantie niet is betaald of is verlopen.",
+    "nextSteps": "Als u deze instantie beheert, betaalt u de openstaande factuur of start u een plan in de factureringsportal en de toegang wordt automatisch binnen enkele minuten hersteld. Iedereen anders: neem contact op met uw instantiebeheerder.",
+    "billingPortal": "Factureringsportal openen",
+    "contactUs": "Contact opnemen met TestPlanIt",
+    "dataRetention": "Je projecten, testcases en resultaten blijven exact zoals ze waren. Niets wordt verwijderd terwijl een instantie is gepauzeerd."
   },
   "parameters": {
     "configureButtonEmpty": "Configureer parameters",

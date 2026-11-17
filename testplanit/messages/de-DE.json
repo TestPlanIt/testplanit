@@ -722,6 +722,7 @@
       "twoFactorSetup": "Zwei-Faktor-Einrichtung",
       "verifyEmail": "E-Mail-Adresse bestätigen",
       "trialExpired": "Probezeit abgelaufen",
+      "instanceSuspended": "Instanz ausgesetzt",
       "linkSsoAccount": "SSO-Konto verknüpfen",
       "userProfile": "Benutzerprofil",
       "tagDetails": "Tag-Details",
@@ -10197,6 +10198,14 @@
     "nextSteps": "Führen Sie ein Upgrade durch, um TestPlanIt weiterhin zu nutzen und auf Ihre Testdaten zuzugreifen.",
     "pricingPlans": "Preispläne",
     "dataRetention": "Ihre Testdaten sind sicher gespeichert und stehen Ihnen nach dem Upgrade Ihres Kontos zur Verfügung."
+  },
+  "InstanceSuspended": {
+    "title": "Diese Instanz ist pausiert",
+    "description": "Der Zugriff wurde ausgesetzt, da das Abonnement für diese TestPlanIt-Instanz unbezahlt ist oder beendet wurde.",
+    "nextSteps": "Wenn Sie diese Instanz verwalten, bezahlen Sie die offene Rechnung oder starten Sie einen Plan im Abrechnungsportal und der Zugriff wird automatisch wiederhergestellt. Alle anderen: Bitte kontaktieren Sie Ihren Instanzadministrator.",
+    "billingPortal": "Abrechnungsportal öffnen",
+    "contactUs": "Kontaktieren Sie TestPlanIt",
+    "dataRetention": "Ihre Projekte, Testfälle und Ergebnisse werden genau wie zuvor beibehalten. Während eine Instanz pausiert ist, wird nichts gelöscht."
   },
   "parameters": {
     "configureButtonEmpty": "Parameter konfigurieren",

@@ -722,6 +722,7 @@
       "twoFactorSetup": "Konfiguracja dwuskładnikowa",
       "verifyEmail": "Zweryfikuj adres e-mail",
       "trialExpired": "Okres próbny wygasł",
+      "instanceSuspended": "Instancja wstrzymana",
       "linkSsoAccount": "Połącz konto SSO",
       "userProfile": "Profil użytkownika",
       "tagDetails": "Szczegóły tagu",
@@ -10197,6 +10198,14 @@
     "nextSteps": "Aby kontynuować korzystanie z TestPlanIt i uzyskać dostęp do swoich danych testowych, dokonaj aktualizacji.",
     "pricingPlans": "Plany cenowe",
     "dataRetention": "Twoje dane testowe są bezpiecznie przechowywane i będą dostępne po uaktualnieniu konta."
+  },
+  "InstanceSuspended": {
+    "title": "Ta instancja jest wstrzymana",
+    "description": "Dostęp został wstrzymany, ponieważ subskrypcja dla tej instancji TestPlanIt jest nieopłacona lub wygasła.",
+    "nextSteps": "Jeśli zarządzasz tą instancją, opłać otwartą fakturę lub rozpocznij plan w portalu rozliczeniowym, a dostęp zostanie przywrócony automatycznie w ciągu kilku minut. Wszyscy pozostali: prosimy o kontakt z administratorem instancji.",
+    "billingPortal": "Otwórz portal rozliczeniowy",
+    "contactUs": "Skontaktuj się z TestPlanIt",
+    "dataRetention": "Twoje projekty, przypadki testowe i wyniki są zachowywane dokładnie tak jak były. Nic nie zostaje usunięte, gdy instancja jest wstrzymana."
   },
   "parameters": {
     "configureButtonEmpty": "Konfiguruj parametry",

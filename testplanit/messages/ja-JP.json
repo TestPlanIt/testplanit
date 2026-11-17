@@ -722,6 +722,7 @@
       "twoFactorSetup": "二段階認証の設定",
       "verifyEmail": "メールアドレスを確認する",
       "trialExpired": "試用期間が終了しました",
+      "instanceSuspended": "インスタンス一時停止中",
       "linkSsoAccount": "SSOアカウントをリンクする",
       "userProfile": "ユーザープロフィール",
       "tagDetails": "タグの詳細",
@@ -10197,6 +10198,14 @@
     "nextSteps": "TestPlanItをアップグレードして、引き続き使用し、テストデータにアクセスしてください。",
     "pricingPlans": "料金プラン",
     "dataRetention": "テスト データは安全に保存され、アカウントをアップグレードすると利用できるようになります。"
+  },
+  "InstanceSuspended": {
+    "title": "このインスタンスは一時停止されています",
+    "description": "このTestPlanItインスタンスのサブスクリプションが未払いまたは終了しているため、アクセスが一時停止されています。",
+    "nextSteps": "このインスタンスを管理している場合は、請求ポータルで未払い請求書を支払うか、プランを開始してください。アクセスは数分以内に自動的に復元されます。それ以外の場合は、インスタンス管理者にお問い合わせください。",
+    "billingPortal": "請求ポータルを開く",
+    "contactUs": "TestPlanItにお問い合わせ",
+    "dataRetention": "プロジェクト、テストケース、結果は以前のままの状態で保持されます。インスタンスが一時停止されている間は、何も削除されません。"
   },
   "parameters": {
     "configureButtonEmpty": "パラメータを設定する",
