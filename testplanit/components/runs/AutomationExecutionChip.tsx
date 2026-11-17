@@ -152,7 +152,7 @@ export function AutomationExecutionChip({
         </div>
       )}
       {latest.error && (
-        <div className="text-destructive">
+        <div className="font-semibold">
           {tCommon("errors.error")}: {latest.error}
         </div>
       )}
