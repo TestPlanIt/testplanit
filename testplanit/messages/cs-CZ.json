@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Náhled není k dispozici",
+      "blocked": "Tento soubor nelze zobrazit náhled, protože je uložen na jiném hostiteli.",
       "tooLarge": "Tento soubor je příliš velký pro zobrazení náhledu.",
       "empty": "Tento dokument se zdá být prázdný.",
       "download": "Stáhnout pro zobrazení",

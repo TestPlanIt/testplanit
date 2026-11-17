@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Vorschau nicht verfügbar",
+      "blocked": "Diese Datei kann nicht angezeigt werden, da sie auf einem anderen Host gespeichert ist.",
       "tooLarge": "Diese Datei ist zu groß für eine Vorschau.",
       "empty": "Dieses Dokument scheint leer zu sein.",
       "download": "Zum Anzeigen herunterladen",

@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Podgląd niedostępny",
+      "blocked": "Nie można wyświetlić podglądu tego pliku, ponieważ jest przechowywany na innym hoście.",
       "tooLarge": "Ten plik jest zbyt duży, aby wyświetlić podgląd.",
       "empty": "Ten dokument wydaje się być pusty.",
       "download": "Pobierz, aby wyświetlić",

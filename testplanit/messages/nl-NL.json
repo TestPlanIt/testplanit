@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Voorbeeld niet beschikbaar",
+      "blocked": "Dit bestand kan niet worden weergegeven omdat het op een ander host is opgeslagen.",
       "tooLarge": "Dit bestand is te groot om een voorbeeld te tonen.",
       "empty": "Dit document lijkt leeg te zijn.",
       "download": "Downloaden om te bekijken",

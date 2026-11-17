@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Anteprima non disponibile",
+      "blocked": "Questo file non può essere visualizzato in anteprima perché è archiviato su un altro host.",
       "tooLarge": "Questo file è troppo grande per l'anteprima.",
       "empty": "Questo documento sembra essere vuoto.",
       "download": "Scarica per visualizzare",

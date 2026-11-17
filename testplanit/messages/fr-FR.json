@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Aperçu indisponible",
+      "blocked": "Ce fichier ne peut pas être affiché car il est stocké sur un autre serveur.",
       "tooLarge": "Ce fichier est trop volumineux pour être prévisualisé.",
       "empty": "Ce document semble être vide.",
       "download": "Télécharger pour afficher",

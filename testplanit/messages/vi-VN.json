@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Không có bản xem trước",
+      "blocked": "Không thể xem trước tệp này vì nó được lưu trữ trên một máy chủ khác.",
       "tooLarge": "Tệp này quá lớn để xem trước.",
       "empty": "Tài liệu này có vẻ như trống.",
       "download": "Tải xuống để xem",

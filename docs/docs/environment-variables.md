@@ -159,6 +159,8 @@ Every page is served with a `Content-Security-Policy` header that lets the brows
 
 Violations are posted by the browser to `/api/csp-report` and written to the application log as one `[csp] violation` line each, with the directive, the blocked URL and the page. A violation that names a host you expect means that host belongs in `CSP_ALLOWED_ORIGINS`. If something on a page stops loading after an upgrade, set `CSP_MODE=report-only` while you find the host in the log and add it.
 
+Attachments uploaded while the instance used a different storage host keep that host in their address. Images and videos still display, but PDF, text and Office previews are blocked until the old host's origin is in `CSP_ALLOWED_ORIGINS`. See [Files on a previous storage host](file-storage.md#files-on-a-previous-storage-host).
+
 ## Real-Time Notifications
 
 See [SSE Notifications](sse-notifications.md).

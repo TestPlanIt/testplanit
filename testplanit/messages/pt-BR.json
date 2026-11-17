@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Visualização indisponível",
+      "blocked": "Este arquivo não pode ser visualizado porque está armazenado em outro host.",
       "tooLarge": "Este arquivo é muito grande para visualizar.",
       "empty": "Este documento parece estar vazio.",
       "download": "Baixar para visualizar",

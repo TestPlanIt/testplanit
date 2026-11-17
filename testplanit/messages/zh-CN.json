@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "预览不可用",
+      "blocked": "无法预览此文件，因为它存储在另一台主机上。",
       "tooLarge": "此文件过大，无法预览。",
       "empty": "此文档似乎为空。",
       "download": "下载以查看",

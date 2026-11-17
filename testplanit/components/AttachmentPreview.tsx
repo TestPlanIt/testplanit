@@ -1,12 +1,15 @@
+import { AttachmentPreviewFallback } from "@/components/AttachmentPreviewFallback";
 import { LinkFavicon } from "@/components/LinkFavicon";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { OfficeDocumentPreview } from "@/components/OfficeDocumentPreview";
 import type { Attachments } from "~/zenstack/models";
 import { ExternalLink, File, Play } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Components } from "react-markdown";
 import Markdown from "react-markdown";
+import { useCspBlocked } from "~/hooks/useCspBlocked";
 import { Link } from "~/lib/navigation";
 import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
 import { getOfficeKind } from "~/lib/utils/officeDocuments";
@@ -37,6 +40,13 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
   const fileURL = getStorageUrlClient(attachment.url) || attachment.url;
   const fileType = attachment.mimeType;
   const officeKind = getOfficeKind(fileType, attachment.name);
+  const t = useTranslations("attachments.preview");
+  // Images, video and audio load from any host; these are fetched or framed.
+  const readsFile =
+    fileType === "application/pdf" ||
+    (fileType.startsWith("text/") && !fileType.startsWith("text/uri")) ||
+    Boolean(officeKind);
+  const isBlocked = useCspBlocked(fileURL) && readsFile;
 
   useEffect(() => {
     if (fileType.startsWith("image/")) {
@@ -79,6 +89,16 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
       <div className="flex h-24 w-24 items-center justify-center">
         <LoadingSpinner />
       </div>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <AttachmentPreviewFallback
+        name={attachment.name}
+        fileURL={fileURL}
+        message={size === "small" ? undefined : t("blocked")}
+      />
     );
   }
 

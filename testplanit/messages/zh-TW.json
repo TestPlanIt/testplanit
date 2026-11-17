@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "無法預覽",
+      "blocked": "此檔案無法預覽，因為它儲存在另一個主機上。",
       "tooLarge": "此檔案太大，無法預覽。",
       "empty": "此文件似乎是空的。",
       "download": "下載以檢視",

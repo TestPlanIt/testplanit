@@ -344,6 +344,8 @@ Full Office documents render only in the large preview (details view and carouse
 
 An Office document falls back to a generic file icon with a download link when it can't be previewed — files larger than 25 MB, empty spreadsheets, and legacy binary `.doc` and `.ppt` files, which have no client-side renderer.
 
+A PDF, text file or Office document stored on a host other than the configured storage shows the same icon and download link, with a note that it can't be previewed because it is stored on another host. See [Files on a previous storage host](#files-on-a-previous-storage-host).
+
 ### Deleting Attachments
 
 Users with appropriate permissions can:
@@ -486,6 +488,18 @@ Files are accessed directly through signed URLs generated during upload. The sys
 - Check if attachment still exists in storage
 - Ensure storage credentials are valid
 - Review bucket permissions
+
+### Files on a previous storage host
+
+**Issue**: PDF, text and Office attachments show "This file can't be previewed because it is stored on another host" instead of a preview. Images and videos on the same host still display.
+
+**Cause**: The attachment's address points at a storage host the instance no longer uses, for example a bucket it was moved away from. The [Content Security Policy](environment-variables.md#content-security-policy) allows pages to read files only from the configured storage, and the browser blocks the rest.
+
+**Solutions**:
+
+- In **Admin > Attachments**, choose **On another host** in the Status filter to list the affected files, and hover over the status to see the host.
+- If the old host still serves the files, add its origin to `CSP_ALLOWED_ORIGINS`, for example `CSP_ALLOWED_ORIGINS=https://old-bucket.s3.us-east-1.amazonaws.com`, and restart TestPlanIt.
+- The application log names each blocked host in a `[csp] violation` line.
 
 ### Broken Images (400 from `/_next/image`)
 

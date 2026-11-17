@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Preview unavailable",
+      "blocked": "This file can't be previewed because it is stored on another host.",
       "tooLarge": "This file is too large to preview.",
       "empty": "This document appears to be empty.",
       "download": "Download to view",

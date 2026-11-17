@@ -4245,6 +4245,7 @@
     },
     "preview": {
       "unavailable": "Önizleme kullanılamıyor",
+      "blocked": "Bu dosya başka bir sunucuda depolandığı için önizlenemez.",
       "tooLarge": "Bu dosya önizleme için çok büyük.",
       "empty": "Bu belge boş görünüyor.",
       "download": "Görüntülemek için indirin",
