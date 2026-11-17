@@ -191,11 +191,13 @@ export function FoundInTestingIssues({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="-mx-1 block cursor-pointer rounded px-1 py-0.5 text-start text-sm transition-colors hover:bg-accent/50"
+                  className="-mx-1 block w-full cursor-pointer rounded px-1 py-0.5 text-start text-sm transition-colors hover:bg-accent/50"
                   style={{ maxWidth: column.getSize() }}
                   title={plainText}
                 >
-                  <span className="line-clamp-2">{plainText}</span>
+                  <span className="line-clamp-2 text-ellipsis">
+                    {plainText}
+                  </span>
                 </button>
               </PopoverTrigger>
               <PopoverContent className="max-h-[400px] w-[500px] overflow-auto">
