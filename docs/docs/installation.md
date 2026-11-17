@@ -55,6 +55,16 @@ pnpm db:deploy   # apply pending migrations
 pnpm build
 ```
 
+### Upgrading to 1.3
+
+**The Content Security Policy is now enforced.** 1.2 sent the policy in report-only mode, where the browser logged what it would have blocked and blocked nothing. From 1.3 the browser blocks anything the policy does not allow. A default install needs no change. After upgrading, check the following:
+
+- **Something on a page stops loading.** Set `CSP_MODE=report-only` to restore the 1.2 behavior, find the blocked host in the `[csp] violation` lines of the application log, add its origin to `CSP_ALLOWED_ORIGINS`, then remove `CSP_MODE`.
+- **Attachments on a previous storage host.** If the instance was ever moved to a different storage host and older attachments still point at the old one, their PDF, text and Office previews are replaced by a note that the file is stored on another host. Images and videos still display. Add the old host's origin to `CSP_ALLOWED_ORIGINS` to bring the previews back. See [Files on a previous storage host](file-storage.md#files-on-a-previous-storage-host).
+- **TestPlanIt shown inside a frame on another site.** Only the app itself may frame its pages by default. List the sites that embed it in `CSP_FRAME_ANCESTORS`.
+
+All three variables are described under [Content Security Policy](environment-variables.md#content-security-policy).
+
 ### Upgrading from a pre-1.0 release
 
 Databases created by a 0.x release predate versioned migrations and have no migration history, so the first v1.0 startup would try to re-create the baseline schema and fail. **Back up your database**, then record the baseline as already applied — once, before the first v1.0 start:
