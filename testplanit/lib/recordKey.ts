@@ -209,21 +209,24 @@ export function parseRecordId(input: string | null | undefined): number | null {
 }
 
 /**
- * Separators that let one search box name several records at once:
- * `12 OR 34`, `12, 34` or `12 34`.
+ * Split a search query into the record references it names, in order. One
+ * search box can name several records at once: `12 OR 34`, `12, 34` or
+ * `12 34`. `OR` separates terms only when it sits between two of them.
  */
-const RECORD_QUERY_SEPARATOR = /\s+or\s+|\s*,\s*|\s+/i;
-
-/** Split a search query into the record references it names, in order. */
 export function splitRecordQueryTerms(
   input: string | null | undefined
 ): string[] {
   if (input == null) return [];
-  return String(input)
-    .trim()
-    .split(RECORD_QUERY_SEPARATOR)
-    .map((term) => term.trim())
-    .filter(Boolean);
+  const terms: string[] = [];
+  for (const segment of String(input).split(",")) {
+    const words = segment.split(/\s+/).filter(Boolean);
+    words.forEach((word, index) => {
+      const isSeparator =
+        word.toLowerCase() === "or" && index > 0 && index < words.length - 1;
+      if (!isSeparator) terms.push(word);
+    });
+  }
+  return terms;
 }
 
 /**
