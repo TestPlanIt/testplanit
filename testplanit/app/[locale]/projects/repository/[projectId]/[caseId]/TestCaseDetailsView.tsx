@@ -2777,7 +2777,9 @@ export function TestCaseDetailsView({
                                   onValueChange={(val) => onChange(Number(val))}
                                   value={value ? value.toString() : ""}
                                 >
-                                  <SelectTrigger>
+                                  <SelectTrigger
+                                    aria-label={t("common.fields.state")}
+                                  >
                                     <SelectValue
                                       placeholder={t(
                                         "common.placeholders.selectState"
@@ -2848,7 +2850,9 @@ export function TestCaseDetailsView({
                                 }}
                                 value={value ? value.toString() : ""}
                               >
-                                <SelectTrigger>
+                                <SelectTrigger
+                                  aria-label={t("common.fields.template")}
+                                >
                                   <SelectValue
                                     placeholder={t(
                                       "common.placeholders.selectTemplate"

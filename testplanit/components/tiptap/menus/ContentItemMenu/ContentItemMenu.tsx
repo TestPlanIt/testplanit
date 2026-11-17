@@ -59,6 +59,7 @@ export const ContentItemMenu = ({ editor, editable }: ContentItemMenuProps) => {
             <Toolbar.Button
               className="min-w-0! cursor-grab p-0 active:cursor-grabbing"
               data-drag-handle
+              aria-label={tActions("actionsLabel")}
             >
               <Icon name="GripVertical" />
             </Toolbar.Button>

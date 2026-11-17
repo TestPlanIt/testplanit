@@ -382,6 +382,7 @@ export default function MilestoneFormControls({
                   <Switch
                     checked={milestone.automaticCompletion}
                     disabled
+                    aria-label={t("fields.automaticCompletion")}
                     className="scale-75"
                   />
                   <span className="text-muted-foreground">
@@ -392,6 +393,7 @@ export default function MilestoneFormControls({
                   <Switch
                     checked={milestone.notifyDaysBefore > 0}
                     disabled
+                    aria-label={t("fields.dueDateNotifications")}
                     className="scale-75"
                   />
                   <span className="text-muted-foreground">

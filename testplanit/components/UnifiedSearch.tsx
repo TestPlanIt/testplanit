@@ -931,6 +931,7 @@ export function UnifiedSearch({
                 size="icon"
                 className="absolute inset-e-1 top-1/2 h-7 w-7 -translate-y-1/2 transform"
                 onClick={clearSearch}
+                aria-label={t("common.actions.clear")}
               >
                 <X className="h-4 w-4" />
               </Button>

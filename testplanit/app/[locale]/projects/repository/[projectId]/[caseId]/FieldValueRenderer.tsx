@@ -94,6 +94,16 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
   const error = errors?.[fieldId]?.message;
   const t = useTranslations();
 
+  const fieldDefinition =
+    template.caseFields?.find((cf: any) => cf.caseField.id === fieldId)
+      ?.caseField ??
+    template.resultFields?.find(
+      (rf: any) =>
+        rf.resultFieldId === fieldId || rf.resultField?.id === fieldId
+    )?.resultField;
+  const systemName = fieldDefinition?.systemName ?? `field-${fieldId}`;
+  const fieldLabel: string | undefined = fieldDefinition?.displayName;
+
   const isEmptyValue = (value: any): boolean => {
     // Handle Text Long fields with emptyEditorContent
     if (fieldType === "Text Long" && typeof value === "string") {
@@ -274,6 +284,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                       ),
                     }))}
                   isMulti
+                  aria-label={fieldLabel}
                   isDisabled={isSubmitting}
                   styles={customStyles}
                 />
@@ -320,7 +331,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 value={value ? value.toString() : ""}
                 disabled={isSubmitting}
               >
-                <SelectTrigger className="mx-1 w-fit">
+                <SelectTrigger className="mx-1 w-fit" aria-label={fieldLabel}>
                   <SelectValue
                     placeholder={t("common.placeholders.selectOption")}
                   />
@@ -368,6 +379,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 checked={value}
                 onCheckedChange={onChange}
                 disabled={isSubmitting}
+                aria-label={fieldLabel}
               />
             )}
           />
@@ -375,10 +387,20 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
           renderDiffWrapper(
             Boolean(fieldValue).toString(),
             Boolean(previousFieldValue).toString(),
-            (val) => <Switch disabled checked={val === "true"} />
+            (val) => (
+              <Switch
+                disabled
+                checked={val === "true"}
+                aria-label={fieldLabel}
+              />
+            )
           )
         ) : (
-          <Switch disabled checked={Boolean(fieldValue)} />
+          <Switch
+            disabled
+            checked={Boolean(fieldValue)}
+            aria-label={fieldLabel}
+          />
         );
       case "Date":
         return isEditMode && !isEffectivelyReadOnly ? (
@@ -420,6 +442,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               <Input
                 className="mx-1"
                 type="url"
+                aria-label={fieldLabel}
                 value={value ?? ""}
                 onChange={onChange}
                 disabled={isSubmitting}
@@ -442,6 +465,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               <Input
                 className="mx-1"
                 type="number"
+                aria-label={fieldLabel}
                 value={value ?? ""}
                 onChange={(e) =>
                   onChange(
@@ -466,6 +490,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             render={({ field: { onChange, value } }) => (
               <Input
                 className="mx-1"
+                aria-label={fieldLabel}
                 value={value ?? ""}
                 onChange={onChange}
                 disabled={isSubmitting}
@@ -533,6 +558,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                     className=""
                     style={editorMinHeightStyle(initialHeight)}
                     readOnly={!isEditorEditable}
+                    ariaLabel={fieldLabel}
                   />
                 </div>
               );
@@ -599,18 +625,6 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
         return fieldValue;
     }
   };
-
-  // Extract systemName for test IDs (supports both case fields and result fields)
-  const caseFieldDefinition = template.caseFields?.find(
-    (cf: any) => cf.caseField.id === fieldId
-  )?.caseField;
-  const resultFieldDefinition = template.resultFields?.find(
-    (rf: any) => rf.resultFieldId === fieldId || rf.resultField?.id === fieldId
-  )?.resultField;
-  const systemName =
-    caseFieldDefinition?.systemName ??
-    resultFieldDefinition?.systemName ??
-    `field-${fieldId}`;
 
   return (
     <div data-testid={`field-value-${systemName}`}>

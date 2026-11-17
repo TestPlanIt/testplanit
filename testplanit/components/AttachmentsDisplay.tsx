@@ -414,6 +414,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                   attachment.url
                                 }
                                 target="_blank"
+                                aria-label={t("common.actions.download")}
                               >
                                 <Download className="h-5 w-5 shrink-0" />
                               </Link>
@@ -436,6 +437,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                 type="button"
                                 variant="destructive"
                                 size="sm"
+                                aria-label={t("common.actions.delete")}
                               >
                                 <Trash className="h-4 w-4" />
                               </Button>
