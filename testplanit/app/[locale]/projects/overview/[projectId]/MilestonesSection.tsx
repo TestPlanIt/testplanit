@@ -72,7 +72,6 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
         {milestones?.length ? (
           <Link
             className="group text-sm text-muted-foreground"
-            scroll={false}
             href={`/projects/milestones/${projectId}`}
           >
             {t("projects.overview.seeAllMilestones", {

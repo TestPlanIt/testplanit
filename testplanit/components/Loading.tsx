@@ -12,7 +12,10 @@ export function Loading({ delay = 300 }: { delay?: number }) {
     return () => clearTimeout(timer);
   }, [delay]);
 
-  if (!show) return null;
+  // Next scrolls a new page to the top by measuring what the page first
+  // renders. Rendering nothing here leaves it nothing to measure, and the
+  // page keeps the previous page's scroll position.
+  if (!show) return <div className="-mt-12 min-h-screen" />;
 
   return (
     <div

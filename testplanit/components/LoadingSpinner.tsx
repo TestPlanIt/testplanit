@@ -22,8 +22,10 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     return () => clearTimeout(timer);
   }, [delay]);
 
+  // An empty element, not null: when the spinner is all a new page renders,
+  // Next needs something to measure before it scrolls the page to the top.
   if (!show) {
-    return null;
+    return <div />;
   }
 
   return (
