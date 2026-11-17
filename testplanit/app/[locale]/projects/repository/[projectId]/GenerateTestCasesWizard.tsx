@@ -1068,6 +1068,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                                   <button
                                     type="button"
                                     className="ms-0.5 rounded-full p-0.5 hover:bg-muted"
+                                    aria-label={tCommon("actions.remove")}
                                     onClick={() => {
                                       field.onChange(
                                         tags.filter((_, i) => i !== idx)
@@ -1080,6 +1081,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                               ))}
                               <Input
                                 className="h-7 w-auto min-w-[120px] flex-1 px-2 text-sm"
+                                aria-label={tCommon("fields.tags")}
                                 placeholder={
                                   tags.length === 0
                                     ? tCommon("fields.tags")
@@ -4353,7 +4355,10 @@ export function GenerateTestCasesWizard({
                       setReviewPageFilter(val === "__all__" ? null : val)
                     }
                   >
-                    <SelectTrigger className="h-9 w-full max-w-md text-sm">
+                    <SelectTrigger
+                      className="h-9 w-full max-w-md text-sm"
+                      aria-label={t("generateTestCases.review.filterByPage")}
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -5271,7 +5276,9 @@ export function GenerateTestCasesWizard({
                             setSelectedTemplateId(Number(value))
                           }
                         >
-                          <SelectTrigger>
+                          <SelectTrigger
+                            aria-label={tCommon("fields.template")}
+                          >
                             <SelectValue
                               placeholder={tCommon(
                                 "placeholders.selectATemplate"
@@ -5408,11 +5415,17 @@ export function GenerateTestCasesWizard({
                       </CardHeader>
                       <CardContent className=" overflow-y-auto">
                         <div className="mb-4">
-                          <Label className="mb-2 block text-sm font-medium">
+                          <Label
+                            htmlFor="generate-quantity"
+                            className="mb-2 block text-sm font-medium"
+                          >
                             {t("generateTestCases.addNotes.quantity")}
                           </Label>
                           <Select value={quantity} onValueChange={setQuantity}>
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger
+                              id="generate-quantity"
+                              className="w-full"
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -5451,6 +5464,7 @@ export function GenerateTestCasesWizard({
                         </div>
 
                         <Textarea
+                          aria-label={t("generateTestCases.addNotes.title")}
                           placeholder={t(
                             "generateTestCases.addNotes.placeholder"
                           )}

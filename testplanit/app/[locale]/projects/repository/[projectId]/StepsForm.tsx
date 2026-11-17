@@ -267,6 +267,7 @@ const StepItem: React.FC<StepItemProps> = ({
                       variant="destructive"
                       className="ms-auto"
                       data-testid={`delete-step-${index}`}
+                      aria-label={t("delete")}
                     >
                       <Trash className="h-5 w-5" />
                     </Button>
@@ -470,6 +471,7 @@ const StepItem: React.FC<StepItemProps> = ({
                       variant="destructive"
                       className="ms-auto"
                       data-testid={`delete-step-${index}`}
+                      aria-label={t("delete")}
                     >
                       <Trash className="h-5 w-5" />
                     </Button>

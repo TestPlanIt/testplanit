@@ -176,7 +176,7 @@ export function CommentList({
     <div ref={setRootRef} className="space-y-2 rounded-md bg-primary/10 p-2">
       <div className="flex items-center gap-1 text-primary">
         <MessageSquare className="h-5 w-5 shrink-0" />
-        <h3 className="text-md font-semibold">
+        <h3 className="text-md font-semibold text-foreground">
           {narrow
             ? comments.length
             : t("comments.titleWithCount", { count: comments.length })}
